@@ -161,6 +161,52 @@ describe('readInventory', () => {
     expect(componentOf(inventory, 'govuk', 'govukTabs').usedIn).toEqual([])
   })
 
+  it('Should name the releases whose assets start a script the service leaves off or load styles it leaves out', () => {
+    write(
+      root,
+      'src/server/app/sets/r-two/assets/scripts.js',
+      "import { createAll, Tabs } from 'govuk-frontend'\ncreateAll(Tabs)"
+    )
+    write(
+      root,
+      'src/server/app/sets/r-one/assets/styles.scss',
+      '@use "@ministryofjustice/frontend/moj/components/filter/filter";'
+    )
+    write(
+      root,
+      'src/server/app/sets/r-one/assets/scripts.js',
+      "import { createAll, Tabs } from 'govuk-frontend'\ncreateAll(Tabs)"
+    )
+    const inventory = readInventory(root)
+    expect(componentOf(inventory, 'govuk', 'govukTabs').switchedOnIn).toEqual([
+      'r-one',
+      'r-two'
+    ])
+    expect(componentOf(inventory, 'moj', 'mojFilter').switchedOnIn).toEqual([
+      'r-one'
+    ])
+  })
+
+  it('Should not count a release that starts a script the service already starts, or a test file', () => {
+    write(
+      root,
+      'src/server/app/sets/r-one/assets/scripts.js',
+      "import { createAll, Radios } from 'govuk-frontend'\ncreateAll(Radios)"
+    )
+    write(
+      root,
+      'src/server/app/sets/r-one/assets/scripts.test.js',
+      'createAll(Tabs)'
+    )
+    const inventory = readInventory(root)
+    expect(componentOf(inventory, 'govuk', 'govukRadios').switchedOnIn).toEqual(
+      []
+    )
+    expect(componentOf(inventory, 'govuk', 'govukTabs').switchedOnIn).toEqual(
+      []
+    )
+  })
+
   it('Should give the import line a template needs', () => {
     const inventory = readInventory(root)
     expect(componentOf(inventory, 'moj', 'mojDatePicker').importLine).toBe(
@@ -204,6 +250,22 @@ describe('renderComponent', () => {
         usedIn: ['a.njk', 'b.njk', 'c.njk']
       })
     ).toContain('No script needed. Used in `a.njk` and 2 more.')
+  })
+
+  it('Should name the releases that switch a component on', () => {
+    expect(
+      renderComponent({
+        macro: 'govukTabs',
+        importLine:
+          '{% from "govuk/components/tabs/macro.njk" import govukTabs %}',
+        script: 'not-started',
+        styled: true,
+        usedIn: [],
+        switchedOnIn: ['r-one', 'r-two']
+      })
+    ).toContain(
+      'Script NOT started. Not used in any set yet. Switched on in `r-one`, `r-two`.'
+    )
   })
 })
 

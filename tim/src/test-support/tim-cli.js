@@ -13,10 +13,10 @@ export const createCliWorkspace = (prefix) => {
   return root
 }
 
-export const runTimInWorkspace = (workspaceRoot, args) =>
+export const runTimInWorkspace = (workspaceRoot, args, { env = {} } = {}) =>
   execa('node', [TIM_CLI_PATH, '--workspace', workspaceRoot, ...args], {
     reject: false,
-    env: { TIM_NO_AUTO_PULL: '1' }
+    env: { TIM_NO_AUTO_PULL: '1', ...env }
   })
 
 export const envelopeOf = (run) => JSON.parse(run.stdout.trim())

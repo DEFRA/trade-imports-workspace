@@ -163,9 +163,9 @@ The system MUST stop the region of origin code box accepting more than five char
 - **THEN** the box holds only the first five
 - **AND** the box offers no autocomplete and no spellcheck
 
-### Requirement: Answering that a region code is required but leaving it empty is rejected on save and continue
+### Requirement: Answering that a region code is required but leaving it empty is rejected on either save control
 **ID**: REQ-ORIGIN-011
-The system MUST refuse to save and continue from the origin page when the user has answered that a region code is required but left the code itself empty, showing an error that focuses the region code field, and MUST NOT refuse the page for that on save and return to overview.
+The system MUST refuse to save from the origin page, on save and continue and on save and return to overview alike, when the user has answered that a region code is required but left the code itself empty, showing an error that focuses the region code field.
 
 #### Scenario: An empty region code is rejected when one is required
 **ID**: SCN-ORIGIN-011-A
@@ -174,13 +174,13 @@ The system MUST refuse to save and continue from the origin page when the user h
 - **THEN** they remain on the origin of the import page
 - **AND** an error focuses the region code field, with the chosen country and the required answer still held
 
-#### Scenario: Save and return to overview saves "Yes" with the code left blank, leaving the origin task to do
+#### Scenario: Save and return to overview refuses "Yes" with the code left blank
 **ID**: SCN-ORIGIN-011-B
 - **GIVEN** the user has chosen a country and answered that a region code is required
 - **WHEN** they leave the region code empty and save and return to overview
-- **THEN** they return to Overview with no error shown
-- **AND** the origin task does not read "Complete"
-- **AND** re-opening the page shows the required answer still held as "Yes"
+- **THEN** they remain on the origin of the import page
+- **AND** an error says "Enter the region of origin code", with "Yes" still chosen
+- **AND** nothing is saved
 
 ### Requirement: With JavaScript, the chosen country's code is shown as a fixed prefix beside the region code field
 **ID**: REQ-ORIGIN-012

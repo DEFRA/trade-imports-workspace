@@ -1,0 +1,651 @@
+{
+  "source": "trace:animals-fit",
+  "structure": "Part 9, Commodity consignment details. Mined all 18 traces of consignment-details.fit.spec.js (10 in 'rendering and validation', 8 in 'persistence and accessibility'); the earlier extraction of each zip sits in the part9 working folder as c01..c18 in the partition's read order (c01=1e363 renders table, c02=644f1 heading sizes, c03=b8182 remove values, c04=f3deb back link, c05=18456 animals Bos taurus 2.5, c06=5467c packages Bos taurus 'boxes', c07=8233c animals Felis catus 0, c08=33681 packages Felis catus -1, c09=7f2a3 all blank, c10=32024 one blank, c11=b423b save and persist, c12=01f7a remove Cat, c13=fc0ef remove Cow, c14=68865 remove last, c15=499d8 add another, c16=86276 button group, c17=d6311 save and return, c18=55d05 axe). For each I read the full test-step list, the network log (data calls only) and the frame snapshots on /consignment-details, and dumped the main DOM tree, every input/button attribute and the error states. Every trace shares one set-up: stub sign-in, start a notification, answer origin (France, no region), open 'What are you importing?' from the overview, select Bos taurus (Cow, 0102) and Felis catus (Cat, 01061900), Save and continue, landing on 'Commodity details'. Pages in this slice: (1) Commodity details at /live-animals/notifications/{ref}/consignment-details, always reached after the commodity question and linked straight from the overview task 'Commodity details'; it has a 'Selected commodities' table form with per-row Remove buttons, an 'Add another commodity' link, then a quantities form with one H2 per commodity ('Cow (0102)'), one H3 per species, and per species 'Number of animals' and 'Number of packages (when required)'; then a button group (Save and continue, Save and return to overview, Cancel and return to overview). (2) Its error state (same URL, 200 re-render with error summary). Conditional surfaces: rows on code 01061900 carry a species-level remove; removing the last line, or opening the page with nothing selected, redirects to 'What are you importing?'. Exits observed: Save and continue and Save and return to overview both 302 to the overview; back link to the overview. The overview task list and totals were read only where these traces land on it after saving. Not reached: Cancel and return to overview was asserted visible but never clicked; no trace drove zero or blank packages alone, upper limits, mixed errors across fields, or a concurrency conflict.",
+  "claims": [
+    {
+      "id": "trace-animals-fit-p9-001",
+      "statement": "After the user selects commodities on 'What are you importing?' and presses Save and continue, the journey redirects to the Commodity details page at /live-animals/notifications/{reference}/consignment-details.",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-consignmen-1e363 network: POST /commodities -> 302; test step expect@60",
+      "quote": "POST /live-animals/notifications/GBN-AG-26-V23TTJ/commodities -> 302 /live-animals/notifications/GBN-AG-26-V23TTJ/consignment-details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-002",
+      "statement": "The page heading (H1, govuk-heading-l) is 'Commodity details'.",
+      "kind": "copy",
+      "ref": "trace commodities-fit-consignmen-1e363 call@1039 main H1",
+      "quote": "Commodity details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-003",
+      "statement": "The heading carries the section caption 'About the consignment' (govuk-caption-l).",
+      "kind": "copy",
+      "ref": "trace commodities-fit-consignmen-1e363 call@1039 main SPAN.govuk-caption-l",
+      "quote": "About the consignment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-004",
+      "statement": "The browser title is 'Commodity details - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "trace commodities-fit-consignmen-1e363 call@1039 TITLE",
+      "quote": "Commodity details - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-005",
+      "statement": "Above the caption the page shows a journey strip: a blue 'Draft' tag and the notification reference in bold.",
+      "kind": "copy",
+      "ref": "trace commodities-fit-consignmen-1e363 call@1039 main DIV.app-journey-strip",
+      "quote": "STRONG.govuk-tag.govuk-tag--blue \" Draft \" SPAN.govuk-body.govuk-!-font-weight-bold \"GBN-AG-26-V23TTJ\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-006",
+      "statement": "The journey strip uses a custom class app-journey-strip around standard govuk-tag and govuk-body elements; it is outside the govuk-frontend component set.",
+      "kind": "constraint",
+      "ref": "trace commodities-fit-consignmen-1e363 call@1039 class list",
+      "quote": "app-journey-strip",
+      "confidence": "verbatim",
+      "note": "A standard alternative would be a caption or summary of the reference; recorded, not judged."
+    },
+    {
+      "id": "trace-animals-fit-p9-007",
+      "statement": "The page has a back link labelled 'Back' that points at the notification overview (/live-animals/notifications/{reference}).",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-consignmen-1e363 call@1039 A.govuk-back-link",
+      "quote": "A {\"href\":\"/live-animals/notifications/GBN-AG-26-V23TTJ\",\"class\":\"govuk-back-link\"} [\"Back\"]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-008",
+      "statement": "Clicking the back link lands on the page headed 'Overview'.",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-consignmen-f3deb test steps pw:api@61, expect@62",
+      "quote": "Click locator('.govuk-back-link') ... Expect \"toBeVisible\" getByRole('heading', { name: 'Overview' })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-009",
+      "statement": "The page shows a table (govuk-table) captioned 'Selected commodities' with a medium caption (govuk-table__caption--m).",
+      "kind": "copy",
+      "ref": "trace commodities-fit-consignmen-1e363 call@1039 CAPTION",
+      "quote": "Selected commodities",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-010",
+      "statement": "The table has three column headers: 'Commodity code', 'Common name', and a visually hidden 'Actions' header.",
+      "kind": "copy",
+      "ref": "trace commodities-fit-consignmen-1e363 call@1039 THEAD",
+      "quote": "TH 'Commodity code' TH 'Common name' TH SPAN.govuk-visually-hidden 'Actions'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-011",
+      "statement": "With Bos taurus and Felis catus selected, the table lists one row '0102 Cow' and one row '01061900 Cat'.",
+      "kind": "data",
+      "ref": "trace commodities-fit-consignmen-1e363 call@1039 TBODY rows; test expects @63-@66",
+      "quote": "0102 Cow Remove Cow  /  01061900 Cat Remove Cat",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-012",
+      "statement": "Each table row ends with a right-aligned 'Remove' button whose accessible name adds the common name in visually hidden text ('Remove Cow', 'Remove Cat').",
+      "kind": "copy",
+      "ref": "trace commodities-fit-consignmen-1e363 call@1039 TD.govuk-!-text-align-right BUTTON",
+      "quote": "BUTTON.govuk-link.app-link-button \"Remove\" SPAN.govuk-visually-hidden \" Cow\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-013",
+      "statement": "The Remove controls are submit buttons styled as links with a custom class app-link-button (govuk-link app-link-button), outside the govuk-frontend component set.",
+      "kind": "constraint",
+      "ref": "trace commodities-fit-consignmen-1e363 call@1039 BUTTON attributes",
+      "quote": "BUTTON {\"type\":\"submit\",\"class\":\"govuk-link app-link-button\",\"name\":\"action\",\"value\":\"remove:0\"} 'Remove Cow'",
+      "confidence": "verbatim",
+      "note": "A plain link to a remove confirmation, or govuk-button--secondary/warning, would be the in-toolbox alternatives."
+    },
+    {
+      "id": "trace-animals-fit-p9-014",
+      "statement": "A commodity not on code 01061900 (Cow, 0102) has a commodity-level remove: its button posts action=remove:<commodity index>.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-consignmen-b8182 test expect@61; trace 1e363 call@1039 BUTTON",
+      "quote": "\"name\":\"action\",\"value\":\"remove:0\"} 'Remove Cow'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-015",
+      "statement": "A commodity on code 01061900 is listed as one row per species, and its remove button posts action=remove-species:<line index>, dropping that species alone.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-consignmen-b8182 test expect@62; trace 1e363 call@1039 BUTTON",
+      "quote": "\"name\":\"action\",\"value\":\"remove-species:1\"} 'Remove Cat'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-016",
+      "statement": "Two species on 01061900 (Cat and Dog) appear as two separate table rows, each with its own species-level remove (remove-species:1 and remove-species:2).",
+      "kind": "data",
+      "ref": "trace commodities-fit-consignmen-499d8 call@1451 BUTTONs",
+      "quote": "01061900 Cat Remove Cat  /  01061900 Dog Remove Dog",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-017",
+      "statement": "The Selected commodities table and its remove buttons sit in their own POST form, separate from the quantities form, each with a hidden CSRF crumb and a hidden concurrencyToken field.",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-consignmen-1e363 call@1039 FORM and hidden INPUTs",
+      "quote": "FORM {\"method\":\"post\",\"novalidate\":\"\"} ... INPUT {\"type\":\"hidden\",\"name\":\"crumb\"} INPUT {\"type\":\"hidden\",\"name\":\"concurrencyToken\",\"value\":\"0\"}",
+      "confidence": "verbatim",
+      "note": "Crumb value is a token: [REDACTED]."
+    },
+    {
+      "id": "trace-animals-fit-p9-018",
+      "statement": "Below the table a link 'Add another commodity' goes to the commodity question page (/live-animals/notifications/{reference}/commodities).",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-consignmen-1e363 call@1039 P.govuk-body A",
+      "quote": "A.govuk-link href=/live-animals/notifications/GBN-AG-26-V23TTJ/commodities \"Add another commodity\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-019",
+      "statement": "After 'Add another commodity', the commodity page shows the existing selection (Bos taurus) already chosen.",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-consignmen-499d8 test expect@68",
+      "quote": "Expect \"toContainText\" locator('#commodity-selection') {\"expected\":\"Bos taurus\"}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-020",
+      "statement": "Adding Canis lupus familiaris and pressing Save and continue returns to Commodity details with a new 'Dog' row on 01061900, the saved quantities kept (25 and 2), and empty inputs for the new species.",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-consignmen-499d8 call@1451; test expects @73-@76",
+      "quote": "numberOfAnimalsQuantity-0=25,numberOfPackages-0=5,numberOfAnimalsQuantity-1=2,numberOfPackages-1=1,numberOfAnimalsQuantity-2=,numberOfPackages-2=",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-021",
+      "statement": "The quantities form groups species under one H2 per commodity, written '<common name> (<commodity code>)', for example 'Cow (0102)' and 'Cat (01061900)'.",
+      "kind": "copy",
+      "ref": "trace commodities-fit-consignmen-1e363 call@1039 H2.govuk-heading-l",
+      "quote": "H2.govuk-heading-l \"Cow (0102)\" ... H2.govuk-heading-l \"Cat (01061900)\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-022",
+      "statement": "Two species on the same code 01061900 get separate H2 groups ('Cat (01061900)' and 'Dog (01061900)'), not one shared group.",
+      "kind": "data",
+      "ref": "trace commodities-fit-consignmen-499d8 call@1451 H2/H3 list",
+      "quote": "H2 Cat (01061900) H3 Felis catus H2 Dog (01061900) H3 Canis lupus familiaris",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-023",
+      "statement": "Under each commodity heading an H3 names the species by its Latin name (for example 'Bos taurus', 'Felis catus').",
+      "kind": "copy",
+      "ref": "trace commodities-fit-consignmen-1e363 call@1039 H3.govuk-heading-m; test expects @67-@68",
+      "quote": "H3.govuk-heading-m \"Bos taurus\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-024",
+      "statement": "Type sizes step down: commodity heading is govuk-heading-l, species heading govuk-heading-m, and both quantity labels govuk-label--s.",
+      "kind": "constraint",
+      "ref": "trace commodities-fit-consignmen-644f1 test expects @61-@64",
+      "quote": "Expect \"toHaveClass\" getByRole('heading', { name: 'Cow (0102)' }) ... getByRole('heading', { name: 'Bos taurus' }) ... locator('label[for=\"numberOfAnimalsQuantity-0\"]') ... locator('label[for=\"numberOfPackages-0\"]')",
+      "confidence": "verbatim",
+      "note": "Expected classes come from the spec (govuk-heading-l, govuk-heading-m, govuk-label--s); the DOM in 1e363 call@1039 confirms them."
+    },
+    {
+      "id": "trace-animals-fit-p9-025",
+      "statement": "Each species has a text input labelled 'Number of animals' (id/name numberOfAnimalsQuantity-<n>, inputmode numeric, govuk-input--width-5).",
+      "kind": "data",
+      "ref": "trace commodities-fit-consignmen-1e363 call@1039 INPUT#numberOfAnimalsQuantity-0",
+      "quote": "LABEL {\"class\":\"govuk-label govuk-label--s\",\"for\":\"numberOfAnimalsQuantity-0\"} ' Number of animals ' INPUT {\"class\":\"govuk-input govuk-input--width-5\",\"id\":\"numberOfAnimalsQuantity-0\",\"name\":\"numberOfAnimalsQuantity-0\",\"type\":\"text\",\"inputmode\":\"numeric\"}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-026",
+      "statement": "The Number of animals input has no hint: its accessible description is empty.",
+      "kind": "copy",
+      "ref": "trace commodities-fit-consignmen-1e363 test expect@70; call@1039 INPUT has no aria-describedby",
+      "quote": "Expect \"toHaveAccessibleDescription\" locator('#numberOfAnimalsQuantity-0')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-027",
+      "statement": "Each species has a text input labelled 'Number of packages (when required)' (id/name numberOfPackages-<n>, inputmode numeric, govuk-input--width-5).",
+      "kind": "data",
+      "ref": "trace commodities-fit-consignmen-1e363 call@1039 INPUT#numberOfPackages-0; test expect@71",
+      "quote": "Number of packages (when required)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-028",
+      "statement": "The Number of packages input has the hint 'Such as crates, bags or boxes', linked by aria-describedby.",
+      "kind": "copy",
+      "ref": "trace commodities-fit-consignmen-1e363 call@1039 DIV.govuk-hint#numberOfPackages-0-hint; test expect@72",
+      "quote": "Such as crates, bags or boxes",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-029",
+      "statement": "Each commodity group is followed by a large visible section break (govuk-section-break--l govuk-section-break--visible).",
+      "kind": "constraint",
+      "ref": "trace commodities-fit-consignmen-1e363 call@1039 HR",
+      "quote": "HR.govuk-section-break.govuk-section-break--l.govuk-section-break--visible",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-030",
+      "statement": "Quantity inputs are numbered by line in display order (0, 1, 2 ...), one pair per species.",
+      "kind": "data",
+      "ref": "trace commodities-fit-consignmen-499d8 call@1451 INPUT ids",
+      "quote": "numberOfAnimalsQuantity-0 ... numberOfAnimalsQuantity-1 ... numberOfAnimalsQuantity-2",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-031",
+      "statement": "The page ends with a button group holding a primary 'Save and continue' button, a secondary 'Save and return to overview' button, and a link 'Cancel and return to overview'.",
+      "kind": "copy",
+      "ref": "trace commodities-fit-consignmen-86276 test expects @61-@63; trace 1e363 call@1039 DIV.govuk-button-group",
+      "quote": "BUTTON.govuk-button \" Save and continue \" BUTTON.govuk-button.govuk-button--secondary \" Save and return to overview \" A.govuk-link \"Cancel and return to overview\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-032",
+      "statement": "'Save and return to overview' submits the quantities form with exit=hub.",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-consignmen-d6311 network POST /consignment-details",
+      "quote": "BODY concurrencyToken=0&numberOfAnimalsQuantity-0=25&numberOfPackages-0=5&numberOfAnimalsQuantity-1=2&numberOfPackages-1=1&exit=hub",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-033",
+      "statement": "'Cancel and return to overview' links to the notification overview without submitting.",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-consignmen-1e363 call@1039 A.govuk-link",
+      "quote": "A {\"class\":\"govuk-link\",\"href\":\"/live-animals/notifications/GBN-AG-26-V23TTJ\"} [\"Cancel and return to overview\"]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-034",
+      "statement": "No trace clicked 'Cancel and return to overview', so whether it discards unsaved quantities was never observed.",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-consignmen-86276 (asserted visible only)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p9-035",
+      "statement": "Pressing 'Save and continue' with valid counts posts every species' animals and packages and redirects to the overview, not to a next question page.",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-consignmen-b423b network POST /consignment-details; test expect@66",
+      "quote": "POST /live-animals/notifications/GBN-AG-26-C8WD8G/consignment-details -> 302 /live-animals/notifications/GBN-AG-26-C8WD8G BODY concurrencyToken=0&numberOfAnimalsQuantity-0=25&numberOfPackages-0=5&numberOfAnimalsQuantity-1=2&numberOfPackages-1=1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-036",
+      "statement": "'Save and return to overview' with valid counts also redirects to the overview.",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-consignmen-d6311 network; test expect@66",
+      "quote": "POST /live-animals/notifications/GBN-AG-26-WGKBQ3/consignment-details -> 302 /live-animals/notifications/GBN-AG-26-WGKBQ3",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-037",
+      "statement": "Saved per-species counts are persisted: reopening the page shows 25 and 5 for Bos taurus and 2 and 1 for Felis catus.",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-consignmen-b423b call@1191; test expects @68-@71",
+      "quote": "numberOfAnimalsQuantity-0=25,numberOfPackages-0=5,numberOfAnimalsQuantity-1=2,numberOfPackages-1=1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-038",
+      "statement": "Counts saved with 'Save and return to overview' are also persisted and shown when the page is reopened.",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-consignmen-d6311 test expects @68-@69",
+      "quote": "Expect \"toHaveValue\" locator('#numberOfAnimalsQuantity-0') {\"expected\":\"25\"} ... locator('#numberOfPackages-0') {\"expected\":\"5\"}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-039",
+      "statement": "After saving, the overview task 'Commodity details' shows status 'Complete' (before saving it showed 'To do').",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-consignmen-d6311 overview call@1297 vs call@1267; trace b423b call@1189",
+      "quote": "Commodity details Complete",
+      "confidence": "verbatim",
+      "note": "The spec title says 'marks the row Completed'; the rendered status text is 'Complete'."
+    },
+    {
+      "id": "trace-animals-fit-p9-040",
+      "statement": "After saving counts, the overview totals show the summed animals and packages across species: '27 Animals' and '6 Packages/boxes' for 25+2 animals and 5+1 packages.",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-consignmen-b423b overview call@1189 app-commodity-total",
+      "quote": "27 Animals Total number of animals in this consignment  |  6 Packages/boxes Total number of packages in this consignment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-041",
+      "statement": "The overview task 'Commodity details' links straight to /consignment-details.",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-consignmen-f3deb overview call@1023 task links",
+      "quote": "/live-animals/notifications/GBN-AG-26-YZE2T3/consignment-details [\"\\n        Commodity details\\n      \"]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-042",
+      "statement": "Once commodities are selected, the overview task list gains an 'Identification details' task (linking to /commodities/identification) after 'Commodity details', shown 'To do'.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-consignmen-f3deb overview call@1023 vs earlier call@1003",
+      "quote": "Commodity details To do  /  Identification details To do",
+      "confidence": "verbatim",
+      "note": "Absent from the overview before commodities were chosen (call@979, call@1003)."
+    },
+    {
+      "id": "trace-animals-fit-p9-043",
+      "statement": "Selecting commodities alone (no counts saved) leaves 'Commodity details' at 'To do' while 'What are you importing?' becomes 'Complete'.",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-consignmen-f3deb overview call@1023",
+      "quote": "What are you importing? Complete  /  Main reason for import To do  /  Commodity details To do",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-044",
+      "statement": "Number of animals is mandatory per species: submitting with every animal count blank keeps the user on Commodity details with an error per species.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-consignmen-7f2a3 call@1329; test expects @62-@65",
+      "quote": "There is a problem Enter the number of animals Enter the number of animals",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-045",
+      "statement": "The blank-animals error message is 'Enter the number of animals', shown in the summary and inline above the field.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-consignmen-7f2a3 call@1329 P.govuk-error-message#numberOfAnimalsQuantity-0-error",
+      "quote": "Enter the number of animals",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-046",
+      "statement": "When only some animal counts are blank, only the blank species get an error: filling Bos taurus with 25 leaves one summary link, pointing at numberOfAnimalsQuantity-1, and keeps 25.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-consignmen-32024 call@1117; test expects @63-@66",
+      "quote": "ERRSUM  There is a problem Enter the number of animals  | ERRMSG numberOfAnimalsQuantity-1-error: Error: Enter the number of animals  | VALUES numberOfAnimalsQuantity-0=25",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-047",
+      "statement": "Number of packages is optional: blank package counts raise no error, even when animal counts are blank.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-consignmen-7f2a3 call@1329 (packages form groups have no error); trace 32024 call@1117",
+      "quote": "numberOfAnimalsQuantity-0=&numberOfPackages-0=&numberOfAnimalsQuantity-1=&numberOfPackages-1=",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of any packages error when packages were posted blank; the label says '(when required)', but no trace shows when packages become required."
+    },
+    {
+      "id": "trace-animals-fit-p9-048",
+      "statement": "No trace shows any condition under which Number of packages becomes required, despite the '(when required)' label.",
+      "kind": "rule",
+      "ref": "consignment-details traces, all 18",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p9-049",
+      "statement": "A non-whole number of animals (2.5) is rejected with 'Enter a whole number greater than 0'.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-consignmen-18456 call@1083",
+      "quote": "ERRSUM  There is a problem Enter a whole number greater than 0  | ERRMSG numberOfAnimalsQuantity-0-error: Error: Enter a whole number greater than 0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-050",
+      "statement": "A number of animals of 0 is rejected with 'Enter a whole number greater than 0'.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-consignmen-8233c call@1163",
+      "quote": "ERRMSG numberOfAnimalsQuantity-1-error: Error: Enter a whole number greater than 0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-051",
+      "statement": "A non-numeric number of packages ('boxes') is rejected with 'Number of packages must be a whole number, like 5'.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-consignmen-5467c call@997",
+      "quote": "ERRSUM  There is a problem Number of packages must be a whole number, like 5  | ERRMSG numberOfPackages-0-error: Error: Number of packages must be a whole number, like 5",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-052",
+      "statement": "A negative number of packages (-1) is rejected with 'Number of packages must be a whole number, like 5'.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-consignmen-33681 call@459",
+      "quote": "ERRMSG numberOfPackages-1-error: Error: Number of packages must be a whole number, like 5",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-053",
+      "statement": "No trace submitted 0 packages, a non-numeric or negative animal count, a very large number, or several different invalid fields at once, so those outcomes and the error ordering are unobserved.",
+      "kind": "rule",
+      "ref": "consignment-details validation traces 18456, 5467c, 8233c, 33681, 7f2a3, 32024",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p9-054",
+      "statement": "A failed submit re-renders the same URL with HTTP 200 (no redirect) and keeps every entered value, including the invalid one.",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-consignmen-18456 network and call@1083",
+      "quote": "POST /live-animals/notifications/GBN-AG-26-JNQ4QJ/consignment-details -> 200  BODY concurrencyToken=0&numberOfAnimalsQuantity-0=2.5&numberOfPackages-0=5&numberOfAnimalsQuantity-1=2&numberOfPackages-1=1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-055",
+      "statement": "The error summary has the title 'There is a problem', role alert, and sits above the caption and heading.",
+      "kind": "copy",
+      "ref": "trace commodities-fit-consignmen-7f2a3 call@1329 DIV.govuk-error-summary",
+      "quote": "H2.govuk-error-summary__title \" There is a problem \"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-056",
+      "statement": "Each error summary link targets the failing input by id (#numberOfAnimalsQuantity-<n> or #numberOfPackages-<n>), and clicking it focuses that input.",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-consignmen-7f2a3 call@1329 summary list; test steps @66-@67; traces 18456/5467c/8233c/33681 steps @68-@69",
+      "quote": "A href=#numberOfAnimalsQuantity-0 \"Enter the number of animals\" LI A href=#numberOfAnimalsQuantity-1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-057",
+      "statement": "The two blank-animals summary links share the same text 'Enter the number of animals' and do not name the species; the species is identified only by where the link goes.",
+      "kind": "copy",
+      "ref": "trace commodities-fit-consignmen-7f2a3 call@1329",
+      "quote": "A href=#numberOfAnimalsQuantity-0 \"Enter the number of animals\" LI A href=#numberOfAnimalsQuantity-1 \"Enter the number of animals\"",
+      "confidence": "verbatim",
+      "note": "The spec title says the page 'names each species'; the rendered link text does not include the species name."
+    },
+    {
+      "id": "trace-animals-fit-p9-058",
+      "statement": "In the error state the field's form group gets govuk-form-group--error, the input gets govuk-input--error, and the inline message carries a visually hidden 'Error:' prefix.",
+      "kind": "constraint",
+      "ref": "trace commodities-fit-consignmen-7f2a3 call@1329",
+      "quote": "DIV.govuk-form-group.govuk-form-group--error ... P.govuk-error-message#numberOfAnimalsQuantity-0-error SPAN.govuk-visually-hidden \"Error:\" \" Enter the number of animals \" INPUT.govuk-input.govuk-input--width-5.govuk-input--error",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-059",
+      "statement": "An input in error is described by its error message; a packages input in error is described by its hint and then its error.",
+      "kind": "constraint",
+      "ref": "trace commodities-fit-consignmen-5467c call@997 INPUT#numberOfPackages-0; trace 7f2a3 call@1329",
+      "quote": "\"aria-describedby\":\"numberOfPackages-0-hint numberOfPackages-0-error\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-060",
+      "statement": "In the error state the browser title is prefixed 'Error: '.",
+      "kind": "copy",
+      "ref": "trace commodities-fit-consignmen-7f2a3 call@1329 TITLE",
+      "quote": "Error: Commodity details - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-061",
+      "statement": "Removing a species row (remove-species) posts only the action from the table form, redirects back to Commodity details, and the remaining species keep their saved counts.",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-consignmen-01f7a network and call@1107; test expects @68-@69",
+      "quote": "POST /live-animals/notifications/GBN-AG-26-KSNG0K/consignment-details -> 302 /live-animals/notifications/GBN-AG-26-KSNG0K/consignment-details BODY concurrencyToken=0&action=remove-species:1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-062",
+      "statement": "After removing Cat, the table lists only Cow and the page shows only Cow's inputs, still holding 25 and 5.",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-consignmen-01f7a call@1107",
+      "quote": "VALUES numberOfAnimalsQuantity-0=25,numberOfPackages-0=5 | ROWS  Commodity code Common name Actions  /  0102 Cow Remove Cow",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-063",
+      "statement": "Removing a commodity group (remove:0, Cow) redirects back to Commodity details; the remaining Cat line moves to index 0 and keeps its saved counts (2 and 1).",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-consignmen-fc0ef network and call@1273; test expects @68-@70",
+      "quote": "VALUES numberOfAnimalsQuantity-0=2,numberOfPackages-0=1 | ROWS  Commodity code Common name Actions  /  01061900 Cat Remove Cat",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-064",
+      "statement": "Removal happens straight away on a single click, with no confirmation page.",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-consignmen-fc0ef network: POST action=remove:0 -> 302 consignment-details -> 200",
+      "quote": "POST /live-animals/notifications/GBN-AG-26-9D2AWT/consignment-details -> 302 /live-animals/notifications/GBN-AG-26-9D2AWT/consignment-details BODY concurrencyToken=0&action=remove:0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-065",
+      "statement": "Removing the last remaining line redirects to the commodity question 'What are you importing?', which shows the 'Search for a commodity' field.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-consignmen-68865 network; test expects @63-@64",
+      "quote": "POST /live-animals/notifications/GBN-AG-26-6JFB9G/consignment-details -> 302 /live-animals/notifications/GBN-AG-26-6JFB9G/commodities BODY concurrencyToken=0&action=remove-species:0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-066",
+      "statement": "After Cow is removed, Cat's species-level remove is renumbered to remove-species:0.",
+      "kind": "data",
+      "ref": "trace commodities-fit-consignmen-68865 network second removal POST",
+      "quote": "BODY concurrencyToken=0&action=remove-species:0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-067",
+      "statement": "Opening /consignment-details with no commodities selected redirects to the commodity question page.",
+      "kind": "rule",
+      "ref": "trace commodities-fit-consignmen-68865 network; test expect@66",
+      "quote": "GET /live-animals/notifications/GBN-AG-26-6JFB9G/consignment-details -> 302 /live-animals/notifications/GBN-AG-26-6JFB9G/commodities",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-068",
+      "statement": "Removing a line before any counts were saved leaves the remaining species' inputs empty; the remove form does not carry unsaved typed counts.",
+      "kind": "behaviour",
+      "ref": "trace commodities-fit-consignmen-68865 call@557",
+      "quote": "VALUES numberOfAnimalsQuantity-0=,numberOfPackages-0= | ROWS  Commodity code Common name Actions  /  01061900 Cat Remove Cat",
+      "confidence": "inferred",
+      "note": "No counts were typed in this trace before removing, so whether typed-but-unsaved counts survive a remove was not directly tested; inferred from the separate forms (remove POST body carries only concurrencyToken and action)."
+    },
+    {
+      "id": "trace-animals-fit-p9-069",
+      "statement": "Every submit carries concurrencyToken=0, including posts made after an earlier save on the same notification.",
+      "kind": "integration",
+      "ref": "trace commodities-fit-consignmen-01f7a network: save then remove POSTs",
+      "quote": "BODY concurrencyToken=0&action=remove-species:1",
+      "confidence": "verbatim",
+      "note": "What the token guards, and what a stale token does, was not exercised: gap."
+    },
+    {
+      "id": "trace-animals-fit-p9-070",
+      "statement": "No trace shows what happens when two sessions edit the same consignment details (a concurrency conflict).",
+      "kind": "behaviour",
+      "ref": "consignment-details traces, all 18",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p9-071",
+      "statement": "The quantities form posts per-line fields numberOfAnimalsQuantity-<n> and numberOfPackages-<n> to the page's own URL; the server answers with no outbound data call visible in the browser network log.",
+      "kind": "integration",
+      "ref": "trace commodities-fit-consignmen-b423b network",
+      "quote": "POST /live-animals/notifications/GBN-AG-26-C8WD8G/consignment-details -> 302 /live-animals/notifications/GBN-AG-26-C8WD8G BODY concurrencyToken=0&numberOfAnimalsQuantity-0=25&numberOfPackages-0=5&numberOfAnimalsQuantity-1=2&numberOfPackages-1=1",
+      "confidence": "verbatim",
+      "note": "Server-side persistence (backend notification API) is not visible in a browser trace: gap for the backend call shape."
+    },
+    {
+      "id": "trace-animals-fit-p9-072",
+      "statement": "The commodity selection hands species to this page as '<common name>|<id>' pairs: Cow|1148346, Cat|923501, Dog|923502.",
+      "kind": "data",
+      "ref": "trace commodities-fit-consignmen-499d8 network POST /commodities",
+      "quote": "selection=Cow|1148346&selection=Cat|923501&commoditySearch=Canis lupus familiaris&species=Dog|923502",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-073",
+      "statement": "The Commodity details page has no serious or critical axe accessibility violations.",
+      "kind": "non-functional",
+      "ref": "trace commodities-fit-consignmen-55d05 test step expect@72",
+      "quote": "Commodity details has serious/critical accessibility violations.\nFull axe violations:\n[]",
+      "confidence": "verbatim",
+      "note": "The step passed with an empty violations list; the message is the assertion's label."
+    },
+    {
+      "id": "trace-animals-fit-p9-074",
+      "statement": "No trace ran axe on the error state of Commodity details.",
+      "kind": "non-functional",
+      "ref": "trace commodities-fit-consignmen-55d05",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p9-075",
+      "statement": "Apart from app-journey-strip and app-link-button, every class in main is govuk-* : Table, Input (width-5), Label (--s), Hint, Error summary, Error message, Button and Button group, Section break, Tag, Back link.",
+      "kind": "constraint",
+      "ref": "trace commodities-fit-consignmen-1e363 call@1039 class list",
+      "quote": "CLASSES: app-journey-strip app-link-button govuk-!-font-weight-bold govuk-!-margin-bottom-4 govuk-!-text-align-right govuk-body govuk-button govuk-button--secondary govuk-button-group govuk-caption-l govuk-form-group govuk-grid-column-two-thirds govuk-grid-row govuk-heading-l govuk-heading-m govuk-hint govuk-input govuk-input--width-5 govuk-label govuk-label--s govuk-link govuk-main-wrapper govuk-section-break govuk-section-break--l govuk-section-break--visible govuk-table govuk-table__body govuk-table__caption govuk-table__caption--m govuk-table__cell govuk-table__head govuk-table__header govuk-table__row govuk-tag govuk-tag--blue govuk-visually-hidden",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-076",
+      "statement": "The page sits in a two-thirds grid column.",
+      "kind": "constraint",
+      "ref": "trace commodities-fit-consignmen-1e363 call@1039 DIV.govuk-grid-column-two-thirds",
+      "quote": "DIV.govuk-grid-row DIV.govuk-grid-column-two-thirds",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-077",
+      "statement": "Both forms set novalidate, so validation is server-side only.",
+      "kind": "constraint",
+      "ref": "trace commodities-fit-consignmen-1e363 call@1039 FORM attributes",
+      "quote": "FORM {\"method\":\"post\",\"novalidate\":\"\"}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p9-078",
+      "statement": "The page shows no per-commodity or page total of animals or packages; totals appear only on the overview.",
+      "kind": "data",
+      "ref": "trace commodities-fit-consignmen-1e363 call@1039 main tree",
+      "quote": "H2.govuk-heading-l \"Cow (0102)\" H3.govuk-heading-m \"Bos taurus\" DIV.govuk-form-group LABEL ... Number of animals",
+      "confidence": "inferred",
+      "note": "Inferred from the full main tree, which holds no total element; the overview shows app-commodity-total blocks."
+    },
+    {
+      "id": "trace-animals-fit-p9-079",
+      "statement": "Only live-animal species with one commodity code per group were walked (Cow 0102, Cat and Dog 01061900); a commodity with several species under a non-01061900 code, or other unit types, never appears.",
+      "kind": "data",
+      "ref": "consignment-details traces, all 18",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

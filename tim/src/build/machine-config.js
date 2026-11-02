@@ -1,5 +1,4 @@
 import { existsSync, readFileSync } from 'node:fs'
-import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { z } from 'zod'
 import { TimError } from '../errors.js'
@@ -26,15 +25,15 @@ const machineConfigSchema = z
   .strict()
 
 /**
- * Where this machine's gate settings live: TIM_MACHINE_CONFIG, or
- * tim/machine.json under XDG_CONFIG_HOME (default ~/.config).
+ * Where this machine's gate settings live: TIM_MACHINE_CONFIG, or the
+ * workspace's own gitignored config/machine.json.
  *
+ * @param {string} workspaceRoot
  * @param {object} [env]
  * @returns {string}
  */
-export const defaultMachineConfigPath = (env = process.env) =>
-  env.TIM_MACHINE_CONFIG ||
-  join(env.XDG_CONFIG_HOME || join(homedir(), '.config'), 'tim', 'machine.json')
+export const defaultMachineConfigPath = (workspaceRoot, env = process.env) =>
+  env.TIM_MACHINE_CONFIG || join(workspaceRoot, 'config', 'machine.json')
 
 const parseJson = (path) => {
   try {

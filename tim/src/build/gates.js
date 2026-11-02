@@ -2,6 +2,7 @@ import { isAbsolute, join, normalize, sep } from 'node:path'
 import { z } from 'zod'
 import { readJsonFile } from '../backlog/io.js'
 import { TimError } from '../errors.js'
+import { loadPrScope, prScopeArgs } from './pr-scope.js'
 
 export const GATES_PATH = join(
   '.claude',
@@ -73,6 +74,7 @@ const rungSchema = z
       )
       .optional(),
     scope: z.array(z.string().min(1)).optional(),
+    scopeFrom: z.literal('pr-scope').optional(),
     ports: z.array(z.number().int().min(1).max(MAX_PORT)).optional(),
     forRepos: z.array(z.string().min(1)).min(1).optional(),
     exclusive: z.boolean().optional()
@@ -87,7 +89,8 @@ const repoGatesSchema = z
   .strict()
 
 const rungProblems = (rung, remoteScripts) => {
-  const { name, phase, run, ports, forRepos, exclusive } = rung
+  const { name, phase, run, scope, scopeFrom, ports, forRepos, exclusive } =
+    rung
   const isMaven = run === MVN_VERIFY
   const isDuplication = run === TIM_DUPLICATION
   return [
@@ -107,6 +110,8 @@ const rungProblems = (rung, remoteScripts) => {
       ? 'An e2e rung names the repos it covers in forRepos.'
       : null,
     phase !== 'e2e' && forRepos ? 'Only an e2e rung takes forRepos.' : null,
+    phase !== 'e2e' && scopeFrom ? 'Only an e2e rung takes scopeFrom.' : null,
+    scope && scopeFrom ? 'A rung names scope or scopeFrom, not both.' : null,
     phase !== 'fit' && ports ? 'Only a fit rung takes ports.' : null,
     phase !== 'e2e' && exclusive
       ? 'Only an e2e rung can be exclusive: an exclusive rung runs against the workspace stack on its own, after every other rung has finished.'
@@ -181,13 +186,19 @@ export const loadGates = (workspaceRoot) => {
 
 const selectedPhases = (phase) => (phase === 'all' ? PHASES : [phase])
 
-const planned = (repo, rung) => ({
+const scopeOf = (rung, repo, folders, workspaceRoot) => {
+  if (!rung.scopeFrom) return rung.scope ?? []
+  const services = folders.filter((folder) => folder !== repo.folder)
+  return prScopeArgs(loadPrScope(workspaceRoot), services)
+}
+
+const planned = (repo, rung, folders, workspaceRoot) => ({
   repo: repo.folder,
   path: rung.cwd ? join(repo.path, rung.cwd) : repo.path,
   name: rung.name,
   phase: rung.phase,
   run: rung.run,
-  scope: rung.scope ?? [],
+  scope: scopeOf(rung, repo, folders, workspaceRoot),
   ports: rung.ports ?? [],
   exclusive: rung.exclusive ?? false,
   refusal: null
@@ -208,7 +219,7 @@ const refused = (repo, name, phase, refusal) => ({
 const coversBuiltRepo = (rung, folders) =>
   rung.phase !== 'e2e' || rung.forRepos.some((repo) => folders.includes(repo))
 
-const repoPlan = (gates, repo, phase, folders) => {
+const repoPlan = (gates, repo, phase, folders, workspaceRoot) => {
   const inPhase = gates.repos[repo.folder].rungs.filter(
     (rung) => rung.phase === phase
   )
@@ -223,7 +234,7 @@ const repoPlan = (gates, repo, phase, folders) => {
       )
     ]
   }
-  return covering.map((rung) => planned(repo, rung))
+  return covering.map((rung) => planned(repo, rung, folders, workspaceRoot))
 }
 
 const firstSelectedPhase = (phase) => selectedPhases(phase)[0]
@@ -238,9 +249,10 @@ const firstSelectedPhase = (phase) => selectedPhases(phase)[0]
  * @param {object} args.gates - A parsed gates.json
  * @param {{folder: string, path: string}[]} args.repos - The backlog's repos, in order
  * @param {'unit'|'fit'|'e2e'|'all'} [args.phase]
+ * @param {string} [args.workspaceRoot] - Needed only for a rung with scopeFrom
  * @returns {object[]}
  */
-export const planRungs = ({ gates, repos, phase = 'all' }) => {
+export const planRungs = ({ gates, repos, phase = 'all', workspaceRoot }) => {
   const folders = repos.map(({ folder }) => folder)
   const missing = repos
     .filter(({ folder }) => !gates.repos[folder])
@@ -254,7 +266,9 @@ export const planRungs = ({ gates, repos, phase = 'all' }) => {
     )
   const known = repos.filter(({ folder }) => gates.repos[folder])
   const rungs = selectedPhases(phase).flatMap((selected) =>
-    known.flatMap((repo) => repoPlan(gates, repo, selected, folders))
+    known.flatMap((repo) =>
+      repoPlan(gates, repo, selected, folders, workspaceRoot)
+    )
   )
   const plan = [...missing, ...rungs]
   if (plan.length > 0) return plan

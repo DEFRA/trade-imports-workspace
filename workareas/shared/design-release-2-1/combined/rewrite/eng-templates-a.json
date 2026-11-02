@@ -1,0 +1,397 @@
+{
+  "chunk": "eng-templates-a",
+  "items": [
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-templates-F1",
+      "field": "what",
+      "before": "Three tests snapshot Andrew's state, act, then expect it unchanged. In create-template.spec.ts: line 83 checks the Manage templates results line still reads the same, and lines 84 and 190 check the draft references on page 1 of the dashboard still match. change-template.spec.ts line 114 makes the same draft-list check. shared-config sets fullyParallel: true, and auth-state signs every worker in as defaultUser (users.andrew). So every other worker's saved template and every live-animals journey spec's new draft lands in the same lists while these tests run.",
+      "after": "Three tests snapshot Andrew's state, act, then expect it unchanged:\n\n- create-template.spec.ts line 83 checks the Manage templates results line still reads the same.\n- create-template.spec.ts lines 84 and 190 check the draft references on page 1 of the dashboard still match.\n- change-template.spec.ts line 114 makes the same draft-list check.\n\nshared-config sets fullyParallel: true.\n\nauth-state signs every worker in as defaultUser (users.andrew).\n\nSo while these tests run, every other worker's saved template lands in the same lists. So does every live-animals journey spec's new draft."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-templates-F1",
+      "field": "scenario",
+      "before": "Worker 3 is in create-template's 'leaving before the name page is posted adds nothing' test, between reading the 'before' count and the Cancel. At that moment worker 7 runs save-template and worker 9 runs any journey spec that creates a GBN-AG draft. The results line moves from 'Show 1-41 of 41' to 'Show 1-42 of 42', and the newest draft heads the dashboard's page 1. Both assertions fail even though the feature works. The one retry (retries: 1) often hits the same race, so the run goes red or gets labelled flaky.",
+      "after": "Worker 3 is in create-template's 'leaving before the name page is posted adds nothing' test. It is between reading the 'before' count and the Cancel.\n\nAt that moment:\n\n- worker 7 runs save-template\n- worker 9 runs any journey spec that creates a GBN-AG draft\n\nThe results line moves from 'Show 1-41 of 41' to 'Show 1-42 of 42'. The newest draft heads the dashboard's page 1.\n\nBoth assertions fail even though the feature works.\n\nThe one retry (retries: 1) often hits the same race. So the run goes red or gets labelled flaky."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-templates-F1",
+      "field": "fix",
+      "before": "Run these tests as an identity no other spec writes to, starting cold: browser.newContext({ storageState: COLD_START }) and manageTemplates.open(true, { userId: <dedicated user> }), as manage-templates.spec does for Sarah. Alternatively assert on things this test owns: no request to /live-animals/start or /notifications (already captured at line 191), and no draft whose origin/internal reference carries this test's unique marker. Do not loosen the equality.",
+      "after": "Run these tests as an identity no other spec writes to, starting cold. Use:\n\n- browser.newContext({ storageState: COLD_START })\n- manageTemplates.open(true, { userId: <dedicated user> })\n\nThis is what manage-templates.spec does for Sarah.\n\nAlternatively, assert on things this test owns:\n\n- no request to /live-animals/start or /notifications (already captured at line 191)\n- no draft whose origin/internal reference carries this test's unique marker\n\nDo not loosen the equality."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-templates-F1",
+      "field": "verifierNote",
+      "before": "Confirmed on the branch. shared-config.ts sets fullyParallel: true and retries: 1. Sign-in with no options falls back to defaultUser = users.andrew (config/users.ts:23, used by base-page and sign-in-page). create-template.spec.ts:72-84 reads Andrew's results line and page-1 draft references, runs a multi-page cross-service flow, then asserts exact equality. Lines 177-190 do the same. Any other worker that saves a template as Andrew (save-template, template-review, view-template, change-template, use-template) or starts a live-animals draft as Andrew in that window changes the results line or the page-1 draft list. dashboard.draftReferences (added by the merge) reads page 1 only. All of this code is new in the merge, and nothing isolates the identity. The same file's requestsToAnimals capture at 179-194 already proves the 'nothing created' intent without shared state.",
+      "after": "Confirmed on the branch.\n\n- shared-config.ts sets fullyParallel: true and retries: 1.\n- Sign-in with no options falls back to defaultUser = users.andrew (config/users.ts:23, used by base-page and sign-in-page).\n- create-template.spec.ts:72-84 reads Andrew's results line and page-1 draft references. It runs a multi-page cross-service flow, then asserts exact equality.\n- Lines 177-190 do the same.\n\nIn that window, another worker changes the results line or the page-1 draft list if it:\n\n- saves a template as Andrew (save-template, template-review, view-template, change-template, use-template)\n- or starts a live-animals draft as Andrew\n\ndashboard.draftReferences (added by the merge) reads page 1 only.\n\nAll of this code is new in the merge. Nothing isolates the identity.\n\nThe same file's requestsToAnimals capture at 179-194 already proves the 'nothing created' intent without shared state."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "workspace-tooling-laptop2-GATE-1",
+      "field": "what",
+      "before": "The gate clears gate-result-<phase>.json once, when it starts, and writes it when it ends. gate-wait returns whatever file appears at that path. Nothing ties a result to the run that is being waited on: no pid, no start-time token, no lock on the logs folder. Stages that repeat reuse one folder: the ladder always writes to logs/<id>-ladder, fix rounds to logs/<id>-fix, and recoverDownStack reruns a stage into the same folder. GATE_WAIT_RULE tells the agent to report \"the gate did not finish\" as red after 20 waits but never to stop the gate, so that gate keeps running.",
+      "after": "The gate clears gate-result-<phase>.json once, when it starts. It writes the file when it ends.\n\ngate-wait returns whatever file appears at that path.\n\nNothing ties a result to the run that is being waited on:\n\n- no pid\n- no start-time token\n- no lock on the logs folder\n\nStages that repeat reuse one folder:\n\n- the ladder always writes to logs/<id>-ladder\n- fix rounds write to logs/<id>-fix\n- recoverDownStack reruns a stage into the same folder\n\nGATE_WAIT_RULE tells the agent to report \"the gate did not finish\" as red after 20 waits. It never tells the agent to stop the gate, so that gate keeps running."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "workspace-tooling-laptop2-GATE-1",
+      "field": "scenario",
+      "before": "With parallelRepos 1 over five repos, the ladder gate runs past the 600s call plus 20 × 540s waits, about 3h10m. The agent reports it red as \"did not finish\" and the loop moves to fix. The fix stage's unit and FIT gate runs beside the leftover ladder gate. That is two gates at once, which the parallelRepos cap exists to stop. Its FIT rungs go red with \"Port N is in use\" from the leftover gate's FIT server. The next ladder clears gate-result-all.json and starts. The leftover gate then finishes and renames its envelope into that same path, and the new ladder's gate-wait returns it straight away. That result came from the code as it was before the fix. If it is green, the loop treats code it never tested as green. Both gates also share the run's holder, so both refresh or rebuild the same stack services at once.",
+      "after": "With parallelRepos 1 over five repos, the ladder gate runs past the 600s call plus 20 × 540s waits. That is about 3h10m.\n\nWhat happens next:\n\n- The agent reports it red as \"did not finish\" and the loop moves to fix.\n- The fix stage's unit and FIT gate runs beside the leftover ladder gate. That is two gates at once, which the parallelRepos cap exists to stop.\n- Its FIT rungs go red with \"Port N is in use\" from the leftover gate's FIT server.\n- The next ladder clears gate-result-all.json and starts.\n- The leftover gate then finishes and renames its envelope into that same path.\n- The new ladder's gate-wait returns it straight away.\n\nThat result came from the code as it was before the fix. If it is green, the loop treats code it never tested as green.\n\nBoth gates also share the run's holder. So both refresh or rebuild the same stack services at once."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "workspace-tooling-laptop2-GATE-1",
+      "field": "fix",
+      "before": "Give each gate run an identity. When it clears the result, write gate-running-<phase>.json with its pid and a nonce, put the nonce in the result envelope, and have gate-wait return only a result whose nonce matches the marker that was there when the wait began. Also make tim build gate refuse to start while another gate's marker in the same folder names a live pid, or take a machine-wide gate lock, because the parallelRepos cap only applies within one process. Change GATE_WAIT_RULE so a gate that runs out of waits is stopped (by pid, from the marker), not left running.",
+      "after": "Give each gate run an identity:\n\n- When it clears the result, write gate-running-<phase>.json with its pid and a nonce.\n- Put the nonce in the result envelope.\n- Have gate-wait return only a result whose nonce matches the marker that was there when the wait began.\n\nAlso do one of these:\n\n- make tim build gate refuse to start while another gate's marker in the same folder names a live pid\n- or take a machine-wide gate lock\n\nThis is needed because the parallelRepos cap only applies within one process.\n\nChange GATE_WAIT_RULE so a gate that runs out of waits is stopped (by pid, from the marker), not left running."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "workspace-tooling-laptop2-GATE-1",
+      "field": "verifierNote",
+      "before": "Holds on the branch. gate-result.js waitForGateResult (lines 55-67) returns any envelope at the path. index.js:328 clears it once at start and :338 writes it at the end, with no run token, pid or lock. increment-build-loop.js:947-960 gives a fixed path per logs folder (gateResultFile) and has GATE_WAIT_RULE report 'the gate did not finish' after MAX_GATE_WAITS=20 without stopping the gate. gates.json now sets parallelRepos 1, and the loop's own comment at :950 says a one-repo-at-a-time gate over five repos runs well past 1.5h. That makes a gate outrunning about 3h10m plausible. A later gate in the same folder (the ladder reruns into logs/<id>-ladder) can then get the leftover gate's envelope. Severity is below high: it needs a gate that runs past the full wait budget, and it needs the backgrounded Bash process to outlive the stage agent that started it, which I could not show for certain.",
+      "after": "Holds on the branch.\n\n- gate-result.js waitForGateResult (lines 55-67) returns any envelope at the path.\n- index.js:328 clears it once at start and :338 writes it at the end. There is no run token, pid or lock.\n- increment-build-loop.js:947-960 gives a fixed path per logs folder (gateResultFile).\n- increment-build-loop.js also has GATE_WAIT_RULE report 'the gate did not finish' after MAX_GATE_WAITS=20 without stopping the gate.\n- gates.json now sets parallelRepos 1.\n- The loop's own comment at :950 says a one-repo-at-a-time gate over five repos runs well past 1.5h.\n\nThat makes a gate outrunning about 3h10m plausible.\n\nA later gate in the same folder can then get the leftover gate's envelope. (The ladder reruns into logs/<id>-ladder.)\n\nSeverity is below high. It needs:\n\n- a gate that runs past the full wait budget\n- the backgrounded Bash process to outlive the stage agent that started it, which I could not show for certain"
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "merge-resolution-TPL-MERGE-1",
+      "field": "what",
+      "before": "`asTemplateReview` replaces every section heading with `copy.template.sections[section.anchor]`, a separate list of five headings in check-answers copy.en.js:167-173 and copy.cy.js:146-152. It does not renumber the review's own headings. The combined branch renamed the review's section to '5. Consignment addresses' (inc-101), but the template copy still says '4. Consignment parties', so the rename never reached template mode. inc-156's AC says the template review shows '4. Consignment addresses' and '5. Contact address', and its notes say the heading follows inc-101 once it lands. inc-158 says the saved-template page shows 'the review's numbered sections without the documents section, renumbered'. The merge log raised this as Question 1 and kept the templates text, but the backlog already answers it. The unit test ('Should show the five sections…'), the fit TEMPLATE_SECTIONS and the e2e SECTION_CAPTIONS in template-review.spec.ts and view-template.spec.ts all pin the stale wording, so they hide the gap. This is also the drift that ruling claim 5 warns against: the next review heading change will miss template mode again.",
+      "after": "`asTemplateReview` replaces every section heading with `copy.template.sections[section.anchor]`. That is a separate list of five headings in check-answers copy.en.js:167-173 and copy.cy.js:146-152.\n\nIt does not renumber the review's own headings.\n\nThe combined branch renamed the review's section to '5. Consignment addresses' (inc-101). But the template copy still says '4. Consignment parties'. So the rename never reached template mode.\n\nWhat the backlog says:\n\n- inc-156's AC says the template review shows '4. Consignment addresses' and '5. Contact address'.\n- inc-156's notes say the heading follows inc-101 once it lands.\n- inc-158 says the saved-template page shows 'the review's numbered sections without the documents section, renumbered'.\n\nThe merge log raised this as Question 1 and kept the templates text. But the backlog already answers it.\n\nThese tests all pin the stale wording, so they hide the gap:\n\n- the unit test ('Should show the five sections…')\n- the fit TEMPLATE_SECTIONS\n- the e2e SECTION_CAPTIONS in template-review.spec.ts and view-template.spec.ts\n\nThis is also the drift that ruling claim 5 warns against. The next review heading change will miss template mode again."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "merge-resolution-TPL-MERGE-1",
+      "field": "scenario",
+      "before": "Create a template and press Review template, or open a saved template's page. Section 4 reads '4. Consignment parties'. On the review of the notification started from it, the same section reads '5. Consignment addresses'. The AC and the design say '4. Consignment addresses'. The Welsh pages show the same drift ('4. Partïon y llwyth').",
+      "after": "Create a template and press Review template. Or open a saved template's page.\n\n- Section 4 reads '4. Consignment parties'.\n- On the review of the notification started from it, the same section reads '5. Consignment addresses'.\n- The AC and the design say '4. Consignment addresses'.\n\nThe Welsh pages show the same drift ('4. Partïon y llwyth')."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "merge-resolution-TPL-MERGE-1",
+      "field": "fix",
+      "before": "Work the template heading out from the review's own `section.heading`: drop the leading 'N. ' and renumber by position after leaving out the documents section. Then delete `copy.template.sections` in English and Welsh. Update the unit test, the check-answers and template-page fit TEMPLATE_SECTIONS, and the e2e template-review.spec.ts and view-template.spec.ts SECTION_CAPTIONS to '4. Consignment addresses'. Leave the template task list, inc-155 and template-task-list.spec.ts on '4. Consignment parties': that list follows the hub's group captions, which still say 'Consignment parties'.",
+      "after": "Work the template heading out from the review's own `section.heading`:\n\n- drop the leading 'N. '\n- renumber by position after leaving out the documents section\n\nThen delete `copy.template.sections` in English and Welsh.\n\nUpdate these to '4. Consignment addresses':\n\n- the unit test\n- the check-answers and template-page fit TEMPLATE_SECTIONS\n- the e2e template-review.spec.ts and view-template.spec.ts SECTION_CAPTIONS\n\nLeave the template task list, inc-155 and template-task-list.spec.ts on '4. Consignment parties'. That list follows the hub's group captions, which still say 'Consignment parties'."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "merge-resolution-TPL-MERGE-1",
+      "field": "verifierNote",
+      "before": "I confirmed this one. On the branch, template-review.js:22 replaces each section heading with copy.template.sections[anchor], and copy/copy.en.js:171 still says '4. Consignment parties'. The review's own heading in copy.en.js:67 is now '5. Consignment addresses' (inc-101 has landed on combined), so the review and the template review now disagree. The inc-156 AC (backlog.json:900) explicitly asks for '4. Consignment addresses'. Its note (line 963) says the heading follows inc-101 once it lands, and inc-158 (line 1085) says the review's own sections, renumbered. The template review heading checks in check-answers.test.js:2750, check-answers.fit.spec.js:1522 and template-page.fit.spec.js:31 all pin the stale wording, so they hide the gap. The template task list (inc-155, backlog.json:778/786) rightly stays on 'Consignment parties' because it follows the hub's captions. The merge introduced this: the merge kept the frozen copy instead of deriving the heading.",
+      "after": "I confirmed this one.\n\nOn the branch:\n\n- template-review.js:22 replaces each section heading with copy.template.sections[anchor].\n- copy/copy.en.js:171 still says '4. Consignment parties'.\n- The review's own heading in copy.en.js:67 is now '5. Consignment addresses' (inc-101 has landed on combined).\n\nSo the review and the template review now disagree.\n\nIn the backlog:\n\n- The inc-156 AC (backlog.json:900) explicitly asks for '4. Consignment addresses'.\n- Its note (line 963) says the heading follows inc-101 once it lands.\n- inc-158 (line 1085) says the review's own sections, renumbered.\n\nThese template review heading checks all pin the stale wording, so they hide the gap:\n\n- check-answers.test.js:2750\n- check-answers.fit.spec.js:1522\n- template-page.fit.spec.js:31\n\nThe template task list (inc-155, backlog.json:778/786) rightly stays on 'Consignment parties'. It follows the hub's captions.\n\nThe merge introduced this. The merge kept the frozen copy instead of deriving the heading."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "workspace-tooling-laptop2-GATE-3",
+      "field": "what",
+      "before": "None of the five commits changes takeLease or giveBack. acquireDecision still returns 'start' for the same holder when the stack is down, and runE2e still calls giveBack whenever lease.started. If a gate run under the run's holder finds the run's stack down, it starts the stack, then stops it and clears the run's lease. 0ff6e2f4 adds `if (context.stackAfterLocal) await context.localDone` before takeLease, and gates.json now sets stackAfterLocal true. The lease is therefore checked only after layer one, which with parallelRepos 1 can take well over an hour.",
+      "after": "None of the five commits changes takeLease or giveBack.\n\n- acquireDecision still returns 'start' for the same holder when the stack is down.\n- runE2e still calls giveBack whenever lease.started.\n\nA gate run under the run's holder may find the run's stack down. If so, it starts the stack, then stops it and clears the run's lease.\n\n0ff6e2f4 adds `if (context.stackAfterLocal) await context.localDone` before takeLease. gates.json now sets stackAfterLocal true.\n\nSo the lease is checked only after layer one. With parallelRepos 1, layer one can take well over an hour."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "workspace-tooling-laptop2-GATE-3",
+      "field": "scenario",
+      "before": "The run holds the lease and the stack is up. During the ladder's 90-minute one-repo-at-a-time layer one, Docker Desktop restarts and the stack goes down. Before these commits the gate checked the lease when it started. Now it checks only after layer one. It finds its own holder with the stack down, starts the stack (started=true), runs E2E, then releases: it stops the stack and clears the run's lease. The next stage's lease status shows no lease and returns stackHeld with holder null, which stops the loop, or the run's own release at the end finds nothing to release.",
+      "after": "The run holds the lease and the stack is up.\n\nDuring the ladder's 90-minute one-repo-at-a-time layer one, Docker Desktop restarts. The stack goes down.\n\nBefore these commits, the gate checked the lease when it started. Now it checks only after layer one. Then it:\n\n- finds its own holder with the stack down\n- starts the stack (started=true)\n- runs E2E\n- releases: it stops the stack and clears the run's lease\n\nThe next stage's lease status shows no lease. Then either:\n\n- it returns stackHeld with holder null, which stops the loop\n- or the run's own release at the end finds nothing to release"
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "workspace-tooling-laptop2-GATE-3",
+      "field": "fix",
+      "before": "In runE2e, when the holder is a build-run holder that already had a lease (the lease existed for this holder before acquire), never give it back: leave the stack up and the lease in place, and report startedForE2e so the loop knows. Or refuse with a 'stackDown' result so recoverDownStack takes the lease again properly. Add a gate.test case: a lease held by the same holder, the stack down, phase all. Assert that the lease file still names the holder and that stop-stack.sh was not called.",
+      "after": "In runE2e, the holder may be a build-run holder that already had a lease. (The lease existed for this holder before acquire.) In that case, never give it back:\n\n- leave the stack up and the lease in place\n- report startedForE2e so the loop knows\n\nOr refuse with a 'stackDown' result, so recoverDownStack takes the lease again properly.\n\nAdd a gate.test case:\n\n- a lease held by the same holder\n- the stack down\n- phase all\n\nAssert that the lease file still names the holder. Assert that stop-stack.sh was not called."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "workspace-tooling-laptop2-GATE-3",
+      "field": "verifierNote",
+      "before": "stack-lease.js acquireDecision line 146: for the same holder, `if (!up) return 'start'`. acquireStack then calls startUnderLease (started:true), and gate.js:453 calls giveBack whenever lease.started, which stops the stack and clears the run's own lease. The bug is older than these commits and none of them changes it. gate.js:438 (`if (context.stackAfterLocal) await context.localDone`), together with gates.json stackAfterLocal true and parallelRepos 1, moves the lease check to after a long one-repo-at-a-time layer one, so the stack has more time to go down unseen. The likely outcome is that the loop stops on stackHeld with holder null. Code under test is not mistaken for green.",
+      "after": "- stack-lease.js acquireDecision line 146: for the same holder, `if (!up) return 'start'`.\n- acquireStack then calls startUnderLease (started:true).\n- gate.js:453 calls giveBack whenever lease.started. That stops the stack and clears the run's own lease.\n\nThe bug is older than these commits. None of them changes it.\n\nThese three together move the lease check to after a long one-repo-at-a-time layer one:\n\n- gate.js:438 (`if (context.stackAfterLocal) await context.localDone`)\n- gates.json stackAfterLocal true\n- parallelRepos 1\n\nSo the stack has more time to go down unseen.\n\nThe likely outcome is that the loop stops on stackHeld with holder null.\n\nCode under test is not mistaken for green."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-templates-F6",
+      "field": "what",
+      "before": "The INS templates-navigation, INS use-template and plants templates-navigation specs are tagged @compose. `npm test` (CDP) excludes them, following the precedent of address-book-navigation and cross-service-sessions. Every animals templates spec, though, crosses animals to INS (the type question) and back, and notification-type.spec crosses INS to animals and plants. None of those is tagged @compose, so they all run on CDP. Either the cross-service hop works on CDP, and three specs lose CDP coverage for no reason, or it does not, and about 60 templates and type-question tests will fail on CDP. Sam's rule is that a test behaves the same on both environments.",
+      "after": "These specs are tagged @compose:\n\n- INS templates-navigation\n- INS use-template\n- plants templates-navigation\n\n`npm test` (CDP) excludes them. This follows the precedent of address-book-navigation and cross-service-sessions.\n\nBut these specs cross services too:\n\n- Every animals templates spec crosses animals to INS (the type question) and back.\n- notification-type.spec crosses INS to animals and plants.\n\nNone of those is tagged @compose, so they all run on CDP.\n\nSo one of these is true:\n\n- The cross-service hop works on CDP, and three specs lose CDP coverage for no reason.\n- It does not work, and about 60 templates and type-question tests will fail on CDP.\n\nSam's rule is that a test behaves the same on both environments."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-templates-F6",
+      "field": "scenario",
+      "before": "A CDP run (`npm test`) executes create-template's beforeEach: Create new template leaves the animals origin for INS's /notification-type/template. If the cross-service session hop that keeps the navigation specs compose-only fails on CDP, every templates spec fails in beforeEach. If it works, the Templates and Use template links that start the templates flow from INS and plants are never checked on CDP.",
+      "after": "A CDP run (`npm test`) executes create-template's beforeEach. Create new template leaves the animals origin for INS's /notification-type/template.\n\nThe cross-service session hop is what keeps the navigation specs compose-only.\n\n- If that hop fails on CDP, every templates spec fails in beforeEach.\n- If it works, the Templates and Use template links that start the templates flow from INS and plants are never checked on CDP."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-templates-F6",
+      "field": "fix",
+      "before": "Decide one way for the cross-service hop. Either remove @compose from the three navigation specs, since the templates specs show the hop is expected to work on CDP, or confirm on CDP that the hop fails and tag the templates and type-question specs to match. Record the reason either way.",
+      "after": "Decide one way for the cross-service hop. Either:\n\n- remove @compose from the three navigation specs, since the templates specs show the hop is expected to work on CDP\n- or confirm on CDP that the hop fails, and tag the templates and type-question specs to match\n\nRecord the reason either way."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-templates-F6",
+      "field": "verifierNote",
+      "before": "The tag split is inconsistent. The INS templates-navigation, INS use-template and plants templates-navigation specs (added in this merge, commits 17038b3 and b9adef9) are tagged @compose, so `npm test` (grep-invert '@compose') skips them on CDP. Meanwhile create-template, save-template, template-review and the other animals templates specs, the animals templates-navigation spec and notification-type.spec are tagged only @integration and make the same animals-to-INS or INS-to-animals/plants hop, using the same waitForURL-on-origin-change plus completeSignInIfRequested pattern. Neither the merge log nor the ruling gives a reason for the difference, and the existing precedent (address-book-navigation, cross-service-sessions) is also unexplained. One of the two groups is tagged wrongly for CDP.",
+      "after": "The tag split is inconsistent.\n\nThese specs are tagged @compose, so `npm test` (grep-invert '@compose') skips them on CDP:\n\n- INS templates-navigation\n- INS use-template\n- plants templates-navigation\n\nThey were added in this merge, in commits 17038b3 and b9adef9.\n\nMeanwhile these specs are tagged only @integration:\n\n- create-template, save-template, template-review and the other animals templates specs\n- the animals templates-navigation spec\n- notification-type.spec\n\nThey make the same animals-to-INS or INS-to-animals/plants hop. They use the same waitForURL-on-origin-change plus completeSignInIfRequested pattern.\n\nNeither the merge log nor the ruling gives a reason for the difference.\n\nThe existing precedent (address-book-navigation, cross-service-sessions) is also unexplained.\n\nOne of the two groups is tagged wrongly for CDP."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-templates-F5",
+      "field": "what",
+      "before": "Same cause as rank 1. Lines 68, 102 and 103 assert that the template this test just saved is the first card on Manage templates. Andrew's template list is shared by every worker, and Manage templates has no pagination, so it lists everything, newest first. Another worker's save that commits between this test's save and the Manage templates render takes first place. The 'Untitled template' case (line 103) is worse: several workers save untitled templates, so this test cannot tell which one is its own.",
+      "after": "Same cause as rank 1.\n\nLines 68, 102 and 103 assert that the template this test just saved is the first card on Manage templates.\n\n- Andrew's template list is shared by every worker.\n- Manage templates has no pagination, so it lists everything, newest first.\n\nAnother worker's save may commit between this test's save and the Manage templates render. If so, that save takes first place.\n\nThe 'Untitled template' case (line 103) is worse. Several workers save untitled templates, so this test cannot tell which one is its own."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-templates-F5",
+      "field": "scenario",
+      "before": "Workers 2 and 5 press Save template within the same second. Worker 2's redirect renders after worker 5's save, so worker 5's card is first. firstCardViewLink's href holds worker 5's template id, and worker 2's test fails.",
+      "after": "Workers 2 and 5 press Save template within the same second.\n\n- Worker 2's redirect renders after worker 5's save, so worker 5's card is first.\n- firstCardViewLink's href holds worker 5's template id.\n- Worker 2's test fails."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-templates-F5",
+      "field": "fix",
+      "before": "Run the save-template 'from a signed-in session' block as a dedicated cold identity, or assert the order relative to a template this test saved earlier, as the 'of two templates' test does. Also give names a crypto.randomUUID() suffix rather than Date.now() (save-template line 48, view-template line 54, template-review), as change-template and use-template already do. templateCard(name) uses exact matching, so a same-millisecond collision between workers breaks strict mode.",
+      "after": "Do one of these:\n\n- Run the save-template 'from a signed-in session' block as a dedicated cold identity.\n- Or assert the order relative to a template this test saved earlier, as the 'of two templates' test does.\n\nAlso give names a crypto.randomUUID() suffix rather than Date.now() in:\n\n- save-template line 48\n- view-template line 54\n- template-review\n\nchange-template and use-template already do this.\n\ntemplateCard(name) uses exact matching. So a same-millisecond collision between workers breaks strict mode."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-templates-F5",
+      "field": "verifierNote",
+      "before": "save-template.spec.ts:68, 102 and 103 assert that the first card on Manage templates is this test's template, or that the first title is 'Untitled template'. Andrew's template list is shared by every parallel worker signed in as defaultUser, and several specs added in this merge save templates as Andrew. A save that commits between this test's save and the Manage templates render takes first place. For the untitled case, another worker's untitled save makes the test unable to tell which card is its own. The 'of two templates' test (124-137) uses relative order and is safe. The Date.now() name collision point is real but very unlikely. The main race holds.",
+      "after": "save-template.spec.ts:68, 102 and 103 assert either:\n\n- that the first card on Manage templates is this test's template\n- or that the first title is 'Untitled template'\n\nAndrew's template list is shared by every parallel worker signed in as defaultUser. Several specs added in this merge save templates as Andrew.\n\nA save that commits between this test's save and the Manage templates render takes first place.\n\nFor the untitled case, another worker's untitled save makes the test unable to tell which card is its own.\n\nThe 'of two templates' test (124-137) uses relative order and is safe.\n\nThe Date.now() name collision point is real but very unlikely.\n\nThe main race holds."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-templates-F3",
+      "field": "what",
+      "before": "The test looks for the template's name on the dashboard. Dashboard cards show only a GBN-AG reference, commodity, origin, arrival, consignee, consignor and status, and none of these can hold a template name. So even if Save template wrongly created a draft notification, the name would still be absent and the assertion would pass.",
+      "after": "The test looks for the template's name on the dashboard.\n\nDashboard cards show only:\n\n- a GBN-AG reference\n- commodity\n- origin\n- arrival\n- consignee\n- consignor\n- status\n\nNone of these can hold a template name.\n\nSo even if Save template wrongly created a draft notification, the name would still be absent. The assertion would pass."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-templates-F3",
+      "field": "scenario",
+      "before": "A regression makes saving a template also create a live-animals draft. The new draft appears first on Andrew's dashboard with a GBN-AG reference, getByText(name) still finds nothing, and the test stays green.",
+      "after": "A regression makes saving a template also create a live-animals draft.\n\n- The new draft appears first on Andrew's dashboard with a GBN-AG reference.\n- getByText(name) still finds nothing.\n- The test stays green."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-templates-F3",
+      "field": "fix",
+      "before": "Record requests to the animals origin across the save, as create-template's requestsToAnimals does. Then assert none went to /live-animals/start or /live-animals/notifications/*. That holds up under parallel runs, unlike comparing the draft list (see F1). Alternatively, save as a dedicated cold identity and assert its dashboard has no drafts.",
+      "after": "Record requests to the animals origin across the save, as create-template's requestsToAnimals does.\n\nThen assert none went to /live-animals/start or /live-animals/notifications/*.\n\nThat holds up under parallel runs, unlike comparing the draft list (see F1).\n\nAlternatively, save as a dedicated cold identity and assert its dashboard has no drafts."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-templates-F3",
+      "field": "verifierNote",
+      "before": "save-template.spec.ts:139-146 asserts only that main contains no text matching the template name. In this merge the dashboard controller adds only a GET /start route. Dashboard cards render reference, commodity, origin, arrival, parties and status, and nothing carries a template name. So if saving a template wrongly created or listed a draft, the card would have no name in it and the assertion would still pass. The check cannot fail on the regression its title names.",
+      "after": "save-template.spec.ts:139-146 asserts only that main contains no text matching the template name.\n\nIn this merge, the dashboard controller adds only a GET /start route.\n\nDashboard cards render reference, commodity, origin, arrival, parties and status. Nothing carries a template name.\n\nSo if saving a template wrongly created or listed a draft, the card would have no name in it. The assertion would still pass.\n\nThe check cannot fail on the regression its title names."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-templates-F2",
+      "field": "what",
+      "before": "The test picks Yes for the region code but never chooses a country. It then asserts only that an error summary shows and the title starts with 'Error:'. Template mode keeps the page's required-answer checks (c-308), so a missing country alone produces both. Nothing ties the error to the region code.",
+      "after": "The test picks Yes for the region code but never chooses a country.\n\nIt then asserts only that:\n\n- an error summary shows\n- the title starts with 'Error:'\n\nTemplate mode keeps the page's required-answer checks (c-308). So a missing country alone produces both.\n\nNothing ties the error to the region code."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-templates-F2",
+      "field": "scenario",
+      "before": "Someone drops the 'region code required when Yes' check from template mode. Save and continue still fails on the missing country, the error summary still shows, and the test passes. The behaviour its title promises is no longer tested.",
+      "after": "Someone drops the 'region code required when Yes' check from template mode.\n\n- Save and continue still fails on the missing country.\n- The error summary still shows.\n- The test passes.\n\nThe behaviour its title promises is no longer tested."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-templates-F2",
+      "field": "fix",
+      "before": "Call originOfImport.selectCountry('France') before choosing Yes, as the next test does. Then assert the exact region-code entry, using errorSummaryLinks.filter({ hasText: <region code required message> }) or originOfImport.errorLinkNamed(...), as well as the 'Error:' title.",
+      "after": "Call originOfImport.selectCountry('France') before choosing Yes, as the next test does.\n\nThen assert the exact region-code entry, as well as the 'Error:' title. Use either:\n\n- errorSummaryLinks.filter({ hasText: <region code required message> })\n- or originOfImport.errorLinkNamed(...)"
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-templates-F2",
+      "field": "verifierNote",
+      "before": "In origin/validate.js the country is oneOf(countryValues). In run.js a blank choice is an any.only missing answer, which is dropped only when allowMissing is true. The origin controller passes allowMissing only for kit.isHubExit (Save and return), so 'Save and continue' with no country produces a country error by itself. The test at create-template.spec.ts:197-209 never picks a country and asserts only that an error summary shows and the title starts with 'Error:'. It still passes if regionCodeSuffixRule stops requiring the code under Yes. The next test (211-227) shows the right pattern: select France and filter errorSummaryLinks by the exact message.",
+      "after": "- In origin/validate.js the country is oneOf(countryValues).\n- In run.js a blank choice is an any.only missing answer. It is dropped only when allowMissing is true.\n- The origin controller passes allowMissing only for kit.isHubExit (Save and return).\n\nSo 'Save and continue' with no country produces a country error by itself.\n\nThe test at create-template.spec.ts:197-209 never picks a country. It asserts only that an error summary shows and the title starts with 'Error:'.\n\nIt still passes if regionCodeSuffixRule stops requiring the code under Yes.\n\nThe next test (211-227) shows the right pattern: select France and filter errorSummaryLinks by the exact message."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-backend-BE-TPL-2",
+      "field": "what",
+      "before": "The ITs test cross-user access only for GET /templates/{id} and POST /templates/{id}/save. Nothing over HTTP and Mongo shows that PUT /templates/{id}/details and PUT /templates/{id}/fulfilments return 404 for another user and leave the document unchanged. NotificationTemplateServiceTest mocks NotificationTemplateRepository with Mockito: it stubs findByIdAndOwnerId and verifies save(). That tests which repository method is called rather than the behaviour, and it breaks the house rule to mock only at the network boundary. A refactor to findById plus an owner check, or to a MongoTemplate update that drops the owner criterion, would keep the unit tests green.",
+      "after": "The ITs test cross-user access only for:\n\n- GET /templates/{id}\n- POST /templates/{id}/save\n\nNothing over HTTP and Mongo shows that PUT /templates/{id}/details and PUT /templates/{id}/fulfilments:\n\n- return 404 for another user\n- leave the document unchanged\n\nNotificationTemplateServiceTest mocks NotificationTemplateRepository with Mockito. It stubs findByIdAndOwnerId and verifies save().\n\nThat tests which repository method is called rather than the behaviour. It also breaks the house rule to mock only at the network boundary.\n\nEither of these refactors would keep the unit tests green:\n\n- a refactor to findById plus an owner check\n- a refactor to a MongoTemplate update that drops the owner criterion"
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-backend-BE-TPL-2",
+      "field": "scenario",
+      "before": "Someone later swaps load() for repository.findById(id) in replaceFulfilments, for example to share code with a future 'use template' path. User B can then overwrite user A's template answers by guessing or leaking a 24-hex id. The unit test with stubbed findByIdAndOwnerId is rewritten alongside the change, and no IT fails. This is the same class of hole as the programme's open 'notifications listed unscoped per user' security ticket.",
+      "after": "Someone later swaps load() for repository.findById(id) in replaceFulfilments. For example, they do it to share code with a future 'use template' path.\n\nUser B can then overwrite user A's template answers by guessing or leaking a 24-hex id.\n\nThe unit test with stubbed findByIdAndOwnerId is rewritten alongside the change. No IT fails.\n\nThis is the same class of hole as the programme's open 'notifications listed unscoped per user' security ticket."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-backend-BE-TPL-2",
+      "field": "fix",
+      "before": "Add ITs for both PUT routes with OTHER_OWNER: expect 404, then read the row from the repository and assert that setId, name and fulfilments are unchanged. Replace the Mockito-repository service test with the IT, or keep only the parts that need no repository mock (the saved-time rules can be checked through the IT as well).",
+      "after": "Add ITs for both PUT routes with OTHER_OWNER:\n\n- expect 404\n- then read the row from the repository\n- assert that setId, name and fulfilments are unchanged\n\nReplace the Mockito-repository service test with the IT. Or keep only the parts that need no repository mock.\n\nThe saved-time rules can be checked through the IT as well."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-backend-BE-TPL-2",
+      "field": "verifierNote",
+      "before": "Confirmed. NotificationTemplateIT has cross-owner tests only for GET /{id} (get_shouldReturn404_forAnotherOwnersTemplate) and POST /{id}/save (save_shouldReturn404_forAnotherOwnersTemplate). No IT sends OTHER_OWNER to PUT /details or PUT /fulfilments. NotificationTemplateServiceTest uses a Mockito @Mock repository, stubs findByIdAndOwnerId and verifies save(), which breaks the rule to mock only at the network boundary. Today's code is correct, because every path goes through load(). The gap is regression protection for the ownership boundary.",
+      "after": "Confirmed.\n\nNotificationTemplateIT has cross-owner tests only for:\n\n- GET /{id} (get_shouldReturn404_forAnotherOwnersTemplate)\n- POST /{id}/save (save_shouldReturn404_forAnotherOwnersTemplate)\n\nNo IT sends OTHER_OWNER to PUT /details or PUT /fulfilments.\n\nNotificationTemplateServiceTest uses a Mockito @Mock repository. It stubs findByIdAndOwnerId and verifies save(). That breaks the rule to mock only at the network boundary.\n\nToday's code is correct, because every path goes through load().\n\nThe gap is regression protection for the ownership boundary."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "shared-frontend-F1",
+      "field": "what",
+      "before": "templateModeRoutes (src/server/app/shared/template-mode.js:123) twins every party picker under /templates. In template mode the picker still builds the INS add-address link with buildInsAddAddressUrl(request, h, journey.journeyId, party), where journeyId is the template id (ins-handshake.js:48). INS always builds the return URL as <animals>/live-animals/notifications/{notification-id}/address-return (trade-imports-ins-frontend src/server/app/features/address-book/journey-registry.js:9). The return therefore lands on the notification route, outside template mode. currentJourney then calls the notification records port with a template id. Templates live in the separate notification_templates collection, so the load misses and Boom.notFound is thrown. The /templates/{journeyId}/address-return twin exists but nothing ever reaches it.",
+      "after": "templateModeRoutes (src/server/app/shared/template-mode.js:123) twins every party picker under /templates.\n\nIn template mode, the picker still builds the INS add-address link with buildInsAddAddressUrl(request, h, journey.journeyId, party). Here journeyId is the template id (ins-handshake.js:48).\n\nINS always builds the return URL as <animals>/live-animals/notifications/{notification-id}/address-return (trade-imports-ins-frontend src/server/app/features/address-book/journey-registry.js:9).\n\nSo the return lands on the notification route, outside template mode. Then:\n\n- currentJourney calls the notification records port with a template id.\n- Templates live in the separate notification_templates collection, so the load misses.\n- Boom.notFound is thrown.\n\nThe /templates/{journeyId}/address-return twin exists, but nothing ever reaches it."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "shared-frontend-F1",
+      "field": "scenario",
+      "before": "Outside stub mode, the trader creates or changes a template, opens Roles and addresses, then Consignor, then 'Add a new address'. They add the address in INS and are redirected to /live-animals/notifications/<templateId>/address-return?..., which shows a 404. The address never reaches the template, the handshake token cookie is left behind, and the trader is off the template journey with no way back except the nav. inc-161 makes party addresses part of a template, so this path is in scope.",
+      "after": "Outside stub mode, the trader:\n\n- creates or changes a template\n- opens Roles and addresses, then Consignor, then 'Add a new address'\n- adds the address in INS\n- is redirected to /live-animals/notifications/<templateId>/address-return?..., which shows a 404\n\nThen:\n\n- The address never reaches the template.\n- The handshake token cookie is left behind.\n- The trader is off the template journey, with no way back except the nav.\n\ninc-161 makes party addresses part of a template, so this path is in scope."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "shared-frontend-F1",
+      "field": "fix",
+      "before": "Carry the mode through the handshake. Either add a return-kind parameter (for example 'return-to=template') that INS's journey-registry maps to /live-animals/templates/{id}/address-return, or have the animals frontend pass INS a full return path that INS allow-lists. As a stop-gap, hide the 'Add a new address' link while inTemplateMode(). Add a template-mode fit or E2E test for the add-address round trip, which would catch this with the stub off.",
+      "after": "Carry the mode through the handshake. Either:\n\n- add a return-kind parameter (for example 'return-to=template') that INS's journey-registry maps to /live-animals/templates/{id}/address-return\n- or have the animals frontend pass INS a full return path that INS allow-lists\n\nAs a stop-gap, hide the 'Add a new address' link while inTemplateMode().\n\nAdd a template-mode fit or E2E test for the add-address round trip. It would catch this with the stub off."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "shared-frontend-F1",
+      "field": "verifierNote",
+      "before": "Holds. TEMPLATE_MODE_EXCLUDED_SLUGS leaves out only documents, declaration, confirmation, amend, cancel-amend, copy and delete, so templateModeRoutes twins every party picker under /templates/{journeyId}/<party-slug>. party-picker.controller.js:82-83 builds the link with buildInsAddAddressUrl(request, h, journey.journeyId, party) whenever stub mode is off, and in template mode journeyId is the template id. INS journey-registry.js:8-9 hard-codes the return as /notifications/{notification-id}/address-return. That route runs outside template mode. state.commit then loads the id through the notification records port, finds nothing, and currentJourney throws Boom.notFound (engine/journey.js:129-131). Nothing reaches the /templates/{journeyId}/address-return twin. The merge introduced the twinning. I rated it below high because the new address is still saved in the org's address book: the trader can get back to the template from the Templates nav and pick it. The template is not updated, though, and the handshake cookie is left behind.",
+      "after": "Holds.\n\nTEMPLATE_MODE_EXCLUDED_SLUGS leaves out only documents, declaration, confirmation, amend, cancel-amend, copy and delete. So templateModeRoutes twins every party picker under /templates/{journeyId}/<party-slug>.\n\nparty-picker.controller.js:82-83 builds the link with buildInsAddAddressUrl(request, h, journey.journeyId, party) whenever stub mode is off. In template mode, journeyId is the template id.\n\nINS journey-registry.js:8-9 hard-codes the return as /notifications/{notification-id}/address-return. That route runs outside template mode. Then:\n\n- state.commit loads the id through the notification records port\n- it finds nothing\n- currentJourney throws Boom.notFound (engine/journey.js:129-131)\n\nNothing reaches the /templates/{journeyId}/address-return twin.\n\nThe merge introduced the twinning.\n\nI rated it below high because the new address is still saved in the org's address book. The trader can get back to the template from the Templates nav and pick it.\n\nThe template is not updated, though. The handshake cookie is left behind."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "shared-frontend-F2",
+      "field": "what",
+      "before": "defraId.formActionOrigins defaults to ['http://localhost:3007'], and content-security-policy.js:13 adds it to form-action. The comment says it exists because the type question's form POST redirects to the animals or plants /start, which redirects again to Defra ID when that frontend has no session. Browsers check form-action on every redirect hop. The local cdp-app-config checkout (services/trade-imports-ins-frontend/{dev,test}, last commit 28 Sep) has no DEFRA_ID_FORM_ACTION_ORIGINS. Unless it is set, CDP gets a form-action that allows localhost and not the real Defra ID origin.",
+      "after": "defraId.formActionOrigins defaults to ['http://localhost:3007']. content-security-policy.js:13 adds it to form-action.\n\nThe comment says it exists because:\n\n- the type question's form POST redirects to the animals or plants /start\n- that /start redirects again to Defra ID when that frontend has no session\n\nBrowsers check form-action on every redirect hop.\n\nThe local cdp-app-config checkout (services/trade-imports-ins-frontend/{dev,test}, last commit 28 Sep) has no DEFRA_ID_FORM_ACTION_ORIGINS.\n\nUnless it is set, CDP gets a form-action that allows localhost and not the real Defra ID origin."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "shared-frontend-F2",
+      "field": "scenario",
+      "before": "On CDP dev or test, a trader signed in to INS but not yet to the animals frontend chooses 'Live animals' on 'What are you importing?' and presses Continue. The POST 302s to animals /live-animals/start, which 302s to the Defra ID authorize URL. The browser blocks the navigation under form-action, so the trader sees nothing happen or a blocked-navigation error. The same applies to the plants types. Production CSP also advertises http://localhost:3007.",
+      "after": "On CDP dev or test, a trader is signed in to INS but not yet to the animals frontend.\n\nThey choose 'Live animals' on 'What are you importing?' and press Continue.\n\n- The POST 302s to animals /live-animals/start.\n- That 302s to the Defra ID authorize URL.\n- The browser blocks the navigation under form-action.\n\nSo the trader sees nothing happen, or a blocked-navigation error.\n\nThe same applies to the plants types.\n\nProduction CSP also advertises http://localhost:3007."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "shared-frontend-F2",
+      "field": "fix",
+      "before": "Add DEFRA_ID_FORM_ACTION_ORIGINS (the browser-facing Defra ID origin) to every INS cdp-app-config environment. Per the CDP rule, draft it locally and Sam commits. Consider defaulting to [] outside local development, and set the localhost value in docker/stack/frontend.compose.yml, so a missing env value fails safe instead of shipping localhost.",
+      "after": "Add DEFRA_ID_FORM_ACTION_ORIGINS (the browser-facing Defra ID origin) to every INS cdp-app-config environment.\n\nPer the CDP rule, draft it locally and Sam commits.\n\nConsider both of these, so a missing env value fails safe instead of shipping localhost:\n\n- defaulting to [] outside local development\n- setting the localhost value in docker/stack/frontend.compose.yml"
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "shared-frontend-F2",
+      "field": "verifierNote",
+      "before": "Holds. The merge added defraId.formActionOrigins to INS config.js:204-209 with the default ['http://localhost:3007'] and spread it into CSP formAction (content-security-policy.js:31-35). The notification-type controller answers a form POST with a redirect to the journey frontend's /start (controller.js:106). If that frontend has no session, it redirects again to Defra ID, and form-action is checked at each redirect hop. In the local cdp-app-config checkout (last commit 28 Sep 2026), the INS dev env sets DEFRA_ID_OIDC_CONFIGURATION_URL to the trade-imports-defra-id-stub.dev.cdp-int.defra.cloud host but has no DEFRA_ID_FORM_ACTION_ORIGINS. On CDP the policy therefore allows localhost:3007 and not the stub or Defra ID origin. Check the live cdp-app-config before acting.",
+      "after": "Holds.\n\nThe merge added defraId.formActionOrigins to INS config.js:204-209 with the default ['http://localhost:3007']. It spread it into CSP formAction (content-security-policy.js:31-35).\n\nThe notification-type controller answers a form POST with a redirect to the journey frontend's /start (controller.js:106).\n\nIf that frontend has no session, it redirects again to Defra ID. form-action is checked at each redirect hop.\n\nIn the local cdp-app-config checkout (last commit 28 Sep 2026), the INS dev env:\n\n- sets DEFRA_ID_OIDC_CONFIGURATION_URL to the trade-imports-defra-id-stub.dev.cdp-int.defra.cloud host\n- has no DEFRA_ID_FORM_ACTION_ORIGINS\n\nSo on CDP the policy allows localhost:3007 and not the stub or Defra ID origin.\n\nCheck the live cdp-app-config before acting."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "shared-frontend-F3",
+      "field": "what",
+      "before": "The new tradeImportsAnimalsFrontend.baseUrl defaults to http://localhost:3000, and context.js builds templatesUrl from it for every plants page's service navigation. Only the workspace stack sets TRADE_IMPORTS_ANIMALS_FRONTEND_URL (docker/stack/frontend.compose.yml:119). The cdp-app-config checkout has it for the INS frontend but not for services/trade-imports-plants-frontend.",
+      "after": "The new tradeImportsAnimalsFrontend.baseUrl defaults to http://localhost:3000.\n\ncontext.js builds templatesUrl from it for every plants page's service navigation.\n\nOnly the workspace stack sets TRADE_IMPORTS_ANIMALS_FRONTEND_URL (docker/stack/frontend.compose.yml:119).\n\nThe cdp-app-config checkout has it for the INS frontend, but not for services/trade-imports-plants-frontend."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "shared-frontend-F3",
+      "field": "scenario",
+      "before": "On CDP dev or test, any signed-in plants page shows 'Templates' in the service navigation pointing at http://localhost:3000/live-animals/templates. Clicking it fails to connect.",
+      "after": "On CDP dev or test, any signed-in plants page shows 'Templates' in the service navigation.\n\nIt points at http://localhost:3000/live-animals/templates.\n\nClicking it fails to connect."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "shared-frontend-F3",
+      "field": "fix",
+      "before": "Add TRADE_IMPORTS_ANIMALS_FRONTEND_URL=https://trade-imports-animals-frontend.<env>.cdp-int.defra.cloud to each plants environment in cdp-app-config. Sam commits it. Ship the config before or with the merge.",
+      "after": "Add TRADE_IMPORTS_ANIMALS_FRONTEND_URL=https://trade-imports-animals-frontend.<env>.cdp-int.defra.cloud to each plants environment in cdp-app-config.\n\nSam commits it.\n\nShip the config before or with the merge."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "shared-frontend-F3",
+      "field": "verifierNote",
+      "before": "Holds. The merge added tradeImportsAnimalsFrontend.baseUrl to plants config.js (default http://localhost:3000, env TRADE_IMPORTS_ANIMALS_FRONTEND_URL). context.js puts templatesUrl into every page's context, and layout.njk:45 uses it as the Templates nav href. The cdp-app-config checkout's plants dev env (a real deployment with auth enabled) has no TRADE_IMPORTS_ANIMALS_FRONTEND_URL. It is also missing TRADE_IMPORTS_INS_FRONTEND_URL, so the plants env file is behind on browser-facing URLs generally, but the Templates link is a new break. The checkout is from 28 Sep, so check the live repo.",
+      "after": "Holds.\n\nThe merge added tradeImportsAnimalsFrontend.baseUrl to plants config.js (default http://localhost:3000, env TRADE_IMPORTS_ANIMALS_FRONTEND_URL).\n\ncontext.js puts templatesUrl into every page's context. layout.njk:45 uses it as the Templates nav href.\n\nThe cdp-app-config checkout's plants dev env (a real deployment with auth enabled) has no TRADE_IMPORTS_ANIMALS_FRONTEND_URL.\n\nIt is also missing TRADE_IMPORTS_INS_FRONTEND_URL. So the plants env file is behind on browser-facing URLs generally. But the Templates link is a new break.\n\nThe checkout is from 28 Sep, so check the live repo."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-features-TPL-1",
+      "field": "what",
+      "before": "The card is hand-built and puts <p class=\"govuk-caption-m\"> (category) and <h3 class=\"govuk-summary-card__title\"> as two direct children of .govuk-summary-card__title-wrapper. In the installed govuk-frontend, that wrapper is `display:flex; flex-wrap:nowrap; justify-content:space-between` from tablet width up. So the two elements become flex items in one row: 'Live animals' on the left and the template name pushed to the right. The design (dashboard-template-card.html) stacks the category above the title inside its own heading div.",
+      "after": "The card is hand-built. It puts these as two direct children of .govuk-summary-card__title-wrapper:\n\n- <p class=\"govuk-caption-m\"> (category)\n- <h3 class=\"govuk-summary-card__title\">\n\nIn the installed govuk-frontend, that wrapper is `display:flex; flex-wrap:nowrap; justify-content:space-between` from tablet width up.\n\nSo the two elements become flex items in one row:\n\n- 'Live animals' on the left\n- the template name pushed to the right\n\nThe design (dashboard-template-card.html) stacks the category above the title inside its own heading div."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-features-TPL-1",
+      "field": "scenario",
+      "before": "On any screen at tablet width or wider, open Manage templates with one saved template. The card header reads 'Live animals ........ Weekly cattle' on one line instead of the caption above the name. The FIT specs check roles and text, not layout, so nothing catches it.",
+      "after": "On any screen at tablet width or wider, open Manage templates with one saved template.\n\nThe card header reads 'Live animals ........ Weekly cattle' on one line. It does not show the caption above the name.\n\nThe FIT specs check roles and text, not layout. So nothing catches it."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-features-TPL-1",
+      "field": "fix",
+      "before": "Wrap the caption and the h3 in one plain <div> inside the title wrapper, so the wrapper has a single flex child. That mirrors the design's heading div and needs no custom CSS.",
+      "after": "Wrap the caption and the h3 in one plain <div> inside the title wrapper. Then the wrapper has a single flex child.\n\nThat mirrors the design's heading div and needs no custom CSS."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-features-TPL-1",
+      "field": "verifierNote",
+      "before": "template.njk:29-34 puts the caption <p> and the <h3> as two direct children of .govuk-summary-card__title-wrapper. The installed govuk-frontend (summary-list/_mixin.scss:203-216) makes that wrapper display:flex; flex-wrap:nowrap; justify-content:space-between from tablet up, so the two sit side by side. No app stylesheet overrides the wrapper (only _summary-card-error.scss touches summary-card). The design partial dashboard-template-card.html wraps both in a single __heading div. copy.categories always gives 'Live animals' for live-animals templates, so every card is affected. The templates merge added this file.",
+      "after": "- template.njk:29-34 puts the caption <p> and the <h3> as two direct children of .govuk-summary-card__title-wrapper.\n- The installed govuk-frontend (summary-list/_mixin.scss:203-216) makes that wrapper display:flex; flex-wrap:nowrap; justify-content:space-between from tablet up. So the two sit side by side.\n- No app stylesheet overrides the wrapper (only _summary-card-error.scss touches summary-card).\n- The design partial dashboard-template-card.html wraps both in a single __heading div.\n- copy.categories always gives 'Live animals' for live-animals templates, so every card is affected.\n\nThe templates merge added this file."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "workspace-tooling-laptop2-GATE-2",
+      "field": "what",
+      "before": "waitForGateResult only checks whether the result file exists. A gate killed by the OS or the tool (SIGKILL from memory pressure on the 16 GB laptop these commits are about, or a Bash tool that kills rather than backgrounds on timeout) writes no result. The catch block that writes an error envelope runs only for thrown errors, not for signals.",
+      "after": "waitForGateResult only checks whether the result file exists.\n\nA gate killed by the OS or the tool writes no result. That covers:\n\n- SIGKILL from memory pressure on the 16 GB laptop these commits are about\n- a Bash tool that kills rather than backgrounds on timeout\n\nThe catch block that writes an error envelope runs only for thrown errors, not for signals."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "workspace-tooling-laptop2-GATE-2",
+      "field": "scenario",
+      "before": "A five-repo baseline's mvn verify and FIT suites push the laptop into memory pressure and the tim node process is killed. The agent gets GATE_STILL_RUNNING 20 times, about 3 hours, before reporting \"the gate did not finish\". Meanwhile no gate is running. If it was killed after the stack started, the stack is left up under the lease.",
+      "after": "A five-repo baseline's mvn verify and FIT suites push the laptop into memory pressure. The tim node process is killed.\n\nThe agent gets GATE_STILL_RUNNING 20 times, about 3 hours, before reporting \"the gate did not finish\".\n\nMeanwhile no gate is running.\n\nIf it was killed after the stack started, the stack is left up under the lease."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "workspace-tooling-laptop2-GATE-2",
+      "field": "fix",
+      "before": "Have the gate write a marker with its pid when it starts (the same marker as GATE-1). Have gate-wait check that the pid is still alive (process.kill(pid, 0)) on each poll, and return a distinct GATE_DIED error at once when the process has gone and there is no result. Add a test that spawns a gate, kills it, and asserts that gate-wait reports it dead instead of still running.",
+      "after": "Have the gate write a marker with its pid when it starts (the same marker as GATE-1).\n\nOn each poll, have gate-wait:\n\n- check that the pid is still alive (process.kill(pid, 0))\n- return a distinct GATE_DIED error at once when the process has gone and there is no result\n\nAdd a test that spawns a gate, kills it, and asserts that gate-wait reports it dead instead of still running."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "workspace-tooling-laptop2-GATE-2",
+      "field": "verifierNote",
+      "before": "waitForGateResult only polls for the file. Nothing in gate-result.js or index.js records a pid or checks that the gate process is alive. The catch at index.js:343 runs only on thrown errors, so a SIGKILL of the tim node process writes nothing, and gate-wait answers GATE_STILL_RUNNING until the agent's 20 waits are used up. I rate it low: memory pressure is more likely to kill the large java or chromium children, which tim sees as a red rung, than the tim node parent. The loop's rule also moves a timed-out call to the background instead of killing it.",
+      "after": "waitForGateResult only polls for the file.\n\nNothing in gate-result.js or index.js records a pid or checks that the gate process is alive.\n\nThe catch at index.js:343 runs only on thrown errors. So a SIGKILL of the tim node process writes nothing. gate-wait answers GATE_STILL_RUNNING until the agent's 20 waits are used up.\n\nI rate it low:\n\n- Memory pressure is more likely to kill the large java or chromium children than the tim node parent. tim sees those as a red rung.\n- The loop's rule also moves a timed-out call to the background instead of killing it."
+    }
+  ]
+}

@@ -1,0 +1,579 @@
+{
+  "source": "trace:prototype-dr2-1",
+  "structure": "Part 10, Upload documents. Mined all 7 traces of documents.fit.spec.js (every action list read in full; snapshots, DOM evals and the network log of each): T1 renders-the-upload-guidance-and-document-fields (core render, 68 actions), T2 save-and-add-another-with-nothing-entered-names-every-field (validation), T3 a-date-of-issue-that-is-not-a-real-date (validation), T4 continuing-with-a-document-type-chosen-but-the-rest-blank-is-held-on-the-page (validation), T5 documents-are-optional-continuing-with-nothing-chosen-moves-on (variant), T6 upload-documents-from-the-hub-save-and-return-to-overview-from-the-hub (variant), T7 a-complete-document-is-listed-with-its-virus-check-status-and-can-be-removed (core journey). The spec file was read for test titles only. Every trace's before-hook starts a live-animals notification, answers origin (France, no region) and commodity (cattle), then navigates to /design-release-2.1/upload-documents; T6 instead answers origin only and enters from the Overview (notification hub) task list link. Pages in this slice: (1) Upload documents, /design-release-2.1/upload-documents, always: status strip (Draft tag plus GBN-AG reference), caption 'Documents', H1 'Upload documents', intro paragraph, bullet list of other documents, a 'Check which additional documents you must upload' details with a 3-row table and GOV.UK link, then a 'File upload' card section holding Document reference (text input), Document type (14-option select), Date of issue (MOJ date picker text input with hint), Attachment (custom drop zone over a file input with file requirements list), a 'Save and add another' button, the list of added documents (a table inside the card, shown only once a document is added) with a virus check status tag and a Remove button per row, then Save and continue, Save and return to overview and a Cancel and return to overview link. Error states on the same page: nothing entered (4 errors), not a real date, and type chosen but rest blank (3 errors). (2) Destinations: Save and continue with nothing chosen goes to Consignment addresses (/roles-and-addresses); entered from the hub (?from=hub), Save and continue returns to Overview (/notification-hub). Network: every submit is a same-route form POST (urlencoded, 302 then GET on success, 200 re-render on error); a client script posts to the unprefixed /upload-documents/virus-check/<id> after a document is added. Not reached: the Save and return to overview button, the Cancel link, the date picker dialog, any file type or size or file-count error, and any virus check outcome other than 'Scanning for virus'.",
+  "claims": [
+    {
+      "id": "trace-prototype-dr2-1-p10-001",
+      "statement": "Upload documents is a page of the DR2.1 notification journey at /design-release-2.1/upload-documents, reached in the traces after origin and commodity are answered for a live-animals notification.",
+      "kind": "behaviour",
+      "ref": "trace documents--upload-documents-renders-the-upload-guidance-and-document-fields action 30",
+      "quote": "Navigate to \"/design-release-2.1/upload-documents\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-002",
+      "statement": "The page title is 'Upload documents - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "trace documents--upload-documents-renders-the-upload-guidance-and-document-fields action 48 (document.title)",
+      "quote": "Upload documents - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-003",
+      "statement": "The page heading (H1) is 'Upload documents'.",
+      "kind": "copy",
+      "ref": "trace documents--upload-documents-renders-the-upload-guidance-and-document-fields action 48 (h1.app-upload-documents-page__heading)",
+      "quote": "Upload documents",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-004",
+      "statement": "A caption 'Documents' sits above the heading, naming the section the page belongs to.",
+      "kind": "copy",
+      "ref": "trace documents--upload-documents-renders-the-upload-guidance-and-document-fields action 48 (p.app-upload-documents-page__caption)",
+      "quote": "Documents",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-005",
+      "statement": "Above the caption the page shows the notification's status as a 'Draft' tag beside the notification reference (for example GBN-AG-26-0III3X).",
+      "kind": "data",
+      "ref": "trace documents--upload-documents-renders-the-upload-guidance-and-document-fields action 48 (div.app-dr2-notification-status)",
+      "quote": "Draft\nGBN-AG-26-0III3X",
+      "confidence": "verbatim",
+      "note": "The reference differs per trace (GBN-AG-26-0S6XIZ in the complete-document trace); it is generated per notification."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-006",
+      "statement": "The intro paragraph tells the user they must attach an ITAHC if the consignment requires one, can add it later, should upload all documents before the consignment arrives at the UK port, and that documents must be in English with all pages uploaded.",
+      "kind": "copy",
+      "ref": "trace documents--upload-documents-renders-the-upload-guidance-and-document-fields action 48 (p.app-upload-documents-page__intro)",
+      "quote": "You must attach an ITAHC if this consignment requires one. If you do not have it now, you can add it later. All documents should be uploaded before the consignment arrives at the UK port. Documents must be in English and you must upload all pages.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-007",
+      "statement": "The page lists other documents the user may need to attach, as a bulleted list: import licences or authorisations, and commercial documents or invoices.",
+      "kind": "copy",
+      "ref": "trace documents--upload-documents-renders-the-upload-guidance-and-document-fields action 48 (p.app-upload-documents-page__body, ul.govuk-list--bullet)",
+      "quote": "Other documents you may need to attach include:\n\nimport licences or authorisations\ncommercial documents or invoices",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-008",
+      "statement": "A collapsed details component titled 'Check which additional documents you must upload' holds the additional-documents guidance.",
+      "kind": "copy",
+      "ref": "trace documents--upload-documents-renders-the-upload-guidance-and-document-fields action 48 (details.govuk-details summary)",
+      "quote": "Check which additional documents you must upload",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-009",
+      "statement": "Inside the details, a table with columns 'Consignment' and 'Documents needed' says animals that do not need a health certificate need the exporter's declaration that they are fit to travel.",
+      "kind": "copy",
+      "ref": "trace documents--upload-documents-renders-the-upload-guidance-and-document-fields action 48 (table.app-upload-documents-page__details-table row 1)",
+      "quote": "Consignment | Documents needed | Animals that do not need a health certificate | Exporter's declaration that they are fit to travel",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-010",
+      "statement": "The details table says livestock transiting bluetongue restricted territories need Bluetongue declaration GBHC172.",
+      "kind": "copy",
+      "ref": "trace documents--upload-documents-renders-the-upload-guidance-and-document-fields action 48 (table.app-upload-documents-page__details-table row 2)",
+      "quote": "Livestock transiting bluetongue restricted territories | Bluetongue declaration GBHC172",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-011",
+      "statement": "The details table says rodents imported for research purposes need an RM39 licence and supplementary health certificate.",
+      "kind": "copy",
+      "ref": "trace documents--upload-documents-renders-the-upload-guidance-and-document-fields action 48 (table.app-upload-documents-page__details-table row 3)",
+      "quote": "Rodents imported for research purposes | RM39 licence and supplementary health certificate",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-012",
+      "statement": "The details ends with a link 'Check the documents you need' to the GOV.UK guidance page import-of-products-animals-food-and-feed-system, opening in a new tab.",
+      "kind": "integration",
+      "ref": "trace documents--upload-documents-renders-the-upload-guidance-and-document-fields action 38 and action 48 (p.app-upload-documents-page__details-link a)",
+      "quote": "<a class=\"govuk-link\" href=\"https://www.gov.uk/guidance/import-of-products-animals-food-and-feed-system?_gl=...\" target=\"_blank\" rel=\"noopener noreferrer\">Check the documents you need</a> on GOV.UK (opens in a new tab).",
+      "confidence": "verbatim",
+      "note": "The href carries a Google Analytics _gl query string copied from a browser session; the test only checks the href prefix."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-013",
+      "statement": "The document fields sit in a card section headed 'File upload' (an H2 labelling the section).",
+      "kind": "copy",
+      "ref": "trace documents--upload-documents-renders-the-upload-guidance-and-document-fields action 48 (section.app-upload-documents-card h2#file-upload-heading)",
+      "quote": "File upload",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-014",
+      "statement": "The user enters a document reference in a text input labelled 'Document reference' (name documentReference); it has no hint.",
+      "kind": "data",
+      "ref": "trace documents--upload-documents-renders-the-upload-guidance-and-document-fields action 40 and action 48 (input#document-reference)",
+      "quote": "Document reference",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-015",
+      "statement": "The user chooses a document type from a select labelled 'Document type' (name documentType) whose first option, 'Select one', has an empty value and is selected by default.",
+      "kind": "data",
+      "ref": "trace documents--upload-documents-renders-the-upload-guidance-and-document-fields action 41 and action 48 (select#document-type)",
+      "quote": "<option value=\"\" selected=\"\">Select one</option>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-016",
+      "statement": "The document type select offers 13 types, in this order (values in brackets): Intra Trade Animal Health Certificate (ITAHC) (itahc), Veterinary health certificate (veterinary-health-certificate), Air waybill (air-waybill), Import permit (import-permit), Letter of authority (Directive 2008/61/EC) (letter-of-authority-directive-2008-61-ec), Commercial invoice (commercial-invoice), Sea waybill (sea-waybill), Rail waybill (rail-waybill), Bill of lading (bill-of-lading), Catch certificate (catch-certificate), Laboratory sampling results for aflatoxin (Reg 2019/1793) (laboratory-sampling-results-for-aflatoxin-reg-2019-1793), Journey log (journey-log), Other (other).",
+      "kind": "data",
+      "ref": "trace documents--upload-documents-renders-the-upload-guidance-and-document-fields action 41 and action 48 (select#document-type option)",
+      "quote": "Intra Trade Animal Health Certificate (ITAHC)\nVeterinary health certificate\nAir waybill\nImport permit\nLetter of authority (Directive 2008/61/EC)\nCommercial invoice\nSea waybill\nRail waybill\nBill of lading\nCatch certificate\nLaboratory sampling results for aflatoxin (Reg 2019/1793)\nJourney log\nOther",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-017",
+      "statement": "Choosing 'Other' as the document type reveals no extra field in the rendered page: no conditional 'describe the document' input is present.",
+      "kind": "rule",
+      "ref": "trace documents--upload-documents-renders-the-upload-guidance-and-document-fields action 48 (form contents)",
+      "quote": "<option value=\"other\">Other</option>",
+      "confidence": "gap",
+      "note": "No trace selects 'Other', so whether it should reveal a description field is not shown."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-018",
+      "statement": "The user enters the date of issue in a single text input labelled 'Date of issue' (name dateOfIssue), as day/month/year.",
+      "kind": "data",
+      "ref": "trace documents--upload-documents-renders-the-upload-guidance-and-document-fields action 42 and action 48 (input#date-of-issue)",
+      "quote": "Date of issue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-019",
+      "statement": "The date of issue hint reads 'For example, 27/3/2026'.",
+      "kind": "copy",
+      "ref": "trace documents--upload-documents-renders-the-upload-guidance-and-document-fields action 48 (div#date-of-issue-hint)",
+      "quote": "For example, 27/3/2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-020",
+      "statement": "The date of issue uses the MOJ date picker: a 'Choose date' toggle button opens a calendar dialog with previous/next year and month buttons, a month grid, and 'Select' and 'Close' buttons.",
+      "kind": "constraint",
+      "ref": "trace documents--upload-documents-renders-the-upload-guidance-and-document-fields action 48 (div.moj-datepicker, button.moj-datepicker__toggle, div#datepicker-date-of-issue)",
+      "quote": "<span class=\"govuk-visually-hidden\">Choose date</span> ... <button type=\"button\" class=\"govuk-button moj-js-datepicker-ok\">Select</button> <button type=\"button\" class=\"govuk-button govuk-button--secondary moj-js-datepicker-cancel\">Close</button>",
+      "confidence": "verbatim",
+      "note": "MOJ Frontend component, outside govuk-frontend. The dialog stays hidden in every trace; the tests type the date and press Escape."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-021",
+      "statement": "The user attaches a file through a field labelled 'Attachment' (file input name attachment, with a hidden attachmentFileName carrying the chosen file name).",
+      "kind": "data",
+      "ref": "trace documents--upload-documents-renders-the-upload-guidance-and-document-fields action 48 (div.app-upload-documents-card__field--attachment)",
+      "quote": "Attachment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-022",
+      "statement": "Under the Attachment label, the hint 'Your file must be:' is followed by a bulleted list of file rules: smaller than 50MB; PDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX; up to a maximum of 15 files; ZIP files are not allowed for security reasons.",
+      "kind": "copy",
+      "ref": "trace documents--upload-documents-renders-the-upload-guidance-and-document-fields actions 43-47 and action 48 (ul.app-upload-documents-card__requirements)",
+      "quote": "Your file must be:\nfiles that are smaller than 50MB\nPDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX\nup to a maximum of 15 files\nZIP files are not allowed for security reasons",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-023",
+      "statement": "A file larger than 50MB is rejected with an error message.",
+      "kind": "rule",
+      "ref": "documents.fit.spec.js and all 7 traces: no oversize upload driven",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The rule is stated as guidance only; no trace shows the error copy or whether it is enforced client- or server-side."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-024",
+      "statement": "A file of a type outside PDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX (including ZIP) is rejected with an error message.",
+      "kind": "rule",
+      "ref": "documents.fit.spec.js and all 7 traces: no disallowed file type driven",
+      "quote": "",
+      "confidence": "gap",
+      "note": "File input has no accept attribute in the rendered DOM; enforcement and error copy are unknown."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-025",
+      "statement": "Adding a 16th file is prevented once 15 files are attached.",
+      "kind": "rule",
+      "ref": "documents.fit.spec.js and all 7 traces: at most one document added",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-026",
+      "statement": "The attachment is a custom drop zone: a live status line reading 'No file chosen', a 'Choose file' label for the hidden file input, and the text 'or drop file'.",
+      "kind": "constraint",
+      "ref": "trace documents--upload-documents-renders-the-upload-guidance-and-document-fields action 48 (div.app-upload-documents-card__dropzone data-module=app-file-upload)",
+      "quote": "No file chosen\nChoose file\nor drop file",
+      "confidence": "verbatim",
+      "note": "Not a govuk-frontend component (app-upload-documents-card__dropzone, app-file-upload module); the govuk-frontend File upload component (with its drop zone enhancement) could replace it."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-027",
+      "statement": "Once a file is chosen, the drop zone status line shows the file's name (for example 'itahc.pdf') and the hidden attachmentFileName takes the same value.",
+      "kind": "behaviour",
+      "ref": "trace documents--upload-documents-a-complete-document-is-listed-with-its-virus-check-status-and-can-be-removed actions 35-37",
+      "quote": "<div class=\"app-upload-documents-card__dropzone-status\" aria-live=\"polite\">itahc.pdf</div> ... <input type=\"hidden\" name=\"attachmentFileName\" value=\"itahc.pdf\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-028",
+      "statement": "The prototype does not send file contents: the form posts as application/x-www-form-urlencoded with only the file name (attachment=itahc.pdf, attachmentFileName=itahc.pdf), so a real upload service is outside what the prototype shows.",
+      "kind": "integration",
+      "ref": "trace documents--upload-documents-a-complete-document-is-listed-with-its-virus-check-status-and-can-be-removed request 199 (POST body)",
+      "quote": "documentReference=ITAHC-001&documentType=itahc&dateOfIssue=5%2F10%2F2026&attachment=itahc.pdf&attachmentFileName=itahc.pdf&action=add-another",
+      "confidence": "inferred",
+      "note": "Inferred from the urlencoded content type and body; the form has no enctype=multipart/form-data."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-029",
+      "statement": "A 'Save and add another' button (action add-another) sits inside the File upload card, after the attachment field.",
+      "kind": "copy",
+      "ref": "trace documents--upload-documents-renders-the-upload-guidance-and-document-fields action 48 (button.app-upload-documents-card__add-button)",
+      "quote": "Save and add another",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-030",
+      "statement": "Below the card the page offers a primary 'Save and continue' button (action continue) and a secondary 'Save and return to overview' button (action hub).",
+      "kind": "copy",
+      "ref": "trace documents--upload-documents-from-the-hub-save-and-return-to-overview-from-the-hub action 24 (main buttons)",
+      "quote": "continue|Save and continue|\nhub|Save and return to overview|",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-031",
+      "statement": "Below the buttons a 'Cancel and return to overview' link goes to the Overview (/design-release-2.1/notification-hub).",
+      "kind": "copy",
+      "ref": "trace documents--upload-documents-renders-the-upload-guidance-and-document-fields action 48 (p.app-origin-form-actions__cancel a)",
+      "quote": "<a class=\"govuk-link\" href=\"/design-release-2.1/notification-hub\">Cancel and return to overview</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-032",
+      "statement": "Pressing 'Save and return to overview' saves the document fields and returns to the Overview.",
+      "kind": "behaviour",
+      "ref": "documents.fit.spec.js and all 7 traces: the action=hub button is never clicked",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The test titled 'save and return to overview from the hub' clicks Save and continue, not Save and return to overview."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-033",
+      "statement": "What 'Cancel and return to overview' does to fields entered but not saved is not shown.",
+      "kind": "behaviour",
+      "ref": "documents.fit.spec.js and all 7 traces: the cancel link is never clicked",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-034",
+      "statement": "The back link reads 'Back' and goes to the Overview (/design-release-2.1/notification-hub), not to the previous question page.",
+      "kind": "behaviour",
+      "ref": "trace documents--upload-documents-renders-the-upload-guidance-and-document-fields action 49 (.govuk-back-link)",
+      "quote": "govuk-back-link|/design-release-2.1/notification-hub|Back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-035",
+      "statement": "Documents are optional: pressing Save and continue with nothing chosen and nothing entered raises no error and moves on to the Consignment addresses page (/design-release-2.1/roles-and-addresses).",
+      "kind": "rule",
+      "ref": "trace documents--upload-documents-documents-are-optional-continuing-with-nothing-chosen-moves-on actions 31-33, requests 200-201",
+      "quote": "POST 302 upload-documents ... GET 200 roles-and-addresses; page title 'Consignment addresses - Import notification service - GOV.UK'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-036",
+      "statement": "In the journey order, the page after Upload documents is Consignment addresses, whose heading is 'Consignment addresses' and whose back link also goes to the Overview.",
+      "kind": "behaviour",
+      "ref": "trace documents--upload-documents-documents-are-optional-continuing-with-nothing-chosen-moves-on action 33",
+      "quote": "Consignment addresses - Import notification service - GOV.UK\nConsignment addresses\n/design-release-2.1/notification-hub",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-037",
+      "statement": "Pressing Save and add another with nothing entered keeps the user on Upload documents and shows an error summary titled 'There is a problem' naming every field, in this order: Enter a document reference, Select a document type, Enter a date of issue, Upload a document.",
+      "kind": "rule",
+      "ref": "trace documents--upload-documents-save-and-add-another-with-nothing-entered-names-every-field actions 31-35",
+      "quote": "There is a problem\nEnter a document reference\nSelect a document type\nEnter a date of issue\nUpload a document",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-038",
+      "statement": "A missing document reference shows 'Enter a document reference', linked from the summary to #document-reference and shown inline above the input.",
+      "kind": "rule",
+      "ref": "trace documents--upload-documents-save-and-add-another-with-nothing-entered-names-every-field action 35 (p#document-reference-error)",
+      "quote": "Enter a document reference",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-039",
+      "statement": "A missing document type shows 'Select a document type', linked from the summary to #document-type and shown inline above the select.",
+      "kind": "rule",
+      "ref": "trace documents--upload-documents-save-and-add-another-with-nothing-entered-names-every-field action 35 (p#document-type-error)",
+      "quote": "Select a document type",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-040",
+      "statement": "A missing date of issue shows 'Enter a date of issue', linked from the summary to #date-of-issue and shown inline above the input.",
+      "kind": "rule",
+      "ref": "trace documents--upload-documents-save-and-add-another-with-nothing-entered-names-every-field action 35 (p#date-of-issue-error)",
+      "quote": "Enter a date of issue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-041",
+      "statement": "A missing file shows 'Upload a document', linked from the summary to #attachment, shown inline under the Attachment label, with the drop zone marked as in error.",
+      "kind": "rule",
+      "ref": "trace documents--upload-documents-save-and-add-another-with-nothing-entered-names-every-field action 35 (p#attachment-error, div.app-upload-documents-card__dropzone--error)",
+      "quote": "<p id=\"attachment-error\" class=\"govuk-error-message\"><span class=\"govuk-visually-hidden\">Error:</span> Upload a document</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-042",
+      "statement": "Error fields use govuk-frontend error styling: the form group gets govuk-form-group--error, the input govuk-input--error and the select govuk-select--error, with a visually hidden 'Error:' prefix on each inline message; the attachment field uses its own app-upload-documents-card__field--error class instead of a govuk form group.",
+      "kind": "constraint",
+      "ref": "trace documents--upload-documents-save-and-add-another-with-nothing-entered-names-every-field action 35",
+      "quote": "DIV|govuk-form-group govuk-form-group--error app-upload-documents-card__form-group ... INPUT|govuk-input ... govuk-input--error|document-reference ... SELECT|govuk-select app-upload-documents-card__select govuk-select--error|document-type",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-043",
+      "statement": "On a validation error the page title stays 'Upload documents - Import notification service - GOV.UK', without an 'Error: ' prefix.",
+      "kind": "copy",
+      "ref": "trace documents--upload-documents-save-and-add-another-with-nothing-entered-names-every-field action 35 (document.title)",
+      "quote": "Upload documents - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-044",
+      "statement": "A validation error re-renders the page in the POST response (HTTP 200) rather than redirecting.",
+      "kind": "behaviour",
+      "ref": "trace documents--upload-documents-save-and-add-another-with-nothing-entered-names-every-field request 199",
+      "quote": "POST http://localhost:3010/design-release-2.1/upload-documents ... status: 200 OK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-045",
+      "statement": "A date of issue that is not a real date (30/2/2026) shows 'Enter a real date', linked to #date-of-issue, alongside 'Upload a document' when no file is chosen.",
+      "kind": "rule",
+      "ref": "trace documents--upload-documents-a-date-of-issue-that-is-not-a-real-date actions 31-39",
+      "quote": "#date-of-issue|Enter a real date\n#attachment|Upload a document",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-046",
+      "statement": "When a submit fails validation, the values the user entered are kept in the fields (reference ITAHC-001, type itahc, date 30/2/2026).",
+      "kind": "behaviour",
+      "ref": "trace documents--upload-documents-a-date-of-issue-that-is-not-a-real-date action 39 (input and select values)",
+      "quote": "documentReference=ITAHC-001\ndocumentType=itahc\ndateOfIssue=30/2/2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-047",
+      "statement": "Whether a date of issue in the future, or in a format other than day/month/year, is rejected is not shown.",
+      "kind": "rule",
+      "ref": "documents.fit.spec.js and all 7 traces: only blank and 30/2/2026 dates driven",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-048",
+      "statement": "Once a document type is chosen, every document field must be completed: pressing Save and continue with only the type chosen (Air waybill) holds the user on Upload documents with errors for the reference, the date of issue and the file.",
+      "kind": "rule",
+      "ref": "trace documents--upload-documents-continuing-with-a-document-type-chosen-but-the-rest-blank-is-held-on-the-page actions 31-37",
+      "quote": "There is a problem\nEnter a document reference\nEnter a date of issue\nUpload a document",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-049",
+      "statement": "On the partly-filled hold, the chosen document type stays selected (air-waybill) and no 'Select a document type' error is shown.",
+      "kind": "behaviour",
+      "ref": "trace documents--upload-documents-continuing-with-a-document-type-chosen-but-the-rest-blank-is-held-on-the-page action 37",
+      "quote": "documentReference=\ndocumentType=air-waybill\ndateOfIssue=",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-050",
+      "statement": "Whether filling only the reference, the date or the file (with no type chosen) also holds the user on the page is not shown; only a chosen type was driven as the partial input.",
+      "kind": "rule",
+      "ref": "documents.fit.spec.js and all 7 traces",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-051",
+      "statement": "Pressing Save and add another with every field complete saves the document and returns to an empty Upload documents form (POST, 302 to /design-release-2.1/upload-documents), with all four fields cleared.",
+      "kind": "behaviour",
+      "ref": "trace documents--upload-documents-a-complete-document-is-listed-with-its-virus-check-status-and-can-be-removed action 44, requests 199-200, action 51 (field values)",
+      "quote": "location: /design-release-2.1/upload-documents ... documentReference=\ndocumentType=\ndateOfIssue=\nattachment=\nattachmentFileName=",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-052",
+      "statement": "Added documents are listed in a table inside the File upload card, below the Save and add another button; the table only appears once a document has been added.",
+      "kind": "rule",
+      "ref": "trace documents--upload-documents-a-complete-document-is-listed-with-its-virus-check-status-and-can-be-removed action 51 (div.app-upload-documents-card__saved > table.app-upload-documents-table); action 62",
+      "quote": "DIV.app-upload-documents-card__saved < DIV.app-upload-documents-card__body < SECTION.app-upload-documents-card",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-053",
+      "statement": "The added-documents table has the column headers Document reference, Document type, Date of issue, Status, and a visually hidden 'Action' header for the remove column.",
+      "kind": "copy",
+      "ref": "trace documents--upload-documents-a-complete-document-is-listed-with-its-virus-check-status-and-can-be-removed action 46 and action 51 (thead th)",
+      "quote": "Document reference | Document type | Date of issue | Status | <span class=\"govuk-visually-hidden\">Action</span>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-054",
+      "statement": "Each added-document row shows the reference as entered, the document type's display name (not its value) and the date of issue as entered (for example ITAHC-001, Intra Trade Animal Health Certificate (ITAHC), 5/10/2026).",
+      "kind": "data",
+      "ref": "trace documents--upload-documents-a-complete-document-is-listed-with-its-virus-check-status-and-can-be-removed actions 47-50 and action 51 (tbody tr)",
+      "quote": "ITAHC-001\tIntra Trade Animal Health Certificate (ITAHC)\t5/10/2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-055",
+      "statement": "The added-documents row does not show the attached file's name.",
+      "kind": "data",
+      "ref": "trace documents--upload-documents-a-complete-document-is-listed-with-its-virus-check-status-and-can-be-removed action 51 (tbody tr)",
+      "quote": "<td class=\"govuk-table__cell\">ITAHC-001</td> <td class=\"govuk-table__cell\">Intra Trade Animal Health Certificate (ITAHC)</td> <td class=\"govuk-table__cell\">5/10/2026</td>",
+      "confidence": "inferred",
+      "note": "Inferred from the row cells: none carries itahc.pdf."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-056",
+      "statement": "Each added document's Status column shows a blue tag 'Scanning for virus' while the virus check is in progress, with visually hidden text 'Virus check status for <reference>'.",
+      "kind": "copy",
+      "ref": "trace documents--upload-documents-a-complete-document-is-listed-with-its-virus-check-status-and-can-be-removed action 51 (strong.govuk-tag--blue.app-upload-documents-table__status data-virus-status=uploading)",
+      "quote": "<span class=\"govuk-visually-hidden\">Virus check status for ITAHC-001</span> <strong class=\"govuk-tag govuk-tag--blue app-upload-documents-table__status\" data-virus-status=\"uploading\" data-document-id=\"doc-1791397046808-1\">Scanning for virus</strong>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-057",
+      "statement": "After a document is added, a page script asks the server for its virus check status with a JSON POST to /upload-documents/virus-check/<document id>.",
+      "kind": "integration",
+      "ref": "trace documents--upload-documents-a-complete-document-is-listed-with-its-virus-check-status-and-can-be-removed request 239",
+      "quote": "POST http://localhost:3010/upload-documents/virus-check/doc-1791397046808-1 ... Accept: application/json ... Response body {\"virusStatus\":null}",
+      "confidence": "verbatim",
+      "note": "The route lacks the /design-release-2.1 prefix and returns virusStatus null; the spec comment says it reads the DR1 session, so under DR2.1 the status never moves on."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-058",
+      "statement": "Four seconds after the document is added, the status is still 'Scanning for virus': in the DR2.1 prototype the virus check never completes.",
+      "kind": "behaviour",
+      "ref": "trace documents--upload-documents-a-complete-document-is-listed-with-its-virus-check-status-and-can-be-removed actions 58-59",
+      "quote": "Wait for timeout 4.0s ... Expect \"toHaveText\" locator('.app-upload-documents-table__status')",
+      "confidence": "verbatim",
+      "note": "The spec states this is a prototype defect: 'under DR2.1 the tag never moves on from \"Scanning for virus\"'."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-059",
+      "statement": "The statuses a document shows once its virus check finishes (clean, infected or failed), and their tag copy and colours, are not shown.",
+      "kind": "copy",
+      "ref": "documents.fit.spec.js and all 7 traces: status never leaves 'Scanning for virus'",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-060",
+      "statement": "Each added-document row has a 'Remove' control, a submit button styled as a link (action remove:<document id>).",
+      "kind": "copy",
+      "ref": "trace documents--upload-documents-a-complete-document-is-listed-with-its-virus-check-status-and-can-be-removed action 51 (button.app-upload-documents-table__remove-button)",
+      "quote": "<button type=\"submit\" name=\"action\" value=\"remove:doc-1791397046808-1\" class=\"govuk-link app-upload-documents-table__remove-button\">Remove</button>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-061",
+      "statement": "Pressing Remove deletes the document straight away, with no confirmation page, and returns to Upload documents with the added-documents table gone.",
+      "kind": "behaviour",
+      "ref": "trace documents--upload-documents-a-complete-document-is-listed-with-its-virus-check-status-and-can-be-removed actions 60-62, requests 240-241",
+      "quote": "documentReference=&documentType=&dateOfIssue=&attachment=&attachmentFileName=&action=remove%3Adoc-1791397046808-1 ... location: /design-release-2.1/upload-documents",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-062",
+      "statement": "No success or removal message (notification banner) is shown after a document is added or removed.",
+      "kind": "copy",
+      "ref": "trace documents--upload-documents-a-complete-document-is-listed-with-its-virus-check-status-and-can-be-removed actions 51 and 62",
+      "quote": "0|none|0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-063",
+      "statement": "Each saved document gets a generated id of the form doc-<timestamp>-<n>.",
+      "kind": "data",
+      "ref": "trace documents--upload-documents-a-complete-document-is-listed-with-its-virus-check-status-and-can-be-removed action 51 (data-document-id)",
+      "quote": "data-document-id=\"doc-1791397046808-1\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-064",
+      "statement": "How the page behaves with more than one document added (row order, Save and continue with documents listed and the form blank) is not shown.",
+      "kind": "behaviour",
+      "ref": "documents.fit.spec.js and all 7 traces: at most one document added, never followed by Save and continue",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-065",
+      "statement": "The Overview task list has an 'Upload documents' task linking to /design-release-2.1/upload-documents?from=hub, with status 'To do' when no document has been added.",
+      "kind": "behaviour",
+      "ref": "trace documents--upload-documents-from-the-hub-save-and-return-to-overview-from-the-hub action 22",
+      "quote": "/design-release-2.1/upload-documents?from=hub|Upload documents|Upload documents / To do",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-066",
+      "statement": "Opened from the Overview, the Upload documents form carries a hidden field from=hub and posts to /design-release-2.1/upload-documents?from=hub.",
+      "kind": "data",
+      "ref": "trace documents--upload-documents-from-the-hub-save-and-return-to-overview-from-the-hub action 24 and request 198",
+      "quote": "from=hub,attachmentFileName= ... POST 302 upload-documents?from=hub",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-067",
+      "statement": "Opened from the Overview, pressing Save and continue with nothing entered returns the user to the Overview (/design-release-2.1/notification-hub) instead of moving on to the next page.",
+      "kind": "rule",
+      "ref": "trace documents--upload-documents-from-the-hub-save-and-return-to-overview-from-the-hub actions 25-27, requests 198-199",
+      "quote": "POST 302 upload-documents?from=hub ... GET 200 notification-hub",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-068",
+      "statement": "After continuing from Upload documents with nothing added, the Overview's Upload documents task still shows 'To do'.",
+      "kind": "rule",
+      "ref": "trace documents--upload-documents-from-the-hub-save-and-return-to-overview-from-the-hub action 27",
+      "quote": "Overview - Import notification service - GOV.UK\nUpload documents / To do",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-069",
+      "statement": "The task status the Overview shows once a document has been added (for example In progress or Completed) is not shown.",
+      "kind": "behaviour",
+      "ref": "documents.fit.spec.js and all 7 traces: the hub is never revisited after a document is added",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p10-070",
+      "statement": "The Upload documents page uses govuk-frontend Details, Table, Select, Input, Hint, Error summary, Error message, Tag, Button and bullet List, plus the MOJ date picker; the page header, notification status strip, File upload card and drop zone are custom app-* layout outside the design system.",
+      "kind": "constraint",
+      "ref": "trace documents--upload-documents-renders-the-upload-guidance-and-document-fields action 48 (main classes)",
+      "quote": "app-upload-documents-page__header, app-upload-documents-card, app-upload-documents-card__dropzone, app-dr2-notification-status, moj-datepicker, govuk-details, govuk-table, govuk-select",
+      "confidence": "verbatim",
+      "note": "The caption and heading use app-upload-documents-page__caption/__heading rather than govuk-caption-l/govuk-heading-l; a standard caption and heading could replace them."
+    }
+  ]
+}

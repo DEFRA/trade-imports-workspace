@@ -1,0 +1,427 @@
+<title>Design Release 2.1 decisions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,600&display=swap">
+<style>
+/* Layout: one reading column for the questions, widening to a two-up comparison grid for the screenshots. */
+:root {
+  --ground: #f6f7f9;
+  --surface: #ffffff;
+  --ink: #1b2330;
+  --muted: #566173;
+  --rule: #d9dee6;
+  --accent: #2f5d8a;
+  --accent-soft: #e4edf6;
+  --proto: #6b4fa0;
+  --proto-soft: #efe9f8;
+  --real: #2f7a5a;
+  --real-soft: #e3f2ea;
+  --default-ground: #fff7e0;
+  --default-edge: #c99a1a;
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --step--1: 0.8125rem;
+  --step-0: 1rem;
+  --step-1: 1.25rem;
+  --step-2: 1.6rem;
+  --step-3: 2.4rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground: #12161d;
+    --surface: #1a2029;
+    --ink: #e6eaf0;
+    --muted: #9aa5b5;
+    --rule: #2c3542;
+    --accent: #8db4dc;
+    --accent-soft: #1f2d3d;
+    --proto: #b9a2e6;
+    --proto-soft: #2a2238;
+    --real: #7cc9a6;
+    --real-soft: #1b2e26;
+    --default-ground: #2b2614;
+    --default-edge: #d9b347;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #12161d;
+  --surface: #1a2029;
+  --ink: #e6eaf0;
+  --muted: #9aa5b5;
+  --rule: #2c3542;
+  --accent: #8db4dc;
+  --accent-soft: #1f2d3d;
+  --proto: #b9a2e6;
+  --proto-soft: #2a2238;
+  --real: #7cc9a6;
+  --real-soft: #1b2e26;
+  --default-ground: #2b2614;
+  --default-edge: #d9b347;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--step-0);
+  line-height: 1.55;
+  padding-inline: 20px;
+  padding-block: 0 64px;
+}
+.wrap { max-width: 1180px; margin-inline: auto; display: grid; gap: 56px; }
+.prose { max-width: 68ch; }
+h1, h2, h3 { text-wrap: balance; line-height: 1.2; margin: 0; }
+h1 { font-family: var(--font-display); font-size: var(--step-3); font-weight: 600; }
+h2 { font-family: var(--font-display); font-size: var(--step-2); font-weight: 600; }
+h3 { font-size: var(--step-1); font-weight: 600; }
+p { margin: 0; }
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible { outline: 3px solid var(--default-edge); outline-offset: 2px; }
+code, .id { font-family: var(--font-mono); font-size: 0.92em; }
+.eyebrow { font-size: var(--step--1); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+
+header.top { padding-block: 48px 8px; display: grid; gap: 16px; border-bottom: 1px solid var(--rule); padding-bottom: 32px; }
+header.top .lede { font-size: var(--step-1); color: var(--muted); max-width: 60ch; }
+.facts { display: flex; flex-wrap: wrap; gap: 12px 28px; margin-top: 8px; }
+.fact { display: grid; gap: 2px; }
+.fact b { font-family: var(--font-mono); font-size: var(--step-1); font-weight: 500; font-variant-numeric: tabular-nums; }
+.fact span { font-size: var(--step--1); color: var(--muted); }
+
+.howto { display: grid; gap: 10px; }
+.howto ol { margin: 0; padding-left: 1.25rem; display: grid; gap: 6px; }
+
+.toc { display: flex; flex-wrap: wrap; gap: 10px; }
+.toc a { background: var(--surface); border: 1px solid var(--rule); border-radius: 6px; padding: 8px 12px; text-decoration: none; color: var(--ink); font-weight: 500; }
+.toc a span { font-family: var(--font-mono); color: var(--accent); margin-right: 6px; }
+
+section.q { display: grid; gap: 24px; scroll-margin-top: 16px; }
+.q-head { display: grid; gap: 10px; }
+.q-num { font-family: var(--font-mono); color: var(--accent); font-size: var(--step--1); letter-spacing: 0.06em; }
+.q-head .ask { font-size: var(--step-1); }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: var(--step--1); color: var(--muted); }
+
+.compare { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+@media (max-width: 760px) { .compare { grid-template-columns: 1fr; } }
+.side { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; display: grid; grid-template-rows: auto auto 1fr; overflow: hidden; }
+.side-head { padding: 14px 16px; display: grid; gap: 6px; border-bottom: 1px solid var(--rule); }
+.tag { justify-self: start; font-size: var(--step--1); font-weight: 600; letter-spacing: 0.04em; padding: 2px 8px; border-radius: 4px; }
+.side.proto .tag { background: var(--proto-soft); color: var(--proto); }
+.side.real .tag { background: var(--real-soft); color: var(--real); }
+.side-head p { color: var(--ink); }
+.side ul.points { margin: 0; padding: 12px 16px 12px 32px; display: grid; gap: 4px; border-bottom: 1px solid var(--rule); font-size: 0.95rem; }
+.shots { display: grid; gap: 1px; background: var(--rule); align-content: start; }
+figure { margin: 0; background: var(--surface); display: grid; }
+figure .frame { max-height: 560px; overflow-y: auto; border-bottom: 1px solid var(--rule); background: #fff; }
+figure img { display: block; width: 100%; height: auto; max-width: 100%; }
+figcaption { padding: 8px 16px 12px; font-size: var(--step--1); color: var(--muted); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+.decision { display: grid; gap: 16px; }
+.default { background: var(--default-ground); border-left: 4px solid var(--default-edge); border-radius: 4px; padding: 16px 20px; display: grid; gap: 10px; }
+.default .label { font-size: var(--step--1); letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; color: var(--ink); }
+.default ul { margin: 0; padding-left: 1.2rem; display: grid; gap: 4px; }
+.why { display: grid; gap: 8px; max-width: 75ch; }
+.why .label { font-size: var(--step--1); letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; color: var(--muted); }
+
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 0.95rem; background: var(--surface); }
+th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: var(--step--1); letter-spacing: 0.04em; text-transform: uppercase; }
+td.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+.answer { display: grid; gap: 8px; background: var(--surface); border: 1px dashed var(--rule); border-radius: 6px; padding: 14px 16px; }
+.answer label { font-weight: 600; }
+.answer textarea { width: 100%; min-height: 72px; font: inherit; color: var(--ink); background: var(--ground); border: 1px solid var(--rule); border-radius: 4px; padding: 8px 10px; }
+.answer .note { font-size: var(--step--1); color: var(--muted); }
+
+footer.end { border-top: 1px solid var(--rule); padding-top: 24px; color: var(--muted); font-size: var(--step--1); display: grid; gap: 6px; }
+
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <p class="eyebrow">GB notification service · bringing the real services up to Design Release 2.1</p>
+  <h1>Three decisions for the call</h1>
+  <p class="lede">Everything else in the comparison was settled by the agreed rules: the prototype wins unless a DR1 judgement or a real constraint says otherwise. These three are the exceptions. Each has a default that gets built if nobody answers.</p>
+  <div class="facts">
+    <div class="fact"><b>16,197</b><span>verified claims from 16 sources</span></div>
+    <div class="fact"><b>1,681</b><span>requirements</span></div>
+    <div class="fact"><b>208</b><span>differences settled by the rules</span></div>
+    <div class="fact"><b>172</b><span>increments in 14 themes</span></div>
+    <div class="fact"><b>3</b><span>decisions needed</span></div>
+  </div>
+</header>
+
+<section class="howto prose" aria-labelledby="howto">
+  <h2 id="howto">How to use this page</h2>
+  <ol>
+    <li>For each question, compare the prototype (left) with what the real service does today (right). Scroll inside a screenshot to see the whole page, or open it full size.</li>
+    <li>Agree the default, or say what to build instead. Answers can be typed in the box under each question during the call.</li>
+    <li>After the call the answers are written up as a ruling, the backlog is re-distilled, and then it is split into its 14 themes for parallel builds.</li>
+  </ol>
+  <nav class="toc" aria-label="Questions">
+    <a href="#q1"><span>1</span>Address search per environment</a>
+    <a href="#q2"><span>2</span>Northern Ireland transporter search</a>
+    <a href="#q3"><span>3</span>When an animal counts as identified</a>
+    <a href="#waiting"><span>·</span>Waiting on others</a>
+  </nav>
+</section>
+
+<!-- Question 1 -->
+<section class="q" id="q1" aria-labelledby="q1-title">
+  <div class="q-head prose">
+    <p class="q-num">QUESTION 1 · conflict <span class="id">c-217</span></p>
+    <h2 id="q1-title">Should address search work in every environment, or only where a real address lookup exists?</h2>
+    <p class="ask">Design Release 2.1 offers "Search for an address" on every add-address page. The real address lookup is only set up on the local stack (as a stub) and in CDP dev. Should it be set up in CDP test, ext-test, perf-test and production, or should those environments offer manual entry only until it is?</p>
+    <div class="meta"><span>Affects <span class="id">inc-042</span>, <span class="id">inc-071</span>, <span class="id">inc-072</span>, <span class="id">inc-081</span></span><span>Requirements <span class="id">req-456</span>, <span class="id">req-457</span>, <span class="id">req-647–654</span>, <span class="id">req-1214–1218</span></span></div>
+  </div>
+
+  <div class="compare">
+    <article class="side proto">
+      <div class="side-head">
+        <span class="tag">Prototype · Design Release 2.1</span>
+        <p>Every add-address page starts with a type-ahead address search, then fills the fields from the chosen result.</p>
+      </div>
+      <ul class="points">
+        <li>Address book, journey parties and contact address all search</li>
+        <li>Results come from a made-up list inside the prototype</li>
+      </ul>
+      <div class="shots">
+        <figure>
+          <div class="frame" tabindex="0"><img src="img/q1-proto-journey-search.png" alt="Prototype 'Add address and contact details' page with a 'Search for an address' box showing a matching result, Acorn Farm" loading="lazy"></div>
+          <figcaption><span>Journey: adding a consignee, search results showing</span><a href="img/q1-proto-journey-search.png" target="_blank" rel="noopener">Full size</a></figcaption>
+        </figure>
+        <figure>
+          <div class="frame" tabindex="0"><img src="img/q1-proto-address-book-search.png" alt="Prototype address book 'Add address and contact details' page for a destination, consignee or importer, with a search box" loading="lazy"></div>
+          <figcaption><span>Address book: adding a destination, consignee or importer</span><a href="img/q1-proto-address-book-search.png" target="_blank" rel="noopener">Full size</a></figcaption>
+        </figure>
+      </div>
+    </article>
+
+    <article class="side real">
+      <div class="side-head">
+        <span class="tag">Real service today</span>
+        <p>No address search anywhere. Every field is typed by hand on one INS page, which the animals journey hands over to.</p>
+      </div>
+      <ul class="points">
+        <li>INS frontend "Add address details": manual fields and a country drop-down</li>
+        <li>The animals journey's party pickers only filter the saved address book</li>
+      </ul>
+      <div class="shots">
+        <figure>
+          <div class="frame" tabindex="0"><img src="img/q1-real-ins-add.png" alt="Real INS frontend 'Add address details' page with manual address and contact fields and no search" loading="lazy"></div>
+          <figcaption><span>INS frontend: add address (also reached from the journey)</span><a href="img/q1-real-ins-add.png" target="_blank" rel="noopener">Full size</a></figcaption>
+        </figure>
+        <figure>
+          <div class="frame" tabindex="0"><img src="img/q1-real-picker.png" alt="Real animals journey 'Consignor or exporter' picker with a search box that filters saved addresses and a paginated list" loading="lazy"></div>
+          <figcaption><span>Animals journey: consignor picker (filters saved addresses; local test data)</span><a href="img/q1-real-picker.png" target="_blank" rel="noopener">Full size</a></figcaption>
+        </figure>
+      </div>
+    </article>
+  </div>
+
+  <div class="decision">
+    <div class="default">
+      <p class="label">Default if nobody answers</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th scope="col">Environment</th><th scope="col">What gets built</th></tr></thead>
+          <tbody>
+            <tr><td>Fit suites and the local stack</td><td>Search runs against the lookup stub's fixed results</td></tr>
+            <tr><td>CDP dev</td><td>Search runs against the INS backend's real address lookup</td></tr>
+            <tr><td>CDP test, ext-test, perf-test, prod</td><td>Search is built behind a per-environment setting, left off. Pages open with the address fields showing and no search box, until the lookup is set up there</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Every field, error message and save is the same in every environment.</p>
+    </div>
+    <div class="why">
+      <p class="label">Why the rules could not settle it</p>
+      <p>The prototype searches everywhere, and a settled rule (<span class="id">c-178</span>) says the search must use the real lookup rather than a made-up list. That lookup is an INS backend spike that exists only locally and in CDP dev. Setting it up elsewhere is a platform and cost decision the sources cannot make.</p>
+    </div>
+    <div class="answer">
+      <label for="a1">Answer for question 1</label>
+      <textarea id="a1" placeholder="Keep the default, or say which environments get the lookup"></textarea>
+      <p class="note">This box is a note-taking aid on your screen only. Tell Claude the answer so it goes into the ruling.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Question 2 -->
+<section class="q" id="q2" aria-labelledby="q2-title">
+  <div class="q-head prose">
+    <p class="q-num">QUESTION 2 · conflict <span class="id">c-218</span></p>
+    <h2 id="q2-title">How should the commercial transporter's Northern Ireland address search work?</h2>
+    <p class="ask">A commercial transporter can only be from Northern Ireland. Should its search use the same address lookup filtered to Northern Ireland (BT) postcodes, with the lookup stubs given a few Northern Ireland addresses so it can be seen working outside CDP dev?</p>
+    <div class="meta"><span>Affects <span class="id">inc-042</span></span><span>Requirements <span class="id">req-456</span>, <span class="id">req-457</span></span><span>Also changes <code>trade-imports-stub</code></span></div>
+  </div>
+
+  <div class="compare">
+    <article class="side proto">
+      <div class="side-head">
+        <span class="tag">Prototype · Design Release 2.1</span>
+        <p>Authorisation number and name, then "Search for an address" with an "Enter address manually" fallback.</p>
+      </div>
+      <ul class="points">
+        <li>The search offers Northern Ireland addresses from a made-up list</li>
+        <li>Required fields are checked before saving</li>
+      </ul>
+      <div class="shots">
+        <figure>
+          <div class="frame" tabindex="0"><img src="img/q2-proto-commercial.png" alt="Prototype 'Add a commercial transporter' page with an authorisation help panel, authorisation number, name and a 'Search for an address' box" loading="lazy"></div>
+          <figcaption><span>Add a commercial transporter</span><a href="img/q2-proto-commercial.png" target="_blank" rel="noopener">Full size</a></figcaption>
+        </figure>
+      </div>
+    </article>
+
+    <article class="side real">
+      <div class="side-head">
+        <span class="tag">Real service today</span>
+        <p>Manual address fields with the country fixed to Northern Ireland. No search.</p>
+      </div>
+      <ul class="points">
+        <li>Submitting the form empty saves and returns to the overview with no error. The backlog already fixes this (the prototype wins)</li>
+        <li>The lookup stubs only return 3 London addresses today</li>
+      </ul>
+      <div class="shots">
+        <figure>
+          <div class="frame" tabindex="0"><img src="img/q2-real-commercial.png" alt="Real 'Add commercial transporter' page with manual address fields and the country fixed to Northern Ireland" loading="lazy"></div>
+          <figcaption><span>Add commercial transporter</span><a href="img/q2-real-commercial.png" target="_blank" rel="noopener">Full size</a></figcaption>
+        </figure>
+      </div>
+    </article>
+  </div>
+
+  <div class="decision">
+    <div class="default">
+      <p class="label">Default if nobody answers</p>
+      <ul>
+        <li>The commercial transporter search calls the same INS backend lookup and lists only results whose postcode starts "BT".</li>
+        <li>The lookup stubs used by the fit suites and the local stack gain a few BT addresses, so the filter and the fill can be seen and tested there.</li>
+        <li>CDP dev uses the real lookup's Northern Ireland results. Other environments follow question 1.</li>
+      </ul>
+    </div>
+    <div class="why">
+      <p class="label">Why the rules could not settle it</p>
+      <p>The prototype's Northern Ireland search uses invented data, which <span class="id">c-178</span> rules out. No source says how a Northern Ireland-only search should be shown or tested where the real lookup is not available.</p>
+    </div>
+    <div class="answer">
+      <label for="a2">Answer for question 2</label>
+      <textarea id="a2" placeholder="Keep the default, or describe the Northern Ireland search to build"></textarea>
+      <p class="note">On your screen only. Tell Claude the answer so it goes into the ruling.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Question 3 -->
+<section class="q" id="q3" aria-labelledby="q3-title">
+  <div class="q-head prose">
+    <p class="q-num">QUESTION 3 · DR1 row <span class="id">inc-103</span>, left to the design authority</p>
+    <h2 id="q3-title">When does an animal count as identified: once one identifier is filled in, or only when all of them are?</h2>
+    <p class="ask">Two authorities disagree. Design Release 2.1 asks for every identifier before arrival. The data-fields specification (V4) the real service implements says "Mandatory to Submit – At least one Animal Identifier". DR1 did not decide: it left this to the design authority. Five requirements are blocked until it is settled.</p>
+    <div class="meta"><span>Affects <span class="id">inc-147</span> (blocked today)</span><span>Requirements <span class="id">req-905</span>, <span class="id">req-906</span>, <span class="id">req-908</span>, <span class="id">req-931</span>, <span class="id">req-940</span></span></div>
+  </div>
+
+  <div class="compare">
+    <article class="side proto">
+      <div class="side-head">
+        <span class="tag">Prototype · Design Release 2.1</span>
+        <p>"You must add all animal identification details before the consignment arrives at the port of entry." Each animal's panel holds every identifier for its commodity.</p>
+      </div>
+      <ul class="points">
+        <li>Submitting with identifiers missing is allowed, but the notification is then flagged "Action required"</li>
+        <li>An animal with none shows "Enter a minimum of 1 identifier"; the header says "You need to complete animal identifiers"</li>
+      </ul>
+      <div class="shots">
+        <figure>
+          <div class="frame" tabindex="0"><img src="img/q3-proto-identification.png" alt="Prototype 'Identification details' page with the inset 'You must add all animal identification details before the consignment arrives' and Ear tag and Passport fields for cattle 1 of 2" loading="lazy"></div>
+          <figcaption><span>Identification details, cattle 1 of 2</span><a href="img/q3-proto-identification.png" target="_blank" rel="noopener">Full size</a></figcaption>
+        </figure>
+        <figure>
+          <div class="frame" tabindex="0"><img src="img/q3-proto-action-required.png" alt="Prototype submitted notification marked 'Submitted action required', with 'Enter a minimum of 1 identifier' shown against a species with no identifiers" loading="lazy"></div>
+          <figcaption><span>A submitted notification flagged "Action required"</span><a href="img/q3-proto-action-required.png" target="_blank" rel="noopener">Full size</a></figcaption>
+        </figure>
+      </div>
+    </article>
+
+    <article class="side real">
+      <div class="side-head">
+        <span class="tag">Real service today</span>
+        <p>The same inset text, but one identifier of two is enough. The task shows Complete, the notification submits, and nothing follows up on the rest.</p>
+      </div>
+      <ul class="points">
+        <li>Ear tag filled, Passport blank: "Identification details" shows Complete</li>
+        <li>The confirmation page lists only the health certificate as still to do</li>
+      </ul>
+      <div class="shots">
+        <figure>
+          <div class="frame" tabindex="0"><img src="img/q3-real-identification.png" alt="Real 'Identification details' page for cattle with Ear tag filled and Passport blank" loading="lazy"></div>
+          <figcaption><span>Identification details, one of two filled</span><a href="img/q3-real-identification.png" target="_blank" rel="noopener">Full size</a></figcaption>
+        </figure>
+        <figure>
+          <div class="frame" tabindex="0"><img src="img/q3-real-overview.png" alt="Real Overview task list showing 'Identification details' as Complete" loading="lazy"></div>
+          <figcaption><span>Overview after saving: marked Complete</span><a href="img/q3-real-overview.png" target="_blank" rel="noopener">Full size</a></figcaption>
+        </figure>
+        <figure>
+          <div class="frame" tabindex="0"><img src="img/q3-real-confirmation.png" alt="Real 'Import notification submitted' page listing only the health certificate under 'You still need to'" loading="lazy"></div>
+          <figcaption><span>Confirmation: no identification follow-up</span><a href="img/q3-real-confirmation.png" target="_blank" rel="noopener">Full size</a></figcaption>
+        </figure>
+      </div>
+    </article>
+  </div>
+
+  <div class="decision">
+    <div class="default">
+      <p class="label">Default if nobody answers</p>
+      <p>Both rules hold, at different moments, which is what Design Release 2.1 already shows:</p>
+      <ul>
+        <li><strong>To submit</strong>, at least one identifier per animal is enough (V4).</li>
+        <li><strong>To be complete</strong>, every identifier for the commodity is needed. Until then the Identification task does not show Complete.</li>
+        <li>A notification submitted with identifiers missing lists "complete the animal identifier information in the notification" on its confirmation page, and is flagged on the dashboard as "Information is missing" (DR2.1).</li>
+      </ul>
+    </div>
+    <div class="why">
+      <p class="label">Why the rules could not settle it</p>
+      <p>The agreed precedence lets only a DR1 judgement override the prototype, and DR1 made none here: it deferred. But the V4 specification is a real validation rule from outside the prototype, so this is a genuine clash between two authorities rather than a design preference.</p>
+    </div>
+    <div class="answer">
+      <label for="a3">Answer for question 3</label>
+      <textarea id="a3" placeholder="Keep the default, or say which rule governs"></textarea>
+      <p class="note">On your screen only. Tell Claude the answer so it goes into the ruling.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Waiting on others -->
+<section class="q" id="waiting" aria-labelledby="waiting-title">
+  <div class="q-head prose">
+    <p class="q-num">NO DECISION NEEDED TODAY</p>
+    <h2 id="waiting-title">Waiting on others</h2>
+    <p>These increments are blocked on work outside the programme. They are listed so the call knows they exist; nobody needs to decide anything about them.</p>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th scope="col">Waiting for</th><th scope="col">Requirements</th><th scope="col">What it holds up</th></tr></thead>
+      <tbody>
+        <tr><td>The MDM reference-data integration (Rhys's ruling, 7 September)</td><td class="num">8</td><td>Country, port and region list content</td></tr>
+        <tr><td>Outcomes sent back from the case system (PIMS Dynamics)</td><td class="num">7</td><td>Completed, delayed and action-required statuses on real notifications</td></tr>
+        <tr><td>Inspection outcomes from the import-checking systems</td><td class="num">3</td><td>The dashboard's inspection and delay cards</td></tr>
+        <tr><td>A germinal products notification reaching the dashboard</td><td class="num">4</td><td>Germinal products dashboard counts (likely to clear now germinal products are in scope)</td></tr>
+        <tr><td>CDP raising the upload size cap (EUDPA-518)</td><td class="num">1</td><td>The 50MB document limit</td></tr>
+        <tr><td>The plants services publishing to the dashboard</td><td class="num">1</td><td>The plants section's dashboard cards</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<footer class="end">
+  <p>Prototype: Design Release 2.1 at commit 04a073b. Real services: every repo on main, 7 October 2026, local stack; the address lists show local test data.</p>
+  <p>Full report and backlog: <code>workareas/shared/design-release-2-1/</code> on branch <code>feat/NO_JIRA-design-release-2-1</code>.</p>
+</footer>
+
+</div>

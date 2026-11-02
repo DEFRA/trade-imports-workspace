@@ -1,0 +1,713 @@
+{
+  "about": {
+    "purpose": "Extends the Design Release 2.1 business review plan (cards.json) with the type question and templates theme: one card per change a user would notice, the open questions to put first, and the screenshots to capture. Built from the 13 rows marked done in themes/type-question-and-templates. The 9 rows still to do are listed in stillToCome, not carded. The dropped row inc-163 'Edit a whole saved template on its own task list' is not carded either: a saved template is changed one section at a time instead.",
+    "before": "main (origin/main in each repo)",
+    "after": "feat/NO_JIRA-design-release-2-1-combined",
+    "capture": "As cards.json: same data, same viewport (desktop 1280 wide, full page), JavaScript on. Most of these pages do not exist on main, so each shot says beforeExists. Where it is false, beforeShows says what main shows at that point instead, if anything; compare is 'before-and-after' only when that is worth a picture, otherwise 'after-only'.",
+    "routes": {
+      "INS": "Home / (Dashboard). The type question /notification-type (from Create new). Its template version /notification-type/template (from Create new template on Manage templates). Both are on the INS front door, which hands over to the animals or plants service.",
+      "live animals": "Start from the INS question: /live-animals/start (creates the draft, opens origin). Manage templates /live-animals/templates. Template name /live-animals/templates/new?type=live-animals, and /live-animals/templates/{templateId}/name once started. While a template is being created, its pages are /live-animals/templates/{templateId}/{slug} (the same slugs as a notification, without accompanying-documents, declaration and confirmation), its task list is /live-animals/templates/{templateId} and its review is /live-animals/templates/{templateId}/notification-view. Once saved, /live-animals/templates/{templateId} is the template's own page, and a Change link opens /live-animals/templates/{templateId}/{slug}?change=1. Use template is a form on the card or page that posts to /live-animals/templates/{templateId}/use and opens the new notification's overview /live-animals/notifications/{id}.",
+      "plants": "Start from the INS question: /high-risk-plants/start (creates the draft, opens /high-risk-plants/notifications/{id}/commodity-type). Plants has no templates pages; its Templates item links to the animals service's Manage templates."
+    },
+    "testData": {
+      "weekly-cattle": "A live animals template named 'Weekly cattle from France': origin France, region code No, internal reference WEEKLY-01, Bos taurus ticked on 'What are you importing?', nothing else answered. The tests repo's save-template.spec.ts saveTemplate walk, with that name and reference.",
+      "weekly-cattle-full": "As weekly-cattle, plus Commodity details with 3 animals for each species and 1 package (use-template.spec.ts saveTemplate), and on Roles and addresses a place of origin, consignor, consignee, importer and place of destination picked from the address book, then a contact address (template-parties.spec.ts). Any saved address-book entries will do; the spec creates its own through the address book.",
+      "empty-templates-user": "A user who has never saved a template: the tests repo's users.sarah on her Gatwick Airport organisation (manage-templates.spec.ts), signed in from a fresh browser."
+    },
+    "notes": [
+      "The main plan's open question q-welsh-drafts covers this theme's new Welsh text too: 'Create new', 'Use template', 'Templates' ('Templedi') and every templates page are machine-drafted.",
+      "Prototype screens not used: notification-hub--template.png (the dropped whole-template edit), templates-discard.png, templates--deleted.png and templates-arena-aintree-delete.png (discarding and deleting a template, still to come).",
+      "The main plan's i-home shot will also show Create new and Use template on the combined side. i-t-home here is the same page, captured for this theme's cards with its navigation and button links recorded."
+    ]
+  },
+  "groups": [
+    {
+      "name": "Starting a notification",
+      "cards": [
+        {
+          "id": "t-type-question",
+          "group": "Starting a notification",
+          "title": "Starting a notification from the INS home asks what you are importing first",
+          "whatChanged": "Before, the INS home's only way to start was a 'Start a new notification' button, shown only when the organisation had no notifications, and it opened the live animals notification list. Now 'Create new' opens a new page, 'What are you importing?', under the caption 'About the consignment', with five options and none chosen: Live animals; Germinal products (semen, ova, embryos); Plants for planting; Potatoes (seed and ware); Wood products. It has a single Continue button, a Back link to the INS home and no Draft tag or reference, and Dashboard stays highlighted in the navigation. Continuing with nothing chosen shows 'Select what you are importing'. No notification exists until an option is chosen and Continue pressed. Live animals then opens a new live animals draft on Origin of the import, with its Draft tag and GBN-AG reference. A plants option opens a new plants draft (see the next card but one). Germinal products goes to where the germinal products service will start, which is not built yet. Leaving with Back creates nothing. Starting from the live animals or plants notification list still skips the question.",
+          "services": ["INS", "live animals", "plants"],
+          "rows": [
+            { "id": "inc-148", "title": "Ask 'What are you importing?' before a notification is created" }
+          ],
+          "rulings": [
+            {
+              "source": "sources/ruling-sam-2026-10-09-templates.md",
+              "ref": "claim 2",
+              "heading": "(a) The dashboard",
+              "quote": "nothing else on the INS home is blocked by claim 1."
+            },
+            {
+              "source": "distil/conflicts.json (decisions page)",
+              "ref": "c-007",
+              "heading": "How the type question maps onto the real services",
+              "quote": "A start from a set's own notifications list in the animals frontend skips the question."
+            }
+          ],
+          "prototypeScreens": ["notification-type.png", "notification-type--error.png"],
+          "shots": ["i-t-type-question", "i-t-type-question-error", "a-t-origin-from-ins", "i-t-type-question-germinal"]
+        },
+        {
+          "id": "t-ins-home-buttons",
+          "group": "Starting a notification",
+          "title": "The INS home always shows Create new and Use template",
+          "whatChanged": "Before, the INS home showed 'Start a new notification' only to an organisation with no notifications. With notifications, or after a search, there was no way to start from the home. Now a primary 'Create new' button and a secondary 'Use template' button sit under the heading, above the reference search and the table, whatever the organisation has and after any search, including one that matches nothing. 'Start a new notification' is gone. Create new opens the 'What are you importing?' question. Use template opens Manage templates in the animals service.",
+          "services": ["INS"],
+          "rows": [
+            { "id": "inc-149", "title": "Create new on today's INS home starts every notification at the type question" },
+            { "id": "inc-153", "title": "Use template button on today's INS home" }
+          ],
+          "rulings": [
+            {
+              "source": "sources/ruling-sam-2026-10-09-templates.md",
+              "ref": "claim 2",
+              "heading": "(a) The dashboard",
+              "quote": "nothing else on the INS home is blocked by claim 1."
+            }
+          ],
+          "prototypeScreens": ["dashboard.png"],
+          "shots": ["i-t-home", "i-t-home-no-results", "i-t-home-empty"]
+        },
+        {
+          "id": "t-plants-first-page",
+          "group": "Starting a notification",
+          "title": "Choosing a plants type on the INS question opens plants' own first page, which asks again",
+          "whatChanged": "Before, a plants notification could be started only from the plants notification list. Now choosing Plants for planting, Potatoes (seed and ware) or Wood products on the INS question creates a new plants draft with a GBN-HRP reference and opens plants' first page. That page is plants' own 'What are you importing?', offering 'Potatoes (seed or ware)', 'Plants for planting' and 'Wood and cut trees', each with its notice-period hint. The choice made on the INS question is not carried across, so nothing is chosen and the trader answers again. Its Back link goes to the plants notification list, not to the INS question. No live animals notification is created.",
+          "services": ["plants", "INS"],
+          "rows": [
+            { "id": "inc-148", "title": "Ask 'What are you importing?' before a notification is created" }
+          ],
+          "rulings": [
+            {
+              "source": "distil/conflicts.json (decisions page)",
+              "ref": "c-007",
+              "heading": "How the type question maps onto the real services",
+              "quote": "Plants for planting, Potatoes (seed and ware) and Wood products continue to the start of the high-risk plants journey in trade-imports-plants-frontend, which creates a plants draft and lands on plants' own first page."
+            }
+          ],
+          "prototypeScreens": [],
+          "shots": ["p-t-first-page-from-ins"]
+        }
+      ]
+    },
+    {
+      "name": "Finding templates",
+      "cards": [
+        {
+          "id": "t-templates-navigation",
+          "group": "Finding templates",
+          "title": "Every service's navigation has a Templates item",
+          "whatChanged": "Before, a signed-in trader's navigation had four items: Dashboard, Address book, Manage account, Log out. Now it has five, in this order, on live animals, the INS front door and plants: Dashboard, Templates, Address book, Manage account, Log out. Templates always opens Manage templates in the animals service, including from plants, which has no templates of its own. Templates is highlighted on every templates page and on the template version of the 'What are you importing?' question; Dashboard and Address book keep their own highlighting. A signed-out visitor does not see it.",
+          "services": ["live animals", "INS", "plants"],
+          "rows": [
+            { "id": "inc-152", "title": "Templates item in the service navigation on every frontend, current on every templates page" }
+          ],
+          "rulings": [
+            {
+              "source": "sources/ruling-sam-2026-10-09-templates.md",
+              "ref": "claim 7",
+              "heading": "(b) Templates",
+              "quote": "added to plants' navigation too, linking across to Manage templates."
+            }
+          ],
+          "prototypeScreens": ["dashboard.png", "templates.png"],
+          "shots": ["a-t-nav-live-animals", "p-t-nav-plants", "i-t-home", "a-t-manage-templates-empty"]
+        },
+        {
+          "id": "t-manage-templates",
+          "group": "Finding templates",
+          "title": "A new Manage templates page lists the trader's own templates",
+          "whatChanged": "New page. It has the heading 'Manage templates', the line 'Select, manage or create new notification templates', the Alpha phase banner, a 'Create new template' button, a 'My templates' heading and a count. A trader with no templates sees 'Show 0 of 0 results' and an empty list, with no message. There is no Back link, and no sort, search, filter or page controls. There are no example templates: the list holds only what the trader has saved, newest first. Templates are kept between sessions and are private to the person who saved them.",
+          "services": ["live animals"],
+          "rows": [
+            { "id": "inc-151", "title": "Manage templates page, empty, read from the user's stored templates" },
+            { "id": "inc-157", "title": "Save a template and see it on Manage templates" }
+          ],
+          "rulings": [
+            {
+              "source": "sources/ruling-sam-2026-10-09-templates.md",
+              "ref": "claim 4",
+              "heading": "(b) Templates",
+              "quote": "templates are create, read, update and delete work and go ahead now."
+            },
+            {
+              "source": "distil/conflicts.json (decisions page)",
+              "ref": "c-183",
+              "heading": "Where templates live",
+              "quote": "templates are stored by the backend and kept between sessions, and a user sees only templates really saved, with no seeded examples."
+            },
+            {
+              "source": "distil/conflicts.json (decisions page)",
+              "ref": "c-184",
+              "heading": "Who a template belongs to",
+              "quote": "A saved template is private to the signed-in user who saved it and listed under 'My templates'; nobody else sees, uses, changes or deletes it."
+            }
+          ],
+          "prototypeScreens": ["templates.png"],
+          "shots": ["a-t-manage-templates-empty"]
+        }
+      ]
+    },
+    {
+      "name": "Creating a template",
+      "cards": [
+        {
+          "id": "t-template-type-question",
+          "group": "Creating a template",
+          "title": "Create new template asks what the template is for, offering only live animals and germinal products",
+          "whatChanged": "New. 'Create new template' opens the same 'What are you importing?' page on the INS front door, but it offers only Live animals and Germinal products (semen, ova, embryos), with neither chosen. Its Back link goes to Manage templates and Templates is highlighted in the navigation. Following the button saves nothing. Choosing a type goes to the template name page; going Back from there shows the type still chosen. Germinal products reaches the name page, but continuing from it returns to Manage templates with nothing saved and no message, because the germinal products service is not built yet.",
+          "services": ["INS", "live animals"],
+          "rows": [
+            { "id": "inc-154", "title": "Start a template: the type question offers live animals and germinal products, goes back to the templates list and on to the template name and origin in template mode" }
+          ],
+          "rulings": [
+            {
+              "source": "distil/conflicts.json (decisions page)",
+              "ref": "c-220",
+              "heading": "Which types template creation offers",
+              "quote": "in template mode the type question offers only Live animals and Germinal products."
+            }
+          ],
+          "prototypeScreens": ["notification-type.png"],
+          "shots": ["i-t-template-type-question", "a-t-template-germinal-continue"]
+        },
+        {
+          "id": "t-template-name",
+          "group": "Creating a template",
+          "title": "The trader names the template",
+          "whatChanged": "New page, 'Enter template name', under the caption 'Create a new template', with one text box and no hint. It ends with 'Save and continue' and a 'Cancel and return to manage templates' link. A blank name is accepted with no error and the template is called 'Untitled template'. Spaces around a name are trimmed, and there is no length or duplicate-name rule. Back goes to the type question (or to Manage templates if no type was chosen). Going back to this page part way through shows the name already entered; starting another template shows it empty.",
+          "services": ["live animals"],
+          "rows": [
+            { "id": "inc-154", "title": "Start a template: the type question offers live animals and germinal products, goes back to the templates list and on to the template name and origin in template mode" }
+          ],
+          "rulings": [],
+          "prototypeScreens": ["templates-create.png"],
+          "shots": ["a-t-template-name"]
+        },
+        {
+          "id": "t-template-mode-pages",
+          "group": "Creating a template",
+          "title": "A template is filled in on the same pages as a notification, marked with a Template tag and its name",
+          "whatChanged": "New. After the name, Origin of the import opens for the template. Every page shows a grey 'Template' tag and the template's name where a notification shows its Draft tag and reference, and asks the same questions with the same hints. Origin offers only 'Save and continue', with no Cancel, and its Back link goes to the name page. 'What are you importing?' offers 'Save and continue', 'Save and return to overview' and a 'Cancel and return to overview' link, and Back goes to origin. Saving it goes to the template's task list, not on to the main import reason. An answer in the wrong format is refused. 'Save and continue' needs the page's required answers, while 'Save and return to overview' saves without them (see the open question). The arrival page still asks for a date, but a template never keeps it. Starting and naming a template creates no notification.",
+          "services": ["live animals"],
+          "rows": [
+            { "id": "inc-154", "title": "Start a template: the type question offers live animals and germinal products, goes back to the templates list and on to the template name and origin in template mode" },
+            { "id": "inc-155", "title": "The template's task list, the Overview while a template is being created, and 'What are you importing?' in template mode" }
+          ],
+          "rulings": [
+            {
+              "source": "sources/ruling-sam-2026-10-09-templates.md",
+              "ref": "claim 5",
+              "heading": "(b) Templates",
+              "quote": "template mode is another way of walking through the same journey pages, capturing the same data"
+            },
+            {
+              "source": "sources/ruling-sam-2026-10-09-templates.md",
+              "ref": "claim 6",
+              "heading": "(b) Templates",
+              "quote": "template rows do not wait for other themes' changes to the pages they walk through."
+            }
+          ],
+          "prototypeScreens": [],
+          "shots": ["a-t-template-origin", "a-t-template-commodities"]
+        },
+        {
+          "id": "t-template-task-list",
+          "group": "Creating a template",
+          "title": "While a template is being created, the overview becomes its task list",
+          "whatChanged": "New. The overview shows the Template tag and name in place of the status and reference, and its list is headed 'Template tasklist' instead of 'Notification tasklist'. It keeps the 'Your commodities' totals. It has five sections: '1. About the consignment', '2. Description of the goods', '3. Transport and arrival', '4. Consignment parties' and '5. Contact address'. There is no Documents section and no Upload documents task. Otherwise the tasks and their names are the notification's own, each tagged Complete or To do. It ends with 'Review template' and 'Return to manage templates' in place of 'Review and submit' and 'Return to dashboard'. There is no 'Save template' button here. A notification's overview is unchanged.",
+          "services": ["live animals"],
+          "rows": [
+            { "id": "inc-155", "title": "The template's task list, the Overview while a template is being created, and 'What are you importing?' in template mode" }
+          ],
+          "rulings": [
+            {
+              "source": "distil/conflicts.json (decisions page)",
+              "ref": "c-264",
+              "heading": "Documents and declaration in template mode",
+              "quote": "a template never offers documents or a declaration"
+            }
+          ],
+          "prototypeScreens": ["notification-hub--new-template.png"],
+          "shots": ["a-t-template-task-list"]
+        },
+        {
+          "id": "t-template-review",
+          "group": "Creating a template",
+          "title": "The trader reviews the template before saving it",
+          "whatChanged": "New. 'Review template' opens 'Review your template' under the Template tag and name. It shows the notification review's cards without the documents and without an arrival date row, and reads 'Not applicable' for every unanswered row. It shows no error summary and no card errors, however much is unanswered. Its sections are numbered as the task list numbers them. The main button reads 'Save template' and saves the template instead of going to the declaration. There is no Delete or Cancel. Back goes to the template's task list. Each Change link opens that page for the template being created.",
+          "services": ["live animals"],
+          "rows": [
+            { "id": "inc-156", "title": "Review your template before saving it" }
+          ],
+          "rulings": [
+            {
+              "source": "sources/ruling-sam-2026-10-09-templates.md",
+              "ref": "claim 5",
+              "heading": "(b) Templates",
+              "quote": "template mode is another way of walking through the same journey pages, capturing the same data"
+            }
+          ],
+          "prototypeScreens": ["review-notification--template.png"],
+          "shots": ["a-t-template-review"]
+        },
+        {
+          "id": "t-template-save",
+          "group": "Creating a template",
+          "title": "Save template keeps the template and lists it first on Manage templates",
+          "whatChanged": "New. 'Save template' saves the template even with only some sections answered and returns to Manage templates. A green Success banner reads '<template name> saved to templates' ('Untitled template saved to templates' with no name). The banner stays until the trader leaves or reloads and does not come back. The new template is listed first and the count goes up, for example 'Show 1-1 of 1 results'. Each template is a card with its category ('Live animals'), its name, the rows Commodity, Origin, Consignee and Consignor ('Not applicable' when unanswered), a 'View template' link and a 'Use template' button. A saved template is still there after signing out and back in, another user never sees it, and it never appears among the trader's notifications.",
+          "services": ["live animals"],
+          "rows": [
+            { "id": "inc-157", "title": "Save a template and see it on Manage templates" },
+            { "id": "inc-161", "title": "Template card answers, category and each party's address" }
+          ],
+          "rulings": [
+            {
+              "source": "distil/conflicts.json (decisions page)",
+              "ref": "c-266",
+              "heading": "Where a template's category comes from",
+              "quote": "a template's category is the set it was made in, shown on the card as 'Live animals' or 'Germinal products', and using it starts a notification in that set."
+            }
+          ],
+          "prototypeScreens": ["templates--saved.png", "templates.png"],
+          "shots": ["a-t-manage-templates-saved", "a-t-template-card-parties"]
+        }
+      ]
+    },
+    {
+      "name": "Using and changing a saved template",
+      "cards": [
+        {
+          "id": "t-template-page",
+          "group": "Using and changing a saved template",
+          "title": "Each saved template has its own page",
+          "whatChanged": "New. 'View template' opens a page with the caption 'Templates' and the template's name as its heading and browser title. Below it are 'Date created: <day month year>', a primary 'Use template' button and a red 'Delete' button. There is no Edit button. The answers are shown in the notification review's cards, in five numbered sections, with a Change link on every card, and Back goes to Manage templates. Opening a template that does not exist, or another user's template, opens Manage templates. The Delete button is shown, but deleting is not built yet (see the open question).",
+          "services": ["live animals"],
+          "rows": [
+            { "id": "inc-158", "title": "View a saved template" }
+          ],
+          "rulings": [
+            {
+              "source": "distil/conflicts.json (decisions page)",
+              "ref": "c-261",
+              "heading": "No whole-template edit",
+              "quote": "A saved template is changed one section at a time"
+            }
+          ],
+          "prototypeScreens": ["templates-arena-aintree.png"],
+          "shots": ["a-t-template-page", "a-t-template-delete"]
+        },
+        {
+          "id": "t-template-parties",
+          "group": "Using and changing a saved template",
+          "title": "A template keeps every party's address",
+          "whatChanged": "New. A template keeps the place of origin, consignor, consignee, importer, place of destination and contact address, each as answered. The template's page shows them on its Addresses card and Contact address card. If no contact address was chosen, the Contact address card shows the place of origin. The card on Manage templates shows the consignee's and consignor's names. A notification started from the template gets each one.",
+          "services": ["live animals"],
+          "rows": [
+            { "id": "inc-161", "title": "Template card answers, category and each party's address" }
+          ],
+          "rulings": [
+            {
+              "source": "distil/conflicts.json (decisions page)",
+              "ref": "c-186",
+              "heading": "Each party's address on a template",
+              "quote": "the contact address falls back to the place of origin where none was chosen, as the design does."
+            }
+          ],
+          "prototypeScreens": ["templates-arena-aintree.png"],
+          "shots": ["a-t-template-page", "a-t-template-card-parties", "a-t-template-used-review"]
+        },
+        {
+          "id": "t-template-change",
+          "group": "Using and changing a saved template",
+          "title": "The trader can change one section of a saved template",
+          "whatChanged": "New. A Change link on the template's page opens that section's page filled in with the template's answers, under the Template tag and name. It offers only 'Save and return' and a 'Cancel' link, and Back goes to the template's page. Saving updates the template and returns to its page, with a green banner '<template name> has been updated' ('Template has been updated' with no name). 'Date created' becomes the day of the change. Leaving without saving keeps the old answers. No notification is touched, and the template keeps no arrival date even if one is entered.",
+          "services": ["live animals"],
+          "rows": [
+            { "id": "inc-159", "title": "Change one section of a saved template" }
+          ],
+          "rulings": [
+            {
+              "source": "distil/conflicts.json (decisions page)",
+              "ref": "c-309",
+              "heading": "Links store nothing; forms do",
+              "quote": "Following any templates link (Create new template, View template, a Change link) stores nothing; storing happens on a form post."
+            }
+          ],
+          "prototypeScreens": ["origin-of-the-import--template-section-edit.png", "templates-arena-aintree--updated.png"],
+          "shots": ["a-t-template-change-origin", "a-t-template-updated"]
+        },
+        {
+          "id": "t-template-use",
+          "group": "Using and changing a saved template",
+          "title": "Use template starts a new draft notification filled in from the template",
+          "whatChanged": "New. 'Use template', on a card or on the template's page, creates a new live animals draft with a new GBN-AG reference and opens its normal overview: 'Notification tasklist', Draft status, the Documents section, 'Review and submit' and 'Return to dashboard'. Nothing on it names the template. The draft is filled in from the template's answers: origin, region code and internal reference; commodities, numbers, packages, net weight and identification details; import reason and purpose; certified for ('Further keeping' if the template's answer is no longer an option); unweaned animals; CPH number; port of entry and transport; transporter; each party and the contact address. The arrival date and documents are left to do, so those tasks show To do. The draft shows no errors when first opened. The template and the trader's other drafts are unchanged. Using a deleted or another user's template opens Manage templates and creates nothing.",
+          "services": ["live animals"],
+          "rows": [
+            { "id": "inc-160", "title": "Use a template to start a notification" },
+            { "id": "inc-161", "title": "Template card answers, category and each party's address" }
+          ],
+          "rulings": [
+            {
+              "source": "distil/conflicts.json (decisions page)",
+              "ref": "c-183",
+              "heading": "Where templates live",
+              "quote": "creating or using a template leaves the user's other drafts untouched."
+            }
+          ],
+          "prototypeScreens": ["notification-hub--from-template.png"],
+          "shots": ["a-t-template-used-overview", "a-t-template-used-review"]
+        }
+      ]
+    }
+  ],
+  "openQuestions": [
+    {
+      "id": "q-t-parties-heading",
+      "title": "Should a template call section 4 'Consignment parties' or 'Consignment addresses'?",
+      "question": "The notification review now calls this section 'Consignment addresses', and Design Release 2.1's template review does too. A template's task list, review and saved page all say '4. Consignment parties'. Which should a template use?",
+      "asBuilt": "The template's task list, the template review and the saved template's page all head section 4 '4. Consignment parties', matching the overview's own section name (a notification's overview says '5. Consignment parties'). The notification review's section reads 'Consignment addresses' and its card 'Addresses'. The template review and page use the 'Addresses' card, so on one page the section says 'parties' and the card says 'Addresses'. This was kept as the templates theme built it when the two themes were merged.",
+      "rows": ["inc-155", "inc-156", "inc-158"],
+      "cards": ["t-template-task-list", "t-template-review", "t-template-page"]
+    },
+    {
+      "id": "q-t-review-back",
+      "title": "Is Back to the task list right on the template review?",
+      "question": "On the template review, the Back link goes to the template's task list. Is that right? The row still to come, 'Back links follow the context a page was opened in', may change how Back links behave across the journey.",
+      "asBuilt": "Template review: Back goes to the template's task list, as Design Release 2.1 draws it. Notification review (draft): Back goes to the live animals notification list. While amending: Back goes to the overview. The task list is the only way into the template review, so Back returns to where the trader came from.",
+      "rows": ["inc-156", "inc-171"],
+      "cards": ["t-template-review"]
+    },
+    {
+      "id": "q-t-plants-asked-twice",
+      "title": "Plants traders are asked what they are importing twice, in different words",
+      "question": "A trader who chooses a plants type on the INS question lands on plants' own 'What are you importing?' with nothing chosen and different option names. Is answering twice acceptable for now, or should plants use the INS answer? Should the option names match? And should plants' Back link go back to the INS question?",
+      "asBuilt": "The INS question offers 'Plants for planting', 'Potatoes (seed and ware)' and 'Wood products'. Plants' first page offers 'Potatoes (seed or ware)', 'Plants for planting' and 'Wood and cut trees', with nothing chosen. The plants draft already exists at this point. The Back link goes to the plants notification list. The templates ruling expects plants' first page to be its own type question, so the INS answer is not passed on.",
+      "rows": ["inc-148"],
+      "cards": ["t-plants-first-page", "t-type-question"]
+    },
+    {
+      "id": "q-t-germinal-not-built",
+      "title": "Germinal products is offered before the germinal products service exists",
+      "question": "Should 'Germinal products (semen, ova, embryos)' be offered on both versions of 'What are you importing?' before the germinal products service is built, or hidden until then?",
+      "asBuilt": "On the INS question, Germinal products sends the trader to the address where the germinal products service will start, which shows page not found today. On the template version, Germinal products goes on to the template name page, but 'Save and continue' there returns to Manage templates with nothing saved and no message. Both are the behaviour the 9 October ruling allows until the germinal set is built.",
+      "rows": ["inc-148", "inc-154"],
+      "cards": ["t-type-question", "t-template-type-question"]
+    },
+    {
+      "id": "q-t-delete-not-built",
+      "title": "The template page shows a Delete button that does not work yet",
+      "question": "The template page shows a red 'Delete' button, but deleting a template is a row still to come. Is it acceptable to show the button before it works, or should it wait for that row?",
+      "asBuilt": "Delete links to the template's delete address, which no page answers yet, so it shows page not found. The row 'Template review ends with Save template and Delete, and a saved template can be deleted' builds the confirmation page and the deleting.",
+      "rows": ["inc-158", "inc-165"],
+      "cards": ["t-template-page"]
+    },
+    {
+      "id": "q-t-template-checks",
+      "title": "Which answers must a template have?",
+      "question": "While a template is being built, should a page insist on its required answers when the trader presses 'Save and continue', or may a template leave them blank? This was not settled by the ruling or the design, so a default was built.",
+      "asBuilt": "As for a notification: an answer in the wrong format is refused, 'Save and continue' needs the page's required answers (for example, choosing Yes for a region code without entering one shows an error), and 'Save and return to overview' saves without them. Origin, the first page after the name, offers only 'Save and continue', so a trader must answer origin before going further. The template's name is optional, no arrival date is kept, and a template can be saved with sections unanswered.",
+      "rows": ["inc-154"],
+      "cards": ["t-template-mode-pages"]
+    },
+    {
+      "id": "q-t-identification-on-template",
+      "title": "Should a template keep animal identification details?",
+      "question": "Ear tags and passports belong to particular animals, so they are likely to differ every time. Should a template keep them and copy them into each new notification?",
+      "asBuilt": "A template keeps whatever identification details were entered. Its page shows them inside the commodity card, and 'Use template' copies them into the new notification. Design Release 2.1's template review for cattle shows no identification details. The built template review shows them inside the commodity card whenever they were entered (not yet checked on a merged stack).",
+      "rows": ["inc-156", "inc-158", "inc-160"],
+      "cards": ["t-template-review", "t-template-page", "t-template-use"]
+    }
+  ],
+  "shots": [
+    {
+      "key": "i-t-home",
+      "service": "ins",
+      "page": "INS home",
+      "state": "Signed-in trader whose organisation has notifications",
+      "howToReach": "Open / on the INS front door after sign-in.",
+      "compare": "before-and-after",
+      "beforeExists": true,
+      "alsoCapture": "The service navigation items in order, their hrefs and which is marked current; and where each button under the heading links (combined: Create new to /notification-type, Use template to the animals service's /live-animals/templates; main: none)."
+    },
+    {
+      "key": "i-t-home-no-results",
+      "service": "ins",
+      "page": "INS home after a search that matches nothing",
+      "state": "Reference search 'GBN-AG-26-999999', no results",
+      "howToReach": "Open /, enter GBN-AG-26-999999 in the reference search and search (as the tests repo's notification-type.spec.ts does). Capture the page.",
+      "compare": "before-and-after",
+      "beforeExists": true
+    },
+    {
+      "key": "i-t-home-empty",
+      "service": "ins",
+      "page": "INS home with no notifications",
+      "state": "Signed-in trader whose organisation has no notifications",
+      "howToReach": "Sign in as a trader whose organisation has no notifications (a fresh stack before any notification is made, or an organisation no test uses), then open /.",
+      "compare": "before-and-after",
+      "beforeExists": true,
+      "alsoCapture": "Where the start button links (main: 'Start a new notification' to the live animals notification list /live-animals; combined: 'Create new' to /notification-type)."
+    },
+    {
+      "key": "i-t-type-question",
+      "service": "ins",
+      "page": "What are you importing? (starting a notification)",
+      "state": "Opened from the INS home, nothing chosen",
+      "howToReach": "Combined: open /, press 'Create new'; lands on /notification-type. Main: open / as in i-t-home-empty and press 'Start a new notification'; capture where it lands (the live animals notification list).",
+      "compare": "before-and-after",
+      "beforeExists": false,
+      "beforeShows": "No such page. The nearest on main is 'Start a new notification', shown only with no notifications, which opens the live animals notification list at /live-animals.",
+      "alsoCapture": "Browser title, the Back link's href and the navigation item marked current."
+    },
+    {
+      "key": "i-t-type-question-error",
+      "service": "ins",
+      "page": "What are you importing? with nothing chosen",
+      "state": "Continue pressed with no option chosen",
+      "howToReach": "On /notification-type press Continue without choosing.",
+      "compare": "after-only",
+      "beforeExists": false,
+      "beforeShows": "Nothing: the page does not exist on main.",
+      "alsoCapture": "Browser title."
+    },
+    {
+      "key": "a-t-origin-from-ins",
+      "service": "animals",
+      "page": "Origin of the import, new draft started from the INS question",
+      "state": "Live animals chosen on the INS question, Continue pressed",
+      "howToReach": "Combined: on /notification-type choose Live animals and press Continue (sign in on the animals service if asked); it goes through /live-animals/start and lands on /live-animals/notifications/{id}/origin. Main: open /live-animals and press the create button.",
+      "compare": "before-and-after",
+      "beforeExists": true,
+      "alsoCapture": "The Back link's href, the Draft tag and the reference."
+    },
+    {
+      "key": "i-t-type-question-germinal",
+      "service": "ins",
+      "page": "Page after choosing Germinal products on the INS question",
+      "state": "Germinal products (semen, ova, embryos) chosen, Continue pressed",
+      "howToReach": "On /notification-type choose Germinal products (semen, ova, embryos) and press Continue. Capture the landing page (the animals service's /germinal-products/start).",
+      "compare": "after-only",
+      "beforeExists": false,
+      "beforeShows": "Nothing: main has no way to choose germinal products.",
+      "alsoCapture": "The URL landed on."
+    },
+    {
+      "key": "p-t-first-page-from-ins",
+      "service": "plants",
+      "page": "Plants' first page, What are you importing?",
+      "state": "New plants draft, nothing chosen",
+      "howToReach": "Combined: on the INS /notification-type choose Plants for planting and press Continue (sign in on the plants service if asked); it goes through /high-risk-plants/start and lands on /high-risk-plants/notifications/{id}/commodity-type. Main: open /high-risk-plants and press the start button.",
+      "compare": "before-and-after",
+      "beforeExists": true,
+      "alsoCapture": "The Back link's href, the option labels in order and the reference."
+    },
+    {
+      "key": "a-t-nav-live-animals",
+      "service": "animals",
+      "page": "Live animals notification list, service navigation",
+      "state": "Signed-in trader",
+      "howToReach": "Open /live-animals.",
+      "compare": "before-and-after",
+      "beforeExists": true,
+      "alsoCapture": "The service navigation items in order, their hrefs and which is marked current."
+    },
+    {
+      "key": "p-t-nav-plants",
+      "service": "plants",
+      "page": "Plants notification list, service navigation",
+      "state": "Signed-in trader",
+      "howToReach": "Open /high-risk-plants.",
+      "compare": "before-and-after",
+      "beforeExists": true,
+      "alsoCapture": "The service navigation items in order, their hrefs (Templates links to the animals service's /live-animals/templates) and which is marked current."
+    },
+    {
+      "key": "a-t-manage-templates-empty",
+      "service": "animals",
+      "page": "Manage templates, no templates",
+      "state": "A user who has never saved a template (empty-templates-user)",
+      "howToReach": "In a fresh browser, sign in as users.sarah on her Gatwick Airport organisation and open /live-animals/templates (manage-templates.spec.ts).",
+      "compare": "after-only",
+      "beforeExists": false,
+      "beforeShows": "Page not found: there are no templates on main.",
+      "alsoCapture": "Browser title and the navigation item marked current."
+    },
+    {
+      "key": "i-t-template-type-question",
+      "service": "ins",
+      "page": "What are you importing? (creating a template)",
+      "state": "Opened from Create new template, nothing chosen",
+      "howToReach": "Open /live-animals/templates, press 'Create new template' (sign in on the INS front door if asked); lands on the INS /notification-type/template.",
+      "compare": "after-only",
+      "beforeExists": false,
+      "beforeShows": "Nothing: no templates on main.",
+      "alsoCapture": "The Back link's href, the options offered and the navigation item marked current."
+    },
+    {
+      "key": "a-t-template-germinal-continue",
+      "service": "animals",
+      "page": "Page after continuing a germinal products template from its name page",
+      "state": "Germinal products chosen, name 'Germinal test' entered, Save and continue pressed",
+      "howToReach": "From i-t-template-type-question choose Germinal products (semen, ova, embryos), Continue to /live-animals/templates/new?type=germinal-products, enter 'Germinal test', press Save and continue. Capture the landing page (Manage templates).",
+      "compare": "after-only",
+      "beforeExists": false,
+      "beforeShows": "Nothing: no templates on main.",
+      "alsoCapture": "The results count on Manage templates before and after."
+    },
+    {
+      "key": "a-t-template-name",
+      "service": "animals",
+      "page": "Enter template name",
+      "state": "Live animals chosen, name box empty",
+      "howToReach": "From i-t-template-type-question choose Live animals and press Continue; lands on /live-animals/templates/new?type=live-animals.",
+      "compare": "after-only",
+      "beforeExists": false,
+      "beforeShows": "Nothing: no templates on main.",
+      "alsoCapture": "Browser title, the Back link's href and the Cancel link's href."
+    },
+    {
+      "key": "a-t-template-origin",
+      "service": "animals",
+      "page": "Origin of the import, creating a template",
+      "state": "Template named 'Weekly cattle from France', origin not answered",
+      "howToReach": "On the name page enter 'Weekly cattle from France' and press Save and continue; lands on /live-animals/templates/{templateId}/origin.",
+      "compare": "after-only",
+      "beforeExists": false,
+      "beforeShows": "Nothing: no templates on main. The notification version of this page is in the main plan's origin shots.",
+      "alsoCapture": "The Back link's href and every button and link at the foot of the page."
+    },
+    {
+      "key": "a-t-template-commodities",
+      "service": "animals",
+      "page": "What are you importing?, creating a template",
+      "state": "Origin answered (France, region code No, internal reference WEEKLY-01), nothing chosen",
+      "howToReach": "On the template's origin choose France, region code No, internal reference WEEKLY-01, press Save and continue; lands on /live-animals/templates/{templateId}/commodities.",
+      "compare": "after-only",
+      "beforeExists": false,
+      "beforeShows": "Nothing: no templates on main.",
+      "alsoCapture": "The Back link's href and every button and link at the foot of the page."
+    },
+    {
+      "key": "a-t-template-task-list",
+      "service": "animals",
+      "page": "The template's task list",
+      "state": "weekly-cattle answered, before review",
+      "howToReach": "On the template's commodity page search 'cow', tick Bos taurus, press Save and continue; lands on /live-animals/templates/{templateId}.",
+      "compare": "after-only",
+      "beforeExists": false,
+      "beforeShows": "Nothing: no templates on main. A notification's overview is in the main plan's overview shots.",
+      "alsoCapture": "The list heading, the section headings and the two buttons' targets."
+    },
+    {
+      "key": "a-t-template-review",
+      "service": "animals",
+      "page": "Review your template",
+      "state": "weekly-cattle, most sections unanswered",
+      "howToReach": "On the template's task list press 'Review template'; lands on /live-animals/templates/{templateId}/notification-view.",
+      "compare": "after-only",
+      "beforeExists": false,
+      "beforeShows": "Nothing: no templates on main.",
+      "alsoCapture": "Browser title, the Back link's href and the section headings."
+    },
+    {
+      "key": "a-t-manage-templates-saved",
+      "service": "animals",
+      "page": "Manage templates just after saving",
+      "state": "weekly-cattle saved with Save template",
+      "howToReach": "On the template review press 'Save template'; lands on /live-animals/templates with the Success banner. Then reload and check the banner has gone.",
+      "compare": "after-only",
+      "beforeExists": false,
+      "beforeShows": "Nothing: no templates on main.",
+      "alsoCapture": "The banner's title and heading, and the results count."
+    },
+    {
+      "key": "a-t-template-card-parties",
+      "service": "animals",
+      "page": "Manage templates, a template card with every answer the card shows",
+      "state": "weekly-cattle-full saved under the name 'Weekly cattle, all parties'",
+      "howToReach": "Create a template as weekly-cattle-full (template-parties.spec.ts startTemplate, then Roles and addresses and the contact address from the task list, then Review template and Save template). Capture its card on /live-animals/templates.",
+      "compare": "after-only",
+      "beforeExists": false,
+      "beforeShows": "Nothing: no templates on main."
+    },
+    {
+      "key": "a-t-template-page",
+      "service": "animals",
+      "page": "A saved template's page",
+      "state": "weekly-cattle-full, opened with View template",
+      "howToReach": "On /live-animals/templates press 'View template' on the 'Weekly cattle, all parties' card; lands on /live-animals/templates/{templateId}.",
+      "compare": "after-only",
+      "beforeExists": false,
+      "beforeShows": "Nothing: no templates on main.",
+      "alsoCapture": "Browser title, the Back link's href, the section headings and every Change link's href."
+    },
+    {
+      "key": "a-t-template-delete",
+      "service": "animals",
+      "page": "Page after pressing Delete on a saved template's page",
+      "state": "Any saved template, Delete pressed",
+      "howToReach": "On a template's page press 'Delete'. Capture the landing page (/live-animals/templates/{templateId}/delete).",
+      "compare": "after-only",
+      "beforeExists": false,
+      "beforeShows": "Nothing: no templates on main."
+    },
+    {
+      "key": "a-t-template-change-origin",
+      "service": "animals",
+      "page": "Origin of the import, changing a saved template",
+      "state": "weekly-cattle-full, Change on the Origin of import card",
+      "howToReach": "On the template's page press 'Change' on the Origin of import card; lands on /live-animals/templates/{templateId}/origin?change=1, filled in.",
+      "compare": "after-only",
+      "beforeExists": false,
+      "beforeShows": "Nothing: no templates on main.",
+      "alsoCapture": "The Back link's href and every button and link at the foot of the page."
+    },
+    {
+      "key": "a-t-template-updated",
+      "service": "animals",
+      "page": "A saved template's page after changing a section",
+      "state": "Internal reference changed to WEEKLY-02, Save and return pressed",
+      "howToReach": "On the change of origin replace the internal reference with WEEKLY-02 and press 'Save and return'; lands on the template's page with the banner.",
+      "compare": "after-only",
+      "beforeExists": false,
+      "beforeShows": "Nothing: no templates on main.",
+      "alsoCapture": "The banner heading and the 'Date created' line."
+    },
+    {
+      "key": "a-t-template-used-overview",
+      "service": "animals",
+      "page": "Overview of a notification started from a template",
+      "state": "Use template pressed on the 'Weekly cattle, all parties' card",
+      "howToReach": "On /live-animals/templates press 'Use template' on the 'Weekly cattle, all parties' card; lands on /live-animals/notifications/{id}.",
+      "compare": "after-only",
+      "beforeExists": false,
+      "beforeShows": "The overview exists on main, but a new notification there always starts empty; there is no way to start one from a template.",
+      "alsoCapture": "The reference, the status tag and each task's Complete or To do tag."
+    },
+    {
+      "key": "a-t-template-used-review",
+      "service": "animals",
+      "page": "Review of a notification started from a template",
+      "state": "As a-t-template-used-overview, Review and submit pressed",
+      "howToReach": "From the new notification's overview press 'Review and submit'; lands on /live-animals/notifications/{id}/notification-view.",
+      "compare": "after-only",
+      "beforeExists": false,
+      "beforeShows": "The review exists on main, but never with answers copied from a template."
+    }
+  ],
+  "stillToCome": [
+    { "id": "inc-150", "title": "Origin's Back link follows where the notification started, and the type question picks the notification back up" },
+    { "id": "inc-164", "title": "Discard a template being created" },
+    { "id": "inc-165", "title": "Template review ends with Save template and Delete, and a saved template can be deleted" },
+    { "id": "inc-166", "title": "Commodity pages return to where the trader came from: check answers, the overview or a template" },
+    { "id": "inc-167", "title": "Main import reason page edits a template from its review" },
+    { "id": "inc-168", "title": "Arrival details while creating or editing a template" },
+    { "id": "inc-169", "title": "Template creation leaves out Upload documents" },
+    { "id": "inc-170", "title": "The transporter list's buttons when amending a notification or editing a template" },
+    { "id": "inc-171", "title": "Back links follow the context a page was opened in" }
+  ]
+}

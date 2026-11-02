@@ -1,0 +1,646 @@
+{
+  "source": "document:dr1-parity-backlog",
+  "structure": "Part 7, Address book and address picker. Read in full seven increments[] rows of backlog.json: inc-053 (lines 22666-22879, flow-change, address-book: no route to add an address from a picker or the contact page), inc-065 (22880-23062, copy-change, addresses: list heading and count wording), inc-046 (23063-23221, copy-change, addresses: contact-address page guidance), inc-064 (26713-26980, add-section, addresses: picker table width), inc-054 (26981-27170, flow-change, address-book: no route to correct a saved address from a picker), inc-055 (27171-27496, flow-change, addresses: whole book on one page, filtered as you type) and inc-062 (30187-30483, add-page, address-book: the saved address book pages, status dropped). Each row carries title, detail, finding.{frontend, prototype, difference, correction, falsifiedBy, verification, relatedTo}, citations, provenance.note and decision. The six blocked rows share one decision: ruling block, by Rhys, 2026-09-04, because address work is live in that space. inc-062 carries decision ruling reject, by Sam, 2026-08-21, ruledAt 2026-08-21T05:57:03Z. Claims record each ruling, who and when, its reason, and the judgements each row records in its difference, correction and provenance notes (bands chosen, sequencing, what survives a ruling, design calls left open), plus the Design release 1 behaviour and copy each row judges against the frontend.",
+  "claims": [
+    {
+      "id": "document-dr1-parity-backlog-p7-001",
+      "statement": "inc-053 (no route to add an address from an address-selection page) is blocked: Rhys ruled block on 2026-09-04 because address work is being done in this space now and parity changes against it would collide.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-053 decision; status",
+      "quote": "Blocked by Rhys, 2026-09-04: address work is being done in this space now, so parity changes against it would collide. Selects addresses from the address book: this increment changes an address-selection page, which is live work in the address space.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-002",
+      "statement": "On the frontend's five consignment party pickers, a search that matches nothing shows only the line \"No addresses match your search.\" with no link, button or guidance.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-053 finding.frontend",
+      "quote": "a search that matches nothing renders one line — \"No addresses match your search.\" — and nothing else: no link, no button, no guidance (fe-address-picker-place-of-origin-no-matches)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-003",
+      "statement": "Submitting a frontend party picker with no row selected returns the error \"Select a consignor from the list\" in an error summary, so a trader whose address is not saved cannot complete the page.",
+      "kind": "rule",
+      "ref": "backlog.json inc-053 finding.frontend",
+      "quote": "submitting without a row selected returns \"Select a consignor from the list\" in an error summary (fe-address-picker-consignor-or-exporter-error), so the page cannot be satisfied at all",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-004",
+      "statement": "The frontend's contact-address page shows the whole address book as radios (thirteen in the capture) and offers no way to add an address.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-053 finding.frontend",
+      "quote": "The contact-address page is a different shape — the whole book as thirteen radios rather than a search — but it is the same dead end: it offers no way to add an address either (fe-contact).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-005",
+      "statement": "In Design release 1 each of the five party pickers has a secondary \"Add a new address\" button under the results table and above \"Save and continue\", linking to /address-book/add?from=<section>.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-053 finding.prototype",
+      "quote": "On the five party pickers it is a secondary \"Add a new address\" button sitting under the results table and above \"Save and continue\" — six captured screens carry it, the five picker headings plus the search-filtered state — pointing at /address-book/add?from=<section>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-006",
+      "statement": "In Design release 1 the contact-address page offers adding an address as a link above the radios, inside the sentence \"If the correct address is not shown, add a new branch address, then return to this page.\", pointing at /address-book/add?from=contact-address.",
+      "kind": "copy",
+      "ref": "backlog.json inc-053 finding.prototype; finding.correction",
+      "quote": "On the contact-address page it is worded differently and sits above the radios, as a link inside the sentence \"If the correct address is not shown, add a new branch address, then return to this page.\", pointing at /address-book/add?from=contact-address.",
+      "confidence": "verbatim",
+      "note": "The correction records that this is body-copy link, not a button, and that the original author wrongly claimed a button on the contact page."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-007",
+      "statement": "In Design release 1, following the add route from a picker or the contact page skips the address-type chooser, because the originating section implies the type, and lands on \"Add address details\", where the address can be searched for or typed in by hand.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-053 finding.prototype",
+      "quote": "Following either skips the address-type chooser, because the section the user came from implies the type and is carried in a hidden addressType, and lands on \"Add address details\" (dr1-address-book-add-from-party-picker), where the address can be searched for or typed in by hand.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-008",
+      "statement": "In Design release 1, saving a new address from the add route writes it to the book, selects it into the section the user came from, returns them to that same page and shows a success message naming the address added.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-053 finding.prototype",
+      "quote": "Saving writes the address to the book, selects it into the section the user came from, redirects them back to that same page and shows a success message naming the address just added (app/routes.js:8118-8194). The notification is never abandoned.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-009",
+      "statement": "inc-053 asks that every address-selection page (the five pickers and the contact-address page) gets a route out to add an address and a return path back with the new address selected.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-053 finding.difference",
+      "quote": "Give every address-selection page a route out, and a return path back to it with the new address selected — the five pickers and the contact-address page.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-010",
+      "statement": "inc-053 judges the band frontend-work rather than needs-backend, because the address-book API behind the frontend already serves create; the disagreement only affects where the add page lives.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-053 finding.difference; provenance.note",
+      "quote": "What turns on the answer is only where the add page lives, not whether the trader is given a route out of the dead end, and the API already serving create is the harder fact, so the band taken here is frontend-work.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-011",
+      "statement": "The workspace has already accepted the missing add-address route as a deliberate temporary measure, with traders who need a new address going to the address book by themselves, so inc-053 is a real but currently accepted gap rather than the next thing to fix.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-053 finding.difference; provenance.note",
+      "quote": "the workspace has already accepted the missing route as a deliberate temporary measure, with traders who need a new address hopping across to the address book by themselves. So this is a gap against Design release 1 that is real and currently accepted, rather than the next thing to fix.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-012",
+      "statement": "Where the add-address route leads is not decided by inc-053: either an add-address page inside this frontend (giving its address-book service a write path it deliberately lacks) or a link out to the Import Notification Service front door's /address-book/add with a return URL back to the page the user left.",
+      "kind": "integration",
+      "ref": "backlog.json inc-053 finding.difference",
+      "quote": "What a person has to choose is the destination ... either an add-address page inside this frontend, which means giving its address-book service a write path it deliberately does not have (src/server/app/services/address-book/index.js:17-19), or a link out to the Import Notification Service front door's existing /address-book/add, which needs a return URL so the user comes back to the page they left rather than being stranded in another service's address book.",
+      "confidence": "gap",
+      "note": "Open destination choice; inc-062's later reject ruling says the INS front door's book is Design release 1's book, which bears on this but the row itself does not record the choice."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-013",
+      "statement": "inc-053 says the picker's empty-state copy \"No addresses match your search.\" must change whichever destination is chosen, because it gives no next step.",
+      "kind": "copy",
+      "ref": "backlog.json inc-053 finding.difference",
+      "quote": "The empty state's copy is part of the work either way: \"No addresses match your search.\" is a statement with no next step in it.",
+      "confidence": "verbatim",
+      "note": "The row gives no replacement wording."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-014",
+      "statement": "The frontend's address-book service is read-only by design: it reads and never writes, and adding, changing and removing records belongs to the INS frontend as the only writer.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-054 finding.frontend; inc-062 finding.frontend (quoting src/server/app/services/address-book/index.js:17-19)",
+      "quote": "\"This service reads and never writes. The notification journey selects from the organisation's book; adding, changing and removing the records in it belongs to the INS frontend, which is the only writer\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-015",
+      "statement": "inc-065 (address list heading and count) is blocked: Rhys ruled block on 2026-09-04 because address work is being done in this space now and parity changes against it would collide.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-065 decision; status",
+      "quote": "Blocked by Rhys, 2026-09-04: address work is being done in this space now, so parity changes against it would collide. Selects addresses from the address book: this increment changes an address-selection page, which is live work in the address space.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-016",
+      "statement": "The frontend picker has no heading above its results table; the table caption carries the count \"Showing 5 of 13 addresses\", and the contact-address page has neither heading nor count above its radios.",
+      "kind": "copy",
+      "ref": "backlog.json inc-065 finding.frontend",
+      "quote": "On a party picker the results table has no heading above it — the table's own caption carries the count, \"Showing 5 of 13 addresses\" ... On the contact-address page there is no heading and no count at all",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-017",
+      "statement": "Design release 1 heads the list of addresses \"Select an address\" as an h2 on the five party pickers and on the contact-address page.",
+      "kind": "copy",
+      "ref": "backlog.json inc-065 finding.prototype; finding.difference",
+      "quote": "Head the list of addresses \"Select an address\" on the five party pickers and on the contact-address page",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-018",
+      "statement": "On the party pickers only, Design release 1 puts the count beneath the heading worded \"Showing {shown} out of {total} results\" (for example \"Showing 9 out of 9 results\"), updating as the trader filters; the contact-address page has the heading but no count.",
+      "kind": "copy",
+      "ref": "backlog.json inc-065 finding.difference; finding.correction",
+      "quote": "reword the count as \"Showing {shown} out of {total} results\" ... The count reword belongs to the five party pickers only: Design release 1's contact-address page carries the heading with no count beneath it at all",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-019",
+      "statement": "The count rewording in inc-065 must also be made in Welsh.",
+      "kind": "copy",
+      "ref": "backlog.json inc-065 finding.difference",
+      "quote": "The count wording is one function in the addresses copy (src/server/app/sets/live-animals/journeys/linear/features/addresses/copy/copy.en.js:51) plus its Welsh counterpart",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-020",
+      "statement": "Design release 1 also uses \"Select an address\" as a visually hidden fieldset legend around the picker's results table; inc-065 judges only the visible h2 to be the finding, not a second heading.",
+      "kind": "copy",
+      "ref": "backlog.json inc-065 finding.correction",
+      "quote": "Design release 1 puts \"Select an address\" on the page twice on a picker: once as the visible h2 and once as a visually hidden legend on the fieldset wrapping the results table (app/views/consignment-address-select.html:102). Only the visible one is this finding",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-021",
+      "statement": "inc-065's picker change is to be sequenced after the picker pagination change, because the numbers the count reports change with it; the count wording only settles once the list behaviour (inc-055) does.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-065 finding.difference; finding.relatedTo inc-055",
+      "quote": "On the picker, sequence this after the pagination change raised as addresses--picker-pages-results-and-searches-on-the-server, because the numbers the count reports change with it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-022",
+      "statement": "inc-046 (contact-address page guidance) is blocked: Rhys ruled block on 2026-09-04 because address work is being done in this space now and parity changes against it would collide.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-046 decision; status",
+      "quote": "Blocked by Rhys, 2026-09-04: address work is being done in this space now, so parity changes against it would collide. Selects addresses from the address book: this increment changes an address-selection page, which is live work in the address space.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-023",
+      "statement": "The frontend's contact-address page, headed \"Contact address for consignment\", carries only the fieldset hint \"Selecting a contact copies their name and address into this notification.\"",
+      "kind": "copy",
+      "ref": "backlog.json inc-046 finding.frontend",
+      "quote": "Under the heading \"Contact address for consignment\" the page's only guidance is the fieldset hint \"Selecting a contact copies their name and address into this notification.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-024",
+      "statement": "Design release 1 puts a paragraph directly under the contact-address heading: \"This is the contact address of the person responsible for the consignment from when it enters Great Britain until authorities complete their checks.\"",
+      "kind": "copy",
+      "ref": "backlog.json inc-046 finding.prototype",
+      "quote": "Design release 1 puts a paragraph directly under the heading: \"This is the contact address of the person responsible for the consignment from when it enters Great Britain until authorities complete their checks.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-025",
+      "statement": "inc-046 asks for the frontend hint to be replaced with Design release 1's sentence as body copy under the heading rather than a fieldset hint, in English and Welsh.",
+      "kind": "copy",
+      "ref": "backlog.json inc-046 finding.difference",
+      "quote": "Replace the hint with Design release 1's sentence, as a paragraph under the heading rather than as a fieldset hint, so it reads as guidance about the question and not as a note about the control. One string in src/server/app/sets/live-animals/journeys/linear/features/contact/copy/copy.en.js:4 and its Welsh counterpart",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-026",
+      "statement": "inc-046 judges that dropping the frontend's \"copies their name and address\" sentence loses nothing the trader can act on: it records that the contact is stored as a copy, unlike consignor, consignee, importer and destination, a storage fact Design release 1 never shows.",
+      "kind": "rule",
+      "ref": "backlog.json inc-046 finding.difference; provenance.note",
+      "quote": "What the frontend's current sentence records — that this party is stored as a copy rather than a reference, unlike consignor, consignee, importer and destination ... — is a fact about storage that Design release 1 does not put in front of the trader, and dropping it from the page loses nothing the trader can act on.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-027",
+      "statement": "Design release 1 uses the same \"person responsible for the consignment\" sentence as the Branch Address type's hint when a trader saves an address.",
+      "kind": "copy",
+      "ref": "backlog.json inc-046 finding.prototype",
+      "quote": "it is the same sentence Design release 1 uses to describe the Branch Address type when a trader saves one",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-028",
+      "statement": "inc-064 (picker results table squeezed into the form column) is blocked: Rhys ruled block on 2026-09-04 because address work is being done in this space now and parity changes against it would collide.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-064 decision; status",
+      "quote": "Blocked by Rhys, 2026-09-04: address work is being done in this space now, so parity changes against it would collide. Selects addresses from the address book: this increment changes an address-selection page, which is live work in the address space.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-029",
+      "statement": "The frontend renders the five party pickers in the two-thirds column, so the five-column results table (radio, Name, Address, Country, View details) wraps every cell over two or three lines.",
+      "kind": "non-functional",
+      "ref": "backlog.json inc-064 finding.frontend",
+      "quote": "All five party pickers render inside the same two-thirds column every other journey page uses, and the results table does not fit it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-030",
+      "statement": "Design release 1 renders the party picker at full page width, as a decision for that page only: its other addresses pages (roles-and-addresses and contact-address-for-consignment) stay in the two-thirds column.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-064 finding.prototype",
+      "quote": "Design release 1 gives the picker the whole width of the page — its view opens on `govuk-grid-column-full` (app/views/consignment-address-select.html:27) — and it is a decision taken for this page rather than a house style",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-031",
+      "statement": "inc-064 asks that the five party pickers use the frontend's existing full-width surface, as the dashboard does, without changing the service-wide default column width.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-064 finding.difference",
+      "quote": "Render the five party pickers on the full-width surface. ... what has to change is which surface the picker asks for, not the default.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-032",
+      "statement": "inc-064 judges that Design release 1's full-width CPH page is not part of the work, because that page holds one short field and nothing overflows the form column.",
+      "kind": "rule",
+      "ref": "backlog.json inc-064 finding.difference",
+      "quote": "Design release 1 also declares full width on its CPH page (app/views/cph-number.html:27), but that page holds one short field and nothing on it overflows the form column, so the work here is the pickers and not every page the design widens.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-033",
+      "statement": "inc-064 is to be sequenced after the picker pagination change, which changes how many rows the table holds.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-064 finding.difference; finding.relatedTo inc-055",
+      "quote": "Sequence it after addresses--picker-pages-results-and-searches-on-the-server, which changes how many rows the table holds and therefore how much of the width the change buys.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-034",
+      "statement": "inc-064 had no independent verifier: the coverage auditor both wrote and checked it.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-064 finding.verification",
+      "quote": "Written and checked by the coverage auditor — I both wrote this finding and checked it, so it did not get an independent verifier and a reader should weigh it accordingly.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-035",
+      "statement": "inc-054 (correcting a wrong saved address from a picker) is blocked: Rhys ruled block on 2026-09-04 because address work is being done in this space now and parity changes against it would collide.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-054 decision; status",
+      "quote": "Blocked by Rhys, 2026-09-04: address work is being done in this space now, so parity changes against it would collide. Selects addresses from the address book: this increment changes an address-selection page, which is live work in the address space.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-036",
+      "statement": "On a frontend party picker each row's \"View details\" opens in place to show name, address lines, country, telephone number and email address, and offers no edit, delete or link out; the transporter list rows lead nowhere either.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-054 finding.frontend",
+      "quote": "On a Frontend party picker each row's \"View details\" is a disclosure that opens in place ... The row offers nothing else: no Edit, no Delete, no link out. ... The transporter list is the same shape, its rows leading nowhere either.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-037",
+      "statement": "In Design release 1 each picker row's \"View details\" is a link to the saved address's own page carrying the originating page in a return parameter, such as /address-book/<id>?return=%2Fplace-of-origin.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-054 finding.prototype",
+      "quote": "In Design release 1 the same \"View details\" is a link out of the row to the saved address's own page, carrying the page the trader came from in a return parameter, so a row on the place-of-origin picker points at /address-book/<id>?return=%2Fplace-of-origin",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-038",
+      "statement": "Design release 1's saved-address page is headed with the record's name, shows a summary list of eight facts, and has an \"Edit\" button beside a red \"Delete\" button.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-054 finding.prototype",
+      "quote": "That page is dr1-address-book-view: the record's name as the heading, a summary list of eight facts, and then an \"Edit\" button beside a red \"Delete\" button.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-039",
+      "statement": "Design release 1's edit page, headed \"Edit address and contact details\", shows all nine address and contact fields prefilled and open, with the address search suppressed, and \"Save changes\" beside \"Cancel\".",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-054 finding.prototype",
+      "quote": "Edit opens dr1-address-book-edit, headed \"Edit address and contact details\", with all nine address and contact fields prefilled and already open, the address search suppressed, and \"Save changes\" beside \"Cancel\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-040",
+      "statement": "In Design release 1 saving, cancelling or deleting from the saved-address pages returns the trader to the picker they left, via the return parameter.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-054 finding.prototype",
+      "quote": "the return parameter is carried into the form action, so saving or cancelling puts the trader back on the picker they left rather than stranding them in the address book, and the delete honours the same parameter",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-041",
+      "statement": "Design release 1's transporter list links its rows to the same saved-address record page.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-054 finding.prototype",
+      "quote": "Design release 1's transporter list links its rows to the same record page.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-042",
+      "statement": "inc-054 asks that every picker row gets a route to the saved record and a way back, with the same destination choice as the add route: a record page in this frontend (adding update and delete to its address-book service) or a link into the INS front door's record and edit pages with a return URL.",
+      "kind": "integration",
+      "ref": "backlog.json inc-054 finding.difference",
+      "quote": "Give every picker row a route to the saved record and a way back to the page the trader left. This is the maintenance half of the route the add finding covers, and it turns on the same choice of destination",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-043",
+      "statement": "inc-054 judges the band frontend-work rather than needs-backend, because the address-book API already serves update and delete; the choice only affects where the record page lives.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-054 finding.difference; provenance.note",
+      "quote": "What turns on the answer is only where the record page lives — built here against the API that already exists, or linked into the Import Notification Service front door's — so the band taken here is frontend-work.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-044",
+      "statement": "inc-054 leaves open whether the frontend's in-place \"View details\" disclosure survives alongside the link; Design release 1 shows only the link.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-054 finding.difference",
+      "quote": "Whether the in-place disclosure survives alongside the link is a design call for whoever does the work; Design release 1 shows only the link.",
+      "confidence": "gap"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-045",
+      "statement": "When the link lands, the name, address lines and country repeated in the in-place disclosure should be removed, as the row's columns already show them.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-054 finding.difference; provenance.note",
+      "quote": "Most of what the disclosure shows is already in the row — the name, the address lines and the country that the Name, Address and Country columns carry — so those repeated lines should come out of it when the link lands.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-046",
+      "statement": "inc-054 and inc-053 are to be built together, since the same row needs a route to create a record and one to correct it and both turn on the same destination.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-054 finding.relatedTo inc-053",
+      "quote": "The same row needs two routes out -- one to create a record and one to correct the one it is showing -- and both land on the same choice of destination, so they are built together.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-047",
+      "statement": "inc-054 had no independent verifier: the address-book slice's coverage auditor both wrote and checked it.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-054 finding.verification",
+      "quote": "Written and checked by me, the coverage auditor for the address-book slice, so a reader should know this finding had no independent verifier -- I am both its author and its only check.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-048",
+      "statement": "inc-055 (whole book on one page, narrowed as you type) is blocked: Rhys ruled block on 2026-09-04 because address work is being done in this space now and parity changes against it would collide.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-055 decision; status",
+      "quote": "Blocked by Rhys, 2026-09-04: address work is being done in this space now, so parity changes against it would collide. Selects addresses from the address book: this increment changes an address-selection page, which is live work in the address space.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-049",
+      "statement": "The frontend picker shows five records at a time, sliced server-side, with pagination beneath the table and a secondary Search button that re-posts the form.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-055 finding.frontend",
+      "quote": "The picker shows five records at a time — `PAGE_SIZE = 5` (src/server/app/services/address-book/index.js:10), sliced server-side — with a govukPagination block beneath the table ... and a secondary Search button that re-posts the whole form",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-050",
+      "statement": "The frontend picker restates the chosen record in a \"Selected address: …\" inset above the table, which exists only because the chosen row can be on another page.",
+      "kind": "copy",
+      "ref": "backlog.json inc-055 finding.frontend",
+      "quote": "Because the chosen record can be on a page the trader is not looking at, the picker has to restate it in an inset above the table, \"Selected address: …\" (:93-95) — a control that exists only to work around the paging.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-051",
+      "statement": "The frontend picker carries no client-side JavaScript by design.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-055 finding.frontend",
+      "quote": "The page carries no client JavaScript by design (:7-11).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-052",
+      "statement": "Design release 1 renders every address for the role in one table with no pagination, and typing in its search box hides non-matching rows and rewrites the count on each keystroke without a page reload.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-055 finding.prototype",
+      "quote": "DR1 renders every address for the role in one table with no pagination anywhere on the page ... typing in it hides non-matching rows and rewrites the count as the trader types.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-053",
+      "statement": "Design release 1's search magnifier button is type=\"button\" and does not submit, so without JavaScript an Enter discards the query.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-055 finding.prototype; finding.difference",
+      "quote": "DR1's magnifier button is `type=\"button\"` and a no-JS Enter discards the query, so copying it verbatim would lose a working search for a trader without JavaScript.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-054",
+      "statement": "inc-055 judges the portable half of Design release 1's picker to be: one page, no pagination, count above the table, with the existing server-side search kept as the no-JavaScript fallback and a live filter layered on top.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-055 finding.difference",
+      "quote": "The portable half is one page, no pagination, count above the table, with the existing server-side search kept as the no-JS fallback and a filter layered on top.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-055",
+      "statement": "inc-055 says the \"Selected address:\" inset can be removed once the chosen row is always on screen.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-055 finding.difference; provenance.note",
+      "quote": "The \"Selected address:\" inset can go once the chosen row is always on screen.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-056",
+      "statement": "inc-055 assumes an organisation's address book stays small enough to show on one page; the source does not say how large a book can get, and if it cannot fit, the finding narrows to the count line and search behaviour.",
+      "kind": "non-functional",
+      "ref": "backlog.json inc-055 finding.difference; finding.falsifiedBy",
+      "quote": "This assumes an organisation's book stays small enough for one page; if it will not, the finding is about the count line and the search behaviour rather than about removing pagination.",
+      "confidence": "gap"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-057",
+      "statement": "Dropping pagination must land together with role-scoping of the picker, because Design release 1's nine rows are nine of thirty-three filtered to the role, and without scoping the frontend would show all thirteen records for every role.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-055 finding.correction",
+      "quote": "the nine rows DR1 shows are nine of thirty-three, filtered to the role — see the picker role-scoping finding — so dropping pagination alone would leave the frontend showing all thirteen records on one page for every role, which is a longer list than DR1 ever shows, not a shorter one. The two should land together.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-058",
+      "statement": "inc-055 notes that moving the count above the table really means replacing the table caption with a \"Select an address\" heading and a count.",
+      "kind": "copy",
+      "ref": "backlog.json inc-055 finding.correction",
+      "quote": "DR1 also puts an h2, \"Select an address\", above its count line, where the frontend's count is the table caption, so moving the count is really replacing a caption with a heading and a count.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-059",
+      "statement": "inc-062 (a searchable saved address book in this frontend) is dropped: Sam ruled reject on 2026-08-21 (2026-08-21T05:57:03Z) because a separate epic folds the address book in.",
+      "kind": "constraint",
+      "ref": "backlog.json inc-062 decision; status",
+      "quote": "Descoped by Sam, 2026-08-21: a separate epic folds the address book in.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-060",
+      "statement": "The inc-062 ruling settles that the trade-imports-ins-frontend address book is the book Design release 1 describes, that it belongs to the separate epic rather than this frontend, and that the eight Design release 1 address-book screens are struck from the backlog.",
+      "kind": "rule",
+      "ref": "backlog.json inc-062 decision.note",
+      "quote": "the answer is that it is, and it belongs to that epic rather than to this frontend. The eight DR1 address-book screens are struck from this backlog.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-061",
+      "statement": "The inc-062 ruling names what survives it: the route out of a party picker (inc-053, inc-054) and the seven address types, which apply inside the notification journey whichever service owns the book.",
+      "kind": "rule",
+      "ref": "backlog.json inc-062 decision.note",
+      "quote": "The finding predicted this outcome and named what survives it: the route out of a party picker (inc-053, inc-054) and the seven address types, which bite inside the notification journey whichever service owns the book.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-062",
+      "statement": "trade-imports-ins-frontend already implements the address book at Design release 1's URLs (/address-book, /address-book/add, /address-book/{id}, /address-book/{id}/edit, /address-book/{id}/delete) with Design release 1's nine field labels.",
+      "kind": "integration",
+      "ref": "backlog.json inc-062 finding.difference",
+      "quote": "the Import Notification Service front door, trade-imports-ins-frontend, already implements this address book at Design release 1's own URLs — /address-book, /address-book/add, /address-book/{id}, /address-book/{id}/edit and /address-book/{id}/delete — and its add form carries exactly the nine field labels above in Design release 1's wording, down to the phone hint",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-063",
+      "statement": "Design release 1 gives every saved address one of seven types: Place of Origin, Consignor, Consignee, Importer, Place of Destination, Transporter and Branch Address, with Branch Address set apart by a divider.",
+      "kind": "data",
+      "ref": "backlog.json inc-062 finding.prototype",
+      "quote": "a \"Type\" select offering Place of Origin, Consignor, Consignee, Importer, Place of Destination, Transporter and Branch Address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-064",
+      "statement": "The seven address types are unbuilt everywhere: the INS front door's add form asks no type, its list has no Type column, and the address-book API's locked wire contract (OperatorResponse) carries no type or role field.",
+      "kind": "integration",
+      "ref": "backlog.json inc-062 finding.difference; finding.correction; provenance.note",
+      "quote": "the INS front door's add form asks for no type, its list has no Type column, and the address book API's locked wire contract (OperatorResponse in trade-imports-address-book) carries no type or role field — so whichever service owns these pages, the seven address types are unbuilt everywhere",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-065",
+      "statement": "The frontend's address-book records deliberately carry no address type, because the same record may be a consignor on one notification and a consignee on the next.",
+      "kind": "data",
+      "ref": "backlog.json inc-062 finding.frontend",
+      "quote": "Frontend's records also carry no address type at all, deliberately, because the same record may be a consignor on one notification and a consignee on the next (src/server/app/services/address-book/index.js:12-15).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-066",
+      "statement": "Design release 1's Place of Origin type hint reads \"The address where the animals begin their journey to Great Britain\".",
+      "kind": "copy",
+      "ref": "backlog.json inc-062 finding.prototype",
+      "quote": "Place of Origin, \"The address where the animals begin their journey to Great Britain\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-067",
+      "statement": "Design release 1's Consignor type hint reads \"This is the sender of the consignment.\"",
+      "kind": "copy",
+      "ref": "backlog.json inc-062 finding.prototype",
+      "quote": "Consignor, \"This is the sender of the consignment.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-068",
+      "statement": "Design release 1's Consignee type hint reads \"This is the receiver or buyer of the consignment being shipped or transported.\"",
+      "kind": "copy",
+      "ref": "backlog.json inc-062 finding.prototype",
+      "quote": "Consignee, \"This is the receiver or buyer of the consignment being shipped or transported.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-069",
+      "statement": "Design release 1's Importer type hint reads \"This is usually the same as the consignee. You can select a different person if needed.\"",
+      "kind": "copy",
+      "ref": "backlog.json inc-062 finding.prototype",
+      "quote": "Importer, \"This is usually the same as the consignee. You can select a different person if needed.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-070",
+      "statement": "Design release 1's Place of Destination type hint reads \"This is where the animals will be unloaded and accommodated for at least 48 hours. If a health certificate is required, it will show this address.\"",
+      "kind": "copy",
+      "ref": "backlog.json inc-062 finding.prototype",
+      "quote": "Place of Destination, \"This is where the animals will be unloaded and accommodated for at least 48 hours. If a health certificate is required, it will show this address.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-071",
+      "statement": "Design release 1's Transporter type hint reads \"This is the person or company responsible for transporting the consignment.\"",
+      "kind": "copy",
+      "ref": "backlog.json inc-062 finding.prototype",
+      "quote": "Transporter, \"This is the person or company responsible for transporting the consignment.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-072",
+      "statement": "Design release 1's Branch Address type hint reads \"This is the contact address of the person responsible for the consignment from when it enters Great Britain until authorities complete their checks.\"",
+      "kind": "copy",
+      "ref": "backlog.json inc-062 finding.prototype",
+      "quote": "then a divider, and Branch Address, \"This is the contact address of the person responsible for the consignment from when it enters Great Britain until authorities complete their checks.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-073",
+      "statement": "Design release 1's add-address details form has nine fields under two headings: Address (Name or organisation name, Address line 1, Address line 2 (optional), Town or city, County (optional), Postcode or Zip code, Country) and Contact details (Email address, Phone number hinted \"For international numbers include the country code\").",
+      "kind": "data",
+      "ref": "backlog.json inc-062 finding.prototype",
+      "quote": "showing nine fields under two headings: Address (Name or organisation name, Address line 1, Address line 2 (optional), Town or city, County (optional), Postcode or Zip code, Country) and Contact details (Email address, Phone number, hinted \"For international numbers include the country code\")",
+      "confidence": "verbatim",
+      "note": "Part of the eight screens the inc-062 ruling struck; recorded because inc-053's add route lands on this form."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-074",
+      "statement": "Design release 1's saved-address view page shows eight of the nine facts; County (optional) is not shown.",
+      "kind": "data",
+      "ref": "backlog.json inc-062 finding.prototype; finding.correction",
+      "quote": "dr1-address-book-view is one saved address, headed with its own name, presented as a summary list of eight of those nine facts — County (optional) is not shown",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-075",
+      "statement": "Design release 1 reaches its address book from a service-navigation item on every page and from inside a notification; the frontend's service navigation has no items.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-062 finding.frontend; finding.prototype; finding.difference",
+      "quote": "Design release 1 puts the book behind a service-navigation item on the same service as the notification journey (app/views/layouts/main.html:16) and routes into it from inside a notification",
+      "confidence": "verbatim",
+      "note": "Recorded as the in-scope argument the inc-062 ruling rejected; the frontend side is \"Its service navigation carries no items\"."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-076",
+      "statement": "Design release 1's address book list page is headed \"Address book\" with the intro \"Manage your addresses for use across import notifications.\", a primary \"Add a new address\" button, a \"Filter addresses\" panel with a search box and a Type select over the seven types, a result count, a Name / Type / Address / Country table with a \"View\" link per row, and pagination.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-062 finding.prototype (dr1-address-book)",
+      "quote": "dr1-address-book is the list: heading \"Address book\", intro \"Manage your addresses for use across import notifications.\", a primary \"Add a new address\" button, a \"Filter addresses\" panel holding a Search box placeholdered \"Search by name, address or country\" and a \"Type\" select offering Place of Origin, Consignor, Consignee, Importer, Place of Destination, Transporter and Branch Address, a result count (\"Showing 1-8 of 58\"), a Name / Type / Address / Country table with a \"View\" link per row, and pagination",
+      "confidence": "verbatim",
+      "note": "One of the eight screens the inc-062 ruling struck from this backlog as belonging to the separate address-book epic."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-077",
+      "statement": "Design release 1's add-address journey starts with a type chooser, \"What is the new address for?\", one addressType radio group over the seven types and a Continue button; the chooser is skipped when the add form is entered from a consignment party picker, the section implying the type.",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-062 finding.prototype (dr1-address-book-add, dr1-address-book-add-from-party-picker)",
+      "quote": "dr1-address-book-add is the type chooser: \"What is the new address for?\", one addressType radio group over those same seven types and a Continue button.",
+      "confidence": "verbatim",
+      "note": "Struck by the inc-062 ruling with the other address-book screens; the skip-from-picker half survives through inc-053."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-078",
+      "statement": "Design release 1's \"Add address details\" form offers a \"Search for an address\" type-ahead, an \"Enter address manually\" toggle that reveals the nine fields, \"Save and continue\" and \"Cancel and return to address book\".",
+      "kind": "behaviour",
+      "ref": "backlog.json inc-062 finding.prototype (dr1-address-book-lookup, -lookup-results, -lookup-manual)",
+      "quote": "dr1-address-book-lookup is the add form: \"Add address details\", a \"Search for an address\" type-ahead writing a hidden addressBookLookupAddressId, an \"Enter address manually\" toggle, \"Save and continue\" and \"Cancel and return to address book\".",
+      "confidence": "verbatim",
+      "note": "Struck by the inc-062 ruling with the other address-book screens."
+    },
+    {
+      "id": "document-dr1-parity-backlog-p7-079",
+      "statement": "inc-053 judges that the add-address button is needed on the pickers whichever way the address-book scope question (inc-062) is settled; only where it leads depends on that answer.",
+      "kind": "rule",
+      "ref": "backlog.json inc-053 finding.relatedTo inc-062",
+      "quote": "Where the button leads depends on whether Design release 1's eight address-book pages are this frontend's work; the button itself is needed either way.",
+      "confidence": "verbatim"
+    }
+  ]
+}

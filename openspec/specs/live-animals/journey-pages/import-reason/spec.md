@@ -92,9 +92,9 @@ The system MUST reveal Transit's own questions — the port of exit, then the de
 - **WHEN** they choose "Temporary admission horses"
 - **THEN** the exit date and then the port of exit are asked for inline, under that option
 
-### Requirement: An incompletely answered reveal is rejected on save and continue without closing it, keeping what was already answered
+### Requirement: An incompletely answered reveal is rejected on either save control without closing it, keeping what was already answered
 **ID**: REQ-IMPORT-REASON-006
-The system MUST refuse to save and continue from a reason whose revealed questions are only partly answered, MUST NOT refuse the page for that on save and return to overview, MUST focus the unanswered question while keeping the reveal open, and MUST keep any answer already given to another question in the same reveal.
+The system MUST refuse to save from a reason whose revealed questions are only partly answered, on save and continue and on save and return to overview alike, MUST focus the unanswered question while keeping the reveal open, and MUST keep any answer already given to another question in the same reveal.
 
 #### Scenario: Answering only the port of exit under Transit is rejected, keeping the port and the reveal open
 **ID**: SCN-IMPORT-REASON-006-A
@@ -103,12 +103,13 @@ The system MUST refuse to save and continue from a reason whose revealed questio
 - **THEN** an error focuses the destination country, with the reveal still open
 - **AND** the port of exit they already answered is still held
 
-#### Scenario: Save and return to overview saves a partly answered reveal and returns to Overview
+#### Scenario: Save and return to overview refuses a partly answered reveal, keeping the reveal open
 **ID**: SCN-IMPORT-REASON-006-B
 - **GIVEN** the user has chosen "Transit" and left the port of exit and the destination country blank
 - **WHEN** they save and return to overview
-- **THEN** they return to Overview with no error shown
-- **AND** re-opening the page shows "Transit" still chosen
+- **THEN** they stay on the page, which shows "Select a port of exit" and "Select a destination country"
+- **AND** "Transit" is still chosen, with the reveal open
+- **AND** nothing is saved
 
 ### Requirement: An invalid submitted reason is refused without preserving it
 **ID**: REQ-IMPORT-REASON-007
@@ -210,21 +211,22 @@ The system MUST start every destination country and port of exit select on the p
 - **WHEN** the page has JavaScript and nothing is chosen
 - **THEN** each such search box reads "Select one"
 
-### Requirement: Save and return saves what was entered without the page's required-answer checks, but refuses an answer that breaks its own format
+### Requirement: Save and return makes the checks of Save and continue and clears the answers of a reason no longer chosen
 **ID**: REQ-IMPORT-REASON-013
-The system MUST, on Save and return to overview, save the reason and whatever of its questions were answered without refusing the page for an unanswered question, MUST clear the answers of a reason no longer chosen, and MUST still refuse an exit date that is not a real date with "Enter a real date".
+The system MUST, on Save and return to overview, make the same checks as Save and continue, refusing an unanswered question and an exit date that is not a real date ("Enter a real date"), and MUST clear the answers of a reason no longer chosen once the reason and its questions are saved.
 
-#### Scenario: Transit without a port of exit saves and keeps the country
+#### Scenario: Transit without a port of exit is refused and keeps the country
 **ID**: SCN-IMPORT-REASON-013-A
 - **GIVEN** the user has chosen "Transit" and given a destination country but no port of exit
 - **WHEN** they save and return to overview
-- **THEN** no error is shown and Overview is shown
-- **AND** when they reopen the page, Transit is chosen with the destination country given
+- **THEN** they stay on the page, which shows "Select a port of exit"
+- **AND** the destination country they gave is still held
+- **AND** nothing is saved
 
 #### Scenario: Changing the reason clears the saved purpose
 **ID**: SCN-IMPORT-REASON-013-B
 - **GIVEN** the user has saved "Internal market" with a purpose
-- **WHEN** they change the reason to "Transit" and save and return to overview
+- **WHEN** they change the reason to "Transit", give a port of exit and a destination country, and save and return to overview
 - **THEN** choosing "Internal market" again shows no purpose chosen
 
 #### Scenario: An exit date that is not a real date is refused

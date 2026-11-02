@@ -7,6 +7,7 @@ import {
   BACKLOG_SCHEMA_PATH,
   loadBacklogSchema,
   recipeFieldsOf,
+  rigoursOf,
   rowSchemaOf,
   statusesOf
 } from './backlog-schema.js'
@@ -74,6 +75,12 @@ describe('statusesOf', () => {
       'rejected',
       'merged-into'
     ])
+  })
+})
+
+describe('rigoursOf', () => {
+  test('names the rigour presets a row may set, in the schema’s order', () => {
+    expect(rigoursOf(schema)).toEqual(['full', 'standard', 'fast'])
   })
 })
 

@@ -1,0 +1,470 @@
+{
+  "batch": "la-pages-b",
+  "changes": [
+    {
+      "capability": "live-animals/journey-pages/origin-of-import",
+      "capabilityName": "Live animals: Origin of the import page",
+      "requirementId": "REQ-ORIGIN-003",
+      "requirementName": "The country field offers the origin countries the service accepts, and submits a country code",
+      "change": "changed",
+      "before": "### Requirement: The country field offers the origin countries the service accepts, and submits a country code\n**ID**: REQ-ORIGIN-003\nThe system MUST offer a placeholder and the thirty-one origin countries the service accepts, and MUST submit the chosen country's code rather than the text the user typed.\n\n#### Scenario: The country list holds a placeholder and the accepted origin countries\n**ID**: SCN-ORIGIN-003-A\n- **GIVEN** the user is on the origin of the import page\n- **WHEN** the country list is read in full\n- **THEN** its first entry invites the user to select a country, and it holds thirty-one origin countries besides\n\n#### Scenario: Choosing a country submits and keeps its code\n**ID**: SCN-ORIGIN-003-B\n- **GIVEN** the user is on the origin of the import page\n- **WHEN** they choose a country and save the page\n- **THEN** the country's code is what the notification keeps, not the text typed into the search field",
+      "after": "### Requirement: The country field offers the origin countries the service accepts, and submits a country code\n**ID**: REQ-ORIGIN-003\nThe system MUST offer a placeholder and the origin countries and territories the service accepts, and MUST submit the chosen country's code rather than the text the user typed, and MUST take those countries, their territories and their names from the reference data service, each territory named with its country, listed alphabetically by the name shown.\n\n#### Scenario: The country list holds a placeholder and the accepted origin countries\n**ID**: SCN-ORIGIN-003-A\n- **GIVEN** the user is on the origin of the import page\n- **WHEN** the country list is read in full\n- **THEN** its first entry invites the user to select a country, and the origin countries and territories follow it\n\n#### Scenario: Choosing a country submits and keeps its code\n**ID**: SCN-ORIGIN-003-B\n- **GIVEN** the user is on the origin of the import page\n- **WHEN** they choose a country and save the page\n- **THEN** the country's code is what the notification keeps, not the text typed into the search field\n\n#### Scenario: The country list holds the reference data service's origin countries and their territories, by name\n**ID**: SCN-ORIGIN-003-C\n- **GIVEN** the user is on the origin of the import page\n- **WHEN** the country list is read in full\n- **THEN** besides the placeholder it holds exactly the origin countries and territories the reference data service serves, each country by its served name and each territory as \"<territory> (<country>)\", in alphabetical order of the name shown",
+      "summary": "The country list now comes from the reference data service, includes territories named with their country, and is sorted by the name shown.\n\nIt no longer says there are thirty-one countries.",
+      "cards": [
+        "origin-subdivisions",
+        "stub-lists"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/origin-of-import",
+      "capabilityName": "Live animals: Origin of the import page",
+      "requirementId": "REQ-ORIGIN-008",
+      "requirementName": "Saving without a country is accepted, but leaves the origin task outstanding",
+      "change": "changed",
+      "before": "### Requirement: Saving without a country is accepted, but leaves the origin task outstanding\n**ID**: REQ-ORIGIN-008\nThe system MUST accept the origin page being saved with no country chosen, without showing an error, and MUST leave the origin task row outstanding on Overview until a country is chosen.\n\n#### Scenario: Saving with no country chosen succeeds and moves on\n**ID**: SCN-ORIGIN-008-A\n- **GIVEN** the user is on the origin of the import page with no country chosen\n- **WHEN** they save and continue\n- **THEN** the page saves without an error summary, and the user moves to the next step\n- **AND** the origin task row on Overview shows as outstanding",
+      "after": "### Requirement: Saving without a country is accepted, but leaves the origin task outstanding\n**ID**: REQ-ORIGIN-008\nThe system MUST accept the origin page being saved with no country chosen, without showing an error, and MUST leave the origin task row on Overview outstanding while no country is chosen. When the task reads Complete is specified by `live-animals/journey-pages/overview`.\n\n#### Scenario: Saving with no country chosen succeeds and moves on\n**ID**: SCN-ORIGIN-008-A\n- **GIVEN** the user is on the origin of the import page with no country chosen\n- **WHEN** they save and continue\n- **THEN** the page saves without an error summary, and the user moves to the next step\n- **AND** the origin task row on Overview shows as outstanding",
+      "summary": "It no longer says choosing a country completes the origin task. The task stays outstanding while no country is chosen.\n\nWhen it reads Complete is now set by the Overview page spec.",
+      "cards": [
+        "origin-complete"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/origin-of-import",
+      "capabilityName": "Live animals: Origin of the import page",
+      "requirementId": "REQ-ORIGIN-009",
+      "requirementName": "The page also asks for an optional internal reference, capped at 58 characters",
+      "change": "changed",
+      "before": "### Requirement: The page also asks for an optional internal reference, capped at 58 characters\n**ID**: REQ-ORIGIN-009\nThe system MUST let the user give an optional internal reference for the notification, MUST reject one longer than 58 characters, and MUST preserve the value typed so it can be corrected. The reference MUST accept whatever punctuation the user's own records use, including hyphens, slashes, spaces and full stops.\n\n#### Scenario: An over-length internal reference is rejected with the value preserved\n**ID**: SCN-ORIGIN-009-A\n- **GIVEN** the user is on the origin of the import page\n- **WHEN** they type an internal reference longer than 58 characters and save and continue\n- **THEN** an error names the internal reference and its limit\n- **AND** the field is focused, still holding the value typed\n\n#### Scenario: A punctuated internal reference is saved and shown as entered\n**ID**: SCN-ORIGIN-009-B\n- **GIVEN** the user is on the origin of the import page\n- **WHEN** they type an internal reference containing hyphens, slashes, spaces and full stops, and save and continue\n- **THEN** the reference is saved\n- **AND** returning to the page shows it exactly as typed",
+      "after": "### Requirement: The page also asks for an optional internal reference, capped at 58 characters\n**ID**: REQ-ORIGIN-009\nThe system MUST let the user give an optional internal reference for the notification, MUST reject one longer than 58 characters, and MUST preserve the value typed so it can be corrected. The reference MUST accept whatever punctuation the user's own records use, including hyphens, slashes, spaces and full stops. The field's hint MUST read \"Enter any internal reference you want to use to identify this consignment, or leave blank.\" and MUST NOT state the limit, which the error names.\n\n#### Scenario: An over-length internal reference is rejected with the value preserved\n**ID**: SCN-ORIGIN-009-A\n- **GIVEN** the user is on the origin of the import page\n- **WHEN** they type an internal reference longer than 58 characters and save and continue\n- **THEN** an error names the internal reference and its limit\n- **AND** the field is focused, still holding the value typed\n\n#### Scenario: A punctuated internal reference is saved and shown as entered\n**ID**: SCN-ORIGIN-009-B\n- **GIVEN** the user is on the origin of the import page\n- **WHEN** they type an internal reference containing hyphens, slashes, spaces and full stops, and save and continue\n- **THEN** the reference is saved\n- **AND** returning to the page shows it exactly as typed\n\n#### Scenario: The internal reference hint invites a reference without stating the limit\n**ID**: SCN-ORIGIN-009-C\n- **GIVEN** the user is on the origin of the import page\n- **WHEN** the page loads\n- **THEN** the internal reference field's hint reads \"Enter any internal reference you want to use to identify this consignment, or leave blank.\"\n- **AND** no hint states the 58-character limit",
+      "summary": "The internal reference hint now has fixed wording and no longer states the 58-character limit.",
+      "cards": [
+        "origin-wording"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/origin-of-import",
+      "capabilityName": "Live animals: Origin of the import page",
+      "requirementId": "REQ-ORIGIN-010",
+      "requirementName": "The region of origin code has a maximum length of five characters",
+      "change": "changed",
+      "before": "### Requirement: The region of origin code has a maximum length of five characters\n**ID**: REQ-ORIGIN-010\nThe system MUST reject a region of origin code longer than five characters, with an error naming the limit, and MUST preserve the value typed.\n\n#### Scenario: An over-length region code is rejected with the value preserved\n**ID**: SCN-ORIGIN-010-A\n- **GIVEN** the user has answered that a region code is required\n- **WHEN** they type a region code longer than five characters and save and continue\n- **THEN** an error names the region code's limit\n- **AND** the field is focused, still holding the value typed\n- **AND** the chosen country and the answer to whether a region code is required are still held",
+      "after": "### Requirement: The region of origin code has a maximum length of five characters\n**ID**: REQ-ORIGIN-010\nThe system MUST stop the region of origin code box accepting more than five characters as the user types, with autocomplete and spellcheck turned off, and MUST still reject a longer region of origin code submitted without that cap, on either save control, with an error naming the limit, preserving the value submitted.\n\n#### Scenario: An over-length region code is rejected with the value preserved\n**ID**: SCN-ORIGIN-010-A\n- **GIVEN** the user has answered that a region code is required\n- **WHEN** they submit a region code longer than five characters without the box's own cap and save and continue\n- **THEN** an error names the region code's limit\n- **AND** the field is focused, still holding the value typed\n- **AND** the chosen country and the answer to whether a region code is required are still held\n\n#### Scenario: An over-length region code is refused on save and return to overview\n**ID**: SCN-ORIGIN-010-B\n- **GIVEN** the user has answered that a region code is required\n- **WHEN** they submit a region code longer than five characters without the box's own cap and save and return to overview\n- **THEN** they remain on the origin of the import page with an error naming the region code's limit\n- **AND** the over-length code is not saved\n\n#### Scenario: Typing stops at five characters\n**ID**: SCN-ORIGIN-010-C\n- **GIVEN** the user has answered that a region code is required\n- **WHEN** they type seven characters into the region code box\n- **THEN** the box holds only the first five\n- **AND** the box offers no autocomplete and no spellcheck",
+      "summary": "The region code box now stops accepting a sixth character as the user types, with autocomplete and spellcheck off.\n\nA longer code sent without that cap is still rejected on either save button.",
+      "cards": [
+        "region-code-behaviour",
+        "format-refused"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/origin-of-import",
+      "capabilityName": "Live animals: Origin of the import page",
+      "requirementId": "REQ-ORIGIN-011",
+      "requirementName": "Answering that a region code is required but leaving it empty is rejected on save and continue",
+      "change": "changed",
+      "before": "### Requirement: Answering that a region code is required but leaving it empty is rejected\n**ID**: REQ-ORIGIN-011\nThe system MUST refuse to save the origin page when the user has answered that a region code is required but left the code itself empty, showing an error that focuses the region code field.\n\n#### Scenario: An empty region code is rejected when one is required\n**ID**: SCN-ORIGIN-011-A\n- **GIVEN** the user has chosen a country and answered that a region code is required\n- **WHEN** they leave the region code empty and save and continue\n- **THEN** they remain on the origin of the import page\n- **AND** an error focuses the region code field, with the chosen country and the required answer still held",
+      "after": "### Requirement: Answering that a region code is required but leaving it empty is rejected on save and continue\n**ID**: REQ-ORIGIN-011\nThe system MUST refuse to save and continue from the origin page when the user has answered that a region code is required but left the code itself empty, showing an error that focuses the region code field, and MUST NOT refuse the page for that on save and return to overview.\n\n#### Scenario: An empty region code is rejected when one is required\n**ID**: SCN-ORIGIN-011-A\n- **GIVEN** the user has chosen a country and answered that a region code is required\n- **WHEN** they leave the region code empty and save and continue\n- **THEN** they remain on the origin of the import page\n- **AND** an error focuses the region code field, with the chosen country and the required answer still held\n\n#### Scenario: Save and return to overview saves \"Yes\" with the code left blank, leaving the origin task to do\n**ID**: SCN-ORIGIN-011-B\n- **GIVEN** the user has chosen a country and answered that a region code is required\n- **WHEN** they leave the region code empty and save and return to overview\n- **THEN** they return to Overview with no error shown\n- **AND** the origin task does not read \"Complete\"\n- **AND** re-opening the page shows the required answer still held as \"Yes\"",
+      "summary": "An empty region code is now refused only on Save and continue.\n\nSave and return to overview saves the \"Yes\" answer with the code blank and leaves the origin task to do. The heading changed to match.",
+      "cards": [
+        "soft-save",
+        "region-code-behaviour"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/origin-of-import",
+      "capabilityName": "Live animals: Origin of the import page",
+      "requirementId": "REQ-ORIGIN-013",
+      "requirementName": "On a notification, the back link's target depends on whether the journey already has answers",
+      "change": "changed",
+      "before": "### Requirement: The back link's target depends on whether the journey already has answers\n**ID**: REQ-ORIGIN-013\nThe system MUST return the user to the notification dashboard when they follow the back link from the origin page of a journey that holds no answers, and to Overview once the journey holds at least one.\n\n#### Scenario: The back link opens the dashboard before any answer is saved\n**ID**: SCN-ORIGIN-013-A\n- **GIVEN** the user has just started a notification and reached the origin of the import page, without saving anything\n- **WHEN** they follow the back link\n- **THEN** the notification dashboard is shown\n\n#### Scenario: The back link opens Overview once the journey has an answer\n**ID**: SCN-ORIGIN-013-B\n- **GIVEN** the user has saved at least one answer on the notification\n- **WHEN** they return to the origin of the import page and follow the back link\n- **THEN** Overview is shown",
+      "after": "### Requirement: On a notification, the back link's target depends on whether the journey already has answers\n**ID**: REQ-ORIGIN-013\nFor a notification, the system MUST return the user to the notification dashboard when they follow the back link from the origin page of a journey that holds no answers, and to Overview once the journey holds at least one. Back while a template is being created is specified by REQ-ORIGIN-019; Back while a saved template's section is changed is specified by `live-animals/notification-templates` REQ-TEMPLATES-028.\n\n#### Scenario: The back link opens the dashboard before any answer is saved\n**ID**: SCN-ORIGIN-013-A\n- **GIVEN** the user has just started a notification and reached the origin of the import page for a notification, without saving anything\n- **WHEN** they follow the back link\n- **THEN** the notification dashboard is shown\n\n#### Scenario: The back link opens Overview once the journey has an answer\n**ID**: SCN-ORIGIN-013-B\n- **GIVEN** the user has saved at least one answer on a notification\n- **WHEN** they return to the origin of the import page and follow the back link\n- **THEN** Overview is shown",
+      "summary": "The Back rule now applies to a notification only. Back while creating or changing a template is covered elsewhere.\n\nThe heading changed to match.",
+      "cards": [
+        "back-links",
+        "t-template-mode-pages"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/origin-of-import",
+      "capabilityName": "Live animals: Origin of the import page",
+      "requirementId": "REQ-ORIGIN-015",
+      "requirementName": "The country question carries no hint, and its empty search box invites a search",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The country question carries no hint, and its empty search box invites a search\n**ID**: REQ-ORIGIN-015\nThe system MUST ask \"Country of origin\" with no hint text, with or without JavaScript. With JavaScript the empty search box MUST show the placeholder \"Search for a country\"; without JavaScript the country list MUST begin with its blank \"Select a country\" entry.\n\n#### Scenario: With JavaScript, the empty search box shows \"Search for a country\" and no hint\n**ID**: SCN-ORIGIN-015-A\n- **GIVEN** the user has reached the origin of the import page with JavaScript available and no country chosen\n- **WHEN** the page loads\n- **THEN** the country field, labelled \"Country of origin\", shows the placeholder \"Search for a country\"\n- **AND** no hint text is shown for the country question\n\n#### Scenario: Without JavaScript, the country list begins with \"Select a country\" and no hint\n**ID**: SCN-ORIGIN-015-B\n- **GIVEN** the user has reached the origin of the import page without JavaScript\n- **WHEN** the page loads\n- **THEN** the country list, labelled \"Country of origin\", begins with its blank \"Select a country\" entry\n- **AND** no hint text is shown for the country question",
+      "summary": "New. The country question has no hint.\n\nWith JavaScript the empty box shows \"Search for a country\". Without it the list starts with \"Select a country\".",
+      "cards": [
+        "origin-country-box"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/origin-of-import",
+      "capabilityName": "Live animals: Origin of the import page",
+      "requirementId": "REQ-ORIGIN-016",
+      "requirementName": "The region of origin code question points to the health certificate",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The region of origin code question points to the health certificate\n**ID**: REQ-ORIGIN-016\nThe system MUST give the question \"Does the consignment have a region of origin code?\" the hint \"Check the health certificate for a region of origin code. You can add the code later if you do not have the certificate now.\"\n\n#### Scenario: The region question's hint names the health certificate\n**ID**: SCN-ORIGIN-016-A\n- **GIVEN** the user is on the origin of the import page\n- **WHEN** the page loads\n- **THEN** the region of origin code question's hint reads \"Check the health certificate for a region of origin code. You can add the code later if you do not have the certificate now.\"",
+      "summary": "New. The region of origin code question has a hint pointing to the health certificate.",
+      "cards": [
+        "origin-wording"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/origin-of-import",
+      "capabilityName": "Live animals: Origin of the import page",
+      "requirementId": "REQ-ORIGIN-017",
+      "requirementName": "A region code typed with no country waits for the country before it is saved",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: A region code typed with no country waits for the country before it is saved\n**ID**: REQ-ORIGIN-017\nThe system MUST keep a region code typed under Yes with no country chosen on the page while the page is shown back, MUST NOT save a region of origin code until a country gives it its prefix, and MUST save the code with that country's prefix once a country is chosen.\n\n#### Scenario: The typed code stays on the page when the save is refused for another answer\n**ID**: SCN-ORIGIN-017-A\n- **GIVEN** the user has chosen no country, answered that a region code is required and typed a code\n- **WHEN** they save and continue with another answer the page refuses\n- **THEN** the page shows the error and the region code box still holds the code typed\n\n#### Scenario: No code is saved until a country is chosen\n**ID**: SCN-ORIGIN-017-B\n- **GIVEN** the user has chosen no country, answered that a region code is required and typed a code\n- **WHEN** they save and continue\n- **THEN** the review page shows no region of origin code\n- **WHEN** they return, choose France, type the code again and save and continue\n- **THEN** the review page shows the code with France's prefix",
+      "summary": "New. A region code typed before a country is chosen stays on the page and is saved only once a country gives it a prefix.",
+      "cards": [
+        "region-code-behaviour"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/origin-of-import",
+      "capabilityName": "Live animals: Origin of the import page",
+      "requirementId": "REQ-ORIGIN-018",
+      "requirementName": "Each territory in the country list is named with its country, and keeps its code",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: Each territory in the country list is named with its country, and keeps its code\n**ID**: REQ-ORIGIN-018\nThe system MUST name every territory in the country of origin list \"<territory> (<country>)\", for example \"Canary Islands (Spain)\", with or without JavaScript. It MUST sort the list alphabetically by the name shown. It MUST save a chosen territory by its own code, and on return MUST show it by that name with its country's code as the region code prefix.\n\n#### Scenario: A territory is named with its country, with or without JavaScript\n**ID**: SCN-ORIGIN-018-A\n- **GIVEN** the user is on the origin of the import page, with or without JavaScript\n- **WHEN** the country list is read\n- **THEN** each territory reads \"<territory> (<country>)\", for example \"Canary Islands (Spain)\"\n\n#### Scenario: The list is sorted by the name shown\n**ID**: SCN-ORIGIN-018-B\n- **GIVEN** the user is on the origin of the import page\n- **WHEN** the country list is read in full\n- **THEN** it is in alphabetical order of the names shown, so \"Canary Islands (Spain)\" sits among the C entries\n\n#### Scenario: A chosen territory keeps its code and is shown back with its country's prefix\n**ID**: SCN-ORIGIN-018-C\n- **GIVEN** the user chose \"Canary Islands (Spain)\", answered that a region code is required, typed a code and saved\n- **WHEN** they return to the origin of the import page\n- **THEN** the country field shows \"Canary Islands (Spain)\", the notification keeps the territory's code, and the region code field carries Spain's code, ES, as its fixed prefix",
+      "summary": "New. Territories in the country list read \"<territory> (<country>)\", sort by that name, and keep their own code.",
+      "cards": [
+        "origin-subdivisions"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/origin-of-import",
+      "capabilityName": "Live animals: Origin of the import page",
+      "requirementId": "REQ-ORIGIN-019",
+      "requirementName": "While a template is being created, the page ends with Save and continue alone and goes back to the template name",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: While a template is being created, the page ends with Save and continue alone and goes back to the template name\n**ID**: REQ-ORIGIN-019\nThe system MUST, when the page is shown for a template being created, end it with \"Save and continue\" alone, with no \"Save and return to overview\" and no cancel link, and MUST make its Back link return to the page headed \"Enter template name\". Its Save and continue MUST save the answer to the template and go on to \"What are you importing?\" for the same template.\n\n#### Scenario: Origin of the import for a template ends with Save and continue and goes back to the template name\n**ID**: SCN-ORIGIN-019-A\n- **GIVEN** the user has named a template and \"Origin of the import\" is shown for it\n- **WHEN** they read the page\n- **THEN** it offers \"Save and continue\" and no \"Save and return to overview\" and no cancel link\n- **WHEN** they follow Back\n- **THEN** the page headed \"Enter template name\" is shown\n\n#### Scenario: Save and continue on a template's Origin of the import goes on to What are you importing? for the template\n**ID**: SCN-ORIGIN-019-B\n- **GIVEN** the user has named a template and \"Origin of the import\" is shown for it\n- **WHEN** they choose a country and select \"Save and continue\"\n- **THEN** \"What are you importing?\" is shown for the template\n- **AND** returning to \"Origin of the import\" shows the chosen country",
+      "summary": "New. When a template is being created, the page ends with Save and continue alone and Back goes to the template name.",
+      "cards": [
+        "t-template-mode-pages"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/arrival-details",
+      "capabilityName": "Live animals: Arrival details page",
+      "requirementId": "REQ-ARRIVAL-002",
+      "requirementName": "The port field offers every port before typing, and filters by name or code",
+      "change": "changed",
+      "before": "### Requirement: The port field offers every port before typing, and filters by name or code\n**ID**: REQ-ARRIVAL-002\nThe system MUST offer the whole list of ports as soon as the user opens the port of entry field, before anything is typed, and MUST filter it by a port's code as well as by its name.\n\n#### Scenario: Opening the port field offers the full list\n**ID**: SCN-ARRIVAL-002-A\n- **GIVEN** the user is on the arrival details page\n- **WHEN** they open the port of entry field without typing anything\n- **THEN** every port is offered\n\n#### Scenario: Typing a port's code offers that port\n**ID**: SCN-ARRIVAL-002-B\n- **GIVEN** the user is on the arrival details page\n- **WHEN** they type a port's code rather than its name\n- **THEN** that port is offered for them to choose\n\n#### Scenario: Typing text that matches no port shows a no-results message\n**ID**: SCN-ARRIVAL-002-C\n- **GIVEN** the user is on the arrival details page\n- **WHEN** they type text that matches no port\n- **THEN** a message tells them nothing matched",
+      "after": "### Requirement: The port field offers every port before typing, and filters by name or code\n**ID**: REQ-ARRIVAL-002\nThe system MUST offer the whole list of ports as soon as the user opens the port of entry field, before anything is typed, and MUST filter it by a port's code as well as by its name, and MUST list every port the reference data service serves, airports first, then seaports, then rail ports, each group A to Z by name ignoring letter case and reading non-breaking and doubled spaces as single spaces.\n\n#### Scenario: Opening the port field offers the full list\n**ID**: SCN-ARRIVAL-002-A\n- **GIVEN** the user is on the arrival details page\n- **WHEN** they open the port of entry field without typing anything\n- **THEN** every port is offered\n\n#### Scenario: Typing a port's code offers that port\n**ID**: SCN-ARRIVAL-002-B\n- **GIVEN** the user is on the arrival details page\n- **WHEN** they type a port's code rather than its name\n- **THEN** that port is offered for them to choose\n\n#### Scenario: Typing text that matches no port shows a no-results message\n**ID**: SCN-ARRIVAL-002-C\n- **GIVEN** the user is on the arrival details page\n- **WHEN** they type text that matches no port\n- **THEN** a message tells them nothing matched\n\n#### Scenario: Every port the reference data service serves is offered, in its order\n**ID**: SCN-ARRIVAL-002-D\n- **GIVEN** the user is on the arrival details page\n- **WHEN** the port list is read in full\n- **THEN** it holds every port the reference data service serves, each reading \"<port name> - <port code>\", for example \"Port of Dover - GB DVR\", in the order the service serves them\n\n#### Scenario: Ports are listed airports first, then seaports, then rail ports, each A to Z by name\n**ID**: SCN-ARRIVAL-002-E\n- **GIVEN** the user is on the arrival details page\n- **WHEN** the port list is read in full\n- **THEN** every airport comes before every seaport, and every seaport before every rail port\n- **AND** within each group the ports run A to Z by name, a name in capitals sorting among the names that start with the same letter, and a name with a non-breaking or doubled space sorting where the same name with single spaces would",
+      "summary": "The port list now holds every port the reference data service serves, ordered airports, then seaports, then rail ports, each A to Z.",
+      "cards": [
+        "port-order",
+        "stub-lists"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/arrival-details",
+      "capabilityName": "Live animals: Arrival details page",
+      "requirementId": "REQ-ARRIVAL-003",
+      "requirementName": "Choosing a port submits and keeps its code",
+      "change": "changed",
+      "before": "### Requirement: Choosing a port submits and keeps its code\n**ID**: REQ-ARRIVAL-003\nThe system MUST submit the chosen port's code rather than the text the user typed, and MUST still hold that code when the user returns to the page.\n\n#### Scenario: The chosen port's code is what the notification keeps\n**ID**: SCN-ARRIVAL-003-A\n- **GIVEN** the user is on the arrival details page\n- **WHEN** they choose a port, complete the page and save it\n- **THEN** the port's code is what the notification keeps\n- **WHEN** they later return to the arrival details page\n- **THEN** the port of entry still holds that code\n\n#### Scenario: The chosen port is shown as its name and code together\n**ID**: SCN-ARRIVAL-003-B\n- **GIVEN** the user is on the arrival details page\n- **WHEN** they choose a port\n- **THEN** the search field shows that port's name followed by its code",
+      "after": "### Requirement: Choosing a port submits and keeps its code\n**ID**: REQ-ARRIVAL-003\nThe system MUST submit the chosen port's code rather than the text the user typed, MUST show the chosen port in the search field as \"<port name> - <port code>\", and MUST still hold that code when the user returns to the page.\n\n#### Scenario: The chosen port's code is what the notification keeps\n**ID**: SCN-ARRIVAL-003-A\n- **GIVEN** the user is on the arrival details page\n- **WHEN** they choose a port, complete the page and save it\n- **THEN** the port's code is what the notification keeps\n- **WHEN** they later return to the arrival details page\n- **THEN** the port of entry still holds that code\n\n#### Scenario: The chosen port is shown as its name and code together\n**ID**: SCN-ARRIVAL-003-B\n- **GIVEN** the user is on the arrival details page\n- **WHEN** they choose a port\n- **THEN** the search field shows that port as \"<port name> - <port code>\", for example \"Port of Dover - GB DVR\"",
+      "summary": "The chosen port now shows in the search box as \"<port name> - <port code>\".",
+      "cards": [
+        "port-labels"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/arrival-details",
+      "capabilityName": "Live animals: Arrival details page",
+      "requirementId": "REQ-ARRIVAL-004",
+      "requirementName": "The port field works without client-side JavaScript",
+      "change": "changed",
+      "before": "### Requirement: The port field works without client-side JavaScript\n**ID**: REQ-ARRIVAL-004\nThe system MUST keep an ordinary port list underneath the searchable field, so a user without JavaScript can still choose a port, and MUST have that underlying list carry the code the page submits.\n\n#### Scenario: An ordinary port list remains available beneath the searchable field\n**ID**: SCN-ARRIVAL-004-A\n- **GIVEN** the user is on the arrival details page\n- **WHEN** the page is examined without relying on the searchable field\n- **THEN** an ordinary port list is present, carrying the code that is submitted",
+      "after": "### Requirement: The port field works without client-side JavaScript\n**ID**: REQ-ARRIVAL-004\nThe system MUST keep an ordinary, labelled port list underneath the searchable field, so a user without JavaScript can still choose a port, MUST have each port in that list read \"<port name> - <port code>\", and MUST have that underlying list carry the code the page submits.\n\n#### Scenario: An ordinary port list remains available beneath the searchable field\n**ID**: SCN-ARRIVAL-004-A\n- **GIVEN** the user is on the arrival details page\n- **WHEN** the page is examined without relying on the searchable field\n- **THEN** an ordinary port list is present, carrying the code that is submitted\n- **AND** the list is labelled as the port of entry question\n- **AND** each port in it reads \"<port name> - <port code>\"",
+      "summary": "The list used without JavaScript is now labelled, and each port reads \"<port name> - <port code>\".",
+      "cards": [
+        "port-labels"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/arrival-details",
+      "capabilityName": "Live animals: Arrival details page",
+      "requirementId": "REQ-ARRIVAL-006",
+      "requirementName": "Save and continue without a means of transport is refused",
+      "change": "changed",
+      "before": "### Requirement: Saving the page empty is rejected\n**ID**: REQ-ARRIVAL-006\nThe system MUST refuse to save the arrival details page when nothing has been answered, showing an error summary.\n\n#### Scenario: Saving with nothing answered shows an error summary\n**ID**: SCN-ARRIVAL-006-A\n- **GIVEN** the user is on the arrival details page with nothing answered\n- **WHEN** they save and continue\n- **THEN** an error summary headed \"There is a problem\" is shown",
+      "after": "### Requirement: Save and continue without a means of transport is refused\n**ID**: REQ-ARRIVAL-006\nThe system MUST refuse Save and continue on the arrival details page while no means of transport is chosen, saving nothing, showing back the other answers entered, and showing the error 'Select a means of transport to the port of entry' in the error summary, linked to the means of transport question, and above that question. Save and return to overview with no means of transport is not refused; what it saves is specified by `live-animals/journey-flow`.\n\n#### Scenario: Saving with no means of transport shows an error on that question\n**ID**: SCN-ARRIVAL-006-A\n- **GIVEN** the user is on the arrival details page with no means of transport chosen\n- **WHEN** they save and continue\n- **THEN** an error summary headed \"There is a problem\" is shown, with \"Select a means of transport to the port of entry\" linked to the means of transport question\n- **AND** the message is shown above the means of transport question, which is shown in its error style\n- **AND** the page title starts \"Error: \"\n- **AND** they remain on the arrival details page\n\n#### Scenario: The other answers are shown back and nothing is saved\n**ID**: SCN-ARRIVAL-006-B\n- **GIVEN** the user has chosen a port of entry and an arrival date but no means of transport\n- **WHEN** they save and continue\n- **THEN** the port of entry and arrival date are still shown on the page\n- **AND** when they leave and return to the page on the same notification, neither answer was saved",
+      "summary": "Saving with nothing answered used to be refused. Now only a missing means of transport stops Save and continue, with a specific error.\n\nSave and return to overview is not refused. The heading changed to match.",
+      "cards": [
+        "means-required",
+        "soft-save"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/arrival-details",
+      "capabilityName": "Live animals: Arrival details page",
+      "requirementId": "REQ-ARRIVAL-007",
+      "requirementName": "The arrival date is confined to one week back and six months ahead",
+      "change": "changed",
+      "before": "### Requirement: The arrival date is confined to one week back and six months ahead\n**ID**: REQ-ARRIVAL-007\nThe system MUST confine the arrival date to a window running from one week in the past to six months in the future, MUST offer that window as the range of the date picker, and MUST reject a date typed outside it with an error naming the allowed range, keeping the user on the page and saving nothing.\n\n#### Scenario: The date picker offers only the allowed window\n**ID**: SCN-ARRIVAL-007-A\n- **GIVEN** the user is on the arrival details page\n- **WHEN** they view the arrival date picker\n- **THEN** its earliest selectable date is one week in the past and its latest is six months in the future\n\n#### Scenario: A date typed outside the window is rejected with an error naming the range\n**ID**: SCN-ARRIVAL-007-B\n- **GIVEN** the user has answered the other arrival questions\n- **WHEN** they type an arrival date outside the allowed window and save and continue\n- **THEN** an error summary headed \"There is a problem\" is shown, and an error against the arrival date says it must be between the earliest and latest allowed dates\n- **AND** they remain on the arrival details page\n\n#### Scenario: An impossible date is rejected with its own error, distinct from the out-of-window error\n**ID**: SCN-ARRIVAL-007-C\n- **GIVEN** the user has answered the other arrival questions\n- **WHEN** they type a date that does not exist and save and continue\n- **THEN** an error summary is shown naming that the date is invalid, not that it falls outside the allowed window\n- **AND** the arrival date field is focused, still holding the impossible date typed\n- **AND** the other arrival answers already given are still held\n\n#### Scenario: The date picker's own calendar excludes the day before the window, and allows the boundary day itself\n**ID**: SCN-ARRIVAL-007-D\n- **GIVEN** the user opens the arrival date picker\n- **WHEN** they navigate to the day immediately before the allowed window\n- **THEN** that day is shown excluded and cannot be chosen\n- **WHEN** they navigate to the earliest day of the allowed window and choose it\n- **THEN** the arrival date field takes that boundary date\n\n#### Scenario: A rejected arrival date is not kept\n**ID**: SCN-ARRIVAL-007-E\n- **GIVEN** the user has had an arrival date rejected for falling outside the allowed window\n- **WHEN** they leave the page and return to it on the same notification\n- **THEN** the arrival date does not hold the rejected value",
+      "after": "### Requirement: The arrival date is confined to one week back and six months ahead\n**ID**: REQ-ARRIVAL-007\nThe system MUST confine the arrival date to a window from one week back to six months ahead, MUST offer that window as the date picker's range, MUST reject a date typed outside it with an error naming the range (saving nothing), and MUST name a saved arrival date that has since fallen outside the window when the page is reopened, with the error \"The saved arrival date is no longer a date you can choose. Enter a new arrival date.\"\n\n#### Scenario: The date picker offers only the allowed window\n**ID**: SCN-ARRIVAL-007-A\n- **GIVEN** the user is on the arrival details page\n- **WHEN** they view the arrival date picker\n- **THEN** its earliest selectable date is one week in the past and its latest is six months in the future\n\n#### Scenario: A date typed outside the window is rejected with an error naming the range\n**ID**: SCN-ARRIVAL-007-B\n- **GIVEN** the user has answered the other arrival questions\n- **WHEN** they type an arrival date outside the allowed window and save and continue\n- **THEN** an error summary headed \"There is a problem\" is shown, and an error against the arrival date says it must be between the earliest and latest allowed dates\n- **AND** they remain on the arrival details page\n\n#### Scenario: An impossible date is rejected with its own error, distinct from the out-of-window error\n**ID**: SCN-ARRIVAL-007-C\n- **GIVEN** the user has answered the other arrival questions\n- **WHEN** they type a date that does not exist and save and continue\n- **THEN** an error summary is shown naming that the date is invalid, not that it falls outside the allowed window\n- **AND** the arrival date field is focused, still holding the impossible date typed\n- **AND** the other arrival answers already given are still held\n\n#### Scenario: The date picker's own calendar excludes the day before the window, and allows the boundary day itself\n**ID**: SCN-ARRIVAL-007-D\n- **GIVEN** the user opens the arrival date picker\n- **WHEN** they navigate to the day immediately before the allowed window\n- **THEN** that day is shown excluded and cannot be chosen\n- **WHEN** they navigate to the earliest day of the allowed window and choose it\n- **THEN** the arrival date field takes that boundary date\n\n#### Scenario: A rejected arrival date is not kept\n**ID**: SCN-ARRIVAL-007-E\n- **GIVEN** the user has had an arrival date rejected for falling outside the allowed window\n- **WHEN** they leave the page and return to it on the same notification\n- **THEN** the arrival date does not hold the rejected value\n\n#### Scenario: A saved arrival date that has fallen out of the window is named when the page is reopened\n**ID**: SCN-ARRIVAL-007-F\n- **GIVEN** an arrival date was saved and is now more than 7 days in the past\n- **WHEN** the user opens the arrival details page\n- **THEN** an error summary is shown, linking to the error \"The saved arrival date is no longer a date you can choose. Enter a new arrival date.\"",
+      "summary": "A saved arrival date that has since fallen outside the allowed window is now named with an error when the page is reopened.",
+      "cards": [
+        "stale-arrival"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/arrival-details",
+      "capabilityName": "Live animals: Arrival details page",
+      "requirementId": "REQ-ARRIVAL-011",
+      "requirementName": "Only the means of transport is needed to continue",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: Only the means of transport is needed to continue\n**ID**: REQ-ARRIVAL-011\nThe system MUST let the user save and continue once a means of transport is chosen, even with the arrival date, port of entry, transport identification and transport document reference left blank.\n\n#### Scenario: A means of transport alone lets the page go on\n**ID**: SCN-ARRIVAL-011-A\n- **GIVEN** the user has chosen a means of transport and left the arrival date, port of entry, transport identification and document reference blank\n- **WHEN** they save and continue\n- **THEN** the next page is shown and no error summary is shown",
+      "summary": "New. A means of transport alone is enough to save and continue.",
+      "cards": [
+        "means-required"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/arrival-details",
+      "capabilityName": "Live animals: Arrival details page",
+      "requirementId": "REQ-ARRIVAL-012",
+      "requirementName": "The port search is hinted and shows a placeholder",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The port search is hinted and shows a placeholder\n**ID**: REQ-ARRIVAL-012\nThe system MUST hint the port of entry with \"Select where the transporter will enter with the consignment. Start typing to search by port or airport name or code.\" and MUST show \"Select a port\" in the search while no port is chosen, and MUST begin the ordinary port list with a blank \"Select a port\" entry.\n\n#### Scenario: The port search reads as Design Release 2.1 words it\n**ID**: SCN-ARRIVAL-012-A\n- **GIVEN** the user is on the arrival details page with no port chosen\n- **WHEN** the page loads\n- **THEN** the port of entry hint reads \"Select where the transporter will enter with the consignment. Start typing to search by port or airport name or code.\"\n- **AND** the port search shows \"Select a port\"\n\n#### Scenario: Without JavaScript, the port list begins with \"Select a port\"\n**ID**: SCN-ARRIVAL-012-B\n- **GIVEN** the user has reached the arrival details page without JavaScript\n- **WHEN** the page loads\n- **THEN** the port of entry list begins with its blank \"Select a port\" entry",
+      "summary": "New. The port search has a hint and shows \"Select a port\" as its placeholder and first list entry.",
+      "cards": [
+        "arrival-wording"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/arrival-details",
+      "capabilityName": "Live animals: Arrival details page",
+      "requirementId": "REQ-ARRIVAL-013",
+      "requirementName": "Means of transport is offered as Air, Rail, Road and Sea, and kept as its code",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: Means of transport is offered as Air, Rail, Road and Sea, and kept as its code\n**ID**: REQ-ARRIVAL-013\nThe system MUST offer the means of transport as \"Air\", \"Rail\", \"Road\" and \"Sea\", in that order, after \"Select one\", and MUST keep the choice in the notification as AIRPLANE, RAILWAY, ROAD_VEHICLE or VESSEL respectively.\n\n#### Scenario: The means of transport options read Air, Rail, Road and Sea\n**ID**: SCN-ARRIVAL-013-A\n- **GIVEN** the user is on the arrival details page\n- **WHEN** the page loads\n- **THEN** the means of transport options read \"Select one\", \"Air\", \"Rail\", \"Road\", \"Sea\" in that order\n\n#### Scenario: Each option is kept as the code other services read\n**ID**: SCN-ARRIVAL-013-B\n- **GIVEN** the user is on the arrival details page\n- **WHEN** they choose Air, Rail, Road or Sea and save\n- **THEN** the notification keeps AIRPLANE, RAILWAY, ROAD_VEHICLE or VESSEL respectively",
+      "summary": "New. Means of transport reads Air, Rail, Road and Sea, and is still kept as the same codes.",
+      "cards": [
+        "arrival-wording"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/arrival-details",
+      "capabilityName": "Live animals: Arrival details page",
+      "requirementId": "REQ-ARRIVAL-014",
+      "requirementName": "The transport identification hint opens \"Enter one of the following:\"",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The transport identification hint opens \"Enter one of the following:\"\n**ID**: REQ-ARRIVAL-014\nThe system MUST open the transport identification hint with \"Enter one of the following:\" followed by the list of flight number, train number, road vehicle registration number, and vessel name (for ferries, also the road vehicle registration number).\n\n#### Scenario: The transport identification hint leads with its instruction\n**ID**: SCN-ARRIVAL-014-A\n- **GIVEN** the user is on the arrival details page\n- **WHEN** the page loads\n- **THEN** the transport identification hint opens with \"Enter one of the following:\"\n- **AND** it lists flight number, train number, road vehicle registration number, and vessel name (for ferries, also the road vehicle registration number)",
+      "summary": "New. The transport identification hint opens with \"Enter one of the following:\".",
+      "cards": [
+        "arrival-wording"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/arrival-details",
+      "capabilityName": "Live animals: Arrival details page",
+      "requirementId": "REQ-ARRIVAL-015",
+      "requirementName": "Each arrival question is set in the medium label size",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: Each arrival question is set in the medium label size\n**ID**: REQ-ARRIVAL-015\nThe system MUST set each of the five arrival questions (arrival date, port of entry, means of transport, transport identification and transport document reference) in the GOV.UK medium label size.\n\n#### Scenario: The arrival questions read at medium size\n**ID**: SCN-ARRIVAL-015-A\n- **GIVEN** a user on the arrival details page\n- **WHEN** the page loads\n- **THEN** the arrival date, port of entry, means of transport, transport identification and transport document reference questions are each set in the medium label size",
+      "summary": "New. Each of the five arrival questions uses the medium label size.",
+      "cards": [
+        "arrival-wording"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/transited-countries",
+      "capabilityName": "Live animals: Transit countries page",
+      "requirementId": "REQ-TRANSIT-COUNTRIES-001",
+      "requirementName": "The page asks for transited countries one at a time by search, starting with an empty list",
+      "change": "changed",
+      "before": "### Requirement: The page asks for transited countries one at a time by search, starting with an empty list\n**ID**: REQ-TRANSIT-COUNTRIES-001\nThe system MUST let the user search for and add one transited country at a time, offering a labelled search field and an \"Add country\" action, and MUST start a fresh notification with no countries added and no cap mentioned up front.\n\n#### Scenario: The page presents an empty list with a search field and no cap stated\n**ID**: SCN-TRANSIT-COUNTRIES-001-A\n- **GIVEN** the user has reached the transited countries page for a fresh notification\n- **WHEN** the page loads\n- **THEN** it offers a labelled country search and an \"Add country\" action\n- **AND** it states no countries have been added yet, with no table shown and no cap mentioned",
+      "after": "### Requirement: The page asks for transited countries one at a time by search, starting with an empty list\n**ID**: REQ-TRANSIT-COUNTRIES-001\nThe system MUST let the user search for and add one transited country at a time, offering a labelled search field and an \"Add country\" action, and MUST start a fresh notification with no countries added, showing no country list and no sentence saying none have been added, and no cap mentioned up front.\n\n#### Scenario: The page presents an empty list with a search field and no cap stated\n**ID**: SCN-TRANSIT-COUNTRIES-001-A\n- **GIVEN** the user has reached the transited countries page for a fresh notification\n- **WHEN** the page loads\n- **THEN** it offers a labelled country search and an \"Add country\" action\n- **AND** no country list is shown and no sentence says that no countries have been added, with no cap mentioned",
+      "summary": "A fresh page no longer shows a list or a sentence saying no countries have been added.",
+      "cards": [
+        "transit-page"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/transited-countries",
+      "capabilityName": "Live animals: Transit countries page",
+      "requirementId": "REQ-TRANSIT-COUNTRIES-003",
+      "requirementName": "Saving with no countries added is accepted",
+      "change": "changed",
+      "before": "### Requirement: Saving with no countries added is accepted\n**ID**: REQ-TRANSIT-COUNTRIES-003\nThe system MUST accept the transited countries page being saved with none added, without showing an error, since the question is optional.\n\n#### Scenario: Continuing with nothing added succeeds\n**ID**: SCN-TRANSIT-COUNTRIES-003-A\n- **GIVEN** the user is on the transited countries page with no countries added\n- **WHEN** they save and continue\n- **THEN** the page saves without an error summary, and the user moves to the next step\n- **AND** the empty list is shown again if they return to the page",
+      "after": "### Requirement: Saving with no countries added is accepted\n**ID**: REQ-TRANSIT-COUNTRIES-003\nThe system MUST accept the transited countries page being saved with none added, without showing an error, since the question is optional.\n\n#### Scenario: Continuing with nothing added succeeds\n**ID**: SCN-TRANSIT-COUNTRIES-003-A\n- **GIVEN** the user is on the transited countries page with no countries added\n- **WHEN** they save and continue\n- **THEN** the page saves without an error summary, and the user moves to the next step\n- **AND** no countries are listed if they return to the page",
+      "summary": "Only the scenario wording changed. Returning to the page now shows no countries listed, rather than an empty list.",
+      "cards": [
+        "transit-page"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/transited-countries",
+      "capabilityName": "Live animals: Transit countries page",
+      "requirementId": "REQ-TRANSIT-COUNTRIES-004",
+      "requirementName": "Adding a country is refused when the entry is blank, not offered, already added, or the cap is reached",
+      "change": "changed",
+      "before": "### Requirement: Adding a country is refused when the entry is blank, not offered, already added, or the cap is reached\n**ID**: REQ-TRANSIT-COUNTRIES-004\nThe system MUST refuse to add a country when the search field is left blank, when the entry is not one of the offered countries, or when it has already been added, in each case naming the reason and linking to and focusing the search field. The system MUST NOT render a rejected entry back as an added row, whatever it contains.\n\n#### Scenario: Pressing Add with nothing chosen is refused\n**ID**: SCN-TRANSIT-COUNTRIES-004-A\n- **GIVEN** the user presses \"Add country\" with the search field empty\n- **WHEN** the page responds\n- **THEN** an error tells them to enter a country to add, linking to and focusing the search field\n\n#### Scenario: A country already added is refused by name\n**ID**: SCN-TRANSIT-COUNTRIES-004-B\n- **GIVEN** the user has already added a country\n- **WHEN** they try to add the same country again\n- **THEN** an error names that country as already added\n- **AND** the list still holds only the one entry\n\n#### Scenario: An out-of-list or tampered entry is refused and never rendered back\n**ID**: SCN-TRANSIT-COUNTRIES-004-C\n- **GIVEN** a country code that is not one of the offered options, however it was submitted\n- **WHEN** the page responds\n- **THEN** an error tells the user to select a country from the list, linking to and focusing the search field\n- **AND** the rejected value is not added to the list or rendered back onto the page as markup",
+      "after": "### Requirement: Adding a country is refused when the entry is blank, not offered, already added, or the cap is reached\n**ID**: REQ-TRANSIT-COUNTRIES-004\nThe system MUST refuse to add a country when the search field is left blank, when the entry is not one of the offered countries or territories, or when it has already been added, in each case naming the reason and linking to and focusing the search field. The system MUST NOT render a rejected entry back as an added row, whatever it contains.\n\n#### Scenario: Pressing Add with nothing chosen is refused\n**ID**: SCN-TRANSIT-COUNTRIES-004-A\n- **GIVEN** the user presses \"Add country\" with the search field empty\n- **WHEN** the page responds\n- **THEN** an error tells them to enter a country to add, linking to and focusing the search field\n\n#### Scenario: A country already added is refused by name\n**ID**: SCN-TRANSIT-COUNTRIES-004-B\n- **GIVEN** the user has already added a country\n- **WHEN** they try to add the same country again\n- **THEN** an error names that country as already added\n- **AND** the list still holds only the one entry\n\n#### Scenario: An out-of-list or tampered entry is refused and never rendered back\n**ID**: SCN-TRANSIT-COUNTRIES-004-C\n- **GIVEN** a country or territory code that is not one of the offered options, however it was submitted\n- **WHEN** the page responds\n- **THEN** an error tells the user to select a country from the list, linking to and focusing the search field\n- **AND** the rejected value is not added to the list or rendered back onto the page as markup",
+      "summary": "The wording now says \"countries or territories\". The rule is otherwise the same.",
+      "cards": [
+        "transit-country-list"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/transited-countries",
+      "capabilityName": "Live animals: Transit countries page",
+      "requirementId": "REQ-TRANSIT-COUNTRIES-006",
+      "requirementName": "The browser title names the page as Transit countries",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The browser title names the page as Transit countries\n**ID**: REQ-TRANSIT-COUNTRIES-006\nThe system MUST title the transited countries page \"Transit countries - Import notification service - GOV.UK\" in the browser, and \"Error: Transit countries - Import notification service - GOV.UK\" while it shows an error.\n\n#### Scenario: The browser title reads Transit countries\n**ID**: SCN-TRANSIT-COUNTRIES-006-A\n- **GIVEN** the user opens the transited countries page\n- **WHEN** the page loads\n- **THEN** the browser title is \"Transit countries - Import notification service - GOV.UK\"\n\n#### Scenario: The browser title starts Error: when the page shows an error\n**ID**: SCN-TRANSIT-COUNTRIES-006-B\n- **GIVEN** the user is on the transited countries page\n- **WHEN** they press \"Add country\" with no country chosen\n- **THEN** the browser title is \"Error: Transit countries - Import notification service - GOV.UK\"",
+      "summary": "New. The browser title is \"Transit countries - Import notification service - GOV.UK\", with \"Error: \" in front when the page shows an error.",
+      "cards": [
+        "transit-page"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/transited-countries",
+      "capabilityName": "Live animals: Transit countries page",
+      "requirementId": "REQ-TRANSIT-COUNTRIES-007",
+      "requirementName": "Back returns to where the user came from",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: Back returns to where the user came from\n**ID**: REQ-TRANSIT-COUNTRIES-007\nThe system MUST point the page's Back link at the arrival details page when the user reached the page by saving and continuing from arrival details in the opening sequence, and at Overview when they opened it from its task on Overview.\n\n#### Scenario: Back goes to arrival details after Save and continue there\n**ID**: SCN-TRANSIT-COUNTRIES-007-A\n- **GIVEN** a newly created notification in its opening sequence\n- **AND** the user has saved arrival details with Road chosen and been shown the transited countries page\n- **WHEN** they select Back\n- **THEN** the arrival details page is shown\n\n#### Scenario: Back goes to Overview when opened from its task\n**ID**: SCN-TRANSIT-COUNTRIES-007-B\n- **GIVEN** the user opened the transited countries page from its task on Overview\n- **WHEN** they select Back\n- **THEN** Overview is shown",
+      "summary": "New. Back goes to arrival details in the opening sequence, and to Overview when the page was opened from its task.",
+      "cards": [
+        "transit-page",
+        "overview-return"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/transited-countries",
+      "capabilityName": "Live animals: Transit countries page",
+      "requirementId": "REQ-TRANSIT-COUNTRIES-008",
+      "requirementName": "The page is offered only for rail or road",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The page is offered only for rail or road\n**ID**: REQ-TRANSIT-COUNTRIES-008\nThe system MUST send a user who opens the transited countries page to Overview when the saved means of transport is Air or Sea, or none is saved, and MUST save no countries and send them to Overview when they submit the page in that state.\n\n#### Scenario: Opening the page without rail or road goes to Overview\n**ID**: SCN-TRANSIT-COUNTRIES-008-A\n- **GIVEN** the saved means of transport is Air, Sea or not saved\n- **WHEN** the user opens the transited countries page\n- **THEN** Overview is shown instead\n\n#### Scenario: Submitting the page after the means changes saves nothing\n**ID**: SCN-TRANSIT-COUNTRIES-008-B\n- **GIVEN** the transited countries page is open with a country added\n- **AND** the means of transport has since been saved as Air\n- **WHEN** the user saves and continues\n- **THEN** Overview is shown\n- **AND** no transited countries were saved",
+      "summary": "New. The page is offered only for rail or road.\n\nOtherwise the user goes to Overview and nothing is saved.",
+      "cards": [
+        "transit-page",
+        "transit-task"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/transited-countries",
+      "capabilityName": "Live animals: Transit countries page",
+      "requirementId": "REQ-TRANSIT-COUNTRIES-009",
+      "requirementName": "The search offers the origin countries and their territories, each territory named with its country",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The search offers the origin countries and their territories, each territory named with its country\n**ID**: REQ-TRANSIT-COUNTRIES-009\nThe system MUST offer in the transited country search, after the placeholder \"Search for a country\", the countries and territories the reference data service serves for the country of origin, in one alphabetical list, naming each territory \"<territory> (<country>)\" with its country's served name, with or without JavaScript.\n\n#### Scenario: The search offers the origin countries and their territories in alphabetical order\n**ID**: SCN-TRANSIT-COUNTRIES-009-A\n- **GIVEN** the user is on the transited countries page\n- **WHEN** the search list is read in full\n- **THEN** after the placeholder \"Search for a country\" it holds exactly the countries and territories the reference data service serves for the country of origin, by name, in alphabetical order\n\n#### Scenario: Each territory is named with its country, with or without JavaScript\n**ID**: SCN-TRANSIT-COUNTRIES-009-B\n- **GIVEN** the transited countries search, with or without JavaScript\n- **WHEN** a territory is read\n- **THEN** it reads \"<territory> (<country>)\", for example \"Canary Islands (Spain)\"",
+      "summary": "New. The search offers the origin countries and their territories in one alphabetical list, each territory named with its country.",
+      "cards": [
+        "transit-country-list",
+        "origin-subdivisions"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/transited-countries",
+      "capabilityName": "Live animals: Transit countries page",
+      "requirementId": "REQ-TRANSIT-COUNTRIES-010",
+      "requirementName": "An added territory is listed, saved and listed again under its country-named label",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: An added territory is listed, saved and listed again under its country-named label\n**ID**: REQ-TRANSIT-COUNTRIES-010\nThe system MUST list an added territory as \"<territory> (<country>)\", MUST save its code when the user saves and continues, and MUST list it again under the same name when the page is reopened.\n\n#### Scenario: A territory is listed, saved and shown again under the same name\n**ID**: SCN-TRANSIT-COUNTRIES-010-A\n- **GIVEN** the user is on the transited countries page\n- **WHEN** they add a territory and save and continue\n- **THEN** no error is shown\n- **AND** when they reopen the page the territory is listed as \"<territory> (<country>)\"",
+      "summary": "New. An added territory is listed, saved and listed again under its country-named label.",
+      "cards": [
+        "transit-country-list"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/confirmation",
+      "capabilityName": "Live animals: Notification submitted page",
+      "requirementId": "REQ-CONFIRM-002",
+      "requirementName": "The confirmation page is not shown for a notification that has not yet been submitted",
+      "change": "changed",
+      "before": "### Requirement: The confirmation page is not shown for a notification that has not yet been submitted\n**ID**: REQ-CONFIRM-002\nThe system MUST redirect a request for the confirmation page to Overview when the notification it names has not been submitted.\n\n#### Scenario: Requesting confirmation for an unsubmitted notification redirects to Overview\n**ID**: SCN-CONFIRM-002-A\n- **GIVEN** a notification has been started but not submitted\n- **WHEN** its confirmation page is requested directly\n- **THEN** Overview is shown instead",
+      "after": "### Requirement: The confirmation page is not shown for a notification that has not yet been submitted\n**ID**: REQ-CONFIRM-002\nThe system MUST redirect a request for the confirmation page to the declaration page when the notification it names has not been submitted (a draft, or an amendment not yet resubmitted).\n\n#### Scenario: Requesting confirmation for an unsubmitted notification opens the declaration\n**ID**: SCN-CONFIRM-002-A\n- **GIVEN** a notification has been started but not submitted\n- **WHEN** its confirmation page is requested directly\n- **THEN** the declaration page is shown instead",
+      "summary": "An unsubmitted notification now sends the user to the declaration page instead of Overview.",
+      "cards": [
+        "confirmation-guard"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/confirmation",
+      "capabilityName": "Live animals: Notification submitted page",
+      "requirementId": "REQ-CONFIRM-004",
+      "requirementName": "The page tells the user how to view or amend the notification later",
+      "change": "changed",
+      "before": "### Requirement: The page tells the user how to view or amend the notification later\n**ID**: REQ-CONFIRM-004\nThe system MUST tell the user they can view or amend the notification from their dashboard and resubmit it, and MUST offer a way back to the dashboard.\n\n#### Scenario: The confirmation page offers a route back to the dashboard\n**ID**: SCN-CONFIRM-004-A\n- **GIVEN** a notification has just been submitted\n- **WHEN** the user reads the confirmation page\n- **THEN** it explains they can view or amend the notification from their dashboard and resubmit it\n- **AND** a link back to the dashboard is offered",
+      "after": "### Requirement: The page tells the user how to view or amend the notification later\n**ID**: REQ-CONFIRM-004\nThe system MUST tell the user 'You can view or change this notification from your dashboard.' and MUST offer a way back to the dashboard.\n\n#### Scenario: The confirmation page offers a route back to the dashboard\n**ID**: SCN-CONFIRM-004-A\n- **GIVEN** a notification has just been submitted\n- **WHEN** the user reads the confirmation page\n- **THEN** it reads 'You can view or change this notification from your dashboard.'\n- **AND** a link back to the dashboard is offered",
+      "summary": "The page now reads \"You can view or change this notification from your dashboard.\" It no longer mentions resubmitting.",
+      "cards": [
+        "confirmation-wording"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/confirmation",
+      "capabilityName": "Live animals: Notification submitted page",
+      "requirementId": "REQ-CONFIRM-005",
+      "requirementName": "The page tells the user where to get help",
+      "change": "changed",
+      "before": "### Requirement: The page tells the user where to get help\n**ID**: REQ-CONFIRM-005\nThe system MUST offer the user routes to help — where to email about import notifications, how to reach the Animal and Plant Health Agency for technical help with the service including its opening hours, and where to go for help with a customs declaration.\n\n#### Scenario: The confirmation page carries the help routes\n**ID**: SCN-CONFIRM-005-A\n- **GIVEN** a notification has just been submitted\n- **WHEN** the user reads the confirmation page\n- **THEN** it gives an email address for help with import notifications, a telephone number and opening hours for technical help, and a route to help with a customs declaration",
+      "after": "### Requirement: The page tells the user where to get help\n**ID**: REQ-CONFIRM-005\nThe system MUST offer the user routes to help — where to email about import notifications, how to reach the Animal and Plant Health Agency for technical help with the service including its opening hours, and where to go for help with a customs declaration. The 'contact HMRC' and 'Find out about call charges' links MUST open in a new tab, keeping that link text. Each link MUST tell screen-reader users that it opens in a new tab, without changing its visible text.\n\n#### Scenario: The confirmation page carries the help routes\n**ID**: SCN-CONFIRM-005-A\n- **GIVEN** a notification has just been submitted\n- **WHEN** the user reads the confirmation page\n- **THEN** it gives an email address for help with import notifications, a telephone number and opening hours for technical help, and a route to help with a customs declaration\n\n#### Scenario: The HMRC links open in a new tab\n**ID**: SCN-CONFIRM-005-B\n- **GIVEN** a notification has just been submitted\n- **WHEN** the user reads the help section\n- **THEN** 'contact HMRC' and 'Find out about call charges' each open in a new tab\n- **AND** each link tells screen-reader users it opens in a new tab, while its visible text stays 'contact HMRC' / 'Find out about call charges'",
+      "summary": "The \"contact HMRC\" and \"Find out about call charges\" links now open in a new tab, and tell screen-reader users so.",
+      "cards": [
+        "hmrc-links"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/confirmation",
+      "capabilityName": "Live animals: Notification submitted page",
+      "requirementId": "REQ-CONFIRM-006",
+      "requirementName": "The page tells the user what they still owe when documents are outstanding",
+      "change": "changed",
+      "before": "### Requirement: The page tells the user what they still owe when documents are outstanding\n**ID**: REQ-CONFIRM-006\nThe system MUST show a section telling the user what they still need to do before the consignment is imported, listing the health certificate and any other required documents, whenever the submitted notification carries no recorded documents, and MUST NOT show this section once documents have been recorded.\n\n#### Scenario: A submission with no documents carries the outstanding-work section\n**ID**: SCN-CONFIRM-006-A\n- **GIVEN** a notification was submitted with no documents recorded\n- **WHEN** the user reads the confirmation page\n- **THEN** a \"Before the consignment is imported\" section tells them they still need to upload the health certificate and any other required documents",
+      "after": "### Requirement: The page tells the user what they still owe when documents are outstanding\n**ID**: REQ-CONFIRM-006\nThe system MUST show a \"Before the consignment is imported\" section, telling the user they still need to 'upload the ITAHC and any other required documents', whenever the notification was submitted without an ITAHC or health certificate — even when other documents were uploaded — and MUST NOT show it when one was.\n\n#### Scenario: A submission with no documents carries the outstanding-work section\n**ID**: SCN-CONFIRM-006-A\n- **GIVEN** a notification was submitted with no documents recorded\n- **WHEN** the user reads the confirmation page\n- **THEN** a \"Before the consignment is imported\" section tells them they still need to 'upload the ITAHC and any other required documents'\n\n#### Scenario: A submission with only other documents still carries the outstanding-work section\n**ID**: SCN-CONFIRM-006-B\n- **GIVEN** a notification was submitted with only a document that is not an ITAHC or health certificate\n- **WHEN** the user reads the confirmation page\n- **THEN** the \"Before the consignment is imported\" section is still shown\n\n#### Scenario: A submission with an ITAHC or health certificate carries no outstanding-work section\n**ID**: SCN-CONFIRM-006-C\n- **GIVEN** a notification was submitted with an ITAHC or health certificate\n- **WHEN** the user reads the confirmation page\n- **THEN** no \"Before the consignment is imported\" section is shown",
+      "summary": "The \"Before the consignment is imported\" section now depends on whether an ITAHC or health certificate was submitted, not on whether any document was.\n\nIt asks for the ITAHC by name.",
+      "cards": [
+        "confirmation-wording",
+        "action-required"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/declaration",
+      "capabilityName": "Live animals: Declaration page",
+      "requirementId": "REQ-DECLARATION-005",
+      "requirementName": "The declaration is confirmed with a small checkbox in a group named for screen readers, and the page shows no status bar",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The declaration is confirmed with a small checkbox in a group named for screen readers, and the page shows no status bar\n**ID**: REQ-DECLARATION-005\nThe system MUST offer the confirmation as a small GOV.UK checkbox in a group whose legend \"Declaration confirmation\" is announced to screen-reader users but not shown on screen. It MUST NOT show a status bar above the heading — no \"Draft\" or \"Amend\" tag, no reference number and no \"Cancel amend\" — whether the notification is a draft being submitted for the first time or an amendment being re-submitted.\n\n#### Scenario: A draft's declaration offers a small confirmation in a hidden-legend group and no status bar\n**ID**: SCN-DECLARATION-005-A\n- **GIVEN** a draft notification ready to submit\n- **WHEN** the user opens the declaration\n- **THEN** the confirmation is a small checkbox in a group named \"Declaration confirmation\", whose name is not shown on screen\n- **AND** no status bar is shown above the heading\n\n#### Scenario: An amendment's declaration shows no status bar\n**ID**: SCN-DECLARATION-005-B\n- **GIVEN** a notification is being amended\n- **WHEN** the user continues from check your answers to the declaration\n- **THEN** no status bar, reference number or \"Cancel amend\" is shown above the heading",
+      "summary": "New. The declaration uses a small checkbox in a group with a screen-reader-only legend, and shows no status bar.",
+      "cards": [
+        "declaration"
+      ]
+    },
+    {
+      "capability": "live-animals/journey-pages/contact-address",
+      "capabilityName": "Live animals: Contact address page",
+      "requirementId": "REQ-CONTACT-003",
+      "requirementName": "The contact address is optional, and saving without one is never refused",
+      "change": "changed",
+      "before": "### Requirement: The contact address is optional, and saving without one returns to Overview\n**ID**: REQ-CONTACT-003\nThe system MUST allow the contact address page to be saved with no address chosen, returning the user to Overview without an error.\n\n#### Scenario: Saving with no address chosen is allowed and exits to Overview\n**ID**: SCN-CONTACT-003-A\n- **GIVEN** the user is on the contact address page with no address chosen\n- **WHEN** they save and continue\n- **THEN** they return to Overview, and no error summary is shown",
+      "after": "### Requirement: The contact address is optional, and saving without one is never refused\n**ID**: REQ-CONTACT-003\nThe system MUST allow the contact address page to be saved with no address chosen, without an error. Outside the opening sequence, saving MUST return the user to Overview; inside it, saving ends the sequence on check your answers (`live-animals/journey-flow` REQ-FLOW-007).\n\n#### Scenario: Saving with no address chosen is allowed and exits to Overview\n**ID**: SCN-CONTACT-003-A\n- **GIVEN** the user opened the contact address page from Overview, with no address chosen\n- **WHEN** they save and continue\n- **THEN** they return to Overview, and no error summary is shown",
+      "summary": "Saving with no address is still never refused. Where the user goes next now depends on whether they are in the opening sequence, which ends on check your answers.\n\nThe heading changed to match.",
+      "cards": [
+        "run-ends-on-review"
+      ]
+    }
+  ]
+}

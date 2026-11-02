@@ -300,6 +300,17 @@ const startFailed = ({ log, reason }) => ({
   reason
 })
 
+const capitalise = (text) => `${text[0].toUpperCase()}${text.slice(1)}`
+
+const restoreOrClearLease = (leasePath, previous, holder) => {
+  if (previous?.holder === holder) {
+    writeJsonAtomic(leasePath, previous)
+    return `the lease kept for "${holder}", who held it before`
+  }
+  rmSync(leasePath, { force: true })
+  return 'the lease cleared'
+}
+
 const startUnderLease = async (context, previous) => {
   const { workspaceRoot, holder, mode, leasePath, logPath, env } = context
   const lease = {
@@ -344,6 +355,7 @@ const startUnderLease = async (context, previous) => {
       started: true,
       lease: held,
       log: upRun.log,
+      heldBefore: previous?.holder === holder,
       replaced: previous && previous.holder !== holder ? previous.holder : null
     }
   }
@@ -353,11 +365,11 @@ const startUnderLease = async (context, previous) => {
     [],
     downLogFor(logPath)
   )
-  rmSync(leasePath, { force: true })
+  const leaseNow = restoreOrClearLease(leasePath, previous, holder)
   const takenDown =
     downRun.exitCode === 0
-      ? 'It was taken down again and the lease cleared.'
-      : `Taking it down again failed too: ${scriptFailure('stop-stack.sh', downRun)} The lease was cleared.`
+      ? `It was taken down again and ${leaseNow}.`
+      : `Taking it down again failed too: ${scriptFailure('stop-stack.sh', downRun)} ${capitalise(leaseNow)}.`
   return startFailed({
     log: upRun.log,
     reason: `The workspace stack did not come up (run-stack.sh exited ${upRun.exitCode}). Read ${upRun.log}. ${takenDown}`
@@ -389,7 +401,10 @@ const restartUnderLease = async (context, lease) => {
  * those same containers, is reused as it is. A stack leased to anyone else,
  * up with no lease at all, or restarted by hand under a lease, is refused
  * and left exactly as it is. A lease whose stack has gone, and whose start is
- * not still running, is stale and is replaced under a lock.
+ * not still running, is stale and is replaced under a lock. `heldBefore`
+ * says whether the holder held the lease before this acquire. A start that
+ * fails clears the lease, unless the holder held it before: then that lease
+ * is kept for them.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
@@ -412,7 +427,14 @@ export const acquireStack = async ({
   const decision = acquireDecision({ up, lease, holder, containers })
   const context = { workspaceRoot, holder, mode, leasePath, logPath, env }
   if (decision === 'reuse') {
-    return { acquired: true, reused: true, started: false, lease, log: null }
+    return {
+      acquired: true,
+      reused: true,
+      started: false,
+      heldBefore: true,
+      lease,
+      log: null
+    }
   }
   if (decision === 'start') return startUnderLease(context, lease)
   if (decision === 'restart') return restartUnderLease(context, lease)

@@ -1,0 +1,1052 @@
+{
+  "source": "repo:backend",
+  "structure": "Part 6, GBN-AG payload, at repos/trade-imports-animals-backend main 15ae53f. Read in full: all 22 files in src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/ (about 900 lines of Java records, one per GBN-AG element: GbnAgEventDataMapper and GbnAgEventData at the top; ExchangedDocument with Authentication, Clause and ReferencedDocument; SpecifiedConsignment with TradeParty, TradeAddress, DefinedContact, TradeCountry, TradeCountrySubDivision, CodedValue, LogisticsLocation, LogisticsTransportMovement, TransportEvent, ConsignmentItem, TradeLineItem, ApplicableClassification, LineTradeDelivery, LogisticsPackage and TradeProductInstance), and src/test/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/GbnAgMapperTest.java (971 lines: a HappyPath group of 18 tests on one fully populated notification, a MinimalAndDefaults group of 3, and 27 standalone tests, three of them parameterised over every document type and means of transport). To name what the payload leaves out, the field lists of the notification domain types (NotificationBase, NotificationAggregate, Origin, Transport, Transporter, AdditionalDetails, Commodity, CommodityComplement, Species, AnimalIdentifier, ConsignmentParty, Address) and AccompanyingDocument were listed, not claimed. Refs in the form outbox/gbnag/<File>.java:<line> are under src/main/java/uk/gov/defra/trade/imports/animals/; GbnAgMapperTest#<name> is a test in the test file above. Claims cover: the fixed $model and $type; every exchangedDocument field and its source; the declaration clauses; every specifiedConsignment field; how parties, addresses and contacts map; origin country and region; locations; the transport movement, mode codes, transport document codes and arrival event; trade lines per species, commodity classification, counts and packages; per-animal product instances and identifier codes; the 14 accompanying-document type codes; every fixed scheme URL; absent-value and blank-value handling; and the notification fields the payload does not carry. Each GbnAgMapperTest test is cited in the ref of the claim it proves. When and how the event is written and sent is part 5's.",
+  "claims": [
+    {
+      "id": "repo-backend-p6-001",
+      "statement": "The GBN-AG event data always carries a $model of \"defra/certificate-internal/1\".",
+      "kind": "data",
+      "ref": "outbox/gbnag/GbnAgEventData.java:9,15; GbnAgMapperTest#HappyPath.shouldSetConstantModelAndType; GbnAgMapperTest#MinimalAndDefaults.shouldStillSetConstantsAndIdentifier",
+      "quote": "public static final String MODEL_VALUE = \"defra/certificate-internal/1\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-002",
+      "statement": "The GBN-AG event data always carries a $type of \"gbn-ag\".",
+      "kind": "data",
+      "ref": "outbox/gbnag/GbnAgEventData.java:10,16; GbnAgMapperTest#HappyPath.shouldSetConstantModelAndType",
+      "quote": "public static final String TYPE_VALUE = \"gbn-ag\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-003",
+      "statement": "The GBN-AG event data has two sections: exchangedDocument (the notification as a document) and specifiedConsignment (the consignment it describes).",
+      "kind": "data",
+      "ref": "outbox/gbnag/GbnAgEventData.java:8-13",
+      "quote": "ExchangedDocument exchangedDocument,\n    SpecifiedConsignment specifiedConsignment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-004",
+      "statement": "The GBN-AG payload is built from three inputs: the stored notification, a version id supplied by the caller, and the notification's accompanying documents.",
+      "kind": "integration",
+      "ref": "outbox/gbnag/GbnAgEventDataMapper.java:11-16",
+      "quote": "public GbnAgEventData toGbnAgEventData(\n        NotificationAggregate notificationAggregate,\n        Integer versionId,\n        List<AccompanyingDocument> accompanyingDocuments)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-005",
+      "statement": "When there is no notification, no GBN-AG event data is produced (the mapper returns nothing rather than failing).",
+      "kind": "behaviour",
+      "ref": "outbox/gbnag/GbnAgEventData.java:22-24; GbnAgMapperTest#toGbnAgEventData_shouldReturnNull_whenNotificationNull",
+      "quote": "if (notificationAggregate == null) {\n            return null;\n        }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-006",
+      "statement": "A notification with almost nothing filled in (only a reference number and status) still maps without error: every consignment section, party, location, transport movement, unweaned-animals flag and consignment item comes out absent, as do traderAssignedId, issueDateTime, issuer and referenceDocument.",
+      "kind": "behaviour",
+      "ref": "GbnAgMapperTest#MinimalAndDefaults.shouldMapAbsentDomainFieldsToNullWithoutError",
+      "quote": "void shouldMapAbsentDomainFieldsToNullWithoutError()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-007",
+      "statement": "exchangedDocument.identifier is the notification's reference number (for example GBN-AG-26-7K8M2P).",
+      "kind": "data",
+      "ref": "outbox/gbnag/ExchangedDocument.java:30; GbnAgMapperTest#HappyPath.shouldMapExchangedDocumentFields",
+      "quote": "notificationAggregate.getReferenceNumber(),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-008",
+      "statement": "exchangedDocument.traderAssignedId is the trader's own internal reference from the origin section; it is absent when no origin or reference is held.",
+      "kind": "data",
+      "ref": "outbox/gbnag/ExchangedDocument.java:31; GbnAgMapperTest#HappyPath.shouldMapExchangedDocumentFields",
+      "quote": "origin != null ? origin.getInternalReference() : null,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-009",
+      "statement": "exchangedDocument.notificationStatusCode is the notification's status name as stored, such as SUBMITTED or DRAFT.",
+      "kind": "data",
+      "ref": "outbox/gbnag/ExchangedDocument.java:32; GbnAgMapperTest#HappyPath.shouldMapExchangedDocumentFields; GbnAgMapperTest#MinimalAndDefaults.shouldStillSetConstantsAndIdentifier",
+      "quote": "notificationAggregate.getStatus() != null ? notificationAggregate.getStatus().name() : null,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-010",
+      "statement": "exchangedDocument.versionId is the version id the caller passes in, and may be absent.",
+      "kind": "data",
+      "ref": "outbox/gbnag/ExchangedDocument.java:33; GbnAgMapperTest#HappyPath.shouldMapExchangedDocumentFields; GbnAgMapperTest#MinimalAndDefaults.shouldStillSetConstantsAndIdentifier",
+      "quote": "versionId,",
+      "confidence": "verbatim",
+      "note": "Where the version id comes from (the event writer) is part 5's."
+    },
+    {
+      "id": "repo-backend-p6-011",
+      "statement": "exchangedDocument.issueDateTime is the notification's last-updated moment, written as an ISO-8601 UTC instant (for example 2026-05-21T10:15:00Z).",
+      "kind": "data",
+      "ref": "outbox/gbnag/ExchangedDocument.java:34,54-56; GbnAgMapperTest#HappyPath.shouldMapExchangedDocumentFields",
+      "quote": "toUtcDateTime(notificationAggregate.getUpdated()),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-012",
+      "statement": "issueDateTime keeps any sub-millisecond digits of the updated moment unchanged, because PIMS receives the value as sent.",
+      "kind": "rule",
+      "ref": "outbox/gbnag/ExchangedDocument.java:49-53; GbnAgMapperTest#shouldEmitIssueDateTimeWithItsSubMillisecondDigitsIntact",
+      "quote": "Sub-millisecond digits are deliberately preserved — PIMS receives the value unchanged.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-013",
+      "statement": "exchangedDocument.issuer is never filled: the notification's consignment contact party is held but deliberately not mapped, because where it belongs on the event is an open question (gap G1).",
+      "kind": "rule",
+      "ref": "outbox/gbnag/ExchangedDocument.java:35; GbnAgMapperTest#HappyPath.shouldMapNotYetCapturedExchangedDocumentFieldsToNull",
+      "quote": "// The fixture sets a consignment contact, but where it belongs on the event is still\n            // an open question, so it is deliberately not mapped to issuer yet.\n            assertThat(doc.issuer()).isNull();            // gap G1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-014",
+      "statement": "exchangedDocument leaves out any field that has no value rather than writing it as null.",
+      "kind": "constraint",
+      "ref": "outbox/gbnag/ExchangedDocument.java:11",
+      "quote": "@JsonInclude(JsonInclude.Include.NON_NULL)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-015",
+      "statement": "exchangedDocument.referenceDocument holds one entry per accompanying document, in the order the documents are given.",
+      "kind": "data",
+      "ref": "outbox/gbnag/ExchangedDocument.java:42-47; GbnAgMapperTest#HappyPath.shouldMapEachAccompanyingDocumentToAReferenceDocumentInOrder",
+      "quote": "return accompanyingDocuments.stream().map(ReferencedDocument::accompanyingDocument).toList();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-016",
+      "statement": "A notification with no accompanying documents has no referenceDocument key at all, never an empty list.",
+      "kind": "rule",
+      "ref": "outbox/gbnag/ExchangedDocument.java:40-45; GbnAgMapperTest#MinimalAndDefaults.shouldMapAbsentDomainFieldsToNullWithoutError",
+      "quote": "// No documents means no referenceDocument key, never an empty array.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-017",
+      "statement": "exchangedDocument.firstSignatoryAuthentication carries the declaration as a list of included clauses, built from the reason for import and the additional details.",
+      "kind": "data",
+      "ref": "outbox/gbnag/ExchangedDocument.java:36; outbox/gbnag/Authentication.java:8,14-26",
+      "quote": "public record Authentication(List<Clause> includedClause)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-018",
+      "statement": "The first clause is always PURPOSE, whose content is the notification's reason for import (for example INTERNAL_MARKET), even when no reason is held.",
+      "kind": "data",
+      "ref": "outbox/gbnag/Authentication.java:19; outbox/gbnag/Clause.java:7,11-13; GbnAgMapperTest#HappyPath.shouldBuildDeclarationClausesIncludingInternalMarketPurpose",
+      "quote": "clauses.add(Clause.purpose(reasonForImport));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-019",
+      "statement": "An INTERNAL_MARKET_PURPOSE clause is added after PURPOSE only when the reason for import is INTERNAL_MARKET.",
+      "kind": "rule",
+      "ref": "outbox/gbnag/Authentication.java:20-22; outbox/gbnag/Clause.java:5,8; GbnAgMapperTest#HappyPath.shouldBuildDeclarationClausesIncludingInternalMarketPurpose; GbnAgMapperTest#MinimalAndDefaults.shouldEmitTwoRequiredClausesWithNullContent_whenReasonNotInternalMarket",
+      "quote": "if (Clause.INTERNAL_MARKET.equals(reasonForImport)) {\n            clauses.add(Clause.internalMarketPurpose());\n        }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-020",
+      "statement": "The INTERNAL_MARKET_PURPOSE clause always has empty content: the internal-market sub-purpose is not sent (the test marks this gap G2 and says the sub-purpose is not in the domain).",
+      "kind": "data",
+      "ref": "outbox/gbnag/Clause.java:15-17; GbnAgMapperTest#HappyPath.shouldBuildDeclarationClausesIncludingInternalMarketPurpose",
+      "quote": "// Required when PURPOSE=INTERNAL_MARKET; sub-purpose not in domain (gap G2)",
+      "confidence": "verbatim",
+      "note": "The notification record does now hold purposeInInternalMarket (NotificationBase.java:38), so the test's 'not in domain' reason looks stale; see repo-backend-p6-121."
+    },
+    {
+      "id": "repo-backend-p6-021",
+      "statement": "The last clause is always GOODS_CERTIFIED_AS, whose content is what the goods are certified for from the additional details (for example BREEDING_AND_PRODUCTION), empty when not given.",
+      "kind": "data",
+      "ref": "outbox/gbnag/Authentication.java:23-24; outbox/gbnag/Clause.java:9,19-21; GbnAgMapperTest#HappyPath.shouldBuildDeclarationClausesIncludingInternalMarketPurpose",
+      "quote": "clauses.add(Clause.goodsCertifiedAs(\n            additionalDetails != null ? additionalDetails.getCertifiedFor() : null));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-022",
+      "statement": "When the reason for import is not internal market, exactly two clauses are sent, PURPOSE then GOODS_CERTIFIED_AS, each with empty content if nothing was answered.",
+      "kind": "behaviour",
+      "ref": "GbnAgMapperTest#MinimalAndDefaults.shouldEmitTwoRequiredClausesWithNullContent_whenReasonNotInternalMarket",
+      "quote": ".containsExactly(\"PURPOSE\", \"GOODS_CERTIFIED_AS\"); // no INTERNAL_MARKET_PURPOSE",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-023",
+      "statement": "No declaration clause carries a urlId.",
+      "kind": "data",
+      "ref": "outbox/gbnag/Clause.java:11-21; GbnAgMapperTest#HappyPath.shouldBuildDeclarationClausesIncludingInternalMarketPurpose",
+      "quote": "assertThat(clauses).allSatisfy(c -> assertThat(c.urlId()).isNull());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-024",
+      "statement": "specifiedConsignment.consignorParty is the notification's consignor.",
+      "kind": "data",
+      "ref": "outbox/gbnag/SpecifiedConsignment.java:33; GbnAgMapperTest#HappyPath.shouldMapPartiesWithRenamedAddressFields; GbnAgMapperTest#shouldMapInlineParty_toConsignorNameAndPostalAddress",
+      "quote": "TradeParty.from(notification.getConsignor()),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-025",
+      "statement": "specifiedConsignment.consigneeParty is the notification's consignee.",
+      "kind": "data",
+      "ref": "outbox/gbnag/SpecifiedConsignment.java:34; GbnAgMapperTest#HappyPath.shouldMapConsigneeAndImporterParties",
+      "quote": "TradeParty.from(notification.getConsignee()),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-026",
+      "statement": "specifiedConsignment.despatchParty is the notification's place of origin.",
+      "kind": "data",
+      "ref": "outbox/gbnag/SpecifiedConsignment.java:35; GbnAgMapperTest#HappyPath.shouldMapDestinationToDeliveryPartyAndPlaceOfOriginToDespatchParty",
+      "quote": "TradeParty.from(notification.getPlaceOfOrigin()),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-027",
+      "statement": "specifiedConsignment.deliveryParty is the notification's destination.",
+      "kind": "data",
+      "ref": "outbox/gbnag/SpecifiedConsignment.java:36; GbnAgMapperTest#HappyPath.shouldMapDestinationToDeliveryPartyAndPlaceOfOriginToDespatchParty",
+      "quote": "TradeParty.from(notification.getDestination()),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-028",
+      "statement": "specifiedConsignment.importer is the notification's importer.",
+      "kind": "data",
+      "ref": "outbox/gbnag/SpecifiedConsignment.java:37; GbnAgMapperTest#HappyPath.shouldMapConsigneeAndImporterParties",
+      "quote": "TradeParty.from(notification.getImporter()),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-029",
+      "statement": "specifiedConsignment.carrier is the transporter from the transport section.",
+      "kind": "data",
+      "ref": "outbox/gbnag/SpecifiedConsignment.java:38; GbnAgMapperTest#HappyPath.shouldMapCarrierFromTransporter",
+      "quote": "TradeParty.from(transport != null ? transport.getTransporter() : null),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-030",
+      "statement": "specifiedConsignment.originCountry is the country of origin from the origin section.",
+      "kind": "data",
+      "ref": "outbox/gbnag/SpecifiedConsignment.java:39; GbnAgMapperTest#HappyPath.shouldMapRegionOfOriginToOriginCountrySubDivision",
+      "quote": "TradeCountry.from(notification.getOrigin()),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-031",
+      "statement": "specifiedConsignment.unloadingBaseportLocation is the port of entry, sent as its code alone (for example GBDVR) with no urlId, name or address.",
+      "kind": "data",
+      "ref": "outbox/gbnag/SpecifiedConsignment.java:40; outbox/gbnag/LogisticsLocation.java:13-15; GbnAgMapperTest#HappyPath.shouldMapPortOfEntryToUnloadingBaseport",
+      "quote": "return identifier != null ? new LogisticsLocation(identifier, null, null, null, null) : null;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-032",
+      "statement": "specifiedConsignment.finalDestinationLocation is the destination holding's County Parish Holding (CPH) number, with urlId https://refdata.tbc.defra.gov.uk/cph_number.",
+      "kind": "data",
+      "ref": "outbox/gbnag/SpecifiedConsignment.java:41; outbox/gbnag/LogisticsLocation.java:11,22-27; GbnAgMapperTest#HappyPath.shouldMapCphNumberToFinalDestinationLocation",
+      "quote": "private static final String CPH_REGISTER = \"https://refdata.tbc.defra.gov.uk/cph_number\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-033",
+      "statement": "The final destination location has no name and no postal address, although the GBN-AG schema requires a postal address there, because nothing the notification collects says which address belongs to the CPH holding.",
+      "kind": "constraint",
+      "ref": "outbox/gbnag/LogisticsLocation.java:17-21; GbnAgMapperTest#HappyPath.shouldMapCphNumberToFinalDestinationLocation",
+      "quote": "The schema also\n     * requires a postal address here, but nothing collected says which address belongs to the\n     * holding, so it is left unset rather than guessed.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-034",
+      "statement": "A missing or blank CPH number leaves finalDestinationLocation out.",
+      "kind": "rule",
+      "ref": "outbox/gbnag/LogisticsLocation.java:23-25; GbnAgMapperTest#shouldOmitFinalDestinationLocationAndRegion_whenBlank",
+      "quote": "if (cphNumber == null || cphNumber.isBlank()) {\n            return null;\n        }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-035",
+      "statement": "specifiedConsignment.mainCarriageLogisticsTransportMovement holds exactly one transport movement whenever the notification has a transport section, and is absent otherwise.",
+      "kind": "data",
+      "ref": "outbox/gbnag/SpecifiedConsignment.java:42; outbox/gbnag/LogisticsTransportMovement.java:24-36",
+      "quote": "if (transport == null) {\n            return null;\n        }\n        return List.of(new LogisticsTransportMovement(",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-036",
+      "statement": "specifiedConsignment.transitTradeCountry lists each transited country as its country code, in the order held (for example BE then DE).",
+      "kind": "data",
+      "ref": "outbox/gbnag/SpecifiedConsignment.java:43; outbox/gbnag/TradeCountry.java:21-28; GbnAgMapperTest#HappyPath.shouldMapTransitedCountriesToTransitTradeCountry",
+      "quote": ".map(code -> new TradeCountry(CodedValue.of(code), null))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-037",
+      "statement": "When no countries were transited (none held, or an empty list), transitTradeCountry is left out rather than sent empty.",
+      "kind": "rule",
+      "ref": "outbox/gbnag/TradeCountry.java:22-24; GbnAgMapperTest#shouldOmitTransitTradeCountry_whenNoCountriesTransited",
+      "quote": "if (countryCodes == null || countryCodes.isEmpty()) {\n            return null;\n        }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-038",
+      "statement": "specifiedConsignment.isOrHasUnweanedAnimals is a true/false flag converted from the stored unweaned-animals answer, and is absent (not false) when the question was not answered.",
+      "kind": "data",
+      "ref": "outbox/gbnag/SpecifiedConsignment.java:27-31,44; GbnAgMapperTest#HappyPath.shouldConvertUnweanedAnimalsStringToBoolean; GbnAgMapperTest#MinimalAndDefaults.shouldMapAbsentDomainFieldsToNullWithoutError",
+      "quote": "// Tri-state: TRUE / FALSE when supplied, null when the field is absent upstream.",
+      "confidence": "verbatim",
+      "note": "Boolean.valueOf turns any stored string other than \"true\" (case-insensitive) into false."
+    },
+    {
+      "id": "repo-backend-p6-039",
+      "statement": "specifiedConsignment.includedConsignmentItem holds exactly one consignment item, which carries every trade line from every commodity complement on the notification.",
+      "kind": "data",
+      "ref": "outbox/gbnag/SpecifiedConsignment.java:45; outbox/gbnag/ConsignmentItem.java:9-17; GbnAgMapperTest#HappyPath.shouldMapCommodityToSingleConsignmentItemWithTradeLine",
+      "quote": "return List.of(new ConsignmentItem(lines));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-040",
+      "statement": "With no commodity, or a commodity with no complements, includedConsignmentItem is left out.",
+      "kind": "rule",
+      "ref": "outbox/gbnag/ConsignmentItem.java:10-12; GbnAgMapperTest#MinimalAndDefaults.shouldMapAbsentDomainFieldsToNullWithoutError",
+      "quote": "if (commodity == null || commodity.getCommodityComplement() == null) {\n            return null;\n        }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-041",
+      "statement": "Only exchangedDocument and referenced documents are marked to leave out empty fields; every other GBN-AG element (the consignment, parties, addresses, locations, movement, lines) is not, so their absent values are written as null unless the event serialiser drops them. A code comment calls a NON_NULL serialisation change 'pending'.",
+      "kind": "constraint",
+      "ref": "outbox/gbnag/TradeParty.java:35-39; outbox/gbnag/ExchangedDocument.java:11; outbox/gbnag/ReferencedDocument.java:9",
+      "quote": "the pending {@code NON_NULL}\n     * serialisation change turns a null into an omitted field",
+      "confidence": "inferred",
+      "note": "Inferred from where @JsonInclude(NON_NULL) appears in outbox/gbnag/ (only two records) and the TradeParty comment. No global NON_NULL setting was found under src/main; how the event is serialised is part 5's."
+    },
+    {
+      "id": "repo-backend-p6-042",
+      "statement": "A consignment party (consignor, consignee, place of origin, destination, importer, or an animal's permanent address) is sent with the party's name as name.",
+      "kind": "data",
+      "ref": "outbox/gbnag/TradeParty.java:21-29; GbnAgMapperTest#HappyPath.shouldMapPartiesWithRenamedAddressFields; GbnAgMapperTest#shouldMapInlineParty_toConsignorNameAndPostalAddress",
+      "quote": "null, null, party.getName(),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-043",
+      "statement": "A consignment party's postalAddress is built from the address held on the party itself.",
+      "kind": "data",
+      "ref": "outbox/gbnag/TradeParty.java:28; GbnAgMapperTest#shouldMapInlineParty_toConsignorNameAndPostalAddress",
+      "quote": "TradeAddress.from(party.getAddress())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-044",
+      "statement": "A consignment party with an email or a phone number gets exactly one definedContact, carrying the email as emailURIUniversalCommunication and the phone as telephoneUniversalCommunication; whichever is missing is left empty.",
+      "kind": "data",
+      "ref": "outbox/gbnag/TradeParty.java:31-34,48; outbox/gbnag/DefinedContact.java:3-7; GbnAgMapperTest#shouldMapPartyEmailAndPhoneToDefinedContact; GbnAgMapperTest#shouldMapDefinedContact_whenOnlyOneOfEmailOrPhoneIsHeld",
+      "quote": "return List.of(new DefinedContact(null, party.getEmail(), party.getPhone()));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-045",
+      "statement": "A consignment party with neither email nor phone has no definedContact at all, never an empty list.",
+      "kind": "rule",
+      "ref": "outbox/gbnag/TradeParty.java:35-46; GbnAgMapperTest#HappyPath.shouldMapPartiesWithRenamedAddressFields",
+      "quote": "<p>Null, not an empty list, when the party carries neither.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-046",
+      "statement": "definedContact.personName is never set, because a party holds an organisation or address name (already sent as the party name) and no separate contact person.",
+      "kind": "rule",
+      "ref": "outbox/gbnag/TradeParty.java:41-42; GbnAgMapperTest#shouldMapPartyEmailAndPhoneToDefinedContact",
+      "quote": "<p>{@code personName} is deliberately never set: the address book holds an organisation or\n     * address name — already mapped to {@link #name()} — and no separate contact person.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-047",
+      "statement": "Consignment parties carry no identifier, urlId, partyRoleCode or partyTypeCode; the test marks the missing despatch-party identifier as gap G6.",
+      "kind": "data",
+      "ref": "outbox/gbnag/TradeParty.java:25-28; GbnAgMapperTest#HappyPath.shouldMapDestinationToDeliveryPartyAndPlaceOfOriginToDespatchParty",
+      "quote": "assertThat(despatch.identifier()).isNull(); // gap G6",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-048",
+      "statement": "The carrier's identifier is the transporter's approval number (for example UK-TR-123456).",
+      "kind": "data",
+      "ref": "outbox/gbnag/TradeParty.java:60; GbnAgMapperTest#HappyPath.shouldMapCarrierFromTransporter",
+      "quote": "transporter.getApprovalNumber(),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-049",
+      "statement": "When the transporter has an approval number, the carrier's urlId is https://refdata.tbc.defra.gov.uk/uk_transporter_authorisation; with no approval number it has none.",
+      "kind": "data",
+      "ref": "outbox/gbnag/TradeParty.java:19-20,61; GbnAgMapperTest#HappyPath.shouldMapCarrierFromTransporter",
+      "quote": "transporter.getApprovalNumber() != null ? UK_TRANSPORTER_AUTHORISATION : null,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-050",
+      "statement": "The carrier's name is the transporter's name.",
+      "kind": "data",
+      "ref": "outbox/gbnag/TradeParty.java:62; GbnAgMapperTest#HappyPath.shouldMapCarrierFromTransporter",
+      "quote": "transporter.getName(),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-051",
+      "statement": "The carrier's partyTypeCode is one coded value holding the transporter type exactly as stored (for example COMMERCIAL), with urlId https://traces-codelists.ec.europa.eu/operator_activity_type; absent when no type is held.",
+      "kind": "data",
+      "ref": "outbox/gbnag/TradeParty.java:17-18,56-58; GbnAgMapperTest#HappyPath.shouldMapCarrierFromTransporter",
+      "quote": "List.of(CodedValue.of(transporter.getType(), OPERATOR_ACTIVITY_TYPE))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-052",
+      "statement": "Whether the stored transporter type values match the TRACES operator_activity_type codelist is unconfirmed: the type is passed through raw (gap EUDPA-274, G9).",
+      "kind": "constraint",
+      "ref": "outbox/gbnag/TradeParty.java:55; GbnAgMapperTest#HappyPath.shouldMapCarrierFromTransporter",
+      "quote": "// TODO(EUDPA-274 gap): transporter type is passed through raw - confirm the operator_activity_type codelist mapping is correct.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-053",
+      "statement": "The carrier's postalAddress is the transporter's address; the carrier has no partyRoleCode and no definedContact.",
+      "kind": "data",
+      "ref": "outbox/gbnag/TradeParty.java:59-66; GbnAgMapperTest#HappyPath.shouldMapCarrierFromTransporter",
+      "quote": "TradeAddress.from(transporter.getAddress()),\n            null);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-054",
+      "statement": "postalAddress.lineOne is address line 1.",
+      "kind": "data",
+      "ref": "outbox/gbnag/TradeAddress.java:20; GbnAgMapperTest#HappyPath.shouldMapPartiesWithRenamedAddressFields",
+      "quote": "address.getAddressLine1(),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-055",
+      "statement": "postalAddress.lineTwo is address line 2.",
+      "kind": "data",
+      "ref": "outbox/gbnag/TradeAddress.java:21; GbnAgMapperTest#HappyPath.shouldMapPartiesWithRenamedAddressFields",
+      "quote": "address.getAddressLine2(),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-056",
+      "statement": "postalAddress.cityName is the town or city.",
+      "kind": "data",
+      "ref": "outbox/gbnag/TradeAddress.java:22; GbnAgMapperTest#HappyPath.shouldMapPartiesWithRenamedAddressFields",
+      "quote": "address.getTownOrCity(),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-057",
+      "statement": "postalAddress.postcodeCode is the postcode.",
+      "kind": "data",
+      "ref": "outbox/gbnag/TradeAddress.java:23; GbnAgMapperTest#HappyPath.shouldMapPartiesWithRenamedAddressFields",
+      "quote": "address.getPostcode(),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-058",
+      "statement": "postalAddress.countryId is the address's ISO country code (for example CH, GB).",
+      "kind": "data",
+      "ref": "outbox/gbnag/TradeAddress.java:24; GbnAgMapperTest#HappyPath.shouldMapPartiesWithRenamedAddressFields",
+      "quote": "address.getCountryCode(),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-059",
+      "statement": "postalAddress.countryName is never sent, because the notification holds only the country code; the receiving side derives the name from countryId.",
+      "kind": "data",
+      "ref": "outbox/gbnag/TradeAddress.java:25; GbnAgMapperTest#HappyPath.shouldMapPartiesWithRenamedAddressFields",
+      "quote": "null, // countryName - the domain holds the ISO code only; GBNAG derives the name from countryId",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-060",
+      "statement": "postalAddress.countrySubDivisionName is the county.",
+      "kind": "data",
+      "ref": "outbox/gbnag/TradeAddress.java:26; GbnAgMapperTest#HappyPath.shouldMapPartiesWithRenamedAddressFields",
+      "quote": "address.getCounty());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-061",
+      "statement": "A party with no address has no postalAddress.",
+      "kind": "rule",
+      "ref": "outbox/gbnag/TradeAddress.java:16-18",
+      "quote": "if (address == null) {\n            return null;\n        }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-062",
+      "statement": "originCountry.code.value is the ISO country of origin code (for example FR), with no urlId or name; originCountry is absent when no origin country is held.",
+      "kind": "data",
+      "ref": "outbox/gbnag/TradeCountry.java:11-18; outbox/gbnag/CodedValue.java:9-11; GbnAgMapperTest#HappyPath.shouldMapRegionOfOriginToOriginCountrySubDivision",
+      "quote": "if (origin == null || origin.getCountryCode() == null) {\n            return null;\n        }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-063",
+      "statement": "The region of origin is sent as originCountry.subordinateTradeCountrySubDivision, with the region code as identifier (for example FR-75) and no urlId.",
+      "kind": "data",
+      "ref": "outbox/gbnag/TradeCountry.java:17; outbox/gbnag/TradeCountrySubDivision.java:14-19; GbnAgMapperTest#HappyPath.shouldMapRegionOfOriginToOriginCountrySubDivision",
+      "quote": "return new TradeCountrySubDivision(regionCode, null, new FunctionTypeCode(REGION_OF_ORIGIN));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-064",
+      "statement": "The region subdivision's functionTypeCode content is always \"106\", the UNCL3227 location function 'Region of origin'.",
+      "kind": "data",
+      "ref": "outbox/gbnag/TradeCountrySubDivision.java:9-10; GbnAgMapperTest#HappyPath.shouldMapRegionOfOriginToOriginCountrySubDivision",
+      "quote": "// UNCL3227 location function \"Region of origin\".\n    private static final String REGION_OF_ORIGIN = \"106\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-065",
+      "statement": "A missing or blank region of origin leaves the subdivision out of originCountry.",
+      "kind": "rule",
+      "ref": "outbox/gbnag/TradeCountrySubDivision.java:15-17; GbnAgMapperTest#shouldOmitFinalDestinationLocationAndRegion_whenBlank",
+      "quote": "if (regionCode == null || regionCode.isBlank()) {\n            return null;\n        }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-066",
+      "statement": "The transport movement carries no identifier and no urlId.",
+      "kind": "data",
+      "ref": "outbox/gbnag/LogisticsTransportMovement.java:28-30",
+      "quote": "return List.of(new LogisticsTransportMovement(\n            null,\n            null,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-067",
+      "statement": "The transport movement's modeCode is a number from the means of transport (UN Rec 19): vessel 1, railway 2, road vehicle 3, airplane 4.",
+      "kind": "data",
+      "ref": "outbox/gbnag/LogisticsTransportMovement.java:38-48; GbnAgMapperTest#shouldMapMeansOfTransportToUnRec19ModeCode; GbnAgMapperTest#HappyPath.shouldMapTransportMovementWithIntegerModeCodeAndArrivalEvent",
+      "quote": "case VESSEL -> 1;\n            case RAILWAY -> 2;\n            case ROAD_VEHICLE -> 3;\n            case AIRPLANE -> 4;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-068",
+      "statement": "With no means of transport chosen, modeCode is absent.",
+      "kind": "rule",
+      "ref": "outbox/gbnag/LogisticsTransportMovement.java:39-41",
+      "quote": "if (meansOfTransport == null) {\n            return null;\n        }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-069",
+      "statement": "usedLogisticsTransportMeans.name is the transport identification (for example a vehicle registration AB-1234); it is absent when none is held.",
+      "kind": "data",
+      "ref": "outbox/gbnag/LogisticsTransportMovement.java:16-21,32; GbnAgMapperTest#HappyPath.shouldMapTransportMovementWithIntegerModeCodeAndArrivalEvent",
+      "quote": "LogisticsTransportMeans.from(transport.getTransportIdentification()),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-070",
+      "statement": "The transport document reference is sent as the movement's one transportContractRelatedReferencedDocument, with the reference as identifier.",
+      "kind": "data",
+      "ref": "outbox/gbnag/LogisticsTransportMovement.java:33-34; outbox/gbnag/ReferencedDocument.java:20-30; GbnAgMapperTest#HappyPath.shouldMapTransportDocumentReferenceWithTypeInferredFromMeansOfTransport",
+      "quote": "ReferencedDocument.transportDocument(\n                transport.getTransportDocumentReference(), transport.getMeansOfTransport()),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-071",
+      "statement": "Only the transport document's reference is collected, so its UNTDID 1001 typeCode is inferred from the means of transport: vessel 705 (bill of lading), railway 720 (rail consignment note), road vehicle 730 (road consignment note), airplane 740 (air waybill).",
+      "kind": "rule",
+      "ref": "outbox/gbnag/ReferencedDocument.java:20-23,46-56; GbnAgMapperTest#shouldInferTransportDocumentTypeFromMeansOfTransport",
+      "quote": "case VESSEL -> \"705\";       // Bill of lading\n            case RAILWAY -> \"720\";      // Rail consignment note\n            case ROAD_VEHICLE -> \"730\"; // Road consignment note\n            case AIRPLANE -> \"740\";     // Air waybill",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-072",
+      "statement": "When the means of transport is unknown, the transport document is still sent with its reference but no typeCode.",
+      "kind": "rule",
+      "ref": "outbox/gbnag/ReferencedDocument.java:47-49; GbnAgMapperTest#shouldLeaveTransportDocumentTypeUnset_whenMeansOfTransportUnknown",
+      "quote": "void shouldLeaveTransportDocumentTypeUnset_whenMeansOfTransportUnknown()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-073",
+      "statement": "A missing or blank transport document reference leaves transportContractRelatedReferencedDocument out.",
+      "kind": "rule",
+      "ref": "outbox/gbnag/ReferencedDocument.java:26-28; GbnAgMapperTest#shouldOmitTransportDocument_whenReferenceBlank",
+      "quote": "if (reference == null || reference.isBlank()) {\n            return null;\n        }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-074",
+      "statement": "The transport document carries no urlId, relationshipTypeCode or issueDateTime: transport documents sit outside the GBN-AG document-type codelist.",
+      "kind": "data",
+      "ref": "outbox/gbnag/ReferencedDocument.java:29; GbnAgMapperTest#HappyPath.shouldMapTransportDocumentReferenceWithTypeInferredFromMeansOfTransport",
+      "quote": "assertThat(doc.urlId()).isNull(); // transport documents are outside the document-type codelist",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-075",
+      "statement": "The arrival date is sent as the movement's one arrivalEvent, as scheduledOccurrenceDateTime.",
+      "kind": "data",
+      "ref": "outbox/gbnag/LogisticsTransportMovement.java:35; outbox/gbnag/TransportEvent.java:15-23; GbnAgMapperTest#HappyPath.shouldMapTransportMovementWithIntegerModeCodeAndArrivalEvent",
+      "quote": "return List.of(new TransportEvent(\n            toUtcDateTime(transport.getArrivalDate()),\n            null,\n            null));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-076",
+      "statement": "The arrival date is written as the start of that day in UTC (for example 2026-07-21T00:00:00Z), whatever the server's own time zone, because PIMS receives an instant.",
+      "kind": "rule",
+      "ref": "outbox/gbnag/TransportEvent.java:25-32; GbnAgMapperTest#shouldEmitArrivalDateAsUtcMidnight_whateverTheJvmDefaultZone",
+      "quote": "PIMS receives an instant, so the arrival date is sent as the start of that day in UTC, for\n     * example {@code 2026-07-21T00:00:00Z}. The zone is fixed here rather than taken from the\n     * JVM, so the string is the same on any host.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-077",
+      "statement": "The arrival event carries no actual occurrence time and no location.",
+      "kind": "data",
+      "ref": "outbox/gbnag/TransportEvent.java:21-22; GbnAgMapperTest#HappyPath.shouldMapTransportMovementWithIntegerModeCodeAndArrivalEvent",
+      "quote": "assertThat(arrival.occurrenceLogisticsLocation()).isNull();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-078",
+      "statement": "With no arrival date, the movement has no arrivalEvent.",
+      "kind": "rule",
+      "ref": "outbox/gbnag/TransportEvent.java:16-18",
+      "quote": "if (transport.getArrivalDate() == null) {\n            return null;\n        }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-079",
+      "statement": "Each accompanying document is sent with urlId https://refdata.tbc.defra.gov.uk/gbn-ag-document-types, whatever its code, because that one codelist (schemas/codelists/gbn-ag-document-types.json in trade-imports-schemas) copies in the UNTDID 1001 codes it uses.",
+      "kind": "data",
+      "ref": "outbox/gbnag/ReferencedDocument.java:18,32-40; GbnAgMapperTest#shouldCodeEachDocumentTypeFromTheDocumentTypeCodelist",
+      "quote": "static final String GBN_AG_DOCUMENT_TYPES = \"https://refdata.tbc.defra.gov.uk/gbn-ag-document-types\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-080",
+      "statement": "An accompanying document's identifier is its document reference.",
+      "kind": "data",
+      "ref": "outbox/gbnag/ReferencedDocument.java:42; GbnAgMapperTest#HappyPath.shouldMapEachAccompanyingDocumentToAReferenceDocumentInOrder",
+      "quote": "document.getDocumentReference(),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-081",
+      "statement": "An accompanying document's issueDateTime is its date of issue as a date only (for example 2026-05-01), not a date and time.",
+      "kind": "data",
+      "ref": "outbox/gbnag/ReferencedDocument.java:79-84; GbnAgMapperTest#HappyPath.shouldMapEachAccompanyingDocumentToAReferenceDocumentInOrder",
+      "quote": "// dateOfIssue is a calendar date, so its ISO form is the date-only issue date.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-082",
+      "statement": "An accompanying document with no date of issue is sent without issueDateTime.",
+      "kind": "rule",
+      "ref": "outbox/gbnag/ReferencedDocument.java:9,81-83; GbnAgMapperTest#shouldLeaveIssueDateOut_whenDocumentHasNoDateOfIssue",
+      "quote": "void shouldLeaveIssueDateOut_whenDocumentHasNoDateOfIssue()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-083",
+      "statement": "Accompanying documents carry no relationshipTypeCode.",
+      "kind": "data",
+      "ref": "outbox/gbnag/ReferencedDocument.java:38-43",
+      "quote": "GBN_AG_DOCUMENT_TYPES,\n            null,\n            document.getDocumentReference(),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-084",
+      "statement": "Referenced documents leave out any field that has no value rather than writing it as null.",
+      "kind": "constraint",
+      "ref": "outbox/gbnag/ReferencedDocument.java:9",
+      "quote": "@JsonInclude(JsonInclude.Include.NON_NULL)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-085",
+      "statement": "A veterinary health certificate is sent with document typeCode 853.",
+      "kind": "data",
+      "ref": "outbox/gbnag/ReferencedDocument.java:62; GbnAgMapperTest#shouldCodeEachDocumentTypeFromTheDocumentTypeCodelist",
+      "quote": "case VETERINARY_HEALTH_CERTIFICATE -> \"853\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-086",
+      "statement": "A health certificate is sent with document typeCode 636.",
+      "kind": "data",
+      "ref": "outbox/gbnag/ReferencedDocument.java:63; GbnAgMapperTest#shouldCodeEachDocumentTypeFromTheDocumentTypeCodelist",
+      "quote": "case HEALTH_CERTIFICATE -> \"636\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-087",
+      "statement": "An air waybill is sent with document typeCode 740.",
+      "kind": "data",
+      "ref": "outbox/gbnag/ReferencedDocument.java:64; GbnAgMapperTest#shouldCodeEachDocumentTypeFromTheDocumentTypeCodelist",
+      "quote": "case AIR_WAYBILL -> \"740\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-088",
+      "statement": "A sea waybill is sent with document typeCode 710.",
+      "kind": "data",
+      "ref": "outbox/gbnag/ReferencedDocument.java:65; GbnAgMapperTest#shouldCodeEachDocumentTypeFromTheDocumentTypeCodelist",
+      "quote": "case SEA_WAYBILL -> \"710\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-089",
+      "statement": "A rail waybill is sent with document typeCode 720.",
+      "kind": "data",
+      "ref": "outbox/gbnag/ReferencedDocument.java:66; GbnAgMapperTest#shouldCodeEachDocumentTypeFromTheDocumentTypeCodelist",
+      "quote": "case RAIL_WAYBILL -> \"720\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-090",
+      "statement": "A bill of lading is sent with document typeCode 705.",
+      "kind": "data",
+      "ref": "outbox/gbnag/ReferencedDocument.java:67; GbnAgMapperTest#shouldCodeEachDocumentTypeFromTheDocumentTypeCodelist",
+      "quote": "case BILL_OF_LADING -> \"705\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-091",
+      "statement": "A commercial invoice is sent with document typeCode 380.",
+      "kind": "data",
+      "ref": "outbox/gbnag/ReferencedDocument.java:68; GbnAgMapperTest#shouldCodeEachDocumentTypeFromTheDocumentTypeCodelist",
+      "quote": "case COMMERCIAL_INVOICE -> \"380\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-092",
+      "statement": "An ITAHC is sent with document typeCode 856 (inspection certificate), as TRACES codes the EU INTRA certificate.",
+      "kind": "data",
+      "ref": "outbox/gbnag/ReferencedDocument.java:69; GbnAgMapperTest#shouldCodeEachDocumentTypeFromTheDocumentTypeCodelist; GbnAgMapperTest#HappyPath.shouldMapEachAccompanyingDocumentToAReferenceDocumentInOrder",
+      "quote": "case ITAHC -> \"856\";                                    // Inspection certificate, as TRACES codes the EU INTRA certificate",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-093",
+      "statement": "An import permit is sent with document typeCode 911 (import licence).",
+      "kind": "data",
+      "ref": "outbox/gbnag/ReferencedDocument.java:70; GbnAgMapperTest#shouldCodeEachDocumentTypeFromTheDocumentTypeCodelist",
+      "quote": "case IMPORT_PERMIT -> \"911\";                            // Import licence",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-094",
+      "statement": "A letter of authority is sent with the Defra document typeCode GBN1.",
+      "kind": "data",
+      "ref": "outbox/gbnag/ReferencedDocument.java:71; GbnAgMapperTest#shouldCodeEachDocumentTypeFromTheDocumentTypeCodelist; GbnAgMapperTest#HappyPath.shouldMapEachAccompanyingDocumentToAReferenceDocumentInOrder",
+      "quote": "case LETTER_OF_AUTHORITY -> \"GBN1\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-095",
+      "statement": "A catch certificate is sent with the Defra document typeCode GBN2.",
+      "kind": "data",
+      "ref": "outbox/gbnag/ReferencedDocument.java:72; GbnAgMapperTest#shouldCodeEachDocumentTypeFromTheDocumentTypeCodelist",
+      "quote": "case CATCH_CERTIFICATE -> \"GBN2\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-096",
+      "statement": "Laboratory sampling results for aflatoxin are sent with document typeCode 4 (test report).",
+      "kind": "data",
+      "ref": "outbox/gbnag/ReferencedDocument.java:73; GbnAgMapperTest#shouldCodeEachDocumentTypeFromTheDocumentTypeCodelist",
+      "quote": "case LABORATORY_SAMPLING_RESULTS_FOR_AFLATOXIN -> \"4\";  // Test report",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-097",
+      "statement": "A journey log is sent with the Defra document typeCode GBN3.",
+      "kind": "data",
+      "ref": "outbox/gbnag/ReferencedDocument.java:74; GbnAgMapperTest#shouldCodeEachDocumentTypeFromTheDocumentTypeCodelist",
+      "quote": "case JOURNEY_LOG -> \"GBN3\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-098",
+      "statement": "A document of type Other is sent with document typeCode 916 (related document); 916 is used only when the notifier chooses Other, never as a default for an uncoded type.",
+      "kind": "rule",
+      "ref": "outbox/gbnag/ReferencedDocument.java:59,75; GbnAgMapperTest#shouldCodeEachDocumentTypeFromTheDocumentTypeCodelist",
+      "quote": "// 916 (Related document) is only for a notifier who chooses \"Other\", never a default.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-099",
+      "statement": "Every accompanying-document type must have a code decided before it can be added: the code lookup is exhaustive, so a new type fails to build, and a test pins the type count at 14 to match the GBN-AG document-type codelist.",
+      "kind": "constraint",
+      "ref": "outbox/gbnag/ReferencedDocument.java:58; GbnAgMapperTest#shouldHaveACodelistRowForEveryDocumentType",
+      "quote": "// Exhaustive on purpose: a new document type fails to compile until someone decides its code.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-100",
+      "statement": "Each commodity complement produces one trade line per species on it, each carrying that species' own animal and package counts.",
+      "kind": "data",
+      "ref": "outbox/gbnag/TradeLineItem.java:19-31,33-44; GbnAgMapperTest#shouldMapEachSpeciesToItsOwnTradeLineWithItsOwnCounts",
+      "quote": "One line per species on the complement, each carrying that species' own counts.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-101",
+      "statement": "A commodity complement with no species (none held, or an empty list) still produces one trade line, from the complement's total animal and package counts, with no scientific name and no individual animals.",
+      "kind": "rule",
+      "ref": "outbox/gbnag/TradeLineItem.java:20-27,46-57; GbnAgMapperTest#shouldMapIndividualTradeProductInstanceToNull_whenSpeciesAbsent; GbnAgMapperTest#shouldMapScientificNameToNull_whenSpeciesEmpty; GbnAgMapperTest#shouldMapCommodityNameOntoTheComplementTotalsLine_whenSpeciesEmpty",
+      "quote": "A complement\n     * with no species still gets one line, from the complement totals.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-102",
+      "statement": "Every trade line from a complement has one applicableClassification with systemId \"CN\" and classCode value equal to the complement's type of commodity, with no urlId, systemName or className.",
+      "kind": "data",
+      "ref": "outbox/gbnag/TradeLineItem.java:59-63; outbox/gbnag/ApplicableClassification.java:12-19; GbnAgMapperTest#HappyPath.shouldMapCommodityToSingleConsignmentItemWithTradeLine",
+      "quote": "return new ApplicableClassification(SYSTEM_ID_CN, null, CodedValue.of(cnCode), null);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-103",
+      "statement": "The type of commodity is passed through as the CN classCode without checking it is a CN code: a value such as \"Domestic\" is sent as-is; the test marks the CN class code as gap G15.",
+      "kind": "constraint",
+      "ref": "outbox/gbnag/ApplicableClassification.java:14-19; GbnAgMapperTest#HappyPath.shouldMapCommodityToSingleConsignmentItemWithTradeLine; GbnAgMapperTest#shouldMapEachSpeciesToItsOwnTradeLineWithItsOwnCounts",
+      "quote": "assertThat(c.classCode().value()).isEqualTo(\"01020000\"); // gap G15",
+      "confidence": "inferred",
+      "note": "Inferred from the second test, whose complement typeOfCommodity \"Domestic\" comes out as classCode \"Domestic\", and from the absence of any check in ApplicableClassification. What G15 says is not in this slice."
+    },
+    {
+      "id": "repo-backend-p6-104",
+      "statement": "A complement with no type of commodity produces trade lines with no applicableClassification.",
+      "kind": "rule",
+      "ref": "outbox/gbnag/ApplicableClassification.java:15-17; outbox/gbnag/TradeLineItem.java:62; GbnAgMapperTest#shouldMapApplicableClassificationToNull_whenTypeOfCommodityAbsent",
+      "quote": "if (cnCode == null) {\n            return null;\n        }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-105",
+      "statement": "Every trade line's description is a one-item list holding the commodity name (for example Cow).",
+      "kind": "data",
+      "ref": "outbox/gbnag/TradeLineItem.java:65-68; GbnAgMapperTest#HappyPath.shouldMapCommodityToSingleConsignmentItemWithTradeLine",
+      "quote": "assertThat(line.description()).containsExactly(\"Cow\"); // commodity.name -> description",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-106",
+      "statement": "Every trade line's commonName is the commodity name.",
+      "kind": "data",
+      "ref": "outbox/gbnag/TradeLineItem.java:38,51; GbnAgMapperTest#HappyPath.shouldMapCommodityToSingleConsignmentItemWithTradeLine",
+      "quote": "assertThat(line.commonName()).isEqualTo(\"Cow\"); // commodity.name -> commonName",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-107",
+      "statement": "With no commodity name, trade lines have no commonName and no description.",
+      "kind": "rule",
+      "ref": "outbox/gbnag/TradeLineItem.java:66-67; GbnAgMapperTest#shouldMapCommonNameToNull_whenCommodityNameAbsent",
+      "quote": "return commodityName != null ? List.of(commodityName) : null;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-108",
+      "statement": "A species trade line's scientificName is the species' display text (for example Bos taurus).",
+      "kind": "data",
+      "ref": "outbox/gbnag/TradeLineItem.java:37; GbnAgMapperTest#HappyPath.shouldMapCommodityToSingleConsignmentItemWithTradeLine",
+      "quote": "assertThat(line.scientificName()).isEqualTo(\"Bos taurus\"); // species.text -> scientificName",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-109",
+      "statement": "Trade lines carry no typeCode and no urlId.",
+      "kind": "data",
+      "ref": "outbox/gbnag/TradeLineItem.java:39-40,52-53; GbnAgMapperTest#HappyPath.shouldMapCommodityToSingleConsignmentItemWithTradeLine",
+      "quote": "assertThat(line.typeCode()).isNull();\n            assertThat(line.urlId()).isNull();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-110",
+      "statement": "A trade line's head count is sent as specifiedLineTradeDelivery.productUnitQuantity.content: the species' number of animals, or the complement total on a no-species line; no unitCode is sent, and the delivery is left out when the count is missing.",
+      "kind": "data",
+      "ref": "outbox/gbnag/LineTradeDelivery.java:5-15; outbox/gbnag/TradeLineItem.java:41,54; GbnAgMapperTest#HappyPath.shouldMapCommodityToSingleConsignmentItemWithTradeLine",
+      "quote": "return List.of(new LineTradeDelivery(new ProductUnitQuantity(totalNoOfAnimals, null)));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-111",
+      "statement": "A trade line's package count is sent as physicalReferencedLogisticsPackage.itemQuantity: the species' number of packages, or the complement total on a no-species line; no levelCode or package typeCode is sent.",
+      "kind": "data",
+      "ref": "outbox/gbnag/LogisticsPackage.java:5-13; outbox/gbnag/TradeLineItem.java:42,55; GbnAgMapperTest#HappyPath.shouldMapCommodityToSingleConsignmentItemWithTradeLine",
+      "quote": "return List.of(new LogisticsPackage(null, null, totalNoOfPackages));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-112",
+      "statement": "When the package count is missing, physicalReferencedLogisticsPackage is left out.",
+      "kind": "rule",
+      "ref": "outbox/gbnag/LogisticsPackage.java:9-11; GbnAgMapperTest#shouldMapLogisticsPackageToNull_whenTotalNoOfPackagesNull",
+      "quote": "if (totalNoOfPackages == null) {\n            return null;\n        }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-113",
+      "statement": "A species trade line has one individualTradeProductInstance per animal listed on the species.",
+      "kind": "data",
+      "ref": "outbox/gbnag/TradeProductInstance.java:24-41; GbnAgMapperTest#HappyPath.shouldReshapeEachAnimalsEarTagAndPassportIntoItsOwnProductInstance",
+      "quote": "One instance per animal on the species line.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-114",
+      "statement": "A species saved before per-animal identifiers existed (no animal list) still produces one product instance, from the first animal's ear tag, passport and microchip held on the species, with no tattoo, name or permanent location.",
+      "kind": "rule",
+      "ref": "outbox/gbnag/TradeProductInstance.java:25-35; GbnAgMapperTest#shouldMapIdentifiersToNull_whenSpeciesCarriesNoEarTagPassportOrMicrochip; GbnAgMapperTest#shouldMapMicrochipOnly_whenSpeciesCarriesNoEarTagOrPassport",
+      "quote": "Species saved before the per-animal list existed\n     * only carry the first animal's identifiers as scalars, so those still produce one instance.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-115",
+      "statement": "Each animal's identifiers are sent as a list of typeCode and content pairs, in the fixed order EAR_TAG, PASSPORT, MICROCHIP, TATTOO, with no urlId.",
+      "kind": "data",
+      "ref": "outbox/gbnag/TradeProductInstance.java:17-22,44-53; GbnAgMapperTest#HappyPath.shouldReshapeEachAnimalsEarTagAndPassportIntoItsOwnProductInstance; GbnAgMapperTest#shouldMapHorseNameAndIdentifiersForEachHorse; GbnAgMapperTest#shouldMapTattooAndPermanentAddressForEachDog; GbnAgMapperTest#shouldMapMicrochipOnly_whenSpeciesCarriesNoEarTagOrPassport",
+      "quote": "addIfPresent(identifiers, EAR_TAG, earTag);\n        addIfPresent(identifiers, PASSPORT, passport);\n        addIfPresent(identifiers, MICROCHIP, microchip);\n        addIfPresent(identifiers, TATTOO, tattoo);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-116",
+      "statement": "An identifier left unanswered is not sent: the journey saves an unanswered identifier as an empty string, and empty or blank values are skipped.",
+      "kind": "rule",
+      "ref": "outbox/gbnag/TradeProductInstance.java:55-60; GbnAgMapperTest#shouldSkipIdentifierLeftUnanswered_asTheJourneySavesItAsAnEmptyString",
+      "quote": "// The journey saves an unanswered identifier as an empty string, not an absent one.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-117",
+      "statement": "An animal with no identifiers at all has no identifier list on its product instance.",
+      "kind": "rule",
+      "ref": "outbox/gbnag/TradeProductInstance.java:52; GbnAgMapperTest#shouldMapIdentifiersToNull_whenSpeciesCarriesNoEarTagPassportOrMicrochip",
+      "quote": "return identifiers.isEmpty() ? null : identifiers;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-118",
+      "statement": "A product instance's name is the horse's name; animals other than horses have no name.",
+      "kind": "data",
+      "ref": "outbox/gbnag/TradeProductInstance.java:38; GbnAgMapperTest#shouldMapHorseNameAndIdentifiersForEachHorse; GbnAgMapperTest#shouldMapTattooAndPermanentAddressForEachDog",
+      "quote": "assertThat(dog.name()).isNull(); // only horses are named",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-119",
+      "statement": "A product instance's permanentLocation is the animal's permanent address, sent as a party with name, postal address and contact (for example a dog's home with phone and email).",
+      "kind": "data",
+      "ref": "outbox/gbnag/TradeProductInstance.java:40; GbnAgMapperTest#shouldMapTattooAndPermanentAddressForEachDog",
+      "quote": "TradeParty.from(animal.getPermanentAddress())))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-120",
+      "statement": "An animal with no permanent address (such as a cow) has no permanentLocation.",
+      "kind": "data",
+      "ref": "outbox/gbnag/TradeParty.java:22-24; GbnAgMapperTest#HappyPath.shouldReshapeEachAnimalsEarTagAndPassportIntoItsOwnProductInstance",
+      "quote": "assertThat(instances.getFirst().permanentLocation()).isNull(); // or permanent address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p6-121",
+      "statement": "The notification's internal-market purpose (purposeInInternalMarket) is held on the record but not carried in the payload: the INTERNAL_MARKET_PURPOSE clause is always sent empty.",
+      "kind": "data",
+      "ref": "outbox/gbnag/Clause.java:15-17; outbox/gbnag/Authentication.java:14-26",
+      "quote": "return new Clause(INTERNAL_MARKET_PURPOSE, null, null);",
+      "confidence": "inferred",
+      "note": "Inferred by comparing the payload mapping with the record's field list (NotificationBase.java:38 holds purposeInInternalMarket); no file in outbox/gbnag/ reads it."
+    },
+    {
+      "id": "repo-backend-p6-122",
+      "statement": "The notification's destination country is not carried in the GBN-AG payload.",
+      "kind": "data",
+      "ref": "outbox/gbnag/SpecifiedConsignment.java:24-46",
+      "quote": "private String destinationCountry;",
+      "confidence": "inferred",
+      "note": "Quote is from NotificationBase.java:40; no file in outbox/gbnag/ reads it."
+    },
+    {
+      "id": "repo-backend-p6-123",
+      "statement": "The notification's port of exit is not carried in the GBN-AG payload.",
+      "kind": "data",
+      "ref": "outbox/gbnag/SpecifiedConsignment.java:24-46",
+      "quote": "private String portOfExit;",
+      "confidence": "inferred",
+      "note": "Quote is from NotificationBase.java:42; no file in outbox/gbnag/ reads it."
+    },
+    {
+      "id": "repo-backend-p6-124",
+      "statement": "The notification's exit date is not carried in the GBN-AG payload.",
+      "kind": "data",
+      "ref": "outbox/gbnag/SpecifiedConsignment.java:24-46",
+      "quote": "private LocalDate exitDate;",
+      "confidence": "inferred",
+      "note": "Quote is from NotificationBase.java:49; no file in outbox/gbnag/ reads it."
+    },
+    {
+      "id": "repo-backend-p6-125",
+      "statement": "The origin section's 'requires region code' answer and country subdivision code are not carried in the GBN-AG payload; only the country code, region of origin code and internal reference are.",
+      "kind": "data",
+      "ref": "outbox/gbnag/TradeCountry.java:11-18; outbox/gbnag/ExchangedDocument.java:31",
+      "quote": "TradeCountrySubDivision.regionOfOrigin(origin.getRegionOfOriginCode()));",
+      "confidence": "inferred",
+      "note": "Origin.java:15,18 holds requiresRegionCode and countrySubdivisionCode; no file in outbox/gbnag/ reads them."
+    },
+    {
+      "id": "repo-backend-p6-126",
+      "statement": "A species' code (its value, for example 1148346) is not carried in the GBN-AG payload; only its display text is, as scientificName.",
+      "kind": "data",
+      "ref": "outbox/gbnag/TradeLineItem.java:33-44",
+      "quote": "species.getText(),",
+      "confidence": "inferred",
+      "note": "Species.java:15 holds value; no file in outbox/gbnag/ reads it."
+    },
+    {
+      "id": "repo-backend-p6-127",
+      "statement": "The notification's created and submitted moments are not carried in the GBN-AG payload; the only timestamp on the document is issueDateTime, taken from the last-updated moment.",
+      "kind": "data",
+      "ref": "outbox/gbnag/ExchangedDocument.java:29-37",
+      "quote": "toUtcDateTime(notificationAggregate.getUpdated()),",
+      "confidence": "inferred",
+      "note": "NotificationAggregate.java:40,50 holds created and submittedAt; no file in outbox/gbnag/ reads them."
+    },
+    {
+      "id": "repo-backend-p6-128",
+      "statement": "Only the current notification content is mapped; the pre-amendment copy of the notification held during an amendment is not carried in the GBN-AG payload.",
+      "kind": "data",
+      "ref": "outbox/gbnag/GbnAgEventData.java:28-29",
+      "quote": "SpecifiedConsignment.from(notificationAggregate.requireNotification()));",
+      "confidence": "inferred",
+      "note": "NotificationAggregate.java:76 holds preAmendNotification; no file in outbox/gbnag/ reads it."
+    },
+    {
+      "id": "repo-backend-p6-129",
+      "statement": "Of each accompanying document only its type, reference and date of issue are carried; its uploaded files and virus-scan status are not in the GBN-AG payload.",
+      "kind": "data",
+      "ref": "outbox/gbnag/ReferencedDocument.java:37-44",
+      "quote": "accompanyingDocumentTypeCode(document.getDocumentType()),\n            GBN_AG_DOCUMENT_TYPES,\n            null,\n            document.getDocumentReference(),\n            issueDate(document));",
+      "confidence": "inferred",
+      "note": "AccompanyingDocument.java:72,76 holds scanStatus and files; the payload mapping reads neither, and does not filter documents by scan status itself."
+    }
+  ]
+}

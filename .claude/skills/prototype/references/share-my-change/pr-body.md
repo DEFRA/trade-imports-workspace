@@ -41,6 +41,12 @@ names.
 <Each row of the release's design-gaps.md: page, what the design wants,
 what was built instead. Or "None".>
 
+## Release patterns
+
+<Each entry of the release's patterns.md: its name, kind (Switch on or
+Custom), status, need or hypothesis, research round and findings. Or
+"None".>
+
 ## Make this real?
 
 This change lives in a design release only. To take it to the real

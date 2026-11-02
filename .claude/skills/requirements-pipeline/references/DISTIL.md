@@ -23,6 +23,7 @@ and the judgement rules a schema cannot check in `SHAPE.md` beside it: read both
 | 11. Answer the report's questions with the user | The main session | [Section 6](#6-answer-the-questions) |
 | 12. Split a themed backlog, one backlog per theme, once the questions are answered and the re-distil has landed | The main session | [Section 7](#7-split-into-themes) |
 | Any time: split one ready theme off early, so a second machine builds it while the rest is still ruled on | The main session | [Section 8](#8-splitting-a-theme-off-early) |
+| Any time: move some rows of a split theme into a new theme, so a second machine builds them in parallel | The main session | [Section 9](#9-moving-rows-out-of-a-split-theme-to-a-second-machine) |
 
 Steps 1 to 9 are one workflow, [`../workflow/distil.js`](../workflow/distil.js). Never spawn a DISTIL agent yourself.
 Never check a DISTIL file with hand-written `jq`. Never write an extract, a requirement or an increment. `tim distil`
@@ -512,6 +513,32 @@ take that id out of the pointer's `requirements` and `fingerprints`; do the same
 like. Change nothing else in it. Never reset reconcile while the backlog has a pointer
 ([Reconciling again from nothing](#reconciling-again-from-nothing)): `tim distil reset` refuses, because a fresh backlog
 would lose the pointer and draft the theme's rows again.
+
+## 9. Moving rows out of a split theme to a second machine
+
+When a theme's split backlog is already building and some of its rows can build in parallel, move them into a new
+theme backlog beside it, so a second machine builds them on their own branch:
+
+```bash
+tim backlog split <workarea>/themes/<theme id> --rows <id>,<id> --to <new theme id> [--branch <name>] [--title <text>] --json           # what moves, what waits on what
+tim backlog split <workarea>/themes/<theme id> --rows <id>,<id> --to <new theme id> [--branch <name>] [--title <text>] --write --json   # move them
+```
+
+Only `todo` or `blocked` rows move. The new backlog lands at `<workarea>/themes/<new theme id>/backlog.json`, with the
+old envelope (programme and theme renamed), the repos its rows use, the same `parent` and `touches`, and the branch
+given (by default the old branch with its theme id swapped for the new one). The old backlog loses the rows and keeps
+one pointer per move in `movedOut`, so nothing drafts them again and no row reuses their ids. `themes/themes.json`
+gains the new theme in the old one's wave, marked `movedFrom`.
+
+**What it rewires.** A moved row stops waiting for a row left behind that is `done`, because the new branch is cut
+from the old one and already has it. Any other dependency between the two backlogs becomes an `externalDependsOn`,
+both ways. Every other backlog in the programme (the parent and each theme split) that waited for a moved row is
+pointed at its new workarea. It refuses, writing nothing, a row that is not there or not `todo` or `blocked`, a theme
+whose workarea already has a backlog, or a result that fails `tim backlog check`.
+
+**Bringing it back.** The new branch is merged back into the old one by a row in the old backlog: a `chore` that waits
+for every moved row through `externalDependsOn` and merges `origin/<new branch>` into each repo through its `merge`
+field ([`BUILD.md`](BUILD.md#branch-lifecycle)). Make the old theme's final row depend on it.
 
 ## Done means
 

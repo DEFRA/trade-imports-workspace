@@ -35,6 +35,11 @@ const ARGS = {
   reference: null
 }
 
+const BASE_COMMIT = '3f2a9c1d'
+const MANDATE_ID = 'm-2026-10-27-1'
+const MANDATE_WORDS =
+  'rebuild the old transporter cards, we are testing them in round 3'
+
 const INVENTORY = {
   title: 'Choose a transporter type',
   pageKind: 'data-collecting',
@@ -53,15 +58,28 @@ const answers = (overrides = {}) => {
   const checks = overrides.checks ?? [true]
   let checkIndex = 0
   const byLabel = {
-    preflight: () => overrides.preflight ?? { ok: true, reason: 'Ready.' },
+    preflight: () =>
+      overrides.preflight ?? {
+        ok: true,
+        baseCommit: BASE_COMMIT,
+        reason: 'Ready.'
+      },
+    'confirm mandate': () =>
+      overrides.mandate ?? {
+        found: true,
+        words: MANDATE_WORDS,
+        scope: 'transporter-type',
+        reason: ''
+      },
     inventory: () => INVENTORY,
-    build: () => ({
-      built: true,
-      recipe: 'add-a-page',
-      filesChanged: ['src/server/app/sets/plants-working/x/template.njk'],
-      leftOut: [],
-      notes: ''
-    }),
+    build: () =>
+      overrides.build ?? {
+        built: true,
+        recipe: 'add-a-page',
+        filesChanged: ['src/server/app/sets/plants-working/x/template.njk'],
+        leftOut: [],
+        notes: ''
+      },
     show: () => ({
       ran: true,
       galleryPath: '.cache/designer/show/plants-working/1',
@@ -83,7 +101,8 @@ const answers = (overrides = {}) => {
       ],
       summary: 'Close match.'
     }),
-    'write records': () => 'done'
+    'write records': () => 'done',
+    'list patterns': () => overrides.patterns ?? { patterns: [] }
   }
   return vi.fn(async (_prompt, opts) => {
     if (opts.label.startsWith('check')) {
@@ -275,5 +294,161 @@ describe('port-kit-page workflow', () => {
     for (const label of ['preflight', 'build', 'check 1', 'show']) {
       expect(promptFor(agent, label)).toContain(REPO)
     }
+  })
+
+  describe("a designer's mandate", () => {
+    const WITH_MANDATE = { ...ARGS, designerMandate: { id: MANDATE_ID } }
+    const NO_MANDATE_RAIL = `- This port has no designer's mandate. Never create or change ${REPO}/src/server/app/sets/plants-working/assets/**, ${REPO}/src/server/app/sets/plants-working/layout.njk, ${REPO}/src/server/app/sets/plants-working/patterns.md or ${REPO}/src/server/app/sets/plants-working/mandates.md, and never add an app-* class.`
+    const builderPrompts = () =>
+      agent.mock.calls
+        .filter(([, opts]) => /^(build|repair)/.test(opts.label))
+        .map(([prompt]) => prompt)
+
+    it.each([
+      [{ designerMandate: { id: 'yes' } }],
+      [{ designerMandate: MANDATE_WORDS }]
+    ])('Should refuse %j before any agent', async (change) => {
+      await expect(
+        runWorkflow({ ...ARGS, ...change }, { agent })
+      ).rejects.toThrow('designerMandate must be { id }')
+      expect(agent).not.toHaveBeenCalled()
+    })
+
+    it('Should read the recorded words back straight after the preflight', async () => {
+      await runWorkflow(WITH_MANDATE, { agent })
+      expect(labels(agent).slice(0, 3)).toEqual([
+        'preflight',
+        'confirm mandate',
+        'inventory'
+      ])
+      expect(promptFor(agent, 'confirm mandate')).toContain(
+        `Run: npm --prefix ${REPO} run designer:mandate -- show --set plants-working --id ${MANDATE_ID}`
+      )
+    })
+
+    it("Should quote the designer's words and id in the build and every repair, and let them rebuild the old page's own code as a pattern", async () => {
+      agent = answers({ checks: [false, true] })
+      await runWorkflow(WITH_MANDATE, { agent })
+      const briefs = builderPrompts()
+      expect(briefs).toHaveLength(2)
+      for (const brief of briefs) {
+        expect(brief).toContain(`DESIGNER'S MANDATE ${MANDATE_ID}`)
+        expect(brief).toContain(`  Words: "${MANDATE_WORDS}"`)
+        expect(brief).toContain(`Asked by: "${MANDATE_WORDS}" (${MANDATE_ID})`)
+        expect(brief).toContain('Never copy the Kit')
+        expect(brief).not.toContain(NO_MANDATE_RAIL)
+      }
+      expect(promptFor(agent, 'build')).toContain(
+        "rebuild each app-* class and custom script the designer's words cover as an app-plants-working- release pattern"
+      )
+      expect(promptFor(agent, 'build')).not.toContain(
+        'Drop every app-* class and custom script.'
+      )
+      for (const label of ['check 1', 'check 2']) {
+        expect(promptFor(agent, label)).toContain(
+          `--full --since ${BASE_COMMIT} --mandate ${MANDATE_ID}`
+        )
+        expect(promptFor(agent, label)).not.toContain('--no-new-patterns')
+      }
+    })
+
+    it("Should never tell a step of a port with a confirmed mandate that it has no designer's mandate", async () => {
+      agent = answers({ checks: [false, true] })
+      await runWorkflow(WITH_MANDATE, { agent })
+      for (const [prompt] of agent.mock.calls) {
+        expect(prompt).not.toContain("has no designer's mandate")
+      }
+    })
+
+    it('Should list the options patterns.md shows the port added, for the designer to choose', async () => {
+      agent = answers({
+        patterns: {
+          patterns: [
+            { name: 'Transporter cards', status: 'Option' },
+            { name: 'Older pattern', status: 'Open' }
+          ]
+        }
+      })
+      const log = vi.fn()
+      await runWorkflow(WITH_MANDATE, { agent, log })
+      expect(promptFor(agent, 'list patterns')).toContain(
+        `Run: git -C ${REPO} diff ${BASE_COMMIT} -- src/server/app/sets/plants-working/patterns.md`
+      )
+      expect(log.mock.calls.at(-1)[0]).toContain(
+        'Options for you to choose, in src/server/app/sets/plants-working/patterns.md: "Transporter cards". Say which to keep, and the others are closed.'
+      )
+    })
+
+    it('Should refuse, in the preflight, a branch that is not main or design/', async () => {
+      await runWorkflow(ARGS, { agent })
+      expect(promptFor(agent, 'preflight')).toContain(
+        `Run: git -C ${REPO} branch --show-current`
+      )
+      expect(promptFor(agent, 'preflight')).toContain(
+        'ok is false unless the branch is main or starts with design/.'
+      )
+    })
+
+    it('Should drop the custom code and check against the starting commit with no mandate', async () => {
+      agent = answers({ checks: [false, true] })
+      await runWorkflow(ARGS, { agent })
+      for (const brief of builderPrompts()) {
+        expect(brief).toContain(NO_MANDATE_RAIL)
+        expect(brief).not.toContain("DESIGNER'S MANDATE")
+      }
+      expect(promptFor(agent, 'build')).toContain(
+        '- Drop every app-* class and custom script. List each dropped thing in leftOut.'
+      )
+      expect(promptFor(agent, 'repair 1')).toContain(
+        'Never edit mandates.md or patterns.md to make it pass.'
+      )
+      for (const label of ['check 1', 'check 2']) {
+        expect(promptFor(agent, label)).toContain(
+          `--full --since ${BASE_COMMIT} --no-new-patterns`
+        )
+      }
+    })
+
+    it('Should offer once to rebuild what it dropped when there is no mandate', async () => {
+      agent = answers({
+        build: {
+          built: true,
+          recipe: 'add-a-page',
+          filesChanged: [],
+          leftOut: ['app-transporter-add-page'],
+          notes: ''
+        }
+      })
+      const log = vi.fn()
+      await runWorkflow(ARGS, { agent, log })
+      expect(log.mock.calls.at(-1)[0]).toContain(
+        "Left out of the old page's own look or behaviour: app-transporter-add-page. If research needs any of it, tell me what you want to learn and it can be rebuilt in your release."
+      )
+    })
+
+    it('Should keep the rail and say so when the mandate cannot be read', async () => {
+      agent = answers({
+        mandate: { found: false, words: '', scope: '', reason: 'Not found.' }
+      })
+      const log = vi.fn()
+      await runWorkflow(WITH_MANDATE, { agent, log })
+      expect(promptFor(agent, 'build')).toContain(NO_MANDATE_RAIL)
+      expect(promptFor(agent, 'check 1')).toContain('--no-new-patterns')
+      expect(log.mock.calls.at(-1)[0]).toContain(
+        `The designer's mandate ${MANDATE_ID} could not be read from src/server/app/sets/plants-working/mandates.md (Not found.), so this port rebuilt no release patterns.`
+      )
+    })
+
+    it('Should stop before any change with no mandate and no starting commit', async () => {
+      agent = answers({
+        preflight: { ok: true, baseCommit: '', reason: 'Ready.' }
+      })
+      const log = vi.fn()
+      await runWorkflow(ARGS, { agent, log })
+      expect(labels(agent)).toEqual(['preflight'])
+      expect(log.mock.calls.at(-1)[0]).toMatch(
+        /^Stopped before any change: the preflight did not give the starting commit/
+      )
+    })
   })
 })

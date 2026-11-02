@@ -1,0 +1,967 @@
+{
+  "source": "repo:plantsfrontend",
+  "structure": "Part 3, Dashboard, row actions, delete and cancel or amend. Read in full, under src/server/app/sets/high-risk-plants/journeys/linear/features/: dashboard/ (page.js, controller.js with the list GET, the amend POST and the create POST; template.njk; notification-helper.js with sort values, date and commodity formatting, page clamping, pagination links and the results label; copy/copy.en.js and copy/copy.cy.js; view-model/sort-options.js; view-model/row/index.js, the card view model; view-model/row/actions.js, the per-status row actions; dashboard.fit.spec.js, 13 tests), delete-notification/ (controller.js, template.njk, copy.en.js, copy.cy.js, delete-notification.fit.spec.js, 4 tests) and cancel-amend/ (controller.js, template.njk, copy.en.js, copy.cy.js, cancel-amend.fit.spec.js, 3 tests plus a setup that submits, amends and edits a notification). To resolve the strings and paths these files reference, the shared notificationActions and journeyStrip copy (src/server/app/shared/copy.en.js and copy.cy.js), STRIP_STATUS, journeyStrip and CYA_SLUG in shared/kit.js, and the path helpers in shared/paths.js were read in the relevant lines only; their other content belongs to part 1. The dashboard is one page at the set root: intro, start button, a filter-by-reference form, a sort form, a results label, one GOV.UK summary card per notification (rows, status and late tags, link and button actions), Previous/Next pagination, an empty state and a deleted-success banner. The delete page and the cancel-amendment page are each a heading, a body sentence and a confirm/no button pair with no radios and no validation error. The claims stop at the pages a row action leads into (hub, check answers / notification view, commodity type).",
+  "claims": [
+    {
+      "id": "repo-plantsfrontend-p3-001",
+      "statement": "The dashboard is served by a GET at the set's root path, and its page id is 'dashboard' with an empty slug.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/page.js:1; dashboard/controller.js:115-120; src/server/app/shared/paths.js:10",
+      "quote": "export const dashboardPage = { id: 'dashboard', slug: '' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-002",
+      "statement": "The dashboard's page title and h1 (govuk-heading-xl) read 'Import notification service' in English.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/copy/copy.en.js:5; dashboard/template.njk:22",
+      "quote": "title: 'Import notification service',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-003",
+      "statement": "The dashboard's title and h1 read 'Gwasanaeth hysbysu mewnforio' in Welsh.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/copy/copy.cy.js:6",
+      "quote": "title: 'Gwasanaeth hysbysu mewnforio',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-004",
+      "statement": "Below the heading the dashboard shows an intro paragraph explaining the service is for telling plant health authorities about high-risk plants for planting, potatoes, or wood and cut trees imported from EU member states under the Plant Health National Notification Scheme.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/copy/copy.en.js:6-11; dashboard/template.njk:23",
+      "quote": "'Use this service to tell the plant health authorities about high-risk ' + 'plants for planting, potatoes, or wood and cut trees you are importing ' + 'from EU member states, as required by the Plant Health National ' + 'Notification Scheme. You will answer a short set of questions about the ' + 'consignment, then submit your notification.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-005",
+      "statement": "The dashboard's intro paragraph has a Welsh version.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/copy/copy.cy.js:7-12",
+      "quote": "'Defnyddiwch y gwasanaeth hwn i roi gwybod i awdurdodau iechyd planhigion ' + 'am blanhigion risg uchel i’w plannu, tatws, neu bren a choed wedi’u ' + 'torri rydych chi’n eu mewnforio o aelod-wladwriaethau’r UE, fel sy’n ' + 'ofynnol gan Gynllun Hysbysu Cenedlaethol Iechyd Planhigion. Byddwch yn ' + 'ateb cyfres fer o gwestiynau am y llwyth, yna’n cyflwyno eich hysbysiad.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-006",
+      "statement": "Every English string on the dashboard is marked provisional, a draft the content designer has still to settle.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/copy/copy.en.js:1-3",
+      "quote": "// PROVISIONAL COPY — awaiting the copy pass. The spec marks this page\n// provisionalCopy: true, so every string here is a draft the content designer\n// has still to settle.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-007",
+      "statement": "The dashboard's Welsh copy is a machine draft not reviewed by a translator: only the title, start button and four action labels come from the spec, and it must not ship without Welsh Language Standards sign-off.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/copy/copy.cy.js:1-4",
+      "quote": "// PROVISIONAL COPY, MACHINE-DRAFT Welsh — not reviewed by a translator. The\n// spec supplies the title, the start button and the four action labels; every\n// other string is a machine draft awaiting the copy pass. Do not ship\n// user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-008",
+      "statement": "The dashboard has a guidance link sentence, 'Check whether your goods are high-risk and when you must notify (GOV.UK)', that renders only when the view model supplies a guidance URL.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/copy/copy.en.js:12-16; dashboard/template.njk:24-28",
+      "quote": "guidanceLink:\n    'Check whether your goods are high-risk and when you must notify (GOV.UK)',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-009",
+      "statement": "The guidance link never renders today: no guidance URL exists, the controller passes no guidanceUrl, and the fit spec proves the link is absent and that nothing in the page's main content has a '#' href.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/copy/copy.en.js:12-14; dashboard/controller.js:71-98; dashboard/dashboard.fit.spec.js:75-90",
+      "quote": "// No URL exists yet, so the link text waits here for one rather than\n  // rendering a '#' href.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-010",
+      "statement": "The guidance link text has a Welsh version.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/copy/copy.cy.js:13-15",
+      "quote": "'Gwiriwch a yw eich nwyddau’n risg uchel a phryd y mae’n rhaid i chi ' +\n    'hysbysu (GOV.UK)',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-011",
+      "statement": "The dashboard shows a GOV.UK start button 'Start a new notification' (Welsh 'Dechrau hysbysiad newydd') in a POST form.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/template.njk:30-33; dashboard/copy/copy.en.js:17; dashboard/copy/copy.cy.js:16",
+      "quote": "{{ govukButton({ text: copy.startButton, isStartButton: true }) }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-012",
+      "statement": "Pressing the start button POSTs to /notifications, which creates a new notification, begins its opening run and redirects to that notification's commodity type page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.js:108-112,127-132",
+      "quote": "const journey = await startJourney(request, h)\n  await beginOpeningRun(request, h, journey.journeyId)\n  return h.redirect(pagePath(journey.journeyId, commodityTypePage.slug))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-013",
+      "statement": "Below the start button the dashboard has an h2 'Your notifications' (Welsh 'Eich hysbysiadau').",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/template.njk:35; dashboard/copy/copy.en.js:18; dashboard/copy/copy.cy.js:17",
+      "quote": "notificationsHeading: 'Your notifications',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-014",
+      "statement": "The notifications area is split into a one-third column holding the filter and a two-thirds column holding the results label, the sort form, the cards and the pagination.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/template.njk:36-125",
+      "quote": "<div class=\"govuk-grid-column-one-third\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-015",
+      "statement": "The filter column has an h3 'Filter notifications' (Welsh 'Hidlo hysbysiadau').",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/template.njk:38; dashboard/copy/copy.en.js:20; dashboard/copy/copy.cy.js:19",
+      "quote": "heading: 'Filter notifications',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-016",
+      "statement": "The filter is a GET form back to the dashboard with one optional text input named referenceNumber, labelled 'Keyword or reference' (Welsh 'Allweddair neu gyfeirnod'), and a 'Search' button (Welsh 'Chwilio').",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/template.njk:40-51; dashboard/copy/copy.en.js:21-22; dashboard/copy/copy.cy.js:20-21",
+      "quote": "label: 'Keyword or reference',\n    button: 'Search',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-017",
+      "statement": "The search form carries the current sort as a hidden field, so searching keeps the chosen sort.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/template.njk:41-43",
+      "quote": "<input type=\"hidden\" name=\"sort\" value=\"{{ sort }}\" />",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-018",
+      "statement": "The search term is trimmed, and a blank or whitespace-only term is treated as no search.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.js:39-45",
+      "quote": "const trimmed = value.trim()\n  return trimmed.length > 0 ? trimmed : undefined",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-019",
+      "statement": "The search term is passed to the notification list query as referenceNumber, so the filter matches on reference; despite the label saying 'Keyword or reference', the frontend sends no separate keyword parameter, and how the term matches is decided behind listKnownJourneys.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.js:56-58",
+      "quote": "listKnownJourneys(request, { page, sort, referenceNumber })",
+      "confidence": "inferred",
+      "note": "Ambiguity between the 'Keyword or reference' label and the reference-only parameter; matching logic lives outside this part."
+    },
+    {
+      "id": "repo-plantsfrontend-p3-020",
+      "statement": "After a search the term is echoed back into the search input.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.js:92; dashboard/template.njk:48",
+      "quote": "referenceNumber: referenceNumber ?? '',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-021",
+      "statement": "When a search matches nothing the results label reads 'No notifications found' (Welsh 'Ni chanfuwyd unrhyw hysbysiadau') and the empty-state sentence is not shown.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.js:47-50; dashboard/template.njk:117-119; dashboard/copy/copy.en.js:23; dashboard/copy/copy.cy.js:22",
+      "quote": "? { ...copy.pagination.results, none: copy.search.noResults }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-022",
+      "statement": "A bold results label sits above the list: 'No Results' with nothing to show, 'Showing 1 Result' when there is one in total, 'Showing {n} of {total} Results' when the page holds one item of several, and 'Showing {start} to {end} of {total} Results' otherwise.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/copy/copy.en.js:49-55; dashboard/notification-helper.js:123-135; dashboard/template.njk:55",
+      "quote": "none: 'No Results',\n      one: 'Showing 1 Result',\n      oneOf: (item, total) => `Showing ${item} of ${total} Results`,\n      many: (start, end, total) =>\n        `Showing ${start} to ${end} of ${total} Results`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-023",
+      "statement": "The results label has Welsh versions: 'Dim canlyniadau', 'Yn dangos 1 canlyniad', 'Yn dangos {n} o {total} o ganlyniadau' and 'Yn dangos {start} i {end} o {total} o ganlyniadau'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/copy/copy.cy.js:48-54",
+      "quote": "none: 'Dim canlyniadau',\n      one: 'Yn dangos 1 canlyniad',\n      oneOf: (item, total) => `Yn dangos ${item} o ${total} o ganlyniadau`,\n      many: (start, end, total) =>\n        `Yn dangos ${start} i ${end} o ${total} o ganlyniadau`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-024",
+      "statement": "The results range is computed from the page, the page size and the total: start is (page - 1) x size + 1 and end is start + items on the page - 1, capped at the total.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/notification-helper.js:106-121",
+      "quote": "const start = (page - 1) * pageSize + 1\n  return {\n    start,\n    end: Math.min(start + itemCount - 1, totalElements),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-025",
+      "statement": "The frontend sets no page size of its own: the size, total and page count come back from the notification list query.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.js:64-69",
+      "quote": "size: listed.size,\n    totalElements: listed.totalElements,\n    totalPages: listed.totalPages",
+      "confidence": "inferred",
+      "note": "The page size itself is not stated anywhere in this part."
+    },
+    {
+      "id": "repo-plantsfrontend-p3-026",
+      "statement": "The sort control is a GET form with a select labelled 'Sort by' (Welsh 'Trefnu yn ôl') and a secondary button 'Update sort' (Welsh 'Diweddaru’r drefn').",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/template.njk:57-71; dashboard/copy/copy.en.js:37-38; dashboard/copy/copy.cy.js:36-37",
+      "quote": "label: 'Sort by',\n    update: 'Update sort',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-027",
+      "statement": "The sort form carries the current page (when past page 1) and the current search term as hidden fields, so updating the sort keeps both.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/template.njk:58-63",
+      "quote": "{% if currentPage > 1 %}\n          <input type=\"hidden\" name=\"page\" value=\"{{ currentPage }}\" />\n        {% endif %}\n        {% if referenceNumber %}\n          <input type=\"hidden\" name=\"referenceNumber\" value=\"{{ referenceNumber }}\" />",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-028",
+      "statement": "The sort options, in order, are: 'Arrival (newest to oldest)' (arrivalDate,desc), 'Arrival (oldest to newest)' (arrivalDate,asc), 'Date created (newest to oldest)' (createdAt,desc) and 'Date created (oldest to newest)' (createdAt,asc).",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/notification-helper.js:9-14; dashboard/view-model/sort-options.js:8-18; dashboard/copy/copy.en.js:39-44",
+      "quote": "arrivalNewest: 'Arrival (newest to oldest)',\n      arrivalOldest: 'Arrival (oldest to newest)',\n      createdNewest: 'Date created (newest to oldest)',\n      createdOldest: 'Date created (oldest to newest)'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-029",
+      "statement": "The sort options have Welsh labels: 'Cyrraedd (mwyaf newydd i’r hynaf)', 'Cyrraedd (hynaf i’r mwyaf newydd)', 'Dyddiad creu (mwyaf newydd i’r hynaf)' and 'Dyddiad creu (hynaf i’r mwyaf newydd)'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/copy/copy.cy.js:38-43",
+      "quote": "arrivalNewest: 'Cyrraedd (mwyaf newydd i’r hynaf)',\n      arrivalOldest: 'Cyrraedd (hynaf i’r mwyaf newydd)',\n      createdNewest: 'Dyddiad creu (mwyaf newydd i’r hynaf)',\n      createdOldest: 'Dyddiad creu (hynaf i’r mwyaf newydd)'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-030",
+      "statement": "The default sort is arrival date newest first (arrivalDate,desc), and any sort value not in the four options falls back to it.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/notification-helper.js:5,51-54",
+      "quote": "export const DEFAULT_NOTIFICATION_SORT = 'arrivalDate,desc'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-031",
+      "statement": "The chosen sort option is shown selected in the sort select.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.js:93-96",
+      "quote": "selected: option.value === sort",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-032",
+      "statement": "Dashboard links leave the default sort and page 1 out of the query string, and carry sort, page and search term otherwise.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/notification-helper.js:56-75",
+      "quote": "if (page > 1) {\n    params.set('page', String(page))\n  }\n  if (sort && sort !== DEFAULT_NOTIFICATION_SORT) {\n    params.set('sort', sort)\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-033",
+      "statement": "Pagination shows only when there is more than one page: a 'Previous' link past page 1 and a 'Next' link before the last page (Welsh 'Blaenorol' and 'Nesaf'), each keeping the sort and search term.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/notification-helper.js:77-104; dashboard/template.njk:121-123; dashboard/copy/copy.en.js:47-48; dashboard/copy/copy.cy.js:46-47",
+      "quote": "previous: page > 1 ? pageLink(page - 1, labels.previous) : undefined,\n    next: page < totalPages ? pageLink(page + 1, labels.next) : undefined",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-034",
+      "statement": "Pagination has no numbered page links, only Previous and Next.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/notification-helper.js:100-103",
+      "quote": "return {\n    previous: page > 1 ? pageLink(page - 1, labels.previous) : undefined,\n    next: page < totalPages ? pageLink(page + 1, labels.next) : undefined\n  }",
+      "confidence": "inferred",
+      "note": "No items array is built, so govukPagination renders only previous and next."
+    },
+    {
+      "id": "repo-plantsfrontend-p3-035",
+      "statement": "A page number that is not a whole number, or is below 1, is treated as page 1, and a page past the last is clamped to the last page, which is then fetched.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/notification-helper.js:41-49; dashboard/controller.js:53-62",
+      "quote": "if (!Number.isInteger(page) || page < 1 || totalPages <= 0) {\n    return 1\n  }\n  return Math.min(page, totalPages)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-036",
+      "statement": "The dashboard lists only notifications known to the signed-in user's session, which the empty-state copy reflects ('in this session').",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.js:57-58; dashboard/copy/copy.en.js:66",
+      "quote": "listKnownJourneys(request, { page, sort, referenceNumber })",
+      "confidence": "inferred",
+      "note": "listKnownJourneys is engine code outside this part; the scoping is read from its name and the empty-state copy."
+    },
+    {
+      "id": "repo-plantsfrontend-p3-037",
+      "statement": "Deleted notifications are left out of the dashboard list.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.js:63",
+      "quote": "const rows = listed.rows.filter((journey) => journey.status !== DELETED)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-038",
+      "statement": "With no notifications and no search term the dashboard shows 'You have not started any notifications in this session.' (Welsh 'Nid ydych wedi dechrau unrhyw hysbysiadau yn y sesiwn hon.').",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/template.njk:117-119; dashboard/copy/copy.en.js:66; dashboard/copy/copy.cy.js:65",
+      "quote": "emptyText: 'You have not started any notifications in this session.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-039",
+      "statement": "Each notification is shown as a GOV.UK summary card whose h3 title is the notification reference, falling back to the journey id when there is no reference.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/template.njk:109-115; dashboard/view-model/row/index.js:17",
+      "quote": "const reference = journey.reference ?? journey.journeyId",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-040",
+      "statement": "Each card's rows, in order, are Commodity, Origin, Arrival, Consignor, Status, Date created and Date submitted.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/template.njk:96-104; dashboard/copy/copy.en.js:25-35",
+      "quote": "commodity: 'Commodity',\n    origin: 'Origin',\n    arrival: 'Arrival',\n    consignor: 'Consignor',\n    created: 'Date created',\n    submitted: 'Date submitted',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-041",
+      "statement": "The card row labels in Welsh are 'Nwydd', 'Tarddiad', 'Cyrraedd', 'Traddodwr', 'Statws', 'Dyddiad creu', 'Dyddiad cyflwyno' and, for actions, 'Camau gweithredu'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/copy/copy.cy.js:24-34",
+      "quote": "status: 'Statws',\n    commodity: 'Nwydd',\n    origin: 'Tarddiad',\n    arrival: 'Cyrraedd',\n    consignor: 'Traddodwr',\n    created: 'Dyddiad creu',\n    submitted: 'Dyddiad cyflwyno',\n    actions: 'Camau gweithredu'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-042",
+      "statement": "A card has no Consignee row, because the plants set carries no consignee obligation; the fit spec proves no 'Consignee' text appears.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/view-model/row/index.js:9-12; dashboard/dashboard.fit.spec.js:135",
+      "quote": "One notification card's view model. There is no consignee cell: the plants\n * set carries no consignee obligation.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-043",
+      "statement": "A 'Reference' label (Welsh 'Cyfeirnod') exists in the copy but is not rendered: the reference is shown only as the card title.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/copy/copy.en.js:26; dashboard/template.njk:96-111",
+      "quote": "reference: 'Reference',",
+      "confidence": "inferred"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-044",
+      "statement": "The Commodity value is the commodity's name, else its text, else its category, else its genus; a plain string commodity is shown as is, and none shows blank.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/notification-helper.js:25-39",
+      "quote": "commodity.name ?? commodity.text ?? commodity.category ?? commodity.genus",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-045",
+      "statement": "The Origin value is the country's display label looked up from the origin country code, falling back to the code itself, and blank when there is no code.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/view-model/row/index.js:18-27",
+      "quote": "origin: originLabel ?? journey.originCountryCode ?? '',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-046",
+      "statement": "The Arrival, Date created and Date submitted values are dates in the format 'd MMM yyyy' (such as 9 Oct 2026), and blank when missing or invalid.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/notification-helper.js:3,16-23; dashboard/view-model/row/index.js:28-31",
+      "quote": "const LIST_DATE_FORMAT = 'd MMM yyyy'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-047",
+      "statement": "The Consignor value is the consignor's name, or blank when none is chosen.",
+      "kind": "data",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/view-model/row/index.js:29",
+      "quote": "consignor: journey.consignorName ?? '',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-048",
+      "statement": "A draft's Date submitted row is empty: the 'Not submitted' copy (Welsh 'Heb ei gyflwyno') exists but is not rendered anywhere; the fit spec proves Date created is filled and Date submitted is empty on a draft.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/copy/copy.en.js:57; dashboard/view-model/row/index.js:31; dashboard/dashboard.fit.spec.js:158-170",
+      "quote": "notSubmitted: 'Not submitted',",
+      "confidence": "inferred",
+      "note": "Unused copy key; the view model formats a missing submittedAt as ''."
+    },
+    {
+      "id": "repo-plantsfrontend-p3-049",
+      "statement": "The Status row shows a GOV.UK tag for the notification's status: 'Draft' (blue), 'Submitted' (green), 'Amending' (yellow) or 'Deleted'.",
+      "kind": "data",
+      "ref": "src/server/app/shared/kit.js:40-54; src/server/app/shared/copy.en.js:65-70; dashboard/view-model/row/index.js:24; dashboard/template.njk:75-80",
+      "quote": "draft: 'Draft',\n    submitted: 'Submitted',\n    amend: 'Amending',\n    deleted: 'Deleted'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-050",
+      "statement": "The status tags in Welsh read 'Drafft', 'Wedi'i gyflwyno', 'Wrthi’n diwygio' and 'Wedi'i ddileu'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.cy.js:66-71",
+      "quote": "draft: 'Drafft',\n    submitted: \"Wedi'i gyflwyno\",\n    amend: 'Wrthi’n diwygio',\n    deleted: \"Wedi'i ddileu\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-051",
+      "statement": "When a notification is flagged late, a red 'Late' tag (Welsh 'Hwyr') shows beside its status tag.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/template.njk:77-79; dashboard/view-model/row/index.js:25; dashboard/copy/copy.en.js:64; dashboard/copy/copy.cy.js:63",
+      "quote": "{{ govukTag({ text: copy.statusLate, classes: \"govuk-tag--red\" }) }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-052",
+      "statement": "The frontend does not work out lateness itself: the late tag follows a lateNotificationIndicator flag on the list row it receives.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/view-model/row/index.js:25",
+      "quote": "late: Boolean(journey.lateNotificationIndicator),",
+      "confidence": "inferred",
+      "note": "No dashboard fit test proves the late tag renders; the rule that sets the flag sits outside this part."
+    },
+    {
+      "id": "repo-plantsfrontend-p3-053",
+      "statement": "A card's link actions render in the card header's action list, and its button actions render as secondary buttons, each in its own POST form, in an 'Actions' row (Welsh 'Camau gweithredu') that appears only when the card has a button action.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/template.njk:82-112; dashboard/view-model/row/actions.js:17-28",
+      "quote": "An action carries either an `href`, which the summary card renders as a link\n * in its action list, or a `postAction`, which the card content renders as a\n * button in its own form.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-054",
+      "statement": "A card's link actions get the card title appended to their accessible name, so a link reads, for example, 'Resume (ref)'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js:25-26; delete-notification/delete-notification.fit.spec.js:16-19",
+      "quote": "// The dashboard renders its notification actions inside a GOV.UK summary card,\n// which appends the card title — the reference — to each action's accessible name.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-055",
+      "statement": "A submitted notification's card offers, in order: 'View', linking to the notification view (check answers) page; 'Amend', a button; and 'Delete', linking to the delete page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/view-model/row/actions.js:39-52",
+      "quote": "if (journey.status === SUBMITTED) {\n    return [\n      {\n        text: copy.actions.view,\n        href: pagePath(journey.journeyId, CYA_SLUG)\n      },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-056",
+      "statement": "The View action links to /notifications/{journeyId}/notification-view.",
+      "kind": "data",
+      "ref": "src/server/app/shared/kit.js:67; dashboard/view-model/row/actions.js:43",
+      "quote": "export const CYA_SLUG = 'notification-view'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-057",
+      "statement": "The Amend action is a button that POSTs to /notifications/{journeyId}/amend, with visually hidden text 'notification {reference}' (Welsh 'hysbysiad {reference}'), so its accessible name reads 'Amend notification {reference}'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/view-model/row/actions.js:45-49; dashboard/copy/copy.en.js:65; dashboard/copy/copy.cy.js:64; cancel-amend/cancel-amend.fit.spec.js:143-148",
+      "quote": "postAction: pagePath(journey.journeyId, 'amend'),\n        visuallyHiddenText: copy.actionHidden(reference)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-058",
+      "statement": "Posting Amend puts the notification into amendment and redirects to its task list (hub); if the amendment cannot start, it redirects back to the dashboard. No confirmation page comes first.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.js:103-106,121-126",
+      "quote": "const journey = await amendJourney(request, h, request.params.journeyId)\n  return h.redirect(journey ? hubPath(journey.journeyId) : dashboardPath())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-059",
+      "statement": "A draft notification's card offers, in order, 'Resume', linking to its task list (hub), and 'Delete'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/view-model/row/actions.js:34-37,53-55",
+      "quote": "if (journey.status === DRAFT) {\n    return [resumeAction, deleteAction]\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-060",
+      "statement": "A notification being amended offers, in order, 'Resume' (to its task list), 'Cancel amendment', linking to /notifications/{journeyId}/cancel-amend, and 'Delete'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/view-model/row/actions.js:56-65",
+      "quote": "text: copy.actions.cancelAmend,\n        href: pagePath(journey.journeyId, 'cancel-amend')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-061",
+      "statement": "A notification in any other status, such as deleted, has no row actions.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/view-model/row/actions.js:66",
+      "quote": "return []",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-062",
+      "statement": "The Delete action, on every status that has actions, links to /notifications/{journeyId}/delete and reads 'Delete' (Welsh 'Dileu').",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/view-model/row/actions.js:30-33; src/server/app/shared/copy.en.js:54-55; src/server/app/shared/copy.cy.js:55-56",
+      "quote": "text: sharedCopy.notificationActions.delete.text,\n    href: pagePath(journey.journeyId, 'delete')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-063",
+      "statement": "The row action labels are 'View', 'Amend', 'Resume' and 'Cancel amendment' in English, and 'Gweld', 'Diwygio', 'Ailddechrau' and 'Canslo diwygiad' in Welsh.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/copy/copy.en.js:58-63; dashboard/copy/copy.cy.js:57-62",
+      "quote": "view: 'View',\n    amend: 'Amend',\n    resume: 'Resume',\n    cancelAmend: 'Cancel amendment'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-064",
+      "statement": "There is no 'Copy as new' row action: it is parked with reuse-previous-consignment, and the fit spec proves the text does not appear.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/view-model/row/actions.js:22-23; dashboard/dashboard.fit.spec.js:172-181",
+      "quote": "There is no Copy as new action: it is parked with\n * reuse-previous-consignment.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-065",
+      "statement": "Shared copy for a 'Copy as new' action still exists, unused here: 'Copy as new', 'Notification copied', 'A new draft notification has been created.'",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:49-53",
+      "quote": "text: 'Copy as new',\n      successTitle: 'Notification copied',\n      successBody: 'A new draft notification has been created.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-066",
+      "statement": "Arriving at the dashboard with ?deleted=1 shows a success notification banner (role alert) titled 'Notification deleted' with the text 'The notification has been deleted.'",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/template.njk:12-19; dashboard/controller.js:97; src/server/app/shared/copy.en.js:56-57",
+      "quote": "successTitle: 'Notification deleted',\n      successBody: 'The notification has been deleted.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-067",
+      "statement": "The deleted banner reads \"Hysbysiad wedi'i ddileu\" and \"Mae'r hysbysiad wedi cael ei ddileu.\" in Welsh.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.cy.js:57-58",
+      "quote": "successTitle: \"Hysbysiad wedi'i ddileu\",\n      successBody: \"Mae'r hysbysiad wedi cael ei ddileu.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-068",
+      "statement": "Every POST form on the dashboard (start and Amend) carries a crumb token.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/template.njk:31,87",
+      "quote": "<input type=\"hidden\" name=\"crumb\" value=\"{{ crumb }}\" />",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-069",
+      "statement": "The dashboard uses the wider 'display' content column rather than the standard question column.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.js:73",
+      "quote": "contentColumnClass: kit.surfaceClass('display'),",
+      "confidence": "inferred",
+      "note": "What 'display' resolves to is in shared/kit.js, part 1."
+    },
+    {
+      "id": "repo-plantsfrontend-p3-070",
+      "statement": "Fit test: the dashboard renders the service heading as h1, the intro body, the start button and the 'Your notifications' heading.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js:58-73",
+      "quote": "test('renders the service heading, the intro body and the start button'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-071",
+      "statement": "Fit test: with no notifications the dashboard shows the empty-state sentence, 'No Results', and the sort select set to arrivalDate,desc.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js:92-98",
+      "quote": "test('renders the empty state and the default sort'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-072",
+      "statement": "Fit test: pressing the start button lands on the new notification's commodity-type page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js:100-108",
+      "quote": "test('starts a notification and lands on its first question'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-073",
+      "statement": "Fit test: a draft card shows its reference as a heading, all seven row labels, no Consignee, the 'Draft' status, 'Resume' and 'Delete' links, no 'View' link, no 'Amend' button, and no visually hidden text in the Resume link's name.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js:116-156",
+      "quote": "test('renders a draft card with its rows and its available actions'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-074",
+      "statement": "Fit test: on a draft, the Date created row holds a date and the Date submitted row is empty.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js:158-170",
+      "quote": "test('renders a dated Date created row and an empty Date submitted row on a draft'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-075",
+      "statement": "Fit test: the dashboard offers no 'Copy as new' action.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js:172-181",
+      "quote": "test('offers no Copy as new action'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-076",
+      "statement": "Fit test: the dashboard at ?deleted=1 shows the 'Notification deleted' banner title and body.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js:183-194",
+      "quote": "test('renders the deleted banner after a delete redirect'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-077",
+      "statement": "Fit test: after sorting by date created oldest first and searching one reference, the URL is ?sort=createdAt%2Casc&referenceNumber={ref}, the sort and search term are kept, and only that reference's card shows.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js:202-228",
+      "quote": "test('searching a reference keeps that card and preserves the sort'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-078",
+      "statement": "Fit test: cards order by the chosen sort, with the older notification first for date created oldest first and last for newest first.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js:230-257",
+      "quote": "test('orders the cards by the chosen sort'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-079",
+      "statement": "Fit test: a search matching nothing keeps the term in the input, shows 'No notifications found' and shows no cards.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js:259-274",
+      "quote": "test('a search that matches nothing keeps the term and says so'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-080",
+      "statement": "Fit test: changing the sort lands on ?sort=createdAt%2Casc with the select showing that value.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js:276-290",
+      "quote": "test('changing the sort round-trips through the query string'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-081",
+      "statement": "Fit test: the empty dashboard has no serious or critical axe violations against WCAG 2 A and AA.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js:298-304",
+      "quote": "test('the dashboard has no serious or critical axe violations'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-082",
+      "statement": "No fit test covers pagination, the late tag, a submitted card's View and Amend actions, or an amending card's actions on the dashboard itself.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js (whole file, 13 tests)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The Amend button and Cancel amendment link are exercised only as set-up steps in cancel-amend.fit.spec.js."
+    },
+    {
+      "id": "repo-plantsfrontend-p3-083",
+      "statement": "The delete notification page is served by GET and POST at /notifications/{journeyId}/delete, reached from a card's Delete action.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/controller.js:75-88",
+      "quote": "path: pageRoutePath('delete'),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-084",
+      "statement": "The delete page and its POST redirect to the dashboard unless the notification belongs to the user's own known notifications, checked before the notification is read.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/controller.js:27-30,45-56",
+      "quote": "// Both handlers therefore check ownership before the first read.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-085",
+      "statement": "Only a draft, submitted or amending notification can be deleted: for any other status both the page and its POST redirect to the dashboard.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/controller.js:22-25,50,58-60",
+      "quote": "journey.status === state.DRAFT ||\n  journey.status === state.SUBMITTED ||\n  journey.status === state.AMEND",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-086",
+      "statement": "The delete page's title and h1 (govuk-heading-l) read 'Delete this notification?' (Welsh \"Dileu'r hysbysiad hwn?\").",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/copy/copy.en.js:2; delete-notification/copy/copy.cy.js:3; delete-notification/template.njk:5",
+      "quote": "title: 'Delete this notification?',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-087",
+      "statement": "The delete page body reads 'This cannot be undone.' (Welsh 'Ni ellir dadwneud hyn.').",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/copy/copy.en.js:3; delete-notification/copy/copy.cy.js:4",
+      "quote": "body: 'This cannot be undone.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-088",
+      "statement": "The delete page's confirm button is a warning button 'Yes, delete notification' (Welsh \"Iawn, dileu'r hysbysiad\").",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/template.njk:12-15; delete-notification/copy/copy.en.js:4; delete-notification/copy/copy.cy.js:5",
+      "quote": "text: copy.confirmButton,\n        classes: \"govuk-button--warning\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-089",
+      "statement": "Beside the confirm button, a secondary link-styled button 'No, return to dashboard' (Welsh \"Na, dychwelyd i'r dangosfwrdd\") goes back to the dashboard without deleting.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/template.njk:16-20; delete-notification/controller.js:42; delete-notification/copy/copy.en.js:5; delete-notification/copy/copy.cy.js:6",
+      "quote": "noLink: 'No, return to dashboard'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-090",
+      "statement": "The delete page's back link goes to the dashboard.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/controller.js:35",
+      "quote": "backLink: dashboardPath(),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-091",
+      "statement": "The delete page asks no radio question and so has no validation error message: the choice is made by which button the user presses.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/template.njk:1-23",
+      "quote": "<div class=\"govuk-button-group\">",
+      "confidence": "inferred"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-092",
+      "statement": "The delete form carries a crumb and a concurrency token.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/template.njk:9-10",
+      "quote": "<input type=\"hidden\" name=\"concurrencyToken\" value=\"{{ concurrencyToken }}\" />",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-093",
+      "statement": "Confirming the delete soft-deletes the notification and redirects to the dashboard with ?deleted=1, which shows the deleted banner; if nothing was deleted it redirects to the dashboard without the banner.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/controller.js:62-72",
+      "quote": "return deleted\n    ? h.redirect(`${dashboardPath()}?deleted=1`)\n    : h.redirect(dashboardPath())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-094",
+      "statement": "Deletion is soft: the notification is kept with a Deleted status, which the dashboard then hides.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/controller.js:63; dashboard/controller.js:63",
+      "quote": "() => softDeleteJourney(request, h, request.params.journeyId),",
+      "confidence": "inferred",
+      "note": "Inferred from the softDeleteJourney name, the Deleted status and the dashboard's DELETED filter."
+    },
+    {
+      "id": "repo-plantsfrontend-p3-095",
+      "statement": "If the delete fails to save, the delete page is shown again with a recoverable-error state and HTTP status 500.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/controller.js:62-68",
+      "quote": "() => render(h, journey, true).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-096",
+      "statement": "The delete page's Welsh copy is a machine draft not reviewed by a translator.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/copy/copy.cy.js:1",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-097",
+      "statement": "Fit test: the delete page, opened from a draft card's Delete link, shows the heading, body and confirm button, and both the 'No, return to dashboard' button and the Back link point to the dashboard.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/delete-notification.fit.spec.js:64-82",
+      "quote": "test('renders confirmation copy, actions and dashboard links'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-098",
+      "statement": "Fit test: pressing No returns to the dashboard and the notification's card is still there.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/delete-notification.fit.spec.js:84-95",
+      "quote": "test('No returns to the dashboard and keeps the notification'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-099",
+      "statement": "Fit test: confirming lands on the dashboard at ?deleted=1, shows the success banner, and the notification's card is gone.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/delete-notification.fit.spec.js:97-114",
+      "quote": "test('confirmation removes the notification and shows the success banner'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-100",
+      "statement": "Fit test: the delete page and the dashboard after a deletion have no serious or critical axe violations.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/delete-notification.fit.spec.js:116-133",
+      "quote": "test('has no serious or critical axe violations on the confirmation page or after confirming'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-101",
+      "statement": "No fit test deletes a submitted or amending notification, or covers the delete page's save-failure state.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/delete-notification.fit.spec.js (whole file, 4 tests)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-102",
+      "statement": "The cancel amendment page is served by GET and POST at /notifications/{journeyId}/cancel-amend, reached from an amending card's 'Cancel amendment' link.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/controller.js:18,81-94",
+      "quote": "const CANCEL_AMEND_SLUG = 'cancel-amend'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-103",
+      "statement": "The cancel amendment page and its POST redirect to the dashboard unless the notification belongs to the user's own known notifications, checked before the notification is read.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/controller.js:31-34,49-52,59-62",
+      "quote": "// Both handlers therefore check ownership before the first read.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-104",
+      "statement": "The cancel amendment page only works on a notification being amended: a submitted notification redirects to its notification view, and any other status redirects to the dashboard, on both GET and POST.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/controller.js:26-29,53-56,63-66",
+      "quote": "journey.status === state.SUBMITTED\n    ? cyaPath(journey.journeyId)\n    : dashboardPath()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-105",
+      "statement": "The cancel amendment page's title and h1 (govuk-heading-l) read 'Cancel this amendment?' (Welsh 'Canslo’r diwygiad hwn?'), with no caption above it.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/copy/copy.en.js:2; cancel-amend/copy/copy.cy.js:3; cancel-amend/template.njk:5; cancel-amend/cancel-amend.fit.spec.js:182",
+      "quote": "title: 'Cancel this amendment?',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-106",
+      "statement": "The cancel amendment page body reads 'Your changes since you started amending will be discarded and the submitted version restored.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/copy/copy.en.js:3",
+      "quote": "body: 'Your changes since you started amending will be discarded and the submitted version restored.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-107",
+      "statement": "The cancel amendment page body has a Welsh version.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/copy/copy.cy.js:4",
+      "quote": "body: 'Bydd eich newidiadau ers i chi ddechrau diwygio yn cael eu dileu a bydd y fersiwn a gyflwynwyd yn cael ei hadfer.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-108",
+      "statement": "The cancel amendment confirm button is a primary button 'Yes, cancel amendment' (Welsh 'Iawn, canslo’r diwygiad'), not a warning button.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/template.njk:12; cancel-amend/copy/copy.en.js:4; cancel-amend/copy/copy.cy.js:5",
+      "quote": "{{ govukButton({ text: copy.confirmButton }) }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-109",
+      "statement": "Beside it, a secondary link-styled button 'No, return to notification' (Welsh 'Na, dychwelyd i’r hysbysiad') goes to the notification view, keeping the amendment.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/template.njk:13-17; cancel-amend/controller.js:46; cancel-amend/copy/copy.en.js:5; cancel-amend/copy/copy.cy.js:6",
+      "quote": "noLink: 'No, return to notification'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-110",
+      "statement": "The cancel amendment page's back link goes to the notification view, not the dashboard it was reached from.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/controller.js:39",
+      "quote": "backLink: cyaPath(journey.journeyId),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-111",
+      "statement": "The cancel amendment page asks no radio question and so has no validation error message; its form carries a crumb and a concurrency token.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/template.njk:8-19",
+      "quote": "<input type=\"hidden\" name=\"concurrencyToken\" value=\"{{ concurrencyToken }}\" />",
+      "confidence": "inferred"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-112",
+      "statement": "Confirming cancels the amendment, restoring the submitted version, and redirects to the notification view with ?cancelled=1; if nothing was restored it redirects to the dashboard.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/controller.js:68-78",
+      "quote": "return restored\n    ? h.redirect(`${cyaPath(restored.journeyId)}?cancelled=1`)\n    : h.redirect(dashboardPath())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-113",
+      "statement": "If cancelling fails to save, the cancel amendment page is shown again with a recoverable-error state and HTTP status 500.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/controller.js:68-71",
+      "quote": "() => render(h, journey, true).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-114",
+      "statement": "The cancel amendment page's Welsh copy is a machine draft not reviewed by a translator.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/copy/copy.cy.js:1",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-115",
+      "statement": "Fit test set-up: a submitted potatoes notification is amended from the dashboard's 'Amend notification {ref}' button, an identification number is changed and saved, and the card's 'Cancel amendment' link leads to /cancel-amend.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js:131-164",
+      "quote": "name: `Amend notification ${reference}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-116",
+      "statement": "Fit test: the cancel amendment page shows its heading as h1, body and confirm button, has no caption, points both the No button and the Back link at the notification view, and has no serious or critical axe violations.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js:166-184",
+      "quote": "test('renders accessible confirmation copy, actions and a bare heading'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-117",
+      "statement": "Fit test: pressing No lands on the notification view, and after a reload it still shows 'Amending' and the changed value.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js:186-194",
+      "quote": "test('No preserves the amendment and its changes after reload'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-118",
+      "statement": "Fit test: confirming lands on the notification view at ?cancelled=1 showing 'Submitted', the original value back and the amended value gone, with no Change links; the view is accessible and the restored value survives a reload.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js:196-208",
+      "quote": "test('confirmation restores the submitted snapshot and an accessible success view'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-plantsfrontend-p3-119",
+      "statement": "No fit test covers the cancel amendment page's redirects for a non-amending notification or its save-failure state.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js (whole file, 3 tests)",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

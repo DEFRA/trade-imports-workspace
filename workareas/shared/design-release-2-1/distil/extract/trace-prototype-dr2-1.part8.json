@@ -1,0 +1,831 @@
+{
+  "source": "trace:prototype-dr2-1",
+  "structure": "Part 8 of 16, Arrival, transit countries and transporter selection. Mined all 6 traces this part names, every action of each, from transport-and-arrival.fit.spec.js (read for test titles only): (1) arrival details › air and sea skip transit countries (64 actions, 0 errors); (2) arrival details › means of transport is the one required answer (105 actions, 0 errors, drives the error state); (3) transit countries › add and remove the countries the consignment travels through (103 actions); (4) transporter details › select a transporter from the list (85 actions); (5) transporter details › the legacy transport-details path redirects to the transporter page (65 actions); (6) transporter details › transporter is optional to proceed (66 actions). Every trace sets up the notification the same way (notification type live animals, origin France, chicken commodity, Internal market / Breeding, 100 animals) before navigating straight to /design-release-2.1/arrival-details; that set-up belongs to earlier parts and is not claimed here. Pages in journey order, all under /design-release-2.1/: (a) arrival-details, 'Arrival details', caption 'Transport and arrival', always shown; snapshot pointers: trace 1 action 44, trace 2 action 66 (error state), trace 6 action 46. (b) transit-countries, 'Which countries will the consignment travel through?', caption 'Movement', conditional: reached after Rail (trace 2 action 92) or Road (trace 3), and guarded with a redirect to the hub when means is Air (trace 1 action 50-51); pointers trace 3 actions 55, 70, 77, 88. (c) transporter, 'Transporter details', caption 'Transport and arrival', reached from arrival details after Air or from transit countries; pointers trace 4 action 60, trace 5 action 52. (d) the legacy /transport-details path, a 302 to /transporter (trace 5 request 319). Onward pages seen only as landing points: upload-documents ('Upload documents', trace 4 action 72, trace 6 action 53) and notification-hub ('Overview', trace 1 action 51). Integrations: the network logs show only same-origin prototype page GETs and form POSTs (bodies read for arrival-details, transit-countries, transporter); the port list (205 entries) is inlined in the arrival page HTML, the transit country list (41 entries) is inlined as application/json in the transit page, and the 8 transporters are server-rendered rows; no reference-data or API call fired. Adding a new transporter (/transporter/add) is part 9's and is claimed here only as the link that leads to it. Surfaces the traces never reached (Sea route, blank transit submit, date validation, transporter search, View details, Save and return, Cancel) are recorded as gaps.",
+  "claims": [
+    {
+      "id": "trace-prototype-dr2-1-p8-001",
+      "statement": "The arrival details page is at /design-release-2.1/arrival-details with the page title 'Arrival details - Import notification service - GOV.UK' and the H1 'Arrival details'.",
+      "kind": "behaviour",
+      "ref": "trace transport-and-arrival--arrival-details-air-and-sea-skip-transit-countries.zip action 44 (Navigate action 36)",
+      "quote": "Arrival details - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-002",
+      "statement": "The arrival details page shows the section caption 'Transport and arrival' above the heading.",
+      "kind": "copy",
+      "ref": "trace transport-and-arrival--arrival-details-air-and-sea-skip-transit-countries.zip action 44, P.app-arrival-details-page__caption (also trace ...transporter-is-optional-to-proceed.zip action 46)",
+      "quote": "Transport and arrival",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-003",
+      "statement": "Every page in this part shows a status panel above the caption with a 'Draft' tag and the notification reference in the form GBN-AG-26-XXXXXX.",
+      "kind": "copy",
+      "ref": "trace transport-and-arrival--transporter-details-transporter-is-optional-to-proceed.zip action 46, DIV.app-dr2-notification-status; also transit page trace ...transit-countries-add-and-remove...zip action 55 and transporter page trace ...select-a-transporter-from-the-list.zip action 60",
+      "quote": "Draft\nGBN-AG-26-0FPYY7",
+      "confidence": "verbatim",
+      "note": "The reference differs per trace (GBN-AG-26-00JVL2, GBN-AG-26-0PX14X, GBN-AG-26-0OWDWV, GBN-AG-26-0D481G); the Draft tag uses govuk-tag with app-dr2-review-status__tag--draft."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-004",
+      "statement": "The arrival details page has a back link 'Back' to the notification overview (/design-release-2.1/notification-hub).",
+      "kind": "behaviour",
+      "ref": "trace transport-and-arrival--arrival-details-air-and-sea-skip-transit-countries.zip action 44, .govuk-back-link",
+      "quote": "Back=/design-release-2.1/notification-hub",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-005",
+      "statement": "The arrival details page asks for the arrival date at the port of entry in a single text input (name arrivalDateAtPort, id arrival-date-at-port) labelled 'Arrival date at port of entry'.",
+      "kind": "data",
+      "ref": "trace transport-and-arrival--arrival-details-air-and-sea-skip-transit-countries.zip action 44, INPUT text arrivalDateAtPort",
+      "quote": "Arrival date at port of entry",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-006",
+      "statement": "The arrival date field has the hint 'The expected date of arrival at the port of entry. For example, 27/3/2026'.",
+      "kind": "copy",
+      "ref": "trace transport-and-arrival--arrival-details-air-and-sea-skip-transit-countries.zip action 44, #arrival-date-at-port-hint",
+      "quote": "The expected date of arrival at the port of entry. For example, 27/3/2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-007",
+      "statement": "The arrival date is entered and posted as one day/month/year string such as '21/10/2026'.",
+      "kind": "data",
+      "ref": "trace transport-and-arrival--arrival-details-air-and-sea-skip-transit-countries.zip action 37 (Fill) and request 280 body",
+      "quote": "arrivalDateAtPort=21%2F10%2F2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-008",
+      "statement": "The arrival date has a 'Choose date' button that opens a calendar picker with 'Previous year', 'Previous month', 'Next month', 'Next year', 'Select' and 'Close' buttons and a month-year title such as 'October 2026'.",
+      "kind": "behaviour",
+      "ref": "trace transport-and-arrival--arrival-details-air-and-sea-skip-transit-countries.zip action 44, BUTTON list; trace ...transporter-is-optional-to-proceed.zip action 46, H2.moj-datepicker__dialog-title",
+      "quote": "Choose date",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-009",
+      "statement": "The date picker limits the selectable arrival date to a range: on 7 October 2026 it allowed 30/9/2026 to 7/4/2027 and marked earlier days 'Excluded date'. This reads as one week in the past to six months ahead of today.",
+      "kind": "rule",
+      "ref": "trace transport-and-arrival--arrival-details-air-and-sea-skip-transit-countries.zip action 44, DIV[data-module=moj-date-picker] data-min-date / data-max-date and day buttons",
+      "quote": "data-min-date=30/9/2026,data-max-date=7/4/2027",
+      "confidence": "inferred",
+      "note": "The relative window (7 days back, 6 months forward) is inferred from one run on 2026-10-07; day buttons read 'Excluded date, Monday 28 September 2026'. Whether the server also enforces the range was not driven."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-010",
+      "statement": "The arrival date uses the MOJ Frontend date picker (moj-date-picker) on a single govuk-input rather than the GOV.UK Date input component with separate day, month and year fields.",
+      "kind": "constraint",
+      "ref": "trace transport-and-arrival--arrival-details-air-and-sea-skip-transit-countries.zip action 44, classes moj-datepicker*, input class govuk-input moj-js-datepicker-input",
+      "quote": "DIV:moj-date-picker:data-module=moj-date-picker",
+      "confidence": "verbatim",
+      "note": "Outside the govuk-frontend toolbox; the govuk-date-input component is the in-toolbox alternative."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-011",
+      "statement": "The arrival details page asks for the port of entry through a type-ahead search field labelled 'Port of entry'.",
+      "kind": "data",
+      "ref": "trace transport-and-arrival--arrival-details-air-and-sea-skip-transit-countries.zip action 43, label for=port-of-entry",
+      "quote": "Port of entry",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-012",
+      "statement": "The port of entry field has the hint 'Select where the transporter will enter with the consignment. Start typing to search by port or airport name or code.'",
+      "kind": "copy",
+      "ref": "trace transport-and-arrival--arrival-details-air-and-sea-skip-transit-countries.zip action 43, #port-of-entry-hint",
+      "quote": "Select where the transporter will enter with the consignment. Start typing to search by port or airport name or code.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-013",
+      "statement": "The port search input has the placeholder 'Select a port' and a search button whose visually hidden text is 'Search'.",
+      "kind": "copy",
+      "ref": "trace transport-and-arrival--arrival-details-air-and-sea-skip-transit-countries.zip action 43, input#port-of-entry placeholder and button.app-commodity-search__button",
+      "quote": "placeholder=\"Select a port\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-014",
+      "statement": "Typing in the port field lists matching ports as buttons in a list labelled 'Port search results', with the matched text in bold; typing 'Heathrow' offered only 'London Heathrow - LHR' and typing 'Dover' offered only 'Dover - GBDVR'.",
+      "kind": "behaviour",
+      "ref": "trace transport-and-arrival--arrival-details-air-and-sea-skip-transit-countries.zip action 43; trace transport-and-arrival--arrival-details-means-of-transport-is-the-one-required-answer.zip action 86",
+      "quote": "London <strong class=\"app-commodity-search__match\">Heathrow</strong> - LHR",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-015",
+      "statement": "The port search announces the number of results in a visually hidden live region, for example '1 result available'.",
+      "kind": "behaviour",
+      "ref": "trace transport-and-arrival--arrival-details-air-and-sea-skip-transit-countries.zip action 43, .app-airport-search__status aria-live=polite",
+      "quote": "1 result available",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-016",
+      "statement": "Choosing a port fills the search field with the port's display text, stores it in the hidden field portOfEntry, and announces 'Selected <port>' in the visually hidden live region.",
+      "kind": "behaviour",
+      "ref": "trace transport-and-arrival--arrival-details-air-and-sea-skip-transit-countries.zip action 44, INPUT hidden portOfEntry and .app-airport-search__status",
+      "quote": "Selected London Heathrow - LHR",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-017",
+      "statement": "The port of entry is posted as the display string 'name - code', for example 'London Heathrow - LHR', not as a separate code.",
+      "kind": "data",
+      "ref": "trace transport-and-arrival--arrival-details-air-and-sea-skip-transit-countries.zip request 280 body",
+      "quote": "portOfEntry=London+Heathrow+-+LHR",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-018",
+      "statement": "The port of entry list holds 205 entries: 28 UK and Crown Dependency airports with three-letter IATA codes (starting 'London Heathrow - LHR', 'London Gatwick - LGW', 'Manchester - MAN', 'London Stansted - STN', 'Edinburgh - EDI') followed by 177 UK seaports with GB UN/LOCODEs (starting 'Aberdeen - GBABD', 'Ardglass - GBAGL', 'Ardrishaig - GBASG', 'Ardrossan - GBARD', 'Aultbea - GBAUL'). Treat it as reference data; the list is truncated here.",
+      "kind": "data",
+      "ref": "trace transport-and-arrival--arrival-details-air-and-sea-skip-transit-countries.zip, arrival-details page HTML resource 732749b773cbc16991c246ed81dfc5129a3e16da.html, inline array; saved to work/part8/ports.json",
+      "quote": "[\"London Heathrow - LHR\",\"London Gatwick - LGW\",\"Manchester - MAN\",\"London Stansted - STN\",\"Edinburgh - EDI\",\"Birmingham - BHX\",\"London Luton - LTN\",\"Glasgow - GLA\",\"Bristol - BRS\",\"Newcastle - NCL\",\"Liverpool John Lennon - LPL\",\"Aberdeen - ABZ\",\"Belfast International - BFS\",\"Belfast City (George Best) - BHD\",\"East Midlands - EMA\",\"Cardiff - CWL\",\"Inverness - INV\",\"Leeds Bradford - LBA\",\"London City - LCY\",\"London Southend - SEN\"",
+      "confidence": "verbatim",
+      "note": "Counts from jq over the inlined array: 205 total, 177 matching ' - GB[A-Z]{3}'. Airports include Jersey, Guernsey and Isle of Man."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-019",
+      "statement": "The port list has no rail terminal entry (for example no Channel Tunnel terminal), although Rail is offered as a means of transport to the port of entry; the source never shows what a rail arrival should pick as its port.",
+      "kind": "data",
+      "ref": "trace transport-and-arrival--arrival-details-air-and-sea-skip-transit-countries.zip, inline port array (205 entries); trace ...means-of-transport-is-the-one-required-answer.zip action 89 (Rail with Dover)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Trace 2 selected Rail with the seaport 'Dover - GBDVR' and the page accepted it."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-020",
+      "statement": "The port list is inlined in the page and searched in the browser; no port or airport lookup call goes over the network.",
+      "kind": "integration",
+      "ref": "trace transport-and-arrival--arrival-details-air-and-sea-skip-transit-countries.zip requests (only page GET/POST and static scripts such as airport-search.js; no data call)",
+      "quote": "GET 200 airport-search.js",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of any data request while typing 'Heathrow'/'Dover' and the presence of the full list in the page HTML. No reference-data service was seen."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-021",
+      "statement": "The port of entry search is a custom autocomplete (app-airport-search, reusing app-commodity-search styles) rather than a GOV.UK component.",
+      "kind": "constraint",
+      "ref": "trace transport-and-arrival--arrival-details-air-and-sea-skip-transit-countries.zip action 43, data-module=app-airport-search, classes app-commodity-search*",
+      "quote": "data-module=\"app-airport-search\"",
+      "confidence": "verbatim",
+      "note": "govuk-frontend has no autocomplete; accessible-autocomplete over a govuk-select is the usual replacement."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-022",
+      "statement": "The arrival details page asks for the means of transport in a select (name meansOfTransport, id means-of-transport) labelled 'Means of transport to the port of entry'.",
+      "kind": "data",
+      "ref": "trace transport-and-arrival--arrival-details-air-and-sea-skip-transit-countries.zip action 44, SELECT meansOfTransport; label class govuk-label govuk-label--m",
+      "quote": "Means of transport to the port of entry",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-023",
+      "statement": "The means of transport options are 'Select one' (the empty default), 'Air', 'Rail', 'Road' and 'Sea'.",
+      "kind": "data",
+      "ref": "trace transport-and-arrival--arrival-details-air-and-sea-skip-transit-countries.zip action 44, #means-of-transport options",
+      "quote": "Select one\nAir\nRail\nRoad\nSea",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-024",
+      "statement": "The arrival details page asks for transport identification in a text input (name transportIdentification) labelled 'Transport identification'.",
+      "kind": "data",
+      "ref": "trace transport-and-arrival--arrival-details-air-and-sea-skip-transit-countries.zip action 44, INPUT text transportIdentification",
+      "quote": "Transport identification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-025",
+      "statement": "The transport identification hint reads 'Enter one of the following:' followed by a bulleted list of flight number, train number, road vehicle registration number, and vessel name (for ferries, also the road vehicle registration number).",
+      "kind": "copy",
+      "ref": "trace transport-and-arrival--transporter-details-transporter-is-optional-to-proceed.zip action 46, #transport-identification-hint (P + UL.govuk-list--bullet)",
+      "quote": "Enter one of the following:\n\nflight number\ntrain number\nroad vehicle registration number\nvessel name (for ferries, also the road vehicle registration number)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-026",
+      "statement": "The arrival details page asks for a transport document reference in a text input (name transportDocumentReference) labelled 'Transport document reference'.",
+      "kind": "data",
+      "ref": "trace transport-and-arrival--arrival-details-air-and-sea-skip-transit-countries.zip action 44, INPUT text transportDocumentReference",
+      "quote": "Transport document reference",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-027",
+      "statement": "The transport document reference hint is 'Enter the reference number on the air waybill, bill of lading, sea waybill, road consignment note (CMR) or other transport document.'",
+      "kind": "copy",
+      "ref": "trace transport-and-arrival--arrival-details-air-and-sea-skip-transit-countries.zip action 44, #transport-document-reference-hint",
+      "quote": "Enter the reference number on the air waybill, bill of lading, sea waybill, road consignment note (CMR) or other transport document.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-028",
+      "statement": "Field labels on the arrival details page use a custom heading style (app-eu-heading-m) except the means-of-transport label, which uses govuk-label--m.",
+      "kind": "constraint",
+      "ref": "trace transport-and-arrival--transporter-details-transporter-is-optional-to-proceed.zip action 46, LABEL classes",
+      "quote": "govuk-label app-eu-heading-m app-arrival-details-page__field-label",
+      "confidence": "verbatim",
+      "note": "govuk-label--m is the in-toolbox equivalent."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-029",
+      "statement": "The arrival details page has a 'Save and continue' primary button (action=continue), a 'Save and return to overview' secondary button (action=hub) and a 'Cancel and return to overview' link to the notification hub.",
+      "kind": "behaviour",
+      "ref": "trace transport-and-arrival--arrival-details-air-and-sea-skip-transit-countries.zip action 44, BUTTON submit action=continue / action=hub, A href=/design-release-2.1/notification-hub",
+      "quote": "Save and continue\nSave and return to overview\n\nCancel and return to overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-030",
+      "statement": "Means of transport is the only required answer on arrival details: saving the empty page shows exactly one error, for means of transport, and none for date, port, transport identification or document reference.",
+      "kind": "rule",
+      "ref": "trace transport-and-arrival--arrival-details-means-of-transport-is-the-one-required-answer.zip action 66 (after Click action 61 on a blank page)",
+      "quote": "There is a problem\nSelect a means of transport to the port of entry",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-031",
+      "statement": "Saving arrival details without a means of transport shows the error 'Select a means of transport to the port of entry'.",
+      "kind": "rule",
+      "ref": "trace transport-and-arrival--arrival-details-means-of-transport-is-the-one-required-answer.zip action 66, .govuk-error-summary and #means-of-transport-error",
+      "quote": "Select a means of transport to the port of entry",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-032",
+      "statement": "The arrival error summary has the title 'There is a problem' and its link points to #means-of-transport.",
+      "kind": "behaviour",
+      "ref": "trace transport-and-arrival--arrival-details-means-of-transport-is-the-one-required-answer.zip action 66, .govuk-error-summary__list a href",
+      "quote": "||#means-of-transport|Select a means of transport to the port of entry",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-033",
+      "statement": "In the error state the means-of-transport form group gets govuk-form-group--error, the select gets govuk-select--error, and an inline error message with the visually hidden prefix 'Error:' sits above the select.",
+      "kind": "behaviour",
+      "ref": "trace transport-and-arrival--arrival-details-means-of-transport-is-the-one-required-answer.zip action 66",
+      "quote": "Error:\nSelect a means of transport to the port of entry",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-034",
+      "statement": "When arrival details shows a validation error, the page title does not gain an 'Error: ' prefix; it stays 'Arrival details - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "trace transport-and-arrival--arrival-details-means-of-transport-is-the-one-required-answer.zip action 66, document.title",
+      "quote": "Arrival details - Import notification service - GOV.UK",
+      "confidence": "verbatim",
+      "note": "GOV.UK pattern guidance prefixes the title with 'Error: ' when the page has errors; recorded as observed, not reconciled."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-035",
+      "statement": "No validation of the arrival date was driven: an invalid date, a past date or a date outside the picker's range was never entered, so any date error copy is unseen.",
+      "kind": "rule",
+      "ref": "trace transport-and-arrival--arrival-details-means-of-transport-is-the-one-required-answer.zip actions 61-92 (only blank submit and a valid date '21/10/2026')",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-036",
+      "statement": "No validation of port of entry, transport identification or transport document reference was driven (no free text that matches no port, no length or format rule), so any such rules or errors are unseen.",
+      "kind": "rule",
+      "ref": "traces transport-and-arrival--arrival-details-*.zip (all arrival submits used blank or well-formed values)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-037",
+      "statement": "Arrival details accepts a submission with means of transport Rail, a date and a port but no transport identification or document reference, and moves on.",
+      "kind": "rule",
+      "ref": "trace transport-and-arrival--arrival-details-means-of-transport-is-the-one-required-answer.zip actions 75-92",
+      "quote": "means of transport is the one required answer",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-038",
+      "statement": "Choosing Rail as the means of transport and saving goes on to the transit countries page.",
+      "kind": "rule",
+      "ref": "trace transport-and-arrival--arrival-details-means-of-transport-is-the-one-required-answer.zip actions 89-92 (snapshot 92 title 'Transit countries - Import notification service - GOV.UK')",
+      "quote": "rail goes on to transit countries",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-039",
+      "statement": "Choosing Road as the means of transport and saving goes on to the transit countries page.",
+      "kind": "rule",
+      "ref": "trace transport-and-arrival--transit-countries-add-and-remove-the-countries-the-consignment-travels-through.zip actions 44-49 (requests 279 POST arrival-details 302, 280 GET transit-countries)",
+      "quote": "Which countries will the consignment travel through?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-040",
+      "statement": "Choosing Air as the means of transport and saving skips transit countries and goes straight to the transporter page.",
+      "kind": "rule",
+      "ref": "trace transport-and-arrival--arrival-details-air-and-sea-skip-transit-countries.zip request 280 (POST arrival-details, location /design-release-2.1/transporter)",
+      "quote": "location: /design-release-2.1/transporter",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-041",
+      "statement": "Sea is said to skip transit countries like Air, but no trace chose Sea, so the Sea route is not shown.",
+      "kind": "rule",
+      "ref": "trace transport-and-arrival--arrival-details-air-and-sea-skip-transit-countries.zip action 44 (Select option chose Air, posted meansOfTransport=Air)",
+      "quote": "air and sea skip transit countries",
+      "confidence": "gap",
+      "note": "The test title claims Sea too; only Air was exercised."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-042",
+      "statement": "The transit countries page is guarded: when the means of transport has no rail or road leg (Air), going to /transit-countries directly redirects to the notification overview.",
+      "kind": "rule",
+      "ref": "trace transport-and-arrival--arrival-details-air-and-sea-skip-transit-countries.zip action 50 (Navigate) and requests 319 (GET transit-countries 302) and 320 (GET notification-hub 200)",
+      "quote": "GET 302 transit-countries\nGET 200 notification-hub",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-043",
+      "statement": "The arrival details form posts arrivalDateAtPort, portOfEntry, meansOfTransport, transportIdentification, transportDocumentReference and action to /design-release-2.1/arrival-details.",
+      "kind": "data",
+      "ref": "trace transport-and-arrival--arrival-details-air-and-sea-skip-transit-countries.zip request 280 body",
+      "quote": "arrivalDateAtPort=21%2F10%2F2026&portOfEntry=London+Heathrow+-+LHR&meansOfTransport=Air&transportIdentification=BA0123&transportDocumentReference=AWB-123&action=continue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-044",
+      "statement": "After arrival details is saved with Air, the overview task list shows section '3. Transport and arrival' with 'Arrival details' marked Complete and 'Transport details' marked To do, and no separate transit countries row.",
+      "kind": "behaviour",
+      "ref": "trace transport-and-arrival--arrival-details-air-and-sea-skip-transit-countries.zip action 51 (Overview page)",
+      "quote": "3. Transport and arrival\nArrival details\nComplete\nTransport details\nTo do",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-045",
+      "statement": "The notification overview page that the transit guard lands on has the title 'Overview - Import notification service - GOV.UK' and the heading 'Overview'.",
+      "kind": "copy",
+      "ref": "trace transport-and-arrival--arrival-details-air-and-sea-skip-transit-countries.zip action 51",
+      "quote": "Overview - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-046",
+      "statement": "Using 'Save and return to overview' or 'Cancel and return to overview' on arrival details, transit countries or transporter was never clicked, so what each saves and where it lands is unseen.",
+      "kind": "behaviour",
+      "ref": "all six part 8 traces (only action=continue was ever clicked)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-047",
+      "statement": "The transit countries page is at /design-release-2.1/transit-countries with the page title 'Transit countries - Import notification service - GOV.UK' and the H1 'Which countries will the consignment travel through?'.",
+      "kind": "behaviour",
+      "ref": "trace transport-and-arrival--transit-countries-add-and-remove-the-countries-the-consignment-travels-through.zip action 55",
+      "quote": "Which countries will the consignment travel through?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-048",
+      "statement": "The transit countries page shows the caption 'Movement', not the 'Transport and arrival' caption the arrival and transporter pages use.",
+      "kind": "copy",
+      "ref": "trace transport-and-arrival--transit-countries-add-and-remove-the-countries-the-consignment-travels-through.zip action 55",
+      "quote": "Movement",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-049",
+      "statement": "The transit countries page explains 'Countries the consignment will travel through are countries between the country of origin and the destination country.'",
+      "kind": "copy",
+      "ref": "trace transport-and-arrival--transit-countries-add-and-remove-the-countries-the-consignment-travels-through.zip action 55",
+      "quote": "Countries the consignment will travel through are countries between the country of origin and the destination country.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-050",
+      "statement": "The transit countries page says the list does not include the United Kingdom.",
+      "kind": "copy",
+      "ref": "trace transport-and-arrival--transit-countries-add-and-remove-the-countries-the-consignment-travels-through.zip action 55",
+      "quote": "This does not include the United Kingdom.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-051",
+      "statement": "The transit countries page has a back link 'Back' to arrival details.",
+      "kind": "behaviour",
+      "ref": "trace transport-and-arrival--transit-countries-add-and-remove-the-countries-the-consignment-travels-through.zip action 55, .govuk-back-link",
+      "quote": "Back=/design-release-2.1/arrival-details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-052",
+      "statement": "Transit countries are added one at a time through a search field labelled 'Enter a country' with the hint 'Enter each country that the consignment will travel through'.",
+      "kind": "data",
+      "ref": "trace transport-and-arrival--transit-countries-add-and-remove-the-countries-the-consignment-travels-through.zip action 55, label for=transit-country-search and #transit-country-search-hint",
+      "quote": "Enter a country\nEnter each country that the consignment will travel through",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-053",
+      "statement": "The transit country search input has the placeholder 'Search for a country' and a search button with visually hidden text 'Search'; results show in a list labelled 'Country search results'.",
+      "kind": "copy",
+      "ref": "trace transport-and-arrival--transit-countries-add-and-remove-the-countries-the-consignment-travels-through.zip action 77, input#transit-country-search and ul#transit-country-search-results",
+      "quote": "placeholder=\"Search for a country\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-054",
+      "statement": "Typing part of a country name lists matches and announces the count; 'Belg' offered only 'Belgium' with '1 result available'.",
+      "kind": "behaviour",
+      "ref": "trace transport-and-arrival--transit-countries-add-and-remove-the-countries-the-consignment-travels-through.zip action 70",
+      "quote": "Belgium\n1 result available",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-055",
+      "statement": "Choosing a country adds it to a list under a 'Country' header, clears the search field, and announces 'Added <country>' in a visually hidden live region.",
+      "kind": "behaviour",
+      "ref": "trace transport-and-arrival--transit-countries-add-and-remove-the-countries-the-consignment-travels-through.zip action 77, #transit-countries-summary and .app-transit-country-search__status",
+      "quote": "Added Germany",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-056",
+      "statement": "More than one transit country can be added; adding Belgium then Germany listed both, in the order added, each with its own 'Remove' link.",
+      "kind": "behaviour",
+      "ref": "trace transport-and-arrival--transit-countries-add-and-remove-the-countries-the-consignment-travels-through.zip action 77",
+      "quote": "Country\nBelgium\nRemove\nGermany\nRemove",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-057",
+      "statement": "The chosen transit countries are held in a hidden field transitCountries as a JSON array, for example [\"Belgium\",\"Germany\"].",
+      "kind": "data",
+      "ref": "trace transport-and-arrival--transit-countries-add-and-remove-the-countries-the-consignment-travels-through.zip action 77, input[name=transitCountries]",
+      "quote": "value=\"[&quot;Belgium&quot;,&quot;Germany&quot;]\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-058",
+      "statement": "Clicking 'Remove' next to a transit country takes it off the list straight away, without a page load, and announces 'Removed <country>'.",
+      "kind": "behaviour",
+      "ref": "trace transport-and-arrival--transit-countries-add-and-remove-the-countries-the-consignment-travels-through.zip actions 85-88",
+      "quote": "Removed Belgium|[\"Germany\"]|Germany\nRemove",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-059",
+      "statement": "The 'Remove' links have href='#' and work only with JavaScript; the trace shows no non-JavaScript way to add or remove a transit country.",
+      "kind": "constraint",
+      "ref": "trace transport-and-arrival--transit-countries-add-and-remove-the-countries-the-consignment-travels-through.zip action 77, a.app-transit-country-search__remove-country href=#",
+      "quote": "<a class=\"govuk-link app-transit-country-search__remove-country\" href=\"#\">Remove</a>",
+      "confidence": "inferred",
+      "note": "Inferred from href='#' and the JSON hidden field; the trace ran with JavaScript on, so a no-JS fallback could exist and not show."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-060",
+      "statement": "The transit country search and its selected-countries list are custom components (app-transit-country-search with custom summary rows), not the GOV.UK Summary list or Add another pattern.",
+      "kind": "constraint",
+      "ref": "trace transport-and-arrival--transit-countries-add-and-remove-the-countries-the-consignment-travels-through.zip action 77, data-module=app-transit-country-search, .app-transit-countries-page__summary-row",
+      "quote": "data-module=\"app-transit-country-search\"",
+      "confidence": "verbatim",
+      "note": "A govuk-summary-list with remove actions, or an add-another loop, would be the in-toolbox replacement."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-061",
+      "statement": "The transit country list offers 41 options: the EU member states plus outermost regions labelled with their parent (for example 'Azores (Portugal)', 'Canary Islands (Spain)', 'Ceuta (Spain)', 'French Guiana (France)') and the Crown Dependencies 'Guernsey (United Kingdom)', 'Isle of Man (United Kingdom)' and 'Jersey (United Kingdom)'; non-EU countries such as Switzerland are absent.",
+      "kind": "data",
+      "ref": "trace transport-and-arrival--transit-countries-add-and-remove-the-countries-the-consignment-travels-through.zip, transit page HTML resource 0197dd312caab48de0526327ef251eab4287dae0.html, script.app-transit-country-search__data",
+      "quote": "[{\"label\":\"Austria\",\"value\":\"Austria\",\"parent\":null},{\"label\":\"Azores (Portugal)\",\"value\":\"Azores (Portugal)\",\"parent\":\"Portugal\"},{\"label\":\"Belgium\",\"value\":\"Belgium\",\"parent\":null},{\"label\":\"Bulgaria\",\"value\":\"Bulgaria\",\"parent\":null},{\"label\":\"Canary Islands (Spain)\",\"value\":\"Canary Islands (Spain)\",\"parent\":\"Spain\"}",
+      "confidence": "verbatim",
+      "note": "Each entry has label, value and parent (null for a state, the parent country for a region). The list includes three UK Crown Dependencies although the page says transit does not include the United Kingdom."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-062",
+      "statement": "The transit country list is inlined in the page as application/json data and searched in the browser; no country lookup call goes over the network.",
+      "kind": "integration",
+      "ref": "trace transport-and-arrival--transit-countries-add-and-remove-the-countries-the-consignment-travels-through.zip, script type=application/json class=app-transit-country-search__data; requests show no data call",
+      "quote": "application/json\" class=\"app-transit-country-search__data\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-063",
+      "statement": "The transit countries form posts transitCountries as a URL-encoded JSON array, plus action, to /design-release-2.1/transit-countries.",
+      "kind": "data",
+      "ref": "trace transport-and-arrival--transit-countries-add-and-remove-the-countries-the-consignment-travels-through.zip request 318 body",
+      "quote": "transitCountries=%5B%22Germany%22%5D&action=continue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-064",
+      "statement": "Saving transit countries goes on to the transporter page.",
+      "kind": "rule",
+      "ref": "trace transport-and-arrival--transit-countries-add-and-remove-the-countries-the-consignment-travels-through.zip request 318 (302, location /design-release-2.1/transporter)",
+      "quote": "location: /design-release-2.1/transporter",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-065",
+      "statement": "Transit countries are said to be optional, but the trace saved the page with one country (Germany) still listed, so saving with no country was never shown.",
+      "kind": "rule",
+      "ref": "trace transport-and-arrival--transit-countries-add-and-remove-the-countries-the-consignment-travels-through.zip action 87 step and request 318 body",
+      "quote": "countries are optional; continue goes to the transporter",
+      "confidence": "gap",
+      "note": "The step title asserts optionality; the posted value was [\"Germany\"]."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-066",
+      "statement": "No transit country errors were driven: a country typed but not chosen, a duplicate country, the country of origin or the UK as a transit country, so any such rule or message is unseen.",
+      "kind": "rule",
+      "ref": "trace transport-and-arrival--transit-countries-add-and-remove-the-countries-the-consignment-travels-through.zip actions 66-88",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-067",
+      "statement": "The transit countries page has the same 'Save and continue', 'Save and return to overview' and 'Cancel and return to overview' actions as arrival details.",
+      "kind": "behaviour",
+      "ref": "trace transport-and-arrival--transit-countries-add-and-remove-the-countries-the-consignment-travels-through.zip action 55",
+      "quote": "Save and continue\nSave and return to overview\n\nCancel and return to overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-068",
+      "statement": "The transporter page is at /design-release-2.1/transporter with the page title 'Transporter details - Import notification service - GOV.UK', the caption 'Transport and arrival' and the H1 'Transporter details'.",
+      "kind": "behaviour",
+      "ref": "trace transport-and-arrival--transporter-details-select-a-transporter-from-the-list.zip action 60",
+      "quote": "Transporter details - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-069",
+      "statement": "The transporter page has a back link 'Back' to the notification overview, not to arrival details or transit countries.",
+      "kind": "behaviour",
+      "ref": "trace transport-and-arrival--transporter-details-select-a-transporter-from-the-list.zip action 60, .govuk-back-link",
+      "quote": "Back=/design-release-2.1/notification-hub",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-070",
+      "statement": "The transporter page introduces the question with 'This is the person or company responsible for transporting the consignment.'",
+      "kind": "copy",
+      "ref": "trace transport-and-arrival--transporter-details-select-a-transporter-from-the-list.zip action 60",
+      "quote": "This is the person or company responsible for transporting the consignment.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-071",
+      "statement": "The transporter page says the transporter must hold a valid transporter authorisation issued by DAERA or APHA if they are transporting any live vertebrate animals in, to, from or through GB, travelling on journeys of over 65 km, or transporting as part of an economic (commercial) activity.",
+      "kind": "rule",
+      "ref": "trace transport-and-arrival--transporter-details-select-a-transporter-from-the-list.zip action 60, .app-transporter-page__guidance-list",
+      "quote": "Your transporter must hold a valid transporter authorisation, issued by DAERA or APHA in the UK if they are:\n\ntransporting any live vertebrate animals in, to, from or through Great Britain (GB)\ntravelling on journeys of over 65 km\ntransporting as part of an economic (commercial) activity",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-072",
+      "statement": "The transporter page links to GOV.UK guidance with 'Find out how to transport animals in connection with an economic activity (opens in a new tab)', opening in a new tab.",
+      "kind": "copy",
+      "ref": "trace transport-and-arrival--transporter-details-select-a-transporter-from-the-list.zip action 60, A target=_blank",
+      "quote": "Find out how to transport animals in connection with an economic activity (opens in a new tab)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-073",
+      "statement": "The guidance link points to https://www.gov.uk/guidance/animal-welfare-in-transport#transporting-animals-in-connection-with-an-economic-activity but carries a copied Google Analytics '_gl' tracking parameter in its URL.",
+      "kind": "constraint",
+      "ref": "trace transport-and-arrival--transporter-details-select-a-transporter-from-the-list.zip action 60, guidance link href",
+      "quote": "https://www.gov.uk/guidance/animal-welfare-in-transport?_gl=1*7jtiw*_ga*OTk4MzczMjM2LjE3ODI3Mzg0NDQ.*_ga_YM5VR1KENG*czE3ODM2ODgyNTkkbzI4JGcxJHQxNzgzNjkyMjE3JGoyMyRsMCRoMA..#transporting-animals-in-connection-with-an-economic-activity",
+      "confidence": "verbatim",
+      "note": "The _gl parameter looks like a session-specific analytics linker pasted from a browser; a clean URL is the obvious replacement."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-074",
+      "statement": "The transporter page says documents issued by DAERA are valid for use in GB.",
+      "kind": "copy",
+      "ref": "trace transport-and-arrival--transporter-details-select-a-transporter-from-the-list.zip action 60",
+      "quote": "Documents issued by DAERA are valid for use in GB.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-075",
+      "statement": "The transporter page says documents issued in any EU member state are not valid for use in GB.",
+      "kind": "copy",
+      "ref": "trace transport-and-arrival--transporter-details-select-a-transporter-from-the-list.zip action 60",
+      "quote": "Documents issued in any EU member state are not valid for use in GB.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-076",
+      "statement": "The transporter page has an H2 'Select a transporter' above the list.",
+      "kind": "copy",
+      "ref": "trace transport-and-arrival--transporter-details-select-a-transporter-from-the-list.zip action 60, H2.app-transporter-page__results-heading",
+      "quote": "Select a transporter",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-077",
+      "statement": "The transporter page has a search field labelled 'Search' with the hint 'Name, address or approval number' and an icon button with aria-label 'Search'.",
+      "kind": "data",
+      "ref": "trace transport-and-arrival--transporter-details-select-a-transporter-from-the-list.zip action 60, .app-transporter-page__search (input name=search id=transporter-search)",
+      "quote": "Search\nName, address or approval number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-078",
+      "statement": "Each transporter row carries lower-case search text made of its name, address, approval number, type and status, which suggests the search filters the list in the browser across all those columns.",
+      "kind": "behaviour",
+      "ref": "trace transport-and-arrival--transporter-details-select-a-transporter-from-the-list.zip action 60, tr[data-search-text]; data-module=app-transporter-search",
+      "quote": "data-search-text=\"portuguese livestock lda rua augusta 250, 1100-053 lisbon pt/lisbon/t1/00071003 commercial approved\"",
+      "confidence": "inferred",
+      "note": "Inferred from the data-search-text attribute and the client-side module; no trace typed into the search."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-079",
+      "statement": "Searching the transporter list was never exercised, so filtering, a no-results state and its copy are unseen.",
+      "kind": "behaviour",
+      "ref": "trace transport-and-arrival--transporter-details-select-a-transporter-from-the-list.zip actions 51-72 (no fill on #transporter-search)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-080",
+      "statement": "The transporter search value is posted with the form as an empty 'search' field when the page is saved.",
+      "kind": "data",
+      "ref": "trace transport-and-arrival--transporter-details-select-a-transporter-from-the-list.zip request 320 body",
+      "quote": "search=&transporterId=aberdeen-livestock&action=continue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-081",
+      "statement": "The transporter page has an 'Add a transporter' secondary button-styled link to /design-release-2.1/transporter/add.",
+      "kind": "behaviour",
+      "ref": "trace transport-and-arrival--transporter-details-select-a-transporter-from-the-list.zip action 60, A.govuk-button--secondary.app-transporter-page__add-button",
+      "quote": "Add a transporter",
+      "confidence": "verbatim",
+      "note": "The add-a-transporter flow itself is part 9's."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-082",
+      "statement": "Transporters are listed in a table with the columns Name, Address, Approval number, Type and Status, plus a select column and an action column whose headers are visually hidden ('Select', 'Action').",
+      "kind": "data",
+      "ref": "trace transport-and-arrival--transporter-details-select-a-transporter-from-the-list.zip action 60, .govuk-table__head",
+      "quote": "Name\tAddress\tApproval number\tType\tStatus",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-083",
+      "statement": "The user picks one transporter with a radio button (name transporterId) in each row; the radio's label is visually hidden as 'Select <transporter name>', inside a fieldset whose legend 'Select a transporter' is visually hidden.",
+      "kind": "data",
+      "ref": "trace transport-and-arrival--transporter-details-select-a-transporter-from-the-list.zip action 60, input[name=transporterId] and legend.govuk-visually-hidden",
+      "quote": "Select Portuguese Livestock Lda",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-084",
+      "statement": "The transporter list showed 8 transporters: Yusen Logistics (Romania) SRL (RO/BUCHAREST/T1/00092010, Commercial, Approved), Roadtrain Ltd (IE/DUBLIN/T1/00092011, Commercial, Approved), Aberdeen Livestock Ltd (UK/ABERDEEN/T1/00092001, Private, Approved), Danish Meat Export ApS (DK/COPENHAGEN/T1/00081002, Commercial, Approved), Portuguese Livestock Lda (PT/LISBON/T1/00071003, Commercial, Approved), Romanian Agri Exports SRL (RO/BUCHAREST/T1/00061004, Private, New), Slovak Farm Export (SK/BRATISLAVA/T1/00051005, Private, Approved) and Finnish Livestock Oy (FI/HELSINKI/T1/00041006, Private, New).",
+      "kind": "data",
+      "ref": "trace transport-and-arrival--transporter-details-select-a-transporter-from-the-list.zip action 60, .govuk-table__body rows",
+      "quote": "Yusen Logistics (Romania) SRL\tBulevardul General Paul Teodorescu 4, Sector 6, 061344 Bucharest, Romania\tRO/BUCHAREST/T1/00092010\tCommercial\tApproved\tView details",
+      "confidence": "verbatim",
+      "note": "Sample data; full rows in the innerText at action 60. Radio values are slugs such as yusen-logistics-romania and aberdeen-livestock."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-085",
+      "statement": "A transporter approval number follows the pattern <country code>/<place>/T1/<8 digits>, for example UK/ABERDEEN/T1/00092001.",
+      "kind": "data",
+      "ref": "trace transport-and-arrival--transporter-details-select-a-transporter-from-the-list.zip action 60, Approval number column",
+      "quote": "UK/ABERDEEN/T1/00092001",
+      "confidence": "inferred",
+      "note": "Pattern inferred from all 8 rows."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-086",
+      "statement": "A transporter's type is either Commercial or Private.",
+      "kind": "data",
+      "ref": "trace transport-and-arrival--transporter-details-select-a-transporter-from-the-list.zip action 60, Type column",
+      "quote": "Commercial\tApproved",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-087",
+      "statement": "A transporter's status shows as a tag: 'Approved' in a green tag, 'New' in a tag with a custom modifier (app-transporter-table__tag--new) rather than a GOV.UK colour modifier.",
+      "kind": "data",
+      "ref": "trace transport-and-arrival--transporter-details-select-a-transporter-from-the-list.zip action 60, strong.govuk-tag.govuk-tag--green / strong.govuk-tag.app-transporter-table__tag--new",
+      "quote": "<strong class=\"govuk-tag app-transporter-table__tag--new app-transporter-table__tag\">New</strong>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-088",
+      "statement": "A transporter with status 'New' can still be selected; every row, including New ones, has a radio.",
+      "kind": "rule",
+      "ref": "trace transport-and-arrival--transporter-details-select-a-transporter-from-the-list.zip action 60, input#transporter-romanian-agri-exports and #transporter-finnish-livestock",
+      "quote": "INPUT|radio|transporterId|transporter-romanian-agri-exports|romanian-agri-exports",
+      "confidence": "verbatim",
+      "note": "Whether choosing a New transporter has any consequence was not driven."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-089",
+      "statement": "Each transporter row has a 'View details' link to the shared, unprefixed address book entry with a return path back to the transporter page, for example /address-book/yusen-logistics-romania?return=%2Ftransporter.",
+      "kind": "behaviour",
+      "ref": "trace transport-and-arrival--transporter-details-select-a-transporter-from-the-list.zip action 60, A 'View details' hrefs",
+      "quote": "/address-book/yusen-logistics-romania?return=%2Ftransporter",
+      "confidence": "verbatim",
+      "note": "The return value is /transporter, without the /design-release-2.1 prefix."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-090",
+      "statement": "No trace followed a 'View details' link, so the transporter detail page and the return to the transporter list are unseen.",
+      "kind": "behaviour",
+      "ref": "trace transport-and-arrival--transporter-details-select-a-transporter-from-the-list.zip (no click on View details)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-091",
+      "statement": "The transporter list puts GOV.UK radios inside a GOV.UK table, a pattern outside the design system's components, with custom table and search classes (app-transporter-table, app-transporter-page__search).",
+      "kind": "constraint",
+      "ref": "trace transport-and-arrival--transporter-details-select-a-transporter-from-the-list.zip action 60, td.app-transporter-table__cell--select > div.govuk-radios",
+      "quote": "<div class=\"govuk-radios app-transporter-table__radio\">",
+      "confidence": "verbatim",
+      "note": "A plain govuk-radios list with hints, or an address-book style selection page, would keep inside the toolbox."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-092",
+      "statement": "The transporters are server-rendered into the page; no transporter or address book data call goes over the network.",
+      "kind": "integration",
+      "ref": "trace transport-and-arrival--transporter-details-select-a-transporter-from-the-list.zip requests 281 (GET transporter 200, 36.1K) and 320; only static scripts address-book.js and address-book-lookup-search.js otherwise",
+      "quote": "GET 200 transporter 36.1K",
+      "confidence": "inferred",
+      "note": "Inferred from the network log; the source of the transporter list behind the prototype is not visible."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-093",
+      "statement": "Selecting a transporter and saving posts transporterId and goes on to the upload documents page ('Upload documents').",
+      "kind": "rule",
+      "ref": "trace transport-and-arrival--transporter-details-select-a-transporter-from-the-list.zip actions 69-72, request 320 (302 location /design-release-2.1/upload-documents)",
+      "quote": "location: /design-release-2.1/upload-documents",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-094",
+      "statement": "Choosing a transporter is optional: saving the transporter page with no transporter selected moves on to upload documents with no error.",
+      "kind": "rule",
+      "ref": "trace transport-and-arrival--transporter-details-transporter-is-optional-to-proceed.zip actions 51-53, requests 318 (POST transporter 302) and 319 (GET upload-documents 200)",
+      "quote": "transporter is optional to proceed",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-095",
+      "statement": "The transporter page has 'Save and continue', 'Save and return to overview' and 'Cancel and return to overview' actions.",
+      "kind": "behaviour",
+      "ref": "trace transport-and-arrival--transporter-details-select-a-transporter-from-the-list.zip action 60",
+      "quote": "Save and continue\nSave and return to overview\n\nCancel and return to overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-096",
+      "statement": "The legacy path /design-release-2.1/transport-details redirects (302) to the transporter page.",
+      "kind": "behaviour",
+      "ref": "trace transport-and-arrival--transporter-details-the-legacy-transport-details-path-redirects-to-the-transporter-page.zip action 51 (Navigate), requests 319 (GET transport-details 302) and 320, snapshot 52 title",
+      "quote": "Transporter details - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-097",
+      "statement": "The overview task list names the transporter step 'Transport details' even though the page it leads to is headed 'Transporter details'.",
+      "kind": "copy",
+      "ref": "trace transport-and-arrival--arrival-details-air-and-sea-skip-transit-countries.zip action 51; trace ...select-a-transporter-from-the-list.zip action 60",
+      "quote": "Transport details\nTo do",
+      "confidence": "verbatim",
+      "note": "Recorded as observed; the task row's link target was not read in this part."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-098",
+      "statement": "What the overview shows for the transport section after a Road or Rail route with transit countries, or after a transporter is chosen, was never captured.",
+      "kind": "behaviour",
+      "ref": "traces transport-and-arrival--transit-countries-*.zip and transport-and-arrival--transporter-details-*.zip (no overview visit after saving)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-099",
+      "statement": "Whether arrival details, transit countries and the chosen transporter are played back when the user returns to each page was not shown; no trace revisited a saved page.",
+      "kind": "behaviour",
+      "ref": "all six part 8 traces",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p8-100",
+      "statement": "The prototype runs on the GOV.UK Prototype Kit (Express) and keeps answers in a session cookie; every page in this part is a same-origin form GET/POST with a 302 redirect after each save.",
+      "kind": "integration",
+      "ref": "trace transport-and-arrival--arrival-details-air-and-sea-skip-transit-countries.zip request 280 headers",
+      "quote": "x-powered-by: Express",
+      "confidence": "inferred",
+      "note": "Cookie name begins govuk-prototype-kit-; its value is a session id and is not copied. Inferred that answers live in the session from the absence of any API call."
+    }
+  ]
+}

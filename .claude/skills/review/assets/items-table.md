@@ -109,7 +109,7 @@ reconciler.
 ## Markdown view
 
 The `## Items` section in `review.{repo}.md` is rendered from this JSON
-by `render-items.sh`, through `tools/review/items-table.jq`. Re-render
+by `render-items.sh --write`, through `tools/review/items-table.jq`. Re-render
 whenever items change. Column order:
 
 ```

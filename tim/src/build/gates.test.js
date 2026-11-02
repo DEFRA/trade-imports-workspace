@@ -78,6 +78,28 @@ describe('the workspace gates.json', () => {
     )
   })
 
+  test('scopes its e2e suite to the services a run builds, from the pull-request scope file', () => {
+    const plan = planRungs({
+      gates: loadGates(workspaceRoot),
+      repos: [
+        repo('trade-imports-animals-frontend'),
+        repo('trade-imports-ins-tests')
+      ],
+      phase: 'e2e',
+      workspaceRoot
+    })
+
+    expect(
+      plan.map(({ repo: folder, name, scope }) => [folder, name, scope])
+    ).toEqual([
+      [
+        'trade-imports-ins-tests',
+        'e2e',
+        ['tests/animals/', '--grep', '@animals-frontend']
+      ]
+    ])
+  })
+
   test('gives each fit rung the port its test:fit:ci serves on, clear of the workspace stack', () => {
     const gates = loadGates(workspaceRoot)
 
@@ -347,6 +369,43 @@ describe('parseGates', () => {
 
     expect(problems.message).toContain('repos.tests: rung "smoke"')
   })
+
+  test('refuses a rung that names both scope and scopeFrom', () => {
+    const problems = problemsOf(
+      gatesWith({
+        tests: {
+          rungs: [
+            {
+              name: 'e2e',
+              phase: 'e2e',
+              run: 'test:docker-compose',
+              scope: ['tests/ins/'],
+              scopeFrom: 'pr-scope',
+              forRepos: ['tests']
+            }
+          ]
+        }
+      })
+    )
+
+    expect(problems.message).toContain(
+      'rung "e2e": A rung names scope or scopeFrom, not both.'
+    )
+  })
+
+  test('refuses scopeFrom on a rung that is not an e2e rung', () => {
+    const problems = problemsOf(
+      gatesWith({
+        tests: {
+          rungs: [{ ...unitRung('unit', 'test'), scopeFrom: 'pr-scope' }]
+        }
+      })
+    )
+
+    expect(problems.message).toContain(
+      'rung "unit": Only an e2e rung takes scopeFrom.'
+    )
+  })
 })
 
 describe('looksRemote', () => {
@@ -484,6 +543,57 @@ describe('planRungs', () => {
         refusal: 'No repo in the backlog has fit rungs in gates.json.'
       })
     ])
+  })
+
+  const scopeFromGates = (forRepos) =>
+    parseGates(
+      gatesWith({
+        'trade-imports-ins-tests': {
+          rungs: [
+            {
+              name: 'e2e',
+              phase: 'e2e',
+              run: 'test:docker-compose',
+              scopeFrom: 'pr-scope',
+              forRepos
+            }
+          ]
+        },
+        'trade-imports-animals-frontend': {
+          rungs: [unitRung('unit', 'test')]
+        }
+      })
+    )
+
+  const scopeOf = (plan) => plan.find(({ name }) => name === 'e2e').scope
+
+  test('scopes a scopeFrom rung to the suites and tags the built services run', () => {
+    const plan = planRungs({
+      gates: scopeFromGates(['trade-imports-animals-frontend']),
+      repos: [
+        repo('trade-imports-ins-tests'),
+        repo('trade-imports-animals-frontend')
+      ],
+      phase: 'e2e',
+      workspaceRoot
+    })
+
+    expect(scopeOf(plan)).toEqual([
+      'tests/animals/',
+      '--grep',
+      '@animals-frontend'
+    ])
+  })
+
+  test('runs every spec for a scopeFrom rung when only its own repo is built', () => {
+    const plan = planRungs({
+      gates: scopeFromGates(['trade-imports-ins-tests']),
+      repos: [repo('trade-imports-ins-tests')],
+      phase: 'e2e',
+      workspaceRoot
+    })
+
+    expect(scopeOf(plan)).toEqual([])
   })
 })
 

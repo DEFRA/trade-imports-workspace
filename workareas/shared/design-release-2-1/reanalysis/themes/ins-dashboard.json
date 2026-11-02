@@ -1,0 +1,56 @@
+{
+  "theme": "ins-dashboard",
+  "file": "~/git/defra/trade-imports-workspace/workareas/shared/design-release-2-1/backlog.json",
+  "rows": [
+    {
+      "id": "inc-128",
+      "verdict": "blocker-holds",
+      "evidence": "Block: Sam's 9 October afternoon ruling, section (j) claim 52, blocks the INS dashboard's summary information until its requirements firm up and are re-distilled (sources/ruling-sam-2026-10-09-pm.md:612-627). No later ruling lifts it: the only later rulings are ruling-paul-2026-10-14.md (address book County) and ruling-sam-2026-10-26.md (Save and return checks). Nothing is built. On ins-frontend origin/main the home is still the table: h1 '{{ copy.title }}' = 'Dashboard' (src/server/app/features/dashboard/template.njk:9, copy/copy.en.js:2), reference search (copy.en.js:4), sort form and table (template.njk:30-89); no 'Import notification service' h1, no category sections. Perf suite on origin/main still expects 'Dashboard': src/k6/readiness.js:39 (INS signed-in page probe, six probes at :64-75) and src/k6/front-door.js:58. Tests repo origin/main page-objects/ins/dashboard-page.ts:8,12 still find the page by h1 'Dashboard' and the reference search. The external dependencies (inc-149 Create new, inc-153 Use template) are built on origin/feat/NO_JIRA-design-release-2-1-type-question-and-templates (commits fd9b1c3, 28d32ac) but not merged to main; that theme's local backlog still shows them as todo.",
+      "proposedChange": "None to the block. For the re-distil: the k6 home check sits in two places, not one: src/k6/front-door.js:58 as well as src/k6/readiness.js:39, so the 'ins-dashboard' heading criterion should name both."
+    },
+    {
+      "id": "inc-132",
+      "verdict": "blocker-holds",
+      "evidence": "Block: ruling-sam-2026-10-09-pm.md claim 52 names the Action needed drill-down (p3-059); no later ruling lifts it. Nothing built: no '/actions' route or 'Tasks requiring your attention' copy on ins-frontend origin/main (git grep finds none); ins-backend has no feature branches and its read model (src/main/java/.../notification/AggregatedNotification.java) holds no organisation, category or action-required field. Dependencies inc-131 and inc-147 (animals-dashboard) are still todo and inc-128 is blocked. Note: the action-required state itself now exists on a theme branch: origin/feat/EUDPA-696-design-release-2-1-overview-and-review adds SUBMITTED_ACTION_REQUIRED in animals-backend (NotificationStatus.java:6, NotificationService.java:225, set when no ITAHC or health certificate) and treats it as read-only in the INS list links (ins-frontend features/dashboard/view-model/list.js). Not on main yet.",
+      "proposedChange": "None to the block. For the re-distil: the 'Submitted action required' status for a missing ITAHC comes from the overview-and-review theme (unmerged), not only inc-131; inc-131's backend half may already be met once that theme merges."
+    },
+    {
+      "id": "inc-133",
+      "verdict": "blocker-holds",
+      "evidence": "Block: ruling-sam-2026-10-09-pm.md claim 52 names the Action needed search and sort (p3-059); no later ruling lifts it. Nothing built: no /actions page on ins-frontend origin/main; the read model on ins-backend origin/main (AggregatedNotification.java) holds no consignee or consignor. Depends on inc-132, itself blocked.",
+      "proposedChange": ""
+    },
+    {
+      "id": "inc-134",
+      "verdict": "blocker-holds",
+      "evidence": "Block: ruling-sam-2026-10-09-pm.md claim 52 names this glance card (p3-060); no later ruling lifts it. Nothing built: no glance cards or Live animals section in ins-frontend origin/main features/dashboard/template.njk. Depends on inc-128 and inc-132, both blocked.",
+      "proposedChange": ""
+    },
+    {
+      "id": "inc-143",
+      "verdict": "blocker-holds",
+      "evidence": "Both blocks still apply. (1) Authorities' outcome feed: ins-backend origin/main has no inspection, delay or outcome state anywhere in src/main (git grep for inspection|delayed finds nothing; AggregatedNotification.java holds only reference, status, origin, commodity, arrival and last-updated), and no ins-backend branch exists. (2) Sam's 9 October ruling claim 52 (p3-062), not lifted. No '/changes' route on ins-frontend origin/main.",
+      "proposedChange": ""
+    },
+    {
+      "id": "inc-144",
+      "verdict": "blocker-holds",
+      "evidence": "Both blocks still apply. (1) No service receives which notifications are chosen for inspection: ins-backend origin/main has no inspection field (AggregatedNotification.java) and no branch. (2) Sam's 9 October ruling claim 52 (p3-062), not lifted. No '/inspection' route on ins-frontend origin/main.",
+      "proposedChange": ""
+    },
+    {
+      "id": "inc-145",
+      "verdict": "blocker-holds",
+      "evidence": "Block: ruling-sam-2026-10-09-pm.md claim 52 names the INS home's germinal section (p3-061, c-297); no later ruling lifts it. Nothing built on ins-frontend origin/main (no sections on the home). Depends on inc-134 (blocked) and inc-141 (germinal-products theme, still todo).",
+      "proposedChange": ""
+    },
+    {
+      "id": "inc-146",
+      "verdict": "blocker-holds",
+      "evidence": "Both blocks still apply. (1) Plants services publishing to the INS read model: trade-imports-plants-backend origin/main has no outbox, SQS or SNS publishing (git grep finds only EmfMetricsPublisher; NotificationController.java:32 says nothing consumes its contract until the service publishes). (2) Sam's 9 October ruling claim 52 (p3-062), not lifted. Depends on inc-134, inc-143 and inc-144, all blocked.",
+      "proposedChange": ""
+    }
+  ],
+  "splitReady": false,
+  "splitReadyWhy": "Not ready. All 8 rows are blocked, and every block still holds: Sam's 9 October ruling on the INS dashboard's summary information has not been lifted, the authorities' outcome and inspection feeds do not exist, and plants does not publish to the INS read model. Dependencies are not done: inc-131 and inc-147 (animals-dashboard) and inc-141 (germinal-products) are todo, and the external inc-149 and inc-153 are built only on the unmerged type-question-and-templates branch. Other unbuilt themes touch the same code: type-question-and-templates changes the INS home's template, copy, controller and fit spec (ins-frontend features/dashboard/*), and overview-and-review changes features/dashboard/view-model/list.js and adds SUBMITTED_ACTION_REQUIRED in animals-backend; neither is merged."
+}

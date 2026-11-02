@@ -1,0 +1,933 @@
+{
+  "source": "prototype:dr2-1-specs",
+  "structure": "Part 3 read e2e/consignment-parties.fit.spec.js (398 lines) and e2e/support/journey.js (270 lines) in full. The spec has 14 tests in four describe blocks: 'consignment addresses' (7: cattle five roles plus CPH, cat permanent address replacing CPH, picking every role then the CPH number, same-as shortcuts, picker search, continue with nothing chosen, save and return to hub), 'add an address from the journey' (2: place of origin international by hand, consignee UK lookup), 'add-address pages for the other roles' (1: consignor, importer, place of destination), 'permanent address' (2: per-animal choice and its errors, retired enter-address redirect) and 'contact address for consignment' (2: choice and error, add a new branch address). A shared toRoles helper starts a live-animals notification, answers origin, commodity (cattle x1 or cat x2), reason and consignment details, then goes to /roles-and-addresses by URL. Pages covered, all under /design-release-2.1: /roles-and-addresses, the five pickers (/place-of-origin, /consignor-or-exporter, /consignee, /importer, /place-of-destination), their /add-address pages, /cph-number, /permanent-address, /permanent-address/select, /permanent-address/enter-address, /contact-address-for-consignment, with exits to /notification-hub, /review-notification and /address-book/add/lookup. From journey.js only the helpers these tests call are claimed: the base path, the action button values, the error summary title, the CORE_ADDRESSES fixture ids, chooseAddress, fillCph and answerContactAddress. Claims p3-001 to p3-110 keep the ids of an earlier extract of this same slice (the spec is unchanged since); p3-111 to p3-113 are new.",
+  "claims": [
+    {
+      "id": "prototype-dr2-1-specs-p3-001",
+      "statement": "Every Design Release 2.1 page in this part is served under the /design-release-2.1 path prefix, a mirror mount of the root route table.",
+      "kind": "constraint",
+      "ref": "e2e/support/journey.js:3-5",
+      "quote": "// Design Release 2.1 is a mirror mount of the root route table.\nconst BASE = '/design-release-2.1'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-002",
+      "statement": "The consignment addresses page lives at /roles-and-addresses and is reachable once a live-animals notification has its origin, commodity, reason for import and consignment details answered.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:21-29",
+      "quote": "await answerConsignmentDetails(page, { [species.id]: count })\n  await page.goto(url('/roles-and-addresses'))\n  await expect(page).toHaveURL(urlFor('/roles-and-addresses'))",
+      "confidence": "verbatim",
+      "note": "The test goes to the page by URL, so it does not prove which link or button on the hub or the consignment details page leads here."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-003",
+      "statement": "The consignment addresses page has the title 'Consignment addresses - Import notification service - GOV.UK' and the heading 'Consignment addresses'.",
+      "kind": "copy",
+      "ref": "e2e/consignment-parties.fit.spec.js:34-35",
+      "quote": "await expect(page).toHaveTitle('Consignment addresses - Import notification service - GOV.UK')\n    await expectHeading(page, 'Consignment addresses')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-004",
+      "statement": "The consignment addresses page shows the text 'Consignment parties' and 'Add all the addresses that are involved in the consignment.'",
+      "kind": "copy",
+      "ref": "e2e/consignment-parties.fit.spec.js:37-38",
+      "quote": "await expect(main).toContainText('Consignment parties')\n    await expect(main).toContainText('Add all the addresses that are involved in the consignment.')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-005",
+      "statement": "The consignment addresses page warns 'Providing a false address is an act of fraud'.",
+      "kind": "copy",
+      "ref": "e2e/consignment-parties.fit.spec.js:39",
+      "quote": "await expect(main).toContainText('Providing a false address is an act of fraud')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-006",
+      "statement": "The consignment addresses page lists a 'Place of origin' role with the hint 'The address where the animals begin their journey to Great Britain'.",
+      "kind": "copy",
+      "ref": "e2e/consignment-parties.fit.spec.js:14,40-42",
+      "quote": "'place-of-origin': ['Place of origin', 'The address where the animals begin their journey to Great Britain', 'Add a place of origin']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-007",
+      "statement": "With no place of origin chosen, the roles page shows an 'Add a place of origin' link to /place-of-origin.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:14,43",
+      "quote": "await expect(main.getByRole('link', { name: linkText })).toHaveAttribute('href', url(`/${section}`))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-008",
+      "statement": "The consignment addresses page lists a 'Consignor' role with the hint 'This is the sender of the consignment.'",
+      "kind": "copy",
+      "ref": "e2e/consignment-parties.fit.spec.js:15,40-42",
+      "quote": "'consignor-or-exporter': ['Consignor', 'This is the sender of the consignment.', 'Add a consignor']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-009",
+      "statement": "With no consignor chosen, the roles page shows an 'Add a consignor' link to /consignor-or-exporter.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:15,43",
+      "quote": "'consignor-or-exporter': ['Consignor', 'This is the sender of the consignment.', 'Add a consignor']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-010",
+      "statement": "The consignment addresses page lists a 'Consignee' role with the hint 'This is the receiver or buyer of the consignment being shipped or transported.'",
+      "kind": "copy",
+      "ref": "e2e/consignment-parties.fit.spec.js:16,40-42",
+      "quote": "consignee: ['Consignee', 'This is the receiver or buyer of the consignment being shipped or transported.', 'Add a consignee']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-011",
+      "statement": "With no consignee chosen, the roles page shows an 'Add a consignee' link to /consignee.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:16,43",
+      "quote": "consignee: ['Consignee', 'This is the receiver or buyer of the consignment being shipped or transported.', 'Add a consignee']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-012",
+      "statement": "The consignment addresses page lists an 'Importer' role with the hint 'This is usually the same as the consignee. You can select a different person if needed.'",
+      "kind": "copy",
+      "ref": "e2e/consignment-parties.fit.spec.js:17,40-42",
+      "quote": "importer: ['Importer', 'This is usually the same as the consignee. You can select a different person if needed.', 'Add an importer']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-013",
+      "statement": "With no importer chosen, the roles page shows an 'Add an importer' link to /importer.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:17,43",
+      "quote": "importer: ['Importer', 'This is usually the same as the consignee. You can select a different person if needed.', 'Add an importer']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-014",
+      "statement": "The consignment addresses page lists a 'Place of destination' role with the hint 'This is where the animals will be unloaded and accommodated for at least 48 hours. If a health certificate is required, it will show this address.'",
+      "kind": "copy",
+      "ref": "e2e/consignment-parties.fit.spec.js:18,40-42",
+      "quote": "'place-of-destination': ['Place of destination', 'This is where the animals will be unloaded and accommodated for at least 48 hours. If a health certificate is required, it will show this address.', 'Add a place of destination']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-015",
+      "statement": "With no place of destination chosen, the roles page shows an 'Add a place of destination' link to /place-of-destination.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:18,43",
+      "quote": "'place-of-destination': ['Place of destination', 'This is where the animals will be unloaded and accommodated for at least 48 hours. If a health certificate is required, it will show this address.', 'Add a place of destination']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-016",
+      "statement": "For a cattle consignment the roles page shows a 'County parish holding (CPH) number' section with the hint 'The county parish holding (CPH) number identifies the holding where the animals will be kept.'",
+      "kind": "copy",
+      "ref": "e2e/consignment-parties.fit.spec.js:45-46",
+      "quote": "await expect(main).toContainText('County parish holding (CPH) number')\n    await expect(main).toContainText('The county parish holding (CPH) number identifies the holding where the animals will be kept.')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-017",
+      "statement": "For a cattle consignment with no CPH number, the roles page shows an 'Add a CPH number' link to /cph-number.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:47",
+      "quote": "await expect(main.getByRole('link', { name: 'Add a CPH number' })).toHaveAttribute('href', url('/cph-number'))",
+      "confidence": "verbatim",
+      "note": "The file header says the CPH number applies to cattle and pigs; only cattle is tested."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-018",
+      "statement": "The CPH number applies to cattle and pig consignments.",
+      "kind": "rule",
+      "ref": "e2e/consignment-parties.fit.spec.js:9-11",
+      "quote": "// per-role address pickers, adding an address from inside the journey, CPH\n// number (cattle and pigs), permanent address (pets), and the contact address.",
+      "confidence": "verbatim",
+      "note": "Stated in a comment only; no test covers pigs."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-019",
+      "statement": "For a cattle consignment the roles page shows no 'Add a permanent address' link.",
+      "kind": "rule",
+      "ref": "e2e/consignment-parties.fit.spec.js:48",
+      "quote": "await expect(main.getByRole('link', { name: 'Add a permanent address' })).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-020",
+      "statement": "The consignment addresses page has a back link to /notification-hub.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:49",
+      "quote": "await expectBackLink(page, url('/notification-hub'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-021",
+      "statement": "The roles and addresses tasks are sections 5 and 6 of the Design Release 2.1 task list.",
+      "kind": "data",
+      "ref": "e2e/consignment-parties.fit.spec.js:9",
+      "quote": "// Sections 5 and 6 of the DR2.1 task list: consignment addresses (roles), the",
+      "confidence": "verbatim",
+      "note": "The comment does not say which pages fall in section 5 and which in section 6."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-022",
+      "statement": "For a cat (pet) consignment the roles page shows a 'Permanent address' section in place of the CPH number section.",
+      "kind": "rule",
+      "ref": "e2e/consignment-parties.fit.spec.js:53-56",
+      "quote": "test('cat: permanent address replaces the CPH number', async ({ page }, testInfo) => {\n    await toRoles(page, SPECIES.cat, 2)\n    const main = page.locator('main')\n    await expect(main).toContainText('Permanent address')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-023",
+      "statement": "The Permanent address section on the roles page explains 'A permanent address is where an animal:' followed by 'will permanently reside' and 'can be checked by the Animal and Plant Health Agency (APHA)'.",
+      "kind": "copy",
+      "ref": "e2e/consignment-parties.fit.spec.js:57-59",
+      "quote": "await expect(main).toContainText('A permanent address is where an animal:')\n    await expect(main).toContainText('will permanently reside')\n    await expect(main).toContainText('can be checked by the Animal and Plant Health Agency (APHA)')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-024",
+      "statement": "For a cat consignment with no permanent address, the roles page shows an 'Add a permanent address' link to /permanent-address.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:60",
+      "quote": "await expect(main.getByRole('link', { name: 'Add a permanent address' })).toHaveAttribute('href', url('/permanent-address'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-025",
+      "statement": "For a cat consignment the roles page shows no 'Add a CPH number' link.",
+      "kind": "rule",
+      "ref": "e2e/consignment-parties.fit.spec.js:61",
+      "quote": "await expect(main.getByRole('link', { name: 'Add a CPH number' })).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-026",
+      "statement": "For a pet consignment, going to /cph-number redirects to /roles-and-addresses, because the CPH number is not part of a pet consignment.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:64-66",
+      "quote": "// CPH is not part of a pet consignment, so the CPH page sends the user back.\n    await page.goto(url('/cph-number'))\n    await expect(page).toHaveURL(urlFor('/roles-and-addresses'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-027",
+      "statement": "Each of the five role pickers (/place-of-origin, /consignor-or-exporter, /consignee, /importer, /place-of-destination) has the title '<role> - Import notification service - GOV.UK' and the role name as its heading.",
+      "kind": "copy",
+      "ref": "e2e/consignment-parties.fit.spec.js:73-76",
+      "quote": "await page.goto(url(`/${section}`))\n        await expect(page).toHaveTitle(`${heading} - Import notification service - GOV.UK`)\n        await expectHeading(page, heading)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-028",
+      "statement": "Each role picker repeats that role's hint from the roles page.",
+      "kind": "copy",
+      "ref": "e2e/consignment-parties.fit.spec.js:77",
+      "quote": "await expect(page.locator('main')).toContainText(hint)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-029",
+      "statement": "Each role picker has an 'Add a new address' link to /<role path>/add-address.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:78",
+      "quote": "await expect(page.locator('main a', { hasText: 'Add a new address' })).toHaveAttribute('href', url(`/${section}/add-address`))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-030",
+      "statement": "Each role picker offers address radios under its own field: placeOfOriginAddressId, consignorAddressId, consigneeAddressId, importerAddressId and placeOfDestinationAddressId.",
+      "kind": "data",
+      "ref": "e2e/consignment-parties.fit.spec.js:79; e2e/support/journey.js:208-214",
+      "quote": "'place-of-origin': ['placeOfOriginAddressId', 'green-valley-livestock-farm'],\n  'consignor-or-exporter': ['consignorAddressId', 'nordic-livestock-export'],\n  consignee: ['consigneeAddressId', 'northern-livestock-imports-consignee'],\n  importer: ['importerAddressId', 'britannia-trade-livestock'],\n  'place-of-destination': ['placeOfDestinationAddressId', 'riverside-holding-facility']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-031",
+      "statement": "The prototype's address data offers Green Valley Livestock Farm as a place of origin, Nordic Livestock Export AB as a consignor, Northern Livestock Imports Ltd as a consignee, Britannia Trade & Livestock Ltd as an importer and Riverside Holding Facility as a place of destination.",
+      "kind": "data",
+      "ref": "e2e/consignment-parties.fit.spec.js:127-131; e2e/support/journey.js:208-214",
+      "quote": "await expect(main).toContainText('Green Valley Livestock Farm')\n      await expect(main).toContainText('Nordic Livestock Export AB')\n      await expect(main).toContainText('Northern Livestock Imports Ltd')\n      await expect(main).toContainText('Britannia Trade & Livestock Ltd')\n      await expect(main).toContainText('Riverside Holding Facility')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-032",
+      "statement": "Each role picker has two buttons, 'Save and continue' and 'Save and return to hub'.",
+      "kind": "copy",
+      "ref": "e2e/consignment-parties.fit.spec.js:80",
+      "quote": "await expect(page.locator('button[name=\"action\"]')).toHaveText(['Save and continue', 'Save and return to hub'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-033",
+      "statement": "The journey's action buttons submit a field named action, with the value 'continue' for Save and continue, 'hub' for Save and return to hub, and 'select' and 'return' for the add-address page's two buttons.",
+      "kind": "data",
+      "ref": "e2e/support/journey.js:17-23; e2e/consignment-parties.fit.spec.js:210,225",
+      "quote": "const saveAndContinue = (page) => clickAction(page, 'continue')\nconst saveAndReturnToOverview = (page) => clickAction(page, 'hub')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-034",
+      "statement": "Each role picker has a back link to /roles-and-addresses.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:81",
+      "quote": "await expectBackLink(page, url('/roles-and-addresses'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-035",
+      "statement": "The place of origin picker's search box is labelled 'Enter a country', the copy the transit-country page also uses.",
+      "kind": "copy",
+      "ref": "e2e/consignment-parties.fit.spec.js:84-86",
+      "quote": "// Place of origin's search box is labelled with the transit-country copy.\n      await page.goto(url('/place-of-origin'))\n      await expect(page.locator('label[for=\"place-of-origin-search\"]')).toHaveText('Enter a country')",
+      "confidence": "verbatim",
+      "note": "The comment presents this as a reuse of transit-country copy; whether it is intended or a copy error is not said."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-036",
+      "statement": "The place of origin picker shows a result count, 'Showing 9 out of 9 results', for the seeded place of origin addresses.",
+      "kind": "copy",
+      "ref": "e2e/consignment-parties.fit.spec.js:87",
+      "quote": "await expect(page.locator('main')).toContainText('Showing 9 out of 9 results')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-037",
+      "statement": "Choosing an address on a role picker and pressing Save and continue returns the user to /roles-and-addresses.",
+      "kind": "behaviour",
+      "ref": "e2e/support/journey.js:216-223; e2e/consignment-parties.fit.spec.js:90-95",
+      "quote": "await page.locator(`input[name=\"${field}\"][value=\"${value}\"]`).check()\n  await saveAndContinue(page)\n  await expect(page).toHaveURL(urlFor('/roles-and-addresses'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-038",
+      "statement": "The CPH number page is at /cph-number, reached from the 'Add a CPH number' link on the roles page.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:98-99",
+      "quote": "await page.locator('main').getByRole('link', { name: 'Add a CPH number' }).click()\n      await expect(page).toHaveURL(urlFor('/cph-number'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-039",
+      "statement": "The CPH number page has the title 'Add the county parish holding number (CPH) - Import notification service - GOV.UK' and the heading 'Add the county parish holding number (CPH)'.",
+      "kind": "copy",
+      "ref": "e2e/consignment-parties.fit.spec.js:100-101",
+      "quote": "await expect(page).toHaveTitle('Add the county parish holding number (CPH) - Import notification service - GOV.UK')\n      await expectHeading(page, 'Add the county parish holding number (CPH)')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-040",
+      "statement": "The CPH number page shows the label 'CPH number' with the hint 'For example 12/345/6789'.",
+      "kind": "copy",
+      "ref": "e2e/consignment-parties.fit.spec.js:103-104",
+      "quote": "await expect(main).toContainText('CPH number')\n      await expect(main).toContainText('For example 12/345/6789')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-041",
+      "statement": "The CPH number is entered in three fields labelled 'County', 'Parish' and 'Holding number'.",
+      "kind": "data",
+      "ref": "e2e/consignment-parties.fit.spec.js:105-107; e2e/support/journey.js:225-229",
+      "quote": "for (const label of ['County', 'Parish', 'Holding number']) {\n        await expect(page.getByLabel(label, { exact: true })).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-042",
+      "statement": "The CPH number page has a 'What is a CPH number?' expander that reveals 'You can find your CPH number on documents from the Animal and Plant Health Agency (APHA)'.",
+      "kind": "copy",
+      "ref": "e2e/consignment-parties.fit.spec.js:108-109",
+      "quote": "await main.getByText('What is a CPH number?').click()\n      await expect(main).toContainText('You can find your CPH number on documents from the Animal and Plant Health Agency (APHA)')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-043",
+      "statement": "The CPH number page has a back link to /roles-and-addresses.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:110",
+      "quote": "await expectBackLink(page, url('/roles-and-addresses'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-044",
+      "statement": "A partial CPH number (county only) is accepted on Save and continue with no error, returns to /roles-and-addresses, and is not stored: the roles page still shows 'Add a CPH number'.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:114-120",
+      "quote": "await test.step('a partial CPH number is accepted without error but not stored', async () => {\n      await fillCph(page, { county: '12', parish: '', holding: '' })\n      await saveAndContinue(page)\n      await expectNoErrorSummary(page)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-045",
+      "statement": "A full CPH number (12, 345, 6789) is saved and the roles page shows it as '12/345/6789'.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:122-132",
+      "quote": "await fillCph(page)\n      await saveAndContinue(page)\n      ...\n      await expect(main).toContainText('12/345/6789')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-046",
+      "statement": "Once a role has an address chosen, the roles page shows the chosen address's name in that role's section.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:126-131",
+      "quote": "await expect(main).toContainText('Green Valley Livestock Farm')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-047",
+      "statement": "When all five roles and the CPH number are answered for cattle, the roles page shows six 'Change' links, one per answered item.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:133",
+      "quote": "await expect(main.getByRole('link', { name: 'Change' })).toHaveCount(6)",
+      "confidence": "verbatim",
+      "note": "The Change links' targets are not asserted."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-048",
+      "statement": "Save and continue on the roles page moves on to /contact-address-for-consignment.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:137-140",
+      "quote": "await test.step('continue moves on to the contact address', async () => {\n      await saveAndContinue(page)\n      await expect(page).toHaveURL(urlFor('/contact-address-for-consignment'))",
+      "confidence": "verbatim",
+      "note": "Asserted only with every role and the CPH number complete; continuing from an incomplete roles page is not tested."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-049",
+      "statement": "Once a place of origin is chosen, the roles page offers one 'Same as place of origin' button on another role that has no address yet.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:143-148",
+      "quote": "await chooseAddress(page, 'place-of-origin')\n    await chooseAddress(page, 'consignee')\n    const main = page.locator('main')\n    await expect(main.getByRole('button', { name: 'Same as place of origin' })).toHaveCount(1)",
+      "confidence": "inferred",
+      "note": "The test does not say which role carries the button; consignor is the likely one, since only consignor and place of origin share an address use on the add-address page (claim on place of origin's other uses)."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-050",
+      "statement": "Once a consignee is chosen, the roles page offers two 'Same as consignee' buttons on other empty roles.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:149",
+      "quote": "await expect(main.getByRole('button', { name: 'Same as consignee' })).toHaveCount(2)",
+      "confidence": "inferred",
+      "note": "Which roles carry it is not asserted; importer and place of destination are the likely pair, matching the consignee's other uses on its add-address page."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-051",
+      "statement": "Pressing 'Same as place of origin' stays on /roles-and-addresses, fills that role with the place of origin's address and removes the button.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:152-154",
+      "quote": "await main.getByRole('button', { name: 'Same as place of origin' }).click()\n    await expect(page).toHaveURL(urlFor('/roles-and-addresses'))\n    await expect(main.getByRole('button', { name: 'Same as place of origin' })).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-052",
+      "statement": "Pressing each 'Same as consignee' button fills that role and removes its button; after both, every one of the five roles shows an address with a 'Change' link.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:155-159",
+      "quote": "await main.getByRole('button', { name: 'Same as consignee' }).first().click()\n    await main.getByRole('button', { name: 'Same as consignee' }).first().click()\n    await expect(main.getByRole('button', { name: 'Same as consignee' })).toHaveCount(0)\n    // Every role now shows an address with a change link.\n    await expect(main.getByRole('link', { name: 'Change' })).toHaveCount(5)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-053",
+      "statement": "The consignor picker has a search box labelled 'Search' with the hint 'Name, address or country'.",
+      "kind": "copy",
+      "ref": "e2e/consignment-parties.fit.spec.js:165-167",
+      "quote": "await expect(page.locator('label[for=\"consignor-search\"]')).toHaveText('Search')\n    await expect(page.locator('main')).toContainText('Name, address or country')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-054",
+      "statement": "Typing in a picker's search box filters the address list as the user types: 'Nordic' on the consignor picker leaves one visible address.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:168-169",
+      "quote": "await page.locator('#consignor-search').fill('Nordic')\n    await expect(page.locator('input[name=\"consignorAddressId\"]:visible')).toHaveCount(1)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-055",
+      "statement": "Save and continue on a role picker with nothing chosen shows no error and returns to /roles-and-addresses with the role still unanswered (the importer still shows 'Add an importer').",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:173-179",
+      "quote": "test('a picker continued with nothing chosen returns to the roles page unchanged', async ({ page }) => {\n    await toRoles(page)\n    await page.goto(url('/importer'))\n    await saveAndContinue(page)\n    await expect(page).toHaveURL(urlFor('/roles-and-addresses'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-056",
+      "statement": "Save and return to hub on a role picker after choosing an address goes to /notification-hub.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:181-187",
+      "quote": "await page.locator('input[name=\"consigneeAddressId\"]').first().check()\n    await saveAndReturnToOverview(page)\n    await expect(page).toHaveURL(urlFor('/notification-hub'))",
+      "confidence": "verbatim",
+      "note": "Whether the chosen consignee was saved is not asserted."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-057",
+      "statement": "'Add a new address' on the place of origin picker opens /place-of-origin/add-address.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:193-195",
+      "quote": "await page.locator('main a', { hasText: 'Add a new address' }).click()\n    await expect(page).toHaveURL(urlFor('/place-of-origin/add-address'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-058",
+      "statement": "The add-address page has the title 'Add address and contact details - Import notification service - GOV.UK' and the heading 'Add address and contact details', for every role.",
+      "kind": "copy",
+      "ref": "e2e/consignment-parties.fit.spec.js:196-197,285",
+      "quote": "await expect(page).toHaveTitle('Add address and contact details - Import notification service - GOV.UK')\n    await expectHeading(page, 'Add address and contact details')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-059",
+      "statement": "The place of origin add-address page shows the sub-heading 'Add new address'.",
+      "kind": "copy",
+      "ref": "e2e/consignment-parties.fit.spec.js:199",
+      "quote": "await expect(main).toContainText('Add new address')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-060",
+      "statement": "The manual address form has the fields 'Name or organisation', 'Address line 1', 'Address line 2 (optional)', 'Town or city', 'Postcode or Zip code', 'Country', 'Email address' and 'Phone number'.",
+      "kind": "data",
+      "ref": "e2e/consignment-parties.fit.spec.js:200-202",
+      "quote": "for (const label of ['Name or organisation', 'Address line 1', 'Address line 2 (optional)', 'Town or city', 'Postcode or Zip code', 'Country', 'Email address', 'Phone number']) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-061",
+      "statement": "On the manual address form, Country is a select list that includes France.",
+      "kind": "data",
+      "ref": "e2e/consignment-parties.fit.spec.js:221",
+      "quote": "await page.getByLabel('Country', { exact: true }).selectOption('France')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-062",
+      "statement": "The add-address page asks 'What else should this address be used for?' with the hint 'This address is being added as a <role> address. Select any other roles or addresses this address should be used for.' (for place of origin: 'a Place of origin address').",
+      "kind": "copy",
+      "ref": "e2e/consignment-parties.fit.spec.js:203-204",
+      "quote": "await expect(main).toContainText('What else should this address be used for?')\n    await expect(main).toContainText('This address is being added as a Place of origin address. Select any other roles or addresses this address should be used for.')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-063",
+      "statement": "On the place of origin add-address page, the only other use offered (addressUses checkbox) is 'Consignor'.",
+      "kind": "rule",
+      "ref": "e2e/consignment-parties.fit.spec.js:205",
+      "quote": "await expect(page.locator('input[name=\"addressUses\"] + label')).toHaveText(['Consignor'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-064",
+      "statement": "The add-address page has two buttons, 'Save and select' and 'Save and return to address page'.",
+      "kind": "copy",
+      "ref": "e2e/consignment-parties.fit.spec.js:206",
+      "quote": "await expect(page.locator('button[name=\"action\"]')).toHaveText(['Save and select', 'Save and return to address page'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-065",
+      "statement": "Each role's add-address page has a back link to that role's picker (/place-of-origin, /consignor-or-exporter, /importer, /place-of-destination).",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:207,293",
+      "quote": "await expectBackLink(page, url(`/${section}`))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-066",
+      "statement": "Save and select on an empty manual address form shows 'There is a problem' with, in order: 'Enter a name or organisation name', 'Enter address line 1', 'Enter a town or city', 'Enter a postcode or Zip code', 'Select a country', 'Enter an email address', 'Enter a phone number'.",
+      "kind": "rule",
+      "ref": "e2e/consignment-parties.fit.spec.js:210-214; e2e/support/journey.js:39-44",
+      "quote": "await expectErrorSummary(page, [\n      'Enter a name or organisation name', 'Enter address line 1', 'Enter a town or city',\n      'Enter a postcode or Zip code', 'Select a country', 'Enter an email address', 'Enter a phone number'\n    ])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-067",
+      "statement": "Address line 2 is optional: leaving it blank raises no error on the add-address page.",
+      "kind": "rule",
+      "ref": "e2e/consignment-parties.fit.spec.js:200,210-226",
+      "quote": "'Address line 2 (optional)'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-068",
+      "statement": "A complete international address with an extra use ticked, submitted with 'Save and return to address page', returns to /place-of-origin and the new address appears in its list.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:217-227",
+      "quote": "await page.locator('input[name=\"addressUses\"][value=\"consignor\"]').check()\n    await clickAction(page, 'return')\n    await expect(page).toHaveURL(urlFor('/place-of-origin'))\n    await expect(main).toContainText('Ferme du Lac')",
+      "confidence": "verbatim",
+      "note": "Whether the address also shows on the consignor picker after ticking Consignor is not asserted."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-069",
+      "statement": "The consignee add-address page starts with a UK address search labelled 'Search for an address' whose box shows the placeholder 'Start typing...'.",
+      "kind": "copy",
+      "ref": "e2e/consignment-parties.fit.spec.js:233-236",
+      "quote": "await expect(page.getByLabel('Search for an address')).toBeVisible()\n    await expect(page.locator('#consignment-address-lookup-search')).toHaveAttribute('placeholder', 'Start typing...')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-070",
+      "statement": "On a lookup add-address page the manual address fields are hidden until an address is picked from the search.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:237",
+      "quote": "await expect(page.getByLabel('Address line 1', { exact: true })).toBeHidden()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-071",
+      "statement": "Save and select on a lookup add-address page before searching shows errors for the hidden fields, in order: 'Enter a name or organisation name', 'Enter address line 1', 'Enter a town or city', 'Enter a postcode or Zip code', 'Enter an email address', 'Enter a phone number' (no country error).",
+      "kind": "rule",
+      "ref": "e2e/consignment-parties.fit.spec.js:240-247",
+      "quote": "await test.step('submitting before searching names the hidden address fields', async () => {\n      await clickAction(page, 'select')\n      await expectErrorSummary(page, [\n        'Enter a name or organisation name', 'Enter address line 1', 'Enter a town or city',\n        'Enter a postcode or Zip code', 'Enter an email address', 'Enter a phone number'\n      ])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-072",
+      "statement": "A lookup add-address page asks for no country, because its addresses are UK addresses.",
+      "kind": "rule",
+      "ref": "e2e/consignment-parties.fit.spec.js:240-245,274",
+      "quote": "test('consignor is entered by hand; importer and place of destination search UK addresses'",
+      "confidence": "inferred",
+      "note": "Inferred from the test name and from 'Select a country' missing from the lookup page's error list."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-073",
+      "statement": "Typing into the address search (for example 'Acorn') shows matching address options as the user types.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:250-254",
+      "quote": "await search.pressSequentially('Acorn', { delay: 30 })\n      const option = page.locator('.app-address-book-lookup-search__option').first()\n      await expect(option).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-074",
+      "statement": "Picking an address from the search fills the form, including the name or organisation, and reveals the address fields.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:256-258",
+      "quote": "await option.click()\n      await expect(page.getByLabel('Address line 1', { exact: true })).toBeVisible()\n      await expect(page.getByLabel('Name or organisation', { exact: true })).not.toHaveValue('')",
+      "confidence": "verbatim",
+      "note": "The search draws on the address book ('app-address-book-lookup-search'); email and phone are not filled by the pick and are typed in afterwards."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-075",
+      "statement": "On the consignee add-address page the other uses offered are 'Importer' and 'Place of destination'.",
+      "kind": "rule",
+      "ref": "e2e/consignment-parties.fit.spec.js:259",
+      "quote": "await expect(page.locator('input[name=\"addressUses\"] + label')).toHaveText(['Importer', 'Place of destination'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-076",
+      "statement": "With a picked address plus email and phone, Save and select on the consignee add-address page saves with no error and returns to /roles-and-addresses.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:263-269",
+      "quote": "await test.step('save and select records it and returns to the roles page', async () => {\n      await page.getByLabel('Email address', { exact: true }).fill('acorn@example.com')\n      await page.getByLabel('Phone number', { exact: true }).fill('01234 567890')\n      await clickAction(page, 'select')\n      await expect(page).toHaveURL(urlFor('/roles-and-addresses'))",
+      "confidence": "verbatim",
+      "note": "That the new address becomes the chosen consignee is implied by 'Save and select' but not asserted on the roles page."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-077",
+      "statement": "The consignor add-address page is entered by hand: the manual fields show at once, the hint reads 'This address is being added as a Consignor address.' and the only other use is 'Place of origin'.",
+      "kind": "rule",
+      "ref": "e2e/consignment-parties.fit.spec.js:277,286-292",
+      "quote": "['consignor-or-exporter', 'Consignor', ['Place of origin'], false],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-078",
+      "statement": "The importer add-address page searches UK addresses, its hint reads 'This address is being added as an Importer address.' and its other uses are 'Consignee' and 'Place of destination'.",
+      "kind": "rule",
+      "ref": "e2e/consignment-parties.fit.spec.js:278,286-290",
+      "quote": "['importer', 'Importer', ['Consignee', 'Place of destination'], true],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-079",
+      "statement": "The place of destination add-address page searches UK addresses, its hint reads 'This address is being added as a Place of destination address.' and its other uses are 'Consignee' and 'Importer'.",
+      "kind": "rule",
+      "ref": "e2e/consignment-parties.fit.spec.js:279,286-290",
+      "quote": "['place-of-destination', 'Place of destination', ['Consignee', 'Importer'], true]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-080",
+      "statement": "Place of origin and consignor addresses are entered by hand (international), while consignee, importer and place of destination addresses are found by UK address search.",
+      "kind": "rule",
+      "ref": "e2e/consignment-parties.fit.spec.js:191,231,274-292",
+      "quote": "test('consignor is entered by hand; importer and place of destination search UK addresses'",
+      "confidence": "inferred",
+      "note": "Assembled from three tests: place of origin by hand (line 191), consignee by search (line 231), the rest from the case table."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-081",
+      "statement": "The 'Add a permanent address' link on the roles page lands on the per-animal page /permanent-address/select.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:60,304-305",
+      "quote": "await page.locator('main').getByRole('link', { name: 'Add a permanent address' }).click()\n      await expect(page).toHaveURL(urlFor('/permanent-address/select'))",
+      "confidence": "verbatim",
+      "note": "The link's href is /permanent-address, so that route forwards to /permanent-address/select."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-082",
+      "statement": "The permanent address page has the title 'Permanent address - Import notification service - GOV.UK' and the heading 'Permanent address'.",
+      "kind": "copy",
+      "ref": "e2e/consignment-parties.fit.spec.js:306-307",
+      "quote": "await expect(page).toHaveTitle('Permanent address - Import notification service - GOV.UK')\n      await expectHeading(page, 'Permanent address')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-083",
+      "statement": "The permanent address page warns 'Providing a false address is an act of fraud' and asks 'Where will their permanent address be?'",
+      "kind": "copy",
+      "ref": "e2e/consignment-parties.fit.spec.js:309-310",
+      "quote": "await expect(main).toContainText('Providing a false address is an act of fraud')\n      await expect(main).toContainText('Where will their permanent address be?')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-084",
+      "statement": "The permanent address page asks once per animal, naming each by its Latin name and number ('Felis catus 1', 'Felis catus 2' for two cats).",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:300-312",
+      "quote": "test('cat: one choice per animal, same as destination or a new address', async ({ page }, testInfo) => {\n...\n      await expect(main).toContainText('Felis catus 1')\n      await expect(main).toContainText('Felis catus 2')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-085",
+      "statement": "Each animal's permanent address choice is a radio field named permanentAddressChoice[<species id>:<index>] with the options 'Same as the place of destination (POD)' (same-as-pod) and 'Enter a new address' (new-address).",
+      "kind": "data",
+      "ref": "e2e/consignment-parties.fit.spec.js:313-315,323,330",
+      "quote": "await expect(page.locator('input[name=\"permanentAddressChoice[cat-felis-catus:0]\"] + label')).toHaveText([\n        'Same as the place of destination (POD)', 'Enter a new address'\n      ])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-086",
+      "statement": "The permanent address page explains 'This is where they will stay after spending 48 hours at the place of destination.'",
+      "kind": "copy",
+      "ref": "e2e/consignment-parties.fit.spec.js:316",
+      "quote": "await expect(main).toContainText('This is where they will stay after spending 48 hours at the place of destination.')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-087",
+      "statement": "The permanent address page has the buttons 'Save and continue' and 'Save and return to hub', and a back link to /roles-and-addresses.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:317-318",
+      "quote": "await expect(page.locator('button[name=\"action\"]')).toHaveText(['Save and continue', 'Save and return to hub'])\n      await expectBackLink(page, url('/roles-and-addresses'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-088",
+      "statement": "Choosing 'Same as the place of destination (POD)' before a place of destination is chosen shows the error 'Add a place of destination before you can continue'.",
+      "kind": "rule",
+      "ref": "e2e/consignment-parties.fit.spec.js:322-326",
+      "quote": "await page.locator('input[name=\"permanentAddressChoice[cat-felis-catus:0]\"][value=\"same-as-pod\"]').check()\n      await saveAndContinue(page)\n      await expectErrorSummary(page, ['Add a place of destination before you can continue'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-089",
+      "statement": "An animal left with no permanent address choice raises no error: with the second cat unanswered, the only errors shown concern the first cat.",
+      "kind": "rule",
+      "ref": "e2e/consignment-parties.fit.spec.js:322-341",
+      "quote": "await expectErrorSummary(page, ['Add a place of destination before you can continue'])",
+      "confidence": "inferred",
+      "note": "expectErrorSummary checks the exact list, so no message for Felis catus 2 appeared while it had no choice."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-090",
+      "statement": "Choosing 'Enter a new address' for an animal reveals an address form for that animal on the same page.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:329-331",
+      "quote": "await test.step('a new address reveals the address form, and every blank field is named per animal', async () => {\n      await page.locator('input[name=\"permanentAddressChoice[cat-felis-catus:0]\"][value=\"new-address\"]').check()\n      await expect(page.locator('#permanentAddressDetails-cat-felis-catus-0-name')).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-091",
+      "statement": "Saving a blank per-animal new address shows, in order: 'Enter a name or organisation name for Felis catus 1', 'Enter address line 1 for Felis catus 1', 'Enter a town or city for Felis catus 1', 'Enter a postcode or Zip code for Felis catus 1', 'Enter an email address for Felis catus 1', 'Enter a phone number for Felis catus 1'.",
+      "kind": "rule",
+      "ref": "e2e/consignment-parties.fit.spec.js:333-341",
+      "quote": "'Enter a name or organisation name for Felis catus 1',\n        'Enter address line 1 for Felis catus 1',\n        'Enter a town or city for Felis catus 1',\n        'Enter a postcode or Zip code for Felis catus 1',\n        'Enter an email address for Felis catus 1',\n        'Enter a phone number for Felis catus 1'",
+      "confidence": "verbatim",
+      "note": "No country error appears for the per-animal address; the test does not show whether the form has a country field."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-092",
+      "statement": "With a place of destination chosen, choosing 'Same as the place of destination (POD)' for every animal saves, returns to /roles-and-addresses, and the Permanent address section shows the place of destination's address (Riverside Holding Facility).",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:345-354",
+      "quote": "await saveAndContinue(page)\n      await expect(page).toHaveURL(urlFor('/roles-and-addresses'))\n      await expect(page.locator('main')).toContainText(/Permanent address[\\s\\S]*Riverside Holding Facility/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-093",
+      "statement": "The /permanent-address/enter-address route is retired: going to it redirects to /permanent-address/select.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:358-362",
+      "quote": "test('the enter-address path is retired and lands on the per-animal page', async ({ page }) => {\n    await toRoles(page, SPECIES.cat, 1)\n    await page.goto(url('/permanent-address/enter-address'))\n    await expect(page).toHaveURL(urlFor('/permanent-address/select'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-094",
+      "statement": "The contact address page is at /contact-address-for-consignment with the title 'Contact address for consignment - Import notification service - GOV.UK' and the heading 'Contact address for consignment'.",
+      "kind": "copy",
+      "ref": "e2e/consignment-parties.fit.spec.js:368-370",
+      "quote": "await page.goto(url('/contact-address-for-consignment'))\n    await expect(page).toHaveTitle('Contact address for consignment - Import notification service - GOV.UK')\n    await expectHeading(page, 'Contact address for consignment')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-095",
+      "statement": "The contact address page explains 'This is the contact address of the person responsible for the consignment from when it enters Great Britain until authorities complete their checks.'",
+      "kind": "copy",
+      "ref": "e2e/consignment-parties.fit.spec.js:372",
+      "quote": "await expect(main).toContainText('This is the contact address of the person responsible for the consignment from when it enters Great Britain until authorities complete their checks.')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-096",
+      "statement": "The contact address page says 'If the correct address is not shown, add a new branch address, then return to this page.'",
+      "kind": "copy",
+      "ref": "e2e/consignment-parties.fit.spec.js:373",
+      "quote": "await expect(main).toContainText('If the correct address is not shown, add a new branch address, then return to this page.')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-097",
+      "statement": "The contact address page offers three contactAddressId radios labelled 'Aberdeen Livestock Ltd', 'West Country Livestock Ltd' and 'Cymru Animal Imports Ltd'.",
+      "kind": "data",
+      "ref": "e2e/consignment-parties.fit.spec.js:374-376",
+      "quote": "await expect(page.locator('input[name=\"contactAddressId\"] + label')).toHaveText([\n      'Aberdeen Livestock Ltd', 'West Country Livestock Ltd', 'Cymru Animal Imports Ltd'\n    ])",
+      "confidence": "verbatim",
+      "note": "Ambiguity: this test picks value 'aberdeen-livestock-harbour-road' while the shared helper answerContactAddress defaults to 'aberdeen-livestock-union-street' (journey.js:231), yet the page has only three radios and shows '15 Union Street, Aberdeen'. Which Aberdeen branch the single Aberdeen radio carries is not settled by this file."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-098",
+      "statement": "The contact address page shows each option's address, such as '15 Union Street, Aberdeen, AB11 5BN'.",
+      "kind": "copy",
+      "ref": "e2e/consignment-parties.fit.spec.js:377",
+      "quote": "await expect(main).toContainText('15 Union Street, Aberdeen, AB11 5BN')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-099",
+      "statement": "The contact address page has the buttons 'Save and continue' and 'Save and return to hub'.",
+      "kind": "copy",
+      "ref": "e2e/consignment-parties.fit.spec.js:378",
+      "quote": "await expect(page.locator('button[name=\"action\"]')).toHaveText(['Save and continue', 'Save and return to hub'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-100",
+      "statement": "Save and continue on the contact address page with nothing chosen shows the error 'Select a contact address', linking to #contact-address.",
+      "kind": "rule",
+      "ref": "e2e/consignment-parties.fit.spec.js:381-383",
+      "quote": "await saveAndContinue(page)\n    await expectErrorSummary(page, ['Select a contact address'])\n    await expect(page.locator('.govuk-error-summary__list a')).toHaveAttribute('href', '#contact-address')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-101",
+      "statement": "Choosing a contact address and pressing Save and continue goes to /review-notification.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:386-388",
+      "quote": "await page.locator('input[name=\"contactAddressId\"][value=\"aberdeen-livestock-harbour-road\"]').check()\n    await saveAndContinue(page)\n    await expect(page).toHaveURL(urlFor('/review-notification'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-102",
+      "statement": "The 'add a new branch address' link on the contact address page opens the address book's add-address lookup (/address-book/add/lookup).",
+      "kind": "integration",
+      "ref": "e2e/consignment-parties.fit.spec.js:391-396",
+      "quote": "await page.locator('main').getByRole('link', { name: 'add a new branch address' }).click()\n    await expect(page).toHaveURL(/\\/address-book\\/add\\/lookup/)",
+      "confidence": "verbatim",
+      "note": "The URL check is a loose regex, so it does not prove whether the address book page is inside the /design-release-2.1 mount, or that the user is brought back to the contact page afterwards."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-103",
+      "statement": "Every error summary in this part has the title 'There is a problem'.",
+      "kind": "copy",
+      "ref": "e2e/support/journey.js:39-44",
+      "quote": "await expect(summary.locator('.govuk-error-summary__title')).toHaveText('There is a problem')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-104",
+      "statement": "The suite asserts no validation error for the CPH number: no test covers a non-numeric or wrongly sized county, parish or holding number.",
+      "kind": "rule",
+      "ref": "e2e/consignment-parties.fit.spec.js:97-135",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Only a partial answer (silently not stored) and a full valid answer are tested."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-105",
+      "statement": "The suite asserts no format validation for the email address or phone number on the add-address page or the per-animal permanent address form.",
+      "kind": "rule",
+      "ref": "e2e/consignment-parties.fit.spec.js:210-269,329-342",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Only the 'Enter ...' blank-field errors are asserted."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-106",
+      "statement": "The suite does not show what a successful per-animal 'Enter a new address' saves or displays on the roles page.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:329-355",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-107",
+      "statement": "The suite does not exercise 'Save and return to hub' on the CPH number, permanent address or contact address pages, nor 'Save and select' on a manual (place of origin or consignor) add-address page.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:97-140,299-398",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-108",
+      "statement": "The suite does not say what happens when /permanent-address is visited for a non-pet (cattle) consignment, the counterpart of the CPH redirect for pets.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:32-67,358-362",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-109",
+      "statement": "The suite does not assert where each 'Change' link on the completed roles page leads, nor which roles carry the 'Same as place of origin' and 'Same as consignee' buttons.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:133,143-160",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-110",
+      "statement": "The suite does not test the roles page with a pig consignment, though the file states the CPH number applies to cattle and pigs.",
+      "kind": "rule",
+      "ref": "e2e/consignment-parties.fit.spec.js:10",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-111",
+      "statement": "The contact address options are branch addresses of the user's organisations: one organisation can appear with more than one branch, each with its own value (such as aberdeen-livestock-harbour-road and aberdeen-livestock-union-street).",
+      "kind": "data",
+      "ref": "e2e/consignment-parties.fit.spec.js:386; e2e/support/journey.js:231",
+      "quote": "await page.locator('input[name=\"contactAddressId\"][value=\"aberdeen-livestock-harbour-road\"]').check()",
+      "confidence": "inferred",
+      "note": "The spec checks the value aberdeen-livestock-harbour-road while the shared helper defaults to aberdeen-livestock-union-street; the radio labels show only the organisation name, so two Aberdeen Livestock Ltd branches are inferred from the two values."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-112",
+      "statement": "The suite asserts no back link on the contact address page, unlike every other page in this part.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:366-389",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p3-113",
+      "statement": "The suite does not show which role the address saved with 'Save and select' on the consignee add-address page is assigned to: it asserts only the return to /roles-and-addresses with no error.",
+      "kind": "behaviour",
+      "ref": "e2e/consignment-parties.fit.spec.js:263-269",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

@@ -1,0 +1,482 @@
+{
+  "batch": "la-templates",
+  "changes": [
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-001",
+      "requirementName": "The Manage templates page introduces the user's templates",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The Manage templates page introduces the user's templates\n**ID**: REQ-TEMPLATES-001\nThe page MUST be titled \"Manage templates\", with the browser title \"Manage templates - Import notification service - GOV.UK\", MUST show the line \"Select, manage or create new notification templates\" under its heading, MUST start with its heading with no Back link, and MUST show the Alpha phase banner whose feedback link goes to the service's feedback address.\n\n#### Scenario: A signed-in user opens Manage templates\n**ID**: SCN-TEMPLATES-001-A\n- **GIVEN** the user is signed in\n- **WHEN** they open Manage templates\n- **THEN** the browser title reads \"Manage templates - Import notification service - GOV.UK\"\n- **AND** the page heading reads \"Manage templates\"\n- **AND** the line \"Select, manage or create new notification templates\" is shown under it\n\n#### Scenario: Manage templates offers no Back link\n**ID**: SCN-TEMPLATES-001-B\n- **GIVEN** the user is signed in\n- **WHEN** they open Manage templates\n- **THEN** the page starts with its heading\n- **AND** no Back link is offered\n\n#### Scenario: Manage templates shows the Alpha phase banner\n**ID**: SCN-TEMPLATES-001-C\n- **GIVEN** the user is signed in\n- **WHEN** they open Manage templates\n- **THEN** the Alpha phase banner reads \"This is a new service. Help us improve it and give your feedback by email.\"\n- **AND** its feedback link goes to the same feedback email address the service's other pages use",
+      "summary": "New page. Manage templates has a heading, a line explaining it, no Back link and the Alpha phase banner.\n\nMain has no templates.",
+      "cards": [
+        "t-manage-templates"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-002",
+      "requirementName": "The page lists the user's templates under \"My templates\" with a results count",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The page lists the user's templates under \"My templates\" with a results count\n**ID**: REQ-TEMPLATES-002\nThe page MUST list the user's saved templates under the heading \"My templates\", MUST show a results count reading \"Show 0 of 0 results\" when there are none and \"Show 1-N of N results\" for N templates, all on one page, and MUST offer no filter, search, \"Sort by\" control or pagination control.\n\n#### Scenario: A user with no saved templates sees a zero count and an empty list\n**ID**: SCN-TEMPLATES-002-A\n- **GIVEN** the user has saved no templates\n- **WHEN** they open Manage templates\n- **THEN** the heading \"My templates\" is shown\n- **AND** the count reads \"Show 0 of 0 results\"\n- **AND** no template is listed and no empty-state message is shown\n\n#### Scenario: Manage templates offers no filter, search, sort or pagination\n**ID**: SCN-TEMPLATES-002-B\n- **GIVEN** the user is signed in\n- **WHEN** they open Manage templates\n- **THEN** no filter, no search box, no \"Sort by\" control and no pagination control is offered",
+      "summary": "New list under 'My templates' with a results count, such as 'Show 0 of 0 results'. There is no filter, search, sort or paging.",
+      "cards": [
+        "t-manage-templates"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-003",
+      "requirementName": "A user's templates are their own and are kept between sessions",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: A user's templates are their own and are kept between sessions\n**ID**: REQ-TEMPLATES-003\nTemplates MUST be stored by the service and kept between sessions, and the list MUST hold only templates the signed-in user has really saved, newest saved first, with no example templates, no template still being created and never another user's.\n\n#### Scenario: A user who has never saved a template sees no examples\n**ID**: SCN-TEMPLATES-003-A\n- **GIVEN** the user has never saved a template\n- **WHEN** their templates are listed\n- **THEN** no template is listed\n\n#### Scenario: Only the user's own templates are listed, newest first\n**ID**: SCN-TEMPLATES-003-B\n- **GIVEN** the user has saved two templates and another user has saved one\n- **WHEN** the user's templates are listed\n- **THEN** only the user's two templates are listed, the newer first\n\n#### Scenario: A template still being created is not listed\n**ID**: SCN-TEMPLATES-003-C\n- **GIVEN** the user has named a template and not yet saved it\n- **WHEN** their templates are listed\n- **THEN** that template is not listed\n\n#### Scenario: Of two templates saved one after the other, the later is listed first\n**ID**: SCN-TEMPLATES-003-D\n- **GIVEN** the user started a template, then started a second, saved the second and then saved the first\n- **WHEN** their templates are listed\n- **THEN** the first-started template is listed above the second\n\n#### Scenario: A saved template is still listed after signing out and back in\n**ID**: SCN-TEMPLATES-003-E\n- **GIVEN** the user has saved a template\n- **WHEN** they sign out, sign back in and open Manage templates\n- **THEN** the template is listed\n\n#### Scenario: Another user neither sees nor opens a user's template\n**ID**: SCN-TEMPLATES-003-F\n- **GIVEN** a user has saved a template\n- **WHEN** another signed-in user opens Manage templates\n- **THEN** the template is not listed\n- **AND** opening the template's address shows Manage templates, without the template\n\n#### Scenario: A saved template is never listed among the user's notifications\n**ID**: SCN-TEMPLATES-003-G\n- **GIVEN** the user has saved a template\n- **WHEN** they open their notification dashboard\n- **THEN** the template is not listed among their notifications\n\n#### Scenario: A template changed after saving is listed first\n**ID**: SCN-TEMPLATES-003-H\n- **GIVEN** the user has saved two templates\n- **AND** they change a section of the older one and save the change\n- **WHEN** their templates are listed\n- **THEN** the changed template is listed first",
+      "summary": "New rule. Templates are private to the person who saved them, kept between sessions and listed newest first, with no example templates.",
+      "cards": [
+        "t-manage-templates",
+        "t-template-save"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-004",
+      "requirementName": "Manage templates offers Create new template",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: Manage templates offers Create new template\n**ID**: REQ-TEMPLATES-004\nThe page MUST offer a primary \"Create new template\" button that opens the question \"What are you importing?\", and following it MUST store nothing until a form in the journey is submitted.\n\n#### Scenario: Create new template opens the type question\n**ID**: SCN-TEMPLATES-004-A\n- **GIVEN** the user is on Manage templates\n- **WHEN** they select \"Create new template\"\n- **THEN** the question \"What are you importing?\" is shown\n\n#### Scenario: Leaving after following the button adds nothing\n**ID**: SCN-TEMPLATES-004-B\n- **GIVEN** the user followed \"Create new template\" and has submitted nothing\n- **WHEN** they return to Manage templates\n- **THEN** the count of templates is the same as before\n- **AND** none of the user's draft notifications has changed",
+      "summary": "New button. 'Create new template' opens the 'What are you importing?' question and saves nothing until a form is submitted.",
+      "cards": [
+        "t-template-type-question",
+        "t-manage-templates"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-005",
+      "requirementName": "The template name page asks what the template is called",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The template name page asks what the template is called\n**ID**: REQ-TEMPLATES-005\nThe page MUST be titled \"Enter template name\" with the browser title \"Enter template name - Import notification service - GOV.UK\" and the caption \"Create a new template\", MUST ask one text question named by the heading with no hint, and MUST end with \"Save and continue\" and a \"Cancel and return to manage templates\" link to Manage templates. It MUST accept a blank name, MUST apply no length, character or duplicate-name rule, and MUST trim spaces around a name.\n\n#### Scenario: The template name page shows its title, caption and controls\n**ID**: SCN-TEMPLATES-005-A\n- **GIVEN** the user has chosen a type for a new template\n- **WHEN** the template name page is shown\n- **THEN** the browser title is \"Enter template name - Import notification service - GOV.UK\"\n- **AND** the caption \"Create a new template\" is shown above the heading \"Enter template name\"\n- **AND** one text input is shown, named by the heading, with no hint\n- **AND** the page offers \"Save and continue\" and the link \"Cancel and return to manage templates\"\n- **AND** the link goes to Manage templates\n\n#### Scenario: Back goes to the type question when a type has been chosen\n**ID**: SCN-TEMPLATES-005-B\n- **GIVEN** a type has been chosen for the template in progress\n- **AND** the template name page is shown\n- **WHEN** the user follows Back\n- **THEN** the type question is shown\n\n#### Scenario: Back goes to Manage templates when no type has been chosen\n**ID**: SCN-TEMPLATES-005-E\n- **GIVEN** no type has been chosen\n- **AND** the template name page is shown\n- **WHEN** the user follows Back\n- **THEN** Manage templates is shown\n\n#### Scenario: A blank or padded name moves on to Origin of the import\n**ID**: SCN-TEMPLATES-005-C\n- **GIVEN** the template name page is shown\n- **WHEN** the user selects \"Save and continue\" with a blank name, or with a name padded with spaces\n- **THEN** \"Origin of the import\" is shown with no error\n- **AND** a padded name is shown without the surrounding spaces\n\n#### Scenario: Going back shows the name entered, and a new template starts empty\n**ID**: SCN-TEMPLATES-005-D\n- **GIVEN** the user has named a template and reached \"Origin of the import\"\n- **WHEN** they follow Back\n- **THEN** the template name page shows the name already entered\n- **AND** starting another new template shows the name empty",
+      "summary": "New page, 'Enter template name'. A blank name is accepted, spaces are trimmed and there is no length or duplicate-name rule.",
+      "cards": [
+        "t-template-name"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-006",
+      "requirementName": "A template is answered on the same journey pages, in template mode",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: A template is answered on the same journey pages, in template mode\n**ID**: REQ-TEMPLATES-006\nA template MUST be answered on the same pages as a notification, with the same questions, hints and stored answers and each page's own answer checks, so that a change to a journey page shows in template mode. Each page MUST show a \"Template\" tag with the template's name above its section caption, and template mode MUST NOT offer the upload documents page or the declaration.\n\n#### Scenario: A template page shows the Template tag and the template's name\n**ID**: SCN-TEMPLATES-006-A\n- **GIVEN** the user is answering a template\n- **WHEN** a journey page is shown\n- **THEN** a \"Template\" tag and the template's name are shown above the section caption\n\n#### Scenario: A template asks the same questions as a notification\n**ID**: SCN-TEMPLATES-006-B\n- **GIVEN** the user is answering a template\n- **WHEN** \"Origin of the import\" is shown\n- **THEN** it asks the same questions with the same hints and guidance as it does for a notification\n\n#### Scenario: A template page refuses a malformed answer\n**ID**: SCN-TEMPLATES-006-C\n- **GIVEN** the user is answering a template on \"Origin of the import\"\n- **WHEN** they select \"Save and continue\" with a region code required but empty, a region code over 5 characters, or an internal reference over 58 characters\n- **THEN** the page is shown again with an error summary\n- **AND** the browser title starts \"Error: \"\n\n#### Scenario: A template offers no upload documents or declaration\n**ID**: SCN-TEMPLATES-006-D\n- **GIVEN** the user is answering a template\n- **WHEN** they try to open the upload documents page or the declaration for it\n- **THEN** the page is not found\n- **AND** the run through the pages skips the upload documents page\n\n#### Scenario: Origin of the import ends with Save and continue alone while a template is created\n**ID**: SCN-TEMPLATES-006-E\n- **GIVEN** the user has named a new template\n- **WHEN** Origin of the import is shown\n- **THEN** \"Save and continue\" is the only control\n- **AND** no \"Save and return to overview\" and no \"Cancel and return to overview\" is offered\n\n#### Scenario: Saving Origin of the import moves on to What are you importing? for the template\n**ID**: SCN-TEMPLATES-006-F\n- **GIVEN** the user has named a new template and Origin of the import is shown\n- **WHEN** they answer it and select \"Save and continue\"\n- **THEN** \"What are you importing?\" is shown for the template",
+      "summary": "New rule. A template is answered on the same pages as a notification, marked with a Template tag and its name, with no documents or declaration.",
+      "cards": [
+        "t-template-mode-pages"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-007",
+      "requirementName": "Starting and naming a template creates no notification",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: Starting and naming a template creates no notification\n**ID**: REQ-TEMPLATES-007\nThe system MUST hold a template being created, with its chosen type and name, apart from the user's saved templates, MUST NOT list it on Manage templates until it is first saved, MUST NOT create a draft notification when a template is started or named, and MUST leave the user's draft notifications unchanged.\n\n#### Scenario: Naming a template leaves the draft notifications unchanged\n**ID**: SCN-TEMPLATES-007-A\n- **GIVEN** the user has chosen a type and named a new template\n- **WHEN** \"Origin of the import\" is shown for the template\n- **THEN** no notification reference and no Draft tag are shown\n- **AND** the user's draft notifications are the same as before",
+      "summary": "New rule. Starting or naming a template creates no notification and changes none of the trader's drafts.",
+      "cards": [
+        "t-template-mode-pages"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-008",
+      "requirementName": "While a template is being created, the Overview is the template's task list",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: While a template is being created, the Overview is the template's task list\n**ID**: REQ-TEMPLATES-008\nThe template's Overview MUST show the heading \"Overview\", a grey \"Template\" tag with the template's name in place of the draft status and reference, the \"Your commodities\" totals for animals and packages (0 and 0 before any are entered) and the list heading \"Template tasklist\".\n\n#### Scenario: The template's Overview shows the Template tag and name and the Template tasklist\n**ID**: SCN-TEMPLATES-008-A\n- **GIVEN** the user is creating a template\n- **WHEN** the template's Overview is shown\n- **THEN** the heading \"Overview\" is shown\n- **AND** a \"Template\" tag and the template's name are shown in place of the draft status and the notification reference\n- **AND** the \"Your commodities\" totals read 0 animals and 0 packages\n- **AND** the list is headed \"Template tasklist\", not \"Notification tasklist\"",
+      "summary": "New. While a template is created the Overview shows a Template tag and the template's name, and the list is headed 'Template tasklist'.",
+      "cards": [
+        "t-template-task-list"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-009",
+      "requirementName": "The template's task list has five sections and no documents",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The template's task list has five sections and no documents\n**ID**: REQ-TEMPLATES-009\nThe template's task list MUST group the tasks under \"1. About the consignment\", \"2. Description of the goods\", \"3. Transport and arrival\", \"4. Consignment parties\" and \"5. Contact address\", with no Documents section and no \"Upload documents\" task, and nothing on the page MUST link to Upload documents or the declaration.\n\n#### Scenario: The template's task list has five sections and no Documents\n**ID**: SCN-TEMPLATES-009-A\n- **GIVEN** the user is creating a template\n- **WHEN** the template's Overview is shown\n- **THEN** the sections read \"1. About the consignment\", \"2. Description of the goods\", \"3. Transport and arrival\", \"4. Consignment parties\" and \"5. Contact address\"\n- **AND** no Documents section and no \"Upload documents\" task is shown\n- **AND** nothing on the page links to Upload documents or the declaration",
+      "summary": "New. The template's task list has five sections and no Documents section or Upload documents task.",
+      "cards": [
+        "t-template-task-list"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-010",
+      "requirementName": "The template's tasks are the notification's tasks",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The template's tasks are the notification's tasks\n**ID**: REQ-TEMPLATES-010\nThe template's task list MUST show the notification task list's own tasks, titles and hints for the same answers, each tagged \"Complete\" in green when answered and \"To do\" in blue otherwise, and each opening its question page for the template.\n\n#### Scenario: The template's tasks are the notification's tasks, tagged Complete or To do, each opening within the template\n**ID**: SCN-TEMPLATES-010-A\n- **GIVEN** the user is creating a template and has answered Origin of the import and \"What are you importing?\"\n- **WHEN** the template's Overview is shown\n- **THEN** it lists the tasks the notification task list lists for the same answers, apart from \"Upload documents\"\n- **AND** the answered tasks are tagged \"Complete\" and the others \"To do\"\n- **AND** the \"Roles and addresses\" task alone carries its hint, as on the notification task list\n- **AND** each task opens its question page for the template\n\n#### Scenario: A template's Arrival details task is complete without an arrival date\n**ID**: SCN-TEMPLATES-010-B\n- **GIVEN** the user is creating a template and has answered the port of entry, means of transport, transport identification and transport document reference\n- **WHEN** the template's Overview is shown\n- **THEN** the \"Arrival details\" task is tagged \"Complete\"",
+      "summary": "New. The template shows the notification's own tasks, tagged Complete or To do.\n\nArrival details is complete without an arrival date.",
+      "cards": [
+        "t-template-task-list"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-011",
+      "requirementName": "The template's task list ends with Review template and Return to manage templates",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The template's task list ends with Review template and Return to manage templates\n**ID**: REQ-TEMPLATES-011\nThe template's task list MUST end with a primary \"Review template\" button to the template review and a secondary \"Return to manage templates\" button to Manage templates, and MUST NOT offer \"Save template\".\n\n#### Scenario: The template's task list ends with Review template and Return to manage templates\n**ID**: SCN-TEMPLATES-011-A\n- **GIVEN** the user is creating a template\n- **WHEN** the template's Overview is shown\n- **THEN** it ends with the primary button \"Review template\" and the secondary button \"Return to manage templates\"\n- **AND** \"Return to manage templates\" opens Manage templates\n- **AND** no \"Save template\" button is offered",
+      "summary": "New. The task list ends with 'Review template' and 'Return to manage templates', and has no 'Save template' button.",
+      "cards": [
+        "t-template-task-list"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-012",
+      "requirementName": "'What are you importing?' is asked in template mode and returns to the template's task list",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: 'What are you importing?' is asked in template mode and returns to the template's task list\n**ID**: REQ-TEMPLATES-012\nWhile a template is being created, \"What are you importing?\" MUST show the \"Template\" tag and the template's name and MUST have a Back link to Origin of the import. It MUST offer \"Save and continue\", \"Save and return to overview\" and a \"Cancel and return to overview\" link to the template's task list, and \"Save and continue\" MUST return to the template's task list.\n\n#### Scenario: What are you importing? in template mode shows the Template tag, Back to Origin and all three controls\n**ID**: SCN-TEMPLATES-012-A\n- **GIVEN** the user is creating a template and has answered Origin of the import\n- **WHEN** \"What are you importing?\" is shown\n- **THEN** a \"Template\" tag and the template's name are shown\n- **AND** the Back link goes to Origin of the import\n- **AND** \"Save and continue\", \"Save and return to overview\" and the link \"Cancel and return to overview\" are offered\n- **AND** the link goes to the template's task list\n\n#### Scenario: Saving What are you importing? returns to the template's task list\n**ID**: SCN-TEMPLATES-012-B\n- **GIVEN** the user is creating a template and has chosen a species on \"What are you importing?\"\n- **WHEN** they select \"Save and continue\"\n- **THEN** the template's task list is shown",
+      "summary": "New. 'What are you importing?' in template mode goes back to Origin and returns to the template's task list once saved.",
+      "cards": [
+        "t-template-mode-pages"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-013",
+      "requirementName": "The template review is titled \"Review your template\" and shows no errors",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The template review is titled \"Review your template\" and shows no errors\n**ID**: REQ-TEMPLATES-013\n\"Review template\" MUST open the review page with the browser title \"Review your template - Import notification service - GOV.UK\" and the heading \"Review your template\" under the \"Template\" tag and the template's name, and MUST show no error summary and no error on any card, however much of the template is answered.\n\n#### Scenario: Review template opens Review your template under the Template tag and name, with no errors\n**ID**: SCN-TEMPLATES-013-A\n- **GIVEN** the user is creating a template and is on its task list\n- **WHEN** they select \"Review template\"\n- **THEN** the page is titled \"Review your template\" with the browser title \"Review your template - Import notification service - GOV.UK\"\n- **AND** a \"Template\" tag and the template's name are shown\n- **AND** no error summary and no card error is shown",
+      "summary": "New page, 'Review your template'. It never shows an error summary or card errors, however much is unanswered.",
+      "cards": [
+        "t-template-review"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-014",
+      "requirementName": "The template review shows the template task list's five sections",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The template review shows the template task list's five sections\n**ID**: REQ-TEMPLATES-014\nThe template review MUST show \"1. About the consignment\", \"2. Description of the goods\", \"3. Transport and arrival\", \"4. Consignment parties\" and \"5. Contact address\", the template task list's sections, with no uploaded documents section and no \"Arrival date at destination\" row, and MUST read \"Not applicable\" for every unanswered row.\n\n#### Scenario: The template review shows five sections, no documents or arrival date, and Not applicable for unanswered rows\n**ID**: SCN-TEMPLATES-014-A\n- **GIVEN** the user is creating a template and has answered only some questions\n- **WHEN** they open the template review\n- **THEN** the five sections of the template's task list are shown, in order\n- **AND** no uploaded documents section and no \"Arrival date at destination\" row is shown\n- **AND** every unanswered row reads \"Not applicable\"",
+      "summary": "New. The template review shows five sections, no documents or arrival date row, and 'Not applicable' for unanswered rows.",
+      "cards": [
+        "t-template-review"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-015",
+      "requirementName": "The template review shows the rows the template's commodity asks for",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The template review shows the rows the template's commodity asks for\n**ID**: REQ-TEMPLATES-015\nFor cattle, the \"Additional details\" card MUST hold \"Certified for\" and \"Includes unweaned animals\", the \"Addresses\" card MUST add \"County parish holding (CPH) number\", no \"Identification details\" table MUST be shown while no animal is identified, and the \"Main import reason\" card MUST hold the single row \"Main import reason\" while no reason is chosen.\n\n#### Scenario: A cattle template's review shows the cattle rows and one main reason row\n**ID**: SCN-TEMPLATES-015-A\n- **GIVEN** the user is creating a template for cattle\n- **WHEN** they open the template review\n- **THEN** \"Additional details\" holds \"Certified for\" and \"Includes unweaned animals\"\n- **AND** \"Addresses\" holds \"County parish holding (CPH) number\"\n- **AND** no \"Identification details\" heading is shown\n- **AND** the \"Main import reason\" card holds the single row \"Main import reason\"",
+      "summary": "New. For cattle the review adds the 'Certified for', 'Includes unweaned animals' and CPH number rows.\n\nIt also adds one 'Main import reason' row until a reason is chosen.",
+      "cards": [
+        "t-template-review"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-016",
+      "requirementName": "The template review's Back link returns to the template's task list",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The template review's Back link returns to the template's task list\n**ID**: REQ-TEMPLATES-016\nThe template review MUST have a Back link that opens the template's task list.\n\n#### Scenario: Back from the template review opens the template's task list\n**ID**: SCN-TEMPLATES-016-A\n- **GIVEN** the user is on the template review\n- **WHEN** they select the Back link\n- **THEN** the template's task list is shown",
+      "summary": "New. Back on the template review returns to the template's task list.",
+      "cards": [
+        "t-template-review"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-017",
+      "requirementName": "The template review's Change links open each question page for the template in progress",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The template review's Change links open each question page for the template in progress\n**ID**: REQ-TEMPLATES-017\nEach card's Change link MUST open its question page for the template being created, showing the \"Template\" tag and the controls that page shows while a template is created: \"Save and continue\" alone on Origin of the import, and \"Save and continue\", \"Save and return to overview\" and \"Cancel and return to overview\" to the template's task list on the contact address page. A page MUST NOT offer a bare \"Save and return\" or \"Cancel\".\n\n#### Scenario: Change opens Origin of the import and the contact address page for the template with their template-creation controls\n**ID**: SCN-TEMPLATES-017-A\n- **GIVEN** the user is on the template review\n- **WHEN** they select \"Change\" on the \"Origin of import\" card\n- **THEN** Origin of the import is shown with the \"Template\" tag\n- **AND** \"Save and continue\" is offered without \"Save and return to overview\"\n- **WHEN** they return to the template review and select \"Change\" on the contact address card\n- **THEN** the contact address page is shown with the \"Template\" tag\n- **AND** \"Save and continue\", \"Save and return to overview\" and the link \"Cancel and return to overview\" are offered\n- **AND** the link goes to the template's task list\n- **AND** no bare \"Save and return\" and no bare \"Cancel\" is offered",
+      "summary": "New. Each Change link on the template review opens that page for the template being created, with the controls used while creating.",
+      "cards": [
+        "t-template-review"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-018",
+      "requirementName": "Save template saves the template instead of going to the declaration",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: Save template saves the template instead of going to the declaration\n**ID**: REQ-TEMPLATES-018\nThe template review MUST end with the button \"Save template\", and selecting it MUST save the template, whatever is answered, and open Manage templates, where the template is now listed first and the count of templates is one higher. It MUST NOT open the declaration.\n\n#### Scenario: Save template saves the template and opens Manage templates, which lists it\n**ID**: SCN-TEMPLATES-018-A\n- **GIVEN** the user is on the template review\n- **WHEN** they select \"Save template\"\n- **THEN** Manage templates is shown\n- **AND** the template is listed there\n- **AND** the declaration is not shown\n\n#### Scenario: A part-answered template is saved, listed first and counted\n**ID**: SCN-TEMPLATES-018-B\n- **GIVEN** the user is on the review of a template with only some sections answered\n- **WHEN** they select \"Save template\"\n- **THEN** Manage templates is shown\n- **AND** the template is the first one listed\n- **AND** the count reads one more than before, such as \"Show 1-1 of 1 results\" for the user's first template",
+      "summary": "New. 'Save template' saves the template even if only partly answered, lists it first on Manage templates and does not open the declaration.",
+      "cards": [
+        "t-template-save",
+        "t-template-review"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-019",
+      "requirementName": "Saving a template shows a success banner on Manage templates once",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: Saving a template shows a success banner on Manage templates once\n**ID**: REQ-TEMPLATES-019\nAfter Save template, Manage templates MUST show a GOV.UK success notification banner with the role alert, titled \"Success\" and headed \"<template title> saved to templates\". It MUST show only on the first Manage templates after the save, so it is gone on reload, and MUST NOT dismiss itself, with or without JavaScript.\n\n#### Scenario: Manage templates confirms a saved template with a Success banner\n**ID**: SCN-TEMPLATES-019-A\n- **GIVEN** the user has just saved a template named \"Weekly cattle\"\n- **WHEN** Manage templates is shown\n- **THEN** a success banner with the role alert is shown, titled \"Success\"\n- **AND** it is headed \"Weekly cattle saved to templates\"\n\n#### Scenario: The banner is gone on reload\n**ID**: SCN-TEMPLATES-019-B\n- **GIVEN** Manage templates is showing the banner for a template just saved\n- **WHEN** the user reloads the page\n- **THEN** the banner is not shown\n\n#### Scenario: The banner shows without JavaScript\n**ID**: SCN-TEMPLATES-019-C\n- **GIVEN** the user has JavaScript turned off\n- **WHEN** they save a template\n- **THEN** Manage templates shows the Success banner and it stays on the page",
+      "summary": "New. After saving, Manage templates shows a Success banner once.\n\nIt is gone on reload and never dismisses itself.",
+      "cards": [
+        "t-template-save"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-020",
+      "requirementName": "A template saved with no name is titled \"Untitled template\"",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: A template saved with no name is titled \"Untitled template\"\n**ID**: REQ-TEMPLATES-020\nA template saved with a blank name MUST be titled \"Untitled template\" on its card, and the banner MUST read \"Untitled template saved to templates\".\n\n#### Scenario: A template saved with no name is listed first as Untitled template\n**ID**: SCN-TEMPLATES-020-A\n- **GIVEN** the user named a template with a blank name\n- **WHEN** they save it\n- **THEN** the banner reads \"Untitled template saved to templates\"\n- **AND** the template is listed first, titled \"Untitled template\"",
+      "summary": "New. A template saved with a blank name is called 'Untitled template' on its card and in the banner.",
+      "cards": [
+        "t-template-save",
+        "t-template-name"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-021",
+      "requirementName": "Each template is a card with its category, title, View template and Use template",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: Each template is a card with its category, title, View template and Use template\n**ID**: REQ-TEMPLATES-021\nEach template MUST be a card labelled \"Template <title>\", showing the template's category (\"Live animals\" or \"Germinal products\") above its title as a level 3 heading, a \"View template\" link to the template's page and, beside it, a secondary \"Use template\" button that submits a form.\n\n#### Scenario: A saved template's card shows its category, title, View template and Use template\n**ID**: SCN-TEMPLATES-021-A\n- **GIVEN** the user has saved a live animals template named \"Weekly cattle\"\n- **WHEN** Manage templates is shown\n- **THEN** a card labelled \"Template Weekly cattle\" is shown\n- **AND** it shows the category \"Live animals\" above the title \"Weekly cattle\", a level 3 heading\n- **AND** it offers the link \"View template\" to the template's page\n- **AND** it offers a secondary button \"Use template\" that submits a form",
+      "summary": "New. Each template is a card with its category, title, a 'View template' link and a 'Use template' button.",
+      "cards": [
+        "t-template-save"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-022",
+      "requirementName": "A saved template's page is titled with its name under the caption Templates",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: A saved template's page is titled with its name under the caption Templates\n**ID**: REQ-TEMPLATES-022\n\"View template\" MUST open the template's page, headed with the template's title (\"Untitled template\" when it was saved with no name) under the caption \"Templates\", with the browser title \"<title> - Import notification service - GOV.UK\".\n\n#### Scenario: View template opens the template's page\n**ID**: SCN-TEMPLATES-022-A\n- **GIVEN** the user has saved a template named \"Weekly cattle\"\n- **WHEN** they select \"View template\" on its card\n- **THEN** the page is headed \"Weekly cattle\" under the caption \"Templates\"\n- **AND** the browser title is \"Weekly cattle - Import notification service - GOV.UK\"\n- **AND** no \"Template\" tag or status strip is shown above the caption",
+      "summary": "New page. A saved template has its own page headed with its name under the caption 'Templates'.",
+      "cards": [
+        "t-template-page"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-023",
+      "requirementName": "The template's page shows the date it was created",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The template's page shows the date it was created\n**ID**: REQ-TEMPLATES-023\nThe page MUST show \"Date created: <d Month yyyy>\" with the day the template was saved, or the day one of its sections was last changed and saved.\n\n#### Scenario: The page shows the day the template was saved\n**ID**: SCN-TEMPLATES-023-A\n- **GIVEN** the user saved a template today\n- **WHEN** they open its page\n- **THEN** it shows \"Date created:\" followed by today's date, written with the month in full\n\n#### Scenario: Changing a section resets the date created\n**ID**: SCN-TEMPLATES-023-B\n- **GIVEN** the user has opened a saved template's page\n- **WHEN** they change a section and save the change\n- **THEN** the page shows \"Date created:\" followed by the day of that save",
+      "summary": "New. The template's page shows 'Date created', which moves to the day a section was last changed and saved.",
+      "cards": [
+        "t-template-page",
+        "t-template-change"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-024",
+      "requirementName": "The template's page offers Use template and Delete, and no Edit",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The template's page offers Use template and Delete, and no Edit\n**ID**: REQ-TEMPLATES-024\nThe page MUST offer a primary \"Use template\" button that submits a form and a red warning \"Delete\" button, and MUST NOT offer an \"Edit\" button or link.\n\n#### Scenario: The page offers Use template and Delete but no Edit\n**ID**: SCN-TEMPLATES-024-A\n- **GIVEN** the user has opened a saved template's page\n- **WHEN** the page is shown\n- **THEN** it offers a primary button \"Use template\" that submits a form\n- **AND** it offers a red warning button \"Delete\"\n- **AND** it offers no \"Edit\" button or link",
+      "summary": "New. The template's page offers 'Use template' and a red 'Delete' button, and no Edit.",
+      "cards": [
+        "t-template-page"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-025",
+      "requirementName": "The template's page goes Back to Manage templates",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The template's page goes Back to Manage templates\n**ID**: REQ-TEMPLATES-025\nThe page MUST offer a Back link to Manage templates.\n\n#### Scenario: Back goes to Manage templates\n**ID**: SCN-TEMPLATES-025-A\n- **GIVEN** the user has opened a saved template's page\n- **WHEN** they select Back\n- **THEN** Manage templates is shown",
+      "summary": "New. Back on the template's page goes to Manage templates.",
+      "cards": [
+        "t-template-page"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-026",
+      "requirementName": "The template's page shows its answers in the review's cards",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: The template's page shows its answers in the review's cards\n**ID**: REQ-TEMPLATES-026\nThe page MUST list the template's answers in the notification review's cards, under \"1. About the consignment\" to \"5. Contact address\", with no documents section and no arrival date. Each card MUST have a Change link to its question page for the template, as MUST the transit countries and each species' number of animals and identification details. Every unanswered row MUST read \"Not applicable\", with no card error or error summary.\n\n#### Scenario: The answers are listed in five numbered sections with a Change link on each card\n**ID**: SCN-TEMPLATES-026-A\n- **GIVEN** the user has opened a saved template's page\n- **WHEN** the page is shown\n- **THEN** the sections are \"1. About the consignment\", \"2. Description of the goods\", \"3. Transport and arrival\", \"4. Consignment parties\" and \"5. Contact address\"\n- **AND** no uploaded documents are shown\n- **AND** every card has a Change link that opens the question page of that card for the template\n\n#### Scenario: A template saved after answering every section shows every saved answer\n**ID**: SCN-TEMPLATES-026-B\n- **GIVEN** the user answered every section of a live animals template and saved it\n- **WHEN** they open its page\n- **THEN** it shows the country and region of origin, internal reference, commodity code, common name and species, the number of animals and packages, the main import reason, the purpose in the market, certified for and unweaned animals\n- **AND** it shows the port of entry, means of transport, transport identification and transport document reference\n- **AND** it shows the transporter's name, address, country, approval number and type, the animal identification details and the CPH number\n- **AND** no arrival date at the port of entry is shown\n\n#### Scenario: A part-answered template's page reads Not applicable and shows no errors\n**ID**: SCN-TEMPLATES-026-C\n- **GIVEN** the user has saved a template with only some sections answered\n- **WHEN** they open its page\n- **THEN** every unanswered row reads \"Not applicable\"\n- **AND** no error summary or card error is shown\n\n#### Scenario: The transit countries and each species' number of animals and identification details have their own Change links\n**ID**: SCN-TEMPLATES-026-D\n- **GIVEN** the user has saved a template with every section answered, arriving overland through transit countries\n- **WHEN** they open its page\n- **THEN** the transit countries, and each species' number of animals and identification details, each have a Change link of their own\n- **AND** each opens its question page for the template",
+      "summary": "New. The template's page shows its answers in the review's five numbered sections, with a Change link on every card and 'Not applicable' for unanswered rows.",
+      "cards": [
+        "t-template-page"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-027",
+      "requirementName": "A template the user cannot open returns them to Manage templates",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: A template the user cannot open returns them to Manage templates\n**ID**: REQ-TEMPLATES-027\nOpening the page of a template that does not exist, or of another user's template, or any of its question pages, MUST show Manage templates.\n\n#### Scenario: A template that does not exist shows Manage templates\n**ID**: SCN-TEMPLATES-027-A\n- **GIVEN** no template has the address the user opens\n- **WHEN** they open it\n- **THEN** Manage templates is shown\n\n#### Scenario: Another user's template shows Manage templates\n**ID**: SCN-TEMPLATES-027-B\n- **GIVEN** another user has saved a template\n- **WHEN** the signed-in user opens that template's address\n- **THEN** Manage templates is shown, without the template\n\n#### Scenario: Changing a template the user cannot open shows Manage templates\n**ID**: SCN-TEMPLATES-027-C\n- **GIVEN** no template has the address the user opens, or another user has saved the template\n- **WHEN** they follow the address of one of its question pages from a Change link\n- **THEN** Manage templates is shown, without the template",
+      "summary": "New. Opening a template that does not exist, or another user's, shows Manage templates instead.",
+      "cards": [
+        "t-template-page"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-028",
+      "requirementName": "A Change link on a saved template's page opens that section's question page for the template, ready to edit",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: A Change link on a saved template's page opens that section's question page for the template, ready to edit\n**ID**: REQ-TEMPLATES-028\nThe question page MUST show the template's answers, MUST leave an unanswered optional field empty, MUST end with the single button \"Save and return\" and a \"Cancel\" link to the template's page with none of \"Save and continue\", \"Save and return to overview\" or \"Cancel and return to overview\", and its Back link MUST open the template's page.\n\n#### Scenario: Change opens the section prefilled, ending with Save and return and Cancel\n**ID**: SCN-TEMPLATES-028-A\n- **GIVEN** the user has opened a saved template's page\n- **WHEN** they select \"Change\" on the \"Origin of import\" card\n- **THEN** Origin of the import is shown with the template's answers\n- **AND** an unanswered optional field is empty\n- **AND** \"Save and return\" is the only submit button\n- **AND** the link \"Cancel\" goes to the template's page\n- **AND** none of \"Save and continue\", \"Save and return to overview\" or \"Cancel and return to overview\" is offered\n\n#### Scenario: Back returns to the template's page\n**ID**: SCN-TEMPLATES-028-B\n- **GIVEN** the user has opened a section of a saved template with a Change link\n- **WHEN** they follow Back\n- **THEN** the template's page is shown",
+      "summary": "New. A Change link opens that section filled in with the template's answers, with only 'Save and return' and 'Cancel'.",
+      "cards": [
+        "t-template-change"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-029",
+      "requirementName": "Save and return updates the template and confirms it on the template's page",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: Save and return updates the template and confirms it on the template's page\n**ID**: REQ-TEMPLATES-029\nSelecting \"Save and return\" MUST update the template and no draft notification, MUST open the template's page showing the new answer and a GOV.UK success notification banner with the role alert, titled \"Success\" and headed \"<template name> has been updated\" (\"Template has been updated\" for a template with no name), MUST show the banner once and never dismiss it itself, with or without JavaScript, and MUST work for every section the page links to.\n\n#### Scenario: Saving a changed section shows the new answer and the Success banner\n**ID**: SCN-TEMPLATES-029-A\n- **GIVEN** the user has opened a section of a saved template named \"Weekly cattle\" with a Change link\n- **WHEN** they change an answer and select \"Save and return\"\n- **THEN** the template's page is shown with the new answer\n- **AND** a success banner with the role alert is shown, titled \"Success\" and headed \"Weekly cattle has been updated\"\n\n#### Scenario: A template with no name is confirmed as 'Template has been updated'\n**ID**: SCN-TEMPLATES-029-B\n- **GIVEN** the user has opened a section of a saved template with no name with a Change link\n- **WHEN** they select \"Save and return\"\n- **THEN** the banner is headed \"Template has been updated\"\n\n#### Scenario: The banner is gone on reload\n**ID**: SCN-TEMPLATES-029-C\n- **GIVEN** the template's page is showing the banner for a section just saved\n- **WHEN** the user reloads the page\n- **THEN** the banner is not shown\n\n#### Scenario: The banner shows and stays without JavaScript\n**ID**: SCN-TEMPLATES-029-D\n- **GIVEN** the user has JavaScript turned off\n- **WHEN** they change a section of a saved template and select \"Save and return\"\n- **THEN** the template's page shows the Success banner and it stays on the page\n\n#### Scenario: Every section the page links to saves and returns to the template's page\n**ID**: SCN-TEMPLATES-029-E\n- **GIVEN** the user has opened a saved template's page with every section answered\n- **WHEN** they follow each Change link on the page and select \"Save and return\"\n- **THEN** each time the template's page is shown with the Success banner\n- **AND** a new answer on the arrival details section is shown on the page\n\n#### Scenario: Changing a template leaves the draft notifications unchanged\n**ID**: SCN-TEMPLATES-029-F\n- **GIVEN** the user has draft notifications on their dashboard\n- **WHEN** they change a section of a saved template and select \"Save and return\"\n- **THEN** the user's draft notifications on the dashboard are the same as before",
+      "summary": "New. 'Save and return' updates the template only, returns to its page and shows a Success banner once, '<name> has been updated'.",
+      "cards": [
+        "t-template-change"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-030",
+      "requirementName": "Leaving a change without saving keeps the template's answers",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: Leaving a change without saving keeps the template's answers\n**ID**: REQ-TEMPLATES-030\nFollowing a Change link MUST store nothing until \"Save and return\" is selected.\n\n#### Scenario: Cancel or Back after editing keeps the saved answer\n**ID**: SCN-TEMPLATES-030-A\n- **GIVEN** the user has opened a section of a saved template with a Change link and typed a new answer\n- **WHEN** they follow \"Cancel\", or Back, instead of saving\n- **THEN** the template's page is shown with the answer it had before\n- **AND** no banner is shown",
+      "summary": "New. Following a Change link saves nothing, so Cancel or Back keeps the old answers.",
+      "cards": [
+        "t-template-change"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-031",
+      "requirementName": "A template never holds an arrival date",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: A template never holds an arrival date\n**ID**: REQ-TEMPLATES-031\nAn arrival date answered on the arrival page while a template is created or changed MUST NOT be kept, so the template's page shows no arrival date and the arrival page opens with the date empty.\n\n#### Scenario: An arrival date answered while creating is not kept\n**ID**: SCN-TEMPLATES-031-A\n- **GIVEN** the user answers the arrival details of a template, including an arrival date, and saves the template\n- **WHEN** they open its page and change its arrival details\n- **THEN** the template's page shows no arrival date\n- **AND** the arrival date field is empty\n\n#### Scenario: An arrival date answered while changing is not kept\n**ID**: SCN-TEMPLATES-031-B\n- **GIVEN** the user has opened the arrival details of a saved template with a Change link\n- **WHEN** they enter an arrival date and select \"Save and return\"\n- **THEN** the template's page shows no arrival date\n- **AND** changing the arrival details again shows the arrival date field empty",
+      "summary": "New rule. An arrival date entered while creating or changing a template is not kept.",
+      "cards": [
+        "t-template-mode-pages",
+        "t-template-change"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-032",
+      "requirementName": "Use template starts a new draft notification from the template",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: Use template starts a new draft notification from the template\n**ID**: REQ-TEMPLATES-032\nSelecting \"Use template\" on a live animals template's card or on its page MUST create and save a new draft notification with a new reference, MUST open that notification's own task list, MUST name the template nowhere on it and MUST leave the user's other drafts unchanged; it MUST work without JavaScript.\n\n#### Scenario: Use template on a card opens a new draft's Notification tasklist\n**ID**: SCN-TEMPLATES-032-A\n- **GIVEN** the user has saved a live animals template\n- **WHEN** they select \"Use template\" on its card\n- **THEN** the Overview of a new notification is shown, with the \"Notification tasklist\" and the status \"Draft\" and a new reference\n- **AND** its sections are \"1. About the consignment\", \"2. Description of the goods\", \"3. Transport and arrival\", \"4. Documents\", \"5. Consignment parties\" and \"6. Contact address\"\n- **AND** it ends with \"Review and submit\" and \"Return to dashboard\", which opens the live animals notification list\n- **AND** nothing on it names the template\n\n#### Scenario: Use template on the template's page starts another draft\n**ID**: SCN-TEMPLATES-032-B\n- **GIVEN** the user has used a template and has opened its page\n- **WHEN** they select \"Use template\"\n- **THEN** the Overview of another new notification is shown with a different reference\n\n#### Scenario: The new notification shows the template's totals\n**ID**: SCN-TEMPLATES-032-C\n- **GIVEN** the user has saved a template with commodity numbers answered\n- **WHEN** they use it\n- **THEN** the notification's Overview shows the template's animal and package totals under \"Your commodities\"\n\n#### Scenario: The new draft is listed and other drafts are unchanged\n**ID**: SCN-TEMPLATES-032-D\n- **GIVEN** the user has a draft notification and a saved template\n- **WHEN** they use the template\n- **THEN** the dashboard lists the new draft and the earlier one, both with the status \"Draft\"\n- **AND** the earlier draft's answers and totals are as they were\n\n#### Scenario: Use template works without JavaScript\n**ID**: SCN-TEMPLATES-032-E\n- **GIVEN** the user has JavaScript turned off and has opened a saved template's page\n- **WHEN** they select \"Use template\"\n- **THEN** the Overview of a new notification is shown with the \"Notification tasklist\"",
+      "summary": "New. 'Use template' creates a new draft notification with a new reference and opens its normal task list, without naming the template.",
+      "cards": [
+        "t-template-use"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-033",
+      "requirementName": "A notification started from a template holds the template's answers, without an arrival date or documents",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: A notification started from a template holds the template's answers, without an arrival date or documents\n**ID**: REQ-TEMPLATES-033\nA notification started from a template MUST hold the answers the template holds, except that it MUST hold no arrival date and no documents, and it MUST show no errors when first opened. It MUST hold each consignment party and the contact address as the template holds them, and where the template has no contact address its place of origin MUST be the contact address.\n\n#### Scenario: A fully answered template's answers are carried into the notification\n**ID**: SCN-TEMPLATES-033-A\n- **GIVEN** the user has saved a template with every section answered\n- **WHEN** they use it and open the review of the new notification\n- **THEN** it shows the template's country of origin, region of origin, internal reference, commodities, species, numbers of animals and packages, animal identification, reason for import, port of entry, means of transport, transport identification, transport document reference and CPH number\n- **AND** it shows the transporter's name, address, country, approval number and type\n\n#### Scenario: Region of origin is carried as the template holds it\n**ID**: SCN-TEMPLATES-033-G\n- **GIVEN** the user has saved a template that answers whether the consignment has a region of origin code\n- **WHEN** they use it and open 'Where is this consignment coming from?'\n- **THEN** the region of origin answer is 'Yes' with the template's code when the template has one\n- **AND** it is 'No' when the template has none\n\n#### Scenario: No arrival date or documents are carried\n**ID**: SCN-TEMPLATES-033-B\n- **GIVEN** the user has saved a template with every section answered\n- **WHEN** they use it\n- **THEN** \"Arrival details\" and \"Upload documents\" read \"To do\" on the new notification's Overview\n- **AND** the tasks the template answered read \"Complete\"\n\n#### Scenario: Certified for falls back to Further keeping\n**ID**: SCN-TEMPLATES-033-C\n- **GIVEN** a template's \"Certified for\" answer is missing or is no longer offered\n- **WHEN** the user uses the template\n- **THEN** \"Certified for\" on the new notification is \"Further keeping\"\n\n#### Scenario: The unweaned answer is No when the commodity asks it and the template has none\n**ID**: SCN-TEMPLATES-033-D\n- **GIVEN** a template's commodity asks whether the consignment contains unweaned animals and the template has no answer\n- **WHEN** the user uses the template\n- **THEN** the new notification's answer is \"No\"\n\n#### Scenario: The purpose is carried only for Internal market\n**ID**: SCN-TEMPLATES-033-E\n- **GIVEN** a template holds a purpose in the internal market\n- **WHEN** the user uses it and the template's reason for import is not \"Internal market\"\n- **THEN** the new notification holds no purpose\n- **AND** when the reason is \"Internal market\" the purpose is carried\n\n#### Scenario: The new notification shows no errors when first opened\n**ID**: SCN-TEMPLATES-033-F\n- **GIVEN** the user has saved a template\n- **WHEN** they use it\n- **THEN** the new notification's Overview shows no error summary\n\n#### Scenario: Each party and the contact address are carried\n**ID**: SCN-TEMPLATES-033-H\n- **GIVEN** the user has saved a template with a place of origin, consignor, consignee, importer, place of destination and contact address\n- **WHEN** they use it and open the review of the new notification\n- **THEN** the \"Addresses\" card shows the template's place of origin, consignor, consignee, importer and place of destination\n- **AND** the \"Contact address\" card shows the template's contact address\n\n#### Scenario: With no contact address, the place of origin becomes the contact address\n**ID**: SCN-TEMPLATES-033-I\n- **GIVEN** the user has saved a template that has a place of origin and no contact address\n- **WHEN** they use it and open the review of the new notification\n- **THEN** the \"Contact address\" card shows the template's place of origin",
+      "summary": "New. A notification started from a template holds the template's answers and parties, but no arrival date or documents, and shows no errors at first.",
+      "cards": [
+        "t-template-use",
+        "t-template-parties"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-034",
+      "requirementName": "A template the user cannot use returns them to Manage templates",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: A template the user cannot use returns them to Manage templates\n**ID**: REQ-TEMPLATES-034\nUsing a template that does not exist, has been deleted or is another user's MUST show Manage templates and MUST create no notification.\n\n#### Scenario: A template that does not exist\n**ID**: SCN-TEMPLATES-034-A\n- **GIVEN** no template has the address the user's \"Use template\" form posts to\n- **WHEN** the form is submitted\n- **THEN** Manage templates is shown\n- **AND** no notification is created\n\n#### Scenario: Another user's template\n**ID**: SCN-TEMPLATES-034-B\n- **GIVEN** another user has saved a template and the signed-in user has its page open\n- **WHEN** the signed-in user selects \"Use template\"\n- **THEN** Manage templates is shown, without the template\n- **AND** no notification is created",
+      "summary": "New. Using a template that is missing, deleted or another user's shows Manage templates and creates nothing.",
+      "cards": [
+        "t-template-use"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-035",
+      "requirementName": "Each template card lists Commodity, Origin, Consignee and Consignor",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: Each template card lists Commodity, Origin, Consignee and Consignor\n**ID**: REQ-TEMPLATES-035\nEach template card MUST list, below \"View template\" and \"Use template\" and in this order, \"Commodity\" (the common name of each of the template's commodities, each named once, in the order they were added, separated by commas), \"Origin\" (the country of origin), \"Consignee\" (the consignee's name) and \"Consignor\" (the consignor's name), each reading \"Not applicable\" when the template has no answer.\n\n#### Scenario: A part-answered template's card reads Not applicable for what it does not hold\n**ID**: SCN-TEMPLATES-035-A\n- **GIVEN** the user has saved a template that answers Origin and a commodity but names no consignee or consignor\n- **WHEN** Manage templates is shown\n- **THEN** the template's card lists \"Commodity\", \"Origin\", \"Consignee\" and \"Consignor\", in that order\n- **AND** \"Commodity\" shows the commodity's common name and \"Origin\" shows the country of origin\n- **AND** \"Consignee\" and \"Consignor\" read \"Not applicable\"\n\n#### Scenario: A template's card names its commodity, origin, consignee and consignor\n**ID**: SCN-TEMPLATES-035-B\n- **GIVEN** the user has saved a template with a commodity, a country of origin, a consignee and a consignor\n- **WHEN** Manage templates is shown\n- **THEN** the template's card shows the commodity's common name, the country of origin, the consignee's name and the consignor's name against \"Commodity\", \"Origin\", \"Consignee\" and \"Consignor\"\n\n#### Scenario: A template saved with nothing answered reads Not applicable for all four\n**ID**: SCN-TEMPLATES-035-C\n- **GIVEN** a saved template holds no answers\n- **WHEN** Manage templates is shown\n- **THEN** the template's card reads \"Not applicable\" for \"Commodity\", \"Origin\", \"Consignee\" and \"Consignor\"",
+      "summary": "New. Each card lists Commodity, Origin, Consignee and Consignor, with 'Not applicable' where the template has no answer.",
+      "cards": [
+        "t-template-save",
+        "t-template-parties"
+      ]
+    },
+    {
+      "capability": "live-animals/notification-templates",
+      "capabilityName": "Live animals: Notification templates",
+      "requirementId": "REQ-TEMPLATES-036",
+      "requirementName": "A saved template's page shows each consignment party and the contact address",
+      "change": "added",
+      "before": "",
+      "after": "### Requirement: A saved template's page shows each consignment party and the contact address\n**ID**: REQ-TEMPLATES-036\nA saved template's page MUST show, in its \"Addresses\" card, the place of origin, consignor, consignee, importer and place of destination each as answered, by name, with the place of origin also showing its address. Its \"Contact address\" card MUST show the contact address as answered or, where none was chosen, the place of origin.\n\n#### Scenario: Each party and the contact address are shown as answered\n**ID**: SCN-TEMPLATES-036-A\n- **GIVEN** the user has saved a template with a place of origin, consignor, consignee, importer, place of destination and contact address\n- **WHEN** they open the template's page\n- **THEN** the \"Addresses\" card shows each of the five parties by name, and the place of origin with its address\n- **AND** the \"Contact address\" card shows the contact address\n\n#### Scenario: With no contact address chosen, the place of origin is shown as the contact address\n**ID**: SCN-TEMPLATES-036-B\n- **GIVEN** the user has saved a template that has a place of origin and no contact address\n- **WHEN** they open the template's page\n- **THEN** the \"Contact address\" card shows the template's place of origin\n- **AND** the \"Addresses\" card reads \"Not applicable\" for a party the template does not hold",
+      "summary": "New. The template's page shows each consignment party by name and the contact address, which falls back to the place of origin.",
+      "cards": [
+        "t-template-parties",
+        "t-template-page"
+      ]
+    }
+  ]
+}

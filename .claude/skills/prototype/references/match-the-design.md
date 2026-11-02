@@ -36,11 +36,15 @@ do it, and say what you chose at the end.
   view model, the two presentation settings: `contentColumnClass` and the
   `classes` of a tag or button the controller builds. Anything else in a
   controller is a journey change: use `references/change-the-journey.md`.
-- Never touch Sass (`*.scss`), `src/client/**`, `webpack.config.js` or
-  `src/server/app/shared/**`. `lint:scss` (in the prototype) must give the
-  same result before and after.
-- No `style` attributes, no inline `<style>` or `<script>`, no new `app-*`
-  classes.
+- Never touch `src/client/**`, `webpack.config.js`,
+  `src/server/app/shared/**`, or Sass outside the release's own `assets/`.
+  `lint:scss` (in the prototype) must pass, and may change only for the
+  release's own files.
+- No `style` attributes and no inline `<style>` or `<script>`. New classes
+  only as `app-<release>-`, and only on a designer's mandate
+  (`references/custom-pattern.md`). With no mandate, no new `app-*` class
+  and nothing in the release's `assets/`, `layout.njk`, `patterns.md` or
+  `mandates.md`.
   `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/.claude/rules/templates.md`
   has the full list of template rules.
 - The header, service navigation, phase banner and footer are always a design
@@ -128,12 +132,18 @@ Use, in this order:
    width, two columns, cards, task list, filter panel, tabs, counts).
 4. `references/match-the-design/nearest-equivalent.md` for bespoke patterns
    (custom dropdowns, modals, sticky bars, chips, header changes).
+5. Before settling on **Nearest**, check MoJ Frontend: its macro, and
+   whether it needs switching on (`components-we-have.md`).
 
 Each difference ends up as exactly one of:
 
 - **Matched**: a GOV.UK class or macro gives the design.
+- **Pattern**: the designer has asked for it, so it is built as a release
+  pattern in the release's `assets/`. Follow `references/custom-pattern.md`
+  for this difference, then come back for the rest.
 - **Nearest**: the nearest GOV.UK option is built, and the difference is
-  logged as a gap.
+  logged as a gap. With no mandate, offer the pattern once in the report
+  (step 9).
 - **Gap only**: nothing can be built (for example the header). Logged as a
   gap.
 
@@ -163,6 +173,10 @@ the heading, table header and columns in
 `references/match-the-design/design-gaps.md`. Create the file if it does not
 exist. Never remove an existing row.
 
+Each **Pattern** gets its entry in `src/server/app/sets/<set-id>/patterns.md`
+instead, in the shape `references/match-the-design/release-patterns.md`
+gives.
+
 ### 7. Check it
 
 ```bash
@@ -191,12 +205,15 @@ In plain English, short:
 
 - what changed on which page, difference by difference
 - what is logged as a design gap, and why
+- each release pattern built, with its one line per rung
+  (`references/custom-pattern.md`, "What to say back")
 - the gallery path and the link to click, for example
   `http://localhost:3103/<set-id>`
 - any new accessibility findings
 - then this line, exactly: "If this should become part of the real service,
   say 'hand this to the real team' and I will prepare a brief and a patch for
-  the plants-frontend team. The design gaps go with it."
+  the plants-frontend team. The design gaps and release patterns go with
+  it."
 
 Do not commit. The designer saves their work with `references/share-my-change.md`.
 

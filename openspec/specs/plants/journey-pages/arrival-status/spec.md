@@ -51,9 +51,9 @@ The system MUST refuse to save an arrival status that is not one of the two offe
 - **THEN** an error is shown
 - **AND** no status is left checked
 
-### Requirement: Saving and continuing with no status chosen is refused, focusing the first option
+### Requirement: Saving with no status chosen is refused on either save control, focusing the first option
 **ID**: REQ-PLANTS-ARRIVAL-STATUS-005
-The system MUST refuse to save and continue from the page when no status has been chosen, showing an error summary, and MUST focus the first status option when the user follows the error. It MUST NOT refuse the page for a missing status on save and return to overview.
+The system MUST refuse to save from the page when no status has been chosen, on save and continue and on save and return to overview alike, showing an error summary, and MUST focus the first status option when the user follows the error.
 
 #### Scenario: Saving with nothing chosen shows the error and focuses the first option
 **ID**: SCN-PLANTS-ARRIVAL-STATUS-005-A
@@ -63,11 +63,13 @@ The system MUST refuse to save and continue from the page when no status has bee
 - **WHEN** they follow the error
 - **THEN** the first status option is focused
 
-#### Scenario: Save and return to overview with nothing chosen reaches Overview without an error
+#### Scenario: Save and return to overview with nothing chosen shows the error and focuses the first option
 **ID**: SCN-PLANTS-ARRIVAL-STATUS-005-B
 - **GIVEN** the user is on the arrival-status page with nothing chosen
 - **WHEN** they save and return to overview
-- **THEN** they return to Overview with no error shown
+- **THEN** an error summary is shown, naming the missing arrival status, and nothing is saved
+- **WHEN** they follow the error
+- **THEN** the first status option is focused
 
 ### Requirement: The page offers a full set of save controls and is reachable from Overview
 **ID**: REQ-PLANTS-ARRIVAL-STATUS-006

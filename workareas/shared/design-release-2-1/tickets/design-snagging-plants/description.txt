@@ -1,0 +1,190 @@
+h3. Background
+
+Design Release 2.1 design snagging fixes what the designers found when they compared the test environment with the prototype on 19 October, plus one tester comment on EUDPA-691 about Back links during the opening run. For a high-risk plants notification, the biggest change is that Back now goes to the previous question while a trader first works through the notification, so the run carries on instead of dropping them at Overview.
+
+The plants address pickers also change: saving with nothing chosen now moves on, with no error. The declaration date is bold, the Consignor card on the review shows only a name and address, and the search boxes and date pickers take the shared look.
+
+Plants does not get most of the live animals changes in this theme: the region of origin code prefix, the Identification details redesign, the CPH number boxes, the headed consignment addresses page, the transporter list, transit countries, the review page's red bar removal (plants never had the bar), Main import reason and Commodity details. Those are on the live animals ticket EUDPA-720.
+
+The search boxes, date pickers and Back links behave the same in both frontends and are described once on the common frontend ticket EUDPA-729. This ticket points there rather than repeat that behaviour in full, but its counts include every plants scenario.
+
+This ticket covers the *high-risk plants journey only*. The work is merged to main on 23 October 2026, in [plants frontend #113|https://github.com/DEFRA/trade-imports-plants-frontend/pull/113] and [tests #42|https://github.com/DEFRA/trade-imports-ins-tests/pull/42], which also hold the second, parallel build. Follow-up fixes from the engineering review are in a separate backlog and are not part of this ticket.
+
+h3. What changes for the user
+
+h4. Back links follow the opening run
+
+When a trader first fills in a plants notification, the service takes them through the questions in order: commodity type, commodities, origin, arrival status, arrival details, place of destination, consignor, identification numbers, then consignment contact. Back now goes to the previous question in that order, and Save and continue after going back carries on from there.
+
+A potatoes notification skips two questions, so its Back links skip them too: arrival details goes back to origin (there is no arrival status question), and identification numbers goes back to place of destination (there is no consignor).
+
+Once the opening run has ended, a page opened from Overview goes back to Overview. Back from an amendment's review goes to Overview. Back from a submitted notification's view, including the one shown after an amendment is cancelled, goes to the plants notification list. The common frontend ticket EUDPA-729 describes the same rule in both services.
+
+h4. Address pickers can be saved with nothing chosen
+
+On the consignor and place of destination pickers, saving with nothing chosen moves on with no error and leaves the task not yet started on Overview. The listed addresses form one group named "Select an address". An address the address book no longer holds is still refused, and following the error goes to the search box, which keeps what was typed. The search box has the joined blue search button described on the common frontend ticket.
+
+h4. Smaller page changes
+
+The date of declaration is shown in bold, and the declaration checkbox is the small style inside a group with a hidden label, matching live animals. On the review page, the Consignor card shows only Name and Address. Arrival details takes the Design Release 2.1 wording and hints, and on a potatoes notification the place of landing search shows "Select a place of landing". The Notification submitted wording changes on the live animals ticket only.
+
+h3. Acceptance criteria
+
+Copied from the service's behaviour specification. These 16 scenarios carry the plants-specific behaviour. The plants specification gained *29 scenarios across 12 files* in total. Every file is linked under "Where this is specified" below, with the number it gained, so you can read any of them in full. Search box and Back link scenarios shared with live animals are also on the common frontend ticket.
+
+h4. Back links in the opening run
+
+h5. In the opening sequence, the back link opens commodity type
+
+* *GIVEN* the user is in the opening sequence and reached the commodities list from commodity type
+* *WHEN* they follow the back link
+* *THEN* the commodity type page is shown
+
+h5. In the opening sequence, the back link opens the commodities list
+
+* *GIVEN* the user is in the opening sequence and reached the origin of the import page from the commodities list
+* *WHEN* they follow the back link
+* *THEN* the commodities list is shown
+
+h5. In the opening sequence, the back link opens origin
+
+* *GIVEN* the user is in the opening sequence and reached the arrival-status page from origin
+* *WHEN* they follow the back link
+* *THEN* the origin page is shown
+
+h5. In the opening sequence, the back link opens arrival status, or origin for potatoes
+
+* *GIVEN* the user is in the opening sequence and reached the arrival details from arrival status
+* *WHEN* they follow the back link
+* *THEN* the arrival-status page is shown
+* *WHEN* instead they are on a potatoes notification, which is not asked arrival status, and reached the arrival details from origin
+* *THEN* the origin page is shown
+
+h5. In the opening sequence, the back link opens the arrival details
+
+* *GIVEN* the user is in the opening sequence and reached the place of destination page from the arrival details
+* *WHEN* they follow the back link
+* *THEN* the arrival details page is shown
+
+h5. In the opening sequence, the back link opens the place of destination
+
+* *GIVEN* the user is in the opening sequence and reached the consignor page from the place of destination
+* *WHEN* they follow the back link
+* *THEN* the place of destination page is shown
+
+h5. In the opening sequence, the back link opens the consignor, or the place of destination for potatoes
+
+* *GIVEN* the user is in the opening sequence and reached identification numbers from the consignor
+* *WHEN* they follow the back link
+* *THEN* the consignor page is shown
+* *WHEN* instead they are on a potatoes notification, which has no consignor, and reached identification numbers from the place of destination
+* *THEN* the place of destination page is shown
+
+h5. In the opening sequence, the back link opens identification numbers
+
+* *GIVEN* the user is in the opening sequence and reached the contact page from identification numbers
+* *WHEN* they follow the back link
+* *THEN* the identification numbers page is shown
+
+h5. Following a back link and saving again carries the opening sequence on
+
+* *GIVEN* the user is in the opening sequence on origin
+* *WHEN* they follow the back link to the commodities list and save it
+* *THEN* origin is shown, not Overview
+
+h4. Back links outside the opening run
+
+h5. The back link opens Overview when the list was opened from Overview
+
+* *GIVEN* the opening sequence has ended and the user is on the commodities list
+* *WHEN* they follow the back link
+* *THEN* Overview is shown
+
+The same scenario is specified for arrival status, arrival details, place of destination, consignor, identification numbers and the contact page.
+
+h5. An amendment's review back link opens Overview
+
+* *GIVEN* a notification being amended
+* *WHEN* the user follows the back link from its review
+* *THEN* Overview is shown
+
+The specification also says the submitted view shown after an amendment is cancelled goes back to the plants notification list. That scenario is on the common frontend ticket.
+
+h4. Address pickers
+
+h5. Saving with nothing chosen continues without an error
+
+* *GIVEN* the user is on the consignor page in the opening sequence with nothing chosen and no consignor held yet
+* *WHEN* they save and continue
+* *THEN* they reach identification numbers, with no error
+* *AND* Overview shows the consignor task not yet started
+
+h5. Saving with nothing chosen moves on and leaves the destination not yet started
+
+* *GIVEN* the user is on the place of destination page in the opening sequence with nothing chosen and no destination held yet
+* *WHEN* they save and continue
+* *THEN* the consignor page is shown, with no error
+* *AND* Overview shows the destination task not yet started
+
+h5. An address-book id the book no longer holds is refused after a search that left the list empty
+
+* *GIVEN* the user is on a picker where a search left the list empty
+* *WHEN* they save an id the book no longer holds
+* *THEN* the party error is shown
+* *AND* following the error focuses the search field, which still holds the term
+
+The specification also covers the listed addresses forming one group named "Select an address", saving either picker with nothing chosen for a role that holds no address yet, recovering from a refused value by choosing an address, and Enter in the search box narrowing the list without JavaScript (on the common frontend ticket).
+
+h4. Smaller page changes
+
+h5. The date of declaration is shown in bold
+
+* *GIVEN* the user has reached the declaration page
+* *WHEN* the page loads
+* *THEN* the date after "Date of declaration:" is bold
+
+h5. The Consignor card has no telephone or email row
+
+* *GIVEN* a plants-for-planting notification has a consignor selected
+* *WHEN* the user views check-your-answers
+* *THEN* the Consignor card has only "Name" and "Address" rows
+
+The place of landing placeholder on a potatoes notification is on the common frontend ticket.
+
+h3. The work behind this change
+
+||Row||What it changed||State||
+|inc-202|Type-ahead search boxes: page placeholder text, bold matching letters and the joined blue magnifying-glass button (see the common frontend ticket)|Done|
+|inc-203|Origin page: the country field with no hint and a "Search for a country" placeholder, specified under the origin page theme (EUDPA-704)|Done|
+|inc-206|Every date picker: the blue calendar button and a calendar that opens in the page (see the common frontend ticket)|Done|
+|inc-208|Arrival details wording and hints, and the place of landing placeholder|Done|
+|inc-210|Search boxes with the joined blue icon button on the consignor, place of destination and consignment contact pickers (see the common frontend ticket)|Done|
+|inc-212|Address picker layout: results grouped under "Select an address", and saving with nothing chosen moves on|Done|
+|inc-213|"Consignor" naming, and the Consignor card showing only Name and Address|Done|
+|inc-217|Declaration: the small checkbox in a group with a hidden label, and the bold date|Done|
+|inc-218|Back links go to the previous step during the opening run, and to the notification list from a submitted notification's view|Done|
+|inc-220|Back from a submitted notification's view goes to the notification list|Merged into inc-218|
+|inc-221|Final tidy of the type-ahead, date picker and origin code after the build, with no change a user sees|Done|
+|inc-223|Upload documents tidy: one date example, the Welsh file type list, logged refusals and save fallbacks, a right-aligned action column|Done|
+
+Eleven rows are built and one was merged into another. Most rows changed both frontends, so they also appear on the live animals ticket. That is how the programme works, not duplication. One more row in this theme was dropped and not built: it would have merged the second, parallel build's branches by hand, and the second build was merged into the first instead. Rows that changed only the tests are not listed, because they change nothing a user sees.
+
+h3. Where this is specified
+
+The full behaviour lives in the service's behaviour specification, in the workspace repository. The plants specification gained 29 scenarios across these 12 files. Each link opens the file as it stands on the branch this work is on.
+
+||Specification||New scenarios||
+|[Addresses|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/plants/addresses/spec.md]|4|
+|[Consignor select|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/plants/journey-pages/consignor-select/spec.md]|4|
+|[Arrival details|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/plants/journey-pages/arrival-details/spec.md]|3|
+|[Check your answers|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/plants/journey-pages/check-your-answers/spec.md]|3|
+|[Place of destination|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/plants/journey-pages/place-of-destination/spec.md]|3|
+|[Arrival status|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/plants/journey-pages/arrival-status/spec.md]|2|
+|[Commodities|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/plants/journey-pages/commodities/spec.md]|2|
+|[Consignment contact select|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/plants/journey-pages/consignment-contact-select/spec.md]|2|
+|[Identification numbers|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/plants/journey-pages/identification-numbers/spec.md]|2|
+|[Journey flow|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/plants/journey-flow/spec.md]|1|
+|[Declaration|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/plants/journey-pages/declaration/spec.md]|1|
+|[Origin|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/plants/journey-pages/origin/spec.md]|2|
+
+Theme totals: 102 scenarios across 26 files, of which 29 scenarios and 12 files are plants and 73 scenarios and 14 files are live animals. This description is generated from those specifications. If a specification changes, this ticket is regenerated to match.

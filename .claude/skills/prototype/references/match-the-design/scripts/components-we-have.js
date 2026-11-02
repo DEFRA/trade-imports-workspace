@@ -6,7 +6,8 @@
  * For every component it records: the macro and its import line, whether the
  * component's script is started in src/client/javascripts/application.js,
  * whether its styles are loaded by src/client/stylesheets/application.scss,
- * and a set template that already uses it.
+ * a set template that already uses it, and the design releases that switch
+ * it on from their own `assets/` folder.
  *
  * This script lives in the workspace, but reads the prototype repo's tree —
  * so it takes `--root <prototype repo path>` rather than using its own
@@ -101,6 +102,43 @@ export const loadedStylesheets = (root) =>
     (match) => match[1]
   )
 
+const releaseFiles = (root, releaseId, extension) =>
+  listFiles(path.join(root, SETS_DIR, releaseId, 'assets'), extension).filter(
+    (file) => !file.endsWith('.test.js')
+  )
+
+const matchesIn = (files, pattern) =>
+  files.flatMap((file) =>
+    [...readFileSync(file, 'utf8').matchAll(pattern)].map((match) => match[1])
+  )
+
+/**
+ * Every design release with an `assets/` folder, in id order, with the
+ * classes its scripts pass to createAll() and the modules its Sass pulls in
+ * with @use.
+ */
+export const releaseAssets = (root) => {
+  const setsDir = path.join(root, SETS_DIR)
+  if (!existsSync(setsDir)) {
+    return []
+  }
+  return readdirSync(setsDir, { withFileTypes: true })
+    .filter(
+      (entry) =>
+        entry.isDirectory() &&
+        existsSync(path.join(setsDir, entry.name, 'assets'))
+    )
+    .map((entry) => entry.name)
+    .sort((a, b) => a.localeCompare(b))
+    .map((id) => ({
+      id,
+      started: new Set(
+        matchesIn(releaseFiles(root, id, '.js'), CREATE_ALL_PATTERN)
+      ),
+      stylesheets: matchesIn(releaseFiles(root, id, '.scss'), USE_PATTERN)
+    }))
+}
+
 const isStyled = (library, folder, stylesheets) => {
   if (library.id === 'app') {
     return true
@@ -176,6 +214,21 @@ const scriptStateOf = (root, library, folder, started) => {
   return started.has(pascalCase(folder)) ? 'started' : 'not-started'
 }
 
+const releasesSwitchingOn = (library, component, releases) => {
+  if (library.id === 'app') {
+    return []
+  }
+  return releases
+    .filter(
+      (release) =>
+        (component.script === 'not-started' &&
+          release.started.has(pascalCase(component.folder))) ||
+        (!component.styled &&
+          isStyled(library, component.folder, release.stylesheets))
+    )
+    .map((release) => release.id)
+}
+
 /**
  * Everything the reference needs, read from the prototype repo at `root`.
  *
@@ -186,6 +239,7 @@ export const readInventory = (root) => {
   const started = startedScripts(root)
   const stylesheets = loadedStylesheets(root)
   const usage = macroUsage(root)
+  const releases = releaseAssets(root)
   const versions = {}
   for (const packageName of [
     ...LIBRARIES.map((library) => library.packageName).filter(Boolean),
@@ -207,6 +261,10 @@ export const readInventory = (root) => {
         styled: isStyled(library, folder, stylesheets),
         usedIn: usage.get(macro) ?? []
       }))
+      .map((component) => ({
+        ...component,
+        switchedOnIn: releasesSwitchingOn(library, component, releases)
+      }))
   }))
   return { versions, libraries }
 }
@@ -227,12 +285,18 @@ const usedInWords = (files) => {
     : `Used in \`${files[0]}\``
 }
 
+const switchedOnWords = (releaseIds = []) =>
+  releaseIds.length === 0
+    ? ''
+    : ` Switched on in ${releaseIds.map((id) => `\`${id}\``).join(', ')}.`
+
 /** One markdown bullet per component. */
 export const renderComponent = (component) =>
   [
     `- \`${component.macro}\`: ${SCRIPT_WORDS[component.script]}.`,
     component.styled ? '' : ' Styles NOT loaded.',
     ` ${usedInWords(component.usedIn)}.`,
+    switchedOnWords(component.switchedOnIn),
     `\n  \`${component.importLine}\``
   ].join('')
 
@@ -304,6 +368,14 @@ export const run = (
   return `Updated ${REFERENCE_FILE}.`
 }
 
+const workspaceHoldingThisScript = () =>
+  path.resolve(
+    path.dirname(fileURLToPath(import.meta.url)),
+    '../../../../../..'
+  )
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  console.log(run(process.argv.slice(2)))
+  console.log(
+    run(process.argv.slice(2), { write: workspaceHoldingThisScript() })
+  )
 }

@@ -64,7 +64,7 @@ const writeDesignerNote = (workspaceRoot, { remove }) => {
 
 const readinessLine = ({ service, ok, user, error }) => {
   if (ok) {
-    const who = user.displayName ?? user.name ?? user.login ?? user.user
+    const who = user.displayName ?? user.user
     return `${service}: OK — signed in as ${who ?? 'an unknown user'}`
   }
   if (service === 'jira') {
@@ -77,7 +77,7 @@ const readinessLine = ({ service, ok, user, error }) => {
  * Set the workspace up for a designer working on the plants prototype:
  * write (or remove) the routing note in `CLAUDE.local.md`, add the
  * prototype's fetch-only upstream remote, install its dependencies, and
- * summarise Jira/GitHub readiness. Never touches Jira or pushes anything.
+ * summarise Jira and Confluence readiness. Never touches Jira or pushes anything.
  *
  * @param {string} workspaceRoot
  * @param {object} [options]
@@ -173,7 +173,7 @@ export const register = (parent, { timVersion }) => {
   parent
     .command('setup')
     .description(
-      "Set the workspace up for a designer working on the plants prototype: note in CLAUDE.local.md that requests route through the `prototype` skill, add the prototype's fetch-only upstream remote, install its dependencies, and check Jira and GitHub readiness. Never touches Jira and never pushes."
+      "Set the workspace up for a designer working on the plants prototype: note in CLAUDE.local.md that requests route through the `prototype` skill, add the prototype's fetch-only upstream remote, install its dependencies, and check Jira and Confluence readiness (for GitHub, run gh auth status). Never touches Jira and never pushes."
     )
     .option(
       '--remove',

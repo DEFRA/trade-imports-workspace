@@ -523,8 +523,42 @@ describe('parseSplitOpts', () => {
     expect(parseSplitOpts({})).toEqual({
       write: false,
       relink: false,
-      theme: []
+      theme: [],
+      rows: []
     })
+  })
+
+  test('takes --rows separated by commas or given more than once, each once', () => {
+    expect(
+      parseSplitOpts({
+        rows: ['inc-003,inc-004', 'inc-003'],
+        to: 'commodity-b'
+      }).rows
+    ).toEqual(['inc-003', 'inc-004'])
+  })
+
+  test('refuses --rows without --to', () => {
+    expect(() => parseSplitOpts({ rows: ['inc-003'] })).toThrow(
+      'Give --rows and --to together: the rows to move, and the theme id of the backlog they move to. To move rows back, give --rows and --back-from.'
+    )
+  })
+
+  test('refuses --rows with --theme', () => {
+    expect(() =>
+      parseSplitOpts({
+        rows: ['inc-003'],
+        to: 'commodity-b',
+        theme: ['origin']
+      })
+    ).toThrow(
+      'Give --rows and --to without --theme, --relink or --branch-prefix. Name the new branch with --branch.'
+    )
+  })
+
+  test('refuses --branch without --rows', () => {
+    expect(() => parseSplitOpts({ branch: 'feat/x-b' })).toThrow(
+      '--branch and --title go with --rows and --to. To name theme branches, give --branch-prefix.'
+    )
   })
 
   test('refuses --relink with --theme', () => {
@@ -536,6 +570,25 @@ describe('parseSplitOpts', () => {
   test('refuses a branch prefix with a space', () => {
     expect(() => parseSplitOpts({ branchPrefix: 'feat/my plants' })).toThrow(
       '--branch-prefix must be a branch name with no spaces, such as feat/EUDPA-123-plants.'
+    )
+  })
+
+  test('refuses --back-from without --rows', () => {
+    expect(() => parseSplitOpts({ backFrom: 'commodity-b' })).toThrow(
+      'Give --rows with --back-from: the rows to move back from that theme.'
+    )
+  })
+
+  test('refuses --back-from with --to or --branch', () => {
+    expect(() =>
+      parseSplitOpts({
+        rows: ['inc-003'],
+        backFrom: 'commodity-b',
+        to: 'commodity-c',
+        branch: 'feat/x-c'
+      })
+    ).toThrow(
+      'Give --rows and --back-from without --to or --branch. The rows go back to the backlog you name, on its own branch.'
     )
   })
 })
@@ -619,5 +672,505 @@ describe('tim backlog split, a second early split', () => {
       [{ workarea: WORKAREA, id: 'inc-002' }],
       [{ workarea: themeWorkarea('origin'), id: 'inc-002' }]
     ])
+  })
+})
+
+describe('tim backlog split --rows --to', () => {
+  const COMMODITY = themeWorkarea('commodity')
+  const COMMODITY_B = themeWorkarea('commodity-b')
+  const ORIGIN_B = themeWorkarea('origin-b')
+
+  const splitIntoThemes = () => runTim(['split', WORKAREA, '--write'])
+
+  const moveRows = (workarea, rows, to, ...extra) =>
+    runTim(['split', workarea, '--rows', rows, '--to', to, ...extra])
+
+  const rowIn = (workarea, id) =>
+    readJson(pathOf(workarea)).increments.find((row) => row.id === id)
+
+  test('a dry run says what would move, and writes nothing', async () => {
+    await splitIntoThemes()
+    const before = readFileSync(pathOf(COMMODITY), 'utf8')
+
+    const run = await moveRows(COMMODITY, 'inc-003', 'commodity-b')
+
+    expect([
+      run.exitCode,
+      envelopeOf(run).result.movedTo.rows,
+      existsSync(pathOf(COMMODITY_B)),
+      readFileSync(pathOf(COMMODITY), 'utf8')
+    ]).toEqual([0, ['inc-003'], false, before])
+  })
+
+  test('moves the rows into a new theme backlog on its own branch, leaving a pointer', async () => {
+    await splitIntoThemes()
+
+    await moveRows(COMMODITY, 'inc-003', 'commodity-b', '--write')
+    const source = readJson(pathOf(COMMODITY))
+    const moved = readJson(pathOf(COMMODITY_B))
+
+    expect({
+      left: source.increments.map((row) => row.id),
+      movedOut: source.movedOut.map(({ at, ...pointer }) => pointer),
+      envelope: {
+        programme: moved.programme,
+        theme: moved.theme,
+        branch: moved.branch,
+        parent: moved.parent
+      },
+      rows: moved.increments.map((row) => [row.id, row.theme])
+    }).toEqual({
+      left: ['inc-004'],
+      movedOut: [
+        {
+          theme: 'commodity-b',
+          branch: 'feat/NO_JIRA-hrp-origin-and-commodity-commodity-b',
+          workarea: COMMODITY_B,
+          backlog: '../commodity-b/backlog.json',
+          increments: ['inc-003'],
+          requirements: ['req-005']
+        }
+      ],
+      envelope: {
+        programme: 'hrp-origin-and-commodity-commodity-b',
+        theme: 'commodity-b',
+        branch: 'feat/NO_JIRA-hrp-origin-and-commodity-commodity-b',
+        parent: { workarea: WORKAREA, wave: 2, landsAfter: ['origin'] }
+      },
+      rows: [['inc-003', 'commodity-b']]
+    })
+  })
+
+  test('names the new branch as given', async () => {
+    await splitIntoThemes()
+
+    await moveRows(
+      COMMODITY,
+      'inc-003',
+      'commodity-b',
+      '--branch',
+      'feat/EUDPA-9-commodity-b',
+      '--write'
+    )
+
+    expect(readJson(pathOf(COMMODITY_B)).branch).toBe(
+      'feat/EUDPA-9-commodity-b'
+    )
+  })
+
+  test('leaves the old, the new and the main backlog each passing tim backlog check', async () => {
+    await splitIntoThemes()
+    await moveRows(COMMODITY, 'inc-003', 'commodity-b', '--write')
+
+    const checks = await Promise.all(
+      [COMMODITY, COMMODITY_B, WORKAREA].map((workarea) =>
+        runTim(['check', workarea])
+      )
+    )
+
+    expect(checks.map((check) => check.exitCode)).toEqual([0, 0, 0])
+  })
+
+  test('a row left behind waits for the moved row to be done in the new backlog', async () => {
+    await splitIntoThemes()
+    setRow(themeWorkarea('origin'), 'inc-002', { status: 'done' })
+    await moveRows(COMMODITY, 'inc-003', 'commodity-b', '--write')
+
+    const nextLeft = await runTim(['next', COMMODITY])
+    const nextMoved = await runTim(['next', COMMODITY_B])
+
+    expect([
+      rowIn(COMMODITY, 'inc-004').externalDependsOn,
+      envelopeOf(nextLeft).result.next,
+      envelopeOf(nextMoved).result.next
+    ]).toEqual([[{ workarea: COMMODITY_B, id: 'inc-003' }], null, 'inc-003'])
+  })
+
+  test('a moved row stops waiting for a done row left behind, and keeps waiting for one not done', async () => {
+    await splitIntoThemes()
+
+    const doneLeftBehind = await moveRows(
+      themeWorkarea('origin'),
+      'inc-002',
+      'origin-b',
+      '--write'
+    )
+    const notDoneLeftBehind = await moveRows(
+      COMMODITY,
+      'inc-004',
+      'commodity-b',
+      '--write'
+    )
+
+    expect([
+      envelopeOf(doneLeftBehind).result.moveRewired.dropped,
+      rowIn(ORIGIN_B, 'inc-002').dependsOn,
+      envelopeOf(notDoneLeftBehind).result.moveRewired.moved,
+      rowIn(COMMODITY_B, 'inc-004').externalDependsOn
+    ]).toEqual([
+      [{ id: 'inc-002', dependsOn: 'inc-001' }],
+      [],
+      [{ id: 'inc-004', dependsOn: 'inc-003', workarea: COMMODITY }],
+      [{ workarea: COMMODITY, id: 'inc-003' }]
+    ])
+  })
+
+  test('points every other backlog that waits for a moved row at its new workarea', async () => {
+    await splitIntoThemes()
+
+    const run = await moveRows(
+      themeWorkarea('origin'),
+      'inc-002',
+      'origin-b',
+      '--write'
+    )
+
+    expect([
+      envelopeOf(run).result.moveRewired.relinked,
+      rowIn(COMMODITY, 'inc-003').externalDependsOn
+    ]).toEqual([
+      [{ id: 'inc-003', dependsOn: 'inc-002', workarea: ORIGIN_B }],
+      [{ workarea: ORIGIN_B, id: 'inc-002' }]
+    ])
+  })
+
+  test('adds the new theme to themes.json in the old theme wave', async () => {
+    await splitIntoThemes()
+
+    await moveRows(COMMODITY, 'inc-003', 'commodity-b', '--write')
+    const index = readJson(indexPath())
+
+    expect([
+      index.landingOrder,
+      index.themes.map(({ id, rows, movedFrom }) => ({ id, rows, movedFrom }))
+    ]).toEqual([
+      [
+        { wave: 1, themes: ['origin', 'documents'] },
+        { wave: 2, themes: ['commodity', 'commodity-b'] }
+      ],
+      [
+        { id: 'origin', rows: 2, movedFrom: undefined },
+        { id: 'commodity', rows: 1, movedFrom: undefined },
+        { id: 'documents', rows: 1, movedFrom: undefined },
+        { id: 'commodity-b', rows: 1, movedFrom: 'commodity' }
+      ]
+    ])
+  })
+
+  test('refuses, writing nothing, a row that is already built', async () => {
+    await splitIntoThemes()
+    const before = readFileSync(pathOf(themeWorkarea('origin')), 'utf8')
+
+    const run = await moveRows(
+      themeWorkarea('origin'),
+      'inc-001',
+      'origin-b',
+      '--write'
+    )
+
+    expect([
+      run.exitCode,
+      envelopeOf(run).errors[0].message,
+      readFileSync(pathOf(themeWorkarea('origin')), 'utf8')
+    ]).toEqual([
+      2,
+      'inc-001 is done. Only a todo or blocked row moves: a row built or set aside stays where it was built.',
+      before
+    ])
+  })
+
+  test('refuses a backlog that is not a theme split', async () => {
+    const run = await moveRows(WORKAREA, 'inc-003', 'commodity-b', '--write')
+
+    expect([run.exitCode, envelopeOf(run).errors[0].message]).toEqual([
+      2,
+      "--rows moves rows out of a theme's split backlog, and shared/hrp is not one. To split a whole theme off a themed backlog, give --theme."
+    ])
+  })
+
+  test('tim backlog check flags a row that reuses the id of a moved row', async () => {
+    await splitIntoThemes()
+    await moveRows(COMMODITY, 'inc-003', 'commodity-b', '--write')
+    const source = readJson(pathOf(COMMODITY))
+    writeJson(pathOf(COMMODITY), {
+      ...source,
+      increments: [
+        ...source.increments,
+        { ...rowIn(COMMODITY_B, 'inc-003'), theme: 'commodity' }
+      ]
+    })
+
+    const run = await runTim(['check', COMMODITY])
+
+    expect(run.stdout).toContain(
+      `inc-003 moved to ${COMMODITY_B}, to build on feat/NO_JIRA-hrp-origin-and-commodity-commodity-b. Give this row a new id, or build it there.`
+    )
+  })
+})
+
+describe('tim backlog split --rows --back-from', () => {
+  const COMMODITY = themeWorkarea('commodity')
+  const COMMODITY_B = themeWorkarea('commodity-b')
+  const ORIGIN = themeWorkarea('origin')
+  const ORIGIN_B = themeWorkarea('origin-b')
+
+  const splitIntoThemes = () => runTim(['split', WORKAREA, '--write'])
+
+  const moveRows = (workarea, rows, to) =>
+    runTim(['split', workarea, '--rows', rows, '--to', to, '--write'])
+
+  const moveBack = (workarea, rows, from, ...extra) =>
+    runTim(['split', workarea, '--rows', rows, '--back-from', from, ...extra])
+
+  const rowIn = (workarea, id) =>
+    readJson(pathOf(workarea)).increments.find((row) => row.id === id)
+
+  test('a dry run says what would move back, and writes nothing', async () => {
+    await splitIntoThemes()
+    await moveRows(COMMODITY, 'inc-003,inc-004', 'commodity-b')
+    const before = readFileSync(pathOf(COMMODITY), 'utf8')
+
+    const run = await moveBack(COMMODITY, 'inc-003,inc-004', 'commodity-b')
+
+    expect([
+      run.exitCode,
+      envelopeOf(run).result.movedBackFrom.rows,
+      readFileSync(pathOf(COMMODITY), 'utf8')
+    ]).toEqual([0, ['inc-003', 'inc-004'], before])
+  })
+
+  test('moving every row back leaves the backlog as it was before they moved', async () => {
+    await splitIntoThemes()
+    const beforeMove = readFileSync(pathOf(COMMODITY), 'utf8')
+    await moveRows(COMMODITY, 'inc-003,inc-004', 'commodity-b')
+
+    await moveBack(COMMODITY, 'inc-003,inc-004', 'commodity-b', '--write')
+
+    expect(readFileSync(pathOf(COMMODITY), 'utf8')).toBe(beforeMove)
+  })
+
+  test('a row left behind waits for the returning row in its own backlog again', async () => {
+    await splitIntoThemes()
+    await moveRows(COMMODITY, 'inc-003', 'commodity-b')
+
+    const run = await moveBack(COMMODITY, 'inc-003', 'commodity-b', '--write')
+
+    expect([
+      envelopeOf(run).result.backRewired.home,
+      readJson(pathOf(COMMODITY)).increments.map(
+        ({ id, dependsOn, externalDependsOn }) => ({
+          id,
+          dependsOn,
+          externalDependsOn
+        })
+      )
+    ]).toEqual([
+      [{ id: 'inc-004', dependsOn: 'inc-003', workarea: COMMODITY }],
+      [
+        {
+          id: 'inc-003',
+          dependsOn: [],
+          externalDependsOn: [{ workarea: ORIGIN, id: 'inc-002' }]
+        },
+        { id: 'inc-004', dependsOn: ['inc-003'], externalDependsOn: undefined }
+      ]
+    ])
+  })
+
+  test('empties the theme they leave, with a pointer to where they went', async () => {
+    await splitIntoThemes()
+    await moveRows(COMMODITY, 'inc-003', 'commodity-b')
+
+    await moveBack(COMMODITY, 'inc-003', 'commodity-b', '--write')
+    const left = readJson(pathOf(COMMODITY_B))
+
+    expect([
+      left.increments,
+      left.movedBack.map(({ at, ...pointer }) => pointer),
+      readJson(pathOf(COMMODITY)).movedOut
+    ]).toEqual([
+      [],
+      [
+        {
+          theme: 'commodity',
+          workarea: COMMODITY,
+          backlog: '../commodity/backlog.json',
+          increments: ['inc-003']
+        }
+      ],
+      undefined
+    ])
+  })
+
+  test('takes the emptied theme out of the landing order in themes.json', async () => {
+    await splitIntoThemes()
+    await moveRows(COMMODITY, 'inc-003', 'commodity-b')
+
+    await moveBack(COMMODITY, 'inc-003', 'commodity-b', '--write')
+    const index = readJson(indexPath())
+
+    expect([
+      index.landingOrder,
+      index.themes.map(({ id, rows, movedBackTo }) => ({
+        id,
+        rows,
+        movedBackTo
+      }))
+    ]).toEqual([
+      [
+        { wave: 1, themes: ['origin', 'documents'] },
+        { wave: 2, themes: ['commodity'] }
+      ],
+      [
+        { id: 'origin', rows: 2, movedBackTo: undefined },
+        { id: 'commodity', rows: 2, movedBackTo: undefined },
+        { id: 'documents', rows: 1, movedBackTo: undefined },
+        { id: 'commodity-b', rows: 0, movedBackTo: 'commodity' }
+      ]
+    ])
+  })
+
+  test('leaves every backlog passing tim backlog check, with nothing to build in the emptied theme', async () => {
+    await splitIntoThemes()
+    await moveRows(COMMODITY, 'inc-003', 'commodity-b')
+    await moveBack(COMMODITY, 'inc-003', 'commodity-b', '--write')
+
+    const checks = await Promise.all(
+      [COMMODITY, COMMODITY_B, WORKAREA].map((workarea) =>
+        runTim(['check', workarea])
+      )
+    )
+    const next = await runTim(['next', COMMODITY_B])
+
+    expect([
+      checks.map((check) => check.exitCode),
+      envelopeOf(next).result.next
+    ]).toEqual([[0, 0, 0], null])
+  })
+
+  test('moving some rows back keeps the rest in the pointer and in the theme they moved to', async () => {
+    await splitIntoThemes()
+    await moveRows(COMMODITY, 'inc-003,inc-004', 'commodity-b')
+
+    await moveBack(COMMODITY, 'inc-003', 'commodity-b', '--write')
+
+    expect([
+      readJson(pathOf(COMMODITY)).movedOut.map(
+        ({ increments, requirements }) => ({ increments, requirements })
+      ),
+      rowIn(COMMODITY_B, 'inc-004').externalDependsOn,
+      envelopeOf(await runTim(['check', COMMODITY_B])).ok
+    ]).toEqual([
+      [{ increments: ['inc-004'], requirements: ['req-006'] }],
+      [{ workarea: COMMODITY, id: 'inc-003' }],
+      true
+    ])
+  })
+
+  test('points every other backlog that waits for a returning row back at its home', async () => {
+    await splitIntoThemes()
+    await moveRows(ORIGIN, 'inc-002', 'origin-b')
+
+    const run = await moveBack(ORIGIN, 'inc-002', 'origin-b', '--write')
+
+    expect([
+      envelopeOf(run).result.backRewired.relinked,
+      rowIn(COMMODITY, 'inc-003').externalDependsOn
+    ]).toEqual([
+      [{ id: 'inc-003', dependsOn: 'inc-002', workarea: ORIGIN }],
+      [{ workarea: ORIGIN, id: 'inc-002' }]
+    ])
+  })
+
+  test('refuses a theme this backlog moved no rows to', async () => {
+    await splitIntoThemes()
+
+    const run = await moveBack(COMMODITY, 'inc-003', 'commodity-b', '--write')
+
+    expect([run.exitCode, envelopeOf(run).errors[0].message]).toEqual([
+      2,
+      'This backlog moved no rows to theme "commodity-b", so there are none to move back. Its "movedOut" names no theme.'
+    ])
+  })
+
+  test('refuses a row that did not move to that theme', async () => {
+    await splitIntoThemes()
+    await moveRows(COMMODITY, 'inc-003', 'commodity-b')
+
+    const run = await moveBack(COMMODITY, 'inc-004', 'commodity-b', '--write')
+
+    expect([run.exitCode, envelopeOf(run).errors[0].message]).toEqual([
+      2,
+      'inc-004 did not move to theme "commodity-b", so nothing was moved back.'
+    ])
+  })
+
+  test('refuses, writing nothing, a row already built where it moved to', async () => {
+    await splitIntoThemes()
+    await moveRows(COMMODITY, 'inc-003', 'commodity-b')
+    setRow(COMMODITY_B, 'inc-003', { status: 'done' })
+    const before = readFileSync(pathOf(COMMODITY), 'utf8')
+
+    const run = await moveBack(COMMODITY, 'inc-003', 'commodity-b', '--write')
+
+    expect([
+      run.exitCode,
+      envelopeOf(run).errors[0].message,
+      readFileSync(pathOf(COMMODITY), 'utf8')
+    ]).toEqual([
+      2,
+      'inc-003 is done. Only a todo or blocked row moves back: a row built or set aside stays where it was built.',
+      before
+    ])
+  })
+
+  test('moving a row out again puts it back in the emptied theme and takes it off movedBack', async () => {
+    await splitIntoThemes()
+    await moveRows(COMMODITY, 'inc-003', 'commodity-b')
+    await moveBack(COMMODITY, 'inc-003', 'commodity-b', '--write')
+
+    const run = await moveRows(COMMODITY, 'inc-003', 'commodity-b')
+    const away = readJson(pathOf(COMMODITY_B))
+    const checks = await Promise.all(
+      [COMMODITY, COMMODITY_B, WORKAREA].map((workarea) =>
+        runTim(['check', workarea])
+      )
+    )
+
+    expect({
+      reopened: envelopeOf(run).result.movedTo.reopened,
+      branch: away.branch,
+      movedBack: away.movedBack,
+      rows: away.increments.map((row) => [row.id, row.theme]),
+      landing: readJson(indexPath()).landingOrder,
+      checks: checks.map((check) => check.exitCode)
+    }).toEqual({
+      reopened: true,
+      branch: 'feat/NO_JIRA-hrp-origin-and-commodity-commodity-b',
+      movedBack: undefined,
+      rows: [['inc-003', 'commodity-b']],
+      landing: [
+        { wave: 1, themes: ['origin', 'documents'] },
+        { wave: 2, themes: ['commodity', 'commodity-b'] }
+      ],
+      checks: [0, 0, 0]
+    })
+  })
+
+  test('tim backlog check flags a row that reuses the id of a row moved back', async () => {
+    await splitIntoThemes()
+    await moveRows(ORIGIN, 'inc-002', 'origin-b')
+    await moveBack(ORIGIN, 'inc-002', 'origin-b', '--write')
+    const away = readJson(pathOf(ORIGIN_B))
+    writeJson(pathOf(ORIGIN_B), {
+      ...away,
+      increments: [{ ...rowIn(ORIGIN, 'inc-002'), theme: 'origin-b' }]
+    })
+
+    const run = await runTim(['check', ORIGIN_B])
+
+    expect(envelopeOf(run).errors[0].message).toContain(
+      `inc-002 moved back to ${ORIGIN}, theme "origin", which builds it. Give this row a new id, or build it there.`
+    )
   })
 })

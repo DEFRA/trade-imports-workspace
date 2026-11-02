@@ -1,0 +1,202 @@
+{
+  "source": "repo:backend",
+  "structure": "repos/trade-imports-animals-backend at main 15ae53f (tag 0.91.0): a Java / Spring Boot service persisting live-animals notifications in MongoDB. All paths below are from the repo root; Java sources sit under src/main/java/uk/gov/defra/trade/imports/animals/ and tests under src/test/java/uk/gov/defra/trade/imports/animals/. Main code is about 7,000 lines in 120 files: notification/ (35 files, ~1,900 lines: the record's domain types, NotificationController 266 lines with 14 endpoints under /notifications, NotificationService 548, copy and content mappers, sort, expiry sweeper, reference-number generator), accompanyingdocument/ plus cdp/uploader/ and s3/ (~1,400 lines: the document-upload API, 7 endpoints, CDP uploader scan callbacks, S3 file access), outbox/ (~580 lines: outbox events, poller, publish to SNS, replay) and outbox/gbnag/ (~900 lines: the GBN-AG payload published to other services), exceptions/ (GlobalExceptionHandler 364 lines: validation and error responses), audit/, filter/AdminSecretFilter, and configuration/ (~1,300 lines, mostly infrastructure). src/main/resources/application.yml (185 lines) holds the notification list, submit, admin and TTL settings and the outbox poller and SNS settings. Tests are about 17,900 lines; the large ones are NotificationServiceTest (2,759), NotificationIT (2,500), NotificationControllerTest (1,395), GbnAgMapperTest (971), GlobalExceptionHandlerTest (633), OutboxServiceTest (618) and DocumentControllerIT (576). There is no CLAUDE.md and no rulings or decisions ledger in the repo; README.md (132 lines) is the only repo doc. Cut into 6 parts by feature, never by layer: the record's fields and validation; the write lifecycle (create, save, submit, amend, cancel-amend, copy); reading, listing, deleting and expiry; accompanying documents; outbox events and publishing; the GBN-AG payload. The scope leaves out infrastructure with no user-observable behaviour: TLS trust store, proxy, metrics and EMF, ECS logging, request tracing, health check, Mongo client and transaction-retry plumbing (configuration/ apart from NotificationTtlConfig, OutboxConfig, StrictLocalDateModule and LocalDateStringConverters), interceptor/, compose/, docker/, Dockerfile, pom.xml and their tests. Unit tests that repeat what an integration test proves through the API (NotificationServiceTest among them) are left out of every part's read, so each part reads its main code and its integration tests in full; the parts that name a unit test read it because it holds expected copy or rules not visible elsewhere.",
+  "parts": [
+    {
+      "part": 1,
+      "title": "Notification record: fields and validation",
+      "scope": "The shape of the stored notification and what the API accepts: every domain type in notification/ that describes the record's content, its status values, reference-number format, date handling and the validation and error responses for bad input. Stops at behaviour: what each endpoint does with the record belongs to parts 2 and 3.",
+      "read": [
+        "README.md",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationBase.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/Notification.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationDto.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/SaveNotificationDto.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationStatus.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationAggregate.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/Origin.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/Commodity.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/CommodityComplement.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/Species.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/AnimalIdentifier.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/Transport.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/MeansOfTransport.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/Transporter.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/Address.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/ConsignmentParty.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/AdditionalDetails.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/ReferenceNumberGenerator.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/configuration/StrictLocalDateModule.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/configuration/LocalDateStringConverters.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/exceptions/GlobalExceptionHandler.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/exceptions/BadRequestException.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/exceptions/ConflictException.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/exceptions/NotFoundException.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/exceptions/ServiceUnavailableException.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/exceptions/OutboxWriteException.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/exceptions/TradeImportsAnimalsBackendException.java",
+        "src/test/java/uk/gov/defra/trade/imports/animals/exceptions/GlobalExceptionHandlerTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/animals/notification/ReferenceNumberGeneratorTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationAggregateTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/animals/configuration/LocalDateStringConvertersTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/animals/OpenApiDateFormatTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/animals/utils/NotificationTestData.java"
+      ],
+      "covers": [
+        "Every field of the notification record, section by section (origin, commodity and its complements, species, animal identifiers, transport and means of transport, transporter, addresses and consignment parties, additional details, status, reference number, timestamps and audit fields), with its type, whether it is required, and every validation annotation or constraint and its message verbatim",
+        "Every NotificationStatus value",
+        "The reference-number format and how it is generated",
+        "Date formats accepted and rejected (strict local dates) and how they are stored",
+        "Every error response GlobalExceptionHandler produces: the status code, body shape and message for each exception and validation failure",
+        "What README.md says about the record, the API or any decision"
+      ],
+      "prefix": "repo-backend-p1"
+    },
+    {
+      "part": 2,
+      "title": "Notification write lifecycle",
+      "scope": "Creating and changing a notification: POST /notifications, PUT /notifications/{referenceNumber}, POST .../copy, .../submit, .../amend and .../cancel-amend, with what each saves, the state transitions it allows and refuses, optimistic locking, and the copy rules. NotificationController and NotificationService are read in full; only the methods behind these six endpoints are claimed here (the rest are part 3's and part 5's).",
+      "read": [
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationRepository.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationCopyMapper.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationContentMapper.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/ActorRequest.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/AuditContext.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/audit/Action.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/audit/Result.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/audit/Audit.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/audit/AuditRepository.java",
+        "src/main/resources/application.yml (the notification.submit section)",
+        "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java",
+        "src/test/java/uk/gov/defra/trade/imports/animals/integration/OptimisticLockingIT.java",
+        "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationCopyMapperTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationContentMapperTest.java"
+      ],
+      "covers": [
+        "The 6 write endpoints (create, save, copy, submit, amend, cancel-amend): request body, response, status codes, and every rule that refuses the call with its error message verbatim",
+        "Draft, submitted, amend and cancel-amend transitions: which statuses each endpoint accepts and what status it leaves",
+        "Submit: what it checks, the submit settings in application.yml, and what it records",
+        "Copy: which fields are carried into the new notification and which are cleared or reset",
+        "Optimistic locking: what a stale save gets back",
+        "Audit records written for each action, with their action and result values",
+        "Every NotificationIT test about these six endpoints, as proof of the behaviour"
+      ],
+      "prefix": "repo-backend-p2"
+    },
+    {
+      "part": 3,
+      "title": "Reading, listing, deleting and expiry",
+      "scope": "Reading notifications back and removing them: GET /notifications (list, paging, sort, filters), GET .../fulfilments, GET /notifications/reference-numbers, POST .../soft-delete and DELETE /notifications, the admin-secret guard, and the draft expiry sweep and TTL. NotificationController and NotificationService are read in full; only the methods behind these endpoints and the sweeper are claimed here.",
+      "read": [
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationRepository.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationSort.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationView.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationViewData.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationFulfilmentsView.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationReferenceOnly.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationPageResponse.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/ReferenceNumberPageResponse.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationExpirySweeper.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/configuration/NotificationTtlConfig.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/filter/AdminSecretFilter.java",
+        "src/main/resources/application.yml (the notification.admin, notification.list and notification.ttl sections and admin.secret)",
+        "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationControllerTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationSortTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationExpirySweeperTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationExpirySweeperConditionTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/animals/configuration/NotificationTtlConfigTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationExpiryIT.java"
+      ],
+      "covers": [
+        "GET /notifications: who it lists (scoping), paging, page size limits, every sort option and its default, every filter or search parameter, and the fields each list item carries",
+        "GET /notifications/{referenceNumber}/fulfilments and GET /notifications/reference-numbers: what each returns and for whom",
+        "POST /notifications/{referenceNumber}/soft-delete and DELETE /notifications: which statuses can be deleted, what is removed or marked, and every refusal with its message",
+        "Which endpoints the admin secret guards and what a caller without it gets",
+        "Draft expiry: which notifications expire, after how long, and what the sweep does to them",
+        "Every NotificationControllerTest and NotificationExpiryIT test about these endpoints, as proof"
+      ],
+      "prefix": "repo-backend-p3"
+    },
+    {
+      "part": 4,
+      "title": "Accompanying documents",
+      "scope": "The accompanying-document part of the record: the 7 document-upload endpoints, document types, scan status and file status, the CDP uploader handshake and scan-result callback, and S3 file retrieval. Stops at the notification record itself (part 1).",
+      "read": [
+        "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/",
+        "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/file/",
+        "src/main/java/uk/gov/defra/trade/imports/animals/cdp/uploader/",
+        "src/main/java/uk/gov/defra/trade/imports/animals/s3/S3DocumentService.java",
+        "src/main/resources/application.yml (the cdp.uploader and app.aws sections)",
+        "src/test/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentTypeTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/AccompanyingDocumentDtoTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/animals/integration/document/DocumentControllerIT.java",
+        "src/test/java/uk/gov/defra/trade/imports/animals/integration/document/DocumentScanCallbackIT.java",
+        "src/test/java/uk/gov/defra/trade/imports/animals/integration/document/AccompanyingDocumentRepositoryIT.java",
+        "src/test/java/uk/gov/defra/trade/imports/animals/integration/document/DocumentInitiateProductionModeIT.java",
+        "src/test/resources/fixtures/cdp-scan-callback-complete.json",
+        "src/test/resources/fixtures/cdp-scan-callback-rejected.json"
+      ],
+      "covers": [
+        "The 7 endpoints: POST and GET /notifications/{ref}/document-uploads, GET and DELETE /document-uploads/{upload-id}, POST /document-uploads/{upload-id}/scan-results, the second POST mapping in DocumentController, and GET /document-uploads/{upload-id}/file: request, response, status codes and every refusal with its message",
+        "Every accompanying-document field with its validation and message verbatim, and every DocumentType value with its code and label",
+        "Every ScanStatus and FileStatus value and the transitions between them",
+        "How an upload is initiated with CDP uploader, how a scan result is recorded (complete and rejected), and how the file is fetched from S3",
+        "Every test in the four document ITs, as proof"
+      ],
+      "prefix": "repo-backend-p4"
+    },
+    {
+      "part": 5,
+      "title": "Outbox events and publishing",
+      "scope": "What the backend publishes to other services and when: the outbox event types, which lifecycle actions write which event, status-change and actor metadata, the poller and SNS publish, replay, and the GET .../outbox-events and POST .../replay endpoints. Stops at the GBN-AG payload's field mapping (part 6). NotificationController is read for the two outbox endpoints only.",
+      "read": [
+        "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEventType.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEvent.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEventMetadata.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEventRepository.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/outbox/StatusChange.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/outbox/Actor.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxPublishService.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxPoller.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxReplayService.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/ReplayResponse.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java",
+        "src/main/java/uk/gov/defra/trade/imports/animals/configuration/OutboxConfig.java",
+        "src/main/resources/application.yml (the outbox section)",
+        "src/test/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEventTypeTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/animals/outbox/OutboxServiceTest.java",
+        "src/test/java/uk/gov/defra/trade/imports/animals/integration/outbox/OutboxPollerIT.java",
+        "src/test/java/uk/gov/defra/trade/imports/animals/integration/outbox/ReplayIT.java"
+      ],
+      "covers": [
+        "Every OutboxEventType value and the lifecycle action that writes it (create, save, submit, amend, cancel-amend, copy, delete)",
+        "The event envelope: metadata, status-change and actor fields",
+        "Where and how events are published (topic, ordering, retry and failure handling) and the poller settings",
+        "GET /notifications/{referenceNumber}/outbox-events and POST /notifications/{referenceNumber}/replay: what they return and who may call them",
+        "Every test in OutboxPollerIT and ReplayIT, as proof"
+      ],
+      "prefix": "repo-backend-p5"
+    },
+    {
+      "part": 6,
+      "title": "GBN-AG payload",
+      "scope": "The GBN-AG event data the backend publishes for a notification: every type in outbox/gbnag/ and how each notification field maps into it. Stops at when the event is written and sent (part 5).",
+      "read": [
+        "src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/",
+        "src/test/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/GbnAgMapperTest.java"
+      ],
+      "covers": [
+        "Every one of the 22 files in outbox/gbnag/ (GbnAgEventDataMapper, GbnAgEventData, ExchangedDocument, SpecifiedConsignment, ConsignmentItem, TradeLineItem, TradeProductInstance, TradeParty, TradeAddress, TradeCountry, TradeCountrySubDivision, LogisticsTransportMovement, LogisticsLocation, TransportEvent, LogisticsPackage, LineTradeDelivery, ReferencedDocument, ApplicableClassification, Authentication, Clause, CodedValue, DefinedContact): its fields and the notification field or fixed value each is filled from",
+        "Every fixed code, scheme id or default the mapping writes",
+        "Notification fields the payload does not carry",
+        "Every GbnAgMapperTest test, as proof of the mapping"
+      ],
+      "prefix": "repo-backend-p6"
+    }
+  ]
+}

@@ -14,9 +14,7 @@ const defaults = () => ({
   workspace: stubFeature(),
   auth: stubFeature(),
   jira: stubFeature(),
-  github: stubFeature(),
   confluence: stubFeature(),
-  gha: stubFeature(),
   docker: stubFeature(),
   start: stubFeature(),
   exit: () => {}
@@ -60,13 +58,17 @@ describe('useMainMenuFeature', () => {
       'Start',
       'Auth',
       'Jira',
-      'GitHub',
       'Confluence',
-      'GitHub Actions',
       'Quit'
     ]) {
       expect(frame).toContain(label)
     }
+  })
+
+  test('lists no GitHub command group on the main menu', () => {
+    const { lastFrame } = render(createElement(Harness))
+
+    expect(lastFrame()).not.toContain('GitHub')
   })
 
   test('selecting Workspace hands control to the workspace feature', async () => {
@@ -90,9 +92,7 @@ describe('useMainMenuFeature', () => {
     ['start', 'Start'],
     ['auth', 'Auth'],
     ['jira', 'Jira'],
-    ['github', 'GitHub'],
-    ['confluence', 'Confluence'],
-    ['gha', 'GitHub Actions']
+    ['confluence', 'Confluence']
   ])('selecting %s hands control to the %s feature', async (value, label) => {
     let opened = false
     const Capture = () => {
@@ -136,9 +136,7 @@ describe('useMainMenuFeature', () => {
         start: wrap('start'),
         auth: wrap('auth'),
         jira: wrap('jira'),
-        github: wrap('github'),
         confluence: wrap('confluence'),
-        gha: wrap('gha'),
         exit: () => seen.push('exit')
       })
       const { onSelect } = feature.routes[SCREENS.MAIN].props

@@ -1,0 +1,110 @@
+{
+  "theme": "germinal-products",
+  "file": "~/git/defra/trade-imports-workspace/workareas/shared/design-release-2-1/reanalysis/themes/germinal-products.json",
+  "splitReady": false,
+  "splitReadyWhy": "Not ready. 20 of the theme's dependsOn rows are todo in themes not yet split off or built: identification-and-permanent-address (inc-045, inc-054), consignment-parties (inc-091, inc-094, inc-095, inc-097), manage-notifications (inc-120, inc-121, inc-123 to inc-125) and animals-dashboard (inc-126, inc-129, inc-130, inc-135 to inc-138, inc-140, inc-196). Its externalDependsOn rows are on theme branches that have not merged to main: commodities-and-reason (EUDPA-693), arrival-and-transit (EUDPA-694), overview-and-review (EUDPA-696), documents (EUDPA-724) and type-question-and-templates (NO_JIRA). Only journey-foundation, reference-lists, design snagging, the snagging follow-ups and EUDPA-617 (MDM commodity search) are on frontend main. No other theme's declared touches overlap this theme's paths, and no germinal set exists on main or on any theme branch (src/server/app/sets holds only live-animals). One premise has changed: EUDPA-617 merged to frontend main on 27 Oct (c3183a8e). The live commodity search now reads MDM through reference-data, and reference-data leaves germinal codes out. So the hard-coded catalogue whose 12 germinal lines inc-016 and inc-017 were going to copy no longer exists.",
+  "rows": [
+    {
+      "id": "inc-016",
+      "verdict": "partly-met",
+      "evidence": "Live half met on main. The live search goes to reference-data /commodities (frontend origin/main:src/server/app/sets/live-animals/services/commodities/search.js:15-16, client.js:6-15). Reference-data asks MDM which result codes are germinal and drops them (referencedata origin/main:src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java:43, :81, :103). The stub catalogue is now a fixture captured from MDM (frontend origin/main:src/server/app/sets/live-animals/services/commodities/stub.js:1-3), and it holds only chapter 01 codes, with no 0511 code (frontend origin/main:src/server/app/services/_capture/fixtures/commodities.json, codes 0101 to 01064900). So criteria 5 and 7 (no semen/embryos/ova/05111000/05119985 results on a live notification) are met. Criterion 8 is met in substance: live commodities are still found and saved. But it names 'Cow, Horse, Cat, Dog and Fish', and the stub has no fish (ostriches stand in for it, per c3183a8e). Germinal half unmet (criteria 1 to 4 and 6): there is no germinal set on main or on any branch. The '12 germinal lines today's live-animals catalogue holds', which criteria 2 to 4 copy, were deleted from the frontend with the hard-coded catalogue (stub.js and matching.js were replaced in c3183a8e). Lines now store commodityCode, speciesLatinName and speciesCommonName, with no commodity name or product type.",
+      "proposedChange": "Drop criteria 5 and 7 (met on main), and keep one regression check that a live search for 'semen' or 05119985 lists nothing. Restate criterion 8 as 'live commodities found through the MDM search (for example cattle 0102, horses 0101, cats under 01061900) can still be chosen and saved'. Rewrite criteria 1 to 4 and 6. The germinal page searches germinal commodities only, through reference-data: add a germinal-only search beside /commodities, keeping the isGerminal codes the live search drops, plus a stub fixture captured from it. Add referencedata to repos. Keep the germinal search hint and the page copy (criterion 1), search through the Search button (criterion 3), 'cattle finds only cattle germinal lines' (criterion 4) and 'save and reopen keeps the selection' (criterion 6). Replace criterion 2's fixed 12-line list with 'the germinal commodities MDM lists under 05111000 and 05119985, each with its species and product type'. Call I made: the 9 Oct afternoon ruling kept the germinal catalogue on 'today's data' only because MDM was not live. Now that it is, the hard-coded 12 lines are gone, so the rewrite reads MDM's germinal list rather than rebuilding a hand-made one. V4's 18-item shape and separate embryos and ova stay in blocked inc-191. Sam may prefer a germinal-set stub of the old 12 lines instead."
+    },
+    {
+      "id": "inc-017",
+      "verdict": "needs-rewrite",
+      "evidence": "Nothing is built. The backend has no gross weight, temperature or typeCode value: TradeLineItem passes typeCode null on every line (backend origin/main:src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/TradeLineItem.java:39, :50), and grep for grossWeight, temperature and LIVE_ANIMAL in backend src/main finds nothing. But the live Commodity details page this row copies has moved under EUDPA-617. Line titles are now '<commodityCode> — <Latin name>' (frontend origin/main:src/server/app/sets/live-animals/journeys/linear/features/commodities/line-title.js:3-7). Selected commodities lists only Code and Species, with no common or commodity name column (view-model/selected-commodity-rows.js:41-50). A stored line has commodityCode, speciesLatinName and speciesCommonName, with no commodity name or product type. So criterion 4's '05111000 | Cattle, Semen | Bos taurus' row and 'Cattle, Semen (05111000)' heading have no field to read from. The interim SEMEN/EMBRYO typeCode (criterion 7) assumes the old catalogue's combined 'Embryos/Ova' lines.",
+      "proposedChange": "Criterion 4: 'A germinal commodity has one Selected commodities row per code listing all its chosen species, laid out as the live page lays it out (code, then species), and its block heading shows the code and the germinal product type'. The product type must be stored on the line, because MDM's code 05119985 covers several product types. Criterion 7: 'each germinal trade line carries SEMEN for a semen line and EMBRYO for any embryos or ova line, until inc-191 separates them', derived from the stored product type. Keep criteria 1 to 3, 5, 6 and 8 to 12 as they are. Name the stored line fields commodityCode, speciesLatinName and speciesCommonName, matching main."
+    },
+    {
+      "id": "inc-024",
+      "verdict": "still-needed",
+      "evidence": "No germinal set, germinal origin page or germinal import-reason page on frontend main (origin/main:src/server/app/sets has only live-animals), and none on any theme branch (grep -il germinal on the commodities-and-reason, overview-and-review, combined and type-question-and-templates branches finds only templates, certification and copy files). Its dependency inc-141 (the germinal list) is unbuilt."
+    },
+    {
+      "id": "inc-052",
+      "verdict": "still-needed",
+      "evidence": "No germinal identification page or backend storage for donor or dates. The backend's notification model has no such fields (backend origin/main:src/main/java/uk/gov/defra/trade/imports/animals/notification/, no match for donor, collectionDate or productionDate). The note about the live page's layout from design snagging still holds. EUDPA-617 only renamed the identification card's Latin-name read to speciesLatinNameOf, so 'Enter details for Bos taurus' still matches how the live card labels species."
+    },
+    {
+      "id": "inc-053",
+      "verdict": "still-needed",
+      "evidence": "Depends on inc-052's germinal identification page, which does not exist on main or on any branch. Nothing has changed in the code it names: kit.dateField and the house calendar from design snagging are on main, as the coherence note says."
+    },
+    {
+      "id": "inc-099",
+      "verdict": "still-needed",
+      "evidence": "No /germinal-products route or germinal Overview on frontend main or on any branch. The live hub still has its animals and packages cards only. The overview-and-review branch (EUDPA-696), which the copy is taken from, is not merged."
+    },
+    {
+      "id": "inc-105",
+      "verdict": "still-needed",
+      "evidence": "No germinal check-answers copy on main or on any branch. The live review it copies is still changing on the unmerged overview-and-review branch (EUDPA-696). On main, EUDPA-617 changed check-answers/refusal.js to refuse species MDM no longer lists, and the germinal copy will inherit that."
+    },
+    {
+      "id": "inc-141",
+      "verdict": "still-needed",
+      "evidence": "No germinal set root or list on main or on any branch. Every live list row it copies (inc-129, inc-130, inc-135 to inc-138, inc-140, inc-196) is todo in animals-dashboard, which is not split off. The backend has no category filter (no match for 'category' in backend origin/main src/main)."
+    },
+    {
+      "id": "inc-172",
+      "verdict": "still-needed",
+      "evidence": "The backend list returns no category and no germinal facts (no match for 'category' in backend origin/main src/main). The frontend list item now carries commodityCode after EUDPA-617 (frontend origin/main:src/server/app/services/persistence/records/stub/marshal/list-item.js, real/marshal/list-item.js). Criterion 3's 'Cattle, Semen' card needs the germinal product type stored on the line, which inc-017's rewrite adds."
+    },
+    {
+      "id": "inc-176",
+      "verdict": "still-needed",
+      "evidence": "Not built. No sets/germinal-products, routes-germinal-products.js or backend category field on main (sets holds only live-animals, and backend src/main has no 'category'). Context from branches: the type-question-and-templates branch's INS type question already posts Germinal products to the animals frontend's /germinal-products/start (insfrontend origin/feat/NO_JIRA-design-release-2-1-type-question-and-templates:src/server/app/features/notification-type/destinations.js:22-24; controller.test.js:147). The templates side stores the type as setId 'germinal-products' (frontend same branch: features/template-name/controller.js:23-24). So the germinal start must answer at /germinal-products/start, and 'germinal-products' is the value that branch already uses. Neither is on main yet."
+    },
+    {
+      "id": "inc-177",
+      "verdict": "still-needed",
+      "evidence": "No germinal Commodity details page or its weight and packages checks on main or on any branch. Its external dependency, commodities-and-reason inc-018, is on the unmerged EUDPA-693 branch."
+    },
+    {
+      "id": "inc-178",
+      "verdict": "still-needed",
+      "evidence": "No germinal transport folder on main or on any branch. The live transporter step it copies is on main as before."
+    },
+    {
+      "id": "inc-179",
+      "verdict": "still-needed",
+      "evidence": "No germinal documents page on main or on any branch. The documents rows it copies after (inc-031, inc-033 to inc-035) are on the unmerged EUDPA-724 branch. On main, EUDPA-296 (ab3ac4f0) changed the live documents page again: uploads now go straight to the upload service. The copy takes that as it stands."
+    },
+    {
+      "id": "inc-181",
+      "verdict": "still-needed",
+      "evidence": "No germinal addresses copy on main or on any branch. Its live dependencies, inc-091 (consignment-parties) and inc-054 (identification-and-permanent-address), are todo in themes not split off. The note about main's addresses/controller.js sections() and party-picker still holds. On main, EUDPA-617 changed addresses/controller.js to ask CPH unless every line's code is exempt. The germinal copy drops CPH anyway."
+    },
+    {
+      "id": "inc-182",
+      "verdict": "still-needed",
+      "evidence": "No germinal journey pages on main or on any branch. The certified-for value exists as reference data: frontend origin/main:src/server/app/services/certification-purposes/stub.js:5 maps 'germinal-products' to 'Germinal products'. The row can seed that value, but nothing sets it on create. Its external dependencies (inc-018, inc-028, inc-029, inc-110 to inc-113, inc-115) are on the unmerged EUDPA-693, EUDPA-694 and EUDPA-696 branches."
+    },
+    {
+      "id": "inc-183",
+      "verdict": "still-needed",
+      "evidence": "No germinal set, so there is no germinal overview or submit rule on main or on any branch."
+    },
+    {
+      "id": "inc-184",
+      "verdict": "still-needed",
+      "evidence": "No germinal specs in the tests repo: tests/animals/e2e/germinal-products is absent on origin/main. The only 'germinal' match is copy text in tests/animals/e2e/features/address-book/address-book-navigation.spec.ts."
+    },
+    {
+      "id": "inc-185",
+      "verdict": "still-needed",
+      "evidence": "No germinal manage pages on main or on any branch. The live rows it copies (inc-120, inc-121, inc-123 to inc-126) are todo in manage-notifications and animals-dashboard, neither split off."
+    },
+    {
+      "id": "inc-186",
+      "verdict": "still-needed",
+      "evidence": "Not on main. On the type-question-and-templates branch, template creation already accepts Germinal products but sends it back to the templates list instead of opening a germinal page (frontend origin/feat/NO_JIRA-design-release-2-1-type-question-and-templates:src/server/app/sets/live-animals/journeys/linear/features/template-name/controller.js:75-77 and :92-94). The templates list already labels the category 'Germinal products' (templates/copy/copy.en.js:25). This row replaces those two redirects with the germinal set's first page in template mode. The criteria still read right once that branch merges."
+    },
+    {
+      "id": "inc-191",
+      "verdict": "blocker-holds",
+      "evidence": "The block has two parts: commodities must come from MDM, and the germinal catalogue and search must then be re-distilled from MDM's list. The first part is now met. Live commodities come from MDM through reference-data (frontend c3183a8e, EUDPA-617, merged 27 Oct). Reference-data already tells germinal codes apart through MDM's isGerminal flag, though so far only to drop them (referencedata origin/main:src/main/java/uk/gov/defra/trade/imports/commodities/CommoditySearchService.java:43, :81, :103). The second part still holds: no germinal catalogue or search has been re-distilled from MDM's list, and no germinal search endpoint exists. So the block's reason still applies, but it now waits only on that re-distil, not on MDM."
+    }
+  ]
+}

@@ -13,7 +13,11 @@ For a repo that does, the workflow takes its entry from the scope file and runs 
 - `suites`: paths under `tests/` to run, in one command. A suite is a domain's directory (`tests/animals/`) or a test type within it (`tests/animals/e2e/`).
 - `tags`: service tags. Tests from any domain carrying one of these run in a second command, after the suites.
 
-Both commands are sharded three ways, and each shard runs both.
+Both commands are sharded, and each shard runs both. A caller sets the number of shards with the workflow's `shard-total` input, from 1 to 6. A caller that leaves it out gets 3.
+
+Playwright splits shards by test count, in file order, so with equal shards the slow animals tests all land on shard 1. When every suite runs (`all`) over 3 shards, the workflow weights the shards `9:14:17` through Playwright's `PWTEST_SHARD_WEIGHTS`, so each runs about the same time of tests. The weights come from per-test times in the October 2026 runs. `PWTEST_SHARD_WEIGHTS` is not in Playwright's documentation, and the weights drift as tests are added: re-check the per-shard `Run E2E tests` times every few weeks, and after a Playwright upgrade.
+
+A new push to a workspace pull request cancels that pull request's run still in progress. A caller's run is cancelled by the caller's own concurrency group, not by this workflow.
 
 ```json
 "trade-imports-animals-backend": {

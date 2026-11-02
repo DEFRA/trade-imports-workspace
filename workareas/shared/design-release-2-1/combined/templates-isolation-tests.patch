@@ -1,0 +1,416 @@
+diff --git a/README.md b/README.md
+index 810807d..c51a924 100644
+--- a/README.md
++++ b/README.md
+@@ -182,6 +182,15 @@ holds only the `sid` auth cookie, and is never written unless a fresh context
+ has proved it restores to a signed-in landing page. A spec that must start
+ unauthenticated opts out with `test.use({ storageState: COLD_START })`.
+ 
++Every worker signs in as Andrew, the shared default user, unless its spec sets
++`test.use({ isolatedUser: true })`. A spec does that when it asserts the order
++or count of the signed-in user's own records, such as which template is listed
++first: its workers then sign in as the defra-id-stub's "Isolated User NN" for
++their parallel slot, so no other running worker writes to that user. The stub
++holds 32 of them (`config/users.ts`); a run with more workers fails at the
++first such spec, naming the fix. Records every user can see, such as the
++dashboard's notifications, are not isolated by this.
++
+ `E2E_SESSION_REUSE=off` is the kill switch: every test signs in for itself
+ again. The CDP config caps workers at 4 when reuse is off; against the
+ docker-compose stack re-cap them yourself (e.g. `-- --workers=4`).
+diff --git a/config/users.ts b/config/users.ts
+index 5dd30e3..70f6163 100644
+--- a/config/users.ts
++++ b/config/users.ts
+@@ -23,3 +23,42 @@ export const users = {
+ export const defaultUser = users.andrew;
+ 
+ export const defaultPassword = process.env.AUTH_PASSWORD || 'Password123';
++
++export type StubUser = { crn: string; displayName: string };
++
++const FIRST_ISOLATED_CRN = 2100010201;
++const ISOLATED_USER_COUNT = 32;
++
++/**
++ * The stub's "Isolated User 01" to "32": single-organisation identities (Gatwick Airport, like Andrew)
++ * that no spec names directly, so a worker signed in as one is the only writer of that user's records.
++ */
++export const isolatedUsers: readonly StubUser[] = Array.from({ length: ISOLATED_USER_COUNT }, (_, index) => {
++  const number = String(index + 1).padStart(2, '0');
++  return { crn: String(FIRST_ISOLATED_CRN + index), displayName: `Isolated User ${number}` };
++});
++
++/**
++ * The isolated user for one parallel worker slot. Playwright gives every worker running at the same
++ * time a different parallelIndex, so no two running workers share the user.
++ */
++export const isolatedUserFor = (parallelIndex: number): StubUser => {
++  const user = isolatedUsers[parallelIndex];
++  if (!user) {
++    throw new Error(
++      `Worker slot ${parallelIndex} has no isolated user: the stub has ${isolatedUsers.length}. ` +
++        'Run fewer workers, or add users to trade-imports-defra-id-stub src/data/mock.json and to isolatedUsers here.',
++    );
++  }
++  return user;
++};
++
++let workerUser: StubUser = defaultUser;
++
++/** The identity this worker process signs in as when a sign-in does not name one. */
++export const signedInUser = (): StubUser => workerUser;
++
++/** Each Playwright worker is its own process, so this sets the identity for this worker's tests only. */
++export const signWorkerInAs = (user: StubUser): void => {
++  workerUser = user;
++};
+diff --git a/fixtures/auth-state.ts b/fixtures/auth-state.ts
+index 840a472..04002ce 100644
+--- a/fixtures/auth-state.ts
++++ b/fixtures/auth-state.ts
+@@ -10,6 +10,7 @@ import {
+   type WorkerInfo,
+ } from '@playwright/test';
+ import { SignInPage } from '@page-objects/shared/auth/sign-in-page';
++import type { StubUser } from '@config/users';
+ import { AnimalsDashboardPage } from '@page-objects/animals/dashboard-page';
+ import { AnimalsAdminDashboardPage } from '@page-objects/animals-admin/dashboard-page';
+ import { InsAddressBookListPage } from '@page-objects/ins/address-book/list-page';
+@@ -77,12 +78,14 @@ export type AuthMint = {
+   targetName: string;
+   baseURL: string;
+   workerIndex: number;
++  /** The CRN to sign in with; the worker's identity when omitted. */
++  userId?: string;
+   proxy?: BrowserContextOptions['proxy'];
+   ignoreHTTPSErrors?: boolean;
+ };
+ 
+ export const createAuthState = async (browser: Browser, mint: AuthMint): Promise<string> => {
+-  const { targetName, baseURL, workerIndex, proxy, ignoreHTTPSErrors } = mint;
++  const { targetName, baseURL, workerIndex, userId, proxy, ignoreHTTPSErrors } = mint;
+   const target = AUTH_TARGETS[targetName];
+   if (!target) {
+     throw new Error(`No auth target named "${targetName}" — add one to AUTH_TARGETS in fixtures/auth-state.ts.`);
+@@ -102,7 +105,7 @@ export const createAuthState = async (browser: Browser, mint: AuthMint): Promise
+     try {
+       const page = await context.newPage();
+       await page.goto(target.landingPath);
+-      await new SignInPage(page).signIn();
++      await new SignInPage(page).signIn({ userId });
+       await expect(target.landingHeading(page)).toBeVisible({ timeout: LANDING_TIMEOUT_MS });
+ 
+       const authOnlyState = stripToAuthCookie(await context.storageState(), baseURL, authCookieNameFor(targetName, baseURL));
+@@ -123,7 +126,7 @@ export const createAuthState = async (browser: Browser, mint: AuthMint): Promise
+   });
+ };
+ 
+-export const createWorkerAuthState = async (browser: Browser, workerInfo: WorkerInfo): Promise<string> => {
++export const createWorkerAuthState = async (browser: Browser, workerInfo: WorkerInfo, user: StubUser): Promise<string> => {
+   const { name } = workerInfo.project;
+   const { baseURL, proxy, ignoreHTTPSErrors } = workerInfo.project.use;
+   if (!baseURL) {
+@@ -134,6 +137,7 @@ export const createWorkerAuthState = async (browser: Browser, workerInfo: Worker
+     targetName: name,
+     baseURL,
+     workerIndex: workerInfo.workerIndex,
++    userId: user.crn,
+     proxy,
+     ignoreHTTPSErrors,
+   });
+diff --git a/fixtures/seed-context.ts b/fixtures/seed-context.ts
+index f4d6b2e..3425ac6 100644
+--- a/fixtures/seed-context.ts
++++ b/fixtures/seed-context.ts
+@@ -1,12 +1,14 @@
+ import { request, type APIRequestContext, type Browser, type WorkerInfo } from '@playwright/test';
+ import { createAuthState } from '@fixtures/auth-state';
+ import { getAnimalsFrontendBaseUrl } from '@config/service-base-urls';
++import type { StubUser } from '@config/users';
+ 
+ const FRONTEND_AUTH_TARGET = 'animals';
+ 
+ export const createFrontendSeedContext = async (
+   browser: Browser,
+   workerInfo: WorkerInfo,
++  user: StubUser,
+   projectAuthState: string | undefined,
+ ): Promise<APIRequestContext> => {
+   const baseURL = getAnimalsFrontendBaseUrl();
+@@ -20,6 +22,7 @@ export const createFrontendSeedContext = async (
+         targetName: FRONTEND_AUTH_TARGET,
+         baseURL,
+         workerIndex: workerInfo.workerIndex,
++        userId: user.crn,
+         proxy,
+         ignoreHTTPSErrors,
+       });
+diff --git a/fixtures/ui.ts b/fixtures/ui.ts
+index 45f72e8..c6e2eb4 100644
+--- a/fixtures/ui.ts
++++ b/fixtures/ui.ts
+@@ -24,11 +24,18 @@ import { createWorkerAuthState } from '@fixtures/auth-state';
+ import { createFrontendSeedContext } from '@fixtures/seed-context';
+ import { getCdpProxy } from '@config/cdp-proxy';
+ import { sessionReuseEnabled } from '@utils/playwright/session-reuse';
++import { defaultUser, isolatedUserFor, signWorkerInAs, type StubUser } from '@config/users';
+ 
+ // frontendSeedContext mints its own session when session reuse is off or the project's baseURL is not the frontend, so both worker fixtures need their own budget rather than the test timeout.
+ const SESSION_MINT_TIMEOUT_MS = 120_000;
+ 
+ export interface AuthWorkerFixtures {
++  /**
++   * Set with test.use({ isolatedUser: true }) in a spec whose assertions read the order or count of the
++   * signed-in user's own records: its workers sign in as their own isolated stub user instead of the shared default.
++   */
++  isolatedUser: boolean;
++  workerUser: StubUser;
+   workerAuthState: string | undefined;
+   frontendSeedContext: APIRequestContext;
+ }
+@@ -52,19 +59,28 @@ export interface PageFixtures {
+ }
+ 
+ export const test = base.extend<PageFixtures, AuthWorkerFixtures>({
++  isolatedUser: [false, { option: true, scope: 'worker' }],
++  workerUser: [
++    async ({ isolatedUser }, use, workerInfo) => {
++      const user = isolatedUser ? isolatedUserFor(workerInfo.parallelIndex) : defaultUser;
++      signWorkerInAs(user);
++      await use(user);
++    },
++    { scope: 'worker', auto: true },
++  ],
+   workerAuthState: [
+-    async ({ browser }, use, workerInfo) => {
++    async ({ browser, workerUser }, use, workerInfo) => {
+       if (!sessionReuseEnabled()) {
+         await use(undefined);
+         return;
+       }
+-      await use(await createWorkerAuthState(browser, workerInfo));
++      await use(await createWorkerAuthState(browser, workerInfo, workerUser));
+     },
+     { scope: 'worker', timeout: SESSION_MINT_TIMEOUT_MS },
+   ],
+   frontendSeedContext: [
+-    async ({ browser, workerAuthState }, use, workerInfo) => {
+-      const context = await createFrontendSeedContext(browser, workerInfo, workerAuthState);
++    async ({ browser, workerUser, workerAuthState }, use, workerInfo) => {
++      const context = await createFrontendSeedContext(browser, workerInfo, workerUser, workerAuthState);
+       await use(context);
+       await context.dispose();
+     },
+diff --git a/page-objects/shared/auth/sign-in-page.ts b/page-objects/shared/auth/sign-in-page.ts
+index d9fe3cd..7af48ec 100644
+--- a/page-objects/shared/auth/sign-in-page.ts
++++ b/page-objects/shared/auth/sign-in-page.ts
+@@ -1,5 +1,5 @@
+ import { Page, Locator } from '@playwright/test';
+-import { defaultPassword, defaultUser } from '@config/users';
++import { defaultPassword, signedInUser } from '@config/users';
+ 
+ export class SignInPage {
+   readonly expectedUrl = new RegExp('/dcidmtest.onmicrosoft.com/oauth2/authresp$');
+@@ -28,7 +28,7 @@ export class SignInPage {
+   }
+ 
+   async signIn(options?: { userId?: string; password?: string }): Promise<void> {
+-    const userId = options?.userId ?? defaultUser.crn;
++    const userId = options?.userId ?? signedInUser().crn;
+     const password = options?.password ?? defaultPassword;
+     await this.inputUserId.fill(userId);
+ 
+diff --git a/page-objects/shared/base-page.ts b/page-objects/shared/base-page.ts
+index 35adb6b..ff1405f 100644
+--- a/page-objects/shared/base-page.ts
++++ b/page-objects/shared/base-page.ts
+@@ -1,5 +1,5 @@
+ import { Page, Locator } from '@playwright/test';
+-import { defaultUser } from '@config/users';
++import { defaultUser, signedInUser } from '@config/users';
+ import { pageLoadWait } from '@config/timeouts';
+ import { SignInPage } from '@page-objects/shared/auth/sign-in-page';
+ import { OrganisationPickerPage } from '@page-objects/shared/auth/organisation-picker-page';
+@@ -109,7 +109,7 @@ export class BasePage {
+     // resolved: anywhere but the stub's sign-in form means this context is
+     // already authenticated — usually the worker's reused session.
+     if (!signInPage.expectedUrl.test(this.page.url())) {
+-      this.requireDefaultIdentity(options);
++      this.requireWorkerIdentity(options);
+       return;
+     }
+     await signInPage.signIn({ userId: options?.userId });
+@@ -142,10 +142,10 @@ export class BasePage {
+     return signInPage.heading.isVisible();
+   }
+ 
+-  private requireDefaultIdentity(options?: { userId?: string; organisationSbi?: string }): void {
+-    if (options?.userId && options.userId !== defaultUser.crn) {
++  private requireWorkerIdentity(options?: { userId?: string; organisationSbi?: string }): void {
++    if (options?.userId && options.userId !== signedInUser().crn) {
+       throw new Error(
+-        `Already signed in as the default user, so cannot sign in as ${options.userId}. ` +
++        `Already signed in as ${signedInUser().displayName}, so cannot sign in as ${options.userId}. ` +
+           'Start cold instead: browser.newContext({ storageState: COLD_START }) for one context, or test.use({ storageState: COLD_START }) for the spec.',
+       );
+     }
+diff --git a/tests/animals/e2e/features/templates/create-template.spec.ts b/tests/animals/e2e/features/templates/create-template.spec.ts
+index 2e15e16..36218f6 100644
+--- a/tests/animals/e2e/features/templates/create-template.spec.ts
++++ b/tests/animals/e2e/features/templates/create-template.spec.ts
+@@ -9,6 +9,9 @@ const GERMINAL_PRODUCTS = 'Germinal products (semen, ova, embryos)';
+ const TEMPLATE_ORIGIN = new RegExp(`${SET_BASES.liveAnimals}/templates/[^/]+/origin$`);
+ const WEEKLY_NAME = 'Weekly Irish cattle';
+ 
++// These tests compare how many templates are listed before and after, so no other worker may save as this user.
++test.use({ isolatedUser: true });
++
+ /** Collects the URLs the page requests from the animals service, so a test can show what was never called. */
+ function requestsToAnimals(page: Page): URL[] {
+   const origin = new URL(requireBaseUrl('TRADE_IMPORTS_ANIMALS_FRONTEND_BASE_URL')).origin;
+@@ -225,6 +228,76 @@ test.describe('Create a template', { tag: '@integration' }, () => {
+     await expect(pages.page).toHaveURL(TEMPLATE_ORIGIN);
+   });
+ 
++  test('continuing for a template already named from the question reached by Back twice returns to that template with its name', async ({ pages, insPages, animalsPages }) => {
++    const { templateName, originOfImport } = animalsPages;
++    await insPages.notificationType.option(LIVE_ANIMALS).check();
++    await insPages.notificationType.continueToService();
++    await templateName.inputName.fill(WEEKLY_NAME);
++    await templateName.btnSaveAndContinue.click();
++    await expect(originOfImport.heading).toBeVisible();
++    const templateId = originOfImport.templateIdFromUrl();
++
++    await originOfImport.linkBack.click();
++    await expect(templateName.heading).toBeVisible();
++    await templateName.linkBack.click();
++
++    await expect(insPages.notificationType.heading).toBeVisible();
++    await expect(insPages.notificationType.option(LIVE_ANIMALS)).toBeChecked();
++
++    await insPages.notificationType.continueToService();
++
++    await expect(templateName.heading).toBeVisible();
++    await expect(templateName.inputName).toHaveValue(WEEKLY_NAME);
++    await templateName.btnSaveAndContinue.click();
++    await expect(originOfImport.heading).toBeVisible();
++    expect(originOfImport.templateIdFromUrl()).toBe(templateId);
++    expect(pages.page.url()).toMatch(TEMPLATE_ORIGIN);
++  });
++
++  test('continuing again from the question, with either type and after an empty choice, keeps the one template and its name', async ({ pages, insPages, animalsPages }) => {
++    const { templateName, originOfImport, manageTemplates } = animalsPages;
++    const type = insPages.notificationType;
++    await manageTemplates.open();
++    const templatesBefore = await manageTemplates.totalResults();
++    await manageTemplates.btnCreateNewTemplate.click();
++    await type.option(LIVE_ANIMALS).check();
++    await type.continueToService();
++    await templateName.inputName.fill(WEEKLY_NAME);
++    await templateName.btnSaveAndContinue.click();
++    await expect(originOfImport.heading).toBeVisible();
++    const templateId = originOfImport.templateIdFromUrl();
++
++    await originOfImport.linkBack.click();
++    await templateName.linkBack.click();
++    await expect(type.heading).toBeVisible();
++
++    // The question comes back with the type selected; opening it with only the template id leaves nothing chosen.
++    const withoutType = new URL(pages.page.url());
++    withoutType.searchParams.delete('type');
++    await pages.page.goto(withoutType.toString());
++    await expect(type.option(LIVE_ANIMALS)).not.toBeChecked();
++    await expect(type.option(GERMINAL_PRODUCTS)).not.toBeChecked();
++    await type.btnContinue.click();
++    await expect(type.errorSummaryLink).toBeVisible();
++
++    await type.option(GERMINAL_PRODUCTS).check();
++    await type.continueToService();
++
++    await expect(templateName.heading).toBeVisible();
++    await expect(templateName.inputName).toHaveValue(WEEKLY_NAME);
++    expect(pages.page.url()).toContain(templateId);
++
++    await templateName.linkBack.click();
++    await type.option(LIVE_ANIMALS).check();
++    await type.continueToService();
++
++    await expect(templateName.inputName).toHaveValue(WEEKLY_NAME);
++    expect(pages.page.url()).toContain(templateId);
++
++    await manageTemplates.open();
++    expect(await manageTemplates.totalResults()).toBe(templatesBefore + 1);
++  });
++
+   test('a template offers no Upload documents or declaration page', async ({ pages, insPages, animalsPages }) => {
+     const { templateName, originOfImport } = animalsPages;
+     await insPages.notificationType.option(LIVE_ANIMALS).check();
+diff --git a/tests/animals/e2e/features/templates/save-template.spec.ts b/tests/animals/e2e/features/templates/save-template.spec.ts
+index dd8efda..52bc859 100644
+--- a/tests/animals/e2e/features/templates/save-template.spec.ts
++++ b/tests/animals/e2e/features/templates/save-template.spec.ts
+@@ -14,6 +14,9 @@ const UNTITLED = 'Untitled template';
+ 
+ type SignInOptions = { userId?: string; organisationSbi?: string };
+ 
++// These tests read which template is listed first and how many there are, so no other worker may save as this user.
++test.use({ isolatedUser: true });
++
+ test.describe('Saving a template', { tag: '@integration' }, () => {
+   /** Presses Create new template on Manage templates and signs in again on the INS type question when asked. */
+   const createNewTemplate = async (page: Page, insPages: InsPages, animalsPages: AnimalsPages, options?: SignInOptions): Promise<void> => {
+@@ -66,7 +69,7 @@ test.describe('Saving a template', { tag: '@integration' }, () => {
+       const templateId = await saveTemplate(insPages, animalsPages, name);
+ 
+       await expect(manageTemplates.firstCardViewLink).toHaveAttribute('href', new RegExp(`/templates/${templateId}$`));
+-      expect(await manageTemplates.totalResults()).toBeGreaterThanOrEqual(before + 1);
++      expect(await manageTemplates.totalResults()).toBe(before + 1);
+       await expect(manageTemplates.templateCard(name)).toBeVisible();
+     });
+ 
+@@ -131,9 +134,7 @@ test.describe('Saving a template', { tag: '@integration' }, () => {
+       await saveTemplate(insPages, animalsPages, second);
+ 
+       const titles = await manageTemplates.templateTitles.allTextContents();
+-      expect(titles.indexOf(second)).toBeGreaterThanOrEqual(0);
+-      expect(titles.indexOf(first)).toBeGreaterThanOrEqual(0);
+-      expect(titles.indexOf(second)).toBeLessThan(titles.indexOf(first));
++      expect(titles.slice(0, 2)).toEqual([second, first]);
+     });
+ 
+     test("a saved template never appears among the user's notifications on the dashboard", async ({ pages, insPages, animalsPages }) => {
+@@ -147,8 +148,8 @@ test.describe('Saving a template', { tag: '@integration' }, () => {
+   });
+ 
+   test.describe('across sessions and users', () => {
+-    test('a saved template is still listed after signing out and back in', async ({ browser }) => {
+-      // The sign-out happens only in this cold context, so the suite's shared signed-in session is untouched.
++    test('a saved template is still listed after signing out and back in', async ({ browser, workerUser }) => {
++      // The sign-out happens only in this cold context, so the worker's signed-in session is untouched.
+       const context = await browser.newContext({ storageState: COLD_START });
+       try {
+         const page = await context.newPage();
+@@ -156,17 +157,17 @@ test.describe('Saving a template', { tag: '@integration' }, () => {
+         const insPages = createInsPages(page);
+         const sharedPages = createSharedPages(page);
+         const { manageTemplates } = animalsPages;
+-        const andrew = { userId: users.andrew.crn };
++        const owner = { userId: workerUser.crn };
+         const name = savedName();
+ 
+-        await manageTemplates.open(true, andrew);
+-        await createNewTemplate(page, insPages, animalsPages, andrew);
++        await manageTemplates.open(true, owner);
++        await createNewTemplate(page, insPages, animalsPages, owner);
+         await saveTemplate(insPages, animalsPages, name);
+ 
+         await manageTemplates.linkSignOut.click();
+         await expect(sharedPages.signOut.heading).toBeVisible();
+ 
+-        await manageTemplates.open(true, andrew);
++        await manageTemplates.open(true, owner);
+ 
+         await expect(manageTemplates.templateCard(name)).toBeVisible();
+       } finally {

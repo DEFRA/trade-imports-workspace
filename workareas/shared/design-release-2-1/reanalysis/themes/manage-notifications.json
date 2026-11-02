@@ -1,0 +1,44 @@
+{
+  "theme": "manage-notifications",
+  "file": "~/git/defra/trade-imports-workspace/workareas/shared/design-release-2-1/backlog.json",
+  "rows": [
+    {
+      "id": "inc-120",
+      "verdict": "still-needed",
+      "evidence": "Nothing on main or on any theme branch adds an amend confirmation page. On origin/main, animals: the card's Amend is still a POST button (src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js:34-37), the POST lands on the overview hub and a refusal goes to ?amendRefused=1 (dashboard/controller.js:117), and no GET route serves /amend (dashboard/controller.js routes, POST only). Plants: the same at high-risk-plants/.../dashboard/view-model/row/actions.js (Amend postAction) and dashboard/controller.js:107. Perftests: k6 'amendment started' still expects the hub (src/k6/journeys.js:337-338). On the overview-and-review branch (feat/EUDPA-696-..., PR #404 open, not merged), the view header's 'Amend this notification' is a form button with formaction to /amend (check-answers/template.njk:52-56, view-model/view-header.js:33-35), still with no confirmation page. The external dependency inc-112 (view header Amend) is built on that branch but not on main.",
+      "proposedChange": "Keep the row. Add a note: on the overview-and-review branch the view header's Amend is a formaction button posting straight to /amend, and an action-required notification's Continue (view-header.js continueHref) also posts to /amend. Both must become links to the new confirmation page with the card's Amend."
+    },
+    {
+      "id": "inc-121",
+      "verdict": "still-needed",
+      "evidence": "On origin/main, animals: the cancel-amend copy still reads 'Cancel this amendment?', has the 'will be discarded' paragraph and offers 'No, return to notification' (cancel-amend/copy/copy.en.js:2-5). The template still renders the body paragraph and a secondary button (cancel-amend/template.njk:6, 13-17). The page still carries a Back link and the journey strip (cancel-amend/controller.js kit.base backLink and journey). The restored view still shows the Success banner (check-answers/controller.js:174, check-answers/template.njk:28-31). The guard sends a Submitted notification to its view, not to the list (cancel-amend/controller.js nonAmendTarget). Plants is unchanged the same way (high-risk-plants/.../cancel-amend/copy/copy.en.js, template.njk, controller.js:26, 37, 45). The overview-and-review branch keeps the banner (check-answers/template.njk amendmentCancelled block) and only widens the guard to isSubmittedStatus (cancel-amend/controller.js:24). inc-110 (Cancel amend beside Continue) is built on that branch but not on main.",
+      "proposedChange": ""
+    },
+    {
+      "id": "inc-123",
+      "verdict": "still-needed",
+      "evidence": "On origin/main, animals-backend NotificationCopyMapper.java still clears the internal reference (line 69), the species and counts (line 87), the unweaned answer (line 99) and the exit date (line 44). It copies the whole fulfilments payload (line 41), so the overview's task statuses still follow the source. It also copies certifiedFor as-is with no mapping of retired values (line 98). No theme branch changes the mapper: the overview-and-review backend diff does not touch it. Copying an amendment still copies the live answers, not the pre-amend snapshot (NotificationService.copyNotification maps source as-is).",
+      "proposedChange": ""
+    },
+    {
+      "id": "inc-124",
+      "verdict": "still-needed",
+      "evidence": "On origin/main, a stale copy from the view page still redirects to the 'check-answers' slug (src/server/app/sets/live-animals/journeys/linear/features/notification-actions/controller.js:13-16, 50), but the view page's slug is 'notification-view' (src/server/app/shared/kit.js:54). The list case already returns to the list with ?staleAction=1. The overview-and-review branch has the same bug (notification-actions/controller.js:13-16). inc-112 (the view header's Copy as new) is built on that branch only. On main the view page's Copy as new form already posts copyOrigin=notification-view (check-answers/template.njk:44-47).",
+      "proposedChange": ""
+    },
+    {
+      "id": "inc-125",
+      "verdict": "still-needed",
+      "evidence": "On origin/main, animals: the delete page still has only a heading, 'This cannot be undone.' and two buttons, 'Yes, delete notification' and 'No, return to dashboard' (delete-notification/copy/copy.en.js:2-5, template.njk:5-21). There is no summary list. Back and No both go to the list (delete-notification/controller.js:27, 34), and the journey strip still shows (kit.base journey). Plants is the same (high-risk-plants/.../delete-notification/copy/copy.en.js, template.njk, controller.js:33, 40). No theme branch changes the delete page's content. The overview-and-review branch only widens deletable to isSubmittedStatus (delete-notification/controller.js:21).",
+      "proposedChange": ""
+    },
+    {
+      "id": "inc-201",
+      "verdict": "partly-met",
+      "evidence": "Nothing is on main: origin/main animals-backend has no SUBMITTED_ACTION_REQUIRED at all (git grep is empty), and the frontend's deletable and row actions accept only SUBMITTED (delete-notification/controller.js:18-21, dashboard/view-model/row/actions.js:28). Most of it is built on the unmerged overview-and-review branch, as part of inc-113 (feat/EUDPA-696-design-release-2-1-overview-and-review, frontend PR #404 open). Backend NotificationService.java on that branch: amend accepts isSubmitted, which includes action-required (lines 228-230, 239). Copy accepts it (line 127). Delete accepts it and publishes NOTIFICATION_SUBMISSION_DELETED (lines 376, 384). Cancel-amend restores status from the outstanding items (line 295). A resubmit recomputes the status from the documents (lines 211-217, 222-226). Frontend on that branch: the view header offers Amend for isSubmittedStatus (check-answers/view-model/view-header.js:33). Card actions use isSubmittedStatus (dashboard/view-model/row/actions.js:28), and so do delete (delete-notification/controller.js:21), the stub copy (services/persistence/records/stub/lifecycle/create.js:37) and the stub amend and cancel (stub/lifecycle/transition.js:34, 72). Not met anywhere: action-required going through inc-120's confirmation page, inc-121's cancel page and inc-125's delete page (those pages don't exist yet), and a copy carrying inc-123's list. No end-to-end proof for an action-required notification was found on main.",
+      "proposedChange": "Rewrite once overview-and-review merges, so the row covers only what that theme leaves.\n\nNew criteria:\n(1) On a 'Submitted action required' notification's view, 'Amend this notification', the card's Amend and the warning's Continue all open the amend confirmation page. 'Yes, continue' opens its amendment on the amend review.\n(2) The cancel-amendment page (inc-121's wording) serves an amending notification that was action-required. 'Yes, cancel amendment' returns to its view showing 'Submitted action required' with its submitted answers and no banner.\n(3) Resubmitting with an ITAHC or health certificate now uploaded and nothing else outstanding shows 'Submitted'. Resubmitting with items still outstanding shows 'Submitted action required'. Proven end to end on the workspace stack.\n(4) 'Copy as new' on an action-required notification carries exactly inc-123's list.\n(5) The delete confirmation page (inc-125's summary and wording) serves an action-required notification. 'Yes, delete' removes it from the set's list with the deletion banner, and the backend publishes NotificationSubmissionDeleted.\n\nAdd overview-and-review's inc-113 being merged to main as the stated precondition. Today it is built only on its branch."
+    }
+  ],
+  "splitReady": false,
+  "splitReadyWhy": "Not ready. All three external dependencies (inc-110 Cancel amend on the review, inc-112 the view header's Amend, Copy as new and Delete, and inc-113 the 'Submitted action required' status) are built only on the overview-and-review branch. Its PR (animals-frontend #404) is still open and the branch dates from 13 October, so main has moved on since. The in-theme dependsOn (inc-201 on inc-120, inc-121, inc-123 and inc-125) are fine for a split. Another unbuilt theme also touches the same code: animals-dashboard's inc-129 and inc-130 (no dependency on this theme) rework the live-animals and plants list cards and their row actions (dashboard/view-model/row/actions.js), where inc-120 turns the card's Amend into a link. The other overlapping unbuilt rows, inc-126, inc-140, inc-185 (germinal-products) and inc-195 (waiting-on-design, blocked), all depend on this theme's rows, so they follow it and do not clash."
+}

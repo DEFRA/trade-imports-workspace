@@ -1,0 +1,422 @@
+{
+  "source": "prototype:dr2-1-source",
+  "structure": "The GB notification service prototype (GOV.UK Prototype Kit, Nunjucks views, one Express router) at ~/git/defra/defra-design/GB-notification-service, commit 04a073b (the checkout's HEAD is 04a073b, so files can be read in place; use git show 04a073b:<path> if it has moved). Design Release 2.1 is not a separate app: app/lib/design-release-2.1-version.js (42 lines) calls app/lib/version-mount.js (363 lines), which copies every route in app/routes.js under /design-release-2.1, keeps a separate session nest (_designRelease21, flag _isDesignRelease21Version), prefixes journey paths in redirects and render data, sets service-navigation hrefs, and renders app/views/design-release-2.1/<view>.html where one exists, otherwise the root view. app/routes.js is 13,114 lines: lines 1-11104 are about 510 helper functions (session, validation, view models, render functions), lines 11105-13102 are about 90 route handlers, lines 13103-13114 mount the versions (DR2.1 before DR2). Handlers branch on isDesignRelease21SessionData and isDesignRelease2SessionData; DR2.1 also sets isDesignRelease2Version, so both DR2 and DR2.1 branches apply under /design-release-2.1. Views in scope: the 39 DR2.1 overrides in app/views/design-release-2.1/ (about 4,500 lines), the 15 DR2.1 partials in app/views/partials/design-release-2.1/ (about 900 lines), the root views DR2.1 falls back on (address-book, address-book-add, address-book-add-usage, address-book-lookup, address-book-view, index; about 880 lines), the root partials the DR2.1 pages include or routes.js renders (notification-status, region-of-origin-code-input, arrival-date-picker, animal-identification-saved-animals, cph-number-input, permanent-address-new-address-fields, the four reason-for-import selects, transporter fields and banner, address-book-manual-address-fields), partials/design-release-2/cancel-amend-modal.html (included by layouts/journey.html), and layouts/main.html and layouts/journey.html. app/data/ holds 34 list files (about 3,900 lines) that routes.js requires. Cut into 16 parts by what a user sees: the shell and journey control, then the journey in page order (start, consignment, reason, identification, arrival and transit, transporter, roles and addresses, CPH and permanent address, documents, review and submit), then notification hub with amend and copy, dashboard, templates, and the address book in two parts. routes.js is too big for one agent, so each part reads the routes.js line ranges that hold its pages' helpers, render functions and handlers; the ranges tile lines 1-13114 with no gaps or overlaps, and a view or partial shared by two parts is read by both but claimed only for the pages the part names. Left out by scope: app/views/intro/ and intro/routes.js, app/views/design-release-2/ and app/views/partials/design-release-2/ (except the one modal journey.html includes), app/views/testing/ and app/lib/testing-version.js and design-release-2-version.js, and the root journey views that DR2.1 overrides. Also left out: app/assets/ (client-side JavaScript and Sass, not named by the scope; the rendered traces source covers client behaviour), and three files nothing in scope reads (app/data/package-types.js, app/data/place-of-origin-addresses.js, app/utils/notification-reference.js, used only by intro/routes.js or not at all).",
+  "parts": [
+    {
+      "part": 1,
+      "title": "Version mount, layout and journey control",
+      "scope": "How /design-release-2.1 is mounted and how its session, links and view overrides work; the page layouts, service navigation and service index; and the cross-page journey machinery: notification reference, session reset, back links, from-hub/from-review returns, the journey step order and next-page logic, save-and-continue versus save-and-return actions. Stops at any individual page's own fields and validation.",
+      "read": [
+        "app/lib/version-mount.js",
+        "app/lib/design-release-2.1-version.js",
+        "app/filters.js",
+        "app/data/session-data-defaults.js",
+        "app/views/layouts/main.html",
+        "app/views/layouts/journey.html",
+        "app/views/index.html",
+        "app/views/partials/design-release-2.1/journey-form-actions.html",
+        "app/views/partials/notification-status.html",
+        "app/views/partials/design-release-2.1/notification-status.html",
+        "app/views/partials/design-release-2/cancel-amend-modal.html",
+        "app/routes.js lines 1-67 (requires and constants, including the notification reference GBN-AG-26-7K8M2P)",
+        "app/routes.js lines 273-401 (notification reference, resetNotificationJourneySession, seedPrototypeSessionForReasonForImport)",
+        "app/routes.js lines 436-499 (isFromHub, isFromReview, template-review return, getJourneyBackLink)",
+        "app/routes.js lines 1495-1603 (getJourneySteps, getNextJourneyPath, isAmendingNotification, journey form actions, getJourneySaveRedirect, getSectionContinueRedirect)",
+        "app/routes.js lines 7052-7106 (design release base path, address book href, getDashboardBackLink)",
+        "app/routes.js lines 11720-11723 (GET /index)",
+        "app/routes.js lines 13103-13114 (POST /intro/sign-in redirect and version mounting)"
+      ],
+      "covers": [
+        "the /design-release-2.1 mount: which path prefixes are journey paths, which are shared (address book, assets, /index), how redirects and links are prefixed, the separate session nest and the shared session keys, and the view-override fallback rule",
+        "the service navigation set for DR2.1 (dashboard, service index, templates, address book hrefs) and every heading, link and banner in layouts/main.html, layouts/journey.html and index.html",
+        "the journey-form-actions partial: every button and link (save and continue, save and return, cancel and others) and when each shows; both notification-status partials: every status and its tag",
+        "the journey step order and next-page rules in getJourneySteps and getNextJourneyPath, every condition that adds or skips a step",
+        "the notification reference format, journey session reset, back-link rules and the from-hub, from-review and template-review return rules",
+        "the sign-in redirect to /design-release-2.1 and the GET /index route"
+      ],
+      "prefix": "prototype-dr2-1-source-p1"
+    },
+    {
+      "part": 2,
+      "title": "Start: notification type, origin and what are you importing",
+      "scope": "The first three journey pages: choose the notification type, the origin of the import (country and region of origin code), and commodity and species selection. Includes /create-notification. Stops at consignment details.",
+      "read": [
+        "app/views/design-release-2.1/notification-type.html",
+        "app/views/design-release-2.1/origin-of-the-import.html",
+        "app/views/design-release-2.1/what-are-you-importing.html",
+        "app/views/partials/region-of-origin-code-input.html",
+        "app/data/countries.js",
+        "app/data/country-region-prefixes.js",
+        "app/data/commodities.js",
+        "app/data/commodities-germinal-products.js",
+        "app/data/commodities-0101-species.js",
+        "app/data/commodities-0102-species.js",
+        "app/data/commodities-01061900-species.js",
+        "app/utils/commodity-search-data.js",
+        "app/routes.js lines 68-272 (notification type normalising, items and validation, commodity and species filtering by type, region of origin code)",
+        "app/routes.js lines 402-435 (hasOriginDetails, validateOriginOfImport)",
+        "app/routes.js lines 500-823 (species and commodity selection parsing, session sync, removal)",
+        "app/routes.js lines 1011-1037 (hasCommoditySelection, validateCommoditySelection, redirectIfNoCommodity)",
+        "app/routes.js lines 10586-10675 (getOriginBackLink, renderNotificationTypePage, startNotificationJourney, renderOriginPage, getCommoditySearchHint, renderWhatAreYouImportingPage)",
+        "app/routes.js lines 11105-11308 (GET /create-notification, GET and POST /notification-type, /origin-of-the-import, /what-are-you-importing)"
+      ],
+      "covers": [
+        "the notification-type page: route, heading, caption, every option and hint, the error message verbatim, and where each type leads",
+        "the origin-of-the-import page: country of origin field and its options, region of origin code (prefix by country, suffix input), every other field, hint and error message verbatim, and branches",
+        "the what-are-you-importing page: commodity search, species selection and removal, the commodity and species lists by notification type (live animals versus germinal products), hints and every error message verbatim",
+        "the commodity and species reference lists in the 5 commodities files and the country and region-prefix lists, as the pages use them",
+        "/create-notification: what it resets and where it sends the user"
+      ],
+      "prefix": "prototype-dr2-1-source-p2"
+    },
+    {
+      "part": 3,
+      "title": "Consignment details and additional animal details",
+      "scope": "The consignment details page (per species or commodity: number of animals, packages, net weight, storage temperature) and the additional animal details page (unweaned and other per-commodity questions), with when each is required. Stops at reason for import.",
+      "read": [
+        "app/views/design-release-2.1/consignment-details.html",
+        "app/views/design-release-2.1/additional-animal-details.html",
+        "app/routes.js lines 824-1010 (packaging fields, germinal products, commodity rows and consignment groups)",
+        "app/routes.js lines 1038-1219 (parse and validate number of animals, packages, net weight, storage temperature; buildRadioItems)",
+        "app/routes.js lines 1372-1494 (unweaned options, additional animal details config and completeness)",
+        "app/routes.js lines 1604-1615 (getPostConsignmentDetailsPath, getAdditionalAnimalDetailsBackLink)",
+        "app/routes.js lines 10676-10726 (renderConsignmentDetailsPage, renderAdditionalAnimalDetailsPage)",
+        "app/routes.js lines 11309-11522 (GET and POST /consignment-details and /additional-animal-details)"
+      ],
+      "covers": [
+        "the consignment-details page: route, heading, caption, every field per species or commodity group with label, hint, suffix and whether required, the germinal storage temperature question and its 3 options, every validation rule and error message verbatim, and where it leads",
+        "the additional-animal-details page: when it is shown, every question, option and hint, every error message verbatim, back link and where it leads"
+      ],
+      "prefix": "prototype-dr2-1-source-p3"
+    },
+    {
+      "part": 4,
+      "title": "Reason for import",
+      "scope": "The reason-for-import page and its conditional follow-up questions (internal market purpose, transhipment destination country and exit border control post, transit options, temporary admission of horses), including /prototype/reason-for-import. Stops at animal identification.",
+      "read": [
+        "app/views/design-release-2.1/reason-for-import.html",
+        "app/views/partials/internal-market-purpose-select.html",
+        "app/views/partials/temporary-admission-horses-select.html",
+        "app/views/partials/transhipment-destination-country-select.html",
+        "app/views/partials/transit-options-select.html",
+        "app/data/import-reasons.js",
+        "app/data/internal-market-purposes.js",
+        "app/data/exit-border-control-posts.js",
+        "app/data/certification-purposes.js",
+        "app/routes.js lines 1616-1756 (import reasons and internal market purposes per session, completeness, validateImportReasonProceed)",
+        "app/routes.js lines 10371-10411 (internal market purpose select and radio items, destination country items)",
+        "app/routes.js lines 10525-10585 (exit border control post items, buildImportReasonItems)",
+        "app/routes.js lines 10757-10870 (renderReasonForImportPage and its conditional partials)",
+        "app/routes.js lines 11523-11538 (GET /prototype/reason-for-import and GET /reason-for-import)",
+        "app/routes.js lines 12286-12389 (POST /reason-for-import)"
+      ],
+      "covers": [
+        "the reason-for-import page: route, heading, caption, every reason option and hint for live animals and for germinal products, every conditional reveal and its field, label, options and hint",
+        "every validation rule and error message verbatim, including the conditional questions, and where the page leads",
+        "the import-reason, internal-market-purpose, certification-purpose and exit-border-control-post lists as the page uses them"
+      ],
+      "prefix": "prototype-dr2-1-source-p4"
+    },
+    {
+      "part": 5,
+      "title": "Animal identification details",
+      "scope": "The animal identification page: per-species identifier fields, adding and removing saved animals, germinal identifier entries, minimum identifiers before submit, and multi-species panels. Stops at arrival details.",
+      "read": [
+        "app/views/design-release-2.1/animal-identification-details.html",
+        "app/views/partials/animal-identification-saved-animals.html",
+        "app/data/commodity-identifiers.js",
+        "app/routes.js lines 1757-2224 (identifier fields per species, entry counts, completeness, panels, save, field and date validation, saved animals table, remove)",
+        "app/routes.js lines 10727-10756 (renderAnimalIdentificationDetailsPage)",
+        "app/routes.js lines 12390-12528 (GET and POST /animal-identification-details)"
+      ],
+      "covers": [
+        "the animal-identification-details page: route, heading, caption, every identifier field per commodity code with label, hint and format, the saved-animals table and its actions, multi-species panels",
+        "every validation rule and error message verbatim, including date format and the minimum-identifier rule, every action button and where each leads"
+      ],
+      "prefix": "prototype-dr2-1-source-p5"
+    },
+    {
+      "part": 6,
+      "title": "Arrival details and transit countries",
+      "scope": "The arrival-details page (port of entry, arrival date with the date picker and allowed range, means of transport, exit border control post where used) and the transit-countries page with when it is required. Stops at transporter.",
+      "read": [
+        "app/views/design-release-2.1/arrival-details.html",
+        "app/views/design-release-2.1/transit-countries.html",
+        "app/views/partials/arrival-date-picker.html",
+        "app/data/uk-airports.js",
+        "app/data/means-of-transport.js",
+        "app/routes.js lines 2225-2369 (airports, port and exit post validity, means of transport, arrival completeness and save, transit countries rules and renderTransitCountriesPage)",
+        "app/routes.js lines 4284-4417 (arrival redirects, continue path, date parsing, allowed date range, validateArrivalDetails, renderArrivalDetailsPage)",
+        "app/routes.js lines 12529-12643 (GET and POST /arrival-details and /transit-countries)"
+      ],
+      "covers": [
+        "the arrival-details page: route, heading, caption, every field with label, hint, options and date-picker bounds, every validation rule and error message verbatim, and where it leads",
+        "the transit-countries page: when it is required (means of transport), its fields, add and remove behaviour, every error message verbatim and where it leads",
+        "the UK airport and means-of-transport lists as the pages use them"
+      ],
+      "prefix": "prototype-dr2-1-source-p6"
+    },
+    {
+      "part": 7,
+      "title": "Transporter",
+      "scope": "The transporter search and select page (and /transport-details), choosing a transporter type, and adding a private or commercial transporter, including saving the new transporter to the address book. Stops at roles and addresses.",
+      "read": [
+        "app/views/design-release-2.1/transporter.html",
+        "app/views/design-release-2.1/transporter-add.html",
+        "app/views/design-release-2.1/transporter-add-private.html",
+        "app/views/design-release-2.1/transporter-add-commercial.html",
+        "app/views/partials/transporter-add-private-fields.html",
+        "app/views/partials/transporter-add-commercial-fields.html",
+        "app/views/partials/transporter-authorisation-banner.html",
+        "app/data/transporters.js",
+        "app/data/transporter-types.js",
+        "app/routes.js lines 3289-3842 (transporter search and results, render functions, type validation, private and commercial forms and validation, save to address book, cancel redirect)",
+        "app/routes.js lines 12664-12858 (GET /transport-details, GET and POST /transporter, /transporter/add, /transporter/add/private, /transporter/add/commercial)"
+      ],
+      "covers": [
+        "the transporter page: route, heading, search, results, selection, the authorisation banner, every error message verbatim and where it leads",
+        "the transporter-add page: every type option and hint and its error message verbatim",
+        "the private and commercial add pages: every field with label, hint, options and whether required, every validation rule and error message verbatim, the success message, cancel, and how a new transporter reaches the address book"
+      ],
+      "prefix": "prototype-dr2-1-source-p7"
+    },
+    {
+      "part": 8,
+      "title": "Roles and addresses, consignment addresses and contact address",
+      "scope": "The roles-and-addresses summary, each selectable consignment address section (place of origin, consignor or exporter, consignee, importer, place of destination and any others in consignment-address-sections.js) with its select and add-address pages, copying addresses between sections, and the contact address for the consignment. Stops at CPH number and permanent address; the address book's own pages belong to parts 15 and 16.",
+      "read": [
+        "app/views/design-release-2.1/roles-and-addresses.html",
+        "app/views/design-release-2.1/consignment-address-select.html",
+        "app/views/design-release-2.1/consignment-add-address.html",
+        "app/views/design-release-2.1/contact-address-for-consignment.html",
+        "app/views/partials/design-release-2.1/consignment-manual-address-fields.html",
+        "app/views/partials/design-release-2.1/consignment-uk-add-address-fields.html",
+        "app/views/partials/design-release-2.1/consignment-uk-contact-fields.html",
+        "app/views/partials/design-release-2.1/consignment-uk-manual-address-fields.html",
+        "app/data/consignment-address-sections.js",
+        "app/data/consignment-address-use-groups.js",
+        "app/data/consignment-addresses.js",
+        "app/data/contact-addresses.js",
+        "app/data/address-book-lookup-addresses.js",
+        "app/routes.js lines 1220-1371 (contact addresses from the address book, search, manual entry, validateContactAddress)",
+        "app/routes.js lines 2370-2652 (renderContactAddressPage, consignment address sections, copy between sections, completeness)",
+        "app/routes.js lines 3201-3220 (renderRolesAndAddressesPage)",
+        "app/routes.js lines 3843-4283 (consignment address search and filtering by section, select and add-address render and handlers, address uses)",
+        "app/routes.js lines 9738-9804 and 9843-9865 (consignment address payload from manual entry, sync to section, consignment return from the address book)",
+        "app/routes.js lines 12644-12663 (GET /contact-address-for-consignment and /roles-and-addresses)",
+        "app/routes.js lines 13017-13102 (the generated section routes, POST /roles-and-addresses, POST /contact-address-for-consignment)"
+      ],
+      "covers": [
+        "the roles-and-addresses page: route, heading, every section row, its status and change or add link, every error message verbatim and where it leads",
+        "for each selectable section in consignment-address-sections.js: its select page route, heading, hint, search, results, copy-from options, every error message verbatim, and its add-address page with every field, label, hint, address use option, UK lookup and manual entry branch and error message verbatim",
+        "the contact-address-for-consignment page: route, heading, search and selection, manual entry, every error message verbatim and where it leads",
+        "the consignment-add-address view itself (part 16 claims only how the address book add journey uses it)"
+      ],
+      "prefix": "prototype-dr2-1-source-p8"
+    },
+    {
+      "part": 9,
+      "title": "CPH number and permanent address",
+      "scope": "The CPH number page and the permanent address pages (the choice page, the per-animal permanent-address-animals page with its new-address fields, /permanent-address/select and /permanent-address/enter-address), with when they are required. Stops at upload documents.",
+      "read": [
+        "app/views/design-release-2.1/cph-number.html",
+        "app/views/design-release-2.1/permanent-address.html",
+        "app/views/design-release-2.1/permanent-address-animals.html",
+        "app/views/partials/cph-number-input.html",
+        "app/views/partials/permanent-address-new-address-fields.html",
+        "app/routes.js lines 2653-3200 (permanent address choices, per-animal lists, form parse and validation, review rows, render functions)",
+        "app/routes.js lines 3221-3288 (CPH split, parse, validateCphNumber, renderCphNumberPage)",
+        "app/routes.js lines 12859-13016 (GET and POST /cph-number, /permanent-address, /permanent-address/select, /permanent-address/enter-address)"
+      ],
+      "covers": [
+        "the cph-number page: route, heading, caption, the CPH input format and hint, every validation rule and error message verbatim, and where it leads",
+        "the permanent-address pages: which species need one, every choice and its conditional new-address fields with labels and hints, every validation rule and error message verbatim, and where each leads"
+      ],
+      "prefix": "prototype-dr2-1-source-p9"
+    },
+    {
+      "part": 10,
+      "title": "Upload documents",
+      "scope": "The upload-documents page: document types, adding and removing documents, the virus-check step and the return to the hub or review. Stops at review.",
+      "read": [
+        "app/views/design-release-2.1/upload-documents.html",
+        "app/routes.js lines 10871-11104 (document type options and labels, uploaded documents, validateUploadDocument, add, virus check, remove, renderUploadDocumentsPage)",
+        "app/routes.js lines 12182-12285 (GET /upload-documents, POST /upload-documents/virus-check/:documentId, POST /upload-documents)"
+      ],
+      "covers": [
+        "the upload-documents page: route, heading, caption, every field with label, hint and options (every document type), the uploaded-documents list and its statuses and actions",
+        "every validation rule and error message verbatim, the virus-check behaviour, and where each action leads"
+      ],
+      "prefix": "prototype-dr2-1-source-p10"
+    },
+    {
+      "part": 11,
+      "title": "Review, declaration, submitted and delete notification",
+      "scope": "The check-your-answers review page in every variant (journey, read-only submitted, amend), its cards, rows, errors and header; the declaration page; the notification-submitted page; and deleting a notification. The amend and cancel-amend modals and the routes that start an amend belong to part 12.",
+      "read": [
+        "app/views/design-release-2.1/review-notification.html",
+        "app/views/design-release-2.1/declaration.html",
+        "app/views/design-release-2.1/notification-submitted.html",
+        "app/views/design-release-2.1/delete-notification.html",
+        "app/views/partials/design-release-2.1/review-page-header.html",
+        "app/views/partials/design-release-2.1/review-sections.html",
+        "app/views/partials/design-release-2.1/review-summary-card.html",
+        "app/views/partials/design-release-2.1/review-summary-row.html",
+        "app/views/partials/design-release-2.1/delete-confirmation.html",
+        "app/routes.js lines 4418-5776 (review value formatting, species and commodity sections, card error states, completeness, review view model, read-only variant, DR2 commodity and document cards, review presentation, status variant, notification metadata, action-required warning, review page header)",
+        "app/routes.js lines 5916-6194 (review page options, renderReviewNotificationPage, delete summary rows for a notification)",
+        "app/routes.js lines 6267-6446 (delete notification view and render, declaration date, validateDeclaration, conditional submission items, renderDeclarationPage, renderNotificationSubmittedPage)",
+        "app/routes.js lines 12046-12181 (GET /review-notification, GET and POST /notifications/delete, POST /review-notification, GET and POST /declaration, GET /notification-submitted)"
+      ],
+      "covers": [
+        "the review-notification page in each variant: route and query parameters, header, status, every card and row with its label and change link, the missing-field display, every card error and the error summary verbatim, buttons and where they lead",
+        "the declaration page: every statement, checkbox and conditional item, every error message verbatim, and what submitting does",
+        "the notification-submitted page: every heading, panel, reference and link",
+        "the delete-notification page: route, the summary rows, the confirmation question and buttons, and where each leads"
+      ],
+      "prefix": "prototype-dr2-1-source-p11"
+    },
+    {
+      "part": 12,
+      "title": "Notification hub, drafts, amend and copy as new",
+      "scope": "The notification hub (task list), saving drafts and submitted notifications, copy-as-new, amend and cancel-amend, and the amend and cancel-amend modals. Stops at the dashboard lists that link to these.",
+      "read": [
+        "app/views/design-release-2.1/notification-hub.html",
+        "app/views/partials/design-release-2.1/amend-notification-modal.html",
+        "app/views/partials/design-release-2.1/cancel-amend-modal.html",
+        "app/data/dashboard-notification-snapshots.js",
+        "app/routes.js lines 5777-5915 (copy-as-new source snapshot, carried-over fields, copy into session, load draft snapshot)",
+        "app/routes.js lines 6447-6609 (package count, hub completeness, getNotificationHubViewModel, renderNotificationHubPage)",
+        "app/routes.js lines 6903-7051 (submitted snapshot clone, comparable snapshot, hasAmendChanges, persist and save draft, saveSubmittedNotification)",
+        "app/routes.js lines 11621-11707 (GET /notifications/copy-as-new, /notifications/amend, /notifications/cancel-amend)",
+        "app/routes.js lines 11738-11741 (GET /notification-hub)"
+      ],
+      "covers": [
+        "the notification-hub page: route, heading, reference and status, every section and task with its status and link, buttons (including save as template) and where each leads",
+        "the amend and cancel-amend modals: every heading, line and button",
+        "copy as new: which fields carry over and which do not, and where it leads",
+        "amend and cancel amend: what each loads, the Amend status, change detection and where each leads",
+        "draft and submitted saving rules"
+      ],
+      "prefix": "prototype-dr2-1-source-p12"
+    },
+    {
+      "part": 13,
+      "title": "Dashboard",
+      "scope": "The DR2.1 overall dashboard home (/), the notifications lists (/live-animals, /germinal-products, /dashboard redirect), and the actions, changes and inspection pages, with their cards, filters, sort, search and pagination. Templates belong to part 14.",
+      "read": [
+        "app/views/design-release-2.1/dashboard-home.html",
+        "app/views/design-release-2.1/dashboard.html",
+        "app/views/design-release-2.1/dashboard-actions.html",
+        "app/views/design-release-2.1/dashboard-changes.html",
+        "app/views/design-release-2.1/dashboard-inspection.html",
+        "app/views/partials/design-release-2.1/dashboard-notification-card.html",
+        "app/data/dashboard-notifications.js",
+        "app/routes.js lines 6610-6902 (dashboard hrefs, actions and inspection pagination, category filter, list path, changes sections, delay filter, dashboard pagination, date format)",
+        "app/routes.js lines 7107-7675 (view, copy and delete hrefs, snapshots by reference, deleteNotification, arrival date, commodity and quantity labels, enrichDesignRelease2Notification, getDashboardNotificationList, results text, sort items)",
+        "app/routes.js lines 8667-8926 (date range, type and status filter items, getDashboardViewModel, renderOverallDashboardPage, renderDashboardPage)",
+        "app/routes.js lines 9020-9123 (actions, changes and inspection view models and render functions)",
+        "app/routes.js lines 11539-11554 (GET /, /live-animals, /germinal-products)",
+        "app/routes.js lines 11708-11719 (GET /actions, /changes, /inspection)",
+        "app/routes.js lines 11724-11737 (GET /dashboard)"
+      ],
+      "covers": [
+        "the dashboard home: every heading, panel, count, link and card",
+        "the notifications list: route and query parameters, tabs, every filter (date range, type, status) and its options, search, sort options, results text, pagination, empty states",
+        "the notification card: every field, status tag, action-required message and action link (view, copy, amend, delete)",
+        "the actions, changes and inspection pages: every heading, filter, sort, card and pagination",
+        "the seeded dashboard notifications as the pages show them"
+      ],
+      "prefix": "prototype-dr2-1-source-p13"
+    },
+    {
+      "part": 14,
+      "title": "Templates",
+      "scope": "The templates list, creating a template from a notification (and from the hub), viewing a template's answers, changing a section, editing, using a template to start a notification, discarding and deleting a template.",
+      "read": [
+        "app/views/design-release-2.1/dashboard-templates.html",
+        "app/views/design-release-2.1/create-template.html",
+        "app/views/design-release-2.1/view-template.html",
+        "app/views/design-release-2.1/delete-template.html",
+        "app/views/partials/design-release-2.1/dashboard-template-card.html",
+        "app/views/partials/design-release-2.1/delete-confirmation.html",
+        "app/data/dashboard-templates.js",
+        "app/routes.js lines 6195-6200 (buildDeleteTemplateSummaryRows)",
+        "app/routes.js lines 7676-8666 (saved templates, template ids, build and save template from session, reference generation, seeding a notification from a template, template review view model, view, change, edit, discard, delete handlers)",
+        "app/routes.js lines 8927-9019 (renderDashboardTemplatesPage, template create journey, renderCreateTemplatePage, handleCreateTemplatePage, handleSaveTemplateFromHub)",
+        "app/routes.js lines 11555-11620 (every /templates route)"
+      ],
+      "covers": [
+        "the templates list page: heading, cards, sort or filter, empty state, success banners, links",
+        "the create-template page: every field, hint, validation rule and error message verbatim, and where it leads",
+        "the view-template page: every card and row and change link, and use, edit, discard and delete actions",
+        "the delete-template page and discard: question, summary rows, buttons and where each leads",
+        "using a template: which answers it seeds into a new notification",
+        "the seeded templates as the pages show them"
+      ],
+      "prefix": "prototype-dr2-1-source-p14"
+    },
+    {
+      "part": 15,
+      "title": "Address book: list, view, edit and delete",
+      "scope": "The address book list (search, type filter, pagination), viewing one address, editing it and deleting it. Adding an address belongs to part 16.",
+      "read": [
+        "app/views/address-book.html",
+        "app/views/address-book-view.html",
+        "app/views/address-book-lookup.html",
+        "app/views/design-release-2.1/delete-address.html",
+        "app/views/partials/design-release-2.1/delete-confirmation.html",
+        "app/views/partials/address-book-manual-address-fields.html",
+        "app/data/address-book.js",
+        "app/data/address-book-address-types.js",
+        "app/routes.js lines 6201-6266 (delete-address summary rows)",
+        "app/routes.js lines 9124-9643 (address book hrefs, pagination, results text, type filter items, addresses, return paths, viewable addresses, view summary rows, view and delete render, update and delete entry, renderAddressBookEditPage)",
+        "app/routes.js lines 9944-10044 (getAddressBookViewModel, renderAddressBookPage)",
+        "app/routes.js lines 11742-11745 (GET /address-book)",
+        "app/routes.js lines 11978-12045 (GET and POST /address-book/:addressId/edit, /address-book/:addressId/delete, GET /address-book/:addressId)"
+      ],
+      "covers": [
+        "the address-book list: route, heading, search, type filter options, results text, every column or card field, pagination, empty state, success banners and links",
+        "the address view page: every summary row and action",
+        "the edit page (address-book-lookup.html in edit mode): every field, label, hint, validation rule and error message verbatim, and where it leads",
+        "the delete-address page: summary rows, question, buttons and where each leads",
+        "the seeded address book and address types as the pages show them"
+      ],
+      "prefix": "prototype-dr2-1-source-p15"
+    },
+    {
+      "part": 16,
+      "title": "Address book: add an address",
+      "scope": "Adding an address to the address book: choose a category, postcode lookup, manual entry, choose usages, and the return to a journey section when the add started there. Under DR2.1 the add-details step renders design-release-2.1/consignment-add-address.html; part 8 claims that view's content for the journey, this part claims how the address book uses it.",
+      "read": [
+        "app/views/address-book-add.html",
+        "app/views/address-book-add-usage.html",
+        "app/views/address-book-lookup.html",
+        "app/views/design-release-2.1/consignment-add-address.html",
+        "app/views/partials/address-book-manual-address-fields.html",
+        "app/views/partials/design-release-2.1/consignment-manual-address-fields.html",
+        "app/views/partials/design-release-2.1/consignment-uk-add-address-fields.html",
+        "app/views/partials/design-release-2.1/consignment-uk-manual-address-fields.html",
+        "app/views/partials/design-release-2.1/consignment-uk-contact-fields.html",
+        "app/data/address-book-add-categories.js",
+        "app/data/address-book-origin-uses.js",
+        "app/data/address-book-destination-uses.js",
+        "app/data/address-book-branch-uses.js",
+        "app/data/address-book-lookup-addresses.js",
+        "app/routes.js lines 9644-9737 (search text, success messages, buildAddressBookEntryFromManual)",
+        "app/routes.js lines 9805-9842 (address book back link and cancel href)",
+        "app/routes.js lines 9866-9943 (saveAddressBookEntry)",
+        "app/routes.js lines 10045-10370 (base path, add categories and DR2.1 options, usages, add details render and post, usage page, add page, type validation, lookup page)",
+        "app/routes.js lines 10412-10524 (address book country items, lookup to manual address, manual address parse and validateAddressBookManualAddress)",
+        "app/routes.js lines 11746-11977 (GET and POST /address-book/add, /address-book/add/lookup, /address-book/add/usage)"
+      ],
+      "covers": [
+        "the address-book-add page: route, heading, every category option and hint, the error message verbatim",
+        "the lookup step: postcode search, results, manual-entry branch, every field, label and hint, every validation rule and error message verbatim",
+        "the usage page: every usage option per category and its error message verbatim",
+        "the DR2.1 add-details step as rendered through consignment-add-address.html from the address book, the success message, and where the user returns (address book or the journey section the add started from)"
+      ],
+      "prefix": "prototype-dr2-1-source-p16"
+    }
+  ]
+}

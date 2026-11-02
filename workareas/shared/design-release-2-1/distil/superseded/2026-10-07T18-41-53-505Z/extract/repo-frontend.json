@@ -1,0 +1,640 @@
+{
+  "source": "repo:frontend",
+  "structure": "repos/trade-imports-animals-frontend is a Hapi + Nunjucks (GOV.UK Frontend) server-rendered app. In scope: the live-animals set under src/server/app/sets/live-animals: journeys/linear/flow/flow.js (page order by section), flow/task-rows.js (hub task rows), flow/entry-guard.js (deep-link guard), obligations/sections/*.js (what is mandatory/optional/gated), and one folder per feature under journeys/linear/features/ (dashboard, hub, origin, commodities [search, consignment-details, animal-identification], import-reason, additional-details, documents, addresses [hub, party-picker, party-edit, ins-handshake], cph-number, transport [port-of-entry, transit-countries, transporters, transporter-add, transporters-select, commercial/private details], contact, check-answers, declaration, confirmation, delete-notification, cancel-amend, notification-actions). Each feature owns copy/copy.en.js (+ copy.cy.js Welsh pair) which holds the user-facing strings; those are the main source of copy claims. Shared layout and copy: src/server/app/shared/layout.njk, shared/copy.en.js, shared/kit.js (journey status strip). Decisions ledger: src/server/app/docs/decisions.md is an architecture-decisions note (no product rulings, no spec/decisions.json exists). Fit specs (*.fit.spec.js) sit beside each feature plus fit/journey-smoke.fit.spec.js; they were used to confirm behaviour (hub, dashboard, notification-actions test names read) but not enumerated test by test. Journey order (flow.js): start (dashboard), origin, commodities (search, then commodity details), animalIdentification, consignment (import reason, additional details), documents, addresses (+CPH), transport (port of entry, transit countries, transporters), contact, review (notification-view, declaration, confirmation; gated on readyForCheckYourAnswers). Left out: src/server/auth, health, common, engine/bridge internals, services plumbing, Welsh copy values (the cy files mirror en), css, tests other than fit spec names, and every non-live-animals set. Notification templates (save/use a template) were searched for with grep across src and not found; recorded as a gap.",
+  "scopeHash": "5da59fbe5eb6a2271cd0c59ba51141c7855b7a788a79839e55cca0d76d21c071",
+  "claims": [
+    {
+      "id": "repo-frontend-001",
+      "statement": "The service name shown in the header, service navigation and every page title is 'Import notification service'; page titles read '<page> - Import notification service - GOV.UK', prefixed with 'Error: ' when the page has an error summary.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/layout.njk:23; src/server/app/shared/copy.en.js:3-7",
+      "quote": "serviceName: 'Import notification service',\n    errorTitlePrefix: 'Error: ',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-002",
+      "statement": "Every page carries a grey 'Alpha' phase banner reading 'This is a new service. Help us improve it and give your feedback by email', linking to a mailto address for the APHA service desk.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/layout.njk:14,65-70; src/server/app/shared/copy.en.js:9-13",
+      "quote": "bodyPrefix: 'This is a new service. Help us improve it and',\n      feedbackLinkText: 'give your feedback by email'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-003",
+      "statement": "A signed-in user sees service navigation with Dashboard, Address book, Manage account and Log out, with the Dashboard item active on the dashboard. Manage account links to '#'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk:16,33-62",
+      "quote": "{% set manageAccountUrl = \"#\" %}",
+      "confidence": "verbatim",
+      "note": "Manage account has no destination today."
+    },
+    {
+      "id": "repo-frontend-004",
+      "statement": "The layout uses no breadcrumbs: a page's route backwards is the back link, and its route up is the service navigation.",
+      "kind": "rule",
+      "ref": "src/server/app/shared/layout.njk:71-75",
+      "quote": "No breadcrumbs: Design release 1 gives a page one route backwards — the\n     back link — and one route up, the service navigation.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-005",
+      "statement": "Pages inside a notification show a status strip above the content: a coloured tag (Draft blue, Submitted green, Amending yellow, Deleted grey) beside the notification reference, which is the journey id.",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/layout.njk:95-100; src/server/app/shared/kit.js:35-58; src/server/app/shared/copy.en.js:70-75",
+      "quote": "draft: 'Draft',\n    submitted: 'Submitted',\n    amend: 'Amending',\n    deleted: 'Deleted'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-006",
+      "statement": "The footer shows Privacy, Cookies and Accessibility statement links to the GOV.UK help pages.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/layout.njk:106-125; src/server/app/shared/copy.en.js:21-25",
+      "quote": "privacy: 'Privacy',\n      cookies: 'Cookies',\n      accessibility: 'Accessibility statement'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-007",
+      "statement": "A save that fails recoverably shows a notification banner 'There is a problem: Sorry, there is a problem with the service. Your answers on this page have been saved. Try again in a few minutes.'",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:36-39",
+      "quote": "body: 'Sorry, there is a problem with the service. Your answers on this page have been saved. Try again in a few minutes.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-008",
+      "statement": "An action on a notification that was changed elsewhere since it was opened is rejected with the banner 'The notification has been updated: This notification was updated since you opened it. Review the details and try again.' (concurrency token check).",
+      "kind": "behaviour",
+      "ref": "src/server/app/shared/copy.en.js:47-50; src/server/app/sets/live-animals/journeys/linear/features/notification-actions/controller.js:41-43",
+      "quote": "body: 'This notification was updated since you opened it. Review the details and try again.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-009",
+      "statement": "The save buttons on question pages are labelled 'Save and continue', 'Save and return to overview' and 'Cancel and return to overview'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:63-67",
+      "quote": "saveAndContinue: 'Save and continue',\n    saveAndReturnToHub: 'Save and return to overview',\n    cancelAndReturnToHub: 'Cancel and return to overview'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-010",
+      "statement": "Default validation messages used when a feature gives none: 'Select a valid option', 'Enter a valid postcode', 'Enter a valid UK telephone number', 'Enter a valid date', 'Enter a real time, like 14:30', 'Enter a whole number', 'Enter N characters or fewer'.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/copy.en.js:96-106",
+      "quote": "oneOf: 'Select a valid option',\n  postcode: 'Enter a valid postcode',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-011",
+      "statement": "The notifications dashboard is headed 'Import notification service', explains 'Use this service to tell the authorities about live animals you are importing. You will answer a short set of questions about the consignment, then submit your notification.', and offers a start-style button 'Start a new notification' (POST that creates a draft and goes to the origin page).",
+      "kind": "behaviour",
+      "ref": "features/dashboard/copy/copy.en.js:2-7; features/dashboard/controller.js:120-124; features/dashboard/template.njk:28-35",
+      "quote": "startButton: 'Start a new notification',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-012",
+      "statement": "The dashboard lists the user's notifications under 'Your notifications' as summary cards (not a table): each card title is the reference, and the body shows Commodity, Origin, Arrival at destination, Consignee, Consignor, Status (tag), Date created and Date submitted.",
+      "kind": "behaviour",
+      "ref": "features/dashboard/template.njk:87-157; features/dashboard/copy/copy.en.js:8-26",
+      "quote": "<div class=\"govuk-summary-card notification-list\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-013",
+      "statement": "A dashboard card shows an empty string for any value the notification does not yet hold (origin, arrival, consignor, consignee, dates), and the reference falls back to the journey id when none is assigned.",
+      "kind": "behaviour",
+      "ref": "features/dashboard/view-model/row/index.js:11-25",
+      "quote": "reference: journey.reference ?? journey.journeyId,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-014",
+      "statement": "The dashboard has a 'Filter notifications' panel with one keyword search box labelled 'Keyword or reference' and a 'Search' button; the search is on the reference number only (query parameter referenceNumber).",
+      "kind": "behaviour",
+      "ref": "features/dashboard/template.njk:40-57; features/dashboard/controller.js:42-47,58-63",
+      "quote": "label: 'Keyword or reference',",
+      "confidence": "verbatim",
+      "note": "The label says keyword or reference, but only referenceNumber is passed to the backend list call."
+    },
+    {
+      "id": "repo-frontend-015",
+      "statement": "The dashboard sort control offers four options: Arrival (newest to oldest) [default], Arrival (oldest to newest), Date created (newest to oldest), Date created (oldest to newest), applied by an 'Update sort' button; an unrecognised sort value falls back to the arrival-newest default.",
+      "kind": "behaviour",
+      "ref": "features/dashboard/notification-helper.js:7-14,110-113; features/dashboard/copy/copy.en.js:27-36",
+      "quote": "{ value: 'arrivalDate,desc', text: 'Arrival (newest to oldest)' },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-016",
+      "statement": "The dashboard shows a results line ('No Results', 'Showing 1 Result', 'Showing X to Y of Z Results') and GOV.UK Previous/Next pagination only when there is more than one page; the fit suite proves paging at the 20-row boundary preserving the chosen sort.",
+      "kind": "behaviour",
+      "ref": "features/dashboard/notification-helper.js:136-215; features/dashboard/dashboard.fit.spec.js:318",
+      "quote": "test('paginates at the 20-row boundary and preserves the selected sort'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-017",
+      "statement": "With no notifications and no search, the dashboard shows 'You have not started any notifications in this session.'; a search with no match shows 'No notifications found' as the results line and no empty-state paragraph.",
+      "kind": "copy",
+      "ref": "features/dashboard/copy/copy.en.js:13,56; features/dashboard/template.njk:159-161; features/dashboard/controller.js:82-88",
+      "quote": "emptyText: 'You have not started any notifications in this session.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-018",
+      "statement": "Deleted notifications are filtered out of the dashboard list.",
+      "kind": "behaviour",
+      "ref": "features/dashboard/controller.js:65",
+      "quote": "const rows = listed.rows.filter((journey) => journey.status !== DELETED)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-019",
+      "statement": "Dashboard row actions depend on status. Submitted: View, Amend (POST), Copy as new (POST), Delete. Draft: Resume, Copy as new, Delete. Amending: Resume, Copy as new, Cancel amendment, Delete. Each link carries visually hidden text 'notification <reference>'.",
+      "kind": "behaviour",
+      "ref": "features/dashboard/view-model/row/actions.js:17-67; features/dashboard/copy/copy.en.js:49-55",
+      "quote": "if (journey.status === SUBMITTED) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-020",
+      "statement": "After a delete or a copy the dashboard shows a green success notification banner ('Notification deleted: The notification has been deleted.' or 'Notification copied: A new draft notification has been created.'), driven by ?deleted=1 or ?copied=1.",
+      "kind": "behaviour",
+      "ref": "features/dashboard/template.njk:10-26; src/server/app/shared/copy.en.js:51-60",
+      "quote": "successBody: 'A new draft notification has been created.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-021",
+      "statement": "Amend (POST) turns a submitted notification into an amendment and opens its overview (hub); if it cannot, the user returns to the dashboard.",
+      "kind": "behaviour",
+      "ref": "features/dashboard/controller.js:115-118",
+      "quote": "return journey ? h.redirect(hubPath(journey.journeyId)) : backToDashboard(h)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-022",
+      "statement": "Copy as new (POST) creates a separate draft from a notification, sends the user to the new copy's overview, and is rejected with a stale-action banner if the source changed since the dashboard or review page loaded (the concurrency token is posted with the action). A copy started from the review page returns to the review page on a recoverable error, otherwise the dashboard.",
+      "kind": "behaviour",
+      "ref": "features/notification-actions/controller.js:13-46; features/notification-actions/notification-actions.fit.spec.js:38-70",
+      "quote": "test('copy creates a separate draft notification'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-023",
+      "statement": "Delete asks 'Delete this notification?' with 'This cannot be undone.', a confirm button 'Yes, delete notification' and a link 'No, return to dashboard'; it is offered for draft, submitted and amending notifications only, and any other status is redirected to the dashboard. It is a soft delete, then returns to the dashboard with ?deleted=1.",
+      "kind": "behaviour",
+      "ref": "features/delete-notification/controller.js:19-59; features/delete-notification/copy/copy.en.js:1-6",
+      "quote": "confirmButton: 'Yes, delete notification',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-024",
+      "statement": "Cancel amendment asks 'Cancel this amendment?' with 'Your changes since you started amending will be discarded and the submitted version restored.', a button 'Yes, cancel amendment' and a link 'No, return to notification'. It is only available while a notification is in amend status; success returns to the review page with ?cancelled=1 and the banner 'Success: The amendment has been cancelled and the submitted version restored.'",
+      "kind": "behaviour",
+      "ref": "features/cancel-amend/controller.js:23-65; features/cancel-amend/copy/copy.en.js; features/check-answers/copy/copy.en.js:36-41",
+      "quote": "body: 'Your changes since you started amending will be discarded and the submitted version restored.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-025",
+      "statement": "Notification templates (saving a notification as a template or starting from one) do not exist in the animals frontend: no route, copy, template or controller was found. The notification actions are only copy, delete, amend and cancel amendment.",
+      "kind": "behaviour",
+      "ref": "grep over src for notification template / save as template found only an unrelated hit in features/delete-notification/controller.js",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in src/server/app/sets/live-animals/journeys/linear/features and src/server/app/shared for any template feature."
+    },
+    {
+      "id": "repo-frontend-026",
+      "statement": "A deep link to any notification page (other than the origin page and the amend, cancel-amend, copy and delete actions) is redirected to the origin page when the notification has neither an opening-run record in this session nor any user-entered committed answer.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.js:14-60",
+      "quote": "const ACTION_SLUGS = new Set(['amend', 'cancel-amend', 'copy', 'delete'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-027",
+      "statement": "The overview (hub) page is headed 'Overview', has no back link (the way off is the Dashboard item in the service navigation), and shows a 'Your commodities' summary of two panels: 'Animals' (Total number of animals in this consignment) and 'Packages/boxes' (Total number of packages in this consignment), summed over all commodity lines and reading 0 before any commodity exists.",
+      "kind": "behaviour",
+      "ref": "features/hub/copy/copy.en.js:1-9; features/hub/controller.js:128-144,160-163; features/hub/hub.fit.spec.js:321,478",
+      "quote": "animalsCaption: 'Total number of animals in this consignment',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-028",
+      "statement": "The overview shows a task list headed 'Notification tasklist' in six numbered groups in this order: '1. About the consignment' (origin, commodities, main reason), '2. Description of the goods' (commodity details, identification, additional details), '3. Transport and arrival' (arrival details, transit countries, transport details), '4. Documents', '5. Consignment parties' (roles and addresses), '6. Contact address'.",
+      "kind": "behaviour",
+      "ref": "features/hub/controller.js:30-52; features/hub/copy/copy.en.js:20-28; features/hub/hub.fit.spec.js:152",
+      "quote": "'description-of-the-goods': '2. Description of the goods',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-029",
+      "statement": "Hub task row titles: 'Where is this consignment coming from?', 'What are you importing?', 'Main reason for import', 'Commodity details', 'Additional details', 'Identification details', 'Arrival details', 'Transit countries', 'Transport details', 'Roles and addresses', 'Contact address for this consignment', 'Upload documents'. Only 'Roles and addresses' has a hint ('Consignor or Exporter, Consignee, Importer and Place of Destination').",
+      "kind": "copy",
+      "ref": "features/hub/copy/copy.en.js:32-70; features/hub/hub.fit.spec.js:303",
+      "quote": "hint: 'Consignor or Exporter, Consignee, Importer and Place of Destination'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-030",
+      "statement": "A hub task is tagged only 'Complete' (green) or 'To do' (blue); there is no part-done or optional state shown on the hub. A row whose stored answer no longer passes its own page's rules reads 'To do' even if the engine rates it complete.",
+      "kind": "rule",
+      "ref": "features/hub/controller.js:54-73; features/hub/copy/copy.en.js:12-19",
+      "quote": "const statusTag = (status, invalid) =>\n  status === FULFILLED && !invalid ? COMPLETE_TAG : TO_DO_TAG",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-031",
+      "statement": "Every hub task can be started in any order: each row is a link with its own status regardless of what else is answered (a task with nothing before it opens and saves before a commodity is chosen).",
+      "kind": "behaviour",
+      "ref": "features/hub/controller.js:84-92; features/hub/hub.fit.spec.js:175,205",
+      "quote": "Design release 1 lets a trader start any task on the notification in any\n// order",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-032",
+      "statement": "The 'Identification details' row is on the hub only once a chosen commodity has its own identifier requirement; on a notification with nothing chosen it is absent. The 'Transit countries' row is conditional and leaves the hub when it does not apply.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:21-38,56-65; features/hub/hub.fit.spec.js:252,267",
+      "quote": "{ id: 'transitCountries', pages: [transitCountriesPage], conditional: true },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-033",
+      "statement": "The overview ends with a primary 'Review and submit' button and a secondary 'Return to dashboard' button; the review page is offered whatever else has been answered (no gate on the button).",
+      "kind": "behaviour",
+      "ref": "features/hub/controller.js:75-80; features/hub/copy/copy.en.js:10-11; features/hub/hub.fit.spec.js:390,406",
+      "quote": "reviewAndSubmit: 'Review and submit',\n  returnToDashboard: 'Return to dashboard',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-034",
+      "statement": "The origin page 'Origin of the import' asks for the Country of origin (searchable select, hint 'Start typing to search for a country.'), then 'Does the consignment have a region of origin code?' Yes/No (hint 'If a region of origin code is required it will be shown on your health certificate.'), then 'Enter the region of origin code' with the country code as a fixed prefix, and an optional 'Your internal reference for this consignment (optional)'.",
+      "kind": "data",
+      "ref": "features/origin/copy/copy.en.js:1-22; features/origin/validate.js:22-39",
+      "quote": "legend: 'Does the consignment have a region of origin code?',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-035",
+      "statement": "Origin validation: country must be a value from the origin country list ('Select a country from the list'); the region code suffix is required only when the requirement answer is Yes ('Enter the region of origin code') and is at most 5 characters; the internal reference is at most 58 characters.",
+      "kind": "rule",
+      "ref": "features/origin/validate.js:19-20,81-110; features/origin/copy/copy.en.js:23-31",
+      "quote": "regionCodeMaxLength: 'Region of origin code must be 5 characters or less',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-036",
+      "statement": "On the origin page, the back link goes to the overview if the notification has committed answers and to the dashboard otherwise; saving goes to the next page in the journey.",
+      "kind": "behaviour",
+      "ref": "features/origin/controller.js:41-47,112-113",
+      "quote": "hasCommittedNotificationAnswers(answers)\n    ? hubPath(journey.journeyId)\n    : dashboardPath()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-037",
+      "statement": "Origin obligations: countryOfOrigin and regionOfOriginCodeRequirement are mandatory; the region code is always in scope, mandatory when the requirement is 'yes' and optional otherwise, and its stored value is kept when the answer flips to no; the internal reference is optional.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/origin.js:12-42; obligations/sections/misc.js:15-19",
+      "quote": "regionCode is mandatory when regionCodeRequirement is yes",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-038",
+      "statement": "The commodity search page is headed 'What are you importing?', with an inset 'A separate notification is required for each health certificate. Consignments that do not require a health certificate must still be notified.', a 'Search for a commodity' box (hint: by commodity name, commodity code or species name, at least 3 characters), a 'N selected' list with 'Clear all', and a help panel linking to the Trade Tariff tool. 'No results found' shows when nothing matches; the error is 'Select a commodity'.",
+      "kind": "behaviour",
+      "ref": "features/commodities/copy/copy.en.js:3-30",
+      "quote": "searchHint:\n      'You can search by commodity name (for example, Cow), commodity code (0102), or species name (Bos taurus). Enter at least 3 characters.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-039",
+      "statement": "The 'Commodity details' page lists the selected commodities in a table (Commodity code, Common name, Remove) with 'Number of animals' (required whole number greater than 0) and 'Number of packages (when required)' (hint 'Such as crates, bags or boxes'; whole number) per commodity line, plus 'Add another commodity'.",
+      "kind": "data",
+      "ref": "features/commodities/copy/copy.en.js:31-55",
+      "quote": "packages: {\n      label: 'Number of packages (when required)',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-040",
+      "statement": "Lowering the number of animals below the count of identifier records already entered is refused: 'You have N identifier record(s) for <species> but entered M animal(s). Remove identifier records or keep the higher count.'",
+      "kind": "rule",
+      "ref": "features/commodities/copy/copy.en.js:52-53",
+      "quote": "countDrop: (records, species, entered) =>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-041",
+      "statement": "The 'Identification details' page tells the user 'You must add all animal identification details before the consignment arrives at the port of entry.' and collects, per animal, one or more of Microchip number, Passport, Tattoo, Ear tag and Horse name (each at most 58 characters; at least one identifier required), plus a permanent address (name or organisation, address lines, town, county, postcode or Zip code, phone, email) under the warning 'Providing a false address is an act of fraud'. A running counter 'Enter details for <species> N of CAP' and 'Save and add another' / 'Save and finish' buttons guide entry, and the cap equals the number of animals entered.",
+      "kind": "behaviour",
+      "ref": "features/commodities/copy/copy.en.js:56-170",
+      "quote": "counter: (species, next, cap) =>\n      `Enter details for ${species} ${next} of ${cap}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-042",
+      "statement": "The identification address form has a hint only on the phone field ('For international numbers include the country code'); name, address line 1, town, postcode and Zip code, phone and email are mandatory; limits are 255 (name, address lines), 100 (town, county), 12 (postcode), 20 (phone) and 254 (email) characters.",
+      "kind": "rule",
+      "ref": "features/commodities/copy/copy.en.js:123-165; features/commodities/animal-identification/address/fields.js:22-26",
+      "quote": "telephoneNumber: 'For international numbers include the country code'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-043",
+      "statement": "The identification page redirects straight past itself when no chosen commodity carries an identifier requirement.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.js:21-26",
+      "quote": "the same question the identification page asks\n// before it redirects a trader straight past itself.",
+      "confidence": "inferred",
+      "note": "Inferred from the comment on task-rows.js; the redirect itself lives in the animal-identification controller, which was not read."
+    },
+    {
+      "id": "repo-frontend-044",
+      "statement": "The 'Main reason for import' page asks 'What is the main reason for importing the animals?' with five options (internal market, transhipment or onward travel, transit, re-entry, temporary admission of horses), each with a hint, and reveals follow-up fields by reason.",
+      "kind": "behaviour",
+      "ref": "features/import-reason/copy/copy.en.js:1-14",
+      "quote": "legend: 'What is the main reason for importing the animals?',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-045",
+      "statement": "Import reason gating: 'Purpose in the internal market' (eleven purposes, each with a hint) applies only for internal market; 'Destination country' applies for transit and transhipment or onward travel; 'Port of exit' applies for transit and temporary admission of horses; 'Exit date' (hint 'For example, 27/3/2026') applies only for temporary admission of horses. When the reason changes, now-inapplicable stored values are purged.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/import-reason.js:40-116; features/import-reason/copy/copy.en.js:15-51",
+      "quote": "portOfExit applies when reasonForImport is transit or temporaryAdmissionHorses",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-046",
+      "statement": "Import reason errors: 'Select a purpose in the internal market', 'Select a destination country', 'Select a port of exit', 'Enter an exit date', 'Enter a real date'; a saved country or port no longer on the reference list is named in an error asking the user to select again.",
+      "kind": "copy",
+      "ref": "features/import-reason/copy/copy.en.js:52-62",
+      "quote": "dateRequired: 'Enter an exit date',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-047",
+      "statement": "The 'Additional details' page asks 'What are the animals certified for?' (hint 'This information can be found on the ITAHC.', values from the certification purposes list) and 'Does the consignment contain any unweaned animals?' Yes/No (hint 'These are animals that are still feeding from their mother.').",
+      "kind": "data",
+      "ref": "features/additional-details/copy/copy.en.js:1-17; src/server/app/sets/live-animals/obligations/sections/misc.js:26-30",
+      "quote": "legend: 'What are the animals certified for?',",
+      "confidence": "verbatim",
+      "note": "animalsCertifiedFor is modelled always-mandatory; the comment says APHA may gate it by commodity later."
+    },
+    {
+      "id": "repo-frontend-048",
+      "statement": "The 'Upload documents' page gives guidance: attach an ITAHC if the consignment requires one (it can be added later), upload everything before the consignment arrives, documents in English with all pages; lists other documents (import licences or authorisations, commercial documents or invoices); and a 'Check which additional documents you must upload' disclosure table by consignment type, with a GOV.UK link.",
+      "kind": "copy",
+      "ref": "features/documents/copy/copy.en.js:3-33",
+      "quote": "summary: 'Check which additional documents you must upload',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-049",
+      "statement": "Each document has a Document reference (hint 'For example, GBHC1234567890.', at most 58 characters), a Document type chosen from a list (ITAHC, Veterinary health certificate, Air waybill, Import permit, Letter of authority, Commercial invoice, Sea waybill, Rail waybill, Bill of lading, Catch certificate, Laboratory sampling results for aflatoxin, Health certificate, Journey log, Other), a Date of issue (hint 'For example, 12/12/2025') and an Attachment.",
+      "kind": "data",
+      "ref": "features/documents/copy/copy.en.js:36-92; src/server/app/sets/live-animals/obligations/sections/documents.js:30-56",
+      "quote": "hint: 'For example, GBHC1234567890.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-050",
+      "statement": "A notification holds up to 15 documents; the hint says 'up to a maximum of N files' and the error at the cap is 'You can upload a maximum of N files'.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/documents.js:19-28; features/documents/copy/copy.en.js:56,131",
+      "quote": "maxEntries: 15,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-051",
+      "statement": "Accepted attachment types are PDF, DOC, DOCX, JPEG, JPG, PNG, XLS and XLSX, up to 10MB each; ZIP files are not allowed; the wrong type error is 'The selected file must be a <types>' and the oversize error 'The selected file must be smaller than 10MB'.",
+      "kind": "constraint",
+      "ref": "features/documents/upload-config.js:3-18,39-47; features/documents/copy/copy.en.js:57,135-138",
+      "quote": "const MAX_FILE_SIZE_MB = 10",
+      "confidence": "verbatim",
+      "note": "The code comment says 50MB was raised for Design Release 1 (EUDPA-518) and put back to 10 because of the ingress body cap."
+    },
+    {
+      "id": "repo-frontend-052",
+      "statement": "The documents table shows Document reference, Document type, Date of issue and a Status tag reporting the virus check: 'Scanning for virus', 'Check completed', 'Virus found' or 'Unknown'. The user can 'Refresh virus scan status', View file and Remove; 'Save and add another' adds a further document.",
+      "kind": "behaviour",
+      "ref": "features/documents/copy/copy.en.js:67-119",
+      "quote": "scanning: 'Scanning for virus',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-053",
+      "statement": "Continuing is refused while any document is still scanning or was rejected: 'You cannot continue until all documents have been scanned or removed'; a virus is reported as '<file> contains a virus. Remove it and try again with a different file.'",
+      "kind": "rule",
+      "ref": "features/documents/copy/copy.en.js:128-134; features/check-answers/refusal.js:31-40",
+      "quote": "cannotContinue:\n      'You cannot continue until all documents have been scanned or removed',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-054",
+      "statement": "Documents are optional to the journey itself: the guidance says an ITAHC can be added later, and the confirmation page tells the user they may still need to 'upload the health certificate and any other required documents'.",
+      "kind": "behaviour",
+      "ref": "features/documents/copy/copy.en.js:5; features/confirmation/copy/copy.en.js:7-11",
+      "quote": "If you do not have it now, you can add it later.",
+      "confidence": "inferred",
+      "note": "Inferred from copy only; whether the documents task blocks submit was not traced."
+    },
+    {
+      "id": "repo-frontend-055",
+      "statement": "The 'Consignment addresses' hub lists five parties, each picked from the organisation's address book: Place of origin, Consignor or exporter, Consignee, Importer and Place of destination, each with a hint and the error 'Select a <party> from the list'; the page warns 'Providing a false address is an act of fraud.' and each unpicked party reads 'Not added yet'.",
+      "kind": "behaviour",
+      "ref": "features/addresses/copy/copy.en.js:3-42; src/server/app/sets/live-animals/obligations/sections/parties.js:6-34",
+      "quote": "warning: 'Providing a false address is an act of fraud.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-056",
+      "statement": "All five parties (place of origin, consignor, consignee, importer, place of destination) are always in scope and mandatory.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/parties.js:1-34",
+      "quote": "Standard address blocks — always in scope.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-057",
+      "statement": "The party picker offers a 'Search' box (hint 'Name, address or country') over a table of Name, Address and Country with a select control, 'View details', a results line 'Showing N of M addresses' and 'No addresses match your search.'; and an 'Add a new address' link.",
+      "kind": "behaviour",
+      "ref": "features/addresses/copy/copy.en.js:43-66",
+      "quote": "hint: 'Name, address or country',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-058",
+      "statement": "'Add a new address' sends the user to the INS front door's address book add page ('/address-book/add') with query parameters journey-type=gbn-ag, notification-id, fulfilment-id and a random one-time handshake-token, which the animals frontend stores in a cookie and checks when the user returns. Failures return 'The address could not be found in your address book...' or 'The address book could not be reached...'.",
+      "kind": "integration",
+      "ref": "features/addresses/ins-handshake.js:7-66; src/server/app/shared/copy.en.js:76-84",
+      "quote": "return `${base}/address-book/add?${params.toString()}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-059",
+      "statement": "The CPH page 'Add the county parish holding number (CPH)' takes three numeric parts: County (2 digits), Parish (3 digits), Holding number (4 digits), with hint 'For example, 12/345/6789.' and a help panel 'What is a CPH number?'; it follows the addresses on the 'Roles and addresses' task.",
+      "kind": "data",
+      "ref": "features/cph-number/copy/copy.en.js:1-31; flow/flow.js:48-51; flow/task-rows.js:78",
+      "quote": "holdingLength: 'Holding number must be 4 digits',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-060",
+      "statement": "The 'Arrival details' page asks for Arrival date at port of entry (hint 'The expected date of arrival at the port of entry. For example, <date>', must be inside a window: 'Arrival date at port of entry must be between <earliest> and <latest>'), Port of entry (searchable), Means of transport to the port of entry (Airplane, Railway, Road Vehicle, Vessel), Transport identification (at most 58 characters, with a bullet hint listing flight number, train number, road vehicle registration number, vessel name) and Transport document reference (at most 58 characters).",
+      "kind": "data",
+      "ref": "features/transport/copy/copy.en.js:2-60",
+      "quote": "lead: 'To identify the means of transport, enter (one of the following):',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-061",
+      "statement": "Arrival date, port of entry, means of transport, transport identification and transport document reference are all mandatory.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/arrival.js:5-15; obligations/sections/transport.js:69-85",
+      "quote": "name: 'transportDocumentReference',\n  status: 'mandatory'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-062",
+      "statement": "The 'Which countries will the consignment travel through?' page applies only when the means of transport is Railway or Road Vehicle; it is optional (an empty list is allowed) and allows up to 12 countries, added one at a time through 'Add country', with 'Countries you have added' table, per-country Remove, and the message 'Maximum of N countries reached. Remove a country to add another.' when full; the UK is excluded.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/transport.js:87-111; features/transport/transit-countries/validate.js:12; features/transport/copy/copy.en.js:62-96",
+      "quote": "export const MAX_TRANSITED_COUNTRIES = 12",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-063",
+      "statement": "The transporter step is a single list page 'Transporter details' ('This is the person or company responsible for transporting the consignment.') with a 'Select a transporter' table (Name, Address, Approval number, Type, Status), a Search box (hint 'Name, address or approval number'), guidance on transporter authorisation (DAERA/APHA valid in GB, EU states not), and an 'Add a transporter' link. Type tag is Commercial or Private; Status tag is Approved or New.",
+      "kind": "behaviour",
+      "ref": "features/transport/copy/copy.en.js:97-160; flow/flow.js:56-60",
+      "quote": "hint: 'Name, address or approval number',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-064",
+      "statement": "'Add a transporter' goes to 'Choose a transporter type' ('What type of transporter will move the animals?'), warning 'Before you add this transporter, please ensure you have already searched for it first.', with Private transporter listed first and Commercial second ('This can only be a commercial transporter from Northern Ireland.').",
+      "kind": "behaviour",
+      "ref": "features/transport/copy/copy.en.js:161-183",
+      "quote": "hint: 'This can only be a commercial transporter from Northern Ireland.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-065",
+      "statement": "'Add commercial transporter' takes Transporter authorisation number (at most 50 characters), name, address (country shown fixed as Northern Ireland), email and phone; 'Add private transporter' takes name, address with a Country select, email and phone. Both show an 'Enter contact details' heading and the phone hint 'For international numbers include the country code'.",
+      "kind": "data",
+      "ref": "features/transport/copy/copy.en.js:193-285",
+      "quote": "country: 'Northern Ireland',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-066",
+      "statement": "Exactly one of the commercial or private transporter address blocks is in scope depending on transporterType (Commercial or Private); switching type drops the stored address of the other. The transporter type is mandatory.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/transport.js:27-63",
+      "quote": "switching transporterType from 'Commercial' to\n// 'Private' drops any stored commercialTransporter address.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-067",
+      "statement": "A transporter chosen from the list is copied by value (name, address, approval number) into the notification, and the error is 'Select a transporter from the list' (or, when the chosen one has since disappeared, 'Select a transporter from the list. The one you chose is no longer available.').",
+      "kind": "behaviour",
+      "ref": "features/transport/copy/copy.en.js:155-159,184-191",
+      "quote": "hint: 'Selecting a transporter copies their name, address and approval number into this notification.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-068",
+      "statement": "The contact step 'Contact address for consignment' asks the user to pick one contact from the address book (hint 'Selecting a contact copies their name and address into this notification.'), shows the 'Current contact address' with 'Edit details', and errors 'Select a contact address'; contactAddress is mandatory.",
+      "kind": "behaviour",
+      "ref": "features/contact/copy/copy.en.js:1-12; src/server/app/sets/live-animals/obligations/sections/misc.js:5-9",
+      "quote": "contactRequired: 'Select a contact address'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-069",
+      "statement": "The review page 'Review your notification' shows six numbered sections (1. About the consignment ... 6. Contact address), each with a subsection heading and summary cards (Import details, Reason for import, Additional animal details, Arrival details, Transit countries, Transport details, Roles and addresses, Contact address for this consignment, Uploaded documents), each with a 'Change' link, and ends with a single 'Continue' button.",
+      "kind": "behaviour",
+      "ref": "features/check-answers/copy/copy.en.js:1-3,42-75,143-147",
+      "quote": "submit: {\n    button: 'Continue'\n  },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-070",
+      "statement": "On the review page an empty value in a finished card reads 'Not applicable'; an empty value in a card with answers outstanding is drawn in the missing style (screen readers hear 'Missing'); each incomplete card gets an error line such as 'Complete import details' shown both in the error summary and in the card.",
+      "kind": "behaviour",
+      "ref": "features/check-answers/copy/copy.en.js:3-9,148-164",
+      "quote": "importDetails: 'Complete import details',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-071",
+      "statement": "Review Continue and the declaration submit are refused when the notification is not ready (task rows incomplete), a party's stored address is no longer valid, stored answers fail their page rules, or a document is rejected or still scanning; a submitted notification is never refused. Invalid parties read 'Correct the address details for the <party>'.",
+      "kind": "rule",
+      "ref": "features/check-answers/refusal.js:44-76; features/check-answers/copy/copy.en.js:165-173",
+      "quote": "if (!scope.readyForCheckYourAnswers) {\n    return { refused: true, extraCardErrors: {} }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-072",
+      "statement": "The review section (review page, declaration, confirmation) is gated on readiness for check-your-answers; the pages come after all answer sections in the flow.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:66-70",
+      "quote": "gate: (scope) => scope.readyForCheckYourAnswers,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-073",
+      "statement": "The declaration page has the heading 'Declaration' and states the user is the UK contact and complying with Regulation (EU) 2017/625, is responsible for the consignment until it clears checks or reaches the place of destination, and is accountable for border control payments, re-dispatch, quarantine and destruction costs; it has one required checkbox 'I confirm that I have reviewed and comply with this declaration and that the information submitted in this notification is true and correct.', a 'Date of declaration:' line and a 'Continue' button. The error is 'Confirm that you have reviewed and comply with this declaration'. The declaration is flow-only session state, not saved with the notification.",
+      "kind": "behaviour",
+      "ref": "features/declaration/copy/copy.en.js:1-34; flow/flow.js:21",
+      "quote": "export const FLOW_ONLY_KEYS = ['declaration']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-074",
+      "statement": "The confirmation page shows a panel 'Import notification submitted' with 'Your reference number', then 'Before the consignment is imported' (upload the health certificate and any other required documents), 'Transporting the consignment' (go directly to the place of destination; may be inspected; stay for the time on the health certificate or 48 hours), 'How to view or amend this notification' (return to dashboard, 'Create a new notification') and 'Getting help' (APHA telephone 0330 041 6999, Monday to Friday 8:30am to 5pm, HMRC link).",
+      "kind": "copy",
+      "ref": "features/confirmation/copy/copy.en.js:1-42",
+      "quote": "telephone: 'Telephone: 0330 041 6999',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-075",
+      "statement": "The system-populated reference number (GBN-AG-YY-XXXXXX, six-character Crockford base32) is assigned at creation and never user-entered, and is not a flow field.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/obligations/sections/system.js:7-15",
+      "quote": "`GBN-AG-YY-XXXXXX` where XXXXXX is a 6-char Crockford base32",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-076",
+      "statement": "Ruling in force in the frontend's architecture note: obligations carry no display copy; journeys own labels, hints, options, validation messages and templates, and one obligation has exactly one page owner.",
+      "kind": "constraint",
+      "ref": "src/server/app/docs/decisions.md ('The model has no display copy', 'One obligation has one page owner')",
+      "quote": "Obligations contain stable domain identity, scope, mandate and invariants. Journeys\nown labels, hints, options, validation messages and templates.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-077",
+      "statement": "Every user-facing string exists in English and Welsh: each feature has copy.en.js and copy.cy.js, and tests enforce matching key trees and that a translated value differs from its English counterpart.",
+      "kind": "constraint",
+      "ref": "features/*/copy/copy.cy.js; .claude/rules/copy.md",
+      "quote": "Change `en` and\n`cy` together.",
+      "confidence": "inferred",
+      "note": "Inferred from the paired files and the rules text; Welsh values were not read."
+    },
+    {
+      "id": "repo-frontend-078",
+      "statement": "The service has no fit spec or copy for a dashboard column or filter other than reference search and sort; there is no status filter, commodity filter or date-range filter on the dashboard.",
+      "kind": "behaviour",
+      "ref": "features/dashboard/template.njk:40-57; features/dashboard/dashboard.fit.spec.js:229-310",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in dashboard template, controller and fit spec for any filter beyond referenceNumber and sort."
+    }
+  ]
+}

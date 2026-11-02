@@ -336,7 +336,7 @@ export class PlantsJourney {
 
   async toArrivalStatus(country: string): Promise<void> {
     await this.plantsPages.origin.selectCountry(country)
-    await this.plantsPages.origin.btnSaveAndContinue.click()
+    await this.plantsPages.origin.saveAndContinue.click()
     await this.plantsPages.arrivalStatus.heading.waitFor()
   }
 }
@@ -622,7 +622,7 @@ await page.getByText('Done').click()
 ```typescript
 // Wrong — the same clicks copied into every spec that needs the page
 await plantsPages.origin.selectCountry('Germany')
-await plantsPages.origin.btnSaveAndContinue.click()
+await plantsPages.origin.saveAndContinue.click()
 await plantsPages.arrivalStatus.heading.waitFor()
 
 // Correct — one to* method on the journey flow

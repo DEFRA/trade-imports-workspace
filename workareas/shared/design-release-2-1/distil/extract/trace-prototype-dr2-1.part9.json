@@ -1,0 +1,687 @@
+{
+  "source": "trace:prototype-dr2-1",
+  "structure": "Part 9, 'Add a transporter': the 4 traces of the transport-and-arrival.fit.spec.js 'add a transporter' describe, every one opened and mined (all passed, 0 errors). Refs use these short names: [type] = transport-and-arrival--add-a-transporter-choose-a-transporter-type.zip (spec line 168, 88 actions); [private] = transport-and-arrival--add-a-transporter-private-transporter-every-required-field-is-named-then-it-is-added-and-selectable.zip (line 184, 117 actions); [cancel] = transport-and-arrival--add-a-transporter-private-transporter-cancel-leaves-the-journey-for-the-dashboard.zip (line 219, 71 actions); [commercial] = transport-and-arrival--add-a-transporter-commercial-transporter-authorisation-number-address-search-or-manual-entry.zip (line 228, 116 actions). Every trace walks the same set-up (create notification, live animals, France, chicken, internal market / breeding, 100 animals, arrival details at Heathrow) and then: (1) Transporter details /design-release-2.1/transporter, the entry point, where 'Add a transporter' is clicked (action 50); (2) Choose a transporter type /transporter/add (always): two radios, Private transporter or Commercial; blank Continue gives an error; (3a) Add a private transporter /transporter/add/private (when Private): name, address lines, town, county, postcode, country select defaulting to United Kingdom, then 'Enter contact details' email and phone; blank save names 6 required fields; complete save returns to /transporter; (3b) Add a commercial transporter /transporter/add/commercial (when Commercial): an Important banner on authorisation, authorisation number, name, an address search with an 'Enter address manually' toggle revealing address lines and a country fixed to Northern Ireland, contact details revealed with the address; blank save names 7 required fields; complete save returns to /transporter; (4) Transporter details again, with a Success banner and the new transporter first in the list, already selected and tagged New; (5) Cancel and return to dashboard on the private page posts and lands on the Dashboard /design-release-2.1. Not reached by any trace: typing into the commercial address search, format validation of any field, cancel from the commercial page, and the back links being followed. Pointers: [type] actions 55 (page) and 68 (error); [private] actions 58-66 (page), 80 (error), 97 (list after add); [commercial] actions 59 (page), 72 (manual entry revealed), 83 (error), 102 (list after add), request 436 (POST body); [cancel] action 58 (dashboard). The spec file was read for test titles only.",
+  "claims": [
+    {
+      "id": "trace-prototype-dr2-1-p9-001",
+      "statement": "The Transporter details page offers an 'Add a transporter' button (a secondary button styled link) that leads to /design-release-2.1/transporter/add, beside the transporter search.",
+      "kind": "behaviour",
+      "ref": "trace [type] action 50 (snapshot of /design-release-2.1/transporter)",
+      "quote": "<a href=\"/design-release-2.1/transporter/add\" role=\"button\" draggable=\"false\" class=\"govuk-button govuk-button--secondary app-transporter-page__add-button\" data-module=\"govuk-button\">Add a transporter</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-002",
+      "statement": "The Transporter details page, seen before the add, has the caption 'Transport and arrival', the heading 'Transporter details' and the intro 'This is the person or company responsible for transporting the consignment.'",
+      "kind": "copy",
+      "ref": "trace [type] action 50",
+      "quote": "Transport and arrival / Transporter details / This is the person or company responsible for transporting the consignment.",
+      "confidence": "verbatim",
+      "note": "The transporter list page itself is part 10's subject; it is claimed here only as the entry point and the destination of the add."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-003",
+      "statement": "Before any transporter is added, the transporter list holds 8 seeded transporters: Yusen Logistics (Romania) SRL, Roadtrain Ltd, Aberdeen Livestock Ltd, Danish Meat Export ApS, Portuguese Livestock Lda, Romanian Agri Exports SRL, Slovak Farm Export and Finnish Livestock Oy, each with an address, approval number, type (Commercial or Private) and status (Approved or New).",
+      "kind": "data",
+      "ref": "trace [type] action 50, table.app-transporter-table rows",
+      "quote": "Yusen Logistics (Romania) SRL | Bulevardul General Paul Teodorescu 4, Sector 6, 061344 Bucharest, Romania | RO/BUCHAREST/T1/00092010 | Commercial | Approved",
+      "confidence": "verbatim",
+      "note": "Prototype seed data, not reference data from a system."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-004",
+      "statement": "Choose a transporter type is reached at /design-release-2.1/transporter/add, with the page title 'Choose a transporter type - Import notification service - GOV.UK'.",
+      "kind": "behaviour",
+      "ref": "trace [type] action 55",
+      "quote": "Choose a transporter type - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-005",
+      "statement": "Choose a transporter type has the caption 'Add a new transporter' and the heading 'Choose a transporter type'.",
+      "kind": "copy",
+      "ref": "trace [type] action 55, .app-transporter-add-page__header",
+      "quote": "<p class=\"app-transporter-add-page__caption\">Add a new transporter</p> <h1 class=\"app-transporter-add-page__heading\">Choose a transporter type</h1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-006",
+      "statement": "Choose a transporter type has a back link 'Back' to /design-release-2.1/transporter.",
+      "kind": "behaviour",
+      "ref": "trace [type] action 55, .govuk-back-link",
+      "quote": "<a href=\"/design-release-2.1/transporter\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-007",
+      "statement": "Choose a transporter type shows a GOV.UK warning text telling the user to check the list before adding a transporter, to avoid duplicates.",
+      "kind": "copy",
+      "ref": "trace [type] action 55, .govuk-warning-text",
+      "quote": "Check the transporter list before adding new transporters to avoid duplicates.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-008",
+      "statement": "Choose a transporter type asks one radios question, transporterType, with a visually hidden legend 'Choose a transporter type' and two options: 'Private transporter' (value private) and 'Commercial' (value commercial).",
+      "kind": "data",
+      "ref": "trace [type] action 55, input[name=transporterType]",
+      "quote": "Private transporter / Commercial",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-009",
+      "statement": "The Commercial option carries the hint that a commercial transporter can only be one from Northern Ireland.",
+      "kind": "copy",
+      "ref": "trace [type] action 55, #transporter-type-commercial-hint",
+      "quote": "This can only be a commercial transporter from Northern Ireland.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-010",
+      "statement": "Choose a transporter type has one button, 'Continue', which posts to /design-release-2.1/transporter/add.",
+      "kind": "copy",
+      "ref": "trace [type] action 55, form.app-transporter-add-form",
+      "quote": "<form method=\"post\" action=\"/design-release-2.1/transporter/add\" novalidate=\"\" class=\"app-transporter-add-form\"> ... Continue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-011",
+      "statement": "Continuing on Choose a transporter type with no option chosen keeps the user on the page with the error summary 'There is a problem' and the message 'Select a transporter type'.",
+      "kind": "rule",
+      "ref": "trace [type] actions 64-68",
+      "quote": "There is a problem / Select a transporter type",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-012",
+      "statement": "The 'Select a transporter type' error summary link points at the first radio, #transporter-type-private, and the same message shows inline above the radios as 'Error: Select a transporter type'.",
+      "kind": "behaviour",
+      "ref": "trace [type] action 68, .govuk-error-summary__list a and #transporter-type-error",
+      "quote": "<a href=\"#transporter-type-private\">Select a transporter type</a> ... <p id=\"transporter-type-error\" class=\"govuk-error-message\"><span class=\"govuk-visually-hidden\">Error:</span> Select a transporter type</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-013",
+      "statement": "Choosing 'Private transporter' and continuing goes to Add a private transporter at /design-release-2.1/transporter/add/private.",
+      "kind": "rule",
+      "ref": "trace [private] actions 52-55; index.json pages",
+      "quote": "Check input[name=\"transporterType\"][value=\"private\"] ... /design-release-2.1/transporter/add/private",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-014",
+      "statement": "Choosing 'Commercial' and continuing goes to Add a commercial transporter at /design-release-2.1/transporter/add/commercial.",
+      "kind": "rule",
+      "ref": "trace [commercial] actions 52-55; request 358 (POST add 302) then 359 (GET commercial)",
+      "quote": "Check input[name=\"transporterType\"][value=\"commercial\"] ... /design-release-2.1/transporter/add/commercial",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-015",
+      "statement": "Add a private transporter has the page title 'Add a private transporter - Import notification service - GOV.UK', the caption 'Add a new transporter' and the heading 'Add a private transporter'.",
+      "kind": "copy",
+      "ref": "trace [private] action 66",
+      "quote": "<p class=\"app-transporter-add-page__caption\">Add a new transporter</p> <h1 class=\"app-transporter-add-page__heading\">Add a private transporter</h1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-016",
+      "statement": "Add a private transporter has a back link 'Back' to the transporter type page, /design-release-2.1/transporter/add.",
+      "kind": "behaviour",
+      "ref": "trace [private] actions 66 and 70 (toHaveAttribute on .govuk-back-link)",
+      "quote": "<a href=\"/design-release-2.1/transporter/add\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-017",
+      "statement": "Add a private transporter asks for 'Name or organisation name' (transporterPrivateName), which is required.",
+      "kind": "data",
+      "ref": "trace [private] actions 58 and 80, #transporter-private-name",
+      "quote": "Name or organisation name",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-018",
+      "statement": "Add a private transporter asks for 'Address line 1' (transporterPrivateAddressLine1), which is required.",
+      "kind": "data",
+      "ref": "trace [private] actions 59 and 80, #transporter-private-address-line-1",
+      "quote": "Address line 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-019",
+      "statement": "Add a private transporter asks for 'Address line 2 (optional)' (transporterPrivateAddressLine2), which is optional.",
+      "kind": "data",
+      "ref": "trace [private] action 60, #transporter-private-address-line-2",
+      "quote": "Address line 2 (optional)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-020",
+      "statement": "Add a private transporter asks for 'Town or city' (transporterPrivateTownOrCity), which is required.",
+      "kind": "data",
+      "ref": "trace [private] actions 61 and 80, #transporter-private-town-or-city",
+      "quote": "Town or city",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-021",
+      "statement": "Add a private transporter asks for 'County (optional)' (transporterPrivateCounty), which is optional.",
+      "kind": "data",
+      "ref": "trace [private] action 62, #transporter-private-county",
+      "quote": "County (optional)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-022",
+      "statement": "Add a private transporter asks for 'Postcode or Zip code' (transporterPrivatePostcode), which is required.",
+      "kind": "data",
+      "ref": "trace [private] actions 63 and 80, #transporter-private-postcode",
+      "quote": "Postcode or Zip code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-023",
+      "statement": "Add a private transporter asks for 'Country' (transporterPrivateCountry) from a select that defaults to United Kingdom.",
+      "kind": "data",
+      "ref": "trace [private] actions 64 and 67 (toHaveValue), #transporter-private-country",
+      "quote": "<option value=\"United Kingdom\" selected=\"\">United Kingdom</option>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-024",
+      "statement": "The private transporter Country select holds 42 options: the EU member states, several of their outermost regions and territories, the Crown Dependencies and the United Kingdom. Northern Ireland is not a separate option.",
+      "kind": "data",
+      "ref": "trace [private] actions 66 and 80, #transporter-private-country options",
+      "quote": "Austria, Azores (Portugal), Belgium, Bulgaria, Canary Islands (Spain), Ceuta (Spain), Croatia, Cyprus, Czech Republic, Denmark, Estonia, Finland, France, French Guiana (France), Germany, Greece, Guadeloupe (France), Guernsey (United Kingdom), Hungary, Isle of Man (United Kingdom), Italy, Jersey (United Kingdom), Latvia, Lithuania, Luxembourg, Madeira (Portugal), Malta, Martinique (France), Mayotte (France), Melilla (Spain), Netherlands, Poland, Portugal, Republic of Ireland, Reunion (France), Romania, Saint Martin (France), Slovakia, Slovenia, Spain, Sweden, United Kingdom",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-025",
+      "statement": "No error appears for Country when a private transporter is saved blank, because it is already set to United Kingdom.",
+      "kind": "rule",
+      "ref": "trace [private] action 80",
+      "quote": "country=United Kingdom",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of a Country entry in the six-item error summary while the select held its default. Whether a blank country could ever be submitted is not shown."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-026",
+      "statement": "Add a private transporter has a second heading, 'Enter contact details', above the email and phone fields.",
+      "kind": "copy",
+      "ref": "trace [private] action 66, h2.app-transporter-add-private-fields__section-heading",
+      "quote": "Enter contact details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-027",
+      "statement": "Add a private transporter asks for 'Email address' (transporterPrivateEmail), which is required.",
+      "kind": "data",
+      "ref": "trace [private] actions 65 and 80, #transporter-private-email",
+      "quote": "Email address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-028",
+      "statement": "Add a private transporter asks for 'Phone number' (transporterPrivatePhone), which is required, with the hint 'For international numbers include the country code'.",
+      "kind": "data",
+      "ref": "trace [private] actions 66 and 80, #transporter-private-phone and #transporter-private-phone-hint",
+      "quote": "Phone number / For international numbers include the country code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-029",
+      "statement": "The email and phone inputs on both add-transporter pages are plain text inputs (type text), not email or tel inputs, and carry no autocomplete attribute.",
+      "kind": "constraint",
+      "ref": "trace [private] action 66 #transporter-private-email, #transporter-private-phone; trace [commercial] action 59 #transporter-commercial-email, #transporter-commercial-phone",
+      "quote": "<input class=\"govuk-input ...\" id=\"transporter-private-email\" name=\"transporterPrivateEmail\" type=\"text\" value=\"\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-030",
+      "statement": "Add a private transporter has two buttons: 'Save and continue' (primary) and 'Cancel and return to dashboard' (secondary, a submit with name action and value cancel), both posting to /design-release-2.1/transporter/add/private.",
+      "kind": "copy",
+      "ref": "trace [private] action 66, .app-transporter-add-private-form__actions",
+      "quote": "Save and continue / <button type=\"submit\" value=\"cancel\" name=\"action\" class=\"govuk-button govuk-button--secondary app-transporter-add-private-form__cancel-button\">Cancel and return to dashboard</button>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-031",
+      "statement": "Saving a blank private transporter shows the error summary 'There is a problem' listing six messages, in field order.",
+      "kind": "rule",
+      "ref": "trace [private] actions 77-81",
+      "quote": "There is a problem\nEnter a name or organisation name\nEnter address line 1\nEnter a town or city\nEnter a postcode or Zip code\nEnter an email address\nEnter a phone number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-032",
+      "statement": "A blank 'Name or organisation name' on the private page gives 'Enter a name or organisation name', inline and in the summary, linked to #transporter-private-name.",
+      "kind": "rule",
+      "ref": "trace [private] action 80, #transporter-private-name-error",
+      "quote": "Enter a name or organisation name",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-033",
+      "statement": "A blank 'Address line 1' on the private page gives 'Enter address line 1', linked to #transporter-private-address-line-1.",
+      "kind": "rule",
+      "ref": "trace [private] action 80, #transporter-private-address-line-1-error",
+      "quote": "Enter address line 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-034",
+      "statement": "A blank 'Town or city' on the private page gives 'Enter a town or city', linked to #transporter-private-town-or-city.",
+      "kind": "rule",
+      "ref": "trace [private] action 80, #transporter-private-town-or-city-error",
+      "quote": "Enter a town or city",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-035",
+      "statement": "A blank 'Postcode or Zip code' on the private page gives 'Enter a postcode or Zip code', linked to #transporter-private-postcode.",
+      "kind": "rule",
+      "ref": "trace [private] action 80, #transporter-private-postcode-error",
+      "quote": "Enter a postcode or Zip code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-036",
+      "statement": "A blank 'Email address' on the private page gives 'Enter an email address', linked to #transporter-private-email.",
+      "kind": "rule",
+      "ref": "trace [private] action 80, #transporter-private-email-error",
+      "quote": "Enter an email address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-037",
+      "statement": "A blank 'Phone number' on the private page gives 'Enter a phone number', linked to #transporter-private-phone.",
+      "kind": "rule",
+      "ref": "trace [private] action 80, #transporter-private-phone-error",
+      "quote": "Enter a phone number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-038",
+      "statement": "On both add-transporter pages the page title stays the same in the error state; it does not gain the 'Error: ' prefix the GOV.UK error pattern uses.",
+      "kind": "constraint",
+      "ref": "trace [private] action 80; trace [commercial] action 83",
+      "quote": "Add a private transporter - Import notification service - GOV.UK",
+      "confidence": "verbatim",
+      "note": "The same holds on Choose a transporter type at [type] action 68: 'Choose a transporter type - Import notification service - GOV.UK'."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-039",
+      "statement": "Saving a complete private transporter (name, address line 1, town, postcode, email and phone) returns the user to Transporter details at /design-release-2.1/transporter.",
+      "kind": "behaviour",
+      "ref": "trace [private] actions 88-96",
+      "quote": "Fill \"Hill Haulage\" ... Fill \"1 Farm Lane\" ... Fill \"Hexham\" ... Fill \"NE46 1AA\" ... Fill \"hill@example.com\" ... Fill \"01434 600000\" ... Expect \"toHaveURL\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-040",
+      "statement": "After a transporter is added, Transporter details shows a GOV.UK success notification banner titled 'Success' reading '<name> transporter added', with the name in sentence case (only its first letter capitalised).",
+      "kind": "copy",
+      "ref": "trace [private] action 97; trace [commercial] action 102, .app-transporter-page__success-banner",
+      "quote": "Hill haulage transporter added",
+      "confidence": "verbatim",
+      "note": "The commercial trace renders 'Lough livestock ltd transporter added' for 'Lough Livestock Ltd', so the entered capitalisation is lowered in the banner."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-041",
+      "statement": "The newly added transporter appears as the first row of the transporter list, ahead of the seeded transporters (9 rows in all).",
+      "kind": "behaviour",
+      "ref": "trace [private] action 97; trace [commercial] action 102",
+      "quote": "Select Hill Haulage | Hill Haulage | 1 Farm Lane, Hexham, NE46 1AA, United Kingdom | Not applicable | Private | New | View details | checked=true",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-042",
+      "statement": "The newly added transporter's radio is already selected when the user returns to the list, so it is the chosen transporter without a further click.",
+      "kind": "behaviour",
+      "ref": "trace [private] action 97; trace [commercial] action 102, input[name=transporterId] checked",
+      "quote": "checked=true | value=added-transporter-1791397171116",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-043",
+      "statement": "A newly added transporter has the status tag 'New', not 'Approved'.",
+      "kind": "rule",
+      "ref": "trace [private] action 97; trace [commercial] action 102",
+      "quote": "Private | New",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-044",
+      "statement": "A newly added private transporter shows 'Not applicable' in the Approval number column, and its type as 'Private'.",
+      "kind": "data",
+      "ref": "trace [private] action 97",
+      "quote": "Not applicable | Private",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-045",
+      "statement": "A newly added transporter's address is shown on one line as the entered lines, town, postcode and country, separated by commas.",
+      "kind": "data",
+      "ref": "trace [private] action 97; trace [commercial] action 102",
+      "quote": "1 Farm Lane, Hexham, NE46 1AA, United Kingdom",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-046",
+      "statement": "A newly added transporter's row is searchable: its search text holds its name, address, approval number, type and status in lower case.",
+      "kind": "behaviour",
+      "ref": "trace [private] action 97, data-search-text",
+      "quote": "hill haulage 1 farm lane, hexham, ne46 1aa, united kingdom not applicable private new",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-047",
+      "statement": "A newly added transporter's row has a 'View details' link to its address book entry, with a return to the transporter page.",
+      "kind": "behaviour",
+      "ref": "trace [commercial] action 102",
+      "quote": "View details | link=/address-book/added-transporter-1791397178850?return=%2Ftransporter",
+      "confidence": "verbatim",
+      "note": "The link has no /design-release-2.1 prefix, unlike every other link on the page; the seeded rows' links share this shape."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-048",
+      "statement": "Choosing 'Cancel and return to dashboard' on Add a private transporter posts the form and redirects to the Dashboard at /design-release-2.1, whose heading is 'Import notification service'.",
+      "kind": "behaviour",
+      "ref": "trace [cancel] actions 55-58; request 397 (POST private 302)",
+      "quote": "Dashboard - Import notification service - GOV.UK || h1=Import notification service",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-049",
+      "statement": "Cancelling from the private transporter page leaves the notification journey entirely, going to the dashboard rather than back to the transporter list or the notification overview, and the dashboard shows no banner about the cancelled transporter.",
+      "kind": "behaviour",
+      "ref": "trace [cancel] action 58",
+      "quote": "banner=none",
+      "confidence": "verbatim",
+      "note": "The trace does not show whether the draft notification's earlier answers or the half-entered transporter were kept."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-050",
+      "statement": "Add a commercial transporter has the page title 'Add a commercial transporter - Import notification service - GOV.UK', the caption 'Add a new transporter' and the heading 'Add a commercial transporter'.",
+      "kind": "copy",
+      "ref": "trace [commercial] action 59",
+      "quote": "<p class=\"app-transporter-add-page__caption\">Add a new transporter</p> <h1 class=\"app-transporter-add-page__heading\">Add a commercial transporter</h1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-051",
+      "statement": "Add a commercial transporter has a back link 'Back' to /design-release-2.1/transporter/add.",
+      "kind": "behaviour",
+      "ref": "trace [commercial] action 59, .govuk-back-link",
+      "quote": "<a href=\"/design-release-2.1/transporter/add\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-052",
+      "statement": "Add a commercial transporter shows the notification's status above the heading: a 'Draft' tag and the notification reference.",
+      "kind": "behaviour",
+      "ref": "trace [commercial] action 59, .app-dr2-notification-status",
+      "quote": "<strong class=\"govuk-tag app-dr2-review-status__tag app-dr2-review-status__tag--draft\">Draft</strong> <span class=\"app-dr2-notification-status__reference\">GBN-AG-26-0HDEKV</span>",
+      "confidence": "verbatim",
+      "note": "Choose a transporter type ([type] action 55: status=false) and Add a private transporter ([private] action 66) render no such status, so the three add pages differ here."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-053",
+      "statement": "Add a commercial transporter shows a GOV.UK notification banner titled 'Important' with the heading 'Help with transporter authorisation'.",
+      "kind": "copy",
+      "ref": "trace [commercial] action 59, .app-transporter-authorisation-banner",
+      "quote": "Important / Help with transporter authorisation",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-054",
+      "statement": "The authorisation banner says the transporter must hold a valid authorisation issued by DAERA or APHA in the UK if they transport live vertebrate animals in, to, from or through GB, travel over 65 km, or transport as an economic (commercial) activity.",
+      "kind": "copy",
+      "ref": "trace [commercial] action 59, .app-transporter-authorisation-banner",
+      "quote": "Your transporter must hold a valid transporter authorisation, issued by DAERA or APHA in the UK if they are:\ntransporting any live vertebrate animals in, to, from or through Great Britain (GB)\ntravelling on journeys of over 65 km\ntransporting as part of an economic (commercial) activity",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-055",
+      "statement": "The authorisation banner links to GOV.UK guidance on animal welfare in transport, opening in a new tab.",
+      "kind": "copy",
+      "ref": "trace [commercial] action 59, .app-transporter-authorisation-banner a.govuk-link",
+      "quote": "<a class=\"govuk-link\" href=\"https://www.gov.uk/guidance/animal-welfare-in-transport?_gl=...#transporting-animals-in-connection-with-an-economic-activity\" rel=\"noreferrer noopener\" target=\"_blank\">Find out how to transport animals in connection with an economic activity (opens in a new tab)</a>",
+      "confidence": "verbatim",
+      "note": "The href carries a Google Analytics _gl query string copied from a browser session."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-056",
+      "statement": "The authorisation banner says documents issued by DAERA are valid in GB and documents issued in any EU member state are not.",
+      "kind": "copy",
+      "ref": "trace [commercial] action 59, .app-transporter-authorisation-banner",
+      "quote": "Documents issued by DAERA are valid for use in GB.\nDocuments issued in any EU member state are not valid for use in GB.",
+      "confidence": "verbatim",
+      "note": "The same guidance copy appears in .app-transporter-page__guidance on the Transporter details page ([type] action 50)."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-057",
+      "statement": "Add a commercial transporter asks for 'Transporter authorisation number' (transporterCommercialAuthorisationNumber), which is required and has no hint.",
+      "kind": "data",
+      "ref": "trace [commercial] actions 59 and 83, #transporter-commercial-authorisation-number",
+      "quote": "Transporter authorisation number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-058",
+      "statement": "Add a commercial transporter asks for 'Name or organisation name' (transporterCommercialName), which is required.",
+      "kind": "data",
+      "ref": "trace [commercial] actions 60 and 83, #transporter-commercial-name",
+      "quote": "Name or organisation name",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-059",
+      "statement": "Add a commercial transporter offers an address search labelled 'Search for an address', a search input with the placeholder 'Start typing...' and a search icon button, with results listed beneath it.",
+      "kind": "data",
+      "ref": "trace [commercial] actions 59 and 61, #transporter-commercial-address-lookup-search",
+      "quote": "Search for an address ... placeholder=\"Start typing...\" ... aria-label=\"Address search results\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-060",
+      "statement": "The address search carries a chosen address in hidden fields addressLookup and addressBookLookupAddressId, and maps a chosen address onto the manual name and address fields.",
+      "kind": "data",
+      "ref": "trace [commercial] action 59, .app-address-book-lookup-page__search data-manual-field-map; request 436 body",
+      "quote": "data-manual-field-map=\"{&quot;nameOrOrganisation&quot;:&quot;transporterCommercialName&quot;,&quot;addressLine1&quot;:&quot;transporterCommercialAddressLine1&quot;, ...}\" ... <input type=\"hidden\" name=\"addressBookLookupAddressId\" ...>",
+      "confidence": "inferred",
+      "note": "Inferred from the page's markup; no trace types into the search, so the mapping was never seen to fire. The field name addressBookLookupAddressId suggests the search reads the address book."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-061",
+      "statement": "On first load of Add a commercial transporter, the address lines and the contact details are hidden; only the authorisation number, the name, the address search and an 'Enter address manually' link-styled button show.",
+      "kind": "rule",
+      "ref": "trace [commercial] actions 59-62 (Address line 1 toBeHidden)",
+      "quote": "<div class=\"... app-address-book-lookup-page__manual--hidden\" id=\"transporter-commercial-manual-address\"> ... <div id=\"transporter-commercial-contact-details\" class=\"app-transporter-add-commercial-fields__contact app-address-book-lookup-page__manual--hidden\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-062",
+      "statement": "Choosing 'Enter address manually' reveals the address fields and the 'Enter contact details' section, hides the 'Enter address manually' link and marks the form as manual entry (manualAddressEntry=true).",
+      "kind": "behaviour",
+      "ref": "trace [commercial] actions 70-72, step 'enter address manually reveals the address fields, fixed to Northern Ireland'",
+      "quote": "Enter address manually",
+      "confidence": "verbatim",
+      "note": "At action 72 both sections have lost the hidden class, the toggle's aria-expanded is true, the link paragraph has app-address-book-lookup-page__manual-link--hidden, and #transporter-commercial-manual-entry is no longer disabled."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-063",
+      "statement": "The commercial manual address asks for 'Address line 1' (required), 'Address line 2 (optional)', 'Town or city' (required), 'County (optional)' and 'Postcode or Zip code' (required).",
+      "kind": "data",
+      "ref": "trace [commercial] actions 59 and 83, #transporter-commercial-manual-address",
+      "quote": "Address line 1 / Address line 2 (optional) / Town or city / County (optional) / Postcode or Zip code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-064",
+      "statement": "A commercial transporter's Country is fixed to Northern Ireland: the select shows only 'Northern Ireland' and is disabled, and a hidden field submits transporterCommercialCountry=Northern Ireland.",
+      "kind": "rule",
+      "ref": "trace [commercial] actions 59 and 72 (toHaveValue on #transporter-commercial-country); request 436 body",
+      "quote": "<input type=\"hidden\" name=\"transporterCommercialCountry\" value=\"Northern Ireland\"> <select class=\"govuk-select ...\" id=\"transporter-commercial-country\" name=\"transporterCommercialCountryDisplay\" disabled=\"\"><option value=\"Northern Ireland\" selected=\"\">Northern Ireland</option></select>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-065",
+      "statement": "The commercial page's contact details are 'Email address' (required) and 'Phone number' (required, hint 'For international numbers include the country code'), under the heading 'Enter contact details'.",
+      "kind": "data",
+      "ref": "trace [commercial] actions 59 and 83, #transporter-commercial-contact-details",
+      "quote": "Enter contact details / Email address / Phone number / For international numbers include the country code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-066",
+      "statement": "Add a commercial transporter has the buttons 'Save and continue' and 'Cancel and return to dashboard' (secondary, action=cancel), posting to /design-release-2.1/transporter/add/commercial.",
+      "kind": "copy",
+      "ref": "trace [commercial] action 59, .app-transporter-add-commercial-form__actions",
+      "quote": "Save and continue / <button type=\"submit\" value=\"cancel\" name=\"action\" class=\"govuk-button govuk-button--secondary app-transporter-add-commercial-form__cancel-button\">Cancel and return to dashboard</button>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-067",
+      "statement": "Saving a blank commercial transporter shows the error summary 'There is a problem' listing seven messages in field order, each linked to its field.",
+      "kind": "rule",
+      "ref": "trace [commercial] actions 80-84, step 'every required field is named'",
+      "quote": "There is a problem\nEnter a transporter authorisation number\nEnter a name or organisation name\nEnter address line 1\nEnter a town or city\nEnter a postcode or Zip code\nEnter an email address\nEnter a phone number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-068",
+      "statement": "A blank 'Transporter authorisation number' gives 'Enter a transporter authorisation number', inline and in the summary, linked to #transporter-commercial-authorisation-number.",
+      "kind": "rule",
+      "ref": "trace [commercial] action 83, #transporter-commercial-authorisation-number-error",
+      "quote": "Enter a transporter authorisation number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-069",
+      "statement": "On the commercial page, blank name, address line 1, town, postcode, email and phone give the same messages as the private page ('Enter a name or organisation name', 'Enter address line 1', 'Enter a town or city', 'Enter a postcode or Zip code', 'Enter an email address', 'Enter a phone number'), linked to the transporter-commercial-* fields.",
+      "kind": "rule",
+      "ref": "trace [commercial] action 83, .govuk-error-message ids transporter-commercial-*-error",
+      "quote": "#transporter-commercial-name = Enter a name or organisation name\n#transporter-commercial-address-line-1 = Enter address line 1\n#transporter-commercial-town-or-city = Enter a town or city\n#transporter-commercial-postcode = Enter a postcode or Zip code\n#transporter-commercial-email = Enter an email address\n#transporter-commercial-phone = Enter a phone number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-070",
+      "statement": "When a commercial transporter is saved with errors, the page comes back with the manual address fields and contact details already revealed and the 'Enter address manually' toggle expanded, so the errors on hidden fields are visible.",
+      "kind": "behaviour",
+      "ref": "trace [commercial] action 83",
+      "quote": "Array of .app-address-book-lookup-page__manual--hidden ids: (none) / aria-expanded: true",
+      "confidence": "verbatim",
+      "note": "The quote is the eval output at action 83, not page copy. The blank save at action 80 followed the manual-entry click at action 70, so whether the error state reveals the fields on its own, without that click, is not shown."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-071",
+      "statement": "A complete commercial transporter, entered by hand, is posted with its authorisation number, name, empty address-search fields, manualAddressEntry=true, the address lines, Northern Ireland as country, email and phone, and the server redirects to /design-release-2.1/transporter.",
+      "kind": "integration",
+      "ref": "trace [commercial] request 436 (POST /design-release-2.1/transporter/add/commercial, 302)",
+      "quote": "transporterCommercialAuthorisationNumber=UK%2FBELFAST%2FT1%2F00012345&transporterCommercialName=Lough+Livestock+Ltd&addressLookup=&addressBookLookupAddressId=&manualAddressEntry=true&transporterCommercialAddressLine1=2+Quay+Street&transporterCommercialAddressLine2=&transporterCommercialTownOrCity=Belfast&transporterCommercialCounty=&transporterCommercialPostcode=BT1+1AA&transporterCommercialCountry=Northern+Ireland&transporterCommercialEmail=lough%40example.com&transporterCommercialPhone=028+9000+0000 ... location: /design-release-2.1/transporter",
+      "confidence": "verbatim",
+      "note": "This is the prototype's own form post; no call to any other system was seen."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-072",
+      "statement": "A newly added commercial transporter shows its entered authorisation number in the Approval number column, its type as 'Commercial' and its address ending in 'Northern Ireland'.",
+      "kind": "data",
+      "ref": "trace [commercial] action 102",
+      "quote": "Lough Livestock Ltd | 2 Quay Street, Belfast, BT1 1AA, Northern Ireland | UK/BELFAST/T1/00012345 | Commercial | New",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-073",
+      "statement": "No outbound call to another system fires anywhere in the add-a-transporter flow: every request is the prototype's own pages, assets and its live-reload socket.",
+      "kind": "integration",
+      "ref": "trace [commercial] requests --grep transporter and --grep api; trace [cancel] requests --method POST",
+      "quote": "No network requests",
+      "confidence": "verbatim",
+      "note": "The quote is the CLI's answer to --grep api. A real service would need somewhere to store a new transporter and an address lookup; neither shows in a prototype trace."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-074",
+      "statement": "Choose a transporter type uses standard GOV.UK components (Back link, Warning text, Radios with an item hint, Error summary, Error message, Button) but its caption and heading use custom app-transporter-add-page__caption and app-transporter-add-page__heading classes instead of govuk-caption-* and govuk-heading-*.",
+      "kind": "constraint",
+      "ref": "trace [type] action 55, classes in main",
+      "quote": "<p class=\"app-transporter-add-page__caption\">Add a new transporter</p> <h1 class=\"app-transporter-add-page__heading\">Choose a transporter type</h1>",
+      "confidence": "verbatim",
+      "note": "The radios also carry app-reason-for-import-radios and app-transporter-add-radios modifiers; the add pages sit in an app-transporter-add-shell wrapper."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-075",
+      "statement": "The private and commercial add pages are built from GOV.UK Text input, Select, Hint, Error message and Button, but the 'Enter contact details' heading is an h2 with a custom class rather than govuk-heading-*, and the input widths use custom classes rather than govuk-input--width-* or govuk-!-width-*.",
+      "kind": "constraint",
+      "ref": "trace [private] action 66; trace [commercial] action 59",
+      "quote": "<h2 class=\"app-transporter-add-private-fields__section-heading\">Enter contact details</h2> ... app-transporter-add-private-fields__input--one-half",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-076",
+      "statement": "The commercial address search is a custom autocomplete (app-commodity-search classes reused from the commodity search) with a link-styled toggle button, not a GOV.UK component; the authorisation guidance uses a standard GOV.UK Notification banner.",
+      "kind": "constraint",
+      "ref": "trace [commercial] action 59, .app-address-book-lookup-page__search",
+      "quote": "<div class=\"app-commodity-search-wrapper app-address-book-lookup-page__search-wrapper\"> ... <button type=\"button\" class=\"govuk-link app-govuk-body-link app-address-book-lookup-page__manual-toggle app-transporter-add-commercial-fields__manual-toggle\" aria-controls=\"transporter-commercial-manual-address\" aria-expanded=\"false\">Enter address manually</button>",
+      "confidence": "verbatim",
+      "note": "A GOV.UK address lookup pattern (postcode lookup then select, with a manual entry link) or accessible-autocomplete could stand in."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-077",
+      "statement": "The trace corpus never types into the commercial address search, so the search results, how a result is chosen and how it fills the address fields are not shown.",
+      "kind": "behaviour",
+      "ref": "trace [commercial] actions 61-72 (search only asserted visible, then Enter address manually clicked)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-078",
+      "statement": "No trace drives a format check on any add-transporter field (authorisation number, postcode, email or phone); only blank-field errors are shown, so whether malformed values are rejected, and with what copy, is unknown.",
+      "kind": "rule",
+      "ref": "trace [private] action 80; trace [commercial] action 83",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-079",
+      "statement": "No trace cancels from Add a commercial transporter; its 'Cancel and return to dashboard' destination is not shown, though the button matches the private page's.",
+      "kind": "behaviour",
+      "ref": "trace [commercial] action 59",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-080",
+      "statement": "No trace follows a back link from the add-transporter pages, and none shows whether answers already entered on the type, private or commercial page are kept when the user goes back or comes back.",
+      "kind": "behaviour",
+      "ref": "trace [type] action 55; trace [private] action 66; trace [commercial] action 59",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-081",
+      "statement": "No trace shows what happens to the draft notification or the partly entered transporter after 'Cancel and return to dashboard', or how the user gets back to the notification from the dashboard.",
+      "kind": "behaviour",
+      "ref": "trace [cancel] action 58",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-082",
+      "statement": "No trace shows a duplicate check when a transporter matching one already in the list is added; the only guard seen is the warning text on Choose a transporter type.",
+      "kind": "rule",
+      "ref": "trace [type] action 55",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p9-083",
+      "statement": "No trace shows the 'New' status of an added transporter changing to 'Approved', or who approves it.",
+      "kind": "behaviour",
+      "ref": "trace [private] action 97; trace [commercial] action 102",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

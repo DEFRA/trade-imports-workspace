@@ -1,0 +1,214 @@
+{
+  "programme": "design-release-2-1",
+  "goal": "Bring the real GB notification services up to Design Release 2.1 of the GB notification service prototype in look and feel: content, wording, layout, components and question order. In scope are the GBN-AG animals notification as two sibling sets in the animals frontend, live-animals and germinal-products, with each set's own notification list, its templates and the INS address book. Wherever a real service differs from Design Release 2.1 in look and feel it changes to match, except where something overrides it: an owner ruling on that same difference, a DR1 judgement on it, or a real constraint the prototype cannot express (persistence, validation, authentication, cross-service behaviour, accessibility). Where a row changes a page or behaviour the high-risk plants frontend also has, the same increment changes plants too, never a separate increment, so that the two start consistent. Plants mirrors the structure, wording patterns, components and behaviour, and keeps its own questions and data. Every page works fully without JavaScript, and JavaScript only enhances a page that already works. A behaviour is built with GOV.UK Frontend first, then another tested government library (Ministry of Justice, HMRC, Scottish Government), and otherwise goes back to design to justify it. No custom JavaScript is written to copy the prototype, and pop-ups are not built: confirmations stay as pages. Where a prototype behaviour needs JavaScript that no accepted component gives, the version that works without JavaScript is built now in its own theme. The JavaScript-only addition is its own increment, one per design question, blocked on design in the waiting-on-design theme; live filtering as the trader types waits there too. A search box uses the real frontend's accessible autocomplete over a native select and behaves as the real frontend configures it. Its entries come from MDM, and only how the list reads (labels, order, hint, placeholder) follows the prototype. Rolling the component out to more screens is EUDPA-635's work, and fields the prototype shows as plain selects stay plain. Reference-list content (countries, territories, ports) is whatever MDM serves through reference-data. It is never edited in code to match Design Release 2.1, and only how a list is shown follows the prototype. For the germinal-products set, the V4 germinal data fields page decides which fields are asked, their format, limits and whether they are mandatory; Design Release 2.1 decides how the pages look and read. Each notification list stays in its own frontend and is reframed in place to the prototype's animals dashboard, in the animals-dashboard theme, with plants' list in the same increments. Only plants' list search, sort, extra filters, tabs and page size wait, on the plants backend (deferred.md); the rest of plants' list changes in those same increments. Every page the prototype sends to \"the overall dashboard\" goes to the set's own list instead. Some areas are adopted but blocked, and each is re-distilled once it is unblocked:\n- **Address search:** waits until the INS address lookup is a real feature. Until then every add-address page offers manual entry only.\n- **The commodity catalogue and commodity search, live and germinal:** wait until commodities come from MDM. The commodity pages' wording, their place in the journey and their questions go ahead on today's commodity data, and so does moving today's germinal lines out of the live-animals catalogue into the germinal set; only Design Release 2.1's and V4's new catalogue content and the search wait.\n- **Transporter management:** adding, listing and searching transporters, the type question, the add pages, the private transporter's country list, removing the unused transporter register page and the address book's transporter tab wait until it is decided whether and where transporters are managed. The transporter step's place in the journey and its germinal copy go ahead.\n- **The INS dashboard's summary information:** the counts, glance cards, status-change cards and drill-downs wait until the INS dashboard's requirements firm up. The INS home's controls and templates go ahead.\n\nThe backlog's report groups work as ready to go or blocked, and names what each blocked row waits on. Architecture (sets, journeys, services, URL paths, field names, data shapes, code structure) stays the real services'. It changes only where a DR1 judgement, a real constraint or a kept look-and-feel requirement needs it, and then it is designed in the real service's conventions. The owner's rulings may add to data shapes. The 9 October ruling does this with a notification category, the germinal products details and trade-line typeCodes in the animals backend; the category is stored on the record only and is not published on the notification event.",
+  "repos": {
+    "frontend": "repos/trade-imports-animals-frontend",
+    "backend": "repos/trade-imports-animals-backend",
+    "insfrontend": "repos/trade-imports-ins-frontend",
+    "insbackend": "repos/trade-imports-ins-backend",
+    "addressbook": "repos/trade-imports-address-book",
+    "referencedata": "repos/trade-imports-reference-data",
+    "stub": "repos/trade-imports-stub",
+    "tests": "repos/trade-imports-ins-tests",
+    "perftests": "repos/trade-imports-performance-tests",
+    "plantsfrontend": "repos/trade-imports-plants-frontend"
+  },
+  "reposWhy": "Design Release 2.1 covers the GBN-AG animals notification journey, live animals and germinal products as sibling sets (animals frontend and backend), the address lookup stub that answers its address searches locally and the MDM country and port fixtures the stub tidy-up regenerates (stub), the notifications dashboard and address book (owned by the INS front door, its read model in ins-backend, and the address-book system of record), and the reference lists the journey reads, including the port traffic type that orders the port list (reference-data); the tests repo holds every service's end-to-end suite; the k6 performance suite (perftests) uses the live-animals set root, which keeps rendering the reframed notification list, and the INS home at '/', whose heading and read-model load change only when the blocked INS dashboard summary is built. The high-risk plants frontend (plantsfrontend) shares the journey engine, overview, review, declaration, confirmation, amend and delete pages, party pickers and notification list, and takes the same change in the same increment wherever a row changes something it also has.",
+  "themes": "Group increments into themes drawn from the evidence, with boundaries set by the code each theme touches (repo and folder), so each theme can be built in parallel on a separate machine without pull requests that conflict with another theme's.",
+  "precedence": [
+    "ruling:sam-2026-10-26",
+    "ruling:sam-2026-10-09-pm",
+    "ruling:sam-2026-10-09-templates",
+    "ruling:sam-2026-10-09",
+    "ruling:sam-2026-10-07",
+    "confluence:6497338582",
+    "document:dr1-parity-notes",
+    "document:dr1-parity-backlog",
+    "prototype:dr2-1-source",
+    "trace:prototype-dr2-1",
+    "prototype:dr2-1-specs",
+    "repo:backend",
+    "repo:insbackend",
+    "repo:addressbook",
+    "repo:referencedata",
+    "repo:stub",
+    "repo:frontend",
+    "repo:insfrontend",
+    "repo:plantsfrontend",
+    "repo:tests",
+    "repo:perftests",
+    "trace:animals-fit",
+    "trace:ins-fit",
+    "trace:e2e"
+  ],
+  "sources": [
+    {
+      "id": "ruling:sam-2026-10-26",
+      "kind": "ruling",
+      "locator": "workareas/shared/design-release-2-1/sources/ruling-sam-2026-10-26.md",
+      "scope": "whole file",
+      "role": "the owner's decision: outranks every other source on Save and return. Save and return to overview makes exactly the same checks as Save and continue on every page, in live animals and plants, with no page an exception; replaces c-211 and c-313."
+    },
+    {
+      "id": "ruling:sam-2026-10-09",
+      "kind": "ruling",
+      "locator": "workareas/shared/design-release-2-1/sources/ruling-sam-2026-10-09.md",
+      "scope": "whole file",
+      "role": "the owner's decisions: outranks every other source. The prototype decides look and feel only (content, wording, layout, components, question order); it never decides architecture (sets, journeys, services, URL paths, field names, data-model shape, code structure). Germinal products is a sibling set of live-animals in the animals frontend. Reference lists never wait on MDM integration; address search waits on the address lookup becoming a real feature."
+    },
+    {
+      "id": "ruling:sam-2026-10-07",
+      "kind": "ruling",
+      "locator": "workareas/shared/design-release-2-1/sources/ruling-sam-2026-10-07.md",
+      "scope": "whole file",
+      "role": "the owner's decisions, as narrowed by ruling:sam-2026-10-09: on look and feel the prototype wins by default over what the real services do today; only a DR1 judgement on the same difference, or a real constraint the prototype cannot express (persistence, validation, authentication, cross-service behaviour), overrides it. The prototype never decides architecture."
+    },
+    {
+      "id": "document:dr1-parity-notes",
+      "kind": "document",
+      "locator": "workareas/shared/design-release-2-1/sources/dr1-parity-union/PROGRAMME-NOTES.md",
+      "scope": "whole file: the standing rulings, the groups blocked by ruling and why, and any other judgement it records (copied from commit 6688fd8e on origin/feat/parity-report-triage-view)",
+      "role": "DR1 judgements only. Never a source of requirements on its own. Used only where the real frontend and the prototype clash: where DR1 already judged that same difference, the judgement wins and its row is cited."
+    },
+    {
+      "id": "document:dr1-parity-backlog",
+      "kind": "document",
+      "locator": "workareas/shared/design-release-2-1/sources/dr1-parity-union/backlog.json",
+      "scope": "every row's judgement on a difference between the real frontend and the prototype: rows whose status is rejected, dropped, blocked or deferred, with the reason; and every RULING or decision recorded in any row's notes, openQuestions or decision field, whatever its status. A done row is a judgement only where its notes record a choice that departs from the prototype. Cite each by row id (inc-NNN). Copied from commit 6688fd8e on origin/feat/parity-report-triage-view.",
+      "role": "DR1 judgements only. Never a source of requirements on its own. Used only where the real frontend and the prototype clash: where DR1 already judged that same difference, the judgement wins and its row is cited."
+    },
+    {
+      "id": "prototype:dr2-1-source",
+      "kind": "repo",
+      "locator": "~/git/defra/defra-design/GB-notification-service",
+      "scope": "Design Release 2.1 only, at commit 04a073b (read with git show 04a073b:<path> if the checkout has moved): app/lib/version-mount.js and app/lib/design-release-2.1-version.js (how /design-release-2.1 mirrors the root routes and overrides views), every view in app/views/design-release-2.1/, the root views and partials those pages fall back to where DR2.1 has no override, the handlers and validation in app/routes.js reached under /design-release-2.1, and app/data/ lists those pages read. Leave out app/views/intro/, /design-release-2/ and /testing/.",
+      "role": "the target design: what every page, field, option, hint, error message, branch and journey step should be. Wins by default."
+    },
+    {
+      "id": "trace:prototype-dr2-1",
+      "kind": "trace",
+      "locator": "workareas/shared/design-release-2-1/sources/traces-prototype",
+      "scope": "every trace in the folder (index.json lists them): the Design Release 2.1 journeys as rendered",
+      "role": "the target design as rendered: verbatim copy, components, conditional reveals and error states."
+    },
+    {
+      "id": "prototype:dr2-1-specs",
+      "kind": "repo",
+      "locator": "workareas/shared/design-release-2-1/prototype-specs",
+      "scope": "the fit-style Playwright specs that drove the Design Release 2.1 traces, and COVERAGE.md: the routes, branches and error states they assert, including any the traces did not reach",
+      "role": "what the Design Release 2.1 journeys are proven to do: the driving suite of trace:prototype-dr2-1."
+    },
+    {
+      "id": "repo:backend",
+      "kind": "repo",
+      "locator": "repos/trade-imports-animals-backend",
+      "scope": "the notification record: fields stored and their validation, lifecycle (draft, submit, amend, copy, delete, templates if any), the API the animals frontend calls, and what it publishes to other services",
+      "role": "what exists today and what has already been ruled; the real persistence, validation and cross-service constraints the prototype cannot express"
+    },
+    {
+      "id": "repo:insbackend",
+      "kind": "repo",
+      "locator": "repos/trade-imports-ins-backend",
+      "scope": "the notification read model behind the dashboard: fields, statuses, filters, sort and search it serves",
+      "role": "what exists today and what has already been ruled; the real persistence and cross-service constraints the prototype cannot express"
+    },
+    {
+      "id": "repo:addressbook",
+      "kind": "repo",
+      "locator": "repos/trade-imports-address-book",
+      "scope": "the address record: fields, types or usages, validation, organisation scoping and the API",
+      "role": "what exists today and what has already been ruled; the real persistence, validation and authorisation constraints the prototype cannot express"
+    },
+    {
+      "id": "repo:referencedata",
+      "kind": "repo",
+      "locator": "repos/trade-imports-reference-data",
+      "scope": "the reference lists the live-animals journey reads: countries, ports, commodities and species, commodity identifiers, transporters, document types, certification purposes",
+      "role": "what exists today and what has already been ruled"
+    },
+    {
+      "id": "repo:stub",
+      "kind": "repo",
+      "locator": "repos/trade-imports-stub",
+      "scope": "the address lookup stub the INS backend calls on the local stack and in the fit suites: the searches it answers, the addresses it returns and their postcodes; and the MDM stub reference-data calls (stubs/mdm, responses/countriesResponse.json, responses/portsOfEntryResponse.json, FileUtilsTest): the countries and ports it returns, their fields, and how it handles the blocks parameter",
+      "role": "what exists today and what has already been ruled"
+    },
+    {
+      "id": "repo:frontend",
+      "kind": "repo",
+      "locator": "repos/trade-imports-animals-frontend",
+      "scope": "src/server/app/sets/live-animals (journey pages, flow, obligations, copy), src/server/app/shared (layout and shared copy), the dashboard, notification actions, delete, cancel-amend and address features, and the fit specs (*.fit.spec.js); any decisions or rulings ledger it keeps",
+      "role": "what exists today and what has already been ruled"
+    },
+    {
+      "id": "repo:insfrontend",
+      "kind": "repo",
+      "locator": "repos/trade-imports-ins-frontend",
+      "scope": "src/server/app/features (dashboard and address book), shared layout and copy, the journey handshake to the animals frontend, and its fit specs",
+      "role": "what exists today and what has already been ruled"
+    },
+    {
+      "id": "repo:tests",
+      "kind": "repo",
+      "locator": "repos/trade-imports-ins-tests",
+      "scope": "tests/animals and tests/ins: the specs, page objects and test data for the live-animals journey, the dashboard and the address book",
+      "role": "what is already proven end to end"
+    },
+    {
+      "id": "repo:perftests",
+      "kind": "repo",
+      "locator": "repos/trade-imports-performance-tests",
+      "scope": "src/k6: the animals frontend and INS front-door routes the k6 scripts request (the live-animals set root, the notification journey pages and the dashboard)",
+      "role": "what exists today and what has already been ruled"
+    },
+    {
+      "id": "trace:animals-fit",
+      "kind": "trace",
+      "locator": "workareas/shared/design-release-2-1/sources/traces-animals-fit",
+      "scope": "every <test>/trace.zip in the folder (report.json, the Playwright JSON report, maps each test to its folder; 455 tests, all passed at animals frontend 4c2119da): the animals frontend's fit journeys and features",
+      "role": "how the real animals frontend renders today"
+    },
+    {
+      "id": "trace:ins-fit",
+      "kind": "trace",
+      "locator": "workareas/shared/design-release-2-1/sources/traces-ins-fit",
+      "scope": "every <test>/trace.zip in the folder (report.json, the Playwright JSON report, maps each test to its folder; 50 tests, all passed at INS frontend 406e300): the INS frontend's fit specs",
+      "role": "how the real INS frontend renders today"
+    },
+    {
+      "id": "trace:e2e",
+      "kind": "trace",
+      "locator": "workareas/shared/design-release-2-1/sources/traces-e2e",
+      "scope": "every <test>/trace.zip in the folder (report.json, the Playwright JSON report, maps each test to its folder and project): the tests repo's animals and ins projects against the workspace stack built from latest main",
+      "role": "how the real services behave end to end today"
+    },
+    {
+      "id": "confluence:6497338582",
+      "kind": "confluence",
+      "locator": "workareas/shared/design-release-2-1/sources/6497338582.json",
+      "scope": "the Germinal Data Elements section, from its heading up to the Out of Scope Data Elements heading, every table row in it; plus any row of the Out of Scope Data Elements table that names germinal products (Live Animals & Germinals Data Fields - V4, version 201)",
+      "role": "policy for the germinal products set: which data a germinal products notification captures, each field's format, whether it is mandatory or optional and where it applies. Governs data, not look and feel: the prototype still decides how pages look and read."
+    },
+    {
+      "id": "ruling:sam-2026-10-09-pm",
+      "kind": "ruling",
+      "locator": "workareas/shared/design-release-2-1/sources/ruling-sam-2026-10-09-pm.md",
+      "scope": "whole file",
+      "role": "the owner's decisions: outranks every other source. Search boxes use the real frontend's accessible component with MDM's entries. JavaScript behaviour follows the toolbox rule with graceful degradation; JavaScript-only prototype behaviour, pop-ups included, waits on design in its own theme. Commodity catalogue and search wait on MDM; transporter management waits on requirements; the INS dashboard's summary information waits on its requirements. The overview, review, declaration and confirmation are set-owned, and shared parts change add-only. Where plants has the same page or behaviour, the same increment changes it. Each notification list is reframed in its own frontend. The report groups work as ready or blocked. Claims marked as the orchestrator's apply Sam's principles and are not his rulings; ruling:sam-2026-10-09-templates covers templates and the dashboard narrowing."
+    },
+    {
+      "id": "ruling:sam-2026-10-09-templates",
+      "kind": "ruling",
+      "locator": "workareas/shared/design-release-2-1/sources/ruling-sam-2026-10-09-templates.md",
+      "scope": "whole file",
+      "role": "the owner's decisions on templates and the dashboard: outranks every source but ruling:sam-2026-10-09-pm. Only the INS dashboard's summary information is blocked; templates are CRUD and go ahead; template mode walks the same pages and waits on no other theme's page changes; plants takes the same change in the same increment. Claims marked as the orchestrator's apply Sam's principles and are not his rulings."
+    },
+    {
+      "id": "repo:plantsfrontend",
+      "kind": "repo",
+      "locator": "repos/trade-imports-plants-frontend",
+      "scope": "src/server/app/sets/high-risk-plants (journey pages, flow and run, task rows, check-answers, declaration, confirmation, cancel-amend, the dashboard and its row actions, party pickers), src/server/app/shared (layout, kit, save actions and shared copy), and the fit specs (*.fit.spec.js); any decisions or rulings ledger it keeps",
+      "role": "what exists today in the high-risk plants frontend, where a row changes a page or behaviour plants also has"
+    }
+  ]
+}

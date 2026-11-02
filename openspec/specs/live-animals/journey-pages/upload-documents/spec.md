@@ -2,7 +2,13 @@
 
 ## Purpose
 
-The accompanying documents attached to a notification — uploading, virus-scanning, viewing, removing, and their durability once attached. The page is titled "Upload documents".
+The accompanying documents attached to a notification — uploading, virus-scanning, viewing, removing, their durability once attached, and the condition under which the page itself can be opened. The page is titled "Upload documents"; whether it is offered at all and whether a journey opened out of context lands here are `live-animals/journey-flow`'s (REQ-FLOW-005, REQ-FLOW-008, REQ-FLOW-009), and every Overview row being linked with no blocked state is `live-animals/journey-pages/overview`'s (REQ-OVERVIEW-002).
+
+A document reference's rules (REQ-DOCS-006) are not chosen here: the Live
+Animals and Germinals Data Fields page gives `accompanying_document_reference`
+as "string - max 58", the length agreed for every free-text reference and
+identifier in the service, and its character set is the alphanumerics plus the
+separators the references on real documents carry.
 
 ## Requirements
 
@@ -14,7 +20,7 @@ The system MUST tell the user, before they add anything, which file types are ac
 **ID**: SCN-DOCS-001-A
 - **GIVEN** the user opens the upload documents page on a notification with none added yet
 - **WHEN** the page loads
-- **THEN** it states the maximum file size as "files that are smaller than 10MB" and the accepted file types as "PDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX"
+- **THEN** it states the maximum file size as "files that are smaller than 50MB" and the accepted file types as "PDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX"
 - **AND** the File upload card shows no table and no message after its "Save and add another" button
 
 #### Scenario: The limit stays stated once documents have been added
@@ -23,15 +29,35 @@ The system MUST tell the user, before they add anything, which file types are ac
 - **WHEN** the page shows the saved document
 - **THEN** the page still states the maximum number of files, as it did before anything was added
 
-### Requirement: The page offers a route back to Overview
+### Requirement: The page's back link follows where the user came from
 **ID**: REQ-DOCS-002
-The system MUST offer a back link from the upload documents page that returns the user to Overview.
+The system MUST open the review page from the upload documents page's back link when the page was opened by changing an answer from the review, or whenever the notification is being amended however the page was opened, and MUST open Overview otherwise.
 
-#### Scenario: The back link opens Overview
+#### Scenario: The back link opens Overview for a draft opened from Overview
 **ID**: SCN-DOCS-002-A
-- **GIVEN** the user is on the upload documents page
+- **GIVEN** the user opens the upload documents page from Overview, on a draft that is not being amended
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+#### Scenario: The back link opens the review when changing an answer from the review
+**ID**: SCN-DOCS-002-B
+- **GIVEN** the user opens the upload documents page by changing the uploaded documents from the review
+- **WHEN** they follow the back link
+- **THEN** the review is shown
+
+#### Scenario: The back link opens the review while the notification is being amended, however the page was opened
+**ID**: SCN-DOCS-002-C
+- **GIVEN** the notification is being amended
+- **WHEN** the user opens the upload documents page from Overview and follows the back link
+- **THEN** the review is shown
+
+#### Scenario: The back link still opens the review after the page refuses a part-filled document
+**ID**: SCN-DOCS-002-D
+- **GIVEN** the user opened the upload documents page by changing an answer from the review
+- **WHEN** they try to add a document with only the reference filled in, and it is refused
+- **THEN** the back link still opens the review
+- **WHEN** they follow it
+- **THEN** the review is shown
 
 ### Requirement: A notification can hold at most fifteen accompanying documents
 **ID**: REQ-DOCS-003
@@ -48,7 +74,7 @@ The system MUST accept up to fifteen documents per notification and MUST reject 
 
 ### Requirement: Each accompanying document has a maximum file size
 **ID**: REQ-DOCS-004
-The system MUST reject a document over the maximum file size, both at the point of picking a very large file and at the exact size boundary, without adding it to the notification, and MUST also reject an oversize file submitted without the client-side check having run.
+The system MUST reject a document over the maximum file size, both at the point of picking a very large file and at the exact size boundary, without adding it to the notification, and MUST also reject an oversize file submitted without the client-side check having run, preserving the empty state. However the file is submitted, the user MUST be returned to the page with the same error explaining the file must be smaller than the maximum size.
 
 #### Scenario: A file at exactly the size limit is accepted, one byte over is rejected
 **ID**: SCN-DOCS-004-A
@@ -70,8 +96,9 @@ The system MUST reject a document over the maximum file size, both at the point 
 **ID**: SCN-DOCS-004-C
 - **GIVEN** the user is adding a document, and the browser's own size check has not run
 - **WHEN** an oversize file is nonetheless submitted
-- **THEN** an error links to and focuses the file field
-- **AND** no added-documents table is shown
+- **THEN** it is refused, and the page comes back with the error explaining the file must be smaller than the maximum size
+- **AND** an error links to and focuses the file field
+- **AND** the notification still shows no documents added
 
 ### Requirement: Only supported file types can be uploaded
 **ID**: REQ-DOCS-005
@@ -87,7 +114,7 @@ The system MUST reject a file of an unsupported type without adding it to the no
 
 ### Requirement: The reference and date of issue are each required, and individually validated
 **ID**: REQ-DOCS-006
-The system MUST require a reference and a valid date of issue for each document, MUST reject a reference over its maximum length, MUST reject a date that is not a real date, and MUST link to and focus whichever field is at fault while preserving the other field's value.
+The system MUST require a reference and a valid date of issue for each document. A reference MUST be made only of letters, numbers, spaces, hyphens, full stops and forward slashes, up to a maximum of 58 characters; the system MUST reject one carrying any other character and MUST reject one over that length. The system MUST reject a date that is not a real date, and MUST link to and focus whichever field is at fault while preserving the other field's value.
 
 #### Scenario: An empty reference links to and focuses the reference field, preserving the date
 **ID**: SCN-DOCS-006-A
@@ -100,8 +127,14 @@ The system MUST require a reference and a valid date of issue for each document,
 **ID**: SCN-DOCS-006-B
 - **GIVEN** the user enters a reference longer than the maximum allowed
 - **WHEN** they try to add the document
-- **THEN** an error links to and focuses the reference field, which still holds the value typed
+- **THEN** an error reading "Document reference must be 58 characters or fewer" links to and focuses the reference field, which still holds the value typed
 - **AND** the date of issue already entered is preserved
+
+#### Scenario: A reference of exactly the maximum length is taken on
+**ID**: SCN-DOCS-006-H
+- **GIVEN** the user enters a reference of 58 characters
+- **WHEN** they add the document
+- **THEN** it is taken on and held against the notification with that reference
 
 #### Scenario: An empty date of issue links to and focuses the date field, preserving the reference
 **ID**: SCN-DOCS-006-C
@@ -124,9 +157,22 @@ The system MUST require a reference and a valid date of issue for each document,
 - **THEN** an error links to and focuses the file field
 - **AND** the reference and date already entered are preserved
 
+#### Scenario: A reference written in one of the shapes real documents carry is taken on
+**ID**: SCN-DOCS-006-F
+- **GIVEN** the user enters a reference written as an air waybill with a hyphen, a certificate with full stops, or an invoice with a space and a forward slash
+- **WHEN** they add the document
+- **THEN** it is taken on and held against the notification with that reference as typed
+
+#### Scenario: A reference carrying a disallowed character is refused
+**ID**: SCN-DOCS-006-G
+- **GIVEN** the user enters a reference carrying a character other than a letter, number, space, hyphen, full stop or forward slash
+- **WHEN** they try to add the document
+- **THEN** an error reading "Document reference must only include letters, numbers, spaces, hyphens, full stops and forward slashes" is shown on the Document reference field
+- **AND** no document is added to the notification
+
 ### Requirement: Every uploaded document is virus-scanned before it can be used
 **ID**: REQ-DOCS-007
-The system MUST show a document as "Scanning for virus" immediately after upload, and MUST resolve it to either "Check completed" with a way to view it, or "Virus found" with an error and no way to view it.
+The system MUST show a document as "Scanning for virus" immediately after upload, and MUST resolve it to either "Check completed" with a way to view it, or a refusal with an error and no way to view it. A refused document MUST be shown as the reason the upload service gave ("Virus found", "Upload failed" or "Download failed"), say the same to assistive technology, and read "Rejected" for a reason the system has no wording for.
 
 #### Scenario: A clean upload becomes checked and viewable
 **ID**: SCN-DOCS-007-A
@@ -136,32 +182,39 @@ The system MUST show a document as "Scanning for virus" immediately after upload
 - **WHEN** the virus scan completes and the file is clean
 - **THEN** its row shows "Check completed" and a link to view the file appears
 
-#### Scenario: An infected upload is flagged and blocked
+#### Scenario: A rejected upload is flagged and blocked, naming the reason
 **ID**: SCN-DOCS-007-B
 - **GIVEN** the user has uploaded a document
 - **WHEN** it is first added
 - **THEN** its row shows "Scanning for virus"
-- **WHEN** the virus scan completes and finds a virus
-- **THEN** its row shows "Virus found", an error explains the file contains a virus and must be removed, and there is no way to view the file
+- **WHEN** the scan completes and refuses the file for carrying a virus
+- **THEN** its row shows "Virus found", an error explains the file cannot be used and must be removed, and there is no way to view the file
+- **AND** assistive technology is told the file contains a virus
 
-### Requirement: The user cannot continue while a document is still being scanned or is infected
+#### Scenario: A refusal the system has no wording for is not named wrongly
+**ID**: SCN-DOCS-007-C
+- **GIVEN** the user has uploaded a document
+- **WHEN** the scan refuses the file for a reason the system has no wording for
+- **THEN** its row shows "Rejected" rather than naming a cause, and there is no way to view the file
+
+### Requirement: The user cannot continue while a document has been rejected
 **ID**: REQ-DOCS-008
-The system MUST refuse to let the user continue past the page while any document's scan is still "Scanning for virus" or has come back "Virus found", showing an error explaining why, and MUST let them continue once every document has resolved to "Check completed" or the infected one has been removed.
+The system MUST let the user continue past the page while a document's scan is still "Scanning for virus", MUST refuse to let them continue while any document has come back "Rejected", showing an error explaining why, and MUST let them continue once the rejected document has been removed.
 
-#### Scenario: Continuing is blocked while a scan is still running
+#### Scenario: Continuing is not blocked while a scan is still running
 **ID**: SCN-DOCS-008-A
 - **GIVEN** a document on the page is still "Scanning for virus"
 - **WHEN** the user tries to continue
-- **THEN** an error explains they cannot continue yet
-- **WHEN** the scan resolves to "Check completed"
 - **THEN** continuing takes them onward
+- **WHEN** they come back to the page
+- **THEN** the document is still listed, and its row settles to "Check completed" once the scan finishes
 
-#### Scenario: Continuing is blocked while an infected document remains
+#### Scenario: Continuing is blocked while a rejected document remains
 **ID**: SCN-DOCS-008-B
-- **GIVEN** a document on the page has come back "Virus found"
+- **GIVEN** a document on the page has come back "Rejected"
 - **WHEN** the user tries to continue
-- **THEN** the same virus error is shown again
-- **WHEN** they remove the infected document
+- **THEN** the same rejection error is shown again
+- **WHEN** they remove the rejected document
 - **THEN** continuing takes them onward
 
 ### Requirement: Each document's scan status updates independently, and completion is announced
@@ -218,13 +271,13 @@ The system MUST keep an uploaded document's file and details once it has been sc
 
 ### Requirement: Each document also asks for its type, chosen from a fixed list, positioned between the reference and the date of issue
 **ID**: REQ-DOCS-013
-The system MUST ask for a document type as a mandatory answer, offering a placeholder plus all fourteen document types, and MUST place this question between the reference and the date of issue. The chosen type MUST be shown on the document's saved row.
+The system MUST ask for a document type as a mandatory answer, offering a placeholder plus the thirteen document types named in the scenario below, and MUST place this question between the reference and the date of issue. The chosen type MUST be shown on the document's saved row.
 
-#### Scenario: The type question offers fourteen types behind a placeholder, in position
+#### Scenario: The type question offers thirteen types behind a placeholder, in position
 **ID**: SCN-DOCS-013-A
 - **GIVEN** the user is adding a document
 - **WHEN** the page loads
-- **THEN** a document type field is shown between the reference and the date of issue, offering a placeholder and fourteen document types, Health certificate among them
+- **THEN** a document type field is shown between the reference and the date of issue, offering a placeholder and then: ITAHC (Intra Trade Animal Health Certificate), Other veterinary certificate / veterinary declaration, Self-declaration, Journey log, Import permit / authorisation, CITES permit/certificate, Air waybill, Sea waybill, Rail waybill, Bill of lading, Commercial invoice, Packing list / species list, Other supporting documents
 
 #### Scenario: Leaving the type on its placeholder is rejected
 **ID**: SCN-DOCS-013-B
@@ -286,45 +339,93 @@ The system MUST show guidance above the upload form saying that an ITAHC must be
 - **THEN** "Animals that do not need a health certificate" needs "Exporter's declaration that they are fit to travel"
 - **AND** "Rodents imported for research purposes" needs "RM39 licence and supplementary health certificate"
 
-### Requirement: Continuing saves a document the user has filled in, says what is missing from one half filled in, and lets an untouched form leave
+### Requirement: Every save button keeps a document the user has filled in, says what is missing from one half filled in, adds a complete one and lets an untouched form leave
 **ID**: REQ-DOCS-016
-The system MUST, when the user continues with the add-a-document fields filled in, save that document rather than dropping the file, and let them continue once it has been scanned. It MUST, when they continue with only some of the fields filled in, show an error for each missing answer and keep them on the page. It MUST let them continue past an untouched form, since uploading documents is optional.
+The system MUST keep a document the user has filled in, whichever save button they select. A document is started by any of its reference, type, date of issue or a chosen file. One not complete MUST keep the user on the page with an error for each detail not given, what they typed kept and nothing added. A complete one MUST be added by every save button. An untouched form MUST let the user leave.
 
-#### Scenario: Continuing with a filled-in form saves the document
+#### Scenario: Save and return to overview with every detail filled in adds the document and shows Overview
 **ID**: SCN-DOCS-016-A
 - **GIVEN** the user has filled in the reference, document type, date of issue and chosen a file
-- **WHEN** they continue
-- **THEN** the document is added, its row shows the type chosen and "Check completed" once scanned
-- **WHEN** they continue again
+- **WHEN** they save and return to overview
 - **THEN** Overview is shown
+- **AND** reopening Upload documents lists the document, its row showing the type chosen
 
-#### Scenario: Continuing with only the document type says what is missing
+#### Scenario: Save and continue with only the document type says what is missing
 **ID**: SCN-DOCS-016-B
 - **GIVEN** the user has chosen a document type and filled in nothing else
-- **WHEN** they continue
-- **THEN** errors say the reference, the date of issue and the file are required
+- **WHEN** they save and continue
+- **THEN** errors say the reference and the date of issue are required
+- **AND** an error on the file says "Upload a document"
 - **AND** the user stays on the upload documents page
 
-#### Scenario: Continuing with an untouched form leaves the page
+#### Scenario: Save and continue with an untouched form leaves the page
 **ID**: SCN-DOCS-016-C
 - **GIVEN** the user has added nothing and filled in nothing
-- **WHEN** they continue
+- **WHEN** they save and continue
 - **THEN** Overview is shown
 
-### Requirement: The document reference has no hint and the date of issue hints an example date
-**ID**: REQ-DOCS-017
-The system MUST ask for the document reference with no hint, and MUST hint the date of issue with an example date.
+#### Scenario: Save and return to overview with a part-filled document is refused
+**ID**: SCN-DOCS-016-D
+- **GIVEN** the user has filled in only the reference
+- **WHEN** they save and return to overview
+- **THEN** they stay on the upload documents page, with an error for each of the document type, the date of issue and the file
+- **AND** the reference they typed is still on the form
+- **AND** no document is added
 
-#### Scenario: The reference carries no hint and the date of issue carries an example
+#### Scenario: A reference, date of issue and attachment with no document type is refused on save and continue
+**ID**: SCN-DOCS-016-E
+- **GIVEN** the user has filled in the reference and the date of issue, chosen a file and left the document type unchosen
+- **WHEN** they save and continue
+- **THEN** the page shows "Select a document type"
+- **AND** no document is added
+
+#### Scenario: The same rules hold without JavaScript
+**ID**: SCN-DOCS-016-F
+- **GIVEN** the user has no JavaScript
+- **WHEN** they save and return to overview with every detail filled in
+- **THEN** Overview is shown and reopening Upload documents lists the document
+- **WHEN** they save and return to overview with only the reference filled in
+- **THEN** they stay on the upload documents page with an error for each detail not given, and no document is added
+
+#### Scenario: A complete document saved with Save and continue is added and held while it is scanned
+**ID**: SCN-DOCS-016-G
+- **GIVEN** the user has filled in the reference, document type, date of issue and chosen a file
+- **WHEN** they save and continue
+- **THEN** the document is added and listed as "Scanning for virus"
+- **AND** they stay on the upload documents page, which shows "You cannot continue until all documents have been scanned or removed"
+- **AND** the same holds while amending for "Save and return" and "Save and continue"
+
+#### Scenario: While amending, an untouched form leaves by the button chosen
+**ID**: SCN-DOCS-016-H
+- **GIVEN** a notification being amended, with the upload documents page opened from a Change link and nothing filled in
+- **WHEN** the user selects "Save and return"
+- **THEN** the review is shown
+- **WHEN** they instead select "Save and continue"
+- **THEN** the page after upload documents is shown, not the review
+
+#### Scenario: Save and add another with a part-filled document is refused
+**ID**: SCN-DOCS-016-I
+- **GIVEN** the user has filled in some but not all of the reference, document type, date of issue and file
+- **WHEN** they select "Save and add another"
+- **THEN** they stay on the upload documents page, with an error for each detail not given
+- **AND** the values they typed are still on the form
+- **AND** no document is added
+
+### Requirement: Two tabs on one notification each keep their own upload
+**ID**: REQ-DOCS-017
+The system MUST let a user with the same notification open in two tabs upload a document from each, adding both to the notification with their own files, rather than one tab's upload replacing the other's.
+
+#### Scenario: Each of two tabs adds its own document
 **ID**: SCN-DOCS-017-A
-- **GIVEN** the user opens the upload documents page
-- **WHEN** the page loads
-- **THEN** the Document reference field has no hint
-- **AND** the hint under the Date of issue field reads "For example, 27/3/2026"
+- **GIVEN** the user has the upload documents page open in two tabs on one notification
+- **WHEN** they add a different document from each tab
+- **THEN** each tab's row resolves to "Check completed"
+- **AND** reloading the page lists both documents
+- **AND** viewing each document serves back the file its own tab uploaded
 
 ### Requirement: The added-documents table is headed and keeps each row's actions at its end
 **ID**: REQ-DOCS-018
-The system MUST head the added-documents table "Document reference", "Document type", "Date of issue", "Status" and a visually hidden "Action", and MUST place each row's "View file" and "Remove" at the right-hand end of the row.
+The system MUST head the added-documents table "Document reference", "Document type", "Date of issue", "Status" and a visually hidden "Action", and MUST place each row's "View file" and "Remove" at the right-hand end of the row. Where the two wrap onto separate lines, they MUST end on the same right-hand edge as each other, whether the row was drawn by the server or rebuilt in the page when a scan completed.
 
 #### Scenario: The table shows five headings with each row's actions at its end
 **ID**: SCN-DOCS-018-A
@@ -332,3 +433,65 @@ The system MUST head the added-documents table "Document reference", "Document t
 - **WHEN** the page shows the added-documents table
 - **THEN** its column headings are "Document reference", "Document type", "Date of issue", "Status" and a visually hidden "Action"
 - **AND** the row's "View file" and "Remove" sit at the right-hand end of the row
+- **AND** on a screen too narrow to hold them side by side, "Remove" wraps below "View file" and the two end on the same right-hand edge
+
+#### Scenario: A row rebuilt when its scan completes keeps its two actions on the same right-hand edge
+**ID**: SCN-DOCS-018-B
+- **GIVEN** a document whose scan settles while the user is on the page, so the page rebuilds the row's actions itself
+- **WHEN** the screen is too narrow to hold "View file" and "Remove" side by side
+- **THEN** "Remove" wraps below "View file" and the two end on the same right-hand edge
+
+### Requirement: The document reference has no hint and the date of issue hints an example date
+**ID**: REQ-DOCS-019
+The system MUST ask for the document reference with no hint, and MUST hint the date of issue with an example date.
+
+#### Scenario: The reference carries no hint and the date of issue carries an example
+**ID**: SCN-DOCS-019-A
+- **GIVEN** the user opens the upload documents page
+- **WHEN** the page loads
+- **THEN** the Document reference field has no hint
+- **AND** the hint under the Date of issue field reads "For example, 27/3/2026"
+
+### Requirement: The page can be opened as soon as the origin of the import is answered
+**ID**: REQ-DOCS-020
+The system MUST offer and open the upload documents page with nothing beyond the origin of the import answered, and MUST ask nothing of what the trader is importing or of any later part of the notification before showing it.
+
+#### Scenario: Reaching the page from Overview with only the origin answered
+**ID**: SCN-DOCS-020-A
+- **GIVEN** a new notification with only the origin of the import answered
+- **WHEN** the user follows Overview's "Upload documents" row
+- **THEN** the page titled "Upload documents" is shown
+
+#### Scenario: Opening the page with the origin and what they are importing answered
+**ID**: SCN-DOCS-020-B
+- **GIVEN** a new notification with the origin of the import and what they are importing answered, and nothing else
+- **WHEN** the user opens the upload documents page
+- **THEN** the page titled "Upload documents" is shown
+
+### Requirement: A document can still be uploaded after leaving the page and coming back to it
+**ID**: REQ-DOCS-021
+An upload session takes one file and is then closed to further files. The system MUST NOT offer the user a closed session to upload through, MUST NOT let the browser keep a copy of the page, and MUST open the page again when the browser hands back a copy it kept.
+
+#### Scenario: Going back after adding a document and adding another
+**ID**: SCN-DOCS-021-A
+- **GIVEN** the user has added a document and left the upload documents page
+- **WHEN** they return to it with the browser's back button, fill in a second document and save it
+- **THEN** the page titled "Upload documents" is shown with both documents in the added-documents table
+
+#### Scenario: Going back and adding another without client-side JavaScript
+**ID**: SCN-DOCS-021-B
+- **GIVEN** the user has no JavaScript, has added a document and left the upload documents page
+- **WHEN** they return to it with the browser's back button, fill in a second document and save it
+- **THEN** the page titled "Upload documents" is shown with both documents in the added-documents table
+
+#### Scenario: Coming back through a link that carries a session a file has already reached
+**ID**: SCN-DOCS-021-C
+- **GIVEN** the user comes back to the upload documents page through a link carrying an upload session a file has already reached
+- **WHEN** they fill in another document and save it
+- **THEN** the page titled "Upload documents" is shown with that document in the added-documents table
+
+#### Scenario: The page is served with the browser forbidden to store it
+**ID**: SCN-DOCS-021-D
+- **GIVEN** the user opens the upload documents page
+- **WHEN** the page is served
+- **THEN** the response forbids the browser storing it

@@ -58,6 +58,14 @@
               "test": "Should redirect to the address book for soft-deleted tombstones",
               "strength": "partial",
               "notes": "frontend hides tombstones from view; API tombstone retention is the E2E assertion"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "an address is found from the dashboard, viewed, kept on No, cancel, then deleted on Yes, delete and no longer found by search",
+              "strength": "partial",
+              "notes": "the final search for the deleted address reads Showing 0 of 0; run against the stack by the build gate; not red-probed"
             }
           ]
         },
@@ -145,9 +153,9 @@
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-              "test": "saves a valid address, shows a confirmation banner and lists the new address",
+              "test": "lists the saved address with each stored line on its own line, each but the last ending in a comma, and its country apart",
               "strength": "partial",
-              "notes": "proves save and list presence by name only, not field-level persistence"
+              "notes": "proves the saved name, postal lines and country are listed; not email, phone or field-level persistence"
             },
             {
               "type": "unit",
@@ -164,7 +172,7 @@
     {
       "id": "REQ-INS-ADDR-005",
       "name": "The add and edit forms ask for the same Standard Address Block, with two fields optional",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-INS-ADDR-005-A",
@@ -200,23 +208,23 @@
         {
           "id": "SCN-INS-ADDR-005-B",
           "name": "The country field lists every country alphabetically, United Kingdom in its place",
-          "coverage": "full",
+          "coverage": "partial",
           "tests": [
             {
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-country-list.spec.ts",
-              "test": "the add form's Country select lists every country reference data serves alphabetically, United Kingdom in its place",
-              "strength": "full",
-              "notes": ""
+              "test": "the add form's Country select lists Select a country first, then every country reference data serves alphabetically, United Kingdom in its place",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
             },
             {
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-country-list.spec.ts",
               "test": "the edit form's Country select offers the same alphabetical list with no blank option",
-              "strength": "full",
-              "notes": ""
+              "strength": "partial",
+              "notes": "no test opens the add form from the consignment contact page"
             },
             {
               "type": "unit",
@@ -446,16 +454,48 @@
       "scenarios": [
         {
           "id": "SCN-INS-ADDR-009-A",
-          "name": "Adding an address confirms it and lists it",
+          "name": "Adding an address confirms it and lists it first",
           "coverage": "full",
           "tests": [
             {
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-              "test": "saves a valid address, shows a confirmation banner and lists the new address",
+              "test": "saves a valid address and keeps the Success banner naming it showing 10 seconds after the list loads",
               "strength": "full",
-              "notes": ""
+              "notes": "red-probed: the banner title and the added banner wording"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "lists the saved address with each stored line on its own line, each but the last ending in a comma, and its country apart",
+              "strength": "partial",
+              "notes": "proves the saved address is listed, with its lines and country; not the banner, its order or its View link"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "lists the saved address first, ahead of the seeded address, with a View link to its own details page",
+              "strength": "full",
+              "notes": "red-probed: the stub's create appended instead of putting the new address first"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/copy/copy.test.js",
+              "test": "Should name the address in each success banner",
+              "strength": "partial",
+              "notes": "the added banner wording only"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "an address added through the form lands on the list with its success banner, its address and country, and a View link to its own page",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
             }
           ]
         },
@@ -524,7 +564,7 @@
               "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
               "test": "returns to the address book without creating an address",
               "strength": "full",
-              "notes": ""
+              "notes": "red-probed: fails when the cancel link submits the typed address, passes restored"
             },
             {
               "type": "unit",
@@ -569,7 +609,7 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-edit.spec.ts",
-              "test": "Cancel after a refused save reopens the edit page with no errors",
+              "test": "after a refused save and Cancel, the edit page opens again with no errors and the stored name",
               "strength": "partial",
               "notes": ""
             }
@@ -664,6 +704,14 @@
               "test": "the delete page summarises the address, and No, cancel returns to its details with nothing deleted",
               "strength": "full",
               "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "an address is found from the dashboard, viewed, kept on No, cancel, then deleted on Yes, delete and no longer found by search",
+              "strength": "partial",
+              "notes": "follows No, cancel from the delete page back to the details page; run against the stack by the build gate; not red-probed"
             }
           ]
         },
@@ -692,7 +740,7 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/delete/delete.controller.test.js",
-              "test": "Should soft-delete the address for the organisation and redirect to the address book",
+              "test": "Should send the delete for the organisation and redirect to the address book",
               "strength": "partial",
               "notes": "the delete reaches the address book and the user is redirected to it; the banner is asserted in its own test"
             },
@@ -711,6 +759,14 @@
               "test": "Should name the address as it is stored",
               "strength": "partial",
               "notes": "the banner wording helper alone"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "an address is found from the dashboard, viewed, kept on No, cancel, then deleted on Yes, delete and no longer found by search",
+              "strength": "partial",
+              "notes": "follows Yes, delete to the list banner; run against the stack by the build gate; not red-probed"
             }
           ]
         },
@@ -757,20 +813,44 @@
           "coverage": "full",
           "tests": [
             {
-              "type": "fit",
+              "type": "unit",
               "repo": "trade-imports-ins-frontend",
-              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
-              "test": "renders addresses in a table with Name, Address and Country columns",
-              "strength": "full",
+              "file": "src/server/app/features/address-book/list/list.controller.test.js",
+              "test": "renders the results count, column headings, and each address's View link and country label",
+              "strength": "partial",
               "notes": ""
             },
             {
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
-              "file": "src/server/app/features/address-book/list/list.controller.test.js",
-              "test": "renders the results count, column headings, each address row and the Add link",
+              "file": "src/server/app/features/address-book/list/list.layout.controller.test.js",
+              "test": "lays the page out as heading, large intro, Add button, then the filter form wrapping a collapsed Filter addresses disclosure",
               "strength": "full",
+              "notes": "red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "renders addresses in a table with Name, Address, Country and Action columns",
+              "strength": "partial",
               "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "shows the intro and the Add a new address button",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "shows the intro and Add a new address, with the Search field hidden until Filter addresses is opened",
+              "strength": "partial",
+              "notes": "run green against the stack; not red-probed"
             }
           ]
         },
@@ -801,6 +881,170 @@
               "test": "Dashboard and Address book links are visible and navigate correctly",
               "strength": "full",
               "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "an address is found from the dashboard, viewed, kept on No, cancel, then deleted on Yes, delete and no longer found by search",
+              "strength": "partial",
+              "notes": "reaches the list from the dashboard through the service navigation; run against the stack by the build gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-012-D",
+          "name": "A name of more than one word shows on two lines",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.layout.controller.test.js",
+              "test": "breaks the name after its first word and puts every stored address line on its own line",
+              "strength": "full",
+              "notes": "red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/view-model/list.test.js",
+              "test": "Should give the first word then the rest, single-spaced, for a name of several words",
+              "strength": "full",
+              "notes": "red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/view-model/list.test.js",
+              "test": "Should give one line for a one-word name",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "shows the name on two lines and the address on one line per stored line",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "a multi-word name shows its first word then the rest on two lines, and a one-word name on one line",
+              "strength": "partial",
+              "notes": "run green against the stack; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-012-E",
+          "name": "Each stored address line shows on its own line",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.layout.controller.test.js",
+              "test": "breaks the name after its first word and puts every stored address line on its own line",
+              "strength": "full",
+              "notes": "red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fields.test.js",
+              "test": "Should give address line 1, address line 2, town or city, county and postcode in that order",
+              "strength": "full",
+              "notes": "red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fields.test.js",
+              "test": "Should leave out blank and missing lines",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "shows the name on two lines and the address on one line per stored line",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "lists the saved address with each stored line on its own line, each but the last ending in a comma, and its country apart",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "each stored address line shows on its own line, each but the last ending in a comma, with blank lines left out",
+              "strength": "partial",
+              "notes": "run green against the stack; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "an address added through the form lands on the list with its success banner, its address and country, and a View link to its own page",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-012-F",
+          "name": "The list cannot be loaded",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.controller.test.js",
+              "test": "returns 500 when the address book cannot be reached, with the heading, intro, Add button and filter but no results line or table",
+              "strength": "full",
+              "notes": "red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-012-G",
+          "name": "A newer address is listed before an older one",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "lists the saved address first, ahead of the seeded address, with a View link to its own details page",
+              "strength": "full",
+              "notes": "red-probed: the stub's create appended instead of putting the new address first"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/services/address-book/address-book.test.js",
+              "test": "Should list created addresses newest first, ahead of the seeded address",
+              "strength": "partial",
+              "notes": "the stub's order only; red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "an address added through the form lands on the list with its success banner, and is listed ahead of an older address",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
             }
           ]
         }
@@ -813,16 +1057,16 @@
       "scenarios": [
         {
           "id": "SCN-INS-ADDR-013-A",
-          "name": "More than twenty-five addresses are shown across pages",
+          "name": "More than eight addresses are shown across pages",
           "coverage": "full",
           "tests": [
             {
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
-              "test": "paginates when there are more than 25 addresses",
+              "test": "lists 8 addresses a page",
               "strength": "full",
-              "notes": "Showing 1-25 of 30 then 26-30 of 30 after Page 2"
+              "notes": "Showing 1-8 of 30 then 9-16 of 30 after Page 2; red-probed: fails when the list asks for 9 a page"
             },
             {
               "type": "unit",
@@ -830,7 +1074,15 @@
               "file": "src/server/app/features/address-book/list/list.controller.test.js",
               "test": "renders numbered pagination when more than one page",
               "strength": "partial",
-              "notes": "renders page 2 range text from mocked API; does not click through page 1→2"
+              "notes": "renders page 2 range text from mocked API; does not click through page 1 to 2"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "lists 8 addresses a page and the rest on the next page",
+              "strength": "partial",
+              "notes": "run against the stack by the build gate; not red-probed"
             }
           ]
         }
@@ -838,29 +1090,45 @@
     },
     {
       "id": "REQ-INS-ADDR-014",
-      "name": "An empty address book invites the user to add the first address",
+      "name": "An empty address book shows no rows and invites the user to add the first address",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-INS-ADDR-014-A",
-          "name": "No addresses shows an empty-state message and an add action",
+          "name": "No addresses shows an empty table and an add action",
           "coverage": "full",
           "tests": [
             {
-              "type": "fit",
+              "type": "unit",
               "repo": "trade-imports-ins-frontend",
-              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
-              "test": "shows an empty-state message and an option to add one",
+              "file": "src/server/app/features/address-book/list/list.layout.controller.test.js",
+              "test": "shows Showing 0 of 0 and the table headings with no rows when the book is empty",
               "strength": "full",
-              "notes": ""
+              "notes": "red-probed"
             },
             {
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
-              "file": "src/server/app/features/address-book/list/list.controller.test.js",
-              "test": "shows empty state when org has no addresses",
+              "file": "src/server/app/features/address-book/view-model/list.test.js",
+              "test": "Should give Showing 0 of 0 for a page with no results",
               "strength": "full",
-              "notes": ""
+              "notes": "red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "shows Showing 0 of 0 and the table headings with no rows",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/delete.fit.spec.js",
+              "test": "confirming removes the address and confirms it on the address book",
+              "strength": "partial",
+              "notes": "the list left after the last delete; not red-probed"
             }
           ]
         }
@@ -1011,15 +1279,15 @@
         {
           "id": "SCN-INS-ADDR-018-A",
           "name": "Leaving name, postcode, country and phone blank on add names each in the form's words",
-          "coverage": "full",
+          "coverage": "partial",
           "tests": [
             {
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-validation-messages.spec.ts",
               "test": "saving the add form with name, postcode, country and phone left blank shows each message at the top and against its field",
-              "strength": "full",
-              "notes": ""
+              "strength": "partial",
+              "notes": "no test opens the add form from the consignment contact page"
             },
             {
               "type": "fit",
@@ -1097,21 +1365,21 @@
         {
           "id": "SCN-INS-ADDR-018-C",
           "name": "A country that is not offered is refused as if none were chosen",
-          "coverage": "full",
+          "coverage": "partial",
           "tests": [
             {
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
               "test": "POST with a country the reference data does not list shows the select-a-country error",
-              "strength": "full",
-              "notes": ""
+              "strength": "partial",
+              "notes": "no test opens the add form from the consignment contact page"
             },
             {
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fields.test.js",
-              "test": "refuses a country the reference data does not list as if blank",
+              "test": "Should refuse a country the reference data does not list as if blank",
               "strength": "partial",
               "notes": "the rule, not the rendered page"
             },
@@ -1120,8 +1388,8 @@
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/edit/edit.controller.test.js",
               "test": "Should refuse a country the reference data does not list with Select a country, sending nothing",
-              "strength": "full",
-              "notes": "the edit form"
+              "strength": "partial",
+              "notes": "the edit form; no test opens the add form from the consignment contact page"
             }
           ]
         },
@@ -1180,7 +1448,7 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-add-form.spec.ts",
-              "test": "the edit page groups its fields under Address and Contact details and labels the name Name or organisation",
+              "test": "the edit page groups its fields under Address and Contact details and opens with the saved name",
               "strength": "full",
               "notes": ""
             },
@@ -1188,7 +1456,7 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "GET renders the add address details form with Back and cancel linking to the address book",
+              "test": "GET renders the add address and contact details page with its caption, no status tag, and Back and cancel linking to the address book",
               "strength": "partial",
               "notes": "the two section headings"
             },
@@ -2223,8 +2491,8 @@
     },
     {
       "id": "REQ-INS-ADDR-027",
-      "name": "The add form names its first field 'Name or organisation', opens its Country select on 'Select a country' and is opened directly from the address book",
-      "coverage": "full",
+      "name": "The add form names its first field 'Name or organisation', opens its Country select on 'Select a country' from the address book, the place of origin and consignor pickers and the consignment contact page, and is opened directly from the address book",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-INS-ADDR-027-A",
@@ -2243,7 +2511,7 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-add-form.spec.ts",
-              "test": "the edit page groups its fields under Address and Contact details and labels the name Name or organisation",
+              "test": "the edit page groups its fields under Address and Contact details and opens with the saved name",
               "strength": "full",
               "notes": ""
             },
@@ -2251,7 +2519,7 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "GET renders the add address details form with Back and cancel linking to the address book",
+              "test": "GET renders the add address and contact details page with its caption, no status tag, and Back and cancel linking to the address book",
               "strength": "partial",
               "notes": "the name label and County"
             },
@@ -2259,24 +2527,24 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/copy/copy.test.js",
-              "test": "Should word the add-details form with its own name label, country placeholder and section headings",
+              "test": "Should label the English form fields with the labels the design sets",
               "strength": "partial",
-              "notes": "the add and edit name labels"
+              "notes": "the Name or organisation and County (optional) labels as copy, which the add and edit forms share; does not render either form"
             }
           ]
         },
         {
           "id": "SCN-INS-ADDR-027-B",
           "name": "The add form opens the Country select on Select a country",
-          "coverage": "full",
+          "coverage": "partial",
           "tests": [
             {
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-add-form.spec.ts",
               "test": "the Country select opens on its blank first option, Select a country, with nothing pre-selected",
-              "strength": "full",
-              "notes": ""
+              "strength": "partial",
+              "notes": "no test opens the add form from the consignment contact page"
             },
             {
               "type": "unit",
@@ -2329,9 +2597,1069 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "GET renders the add address details form with Back and cancel linking to the address book",
+              "test": "GET renders the add address and contact details page with its caption, no status tag, and Back and cancel linking to the address book",
               "strength": "partial",
-              "notes": "the heading and the Back link to the address book"
+              "notes": "the Back link to the address book"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-028",
+      "name": "The address book is searched from a collapsed 'Filter addresses' disclosure by a field and button labelled 'Search'",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-028-A",
+          "name": "The filter disclosure is collapsed on load and opens and closes",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.layout.controller.test.js",
+              "test": "lays the page out as heading, large intro, Add button, then the filter form wrapping a collapsed Filter addresses disclosure",
+              "strength": "full",
+              "notes": "red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "keeps the Search field hidden until Filter addresses is opened, and hides it again when closed",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "opens and closes the disclosure",
+              "strength": "partial",
+              "notes": "JavaScript off; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "shows the intro and Add a new address, with the Search field hidden until Filter addresses is opened",
+              "strength": "partial",
+              "notes": "run green against the stack; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "Filter addresses opens to show the Search field",
+              "strength": "partial",
+              "notes": "run green against the stack; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-028-B",
+          "name": "The search field is labelled Search, with a hint and an icon-only button",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.layout.controller.test.js",
+              "test": "holds the Search label, its hint, the input and one icon-only submit button inside the disclosure",
+              "strength": "full",
+              "notes": "red-probed: fails with the hint removed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/copy/copy.test.js",
+              "test": "Should word the list intro, filter disclosure, search field and hint, search button, Clear search link and empty results line",
+              "strength": "partial",
+              "notes": "pins the English copy; the probe changed the results line, not these keys"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "describes the Search field with the hint Search by name, address or country",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-028-C",
+          "name": "Submitting a search lists the matches",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.layout.controller.test.js",
+              "test": "lists the match under the filter with Clear search and its View link as the only links there",
+              "strength": "partial",
+              "notes": "red-probed: fails with Clear search removed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "lists only the matches, with the term in the address book URL, when submitted with the Search button",
+              "strength": "full",
+              "notes": "lists the one match of thirty and reads Showing 1-1 of 1; red-probed: fails when the stub ignores the term"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "lists only the matches, with the term in the address book URL, when submitted with Enter in the Search field",
+              "strength": "full",
+              "notes": "lists the one match of thirty and reads Showing 1-1 of 1; red-probed: fails when the stub ignores the term"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "lists only the matches, with the term in the address book URL, when submitted with the Search button and JavaScript is off",
+              "strength": "full",
+              "notes": "lists the one match of thirty and reads Showing 1-1 of 1; red-probed: fails when the stub ignores the term"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "lists only the matches, with the term in the address book URL, when submitted with Enter in the Search field and JavaScript is off",
+              "strength": "full",
+              "notes": "lists the one match of thirty and reads Showing 1-1 of 1; red-probed: fails when the stub ignores the term"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "a search submitted with the Search button lists the address it matches",
+              "strength": "partial",
+              "notes": "run green against the stack; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "a search submitted with Enter in the Search field lists the address it matches",
+              "strength": "partial",
+              "notes": "run green against the stack; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "a search submitted with the Search button and JavaScript is off lists the address it matches",
+              "strength": "partial",
+              "notes": "run green against the stack; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "a search submitted with Enter in the Search field and JavaScript is off lists the address it matches",
+              "strength": "partial",
+              "notes": "run green against the stack; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-028-D",
+          "name": "A search matching nothing shows an empty table",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.layout.controller.test.js",
+              "test": "shows Showing 0 of 0, the table headings, no rows and Clear search as the only link under the filter when a search matches nothing",
+              "strength": "full",
+              "notes": "red-probed: fails with Clear search removed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "a search matching nothing shows Showing 0 of 0, the column headers, no rows and Clear search as the only link",
+              "strength": "partial",
+              "notes": "run green against the stack; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-028-E",
+          "name": "Clear search returns to the whole address book",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "Clear search after a search returns to the whole address book with an empty Search field",
+              "strength": "full",
+              "notes": "red-probed: fails with Clear search removed; follows the link"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.controller.test.js",
+              "test": "Should link Clear search to the whole address book under the results line when a search has %s",
+              "strength": "partial",
+              "notes": "red-probed: fails with Clear search removed; proves the link and its href, not following it"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-028-F",
+          "name": "Text typed and not submitted leaves the list unchanged",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "leaves the list as it is while text is typed and not yet submitted",
+              "strength": "partial",
+              "notes": "no client script filters the list, so this passes without one; a script that filtered as the user types would turn it red"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-029",
+      "name": "The success banner after an add, edit or delete stays until the user leaves or reloads the page",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-029-A",
+          "name": "The banner is still shown ten seconds later",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "saves a valid address and keeps the Success banner naming it showing 10 seconds after the list loads",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "the success banner after an edit is still showing 10 seconds later, and a reload shows no banner",
+              "strength": "partial",
+              "notes": "run green against the stack; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-029-B",
+          "name": "Reloading the list shows no banner",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "the success banner after an edit is still showing 10 seconds later, and a reload shows no banner",
+              "strength": "partial",
+              "notes": "run green against the stack; not red-probed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-030",
+      "name": "A page number out of range shows a real page of addresses",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-030-A",
+          "name": "A page number below 1 or not a number shows the first page",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.controller.test.js",
+              "test": "asks for page 1 when the page number is %s",
+              "strength": "partial",
+              "notes": "page 0 and abc each ask the service for page 1; not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "shows the first page when the page number is 0",
+              "strength": "partial",
+              "notes": "Showing 1-8 of 30; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-030-B",
+          "name": "A page number beyond the last page shows the last page",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "shows the last page when the page number is past the last page",
+              "strength": "full",
+              "notes": "Showing 25-30 of 30 with Page 4 current; red-probed: fails when the list serves the empty page"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.controller.test.js",
+              "test": "shows the last page, asked for a second time, when the page number is past the last page",
+              "strength": "full",
+              "notes": "red-probed: fails when the list serves the empty page"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-031",
+      "name": "The address book service serves a requested page size from 1 to 100",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-031-A",
+          "name": "A requested page size is served",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java",
+              "test": "list_shouldReturn8ItemsAcross4Pages_whenPageSizeIs8",
+              "strength": "partial",
+              "notes": "not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-031-B",
+          "name": "A page size outside 1 to 100 is refused",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java",
+              "test": "list_shouldReturn400BadRequestProblemWithNoErrorsMap_whenPageSizeIsOutOfRange",
+              "strength": "partial",
+              "notes": "not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-031-C",
+          "name": "No page size gives 25 addresses a page",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java",
+              "test": "list_shouldReturn25ItemsAcross2Pages_whenNoPageSizeIsRequested",
+              "strength": "partial",
+              "notes": "not red-probed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-032",
+      "name": "A search matches an address by its name, address, town, county, postcode or country",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-032-A",
+          "name": "A term inside an address line finds that address",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java",
+              "test": "partialWordSearchMatchesAddressLineTwoCaseInsensitively",
+              "strength": "partial",
+              "notes": "the service matches address line 2, ignoring case; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "a search finds an address by a lower-case word inside its address line 2",
+              "strength": "partial",
+              "notes": "run against the stack by the build gate; not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "finds an address by a term inside its address line 1",
+              "strength": "partial",
+              "notes": "address line 1 in stub mode, red-probed: fails when the stub ignores the term"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-032-B",
+          "name": "A country name finds the addresses in that country",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "finds the addresses in a country by part of its name",
+              "strength": "full",
+              "notes": "fran finds the France row and reads Showing 1-1 of 1; red-probed: fails when the stub ignores the term"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.controller.test.js",
+              "test": "forwards the search query and the country code whose name contains it",
+              "strength": "partial",
+              "notes": "the codes reach the address book service as repeated countryCode parameters"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java",
+              "test": "severalCountryCodesMatchTheAddressesInAnyOfThem",
+              "strength": "partial",
+              "notes": "the service matches any of several codes; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-032-C",
+          "name": "A search counts its matches and pages them past eight",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "lists the matches across all pages and keeps the term on the next page",
+              "strength": "full",
+              "notes": "Showing 1-8 of 11 then 9-11 of 11 with the term kept; red-probed: fails when the stub ignores the term"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.controller.test.js",
+              "test": "shows no pagination when the matches of a search fit on one page",
+              "strength": "partial",
+              "notes": "Showing 1-2 of 2 with no pagination from mocked API; not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "counts the matches of a search that fits on one page and shows no pagination",
+              "strength": "full",
+              "notes": "proves the Then 'Showing 1-2 of 2 and no pagination' over the stub; red-probed: fails when the expected line reads Showing 1-2 of 3, green restored"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-032-D",
+          "name": "An address just added is found by its name, its address and its country",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "finds the saved address by its name, a fragment of its address and part of its country name",
+              "strength": "full",
+              "notes": "red-probed: the stub's search left out address line 1"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "an address added through the form is found by a search on its name, part of its address and part of its country name",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-033",
+      "name": "The add page is headed 'Add address and contact details' under the caption 'Add new address', and shows the notification's status block when reached from a journey",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-033-A",
+          "name": "Reached from a journey's role picker, the page is headed with its caption and title",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET arriving through a journey handshake shows the page title, the blue Draft status and notification id above the caption and heading, then the section headings and every field label",
+              "strength": "full",
+              "notes": "red-probed: fails when the add title copy reverts, and when the caption is removed from the template"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "shows the Draft status and notification id above the caption, heading, section headings and fields",
+              "strength": "partial",
+              "notes": "run by the gate; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
+              "test": "the INS add page reached from the Consignor picker shows its page title, heading, caption, Draft status, notification reference, section headings, field labels and autocomplete hints",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-033-B",
+          "name": "Reached from a journey, the page shows a Draft tag and the notification's reference",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET arriving through a journey handshake shows the page title, the blue Draft status and notification id above the caption and heading, then the section headings and every field label",
+              "strength": "full",
+              "notes": "red-probed: fails when the strip is not passed to the layout"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "shows the Draft status and notification id above the caption, heading, section headings and fields",
+              "strength": "partial",
+              "notes": "run by the gate; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
+              "test": "the INS add page reached from the Consignor picker shows its page title, heading, caption, Draft status, notification reference, section headings, field labels and autocomplete hints",
+              "strength": "partial",
+              "notes": "reads the reference the journey returned; run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-033-C",
+          "name": "A refused save from a journey still shows the status block",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST from the consignee handshake keeps the journey, the Draft status, the notification id and United Kingdom alone on the form when the API rejects the address",
+              "strength": "full",
+              "notes": "red-probed: fails when the strip is not passed to the layout"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-033-D",
+          "name": "Opened from the address book, the page shows its heading and caption with no status block",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET renders the add address and contact details page with its caption, no status tag, and Back and cancel linking to the address book",
+              "strength": "full",
+              "notes": "red-probed: fails when the caption is removed or the title copy reverts, and when the journey strip is made unconditional (the strip length-0 assertion)"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "clicking Add a new address navigates to the add form",
+              "strength": "partial",
+              "notes": "reads the heading only; run by the gate; not red-probed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-034",
+      "name": "The add and edit forms give each personal-data field its browser autocomplete hint",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-034-A",
+          "name": "The add form carries the autocomplete hints",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET gives each personal-data field its browser autocomplete hint and none to County or Country",
+              "strength": "full",
+              "notes": "red-probed: fails when the postcode hint is removed from the shared field macro"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "gives each personal-data field its browser autocomplete hint",
+              "strength": "partial",
+              "notes": "run by the gate; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
+              "test": "the INS add page reached from the Consignor picker shows its page title, heading, caption, Draft status, notification reference, section headings, field labels and autocomplete hints",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-034-B",
+          "name": "The edit form carries the autocomplete hints",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/edit/edit.controller.test.js",
+              "test": "Should give each personal-data field its browser autocomplete hint and none to County or Country",
+              "strength": "full",
+              "notes": "red-probed: fails when the postcode hint is removed from the shared field macro"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-035",
+      "name": "The add page reached from a notification's role picker offers any country for a place of origin or consignor and the United Kingdom alone for a consignee, importer or place of destination",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-035-A",
+          "name": "The place of origin and consignor pages offer every country, opening on Select a country",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET from the placeOfOrigin handshake opens the Country select on Select a country, offers every served country and shows every field",
+              "strength": "full",
+              "notes": "red-probed: fails when the United Kingdom branch applies to every context"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET from the consignor handshake opens the Country select on Select a country, offers every served country and shows every field",
+              "strength": "full",
+              "notes": "red-probed: fails when the United Kingdom branch applies to every context"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "from the place of origin handshake opens the Country select on Select a country and offers every captured country, alphabetically, as a plain select",
+              "strength": "full",
+              "notes": "red-probed: fails when the any-country branch of addFormCountryOffer returns the United Kingdom alone, passes restored"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "from the consignor handshake opens the Country select on Select a country and offers every captured country, alphabetically, as a plain select",
+              "strength": "full",
+              "notes": "red-probed: fails when the any-country branch of addFormCountryOffer returns the United Kingdom alone, passes restored"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
+              "test": "the INS add page reached from the Place of origin picker opens on Select a country and offers every captured country, alphabetically, as a plain select",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
+              "test": "the INS add page reached from the Consignor picker opens on Select a country and offers every captured country, alphabetically, as a plain select",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-035-B",
+          "name": "The consignee, importer and place of destination pages offer the United Kingdom alone",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET from the consignee handshake offers United Kingdom alone, selected, with every field shown",
+              "strength": "full",
+              "notes": "red-probed: fails when the registry's United Kingdom fulfilment ids are emptied"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET from the importer handshake offers United Kingdom alone, selected, with every field shown",
+              "strength": "full",
+              "notes": "red-probed: fails when the registry's United Kingdom fulfilment ids are emptied"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET from the placeOfDestination handshake offers United Kingdom alone, selected, with every field shown",
+              "strength": "full",
+              "notes": "red-probed: fails when the registry's United Kingdom fulfilment ids are emptied"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST from the consignee handshake keeps the journey, the Draft status, the notification id and United Kingdom alone on the form when the API rejects the address",
+              "strength": "full",
+              "notes": "red-probed: fails when the address book 400 re-render drops the handshake context"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST from the consignee handshake shows the recoverable-error banner and United Kingdom alone, selected, when the address book fails",
+              "strength": "full",
+              "notes": "red-probed: fails when the address book failure re-render drops the handshake context"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "from the consignee handshake offers United Kingdom alone, selected, with every field shown",
+              "strength": "partial",
+              "notes": "run by the gate; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
+              "test": "the INS add page reached from the Consignee picker offers United Kingdom alone, already selected",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-035-C",
+          "name": "A consignee, importer or place of destination address is saved as United Kingdom whatever country is posted",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST from the consignee handshake saves the address as United Kingdom whatever country is posted",
+              "strength": "full",
+              "notes": "red-probed: fails when the posted country is not fixed to GB"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/address-countries.test.js",
+              "test": "Should offer United Kingdom alone, accept only GB and fix the posted country to GB for the consignee",
+              "strength": "full",
+              "notes": "red-probed: fails when the posted country is not fixed to GB"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
+              "test": "Save and select on the INS add page reached from the Consignee picker saves the address, selects it for the role and lands on Roles and addresses with the added banner",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-035-D",
+          "name": "A place of origin or consignor address with no country, or one the list does not offer, is refused",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST from the consignor handshake with no country shows Select a country and saves nothing",
+              "strength": "full",
+              "notes": "red-probed: fails when the United Kingdom branch applies to every context"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST from the consignor handshake with a country the list does not offer shows Select a country and saves nothing",
+              "strength": "full",
+              "notes": "red-probed: fails when the United Kingdom branch applies to every context"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-035-E",
+          "name": "A consignee, importer or place of destination address with the name, postcode and phone blank is refused naming each",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST from the consignee handshake with the name, postcode, country and phone blank lists the name, postcode and phone errors only, and keeps United Kingdom selected",
+              "strength": "full",
+              "notes": "red-probed: fails when the blank country is not fixed to GB before validation"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "from the consignee handshake a blank name links to the name field and the error page has no serious or critical axe violations",
+              "strength": "partial",
+              "notes": "run by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-035-F",
+          "name": "A place of origin or consignor address with an over-long postcode or a badly formed email address is refused",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST from the consignor handshake with a 13-character postcode and a badly formed email shows both format errors and saves nothing",
+              "strength": "full",
+              "notes": "red-probed: fails when the postcode maximum length is raised to 13"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-035-G",
+          "name": "The place of origin and consignor pages offer the Country field as a drop-down list",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "from the place of origin handshake opens the Country select on Select a country and offers every captured country, alphabetically, as a plain select",
+              "strength": "full",
+              "notes": "red-probed: fails when the govukSelect in address-fields.njk is replaced by a text input, passes restored"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "from the consignor handshake opens the Country select on Select a country and offers every captured country, alphabetically, as a plain select",
+              "strength": "full",
+              "notes": "red-probed: fails when the govukSelect in address-fields.njk is replaced by a text input, passes restored"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
+              "test": "the INS add page reached from the Place of origin picker opens on Select a country and offers every captured country, alphabetically, as a plain select",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
+              "test": "the INS add page reached from the Consignor picker opens on Select a country and offers every captured country, alphabetically, as a plain select",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-036",
+      "name": "The add page reached from a notification journey returns through the journey to the page each control names",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-036-A",
+          "name": "A role's add page offers Back, Save and select, Save and return to address page and Cancel and return to hub",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET from a role handshake offers Save and select, Save and return to address page and a Cancel and return to hub link, and carries the journey forward in hidden fields",
+              "strength": "full",
+              "notes": "red-probed: fails when the role's controls are swapped for the contact's"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET from a role handshake links Back to the journey return with no address and no landing",
+              "strength": "full",
+              "notes": "red-probed: fails when Back links to the address book"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "from a role handshake offers Back to the journey, Save and select, Save and return to address page and a Cancel and return to hub link",
+              "strength": "partial",
+              "notes": "run by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-036-B",
+          "name": "Save and select hands the new address back to the journey for selection",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST of Save and select returns to the journey with the new address id and the select landing, logs the hand-back once, and shows no address-book banner",
+              "strength": "full",
+              "notes": "red-probed: fails when the landing is dropped from the return URL"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
+              "test": "Save and select on the INS add page reached from the Consignor picker saves the address, selects it for the role and lands on Roles and addresses with the added banner",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-036-C",
+          "name": "Save and return to address page hands the new address back without selecting it",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST of Save and return to address page returns to the journey with the new address id and the return landing",
+              "strength": "full",
+              "notes": "red-probed: fails when the posted action is ignored"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
+              "test": "Save and return to address page on the INS add page reached from the Consignor picker lands on the picker with the added banner, the new address listed first and nothing selected",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-036-D",
+          "name": "Cancel and return to hub saves nothing",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
+              "test": "Cancel and return to hub on the INS add page reached from the Consignor picker lands on the Overview and saves no address",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-036-E",
+          "name": "The consignment contact's add page offers Back, Save and continue and Cancel and return to address page",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET from the consignment contact handshake offers Save and continue and a Cancel and return to address page button, and a Back link to the journey return with no address and no landing",
+              "strength": "full",
+              "notes": "red-probed: fails when the contact is not told apart from a role"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/journey-registry.test.js",
+              "test": "is true for the consignment contact handshake",
+              "strength": "full",
+              "notes": "red-probed: fails when the predicate never says true"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST of the consignment contact Save and continue, which carries no action, returns to the journey with the select landing",
+              "strength": "full",
+              "notes": "red-probed: fails when the save hands back the return landing instead of select"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "Cancel from the consignment contact handshake returns to the journey with no address and no landing, and logs the hand-back once",
+              "strength": "full",
+              "notes": "red-probed: fails when the contact cancel hands back with the cancel landing"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "from the consignment contact handshake offers Back to the journey, Save and continue and Cancel and return to address page",
+              "strength": "partial",
+              "notes": "run by the gate; not red-probed"
             }
           ]
         }

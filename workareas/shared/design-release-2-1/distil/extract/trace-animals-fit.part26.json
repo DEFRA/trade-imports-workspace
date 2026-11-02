@@ -1,0 +1,503 @@
+{
+  "source": "trace:animals-fit",
+  "structure": "Part 26, Declaration and confirmation. Read both spec files in full (confirmation.fit.spec.js: 'confirmation feature' 1 test, 'submitted confirmation feature' 4 tests; declaration.fit.spec.js: 'declaration feature' 4 tests, 'declaration submission' 1 test) and mined all 10 trace zips: confirmation 40737 (unsubmitted redirect), bc3a5 (render), 88be8 (dashboard link), 86dee (create new), 00349 (axe); declaration dbd39 (render), c39b7 (validation), 5267c (back link), 9c034 (axe), 49d7b (submission). The tim trace CLI could not open these zips ('The trace was created by a newer version of Playwright and is not supported by this version of the viewer'), so each zip, already unpacked in the part26 working folder (c1-c5, d1-d5, mapping confirmed from each trace's title), was read directly: the action list from test.trace and 1-trace.trace, rendered DOM from the frame-snapshot taken on arrival at each page, and the network log from 1-trace.network. Pages, in journey order: (1) Declaration, /live-animals/notifications/{ref}/declaration, reached by Continue from the check-answers page (notification-view) or directly by URL; one checkbox, a date line, Continue; error state on submitting unticked; renders identically for an incomplete notification (only origin answered) and a complete one. (2) Import notification submitted (confirmation), /live-animals/notifications/{ref}/confirmation, reached only after a successful declaration POST; panel with reference, four sections (Before the consignment is imported, Transporting the consignment, How to view or amend this notification, Getting help), no back link, no Draft strip. Conditional: confirmation redirects to the notification hub when the notification is not submitted; declaration redirects to confirmation once submitted. Also seen in passing: the dashboard card for the submitted notification (status Submitted) after Return to your dashboard, and the origin page of a fresh notification after Create a new notification. Every component on both pages is govuk-* except app-journey-strip (declaration) and app-link-button (confirmation).",
+  "claims": [
+    {
+      "id": "trace-animals-fit-p26-001",
+      "statement": "The declaration page is at /live-animals/notifications/{reference}/declaration and is reached by pressing Continue on the check-answers page (notification-view), which POSTs and redirects there.",
+      "kind": "behaviour",
+      "ref": "trace 49d7b (declaration.fit.spec.js:137) network: POST notification-view 302 -> /declaration; action call@2749",
+      "quote": "POST http://localhost:3000/live-animals/notifications/GBN-AG-26-VEQEJZ/notification-view 302 http://localhost:3000/live-animals/notifications/GBN-AG-26-VEQEJZ/declaration",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-002",
+      "statement": "The declaration page can be opened directly by URL for a draft notification that has only its origin answered, and it renders in full (same content as for a complete notification); no completeness guard stops the trader reaching it.",
+      "kind": "behaviour",
+      "ref": "trace dbd39 (declaration.fit.spec.js:36) action call@1857 goto declaration -> 200; snapshot identical to trace bc3a5 call@1551",
+      "quote": "GET http://localhost:3000/live-animals/notifications/GBN-AG-26-VTJZ1J/declaration 200",
+      "confidence": "verbatim",
+      "note": "Whether submitting the declaration for an incomplete notification is blocked is not shown: see the gap claim on that."
+    },
+    {
+      "id": "trace-animals-fit-p26-003",
+      "statement": "The declaration page's browser title is 'Declaration - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "trace dbd39 action call@1857 snapshot <title>",
+      "quote": "Declaration - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-004",
+      "statement": "The declaration page has a Back link to the check-answers page (/live-animals/notifications/{reference}/notification-view), and following it lands on notification-view.",
+      "kind": "behaviour",
+      "ref": "trace 5267c (declaration.fit.spec.js:90); trace dbd39 action call@1857 snapshot govuk-back-link",
+      "quote": "<A href=\"/live-animals/notifications/GBN-AG-26-8H7G55/notification-view\" class=\"govuk-back-link\">Back</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-005",
+      "statement": "Above the heading, the declaration page shows a journey strip with a blue 'Draft' tag and the notification reference in bold.",
+      "kind": "copy",
+      "ref": "trace dbd39 action call@1857 snapshot main .app-journey-strip",
+      "quote": "<STRONG class=\"govuk-tag govuk-tag--blue\">Draft</STRONG> <SPAN class=\"govuk-body govuk-!-font-weight-bold\">GBN-AG-26-8H7G55</SPAN>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-006",
+      "statement": "The declaration page heading (h1, govuk-heading-l) is 'Declaration'.",
+      "kind": "copy",
+      "ref": "trace dbd39 action call@1859",
+      "quote": "Declaration",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-007",
+      "statement": "The first declaration statement is an h2 'I am the contact for the authorities and located in the UK.'",
+      "kind": "copy",
+      "ref": "trace dbd39 action call@1861",
+      "quote": "I am the contact for the authorities and located in the UK.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-008",
+      "statement": "Below the first statement, a paragraph reads 'I am complying with the requirements of Regulation (EU) 2017/625 including on animal health and welfare.'",
+      "kind": "copy",
+      "ref": "trace dbd39 action call@1863",
+      "quote": "I am complying with the requirements of Regulation (EU) 2017/625 including on animal health and welfare.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-009",
+      "statement": "The second declaration statement is an h2 'I confirm I am responsible for this consignment.'",
+      "kind": "copy",
+      "ref": "trace dbd39 action call@1865",
+      "quote": "I confirm I am responsible for this consignment.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-010",
+      "statement": "Under the responsibility statement, a paragraph sets the period of responsibility.",
+      "kind": "copy",
+      "ref": "trace dbd39 action call@1867",
+      "quote": "I am responsible from the submission of this notification to when it enters Great Britain. And I am responsible until it has either:",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-011",
+      "statement": "The responsibility period ends at one of two bulleted events: 'cleared official checks at the border' or 'reached the Place of Destination as stated on the health certificate or notification'.",
+      "kind": "copy",
+      "ref": "trace dbd39 actions call@1869, call@1871 (govuk-list--bullet)",
+      "quote": "cleared official checks at the border | reached the Place of Destination as stated on the health certificate or notification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-012",
+      "statement": "The third declaration statement is an h2 'I confirm that I am accountable for:'",
+      "kind": "copy",
+      "ref": "trace dbd39 action call@1873",
+      "quote": "I confirm that I am accountable for:",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-013",
+      "statement": "The accountability statement is followed by four bullets covering payment for official controls, re-dispatch, quarantine or isolation costs, and destruction and disposal costs.",
+      "kind": "copy",
+      "ref": "trace dbd39 actions call@1875, call@1877, call@1879, call@1881",
+      "quote": "any payment for the official controls at the border | any arrangements to re-dispatch the consignment | any costs needed for quarantine or isolation of consignments | any costs needed for destruction and disposal of consignments, when instructed by the authorities",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-014",
+      "statement": "A paragraph states the trader is authorised to be accountable when raising notifications for a third party.",
+      "kind": "copy",
+      "ref": "trace dbd39 action call@1883",
+      "quote": "I am authorised as being accountable for these things if raising notifications on behalf of a third party.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-015",
+      "statement": "A final paragraph states the trader can legally act for a third party under the declaration's conditions.",
+      "kind": "copy",
+      "ref": "trace dbd39 action call@1885",
+      "quote": "I can legally act on behalf of a third party in relation to the conditions of this declaration.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-016",
+      "statement": "The declaration form has a single GOV.UK checkbox (name 'declaration', value 'confirmed', id 'declaration'), unticked on arrival, with no hint and no fieldset legend.",
+      "kind": "data",
+      "ref": "trace dbd39 action call@1857 snapshot form .govuk-checkboxes",
+      "quote": "<INPUT class=\"govuk-checkboxes__input\" id=\"declaration\" name=\"declaration\" type=\"checkbox\" value=\"confirmed\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-017",
+      "statement": "The declaration checkbox label reads 'I confirm that I have reviewed and comply with this declaration and that the information submitted in this notification is true and correct.'",
+      "kind": "copy",
+      "ref": "trace dbd39 action call@1887",
+      "quote": "I confirm that I have reviewed and comply with this declaration and that the information submitted in this notification is true and correct.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-018",
+      "statement": "Below the checkbox the page shows 'Date of declaration:' followed by today's date in long form (day, full month name, year); it is display text, not an input.",
+      "kind": "copy",
+      "ref": "trace dbd39 action call@1889 (text /^Date of declaration:/); snapshot call@1857",
+      "quote": "Date of declaration: 7 October 2026",
+      "confidence": "verbatim",
+      "note": "Traces recorded on 7 October 2026, so the date shown is the current date; the spec title says 'the current date'."
+    },
+    {
+      "id": "trace-animals-fit-p26-019",
+      "statement": "The declaration form's submit button is a primary GOV.UK button labelled 'Continue'.",
+      "kind": "copy",
+      "ref": "trace dbd39 action call@1891",
+      "quote": "Continue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-020",
+      "statement": "The declaration form posts back to its own URL with hidden fields crumb (CSRF token) and concurrencyToken, plus declaration=confirmed when ticked.",
+      "kind": "integration",
+      "ref": "trace 49d7b network POST /declaration postData",
+      "quote": "crumb=[REDACTED]&concurrencyToken=0&declaration=confirmed",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-021",
+      "statement": "Submitting the declaration without ticking the checkbox re-renders the page with HTTP 400 and does not submit the notification.",
+      "kind": "rule",
+      "ref": "trace c39b7 (declaration.fit.spec.js:69) network POST /declaration 400",
+      "quote": "POST http://localhost:3000/live-animals/notifications/GBN-AG-26-VTJZ1J/declaration 400",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-022",
+      "statement": "When the declaration checkbox is unticked on submit, the error summary 'There is a problem' lists 'Confirm that you have reviewed and comply with this declaration' as a link to #declaration.",
+      "kind": "rule",
+      "ref": "trace c39b7 action call@2555 snapshot .govuk-error-summary",
+      "quote": "Confirm that you have reviewed and comply with this declaration",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-023",
+      "statement": "The same message shows as an inline error above the checkbox (id declaration-error, prefixed by visually hidden 'Error:'), and the form group takes the error style.",
+      "kind": "rule",
+      "ref": "trace c39b7 action call@2555 snapshot .govuk-form-group--error",
+      "quote": "<SPAN class=\"govuk-visually-hidden\">Error:</SPAN> Confirm that you have reviewed and comply with this declaration",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-024",
+      "statement": "In the error state the browser title is prefixed 'Error: '.",
+      "kind": "copy",
+      "ref": "trace c39b7 action call@2555 snapshot <title>",
+      "quote": "Error: Declaration - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-025",
+      "statement": "Clicking the error summary link moves focus to the declaration checkbox, which stays unticked.",
+      "kind": "behaviour",
+      "ref": "trace c39b7 actions call@2559, call@2561, call@2563",
+      "quote": "internal:role=alert >> internal:role=link[name=\"Confirm that you have reviewed and comply with this declaration\"i]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-026",
+      "statement": "The error-state declaration page still shows the Back link, Draft strip, all statements and the date line.",
+      "kind": "behaviour",
+      "ref": "trace c39b7 action call@2555 snapshot",
+      "quote": "Date of declaration: 7 October 2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-027",
+      "statement": "Ticking the declaration and pressing Continue on a complete notification submits it and redirects (302) to /live-animals/notifications/{reference}/confirmation.",
+      "kind": "behaviour",
+      "ref": "trace 49d7b actions call@2753, call@2755, call@2757; network POST /declaration 302",
+      "quote": "POST http://localhost:3000/live-animals/notifications/GBN-AG-26-VEQEJZ/declaration 302 http://localhost:3000/live-animals/notifications/GBN-AG-26-VEQEJZ/confirmation",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-028",
+      "statement": "Once a notification is submitted, going back to its declaration URL redirects (302) to its confirmation page, so the declaration cannot be made again.",
+      "kind": "rule",
+      "ref": "trace 49d7b actions call@2759, call@2761; network GET /declaration 302",
+      "quote": "GET http://localhost:3000/live-animals/notifications/GBN-AG-26-VEQEJZ/declaration 302 http://localhost:3000/live-animals/notifications/GBN-AG-26-VEQEJZ/confirmation",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-029",
+      "statement": "Opening the confirmation URL for a notification that has not been submitted redirects (302) to that notification's hub (/live-animals/notifications/{reference}).",
+      "kind": "rule",
+      "ref": "trace 40737 (confirmation.fit.spec.js:89) network GET /confirmation 302",
+      "quote": "GET http://localhost:3000/live-animals/notifications/GBN-AG-26-VVG46Q/confirmation 302 http://localhost:3000/live-animals/notifications/GBN-AG-26-VVG46Q",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-030",
+      "statement": "The confirmation page's browser title is 'Import notification submitted - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "trace bc3a5 (confirmation.fit.spec.js:122) action call@1555 snapshot <title>",
+      "quote": "Import notification submitted - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-031",
+      "statement": "The confirmation page opens with a GOV.UK confirmation panel whose title (h1) is 'Import notification submitted'.",
+      "kind": "copy",
+      "ref": "trace bc3a5 action call@1557; snapshot .govuk-panel--confirmation",
+      "quote": "Import notification submitted",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-032",
+      "statement": "The panel body shows 'Your reference number' then, on a new line in bold, the notification reference (format GBN-AG-26-XXXXXX).",
+      "kind": "data",
+      "ref": "trace bc3a5 actions call@1559, call@1561; snapshot .govuk-panel__body",
+      "quote": "Your reference number<BR></BR><STRONG>GBN-AG-26-HN2H6H</STRONG>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-033",
+      "statement": "The confirmation page does not show a date of declaration.",
+      "kind": "rule",
+      "ref": "trace bc3a5 action call@1563 (text /date of declaration/i count 0)",
+      "quote": "internal:text=/date of declaration/i to.have.count 0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-034",
+      "statement": "The confirmation page has no Back link.",
+      "kind": "rule",
+      "ref": "trace bc3a5 action call@1603 (link 'Back' count 0); snapshot has no govuk-back-link",
+      "quote": "internal:role=link[name=\"Back\"s] to.have.count 0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-035",
+      "statement": "The confirmation page shows no Draft/status journey strip above the panel.",
+      "kind": "copy",
+      "ref": "trace bc3a5 action call@1555 snapshot main",
+      "quote": "<DIV class=\"govuk-grid-column-two-thirds\"> <DIV class=\"govuk-panel govuk-panel--confirmation\">",
+      "confidence": "inferred",
+      "note": "Inferred from absence: the snapshot's main starts directly with the panel, whereas the declaration page carries an app-journey-strip."
+    },
+    {
+      "id": "trace-animals-fit-p26-036",
+      "statement": "The first section after the panel is an h2 'Before the consignment is imported' with the lead-in 'You still need to:'.",
+      "kind": "copy",
+      "ref": "trace bc3a5 actions call@1565, call@1567",
+      "quote": "Before the consignment is imported | You still need to:",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-037",
+      "statement": "When the submitted notification has no documents uploaded, the outstanding-work list has one bullet: 'upload the health certificate and any other required documents'.",
+      "kind": "rule",
+      "ref": "trace bc3a5 action call@1569",
+      "quote": "upload the health certificate and any other required documents",
+      "confidence": "verbatim",
+      "note": "The journey in this trace uploads no documents; the spec comment says documents are optional at submission. Whether the list changes or disappears when documents are uploaded is not shown."
+    },
+    {
+      "id": "trace-animals-fit-p26-038",
+      "statement": "Documents are not required to submit: a notification with no documents uploaded was submitted successfully.",
+      "kind": "rule",
+      "ref": "trace bc3a5 actions call@1547-call@1555 (no upload action before submission)",
+      "quote": "upload the health certificate and any other required documents",
+      "confidence": "inferred",
+      "note": "Inferred from the action list (no upload step) plus a successful submit and the outstanding-documents bullet."
+    },
+    {
+      "id": "trace-animals-fit-p26-039",
+      "statement": "The second section is an h2 'Transporting the consignment' telling the trader to tell the transporter the consignment must go directly to the place of destination.",
+      "kind": "copy",
+      "ref": "trace bc3a5 actions call@1571, call@1573",
+      "quote": "Tell the transporter that this consignment must go directly to the place of destination on entry to Great Britain.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-040",
+      "statement": "The transporting section warns the animals may need inspecting and must then stay at the place of destination for one of two bulleted periods.",
+      "kind": "copy",
+      "ref": "trace bc3a5 actions call@1575, call@1577, call@1579, call@1581",
+      "quote": "The animals or consignment may need to be inspected. | If so, the animals must stay at the place of destination for either: | the time stated on the health certificate | 48 hours if no time is specified",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-041",
+      "statement": "The third section is an h2 'How to view or amend this notification' saying it can be viewed or amended from the dashboard and resubmitted.",
+      "kind": "copy",
+      "ref": "trace bc3a5 actions call@1583, call@1585",
+      "quote": "You can view or amend this notification from your dashboard and resubmit it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-042",
+      "statement": "The confirmation page has a 'Return to your dashboard' link to /live-animals; following it lands on the dashboard.",
+      "kind": "behaviour",
+      "ref": "trace 88be8 (confirmation.fit.spec.js:136) actions call@2185, call@2187; network GET /live-animals 200",
+      "quote": "<A class=\"govuk-link\" href=\"/live-animals\">Return to your dashboard</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-043",
+      "statement": "After submission the dashboard lists the notification as a summary card with a green 'Submitted' status tag and View, Amend, Copy as new and Delete actions.",
+      "kind": "behaviour",
+      "ref": "trace 88be8 action call@2187 snapshot dashboard .govuk-summary-card",
+      "quote": "<STRONG class=\"govuk-tag govuk-tag--green\">Submitted</STRONG>",
+      "confidence": "verbatim",
+      "note": "Seen in passing after the dashboard link; the dashboard itself belongs to another part."
+    },
+    {
+      "id": "trace-animals-fit-p26-044",
+      "statement": "The confirmation page has a 'Create a new notification' control, a submit button styled as a link (govuk-link app-link-button) in a form posting to /live-animals/notifications.",
+      "kind": "copy",
+      "ref": "trace bc3a5 action call@1589; snapshot form[action=\"/live-animals/notifications\"]",
+      "quote": "<BUTTON type=\"submit\" class=\"govuk-link app-link-button\">Create a new notification</BUTTON>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-045",
+      "statement": "Pressing 'Create a new notification' creates a fresh notification with a new reference and lands on its 'Origin of the import' page, without returning to the dashboard.",
+      "kind": "behaviour",
+      "ref": "trace 86dee (confirmation.fit.spec.js:149) network POST /live-animals/notifications 302 -> new reference /origin",
+      "quote": "POST http://localhost:3000/live-animals/notifications 302 http://localhost:3000/live-animals/notifications/GBN-AG-26-45BD2S/origin",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-046",
+      "statement": "'Link-styled button' (app-link-button) is a custom class outside govuk-frontend, used so a POST form can look like a link; a standard govuk-button--secondary or a GET link to a create route would replace it.",
+      "kind": "constraint",
+      "ref": "trace bc3a5 action call@1555 snapshot classes",
+      "quote": "govuk-link app-link-button",
+      "confidence": "inferred",
+      "note": "Every other class on the confirmation page is govuk-*."
+    },
+    {
+      "id": "trace-animals-fit-p26-047",
+      "statement": "The declaration page uses a custom app-journey-strip container (with govuk-tag and govuk-body inside) for the Draft tag and reference; everything else on the page is govuk-* (headings, body, bullet lists, checkboxes, button, back link, error summary, error message).",
+      "kind": "constraint",
+      "ref": "trace dbd39 action call@1857 snapshot classes",
+      "quote": "app-journey-strip govuk-!-margin-bottom-4",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-048",
+      "statement": "The fourth section is an h2 'Getting help', starting with an email address for help with live animal and germinal product import notifications.",
+      "kind": "copy",
+      "ref": "trace bc3a5 action call@1591; snapshot main",
+      "quote": "To get help with import notifications for live animals or germinal products, email importsriskmanagement@apha.gov.uk.",
+      "confidence": "verbatim",
+      "note": "The email paragraph is in the snapshot but not asserted by the test."
+    },
+    {
+      "id": "trace-animals-fit-p26-049",
+      "statement": "The help section gives APHA technical help contacts as bullets: telephone 0330 041 6999 and email APHAServiceDesk@apha.gov.uk.",
+      "kind": "copy",
+      "ref": "trace bc3a5 actions call@1593, call@1595; snapshot main",
+      "quote": "Contact the Animal and Plant Health Agency (APHA) if you need technical help with this service: | Telephone: 0330 041 6999 | Email: APHAServiceDesk@apha.gov.uk",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-050",
+      "statement": "The help section states opening hours.",
+      "kind": "copy",
+      "ref": "trace bc3a5 action call@1597",
+      "quote": "Monday to Friday, 8:30am to 5pm, except bank holidays",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-051",
+      "statement": "The help section links customs-declaration help to HMRC ('contact HMRC', gov.uk customs international trade and excise enquiries page).",
+      "kind": "copy",
+      "ref": "trace bc3a5 action call@1599; snapshot href",
+      "quote": "If you need help with your customs declaration, contact HMRC.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-052",
+      "statement": "The help section ends with a 'Find out about call charges' link to https://www.gov.uk/call-charges.",
+      "kind": "copy",
+      "ref": "trace bc3a5 action call@1601; snapshot href",
+      "quote": "Find out about call charges",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-053",
+      "statement": "On the confirmation page the service navigation marks Dashboard as the active item.",
+      "kind": "copy",
+      "ref": "trace bc3a5 action call@1555 snapshot .govuk-service-navigation__item--active",
+      "quote": "<STRONG class=\"govuk-service-navigation__active-fallback\">Dashboard</STRONG>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-054",
+      "statement": "The declaration page has no serious or critical axe violations against WCAG 2 A and AA.",
+      "kind": "non-functional",
+      "ref": "trace 9c034 (declaration.fit.spec.js:107) actions call@1939-call@1957; test passed",
+      "quote": "has no serious or critical axe violations",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-055",
+      "statement": "The confirmation page has no serious or critical axe violations against WCAG 2 A and AA.",
+      "kind": "non-functional",
+      "ref": "trace 00349 (confirmation.fit.spec.js:164); test passed",
+      "quote": "has no serious or critical axe violations",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p26-056",
+      "statement": "The declaration submit carries concurrencyToken=0, the same value the declaration page was rendered with, indicating an optimistic-concurrency check on submission.",
+      "kind": "rule",
+      "ref": "trace 49d7b network POST /declaration postData; trace dbd39 snapshot hidden input concurrencyToken",
+      "quote": "<INPUT type=\"hidden\" name=\"concurrencyToken\" value=\"0\">",
+      "confidence": "inferred",
+      "note": "No trace drives a stale-token conflict, so what the trader sees on a conflict is not shown."
+    },
+    {
+      "id": "trace-animals-fit-p26-057",
+      "statement": "No trace shows what happens when the declaration is ticked and submitted for an incomplete notification (one with unanswered required sections); it should either block submission or say what is missing.",
+      "kind": "rule",
+      "ref": "declaration.fit.spec.js 'declaration feature' tests (incomplete notification, never submitted ticked)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p26-058",
+      "statement": "No trace shows the confirmation page for a notification that had documents uploaded, so whether the 'You still need to:' list changes or the section disappears is unknown.",
+      "kind": "copy",
+      "ref": "confirmation.fit.spec.js 'submitted confirmation feature' (journey uploads no documents)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p26-059",
+      "statement": "The browser network log does not show the server-side call that records the submission (backend or downstream system); the submission integration is not observable from these traces.",
+      "kind": "integration",
+      "ref": "trace 49d7b 1-trace.network (only browser-to-frontend requests)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p26-060",
+      "statement": "No trace shows the declaration or confirmation behaviour when the save fails or the concurrency token is stale (error page or conflict message).",
+      "kind": "behaviour",
+      "ref": "declaration.fit.spec.js (no failure-path test)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p26-061",
+      "statement": "No trace shows the confirmation or declaration pages for an amended (resubmitted) notification, though the confirmation copy says notifications can be amended and resubmitted.",
+      "kind": "behaviour",
+      "ref": "confirmation.fit.spec.js / declaration.fit.spec.js (no amend path)",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

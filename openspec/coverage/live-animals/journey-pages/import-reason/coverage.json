@@ -134,7 +134,7 @@
     },
     {
       "id": "REQ-IMPORT-REASON-006",
-      "name": "An incompletely answered reveal is rejected on save and continue without closing it, keeping what was already answered",
+      "name": "An incompletely answered reveal is rejected on either save control without closing it, keeping what was already answered",
       "coverage": "full",
       "scenarios": [
         {
@@ -147,11 +147,11 @@
         },
         {
           "id": "SCN-IMPORT-REASON-006-B",
-          "name": "Save and return to overview saves a partly answered reveal and returns to Overview",
+          "name": "Save and return to overview refuses a partly answered reveal, keeping the reveal open",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/soft-save.spec.ts", "test": "main import reason: when a required answer is missing, saves, leaves the task not complete and keeps the answers", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should save a transit reason with its port and country left blank and go to the overview", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/soft-save.spec.ts", "test": "main import reason: when a required answer is missing, refuses the save, names each missing answer and keeps the answer given", "strength": "partial", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should refuse a transit reason with its port and country left blank, naming both, and save nothing", "strength": "full", "notes": "" }
           ]
         }
       ]
@@ -323,22 +323,24 @@
     },
     {
       "id": "REQ-IMPORT-REASON-013",
-      "name": "Save and return saves what was entered without the page's required-answer checks, but refuses an answer that breaks its own format",
+      "name": "Save and return makes the checks of Save and continue and clears the answers of a reason no longer chosen",
       "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-IMPORT-REASON-013-A",
-          "name": "Transit without a port of exit saves and keeps the country",
-          "coverage": "none",
-          "tests": [],
-          "notes": "The tests that prove this are only on an open Design Release 2.1 theme branch, not on main yet."
+          "name": "Transit without a port of exit is refused and keeps the country",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should refuse a transit reason with a destination country and no port of exit, naming the port and keeping the country", "strength": "full", "notes": "" }
+          ]
         },
         {
           "id": "SCN-IMPORT-REASON-013-B",
           "name": "Changing the reason clears the saved purpose",
-          "coverage": "none",
-          "tests": [],
-          "notes": "The tests that prove this are only on an open Design Release 2.1 theme branch, not on main yet."
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should clear the purpose saved for a reason no longer chosen when a transit reason with its answers is saved", "strength": "partial", "notes": "it reads the stored answers, not choosing Internal market again" }
+          ]
         },
         {
           "id": "SCN-IMPORT-REASON-013-D",

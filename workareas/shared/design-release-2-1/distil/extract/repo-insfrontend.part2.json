@@ -1,0 +1,900 @@
+{
+  "source": "repo:insfrontend",
+  "structure": "Part 2, Address book list, view and delete. Read in full: the list feature (list/list.controller.js, list/list.njk, view-model/list.js), the view feature (view/view.controller.js, view/view.njk), the delete feature (delete/delete.controller.js, delete/delete.njk), the shared helpers stored-address.js, address-id-params.js and success-banner.js, the client script src/client/javascripts/address-book-success-banner.js, the English and Welsh copy (copy/copy.en.js, copy/copy.cy.js; only the list, successBanner, view and delete keys are claimed here, plus the form.fields labels the view page reuses), the address book service (services/address-book/client.js, index.js, stub.js) and the fit specs list.fit.spec.js (6 tests), view.fit.spec.js (5 tests), delete.fit.spec.js (4 tests) with their helpers axe.js and seed-address.js. Shared paths.js and kit.js (base, requireOrganisationId, pageRoutes) and the shared recoverableError copy were read only where these pages call them. Pages covered: GET /address-book (search form, add button, empty state, no-match state, results label, table, pagination, success banner, recoverable error), GET /address-book/{id} (summary list, Edit and Delete buttons, Back link, not-found path), GET and POST /address-book/{id}/delete (confirmation, confirm, cancel, banner, redirect). Service: list, get and delete calls, organisation scoping and the in-memory stub. Every test in the three specs has a claim. The add and edit pages, the handshake and the country list loader belong to other parts.",
+  "claims": [
+    {
+      "id": "repo-insfrontend-p2-001",
+      "statement": "The address book list page is served by GET at /address-book.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:119; src/server/app/shared/paths.js:2",
+      "quote": "export const routes = kit.pageRoutes(addressBookPath(), { get })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-002",
+      "statement": "The list, view and delete pages all require the signed-in session to carry an organisation id; without one the request fails with 403 Forbidden 'Organisation could not be identified'.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:71; view/view.controller.js:51; delete/delete.controller.js:21,39; src/server/app/shared/kit.js:57-63",
+      "quote": "throw Boom.forbidden('Organisation could not be identified')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-003",
+      "statement": "The list page's page title and h1 heading (extra-large) are 'Address book'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/list/list.njk:20; list.controller.js:62; copy/copy.en.js:3",
+      "quote": "title: 'Address book',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-004",
+      "statement": "Under the heading the list page shows the intro 'Manage addresses used across import and export services.'",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/list/list.njk:22; copy/copy.en.js:4",
+      "quote": "intro: 'Manage addresses used across import and export services.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-005",
+      "statement": "The list page has a search form that submits by GET to /address-book, with a search-type text input named q labelled 'Search addresses', prefilled with the current search term.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/list/list.njk:24-35; copy/copy.en.js:6",
+      "quote": "<form method=\"get\" action=\"{{ listHref }}\" class=\"govuk-!-margin-bottom-6\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-006",
+      "statement": "The search input's hint 'Search by name, town or city, postcode or country' is passed inside the label object rather than as the input's hint, so the GOV.UK input macro most likely does not render it.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/list/list.njk:26-29; copy/copy.en.js:7",
+      "quote": "label: {\n        text: copy.list.search.label,\n        hint: copy.list.search.hint\n      },",
+      "confidence": "inferred",
+      "note": "govukInput takes hint as a sibling of label, not a label property; the hint copy exists but is probably invisible. Worth confirming in the rendered page."
+    },
+    {
+      "id": "repo-insfrontend-p2-007",
+      "statement": "The search form's submit button reads 'Search'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/list/list.njk:36-39; copy/copy.en.js:8",
+      "quote": "button: 'Search',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-008",
+      "statement": "The search term is trimmed, and a blank term is treated as no search at all.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:73-74,82",
+      "quote": "const q = request.query.q?.trim() ?? ''\n  const hasSearch = Boolean(q)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-009",
+      "statement": "The list passes a country code filter to the address book service: an explicit countryCode query parameter if given, otherwise a country code resolved from the search term against the country list, so searching by a country name filters by that country.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:78-83",
+      "quote": "const countryCode =\n      request.query.countryCode?.trim() ||\n      resolveCountryCodeFromSearchTerm(q, countries)",
+      "confidence": "verbatim",
+      "note": "resolveCountryCodeFromSearchTerm lives in address-countries.js, outside this part; its matching rule is not claimed here."
+    },
+    {
+      "id": "repo-insfrontend-p2-010",
+      "statement": "The list page always shows an 'Add a new address' button (a link styled as a button) to /address-book/add, whether the book is empty, searched or populated.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/list/list.njk:42-47; list.controller.js:66; copy/copy.en.js:11",
+      "quote": "add: 'Add a new address',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-011",
+      "statement": "The list reads the page number from the page query parameter; a missing, non-numeric or less-than-1 value means page 1.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:28-31",
+      "quote": "return Number.isNaN(page) || page < 1 ? 1 : page",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-012",
+      "statement": "When the organisation has no addresses and no search is active, the list shows 'You have no addresses yet.' in place of the table.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/list/list.njk:49-50; list.controller.js:96; copy/copy.en.js:12",
+      "quote": "empty: 'You have no addresses yet.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-013",
+      "statement": "When a search matches nothing, the list shows 'No addresses match \"<term>\".' and a 'Clear search' link back to /address-book.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/list/list.njk:51-55; list.controller.js:97; copy/copy.en.js:9,13",
+      "quote": "<p class=\"govuk-body\">{{ copy.list.noMatchPrefix }} \"{{ q }}\".</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-014",
+      "statement": "Above the table the list shows a results label 'Showing <from>-<to> of <total>' computed from the page, page size and total; no label is shown when there are no items.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/view-model/list.js:21-32; list.njk:57-61; copy/copy.en.js:14",
+      "quote": "results: (from, to, total) => `Showing ${from}-${to} of ${total}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-015",
+      "statement": "When a search returns results, a 'Clear search' link to /address-book is shown above the table.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/list/list.njk:63-67",
+      "quote": "<a class=\"govuk-link\" href=\"{{ listHref }}\" data-testid=\"address-book-clear-search\">{{ copy.list.search.clear }}</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-016",
+      "statement": "The address table has the column headings Name, Address and Country, and a fourth column whose heading 'Action' is visually hidden.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/list/list.njk:69-77; copy/copy.en.js:15-21",
+      "quote": "{ html: '<span class=\"govuk-visually-hidden\">' + copy.list.table.action + '</span>' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-017",
+      "statement": "Each table row's Name cell shows the address's name.",
+      "kind": "data",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:44",
+      "quote": "{ text: address.name },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-018",
+      "statement": "Each table row's Address cell is address line 1, town or city and postcode joined with ', ', leaving out blank parts; address line 2 and county are not shown in the list.",
+      "kind": "data",
+      "ref": "src/server/app/features/address-book/view-model/list.js:59-62",
+      "quote": "[address.addressLine1, address.townOrCity, address.postcode]\n    .filter(Boolean)\n    .join(', ')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-019",
+      "statement": "Each table row's Country cell shows the country name looked up from the address form's country list, falling back to the raw country code when the code is not in the list.",
+      "kind": "data",
+      "ref": "src/server/app/features/address-book/view-model/list.js:70; list.controller.js:50-51,85-88",
+      "quote": "countryName: countryNames[address.countryCode] ?? address.countryCode",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-020",
+      "statement": "Each table row ends with a 'View' link to /address-book/{id}, whose accessible name includes the address name in visually hidden text ('View <name>').",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:39-40; copy/copy.en.js:20",
+      "quote": "`<a class=\"govuk-link\" href=\"${addressPath(address.id)}\">${copy.list.table.view}<span class=\"govuk-visually-hidden\"> ${escapeHtml(address.name)}</span></a>`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-021",
+      "statement": "Pagination is shown only when there is more than one page; it has numbered page links with the current page marked, a Previous link except on the first page and a Next link except on the last.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/view-model/list.js:37-57; list.njk:79-81",
+      "quote": "if (totalPages <= 1) {\n    return null\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-022",
+      "statement": "Pagination links keep the current search term (q) and country code, and add page only for pages after the first.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/view-model/list.js:3-16,34-35",
+      "quote": "if (page && page > 1) {\n    params.set('page', String(page))\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-023",
+      "statement": "For the results label and pagination, the requested page is clamped between 1 and the total number of pages.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/view-model/list.js:18-19",
+      "quote": "Math.min(Math.max(page, 1), Math.max(totalPages, 1))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-024",
+      "statement": "The list's page size, total items and total pages come from the address book service's response, not from the frontend.",
+      "kind": "integration",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:53-58",
+      "quote": "page: response.page,\n  pageSize: response.pageSize,\n  totalItems: response.totalItems,\n  totalPages: response.totalPages",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-025",
+      "statement": "If loading the list fails unexpectedly, the page responds 500 and renders the address book page with the shared recoverable error banner ('There is a problem' / 'Sorry, there is a problem with the service. Try again in a few minutes.'), no table, no results label and no pagination, and logs 'Failed to load address book'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:100-116; src/server/app/shared/copy.en.js:33-36",
+      "quote": "logger.error({ err, orgId }, 'Failed to load address book')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-026",
+      "statement": "An HTTP error already raised as a Boom error while loading the list (such as forbidden) is rethrown rather than turned into the recoverable error page.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:101-103",
+      "quote": "if (err.isBoom) {\n      throw err\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-027",
+      "statement": "The list page renders in the wider 'display' content column rather than the default form column.",
+      "kind": "constraint",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:63; src/server/app/shared/kit.js:48-55",
+      "quote": "contentColumnClass: kit.surfaceClass('display'),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-028",
+      "statement": "After an add, edit or delete, the list page shows a GOV.UK success notification banner titled 'Success' (element id address-book-success-banner) carrying the message set by that action.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/list/list.njk:9-18; copy/copy.en.js:24",
+      "quote": "type: \"success\",\n      titleText: copy.successBanner.title,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-029",
+      "statement": "The success banner message is held in the session under addressBookSuccess and is shown once: reading it on the list page clears it.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/success-banner.js:1-6; list.controller.js:75",
+      "quote": "export const takeSuccessBanner = (request) => request.yar.get(SESSION_KEY, true)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-030",
+      "statement": "In the browser the success banner hides itself 3 seconds after the page loads.",
+      "kind": "behaviour",
+      "ref": "src/client/javascripts/address-book-success-banner.js:1-14; src/client/javascripts/application.js:18-20",
+      "quote": "export const SUCCESS_BANNER_DISMISS_MS = 3000",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-031",
+      "statement": "The success banner messages are '<name> added to your address book', '<name> updated in your address book' and '<name> deleted from your address book'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.en.js:23-28",
+      "quote": "added: (name) => `${name} added to your address book`,\n    updated: (name) => `${name} updated in your address book`,\n    deleted: (name) => `${name} deleted from your address book`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-032",
+      "statement": "The address details page is served by GET at /address-book/{id}.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/view/view.controller.js:75-79; src/server/app/shared/paths.js:5",
+      "quote": "export const addressRoutePath = () => '/address-book/{id}'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-033",
+      "statement": "On the details and delete routes, an id that is not a 24-character hexadecimal string returns 404 Page not found.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/address-id-params.js:6-23",
+      "quote": "const OBJECT_ID_PATTERN = /^[a-fA-F0-9]{24}$/",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-034",
+      "statement": "The id validation declares the message 'Enter a valid address id', but its fail action always throws 404, so the message is never shown to a user.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/address-id-params.js:9-12,19-21",
+      "quote": "'string.pattern.base': 'Enter a valid address id',",
+      "confidence": "inferred",
+      "note": "Inferred from failAction throwing Boom.notFound() unconditionally."
+    },
+    {
+      "id": "repo-insfrontend-p2-035",
+      "statement": "An address the service returns marked as deleted is treated as not found: the details and delete pages respond 404.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/stored-address.js:6-12",
+      "quote": "if (address.deleted) {\n    throw Boom.notFound()\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-036",
+      "statement": "When the address book service answers 404 for an address (unknown id, or one belonging to another organisation), the details and delete pages respond 404.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/stored-address.js:14-20; view/view.controller.js:68-72",
+      "quote": "if (err.status === HTTP_STATUS_NOT_FOUND) {\n    return Boom.notFound()\n  }",
+      "confidence": "verbatim",
+      "note": "That another organisation's address comes back 404 depends on the address book API scoping by the organisation in the path; the frontend just maps 404."
+    },
+    {
+      "id": "repo-insfrontend-p2-037",
+      "statement": "Any other failure loading the details page is logged as 'Failed to load address' and responds 500.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/view/view.controller.js:68-72; stored-address.js:21-22",
+      "quote": "logger.error({ err, orgId, id }, 'Failed to load address')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-038",
+      "statement": "The address details page's page title and h1 heading (large) are the address's name.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/view/view.controller.js:58,60; view.njk:6",
+      "quote": "heading: address.name,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-039",
+      "statement": "The address details page has a Back link to /address-book.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/view/view.controller.js:58",
+      "quote": "...kit.base(address.name, { backLink: addressBookPath() }),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-040",
+      "statement": "The address details page shows a summary list with nine rows in this order: Name or organisation name, Address line 1, Address line 2 (optional), Town or city, County, Postcode or Zip code, Country, Email address, Phone number.",
+      "kind": "data",
+      "ref": "src/server/app/features/address-book/view/view.controller.js:20-45",
+      "quote": "export const buildRows = (address, countryName) => [",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-041",
+      "statement": "The first details row is labelled 'Name or organisation name' and shows the address's name.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/view/view.controller.js:21; copy/copy.en.js:33",
+      "quote": "name: 'Name or organisation name',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-042",
+      "statement": "The details row 'Address line 1' shows address line 1.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/view/view.controller.js:22-25; copy/copy.en.js:34",
+      "quote": "addressLine1: 'Address line 1',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-043",
+      "statement": "The details row for address line 2 reuses the form label 'Address line 2 (optional)', including '(optional)', on a read-only page.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/view/view.controller.js:26-29; copy/copy.en.js:35",
+      "quote": "addressLine2: 'Address line 2 (optional)',",
+      "confidence": "verbatim",
+      "note": "County uses its own view label without '(optional)' (countyRowLabel); address line 2 does not."
+    },
+    {
+      "id": "repo-insfrontend-p2-044",
+      "statement": "The details row 'Town or city' shows the town or city.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/view/view.controller.js:30-33; copy/copy.en.js:36",
+      "quote": "townOrCity: 'Town or city',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-045",
+      "statement": "The details row for county is labelled 'County' (a view-only label, without the form's '(optional)').",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/view/view.controller.js:34; copy/copy.en.js:60",
+      "quote": "countyRowLabel: 'County'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-046",
+      "statement": "The details row 'Postcode or Zip code' shows the postcode.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/view/view.controller.js:35-38; copy/copy.en.js:38",
+      "quote": "postcode: 'Postcode or Zip code',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-047",
+      "statement": "The details row 'Country' shows the country's name from the country list, falling back to the country code.",
+      "kind": "data",
+      "ref": "src/server/app/features/address-book/view/view.controller.js:39-42,47-48",
+      "quote": "value: { text: countryName ?? address.countryCode }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-048",
+      "statement": "The details row 'Email address' shows the email address, and the row 'Phone number' shows the phone number; email comes before phone.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/view/view.controller.js:43-44; copy/copy.en.js:40-41",
+      "quote": "{ key: { text: copy.form.fields.email }, value: { text: address.email } },\n  { key: { text: copy.form.fields.phone }, value: { text: address.phone } }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-049",
+      "statement": "Optional fields left blank (address line 2, county) still appear as rows on the details page with an empty value.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/view.fit.spec.js:45-55; view/view.controller.js:20-45",
+      "quote": "'1 Stub Way',\n      '',\n      'Stubton',\n      '',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-050",
+      "statement": "The details page has no per-row Change links; editing is one 'Edit' button for the whole address.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/view/view.controller.js:20-45; view.njk:8-22",
+      "quote": "{{ govukSummaryList({\n    rows: summaryRows\n  }) }}",
+      "confidence": "inferred",
+      "note": "Inferred from the summary rows carrying only key and value, with no actions."
+    },
+    {
+      "id": "repo-insfrontend-p2-051",
+      "statement": "The details page has an 'Edit' button (a link styled as a button) to /address-book/{id}/edit.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/view/view.njk:13-16; view.controller.js:61; copy/copy.en.js:58",
+      "quote": "edit: 'Edit',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-052",
+      "statement": "The details page has a red warning-style 'Delete' button (a link styled as a button) to /address-book/{id}/delete.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/view/view.njk:17-21; view.controller.js:62; copy/copy.en.js:59",
+      "quote": "text: copy.view.delete,\n      href: deleteHref,\n      classes: \"govuk-button--warning\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-053",
+      "statement": "The delete confirmation page is served by GET and POST at /address-book/{id}/delete.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/delete/delete.controller.js:57-61; src/server/app/shared/paths.js:9",
+      "quote": "export const addressDeleteRoutePath = () => `${addressRoutePath()}/delete`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-054",
+      "statement": "The delete confirmation page's page title and h1 heading (large) are 'Delete address'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/delete/delete.njk:5; delete.controller.js:27; copy/copy.en.js:63",
+      "quote": "title: 'Delete address',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-055",
+      "statement": "The delete confirmation asks 'Are you sure you want to delete <name> from your address book?', with the address name in bold.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/delete/delete.njk:7-9; copy/copy.en.js:64-65",
+      "quote": "{{ copy.delete.confirmPrefix }} <strong>{{ addressName }}</strong> {{ copy.delete.confirmSuffix }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-056",
+      "statement": "The delete confirmation shows only the address's name, not its other details.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/delete/delete.controller.js:26-30",
+      "quote": "addressName: address.name",
+      "confidence": "inferred",
+      "note": "Inferred from the view model passing only addressName."
+    },
+    {
+      "id": "repo-insfrontend-p2-057",
+      "statement": "The delete confirmation page has a Back link to the address details page, /address-book/{id}.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/delete/delete.controller.js:27",
+      "quote": "...kit.base(copy.delete.title, { backLink: addressPath(id) }),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-058",
+      "statement": "The delete confirmation is a POST form carrying a CSRF crumb token.",
+      "kind": "constraint",
+      "ref": "src/server/app/features/address-book/delete/delete.njk:11-12",
+      "quote": "<input type=\"hidden\" name=\"crumb\" value=\"{{ crumb }}\" />",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-059",
+      "statement": "The delete confirmation's primary button is a red warning-style 'Yes, delete this address'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/delete/delete.njk:14-17; copy/copy.en.js:66",
+      "quote": "confirm: 'Yes, delete this address',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-060",
+      "statement": "The delete confirmation has a secondary 'Cancel' button that submits cancel=true; it redirects to the address details page and deletes nothing.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/delete/delete.njk:18-23; delete.controller.js:41-43; copy/copy.en.js:67",
+      "quote": "if (request.payload?.cancel) {\n    return h.redirect(addressPath(id))\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-061",
+      "statement": "Confirming the delete re-loads the address (404 if it is now missing or marked deleted), deletes it through the address book service, sets the success banner '<name> deleted from your address book' and redirects to /address-book.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/delete/delete.controller.js:45-49",
+      "quote": "await deleteAddress(orgId, id)\n    setSuccessBanner(request, copy.successBanner.deleted(address.name))\n    return h.redirect(addressBookPath())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-062",
+      "statement": "Unexpected failures on the delete page are logged ('Failed to load address for delete' on GET, 'Failed to delete address' on POST) and respond 500; a 404 from the service responds 404.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/delete/delete.controller.js:31-35,50-54",
+      "quote": "logger.error({ err, orgId, id }, 'Failed to delete address')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-063",
+      "statement": "The address book service is chosen per call: the in-memory stub when the app runs in stub mode, otherwise the HTTP client.",
+      "kind": "integration",
+      "ref": "src/server/app/services/address-book/index.js:6",
+      "quote": "const addressBook = () => (isStubMode() ? stub : client)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-064",
+      "statement": "The client calls the address book API at <tradeImportsAddressBookApi.baseUrl>/organisation/{orgId}/addresses, adding /{addressId} for a single address, with both ids URL-encoded.",
+      "kind": "integration",
+      "ref": "src/server/app/services/address-book/client.js:9,12-20",
+      "quote": "const base = `${addressBookUrl}/organisation/${encodeURIComponent(orgId)}/addresses`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-065",
+      "statement": "Every client call sends a Trade-Imports-Organisation-Id header carrying the signed-in organisation id, a JSON Content-Type and the tracing header with the current trace id.",
+      "kind": "integration",
+      "ref": "src/server/app/services/address-book/client.js:7,23-27",
+      "quote": "[ORGANISATION_ID_HEADER]: orgId,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-066",
+      "statement": "The code records that the address book API relies on the organisation header alone to authorise a request, with no further authentication, so the header must come only from the authenticated session and match the organisation in the path (ruling cv-010).",
+      "kind": "constraint",
+      "ref": "src/server/app/services/address-book/client.js:22",
+      "quote": "// The organisation header is the authorisation — the address book trusts it with no further authentication (see its IdentityHeaderFilter). It must come only from the authenticated session, and must match the orgId in the path (cv-010).",
+      "confidence": "verbatim",
+      "note": "Security-relevant: the service-to-service trust boundary depends on this frontend. Stated in general terms only."
+    },
+    {
+      "id": "repo-insfrontend-p2-067",
+      "statement": "The client refuses to call the address book when there is no organisation id, failing before any request is sent.",
+      "kind": "rule",
+      "ref": "src/server/app/services/address-book/client.js:13-17",
+      "quote": "'Cannot reach the address book without an organisation: the signed-in session carries none'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-068",
+      "statement": "Listing addresses sends GET to the organisation's addresses with page always set and q and countryCode only when present.",
+      "kind": "integration",
+      "ref": "src/server/app/services/address-book/client.js:45-65",
+      "quote": "url.searchParams.set('page', String(page))\n  if (q) {\n    url.searchParams.set('q', q)\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-069",
+      "statement": "The list response is a page object with items, page, pageSize, totalItems and totalPages.",
+      "kind": "data",
+      "ref": "src/server/app/features/address-book/list/list.controller.js:53-58,86; src/server/app/services/address-book/stub.js:55-61",
+      "quote": "items: all.slice(from, from + PAGE_SIZE),\n    page,\n    pageSize: PAGE_SIZE,\n    totalItems,\n    totalPages",
+      "confidence": "inferred",
+      "note": "Inferred from what the controller reads and the stub returns; the client returns the API JSON unchanged."
+    },
+    {
+      "id": "repo-insfrontend-p2-070",
+      "statement": "A stored address carries id, name, addressLine1, addressLine2, townOrCity, county, postcode, countryCode, email, phone and a deleted flag.",
+      "kind": "data",
+      "ref": "src/server/app/services/address-book/stub.js:13-25; src/server/app/features/address-book/stored-address.js:8",
+      "quote": "id: String(index).padStart(OBJECT_ID_LENGTH, '0'),\n  name: `Stub Farm ${index}`,",
+      "confidence": "inferred",
+      "note": "Field set read from the stub's seed record and the deleted check; the real API's record shape is not in this repo."
+    },
+    {
+      "id": "repo-insfrontend-p2-071",
+      "statement": "Getting one address sends GET to /organisation/{orgId}/addresses/{id} and returns the address JSON.",
+      "kind": "integration",
+      "ref": "src/server/app/services/address-book/client.js:78-86",
+      "quote": "export const getAddress = async (orgId, id) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-072",
+      "statement": "Deleting an address sends DELETE to /organisation/{orgId}/addresses/{id} and reads no response body.",
+      "kind": "integration",
+      "ref": "src/server/app/services/address-book/client.js:99-106",
+      "quote": "method: 'DELETE',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-073",
+      "statement": "A non-success response from list, get or delete is raised as an error carrying its status, which the pages map to 404 or 500.",
+      "kind": "integration",
+      "ref": "src/server/app/services/address-book/client.js:63,84,105",
+      "quote": "await throwOnError(response)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-074",
+      "statement": "The API may return an address marked deleted rather than 404 for a removed address, implying a soft delete on the address book side.",
+      "kind": "integration",
+      "ref": "src/server/app/features/address-book/stored-address.js:8",
+      "quote": "if (address.deleted) {",
+      "confidence": "inferred",
+      "note": "Inferred from the frontend guarding a deleted flag on a fetched address; the stub hard-deletes instead."
+    },
+    {
+      "id": "repo-insfrontend-p2-075",
+      "statement": "The stub keeps addresses in an in-memory store per organisation, seeded the first time that organisation is used and lost when the process restarts.",
+      "kind": "behaviour",
+      "ref": "src/server/app/services/address-book/stub.js:8,39-44",
+      "quote": "const store = new Map()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-076",
+      "statement": "The stub seeds no addresses for an organisation id ending '-empty', 30 for one ending '-paginated', and one ('Stub Farm 1') for any other.",
+      "kind": "behaviour",
+      "ref": "src/server/app/services/address-book/stub.js:4,27-37",
+      "quote": "if (orgId.endsWith('-empty')) {\n    return []\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-077",
+      "statement": "A stub seed address N is named 'Stub Farm N', at 'N Stub Way', Stubton, ST1 1UB, GB, email stub-farm-N@example.com, phone 01234567890, with blank address line 2 and county, and an id of N zero-padded to 24 characters.",
+      "kind": "data",
+      "ref": "src/server/app/services/address-book/stub.js:13-25",
+      "quote": "addressLine1: `${index} Stub Way`,\n  addressLine2: '',\n  townOrCity: 'Stubton',\n  county: '',\n  postcode: 'ST1 1UB',\n  countryCode: 'GB',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-078",
+      "statement": "The stub pages its list 25 to a page and always reports at least one page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/services/address-book/stub.js:3,49-62",
+      "quote": "const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-079",
+      "statement": "The stub ignores the search term and country code, so searching in stub mode returns the unfiltered list.",
+      "kind": "behaviour",
+      "ref": "src/server/app/services/address-book/stub.js:49",
+      "quote": "export const listAddresses = async (orgId, { page = 1 } = {}) => {",
+      "confidence": "inferred",
+      "note": "Inferred from the stub destructuring only page."
+    },
+    {
+      "id": "repo-insfrontend-p2-080",
+      "statement": "The stub answers 404 for an unknown address id on get.",
+      "kind": "behaviour",
+      "ref": "src/server/app/services/address-book/stub.js:46-47,70-76",
+      "quote": "Object.assign(new Error('Not found'), { status: HTTP_STATUS_NOT_FOUND })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-081",
+      "statement": "The stub's delete removes the address from the store outright, and does nothing for an unknown id.",
+      "kind": "behaviour",
+      "ref": "src/server/app/services/address-book/stub.js:88-94",
+      "quote": "if (index !== -1) {\n    all.splice(index, 1)\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-082",
+      "statement": "Fit test: after sign-in, Dashboard and Address book links are visible, and the Address book link goes to /address-book with the heading 'Address book'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:13 'Dashboard and Address book links are visible and navigate correctly'",
+      "quote": "test('Dashboard and Address book links are visible and navigate correctly'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-083",
+      "statement": "Fit test: the list shows a table with Name, Address and Country columns, a row 'Stub Farm 1' / '1 Stub Way, Stubton, ST1 1UB' / 'United Kingdom', and the 'Add a new address' button.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:32 'renders addresses in a table with Name, Address and Country columns'",
+      "quote": "test('renders addresses in a table with Name, Address and Country columns'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-084",
+      "statement": "Fit test: clicking 'Add a new address' goes to /address-book/add with the heading 'Add address details'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:65 'clicking Add a new address navigates to the add form'",
+      "quote": "test('clicking Add a new address navigates to the add form'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-085",
+      "statement": "Fit test: the address book list has no serious or critical axe violations.",
+      "kind": "non-functional",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:79 'has no serious or critical axe violations'",
+      "quote": "await expectNoSeriousOrCriticalViolations(page, 'Address book list')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-086",
+      "statement": "Fit test: with 30 addresses the list shows 'Showing 1-25 of 30', and the 'Page 2' link goes to page=2 showing 'Showing 26-30 of 30'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:86 'paginates when there are more than 25 addresses'",
+      "quote": "test('paginates when there are more than 25 addresses'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-087",
+      "statement": "Fit test: an organisation with no addresses sees 'You have no addresses yet.' and the 'Add a new address' button.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js:100 'shows an empty-state message and an option to add one'",
+      "quote": "test('shows an empty-state message and an option to add one'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-088",
+      "statement": "Fit test: clicking 'View Stub Farm 1' in the list opens /address-book/000000000000000000000001 with the h1 'Stub Farm 1'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/view.fit.spec.js:13 'clicking View on a row opens that address details page'",
+      "quote": "test('clicking View on a row opens that address details page'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-089",
+      "statement": "Fit test: the details page lists the nine Standard Address Block labels in order with the seed address's values, blanks included.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/view.fit.spec.js:29 'lists every Standard Address Block field against its label'",
+      "quote": "test('lists every Standard Address Block field against its label'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-090",
+      "statement": "Fit test: the details page offers Edit (href /address-book/{id}/edit) and Delete (href /address-book/{id}/delete), both exposed as buttons in the accessibility tree.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/view.fit.spec.js:58 'offers Edit and Delete for the address being viewed'",
+      "quote": "test('offers Edit and Delete for the address being viewed'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-091",
+      "statement": "Fit test: Back on the details page returns to /address-book with the h1 'Address book'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/view.fit.spec.js:80 'Back returns to the address book'",
+      "quote": "test('Back returns to the address book'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-092",
+      "statement": "Fit test: the address details page has no serious or critical axe violations.",
+      "kind": "non-functional",
+      "ref": "src/server/app/features/address-book/fit/view.fit.spec.js:91 'has no serious or critical axe violations'",
+      "quote": "await expectNoSeriousOrCriticalViolations(page, 'Address details')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-093",
+      "statement": "Fit test: the delete page has the h1 'Delete address', asks 'Are you sure you want to delete Stub Farm 1 from your address book?', and its Back link points to /address-book/{id}.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/delete.fit.spec.js:15 'asks for confirmation and names the address being deleted'",
+      "quote": "test('asks for confirmation and names the address being deleted'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-094",
+      "statement": "Fit test: Cancel on the delete page returns to the address details page, and the address is still listed in the address book.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/delete.fit.spec.js:33 'Cancel returns to the address details with nothing deleted'",
+      "quote": "test('Cancel returns to the address details with nothing deleted'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-095",
+      "statement": "Fit test: confirming the delete lands on /address-book showing 'Stub Farm 1 deleted from your address book', with no View link for it and the empty state 'You have no addresses yet.'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/delete.fit.spec.js:53 'confirming removes the address and confirms it on the address book'",
+      "quote": "test('confirming removes the address and confirms it on the address book'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-096",
+      "statement": "Fit test: the delete confirmation page has no serious or critical axe violations.",
+      "kind": "non-functional",
+      "ref": "src/server/app/features/address-book/fit/delete.fit.spec.js:75 'has no serious or critical axe violations'",
+      "quote": "await expectNoSeriousOrCriticalViolations(page, 'Delete address')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-097",
+      "statement": "The fit accessibility checks run axe against WCAG 2.0 A/AA, 2.1 A/AA and 2.2 AA and fail only on serious or critical violations.",
+      "kind": "non-functional",
+      "ref": "src/server/app/features/address-book/fit/axe.js:4-6",
+      "quote": "const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']\n\nconst BLOCKING_IMPACTS = ['serious', 'critical']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-098",
+      "statement": "The Welsh address book copy is a machine draft that no translator has reviewed, and must not ship to users without Welsh Language Standards sign-off.",
+      "kind": "constraint",
+      "ref": "src/server/app/features/address-book/copy/copy.cy.js:1",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-099",
+      "statement": "Welsh list page title and intro: 'Llyfr cyfeiriadau' and 'Rheoli cyfeiriadau a ddefnyddir ar draws gwasanaethau mewnforio ac allforio.'",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.cy.js:4-6",
+      "quote": "title: 'Llyfr cyfeiriadau',\n    intro:\n      'Rheoli cyfeiriadau a ddefnyddir ar draws gwasanaethau mewnforio ac allforio.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-100",
+      "statement": "Welsh search copy: label 'Chwilio cyfeiriadau', hint 'Chwilio yn ôl enw, tref neu ddinas, cod post neu wlad', button 'Chwilio', clear 'Clirio’r chwiliad'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.cy.js:7-12",
+      "quote": "label: 'Chwilio cyfeiriadau',\n      hint: 'Chwilio yn ôl enw, tref neu ddinas, cod post neu wlad',\n      button: 'Chwilio',\n      clear: 'Clirio’r chwiliad'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-101",
+      "statement": "Welsh list states: add 'Ychwanegu cyfeiriad newydd', empty 'Nid oes gennych unrhyw gyfeiriadau eto.', no match 'Nid oes unrhyw gyfeiriadau yn cyfateb i', results 'Yn dangos <from>-<to> o <total>'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.cy.js:13-16",
+      "quote": "add: 'Ychwanegu cyfeiriad newydd',\n    empty: 'Nid oes gennych unrhyw gyfeiriadau eto.',\n    noMatchPrefix: 'Nid oes unrhyw gyfeiriadau yn cyfateb i',\n    results: (from, to, total) => `Yn dangos ${from}-${to} o ${total}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-102",
+      "statement": "Welsh table headings: 'Enw', 'Cyfeiriad', 'Gwlad', hidden action 'Cam gweithredu', link 'Gweld'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.cy.js:17-23",
+      "quote": "name: 'Enw',\n      address: 'Cyfeiriad',\n      country: 'Gwlad',\n      action: 'Cam gweithredu',\n      view: 'Gweld'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-103",
+      "statement": "Welsh success banner: title 'Llwyddiant', with added, updated and deleted messages.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.cy.js:25-30",
+      "quote": "title: 'Llwyddiant',\n    added: (name) => `${name} wedi’i ychwanegu at eich llyfr cyfeiriadau`,\n    updated: (name) => `${name} wedi’i ddiweddaru yn eich llyfr cyfeiriadau`,\n    deleted: (name) => `${name} wedi’i ddileu o’ch llyfr cyfeiriadau`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-104",
+      "statement": "Welsh details page actions: 'Golygu' (Edit), 'Dileu' (Delete) and the county row label 'Sir'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.cy.js:59-63",
+      "quote": "edit: 'Golygu',\n    delete: 'Dileu',\n    countyRowLabel: 'Sir'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-105",
+      "statement": "Welsh delete confirmation: title 'Dileu cyfeiriad', question 'Ydych chi’n siŵr eich bod am ddileu <name> o’ch llyfr cyfeiriadau?', confirm 'Ie, dileu’r cyfeiriad hwn', cancel 'Canslo'.",
+      "kind": "copy",
+      "ref": "src/server/app/features/address-book/copy/copy.cy.js:64-70",
+      "quote": "title: 'Dileu cyfeiriad',\n    confirmPrefix: 'Ydych chi’n siŵr eich bod am ddileu',\n    confirmSuffix: 'o’ch llyfr cyfeiriadau?',\n    confirm: 'Ie, dileu’r cyfeiriad hwn',\n    cancel: 'Canslo'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-insfrontend-p2-106",
+      "statement": "No fit test covers searching the address book, the no-match state or the Clear search link.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js (all 6 tests)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The stub ignores q and countryCode (p2-079), so search cannot be proven in stub-mode fit tests as written."
+    },
+    {
+      "id": "repo-insfrontend-p2-107",
+      "statement": "No fit test covers the 404 path for an unknown or malformed address id on the details or delete pages.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/view.fit.spec.js; delete.fit.spec.js",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-insfrontend-p2-108",
+      "statement": "No fit test covers the list's recoverable error page when the address book service fails.",
+      "kind": "behaviour",
+      "ref": "src/server/app/features/address-book/fit/list.fit.spec.js",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-insfrontend-p2-109",
+      "statement": "Nothing in this slice says what the delete page or the details page should do when an address is used by an in-progress notification; delete proceeds unconditionally.",
+      "kind": "rule",
+      "ref": "src/server/app/features/address-book/delete/delete.controller.js:38-55",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-insfrontend-p2-110",
+      "statement": "The success banner auto-hides after 3 seconds with no setting to keep it, and no fit test checks the hiding.",
+      "kind": "non-functional",
+      "ref": "src/client/javascripts/address-book-success-banner.js:1-14",
+      "quote": "",
+      "confidence": "gap",
+      "note": "A success banner that disappears on a timer may not meet WCAG 2.2.1 Timing Adjustable; the slice records no ruling on it."
+    }
+  ]
+}

@@ -1,0 +1,1688 @@
+{
+  "source": "repo:tests",
+  "structure": "Part 3, Documents, lifecycle and persistence. Read in full: 10 feature/page specs (documents-refresh-no-js 1 test, documents-reject 1, documents-limits 2, documents-scan-lifecycle 2, promoted-documents 2, promoted-lifecycle 2, cancel-amend-ui 4, amend-resubmit 1, notification-delete 2, pages/notification-view-states 11), the journeys README and 7 journey specs (promoted-notification 1, dynamics/notification-events 1, dynamics/notification-data 1, persistence/api-seed-parity 1, persistence-notification 2, persistence-accompanying-document 1) - 36 tests in all; the page objects for Upload documents, Review your notification (notification view), Cancel this amendment? and Declaration; the notification-actions and seeded-journey flows, the seed-context fixture and the seeded-journey answer fixture; the DLQ event fixture; the Mongo models for the notification and accompanying_documents collections and the outbox event (GBN-AG payload); the backend notification API and fulfilments wire models; the PIMS Dynamics importer-notification row model; the frontend-form, REST, notification API, animals Dynamics and Dataverse HTTP clients, the Mongo and SQS clients; and the synthetic-file, EICAR and scan-status utilities. resources/file-upload/constants.ts and paths.ts were also read because the document specs take their limits and messages from them. Covered: the Upload documents page and its scan states, no-JS refresh, the 15-document and 10MB limits and their error copy, file-type and virus rejects, download headers and removal; the notification lifecycle (DRAFT, SUBMITTED, AMEND, DELETED) through the backend API and the UI view states, amend and resubmit, cancel amendment with its confirmation page and banner, delete with its confirmation page, copy as new, confirmation page; and what is stored in Mongo and sent to PIMS Dynamics, plus the outbox, API and Dynamics field catalogues. Claims run spec by spec, then the support models.",
+  "claims": [
+    {
+      "id": "repo-tests-p3-001",
+      "statement": "The accompanying documents page has the level-1 heading 'Upload documents'.",
+      "kind": "copy",
+      "ref": "page-objects/animals/accompanying-documents-page.ts:10",
+      "quote": "return this.page.getByRole('heading', { level: 1, name: 'Upload documents' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-002",
+      "statement": "The accompanying documents page is served at the notification's 'accompanying-documents' path.",
+      "kind": "data",
+      "ref": "page-objects/animals/accompanying-documents-page.ts:6",
+      "quote": "super(page, 'accompanying-documents');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-003",
+      "statement": "A trader reaches the Upload documents page from the 'Upload documents' task on the overview (task list).",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/documents-refresh-no-js.spec.ts:22",
+      "quote": "await animalsPages.overview.task('Upload documents').click();\n    await expect(animalsPages.accompanyingDocuments.heading).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-004",
+      "statement": "The Upload documents page has a field labelled 'Document reference'.",
+      "kind": "data",
+      "ref": "page-objects/animals/accompanying-documents-page.ts:14",
+      "quote": "return this.page.getByLabel('Document reference');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-005",
+      "statement": "The Upload documents page has a select labelled 'Document type'; the suite picks the value 'ITAHC' by default.",
+      "kind": "data",
+      "ref": "page-objects/animals/accompanying-documents-page.ts:18,52-54",
+      "quote": "return this.page.getByLabel('Document type');\n...\nasync fillDocument(reference: string, issueDate: string, filePath: string, documentType: string = 'ITAHC')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-006",
+      "statement": "The trader picks the document type from a select on the upload page itself.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-accompanying-document.spec.ts:14",
+      "quote": "The trader picks the document type from the select on the upload page",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-007",
+      "statement": "The date of issue is entered in one input named 'accompanyingDocumentDateOfIssue' as a dd/mm/yyyy string (the suite fills '03/01/2026'), so it is one text field rather than separate day, month and year boxes.",
+      "kind": "data",
+      "ref": "page-objects/animals/accompanying-documents-page.ts:55; tests/animals/e2e/features/documents-limits.spec.ts:8",
+      "quote": "await this.page.locator('input[name=\"accompanyingDocumentDateOfIssue\"]').fill(issueDate);",
+      "confidence": "inferred",
+      "note": "Inferred from one fill() of a whole date string; the field's label is not asserted."
+    },
+    {
+      "id": "repo-tests-p3-008",
+      "statement": "With JavaScript the file upload is enhanced: the file input is hidden inside a drop zone with a button in front of it carrying the field's id, and the field label names that button.",
+      "kind": "behaviour",
+      "ref": "page-objects/animals/accompanying-documents-page.ts:21-26",
+      "quote": "The JavaScript-enhanced file upload hides the input inside a drop zone and\n  // puts a button in front of it carrying the field's id, so the label now\n  // names the button. The file still goes to the input behind it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-009",
+      "statement": "A document is added by pressing the 'Save and add another' button on the Upload documents page.",
+      "kind": "behaviour",
+      "ref": "page-objects/animals/accompanying-documents-page.ts:28-30; tests/animals/e2e/features/promoted-documents.spec.ts:13",
+      "quote": "return this.page.getByRole('button', { name: 'Save and add another' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-010",
+      "statement": "The Upload documents page has a 'Continue' button.",
+      "kind": "data",
+      "ref": "page-objects/animals/accompanying-documents-page.ts:32-34",
+      "quote": "return this.page.getByRole('button', { name: 'Continue' });",
+      "confidence": "verbatim",
+      "note": "Declared in the page object; no spec in this part presses it."
+    },
+    {
+      "id": "repo-tests-p3-011",
+      "statement": "Added documents are listed in a table (id 'documents-added') with one row per document showing its document reference.",
+      "kind": "data",
+      "ref": "tests/animals/e2e/features/documents-limits.spec.ts:38; page-objects/animals/accompanying-documents-page.ts:36-38",
+      "quote": "await expect(pages.page.locator('#documents-added tbody tr')).toHaveCount(maximumDocuments);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-012",
+      "statement": "Each document row has a button named 'Remove document N', where N is the row's position.",
+      "kind": "behaviour",
+      "ref": "page-objects/animals/accompanying-documents-page.ts:40-42",
+      "quote": "return this.page.getByRole('button', { name: `Remove document ${index}`, exact: true });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-013",
+      "statement": "A scanned clean document row has a link named 'View file for document N'.",
+      "kind": "behaviour",
+      "ref": "page-objects/animals/accompanying-documents-page.ts:44-46",
+      "quote": "return this.page.getByRole('link', { name: `View file for document ${index}` });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-014",
+      "statement": "With no documents added, the Upload documents page shows 'You have not added any documents yet.'",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/documents-reject.spec.ts:21",
+      "quote": "await expect(pages.page.getByText('You have not added any documents yet.')).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-015",
+      "statement": "A document whose virus scan is still pending shows the status 'Scanning for virus' in its row.",
+      "kind": "copy",
+      "ref": "utils/scan-status.ts:3",
+      "quote": "export const SCANNING_STATUS = 'Scanning for virus';",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-016",
+      "statement": "A clean document whose scan has finished shows the status 'Check completed' in its row.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/documents-scan-lifecycle.spec.ts:50",
+      "quote": "await expect(row).toContainText('Check completed', { timeout: fileUploadTimeouts.virusScanComplete });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-017",
+      "statement": "An infected document shows the status 'Virus found' in its row.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/documents-scan-lifecycle.spec.ts:29",
+      "quote": "await expect(row).toContainText('Virus found', { timeout: fileUploadTimeouts.virusScanComplete });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-018",
+      "statement": "While a clean upload is still scanning its row has no 'View file' link, and it gets the view link once it reads 'Check completed'.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/documents-scan-lifecycle.spec.ts:37 'clean upload: shows Scanning for virus with no view link, then Check completed with a view link'",
+      "quote": "if (pending) {\n      expect(text).not.toContain('View file');\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-019",
+      "statement": "The 'Remove document' button is available on a document row while its scan is in progress.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/documents-scan-lifecycle.spec.ts:48",
+      "quote": "await expect(animalsPages.accompanyingDocuments.removeDocument(1)).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-020",
+      "statement": "An infected upload is accepted onto the list while it is scanned, then its row turns to 'Virus found'.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/documents-scan-lifecycle.spec.ts:15 'infected upload: accepted while scanning, then Virus found with error summary and no view link'",
+      "quote": "infected upload: accepted while scanning, then Virus found with error summary and no view link",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-021",
+      "statement": "When a virus is found the page shows a 'There is a problem' error summary with the message '<file name> contains a virus. Remove it and try again with a different file.'",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/documents-scan-lifecycle.spec.ts:30-33",
+      "quote": "pages.page.getByText(`${eicar.fileName} contains a virus. Remove it and try again with a different file.`).first(),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-022",
+      "statement": "An infected document's row has no 'View file' link.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/documents-scan-lifecycle.spec.ts:34",
+      "quote": "await expect(animalsPages.accompanyingDocuments.viewFile(1)).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-023",
+      "statement": "The local mock uploader marks a file infected when its name contains 'virus'; the real CDP uploader detects the standard EICAR signature in the file's bytes.",
+      "kind": "integration",
+      "ref": "utils/eicar-file-writer.ts:6-8",
+      "quote": "// Mock uploader: filename containing \"virus\" triggers an INFECTED result during virus scanning.\n// CDP uploader (real): detects the standard EICAR signature in the file bytes during virus scanning.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-024",
+      "statement": "The scanning state is not guaranteed to be seen: a real scanner can settle a small file before the redirected page renders, while the local upload stub holds the pending state until a refresh read.",
+      "kind": "non-functional",
+      "ref": "utils/scan-status.ts:10-16",
+      "quote": "A real scanner can settle a small file before\n * the redirected page renders, so the pending state is not guaranteed; the\n * local upload stub holds it until a refresh read.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-025",
+      "statement": "Without client JavaScript, a document still scanning shows a 'Refresh' link whose address carries 'attempt=1'.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/documents-refresh-no-js.spec.ts:31-33",
+      "quote": "await expect(animalsPages.accompanyingDocuments.refreshStatus).toBeVisible();\n      await expect(animalsPages.accompanyingDocuments.refreshStatus).toHaveAttribute('href', /attempt=1/);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-026",
+      "statement": "Without JavaScript, following the Refresh link re-reads the scan status, so repeated refreshes move the row on to 'Check completed'.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/documents-refresh-no-js.spec.ts:11 'the refresh fallback reflects scan progress without client JavaScript'",
+      "quote": "await animalsPages.accompanyingDocuments.refreshStatus.click();\n            return row.textContent();\n...\n        .toContain('Check completed');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-027",
+      "statement": "Once the scan has completed the Refresh link is no longer shown and the 'View file for document 1' link is, without JavaScript.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/documents-refresh-no-js.spec.ts:46-48",
+      "quote": "await expect(animalsPages.accompanyingDocuments.refreshStatus).toHaveCount(0);\n    await expect(animalsPages.accompanyingDocuments.viewFile(1)).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-028",
+      "statement": "The whole journey up to uploading a document works without JavaScript: the origin task ('Where is this consignment coming from?') is answered with a 'Country of origin' select and a 'No' radio and 'Save and continue' returns to the overview.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/documents-refresh-no-js.spec.ts:9,15-19",
+      "quote": "test.use({ javaScriptEnabled: false });\n...\n    await animalsPages.overview.task('Where is this consignment coming from?').click();\n    await pages.page.getByLabel('Country of origin').selectOption('FR');\n    await pages.page.getByRole('radio', { name: 'No' }).check();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-029",
+      "statement": "A notification accepts up to 15 documents: the fifteenth is added with no error and 'Save and add another' is still offered.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/documents-limits.spec.ts:21 'accepts a fifteenth document and rejects a sixteenth with the maximum-documents error'",
+      "quote": "const maximumDocuments = 15;\n...\n    await expect(animalsPages.accompanyingDocuments.saveAndAddAnother).toBeVisible();\n    await expect(pages.page.locator('.govuk-error-summary')).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-030",
+      "statement": "Trying to add a sixteenth document shows a 'There is a problem' error summary linking 'You can upload a maximum of 15 files'.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/documents-limits.spec.ts:10,46-47",
+      "quote": "const maximumDocumentsMessage = `You can upload a maximum of ${maximumDocuments} files`;\n...\n    await expect(pages.page.getByRole('link', { name: maximumDocumentsMessage })).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-031",
+      "statement": "The maximum-documents error appears only in the error summary, with no inline field error message.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/documents-limits.spec.ts:48",
+      "quote": "await expect(pages.page.locator('.govuk-error-message')).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-032",
+      "statement": "A refused sixteenth document is not added: the list keeps 15 rows and has no row for its reference.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/documents-limits.spec.ts:49-50",
+      "quote": "await expect(pages.page.locator('#documents-added tbody tr')).toHaveCount(maximumDocuments);\n    await expect(animalsPages.accompanyingDocuments.documentRow(sixteenthReference)).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-033",
+      "statement": "The file size limit is 10MB in decimal units (10,000,000 bytes), and a PDF of exactly that size is accepted and scans to 'Check completed' with no error.",
+      "kind": "rule",
+      "ref": "resources/file-upload/constants.ts:3; tests/animals/e2e/features/documents-limits.spec.ts:53-66",
+      "quote": "export const MAX_FILE_SIZE_BYTES = 10 * DECIMAL_BYTES_PER_MB;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-034",
+      "statement": "A file one byte over 10MB is refused with an error summary link and an inline error both reading 'The selected file must be smaller than 10MB' (inline prefixed 'Error: ').",
+      "kind": "copy",
+      "ref": "resources/file-upload/constants.ts:11; tests/animals/e2e/features/documents-limits.spec.ts:72-74",
+      "quote": "export const OVERSIZE_FILE_MESSAGE = 'The selected file must be smaller than 10MB';\n...\n    await expect(pages.page.locator('.govuk-error-message')).toHaveText(`Error: ${OVERSIZE_FILE_MESSAGE}`);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-035",
+      "statement": "An oversize file is not added to the list: the already-added document stays the only row.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/documents-limits.spec.ts:75-76",
+      "quote": "await expect(pages.page.locator('#documents-added tbody tr')).toHaveCount(1);\n    await expect(animalsPages.accompanyingDocuments.documentRow(overReference)).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-036",
+      "statement": "A file well over the limit (10MB plus 200,000 bytes) is refused with 'There is a problem' and the 10MB message, and no document is added (the empty-state text stays).",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/documents-reject.spec.ts:8 'refuses an oversize file pick without adding a document'",
+      "quote": "await expect(pages.page.getByRole('heading', { name: 'There is a problem' })).toBeVisible();\n    // The oversize message renders both client-side and server-side; either satisfies the reject.\n    await expect(pages.page.getByText(OVERSIZE_FILE_MESSAGE).first()).toBeVisible();\n    await expect(pages.page.getByText('You have not added any documents yet.')).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-037",
+      "statement": "The oversize message is rendered both by a browser-side check and by the server, so either catches an oversize file.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/documents-reject.spec.ts:19; resources/file-upload/constants.ts:5-9",
+      "quote": "The oversize message renders both client-side and server-side; either satisfies the reject.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-038",
+      "statement": "The frontend upload route has a request payload cap of the file limit plus 1024 bytes of multipart headroom.",
+      "kind": "constraint",
+      "ref": "resources/file-upload/constants.ts:5-8",
+      "quote": "Above the Hapi route payload cap (the file limit plus 1024 B of multipart headroom)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-039",
+      "statement": "Documents are uploaded, scanned and downloaded through the real CDP uploader in the compose stack.",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/features/promoted-documents.spec.ts:7 'uploads, scans, downloads and removes a document through the real uploader'",
+      "quote": "uploads, scans, downloads and removes a document through the real uploader",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-040",
+      "statement": "The 'View file' link serves the uploaded file with HTTP 200 and a content type of application/pdf for a PDF.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/promoted-documents.spec.ts:25-27",
+      "quote": "expect(response.status()).toBe(200);\n    expect(response.headers()['content-type']).toContain('application/pdf');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-041",
+      "statement": "The file download response carries the header X-Content-Type-Options: nosniff.",
+      "kind": "non-functional",
+      "ref": "tests/animals/e2e/features/promoted-documents.spec.ts:28",
+      "quote": "expect(response.headers()['x-content-type-options']).toBe('nosniff');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-042",
+      "statement": "The downloaded file is byte-for-byte the file that was uploaded.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/promoted-documents.spec.ts:29-36",
+      "quote": "expect(downloaded).toEqual(uploaded);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-043",
+      "statement": "Pressing 'Remove document 1' removes the row, and with no documents left the empty-state text 'You have not added any documents yet.' shows again.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/promoted-documents.spec.ts:32-34",
+      "quote": "await animalsPages.accompanyingDocuments.removeDocument(1).click();\n    await expect(row).toHaveCount(0);\n    await expect(pages.page.getByText('You have not added any documents yet.')).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-044",
+      "statement": "An unsupported file type (a .txt file) is refused with a 'There is a problem' error summary and no document is added.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/promoted-documents.spec.ts:39 'rejects an unsupported file type without adding a document'",
+      "quote": "await animalsPages.accompanyingDocuments.fillDocument(`PW-TXT-${Date.now()}`, '03/01/2026', fileUploadPaths.restrictedFile10bTxt);\n...\n    await expect(pages.page.getByRole('heading', { name: 'There is a problem' })).toBeVisible();\n    await expect(pages.page.getByText('You have not added any documents yet.')).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-045",
+      "statement": "No test proves the wording of the unsupported-file-type error message; the spec asserts only the error summary heading.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/promoted-documents.spec.ts:39-46",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-tests-p3-046",
+      "statement": "The suite holds .doc, .docx, .xls, .xlsx, .pdf, .jpg, .jpeg and .png files as 'safe' uploads and a .txt file as 'restricted', implying those office, PDF and image types are the accepted set and plain text is not.",
+      "kind": "rule",
+      "ref": "resources/file-upload/paths.ts:6-14",
+      "quote": "const safeFile19kbDoc = pathFromHere('./safe-file-19kb.doc');\n...\nconst safeFile250bPng = pathFromHere('./safe-file-250b.png');\nconst restrictedFile10bTxt = pathFromHere('./restricted-file-10b.txt');",
+      "confidence": "inferred",
+      "note": "Only PDF (accepted) and TXT (refused) are exercised by specs in this part; the other types are fixture names only."
+    },
+    {
+      "id": "repo-tests-p3-047",
+      "statement": "No test in this part proves the Document type select's list of options, or validation of a missing document reference, type, date of issue or file.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/documents-*.spec.ts; page-objects/animals/accompanying-documents-page.ts",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-tests-p3-048",
+      "statement": "An uploaded document is stored as one record in the backend's 'accompanying_documents' collection, keyed to the notification by its reference number.",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-accompanying-document.spec.ts:41-52",
+      "quote": "client.collection<AccompanyingDocumentModel>('trade-imports-animals-backend', 'accompanying_documents');\n...\n      expect(doc.notificationReferenceNumber).toBe(referenceNumber);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-049",
+      "statement": "The stored document keeps the document reference the trader entered.",
+      "kind": "data",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-accompanying-document.spec.ts:53",
+      "quote": "expect(doc.documentReference).toBe(documentReference);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-050",
+      "statement": "Each stored document has an upload id in UUID form.",
+      "kind": "data",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-accompanying-document.spec.ts:54",
+      "quote": "expect(doc.uploadId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-051",
+      "statement": "The date of issue is stored as a calendar-date string in YYYY-MM-DD form (03/01/2026 is stored as 2026-01-03).",
+      "kind": "data",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-accompanying-document.spec.ts:28-29,55; domain/animals/models/db/accompanying-document.ts:11-12",
+      "quote": "/** A calendar date, stored as a `YYYY-MM-DD` string. */\n  dateOfIssue: string;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-052",
+      "statement": "A clean document's stored scan status becomes 'COMPLETE'.",
+      "kind": "data",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-accompanying-document.spec.ts:56",
+      "quote": "await expect.poll(() => collection.findOne({ uploadId: doc.uploadId }).then((d) => d?.scanStatus)).toBe('COMPLETE');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-053",
+      "statement": "The chosen document type is stored by its code ('ITAHC').",
+      "kind": "data",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-accompanying-document.spec.ts:57",
+      "quote": "expect(doc.documentType).toBe('ITAHC');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-054",
+      "statement": "The stored file record keeps the original file name, its content type, its length in bytes, the detected content type and a SHA-256 checksum.",
+      "kind": "data",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-accompanying-document.spec.ts:59-64",
+      "quote": "expect(file.filename).toBe(fileUploadNames.safeFile1kbPdf);\n      expect(file.contentType).toBe('application/pdf');\n      expect(file.contentLength).toBe(uploaded.length);\n...\n      expect(file.detectedContentType).toBe('application/pdf');\n      expect(file.checksumSha256).toBeDefined();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-055",
+      "statement": "The uploaded file's S3 key starts with the notification reference number and then the upload id.",
+      "kind": "data",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-accompanying-document.spec.ts:62",
+      "quote": "expect(file.s3Key).toMatch(new RegExp(`^${referenceNumber}/${doc.uploadId}/`));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-056",
+      "statement": "An uploaded document's row is still listed after a fresh load of the Upload documents page.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-accompanying-document.spec.ts:69-70",
+      "quote": "await animalsPages.accompanyingDocuments.open(referenceNumber);\n    await expect(animalsPages.accompanyingDocuments.documentRow(documentReference)).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-057",
+      "statement": "A stored accompanying document also carries a version, a correlation id, created and updated times, and per file an S3 bucket and a file status.",
+      "kind": "data",
+      "ref": "domain/animals/models/db/accompanying-document.ts:3-27",
+      "quote": "version: number;\n  notificationReferenceNumber: string;\n  uploadId: string;\n  correlationId: string;\n...\n    s3Bucket: string;\n    fileStatus: string;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-058",
+      "statement": "The suite's own document type carries a file path and an optional document type, document reference and issue date.",
+      "kind": "data",
+      "ref": "domain/animals/types/accompanying-document.ts:4-9",
+      "quote": "filePath: string;\n  documentType?: DocumentType;\n  documentReference?: string;\n  issueDate?: DateInput;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-059",
+      "statement": "A notification has one of four statuses: DRAFT, SUBMITTED, AMEND or DELETED, in the notification API and in its fulfilments view alike.",
+      "kind": "data",
+      "ref": "domain/animals/models/api/notification.ts:3-8; domain/animals/models/api/notification-fulfilments.ts:1-6",
+      "quote": "draft: 'DRAFT',\n  submitted: 'SUBMITTED',\n  amend: 'AMEND',\n  deleted: 'DELETED',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-060",
+      "statement": "POST /notifications on the backend with an empty notification creates one, mints its reference number and returns it in DRAFT status.",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/features/promoted-lifecycle.spec.ts:9-13; adapters/http/notification-api-client.ts:27-37",
+      "quote": "Empty nested notification → server mints the\n   * reference number via ReferenceNumberGenerator and returns it in the response.\n   * Body shape is {@code SaveNotificationDto}: `{ notification, actor? }`.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-061",
+      "statement": "GET /notifications/{id}/fulfilments returns the notification's reference number, status and fulfilments; a new notification's fulfilments are empty and its status DRAFT.",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/features/promoted-lifecycle.spec.ts:15-19",
+      "quote": "const initial = await notificationApi.getNotificationFulfilments(id);\n    expect(initial.referenceNumber).toBe(id);\n    expect(initial.status).toBe(notificationFulfilmentsStatuses.draft);\n    expect(initial.fulfilments).toEqual([]);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-062",
+      "statement": "POST /notifications/{id}/submit moves a notification to SUBMITTED, and the fulfilments view reports SUBMITTED too.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/promoted-lifecycle.spec.ts:21-25",
+      "quote": "const submitted = await notificationApi.submitNotification(id);\n    expect(submitted.status).toBe(notificationStatuses.submitted);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-063",
+      "statement": "POST /notifications/{id}/amend moves a submitted notification to AMEND, and the fulfilments view reports AMEND too.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/promoted-lifecycle.spec.ts:27-31",
+      "quote": "const amended = await notificationApi.amendNotification(id);\n    expect(amended.status).toBe(notificationStatuses.amend);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-064",
+      "statement": "POST /notifications/{id}/cancel-amend returns an amending notification to SUBMITTED.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/promoted-lifecycle.spec.ts:33-35",
+      "quote": "const cancelled = await notificationApi.cancelAmendNotification(id);\n    expect(cancelled.status).toBe(notificationStatuses.submitted);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-065",
+      "statement": "Copying a notification (POST /notifications/{id}/copy with the source's concurrency token) creates a new DRAFT with a new reference number every time; copies are not de-duplicated and copying does not change the source.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/promoted-lifecycle.spec.ts:37-46",
+      "quote": "// Copy no longer dedupes — two calls produce two distinct copies.\n    // Copy is a WYSIWYG operation post-EUDPA-314, so the caller passes the\n    // source's current concurrencyToken; copy does not mutate the source, so\n    // both calls carry the same token.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-066",
+      "statement": "Soft-deleting a notification (POST /notifications/{id}/soft-delete) sets it to DELETED, and repeating it is idempotent, returning the deleted notification unchanged.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/promoted-lifecycle.spec.ts:48-52",
+      "quote": "// Soft-delete is idempotent — repeated calls return the DELETED notification unchanged.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-067",
+      "statement": "PUT /notifications/{id} replaces the whole record; it answers 404 for an unknown reference and 400 without a matching concurrency token, and an optional actor supplies the organisation id so address-book party references resolve onto the NotificationEdited event.",
+      "kind": "integration",
+      "ref": "adapters/http/notification-api-client.ts:39-55",
+      "quote": "Whole-record replace of an existing notification via PUT /notifications/{id}.\n   * 404 if the reference is unknown, 400 without a matching concurrencyToken. The\n   * optional actor supplies organisationId so address-book party references\n   * resolve onto the NotificationEdited event.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-068",
+      "statement": "A second submit or amend that lands inside the first one's per-notification outbox lock window fails with a 500; the suite retries up to 3 times because people never race like this.",
+      "kind": "constraint",
+      "ref": "adapters/http/notification-api-client.ts:7-11",
+      "quote": "Per-aggregate outbox lock (NotificationService.writeWithOutbox via ShedLock) fails a\n// second submit/amend that lands inside the first's lock window with a 500. Human clicks\n// never race like this; back-to-back API calls in a test do.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-069",
+      "statement": "Calls to the backend API carry an x-api-key header when a developer API key is configured.",
+      "kind": "integration",
+      "ref": "adapters/http/rest-client.ts:77; adapters/http/notification-api-client.ts:19",
+      "quote": "...(this.apiKey ? { 'x-api-key': this.apiKey } : {}),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-070",
+      "statement": "A submitted notification's view page is read-only: the journey strip says 'Submitted' and there are no 'Change' links.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/promoted-lifecycle.spec.ts:55 'renders a submitted notification read-only and re-enters an amendment at Overview'",
+      "quote": "await expect(animalsPages.notificationView.journeyStrip).toContainText('Submitted');\n    await expect(pages.page.getByRole('link', { name: /^Change/ })).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-071",
+      "statement": "Choosing Amend on a submitted notification's dashboard card re-enters the notification at the overview, whose journey strip says 'Amending'.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/promoted-lifecycle.spec.ts:69-71; flows/animals/notification-actions.ts:14-19",
+      "quote": "await animalsNotificationActions.amendNotification(journeyContext.journeyId);\n    await expect(animalsPages.overview.heading).toBeVisible();\n    await expect(animalsPages.overview.journeyStrip).toContainText('Amending');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-072",
+      "statement": "The notification view page has the level-1 heading 'Review your notification' and is served at the notification's 'notification-view' path.",
+      "kind": "copy",
+      "ref": "page-objects/animals/notification-view-page.ts:7,11",
+      "quote": "super(page, 'notification-view');\n...\n    return this.page.getByRole('heading', { level: 1, name: 'Review your notification' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-073",
+      "statement": "The notification view page shows a journey strip carrying a status tag and the notification's reference number.",
+      "kind": "data",
+      "ref": "page-objects/animals/notification-view-page.ts:14-20; tests/animals/e2e/pages/notification-view-states.spec.ts:27-30",
+      "quote": "return this.page.locator('.app-journey-strip');\n...\n      await expect(animalsPages.notificationView.journeyStrip.locator('.govuk-tag')).toHaveText('Draft');\n      await expect(animalsPages.notificationView.journeyStrip).toContainText(journeyContext.journeyId);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-074",
+      "statement": "While amending, the notification view shows the journey strip 'Amending' and a 'Cancel amendment' link.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/cancel-amend-ui.spec.ts:10 'shows the Cancel amendment link while the notification is amending'",
+      "quote": "await expect(animalsPages.notificationView.journeyStrip).toContainText('Amending');\n      await expect(animalsPages.notificationView.cancelAmendment).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-075",
+      "statement": "Selecting 'Cancel amendment' opens a confirmation page at the notification's 'cancel-amend' path with the heading 'Cancel this amendment?'.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/cancel-amend-ui.spec.ts:15-21; page-objects/animals/notification-cancel-amend-page.ts:6,10",
+      "quote": "super(page, 'cancel-amend');\n...\n    return this.page.getByRole('heading', { level: 1, name: 'Cancel this amendment?' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-076",
+      "statement": "The cancel amendment page says 'Your changes since you started amending will be discarded and the submitted version restored.'",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/cancel-amend-ui.spec.ts:23",
+      "quote": "pages.page.getByText('Your changes since you started amending will be discarded and the submitted version restored.'),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-077",
+      "statement": "The cancel amendment page offers a 'Yes, cancel amendment' button and a 'No' button.",
+      "kind": "copy",
+      "ref": "page-objects/animals/notification-cancel-amend-page.ts:13-19",
+      "quote": "return this.page.getByRole('button', { name: 'Yes, cancel amendment' });\n...\n    return this.page.getByRole('button', { name: /No/ });",
+      "confidence": "verbatim",
+      "note": "The No button's full label is matched only by /No/; its exact wording is not asserted."
+    },
+    {
+      "id": "repo-tests-p3-078",
+      "statement": "Choosing No on the cancel amendment page returns to the notification view with the amendment still in progress: 'Amending' strip, 'Cancel amendment' link and 'Change import details' link still shown.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/cancel-amend-ui.spec.ts:29 'No returns to the notification view with the amendment still in progress'",
+      "quote": "await expect(animalsPages.notificationView.journeyStrip).toContainText('Amending');\n      await expect(animalsPages.notificationView.cancelAmendment).toBeVisible();\n      await expect(animalsPages.notificationView.changeLink('Change import details')).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-079",
+      "statement": "While amending, 'Change import details' on the view page opens the origin page, and saving it returns to the view page showing the new country.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/cancel-amend-ui.spec.ts:50-55",
+      "quote": "await animalsPages.notificationView.changeLink('Change import details').click();\n      await expect(animalsPages.originOfImport.heading).toBeVisible();\n      await animalsPages.originOfImport.selectCountry('Belgium');\n      await animalsPages.originOfImport.saveAndContinue.click();\n      await expect(animalsPages.notificationView.heading).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-080",
+      "statement": "Choosing 'Yes, cancel amendment' redirects to the notification view with '?cancelled=1' and shows an alert 'The amendment has been cancelled and the submitted version restored.'",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/cancel-amend-ui.spec.ts:60-61",
+      "quote": "await expect(pages.page.getByRole('alert')).toContainText('The amendment has been cancelled and the submitted version restored.');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-081",
+      "statement": "After the amendment is cancelled the notification is Submitted and read-only again (no 'Cancel amendment', no Change links) and the answers changed during the amendment are restored to their submitted values.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/cancel-amend-ui.spec.ts:41 'Yes cancels the amendment and restores the submitted answers'",
+      "quote": "await expect(animalsPages.notificationView.journeyStrip).toContainText('Submitted');\n      await expect(animalsPages.notificationView.cancelAmendment).not.toBeVisible();\n      await expect(pages.page.getByRole('link', { name: /^Change/ })).toHaveCount(0);\n      await expect(countryRow).toContainText('France');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-082",
+      "statement": "The frontend's amend action is a POST to /notifications/{id}/amend that redirects to the notification's hub at /notifications/{id}.",
+      "kind": "integration",
+      "ref": "flows/animals/seeded-journey.ts:65-67",
+      "quote": "await this.forms.postForm(`${CREATE_PATH}/${journeyId}/amend`, {}, { redirectsTo: new RegExp(`^${CREATE_PATH}/${journeyId}$`) });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-083",
+      "statement": "The frontend's cancel-amend action is a POST to /notifications/{id}/cancel-amend that redirects to the notification view with '?cancelled=1'.",
+      "kind": "integration",
+      "ref": "flows/animals/seeded-journey.ts:69-71",
+      "quote": "await this.forms.postForm(`${CREATE_PATH}/${journeyId}/cancel-amend`, {}, { redirectsTo: /\\/notification-view\\?cancelled=1$/ });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-084",
+      "statement": "The frontend's delete action is a POST to /notifications/{id}/delete that redirects to a page with '?deleted=1'.",
+      "kind": "integration",
+      "ref": "flows/animals/seeded-journey.ts:73-75",
+      "quote": "await this.forms.postForm(`${CREATE_PATH}/${journeyId}/delete`, {}, { redirectsTo: /\\?deleted=1$/ });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-085",
+      "statement": "An amendment can only be resubmitted through the declaration once every task row is fulfilled.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/features/amend-resubmit.spec.ts:9-11",
+      "quote": "the declaration resubmit is gated on every task row being fulfilled",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-086",
+      "statement": "While amending, the overview's review-and-submit action leads to the 'Review your notification' page.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/amend-resubmit.spec.ts:29-30",
+      "quote": "await animalsPages.overview.reviewAndSubmitButton.click();\n    await expect(animalsPages.notificationView.heading).toBeVisible();",
+      "confidence": "inferred",
+      "note": "The button's label lives in the overview page object, which is outside this part."
+    },
+    {
+      "id": "repo-tests-p3-087",
+      "statement": "While amending, the review page offers at least four Change links, including 'Change import details' and 'Change commodity 1'.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/amend-resubmit.spec.ts:31-33",
+      "quote": "await expect(animalsPages.notificationView.changeLink('Change import details')).toBeVisible();\n    await expect(animalsPages.notificationView.changeLink('Change commodity 1')).toBeVisible();\n    expect(await pages.page.getByRole('link', { name: /^Change/ }).count()).toBeGreaterThanOrEqual(4);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-088",
+      "statement": "Continue on the amending review page leads to the 'Declaration' page.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/amend-resubmit.spec.ts:44-45",
+      "quote": "await animalsPages.notificationView.continueButton.click();\n    await expect(animalsPages.declaration.heading).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-089",
+      "statement": "The declaration page has the level-1 heading 'Declaration' and is served at the notification's 'declaration' path.",
+      "kind": "copy",
+      "ref": "page-objects/animals/declaration-page.ts:6,10",
+      "quote": "super(page, 'declaration');\n...\n    return this.page.getByRole('heading', { level: 1, name: 'Declaration' });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-090",
+      "statement": "The declaration page has a confirmation checkbox whose label begins 'I confirm that I have reviewed' and a 'Continue' button.",
+      "kind": "copy",
+      "ref": "page-objects/animals/declaration-page.ts:13-19",
+      "quote": "return this.page.getByRole('checkbox', { name: /I confirm that I have reviewed/ });\n...\n    return this.page.getByRole('button', { name: 'Continue' });",
+      "confidence": "verbatim",
+      "note": "Only the start of the checkbox label is matched; the full wording is not asserted."
+    },
+    {
+      "id": "repo-tests-p3-091",
+      "statement": "Ticking the declaration and pressing Continue on an amendment resubmits it, showing the 'Import notification submitted' page.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/amend-resubmit.spec.ts:46-48",
+      "quote": "await animalsPages.declaration.confirmation.check();\n    await animalsPages.declaration.continueButton.click();\n    await expect(pages.page.getByRole('heading', { name: 'Import notification submitted' })).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-092",
+      "statement": "A resubmitted amendment is Submitted again, read-only (no Change links, no 'Cancel amendment') and keeps the value edited during the amendment.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/amend-resubmit.spec.ts:14 'resubmits an amended notification: Submitted → Amending → Submitted with the edited answer kept'",
+      "quote": "await expect(animalsPages.notificationView.journeyStrip).toContainText('Submitted');\n    await expect(countryRow).toContainText('Belgium');\n    await expect(pages.page.getByRole('link', { name: /^Change/ })).toHaveCount(0);\n    await expect(animalsPages.notificationView.cancelAmendment).not.toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-093",
+      "statement": "The dashboard offers Amend again for a notification whose amendment was resubmitted.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/amend-resubmit.spec.ts:57-60",
+      "quote": "// And the dashboard offers Amend again for the resubmitted notification.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-094",
+      "statement": "The delete confirmation page is at /notifications/{id}/delete under the live-animals base and has the heading 'Delete this notification?'.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/notification-delete.spec.ts:11-12",
+      "quote": "await pages.page.goto(`${SET_BASES.liveAnimals}/notifications/${journeyId}/delete`);\n    await pages.page.getByRole('heading', { name: 'Delete this notification?' }).waitFor();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-095",
+      "statement": "The delete confirmation page has a 'Yes, delete notification' button.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/notification-delete.spec.ts:13",
+      "quote": "await pages.page.getByRole('button', { name: 'Yes, delete notification' }).click();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-096",
+      "statement": "After deletion the page shows 'The notification has been deleted.'",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/features/notification-delete.spec.ts:14",
+      "quote": "await expect(pages.page.getByText('The notification has been deleted.')).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-097",
+      "statement": "A draft notification can be deleted.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/notification-delete.spec.ts:6 'deletes a draft notification'",
+      "quote": "test('deletes a draft notification'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-098",
+      "statement": "A submitted notification can be deleted from its dashboard card's Delete action, after which a search for its reference on the dashboard finds no cards.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/notification-delete.spec.ts:17 'deletes the notification and removes it from the dashboard'; flows/animals/notification-actions.ts:41-48",
+      "quote": "await animalsNotificationActions.deleteNotification(referenceNumber);\n      await animalsPages.dashboard.open();\n      await animalsPages.dashboard.searchForReference(referenceNumber);\n      await expect(animalsPages.dashboard.notificationCards).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-099",
+      "statement": "No test proves the delete confirmation page's other content, such as a way back without deleting.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/features/notification-delete.spec.ts; flows/animals/notification-actions.ts:41-48",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-tests-p3-100",
+      "statement": "The notification view groups answers under the numbered section heading '1. About the consignment'.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:15",
+      "quote": "await expect(pages.page.getByRole('heading', { name: '1. About the consignment' })).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-101",
+      "statement": "The notification view has the numbered section heading '2. Description of the goods'.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:16",
+      "quote": "await expect(pages.page.getByRole('heading', { name: '2. Description of the goods' })).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-102",
+      "statement": "The notification view has the numbered section heading '3. Transport and arrival'.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:17",
+      "quote": "await expect(pages.page.getByRole('heading', { name: '3. Transport and arrival' })).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-103",
+      "statement": "The notification view has the numbered section heading '4. Documents'.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:18",
+      "quote": "await expect(pages.page.getByRole('heading', { name: '4. Documents' })).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-104",
+      "statement": "The notification view has the numbered section heading '5. Consignment parties'.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:19",
+      "quote": "await expect(pages.page.getByRole('heading', { name: '5. Consignment parties' })).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-105",
+      "statement": "The notification view has the numbered section heading '6. Contact address'.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:20",
+      "quote": "await expect(pages.page.getByRole('heading', { name: '6. Contact address' })).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-106",
+      "statement": "The notification view has an 'Uploaded documents' summary card that shows 'You have not added any documents yet.' when none were added.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:21-22",
+      "quote": "await expect(animalsPages.notificationView.summaryCard('Uploaded documents')).toContainText('You have not added any documents yet.');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-107",
+      "statement": "The notification view has an 'Import details' summary card showing the country of origin by name (France).",
+      "kind": "data",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:23",
+      "quote": "await expect(animalsPages.notificationView.summaryCard('Import details')).toContainText('France');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-108",
+      "statement": "Each commodity has its own summary card titled with the commodity, its code and species, such as 'Cow (0102) — Bos taurus', containing a 'Number of animals' row.",
+      "kind": "data",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:24",
+      "quote": "await expect(animalsPages.notificationView.summaryCard('Cow (0102) — Bos taurus')).toContainText('Number of animals');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-109",
+      "statement": "A draft notification's view shows the journey strip tag 'Draft' with its reference number.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:27 'shows the Draft strip with the notification reference'",
+      "quote": "await expect(animalsPages.notificationView.journeyStrip.locator('.govuk-tag')).toHaveText('Draft');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-110",
+      "statement": "A draft notification's view has Change links for its recorded answers, such as 'Change import details' and 'Change commodity 1'.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:32 'shows Change links for the recorded answers'",
+      "quote": "await expect(animalsPages.notificationView.changeLink('Change import details')).toBeVisible();\n      await expect(animalsPages.notificationView.changeLink('Change commodity 1')).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-111",
+      "statement": "A draft notification's view offers a Continue button and none of 'Copy as new', 'Delete' or 'Cancel amendment'.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:37 'offers submission and none of the post-submit actions'",
+      "quote": "await expect(animalsPages.notificationView.continueButton).toBeVisible();\n      await expect(pages.page.getByRole('button', { name: 'Copy as new' })).toHaveCount(0);\n      await expect(pages.page.getByRole('button', { name: 'Delete' })).toHaveCount(0);\n      await expect(animalsPages.notificationView.cancelAmendment).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-112",
+      "statement": "Pressing Continue on an unfinished draft's view keeps the trader on the view page and shows a 'There is a problem' error summary linking each unfinished section, such as 'Complete arrival details'.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:44 'Continue: when the notification is unfinished, stays put and names what is left'",
+      "quote": "await expect(animalsPages.notificationView.errorSummary).toContainText('There is a problem');\n      await expect(animalsPages.notificationView.errorSummary.getByRole('link', { name: 'Complete arrival details' })).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-113",
+      "statement": "A draft with every section answered shows no error summary on its view page.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:60 'shows no error summary once every section is answered'",
+      "quote": "await expect(animalsPages.notificationView.errorSummary).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-114",
+      "statement": "Pressing Continue on a draft ready to submit goes to the declaration page.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:65 'Continue moves on to the declaration'",
+      "quote": "await animalsPages.notificationView.continueButton.click();\n      await expect(pages.page).toHaveURL(/\\/declaration$/);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-115",
+      "statement": "A submitted notification's view shows the journey strip tag 'Submitted' with its reference number.",
+      "kind": "copy",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:78 'lands on the view page with the Submitted strip and reference'",
+      "quote": "await expect(animalsPages.notificationView.journeyStrip.locator('.govuk-tag')).toHaveText('Submitted');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-116",
+      "statement": "A submitted notification's read-only view offers 'Copy as new' and 'Delete' buttons and no 'Cancel amendment' link.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:84 'offers Copy as new and Delete on the read-only view'",
+      "quote": "await expect(pages.page.getByRole('button', { name: 'Copy as new' })).toBeVisible();\n      await expect(pages.page.getByRole('button', { name: 'Delete' })).toBeVisible();\n      await expect(animalsPages.notificationView.cancelAmendment).toHaveCount(0);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-117",
+      "statement": "'Copy as new' on a submitted notification's view creates a new draft with a new reference number and lands on that draft's overview.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:90 'copies the submitted notification to a new draft'",
+      "quote": "await animalsPages.notificationView.btnCopyAsNew.click();\n\n      await animalsPages.overview.heading.waitFor();\n...\n      expect(copiedReferenceNumber).not.toEqual(originalReferenceNumber);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-118",
+      "statement": "A live-animals notification reference number has the form GBN-AG-, two digits, a hyphen, then six capital letters or digits.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:3-4",
+      "quote": "const EXACT_REFERENCE_NUMBER_PATTERN = /^GBN-AG-\\d{2}-[0-9A-Z]{6}$/;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-119",
+      "statement": "A submitted notification's view still shows the recorded answers, including the 'Import details' card and the commodity card.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/pages/notification-view-states.spec.ts:102 'still renders the recorded answers after submission'",
+      "quote": "await expect(animalsPages.notificationView.summaryCard('Import details')).toContainText('France');\n      await expect(animalsPages.notificationView.summaryCard('Cow (0102) — Bos taurus')).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-120",
+      "statement": "On the notification view each party row has its own 'Edit details' link to edit the address copied onto this notification, while the party card keeps one Change link that re-picks from the address book.",
+      "kind": "behaviour",
+      "ref": "page-objects/animals/notification-view-page.ts:58-62",
+      "quote": "The row's own link to edit the address copied onto this notification —\n   * the card keeps the one Change link that re-picks from the book.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-121",
+      "statement": "On the notification view a party role still to be answered shows its error message in the row's value cell, ahead of the actions cell.",
+      "kind": "behaviour",
+      "ref": "page-objects/animals/notification-view-page.ts:64-69",
+      "quote": "A summary list has no error state of its own, so an outstanding role\n   * carries its message in the row's value cell — the first definition of the\n   * row, ahead of the actions cell.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-122",
+      "statement": "Copying a notification is also offered from its dashboard card ('Copy as new') and lands on the copy's overview.",
+      "kind": "behaviour",
+      "ref": "flows/animals/notification-actions.ts:21-27",
+      "quote": "/** Copies a notification from its dashboard card, landing on the copy's overview. */",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-123",
+      "statement": "The notification view's heading also appears on the error page, so a successful cancel is recognised by the '?cancelled=1' address rather than the heading.",
+      "kind": "behaviour",
+      "ref": "flows/animals/notification-actions.ts:29-32",
+      "quote": "Waits on\n   * `?cancelled=1` rather than the view's heading, which the error page also has.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-124",
+      "statement": "Submitting a notification lands on /notifications/{id}/confirmation under the live-animals base, with the heading 'Import notification submitted' and a panel showing the reference number.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/journeys/promoted-notification.spec.ts:5 'submits a promoted live-animals notification through the hub-owned spine'",
+      "quote": "await expect(pages.page.getByRole('heading', { name: 'Import notification submitted' })).toBeVisible();\n    await expect(pages.page).toHaveURL(new RegExp(`${SET_BASES.liveAnimals}/notifications/${journeyContext.journeyId}/confirmation$`));\n    await expect(pages.page.locator('.govuk-panel')).toContainText(journeyContext.journeyId);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-125",
+      "statement": "Journey tests walk the whole notification wizard through the front door, as a user would.",
+      "kind": "constraint",
+      "ref": "tests/animals/e2e/journeys/README.md:7-8",
+      "quote": "These tests walk the notification wizard (`AnimalsJourney`, `flows/animals/journey.ts`) via the front door.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-126",
+      "statement": "A submitted notification appears in PIMS Dynamics as exactly one importer-notification row whose name is the notification's reference number.",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-events.spec.ts:33 'a submitted notification is created in PIMS Dynamics'",
+      "quote": ".toHaveLength(1);\n...\n    expect.soft(row.defraimp_name).toBe(referenceNumber);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-127",
+      "statement": "The PIMS Dynamics row for a submitted notification has the submitted status code (714100001).",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-events.spec.ts:50; domain/animals/constants/animals-dynamics-statuses.ts:3",
+      "quote": "expect.soft(row.defraimp_status).toBe(animalsDynamicsStatuses.submitted);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-128",
+      "statement": "The PIMS Dynamics row's submission date is set and is within a set tolerance of the moment the notification was submitted.",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-events.spec.ts:51-54",
+      "quote": "expect.soft(row.defraimp_submissiondate).not.toBeNull();\n    expect\n      .soft(Math.abs(Date.parse(row.defraimp_submissiondate ?? '') - submittedAt))\n      .toBeLessThan(ANIMALS_DYNAMICS_SUBMISSION_DATE_TOLERANCE_MS);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-129",
+      "statement": "The PIMS Dynamics row carries the importer's company name as submitted ('Import Co UK').",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:42; domain/animals/constants/journey-options.ts:67",
+      "quote": "expect.soft(row.defraimp_importercompanyname).toBe(IMPORTER_NAME);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-130",
+      "statement": "The PIMS Dynamics row carries the consignor's company name as submitted ('Astra Rosales').",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:43; domain/animals/constants/journey-options.ts:65",
+      "quote": "expect.soft(row.defraimp_consignorcompanyname).toBe(CONSIGNOR_NAME);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-131",
+      "statement": "The PIMS Dynamics row carries the consignee's company name as submitted ('British Livestock Ltd').",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:44; domain/animals/constants/journey-options.ts:66",
+      "quote": "expect.soft(row.defraimp_consigneecompanyname).toBe(CONSIGNEE_NAME);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-132",
+      "statement": "No test yet proves the other PIMS Dynamics columns (origin, commodity, transport, arrival, other parties) carry the submitted data; the data test is a starting set.",
+      "kind": "integration",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-data.spec.ts:39",
+      "quote": "// TODO: assert more columns here as PIMS Dynamics stores them; this is a starting set.",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-tests-p3-133",
+      "statement": "The PIMS Dynamics tests run only against a CDP environment: the compose stack has no PIMS Dynamics, so they are skipped there.",
+      "kind": "constraint",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-events.spec.ts:27",
+      "quote": "skipIfComposeEnvironment('the compose stack has no PIMS Dynamics');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-134",
+      "statement": "Playwright tracing is off for the PIMS Dynamics tests because traces would record the bearer token and client secret.",
+      "kind": "non-functional",
+      "ref": "tests/animals/e2e/journeys/dynamics/notification-events.spec.ts:21-23",
+      "quote": "// Traces record APIRequestContext calls with their headers and form bodies: the bearer token and client secret.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-135",
+      "statement": "PIMS Dynamics is read through the Dataverse Web API (OData 4.0), authenticated app-only with a Microsoft Entra ID client-credentials token, filtering importer notifications by reference.",
+      "kind": "integration",
+      "ref": "adapters/http/dataverse-client.ts:13-41; adapters/http/animals-dynamics-client.ts:44-46",
+      "quote": "HTTP client for one Dataverse environment's Web API, authenticated app-only through\n * Microsoft Entra ID.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-136",
+      "statement": "A PIMS Dynamics importer-notification row has identity and status columns: aggregate version, cloned, devolved office, id, import type, IPAFFS id, matched, MRN number, name, PIMS status, process status, purpose of consignment, status, trader reference, type, version, state code and status code.",
+      "kind": "data",
+      "ref": "domain/animals/models/dynamics/importer-notification.ts:13-32",
+      "quote": "defraimp_aggregateversion: number | null;\n  defraimp_cloned: boolean | null;\n...\n  defraimp_traderreference: string | null;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-137",
+      "statement": "A PIMS Dynamics row has submission and audit columns: date completed, date email sent, date telephone call made, last updated (date, display name, user id), submission date, and submitted-by display name, control-user flag and user id.",
+      "kind": "data",
+      "ref": "domain/animals/models/dynamics/importer-notification.ts:34-44",
+      "quote": "defraimp_submissiondate: string | null;\n  defraimp_submittedbydisplayname: string | null;\n  defraimp_submittedbyiscontroluser: boolean | null;\n  defraimp_submittedbyuserid: string | null;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-138",
+      "statement": "A PIMS Dynamics row holds, for each of the importer, consignor, second consignor, consignee, transporter, place of origin harvest and place of destination, three address lines, city, country id and ISO code, email, postal code, telephone and UK telephone, approval number, company name, id, individual name, international phone code and number, other identifier, status and type.",
+      "kind": "data",
+      "ref": "domain/animals/models/dynamics/importer-notification.ts:46-202",
+      "quote": "defraimp_importeraddressaddressline1: string | null;\n...\n  defraimp_importertype: string | null;",
+      "confidence": "verbatim",
+      "note": "The transporter group also has 'defraimp_transporterdetailsrequired'."
+    },
+    {
+      "id": "repo-tests-p3-139",
+      "statement": "A PIMS Dynamics row's place of origin is held in a smaller column set: two address lines, city, company name, country id, email, phone and postcode.",
+      "kind": "data",
+      "ref": "domain/animals/models/dynamics/importer-notification.ts:152-160",
+      "quote": "defraimp_placeoforiginaddressline1: string | null;\n  defraimp_placeoforiginaddressline2: string | null;\n  defraimp_placeoforigincity: string | null;\n  defraimp_placeoforigincompanyname: string | null;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-140",
+      "statement": "A PIMS Dynamics row has person-responsible columns: address, city, company id and name, contact id, country, county, email, fax, id, name, phone, postcode and type.",
+      "kind": "data",
+      "ref": "domain/animals/models/dynamics/importer-notification.ts:204-220",
+      "quote": "defraimp_personresponsiblename: string | null;\n  defraimp_personresponsiblephone: string | null;\n  defraimp_personresponsiblepostcode: string | null;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-141",
+      "statement": "A PIMS Dynamics row has journey columns: arrival date and time, consigned country, country of origin, CPH number, departure date and time, estimated journey time, exit border control post and date, whether the destination is the permanent address, means of transport to and from the entry point (document, id, type), port of entry, port of exit and date, responsible for transport, route transiting states and transit destination country.",
+      "kind": "data",
+      "ref": "domain/animals/models/dynamics/importer-notification.ts:222-245",
+      "quote": "defraimp_arrivaldate: string | null;\n...\n  defraimp_cphnumber: string | null;\n...\n  defraimp_routetransitingstates: string | null;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-142",
+      "statement": "A PIMS Dynamics row has compliance columns: caseworker intervention, contacted due to non-compliance, health certificate attached, importing from charity, inspection required, non-compliance (calculated, comments, status, type) and veterinary document.",
+      "kind": "data",
+      "ref": "domain/animals/models/dynamics/importer-notification.ts:247-257",
+      "quote": "defraimp_healthcertificateattached: boolean | null;\n  defraimp_importingfromcharity: boolean | null;\n  defraimp_inspectionrequired: number | null;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-143",
+      "statement": "A PIMS Dynamics row has commodity columns: animals certified as, certified for, intended for, consigned country, country of origin, includes non-ablacted (unweaned) animals, internal market purpose, number of animals, number of packages, region of origin, total gross and net weight, commodity complement id, name and text, description, commodity id and id types, species class, common name, id, name, nomination and type, complex commodity, multiple commodity codes, identification of animals text, species details and weight.",
+      "kind": "data",
+      "ref": "domain/animals/models/dynamics/importer-notification.ts:259-291",
+      "quote": "defraimp_commoditiescertifiedfor: number | null;\n...\n  defraimp_commoditiesincludenonablactedanimals: boolean | null;\n  defraimp_commoditiesinternalmarketpurpose: number | null;\n  defraimp_commoditiesnumberofanimals: number | null;\n  defraimp_commoditiesnumberofpackages: number | null;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-144",
+      "statement": "In PIMS Dynamics rows, lookups arrive as '_<name>_value', option sets as numeric codes and dates as ISO strings; only the primary key, reference, state code and owner are required.",
+      "kind": "constraint",
+      "ref": "domain/animals/models/dynamics/importer-notification.ts:2-5",
+      "quote": "Lookups arrive in rows as `_<name>_value`; option sets arrive\n * as their numeric code and dates as ISO strings. A column is non-null only where the table metadata\n * requires it (primary key, reference, state code, owner); every other column can be null.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-145",
+      "statement": "A notification is stored in the 'notification' collection of the trade-imports-animals-backend database as DRAFT by the time the trader reaches the declaration.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:21 'draft notification persists as DRAFT up to declaration'",
+      "quote": "await animalsJourney.toDeclaration();\n...\n      expect(doc.status).toBe('DRAFT');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-146",
+      "statement": "After submission the stored notification's status is SUBMITTED.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:73",
+      "quote": "expect(doc.status).toBe('SUBMITTED');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-147",
+      "statement": "The stored notification keeps answer content under 'notification', while the reference number, status and fulfilments stay at the document root.",
+      "kind": "data",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:65-67",
+      "quote": "// Content fields live under doc.notification.* after the aggregate refactor\n      // (EUDPA-335). Aggregate-level fields — referenceNumber, status, fulfilments\n      // — stay at the document root.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-148",
+      "statement": "The stored origin keeps the country code (FR), whether a region code is required ('yes'), the full region code (FR-75) and the internal reference (Imports456GB).",
+      "kind": "data",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:74-77",
+      "quote": "expect(notification.origin.countryCode).toBe('FR');\n      expect(notification.origin.requiresRegionCode).toBe('yes');\n      expect(notification.origin.regionOfOriginCode).toBe('FR-75');\n      expect(notification.origin.internalReference).toBe('Imports456GB');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-149",
+      "statement": "The region of origin code's country prefix is filled in for the trader, so the trader types only the part after it ('75' becomes 'FR-75').",
+      "kind": "behaviour",
+      "ref": "domain/animals/fixtures/seeded-journey.ts:39-40",
+      "quote": "// The country prefix is filled in for the trader, so the box takes only what follows it.\n    regionOfOriginCodeSuffix: '75',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-150",
+      "statement": "The stored commodity keeps its name (Cow), the species' scientific name (Bos taurus) and the ear tag (UK123456789012).",
+      "kind": "data",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:78-80",
+      "quote": "expect(notification.commodity.name).toBe('Cow');\n      expect(species.text).toBe('Bos taurus');\n      expect(species.earTag).toBe('UK123456789012');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-151",
+      "statement": "Each species line stores a list of animal identifiers; an identifier not asked for on the journey (passport) is stored as an empty string rather than left out.",
+      "kind": "data",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:81-84",
+      "quote": "expect(species.animalIdentifiers).toEqual([{ earTag: 'UK123456789012', passport: '' }]);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-152",
+      "statement": "Each commodity complement stores the total number of animals and the total number of packages.",
+      "kind": "data",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:85-86",
+      "quote": "expect(complement.totalNoOfAnimals).toBe(1);\n      expect(complement.totalNoOfPackages).toBe(5);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-153",
+      "statement": "The stored notification keeps the reason for import (internalMarket) and the purpose in the internal market (breeding).",
+      "kind": "data",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:87-88",
+      "quote": "expect(notification.reasonForImport).toBe('internalMarket');\n      expect(notification.purposeInInternalMarket).toBe('breeding');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-154",
+      "statement": "The stored additional details keep what the animals are certified for (slaughter) and whether there are unweaned animals ('no').",
+      "kind": "data",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:89-90",
+      "quote": "expect(notification.additionalDetails.certifiedFor).toBe('slaughter');\n      expect(notification.additionalDetails.unweanedAnimals).toBe('no');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-155",
+      "statement": "Every party on a submitted notification is stored as a copy of the address-book record picked for it, with no link (address id) back to the address book.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:91-94",
+      "quote": "// Every party is a copy of the record picked for it, with no link back to\n      // the address book — on the top-level notification fields, not a separate\n      // amend-scoped snapshot.\n      expect(notification.consignor).not.toHaveProperty('addressId');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-156",
+      "statement": "A stored party keeps the record's name, email, phone and address (address line 1, town or city, postcode, country code).",
+      "kind": "data",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:95-105",
+      "quote": "name: consignor.name,\n        email: consignor.email,\n        phone: consignor.phone,\n        address: {\n          addressLine1: consignor.addressLine1,\n          townOrCity: consignor.townOrCity,\n          postcode: consignor.postcode,\n          countryCode: consignor.countryCode,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-157",
+      "statement": "The notification stores six party roles, each from the record picked for it: consignor, destination (place of destination), consignee, importer, place of origin, and consignment (the contact address).",
+      "kind": "data",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:106-110",
+      "quote": "expect(notification.destination).toMatchObject({ name: destination.name, address: { postcode: destination.postcode } });\n...\n      expect(notification.consignment).toMatchObject({ name: contact.name, address: { postcode: contact.postcode } });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-158",
+      "statement": "A stored notification holds a pre-amend snapshot of its content only while an amendment is in progress; a submitted notification has none.",
+      "kind": "data",
+      "ref": "domain/animals/models/db/notification-document.ts:100-101; tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:111",
+      "quote": "/** Pre-amend snapshot of notification content. Present only during an in-flight amendment. */\n  preAmendNotification?: NotificationContent;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-159",
+      "statement": "The CPH number is entered as county, parish and holding parts (12, 345, 6789) and stored joined as one string ('123456789').",
+      "kind": "data",
+      "ref": "domain/animals/fixtures/seeded-journey.ts:67; tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:112",
+      "quote": "{ slug: 'cph-number', form: { cphCounty: '12', cphParish: '345', cphHolding: '6789' } },\n...\n      expect(notification.cphNumber).toBe('123456789');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-160",
+      "statement": "The stored transport keeps the port of entry (GB ABD), means of transport (ROAD_VEHICLE), transport identification and transport document reference.",
+      "kind": "data",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:113-116",
+      "quote": "expect(notification.transport.portOfEntry).toBe('GB ABD');\n      expect(notification.transport.meansOfTransport).toBe('ROAD_VEHICLE');\n      expect(notification.transport.transportIdentification).toBe('FR-892-LK');\n      expect(notification.transport.transportDocumentReference).toBe('CMR-2026-884721');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-161",
+      "statement": "Transited countries are added one at a time and stored in the order they were added.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:117-118",
+      "quote": "// Countries are added one at a time, so the list keeps the order they were added in.\n      expect(notification.transport.transitedCountries).toEqual(['FR', 'BE']);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-162",
+      "statement": "Transited countries apply to land transport only.",
+      "kind": "rule",
+      "ref": "domain/animals/fixtures/seeded-journey.ts:81",
+      "quote": "// Only in scope because arrivalStep posts ROAD_VEHICLE — transitedCountries applies to land transport only.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-163",
+      "statement": "The transporter is picked from one list holding both kinds, so the pick also settles the transporter type (stored, for example, as 'Commercial') with no separate type question.",
+      "kind": "behaviour",
+      "ref": "domain/animals/fixtures/seeded-journey.ts:86-88; tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:119-120",
+      "quote": "// The list carries both kinds, so the pick settles the transporter type too\n  // and there is no separate type post.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-164",
+      "statement": "The arrival date is stored as the chosen calendar date in YYYY-MM-DD string form, whatever timezone the backend runs in.",
+      "kind": "rule",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:121-127",
+      "quote": "// EUDPA-282: the stored value must be the chosen calendar date, whatever timezone\n      // the backend JVM runs in. It is stored as a `YYYY-MM-DD` string, which has no zone\n      // to drift in.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-165",
+      "statement": "A submitted notification reloads on its view page as Submitted.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:132-134",
+      "quote": "await animalsPages.notificationView.open(referenceNumber);\n    await expect(animalsPages.notificationView.heading).toBeVisible();\n    await expect(animalsPages.notificationView.journeyStrip).toContainText('Submitted');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-166",
+      "statement": "The stored notification model also has room for a transporter's address and approval number, a destination country, a port of exit and an exit date (YYYY-MM-DD), and created and updated times.",
+      "kind": "data",
+      "ref": "domain/animals/models/db/notification-document.ts:80-104",
+      "quote": "approvalNumber: string;\n...\n  destinationCountry?: string;\n  portOfExit?: string;\n  /** A calendar date, stored as a `YYYY-MM-DD` string. */\n  exitDate?: string;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-167",
+      "statement": "An animal identifier unit can hold a microchip, passport, tattoo, ear tag, horse name and permanent address; every unit on a species line is kept.",
+      "kind": "data",
+      "ref": "domain/animals/models/db/notification-document.ts:23-34; domain/animals/models/api/notification.ts:49-61",
+      "quote": "microchip?: string;\n  passport?: string;\n  tattoo?: string;\n  earTag?: string;\n  horseName?: string;\n  permanentAddress?: StoredParty;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-168",
+      "statement": "Alongside the identifier list, each species line keeps legacy ear tag, passport and microchip fields carrying only the line's first identifier unit.",
+      "kind": "data",
+      "ref": "domain/animals/models/api/notification.ts:67-69",
+      "quote": "`earTag`/`passport`/`microchip` carry only the line's first\n * animal-identifier unit  — `animalIdentifiers` carries every\n * unit.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-169",
+      "statement": "A party's address uses address line 1, optional address line 2, town or city, optional county, postcode and country code, replacing an older shape with address line 3, city and a free-text country.",
+      "kind": "data",
+      "ref": "domain/animals/models/api/notification.ts:12-24",
+      "quote": "Field names follow the address book\n * (EUDPA-294 replaced an older shape carrying `addressLine3`, `city` and a\n * free-text `country`).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-170",
+      "statement": "The transporter is not an address-book party: it carries an approval number and a type the address book does not hold.",
+      "kind": "data",
+      "ref": "domain/animals/models/api/notification.ts:38-47",
+      "quote": "Transporter is not an address-book party: it carries an approval number and\n * type the book does not hold.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-171",
+      "statement": "Per-species counts are sent to the backend as strings (raw form values) and come back as numbers once stored.",
+      "kind": "data",
+      "ref": "domain/animals/models/api/notification.ts:63-66",
+      "quote": "Per-species counts are strings on the wire (the frontend submits raw form\n * input values) but echo back as numbers once the backend has stored them.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-172",
+      "statement": "The backend notification API echoes sections a draft has not reached yet as null.",
+      "kind": "integration",
+      "ref": "domain/animals/models/api/notification.ts:116-120",
+      "quote": "Sections a draft has not\n * reached yet are echoed back as null by the backend",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-173",
+      "statement": "The backend notification API returns, besides the content sections, the status, created and updated times, a submitted-at time, the fulfilments and a concurrency token.",
+      "kind": "data",
+      "ref": "domain/animals/models/api/notification.ts:139-144",
+      "quote": "status?: NotificationStatus;\n  created?: string;\n  updated?: string;\n  submittedAt?: string | null;\n  fulfilments?: PersistedFulfilmentEntry[];\n  concurrencyToken?: number;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-174",
+      "statement": "Each stored fulfilment is keyed by an obligation id and holds either a single value or a list of records, each with its own fulfilment id and value.",
+      "kind": "data",
+      "ref": "domain/animals/models/api/notification-fulfilments.ts:10-15",
+      "quote": "| { obligationId: string; value: unknown }\n  | {\n      obligationId: string;\n      records: Array<{ fulfilmentId: string; value: unknown }>;\n    };",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-175",
+      "statement": "The fulfilments view also carries the submitted fulfilments, the created time and a submitted-at time.",
+      "kind": "data",
+      "ref": "domain/animals/models/api/notification-fulfilments.ts:17-24",
+      "quote": "submittedFulfilments?: PersistedFulfilmentEntry[] | null;\n  status: NotificationFulfilmentsStatus;\n  created: string;\n  submittedAt?: string | null;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-176",
+      "statement": "A notification seeded through the frontend's form routes stores the same status, notification content and fulfilments as the same journey completed in the browser.",
+      "kind": "behaviour",
+      "ref": "tests/animals/e2e/journeys/persistence/api-seed-parity.spec.ts:12 'a seeded notification stores what the same journey stores through the browser'",
+      "quote": "expect(seededDoc.status).toBe(browserDoc.status);\n...\n      expect(seededDoc.notification).toEqual(browserDoc.notification);\n      expect(seededDoc.fulfilments).toEqual(browserDoc.fulfilments);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-177",
+      "statement": "Only the frontend writes the notification document alongside the fulfilments blob, so seeding goes through the frontend's save-and-continue routes, never straight to the backend.",
+      "kind": "integration",
+      "ref": "flows/animals/seeded-journey.ts:19-23",
+      "quote": "Seeds through the frontend's save-and-continue routes, never the backend: only the frontend\n * writes the notification document alongside the fulfilments blob.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-178",
+      "statement": "A page's save replaces the whole record, but each route accepts only its own page's fields.",
+      "kind": "behaviour",
+      "ref": "flows/animals/seeded-journey.ts:21-22",
+      "quote": "One post per page, because a\n * save replaces the whole record but a route accepts only its own page's fields.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-179",
+      "statement": "A POST to /notifications under the live-animals base creates a notification and redirects to that new notification's origin page.",
+      "kind": "behaviour",
+      "ref": "flows/animals/seeded-journey.ts:16-17,33-40",
+      "quote": "export const CREATE_PATH = `${SET_BASES.liveAnimals}/notifications`;\nconst CREATED_AT_ORIGIN = new RegExp(`^${CREATE_PATH}/(?<journeyId>[^/]+)/origin$`);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-180",
+      "statement": "The journey's page routes, in order, are origin, commodities, consignment-details, commodities/identification, import-reason, additional-details, consignors/select, destinations/select, place-of-origin/select, consignees/select, importers/select, addresses, cph-number, port-of-entry, transit-countries, transporters, consignment/contact/select and declaration.",
+      "kind": "data",
+      "ref": "domain/animals/fixtures/seeded-journey.ts:34-106",
+      "quote": "slug: 'origin',\n...\n  { slug: 'commodities', form: { species: COW_COMMODITY_LINE } },\n...\n  slug: 'consignment/contact/select',\n...\nexport const declarationStep: SeedStep = { slug: 'declaration', form: { declaration: 'confirmed' } };",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-181",
+      "statement": "The origin page posts countryOfOrigin, regionOfOriginCodeRequirement, regionOfOriginCodeSuffix and internalReferenceNumber.",
+      "kind": "data",
+      "ref": "domain/animals/fixtures/seeded-journey.ts:34-43",
+      "quote": "countryOfOrigin: 'FR',\n    regionOfOriginCodeRequirement: 'yes',\n...\n    regionOfOriginCodeSuffix: '75',\n    internalReferenceNumber: 'Imports456GB',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-182",
+      "statement": "The commodity picker's checkbox value is the commodity and the species id joined by '|' (for example 'Cow|1148346' for Bos taurus).",
+      "kind": "data",
+      "ref": "domain/animals/fixtures/seeded-journey.ts:27-28",
+      "quote": "// The commodity picker's checkbox value is commodity|speciesId — 'Cow' is the commodity, 1148346 the species (Bos taurus).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-183",
+      "statement": "The consignment details page takes per-line fields for number of animals and number of packages, and the identification page per-line ear tags, each suffixed with the line index.",
+      "kind": "data",
+      "ref": "domain/animals/fixtures/seeded-journey.ts:47-51",
+      "quote": "form: { [`numberOfAnimalsQuantity-${FIRST_LINE_INDEX}`]: '1', [`numberOfPackages-${FIRST_LINE_INDEX}`]: '5' },\n...\n  { slug: 'commodities/identification', form: { [`animalIdentifierEarTag-${FIRST_LINE_INDEX}`]: 'UK123456789012' } },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-184",
+      "statement": "The import reason page posts reasonForImport and purposeInInternalMarket, and the additional details page posts animalsCertifiedFor and containsUnweanedAnimals.",
+      "kind": "data",
+      "ref": "domain/animals/fixtures/seeded-journey.ts:54-57",
+      "quote": "{ slug: 'import-reason', form: { reasonForImport: 'internalMarket', purposeInInternalMarket: 'breeding' } },\n  { slug: 'additional-details', form: { animalsCertifiedFor: 'slaughter', containsUnweanedAnimals: 'no' } },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-185",
+      "statement": "Each party picker posts the chosen address-book record id as 'party'; the contact picker posts it as 'contactAddress'.",
+      "kind": "data",
+      "ref": "domain/animals/fixtures/seeded-journey.ts:59-64,91-94",
+      "quote": "{ slug: 'consignors/select', form: { party: parties.consignor } },\n...\n  form: { contactAddress: parties.contact },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-186",
+      "statement": "After the party pickers, an empty post to the addresses hub is what moves the journey past them.",
+      "kind": "behaviour",
+      "ref": "domain/animals/fixtures/seeded-journey.ts:65-66",
+      "quote": "// The empty hub post is what advances past the pickers; without it the seed stalls.\n  { slug: 'addresses', form: {} },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-187",
+      "statement": "The port-of-entry page posts arrivalDateAtPort, portOfEntry, meansOfTransport, transportIdentification and transportDocumentReference, with an arrival date one month ahead to fall inside the arrival window.",
+      "kind": "data",
+      "ref": "domain/animals/fixtures/seeded-journey.ts:32,70-79",
+      "quote": "arrivalDateAtPort: getRelativeAppDateText({ monthOffset: MONTHS_AHEAD_INSIDE_ARRIVAL_WINDOW }),\n    portOfEntry: 'GB ABD',\n    meansOfTransport: 'ROAD_VEHICLE',",
+      "confidence": "verbatim",
+      "note": "The arrival window's own bounds are not stated here; only that one month ahead falls inside it."
+    },
+    {
+      "id": "repo-tests-p3-188",
+      "statement": "Transited countries post as a repeated 'transitedCountries' field, and the transporter as a 'transporter' id from the list (for example 'garcia-livestock-transport').",
+      "kind": "data",
+      "ref": "domain/animals/fixtures/seeded-journey.ts:85-88",
+      "quote": "{ slug: 'transit-countries', form: { transitedCountries: ['FR', 'BE'] } },\n...\n  { slug: 'transporters', form: { transporter: 'garcia-livestock-transport' } },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-189",
+      "statement": "The declaration page posts declaration=confirmed; a refused submission redirects back to check your answers rather than to the confirmation page.",
+      "kind": "behaviour",
+      "ref": "domain/animals/fixtures/seeded-journey.ts:106; flows/animals/seeded-journey.ts:52-55",
+      "quote": "// redirectsTo is the assertion: a refused submission lands back on check-your-answers, not the confirmation.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-190",
+      "statement": "A notification with only origin and commodity answered (seed depth 'unlocked') reports arrival details as the next thing to complete; 'draft' depth answers through arrival, and 'readyToSubmit' adds transit countries, transporter and contact address.",
+      "kind": "behaviour",
+      "ref": "domain/animals/fixtures/seeded-journey.ts:96-104; tests/animals/e2e/pages/notification-view-states.spec.ts:9,50",
+      "quote": "const unlocked = [originStep, ...commoditySteps];\n...\n  return depth === 'draft' ? throughArrival : [...throughArrival, ...transportSteps, contactStep(parties)];",
+      "confidence": "inferred",
+      "note": "Inferred from the unlocked seed's view naming 'Complete arrival details' while import reason and additional details are also unanswered."
+    },
+    {
+      "id": "repo-tests-p3-191",
+      "statement": "Every frontend form post must carry a CSRF 'crumb' field matching the 'crumb' cookie.",
+      "kind": "constraint",
+      "ref": "adapters/http/frontend-form-client.ts:47,75",
+      "quote": "// @hapi/crumb (non-restful mode) matches the posted \"crumb\" field against the \"crumb\" cookie — the two names below must stay identical.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-192",
+      "statement": "No service is served at the frontend root: '/' redirects (302) to the default set, and each set serves its own dashboard at its base path.",
+      "kind": "behaviour",
+      "ref": "adapters/http/frontend-form-client.ts:7-13",
+      "quote": "No set is served at the root any\n * more — `/` is a server-wide 302 to the default set — so land on the set's own\n * dashboard.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-193",
+      "statement": "A page that rejects its submission re-renders with HTTP 200 and an error summary rather than redirecting; a successful save redirects.",
+      "kind": "behaviour",
+      "ref": "adapters/http/frontend-form-client.ts:79-82",
+      "quote": "// A page that rejects its payload can re-render 200 with an error summary, so a non-redirect is a failed post.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-194",
+      "statement": "A refused transition (amend, cancel, delete) also redirects, just to a different page, so success is shown by where the redirect lands.",
+      "kind": "behaviour",
+      "ref": "adapters/http/frontend-form-client.ts:71",
+      "quote": "// Pass redirectsTo for any transition (amend, cancel, delete): a refusal redirects too, just elsewhere, so 3xx alone reads it as success.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-195",
+      "statement": "Seeded notifications are created as a signed-in user of the animals frontend, reusing the project's sign-in state when it is already on that frontend.",
+      "kind": "integration",
+      "ref": "fixtures/seed-context.ts:5-27",
+      "quote": "const alreadyOnTheFrontend = projectAuthState !== undefined && projectBaseUrl === baseURL;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-196",
+      "statement": "The seeded journey's parties are the address-book records 'Origin Farm' (place of origin), 'Astra Rosales' (consignor), 'British Livestock Ltd' (consignee), 'Import Co UK' (importer), 'Tech Imports Ltd' (place of destination) and 'Animal and Plant Health Agency' (contact).",
+      "kind": "data",
+      "ref": "domain/animals/fixtures/seeded-journey.ts:7-14",
+      "quote": "placeOfOrigin: 'Origin Farm',\n  consignor: 'Astra Rosales',\n  consignee: 'British Livestock Ltd',\n  importer: 'Import Co UK',\n  placeOfDestination: 'Tech Imports Ltd',\n  contact: 'Animal and Plant Health Agency',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-197",
+      "statement": "The Mongo persistence tests run only on the compose stack, the only environment exposing Mongo.",
+      "kind": "constraint",
+      "ref": "tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:18; tests/animals/e2e/journeys/persistence/api-seed-parity.spec.ts:9",
+      "quote": "skipUnlessComposeEnvironment('the round-trip asserts on Mongo directly, which only the compose stack exposes');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-198",
+      "statement": "A submitted-notification outbox event can be placed straight onto the dead-letter queue, a FIFO queue needing a message group id and de-duplication id; the admin UI shows the event id as the message Id.",
+      "kind": "integration",
+      "ref": "domain/animals/fixtures/dlq-event.ts:16-33; adapters/queue/sqs-client.ts:21-31",
+      "quote": "Seed one message directly onto the DLQ — the same shortcut the gateway's DlqServiceIT uses.\n * eventId (shown by the admin UI as the message Id) and the FIFO group are unique per seed",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-199",
+      "statement": "Locally the queues run on an SQS emulator (Floci) in region eu-west-2 by default.",
+      "kind": "constraint",
+      "ref": "adapters/queue/sqs-client.ts:4-18",
+      "quote": "pointed at the local emulator (Floci in\n * the compose stack)\n...\n      region: process.env.AWS_REGION ?? 'eu-west-2',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-200",
+      "statement": "An outbox event carries an id, aggregate id, aggregate type, sub-type, aggregate version, event type, timestamp, data, an optional actor, optional status changes and metadata (correlation id, schema version, optional schema URL).",
+      "kind": "data",
+      "ref": "domain/animals/models/db/outbox-event-document.ts:1-18",
+      "quote": "aggregateId: string;\n  aggregateType: string;\n  subType: string;\n  aggregateVersion: number;\n  eventType: string;\n  timestamp: Date;\n  data: GbnAgEventData;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-201",
+      "statement": "An outbox event's actor has an id, source, user type, display name, organisation id and on-behalf-of organisation id; each status change has a status, date changed and optional actor.",
+      "kind": "data",
+      "ref": "domain/animals/models/db/outbox-event-document.ts:20-33",
+      "quote": "displayName: string | null;\n  organisationId: string | null;\n  onBehalfOfOrganisationId: string | null;\n...\n  status: string;\n  dateChanged: Date;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-202",
+      "statement": "An outbox event's data is the GBN-AG payload produced by the backend's GBN-AG mapper, not the raw notification shape: a model and type marker, an exchanged document and a specified consignment.",
+      "kind": "integration",
+      "ref": "domain/animals/models/db/outbox-event-document.ts:35-43",
+      "quote": "// The outbox event `data` is the GBN-AG payload produced by the backend GbnAgMapper\n// (EUDPA-274), not the raw notification shape.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-203",
+      "statement": "The GBN-AG exchanged document carries an identifier, trader-assigned id, notification status code, version id, issue date-time and referenced documents (type code, URL id, identifier, issue date-time).",
+      "kind": "data",
+      "ref": "domain/animals/models/db/outbox-event-document.ts:51-58,86-91",
+      "quote": "identifier: string;\n  traderAssignedId?: string;\n  notificationStatusCode?: string;\n  versionId?: number;\n  issueDateTime?: string;\n  referenceDocument?: GbnAgReferencedDocument[];",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-204",
+      "statement": "The GBN-AG specified consignment names the consignor, consignee, despatch, delivery, importer and carrier parties, each with identifier, URL id, name, party role code and party type codes.",
+      "kind": "data",
+      "ref": "domain/animals/models/db/outbox-event-document.ts:60-66,121-127",
+      "quote": "consignorParty?: GbnAgTradeParty;\n  consigneeParty?: GbnAgTradeParty;\n  despatchParty?: GbnAgTradeParty;\n  deliveryParty?: GbnAgTradeParty;\n  importer?: GbnAgTradeParty;\n  carrier?: GbnAgTradeParty;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-205",
+      "statement": "The GBN-AG specified consignment carries the origin country with an optional subdivision (region), the unloading base port and final destination locations, the main-carriage transport movement (mode code and contract documents) and the transit countries.",
+      "kind": "data",
+      "ref": "domain/animals/models/db/outbox-event-document.ts:68-96,128-132",
+      "quote": "originCountry?: GbnAgTradeCountry;\n  unloadingBaseportLocation?: GbnAgLogisticsLocation;\n  finalDestinationLocation?: GbnAgLogisticsLocation;\n  mainCarriageLogisticsTransportMovement?: GbnAgLogisticsTransportMovement[];\n  transitTradeCountry?: GbnAgTradeCountry[];",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-206",
+      "statement": "Each GBN-AG trade line item carries a description, scientific and common names, the number of animals, the number of packages and individual animals with typed identifiers.",
+      "kind": "data",
+      "ref": "domain/animals/models/db/outbox-event-document.ts:98-119",
+      "quote": "scientificName?: string;\n  commonName?: string;\n  specifiedLineTradeDelivery?: { productUnitQuantity: { content: number } }[];\n  physicalReferencedLogisticsPackage?: { itemQuantity: number }[];\n  individualTradeProductInstance?: GbnAgTradeProductInstance[];",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-tests-p3-207",
+      "statement": "No spec in this part proves the contents of the outbox event; the outbox model types only the sections an outbox smoke check elsewhere reads and leaves other GBN-AG slots unmapped for now.",
+      "kind": "integration",
+      "ref": "domain/animals/models/db/outbox-event-document.ts:36-37",
+      "quote": "Only the sections/fields the outbox\n// E2E smoke-checks are typed; unmapped-for-now slots are omitted or left optional.",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-tests-p3-208",
+      "statement": "The document, delete and view-state specs are tagged as duplicated in the frontend repo, so the frontend's own tests are expected to prove the same behaviour.",
+      "kind": "constraint",
+      "ref": "tests/animals/e2e/features/documents-limits.spec.ts:20; tests/animals/e2e/pages/notification-view-states.spec.ts:6; tests/animals/e2e/features/notification-delete.spec.ts:5",
+      "quote": "{ tag: ['@integration', '@duplicated-in-frontend'] }",
+      "confidence": "inferred",
+      "note": "The tag's meaning is read from its name; no file in this part defines it."
+    },
+    {
+      "id": "repo-tests-p3-209",
+      "statement": "Cancelling an amendment (Yes) and deleting a submitted notification from the dashboard are smoke-tagged, so they run in the smoke subset.",
+      "kind": "constraint",
+      "ref": "tests/animals/e2e/features/cancel-amend-ui.spec.ts:42; tests/animals/e2e/features/notification-delete.spec.ts:19",
+      "quote": "{ tag: '@smoke' },",
+      "confidence": "verbatim"
+    }
+  ]
+}

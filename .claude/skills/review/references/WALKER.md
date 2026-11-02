@@ -186,7 +186,7 @@ Re-render the markdown items view so the user can see the dispositions
 they just set:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/review/render-items.sh EUDPA-XXXXX --repo {repo}
+~/git/defra/trade-imports-workspace/tools/review/render-items.sh EUDPA-XXXXX --repo {repo} --write
 ```
 
 Print the summary:

@@ -1,0 +1,608 @@
+{
+  "source": "trace:prototype-dr2-1",
+  "structure": "Part 2, Notification type and origin of the import. Mined all 7 traces of about-the-consignment.fit.spec.js under the 'notification type' (3) and 'origin of the import' (4) describes, each opened in full with its action list, the expected values of its assertions (action detail), snapshots of the pages it rendered and, for the core and variant traces, the network log and form bodies. Traces (zip name under sources/traces-prototype, shortened here to the part after 'about-the-consignment--'): T1 notification-type-create-new-asks-what-is-being-imported-before-the-journey-starts (57 actions, validation + core); T2 notification-type-plants-for-planting-reaches-the-commodity-search-which-offers-nothing-to-pick (43, variant); T3 notification-type-starting-from-a-category-dashboard-skips-the-type-question (23, variant); T4 origin-of-the-import-country-is-optional-to-proceed-and-the-answers-are-kept (35, core); T5 origin-of-the-import-region-code-yes-reveals-the-code-box-with-the-country-prefix-and-an-empty-code-is-an-error (68, validation + variant); T6 origin-of-the-import-renders-the-origin-questions (44, core); T7 origin-of-the-import-the-country-search-offers-matching-countries-and-keeps-the-pick (37, variant). Page inventory in journey order: (1) /create-notification, a redirect only: with no category it 302s to /notification-type, with ?category=live-animals (the 'Create new' button on the live-animals dashboard) it 302s straight to /origin-of-the-import; (2) notification-type, 'What are you importing?' under the caption 'About the consignment', five radios and a Continue button, shown only when no category is given (T1 a16 and a30 error state, T2 a9); (3) origin-of-the-import, 'Origin of the import', always shown after the type: draft status and reference, country-of-origin search, region of origin code Yes/No with a conditional code box and country prefix, optional internal reference, Save and continue (T6 a28, T5 a32 error state, T7 a19 and a24, T4 a22 on return, T3 a10 from the dashboard); (4) what-are-you-importing, reached after origin, recorded here only as T2 renders it on the plants-for-planting branch (T2 a29): the rest of that page is part 3's. Conditional: the type question is skipped when the journey starts from a category dashboard; the region code box shows only when Yes is chosen; the code prefix fills only once a country is picked. The four types other than live animals and plants for planting are never chosen in any trace.",
+  "claims": [
+    {
+      "id": "trace-prototype-dr2-1-p2-001",
+      "statement": "Starting a new notification at /create-notification with no category sends the user to the notification type question at /notification-type (a 302 redirect).",
+      "kind": "behaviour",
+      "ref": "trace T1 (notification-type-create-new-asks-what-is-being-imported-before-the-journey-starts) action 10 and request 1",
+      "quote": "GET 302 create-notification; GET 200 notification-type",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-002",
+      "statement": "The notification type page's browser title is 'What are you importing? - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "trace T1 action 16 snapshot (main outerHTML)",
+      "quote": "What are you importing? - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-003",
+      "statement": "The notification type page heading is 'What are you importing?', rendered as the h1 inside the radios' fieldset legend (a large legend), with the caption 'About the consignment' inside the heading.",
+      "kind": "copy",
+      "ref": "trace T1 action 16 snapshot, legend.govuk-fieldset__legend--l h1.govuk-fieldset__heading",
+      "quote": "<span class=\"govuk-caption-l\">About the consignment</span> What are you importing?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-004",
+      "statement": "The notification type question offers five radio options, in this order: Live animals; Germinal products (semen, ova, embryos); Plants for planting; Potatoes (seed and ware); Wood products.",
+      "kind": "data",
+      "ref": "trace T1 action 16 snapshot, input[name=notificationType] labels",
+      "quote": "Live animals | Germinal products (semen, ova, embryos) | Plants for planting | Potatoes (seed and ware) | Wood products",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-005",
+      "statement": "The notification type radios submit as field notificationType with the values live-animals, germinal-products, plants-for-planting, potatoes and wood-products; none is pre-selected.",
+      "kind": "data",
+      "ref": "trace T1 action 16 snapshot, input[name=notificationType] values",
+      "quote": "value=\"live-animals\" ... value=\"germinal-products\" ... value=\"plants-for-planting\" ... value=\"potatoes\" ... value=\"wood-products\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-006",
+      "statement": "The notification type page has a single primary button labelled 'Continue', with no secondary save button and no cancel link.",
+      "kind": "copy",
+      "ref": "trace T1 action 16 snapshot, .app-origin-form-actions",
+      "quote": "<button type=\"submit\" value=\"continue\" name=\"action\" class=\"govuk-button\"> Continue </button>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-007",
+      "statement": "The notification type page's back link goes to the service dashboard at /design-release-2.1.",
+      "kind": "behaviour",
+      "ref": "trace T1 action 15 (expect .govuk-back-link href)",
+      "quote": "expectedText: [{\"string\":\"/design-release-2.1\"}]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-008",
+      "statement": "The notification type page shows no draft status or notification reference: no notification exists until a type is chosen.",
+      "kind": "behaviour",
+      "ref": "trace T1 action 16 snapshot (main has no .app-dr2-notification-status) against action 44 (origin page shows Draft)",
+      "quote": "<form method=\"post\" action=\"/design-release-2.1/notification-type\" novalidate=\"\">",
+      "confidence": "inferred",
+      "note": "Inferred from the status block being absent on the type page and present on the next page; the quote shows the type page's main opens straight into the form."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-009",
+      "statement": "Continuing from the notification type page with no option chosen re-renders the page (POST returns 200) with an error.",
+      "kind": "rule",
+      "ref": "trace T1 actions 24-30 and request 41",
+      "quote": "POST 200 notification-type",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-010",
+      "statement": "With no notification type chosen, an error summary titled 'There is a problem' lists 'Select what you are importing', linking to #notificationType (the first radio).",
+      "kind": "rule",
+      "ref": "trace T1 action 30 snapshot, .govuk-error-summary",
+      "quote": "There is a problem ... <a href=\"#notificationType\">Select what you are importing</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-011",
+      "statement": "With no notification type chosen, the radios' form group takes the error state and shows the inline message 'Select what you are importing' (id notificationType-error).",
+      "kind": "rule",
+      "ref": "trace T1 action 30 snapshot, .govuk-form-group--error and .govuk-error-message",
+      "quote": "govuk-error-message :: notificationType-error :: Error: Select what you are importing",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-012",
+      "statement": "The notification type page keeps the same browser title in its error state, with no 'Error: ' prefix.",
+      "kind": "constraint",
+      "ref": "trace T1 action 30 snapshot, document.title",
+      "quote": "What are you importing? - Import notification service - GOV.UK",
+      "confidence": "verbatim",
+      "note": "The GOV.UK error pattern prefixes the title with 'Error: '; the prototype does not."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-013",
+      "statement": "Choosing Live animals and continuing posts the type and redirects to the origin of the import page.",
+      "kind": "behaviour",
+      "ref": "trace T1 actions 38-41, requests 79-80",
+      "quote": "POST 302 notification-type; GET 200 origin-of-the-import",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-014",
+      "statement": "Once a type is chosen, the origin page shows a 'Draft' status tag next to a newly created notification reference.",
+      "kind": "behaviour",
+      "ref": "trace T1 action 44 snapshot, .app-dr2-notification-status",
+      "quote": "<strong class=\"govuk-tag app-dr2-review-status__tag app-dr2-review-status__tag--draft\">Draft</strong> <span class=\"app-dr2-notification-status__reference\">GBN-AG-26-0NVOP4</span>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-015",
+      "statement": "The draft notification reference takes the form GBN-AG-26- followed by six upper-case letters and digits, different for each new notification.",
+      "kind": "data",
+      "ref": "trace T1 a44, T2 a29, T6 a20, T3 a10, T4 a22 (.app-dr2-notification-status__reference)",
+      "quote": "GBN-AG-26-0NVOP4; GBN-AG-26-06GQI5; GBN-AG-26-0K2RHL; GBN-AG-26-071WLO; GBN-AG-26-0NZNXO",
+      "confidence": "inferred",
+      "note": "Pattern read across five references rendered in five traces; the rule that generates them is not visible. 26 is plausibly the year."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-016",
+      "statement": "The live-animals category dashboard's 'Create new' is a button-styled link to /create-notification?category=live-animals.",
+      "kind": "behaviour",
+      "ref": "trace T3 (notification-type-starting-from-a-category-dashboard-skips-the-type-question) action 8 snapshot",
+      "quote": "<a href=\"/design-release-2.1/create-notification?category=live-animals\" role=\"button\" class=\"govuk-button\" data-module=\"govuk-button\"> Create new </a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-017",
+      "statement": "Starting a notification from a category dashboard skips the notification type question: /create-notification?category=live-animals redirects straight to the origin of the import page.",
+      "kind": "rule",
+      "ref": "trace T3 action 9 and requests 41-42",
+      "quote": "GET 302 create-notification?category=live-animals; GET 200 origin-of-the-import",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-018",
+      "statement": "When the journey starts from the live-animals dashboard, the origin page's back link returns to that dashboard (/design-release-2.1/live-animals).",
+      "kind": "behaviour",
+      "ref": "trace T3 action 10 (expect .govuk-back-link href) and snapshot",
+      "quote": "expectedText: [{\"string\":\"/design-release-2.1/live-animals\"}]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-019",
+      "statement": "When the journey starts from the type question, the origin page's back link returns to the type question (/design-release-2.1/notification-type).",
+      "kind": "behaviour",
+      "ref": "trace T6 (origin-of-the-import-renders-the-origin-questions) action 20 snapshot; T4 action 22 snapshot",
+      "quote": "link \"Back\" ... /url: /design-release-2.1/notification-type",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-020",
+      "statement": "Starting from a category dashboard also creates the draft notification: the origin page shows Draft and a reference.",
+      "kind": "behaviour",
+      "ref": "trace T3 action 10 snapshot (main innerText)",
+      "quote": "Draft\nGBN-AG-26-071WLO\n\nAbout the consignment\n\nOrigin of the import",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-021",
+      "statement": "Choosing Plants for planting leads to the same origin of the import page as Live animals, then on to the commodity search page.",
+      "kind": "behaviour",
+      "ref": "trace T2 (notification-type-plants-for-planting-reaches-the-commodity-search-which-offers-nothing-to-pick) actions 9-21 and action 18 snapshot",
+      "quote": "Origin of the import - Import notification service - GOV.UK | Draft GBN-AG-26-06GQI5 About the consignment Origin of the import Country of origin",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-022",
+      "statement": "On the plants-for-planting branch, the commodity page still renders the live-animals content: the heading 'What are you importing?', the ITAHC inset text, and a hint using cattle as its example.",
+      "kind": "copy",
+      "ref": "trace T2 action 29 snapshot (main innerText)",
+      "quote": "What are you importing?\nYou must submit a separate notification for every single ITAHC. You must also submit a notification for goods that do not need an ITAHC.\nSearch for a commodity\nYou can search by common name (for example, cattle), commodity code (0102), or Latin name (Bos taurus).",
+      "confidence": "verbatim",
+      "note": "The page belongs to part 3; recorded here only as the plants branch renders it."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-023",
+      "statement": "On the plants-for-planting branch, searching the commodity box for 'cattle' offers nothing to pick: no results list opens and no selectable commodity appears.",
+      "kind": "behaviour",
+      "ref": "trace T2 action 24 (expect input[name=commodity-selection] count 0) and action 29 snapshot",
+      "quote": "value=cattle | results-hidden=true | results= | status= | selected-hidden=true",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-024",
+      "statement": "An empty commodity search on the plants branch shows no 'no results' message, and the screen-reader status stays empty.",
+      "kind": "behaviour",
+      "ref": "trace T2 action 29 snapshot (#commodity-search-status)",
+      "quote": "status=",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-025",
+      "statement": "No plant commodity search is shown working: the corpus never searches with a plant term on the plants-for-planting branch, so whether any plant commodities can be found is unknown.",
+      "kind": "behaviour",
+      "ref": "trace T2 action 23 (only 'cattle' typed)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-026",
+      "statement": "Where choosing Germinal products, Potatoes (seed and ware) or Wood products leads is never shown: no trace chooses them.",
+      "kind": "behaviour",
+      "ref": "traces T1-T3 (only live-animals and plants-for-planting are checked)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-027",
+      "statement": "Only the live-animals category dashboard start is shown; starting from any other category's dashboard is never traced.",
+      "kind": "behaviour",
+      "ref": "trace T3 (navigates to /design-release-2.1/live-animals only)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-028",
+      "statement": "The origin page's browser title is 'Origin of the import - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "trace T6 action 14 and action 20 snapshot",
+      "quote": "Origin of the import - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-029",
+      "statement": "The origin page heading is 'Origin of the import' (h1), with the caption 'About the consignment' shown above it as a separate paragraph, not a govuk caption.",
+      "kind": "copy",
+      "ref": "trace T1 action 44 snapshot, .app-origin-page__header",
+      "quote": "<p class=\"app-origin-page__caption\">About the consignment</p> <h1 class=\"app-origin-page__heading\">Origin of the import</h1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-030",
+      "statement": "The origin page asks for the country of origin under a level-2 heading 'Country of origin'.",
+      "kind": "copy",
+      "ref": "trace T6 action 17 and action 20 snapshot",
+      "quote": "heading \"Country of origin\" [level=2]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-031",
+      "statement": "The country of origin is a type-ahead search box (id country-of-origin, type search) with the placeholder 'Search for a country' and a search icon button labelled 'Search' for screen readers.",
+      "kind": "data",
+      "ref": "trace T6 action 18 and T1 action 44 snapshot, .app-origin-country",
+      "quote": "<input class=\"app-commodity-search__input\" id=\"country-of-origin\" type=\"search\" autocomplete=\"off\" placeholder=\"Search for a country\" ...> <button class=\"app-commodity-search__button\" type=\"button\"> <span class=\"govuk-visually-hidden\">Search</span>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-032",
+      "statement": "The country search box has no visible label or hint; the h2 'Country of origin' is not associated with the input as its label.",
+      "kind": "constraint",
+      "ref": "trace T1 action 44 snapshot, .app-origin-country",
+      "quote": "<h2 class=\"app-eu-heading-m app-origin-country__label\">Country of origin</h2>",
+      "confidence": "inferred",
+      "note": "Read from the markup: the h2 is not a <label for>, and the accessibility tree names the box only by its placeholder ('searchbox \"Search for a country\"')."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-033",
+      "statement": "The chosen country is submitted in a hidden field countryOfOrigin, holding the country name, not the visible search box (which has no name).",
+      "kind": "data",
+      "ref": "trace T5 request 120 body; T2 action 18 snapshot, input.app-country-search__value",
+      "quote": "countryOfOrigin=France&regionOfOriginRequired=Yes&regionOfOriginCodeSuffix=75&internalReference=&action=continue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-034",
+      "statement": "Typing part of a country name opens a results list of matching countries, each a button, with the typed letters shown in bold.",
+      "kind": "behaviour",
+      "ref": "trace T7 (origin-of-the-import-the-country-search-offers-matching-countries-and-keeps-the-pick) action 19 snapshot, #country-search-results",
+      "quote": "<button type=\"button\" class=\"app-country-search__option\" data-country=\"Netherlands\"> <strong class=\"app-commodity-search__match\">Neth</strong>erlands </button>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-035",
+      "statement": "Typing 'Neth' offers exactly one country, Netherlands.",
+      "kind": "data",
+      "ref": "trace T7 actions 15-16 and action 19 snapshot",
+      "quote": "status=1 result available",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-036",
+      "statement": "The country results list is labelled 'Country search results' and a screen-reader live region announces how many results are available.",
+      "kind": "copy",
+      "ref": "trace T7 action 19 snapshot, #country-search-results and .app-country-search__status",
+      "quote": "aria-label=\"Country search results\" ... status=1 result available",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-037",
+      "statement": "Picking a country from the results closes the list, puts the country name in the search box and in countryOfOrigin, and announces 'Selected <country>' to screen readers.",
+      "kind": "behaviour",
+      "ref": "trace T7 actions 23-24 and action 24 snapshot",
+      "quote": "hidden=true | value=Netherlands | search=Netherlands | status=Selected Netherlands",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-038",
+      "statement": "The country search runs in the browser: typing into it fires no network request, so the country list is held client-side.",
+      "kind": "integration",
+      "ref": "trace T7 requests (only page loads, static assets and browser-sync; country-search.js 8.0K loaded)",
+      "quote": "GET 200 country-search.js 8.0K",
+      "confidence": "inferred",
+      "note": "No data call appears between the origin page load and the end of the trace; the full country list, its size and source are not visible."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-039",
+      "statement": "What the country search shows when nothing matches is never traced.",
+      "kind": "behaviour",
+      "ref": "traces T2, T5, T7 (only 'Fran' and 'Neth' typed)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-040",
+      "statement": "Typing 'Fran' offers France, and picking it sets countryOfOrigin to France.",
+      "kind": "data",
+      "ref": "trace T2 actions 15-17 and action 18 snapshot",
+      "quote": "country=France | search=France",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-041",
+      "statement": "The origin page asks 'Does the consignment have a region of origin code?' as a medium fieldset legend over Yes and No radios.",
+      "kind": "copy",
+      "ref": "trace T1 action 44 snapshot, .app-origin-radios-block legend",
+      "quote": "Does the consignment have a region of origin code?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-042",
+      "statement": "The region of origin code question has the hint 'Check the health certificate for a region of origin code. You can add the code later if you do not have the certificate now.'",
+      "kind": "copy",
+      "ref": "trace T1 action 44 snapshot, #region-of-origin-hint",
+      "quote": "Check the health certificate for a region of origin code. You can add the code later if you do not have the certificate now.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-043",
+      "statement": "The region of origin code answer submits as regionOfOriginRequired with the values Yes and No; neither is pre-selected on a new notification.",
+      "kind": "data",
+      "ref": "trace T1 action 44 snapshot, input[name=regionOfOriginRequired]",
+      "quote": "name=\"regionOfOriginRequired\" type=\"radio\" value=\"Yes\" ... name=\"regionOfOriginRequired\" type=\"radio\" value=\"No\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-044",
+      "statement": "The region of origin code box is hidden until Yes is chosen; choosing Yes reveals it as a radios conditional reveal under the Yes option.",
+      "kind": "rule",
+      "ref": "trace T5 (origin-of-the-import-region-code-yes-reveals-...) actions 15-17",
+      "quote": "Expect \"toBeHidden\" locator('#region-of-origin-code-suffix'); Check locator('input[name=\"regionOfOriginRequired\"][value=\"Yes\"]'); Expect \"toBeVisible\" getByLabel('Enter the region of origin code')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-045",
+      "statement": "The revealed region code box is labelled 'Enter the region of origin code'.",
+      "kind": "copy",
+      "ref": "trace T1 action 44 snapshot, label[for=region-of-origin-code-suffix]",
+      "quote": "Enter the region of origin code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-046",
+      "statement": "The region code box has the hint 'Enter up to 5 characters.'",
+      "kind": "copy",
+      "ref": "trace T5 action 18 (expect main to contain) and T1 action 44 snapshot, #region-of-origin-code-hint",
+      "quote": "Enter up to 5 characters.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-047",
+      "statement": "The region code box (field regionOfOriginCodeSuffix) accepts at most 5 characters, enforced by the input's maxlength.",
+      "kind": "rule",
+      "ref": "trace T1 action 44 snapshot, #region-of-origin-code-suffix",
+      "quote": "name=\"regionOfOriginCodeSuffix\" type=\"text\" value=\"\" maxlength=\"5\" autocomplete=\"off\" spellcheck=\"false\" inputmode=\"text\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-048",
+      "statement": "The region code box has a prefix showing the chosen country's two-letter code, which is empty until a country is picked.",
+      "kind": "behaviour",
+      "ref": "trace T1 action 44 snapshot (empty prefix); T5 action 53 snapshot (FR)",
+      "quote": "<div class=\"govuk-input__prefix app-region-origin-code__prefix\" id=\"region-of-origin-code-prefix\" aria-hidden=\"true\"></div>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-049",
+      "statement": "Picking France fills the region code prefix with FR.",
+      "kind": "behaviour",
+      "ref": "trace T5 actions 40-45 and action 53 snapshot; T2 action 18 snapshot",
+      "quote": "prefix=FR | suffix=75 | country=France",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-050",
+      "statement": "Picking Netherlands fills the region code prefix with NL.",
+      "kind": "behaviour",
+      "ref": "trace T7 action 24 snapshot",
+      "quote": "prefix=NL",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-051",
+      "statement": "The country prefix is hidden from screen readers and is not submitted: the form posts only the code typed after it.",
+      "kind": "data",
+      "ref": "trace T5 request 120 body; T1 action 44 snapshot (aria-hidden prefix)",
+      "quote": "regionOfOriginCodeSuffix=75",
+      "confidence": "verbatim",
+      "note": "How the prefix and suffix are combined into one region code is not visible in the trace."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-052",
+      "statement": "Choosing Yes for a region of origin code and leaving the code empty is an error: the page re-renders (POST returns 200).",
+      "kind": "rule",
+      "ref": "trace T5 actions 25-32 and request 81 (body countryOfOrigin=&regionOfOriginRequired=Yes&regionOfOriginCodeSuffix=)",
+      "quote": "POST 200 origin-of-the-import",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-053",
+      "statement": "With Yes chosen and no code, the error summary 'There is a problem' lists 'Enter the region of origin code', linking to #region-of-origin-code-suffix.",
+      "kind": "rule",
+      "ref": "trace T5 action 32 snapshot, .govuk-error-summary",
+      "quote": "There is a problem\nEnter the region of origin code\n#region-of-origin-code-suffix",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-054",
+      "statement": "With Yes chosen and no code, the code box's form group takes the error state with the inline message 'Enter the region of origin code' (id region-of-origin-code-error), and Yes stays chosen with the box still revealed.",
+      "kind": "rule",
+      "ref": "trace T5 action 32 snapshot, .app-region-origin-code",
+      "quote": "<p id=\"region-of-origin-code-error\" class=\"govuk-error-message\"> <span class=\"govuk-visually-hidden\">Error:</span> Enter the region of origin code </p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-055",
+      "statement": "In the region code error state the input itself does not take the govuk-input--error style.",
+      "kind": "constraint",
+      "ref": "trace T5 action 32 and action 53 snapshots, #region-of-origin-code-suffix class",
+      "quote": "inputclass=govuk-input app-region-origin-code__input",
+      "confidence": "verbatim",
+      "note": "The standard GOV.UK text input pattern adds govuk-input--error to the input in an error state."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-056",
+      "statement": "The origin page keeps the same browser title in its error state, with no 'Error: ' prefix.",
+      "kind": "constraint",
+      "ref": "trace T5 action 32 snapshot, document.title",
+      "quote": "Origin of the import - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-057",
+      "statement": "An empty country of origin is not an error: with Yes and no code, the only error raised is the region code one, though no country was chosen.",
+      "kind": "rule",
+      "ref": "trace T5 request 81 body and action 32 snapshot (error summary has one item)",
+      "quote": "countryOfOrigin=&regionOfOriginRequired=Yes&regionOfOriginCodeSuffix=&internalReference=&action=continue",
+      "confidence": "inferred",
+      "note": "Inferred from the one-item error summary for a submission with no country."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-058",
+      "statement": "A country, Yes and a region code save and continue to the commodity page at /what-are-you-importing.",
+      "kind": "behaviour",
+      "ref": "trace T5 actions 53-55, request 120",
+      "quote": "location: /design-release-2.1/what-are-you-importing",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-059",
+      "statement": "The country of origin is optional to proceed: saving with No for region code, an internal reference and no country continues to /what-are-you-importing.",
+      "kind": "rule",
+      "ref": "trace T4 (origin-of-the-import-country-is-optional-to-proceed-and-the-answers-are-kept) actions 14-18",
+      "quote": "expectedText: [{\"regexSource\":\"\\\\/design-release-2\\\\.1\\\\/what-are-you-importing(\\\\?.*)?$\"}]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-060",
+      "statement": "Returning to the origin page keeps the saved answers: No stays chosen, the internal reference shows what was entered, and the country stays empty.",
+      "kind": "behaviour",
+      "ref": "trace T4 actions 19-22 and action 22 snapshot",
+      "quote": "ref=REF-2026/01 | checked=regionOfOriginRequired=No | country=",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-061",
+      "statement": "The internal reference accepts free text including letters, digits, a hyphen and a slash (REF-2026/01 was saved and shown back).",
+      "kind": "data",
+      "ref": "trace T4 action 15 (Fill \"REF-2026/01\") and action 22 snapshot",
+      "quote": "Fill \"REF-2026/01\" locator('#internal-reference')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-062",
+      "statement": "The origin page asks for an optional internal reference, labelled 'Your internal reference for this consignment (optional)' as a medium label.",
+      "kind": "copy",
+      "ref": "trace T6 action 21 and T1 action 44 snapshot, label[for=internal-reference]",
+      "quote": "Your internal reference for this consignment (optional)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-063",
+      "statement": "The internal reference has the hint 'Enter any internal reference you want to use to identify this consignment, or leave blank.'",
+      "kind": "copy",
+      "ref": "trace T1 action 44 snapshot, #internal-reference-hint",
+      "quote": "Enter any internal reference you want to use to identify this consignment, or leave blank.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-064",
+      "statement": "The internal reference is a single text input submitted as internalReference, with no visible length limit.",
+      "kind": "data",
+      "ref": "trace T1 action 44 snapshot, #internal-reference",
+      "quote": "<input class=\"govuk-input app-origin-reference__input\" id=\"internal-reference\" name=\"internalReference\" type=\"text\" value=\"\" aria-describedby=\"internal-reference-hint\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-065",
+      "statement": "Any length or character rules for the internal reference are never shown: no trace enters an invalid one.",
+      "kind": "rule",
+      "ref": "traces T4, T6",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-066",
+      "statement": "The origin page's only button is 'Save and continue': it has no 'Save and return to overview' button and no 'Cancel and return to overview' link.",
+      "kind": "copy",
+      "ref": "trace T6 actions 24-25",
+      "quote": "button[name=\"action\"] expectedText: [{\"string\":\"Save and continue\"}]; role=link[name=\"Cancel and return to overview\"] expectedNumber: 0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-067",
+      "statement": "What happens when the origin page is saved without answering the region of origin code question is never shown.",
+      "kind": "rule",
+      "ref": "traces T4-T7 (every submit chooses Yes or No)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-068",
+      "statement": "Validation of the region code's content (characters allowed, or a code that does not fit the country) is never shown beyond the empty-code error.",
+      "kind": "rule",
+      "ref": "trace T5 (only an empty code and '75' are submitted)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-069",
+      "statement": "Whether a region code already saved, or a chosen country, is shown back on return to the origin page is never traced; only No, an empty country and the internal reference are checked on return.",
+      "kind": "behaviour",
+      "ref": "trace T4 actions 20-22",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-070",
+      "statement": "The origin page builds its country search and region code box outside the govuk-frontend toolbox: a custom search component (app-commodity-search, reused from the commodity search) with its own results list, custom heading and caption classes (app-origin-page__caption, app-eu-heading-m) and a govuk-input__prefix wrapped in app-region-origin-code classes. A GOV.UK accessible autocomplete or a select, and a standard govuk-caption-l, would be the standard replacements.",
+      "kind": "constraint",
+      "ref": "trace T6 action 28 snapshot (class list in main)",
+      "quote": "app-commodity-search app-commodity-search-panel app-commodity-search-wrapper ... app-country-search__status app-country-search__value ... app-eu-heading-m ... app-origin-page__caption ... app-region-origin-code__prefix govuk-button govuk-fieldset ... govuk-input__prefix govuk-input__wrapper ... govuk-radios__conditional",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-071",
+      "statement": "The origin page otherwise uses standard GOV.UK components: Radios with a conditional reveal, Fieldset, Hint, Text input with a prefix, Tag and Button.",
+      "kind": "constraint",
+      "ref": "trace T6 action 28 snapshot (class list in main)",
+      "quote": "govuk-fieldset govuk-fieldset__legend govuk-fieldset__legend--m govuk-form-group ... govuk-hint govuk-input govuk-input__prefix govuk-input__wrapper govuk-label govuk-label--m govuk-radios govuk-radios__conditional ... govuk-tag",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-072",
+      "statement": "The notification type page uses only the standard GOV.UK Radios, Fieldset with a heading legend and caption, and Button, inside a custom app-origin-form-actions wrapper.",
+      "kind": "constraint",
+      "ref": "trace T1 action 16 snapshot (main outerHTML)",
+      "quote": "<div class=\"govuk-radios\" data-module=\"govuk-radios\"> ... <div class=\"app-origin-form-actions\"> <div class=\"app-origin-actions\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-073",
+      "statement": "The origin page and the type page are plain server-posted forms (no JavaScript-only submit): the type form posts to /design-release-2.1/notification-type and the origin form to /design-release-2.1/origin-of-the-import, each with action=continue.",
+      "kind": "integration",
+      "ref": "trace T1 action 16 and action 44 snapshots (form action), T5 request 120",
+      "quote": "<form method=\"post\" action=\"/design-release-2.1/origin-of-the-import\" novalidate=\"\" class=\"app-origin-form\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p2-074",
+      "statement": "No call to any external system fires on the type or origin pages: the network log holds only page loads, form posts, static assets and the prototype's live-reload socket.",
+      "kind": "integration",
+      "ref": "trace T1 requests 1-118; T3 requests 1-80; T7 requests 1-80",
+      "quote": "POST 302 notification-type; GET 200 origin-of-the-import; GET 200 country-search.js",
+      "confidence": "inferred",
+      "note": "This is a GOV.UK Prototype Kit build, so state is held in the session; the real service's persistence and reference-data calls are not visible here."
+    }
+  ]
+}

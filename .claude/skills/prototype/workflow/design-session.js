@@ -3,12 +3,12 @@ export const meta = {
   description:
     'Work through a list of design requests in one design release: split each into parts, route each part to its reference with references/ROUTING.md, build it, check it, show the whole session in one gallery, and save each landed part as its own commit',
   whenToUse:
-    'Several changes to one design release in one go, such as notes from a crit or a feedback round. Launch by scriptPath with args {set, requests}; both are required. Optional: keepOffMain (boolean) when the designer already asked to keep this session off main. Never pushes.',
+    "Several changes to one design release in one go, such as notes from a crit or a feedback round. Launch by scriptPath with args {set, requests}; both are required. Optional: keepOffMain (boolean) when the designer already asked to keep this session off main; designerMandate ({ id }) when the skill has recorded the designer's own permission for release patterns with designer:mandate record. Never pushes.",
   phases: [
     {
       title: 'Classify',
       detail:
-        'the release is yours; each request is split into parts, and each part gets a reference and its pages from references/ROUTING.md'
+        "any designer's mandate is confirmed from mandates.md; the release is yours; each request is split into parts, and each part gets a reference and its pages from references/ROUTING.md"
     },
     {
       title: 'Prepare',
@@ -73,6 +73,7 @@ const git = (command) => `git -C ${REPO} ${command}`
 
 const NOT_RELEASES = ['high-risk-plants', 'sample-journey']
 const KEBAB = /^[a-z0-9]+(-[a-z0-9]+)*$/
+const MANDATE_ID = /^m-\d{4}-\d{2}-\d{2}-\d+$/
 const MAX_SLUG_WORDS = 5
 
 // The references a session can run for a request. Each one changes a design
@@ -84,17 +85,23 @@ const SESSION_REFERENCES = [
   'example-data',
   'fake-a-service'
 ]
+const PATTERN_REFERENCE = 'custom-pattern'
+
+const sessionReferences = (mandate) =>
+  mandate ? [...SESSION_REFERENCES, PATTERN_REFERENCE] : SESSION_REFERENCES
 
 // check-my-change's rule: words, layout and examples need the quick check
 // (which also runs the code rules on every changed file, so an example that
 // breaks one is caught here, not in a later request's check); flow, model and
-// service changes need the full one.
+// service changes need the full one, and so does a release pattern, whose
+// asset tests run only there.
 const CHECK_LEVEL = {
   'change-the-words': 'quick',
   'match-the-design': 'quick',
   'example-data': 'quick',
   'change-the-journey': 'full',
-  'fake-a-service': 'full'
+  'fake-a-service': 'full',
+  [PATTERN_REFERENCE]: 'full'
 }
 
 const refuse = (reason) => {
@@ -120,8 +127,17 @@ if (
 ) {
   refuse('requests must be a list of at least one request, each in words')
 }
+if (
+  config.designerMandate !== undefined &&
+  !MANDATE_ID.test(config.designerMandate?.id ?? '')
+) {
+  refuse(
+    "designerMandate must be { id } with an id that designer:mandate record printed, such as m-2026-10-27-1. Leave it out when the designer gave no permission for release patterns"
+  )
+}
 
 const SET_DIR = `src/server/app/sets/${config.set}`
+const SKILL_DIR = '~/git/defra/trade-imports-workspace/.claude/skills/prototype'
 
 // The prototype-owned service folders: each has its own line in the ours
 // list of overrides.json. Every other folder under src/server/app/services/
@@ -136,17 +152,50 @@ const PROTOTYPE_SERVICE_GLOBS = PROTOTYPE_SERVICES.map(
   (name) => `src/server/app/services/${name}/`
 )
 
-const GUARD_RAILS = [
-  'GUARD RAILS:',
-  `- Every command acts on the prototype repository at ${REPO}, never on the workspace repo you were launched from: use "${npm('<script>')} -- ..." for every npm command and "${git('<command>')}" for every git command. A command without that prefix would act on the wrong repo.`,
-  'Run one Bash command per call: no &&, ;, | or cd.',
-  `- Change files only under ${SET_DIR}/, src/server/app/routes-${config.set}.js, src/server/prototype-seed/scenarios/${config.set}.js, src/server/prototype-seed/fixtures/${config.set}/, src/server/prototype-data/${config.set}/, src/server/prototype-support/ and the prototype-owned service folders (${PROTOTYPE_SERVICE_GLOBS.join(', ')}, or any other src/server/app/services/<name>/ that overrides.json lists on its own line in ours), all inside ${REPO}, and only when your step says to change files. A new prototype-owned service is made only with ${npm('designer:service')} -- new, which adds its own ours line to overrides.json.`,
-  '- Never change any other folder under src/server/app/services/ (address-book, countries, ports, persistence, set-context): they belong to the real service.',
+const RELEASE_PATTERN_FILES = `${SET_DIR}/assets/**, ${SET_DIR}/layout.njk, ${SET_DIR}/patterns.md or ${SET_DIR}/mandates.md`
+
+const noMandateRails = () => [
+  `- This session has no designer's mandate. Never create or change ${RELEASE_PATTERN_FILES}, and never add an app-* class. When a part needs a pattern GOV.UK and MoJ lack, build the nearest GOV.UK option and add a row to ${SET_DIR}/design-gaps.md.`,
   '- Never change *.scss, src/client/**, webpack.config.js, src/server/app/shared/**, .claude/settings.json (in the prototype or the workspace) or any other set.',
-  '- Never add *.test.js or *.fit.spec.js files to a design release.',
-  '- Never push, never run git reset, never use --no-verify.',
-  '- Never ask the designer a question: you are running unattended.'
-].join('\n')
+  '- Never add *.test.js or *.fit.spec.js files to a design release.'
+]
+
+const mandateRails = (mandate) => [
+  `- DESIGNER'S MANDATE ${mandate.id}. The designer gave this permission in their own session, and ${SET_DIR}/mandates.md records it:`,
+  `  Words: "${mandate.words}"`,
+  `  Scope: ${mandate.scope}`,
+  `- Within that scope you may build a release pattern, following ${SKILL_DIR}/references/custom-pattern.md ("Working inside a workflow"): change ${SET_DIR}/assets/**, ${SET_DIR}/layout.njk and ${SET_DIR}/patterns.md, and use app-${config.set}- classes. Outside that scope, build the nearest GOV.UK option and add a row to ${SET_DIR}/design-gaps.md. No script checks the scope, so keep to it yourself.`,
+  '- Climb the ladder first: GOV.UK Frontend, then MoJ Frontend. Build a custom pattern only when neither does the job, and give one line per rung you checked in notes.',
+  `- Every patterns.md entry you write says Asked by: "${mandate.words}" (${mandate.id}), with those words exactly. A need or hypothesis you wrote yourself ends "(proposed: confirm)".`,
+  '- Give every patterns.md entry you add Status: Option, for the designer to choose, even when you build only one. Never pick one for them.',
+  `- To change a pattern the release already has, keep its entry and its Asked by lines, and add an Asked by line quoting this mandate when it has none.`,
+  `- Never create or change ${SET_DIR}/mandates.md, and never run designer:mandate.`,
+  '- Never change src/client/**, webpack.config.js, webpack.prototype.config.js, src/server/app/shared/**, .claude/settings.json (in the prototype or the workspace) or any other set. Never write a style attribute, an inline <style> or an inline <script>.',
+  `- Never add *.test.js or *.fit.spec.js files to a design release, except ${SET_DIR}/assets/<name>.test.js beside a pattern's own script module.`
+]
+
+const guardRailsWith = (editLines) =>
+  [
+    'GUARD RAILS:',
+    `- Every command acts on the prototype repository at ${REPO}, never on the workspace repo you were launched from: use "${npm('<script>')} -- ..." for every npm command and "${git('<command>')}" for every git command. A command without that prefix would act on the wrong repo.`,
+    'Run one Bash command per call: no &&, ;, | or cd.',
+    `- Change files only under ${SET_DIR}/, src/server/app/routes-${config.set}.js, src/server/prototype-seed/scenarios/${config.set}.js, src/server/prototype-seed/fixtures/${config.set}/, src/server/prototype-data/${config.set}/, src/server/prototype-support/ and the prototype-owned service folders (${PROTOTYPE_SERVICE_GLOBS.join(', ')}, or any other src/server/app/services/<name>/ that overrides.json lists on its own line in ours), all inside ${REPO}, and only when your step says to change files. A new prototype-owned service is made only with ${npm('designer:service')} -- new, which adds its own ours line to overrides.json.`,
+    '- Never change any other folder under src/server/app/services/ (address-book, countries, ports, persistence, set-context): they belong to the real service.',
+    ...editLines,
+    '- Never push, never run git reset, never use --no-verify.',
+    '- Never ask the designer a question: you are running unattended.'
+  ].join('\n')
+
+// A step that edits files by following a reference: the mandate, or its
+// absence, decides what it may build.
+const builderRails = (mandate) =>
+  guardRailsWith(mandate ? mandateRails(mandate) : noMandateRails())
+
+// A step that only runs the commands it is given, which may stage or undo a
+// release's own files but never edits one.
+const GUARD_RAILS = guardRailsWith([
+  '- Never change src/client/**, webpack.config.js, src/server/app/shared/**, .claude/settings.json (in the prototype or the workspace) or any other set.'
+])
 
 const withModel = (tier, opts) =>
   MODELS[tier] ? { ...opts, model: MODELS[tier] } : opts
@@ -183,14 +232,26 @@ const CLASSIFY_SCHEMA = {
   ]
 }
 
+const MANDATE_SCHEMA = {
+  type: 'object',
+  properties: {
+    found: { type: 'boolean' },
+    words: { type: 'string' },
+    scope: { type: 'string' },
+    reason: { type: 'string' }
+  },
+  required: ['found', 'words', 'scope', 'reason']
+}
+
 const PREPARE_SCHEMA = {
   type: 'object',
   properties: {
     ready: { type: 'boolean' },
     branch: { type: 'string' },
+    baseCommit: { type: 'string' },
     reason: { type: 'string' }
   },
-  required: ['ready', 'branch', 'reason']
+  required: ['ready', 'branch', 'baseCommit', 'reason']
 }
 
 const BUILD_SCHEMA = {
@@ -260,7 +321,57 @@ const COMMIT_SCHEMA = {
 const numbered = (requests) =>
   requests.map((request, index) => `${index + 1}. ${request}`).join('\n')
 
-const classify = () =>
+const confirmMandate = (id) =>
+  agent(
+    [
+      `Read one recorded designer's mandate from the design release "${config.set}".`,
+      `Run: ${npm('designer:mandate')} -- show --set ${config.set} --id ${id}`,
+      "It prints JSON after npm's own first lines. When the JSON holds the entry, found is true, and words and scope are copied from it character for character, with nothing tidied. When it refuses, finds no such entry or the command is missing, found is false, words and scope are empty, and reason is what it printed.",
+      'Change nothing.',
+      GUARD_RAILS
+    ].join('\n'),
+    withModel('runner', {
+      label: 'confirm mandate',
+      phase: 'Classify',
+      schema: MANDATE_SCHEMA
+    })
+  )
+
+/**
+ * The designer's mandate this session works under, read back from the
+ * release's mandates.md, and the line the summary gives about it.
+ */
+const confirmedMandate = async () => {
+  if (config.designerMandate === undefined) {
+    return { mandate: null, note: [] }
+  }
+  const { id } = config.designerMandate
+  const shown = await confirmMandate(id)
+  if (!shown?.found) {
+    return {
+      mandate: null,
+      note: [
+        `The designer's mandate ${id} could not be read from ${SET_DIR}/mandates.md (${shown?.reason || 'the step did not answer'}), so this session built no release patterns.`
+      ]
+    }
+  }
+  return {
+    mandate: { id, words: shown.words, scope: shown.scope },
+    note: [`Worked under the designer's mandate ${id}: "${shown.words}".`]
+  }
+}
+
+const classifyMandateLines = (mandate) =>
+  mandate
+    ? [
+        `The designer has a recorded mandate (${mandate.id}) for release patterns: "${mandate.words}" Scope: ${mandate.scope}.`,
+        `A part within that scope that needs something GOV.UK and MoJ lack (new styles, a script, a component switched on) is a ${PATTERN_REFERENCE} part. Read ${SKILL_DIR}/references/${PATTERN_REFERENCE}.md too.`
+      ]
+    : [
+        "This session has no designer's mandate. Never refuse a part for needing styles, a script or a component GOV.UK and MoJ lack: route it to match-the-design, which builds the nearest GOV.UK option and logs a design gap. Its reason says: \"Built the nearest GOV.UK option and logged a design gap. Ask in your own words, with what you want research to learn, and it can be built.\""
+      ]
+
+const classify = (mandate) =>
   agent(
     [
       `A designer has asked for these changes to the design release "${config.set}":`,
@@ -274,7 +385,8 @@ const classify = () =>
       '',
       'Step 2. Split each request into parts and route each part to exactly one reference.',
       'Read ~/git/defra/trade-imports-workspace/.claude/skills/prototype/references/ROUTING.md: "Working out what they want", the "Outcomes" and "Phrases" tables, "When no single row fits" and "Requests that fit two references". Then read each of these references, at ~/git/defra/trade-imports-workspace/.claude/skills/prototype/references/<name>.md (in the workspace, not the prototype repo — this skill lives in the workspace):',
-      SESSION_REFERENCES.join(', '),
+      sessionReferences(mandate).join(', '),
+      ...classifyMandateLines(mandate),
       'Follow "Working out what they want": name the outcome of each request, split it into parts, and map each part with the Outcomes table, then the Phrases table, matching on meaning rather than exact words ("overdue" is "late", "attach" is "upload").',
       'A request with one part gets one entry. A request with several parts (new words and a layout change, say, or a vague note such as "the dashboard feels thin") gets one entry per part, in the order to build them, all with the same index. Give each entry a part: one short sentence saying exactly what that part changes, specific enough to build without asking. For a one-part request, part may repeat the request.',
       'Never refuse a request for being vague. Split it into the concrete parts a designer most likely meant, using the release as it is now, and say in reason which reading you took.',
@@ -311,6 +423,7 @@ const prepare = (slug) =>
       `   - Any other branch (a feat/, chore/ or trial branch that is not this designer's own): run: ${git(`switch -c design/${config.set}-${slug}`)}`,
       '     The new branch starts from the current one. If git says the branch already exists, stop: ready is false and reason names the branch and asks the designer to switch to it or pick another name.',
       `3. Run: ${git('branch --show-current')}, and return the branch name in branch.`,
+      `4. Run: ${git('rev-parse HEAD')}, and return the commit it prints in baseCommit.`,
       GUARD_RAILS
     ].join('\n'),
     withModel('runner', {
@@ -360,7 +473,7 @@ const partLine = (request, route) =>
       ]
     : []
 
-const build = (request, route) =>
+const build = (request, route, context) =>
   agent(
     [
       `Make one change in the design release "${config.set}". The designer asked:`,
@@ -375,7 +488,7 @@ const build = (request, route) =>
       "- New words go in copy.en.js, and the same key in copy.cy.js as '[Welsh needed] <English>' unless the designer gave the Welsh.",
       `- Run ${npm('designer:format')} when you have finished editing.`,
       'Return built, every file you created or changed (repo-relative paths, relative to the prototype repo), the recipe you followed (its file name, such as add-a-field or move-a-page, or "none"), whether you added any [Welsh needed] marker, and notes in one or two plain sentences.',
-      GUARD_RAILS
+      builderRails(context.mandate)
     ].join('\n'),
     withModel('builder', {
       label: `build ${route.id}`,
@@ -384,10 +497,15 @@ const build = (request, route) =>
     })
   )
 
-const check = (label, level) =>
+const runFlags = (context) =>
+  context.mandate
+    ? ` --since ${context.baseCommit} --mandate ${context.mandate.id}`
+    : ` --since ${context.baseCommit} --no-new-patterns`
+
+const check = (label, level, context) =>
   agent(
     [
-      `1. Run: ${npm('designer:check')} -- --set ${config.set} --${level}`,
+      `1. Run: ${npm('designer:check')} -- --set ${config.set} --${level}${runFlags(context)}`,
       '   Report whether it passed, its plain-English summary (every failing row in full) and the log path it prints.',
       `2. Run: ${npm('designer:where')} -- --changed --json`,
       "   The JSON comes after npm's own first lines. Return every record as { path, owner } in changed.",
@@ -397,7 +515,16 @@ const check = (label, level) =>
     withModel('runner', { label, phase: 'Build', schema: CHECK_SCHEMA })
   )
 
-const repair = (request, route, failure) =>
+const patternRepairLines = (context) =>
+  context.mandate
+    ? [
+        `If it says a pattern must cite the designer's mandate ${context.mandate.id}, or must be an Option, fix that entry in ${SET_DIR}/patterns.md to say so. If it says the run added a mandate, take that entry out of ${SET_DIR}/mandates.md. Never change any other mandates.md entry.`
+      ]
+    : [
+        `If it says this run has no designer's mandate, take out what this request added to ${RELEASE_PATTERN_FILES} and every app-* class it added, then build the nearest GOV.UK option and add a row to ${SET_DIR}/design-gaps.md. Never edit mandates.md or patterns.md to make it pass.`
+      ]
+
+const repair = (request, route, failure, context) =>
   agent(
     [
       `The check of the design release "${config.set}" failed after this request was built:`,
@@ -406,8 +533,9 @@ const repair = (request, route, failure) =>
       `Summary: ${failure.summary}`,
       `Full log: ${failure.logPath} (read it; the path is inside ${REPO}).`,
       `Fix the cause in the files this request changed, following ~/git/defra/trade-imports-workspace/.claude/skills/prototype/references/${route.skill}.md and ~/git/defra/trade-imports-workspace/.claude/skills/prototype/references/check-my-change.md. If the failure is in a file this request did not touch, change nothing and say so in notes.`,
+      ...patternRepairLines(context),
       `Run ${npm('designer:format')} when you have finished. Return what you changed.`,
-      GUARD_RAILS
+      builderRails(context.mandate)
     ].join('\n'),
     withModel('builder', {
       label: `repair ${route.id}`,
@@ -470,10 +598,10 @@ const show = (landedSkills) =>
     withModel('runner', { label: 'show', phase: 'Show', schema: SHOW_SCHEMA })
   )
 
-const fullCheck = () =>
+const fullCheck = (context) =>
   agent(
     [
-      `Run: ${npm('designer:check')} -- --set ${config.set} --full`,
+      `Run: ${npm('designer:check')} -- --set ${config.set} --full${runFlags(context)}`,
       'This is what the pre-commit hook runs. Report whether it passed, its plain-English summary (every failing row in full) and the log path. Return changed as an empty list.',
       'Change nothing.',
       GUARD_RAILS
@@ -525,8 +653,8 @@ const sessionSlugFrom = (suggested) => {
   return words.length > 0 ? words.join('-') : 'design-session'
 }
 
-const checkedRoute = (route) =>
-  !route.refused && !SESSION_REFERENCES.includes(route.skill)
+const checkedRoute = (route, references) =>
+  !route.refused && !references.includes(route.skill)
     ? {
         ...route,
         refused: true,
@@ -539,7 +667,7 @@ const checkedRoute = (route) =>
  * A request with one part keeps its number as its id ("2"); the parts of a
  * split request are numbered under it ("2.1", "2.2"), in build order.
  */
-const unitsFor = (classified, index) => {
+const unitsFor = (classified, index, references) => {
   const request = config.requests[index - 1]
   const routes = (classified.requests ?? []).filter(
     (item) => item.index === index
@@ -561,7 +689,7 @@ const unitsFor = (classified, index) => {
   return routes.map((route, position) => {
     const split = routes.length > 1
     return {
-      ...checkedRoute({ pages: [], reason: '', ...route }),
+      ...checkedRoute({ pages: [], reason: '', ...route }, references),
       id: split ? `${index}.${position + 1}` : String(index),
       index,
       request,
@@ -608,8 +736,8 @@ const groupByFiles = (landed) => {
   )
 }
 
-const buildOne = async (request, route, alreadyChanged) => {
-  const built = await build(request, route)
+const buildOne = async (request, route, alreadyChanged, context) => {
+  const built = await build(request, route, context)
   if (!built?.built) {
     return {
       landed: false,
@@ -618,11 +746,11 @@ const buildOne = async (request, route, alreadyChanged) => {
     }
   }
   const level = CHECK_LEVEL[route.skill]
-  let checked = await check(`check ${route.id}`, level)
+  let checked = await check(`check ${route.id}`, level, context)
   if (checked && !checked.passed) {
     log(`Request ${route.id} failed its check. One repair.`)
-    await repair(request, route, checked)
-    checked = await check(`recheck ${route.id}`, level)
+    await repair(request, route, checked, context)
+    checked = await check(`recheck ${route.id}`, level, context)
   }
   const changedNow = checked?.changed ?? []
   const paths = [
@@ -678,6 +806,72 @@ const splitLines = (units) =>
       : []
   })
 
+const PATTERNS_SCHEMA = {
+  type: 'object',
+  properties: {
+    patterns: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          status: { type: 'string' }
+        },
+        required: ['name', 'status']
+      }
+    }
+  },
+  required: ['patterns']
+}
+
+const listChangedPatterns = (context) =>
+  agent(
+    [
+      `List the release patterns this session added or changed in ${SET_DIR}/patterns.md.`,
+      `Run: ${git(`diff ${context.baseCommit} -- ${SET_DIR}/patterns.md`)}`,
+      `Then read ${REPO}/${SET_DIR}/patterns.md.`,
+      'Return, in patterns, one { name, status } for each "## <name>" entry that the diff adds or changes: its name as the heading writes it, and the value of its "- Status:" line. Return an empty list when the diff is empty.',
+      'Change nothing.',
+      GUARD_RAILS
+    ].join('\n'),
+    withModel('runner', {
+      label: 'list patterns',
+      phase: 'Save',
+      schema: PATTERNS_SCHEMA
+    })
+  )
+
+const patternLines = (patterns) => {
+  const quoted = (list) => list.map(({ name }) => `"${name}"`).join(', ')
+  const options = patterns.filter(({ status }) => status === 'Option')
+  const others = patterns.filter(({ status }) => status !== 'Option')
+  return [
+    ...(options.length > 0
+      ? [
+          `Options for you to choose, in ${SET_DIR}/patterns.md: ${quoted(options)}. Say which to keep, and the others are closed.`
+        ]
+      : []),
+    ...(others.length > 0
+      ? [
+          `Release patterns this session changed, in ${SET_DIR}/patterns.md: ${others.map(({ name, status }) => `"${name}" (${status})`).join(', ')}.`
+        ]
+      : [])
+  ]
+}
+
+const changedPatternLines = async (context) => {
+  if (!context.mandate) {
+    return []
+  }
+  const listed = await listChangedPatterns(context)
+  if (!listed) {
+    return [
+      `The release patterns this session changed could not be listed. Read ${SET_DIR}/patterns.md for any Option to choose.`
+    ]
+  }
+  return patternLines(listed.patterns)
+}
+
 const summarise = (results, extra) => {
   log(
     [
@@ -703,7 +897,7 @@ const saveGroups = async (groups) => {
   return `Saved ${groups.length} commit${groups.length === 1 ? '' : 's'}. Nothing was pushed: say "share this" to open a pull request.`
 }
 
-const buildAll = async (units) => {
+const buildAll = async (units, context) => {
   const results = []
   const kept = []
   for (const [order, unit] of units.entries()) {
@@ -719,7 +913,7 @@ const buildAll = async (units) => {
       continue
     }
     log(`Request ${unit.id} of ${config.requests.length}: ${unit.skill}`)
-    const outcome = await buildOne(unit.request, unit, kept)
+    const outcome = await buildOne(unit.request, unit, kept, context)
     if (outcome.landed) {
       const staged = await stage(unit.id, outcome.paths)
       if (staged?.done) {
@@ -739,7 +933,8 @@ const buildAll = async (units) => {
 
 const main = async () => {
   phase('Classify')
-  const classified = await classify()
+  const { mandate, note: mandateNote } = await confirmedMandate()
+  const classified = await classify(mandate)
   if (!classified) {
     log('Stopped before any change: the classify step did not answer.')
     return
@@ -748,10 +943,11 @@ const main = async () => {
     log(`Stopped before any change: ${classified.releaseReason}`)
     return
   }
+  const references = sessionReferences(mandate)
   const units = config.requests.flatMap((_, position) =>
-    unitsFor(classified, position + 1)
+    unitsFor(classified, position + 1, references)
   )
-  const splits = splitLines(units)
+  const splits = [...mandateNote, ...splitLines(units)]
   if (units.every((unit) => unit.refused)) {
     summarise(
       units.map((unit) => ({ ...unit, status: 'refused' })),
@@ -768,6 +964,13 @@ const main = async () => {
     )
     return
   }
+  if (!prepared.baseCommit) {
+    log(
+      "Stopped before any change: the prepare step did not give the starting commit, so the checks could not tell a release pattern from this session's own work."
+    )
+    return
+  }
+  const context = { mandate, baseCommit: prepared.baseCommit }
   log(`Working on branch ${prepared.branch}.`)
   if (classified.releaseMissing) {
     const started = await startRelease()
@@ -781,7 +984,7 @@ const main = async () => {
   }
 
   phase('Build')
-  const results = await buildAll(units)
+  const results = await buildAll(units, context)
   const landed = results.filter((item) => item.status === 'landed')
   if (landed.length === 0) {
     summarise(results, [
@@ -798,17 +1001,25 @@ const main = async () => {
     : `No gallery: ${shown?.summary ?? 'the show step did not answer'}`
 
   phase('Save')
-  const checked = await fullCheck()
+  const options = await changedPatternLines(context)
+  const checked = await fullCheck(context)
   if (!checked?.passed) {
     summarise(results, [
       ...splits,
+      ...options,
       gallery,
       `Not saved: the full check failed (${checked?.summary ?? 'no answer'}). The landed changes are kept but not saved; say "check my changes".`
     ])
     return
   }
   const saving = await saveGroups(groupByFiles(landed))
-  summarise(results, [...splits, gallery, `Branch: ${prepared.branch}`, saving])
+  summarise(results, [
+    ...splits,
+    ...options,
+    gallery,
+    `Branch: ${prepared.branch}`,
+    saving
+  ])
 }
 
 await main()

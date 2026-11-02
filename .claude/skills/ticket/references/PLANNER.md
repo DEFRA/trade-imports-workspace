@@ -128,9 +128,13 @@ plus the grep.]
 [Quote the rule, give the reason. Or "None".]
 
 ## Verification
-[Unit tests, lint, and the E2E suite (`npm run test:docker-compose` in
-the tests repo). If a behaviour has no E2E cover, add or extend a spec
-in Tests above. No manual browser steps.]
+[Unit tests and lint, every time. Then the cheapest run that can fail
+for this change: name it, and say what each step would catch. An E2E
+run belongs here only when the change touches the tests repo,
+cross-cutting code, or a spec in Tests above — otherwise name the
+existing spec that covers the behaviour, say it is unchanged, and leave
+it to CI. If a behaviour has no E2E cover, add or extend a spec in
+Tests above. No manual browser steps.]
 
 ## Configuration
 | Variable/Flag | Purpose | Where Defined |
@@ -214,6 +218,12 @@ Plan review: [passed / N items fixed]
   is not a caller.
 - Don't write manual browser checks into Verification. Add or extend
   an E2E spec.
+- Don't write a verification step the same section argues against. "No
+  new E2E spec is needed, because the fit suite proves it" and "run the
+  E2E suite" cannot both stand. Keep the reasoning and drop the step.
+- Don't scale the proof to the ticket's importance. Scale it to what
+  the change can break: three files of one feature's markup do not
+  earn a stack, however carefully the rest of the plan reads.
 - Don't carry ticket keys, backlog ids or "removed" wording into
   anything the implementor will turn into code or test titles. State
   the end state.

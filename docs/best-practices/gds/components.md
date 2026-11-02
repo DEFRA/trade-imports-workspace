@@ -84,6 +84,14 @@ If a layout seems to need custom CSS, find the component or utility that does th
 2. If not, does a tested, accessible component from another government design system do it (MoJ, HMRC, Scottish Government)? Use that.
 3. If not, why must the service have it? If nothing compels it, go back to design and say it is not needed.
 
+**A plants-prototype design release.** Alpha research is where a pattern's
+evidence is gathered, so a designer may reach step 3 in their own design
+release. Their answer to "why must the service have it?" is recorded in the
+release's `patterns.md`, and the pattern lives only in that release's
+`assets/`. It reaches a real service as a pattern request with that
+evidence, never as copied code. Every real service repo follows this
+section as written.
+
 The alphagov `accessible-autocomplete`, enhancing a native `<select>`, is an accepted component: with JavaScript off, the user gets the select.
 
 - Bad: a drop zone that only uploads with JavaScript, copied from the prototype.

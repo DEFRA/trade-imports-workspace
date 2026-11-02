@@ -101,3 +101,77 @@ Then tell the designer, in plain words:
   `http://localhost:3103/plants-working`
 - any new accessibility findings from the gallery
 - the hand-off line
+
+## 8. The designer asks for navy, with a reason
+
+Later the designer says:
+
+> We're testing whether navy reads as submitted in round 3, so can the tag
+> really be navy?
+
+That is a mandate for a custom pattern, with its reason. Follow
+`references/custom-pattern.md`.
+
+Record the words, verbatim:
+
+```bash
+npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run designer:mandate -- record --set plants-working --words "We're testing whether navy reads as submitted in round 3, so can the tag really be navy?" --scope "dashboard"
+```
+
+It prints the id, say `m-2026-10-27-1`.
+
+`src/server/app/sets/plants-working/assets/styles.scss`:
+
+```scss
+@use "govuk-frontend/dist/govuk/base" as *;
+@use "submitted-tag";
+```
+
+`src/server/app/sets/plants-working/assets/_submitted-tag.scss`:
+
+```scss
+@use "govuk-frontend/dist/govuk/base" as *;
+
+.app-plants-working-submitted-tag {
+  color: govuk-colour("white");
+  background-color: govuk-colour("blue", $variant: "shade-50");
+}
+```
+
+GOV.UK's darkest blue is the navy here. It is close to #1d3f6e, and it keeps
+the colour on the GOV.UK palette.
+
+The dashboard template's first line becomes
+`{% extends "plants-working/layout.njk" %}`, and the release's
+`layout.njk` loads only `release-plants-working.css`, because there is no
+script. The row's `classes` for the Submitted status become
+`govuk-tag app-plants-working-submitted-tag`.
+
+The design gap row from section 6 becomes
+`Closed: built as the "Navy submitted tag" release pattern`, and
+`patterns.md` gains:
+
+```markdown
+## Navy submitted tag
+
+- Kind: Custom
+- Pages: dashboard
+- Classes: app-plants-working-submitted-tag
+- Files: assets/styles.scss, assets/_submitted-tag.scss
+- Why not GOV.UK or MoJ:
+  - GOV.UK: Tag. 9 fixed colours, none of them navy.
+  - MoJ: Badge. Its colours are the GOV.UK ones.
+- Need or hypothesis: traders read a navy tag as "submitted" more readily than GOV.UK blue.
+- Research round: Round 3 (next round)
+- Findings: none yet
+- Asked by: "We're testing whether navy reads as submitted in round 3, so can the tag really be navy?" (m-2026-10-27-1)
+- Status: Open
+```
+
+Then tell the designer:
+
+```text
+GOV.UK: Tag has 9 fixed colours, and none is navy.
+MoJ: Badge uses the same GOV.UK colours.
+Custom: built in your release as "Navy submitted tag" (patterns.md), because you want round 3 to test whether navy reads as submitted.
+```

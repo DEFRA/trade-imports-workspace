@@ -6,9 +6,11 @@ into a GOV.UK Frontend class or macro. The values come from the installed
 `node_modules/govuk-frontend/dist/govuk/settings/` in the prototype repo).
 
 The rule for every difference: pick the nearest step on the GOV.UK scale.
-Never write a pixel value, a `style` attribute or new Sass. If the nearest step
-is not close enough for the designer, build the nearest step anyway and add a
-row to the release's `design-gaps.md`.
+Never write a pixel value or a `style` attribute. No new Sass unless it is a
+release pattern the designer asked for (`references/custom-pattern.md`), and
+then only GOV.UK's spacing, colour and type mixins. If the nearest step is not
+close enough for the designer, build the nearest step anyway and add a row to
+the release's `design-gaps.md`.
 
 ## Spacing
 

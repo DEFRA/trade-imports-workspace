@@ -1,5 +1,6 @@
 import { register as registerLint } from './lint.js'
 import { register as registerGaps } from './gaps.js'
+import { register as registerDiff } from './diff.js'
 
 export const register = (program, { timVersion }) => {
   const spec = program
@@ -10,4 +11,5 @@ export const register = (program, { timVersion }) => {
 
   registerLint(spec, { timVersion })
   registerGaps(spec, { timVersion })
+  registerDiff(spec, { timVersion })
 }

@@ -1,0 +1,222 @@
+{
+  "source": "repo:insbackend",
+  "extractHash": "3bbbd7f80b32445b347124f4c8ae31c2e8dc6214928f93c1e6075a8ef81a13e4",
+  "verdicts": [
+    {
+      "id": "repo-insbackend-001",
+      "holds": true,
+      "reason": "AggregatedNotification.java:12 has @Document(collection = \"notifications\") and @Id aggregateId at lines 20-21."
+    },
+    {
+      "id": "repo-insbackend-002",
+      "holds": true,
+      "reason": "Class lines 19-31 declare exactly aggregateId, aggregateVersion, referenceNumber, status, originCountry, commodity, arrivalDate, lastUpdated; no other fields."
+    },
+    {
+      "id": "repo-insbackend-003",
+      "holds": true,
+      "reason": "Lines 30-31 declare both as java.time.Instant."
+    },
+    {
+      "id": "repo-insbackend-004",
+      "holds": true,
+      "reason": "status is a plain String (line 27); DELETED_STATUS is the only special case in the query service; IT seeds DRAFT, SUBMITTED, DELETED only."
+    },
+    {
+      "id": "repo-insbackend-005",
+      "holds": true,
+      "reason": "Line 13 has the compound index status_sort_fields {'status':1,'arrivalDate':-1,'lastUpdated':-1}; @Indexed on referenceNumber at line 25. Claim says it supports the list query, which is a mild inference but reasonable."
+    },
+    {
+      "id": "repo-insbackend-006",
+      "holds": true,
+      "reason": "Controller has a single @GetMapping on /notifications and the Tag description says read-only; no other mapping in the notification controller."
+    },
+    {
+      "id": "repo-insbackend-007",
+      "holds": true,
+      "reason": "Controller lines 36-39 take exactly page, sort and referenceNumber; no other params."
+    },
+    {
+      "id": "repo-insbackend-008",
+      "holds": true,
+      "reason": "@Min(1) on page with @Validated class; GlobalExceptionHandler.handleConstraintViolationException returns 400 'Validation Error'; IT findAll_pageIsZero_returnsBadRequest confirms. Inferred kind is right."
+    },
+    {
+      "id": "repo-insbackend-009",
+      "holds": true,
+      "reason": "application.yml:152 page-size: ${NOTIFICATION_LIST_PAGE_SIZE:25}; service uses it for PageRequest and the caller has no size param."
+    },
+    {
+      "id": "repo-insbackend-010",
+      "holds": true,
+      "reason": "Record components at lines 11-16; page is getNumber()+1."
+    },
+    {
+      "id": "repo-insbackend-011",
+      "holds": true,
+      "reason": "Javadoc lines 7-8 say it is serialised directly, and content is List<AggregatedNotification>."
+    },
+    {
+      "id": "repo-insbackend-012",
+      "holds": true,
+      "reason": "QueryService line 49 uses findAllByStatusNot(DELETED_STATUS) and line 38 the same for reference search."
+    },
+    {
+      "id": "repo-insbackend-013",
+      "holds": true,
+      "reason": "Upsert only sets status when non-null (line 87) and the repository query is status-not-DELETED, so a null status is listed. Inference is sound (Mongo $ne matches missing fields)."
+    },
+    {
+      "id": "repo-insbackend-014",
+      "holds": true,
+      "reason": "Controller Operation description lines 30-31 list the four sort options and default arrivalDate,desc."
+    },
+    {
+      "id": "repo-insbackend-015",
+      "holds": true,
+      "reason": "Sort.java lines 18-30: blank or null, parts.length != 2 or unknown field gives defaultSort; direction non-'asc' gives DESC."
+    },
+    {
+      "id": "repo-insbackend-016",
+      "holds": true,
+      "reason": "switch at lines 32-36 allows only arrivalDate and lastUpdated; everything else is the default sort."
+    },
+    {
+      "id": "repo-insbackend-017",
+      "holds": true,
+      "reason": "QueryService lines 34-38 trimToNull then findByReferenceNumberAndStatusNot; derived Mongo equality is case-sensitive exact."
+    },
+    {
+      "id": "repo-insbackend-018",
+      "holds": true,
+      "reason": "IT line 82 test name findAll_referenceNumber_noMatch_returnsEmptyContent_not404; code returns Page.empty with a 200."
+    },
+    {
+      "id": "repo-insbackend-019",
+      "holds": true,
+      "reason": "IT line 94 test name findAll_referenceNumber_matchingDeletedNotification_isExcluded; seeds a DELETED notification."
+    },
+    {
+      "id": "repo-insbackend-020",
+      "holds": true,
+      "reason": "QueryService lines 39-44 use PageRequest.of(0, ...) and a one-element PageImpl, with the quoted comment."
+    },
+    {
+      "id": "repo-insbackend-021",
+      "holds": true,
+      "reason": "page-1 passed to PageRequest and repository.findAllByStatusNot; Spring Data returns an empty page past the end, no error thrown. Inferred is the right confidence."
+    },
+    {
+      "id": "repo-insbackend-022",
+      "holds": true,
+      "reason": "docs/repos/trade-imports-ins-backend.md:22 has the quoted text; controller takes no identity and the record has no organisation field."
+    },
+    {
+      "id": "repo-insbackend-023",
+      "holds": true,
+      "reason": "application.yml lines 13-26 exclude the four security auto-configurations and the comment says no SecurityFilterChain bean is created."
+    },
+    {
+      "id": "repo-insbackend-024",
+      "holds": true,
+      "reason": "NotificationSqsListener.java:34 @SqsListener on the queue-url; group-id header read as aggregateId (line 37); body parsed as JSON. The FIFO nature is shown by the group id and floci script."
+    },
+    {
+      "id": "repo-insbackend-025",
+      "holds": true,
+      "reason": "OutboxEventType lines 7-14 list the eight wire values with the stated prefix."
+    },
+    {
+      "id": "repo-insbackend-026",
+      "holds": true,
+      "reason": "Listener lines 59-66 throw SqsNonRetryableException with the quoted comment; the error handler discards non-retryable errors (message deleted)."
+    },
+    {
+      "id": "repo-insbackend-027",
+      "holds": true,
+      "reason": "Listener lines 44-57 and UpsertService lines 26-31, 61-75 throw SqsNonRetryableException for each listed case; handler line 37 discards them. Quote is at UpsertService:30."
+    },
+    {
+      "id": "repo-insbackend-028",
+      "holds": true,
+      "reason": "ErrorHandler lines 31-35 increment retryCounter and rethrow retryable exceptions. Note: nothing in the notification package throws SqsRetryableException, so the path may rely on other code."
+    },
+    {
+      "id": "repo-insbackend-029",
+      "holds": true,
+      "reason": "UpsertService line 37 reads exchangedDocument.identifier."
+    },
+    {
+      "id": "repo-insbackend-030",
+      "holds": true,
+      "reason": "UpsertService line 38 reads exchangedDocument.notificationStatusCode."
+    },
+    {
+      "id": "repo-insbackend-031",
+      "holds": true,
+      "reason": "Lines 41-42 read originCountry.code.value; the stored value is that string, so a code. Whether it is an ISO code depends on the publisher; inference is reasonable."
+    },
+    {
+      "id": "repo-insbackend-032",
+      "holds": true,
+      "reason": "Lines 44-48 take path(0) movement, path(0) arrivalEvent, scheduledOccurrenceDateTime."
+    },
+    {
+      "id": "repo-insbackend-033",
+      "holds": true,
+      "reason": "Lines 50-54 take includedConsignmentItem[0].includedTradeLineItem[0].commonName; nothing else stored."
+    },
+    {
+      "id": "repo-insbackend-034",
+      "holds": true,
+      "reason": "Lines 39 and 56-66: issueDateTime parsed, else Instant.now()."
+    },
+    {
+      "id": "repo-insbackend-035",
+      "holds": true,
+      "reason": "Lines 81-90: lastUpdated and aggregateVersion set unconditionally, the five other fields set only when non-null."
+    },
+    {
+      "id": "repo-insbackend-036",
+      "holds": true,
+      "reason": "Lines 92-96 query _id match and aggregateVersion lt incoming, with mongoTemplate.upsert and setOnInsert _id. One nuance: a stale event against an existing record makes the upsert try an insert with duplicate _id; the claim's outcome still holds in the sense that only higher versions apply."
+    },
+    {
+      "id": "repo-insbackend-037",
+      "holds": true,
+      "reason": "Listener resolves the event type but only uses it for validation; upsert sets status solely from notificationStatusCode. Sound inference."
+    },
+    {
+      "id": "repo-insbackend-038",
+      "holds": true,
+      "reason": "Class has no amendment fields, as listed at AggregatedNotification.java:17-32; gap is accurate."
+    },
+    {
+      "id": "repo-insbackend-039",
+      "holds": true,
+      "reason": "No template concept in the notification package; gap is accurate."
+    },
+    {
+      "id": "repo-insbackend-040",
+      "holds": true,
+      "reason": "Controller has no status filter or count endpoint; repository has only findAllByStatusNot and findByReferenceNumberAndStatusNot."
+    },
+    {
+      "id": "repo-insbackend-041",
+      "holds": true,
+      "reason": "GlobalExceptionHandler sets 'Validation Error' with BAD_REQUEST (lines 48, 74-79) and INTERNAL_SERVER_ERROR with the quoted message (lines 161-162); ProblemDetail is RFC 7807."
+    },
+    {
+      "id": "repo-insbackend-042",
+      "holds": true,
+      "reason": "application.yml:35 read-preference: ${MONGO_READ_PREFERENCE:secondary}; delay is a reasonable inference."
+    },
+    {
+      "id": "repo-insbackend-043",
+      "holds": true,
+      "reason": "floci script lines 14-15 and 33-37 create the topic, queue and a raw-delivery subscription; publisher not named in the script."
+    }
+  ],
+  "missed": []
+}

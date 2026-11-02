@@ -32,6 +32,16 @@
       "type": "array",
       "items": { "$ref": "#/$defs/splitOffTheme" }
     },
+    "movedOut": {
+      "description": "Split backlogs only: the rows moved out of this backlog into a new theme's split backlog by `tim backlog split <workarea> --rows <ids> --to <theme id> --write`, one pointer per move, so a second machine builds them on its own branch. None of those rows is in `increments` any more, and no row here may reuse one's id. Changed only by `tim backlog split <workarea> --rows <ids> --back-from <theme id> --write`, which takes the rows that come back out of the pointer, and drops the pointer once it holds none. The rules a schema cannot check are in SHAPE.md.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/movedOutRows" }
+    },
+    "movedBack": {
+      "description": "Split backlogs only: the rows this backlog sent back to the backlog they first moved out of, by `tim backlog split <home workarea> --rows <ids> --back-from <this theme id> --write`, one pointer per move, so its first machine builds them and this one does not. None of those rows is in `increments` any more, and no row here may reuse one's id. A backlog that sent every row back has no `increments` left. Fixed once written.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/movedBackRows" }
+    },
     "theme": {
       "description": "Split backlogs only: the id of the theme this backlog builds, written by `tim backlog split`. Every row here belongs to it. A split backlog also carries `branch` and `parent`, and never `themes`.",
       "$ref": "#/$defs/text"
@@ -182,6 +192,68 @@
         },
         "at": {
           "description": "When the theme was split off, as an ISO 8601 time, such as \"2026-10-09T14:30:00.000Z\".",
+          "$ref": "#/$defs/text"
+        }
+      }
+    },
+    "movedOutRows": {
+      "description": "A pointer to rows moved out of a split backlog, written by `tim backlog split --rows --to`.",
+      "type": "object",
+      "required": ["theme", "branch", "workarea", "backlog", "increments", "at"],
+      "properties": {
+        "theme": {
+          "description": "The new theme the rows moved to, such as \"design-snagging-b\".",
+          "$ref": "#/$defs/themeId"
+        },
+        "branch": {
+          "description": "The branch the new theme builds on, the same as its backlog's `branch`.",
+          "$ref": "#/$defs/text"
+        },
+        "workarea": {
+          "description": "The new backlog's workarea, such as \"shared/hrp/themes/origin-pages-b\": what an `externalDependsOn` on a moved row names.",
+          "$ref": "#/$defs/text"
+        },
+        "backlog": {
+          "description": "The new backlog's path, relative to this backlog's folder, such as \"../origin-pages-b/backlog.json\".",
+          "$ref": "#/$defs/text"
+        },
+        "increments": {
+          "description": "The ids of every row that moved. No row here may reuse one.",
+          "$ref": "#/$defs/textList"
+        },
+        "requirements": {
+          "description": "The requirement ids the moved rows covered, from their `requirements`.",
+          "$ref": "#/$defs/textList"
+        },
+        "at": {
+          "description": "When the rows moved, as an ISO 8601 time.",
+          "$ref": "#/$defs/text"
+        }
+      }
+    },
+    "movedBackRows": {
+      "description": "A pointer to rows sent back to the split backlog they moved out of, written by `tim backlog split --rows --back-from`.",
+      "type": "object",
+      "required": ["theme", "workarea", "backlog", "increments", "at"],
+      "properties": {
+        "theme": {
+          "description": "The theme the rows went back to, such as \"design-snagging\".",
+          "$ref": "#/$defs/themeId"
+        },
+        "workarea": {
+          "description": "That theme's workarea, such as \"shared/hrp/themes/origin-pages\": what an `externalDependsOn` on a row that went back names.",
+          "$ref": "#/$defs/text"
+        },
+        "backlog": {
+          "description": "That theme's backlog path, relative to this backlog's folder, such as \"../origin-pages/backlog.json\".",
+          "$ref": "#/$defs/text"
+        },
+        "increments": {
+          "description": "The ids of every row that went back. No row here may reuse one.",
+          "$ref": "#/$defs/textList"
+        },
+        "at": {
+          "description": "When the rows went back, as an ISO 8601 time.",
           "$ref": "#/$defs/text"
         }
       }
@@ -339,6 +411,13 @@
           "description": "Branch lifecycle only: false pushes the row and records its pull requests without waiting for CI, for a row whose pull requests cannot run checks yet (GitHub runs none on a pull request that conflicts with its base). null or absent: true. The full lifecycle always waits.",
           "anyOf": [{ "type": "boolean" }, { "type": "null" }]
         },
+        "rigour": {
+          "description": "How much of the pipeline this row gets, overriding the run's `rigour`: `full` (every stage, the plan reviewed twice), `standard` (one plan review, no style reviewers) or `fast` (one code reviewer across the whole change, whose findings the judge verifies itself). The plan lint, the gate and the theme's engineering review run at every preset. null or absent: the run's value. `tim build rigour <workarea>` proposes one per row; BUILD.md's \"Choosing rigour\" says what each preset runs in full.",
+          "anyOf": [
+            { "enum": ["full", "standard", "fast"] },
+            { "type": "null" }
+          ]
+        },
         "ticket": {
           "description": "Written by the build loop through `tim backlog set --ticket`: the Jira key raised for the increment.",
           "$ref": "#/$defs/text"
@@ -358,6 +437,52 @@
             "type": "object",
             "required": ["url"],
             "properties": { "url": { "$ref": "#/$defs/text" } }
+          }
+        },
+        "attempt": {
+          "description": "Written by the build loop through `tim backlog set --attempt`: how far the last failed attempt at the increment got, so a relaunch picks it up there rather than re-planning and re-implementing it. Cleared when the increment lands, because a recorded commit and an attempt in flight cannot both be true. Set it to \"none\" to clear it by hand.",
+          "type": "object",
+          "required": ["stage", "reason", "at", "planReviewed", "work"],
+          "properties": {
+            "stage": {
+              "description": "The stage the attempt reached, and the one a relaunch enters at: implement (the plan is reviewed, the code is not written), review (the code is written and staged), ladder (the code is written, reviewed and fixed).",
+              "enum": ["implement", "review", "ladder"]
+            },
+            "reason": {
+              "description": "The stop reason that ended the attempt, such as \"ladder-red\".",
+              "$ref": "#/$defs/text"
+            },
+            "at": {
+              "description": "When the attempt was preserved, as an ISO 8601 time.",
+              "$ref": "#/$defs/text"
+            },
+            "planReviewed": {
+              "description": "true when plans/<id>.md passed its lint and its plan review before the attempt ran. false means a relaunch plans again whatever `stage` says.",
+              "type": "boolean"
+            },
+            "work": {
+              "description": "Where the preserved work is. The full lifecycle commits it; the branch lifecycle cannot, so it writes patches.",
+              "type": "object",
+              "required": ["kind"],
+              "properties": {
+                "kind": {
+                  "description": "wip: a pushed commit at the branch's head. patches: files under <workarea>/logs/. none: the stage left nothing to restore.",
+                  "enum": ["wip", "patches", "none"]
+                },
+                "branch": {
+                  "description": "kind wip: the branch the commit is on.",
+                  "$ref": "#/$defs/text"
+                },
+                "sha": {
+                  "description": "kind wip: the commit.",
+                  "$ref": "#/$defs/text"
+                },
+                "files": {
+                  "description": "kind patches: each saved file, relative to the workarea, such as [\"logs/inc-034-preserve-frontend.staged.patch\"].",
+                  "$ref": "#/$defs/textList"
+                }
+              }
+            }
           }
         }
       },

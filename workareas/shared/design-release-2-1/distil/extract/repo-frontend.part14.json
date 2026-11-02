@@ -1,0 +1,538 @@
+{
+  "source": "repo:frontend",
+  "structure": "Part 14 (Declaration and confirmation), read at repos/trade-imports-animals-frontend main 4c2119da. Read in full: features/declaration (page.js, controller.js, template.njk, copy/copy.en.js, copy/copy.cy.js, declaration.fit.spec.js) and features/confirmation (page.js, controller.js, template.njk, outstanding.js, copy/copy.en.js, copy/copy.cy.js, confirmation.fit.spec.js), all under src/server/app/sets/live-animals/journeys/linear/features. To state what declaration submit does, also read check-answers/refusal.js (the refusal predicate the declaration calls) and the CYA_SLUG and recoverableSave definitions in src/server/app/shared/kit.js; those files belong to other parts and only their effect on these two pages is claimed. Covered: the declaration page at /notifications/{id}/declaration (heading, five declaration statements with two bullet lists, the single 'confirmed' checkbox, the date of declaration line, Continue button, the required-checkbox error verbatim, back link to check answers, the already-submitted redirect, the review-refusal redirect, the recoverable save failure, and the commit plus submit to confirmation); the confirmation page at /notifications/{id}/confirmation (GET only, the redirect for an unsubmitted notification, the panel with title and reference number, the outstanding-documents section and when it shows, the transporting, view-or-amend and getting-help sections with every link and the create-a-new-notification POST button, no back link); Welsh copy parity for both pages (machine-draft); and every test in declaration.fit.spec.js (5 tests) and confirmation.fit.spec.js (5 tests). Unit tests (controller.test.js, template.test.js, copy.test.js) are outside the partition's scope and were not claimed.",
+  "claims": [
+    {
+      "id": "repo-frontend-p14-001",
+      "statement": "The declaration page is served at the slug 'declaration' under a notification, so its path is /notifications/{notification id}/declaration.",
+      "kind": "behaviour",
+      "ref": "features/declaration/page.js:1-4; declaration.fit.spec.js:23",
+      "quote": "id: 'declaration',\n  slug: 'declaration'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-002",
+      "statement": "The declaration page collects one answer, 'declaration'.",
+      "kind": "data",
+      "ref": "features/declaration/controller.js:21",
+      "quote": "export const meta = { ...page, collects: ['declaration'] }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-003",
+      "statement": "A user reaches the declaration page by pressing Continue on the check answers (notification-view) page.",
+      "kind": "behaviour",
+      "ref": "features/declaration/declaration.fit.spec.js:129-135",
+      "quote": "await openReviewFromHub(page)\n    await page.getByRole('button', { name: 'Continue' }).click()\n    await expect(page.getByRole('heading', { name: copy.title })).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-004",
+      "statement": "The declaration page heading (h1) and page title is 'Declaration'.",
+      "kind": "copy",
+      "ref": "features/declaration/copy/copy.en.js:2; template.njk:8",
+      "quote": "title: 'Declaration',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-005",
+      "statement": "The declaration page shows a level-2 heading 'I am the contact for the authorities and located in the UK.'",
+      "kind": "copy",
+      "ref": "features/declaration/copy/copy.en.js:4; template.njk:10",
+      "quote": "contactUk: 'I am the contact for the authorities and located in the UK.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-006",
+      "statement": "Under the contact heading the declaration page says the user is complying with Regulation (EU) 2017/625, including on animal health and welfare.",
+      "kind": "copy",
+      "ref": "features/declaration/copy/copy.en.js:5-6; template.njk:12",
+      "quote": "'I am complying with the requirements of Regulation (EU) 2017/625 including on animal health and welfare.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-007",
+      "statement": "The declaration page shows a level-2 heading 'I confirm I am responsible for this consignment.'",
+      "kind": "copy",
+      "ref": "features/declaration/copy/copy.en.js:7; template.njk:14",
+      "quote": "responsible: 'I confirm I am responsible for this consignment.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-008",
+      "statement": "Under the responsibility heading the declaration page says the user is responsible from submission until the consignment enters Great Britain, and until it has either of two outcomes.",
+      "kind": "copy",
+      "ref": "features/declaration/copy/copy.en.js:8-9; template.njk:16",
+      "quote": "'I am responsible from the submission of this notification to when it enters Great Britain. And I am responsible until it has either:'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-009",
+      "statement": "The responsibility bullet list has two items: 'cleared official checks at the border' and 'reached the Place of Destination as stated on the health certificate or notification'.",
+      "kind": "copy",
+      "ref": "features/declaration/copy/copy.en.js:10-13; template.njk:18-22",
+      "quote": "'cleared official checks at the border',\n      'reached the Place of Destination as stated on the health certificate or notification'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-010",
+      "statement": "The declaration page shows a level-2 heading 'I confirm that I am accountable for:'.",
+      "kind": "copy",
+      "ref": "features/declaration/copy/copy.en.js:14; template.njk:24",
+      "quote": "accountableFor: 'I confirm that I am accountable for:',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-011",
+      "statement": "The accountability bullet list has four items: payment for official controls at the border, arrangements to re-dispatch the consignment, costs of quarantine or isolation, and costs of destruction and disposal when instructed by the authorities.",
+      "kind": "copy",
+      "ref": "features/declaration/copy/copy.en.js:15-20; template.njk:26-30",
+      "quote": "'any payment for the official controls at the border',\n      'any arrangements to re-dispatch the consignment',\n      'any costs needed for quarantine or isolation of consignments',\n      'any costs needed for destruction and disposal of consignments, when instructed by the authorities'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-012",
+      "statement": "The declaration page says the user is authorised as accountable for these things when raising notifications on behalf of a third party.",
+      "kind": "copy",
+      "ref": "features/declaration/copy/copy.en.js:21-22; template.njk:32",
+      "quote": "'I am authorised as being accountable for these things if raising notifications on behalf of a third party.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-013",
+      "statement": "The declaration page says the user can legally act on behalf of a third party in relation to the declaration's conditions.",
+      "kind": "copy",
+      "ref": "features/declaration/copy/copy.en.js:23-24; template.njk:34",
+      "quote": "'I can legally act on behalf of a third party in relation to the conditions of this declaration.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-014",
+      "statement": "The declaration page has a single checkbox, field name 'declaration' with value 'confirmed', labelled 'I confirm that I have reviewed and comply with this declaration and that the information submitted in this notification is true and correct.'",
+      "kind": "data",
+      "ref": "features/declaration/template.njk:40-50; copy/copy.en.js:26-27",
+      "quote": "name: \"declaration\",\n      ...\n          value: \"confirmed\",\n          text: copy.declarationLabel,",
+      "confidence": "verbatim",
+      "note": "Label text: 'I confirm that I have reviewed and comply with this declaration and that the information submitted in this notification is true and correct.' The checkbox has no hint and no fieldset legend."
+    },
+    {
+      "id": "repo-frontend-p14-015",
+      "statement": "The declaration checkbox is pre-ticked when a declaration of 'confirmed' is already saved on the notification.",
+      "kind": "behaviour",
+      "ref": "features/declaration/controller.js:56; template.njk:47",
+      "quote": "checked: values.declaration == \"confirmed\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-016",
+      "statement": "The declaration page shows 'Date of declaration:' followed by today's date, written as day, full month name and year (for example 7 October 2026).",
+      "kind": "copy",
+      "ref": "features/declaration/controller.js:30-35,45; template.njk:52; copy/copy.en.js:28",
+      "quote": "dateOfDeclaration: 'Date of declaration:',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-017",
+      "statement": "The date of declaration is always the date the page is rendered and is formatted in English (en-GB) even when the page is shown in Welsh, so a Welsh user sees an English month name.",
+      "kind": "behaviour",
+      "ref": "features/declaration/controller.js:30-35",
+      "quote": "new Date(value).toLocaleDateString('en-GB', {",
+      "confidence": "inferred",
+      "note": "Inferred: the formatter hard-codes the en-GB locale while the copy switches between en and cy."
+    },
+    {
+      "id": "repo-frontend-p14-018",
+      "statement": "The declaration page's submit button reads 'Continue'.",
+      "kind": "copy",
+      "ref": "features/declaration/copy/copy.en.js:29; template.njk:54",
+      "quote": "continueButton: 'Continue',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-019",
+      "statement": "The declaration page's back link goes to the check answers page (notification-view).",
+      "kind": "behaviour",
+      "ref": "features/declaration/controller.js:40; shared/kit.js:60; declaration.fit.spec.js:90-105",
+      "quote": "backLink: pagePath(journey.journeyId, kit.CYA_SLUG),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-020",
+      "statement": "Submitting the declaration without ticking the checkbox is rejected with the error 'Confirm that you have reviewed and comply with this declaration', and the page is re-shown with status 400.",
+      "kind": "rule",
+      "ref": "features/declaration/controller.js:26-28,67-70; copy/copy.en.js:30-33",
+      "quote": "requiredOneOf('declaration', ['confirmed'], copy.errors.declarationRequired)",
+      "confidence": "verbatim",
+      "note": "Error text: 'Confirm that you have reviewed and comply with this declaration'. Any value other than 'confirmed' is also rejected."
+    },
+    {
+      "id": "repo-frontend-p14-021",
+      "statement": "The declaration error is shown both in an error summary (as a link) and as an inline error message on the checkbox, and following the summary link focuses the checkbox.",
+      "kind": "behaviour",
+      "ref": "features/declaration/template.njk:6,42; declaration.fit.spec.js:69-88",
+      "quote": "errorMessage: errors.declaration and { text: errors.declaration },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-022",
+      "statement": "Opening or submitting the declaration page for a notification that is already submitted redirects to that notification's confirmation page.",
+      "kind": "behaviour",
+      "ref": "features/declaration/controller.js:53-55,61-63; declaration.fit.spec.js:137-152",
+      "quote": "if (journey.status === state.SUBMITTED) {\n    return h.redirect(pagePath(journey.journeyId, confirmationPage.slug))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-023",
+      "statement": "After a valid tick, the declaration submit re-checks that the notification is ready for review; if it is refused, the user is redirected back to the check answers page and nothing is submitted.",
+      "kind": "rule",
+      "ref": "features/declaration/controller.js:72-74; check-answers/refusal.js reviewRefusal",
+      "quote": "if (await isReviewRefused(request, h)) {\n    return h.redirect(pagePath(journey.journeyId, kit.CYA_SLUG))",
+      "confidence": "verbatim",
+      "note": "The refusal predicate (owned by the check answers part) refuses when the notification is not ready for check your answers, has an invalid party, has an invalid stored review card, or has a document that is rejected or still being scanned. Its comment says it stops 'a bookmark or back-button' sneaking 'a stale submission past'."
+    },
+    {
+      "id": "repo-frontend-p14-024",
+      "statement": "A valid declaration submit saves the declaration answer on the notification and then submits the notification.",
+      "kind": "behaviour",
+      "ref": "features/declaration/controller.js:78-81",
+      "quote": "await state.commit(request, h, values)\n      result = await state.submitJourney(request, h)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-025",
+      "statement": "When the submit succeeds the user is redirected to the confirmation page.",
+      "kind": "behaviour",
+      "ref": "features/declaration/controller.js:94; declaration.fit.spec.js:137-147",
+      "quote": "return h.redirect(pagePath(journey.journeyId, confirmationPage.slug))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-026",
+      "statement": "When the submit call returns a not-ok result, the user is redirected back to the check answers page with no message on the declaration page.",
+      "kind": "behaviour",
+      "ref": "features/declaration/controller.js:91-93",
+      "quote": "if (!result.ok) {\n    return h.redirect(pagePath(journey.journeyId, kit.CYA_SLUG))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-027",
+      "statement": "When saving or submitting fails with a recoverable backend error, the declaration page is re-shown with the user's tick kept, a recoverable-error state and status 500; a stale concurrency token or any other error is not handled here and propagates.",
+      "kind": "behaviour",
+      "ref": "features/declaration/controller.js:77-89; shared/kit.js:178-190",
+      "quote": "render(h, journey, values, {}, true).code(\n        HTTP_STATUS_INTERNAL_SERVER_ERROR\n      )",
+      "confidence": "verbatim",
+      "note": "What the recoverable-error state shows is defined in the shared layout (another part)."
+    },
+    {
+      "id": "repo-frontend-p14-028",
+      "statement": "The declaration form posts with a CSRF crumb and a concurrency token as hidden fields.",
+      "kind": "constraint",
+      "ref": "features/declaration/template.njk:37-38",
+      "quote": "<input type=\"hidden\" name=\"crumb\" value=\"{{ crumb }}\" />\n    <input type=\"hidden\" name=\"concurrencyToken\" value=\"{{ concurrencyToken }}\" />",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-029",
+      "statement": "The declaration page has Welsh copy for every English string, marked as a machine draft not yet reviewed by a translator.",
+      "kind": "constraint",
+      "ref": "features/declaration/copy/copy.cy.js:1",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-030",
+      "statement": "A fit test proves the declaration page renders every declaration statement, both bullet lists, the checkbox, the 'Date of declaration:' line and the Continue button.",
+      "kind": "behaviour",
+      "ref": "features/declaration/declaration.fit.spec.js:36 'renders every declaration statement and the current date'",
+      "quote": "test('renders every declaration statement and the current date'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-031",
+      "statement": "A fit test proves submitting unticked shows the error in the summary and inline, that the summary link focuses the checkbox, and that the checkbox stays unticked.",
+      "kind": "behaviour",
+      "ref": "features/declaration/declaration.fit.spec.js:69 'declaration validation: when unchecked, links to and focuses the clear checkbox'",
+      "quote": "test('declaration validation: when unchecked, links to and focuses the clear checkbox'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-032",
+      "statement": "A fit test proves the declaration back link points at and returns to the check answers page.",
+      "kind": "behaviour",
+      "ref": "features/declaration/declaration.fit.spec.js:90 'back link returns to check answers'",
+      "quote": "test('back link returns to check answers'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-033",
+      "statement": "A fit test holds the declaration page to no serious or critical axe violations against WCAG 2 A and AA.",
+      "kind": "non-functional",
+      "ref": "features/declaration/declaration.fit.spec.js:107 'has no serious or critical axe violations'",
+      "quote": ".withTags(['wcag2a', 'wcag2aa'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-034",
+      "statement": "A fit test proves a complete notification can be declared and submitted, lands on the confirmation page, and that revisiting the declaration URL afterwards redirects to confirmation.",
+      "kind": "behaviour",
+      "ref": "features/declaration/declaration.fit.spec.js:137 'submits a complete notification, redirects to confirmation and keeps the declaration'",
+      "quote": "test('submits a complete notification, redirects to confirmation and keeps the declaration'",
+      "confidence": "verbatim",
+      "note": "Despite the name, the test does not assert the saved declaration value; it asserts the post-submit redirect from the declaration URL."
+    },
+    {
+      "id": "repo-frontend-p14-035",
+      "statement": "The declaration page can be opened directly by URL on a notification that has only its origin answered; the page itself does not check that earlier sections are complete before showing.",
+      "kind": "behaviour",
+      "ref": "features/declaration/declaration.fit.spec.js:15-28; controller.js:51-57",
+      "quote": "await answerOriginEntry(page)\n\n  await page.goto(declarationUrl)\n  await expect(page.getByRole('heading', { name: copy.title })).toBeVisible()",
+      "confidence": "inferred",
+      "note": "Inferred from the GET handler (only the submitted check) and the spec's set-up, which reaches the page after answering origin only. Completeness is enforced at submit by the review-refusal check (repo-frontend-p14-023)."
+    },
+    {
+      "id": "repo-frontend-p14-036",
+      "statement": "The confirmation page is served at the slug 'confirmation' under a notification, so its path is /notifications/{notification id}/confirmation, and it answers GET only.",
+      "kind": "behaviour",
+      "ref": "features/confirmation/page.js:1-4; controller.js:35-42",
+      "quote": "method: 'GET',\n    path: pageRoutePath(page.slug),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-037",
+      "statement": "Opening the confirmation page for a notification that is not submitted redirects to that notification's hub (task list).",
+      "kind": "behaviour",
+      "ref": "features/confirmation/controller.js:22-24; confirmation.fit.spec.js:89-98",
+      "quote": "if (journey.status !== state.SUBMITTED) {\n    return h.redirect(hubPath(journey.journeyId))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-038",
+      "statement": "The confirmation page title is 'Import notification submitted' and it has no back link.",
+      "kind": "copy",
+      "ref": "features/confirmation/copy/copy.en.js:2; controller.js:26; confirmation.fit.spec.js:131-133",
+      "quote": "title: 'Import notification submitted',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-039",
+      "statement": "The confirmation page shows a GOV.UK panel titled 'Import notification submitted' with 'Your reference number' and, in bold beneath it, the reference number.",
+      "kind": "copy",
+      "ref": "features/confirmation/template.njk:5-9; copy/copy.en.js:3-6",
+      "quote": "title: 'Import notification submitted',\n    referencePrefix: 'Your reference number'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-040",
+      "statement": "The reference number shown on the confirmation page is the notification's own journey id (the id in its URL), not a separately issued reference.",
+      "kind": "data",
+      "ref": "features/confirmation/controller.js:28; confirmation.fit.spec.js:16-21",
+      "quote": "referenceNumber: journey.journeyId,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-041",
+      "statement": "The confirmation page does not repeat the date of declaration.",
+      "kind": "rule",
+      "ref": "features/confirmation/confirmation.fit.spec.js:24-29",
+      "quote": "// The declaration date is shown once, on the declaration page. Design release 1\n// takes the submitted page from the reference panel straight to what the trader\n// still has to do, so the date is not repeated here.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-042",
+      "statement": "When the submitted notification has no documents, the confirmation page shows a section headed 'Before the consignment is imported' with 'You still need to:' and the bullet 'upload the health certificate and any other required documents'.",
+      "kind": "copy",
+      "ref": "features/confirmation/outstanding.js:27-30; template.njk:11-19; copy/copy.en.js:7-11",
+      "quote": "heading: 'Before the consignment is imported',\n    intro: 'You still need to:',\n    documents: 'upload the health certificate and any other required documents'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-043",
+      "statement": "The outstanding-items section is left out entirely when the list is empty, which today means when the notification has at least one document.",
+      "kind": "rule",
+      "ref": "features/confirmation/outstanding.js:15-16,29; template.njk:11",
+      "quote": "return documents.length === 0 ? [copy.outstanding.documents] : []",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-044",
+      "statement": "A notification can be submitted with no documents, because the documents obligation has a cap but no minimum and no required-one-of.",
+      "kind": "rule",
+      "ref": "features/confirmation/outstanding.js:8-13",
+      "quote": "// Submission does not require documents — the documents group carries only a\n// cap, no floor and no required-one-of (obligations/sections/documents.js) — so\n// a notification can be submitted with the health certificate still to come.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-045",
+      "statement": "Design release 1 has a second outstanding bullet for animal identifiers, which the confirmation page does not show yet; it is held back on the open identifier-completeness decision (what counts as a complete identifier record), recorded on inc-153 in the parity backlog.",
+      "kind": "rule",
+      "ref": "features/confirmation/outstanding.js:18-26",
+      "quote": "// Design release 1 carries a second bullet, for animal identifiers, which this\n// journey can now reach: ... That bullet is not held\n// back for reachability. It waits on the identifier-completeness decision —\n// what counts as a complete identifier record — which is still open, and is\n// recorded as an open question on inc-153 in the parity backlog.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-046",
+      "statement": "A consignment declaring a single identified species can be submitted with no identifier record saved, because the identifier obligation only asks for a record where more than one commodity line carries a typed identifier set.",
+      "kind": "rule",
+      "ref": "features/confirmation/outstanding.js:19-23",
+      "quote": "the identifier obligation asks for a record only\n// where more than one commodity line carries a typed identifier set\n// (obligations/sections/commodities/identifiers.js, floorAppliesToParent with\n// moreThanOne), so a consignment declaring a single identified species is\n// submitted with no identifier record saved at all.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-047",
+      "statement": "The confirmation page has a section 'Transporting the consignment' telling the user to tell the transporter the consignment must go directly to the place of destination on entry to Great Britain.",
+      "kind": "copy",
+      "ref": "features/confirmation/copy/copy.en.js:13-15; template.njk:21-22",
+      "quote": "heading: 'Transporting the consignment',\n    direct:\n      'Tell the transporter that this consignment must go directly to the place of destination on entry to Great Britain.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-048",
+      "statement": "The transporting section says the animals or consignment may need to be inspected, and if so the animals must stay at the place of destination for either the time stated on the health certificate or 48 hours if no time is specified.",
+      "kind": "copy",
+      "ref": "features/confirmation/copy/copy.en.js:16-21; template.njk:23-29",
+      "quote": "inspection: 'The animals or consignment may need to be inspected.',\n    stay: 'If so, the animals must stay at the place of destination for either:',\n    stayItems: [\n      'the time stated on the health certificate',\n      '48 hours if no time is specified'\n    ]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-049",
+      "statement": "The confirmation page has a section 'How to view or amend this notification' saying the user can view or amend it from their dashboard and resubmit it.",
+      "kind": "copy",
+      "ref": "features/confirmation/copy/copy.en.js:24-25; template.njk:31-32",
+      "quote": "heading: 'How to view or amend this notification',\n    body: 'You can view or amend this notification from your dashboard and resubmit it.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-050",
+      "statement": "The confirmation page has a link 'Return to your dashboard' that goes to the dashboard (the service's base path).",
+      "kind": "behaviour",
+      "ref": "features/confirmation/template.njk:34; controller.js:30; copy/copy.en.js:26; confirmation.fit.spec.js:136-145",
+      "quote": "dashboardLink: 'Return to your dashboard',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-051",
+      "statement": "The confirmation page has a 'Create a new notification' control, a button styled as a link that POSTs to the same create route as the dashboard's start action, starting a fresh notification on the origin page.",
+      "kind": "behaviour",
+      "ref": "features/confirmation/template.njk:36-44; controller.js:31; copy/copy.en.js:27; confirmation.fit.spec.js:147-162",
+      "quote": "{# Starting a notification is a POST (it creates a record), so this is a\n     form styled as a link rather than an anchor — same route and same idiom as\n     the dashboard's start action. #}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-052",
+      "statement": "The confirmation page has a 'Getting help' section giving importsriskmanagement@apha.gov.uk as a mailto link for help with import notifications for live animals or germinal products.",
+      "kind": "copy",
+      "ref": "features/confirmation/template.njk:46-47; copy/copy.en.js:30-32",
+      "quote": "importsEmailPrefix:\n      'To get help with import notifications for live animals or germinal products, email',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-053",
+      "statement": "The getting-help section tells users to contact APHA for technical help, by telephone 0330 041 6999 or email APHAServiceDesk@apha.gov.uk (mailto link), Monday to Friday, 8:30am to 5pm, except bank holidays.",
+      "kind": "copy",
+      "ref": "features/confirmation/template.njk:48-53; copy/copy.en.js:33-37",
+      "quote": "technicalHelp:\n      'Contact the Animal and Plant Health Agency (APHA) if you need technical help with this service:',\n    telephone: 'Telephone: 0330 041 6999',\n    emailPrefix: 'Email:',\n    openingHours: 'Monday to Friday, 8:30am to 5pm, except bank holidays',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-054",
+      "statement": "The getting-help section links 'contact HMRC' to the GOV.UK HMRC customs, international trade and excise enquiries page for help with a customs declaration.",
+      "kind": "copy",
+      "ref": "features/confirmation/template.njk:54; copy/copy.en.js:38-39",
+      "quote": "<a class=\"govuk-link\" href=\"https://www.gov.uk/government/organisations/hm-revenue-customs/contact/customs-international-trade-and-excise-enquiries\">{{ copy.help.customsLink }}</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-055",
+      "statement": "The getting-help section has a link 'Find out about call charges' to https://www.gov.uk/call-charges.",
+      "kind": "copy",
+      "ref": "features/confirmation/template.njk:55-57; copy/copy.en.js:40",
+      "quote": "<a class=\"govuk-link\" href=\"https://www.gov.uk/call-charges\">{{ copy.help.callCharges }}</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-056",
+      "statement": "The two help email addresses are hard-coded in the confirmation template rather than held in the copy files, so the Welsh page shows the same addresses.",
+      "kind": "constraint",
+      "ref": "features/confirmation/template.njk:47,51",
+      "quote": "href=\"mailto:importsriskmanagement@apha.gov.uk\">importsriskmanagement@apha.gov.uk</a>",
+      "confidence": "inferred",
+      "note": "Inferred from the template: the addresses and the HMRC and call-charges URLs are literal in template.njk, while the surrounding text comes from copy."
+    },
+    {
+      "id": "repo-frontend-p14-057",
+      "statement": "The confirmation page has Welsh copy for every English string, marked as a machine draft not yet reviewed by a translator.",
+      "kind": "constraint",
+      "ref": "features/confirmation/copy/copy.cy.js:1",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-058",
+      "statement": "A fit test proves opening the confirmation page for an unsubmitted notification redirects to its hub.",
+      "kind": "behaviour",
+      "ref": "features/confirmation/confirmation.fit.spec.js:89 'redirects an unsubmitted notification back to its hub'",
+      "quote": "test('redirects an unsubmitted notification back to its hub'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-059",
+      "statement": "A fit test proves that after a complete submission without documents the confirmation page shows the reference, the outstanding-documents section, the transporting, view-or-amend and help copy, no declaration date and no back link.",
+      "kind": "behaviour",
+      "ref": "features/confirmation/confirmation.fit.spec.js:122 'renders the notification reference and all feature copy, with no declaration date and no back link'",
+      "quote": "test('renders the notification reference and all feature copy, with no declaration date and no back link'",
+      "confidence": "verbatim",
+      "note": "The help assertions do not check the importsriskmanagement email line or the APHAServiceDesk email link."
+    },
+    {
+      "id": "repo-frontend-p14-060",
+      "statement": "A fit test proves the 'Return to your dashboard' link points at and returns to the dashboard.",
+      "kind": "behaviour",
+      "ref": "features/confirmation/confirmation.fit.spec.js:136 'dashboard link returns to the dashboard'",
+      "quote": "test('dashboard link returns to the dashboard'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-061",
+      "statement": "A fit test proves 'Create a new notification' starts a fresh notification with a different reference, landing on 'Origin of the import', without returning to the dashboard.",
+      "kind": "behaviour",
+      "ref": "features/confirmation/confirmation.fit.spec.js:149 'create-a-new-notification starts a fresh notification'",
+      "quote": "// Second consignment, no detour: the page starts a fresh notification without\n  // sending the trader back to the dashboard for the start button.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-062",
+      "statement": "A fit test holds the confirmation page to no serious or critical axe violations against WCAG 2 A and AA.",
+      "kind": "non-functional",
+      "ref": "features/confirmation/confirmation.fit.spec.js:164 'has no serious or critical axe violations'",
+      "quote": ".withTags(['wcag2a', 'wcag2aa'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p14-063",
+      "statement": "No fit test proves the confirmation page with documents uploaded, where the outstanding-items section should be absent.",
+      "kind": "behaviour",
+      "ref": "features/confirmation/confirmation.fit.spec.js (whole file)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked through all five tests: every submitted test uses the same no-documents journey."
+    },
+    {
+      "id": "repo-frontend-p14-064",
+      "statement": "No fit test proves the declaration submit's refusal path (a stale or incomplete notification sent back to check answers) or the recoverable save failure.",
+      "kind": "behaviour",
+      "ref": "features/declaration/declaration.fit.spec.js (whole file)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked through all five tests; these paths may be covered by controller.test.js, which is outside this part's read."
+    },
+    {
+      "id": "repo-frontend-p14-065",
+      "statement": "The confirmation page shows nothing that tells the user an email or other confirmation has been sent, and says nothing about what happens to the notification next at the border beyond the transporting guidance.",
+      "kind": "copy",
+      "ref": "features/confirmation/template.njk; copy/copy.en.js",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The slice is silent on a confirmation email or a 'what happens next' section for the notification itself; recorded so the reconciler can weigh it against design sources."
+    }
+  ]
+}

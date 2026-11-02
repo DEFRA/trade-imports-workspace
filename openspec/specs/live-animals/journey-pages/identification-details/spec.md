@@ -8,27 +8,41 @@ The identifier records entered for the animals of each species on a consignment:
 
 ### Requirement: The page opens with a summary of every commodity the notification holds, above one section per commodity
 **ID**: REQ-IDENT-001
-The system MUST show, above the identification sections, a summary table with one row per chosen commodity — one row per chosen species under commodity code 01061900 — listing its code, common name, species and number of animals (the total of that commodity's species), and MUST offer a Change link from each summary row back to commodity selection.
+The system MUST show, above the identification sections, a summary table with one row per chosen commodity — one row per chosen species under commodity code 01061900 — listing its code, the Latin names of its species and its number of animals (the total of that commodity's species), and MUST offer a Change link from each summary row back to commodity selection, showing what is already chosen, where saving returns the user to identification details.
 
 #### Scenario: The summary lists every commodity with its species and a change link, ahead of the sections
 **ID**: SCN-IDENT-001-A
 - **GIVEN** the user has chosen more than one commodity
 - **WHEN** they open the identification details page
-- **THEN** a summary table headed Commodity code, Common name, Species and Number of animals lists every commodity, ahead of the identification sections
+- **THEN** a summary table headed Commodity code, Species and Number of animals lists every commodity, ahead of the identification sections
 - **AND** each row offers a Change link that opens commodity selection
 
 #### Scenario: Two species of one commodity share a row listing both Latin names and their total
 **ID**: SCN-IDENT-001-B
 - **GIVEN** the user has chosen two species under one commodity (for example, two cattle species with 2 and 3 animals)
 - **WHEN** they open the identification details page
-- **THEN** the summary shows one row for that commodity, named by the catalogue's name for it, listing both Latin names
+- **THEN** the summary shows one row for that commodity code, listing both Latin names
 - **AND** its number of animals is the total of the two species
 
 #### Scenario: Each species under commodity code 01061900 has its own row
 **ID**: SCN-IDENT-001-C
 - **GIVEN** the user has chosen a species under commodity code 01061900 (for example, a cat) and a species under another commodity
 - **WHEN** they open the identification details page
-- **THEN** the summary shows that species on its own row, named by the species' common name, with its own number of animals
+- **THEN** the summary shows that species on its own row, with its Latin name and its own number of animals
+
+#### Scenario: Adding a commodity from a summary row's Change returns to identification details listing it
+**ID**: SCN-IDENT-001-D
+- **GIVEN** the user is on the identification details page
+- **WHEN** they follow Change on a summary row
+- **THEN** commodity selection shows the commodities already chosen
+- **WHEN** they choose a further commodity and save and continue
+- **THEN** identification details is shown, and its summary lists the added commodity
+
+#### Scenario: Removing a commodity from a summary row's Change returns to identification details without it
+**ID**: SCN-IDENT-001-E
+- **GIVEN** the user is on the identification details page with more than one commodity chosen
+- **WHEN** they follow Change on a summary row, untick that commodity and save and continue
+- **THEN** identification details is shown, and its summary lists only the commodities left
 
 ### Requirement: The page asks for one animal's identifiers per species card, and the card's save button says what is left on the line
 **ID**: REQ-IDENT-002
@@ -50,7 +64,7 @@ The system MUST ask the user for the identifiers of a single animal on a card sc
 
 ### Requirement: Each card offers a way to change that species' declared animal count, and a way to add a further commodity
 **ID**: REQ-IDENT-003
-The system MUST offer, on every species card, a Change number of animals link, naming that species to screen readers, that opens commodity details with that species' number-of-animals field ready to edit, and MUST offer an Add another commodity link — reachable while there are still commodities to identify, not only once none remain — that opens commodity selection.
+The system MUST offer, on every species card, a Change number of animals link, naming that species to screen readers, that opens commodity details with that species' number-of-animals field ready to edit, and MUST offer an Add another commodity link — reachable while there are still commodities to identify, not only once none remain — that opens commodity selection, where saving returns the user to identification details.
 
 #### Scenario: Change number of animals opens commodity details on that line
 **ID**: SCN-IDENT-003-A
@@ -64,6 +78,7 @@ The system MUST offer, on every species card, a Change number of animals link, n
 - **GIVEN** the user has a commodity still to identify
 - **WHEN** they follow Add another commodity
 - **THEN** commodity selection opens
+- **AND** saving there returns to identification details
 
 ### Requirement: The identifier fields start empty for each new record
 **ID**: REQ-IDENT-004
@@ -98,7 +113,7 @@ The system MUST show only the identifier fields that a given commodity supports,
 
 #### Scenario: A commodity with no identifier of its own earns no panel
 **ID**: SCN-IDENT-006-B
-- **GIVEN** a commodity line whose commodity carries no identifier of its own (for example, fish)
+- **GIVEN** a commodity line whose commodity carries no identifier of its own (for example, ostriches)
 - **WHEN** the user views the identification details page
 - **THEN** that line has no identification card at all — no typed fields and no free-text fields
 
@@ -264,21 +279,21 @@ The system MUST return the user to Overview when they follow the back link from 
 **ID**: REQ-IDENT-019
 The system MUST pass the user on, without showing the identification details page, when no commodity on the notification carries an identifier of its own.
 
-#### Scenario: A consignment of fish alone carries on past the page
+#### Scenario: A consignment of ostriches alone carries on past the page
 **ID**: SCN-IDENT-019-A
-- **GIVEN** the notification holds only a commodity with no identifier of its own (for example, fish)
+- **GIVEN** the notification holds only a commodity with no identifier of its own (for example, ostriches)
 - **WHEN** the identification details page is requested directly
 - **THEN** Overview is shown instead, and the page itself is never rendered
 
 ### Requirement: Identification is shown as one section per commodity holding one card per species
 **ID**: REQ-IDENT-020
-The system MUST show identification as one section per commodity, headed with the commodity's name and code, holding one card per selected species that has identifier fields and a number of animals, in the order their species are listed for selection, each headed by the species name with a Change number of animals link, and MUST show no card for a species with no number of animals.
+The system MUST show identification as one section per commodity code, headed with the code, holding one card per selected species that has identifier fields and a number of animals, in the order their species are listed for selection, each headed by the species name with a Change number of animals link, and MUST show no card for a species with no number of animals.
 
 #### Scenario: A commodity with two species shows one section holding two cards
 **ID**: SCN-IDENT-020-A
 - **GIVEN** the user has chosen two cattle species, each with a number of animals, and a horse
 - **WHEN** they open the identification details page
-- **THEN** a section headed "Cow (0102)" holds one card for each cattle species, each headed by its Latin name
+- **THEN** a section headed "0102" holds one card for each cattle species, each headed by its Latin name
 - **AND** a separate section holds the horse's card
 
 #### Scenario: A species with no number of animals has no card
@@ -287,9 +302,9 @@ The system MUST show identification as one section per commodity, headed with th
 - **WHEN** the user opens the identification details page
 - **THEN** the summary lists that species and no card or entry form is shown for it
 
-### Requirement: A card's button saves only its own species, and the page's save buttons save only species of one animal
+### Requirement: A card's button saves only its own species, Enter saves every species typed in, and the page's save buttons save only species of one animal
 **ID**: REQ-IDENT-021
-The system MUST, when a species card's save button is pressed, validate and save only that species' current animal and reload with that species' form empty, MUST NOT validate or save values typed into any other species' form, MUST validate and save the typed identifiers of each species with one animal when Save and continue or Save and return to overview is pressed, and MUST NOT validate or save anything typed into the form of a species with more than one animal on those buttons.
+The system MUST, when a card's button is pressed, validate and save only its species' current animal and reload with its form empty, leaving other forms alone. The system MUST, when Enter is pressed, validate and save every species form holding a value, and return the user to identification details when a species with more than one animal was saved. The system MUST, on Save and continue or Save and return to overview, validate and save only the forms of species with one animal.
 
 #### Scenario: A card button saves only its own species and shows no error for another
 **ID**: SCN-IDENT-021-A
@@ -304,6 +319,20 @@ The system MUST, when a species card's save button is pressed, validate and save
 - **WHEN** the user presses Save and continue
 - **THEN** the one-animal species' record is saved
 - **AND** the two-animal species has no record saved, and its card still asks for its first animal
+
+#### Scenario: Enter saves a species of several animals and stays on identification details
+**ID**: SCN-IDENT-021-C
+- **GIVEN** a valid identifier is typed into the form of a species with more than one animal
+- **WHEN** the user presses Enter in that field
+- **THEN** that animal is saved and identification details is shown again
+- **AND** that species' saved-animals table lists the record, its form is empty, and its heading reports the next animal
+
+#### Scenario: Enter with an over-length identifier in a species of several animals is blocked and keeps the value
+**ID**: SCN-IDENT-021-D
+- **GIVEN** an over-length ear tag is typed into the form of a species with more than one animal
+- **WHEN** the user presses Enter in that field
+- **THEN** nothing is saved and the field shows its error
+- **AND** the over-length value stays in the field
 
 ### Requirement: The identifier fields are labelled Microchip, Passport, Tattoo, Ear tag and Horse name, with no hint text
 **ID**: REQ-IDENT-022

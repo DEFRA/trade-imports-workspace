@@ -1,0 +1,1134 @@
+{
+  "source": "repo:frontend",
+  "structure": "Part 3, Dashboard and notification actions, read in full at frontend HEAD 4c2119da: the dashboard feature (page.js, controller.js, template.njk, notification-helper.js, copy/copy.en.js, copy/copy.cy.js, view-model/sort-options.js, view-model/row/index.js, view-model/row/actions.js, dashboard.fit.spec.js), notification-actions (controller.js, notification-actions.fit.spec.js), cancel-amend (controller.js, template.njk, copy en/cy, cancel-amend.fit.spec.js) and delete-notification (controller.js, template.njk, copy en/cy, delete-notification.fit.spec.js), all under src/server/app/sets/live-animals/journeys/linear/features/. To read what those files render, it also looked up, without claiming their wider content: shared/paths.js (route shapes), shared/kit.js (status tag text and colours, CYA slug), shared/copy.en.js (notification action, recoverable error and stale action copy), shared/layout.njk banners, config/nunjucks/context/context.js (staleAction query flag), flow/section-captions (the Dashboard caption), sets/live-animals/set.js (the /live-animals base) and engine/journey.js (which notifications are listed and what amend, copy, cancel-amend and delete do). Pages covered: the dashboard at GET / (heading, start button, filter panel with reference search, sort, results label, notification cards with eight fields, status tags, row actions per status, pagination, empty states, success banners), the create POST /notifications and amend POST /notifications/{id}/amend routes, the copy POST /notifications/{id}/copy action, the cancel-amend page GET/POST /notifications/{id}/cancel-amend and the delete page GET/POST /notifications/{id}/delete. Every test in the four fit specs gets a claim: dashboard 15 tests in 6 describes, notification-actions 4, cancel-amend 5, delete-notification 5. The unit tests (controller.test.js, copy.test.js, index.test.js, notification-helper.test.js) sit in the folders but are not in this part's read list and were not claimed. Claims run dashboard, row actions, create and amend, copy, cancel-amend, delete, then each fit spec's tests, then gaps.",
+  "claims": [
+    {
+      "id": "repo-frontend-p3-001",
+      "statement": "The dashboard is the GET route at the root of the live-animals set, so a user reaches it at /live-animals.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js:127-131; src/server/app/shared/paths.js:10,19; src/server/app/sets/live-animals/set.js:6-7",
+      "quote": "export const dashboardRoutePath = () => '/'",
+      "confidence": "verbatim",
+      "note": "SET_ID = 'live-animals' and SET_BASE = `/${SET_ID}`; dashboardPath() returns the set base."
+    },
+    {
+      "id": "repo-frontend-p3-002",
+      "statement": "The dashboard shows the section caption 'Dashboard' above its heading, in the extra-large caption style.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:28; src/server/app/sets/live-animals/journeys/linear/flow/section-captions/index.js:49; flow/section-captions/copy/copy.en.js:12",
+      "quote": "dashboard: 'Dashboard',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-003",
+      "statement": "The dashboard's page title and extra-large heading are 'Import notification service'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:2; template.njk:29; controller.js:74",
+      "quote": "title: 'Import notification service',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-004",
+      "statement": "Under the heading, the dashboard explains the service in one paragraph about telling the authorities about imported live animals.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:3-6; template.njk:30",
+      "quote": "'Use this service to tell the authorities about live animals ' + 'you are importing. You will answer a short set of questions ' + 'about the consignment, then submit your notification.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-005",
+      "statement": "The dashboard has a GOV.UK start button 'Start a new notification' in a form that posts to /live-animals/notifications.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:32-35; copy/copy.en.js:7; controller.js:79",
+      "quote": "{{ govukButton({ text: copy.startButton, isStartButton: true }) }}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-006",
+      "statement": "Posting to /notifications creates a new notification, adds it to the notifications the user's session knows, and begins an opening run for it.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js:120-124,139-143; src/server/app/engine/journey.js:89-95",
+      "quote": "const journey = await startJourney(request, h)\n  await beginOpeningRun(request, h, journey.journeyId)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-007",
+      "statement": "After creating a notification, the user is sent straight to that notification's origin page, not to the overview.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js:123",
+      "quote": "return h.redirect(pagePath(journey.journeyId, originPage.slug))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-008",
+      "statement": "Below the start button, the dashboard has a medium heading 'Your notifications'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:37; copy/copy.en.js:8",
+      "quote": "notificationsHeading: 'Your notifications',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-009",
+      "statement": "The notification list is laid out in two columns: a filter panel in the left one-third and the results, sort and cards in the right two-thirds.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:38-61",
+      "quote": "<div class=\"govuk-grid-column-one-third\">\n      <aside class=\"notification-list__filters\" aria-labelledby=\"filter-notifications-heading\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-010",
+      "statement": "The filter panel is headed 'Filter notifications'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:41; copy/copy.en.js:10",
+      "quote": "heading: 'Filter notifications',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-011",
+      "statement": "The filter panel has one text field, labelled 'Keyword or reference' (small bold label), named referenceNumber, with no hint.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:47-55; copy/copy.en.js:11",
+      "quote": "label: 'Keyword or reference',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-012",
+      "statement": "The filter panel's 'Search' button submits a GET to the dashboard with the reference as the referenceNumber query parameter.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:43,56; copy/copy.en.js:12",
+      "quote": "<form method=\"get\" action=\"{{ listAction }}\" class=\"notification-list__search-form\" data-testid=\"notification-search-form\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-013",
+      "statement": "A search keeps the sort order the user has chosen, carried as a hidden field in the search form.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:44-46",
+      "quote": "{% if sort %}\n            <input type=\"hidden\" name=\"sort\" value=\"{{ sort }}\" />",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-014",
+      "statement": "A search does not keep the page number: the search form carries no page field, so a search starts at page 1.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:43-57",
+      "quote": "{% if sort %}\n            <input type=\"hidden\" name=\"sort\" value=\"{{ sort }}\" />\n          {% endif %}",
+      "confidence": "inferred",
+      "note": "Read from the absence of a page hidden input in the search form, against the sort form which does carry one."
+    },
+    {
+      "id": "repo-frontend-p3-015",
+      "statement": "The search term is trimmed, and a blank or whitespace-only term means no filter.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js:42-48,58",
+      "quote": "const trimmed = value.trim()\n  return trimmed.length > 0 ? trimmed : undefined",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-016",
+      "statement": "The search field is filled with the term currently searched for, so the term stays visible after the search.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:54; controller.js:98",
+      "quote": "referenceNumber: referenceNumber ?? '',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-017",
+      "statement": "Although the label says 'Keyword or reference', the term is passed to the notification listing only as a reference number; nothing in this slice searches by any other keyword.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js:58-63; dashboard.fit.spec.js:234-260",
+      "quote": "const listed = await listKnownJourneys(request, {\n    page: requestedPage,\n    sort,\n    referenceNumber\n  })",
+      "confidence": "inferred",
+      "note": "Whether the backend matches exactly or partially is outside this slice; the fit spec proves an exact reference match only. The label and the behaviour may disagree."
+    },
+    {
+      "id": "repo-frontend-p3-018",
+      "statement": "The reference search is the only filter on the dashboard: there is no filter by status, date, commodity or party.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:40-58",
+      "quote": "{{ govukInput({\n            id: \"referenceNumber\",\n            name: \"referenceNumber\",",
+      "confidence": "inferred",
+      "note": "Read from the filter panel holding a single input."
+    },
+    {
+      "id": "repo-frontend-p3-019",
+      "statement": "Above the cards, a small bold results label says how many notifications are shown: 'No Results', 'Showing 1 Result', 'Showing N of T Results' (one item on a page) or 'Showing S to E of T Results'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:40-46; notification-helper.js:195-215; template.njk:63",
+      "quote": "none: 'No Results',\n      one: 'Showing 1 Result',\n      oneOf: (item, total) => `Showing ${item} of ${total} Results`,\n      many: (start, end, total) =>\n        `Showing ${start} to ${end} of ${total} Results`",
+      "confidence": "verbatim",
+      "note": "The helper's own fallbacks differ ('Showing 1 Results'), but the controller always passes the copy labels. 'Results' is capitalised mid-sentence in the copy."
+    },
+    {
+      "id": "repo-frontend-p3-020",
+      "statement": "The results range is worked out from the page number, the page size the listing returns and the number of rows shown: start is (page-1) times size plus 1, end is capped at the total.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/notification-helper.js:178-193",
+      "quote": "const start = (page - 1) * pageSize + 1\n  return {\n    start,\n    end: Math.min(start + itemCount - 1, totalElements),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-021",
+      "statement": "When a reference search finds nothing, the results label reads 'No notifications found' instead of 'No Results'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js:82-88; copy/copy.en.js:13",
+      "quote": "noResults: 'No notifications found'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-022",
+      "statement": "When the user has no notifications and is not searching, the dashboard says 'You have not started any notifications in this session.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:159-161; copy/copy.en.js:56",
+      "quote": "emptyText: 'You have not started any notifications in this session.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-023",
+      "statement": "When a reference search finds nothing, the empty-state sentence is not shown; only the results label says nothing was found.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:159",
+      "quote": "{% elif not referenceNumber %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-024",
+      "statement": "The dashboard lists only notifications the user's session knows: the listing is asked for the journey ids held in the session, not for every notification the user or their organisation owns.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js:59; src/server/app/engine/journey.js:141-147",
+      "quote": "const journeyIds = await session.knownJourneyIds(request)\n  return records.list({ journeyIds, page, sort, referenceNumber })",
+      "confidence": "verbatim",
+      "note": "The empty-state copy ('in this session') matches this. A notification opened directly by id is added to the known set (engine/journey.js:110-112)."
+    },
+    {
+      "id": "repo-frontend-p3-025",
+      "statement": "Deleted notifications are left out of the dashboard list.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js:65",
+      "quote": "const rows = listed.rows.filter((journey) => journey.status !== DELETED)",
+      "confidence": "verbatim",
+      "note": "The filter runs after the listing is paged, so a page holding a deleted row could show fewer rows than the page size while the totals still count it."
+    },
+    {
+      "id": "repo-frontend-p3-026",
+      "statement": "The sort control is a select labelled 'Sort by' (small bold label).",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:72-79; copy/copy.en.js:28",
+      "quote": "label: 'Sort by',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-027",
+      "statement": "The sort options are, in order: 'Arrival (newest to oldest)', 'Arrival (oldest to newest)', 'Date created (newest to oldest)', 'Date created (oldest to newest)', with values arrivalDate,desc, arrivalDate,asc, createdAt,desc and createdAt,asc.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/notification-helper.js:9-14; view-model/sort-options.js:8-18; copy/copy.en.js:30-35",
+      "quote": "{ value: 'arrivalDate,desc', text: 'Arrival (newest to oldest)' },\n  { value: 'arrivalDate,asc', text: 'Arrival (oldest to newest)' },\n  { value: 'createdAt,desc', text: 'Date created (newest to oldest)' },\n  { value: 'createdAt,asc', text: 'Date created (oldest to newest)' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-028",
+      "statement": "The default sort is arrival date, newest first; any sort value not in the list falls back to it.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/notification-helper.js:7,110-113",
+      "quote": "export const DEFAULT_NOTIFICATION_SORT = 'arrivalDate,desc'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-029",
+      "statement": "The sort is applied with a secondary 'Update sort' button; the dashboard does not re-sort when the select changes.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:80-83; copy/copy.en.js:29",
+      "quote": "update: 'Update sort',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-030",
+      "statement": "Changing the sort keeps the current page (when beyond page 1) and the current reference search.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:66-71",
+      "quote": "{% if currentPage > 1 %}\n            <input type=\"hidden\" name=\"page\" value=\"{{ currentPage }}\" />\n          {% endif %}\n          {% if referenceNumber %}\n            <input type=\"hidden\" name=\"referenceNumber\" value=\"{{ referenceNumber }}\" />",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-031",
+      "statement": "Dashboard links write page only when beyond 1, sort only when not the default, and referenceNumber only when searching.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/notification-helper.js:115-134",
+      "quote": "if (page > 1) {\n    params.set('page', String(page))\n  }\n  if (sort && sort !== DEFAULT_NOTIFICATION_SORT) {\n    params.set('sort', sort)\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-032",
+      "statement": "A page number that is not a whole number or is below 1 is treated as page 1, and one beyond the last page is treated as the last page.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/notification-helper.js:100-108; controller.js:55-56,64",
+      "quote": "if (!Number.isInteger(page) || page < 1 || totalPages <= 0) {\n    return 1\n  }\n  return Math.min(page, totalPages)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-033",
+      "statement": "Pagination shows 'Previous' and 'Next' links only when there is more than one page: no Previous on the first page and no Next on the last.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/notification-helper.js:136-176; template.njk:163-165; copy/copy.en.js:38-39",
+      "quote": "if (totalPages <= 1) {\n    return null\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-034",
+      "statement": "Previous and Next links keep the current sort and reference search.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/notification-helper.js:153-174",
+      "quote": "href: `${baseUrl}${buildHomeListQueryString({\n              page: page + 1,\n              sort: sortOrDefault,\n              referenceNumber\n            })}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-035",
+      "statement": "Pagination is previous and next only: there are no numbered page links.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/notification-helper.js:152-175",
+      "quote": "return {\n    previous:",
+      "confidence": "inferred",
+      "note": "Read from buildPaginationLinks returning only previous and next, with no items array for govukPagination."
+    },
+    {
+      "id": "repo-frontend-p3-036",
+      "statement": "The page size comes from the notification listing, not the frontend; the fit spec proves 20 notifications a page.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js:66-71; dashboard.fit.spec.js:20",
+      "quote": "const PAGE_SIZE = 20",
+      "confidence": "inferred",
+      "note": "The controller reads size from listed.size; the 20 is set by the backend and proven by the fit spec."
+    },
+    {
+      "id": "repo-frontend-p3-037",
+      "statement": "Each notification is shown as a summary card titled with its reference, falling back to its journey id when it has no reference.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:89-91; view-model/row/index.js:12",
+      "quote": "reference: journey.reference ?? journey.journeyId,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-038",
+      "statement": "Each card shows eight fields in three rows: Commodity, Origin and 'Arrival at destination'; Consignee, Consignor and Status; 'Date created' and 'Date submitted'.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:115-156; copy/copy.en.js:15-26",
+      "quote": "status: 'Status',\n    commodity: 'Commodity',\n    origin: 'Origin',\n    arrival: 'Arrival at destination',\n    consignor: 'Consignor',\n    consignee: 'Consignee',\n    created: 'Date created',\n    submitted: 'Date submitted',",
+      "confidence": "verbatim",
+      "note": "Consignee is shown before Consignor on the card, though the copy lists consignor first."
+    },
+    {
+      "id": "repo-frontend-p3-039",
+      "statement": "The card's Commodity shows the commodity's name for its code, falling back through name, display name, text, commodity code, code and value; blank when there is no commodity.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/notification-helper.js:75-95; view-model/row/index.js:14",
+      "quote": "commodity: formatCommodity(journey.commodity, commodities.commodityNameFor),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-040",
+      "statement": "The card's Origin shows the display label of the country of origin, and is blank when no country is chosen.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/index.js:15-17",
+      "quote": "origin: journey.originCountryCode\n    ? await countries.originDisplayLabel(journey.originCountryCode)\n    : '',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-041",
+      "statement": "The card's 'Arrival at destination' shows the arrival date the user chose, as that calendar day regardless of the server's time zone.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/index.js:18-19; notification-helper.js:22-46,57-63",
+      "quote": "// arrival is a day the user chose; created and submitted are moments.\n  arrival: formatDisplayCalendarDate(journey.arrivalDate),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-042",
+      "statement": "The card's 'Date created' and 'Date submitted' show the day the event happened in the service's time zone, not the server's.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/notification-helper.js:65-73; view-model/row/index.js:22-23",
+      "quote": "A moment that happened — created, submitted. Rendered as the day it\n * happened in the service's zone, not the container's ambient `TZ`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-043",
+      "statement": "A missing or unparseable date shows as blank on the card, so a notification not yet submitted shows an empty 'Date submitted'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/notification-helper.js:48-55",
+      "quote": "if (!value) {\n    return ''\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-044",
+      "statement": "The dashboard copy holds 'Not submitted', but the card never renders it: an unsubmitted notification shows a blank 'Date submitted'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:48; view-model/row/index.js:23",
+      "quote": "notSubmitted: 'Not submitted',",
+      "confidence": "inferred",
+      "note": "Read from the key being absent from the template and the row view model. Likewise the 'Reference' and 'Actions' table headings in copy (copy.en.js:16,25) are not rendered."
+    },
+    {
+      "id": "repo-frontend-p3-045",
+      "statement": "The card's Consignor and Consignee show the party names, blank when none is chosen.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/index.js:20-21",
+      "quote": "consignor: journey.consignorName ?? '',\n  consignee: journey.consigneeName ?? '',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-046",
+      "statement": "The card's Status is a tag: 'Draft' in blue, 'Submitted' in green, 'Amending' in yellow and 'Deleted' in grey.",
+      "kind": "copy",
+      "ref": "src/server/app/shared/kit.js:33-50; src/server/app/shared/copy.en.js:68-73; dashboard/template.njk:142",
+      "quote": "draft: 'Draft',\n    submitted: 'Submitted',\n    amend: 'Amending',\n    deleted: 'Deleted'",
+      "confidence": "verbatim",
+      "note": "Classes govuk-tag--blue, --green, --yellow, --grey. Deleted rows are filtered from the dashboard, so the grey tag does not appear there."
+    },
+    {
+      "id": "repo-frontend-p3-047",
+      "statement": "A submitted notification's card offers four actions, in order: View, Amend, 'Copy as new' and Delete.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js:28-41",
+      "quote": "if (journey.status === SUBMITTED) {\n    return [\n      {\n        text: copy.actions.view,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-048",
+      "statement": "View is a link to the notification's read-only view at /notifications/{id}/notification-view.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js:31-33; src/server/app/shared/kit.js:60",
+      "quote": "export const CYA_SLUG = 'notification-view'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-049",
+      "statement": "Amend is a button that posts to /notifications/{id}/amend.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js:34-37",
+      "quote": "text: copy.actions.amend,\n        postAction: pagePath(journey.journeyId, 'amend')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-050",
+      "statement": "A draft notification's card offers three actions, in order: Resume, 'Copy as new' and Delete.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js:42-51",
+      "quote": "if (journey.status === DRAFT) {\n    return [\n      {\n        text: copy.actions.resume,\n        href: hubPath(journey.journeyId)\n      },\n      copyAction,\n      deleteAction\n    ]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-051",
+      "statement": "Resume is a link to the notification's overview (hub) at /notifications/{id}.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js:45-46; src/server/app/shared/paths.js:17",
+      "quote": "export const hubPath = (journeyId) => `${setBase()}/notifications/${journeyId}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-052",
+      "statement": "A notification being amended offers four actions, in order: Resume, 'Copy as new', 'Cancel amendment' and Delete.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js:52-65",
+      "quote": "if (journey.status === AMEND) {\n    return [\n      {\n        text: copy.actions.resume,\n        href: hubPath(journey.journeyId)\n      },\n      copyAction,\n      {\n        text: copy.actions.cancelAmend,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-053",
+      "statement": "'Cancel amendment' is a link to the cancel-amend page at /notifications/{id}/cancel-amend.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js:59-62",
+      "quote": "href: pagePath(journey.journeyId, 'cancel-amend')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-054",
+      "statement": "A notification in any other status has no actions on its card.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js:66",
+      "quote": "return []",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-055",
+      "statement": "The action labels are 'View', 'Amend', 'Resume', 'Cancel amendment', 'Copy as new' and 'Delete'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.en.js:49-54; src/server/app/shared/copy.en.js:53,58",
+      "quote": "view: 'View',\n    amend: 'Amend',\n    resume: 'Resume',\n    cancelAmend: 'Cancel amendment'",
+      "confidence": "verbatim",
+      "note": "'Copy as new' and 'Delete' come from shared copy notificationActions."
+    },
+    {
+      "id": "repo-frontend-p3-056",
+      "statement": "Every card action carries visually hidden text 'notification {reference}', so a screen reader hears, for example, 'Delete notification GBN-AG-…'.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:103,108; copy/copy.en.js:55",
+      "quote": "actionHidden: (reference) => `notification ${reference}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-057",
+      "statement": "Card actions that change data (Amend, 'Copy as new') are forms posting with the CSRF crumb, rendered as link-styled buttons; the others are plain links.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:95-110",
+      "quote": "<button type=\"submit\" class=\"govuk-link app-link-button\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-058",
+      "statement": "'Copy as new' sends the notification's concurrency token and the origin 'dashboard' with the copy request.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js:18-23; template.njk:98-101",
+      "quote": "postAction: pagePath(journey.journeyId, 'copy'),\n    concurrencyToken: journey.concurrencyToken,\n    copyOrigin: 'dashboard'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-059",
+      "statement": "Delete on a card is a link to the delete confirmation page at /notifications/{id}/delete, not an immediate delete.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js:24-27",
+      "quote": "href: pagePath(journey.journeyId, 'delete')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-060",
+      "statement": "Amend works only on a notification the session knows; anything else sends the user back to the dashboard.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.js:115-118,134-138; src/server/app/engine/journey.js:162-177",
+      "quote": "return journey ? h.redirect(hubPath(journey.journeyId)) : backToDashboard(h)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-061",
+      "statement": "Amending a submitted notification puts it into amendment and opens its overview; amending a draft or one already being amended opens its overview without changing it; any other status returns to the dashboard.",
+      "kind": "behaviour",
+      "ref": "src/server/app/engine/journey.js:152-160; dashboard/controller.js:117",
+      "quote": "if (journey.status === SUBMITTED) {\n    return records.amend(journeyId, actor)\n  }\n  if (journey.status === DRAFT || journey.status === AMEND) {\n    return journey\n  }\n  return undefined",
+      "confidence": "verbatim",
+      "note": "The engine is outside this part's read list; read only to say where the amend route leads."
+    },
+    {
+      "id": "repo-frontend-p3-062",
+      "statement": "With ?deleted=1, the dashboard shows a green success banner titled 'Notification deleted' with 'The notification has been deleted.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:10-17; controller.js:106; src/server/app/shared/copy.en.js:57-61",
+      "quote": "successTitle: 'Notification deleted',\n      successBody: 'The notification has been deleted.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-063",
+      "statement": "With ?copied=1, the dashboard shows a success banner titled 'Notification copied' with 'A new draft notification has been created.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:19-26; controller.js:107; src/server/app/shared/copy.en.js:52-56",
+      "quote": "successTitle: 'Notification copied',\n      successBody: 'A new draft notification has been created.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-064",
+      "statement": "Nothing in this slice sends the user to the dashboard with ?copied=1: a successful copy goes to the new draft's overview, so the 'Notification copied' banner is never reached from 'Copy as new'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/controller.js:37-39",
+      "quote": "return copied\n      ? h.redirect(hubPath(copied.journeyId))\n      : h.redirect(dashboardPath())",
+      "confidence": "inferred",
+      "note": "Whether the hub shows its own copy banner belongs to part 4."
+    },
+    {
+      "id": "repo-frontend-p3-065",
+      "statement": "Both dashboard success banners are announced to assistive technology as alerts.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/template.njk:15,24",
+      "quote": "role: \"alert\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-066",
+      "statement": "When a copy from the dashboard fails to save, the dashboard is shown again with HTTP 500 and the 'There is a problem' banner saying 'Sorry, there is a problem with the service. Your answers on this page have been saved. Try again in a few minutes.'",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/controller.js:18-33; dashboard/controller.js:50-54,105; src/server/app/shared/layout.njk:81-87; src/server/app/shared/copy.en.js:36-39",
+      "quote": "body: 'Sorry, there is a problem with the service. Your answers on this page have been saved. Try again in a few minutes.'",
+      "confidence": "verbatim",
+      "note": "The shared body talks about answers on this page being saved, which does not fit a failed copy from the dashboard."
+    },
+    {
+      "id": "repo-frontend-p3-067",
+      "statement": "With ?staleAction=1, the dashboard shows the banner 'The notification has been updated' with 'This notification was updated since you opened it. Review the details and try again.'",
+      "kind": "copy",
+      "ref": "src/config/nunjucks/context/context.js:75; src/server/app/shared/layout.njk:88-94; src/server/app/shared/copy.en.js:47-50",
+      "quote": "title: 'The notification has been updated',\n    body: 'This notification was updated since you opened it. Review the details and try again.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-068",
+      "statement": "The dashboard's Welsh copy is a machine draft not yet reviewed by a translator, and must not ship without Welsh Language Standards sign-off.",
+      "kind": "constraint",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.cy.js:1",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-069",
+      "statement": "In Welsh the dashboard is titled 'Gwasanaeth hysbysu mewnforio', its start button reads 'Dechrau hysbysiad newydd' and its list heading 'Eich hysbysiadau'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/copy/copy.cy.js:3,8,9",
+      "quote": "title: 'Gwasanaeth hysbysu mewnforio',",
+      "confidence": "verbatim",
+      "note": "Every English dashboard key has a Welsh twin in copy.cy.js, including sort options, results labels, action labels and the empty state."
+    },
+    {
+      "id": "repo-frontend-p3-070",
+      "statement": "The Welsh sort option labels are hard-wired in order to the four sort values; the English labels in the helper are replaced by the localised copy.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/sort-options.js:8-18",
+      "quote": "export const sortOptions = NOTIFICATION_SORT_OPTIONS.map((option, index) => ({\n  ...option,\n  text: sortOptionText[index]\n}))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-071",
+      "statement": "'Copy as new' is the POST route /notifications/{id}/copy.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/controller.js:48-55",
+      "quote": "path: pageRoutePath('copy'),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-072",
+      "statement": "Copy creates a new, separate notification from the source, adds it to the session's known notifications, and sends the user to the new notification's overview.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/controller.js:29-39; src/server/app/engine/journey.js:189-198",
+      "quote": "const copied = await records.copy(journeyId, concurrencyToken, actor)\n  await session.addKnownJourney(request, h, copied.journeyId)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-073",
+      "statement": "Copy works only on a notification the session knows; anything else sends the user back to the dashboard with no banner.",
+      "kind": "rule",
+      "ref": "src/server/app/engine/journey.js:189-192; notification-actions/controller.js:37-39",
+      "quote": "if (!(await isKnownJourney(request, journeyId))) {\n    return undefined\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-074",
+      "statement": "Copy checks the concurrency token the page held; if the notification has changed since, the user is sent back where they started with ?staleAction=1 and sees the 'The notification has been updated' banner.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/controller.js:24-27,40-43",
+      "quote": "if (error?.code === 'STALE_CONCURRENCY_TOKEN') {\n      return h.redirect(`${originPath(request)}?staleAction=1`)\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-075",
+      "statement": "Copy can start from the dashboard or from the notification view; the copyOrigin field decides where a stale or failed copy returns the user.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/controller.js:13-21",
+      "quote": "request.payload?.copyOrigin === 'notification-view'\n    ? pagePath(request.params.journeyId, 'check-answers')\n    : dashboardPath()",
+      "confidence": "verbatim",
+      "note": "For a stale copy from the notification view the redirect uses the slug 'check-answers', while the view itself lives at 'notification-view' (kit.CYA_SLUG). Whether a check-answers route exists is outside this slice; the two may not match."
+    },
+    {
+      "id": "repo-frontend-p3-076",
+      "statement": "When a copy fails to save, the page the copy came from is shown again with HTTP 500 and the recoverable-error banner.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/controller.js:29-36",
+      "quote": "(await recoverCopy(request, h)).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-077",
+      "statement": "Copying a notification that holds address-book parties raises a NotificationCreated event that resolves those parties, so the acting user's organisation id travels with the copy call.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/notification-actions.fit.spec.js:14-17",
+      "quote": "// Copy on the real backend emits a NotificationCreated event that resolves the\n// source parties, so the acting user's organisationId has to travel with the\n// call whenever the source carries address-book parties.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-078",
+      "statement": "The cancel-amend page is GET and POST at /notifications/{id}/cancel-amend.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/controller.js:15,67-80",
+      "quote": "const CANCEL_AMEND_SLUG = 'cancel-amend'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-079",
+      "statement": "The cancel-amend page shows only for a notification being amended; for a submitted one it redirects to the notification view, and for any other status to the dashboard.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/controller.js:23-26,41-46",
+      "quote": "journey.status === state.SUBMITTED\n    ? cyaPath(journey.journeyId)\n    : dashboardPath()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-080",
+      "statement": "The cancel-amend page's title and large heading are 'Cancel this amendment?', with no section caption.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/copy/copy.en.js:2; template.njk:5; flow/section-captions/index.js:44-45",
+      "quote": "title: 'Cancel this amendment?',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-081",
+      "statement": "The cancel-amend page warns that changes made since amending began will be discarded and the submitted version restored.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/copy/copy.en.js:3; template.njk:6",
+      "quote": "body: 'Your changes since you started amending will be discarded and the submitted version restored.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-082",
+      "statement": "The cancel-amend page's primary button is 'Yes, cancel amendment', a standard (not warning) button that posts the form.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/copy/copy.en.js:4; template.njk:12",
+      "quote": "confirmButton: 'Yes, cancel amendment',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-083",
+      "statement": "The cancel-amend page's secondary button 'No, return to notification' links to the notification view and leaves the amendment in place.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/copy/copy.en.js:5; template.njk:13-17; controller.js:38",
+      "quote": "noLink: 'No, return to notification'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-084",
+      "statement": "The cancel-amend page's back link goes to the notification view.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/controller.js:30-31",
+      "quote": "backLink: cyaPath(journey.journeyId),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-085",
+      "statement": "The cancel-amend form posts the CSRF crumb and the notification's concurrency token.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/template.njk:8-10",
+      "quote": "<input type=\"hidden\" name=\"concurrencyToken\" value=\"{{ concurrencyToken }}\" />",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-086",
+      "statement": "Confirming cancel-amend restores the submitted version and sends the user to the notification view with ?cancelled=1; if the session does not know the notification, it returns to the dashboard.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/controller.js:54-64; src/server/app/engine/journey.js:179-187",
+      "quote": "return restored\n    ? h.redirect(`${cyaPath(restored.journeyId)}?cancelled=1`)\n    : h.redirect(dashboardPath())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-087",
+      "statement": "Posting cancel-amend for a notification that is not being amended changes nothing and redirects as the GET does.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/controller.js:48-52",
+      "quote": "if (journey.status !== state.AMEND) {\n    return h.redirect(nonAmendTarget(journey))\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-088",
+      "statement": "When cancelling an amendment fails to save, the cancel-amend page is shown again with HTTP 500 and the recoverable-error banner.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/controller.js:54-60",
+      "quote": "() => render(h, journey, true).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-089",
+      "statement": "The cancel-amend page has Welsh copy, a machine draft not yet reviewed by a translator: 'Canslo’r diwygiad hwn?', 'Iawn, canslo’r diwygiad' and 'Na, dychwelyd i’r hysbysiad'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/copy/copy.cy.js:1-7",
+      "quote": "title: 'Canslo’r diwygiad hwn?',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-090",
+      "statement": "The delete page is GET and POST at /notifications/{id}/delete.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/delete-notification/controller.js:61-74",
+      "quote": "path: pageRoutePath('delete'),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-091",
+      "statement": "A draft, submitted or amending notification can be deleted; for any other status the delete page redirects to the dashboard.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/delete-notification/controller.js:19-22,37-40",
+      "quote": "journey.status === state.DRAFT ||\n  journey.status === state.SUBMITTED ||\n  journey.status === state.AMEND",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-092",
+      "statement": "The delete page's title and large heading are 'Delete this notification?', with no section caption.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/delete-notification/copy/copy.en.js:2; template.njk:5; flow/section-captions/index.js:44-45",
+      "quote": "title: 'Delete this notification?',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-093",
+      "statement": "The delete page warns 'This cannot be undone.'",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/delete-notification/copy/copy.en.js:3; template.njk:6",
+      "quote": "body: 'This cannot be undone.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-094",
+      "statement": "The delete page does not name the notification it will delete: no reference appears on the page.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/delete-notification/template.njk:4-22",
+      "quote": "<h1 class=\"govuk-heading-l\">{{ heading }}</h1>\n  <p class=\"govuk-body\">{{ copy.body }}</p>",
+      "confidence": "inferred",
+      "note": "The layout may show a journey strip with the reference (kit.base passes journey); that strip is outside this slice. The cancel-amend page is the same."
+    },
+    {
+      "id": "repo-frontend-p3-095",
+      "statement": "The delete page's primary button is the red warning button 'Yes, delete notification'.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/delete-notification/copy/copy.en.js:4; template.njk:12-15",
+      "quote": "confirmButton: 'Yes, delete notification',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-096",
+      "statement": "The delete page's secondary button 'No, return to dashboard' links to the dashboard.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/delete-notification/copy/copy.en.js:5; template.njk:16-20; controller.js:34",
+      "quote": "noLink: 'No, return to dashboard'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-097",
+      "statement": "The delete page's back link goes to the dashboard.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/delete-notification/controller.js:26-27",
+      "quote": "backLink: dashboardPath(),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-098",
+      "statement": "The delete form posts the CSRF crumb and the notification's concurrency token.",
+      "kind": "data",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/delete-notification/template.njk:8-10",
+      "quote": "<input type=\"hidden\" name=\"concurrencyToken\" value=\"{{ concurrencyToken }}\" />",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-099",
+      "statement": "Confirming delete soft-deletes the notification (it is marked deleted, not removed) and sends the user to the dashboard with ?deleted=1.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/delete-notification/controller.js:48-58",
+      "quote": "() => softDeleteJourney(request, h, request.params.journeyId),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-100",
+      "statement": "Deleting a notification the session does not know changes nothing and returns to the dashboard with no banner.",
+      "kind": "rule",
+      "ref": "src/server/app/engine/journey.js:200-206; delete-notification/controller.js:56-58",
+      "quote": "return deleted\n    ? h.redirect(`${dashboardPath()}?deleted=1`)\n    : h.redirect(dashboardPath())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-101",
+      "statement": "Posting delete for a notification not in a deletable status changes nothing and returns to the dashboard.",
+      "kind": "rule",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/delete-notification/controller.js:43-46",
+      "quote": "if (!deletable(journey)) {\n    return h.redirect(dashboardPath())\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-102",
+      "statement": "When a delete fails to save, the delete page is shown again with HTTP 500 and the recoverable-error banner.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/delete-notification/controller.js:48-55",
+      "quote": "() => render(h, journey, true).code(HTTP_STATUS_INTERNAL_SERVER_ERROR)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-103",
+      "statement": "Deleting a submitted notification that holds address-book parties raises a NotificationSubmissionDeleted event that resolves those parties, so the backend needs the acting user's organisation id and the frontend forwards it.",
+      "kind": "integration",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/delete-notification/delete-notification.fit.spec.js:94-97",
+      "quote": "// Deleting a submitted notification carrying real address-book parties emits a\n// NotificationSubmissionDeleted event that has to resolve those parties, so the\n// backend requires the acting user's organisationId.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-104",
+      "statement": "The delete page has Welsh copy, a machine draft not yet reviewed by a translator: \"Dileu'r hysbysiad hwn?\", 'Ni ellir dadwneud hyn.', \"Iawn, dileu'r hysbysiad\" and \"Na, dychwelyd i'r dangosfwrdd\".",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/delete-notification/copy/copy.cy.js:1-7",
+      "quote": "title: \"Dileu'r hysbysiad hwn?\",",
+      "confidence": "verbatim",
+      "note": "The Welsh delete copy uses a straight apostrophe where the cancel-amend Welsh copy uses a curly one."
+    },
+    {
+      "id": "repo-frontend-p3-105",
+      "statement": "Fit test: a signed-in user with no notifications sees the heading, body, 'Your notifications', 'No Results', the empty-state sentence and the sort set to arrival newest first.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js:94-109 'renders the empty notification list and default sort'",
+      "quote": "await expect(page.getByLabel(copy.sort.label)).toHaveValue(\n      'arrivalDate,desc'\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-106",
+      "statement": "Fit test: 'Start a new notification' opens the 'Origin of the import' page at /notifications/{id}/origin.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js:111-120 'starts a new notification at the origin page'",
+      "quote": "page.getByRole('heading', { name: 'Origin of the import' })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-107",
+      "statement": "Fit test: a submitted notification's card shows its reference, the commodity 'Cow', origin 'France', the arrival date, consignor and consignee names, the 'Submitted' tag, and View, Amend, 'Copy as new' and Delete.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js:128-155 'submitted notification renders its row data and actions'",
+      "quote": "await expect(page.getByText('Submitted', { exact: true })).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-108",
+      "statement": "Fit test: with a notification card, the dashboard does not scroll sideways at the default viewport or at 769px wide.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js:157-173 'dashboard does not overflow horizontally at desktop'",
+      "quote": "const DESKTOP_BREAKPOINT_WIDTH = 769",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-109",
+      "statement": "Fit test: a draft's card shows the 'Draft' tag with Resume, 'Copy as new' and Delete, and no View or Amend.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js:175-191 'draft notification renders only its available actions'",
+      "quote": "await expect(actionFor(page, 'button', 'Amend', reference)).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-110",
+      "statement": "Fit test: the 'Copy as new' button renders in the same GDS Transport typeface as the neighbouring Delete link.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js:193-209 'copy as new renders in the same typeface as its neighbouring link actions'",
+      "quote": "await expect.poll(() => fontFamilyOf(copyAsNew)).toMatch(/GDS Transport/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-111",
+      "statement": "Fit test: Amend on a submitted card opens the 'Overview' page, and back on the dashboard the card shows 'Amending' with Resume and 'Cancel amendment'.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js:211-226 'amending notification renders resume and cancel-amend actions'",
+      "quote": "await expect(page.getByText('Amending', { exact: true })).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-112",
+      "statement": "Fit test: searching for an exact reference shows only that notification, keeps the chosen sort, keeps the term in the field and puts both in the URL.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js:234-260 'reference search finds an exact notification and preserves sort'",
+      "quote": "`${BASE}?sort=createdAt%2Casc&referenceNumber=${firstReference}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-113",
+      "statement": "Fit test: a reference search with no match keeps the term in the field, shows 'No notifications found' and hides the user's existing notification.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js:262-280 'reference search with no match preserves the query and renders its empty state'",
+      "quote": "const missingReference = 'GBN-AG-26-ZZZZZZ'",
+      "confidence": "verbatim",
+      "note": "The reference format GBN-AG-26-XXXXXX is shown by this test's fixture."
+    },
+    {
+      "id": "repo-frontend-p3-114",
+      "statement": "Fit test: clearing the search and pressing Search again restores the full list and keeps the chosen sort.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js:282-310 'empty reference search clears the filter and restores the full list'",
+      "quote": "`${BASE}?sort=createdAt%2Casc&referenceNumber=`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-115",
+      "statement": "Fit test: with 21 notifications, page 1 shows 20 and 'Showing 1 to 20 of 21 Results' with no Previous; Next goes to ?page=2 with 1 notification, 'Showing 21 of 21 Results', Previous and no Next; changing the sort there keeps page 2.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js:318-373 'paginates at the 20-row boundary and preserves the selected sort'",
+      "quote": "await expect(page).toHaveURL(`${BASE}?page=2&sort=createdAt%2Casc`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-116",
+      "statement": "Fit test: the dashboard shows an 'Alpha' phase banner reading 'This is a new service. Help us improve it and give your feedback by email.', with the feedback link going to mailto:APHAServiceDesk@apha.gov.uk.",
+      "kind": "copy",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js:376-396 'dashboard tells the user the service is in alpha and offers feedback'",
+      "quote": "const FEEDBACK_MAILTO = 'mailto:APHAServiceDesk@apha.gov.uk'",
+      "confidence": "verbatim",
+      "note": "The banner itself is shared layout chrome, outside this slice; this spec is where it is proven."
+    },
+    {
+      "id": "repo-frontend-p3-117",
+      "statement": "Fit test: the alpha banner and its feedback link also appear on an answering page once a notification is started.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js:398-407 'the banner follows the layout onto an answering page'",
+      "quote": "test('the banner follows the layout onto an answering page'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-118",
+      "statement": "Fit test: the empty dashboard has no serious or critical WCAG 2 A or AA axe violations.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js:415-421 'empty dashboard has no serious or critical axe violations'",
+      "quote": ".withTags(['wcag2a', 'wcag2aa'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-119",
+      "statement": "Fit test: the dashboard with a notification card has no serious or critical WCAG 2 A or AA axe violations.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js:423-433 'dashboard with a notification card has no serious or critical axe violations'",
+      "quote": "'Dashboard with notification cards'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-120",
+      "statement": "Fit test: 'Copy as new' on an answered notification opens the overview of a new notification with a different reference and the 'Draft' tag.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/notification-actions.fit.spec.js:38-49 'copy creates a separate draft notification'",
+      "quote": "expect(copiedReference).not.toBe(sourceReference)\n    await expect(page.getByText('Draft', { exact: true })).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-121",
+      "statement": "Fit test: the copy keeps the source's answers: its origin row is complete and the country is still France (FR).",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/notification-actions.fit.spec.js:51-68 'copy preserves the source answers in the new draft'",
+      "quote": "await expect(page.locator('select#countryOfOrigin-select')).toHaveValue(\n      'FR'\n    )",
+      "confidence": "verbatim",
+      "note": "Only the origin answer is proven; which other answers a copy carries is not shown in this slice."
+    },
+    {
+      "id": "repo-frontend-p3-122",
+      "statement": "Fit test: after a copy, both the source and the copy appear on the dashboard.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/notification-actions.fit.spec.js:70-85 'copy leaves both source and copied notifications on the dashboard'",
+      "quote": "page.getByRole('heading', { name: copiedReference, exact: true })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-123",
+      "statement": "Fit test: the copied notification's overview has no serious or critical WCAG 2 A or AA axe violations.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/notification-actions/notification-actions.fit.spec.js:87-104 'copied notification hub has no serious or critical axe violations'",
+      "quote": "`Copied notification hub has serious/critical accessibility violations.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-124",
+      "statement": "Fit test: the cancel-amend page is reached from the notification view's cancel-amendment link and shows its heading, body, both buttons and a Back link to the notification view.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js:28-45,68-80 'renders confirmation copy, actions and review back link'",
+      "quote": ").toHaveAttribute('href', /\\/notifications\\/[^/]+\\/notification-view$/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-125",
+      "statement": "Fit test: 'No, return to notification' returns to the notification view still 'Amending', with the changed value and the cancel-amendment link.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js:82-93 'No keeps the amendment and its changed value'",
+      "quote": "await expect(page.getByText('DiscardMe99', { exact: true })).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-126",
+      "statement": "Fit test: confirming the cancellation shows the success banner, the 'Submitted' tag and the original value, drops the amended value, and leaves no Change links.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js:95-109 'confirmation restores the submitted snapshot and shows its banner'",
+      "quote": "await expect(page.getByRole('link', { name: /^Change/ })).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-127",
+      "statement": "Fit test: the cancel-amend page has no serious or critical WCAG 2 A or AA axe violations.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js:111-115 'confirmation page has no serious or critical axe violations'",
+      "quote": "await expectAxeClean(page, 'Cancel amendment')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-128",
+      "statement": "Fit test: the restored, read-only submitted view has no serious or critical WCAG 2 A or AA axe violations.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js:117-124 'restored submitted review has no serious or critical axe violations'",
+      "quote": "await expectAxeClean(page, 'Read-only submitted check answers')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-129",
+      "statement": "Fit test: the delete page, reached from a draft card's Delete link, shows its heading, body and both buttons, with 'No, return to dashboard' and Back both going to the dashboard.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/delete-notification/delete-notification.fit.spec.js:29-43 'renders confirmation copy, actions and dashboard links'",
+      "quote": "page.getByRole('link', { name: 'Back', exact: true })\n    ).toHaveAttribute('href', BASE)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-130",
+      "statement": "Fit test: 'No, return to dashboard' returns to the dashboard and the notification is still listed.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/delete-notification/delete-notification.fit.spec.js:45-56 'No returns to the dashboard and keeps the notification'",
+      "quote": "test('No returns to the dashboard and keeps the notification'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-131",
+      "statement": "Fit test: confirming delete returns to the dashboard at ?deleted=1, shows 'Notification deleted' and 'The notification has been deleted.', and the notification is gone from the list.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/delete-notification/delete-notification.fit.spec.js:58-75 'confirmation removes the notification and shows the success banner'",
+      "quote": "await expect(page).toHaveURL(`${BASE}?deleted=1`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-132",
+      "statement": "Fit test: the delete page has no serious or critical WCAG 2 A or AA axe violations.",
+      "kind": "non-functional",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/delete-notification/delete-notification.fit.spec.js:77-91 'confirmation page has no serious or critical axe violations'",
+      "quote": "`Delete notification has serious/critical accessibility violations.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-133",
+      "statement": "Fit test: a submitted notification carrying address-book parties can be deleted, returning to the dashboard with the 'Notification deleted' banner.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/delete-notification/delete-notification.fit.spec.js:98-128 'confirmation removes a submitted notification carrying address-book parties'",
+      "quote": "test('confirmation removes a submitted notification carrying address-book parties'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p3-134",
+      "statement": "No fit spec in this slice proves the stale-action path: a copy, delete or cancel-amend made against a notification changed since the page was opened.",
+      "kind": "behaviour",
+      "ref": "dashboard.fit.spec.js, notification-actions.fit.spec.js, cancel-amend.fit.spec.js, delete-notification.fit.spec.js (searched every test)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The copy controller handles STALE_CONCURRENCY_TOKEN; the delete and cancel-amend controllers post a concurrency token but have no stale handling of their own in this slice."
+    },
+    {
+      "id": "repo-frontend-p3-135",
+      "statement": "No fit spec in this slice proves deleting or cancel-amending a notification while amending, or the redirects for a non-deletable or non-amending notification.",
+      "kind": "behaviour",
+      "ref": "delete-notification.fit.spec.js, cancel-amend.fit.spec.js (searched every test)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-frontend-p3-136",
+      "statement": "No fit spec in this slice proves the dashboard's 'Notification copied' banner, the recoverable-error banner after a failed action, or the Welsh dashboard.",
+      "kind": "behaviour",
+      "ref": "dashboard.fit.spec.js, notification-actions.fit.spec.js (searched every test)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-frontend-p3-137",
+      "statement": "The slice does not say whether a user can see notifications started in an earlier session or by colleagues in their organisation; the dashboard lists only the session's known notifications, and nothing records whether that is intended.",
+      "kind": "rule",
+      "ref": "src/server/app/engine/journey.js:141-147; dashboard/copy/copy.en.js:56 (looked for a ruling or comment in the dashboard feature)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-frontend-p3-138",
+      "statement": "The cancel-amend page is reached from the dashboard's 'Cancel amendment' link as well as from the notification view's cancel-amendment link.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/view-model/row/actions.js:59-62; cancel-amend/cancel-amend.fit.spec.js:42-44",
+      "quote": ".getByRole('link', { name: checkAnswersCopy.cancelAmend.link })",
+      "confidence": "verbatim"
+    }
+  ]
+}

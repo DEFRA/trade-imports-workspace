@@ -1,0 +1,894 @@
+{
+  "source": "trace:e2e",
+  "structure": "Part 6, Animal identification and CPH number (animals journey). Read the five spec files in full (pages/animal-identification.spec.ts, features/animal-identifiers-cap.spec.ts, features/animal-identifiers-conditional.spec.ts, pages/cph-number.spec.ts, features/cph-scope.spec.ts) and mined all 12 trace zips the part names, none sampled. The trace CLI run through tim distil trace still refuses every zip (TraceVersionError: recorded by a newer Playwright than the viewer tim installs; re-tried on 1654a for this run), so each zip is unzipped into trace-e2e.work/part6/<hash>/ and read raw: test.trace for the action list (every action transcribed), 1-trace.trace frame snapshots rendered to HTML (<hash>.main.html: main element and back link) for the rendered DOM, and 1-trace.network for the request log. The zips are unchanged since they were first unzipped (written 18:42, unzipped 20:27 the same day), so the unzipped files and renders in the part folder are this part's reading. Refs cite the trace by its folder hash and the snapshot callId (call@N) or test action id (pw:api@N / expect@N). Traces: f63b4 (cap: cattle, count 2, counter 1 of 2 -> 2 of 2 -> maximum reached, count-drop error on Commodity details, remove, count 1 saves), 34a64 (cats: identifier types plus permanent address, partial-address error then a committed record), c709d (cattle plus Atlantic salmon: card only for cattle), f123d (salmon only: identification page redirects to the overview), cf344 (CPH scope: cats -> no CPH row and Continue goes to overview; cattle added -> CPH row 'Not added yet', Add -> CPH page -> back to hub with 123456789, Change prefilled, Back to hub, Continue -> CPH page prefilled), 714ef / 80f8e / dc773 (identification page, cattle count 1: controls, empty ear tag, valid ear tag saves to overview), 1654a / b3987 / 2feb0 / a698a (CPH page reached sequentially from the addresses hub after all five parties added: controls, empty on load, valid 12/345/6789 saves to overview, empty submit gives 'Enter a CPH number' with HTTP 400). Pages in this slice, in journey order: Overview task row 'Identification details' (section '2. Description of the goods', conditional on an identifier-bearing commodity) -> Identification details (/commodities/identification: journey strip, caption, inset text, Selected commodities table, one card per identifier-bearing commodity line with its N-of-M unit form, saved-records table, Save and add another / Save and finish, maximum-reached state; page buttons Save and continue, Save and return to overview, Cancel and return to overview) -> Overview. Commodity details (/consignment-details) carries the count-drop error. Consignment addresses hub (/addresses) carries the CPH row only when a CPH-triggering commodity exists -> Add the county parish holding number (CPH) (/cph-number, or /cph-number?return=addresses from the hub row) -> Overview (sequential) or the hub (return=addresses). Conditional: the identification page and its task row exist only when a commodity line has an identifier type; the identifier fields per card depend on the commodity; the permanent address only for cats (dogs per the test title, not walked); the CPH row and the sequential CPH step exist only when a CPH-triggering line (cattle observed) exists. Only Bos taurus, Felis catus and Salmo salar were walked; dogs, horses and other species were not, and no identifier or CPH format validation was driven: each is a gap claim. The claims carry forward the earlier extract of this slice (ids trace-e2e-p6-001 to -102, all of which its verifier upheld) and add as -103 to -109 the facts that verifier found missing, each re-checked against the same traces.",
+  "claims": [
+    {
+      "id": "trace-e2e-p6-001",
+      "statement": "The animals journey overview lists an 'Identification details' task under section '2. Description of the goods', linking to /commodities/identification, when the consignment holds a commodity with an identifier type.",
+      "kind": "behaviour",
+      "ref": "trace f63b4 call@238 (overview after cattle line saved); trace c709d call@295",
+      "quote": "Identification details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-002",
+      "statement": "The 'Identification details' task row shows the status 'Complete' as soon as a cattle line with a count is saved, before any identifier record has been entered.",
+      "kind": "behaviour",
+      "ref": "trace f63b4 call@238 (overview, description-of-the-goods-2-status), before the identification page was first opened at pw:api@58",
+      "quote": "Complete",
+      "confidence": "verbatim",
+      "note": "Read together with the inset text 'You must add all animal identification details before the consignment arrives at the port of entry.': the trace suggests identifier records are not required for the task to be complete. Recorded, not reconciled. Same source, outside this slice: another part's trace (1c358) shows the row 'To do' once a cattle line with no records joins a cat line, so the status rule is not shown here."
+    },
+    {
+      "id": "trace-e2e-p6-003",
+      "statement": "When no commodity on the consignment has an identifier type (Atlantic salmon only), the overview shows no 'Identification details' task row; section 2 lists only 'Commodity details' and 'Additional details'.",
+      "kind": "rule",
+      "ref": "trace f123d call@234 and call@236 (overview, section '2. Description of the goods')",
+      "quote": "2. Description of the goods",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-004",
+      "statement": "When no commodity on the consignment has an identifier type, a direct GET of the identification page redirects (302) to the notification overview instead of rendering the page.",
+      "kind": "rule",
+      "ref": "trace f123d pw:api@58 (Navigate /commodities/identification); network: GET .../commodities/identification -> 302 .../GBN-AG-26-EMDA3X",
+      "quote": "GET http://localhost:3000/live-animals/notifications/GBN-AG-26-EMDA3X/commodities/identification -> 302",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-005",
+      "statement": "The identification page's H1 is 'Identification details'.",
+      "kind": "copy",
+      "ref": "trace 714ef call@650; trace f63b4 call@242",
+      "quote": "Identification details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-006",
+      "statement": "The identification page's section caption is 'About the consignment', although its task row sits under the overview section '2. Description of the goods'.",
+      "kind": "copy",
+      "ref": "trace 714ef call@650 (caption above H1); trace c709d call@295 (overview section heading)",
+      "quote": "About the consignment",
+      "confidence": "verbatim",
+      "note": "Caption and overview section name disagree; recorded as observed."
+    },
+    {
+      "id": "trace-e2e-p6-007",
+      "statement": "The identification page shows inset text telling the user to add all animal identification details before the consignment arrives at the port of entry.",
+      "kind": "copy",
+      "ref": "trace 714ef call@650 (govuk-inset-text below H1)",
+      "quote": "You must add all animal identification details before the consignment arrives at the port of entry.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-008",
+      "statement": "The identification page's back link reads 'Back' and goes to the notification overview.",
+      "kind": "behaviour",
+      "ref": "trace 714ef call@650 (govuk-back-link href /live-animals/notifications/GBN-AG-26-1R05PZ)",
+      "quote": "Back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-009",
+      "statement": "Above the identification page heading, a strip shows a blue 'Draft' tag and the notification reference (for example GBN-AG-26-1R05PZ).",
+      "kind": "copy",
+      "ref": "trace 714ef call@650 (div.app-journey-strip with govuk-tag--blue)",
+      "quote": "Draft",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-010",
+      "statement": "The identification page shows a 'Selected commodities' table with columns 'Commodity code', 'Common name', 'Number of animals' and a visually hidden 'Actions' column, one row per commodity line.",
+      "kind": "data",
+      "ref": "trace 714ef call@650 (govuk-table, caption govuk-table__caption--m)",
+      "quote": "Selected commodities",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-011",
+      "statement": "The 'Selected commodities' table lists every commodity line, including one with no identifier type (Atlantic salmon, 0301, count 1), even though that line gets no identification card.",
+      "kind": "behaviour",
+      "ref": "trace c709d call@299 (table rows 0102 Domestic cattle 1; 0301 Atlantic salmon 1)",
+      "quote": "Atlantic salmon",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-012",
+      "statement": "Each 'Selected commodities' row has a 'Change' link (visually hidden suffix with the common name) that goes to the commodity selection page /commodities.",
+      "kind": "behaviour",
+      "ref": "trace 714ef call@650 (row action href .../commodities, 'Change<span hidden> Domestic cattle</span>')",
+      "quote": "Change",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-013",
+      "statement": "The identification page has an 'Add another commodity' link to /commodities below the selected commodities table.",
+      "kind": "behaviour",
+      "ref": "trace 714ef call@650",
+      "quote": "Add another commodity",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-014",
+      "statement": "The 'Common name' shown in the identification page's table differs from the name in the card heading and on Commodity details for the same line: 'Domestic cattle' in the table, 'Cow (0102) — Bos taurus' on the card, 'Cow' on Commodity details.",
+      "kind": "copy",
+      "ref": "trace f63b4 call@242 (table 'Domestic cattle', card H2 'Cow (0102) — Bos taurus'); trace f63b4 call@282 (Commodity details table 'Cow')",
+      "quote": "Domestic cattle",
+      "confidence": "verbatim",
+      "note": "For cats the table and card agree ('Cat', 'Cat (01061900) — Felis catus'). Salmon shows 'Atlantic salmon'."
+    },
+    {
+      "id": "trace-e2e-p6-015",
+      "statement": "Each commodity line that has an identifier type gets its own card (section id identification-card-<index>) headed '<common name> (<commodity code>) — <species>', for example 'Cow (0102) — Bos taurus' or 'Cat (01061900) — Felis catus'.",
+      "kind": "copy",
+      "ref": "trace f63b4 call@242 (H2 govuk-heading-m); trace 34a64 call@212",
+      "quote": "Cow (0102) — Bos taurus",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-016",
+      "statement": "A commodity line with no identifier type (Atlantic salmon) gets no card and no 'Enter details for Salmo salar' heading, while the cattle line on the same consignment keeps its card.",
+      "kind": "rule",
+      "ref": "trace c709d call@299 (only identification-card-0 for Bos taurus); expect@67 toHaveCount 0",
+      "quote": "Enter details for Bos taurus 1 of 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-017",
+      "statement": "The identification page never offers a free-text identifier field: no field labelled 'Identification details' or 'Animal description' appears for any commodity walked.",
+      "kind": "rule",
+      "ref": "trace 34a64 expect@65-66; trace c709d expect@68-69; trace f123d expect@61-62",
+      "quote": "getByLabel('Animal description')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-018",
+      "statement": "Each card has a 'Change number of animals' link (visually hidden suffix with the card heading) that goes to Commodity details (/consignment-details).",
+      "kind": "behaviour",
+      "ref": "trace f63b4 call@242 (card link href .../consignment-details)",
+      "quote": "Change number of animals",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-019",
+      "statement": "The unit form in a card is headed 'Enter details for <species> <N> of <M>', where N is the next record number and M the line's declared number of animals.",
+      "kind": "copy",
+      "ref": "trace f63b4 call@242 ('Enter details for Bos taurus 1 of 2'); call@248 ('Enter details for Bos taurus 2 of 2')",
+      "quote": "Enter details for Bos taurus 1 of 2",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-020",
+      "statement": "For cattle (Bos taurus, 0102) the unit form asks for 'Ear tag' and 'Passport' only.",
+      "kind": "rule",
+      "ref": "trace 714ef call@650 (inputs animalIdentifierEarTag-0, animalIdentifierPassport-0)",
+      "quote": "Ear tag",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-021",
+      "statement": "The 'Ear tag' field is a text input, with no '(optional)' suffix on its label, and the hint 'For example, UK123456789012'.",
+      "kind": "data",
+      "ref": "trace 714ef call@650 (label govuk-label--s, hint animalIdentifierEarTag-0-hint, input govuk-input--width-20 name animalIdentifierEarTag-0)",
+      "quote": "For example, UK123456789012",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-022",
+      "statement": "The 'Passport' field is a text input with the hint 'For example, UK123456789'.",
+      "kind": "data",
+      "ref": "trace 714ef call@650 (name animalIdentifierPassport-0, govuk-input--width-20)",
+      "quote": "For example, UK123456789",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-102",
+      "statement": "A cattle record saves with only its ear tag: the passport left blank raises no error and shows as an empty cell, so passport is not required alongside an ear tag.",
+      "kind": "rule",
+      "ref": "trace f63b4 pw:api@60-61, call@248 (row Bos taurus 1 with empty Passport cell)",
+      "quote": "UK000000000001",
+      "confidence": "inferred",
+      "note": "Inferred from a successful save with a blank passport; no test submitted a record with every identifier blank."
+    },
+    {
+      "id": "trace-e2e-p6-023",
+      "statement": "The ear tag field is empty when the identification page first loads.",
+      "kind": "behaviour",
+      "ref": "trace 80f8e expect@62 toHaveValue ''; trace 714ef call@650 value=\"\"",
+      "quote": "value=\"\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-024",
+      "statement": "For cats (Felis catus, 01061900) the unit form asks for 'Microchip number', 'Passport' and 'Tattoo', and not for 'Ear tag' or 'Horse name'.",
+      "kind": "rule",
+      "ref": "trace 34a64 call@212 (inputs animalIdentifierMicrochip-0, animalIdentifierPassport-0, animalIdentifierTattoo-0); expect@63-64",
+      "quote": "Microchip number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-025",
+      "statement": "The 'Microchip number' field has the hint 'For example, 900123456789012'.",
+      "kind": "data",
+      "ref": "trace 34a64 call@212 (animalIdentifierMicrochip-0-hint)",
+      "quote": "For example, 900123456789012",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-026",
+      "statement": "The 'Tattoo' field has the hint 'For example, AB1234'.",
+      "kind": "data",
+      "ref": "trace 34a64 call@212 (animalIdentifierTattoo-0-hint)",
+      "quote": "For example, AB1234",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-027",
+      "statement": "Fields for identifier types a commodity does not require are absent from the page, not merely hidden: the cat card's DOM holds no ear tag or horse name input.",
+      "kind": "rule",
+      "ref": "trace 34a64 call@212 (rendered main has no animalIdentifierEarTag or horse name input)",
+      "quote": "animalIdentifierTattoo-0",
+      "confidence": "inferred",
+      "note": "Inferred from the rendered DOM; the test only asserts toBeHidden."
+    },
+    {
+      "id": "trace-e2e-p6-028",
+      "statement": "For cats, the unit form adds a permanent address block after the identifier fields.",
+      "kind": "rule",
+      "ref": "trace 34a64 call@212",
+      "quote": "Where will their permanent address be?",
+      "confidence": "verbatim",
+      "note": "The test title says 'cats and dogs'; only cats were walked."
+    },
+    {
+      "id": "trace-e2e-p6-029",
+      "statement": "The permanent address block opens with a warning: 'Providing a false address is an act of fraud' (GOV.UK warning text, no trailing full stop).",
+      "kind": "copy",
+      "ref": "trace 34a64 call@212 (govuk-warning-text__text)",
+      "quote": "Providing a false address is an act of fraud",
+      "confidence": "verbatim",
+      "note": "The addresses hub's warning ends with a full stop ('...an act of fraud.'); this one does not."
+    },
+    {
+      "id": "trace-e2e-p6-030",
+      "statement": "The permanent address block explains, as a bulleted list, that a permanent address is where an animal will permanently reside and can be checked by APHA.",
+      "kind": "copy",
+      "ref": "trace 34a64 call@212 (p.govuk-body then ul.govuk-list--bullet)",
+      "quote": "A permanent address is where an animal: will permanently reside; can be checked by the Animal and Plant Health Agency (APHA)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-031",
+      "statement": "The permanent address block's sub-heading is 'Where will their permanent address be?'.",
+      "kind": "copy",
+      "ref": "trace 34a64 call@212 (H3 govuk-heading-s)",
+      "quote": "Where will their permanent address be?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-032",
+      "statement": "The permanent address asks for eight fields in this order: 'Name or organisation name', 'Address line 1', 'Address line 2 (optional)', 'Town or city', 'County (optional)', 'Postcode or Zip code', 'Phone number', 'Email address'.",
+      "kind": "data",
+      "ref": "trace 34a64 call@212 (inputs nameOrOrganisationName-0, addressLine1-0, addressLine2-0, townOrCity-0, county-0, postalOrZipCode-0, telephoneNumber-0, emailAddress-0)",
+      "quote": "Name or organisation name",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-033",
+      "statement": "The permanent address has no country field.",
+      "kind": "rule",
+      "ref": "trace 34a64 call@212; expect@68 getByLabel('Country') toHaveCount 0",
+      "quote": "getByLabel('Country')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-034",
+      "statement": "The permanent address 'Phone number' field is a tel input with the hint 'For international numbers include the country code'.",
+      "kind": "data",
+      "ref": "trace 34a64 call@212 (telephoneNumber-0 type=tel, autocomplete=tel)",
+      "quote": "For international numbers include the country code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-035",
+      "statement": "The permanent address fields carry autocomplete attributes: name, address-line1, address-line2, address-level2, postal-code, tel and email; the email field is type email.",
+      "kind": "data",
+      "ref": "trace 34a64 call@212",
+      "quote": "autocomplete=\"address-line1\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-036",
+      "statement": "A partial permanent address blocks the add: with passport and name filled but the rest blank, 'Save and add another' re-renders the page with an error summary 'There is a problem'.",
+      "kind": "rule",
+      "ref": "trace 34a64 pw:api@69-71, call@238",
+      "quote": "There is a problem",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-037",
+      "statement": "When any part of the permanent address is given, a blank address line 1 shows the error 'Enter address line 1', linked to #addressLine1-0.",
+      "kind": "rule",
+      "ref": "trace 34a64 call@238 (error summary and addressLine1-0-error)",
+      "quote": "Enter address line 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-038",
+      "statement": "When any part of the permanent address is given, a blank town or city shows the error 'Enter a town or city'.",
+      "kind": "rule",
+      "ref": "trace 34a64 call@238 (townOrCity-0-error)",
+      "quote": "Enter a town or city",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-039",
+      "statement": "When any part of the permanent address is given, a blank postcode shows the error 'Enter a postcode or Zip code'.",
+      "kind": "rule",
+      "ref": "trace 34a64 call@238 (postalOrZipCode-0-error)",
+      "quote": "Enter a postcode or Zip code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-040",
+      "statement": "When any part of the permanent address is given, a blank phone number shows the error 'Enter a phone number'.",
+      "kind": "rule",
+      "ref": "trace 34a64 call@238 (telephoneNumber-0-error)",
+      "quote": "Enter a phone number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-041",
+      "statement": "When any part of the permanent address is given, a blank email address shows the error 'Enter an email address'.",
+      "kind": "rule",
+      "ref": "trace 34a64 call@238 (emailAddress-0-error)",
+      "quote": "Enter an email address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-042",
+      "statement": "Address line 2 and county are optional in the permanent address: they raise no error when the rest of the address is incomplete or complete.",
+      "kind": "rule",
+      "ref": "trace 34a64 call@238 (no error on addressLine2-0 or county-0); pw:api@74-79 commits without them",
+      "quote": "Address line 2 (optional)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-043",
+      "statement": "After a failed add, the values already entered (passport, name) are kept in the re-rendered form.",
+      "kind": "behaviour",
+      "ref": "trace 34a64 call@238 (animalIdentifierPassport-0 value UK123456789, nameOrOrganisationName-0 value Pet Owner)",
+      "quote": "value=\"UK123456789\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-044",
+      "statement": "Completing the mandatory permanent address fields lets 'Save and add another' commit the record; the form then reopens at the next number ('Enter details for Felis catus 2 of 2').",
+      "kind": "behaviour",
+      "ref": "trace 34a64 pw:api@79, call@254",
+      "quote": "Enter details for Felis catus 2 of 2",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-045",
+      "statement": "Saved records for a line appear in a table inside the card, with an 'Animal' column, one column per identifier type of that commodity, and a visually hidden 'Actions' column; cattle show 'Ear tag' and 'Passport' columns.",
+      "kind": "data",
+      "ref": "trace f63b4 call@248 (table headers Animal, Ear tag, Passport, Actions)",
+      "quote": "Animal",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-046",
+      "statement": "For cats, the saved-records table has columns 'Animal', 'Microchip', 'Passport', 'Tattoo' and 'Permanent address'.",
+      "kind": "data",
+      "ref": "trace 34a64 call@254 (table headers)",
+      "quote": "Permanent address",
+      "confidence": "verbatim",
+      "note": "The column header reads 'Microchip' while the field label reads 'Microchip number'."
+    },
+    {
+      "id": "trace-e2e-p6-047",
+      "statement": "The saved-records 'Permanent address' cell shows only the name or organisation name ('Pet Owner'), not the rest of the address.",
+      "kind": "data",
+      "ref": "trace 34a64 call@254 (row 'Felis catus 1': cells '', 'UK123456789', '', 'Pet Owner')",
+      "quote": "Pet Owner",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-048",
+      "statement": "Each saved record is labelled '<species> <n>' in the Animal column (for example 'Bos taurus 1'), and identifier types left blank show as empty cells.",
+      "kind": "data",
+      "ref": "trace f63b4 call@248 (row 'Bos taurus 1', 'UK000000000001', empty passport cell)",
+      "quote": "Bos taurus 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-049",
+      "statement": "Each saved record row has a 'Remove' button (visually hidden suffix ' animal <n>') that submits the form with action remove:<line>:<record>.",
+      "kind": "behaviour",
+      "ref": "trace f63b4 call@248 (button.govuk-link.app-link-button value remove:0:0)",
+      "quote": "Remove",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-050",
+      "statement": "A card's secondary button reads 'Save and add another' while more than one record is still outstanding; it commits the current record and reopens the form at the next number.",
+      "kind": "behaviour",
+      "ref": "trace f63b4 call@242 (button value add:0 'Save and add another'), pw:api@61 -> call@248",
+      "quote": "Save and add another",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-051",
+      "statement": "When the form is for the last outstanding animal of a line with more than one animal (N = M), the card's secondary button reads 'Save and finish' instead of 'Save and add another'.",
+      "kind": "behaviour",
+      "ref": "trace f63b4 call@248 ('Enter details for Bos taurus 2 of 2', button value add:0 'Save and finish'); trace 34a64 call@254",
+      "quote": "Save and finish",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-052",
+      "statement": "A line with a declared count of 1 shows its unit form with no card-level button at all; the page's 'Save and continue' captures the record.",
+      "kind": "behaviour",
+      "ref": "trace 714ef call@650 ('Enter details for Bos taurus 1 of 1', no add button); expect@65 toHaveCount 0",
+      "quote": "Enter details for Bos taurus 1 of 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-053",
+      "statement": "When the number of saved records reaches the declared count, the entry form is replaced by the message 'You have entered details for all <M> <species> animals. Remove a record if you need to replace it.' and no ear tag field or 'Save and add another' button is shown.",
+      "kind": "rule",
+      "ref": "trace f63b4 call@262 (p.govuk-body in identification-card-0); expect@69-71",
+      "quote": "You have entered details for all 2 Bos taurus animals. Remove a record if you need to replace it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-054",
+      "statement": "In the maximum-reached state the saved records stay listed, each with its Remove button.",
+      "kind": "behaviour",
+      "ref": "trace f63b4 call@262 (rows Bos taurus 1 and Bos taurus 2 with remove:0:0 and remove:0:1)",
+      "quote": "Bos taurus 2",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-055",
+      "statement": "Removing a record frees a slot: after removing record 2 of 2, the entry form reopens at 'Enter details for Bos taurus 2 of 2' with the remaining record still listed.",
+      "kind": "behaviour",
+      "ref": "trace f63b4 pw:api@84, call@294",
+      "quote": "Enter details for Bos taurus 2 of 2",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-056",
+      "statement": "Card-level actions (add, remove) post back to the identification page and redirect (302) to it again, so the user stays on the page.",
+      "kind": "behaviour",
+      "ref": "trace f63b4 network: POST .../commodities/identification -> 302 .../commodities/identification",
+      "quote": "POST http://localhost:3000/live-animals/notifications/GBN-AG-26-V01CJ9/commodities/identification -> 302 http://localhost:3000/live-animals/notifications/GBN-AG-26-V01CJ9/commodities/identification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-057",
+      "statement": "The identification page's 'Save and continue' saves and returns to the notification overview.",
+      "kind": "behaviour",
+      "ref": "trace dc773 pw:api@63; network POST .../commodities/identification -> 302 .../GBN-AG-26-HB5MQ4",
+      "quote": "Save and continue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-058",
+      "statement": "A valid ear tag (UK123456789012) on a one-animal cattle line saves without any error.",
+      "kind": "behaviour",
+      "ref": "trace dc773 pw:api@62-63, expect@64 'There is a problem' toHaveCount 0",
+      "quote": "UK123456789012",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-059",
+      "statement": "The identification page's button group holds 'Save and continue', a secondary 'Save and return to overview' button, and a 'Cancel and return to overview' link.",
+      "kind": "copy",
+      "ref": "trace 714ef call@650 (govuk-button-group)",
+      "quote": "Save and return to overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-060",
+      "statement": "The identification form begins with a visually hidden, unfocusable 'Save and finish' submit button (action=finish), so pressing Enter in a field submits as 'finish' rather than as the first visible button.",
+      "kind": "constraint",
+      "ref": "trace 714ef call@650 (button.govuk-visually-hidden aria-hidden tabindex -1 value finish)",
+      "quote": "Save and finish",
+      "confidence": "inferred",
+      "note": "Purpose inferred from position and attributes; no test pressed Enter."
+    },
+    {
+      "id": "trace-e2e-p6-061",
+      "statement": "Lowering a line's number of animals below its saved identifier records is blocked on Commodity details with the error 'You have 2 identifier records for Bos taurus but entered 1 animal. Remove identifier records or keep the higher count.', naming the species.",
+      "kind": "rule",
+      "ref": "trace f63b4 pw:api@77-78, call@282 (error summary and numberOfAnimalsQuantity-0-error)",
+      "quote": "You have 2 identifier records for Bos taurus but entered 1 animal. Remove identifier records or keep the higher count.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-062",
+      "statement": "The count-drop error shows both in the error summary and inline on the 'Number of animals' field, which keeps the entered value 1; the records are not trimmed.",
+      "kind": "behaviour",
+      "ref": "trace f63b4 call@282 (input numberOfAnimalsQuantity-0 value 1 govuk-input--error); call@288 still shows two records",
+      "quote": "Error:",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-063",
+      "statement": "The count-drop error summary link goes straight to that species' identification card (/commodities/identification#identification-card-0), where the saved records are listed.",
+      "kind": "behaviour",
+      "ref": "trace f63b4 call@282 (summary href), pw:api@81 -> call@288",
+      "quote": "/live-animals/notifications/GBN-AG-26-V01CJ9/commodities/identification#identification-card-0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-064",
+      "statement": "The count-drop error is returned by re-rendering Commodity details (POST answered 200, no redirect).",
+      "kind": "behaviour",
+      "ref": "trace f63b4 network: POST .../consignment-details -> 200",
+      "quote": "POST http://localhost:3000/live-animals/notifications/GBN-AG-26-V01CJ9/consignment-details -> 200",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-065",
+      "statement": "Once the record count no longer exceeds it, the lower number of animals saves: with one record left, a count of 1 saves and returns to the overview.",
+      "kind": "rule",
+      "ref": "trace f63b4 pw:api@91-93; network POST .../consignment-details -> 302 overview",
+      "quote": "Overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-066",
+      "statement": "The 'Identification details' task row stays 'Complete' when a line has fewer records than its declared count (1 of 2 after a remove).",
+      "kind": "behaviour",
+      "ref": "trace f63b4 call@298 (overview after remove and Save and continue)",
+      "quote": "Complete",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-067",
+      "statement": "The identification page uses GOV.UK components throughout (table, inset text, warning text, inputs, labels, hints, error summary, error message, buttons, button group, back link, tag), plus two app classes: app-journey-strip for the draft strip and app-link-button for the Remove buttons styled as links.",
+      "kind": "constraint",
+      "ref": "trace 714ef call@650; trace f63b4 call@248 (button class 'govuk-link app-link-button')",
+      "quote": "app-link-button",
+      "confidence": "verbatim",
+      "note": "A Remove control that submits the form has no direct govuk-frontend equivalent; a link-styled button is a common pattern outside the toolbox."
+    },
+    {
+      "id": "trace-e2e-p6-068",
+      "statement": "The addresses hub shows no 'County parish holding (CPH) number' row when the only commodity line is not CPH-triggering (cats).",
+      "kind": "rule",
+      "ref": "trace cf344 call@389 (summary list rows: Place of origin, Consignor or exporter, Consignee, Importer, Place of destination); expect@63",
+      "quote": "County parish holding (CPH) number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-069",
+      "statement": "With no CPH-triggering line, Continue (the hub's 'Save and continue') goes straight to the overview and the CPH page is skipped.",
+      "kind": "rule",
+      "ref": "trace cf344 pw:api@64; network POST .../addresses -> 302 .../GBN-AG-26-1YREQ6",
+      "quote": "POST http://localhost:3000/live-animals/notifications/GBN-AG-26-1YREQ6/addresses -> 302 http://localhost:3000/live-animals/notifications/GBN-AG-26-1YREQ6",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-070",
+      "statement": "Adding a CPH-triggering commodity line (cattle) alongside the cats line brings CPH into scope: the addresses hub gains a 'County parish holding (CPH) number' row showing 'Not added yet'.",
+      "kind": "rule",
+      "ref": "trace cf344 call@427 (last summary list row); expect@82-83",
+      "quote": "Not added yet",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-071",
+      "statement": "The CPH hub row's key carries the description 'The county parish holding (CPH) number identifies the holding where the animals will be kept.'",
+      "kind": "copy",
+      "ref": "trace cf344 call@427 (dt.govuk-summary-list__key second span)",
+      "quote": "The county parish holding (CPH) number identifies the holding where the animals will be kept.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-072",
+      "statement": "The CPH row is the last row of the addresses hub, after Place of destination.",
+      "kind": "data",
+      "ref": "trace cf344 call@427",
+      "quote": "County parish holding (CPH) number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-073",
+      "statement": "The empty CPH row's action is an 'Add' link (visually hidden suffix ' county parish holding (cph) number') to /cph-number?return=addresses.",
+      "kind": "behaviour",
+      "ref": "trace cf344 call@427 (dd.govuk-summary-list__actions)",
+      "quote": "Add",
+      "confidence": "verbatim",
+      "note": "The hidden suffix is lower-cased to 'cph', which a screen reader would read as a word."
+    },
+    {
+      "id": "trace-e2e-p6-074",
+      "statement": "Saving the CPH page reached from the hub row returns to the addresses hub, not to the next step of the journey.",
+      "kind": "behaviour",
+      "ref": "trace cf344 pw:api@89; network POST .../cph-number?return=addresses -> 302 .../addresses",
+      "quote": "POST http://localhost:3000/live-animals/notifications/GBN-AG-26-1YREQ6/cph-number?return=addresses -> 302 http://localhost:3000/live-animals/notifications/GBN-AG-26-1YREQ6/addresses",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-075",
+      "statement": "The hub shows a saved CPH number as nine digits with the slashes stripped ('123456789' for 12/345/6789).",
+      "kind": "data",
+      "ref": "trace cf344 call@445 (dd.govuk-summary-list__value)",
+      "quote": "123456789",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-076",
+      "statement": "Once a CPH number is saved, the hub row's action reads 'Change' and still goes to /cph-number?return=addresses.",
+      "kind": "behaviour",
+      "ref": "trace cf344 call@445",
+      "quote": "Change",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-077",
+      "statement": "Reopening the CPH page shows the stored value split back into its parts: County 12, Parish 345, Holding number 6789.",
+      "kind": "behaviour",
+      "ref": "trace cf344 call@451 (inputs value 12, 345, 6789); expect@93-95",
+      "quote": "value=\"6789\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-078",
+      "statement": "Reached from the hub (return=addresses), the CPH page's back link goes to the addresses hub.",
+      "kind": "behaviour",
+      "ref": "trace cf344 call@435 (govuk-back-link href .../addresses); pw:api@96 -> addresses",
+      "quote": "Back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-079",
+      "statement": "Reached sequentially, the CPH page's back link goes to the notification overview, not the addresses hub.",
+      "kind": "behaviour",
+      "ref": "trace cf344 call@463; trace a698a call@1156 (govuk-back-link href /live-animals/notifications/GBN-AG-26-TCDRWJ)",
+      "quote": "Back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-080",
+      "statement": "When a CPH-triggering line exists, the addresses hub's 'Save and continue' goes on to the CPH page (/cph-number) as the next step.",
+      "kind": "behaviour",
+      "ref": "trace cf344 pw:api@98; trace a698a pw:api@91; network POST .../addresses -> 302 .../cph-number",
+      "quote": "POST http://localhost:3000/live-animals/notifications/GBN-AG-26-TCDRWJ/addresses -> 302 http://localhost:3000/live-animals/notifications/GBN-AG-26-TCDRWJ/cph-number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-081",
+      "statement": "Reached sequentially, saving a valid CPH number returns to the notification overview.",
+      "kind": "behaviour",
+      "ref": "trace 2feb0 pw:api@96; network POST .../cph-number -> 302 .../GBN-AG-26-ED451C",
+      "quote": "POST http://localhost:3000/live-animals/notifications/GBN-AG-26-ED451C/cph-number -> 302 http://localhost:3000/live-animals/notifications/GBN-AG-26-ED451C",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-082",
+      "statement": "The CPH page's H1 is 'Add the county parish holding number (CPH)', with the section caption 'Consignment parties'.",
+      "kind": "copy",
+      "ref": "trace 1654a/cf344 call@435",
+      "quote": "Add the county parish holding number (CPH)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-083",
+      "statement": "The CPH page has a details component 'What is a CPH number?' explaining that a CPH number is a unique 9-digit number for land and buildings where livestock are kept, moved or handled, found on APHA documents.",
+      "kind": "copy",
+      "ref": "trace cf344 call@435 (govuk-details)",
+      "quote": "A county parish holding (CPH) number is a unique 9-digit number used to identify land and buildings where livestock are kept, moved or handled.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-084",
+      "statement": "The 'What is a CPH number?' details' second paragraph tells the user where to find the number.",
+      "kind": "copy",
+      "ref": "trace cf344 call@435 (govuk-details second p)",
+      "quote": "You can find your CPH number on documents from the Animal and Plant Health Agency (APHA).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-085",
+      "statement": "The CPH number is asked for as a fieldset with the legend 'CPH number' and the hint 'For example, 12/345/6789.'",
+      "kind": "copy",
+      "ref": "trace cf344 call@435 (fieldset role=group, legend govuk-fieldset__legend--s, #cph-hint)",
+      "quote": "For example, 12/345/6789.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-086",
+      "statement": "The CPH number has three numeric inputs: 'County' (max 2 characters), 'Parish' (max 3) and 'Holding number' (max 4), each inputmode numeric with spellcheck off.",
+      "kind": "data",
+      "ref": "trace cf344 call@435 (cphCounty maxlength 2 width-2; cphParish maxlength 3 width-3; cphHolding maxlength 4 width-4)",
+      "quote": "Holding number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-087",
+      "statement": "The three CPH parts are empty when the page first loads on a new notification.",
+      "kind": "behaviour",
+      "ref": "trace b3987 expect@93-95 toHaveValue ''; trace a698a call@1156 value=\"\"",
+      "quote": "value=\"\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-088",
+      "statement": "The CPH page reuses the GOV.UK date input layout (govuk-date-input__label on each part's label) for its three parts.",
+      "kind": "constraint",
+      "ref": "trace cf344 call@435 (LABEL class 'govuk-label govuk-date-input__label')",
+      "quote": "govuk-date-input__label",
+      "confidence": "verbatim",
+      "note": "A date-input pattern repurposed for a non-date multi-part code; it stays inside govuk-frontend classes."
+    },
+    {
+      "id": "trace-e2e-p6-089",
+      "statement": "The CPH page has only one button, 'Save and continue'; it has no 'Save and return to overview' button and no 'Cancel and return to overview' link.",
+      "kind": "copy",
+      "ref": "trace 1654a / cf344 call@435 (button group holds one button)",
+      "quote": "Save and continue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-090",
+      "statement": "Submitting the CPH page empty shows an error summary 'There is a problem' with the message 'Enter a CPH number', linked to the County input (#cphCounty).",
+      "kind": "rule",
+      "ref": "trace a698a pw:api@93, call@1160",
+      "quote": "Enter a CPH number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-091",
+      "statement": "The empty-CPH error also shows inline under the hint ('Error: Enter a CPH number'), and only the County input is styled as in error.",
+      "kind": "behaviour",
+      "ref": "trace a698a call@1160 (#cph-error; cphCounty govuk-input--error, parish and holding not)",
+      "quote": "Enter a CPH number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-092",
+      "statement": "The empty CPH submission is answered with HTTP 400 and the re-rendered page.",
+      "kind": "behaviour",
+      "ref": "trace a698a network: POST .../cph-number -> 400",
+      "quote": "POST http://localhost:3000/live-animals/notifications/GBN-AG-26-TCDRWJ/cph-number -> 400",
+      "confidence": "verbatim",
+      "note": "The identification and Commodity details validation re-renders answered 200; the CPH page answers 400."
+    },
+    {
+      "id": "trace-e2e-p6-093",
+      "statement": "A valid CPH number (12 / 345 / 6789) saves without any error.",
+      "kind": "behaviour",
+      "ref": "trace 2feb0 pw:api@93-96, expect@97",
+      "quote": "There is a problem",
+      "confidence": "verbatim",
+      "note": "The quote is the error heading the test asserts is absent."
+    },
+    {
+      "id": "trace-e2e-p6-094",
+      "statement": "The identification and CPH pages are server-rendered forms posted to the animals frontend (POST, then 302 redirect to the next page); no call to another system is visible from the browser.",
+      "kind": "integration",
+      "ref": "trace f63b4 / cf344 / 2feb0 1-trace.network (only localhost:3000 /live-animals requests)",
+      "quote": "POST http://localhost:3000/live-animals/notifications/GBN-AG-26-1YREQ6/cph-number?return=addresses -> 302",
+      "confidence": "verbatim",
+      "note": "The frontend's own calls to the backend are server side and not in a browser trace."
+    },
+    {
+      "id": "trace-e2e-p6-095",
+      "statement": "The trace never shows validation of an identifier's format: no invalid ear tag, passport, microchip or tattoo was submitted, so any format rule and its error copy is unseen.",
+      "kind": "rule",
+      "ref": "traces 714ef, 80f8e, dc773, f63b4, 34a64",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p6-096",
+      "statement": "The trace never shows a dog line: the cats-and-dogs permanent address rule was walked for cats only, so the dog unit form's identifier types and permanent address are unseen.",
+      "kind": "rule",
+      "ref": "trace 34a64 (Felis catus only)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p6-097",
+      "statement": "The trace never shows a horse line or any other species with its own identifier set, so the commodities that get a 'Horse name' field (asserted absent for cats) and their form are unseen.",
+      "kind": "rule",
+      "ref": "trace 34a64 expect@64",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p6-098",
+      "statement": "The trace never shows a consignment with two or more identifier-bearing lines, so how multiple cards stack on the page is unseen.",
+      "kind": "behaviour",
+      "ref": "traces f63b4, 34a64, c709d (one identifier-bearing card each)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p6-099",
+      "statement": "The trace never shows which commodities other than cattle trigger CPH, or any CPH validation beyond an empty submission (partial entry, non-numeric, wrong length).",
+      "kind": "rule",
+      "ref": "traces cf344, a698a",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p6-100",
+      "statement": "The trace never exercises 'Save and return to overview' or 'Cancel and return to overview' on the identification page, nor what happens to an unsaved record when the user leaves.",
+      "kind": "behaviour",
+      "ref": "traces 714ef, f63b4",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p6-101",
+      "statement": "The trace never shows what happens to identifier records or the CPH number when the triggering commodity line is removed.",
+      "kind": "behaviour",
+      "ref": "traces f63b4, cf344",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p6-103",
+      "statement": "A card action that fails validation (an add with a partial permanent address) is answered with a 200 re-render of the identification page, not the 302 redirect a successful add or remove gets.",
+      "kind": "behaviour",
+      "ref": "trace 34a64 network: first POST .../commodities/identification -> 200 (pw:api@71, call@238); second -> 302 .../commodities/identification (pw:api@79)",
+      "quote": "POST http://localhost:3000/live-animals/notifications/GBN-AG-26-FZESMY/commodities/identification -> 200",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-104",
+      "statement": "The card's 'Save and finish' button on the last outstanding animal submits the same action as 'Save and add another' (action=add:<line>); only its label changes.",
+      "kind": "behaviour",
+      "ref": "trace f63b4 call@248 and trace 34a64 call@254 (button name=action value=add:0 'Save and finish')",
+      "quote": "value=\"add:0\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-105",
+      "statement": "In the maximum-reached state the card has no card-level button at all, neither 'Save and add another' nor 'Save and finish'; only the page's 'Save and continue', 'Save and return to overview' and 'Cancel and return to overview' remain.",
+      "kind": "behaviour",
+      "ref": "trace f63b4 call@262 and call@288 (section identification-card-0 ends with the 'You have entered details for all 2 Bos taurus animals' paragraph)",
+      "quote": "You have entered details for all 2 Bos taurus animals. Remove a record if you need to replace it.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-106",
+      "statement": "The page's 'Save and continue' with the open unit form left completely blank saves without any error and goes to the overview, so an empty unit form is treated neither as a record nor as a validation failure.",
+      "kind": "behaviour",
+      "ref": "trace f63b4 pw:api@85-87 (form 'Enter details for Bos taurus 2 of 2' left blank, Save and continue); network POST .../commodities/identification -> 302 overview; call@298",
+      "quote": "Save and continue",
+      "confidence": "inferred",
+      "note": "Inferred from the blank 2-of-2 form being submitted and the redirect to the overview with no error; the test does not assert the absence of an error."
+    },
+    {
+      "id": "trace-e2e-p6-107",
+      "statement": "When the CPH page is reached sequentially after a CPH number has already been saved, it opens with the saved parts prefilled (County 12, Parish 345, Holding number 6789), and the hub's Continue still routes to it.",
+      "kind": "behaviour",
+      "ref": "trace cf344 call@463 (/cph-number, inputs value 12/345/6789); network POST .../addresses -> 302 .../cph-number",
+      "quote": "<INPUT class=\"govuk-input govuk-input--width-2\" id=\"cphCounty\" name=\"cphCounty\" type=\"text\" spellcheck=\"false\" value=\"12\" inputmode=\"numeric\" maxlength=\"2\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-108",
+      "statement": "The CPH page shows the journey strip above its caption: a blue 'Draft' tag and the notification reference.",
+      "kind": "copy",
+      "ref": "trace cf344 call@435; trace a698a call@1160 (div.app-journey-strip)",
+      "quote": "Draft",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p6-109",
+      "statement": "In the empty-CPH error state the error summary sits between the journey strip and the caption, the form group gains govuk-form-group--error, and the fieldset is described by both the hint and the error (aria-describedby 'cph-hint cph-error').",
+      "kind": "behaviour",
+      "ref": "trace a698a call@1160",
+      "quote": "<FIELDSET class=\"govuk-fieldset\" role=\"group\" aria-describedby=\"cph-hint cph-error\">",
+      "confidence": "verbatim"
+    }
+  ]
+}

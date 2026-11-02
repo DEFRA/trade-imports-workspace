@@ -8,7 +8,7 @@ export const meta = {
     {
       title: 'Plan',
       detail:
-        'read the hand-off folder, pick the route if auto, list elements and their recipes, name the branches'
+        'read the hand-off folder, pick the route if auto, list elements and their recipes, list release patterns as requests that are never built, name the branches'
     },
     {
       title: 'Apply',
@@ -106,7 +106,8 @@ const GUARD_RAILS = [
   '- Never launch the requirements-pipeline BUILD phase, and never launch any other Workflow yourself.',
   '- Never edit .claude/settings.json, .claude/settings.local.json or anything under .claude/hooks/, in any repo.',
   '- Never install packages. If node_modules is missing, stop and say so.',
-  '- Stage files by name. Never a wildcard add.'
+  '- Stage files by name. Never a wildcard add.',
+  `- A release pattern (an entry in the design release's patterns.md, or anything from its assets/ folder) never becomes code here. Never add Sass, client JavaScript or app-* classes to ${PLANTS_FRONTEND}/src/client/** for one: it reaches the real team as a pattern request in the story.`
 ].join('\n')
 
 const withModel = (role, opts) =>
@@ -144,6 +145,7 @@ const PLAN_SCHEMA = {
     route: { type: 'string', enum: ['C1', 'C2'] },
     routeWhy: { type: 'string' },
     elements: { type: 'array', items: ELEMENT_SCHEMA },
+    patternRequests: { type: 'array', items: { type: 'string' } },
     sources: { type: 'array', items: { type: 'string' } },
     frontendClean: { type: 'boolean' },
     frontendStartBranch: { type: 'string' }
@@ -156,6 +158,7 @@ const PLAN_SCHEMA = {
     'route',
     'routeWhy',
     'elements',
+    'patternRequests',
     'sources',
     'frontendClean',
     'frontendStartBranch'
@@ -184,6 +187,7 @@ const plan = () =>
       `   A brief-only hand-off (no upstream.patch, report.json's briefOnly set) is fine for route C2, which needs no patch: plan it as C2.${config.route === 'C1' ? ' The route given is C1, which needs upstream.patch, so ok is false and problem says a brief-only hand-off can only go the C2 way.' : ''}`,
       '   Otherwise ok is true, problem is "", slug is the last path segment of the hand-off folder with its date prefix removed (for example "consignment-addresses" from ".../2026-09-28-consignment-addresses"), and title is the hand-off\'s short summary.',
       '2. List elements: one entry per page or service the patch touches (from report.json\'s files or pages list). For each: description (one plain sentence), recipe (the recipe file name such as add-a-field, add-a-page, add-a-section, or "none" for a wording-only change), and kind ("frontend" for a plants-frontend page or field, "backend-contract" when report.json or brief.md names a new backend endpoint or contract field, "other" otherwise).',
+      '   patternRequests: the name of each release pattern the hand-off asks the real team for (report.json\'s cannotShip.patternRequests, or the "Pattern requests" section of brief.md), or [] when there are none. A pattern request is never an element: it is not built here, whatever its pages are.',
       routeInstruction,
       '3. sources: for a C2 route, list the DISTIL sources a distil-request.md should name: the hand-off folder itself, the design branch named in brief.md\'s links, "repo:trade-imports-plants-frontend", "repo:trade-imports-plants-backend" only if any element is kind backend-contract, and "openspec/specs/plants". For C1, return [].',
       `4. Run: git -C ${PLANTS_FRONTEND} status --porcelain`,
@@ -224,6 +228,14 @@ const parityQuote = [
   `, and the tests repo once the change is ready to prove end to end. Coordinate the branch name across repos via the tests repo, per the workspace's cross-repo branch-parity rule.`
 ].join('')
 
+const patternRequests = planned.patternRequests ?? []
+const patternRequestLines =
+  patternRequests.length === 0
+    ? []
+    : [
+        `Pattern requests, not built here (the real team builds each from its evidence in the story): ${patternRequests.join(', ')}`
+      ]
+
 const planResult = {
   status: 'planned',
   route,
@@ -232,6 +244,7 @@ const planResult = {
   slug: planned.slug,
   title: planned.title,
   elements: planned.elements,
+  patternRequests,
   parityQuote,
   frontendClean: planned.frontendClean,
   frontendStartBranch: planned.frontendStartBranch
@@ -246,7 +259,8 @@ if (dryRun) {
       parityQuote,
       ...planned.elements.map(
         (element) => `- ${element.description} — recipe: ${element.recipe}`
-      )
+      ),
+      ...patternRequestLines
     ].join('\n')
   )
   return planResult
@@ -382,6 +396,18 @@ const VERIFY_SCHEMA = {
 // the prompt below assembles each into a full --prefix command.
 const LADDER = ['test', 'lint', 'lint:arch', 'test:fit', 'test:a11y']
 
+const PATTERN_CODE_CHECK = 'pattern-code check'
+
+const patternCodeCheck = () => [
+  `Then the ${PATTERN_CODE_CHECK}, which proves no release pattern became code:`,
+  `- Run: git -C ${PLANTS_FRONTEND} diff --name-only origin/main`,
+  `- Run: git -C ${PLANTS_FRONTEND} ls-files --others --exclude-standard`,
+  `- Read the file names in ${handoff}/upstream.patch (its "diff --git" lines).`,
+  `- It fails for each file the first two list that upstream.patch does not name and that is under src/client/** or ends .scss, and for each app-* class added on this branch (the "+" lines of git -C ${PLANTS_FRONTEND} diff origin/main) that upstream.patch does not add. Give the command "${PATTERN_CODE_CHECK}" and a summary naming the file or class.`,
+  `- Run: ls ${WORKSPACE}/repos/trade-imports-plants-prototype/src/server/app/sets`,
+  `- It also fails, whether or not upstream.patch adds it, for each "+" line of that diff that names an app-<set>- class for any set that ls lists (app-high-risk-plants- included), or that extends any layout other than "shared/layout.njk", such as "high-risk-plants/layout.njk". That is release code, which never reaches the real service. Give the command "${PATTERN_CODE_CHECK}" and a summary quoting the line.`
+]
+
 const verifyPrompt = (attempt) =>
   [
     `Run trade-imports-plants-frontend's own ladder on ${branchName} (attempt ${attempt}). Fix nothing.`,
@@ -389,7 +415,8 @@ const verifyPrompt = (attempt) =>
       (script) => `- npm --prefix ${PLANTS_FRONTEND} ${script === 'test' ? 'test' : `run ${script}`}`
     ),
     'Skip a script this repo does not have (say so) rather than failing on "missing script".',
-    'passed is true only when every script that exists succeeds. For each failure give the command and a plain summary naming the failing test or rule and its file.',
+    ...patternCodeCheck(),
+    'passed is true only when every script that exists succeeds and the pattern-code check finds nothing. For each failure give the command and a plain summary naming the failing test or rule and its file.',
     GUARD_RAILS
   ].join('\n')
 
@@ -398,6 +425,7 @@ const repairPrompt = (failures) =>
     `The ladder failed on ${branchName}. Fix the cause, not the check:`,
     JSON.stringify(failures, null, 2),
     'Never weaken what a test checks, never skip or delete a test.',
+    `A "${PATTERN_CODE_CHECK}" failure means a release pattern became code: take out the file or class it names. The pattern stays a request in the story.`,
     PARK,
     'Return ok, a plain summary and changedFiles.',
     GUARD_RAILS

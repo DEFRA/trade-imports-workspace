@@ -210,7 +210,27 @@ Local branches, stashes and uncommitted files are untouched. The
 tooling also copes with `gh-pages` being absent on the remote (the
 truncate job deletes and re-creates it).
 
-### 6. The guard rails you will meet
+### 6. Tune the tests to this machine (once)
+
+How hard the test gate and the build loop drive the machine (how many browser
+workers each FIT and E2E suite runs) depends on the machine. Too many and the
+laptop swaps, the terminal freezes and tests time out; too few and every gate
+is slow. Measure this machine once, after `tim` is linked and the repos are
+cloned, with the workspace stack free and nothing else heavy running:
+
+```bash
+tim build tune
+```
+
+It starts the workspace stack, times every FIT and E2E suite at 2, 3 and 4
+workers, picks each suite's count, saves them to `config/machine.json` (which
+git ignores) and takes the stack down again. It takes about an hour. Keep the
+machine awake and the lid open while it runs. Run it again after you change
+Docker Desktop's CPUs or memory, or move to another machine. See
+[`machine-tuning.md`](../.claude/skills/requirements-pipeline/references/machine-tuning.md)
+for how the counts are chosen.
+
+### 7. The guard rails you will meet
 
 The workspace's `.claude/settings.json` carries a deny list and two
 `PreToolUse` hooks. Every session and every agent you spawn gets them.
@@ -279,7 +299,7 @@ this workspace — there is no separate, prototype-only setup:
    without you ever having to name it), adds the prototype's fetch-only
    `upstream` remote (`trade-imports-plants-frontend`, push disabled),
    installs the prototype's dependencies with its pinned npm version, and
-   reports Jira/GitHub readiness. It never touches Jira and never pushes.
+   reports Jira and Confluence readiness (for GitHub, run `gh auth status`). It never touches Jira and never pushes.
    Re-run it with `--remove` to take the note back out.
 4. **Open Claude Code at the workspace root**
    (`~/git/defra/trade-imports-workspace`), not inside

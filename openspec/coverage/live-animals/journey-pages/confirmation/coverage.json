@@ -93,7 +93,7 @@
     },
     {
       "id": "REQ-CONFIRM-006",
-      "name": "The page tells the user what they still owe when documents are outstanding",
+      "name": "The page tells the user they still owe the ITAHC when none was uploaded",
       "coverage": "full",
       "scenarios": [
         {
@@ -108,11 +108,20 @@
           ]
         },
         {
-          "id": "SCN-CONFIRM-006-C",
-          "name": "A submission with a document carries no outstanding-work section",
+          "id": "SCN-CONFIRM-006-B",
+          "name": "A submission with documents but no ITAHC carries the outstanding-work section",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.test.js", "test": "Should list nothing outstanding when a document has been uploaded", "strength": "full", "notes": "an exact empty list" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.test.js", "test": "Should list the outstanding documents when only a veterinary health certificate has been uploaded", "strength": "full", "notes": "an exact one-item list; red when the reminder is dropped for any uploaded document" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/confirmation.spec.ts", "test": "lists the ITAHC as still to upload when only a veterinary health certificate was uploaded", "strength": "full", "notes": "submits through the UI with a veterinary health certificate; red when the reminder is dropped" }
+          ]
+        },
+        {
+          "id": "SCN-CONFIRM-006-C",
+          "name": "A submission with an ITAHC carries no outstanding-work section",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/controller.test.js", "test": "Should list nothing outstanding when an ITAHC has been uploaded", "strength": "full", "notes": "an exact empty list; red when the reminder is always listed" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.test.js", "test": "Should show only the transport, view-or-amend and help sections when nothing is outstanding", "strength": "full", "notes": "the exact heading list; fails without the template's outstanding guard" }
           ]
         }

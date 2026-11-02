@@ -185,6 +185,37 @@ describe('renderStartText', () => {
     )
   })
 
+  test('says when origin/<base> was merged into a reused workspace branch', () => {
+    expect(
+      renderStartText({
+        id: 'inc-004',
+        repeat: false,
+        ticket: null,
+        warnings: [],
+        branched: [
+          {
+            repo: 'workspace',
+            branch: 'feat/EUDPA-5-x',
+            head: 'aaa1111',
+            cut: false,
+            from: null,
+            caughtUpToBase: false,
+            mergedBase: 'origin/main'
+          }
+        ],
+        resumeAt: 'ci',
+        failedStep: null,
+        reason: null
+      })
+    ).toBe(
+      [
+        'Increment inc-004.',
+        '  workspace  on feat/EUDPA-5-x, merged origin/main into it at aaa1111',
+        'Resume at ci.'
+      ].join('\n')
+    )
+  })
+
   test('names what the workspace repo carried and which repos need a person’s approval', () => {
     expect(
       renderStartText({

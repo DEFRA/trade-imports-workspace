@@ -1,0 +1,1346 @@
+{
+  "source": "prototype:dr2-1-specs",
+  "structure": "Part 2 of 7 (Goods, transport and arrival, documents). Read in full: e2e/description-of-the-goods.fit.spec.js (249 lines; 3 describe blocks, 7 tests: commodity details x3 for cattle, two commodities and germinal products; identification details x2 for cattle and germinal products; additional details x2 for cattle and poultry), e2e/transport-and-arrival.fit.spec.js (272 lines; 4 describe blocks, 10 tests: arrival details x2, transit countries x1, transporter details x3 including the legacy /transport-details redirect, add a transporter x4 for type choice, private add, private cancel and commercial add), e2e/documents.fit.spec.js (124 lines; 2 describe blocks, 7 tests: upload documents x6 and upload documents from the hub x1), and the shared helper e2e/support/journey.js (270 lines; the /design-release-2.1 base path, error summary, inline error and back link assertions, the action button group, the bespoke autocompletes, the MOJ date picker, species fixtures and the per-page answer helpers). Claims cover the pages /consignment-details (Commodity details), /animal-identification-details (Identification details), /additional-animal-details (Additional details), /arrival-details, /transit-countries, /transporter, /transport-details (legacy redirect), /transporter/add, /transporter/add/private, /transporter/add/commercial and /upload-documents (including ?from=hub): each page's title, heading, caption, body copy, fields, options, hints, error messages in order, conditional reveals, branches, redirects and back links, as each test asserts them. journey.js is shared by every part; only the conventions these pages use and the helpers for these pages are claimed here. Refs are spec file, line and test name. Gaps record what the pages show but no test proves.",
+  "claims": [
+    {
+      "id": "prototype-dr2-1-specs-p2-001",
+      "statement": "Design Release 2.1 is served under the /design-release-2.1 path prefix, as a mirror mount of the root route table.",
+      "kind": "constraint",
+      "ref": "e2e/support/journey.js:3-5",
+      "quote": "// Design Release 2.1 is a mirror mount of the root route table.\nconst BASE = '/design-release-2.1'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-002",
+      "statement": "Every page title in this slice follows the pattern '<page name> - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:37, e2e/transport-and-arrival.fit.spec.js:26, e2e/documents.fit.spec.js:37",
+      "quote": "await expect(page).toHaveTitle('Commodity details - Import notification service - GOV.UK')",
+      "confidence": "inferred",
+      "note": "Inferred from every title assertion in the three specs sharing the same suffix."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-003",
+      "statement": "A validation failure shows a GOV.UK error summary titled 'There is a problem', listing each error message as a link, in field order.",
+      "kind": "behaviour",
+      "ref": "e2e/support/journey.js:38-44 expectErrorSummary",
+      "quote": "/** Error summary title plus the exact list of linked messages, in order. */\n...\nawait expect(summary.locator('.govuk-error-summary__title')).toHaveText('There is a problem')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-004",
+      "statement": "Each field in error also shows an inline GOV.UK error message under the field, with the 'Error:' prefix.",
+      "kind": "behaviour",
+      "ref": "e2e/support/journey.js:50-53 expectInlineError",
+      "quote": "/** Inline error message under a field (GOV.UK \"Error:\" prefix). */",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-005",
+      "statement": "Journey pages submit through an action button group: buttons named 'action' whose value 'continue' is Save and continue, 'hub' is save and return to overview, and 'add-another' is Save and add another.",
+      "kind": "behaviour",
+      "ref": "e2e/support/journey.js:17-23; e2e/documents.fit.spec.js:60",
+      "quote": "await page.locator(`button[name=\"action\"][value=\"${value}\"]`).first().click()\n...\nconst saveAndContinue = (page) => clickAction(page, 'continue')\nconst saveAndReturnToOverview = (page) => clickAction(page, 'hub')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-006",
+      "statement": "Some pages, such as the add-a-transporter pages, do not use the action button group and submit through a plain form button named by its text ('Continue', 'Save and continue', 'Cancel and return to dashboard').",
+      "kind": "behaviour",
+      "ref": "e2e/support/journey.js:25-32 submitForm; e2e/transport-and-arrival.fit.spec.js:178, 199, 222",
+      "quote": "/** The page's main form submit (pages without the action button group). */",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-007",
+      "statement": "Every Design Release 2.1 date picker takes dates as d/m/yyyy, with single-digit days and months allowed.",
+      "kind": "rule",
+      "ref": "e2e/support/journey.js:10-15 dateFromToday",
+      "quote": "/** d/m/yyyy, the format every DR2.1 date picker takes, `days` from today. */",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-008",
+      "statement": "Date fields are MOJ date pickers: the user can type the date into the input and dismiss the calendar.",
+      "kind": "behaviour",
+      "ref": "e2e/support/journey.js:103-108 fillDate",
+      "quote": "/** Opens the MOJ date picker input, types the date, dismisses the calendar. */",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-009",
+      "statement": "Port of entry and transit country (like country of origin) are bespoke type-and-pick autocompletes: options render on each keystroke, and clicking an option writes the hidden value the server reads.",
+      "kind": "behaviour",
+      "ref": "e2e/support/journey.js:67-86 pickFromAutocomplete",
+      "quote": "Bespoke type-and-pick autocompletes (country of origin, port of entry, transit\n * country). They render on each input event, so type per key, then click the\n * rendered option, which writes the hidden value the server reads.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-010",
+      "statement": "Journey pages show a draft strip with a status tag and the notification reference, in the form GBN-XX-NN-XXXX.",
+      "kind": "copy",
+      "ref": "e2e/support/journey.js:60-65 readReference",
+      "quote": "/** The draft strip (status tag + notification reference) on journey pages. */\n...\nconst match = text.match(/GBN-[A-Z]{2}-\\d{2}-[A-Z0-9]+/)",
+      "confidence": "verbatim",
+      "note": "Not asserted by any test in this part; the helper describes it."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-011",
+      "statement": "The species the walks use are: Cattle 0102 Bos taurus (id cattle-bos-taurus), Chicken 010511 Gallus domesticus, Cat 01061900 Felis catus, Horse 0101 'Equus cabalus' and Cattle, Semen 05111000 Bos taurus (id cattle-semen-bos-taurus).",
+      "kind": "data",
+      "ref": "e2e/support/journey.js:111-117 SPECIES",
+      "quote": "cattle: { search: 'cattle', id: 'cattle-bos-taurus', latin: 'Bos taurus', code: '0102', name: 'Cattle' },\n  chicken: { search: 'chicken', id: 'chicken-gallus-domesticus', latin: 'Gallus domesticus', code: '010511', name: 'Chicken' },\n  cat: { search: 'felis', id: 'cat-felis-catus', latin: 'Felis catus', code: '01061900', name: 'Cat' },\n  horse: { search: 'horse', id: 'horse-equus-caballus', latin: 'Equus cabalus', code: '0101', name: 'Horse' },\n  cattleSemen: { search: 'semen', id: 'cattle-semen-bos-taurus', latin: 'Bos taurus', code: '05111000', name: 'Cattle, Semen' }",
+      "confidence": "verbatim",
+      "note": "The horse Latin name is spelt 'Equus cabalus' in the fixture while its id says 'equus-caballus'."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-012",
+      "statement": "A germinal products notification can be started directly at /create-notification?category=germinal-products, which leads on to the origin page.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:19-25 toCommodityDetails",
+      "quote": "if (type === 'germinal-products') {\n    await page.goto(url('/create-notification?category=germinal-products'))",
+      "confidence": "inferred",
+      "note": "Inferred: the helper answers the origin page straight after this URL, without choosing a notification type."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-013",
+      "statement": "Section 2 of the Design Release 2.1 task list is commodity details, identification details and additional details, and which of those pages appear depends on the species chosen.",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:9-10",
+      "quote": "// Section 2 of the DR2.1 task list: commodity details, identification details\n// and additional details. Which pages appear depends on the species chosen.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-014",
+      "statement": "After the reason for import page, Save and continue goes to the commodity details page at /consignment-details.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:28-29 toCommodityDetails",
+      "quote": "await answerReason(page, reason)\n  await expect(page).toHaveURL(urlFor('/consignment-details'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-015",
+      "statement": "The commodity details page has the title 'Commodity details - Import notification service - GOV.UK' and the heading 'Commodity details'.",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:37-38 test 'cattle: number of animals is required and must be a whole number'",
+      "quote": "await expect(page).toHaveTitle('Commodity details - Import notification service - GOV.UK')\n      await expectHeading(page, 'Commodity details')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-016",
+      "statement": "The commodity details page shows 'Description of the goods' as its section caption.",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:40 test 'cattle: number of animals is required and must be a whole number'",
+      "quote": "await expect(main).toContainText('Description of the goods')",
+      "confidence": "inferred",
+      "note": "The test asserts the text is in main; that it is the caption is inferred from the pattern of other pages."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-017",
+      "statement": "The commodity details page shows a 'Selected commodities' table with the columns Commodity code, Common name and Species, one row per chosen species (for cattle: 0102, Cattle, Bos taurus).",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:41-42 test 'cattle: number of animals is required and must be a whole number'",
+      "quote": "await expect(main).toContainText('Selected commodities')\n      await expect(main).toContainText(/Commodity code\\s+Common name\\s+Species\\s+0102\\s+Cattle\\s+Bos taurus/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-018",
+      "statement": "Each selected commodity has a 'Remove' button on the commodity details page.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:43 test 'cattle: number of animals is required and must be a whole number'",
+      "quote": "await expect(main.getByRole('button', { name: 'Remove' })).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-019",
+      "statement": "The commodity details page has an 'Add another commodity' link back to the commodity search at /what-are-you-importing.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:44 test 'cattle: number of animals is required and must be a whole number'",
+      "quote": "await expect(main.getByRole('link', { name: 'Add another commodity' })).toHaveAttribute('href', url('/what-are-you-importing'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-020",
+      "statement": "For live animals, each commodity gets its own block headed with its common name and code, such as 'Cattle (0102)'.",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:45 test 'cattle: number of animals is required and must be a whole number'",
+      "quote": "await expect(main).toContainText('Cattle (0102)')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-021",
+      "statement": "Each live-animal commodity block asks 'Number of animals'.",
+      "kind": "data",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:46 test 'cattle: number of animals is required and must be a whole number'",
+      "quote": "await expect(page.getByLabel('Number of animals')).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-022",
+      "statement": "Each live-animal commodity block asks 'Number of packages (when required)', with the hint 'Such as crates, bags or boxes'.",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:47-48 test 'cattle: number of animals is required and must be a whole number'",
+      "quote": "await expect(page.getByLabel('Number of packages (when required)')).toBeVisible()\n      await expect(main).toContainText('Such as crates, bags or boxes')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-023",
+      "statement": "The number of packages is optional for live animals: continuing with it blank raises only the number of animals error.",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:53-56, 68-71 test 'cattle: number of animals is required and must be a whole number'",
+      "quote": "await expectErrorSummary(page, ['Enter the number of animals'])",
+      "confidence": "inferred",
+      "note": "Inferred from the error summary listing only the number of animals, and from a valid count alone continuing."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-024",
+      "statement": "From the commodity details page the back link goes to the commodity search at /what-are-you-importing.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:49 test 'cattle: number of animals is required and must be a whole number'",
+      "quote": "await expectBackLink(page, url('/what-are-you-importing'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-025",
+      "statement": "Continuing with no number of animals shows the error 'Enter the number of animals', linked to that commodity's field (id number-of-animals-<species id>, such as #number-of-animals-cattle-bos-taurus).",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:53-57 test 'cattle: number of animals is required and must be a whole number', step 'empty number of animals'",
+      "quote": "await expectErrorSummary(page, ['Enter the number of animals'])\n      await expect(page.locator('.govuk-error-summary__list a')).toHaveAttribute('href', '#number-of-animals-cattle-bos-taurus')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-026",
+      "statement": "A number of animals of 0 shows 'Enter a whole number greater than 0' in the error summary and inline.",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:60-65 step 'zero animals'",
+      "quote": "await page.getByLabel('Number of animals').fill('0')\n      await saveAndContinue(page)\n      await expectErrorSummary(page, ['Enter a whole number greater than 0'])\n      await expectInlineError(page, 'Enter a whole number greater than 0')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-027",
+      "statement": "For cattle, a valid number of animals continues to the identification details page at /animal-identification-details.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:68-72 step 'a valid count continues to identification details'",
+      "quote": "await page.getByLabel('Number of animals').fill('2')\n      await saveAndContinue(page)\n      await expect(page).toHaveURL(urlFor('/animal-identification-details'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-028",
+      "statement": "When two commodities are chosen (such as horse and pig), the commodity details page shows one block each, headed 'Horse (0101)' and 'Pig (0103)', each with its own number of animals field named numberOfAnimals[<species id>].",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:75-81 test 'two commodities get one block each; removing the last returns to the search'",
+      "quote": "await expect(main).toContainText('Horse (0101)')\n    await expect(main).toContainText('Pig (0103)')\n    await expect(page.locator('input[name^=\"numberOfAnimals[\"]')).toHaveCount(2)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-029",
+      "statement": "Removing one of several commodities keeps the user on /consignment-details, without that commodity's block.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:83-85 test 'two commodities get one block each; removing the last returns to the search'",
+      "quote": "await main.locator('button[name=\"removeCommodity\"][value=\"horse\"]').click()\n    await expect(page).toHaveURL(urlFor('/consignment-details'))\n    await expect(main).not.toContainText('Horse (0101)')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-030",
+      "statement": "Removing the last remaining commodity returns the user to the commodity search at /what-are-you-importing.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:86-87 test 'two commodities get one block each; removing the last returns to the search'",
+      "quote": "await main.locator('button[name=\"removeCommodity\"][value=\"pig\"]').click()\n    await expect(page).toHaveURL(urlFor('/what-are-you-importing'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-031",
+      "statement": "For germinal products, the commodity block is headed with the name and code, such as 'Cattle, Semen (05111000)'.",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:93 test 'germinal products: weight, packages and storage temperature'",
+      "quote": "await expect(main).toContainText('Cattle, Semen (05111000)')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-032",
+      "statement": "For germinal products, the commodity details page asks for 'Total gross weight' in kg.",
+      "kind": "data",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:94-95 test 'germinal products: weight, packages and storage temperature'",
+      "quote": "await expect(page.getByLabel('Total gross weight')).toBeVisible()\n    await expect(main).toContainText('kg')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-033",
+      "statement": "For germinal products, the commodity details page asks for 'Number of packages'.",
+      "kind": "data",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:96 test 'germinal products: weight, packages and storage temperature'",
+      "quote": "await expect(page.getByLabel('Number of packages')).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-034",
+      "statement": "For germinal products, the commodity details page asks 'How will the products be stored' with the radio options Ambient, Chilled and Frozen.",
+      "kind": "data",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:97-98 test 'germinal products: weight, packages and storage temperature'",
+      "quote": "await expect(main).toContainText('How will the products be stored')\n    await expect(page.locator('input[name=\"storageTemperature\"] + label')).toHaveText(['Ambient', 'Chilled', 'Frozen'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-035",
+      "statement": "For germinal products, continuing with nothing entered shows, in order: 'Enter the total gross weight', 'Enter the number of packages', 'Select a temperature'.",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:101-102 test 'germinal products: weight, packages and storage temperature'",
+      "quote": "await expectErrorSummary(page, ['Enter the total gross weight', 'Enter the number of packages', 'Select a temperature'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-036",
+      "statement": "A total gross weight of 0 shows 'Enter a number greater than 0'; a decimal weight such as 1.5 is accepted.",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:105-115 test 'germinal products: weight, packages and storage temperature'",
+      "quote": "await page.getByLabel('Total gross weight').fill('0')\n...\n    await expectErrorSummary(page, ['Enter a number greater than 0', 'Enter a whole number greater than 0', 'Select a temperature'])\n...\n    await page.getByLabel('Total gross weight').fill('1.5')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-037",
+      "statement": "A germinal number of packages that is not a whole number (such as 'x') shows 'Enter a whole number greater than 0'.",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:106-108 test 'germinal products: weight, packages and storage temperature'",
+      "quote": "await page.getByLabel('Number of packages').fill('x')\n    await saveAndContinue(page)\n    await expectErrorSummary(page, ['Enter a number greater than 0', 'Enter a whole number greater than 0', 'Select a temperature'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-038",
+      "statement": "Valid germinal commodity details (weight, packages and a storage temperature) continue to /animal-identification-details.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:111-115 test 'germinal products: weight, packages and storage temperature'",
+      "quote": "await page.locator('input[name=\"storageTemperature\"][value=\"Frozen\"]').check()\n    await saveAndContinue(page)\n    await expect(page).toHaveURL(urlFor('/animal-identification-details'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-039",
+      "statement": "The identification details page has the title 'Identification details - Import notification service - GOV.UK' and the heading 'Identification details'.",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:125-126 test 'cattle: one identification panel per animal, saved one at a time'",
+      "quote": "await expect(page).toHaveTitle('Identification details - Import notification service - GOV.UK')\n      await expectHeading(page, 'Identification details')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-040",
+      "statement": "The identification details page says 'You must add all animal identification details before the consignment arrives at the port of entry.'",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:128 test 'cattle: one identification panel per animal, saved one at a time'",
+      "quote": "You must add all animal identification details before the consignment arrives at the port of entry.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-041",
+      "statement": "For live animals, identification details are entered one animal at a time, in a panel headed 'Enter details for <Latin name> <n> of <total>', such as 'Enter details for Bos taurus 1 of 2'.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:129 test 'cattle: one identification panel per animal, saved one at a time'",
+      "quote": "await expect(main).toContainText('Enter details for Bos taurus 1 of 2')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-042",
+      "statement": "For cattle, each animal's identification panel asks for 'Ear tag' and 'Passport'.",
+      "kind": "data",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:130-131 test 'cattle: one identification panel per animal, saved one at a time'",
+      "quote": "await expect(page.getByLabel('Ear tag')).toBeVisible()\n      await expect(page.getByLabel('Passport')).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-043",
+      "statement": "The identification details page has a 'Change number of animals' link to /consignment-details.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:132 test 'cattle: one identification panel per animal, saved one at a time'",
+      "quote": "await expect(main.getByRole('link', { name: 'Change number of animals' })).toHaveAttribute('href', url('/consignment-details'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-044",
+      "statement": "While further animals remain, the identification panel's save button is 'Save and add another'.",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:133 test 'cattle: one identification panel per animal, saved one at a time'",
+      "quote": "await expect(main.getByRole('button', { name: 'Save and add another' })).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-045",
+      "statement": "For cattle, the identification details back link goes to /consignment-details.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:134 test 'cattle: one identification panel per animal, saved one at a time'",
+      "quote": "await expectBackLink(page, url('/consignment-details'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-046",
+      "statement": "Saving an animal with 'Save and add another' moves on to the next animal's panel ('Enter details for Bos taurus 2 of 2').",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:138-143 step 'saving the first animal moves on to the second and lists the first'",
+      "quote": "await page.getByRole('button', { name: 'Save and add another' }).click()\n      const main = page.locator('main')\n      await expect(main).toContainText('Enter details for Bos taurus 2 of 2')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-047",
+      "statement": "On the last animal's panel the save button is 'Save and finish'.",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:144 step 'saving the first animal moves on to the second and lists the first'",
+      "quote": "await expect(main.getByRole('button', { name: 'Save and finish' })).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-048",
+      "statement": "Saved animals are listed in a table with the columns Animal, Ear tag and Passport, one row per animal (such as 'Bos taurus 1', UK123456700001, PP-001).",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:145 step 'saving the first animal moves on to the second and lists the first'",
+      "quote": "await expect(main).toContainText(/Animal\\s+Ear tag\\s+Passport\\s+Bos taurus 1\\s+UK123456700001\\s+PP-001/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-049",
+      "statement": "Each saved animal row has a 'Remove' button.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:146 step 'saving the first animal moves on to the second and lists the first'",
+      "quote": "await expect(main.locator('button[value=\"remove:cattle-bos-taurus:0\"]')).toHaveText('Remove')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-050",
+      "statement": "Pressing 'Save and finish' with one of the animal's identifiers blank (passport) does not save the animal, keeps the same panel open, and shows no error.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:150-156 step 'the last animal with a blank identifier is not saved, and no error is shown'",
+      "quote": "await expect(page.locator('main')).toContainText('Enter details for Bos taurus 2 of 2')\n      await expect(page.locator('.govuk-error-summary')).toHaveCount(0)\n      await expect(page.locator('button[value=\"remove:cattle-bos-taurus:1\"]')).toHaveCount(0)",
+      "confidence": "verbatim",
+      "note": "The page silently refuses to save an incomplete animal; the spec records this as current behaviour, not as a stated requirement."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-051",
+      "statement": "Saving the last animal with both identifiers lists it in the saved animals table with its own Remove button.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:158-163 step 'saving the last animal'",
+      "quote": "await expect(page.locator('button[value=\"remove:cattle-bos-taurus:1\"]')).toBeVisible()\n      await expect(page.locator('main')).toContainText(/Bos taurus 2\\s+UK123456700002\\s+PP-002/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-052",
+      "statement": "Removing a saved animal reopens that animal's identification panel.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:167-170 step 'removing an animal reopens its panel'",
+      "quote": "await page.locator('button[value=\"remove:cattle-bos-taurus:1\"]').click()\n      await expect(page.locator('main')).toContainText('Enter details for Bos taurus 2 of 2')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-053",
+      "statement": "For cattle, Save and continue on identification details goes to /additional-animal-details, even when not every animal has been identified.",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:172-175 step 'continue moves on to additional details'; :218-220 test 'cattle: certification purpose and unweaned animals'",
+      "quote": "await saveAndContinue(page)\n      await expect(page).toHaveURL(urlFor('/additional-animal-details'))",
+      "confidence": "inferred",
+      "note": "Inferred: both tests continue with an animal unidentified (one just removed; one never entered) and land on additional details, so identification is optional to proceed."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-054",
+      "statement": "For germinal products, the identification panel is headed 'Enter details for <Latin name>' (such as 'Enter details for Bos taurus') and asks for 'Donor name/ID', 'Collection date', 'Production date' and 'Identification number/mark'.",
+      "kind": "data",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:186-190 test 'germinal products: donor, dates and identification mark, with date and length errors'",
+      "quote": "await expect(main).toContainText('Enter details for Bos taurus')\n    for (const label of ['Donor name/ID', 'Collection date', 'Production date', 'Identification number/mark']) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-055",
+      "statement": "The germinal date fields show the hint 'For example, 27/03/2026'.",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:191 test 'germinal products: donor, dates and identification mark, with date and length errors'",
+      "quote": "await expect(main).toContainText('For example, 27/03/2026')",
+      "confidence": "verbatim",
+      "note": "This hint zero-pads the month, unlike the arrival date hint 'For example, 27/3/2026'."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-056",
+      "statement": "A donor name/ID longer than 58 characters shows 'Donor name/ID must be 58 characters or less'.",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:194-202 test 'germinal products: donor, dates and identification mark, with date and length errors'",
+      "quote": "await page.getByLabel('Donor name/ID', { exact: true }).fill('D'.repeat(60))\n...\n      'Donor name/ID must be 58 characters or less',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-057",
+      "statement": "A collection date that is not a real date (such as 99/99/2026) shows 'Collection date must be a real date'.",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:195-202 test 'germinal products: donor, dates and identification mark, with date and length errors'",
+      "quote": "await page.getByLabel('Collection date', { exact: true }).fill('99/99/2026')\n...\n      'Collection date must be a real date',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-058",
+      "statement": "A production date in the wrong format (such as 2026-09-01) shows 'Enter a production date in the format DD/MM/YYYY'.",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:196-202 test 'germinal products: donor, dates and identification mark, with date and length errors'",
+      "quote": "await page.getByLabel('Production date', { exact: true }).fill('2026-09-01')\n...\n      'Enter a production date in the format DD/MM/YYYY'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-059",
+      "statement": "The germinal identification errors are listed in field order: donor name/ID, collection date, production date.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:198-202 test 'germinal products: donor, dates and identification mark, with date and length errors'",
+      "quote": "await expectErrorSummary(page, [\n      'Donor name/ID must be 58 characters or less',\n      'Collection date must be a real date',\n      'Enter a production date in the format DD/MM/YYYY'\n    ])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-060",
+      "statement": "A blank identification number/mark raises no error on the germinal identification page.",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:194-202 test 'germinal products: donor, dates and identification mark, with date and length errors'",
+      "quote": "await expectErrorSummary(page, [\n      'Donor name/ID must be 58 characters or less',\n      'Collection date must be a real date',\n      'Enter a production date in the format DD/MM/YYYY'\n    ])",
+      "confidence": "inferred",
+      "note": "Inferred: the identification number/mark is left blank on the first submit and the exact error list does not name it."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-061",
+      "statement": "The specs do not prove whether the germinal donor name/ID, collection date and production date are required when left blank.",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:178-212 test 'germinal products: donor, dates and identification mark, with date and length errors'",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The test only submits invalid and valid values; no blank submission is made on this page."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-062",
+      "statement": "Germinal identification dates accept single-digit day and month, such as 1/9/2026.",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:206-211 test 'germinal products: donor, dates and identification mark, with date and length errors'",
+      "quote": "await page.getByLabel('Collection date', { exact: true }).fill('1/9/2026')\n    await page.getByLabel('Production date', { exact: true }).fill('2/9/2026')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-063",
+      "statement": "Germinal-only consignments have no additional details page: valid identification details continue straight to /arrival-details.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:209-211 test 'germinal products: donor, dates and identification mark, with date and length errors'",
+      "quote": "// Germinal-only consignments have no additional details page.\n    await expect(page).toHaveURL(urlFor('/arrival-details'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-064",
+      "statement": "The additional details page is at /additional-animal-details, with the title 'Additional details - Import notification service - GOV.UK' and the heading 'Additional details'.",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:220-223 test 'cattle: certification purpose and unweaned animals'",
+      "quote": "await expect(page).toHaveTitle('Additional details - Import notification service - GOV.UK')\n    await expectHeading(page, 'Additional details')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-065",
+      "statement": "The additional details page shows 'Commodity details' as its section caption.",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:225 test 'cattle: certification purpose and unweaned animals'",
+      "quote": "await expect(main).toContainText('Commodity details')",
+      "confidence": "inferred",
+      "note": "The test asserts the text is in main; that it is the caption is inferred."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-066",
+      "statement": "The additional details page asks 'What are the animals certified for?' with the hint 'You can find this information on the ITAHC.'",
+      "kind": "copy",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:226-227 test 'cattle: certification purpose and unweaned animals'",
+      "quote": "await expect(main).toContainText('What are the animals certified for?')\n    await expect(main).toContainText('You can find this information on the ITAHC.')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-067",
+      "statement": "The certification purpose is a radio list of 16 options, in order: Further keeping, Slaughter, Confined establishment, Germinal products, Registered equine animal, Travelling circus/animal act, Exhibition, Event or activity near borders, Release into the wild, Dispatch centre, Relaying area / purification centre, Ornamental aquaculture establishment, Technical use, Quarantine or similar establishment, Live aquatic animals for human consumption, Other.",
+      "kind": "data",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:12-17 CERTIFICATION_PURPOSES, :228",
+      "quote": "'Further keeping', 'Slaughter', 'Confined establishment', 'Germinal products', 'Registered equine animal',\n  'Travelling circus/animal act', 'Exhibition', 'Event or activity near borders', 'Release into the wild',\n  'Dispatch centre', 'Relaying area / purification centre', 'Ornamental aquaculture establishment',\n  'Technical use', 'Quarantine or similar establishment', 'Live aquatic animals for human consumption', 'Other'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-068",
+      "statement": "For cattle, the additional details page asks 'Does the consignment contain any unweaned animals?' with the hint 'These are animals that are still feeding from their mother.' and the options Yes and No.",
+      "kind": "data",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:229-231 test 'cattle: certification purpose and unweaned animals'",
+      "quote": "await expect(main).toContainText('Does the consignment contain any unweaned animals?')\n    await expect(main).toContainText('These are animals that are still feeding from their mother.')\n    await expect(page.locator('input[name=\"unweanedAnimals\"] + label')).toHaveText(['Yes', 'No'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-069",
+      "statement": "For cattle, the additional details back link goes to /animal-identification-details.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:232 test 'cattle: certification purpose and unweaned animals'",
+      "quote": "await expectBackLink(page, url('/animal-identification-details'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-070",
+      "statement": "Both additional details questions are optional to proceed: continuing with neither answered goes to /arrival-details.",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:235-237 test 'cattle: certification purpose and unweaned animals'",
+      "quote": "// Both questions are optional to proceed.\n    await saveAndContinue(page)\n    await expect(page).toHaveURL(urlFor('/arrival-details'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-071",
+      "statement": "Poultry (chicken) has no identification details page: commodity details continue straight to /additional-animal-details, whose back link goes to /consignment-details.",
+      "kind": "behaviour",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:240-246 test 'poultry: no identification page and no unweaned question'",
+      "quote": "await answerConsignmentDetails(page, { [SPECIES.chicken.id]: 400 })\n    await expect(page).toHaveURL(urlFor('/additional-animal-details'))\n...\n    await expectBackLink(page, url('/consignment-details'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-072",
+      "statement": "For poultry, the additional details page shows all 16 certification purposes but not the unweaned animals question.",
+      "kind": "rule",
+      "ref": "e2e/description-of-the-goods.fit.spec.js:244-245 test 'poultry: no identification page and no unweaned question'",
+      "quote": "await expect(page.locator('input[name=\"certificationPurpose\"]')).toHaveCount(CERTIFICATION_PURPOSES.length)\n    await expect(page.locator('input[name=\"unweanedAnimals\"]')).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-073",
+      "statement": "Section 3 of the Design Release 2.1 task list is arrival details, transit countries (rail and road only), transporter details and adding a new transporter.",
+      "kind": "rule",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:9-10",
+      "quote": "// Section 3 of the DR2.1 task list: arrival details, transit countries (rail and\n// road only), transporter details and adding a new transporter.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-074",
+      "statement": "The arrival details page is at /arrival-details, with the title 'Arrival details - Import notification service - GOV.UK', the heading 'Arrival details' and the caption 'Transport and arrival'.",
+      "kind": "copy",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:26-29 test 'means of transport is the one required answer'",
+      "quote": "await expect(page).toHaveTitle('Arrival details - Import notification service - GOV.UK')\n      await expectHeading(page, 'Arrival details')\n      const main = page.locator('main')\n      await expect(main).toContainText('Transport and arrival')",
+      "confidence": "verbatim",
+      "note": "'Transport and arrival' as the caption is inferred from its place in main."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-075",
+      "statement": "The arrival details page asks 'Arrival date at port of entry' with the hint 'The expected date of arrival at the port of entry. For example, 27/3/2026'.",
+      "kind": "copy",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:30-31 test 'means of transport is the one required answer'",
+      "quote": "await expect(page.getByLabel('Arrival date at port of entry')).toBeVisible()\n      await expect(main).toContainText('The expected date of arrival at the port of entry. For example, 27/3/2026')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-076",
+      "statement": "The arrival details page asks 'Port of entry' with the hint 'Select where the transporter will enter with the consignment. Start typing to search by port or airport name or code.'",
+      "kind": "copy",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:32-33 test 'means of transport is the one required answer'",
+      "quote": "await expect(page.getByLabel('Port of entry', { exact: true })).toBeVisible()\n      await expect(main).toContainText('Select where the transporter will enter with the consignment. Start typing to search by port or airport name or code.')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-077",
+      "statement": "The means of transport is a select with the options 'Select one', Air, Rail, Road and Sea.",
+      "kind": "data",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:34 test 'means of transport is the one required answer'",
+      "quote": "await expect(page.locator('#means-of-transport option')).toHaveText(['Select one', 'Air', 'Rail', 'Road', 'Sea'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-078",
+      "statement": "The arrival details page asks for 'Transport identification', with guidance naming the flight number, train number, road vehicle registration number, or vessel name (for ferries, also the road vehicle registration number).",
+      "kind": "copy",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:35-38 test 'means of transport is the one required answer'",
+      "quote": "await expect(page.getByLabel('Transport identification')).toBeVisible()\n      for (const item of ['flight number', 'train number', 'road vehicle registration number', 'vessel name (for ferries, also the road vehicle registration number)']) {",
+      "confidence": "verbatim",
+      "note": "The surrounding sentence or list wording is not asserted; only these four items are."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-079",
+      "statement": "The arrival details page asks for 'Transport document reference' with the hint 'Enter the reference number on the air waybill, bill of lading, sea waybill, road consignment note (CMR) or other transport document.'",
+      "kind": "copy",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:39-40 test 'means of transport is the one required answer'",
+      "quote": "await expect(page.getByLabel('Transport document reference')).toBeVisible()\n      await expect(main).toContainText('Enter the reference number on the air waybill, bill of lading, sea waybill, road consignment note (CMR) or other transport document.')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-080",
+      "statement": "When opened directly, the arrival details back link goes to the notification hub at /notification-hub.",
+      "kind": "behaviour",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:41 test 'means of transport is the one required answer'",
+      "quote": "await expectBackLink(page, url('/notification-hub'))",
+      "confidence": "verbatim",
+      "note": "The test reaches the page by page.goto after consignment details, not from additional details."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-081",
+      "statement": "Continuing without a means of transport shows 'Select a means of transport to the port of entry' in the error summary, linked to #means-of-transport, and inline.",
+      "kind": "rule",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:45-50 step 'continuing without a means of transport'",
+      "quote": "await expectErrorSummary(page, ['Select a means of transport to the port of entry'])\n      await expect(page.locator('.govuk-error-summary__list a')).toHaveAttribute('href', '#means-of-transport')\n      await expectInlineError(page, 'Select a means of transport to the port of entry')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-082",
+      "statement": "The means of transport is the only required answer on the arrival details page: arrival date, port of entry, transport identification and transport document reference are optional to proceed.",
+      "kind": "rule",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:22 test 'means of transport is the one required answer', :45-47",
+      "quote": "test('means of transport is the one required answer', async ({ page }, testInfo) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-083",
+      "statement": "Typing a port name such as 'Dover' in the port of entry search shows matching options, and choosing one sets the port of entry value to it.",
+      "kind": "behaviour",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:53-62 step 'the port of entry search'",
+      "quote": "await input.pressSequentially('Dover', { delay: 30 })\n      await expect(page.locator('button.app-country-search__option', { hasText: 'Dover' }).first()).toBeVisible()\n...\n      await expect(page.locator('input[name=\"portOfEntry\"]')).toHaveValue(/Dover/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-084",
+      "statement": "Choosing Rail as the means of transport continues to the transit countries page at /transit-countries.",
+      "kind": "behaviour",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:64-68 step 'rail goes on to transit countries'",
+      "quote": "await page.locator('#means-of-transport').selectOption('Rail')\n      await saveAndContinue(page)\n      await expect(page).toHaveURL(urlFor('/transit-countries'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-085",
+      "statement": "Choosing Road as the means of transport continues to /transit-countries.",
+      "kind": "behaviour",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:84-85 test 'add and remove the countries the consignment travels through'",
+      "quote": "await answerArrival(page, { means: 'Road', port: { search: 'Dover', option: 'Dover' }, transportId: 'AB12 CDE' })\n    await expect(page).toHaveURL(urlFor('/transit-countries'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-086",
+      "statement": "Choosing Air as the means of transport skips transit countries and continues to the transporter page at /transporter.",
+      "kind": "behaviour",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:71-74 test 'air and sea skip transit countries'",
+      "quote": "await answerArrival(page, { means: 'Air' })\n    await expect(page).toHaveURL(urlFor('/transporter'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-087",
+      "statement": "Choosing Sea as the means of transport also skips transit countries.",
+      "kind": "behaviour",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:71 test 'air and sea skip transit countries'",
+      "quote": "test('air and sea skip transit countries', async ({ page }) => {",
+      "confidence": "inferred",
+      "note": "Only the test name says it; the test exercises Air only, so Sea is not proven."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-088",
+      "statement": "The transit countries page is guarded: opening it when the means of transport is not rail or road redirects to /notification-hub.",
+      "kind": "rule",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:75-77 test 'air and sea skip transit countries'",
+      "quote": "await page.goto(url('/transit-countries'))\n    // The transit page is guarded: with no rail or road leg it sends the user to the hub.\n    await expect(page).toHaveURL(urlFor('/notification-hub'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-089",
+      "statement": "The transit countries page has the title 'Transit countries - Import notification service - GOV.UK', the heading 'Which countries will the consignment travel through?' and the caption 'Movement'.",
+      "kind": "copy",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:88-91 test 'add and remove the countries the consignment travels through'",
+      "quote": "await expect(page).toHaveTitle('Transit countries - Import notification service - GOV.UK')\n      await expectHeading(page, 'Which countries will the consignment travel through?')\n      const main = page.locator('main')\n      await expect(main).toContainText('Movement')",
+      "confidence": "verbatim",
+      "note": "'Movement' as the caption is inferred from its place in main."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-090",
+      "statement": "The transit countries page explains: 'Countries the consignment will travel through are countries between the country of origin and the destination country.' and 'This does not include the United Kingdom.'",
+      "kind": "copy",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:92-93 test 'add and remove the countries the consignment travels through'",
+      "quote": "Countries the consignment will travel through are countries between the country of origin and the destination country.\n...\nThis does not include the United Kingdom.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-091",
+      "statement": "The transit countries page has an 'Enter a country' search field with the hint 'Enter each country that the consignment will travel through'.",
+      "kind": "copy",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:94-95 test 'add and remove the countries the consignment travels through'",
+      "quote": "await expect(page.getByLabel('Enter a country')).toBeVisible()\n      await expect(main).toContainText('Enter each country that the consignment will travel through')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-092",
+      "statement": "The transit countries back link goes to /arrival-details.",
+      "kind": "behaviour",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:96 test 'add and remove the countries the consignment travels through'",
+      "quote": "await expectBackLink(page, url('/arrival-details'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-093",
+      "statement": "Each country picked from the transit country search is added to a list shown in a table with a 'Country' column, and the chosen countries are held in order (such as Belgium then Germany).",
+      "kind": "behaviour",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:100-105 step 'adding two countries lists them'",
+      "quote": "await pickFromAutocomplete(page, 'transit-country-search', 'Belg', 'Belgium')\n      await pickFromAutocomplete(page, 'transit-country-search', 'Germ', 'Germany')\n      await expect(page.locator('input[name=\"transitCountries\"]')).toHaveValue('[\"Belgium\",\"Germany\"]')\n      await expect(page.locator('main')).toContainText(/Country\\s+Belgium/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-094",
+      "statement": "The transit countries are submitted as one hidden field, transitCountries, holding a JSON array of country names.",
+      "kind": "data",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:103 step 'adding two countries lists them'",
+      "quote": "await expect(page.locator('input[name=\"transitCountries\"]')).toHaveValue('[\"Belgium\",\"Germany\"]')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-095",
+      "statement": "Each listed transit country has a 'Remove' link that removes it from the list.",
+      "kind": "behaviour",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:108-111 step 'removing one'",
+      "quote": "await page.locator('main').getByRole('link', { name: 'Remove' }).first().click()\n      await expect(page.locator('input[name=\"transitCountries\"]')).toHaveValue('[\"Germany\"]')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-096",
+      "statement": "Transit countries are optional; Save and continue goes to /transporter.",
+      "kind": "rule",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:113-116 step 'countries are optional; continue goes to the transporter'",
+      "quote": "await test.step('countries are optional; continue goes to the transporter', async () => {\n      await saveAndContinue(page)\n      await expect(page).toHaveURL(urlFor('/transporter'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-097",
+      "statement": "The specs assert no error states on the transit countries page, such as a duplicate country, the United Kingdom, or an unmatched search.",
+      "kind": "rule",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:81-118 describe 'transit countries'",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-098",
+      "statement": "The transporter page has the title 'Transporter details - Import notification service - GOV.UK' and the heading 'Transporter details'.",
+      "kind": "copy",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:128-129 test 'select a transporter from the list'",
+      "quote": "await expect(page).toHaveTitle('Transporter details - Import notification service - GOV.UK')\n    await expectHeading(page, 'Transporter details')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-099",
+      "statement": "The transporter page says 'This is the person or company responsible for transporting the consignment.'",
+      "kind": "copy",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:131 test 'select a transporter from the list'",
+      "quote": "This is the person or company responsible for transporting the consignment.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-100",
+      "statement": "The transporter page says 'Your transporter must hold a valid transporter authorisation, issued by DAERA or APHA in the UK if they are:'.",
+      "kind": "copy",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:132 test 'select a transporter from the list'",
+      "quote": "Your transporter must hold a valid transporter authorisation, issued by DAERA or APHA in the UK if they are:",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-101",
+      "statement": "The specs do not assert the list of conditions that follows 'if they are:' on the transporter page.",
+      "kind": "copy",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:132 test 'select a transporter from the list'",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The sentence ends with a colon, so a list follows on the page; its items are not in the spec."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-102",
+      "statement": "The transporter page says 'Documents issued in any EU member state are not valid for use in GB.'",
+      "kind": "copy",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:133 test 'select a transporter from the list'",
+      "quote": "Documents issued in any EU member state are not valid for use in GB.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-103",
+      "statement": "The transporter page links to guidance with the text 'Find out how to transport animals in connection with an economic activity (opens in a new tab)'.",
+      "kind": "copy",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:134 test 'select a transporter from the list'",
+      "quote": "Find out how to transport animals in connection with an economic activity (opens in a new tab)",
+      "confidence": "verbatim",
+      "note": "The link target is not asserted."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-104",
+      "statement": "The transporter page has an 'Add a transporter' link to /transporter/add.",
+      "kind": "behaviour",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:135 test 'select a transporter from the list'",
+      "quote": "await expect(main.locator('a', { hasText: 'Add a transporter' })).toHaveAttribute('href', url('/transporter/add'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-105",
+      "statement": "The transporter page lists transporters in a table with the columns Name, Address, Approval number, Type and Status, each row selectable by a radio (transporterId); the seeded list has 8 transporters, including approval number UK/ABERDEEN/T1/00092001.",
+      "kind": "data",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:136-138 test 'select a transporter from the list'",
+      "quote": "await expect(main).toContainText(/Name\\s+Address\\s+Approval number\\s+Type\\s+Status/)\n    await expect(page.locator('input[name=\"transporterId\"]')).toHaveCount(8)\n    await expect(main).toContainText('UK/ABERDEEN/T1/00092001')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-106",
+      "statement": "Each transporter has a 'View details' link that opens the shared, unprefixed address book entry with a return path to the transporter page, such as /address-book/yusen-logistics-romania?return=%2Ftransporter.",
+      "kind": "behaviour",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:139-140 test 'select a transporter from the list'",
+      "quote": "// View details opens the shared (unprefixed) address book entry.\n    await expect(main.getByRole('link', { name: 'View details' }).first()).toHaveAttribute('href', '/address-book/yusen-logistics-romania?return=%2Ftransporter')",
+      "confidence": "verbatim",
+      "note": "The return path is the unprefixed /transporter, not /design-release-2.1/transporter."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-107",
+      "statement": "The transporter page back link goes to /notification-hub.",
+      "kind": "behaviour",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:141 test 'select a transporter from the list'",
+      "quote": "await expectBackLink(page, url('/notification-hub'))",
+      "confidence": "verbatim",
+      "note": "Asserted after arriving from arrival details with Air."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-108",
+      "statement": "Choosing a transporter and continuing goes to the upload documents page at /upload-documents.",
+      "kind": "behaviour",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:144-146 test 'select a transporter from the list'",
+      "quote": "await page.locator('input[name=\"transporterId\"][value=\"aberdeen-livestock\"]').check()\n    await saveAndContinue(page)\n    await expect(page).toHaveURL(urlFor('/upload-documents'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-109",
+      "statement": "A transporter is optional to proceed: continuing with none chosen goes to /upload-documents.",
+      "kind": "rule",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:149-152 test 'transporter is optional to proceed'",
+      "quote": "test('transporter is optional to proceed', async ({ page }) => {\n    await saveAndContinue(page)\n    await expect(page).toHaveURL(urlFor('/upload-documents'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-110",
+      "statement": "The legacy /transport-details path redirects to /transporter.",
+      "kind": "behaviour",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:154-157 test 'the legacy transport-details path redirects to the transporter page'",
+      "quote": "await page.goto(url('/transport-details'))\n    await expect(page).toHaveURL(urlFor('/transporter'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-111",
+      "statement": "The add a transporter start page is at /transporter/add, with the title 'Choose a transporter type - Import notification service - GOV.UK', the heading 'Choose a transporter type' and the caption 'Add a new transporter'.",
+      "kind": "copy",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:165-172 test 'choose a transporter type'",
+      "quote": "await expect(page).toHaveTitle('Choose a transporter type - Import notification service - GOV.UK')\n    await expectHeading(page, 'Choose a transporter type')\n    const main = page.locator('main')\n    await expect(main).toContainText('Add a new transporter')",
+      "confidence": "verbatim",
+      "note": "'Add a new transporter' as the caption is inferred from its place in main."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-112",
+      "statement": "The choose a transporter type page says 'Check the transporter list before adding new transporters to avoid duplicates.'",
+      "kind": "copy",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:173 test 'choose a transporter type'",
+      "quote": "Check the transporter list before adding new transporters to avoid duplicates.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-113",
+      "statement": "The transporter type is a radio choice of 'Private transporter' or 'Commercial', and the page says 'This can only be a commercial transporter from Northern Ireland.'",
+      "kind": "data",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:174-175 test 'choose a transporter type'",
+      "quote": "await expect(page.locator('input[name=\"transporterType\"] + label')).toHaveText(['Private transporter', 'Commercial'])\n    await expect(main).toContainText('This can only be a commercial transporter from Northern Ireland.')",
+      "confidence": "verbatim",
+      "note": "Whether the Northern Ireland sentence is the Commercial option's hint is not asserted."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-114",
+      "statement": "Pressing 'Continue' on the choose a transporter type page without a choice shows 'Select a transporter type', linked to the first option (#transporter-type-private).",
+      "kind": "rule",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:178-180 test 'choose a transporter type'",
+      "quote": "await submitForm(page, 'Continue')\n    await expectErrorSummary(page, ['Select a transporter type'])\n    await expect(page.locator('.govuk-error-summary__list a')).toHaveAttribute('href', '#transporter-type-private')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-115",
+      "statement": "Choosing Private transporter and Continue goes to /transporter/add/private, with the title 'Add a private transporter - Import notification service - GOV.UK' and the heading 'Add a private transporter'.",
+      "kind": "behaviour",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:185-189 test 'private transporter: every required field is named, then it is added and selectable'",
+      "quote": "await expect(page).toHaveURL(urlFor('/transporter/add/private'))\n    await expect(page).toHaveTitle('Add a private transporter - Import notification service - GOV.UK')\n    await expectHeading(page, 'Add a private transporter')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-116",
+      "statement": "The add a private transporter page asks for: 'Name or organisation name', 'Address line 1', 'Address line 2 (optional)', 'Town or city', 'County (optional)', 'Postcode or Zip code', 'Country', 'Email address' and 'Phone number'.",
+      "kind": "data",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:190-192 test 'private transporter: every required field is named, then it is added and selectable'",
+      "quote": "for (const label of ['Name or organisation name', 'Address line 1', 'Address line 2 (optional)', 'Town or city', 'County (optional)', 'Postcode or Zip code', 'Country', 'Email address', 'Phone number']) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-117",
+      "statement": "On the add a private transporter page, Country is prefilled with 'United Kingdom'.",
+      "kind": "data",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:193 test 'private transporter: every required field is named, then it is added and selectable'",
+      "quote": "await expect(page.getByLabel('Country', { exact: true })).toHaveValue('United Kingdom')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-118",
+      "statement": "The add a private transporter page groups email and phone under 'Enter contact details', with the phone hint 'For international numbers include the country code'.",
+      "kind": "copy",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:194-195 test 'private transporter: every required field is named, then it is added and selectable'",
+      "quote": "await expect(page.locator('main')).toContainText('Enter contact details')\n    await expect(page.locator('main')).toContainText('For international numbers include the country code')",
+      "confidence": "verbatim",
+      "note": "That the country code sentence is the phone field's hint is inferred."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-119",
+      "statement": "The add a private transporter back link goes to /transporter/add.",
+      "kind": "behaviour",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:196 test 'private transporter: every required field is named, then it is added and selectable'",
+      "quote": "await expectBackLink(page, url('/transporter/add'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-120",
+      "statement": "Pressing 'Save and continue' on the add a private transporter page with nothing entered shows, in order: 'Enter a name or organisation name', 'Enter address line 1', 'Enter a town or city', 'Enter a postcode or Zip code', 'Enter an email address', 'Enter a phone number'.",
+      "kind": "rule",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:199-203 test 'private transporter: every required field is named, then it is added and selectable'",
+      "quote": "await expectErrorSummary(page, [\n      'Enter a name or organisation name', 'Enter address line 1', 'Enter a town or city',\n      'Enter a postcode or Zip code', 'Enter an email address', 'Enter a phone number'\n    ])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-121",
+      "statement": "A complete private transporter is saved and the user returns to /transporter, where a confirmation '<Name> transporter added' is shown (the name sentence-cased, such as 'Hill haulage transporter added') and the new transporter appears in the list.",
+      "kind": "behaviour",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:206-215 test 'private transporter: every required field is named, then it is added and selectable'",
+      "quote": "await expect(page).toHaveURL(urlFor('/transporter'))\n    await expect(page.locator('main')).toContainText('Hill haulage transporter added')\n    await expect(page.locator('main')).toContainText('Hill Haulage')",
+      "confidence": "verbatim",
+      "note": "The confirmation lower-cases all but the first letter of the entered name ('Hill Haulage' becomes 'Hill haulage')."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-122",
+      "statement": "A newly added transporter can be selected on the transporter page.",
+      "kind": "behaviour",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:184 test 'private transporter: every required field is named, then it is added and selectable'",
+      "quote": "test('private transporter: every required field is named, then it is added and selectable'",
+      "confidence": "inferred",
+      "note": "The test name says 'selectable'; the test only asserts the name appears on the page, not that it is selected or has a radio."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-123",
+      "statement": "The add a private transporter page has a 'Cancel and return to dashboard' button that, from inside the journey, leaves for the overall dashboard (the /design-release-2.1 root, heading 'Import notification service'), not the transporter list.",
+      "kind": "behaviour",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:219-226 test 'private transporter: cancel leaves the journey for the dashboard'",
+      "quote": "await submitForm(page, 'Cancel and return to dashboard')\n    // From inside the journey, cancel lands on the overall dashboard, not the transporter list.\n    await expect(page).toHaveURL(new RegExp(`${url().replace(/\\./g, '\\\\.')}$`))\n    await expectHeading(page, 'Import notification service')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-124",
+      "statement": "Choosing Commercial and Continue goes to /transporter/add/commercial, with the title 'Add a commercial transporter - Import notification service - GOV.UK' and the heading 'Add a commercial transporter'.",
+      "kind": "behaviour",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:229-233 test 'commercial transporter: authorisation number, address search or manual entry'",
+      "quote": "await expect(page).toHaveURL(urlFor('/transporter/add/commercial'))\n    await expect(page).toHaveTitle('Add a commercial transporter - Import notification service - GOV.UK')\n    await expectHeading(page, 'Add a commercial transporter')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-125",
+      "statement": "The add a commercial transporter page shows 'Help with transporter authorisation'.",
+      "kind": "copy",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:235 test 'commercial transporter: authorisation number, address search or manual entry'",
+      "quote": "await expect(main).toContainText('Help with transporter authorisation')",
+      "confidence": "verbatim",
+      "note": "Its form (likely a details expander) and contents are not asserted."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-126",
+      "statement": "The add a commercial transporter page asks for 'Transporter authorisation number' and 'Name or organisation name'.",
+      "kind": "data",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:236-237 test 'commercial transporter: authorisation number, address search or manual entry'",
+      "quote": "await expect(page.getByLabel('Transporter authorisation number')).toBeVisible()\n    await expect(page.getByLabel('Name or organisation name', { exact: true })).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-127",
+      "statement": "The add a commercial transporter page first offers a 'Search for an address' field, with the address fields hidden.",
+      "kind": "behaviour",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:238-239 test 'commercial transporter: authorisation number, address search or manual entry'",
+      "quote": "await expect(page.getByLabel('Search for an address')).toBeVisible()\n    await expect(page.getByLabel('Address line 1', { exact: true })).toBeHidden()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-128",
+      "statement": "An 'Enter address manually' button on the commercial transporter page reveals the address fields.",
+      "kind": "behaviour",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:242-244 step 'enter address manually reveals the address fields, fixed to Northern Ireland'",
+      "quote": "await main.getByRole('button', { name: 'Enter address manually' }).click()\n      await expect(page.getByLabel('Address line 1', { exact: true })).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-129",
+      "statement": "A commercial transporter's address country is fixed to 'Northern Ireland'.",
+      "kind": "rule",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:242-245 step 'enter address manually reveals the address fields, fixed to Northern Ireland'",
+      "quote": "await expect(page.locator('#transporter-commercial-country')).toHaveValue('Northern Ireland')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-130",
+      "statement": "Pressing 'Save and continue' on the commercial transporter page with nothing entered shows, in order: 'Enter a transporter authorisation number', 'Enter a name or organisation name', 'Enter address line 1', 'Enter a town or city', 'Enter a postcode or Zip code', 'Enter an email address', 'Enter a phone number'.",
+      "kind": "rule",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:249-254 step 'every required field is named'",
+      "quote": "await expectErrorSummary(page, [\n        'Enter a transporter authorisation number', 'Enter a name or organisation name', 'Enter address line 1',\n        'Enter a town or city', 'Enter a postcode or Zip code', 'Enter an email address', 'Enter a phone number'\n      ])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-131",
+      "statement": "A complete commercial transporter is saved and the user returns to /transporter, with the confirmation 'Lough livestock ltd transporter added' and the new authorisation number (UK/BELFAST/T1/00012345) in the list.",
+      "kind": "behaviour",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:258-270 step 'a complete commercial transporter is added'",
+      "quote": "await expect(page).toHaveURL(urlFor('/transporter'))\n      await expect(page.locator('main')).toContainText('Lough livestock ltd transporter added')\n      await expect(page.locator('main')).toContainText('UK/BELFAST/T1/00012345')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-132",
+      "statement": "The specs do not exercise the commercial transporter address search: no search results, choosing a result, or no-match state is asserted.",
+      "kind": "behaviour",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:228-271 test 'commercial transporter: authorisation number, address search or manual entry'",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The test title names 'address search', but only the manual entry path is driven."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-133",
+      "statement": "The specs do not prove any format rule for the transporter authorisation number, email address or phone number beyond their being required.",
+      "kind": "rule",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:184-271 describe 'add a transporter'",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-134",
+      "statement": "The arrival details specs prove no validation on the arrival date (such as a real date or a date in the past) or on the port of entry.",
+      "kind": "rule",
+      "ref": "e2e/transport-and-arrival.fit.spec.js:21-79 describe 'arrival details'",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-135",
+      "statement": "Section 4 of the Design Release 2.1 task list is upload documents: uploads are optional, but once a document type is chosen every document field must be completed.",
+      "kind": "rule",
+      "ref": "e2e/documents.fit.spec.js:8-9",
+      "quote": "// Section 4 of the DR2.1 task list: upload documents. Uploads are optional, but\n// once a document type is chosen every document field must be completed.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-136",
+      "statement": "The upload documents page is at /upload-documents, with the title 'Upload documents - Import notification service - GOV.UK', the heading 'Upload documents' and the caption 'Documents'.",
+      "kind": "copy",
+      "ref": "e2e/documents.fit.spec.js:37-40 test 'renders the upload guidance and document fields'",
+      "quote": "await expect(page).toHaveTitle('Upload documents - Import notification service - GOV.UK')\n    await expectHeading(page, 'Upload documents')\n    const main = page.locator('main')\n    await expect(main).toContainText('Documents')",
+      "confidence": "verbatim",
+      "note": "'Documents' as the caption is inferred from its place in main."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-137",
+      "statement": "The upload documents page says 'You must attach an ITAHC if this consignment requires one. If you do not have it now, you can add it later. All documents should be uploaded before the consignment arrives at the UK port. Documents must be in English and you must upload all pages.'",
+      "kind": "copy",
+      "ref": "e2e/documents.fit.spec.js:41 test 'renders the upload guidance and document fields'",
+      "quote": "You must attach an ITAHC if this consignment requires one. If you do not have it now, you can add it later. All documents should be uploaded before the consignment arrives at the UK port. Documents must be in English and you must upload all pages.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-138",
+      "statement": "The upload documents guidance names other documents, including 'import licences or authorisations' and 'commercial documents or invoices'.",
+      "kind": "copy",
+      "ref": "e2e/documents.fit.spec.js:42-43 test 'renders the upload guidance and document fields'",
+      "quote": "await expect(main).toContainText('import licences or authorisations')\n    await expect(main).toContainText('commercial documents or invoices')",
+      "confidence": "verbatim",
+      "note": "The surrounding sentence and any other items in the list are not asserted."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-139",
+      "statement": "The upload documents page shows 'Check which additional documents you must upload' and one link to GOV.UK guidance at https://www.gov.uk/guidance/import-of-products-animals-food-and-feed-system.",
+      "kind": "copy",
+      "ref": "e2e/documents.fit.spec.js:44-45 test 'renders the upload guidance and document fields'",
+      "quote": "await expect(main).toContainText('Check which additional documents you must upload')\n    await expect(main.locator('a[href^=\"https://www.gov.uk/guidance/import-of-products-animals-food-and-feed-system\"]')).toHaveCount(1)",
+      "confidence": "verbatim",
+      "note": "The link's text is not asserted; the href is matched by prefix."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-140",
+      "statement": "The upload documents page has a 'File upload' section asking for 'Document reference', a 'Document type' select and a 'Date of issue'.",
+      "kind": "data",
+      "ref": "e2e/documents.fit.spec.js:46-49 test 'renders the upload guidance and document fields'",
+      "quote": "await expect(main).toContainText('File upload')\n    await expect(page.getByLabel('Document reference')).toBeVisible()\n    await expect(page.locator('#document-type option')).toHaveText(DOCUMENT_TYPES)\n    await expect(page.getByLabel('Date of issue')).toBeVisible()",
+      "confidence": "verbatim",
+      "note": "The document type select's label is not asserted; its id is document-type."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-141",
+      "statement": "The document type options are, in order: Select one, Intra Trade Animal Health Certificate (ITAHC), Veterinary health certificate, Air waybill, Import permit, Letter of authority (Directive 2008/61/EC), Commercial invoice, Sea waybill, Rail waybill, Bill of lading, Catch certificate, Laboratory sampling results for aflatoxin (Reg 2019/1793), Journey log, Other.",
+      "kind": "data",
+      "ref": "e2e/documents.fit.spec.js:11-26 DOCUMENT_TYPES",
+      "quote": "'Select one',\n  'Intra Trade Animal Health Certificate (ITAHC)',\n  'Veterinary health certificate',\n  'Air waybill',\n  'Import permit',\n  'Letter of authority (Directive 2008/61/EC)',\n  'Commercial invoice',\n  'Sea waybill',\n  'Rail waybill',\n  'Bill of lading',\n  'Catch certificate',\n  'Laboratory sampling results for aflatoxin (Reg 2019/1793)',\n  'Journey log',\n  'Other'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-142",
+      "statement": "Document type option values are slugs, such as 'itahc' for the ITAHC and 'air-waybill' for an air waybill.",
+      "kind": "data",
+      "ref": "e2e/documents.fit.spec.js:66, 75; e2e/support/journey.js:198",
+      "quote": "await page.locator('#document-type').selectOption('itahc')\n...\n    await page.locator('#document-type').selectOption('air-waybill')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-143",
+      "statement": "The upload documents page states the file rules: files smaller than 50MB; PDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX; up to a maximum of 15 files; ZIP files are not allowed for security reasons.",
+      "kind": "copy",
+      "ref": "e2e/documents.fit.spec.js:50-52 test 'renders the upload guidance and document fields'",
+      "quote": "for (const rule of ['files that are smaller than 50MB', 'PDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX', 'up to a maximum of 15 files', 'ZIP files are not allowed for security reasons']) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-144",
+      "statement": "The specs do not prove that the stated file rules (size, type, maximum of 15 files, no ZIP) are enforced: no oversized, wrong-type, ZIP or sixteenth file is tried.",
+      "kind": "rule",
+      "ref": "e2e/documents.fit.spec.js:28-111 describe 'upload documents'",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-145",
+      "statement": "Before a file is chosen, the file input shows 'No file chosen'.",
+      "kind": "copy",
+      "ref": "e2e/documents.fit.spec.js:53 test 'renders the upload guidance and document fields'",
+      "quote": "await expect(main).toContainText('No file chosen')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-146",
+      "statement": "The upload documents page has a 'Save and add another' button.",
+      "kind": "copy",
+      "ref": "e2e/documents.fit.spec.js:54 test 'renders the upload guidance and document fields'",
+      "quote": "await expect(main.getByRole('button', { name: 'Save and add another' })).toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-147",
+      "statement": "When opened directly, the upload documents back link goes to /notification-hub.",
+      "kind": "behaviour",
+      "ref": "e2e/documents.fit.spec.js:55 test 'renders the upload guidance and document fields'",
+      "quote": "await expectBackLink(page, url('/notification-hub'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-148",
+      "statement": "Pressing 'Save and add another' with nothing entered shows, in order: 'Enter a document reference', 'Select a document type', 'Enter a date of issue', 'Upload a document'.",
+      "kind": "rule",
+      "ref": "e2e/documents.fit.spec.js:59-63 test 'save and add another with nothing entered names every field'",
+      "quote": "await clickAction(page, 'add-another')\n    await expectErrorSummary(page, ['Enter a document reference', 'Select a document type', 'Enter a date of issue', 'Upload a document'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-149",
+      "statement": "A date of issue that is not a real date (such as 30/2/2026) shows 'Enter a real date'.",
+      "kind": "rule",
+      "ref": "e2e/documents.fit.spec.js:65-71 test 'a date of issue that is not a real date'",
+      "quote": "await fillDate(page, '#date-of-issue', '30/2/2026')\n    await clickAction(page, 'add-another')\n    await expectErrorSummary(page, ['Enter a real date', 'Upload a document'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-150",
+      "statement": "A document with no file attached shows 'Upload a document', even when its other fields are filled in.",
+      "kind": "rule",
+      "ref": "e2e/documents.fit.spec.js:65-71 test 'a date of issue that is not a real date'",
+      "quote": "await expectErrorSummary(page, ['Enter a real date', 'Upload a document'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-151",
+      "statement": "Pressing Save and continue with a document type chosen but the other fields blank keeps the user on /upload-documents and shows, in order: 'Enter a document reference', 'Enter a date of issue', 'Upload a document'.",
+      "kind": "rule",
+      "ref": "e2e/documents.fit.spec.js:74-79 test 'continuing with a document type chosen but the rest blank is held on the page'",
+      "quote": "await page.locator('#document-type').selectOption('air-waybill')\n    await saveAndContinue(page)\n    await expect(page).toHaveURL(urlFor('/upload-documents'))\n    await expectErrorSummary(page, ['Enter a document reference', 'Enter a date of issue', 'Upload a document'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-152",
+      "statement": "Documents are optional: Save and continue with nothing chosen goes to the roles and addresses page at /roles-and-addresses.",
+      "kind": "behaviour",
+      "ref": "e2e/documents.fit.spec.js:81-84 test 'documents are optional: continuing with nothing chosen moves on'",
+      "quote": "await saveAndContinue(page)\n    await expect(page).toHaveURL(urlFor('/roles-and-addresses'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-153",
+      "statement": "Choosing a file shows its name (such as 'itahc.pdf') on the page and carries the name in a hidden attachmentFileName field.",
+      "kind": "behaviour",
+      "ref": "e2e/documents.fit.spec.js:87-88 test 'a complete document is listed with its virus check status, and can be removed'; e2e/support/journey.js:202-205",
+      "quote": "await page.locator('#attachment').setInputFiles(file)\n    await expect(page.locator('input[name=\"attachmentFileName\"]')).toHaveValue(file.name)\n...\n    await expect(page.locator('main')).toContainText('itahc.pdf')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-154",
+      "statement": "A date of issue in the past (such as two days ago) is accepted.",
+      "kind": "rule",
+      "ref": "e2e/documents.fit.spec.js:87, 97 test 'a complete document is listed with its virus check status, and can be removed'",
+      "quote": "await fillDocument(page, { reference: 'ITAHC-001', issued: dateFromToday(-2) })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-155",
+      "statement": "Saving a complete document with 'Save and add another' lists it in a table with the columns Document reference, Document type, Date of issue, Status and Action, showing its reference, full type name and date of issue.",
+      "kind": "behaviour",
+      "ref": "e2e/documents.fit.spec.js:90-97 test 'a complete document is listed with its virus check status, and can be removed'",
+      "quote": "await expect(table.locator('thead th')).toHaveText(['Document reference', 'Document type', 'Date of issue', 'Status', 'Action'])\n    await expect(table.locator('tbody tr')).toHaveCount(1)\n    await expect(table.locator('tbody tr').first()).toContainText('ITAHC-001')\n    await expect(table.locator('tbody tr').first()).toContainText('Intra Trade Animal Health Certificate (ITAHC)')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-156",
+      "statement": "A newly listed document shows the status 'Scanning for virus'.",
+      "kind": "copy",
+      "ref": "e2e/documents.fit.spec.js:98 test 'a complete document is listed with its virus check status, and can be removed'",
+      "quote": "await expect(table.locator('.app-upload-documents-table__status')).toHaveText('Scanning for virus')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-157",
+      "statement": "Under Design Release 2.1 the document status never moves on from 'Scanning for virus', because the simulated virus check posts to the unprefixed /upload-documents/virus-check route, which reads the root (Design Release 1) session.",
+      "kind": "constraint",
+      "ref": "e2e/documents.fit.spec.js:101-105 test 'a complete document is listed with its virus check status, and can be removed'",
+      "quote": "// The simulated virus check posts to the unprefixed /upload-documents/virus-check\n    // route, which reads the root (DR1) session, so under DR2.1 the tag never\n    // moves on from \"Scanning for virus\".",
+      "confidence": "verbatim",
+      "note": "This is a prototype wiring fault the spec pins as current behaviour; the status the check should move to is not stated."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-158",
+      "statement": "The prototype simulates a virus check on each uploaded document, which is meant to update its status after a short wait.",
+      "kind": "behaviour",
+      "ref": "e2e/documents.fit.spec.js:101-104 test 'a complete document is listed with its virus check status, and can be removed'",
+      "quote": "// The simulated virus check posts to the unprefixed /upload-documents/virus-check",
+      "confidence": "inferred",
+      "note": "Inferred from the comment and the 4-second wait; the resulting status names (such as clean or infected) are a gap."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-159",
+      "statement": "Each listed document has a 'Remove' button that removes it, keeping the user on /upload-documents; with no documents left, the table is not shown.",
+      "kind": "behaviour",
+      "ref": "e2e/documents.fit.spec.js:107-109 test 'a complete document is listed with its virus check status, and can be removed'",
+      "quote": "await table.getByRole('button', { name: 'Remove' }).click()\n    await expect(page).toHaveURL(urlFor('/upload-documents'))\n    await expect(page.locator('table.app-upload-documents-table')).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-160",
+      "statement": "The notification hub has an 'Upload documents' link to /upload-documents?from=hub.",
+      "kind": "behaviour",
+      "ref": "e2e/documents.fit.spec.js:117-119 test 'save and return to overview from the hub'",
+      "quote": "await page.locator('main').getByRole('link', { name: 'Upload documents' }).click()\n    await expect(page).toHaveURL(url('/upload-documents?from=hub').replace(/\\./g, '.'))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-161",
+      "statement": "When upload documents is opened from the hub, the page carries from=hub in a hidden field, and Save and continue returns to /notification-hub instead of moving on to roles and addresses.",
+      "kind": "behaviour",
+      "ref": "e2e/documents.fit.spec.js:120-122 test 'save and return to overview from the hub'",
+      "quote": "await expect(page.locator('input[name=\"from\"][value=\"hub\"]')).toHaveCount(1)\n    await saveAndContinue(page)\n    await expect(page).toHaveURL(urlFor('/notification-hub'))",
+      "confidence": "verbatim",
+      "note": "The test is titled 'save and return to overview from the hub' but presses the continue action, not the hub action."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-162",
+      "statement": "The upload documents page can be opened before the earlier sections are complete (straight after the commodity), with no entry guard.",
+      "kind": "rule",
+      "ref": "e2e/documents.fit.spec.js:29-34 beforeEach",
+      "quote": "await answerCommodity(page, SPECIES.cattle)\n    await page.goto(url('/upload-documents'))",
+      "confidence": "inferred",
+      "note": "Inferred: the beforeEach skips reason, consignment, arrival and transporter, and every test renders the page."
+    },
+    {
+      "id": "prototype-dr2-1-specs-p2-163",
+      "statement": "The specs do not prove how many documents can be listed or whether a second document can be added after the first.",
+      "kind": "behaviour",
+      "ref": "e2e/documents.fit.spec.js:86-110 test 'a complete document is listed with its virus check status, and can be removed'",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

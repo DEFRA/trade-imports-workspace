@@ -45,9 +45,9 @@ The system MUST refuse to save a commodity type that is not one of the three off
 - **THEN** an error is shown
 - **AND** no type is left checked
 
-### Requirement: Saving and continuing with no type chosen is refused, focusing the first option
+### Requirement: Saving with no type chosen is refused on either save control, focusing the first option
 **ID**: REQ-PLANTS-COMMODITY-TYPE-004
-The system MUST refuse to save and continue from the page when no type has been chosen, showing an error summary, and MUST focus the first type option when the user follows the error. It MUST NOT refuse the page for a missing type on save and return to overview.
+The system MUST refuse to save from the page when no type has been chosen, on save and continue and on save and return to overview alike, showing an error summary, and MUST focus the first type option when the user follows the error. The commodity lines already held MUST be kept.
 
 #### Scenario: Saving with nothing chosen shows the error and focuses the first option
 **ID**: SCN-PLANTS-COMMODITY-TYPE-004-A
@@ -57,11 +57,12 @@ The system MUST refuse to save and continue from the page when no type has been 
 - **WHEN** they follow the error
 - **THEN** the first type option is focused
 
-#### Scenario: Save and return to overview with nothing chosen reaches Overview without an error
+#### Scenario: Save and return to overview with nothing chosen shows the error and keeps the lines
 **ID**: SCN-PLANTS-COMMODITY-TYPE-004-B
-- **GIVEN** the user is on the commodity-type page with nothing chosen
+- **GIVEN** the user is on the commodity-type page with nothing chosen and the notification holds commodity lines
 - **WHEN** they save and return to overview
-- **THEN** they return to Overview with no error shown
+- **THEN** an error summary is shown, naming the missing commodity type, and nothing is saved
+- **AND** the commodity lines are still held
 
 ### Requirement: The page offers a full set of save controls, being reached directly from Overview
 **ID**: REQ-PLANTS-COMMODITY-TYPE-005

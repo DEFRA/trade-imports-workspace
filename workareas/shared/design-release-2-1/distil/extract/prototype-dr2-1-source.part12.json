@@ -1,0 +1,924 @@
+{
+  "source": "prototype:dr2-1-source",
+  "structure": "Part 12, Notification hub, drafts, amend and copy as new. Read in full from the extracted copy of the source at commit 04a073b (prototype-dr2-1-source.work/app): app/views/design-release-2.1/notification-hub.html (118 lines: phase banner, status partial, 'Overview' heading, 'Your commodities' summary cards, task list sections, two action buttons); app/views/partials/design-release-2.1/amend-notification-modal.html (36 lines) and cancel-amend-modal.html (32 lines); app/data/dashboard-notification-snapshots.js (226 lines: the sheep/goat, cattle and action-required snapshots built for seeded dashboard notifications); app/routes.js lines 5777-5915 (copy-as-new source snapshot, carried-over field list, copy into session, load draft snapshot), 6447-6609 (package count, hub view model, render), 6903-7051 (snapshot clone, comparable snapshot, hasAmendChanges, persistDraftNotification, saveDraftNotification, saveSubmittedNotification) and 11621-11741 (GET /notifications/copy-as-new, /notifications/amend, /notifications/cancel-amend, /notification-hub). To state what the slice's code does, I also read the helpers it calls: the notification-status partial the hub includes, ensurePrototypeNotificationReference, resetNotificationJourneySession, isAmendingNotification, formatNetWeightDisplay, getDashboardBackLink, generateDesignReleaseNotificationReference, mapTemplateCertificationPurpose, isCreatingTemplateJourney and isDesignRelease21TemplateCreate. Covered: the hub page (route, reference and status, summary cards, every section and task with status and link, both buttons, the template variants), both modals (every heading, line and button), copy as new (source lookup, fields carried over and not, where it leads), amend and cancel amend (what each loads, the Amend status, change detection, redirects), and the draft and submitted saving rules. The per-task completeness checks (hasOriginDetails and so on) and the dashboard lists that link to these routes belong to other parts. Route paths are written as the root routes; the version mount (another part) serves them under /design-release-2.1.",
+  "claims": [
+    {
+      "id": "prototype-dr2-1-source-p12-001",
+      "statement": "The notification hub is reached at GET /notification-hub.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11738",
+      "quote": "router.get('/notification-hub', (req, res) => {\n  return renderNotificationHubPage(req, res)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-002",
+      "statement": "Opening the hub makes sure the notification has a reference: if it has none, or it is not in the GBN-XX-NN-XXXX form, a new reference is generated.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6602 and 291-304",
+      "quote": "if (!value || !isDesignReleaseNotificationReference(value)) {\n    sessionData.notificationReference = generateDesignReleaseNotificationReference(sessionData)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-003",
+      "statement": "A generated notification reference is 'GBN-AG-26-' followed by 6 random upper-case letters or digits, chosen so it does not match the default reference, the current one, any seeded dashboard notification, any draft or any submitted notification.",
+      "kind": "rule",
+      "ref": "app/routes.js:7820-7848",
+      "quote": "const reference = `GBN-AG-26-${code}`\n\n    if (!existing.has(reference)) {\n      return reference",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-004",
+      "statement": "Opening the hub saves the notification as a draft (subject to the draft saving rules).",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6603",
+      "quote": "persistDraftNotification(req.session.data)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-005",
+      "statement": "The hub's page name and main heading are 'Overview'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/notification-hub.html:3 and 24",
+      "quote": "<h1 class=\"app-notification-hub__title\">Overview</h1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-006",
+      "statement": "The hub shows an Alpha phase banner reading 'This is a new service. Help us improve it and give your feedback by email.', whose feedback link goes to '#' (a placeholder).",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/notification-hub.html:10-15",
+      "quote": "html: 'This is a new service. Help us improve it and <a class=\"govuk-link\" href=\"#\">give your feedback by email</a>.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-007",
+      "statement": "Above the heading the hub shows a status tag: 'Template' when a template is being created, otherwise the notification's status, or 'Draft' when it has none.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/design-release-2.1/notification-status.html:2 (included at notification-hub.html:22)",
+      "quote": "{% set statusText = \"Template\" if isCreatingTemplate else (data.notificationStatus if data.notificationStatus else \"Draft\") %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-008",
+      "statement": "Beside the status tag the hub shows the template name when a template is being created, otherwise the notification reference.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/design-release-2.1/notification-status.html:5 and 9",
+      "quote": "{% set statusReference = data.templateName if isCreatingTemplate else notificationReference %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-009",
+      "statement": "When the status is 'Amend', the status line also shows a 'Cancel amend' link-style button that opens the cancel amendment modal.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/design-release-2.1/notification-status.html:10-14",
+      "quote": "<button class=\"govuk-link app-dr2-notification-status__cancel-link\" type=\"button\" data-modal-open=\"cancel-amend-modal\">\n      Cancel amend",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-010",
+      "statement": "The hub page does not include the cancel amendment modal itself, so a 'Cancel amend' button shown on the hub during an amendment has no modal on that page to open.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/notification-hub.html (whole file; compare review-notification.html:102 and cph-number.html:75, which include it)",
+      "quote": "{% include \"partials/design-release-2.1/notification-status.html\" %}",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of an include of cancel-amend-modal.html in notification-hub.html. Amend lands on the review page, not the hub, so this only shows if a user goes from the review page to the hub while amending."
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-011",
+      "statement": "The hub has a 'Your commodities' section heading above the summary cards.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/notification-hub.html:27",
+      "quote": "id=\"notification-hub-commodities-heading\">Your commodities</h2>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-012",
+      "statement": "For a live animals notification the hub shows two summary cards: the total number of animals, labelled 'Animals' with the caption 'Total number of animals in this consignment', and the total number of packages, labelled 'Packages/boxes' with the caption 'Total number of packages in this consignment'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/notification-hub.html:50-69",
+      "quote": "<p class=\"app-notification-hub-card__label\">Animals</p>",
+      "confidence": "verbatim",
+      "note": "Caption strings: 'Total number of animals in this consignment' (line 57) and 'Total number of packages in this consignment' (line 67)."
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-013",
+      "statement": "When the notification holds only germinal products, the hub shows the 'Packages/boxes' card and a net weight card labelled 'Kilograms' with the caption 'Total weight of packages in this consignment', instead of the animals card.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/notification-hub.html:30-49; app/routes.js:6467",
+      "quote": "<p class=\"app-notification-hub-card__label\">Kilograms</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-014",
+      "statement": "The total number of packages is the sum of every package count entered that is a positive number; other values are ignored, and the card shows '0' when the total is not above zero.",
+      "kind": "rule",
+      "ref": "app/routes.js:6447-6455 and 6500",
+      "quote": "return Number.isFinite(count) && count > 0 ? total + count : total",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-015",
+      "statement": "The animals card shows the total number of animals, or '0' when there are none.",
+      "kind": "rule",
+      "ref": "app/routes.js:6499",
+      "quote": "animalCountDisplay: totalAnimals > 0 ? String(totalAnimals) : '0',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-016",
+      "statement": "The net weight card shows '0' when the total weight is not a positive number, a whole number as entered, and otherwise the weight rounded to 3 decimal places.",
+      "kind": "rule",
+      "ref": "app/routes.js:6501 and 4462-4472",
+      "quote": "return String(Math.round(totalWeight * 1000) / 1000)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-017",
+      "statement": "The task list heading is 'Notification tasklist', or 'Template tasklist' when a template is being created.",
+      "kind": "copy",
+      "ref": "app/routes.js:6502",
+      "quote": "tasklistHeading: isCreatingTemplate ? 'Template tasklist' : 'Notification tasklist',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-018",
+      "statement": "Each task shows a status tag: 'Complete' in green when its check passes, otherwise 'To do' in blue.",
+      "kind": "copy",
+      "ref": "app/routes.js:6462-6463",
+      "quote": "const statusComplete = { text: 'Complete', class: 'govuk-tag--green' }\n  const statusTodo = { text: 'To do', class: 'govuk-tag--blue' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-019",
+      "statement": "Each task is a link to its page with ?from=hub added, so the page knows the user came from the hub.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6509-6592; notification-hub.html:86",
+      "quote": "href: '/origin-of-the-import?from=hub',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-020",
+      "statement": "The first task list section is '1. About the consignment'.",
+      "kind": "copy",
+      "ref": "app/routes.js:6505",
+      "quote": "title: '1. About the consignment',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-021",
+      "statement": "Section 1 has the task 'Where is this consignment coming from?', linking to /origin-of-the-import?from=hub and complete when the origin details are complete.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6507-6511",
+      "quote": "text: 'Where is this consignment coming from?',\n            href: '/origin-of-the-import?from=hub',\n            status: hasOriginDetails(sessionData) ? statusComplete : statusTodo",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-022",
+      "statement": "Section 1 has the task 'What are you importing?', linking to /what-are-you-importing?from=hub and complete when a commodity has been selected.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6512-6516",
+      "quote": "text: 'What are you importing?',\n            href: '/what-are-you-importing?from=hub',\n            status: hasCommoditySelection(sessionData) ? statusComplete : statusTodo",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-023",
+      "statement": "Section 1 has the task 'Main import reason', linking to /reason-for-import?from=hub and complete when the import reason is complete.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6517-6521",
+      "quote": "text: 'Main import reason',\n            href: '/reason-for-import?from=hub',\n            status: hasImportReasonComplete(sessionData) ? statusComplete : statusTodo",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-024",
+      "statement": "The second task list section is '2. Description of the goods'.",
+      "kind": "copy",
+      "ref": "app/routes.js:6525",
+      "quote": "title: '2. Description of the goods',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-025",
+      "statement": "Section 2 has the task 'Commodity details', linking to /consignment-details?from=hub and complete when the consignment details are complete.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6527-6531",
+      "quote": "text: 'Commodity details',\n            href: '/consignment-details?from=hub',\n            status: hasConsignmentDetails(sessionData) ? statusComplete : statusTodo",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-026",
+      "statement": "Section 2 shows the task 'Identification details', linking to /animal-identification-details?from=hub, only when the commodities need animal identifiers; it is complete when every identifier is complete.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6532-6536",
+      "quote": "...(hasAnimalIdentifiersRequired(sessionData) ? [{\n            text: 'Identification details',\n            href: '/animal-identification-details?from=hub',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-027",
+      "statement": "Section 2 shows the task 'Additional details', linking to /additional-animal-details?from=hub, only when the additional animal details page is required; it is complete when those details are complete.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6537-6541",
+      "quote": "...(requiresAdditionalAnimalDetailsPage(sessionData) ? [{\n            text: 'Additional details',\n            href: '/additional-animal-details?from=hub',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-028",
+      "statement": "The third task list section is '3. Transport and arrival'.",
+      "kind": "copy",
+      "ref": "app/routes.js:6545",
+      "quote": "title: '3. Transport and arrival',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-029",
+      "statement": "Section 3 has the task 'Arrival details', linking to /arrival-details?from=hub and complete when the arrival details are complete.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6547-6551",
+      "quote": "text: 'Arrival details',\n            href: '/arrival-details?from=hub',\n            status: hasArrivalDetailsComplete(sessionData) ? statusComplete : statusTodo",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-030",
+      "statement": "Section 3 shows the task 'Transit countries', linking to /transit-countries?from=hub, only when transit countries are required; it is complete when at least one transit country is selected.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6552-6556",
+      "quote": "...(requiresTransitCountries(sessionData) ? [{\n            text: 'Transit countries',\n            href: '/transit-countries?from=hub',\n            status: hasTransitCountriesSelected(sessionData) ? statusComplete : statusTodo",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-031",
+      "statement": "Section 3 has the task 'Transport details', linking to /transporter?from=hub and complete when the transport details are complete.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6557-6561",
+      "quote": "text: 'Transport details',\n            href: '/transporter?from=hub',\n            status: hasTransportDetailsComplete(sessionData) ? statusComplete : statusTodo",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-032",
+      "statement": "The hub shows a '4. Documents' section with the task 'Upload documents', linking to /upload-documents?from=hub and complete when at least one document is uploaded.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6566-6575",
+      "quote": "title: '4. Documents',\n            items: [\n              {\n                text: 'Upload documents',\n                href: '/upload-documents?from=hub',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-033",
+      "statement": "When a template is being created in Design Release 2.1, the hub leaves out the Documents section, and the sections after it are renumbered.",
+      "kind": "rule",
+      "ref": "app/routes.js:6469 and 6564-6588",
+      "quote": "...(skipShipmentFields\n        ? []",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-034",
+      "statement": "The hub has a 'Consignment parties' section, numbered 5 (or 4 when creating a template), with the task 'Roles and addresses', linking to /roles-and-addresses?from=hub and complete when the consignment addresses are complete.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6576-6585",
+      "quote": "title: skipShipmentFields ? '4. Consignment parties' : '5. Consignment parties',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-035",
+      "statement": "The 'Roles and addresses' task has the hint 'Consignor or Exporter, Consignee, Importer and Place of Destination' shown under its link.",
+      "kind": "copy",
+      "ref": "app/routes.js:6582; notification-hub.html:87-89",
+      "quote": "hint: 'Consignor or Exporter, Consignee, Importer and Place of Destination',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-036",
+      "statement": "The hub has a 'Contact address' section, numbered 6 (or 5 when creating a template), with the task 'Contact address for this consignment', linking to /contact-address-for-consignment?from=hub and complete when a contact address is chosen.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6587-6595",
+      "quote": "title: skipShipmentFields ? '5. Contact address' : '6. Contact address',\n        items: [\n          {\n            text: 'Contact address for this consignment',\n            href: '/contact-address-for-consignment?from=hub',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-037",
+      "statement": "The rules that decide when each hub task is complete (origin, commodity, import reason, consignment details, identifiers, additional details, arrival, transit, transport, documents, addresses, contact address) are not in this slice.",
+      "kind": "rule",
+      "ref": "app/routes.js:6510-6593 (calls only)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Each status calls a has...Complete helper defined elsewhere in routes.js; the per-page parts own those rules."
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-038",
+      "statement": "For a notification, the hub's main button is 'Review and submit', going to /review-notification.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6485-6488",
+      "quote": "text: 'Review and submit',\n          href: '/review-notification'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-039",
+      "statement": "The 'Review and submit' button is always shown and active, whether or not every task is complete.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6457-6459 and 6475-6488; notification-hub.html:104-107",
+      "quote": "function hasAllNotificationHubSectionsComplete (sessionData) {\n  return hasNotificationComplete(sessionData)",
+      "confidence": "inferred",
+      "note": "Inferred: the view model never uses hasAllNotificationHubSectionsComplete and the button has no condition."
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-040",
+      "statement": "When a template is being created in Design Release 2.1, the hub's main button is 'Review template', going to /review-notification.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6475-6480",
+      "quote": "text: 'Review template',\n              href: '/review-notification'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-041",
+      "statement": "When a template is being created outside Design Release 2.1, the hub's main button is 'Save template', going to /templates/save; in a Design Release 2.1 session every template creation gets 'Review template' instead.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6481-6484 and 8949-8951",
+      "quote": "text: 'Save template',\n              href: '/templates/save'",
+      "confidence": "inferred",
+      "note": "isDesignRelease21TemplateCreate is true for every template creation in a DR2.1 session, so the 'Save template' branch is not reached under /design-release-2.1."
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-042",
+      "statement": "For a notification, the hub's secondary button is 'Return to dashboard', going to the dashboard.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6494-6497; notification-hub.html:109-113",
+      "quote": "text: 'Return to dashboard',\n          href: '/'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-043",
+      "statement": "When a template is being created, the hub's secondary button is 'Return to manage templates', going to /templates.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6489-6493",
+      "quote": "text: 'Return to manage templates',\n          href: '/templates'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-044",
+      "statement": "The hub has no 'Save as template' button: it shows only the main and secondary buttons.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/notification-hub.html:103-114; no 'save as template' text in any DR2.1 view or partial",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The partition's covers expected a save-as-template button on the hub; searched app/views/design-release-2.1 and app/views/partials/design-release-2.1 and found none."
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-045",
+      "statement": "When no notification reference is set, the hub falls back to the default reference GBN-AG-26-7K8M2P.",
+      "kind": "data",
+      "ref": "app/routes.js:6472 and 62-64",
+      "quote": "const DESIGN_RELEASE_NOTIFICATION_REFERENCE = 'GBN-AG-26-7K8M2P'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-046",
+      "statement": "The amend notification modal has the heading 'Amend notification'.",
+      "kind": "copy",
+      "ref": "app/views/partials/design-release-2.1/amend-notification-modal.html:22-24",
+      "quote": "Amend notification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-047",
+      "statement": "The amend notification modal asks 'Are you sure you want to change this notification?'.",
+      "kind": "copy",
+      "ref": "app/views/partials/design-release-2.1/amend-notification-modal.html:25-27",
+      "quote": "Are you sure you want to change this notification?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-048",
+      "statement": "The amend modal's 'Yes, continue' button goes to the page's amend link, or to /notifications/amend under the journey's base path.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/design-release-2.1/amend-notification-modal.html:29",
+      "quote": "<a class=\"govuk-button\" href=\"{{ pageHeader.amendHref or ((journeyBasePath + '/notifications/amend') if journeyBasePath else '/notifications/amend') }}\">Yes, continue</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-049",
+      "statement": "The amend modal can be closed without amending by the 'No, go back' link button, the close button (labelled 'Close' for screen readers) or a click on the overlay.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/design-release-2.1/amend-notification-modal.html:2, 12-19, 30-32",
+      "quote": "<button class=\"govuk-link app-dr2-amend-modal__back-link\" type=\"button\" data-amend-modal-dismiss>\n          No, go back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-050",
+      "statement": "The amend modal is hidden until opened, and is a modal dialog labelled by its heading and described by its question.",
+      "kind": "non-functional",
+      "ref": "app/views/partials/design-release-2.1/amend-notification-modal.html:1-9",
+      "quote": "role=\"dialog\"\n    aria-modal=\"true\"\n    aria-labelledby=\"amend-notification-modal-title\"\n    aria-describedby=\"amend-notification-modal-description\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-051",
+      "statement": "The amend modal is part of the review page header, so amending starts from a notification's review page.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/design-release-2.1/review-page-header.html:42",
+      "quote": "{% include \"partials/design-release-2.1/amend-notification-modal.html\" %}",
+      "confidence": "inferred",
+      "note": "What opens the modal in the header belongs to the review page part."
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-052",
+      "statement": "The cancel amendment modal has the heading 'Are you sure you want to cancel this amendment?'.",
+      "kind": "copy",
+      "ref": "app/views/partials/design-release-2.1/cancel-amend-modal.html:21-23",
+      "quote": "Are you sure you want to cancel this amendment?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-053",
+      "statement": "The cancel amendment modal's 'Yes, cancel amendment' button goes to the page's cancel link, or to /notifications/cancel-amend under the journey's base path.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/design-release-2.1/cancel-amend-modal.html:25",
+      "quote": "<a class=\"govuk-button\" href=\"{{ cancelAmendHref or ((journeyBasePath + '/notifications/cancel-amend') if journeyBasePath else '/notifications/cancel-amend') }}\">Yes, cancel amendment</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-054",
+      "statement": "The cancel amendment modal can be closed without cancelling by the 'Go back' link button, the close button (labelled 'Close' for screen readers) or a click on the overlay.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/design-release-2.1/cancel-amend-modal.html:2, 11-18, 26-28",
+      "quote": "<button class=\"govuk-link app-dr2-amend-modal__back-link\" type=\"button\" data-modal-dismiss>\n          Go back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-055",
+      "statement": "The cancel amendment modal is hidden until opened and is a modal dialog labelled by its heading; unlike the amend modal it has no separate description.",
+      "kind": "non-functional",
+      "ref": "app/views/partials/design-release-2.1/cancel-amend-modal.html:1-9",
+      "quote": "role=\"dialog\"\n    aria-modal=\"true\"\n    aria-labelledby=\"cancel-amend-modal-title\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-056",
+      "statement": "The cancel amendment modal is opened by the 'Cancel amend' link in the status line and by a button on the review page, and is included on the review page and the CPH number page.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/design-release-2.1/notification-status.html:11; review-notification.html:79 and 102; cph-number.html:75",
+      "quote": "data-modal-open=\"cancel-amend-modal\"",
+      "confidence": "inferred",
+      "note": "Found by searching the DR2.1 views for the modal id; the review and CPH pages belong to other parts."
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-057",
+      "statement": "Copy as new is reached at GET /notifications/copy-as-new; outside a Design Release 2 or 2.1 session it redirects to /.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11621-11624",
+      "quote": "router.get('/notifications/copy-as-new', (req, res) => {\n  if (!isDesignRelease2SessionData(req.session.data)) {\n    return res.redirect('/')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-058",
+      "statement": "Copy as new and amend with ?submitted=<id> use that submitted notification's saved snapshot; if no submitted notification has that id, the user is sent back to the dashboard.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:5781-5789 and 11633-11635",
+      "quote": "if (!submittedNotification) {\n      return null\n    }\n\n    return submittedNotification.snapshot",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-059",
+      "statement": "Copy as new and amend with ?reference=<reference> use that dashboard notification's saved snapshot, or build one from its dashboard details when it has none; if the reference is not found, the user is sent back to the dashboard.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:5791-5798",
+      "quote": "return metadata.snapshot || buildDashboardNotificationSnapshot(metadata)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-060",
+      "statement": "Copy as new and amend with neither ?submitted nor ?reference use the notification currently in the session.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:5801",
+      "quote": "return sessionData",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-061",
+      "statement": "'Back to the dashboard' from these routes means the design release's own dashboard path (such as /design-release-2.1), or / when there is none.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:7093-7105",
+      "quote": "if (designReleaseBasePath) {\n    return designReleaseBasePath\n  }\n\n  return '/'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-062",
+      "statement": "Copy as new starts a fresh notification: it clears the journey, keeping only the user's address book additions, drafts, submitted notifications, deleted references, saved and deleted templates and the version flags.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:5876 and 329-345",
+      "quote": "resetNotificationJourneySession(sessionData)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-063",
+      "statement": "Copy as new carries over the import details: country of origin, whether a region of origin is required, the region of origin code and its suffix, and the internal reference.",
+      "kind": "rule",
+      "ref": "app/routes.js:5814-5819",
+      "quote": "// 1. About the consignment — import details\n    'countryOfOrigin',\n    'regionOfOriginRequired',\n    'regionOfOriginCode',\n    'regionOfOriginCodeSuffix',\n    'internalReference',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-064",
+      "statement": "Copy as new carries over what is being imported: the selected species, commodity selections, commodity id, code and name, and the notification type.",
+      "kind": "rule",
+      "ref": "app/routes.js:5820-5826",
+      "quote": "// What are you importing\n    'selectedSpecies',\n    'commoditySelections',\n    'commodityId',\n    'commodityCode',\n    'commodityName',\n    'notificationType',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-065",
+      "statement": "Copy as new carries over the main reason for import and its follow-ups: import reason, internal market purpose, transhipment destination country, transit exit border control post, transit destination country, temporary admission exit date and temporary admission port of exit.",
+      "kind": "rule",
+      "ref": "app/routes.js:5827-5834",
+      "quote": "// Main reason for import\n    'importReason',\n    'internalMarketPurpose',\n    'transhipmentDestinationCountry',\n    'transitExitBorderControlPost',\n    'transitDestinationCountry',\n    'temporaryAdmissionExitDate',\n    'temporaryAdmissionPortOfExit',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-066",
+      "statement": "Copy as new carries over the additional animal details: certification purpose, unweaned animals and storage temperature.",
+      "kind": "rule",
+      "ref": "app/routes.js:5835-5838",
+      "quote": "// 2. Additional animal details\n    'certificationPurpose',\n    'unweanedAnimals',\n    'storageTemperature',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-067",
+      "statement": "Copy as new carries over the roles and addresses: place of origin, consignor, consignee, importer and place of destination addresses (with their ids), the CPH number, and the permanent address details (address, id, same-as-destination answer, summary and animals).",
+      "kind": "rule",
+      "ref": "app/routes.js:5839-5855",
+      "quote": "// 3. Roles and addresses\n    'placeOfOriginAddress',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-068",
+      "statement": "Copy as new does not carry over the shipment-specific details: the number of animals, packages and net weight, animal identifiers, port of entry, arrival date, transport, transit countries, transporter, uploaded documents or the contact address. The user enters these again.",
+      "kind": "rule",
+      "ref": "app/routes.js:5812-5856",
+      "quote": "carriedOverKeys.forEach((key) => {\n    if (source[key] !== undefined) {",
+      "confidence": "inferred",
+      "note": "Inferred from what the carried-over list leaves out, compared with the fields a snapshot holds (for example dashboard-notification-snapshots.js:62-97 and 159-172)."
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-069",
+      "statement": "Only fields that have a value in the source are copied; each copied value is a deep copy, so changing the new notification does not change the original.",
+      "kind": "rule",
+      "ref": "app/routes.js:5804-5810 and 5858-5862",
+      "quote": "return JSON.parse(JSON.stringify(value))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-070",
+      "statement": "When copying, an older certification purpose is mapped to a current option: 'Breeding' and 'Breeding and/or production' become 'Further keeping', 'Slaughter' stays 'Slaughter', and any other value not in the current options becomes 'Further keeping'.",
+      "kind": "rule",
+      "ref": "app/routes.js:5864-5866 and 7987-8000",
+      "quote": "const aliases = {\n    Breeding: 'Further keeping',\n    'Breeding and/or production': 'Further keeping',\n    Slaughter: 'Slaughter'\n  }\n\n  return aliases[value] || 'Further keeping'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-071",
+      "statement": "If the copied notification has no notification type, it is worked out from the copied answers.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:5878-5880",
+      "quote": "if (!sessionData.notificationType) {\n    sessionData.notificationType = getNotificationType(sessionData)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-072",
+      "statement": "The copy gets a new notification reference and the status 'Draft', with no errors.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:5881-5884",
+      "quote": "sessionData.notificationReference = generateDesignReleaseNotificationReference(sessionData)\n  sessionData.notificationStatus = 'Draft'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-073",
+      "statement": "The copy is saved as a draft straight away, before the user changes anything.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:5885",
+      "quote": "persistDraftNotification(sessionData)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-074",
+      "statement": "After copying, the user is taken to the notification hub.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11643",
+      "quote": "return res.redirect('/notification-hub')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-075",
+      "statement": "Amend is reached at GET /notifications/amend; outside a Design Release 2 or 2.1 session it redirects to /, and when the notification cannot be found it sends the user back to the dashboard.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11646-11660",
+      "quote": "router.get('/notifications/amend', (req, res) => {\n  if (!isDesignRelease2SessionData(req.session.data)) {\n    return res.redirect('/')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-076",
+      "statement": "Amend loads the whole saved notification into the session, replacing the current journey answers but keeping the drafts, submitted notifications, deleted references, address book additions and version flags.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11662-11666 and 5890-5914",
+      "quote": "const preserveKeys = [\n    '_isDesignRelease2Version',\n    '_isDesignRelease21Version',\n    '_designRelease2',\n    '_designRelease21',\n    'deletedNotificationReferences',\n    'draftNotifications',\n    'submittedNotifications',\n    'addressBookAddedAddresses'\n  ]",
+      "confidence": "verbatim",
+      "note": "Unlike resetNotificationJourneySession, this list does not keep savedTemplates or deletedTemplateIds, so loading a snapshot for amend may drop saved templates unless the snapshot carries them."
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-077",
+      "statement": "An amended notification keeps its original reference: the snapshot's reference, else the ?reference value, else a newly generated one.",
+      "kind": "rule",
+      "ref": "app/routes.js:11663-11667",
+      "quote": "const notificationReference = snapshot.notificationReference || reference ||\n    generateDesignReleaseNotificationReference(req.session.data)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-078",
+      "statement": "While amending, the notification's status is 'Amend'.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11668",
+      "quote": "req.session.data.notificationStatus = 'Amend'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-079",
+      "statement": "Amend records which notification is being amended, by submitted id and by reference, so that submitting replaces it and cancelling returns to it.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11669-11672",
+      "quote": "req.session.data.amendingFrom = {\n    submittedId: submittedId || null,\n    reference: reference || notificationReference || null\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-080",
+      "statement": "Amend keeps a copy of the notification as it was before the amendment, for change detection, and clears any errors.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11673-11675",
+      "quote": "req.session.data.amendOriginalSnapshot = getComparableNotificationSnapshot(snapshot)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-081",
+      "statement": "After choosing to amend, the user is taken to the review page of the notification.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11677",
+      "quote": "return res.redirect('/review-notification')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-082",
+      "statement": "A notification counts as changed during an amendment when its answers differ from the copy taken when the amendment started; with no copy taken it never counts as changed.",
+      "kind": "rule",
+      "ref": "app/routes.js:6941-6948",
+      "quote": "return JSON.stringify(getComparableNotificationSnapshot(sessionData)) !==\n    JSON.stringify(sessionData.amendOriginalSnapshot)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-083",
+      "statement": "Change detection ignores everything that is not a notification answer: errors, messages, the commodity search box, the status, the amend bookkeeping, version flags, drafts, submitted notifications, saved templates, deleted references and address book additions.",
+      "kind": "rule",
+      "ref": "app/routes.js:6903-6939",
+      "quote": "const transientKeys = [\n    '_designRelease2',\n    '_designRelease21',\n    '_isDesignRelease2Version',\n    '_isDesignRelease21Version',\n    '_testing',\n    'addressBookAddedAddresses',\n    'amendingFrom',\n    'amendOriginalSnapshot',\n    'dashboardSuccessMessage',\n    'deletedNotificationReferences',\n    'draftNotifications',\n    'notificationStatus',\n    'savedTemplates',\n    'submittedNotifications',\n    'templatesSuccessMessage'\n  ]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-084",
+      "statement": "What the page does with the amend change check (for example, whether submitting an unchanged amendment is blocked) is not in this slice.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6941 (definition only)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "hasAmendChanges is defined here but called from the review and submit handlers, which other parts own."
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-085",
+      "statement": "Cancel amend is reached at GET /notifications/cancel-amend; outside a Design Release 2 or 2.1 session it redirects to /.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11680-11683",
+      "quote": "router.get('/notifications/cancel-amend', (req, res) => {\n  if (!isDesignRelease2SessionData(req.session.data)) {\n    return res.redirect('/')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-086",
+      "statement": "Cancelling an amendment clears the amend bookkeeping, the original copy, the 'Amend' status and any errors.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11691-11695",
+      "quote": "delete req.session.data.amendingFrom\n  delete req.session.data.amendOriginalSnapshot\n  delete req.session.data.notificationStatus",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-087",
+      "statement": "After cancelling an amendment, the user goes back to the submitted notification's review page (by submitted id when known, otherwise by reference), or to the dashboard when neither is known.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11697-11705",
+      "quote": "if (submittedId) {\n    return res.redirect(`/review-notification?submitted=${encodeURIComponent(submittedId)}`)\n  }\n\n  if (reference) {\n    return res.redirect(`/review-notification?reference=${encodeURIComponent(reference)}`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-088",
+      "statement": "Cancelling an amendment does not write anything back to the submitted notification: edits made during the amendment are left in the session and are not saved over the submitted record.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11680-11706",
+      "quote": "delete req.session.data.amendOriginalSnapshot",
+      "confidence": "inferred",
+      "note": "Inferred: the handler only clears state and redirects; submitted records change only in saveSubmittedNotification. The review page reloads the submitted record by id or reference."
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-089",
+      "statement": "A notification is saved as a draft automatically only in a Design Release 2 or 2.1 session, and never while a template is being created or a notification is being amended.",
+      "kind": "rule",
+      "ref": "app/routes.js:6950-6957 and 1556-1558",
+      "quote": "!isDesignRelease2SessionData(sessionData) ||\n    isCreatingTemplateJourney(sessionData) ||\n    isAmendingNotification(sessionData)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-090",
+      "statement": "A draft is only saved when the notification has a reference; before saving, a missing or malformed reference is replaced with a generated one.",
+      "kind": "rule",
+      "ref": "app/routes.js:6959 and 6970-6974",
+      "quote": "if (!reference) {\n    return null\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-091",
+      "statement": "There is one draft per reference: saving replaces any existing draft with the same reference, moves it to the top of the drafts list and keeps its original created date.",
+      "kind": "rule",
+      "ref": "app/routes.js:6976-6993",
+      "quote": "createdAt: existingDraft ? existingDraft.createdAt : new Date().toISOString(),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-092",
+      "statement": "A saved draft records the commodity codes, commodity names, a category of 'Germinal products' or 'Live animals', the country of origin (or 'Not applicable'), the arrival date formatted for the dashboard, the status 'Draft', and the full notification.",
+      "kind": "data",
+      "ref": "app/routes.js:6979-6992",
+      "quote": "categoryLabel: hasGerminalProductsOnly(snapshot) ? 'Germinal products' : 'Live animals',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-093",
+      "statement": "A saved draft or submitted notification has a quantity labelled 'Number of packages' (germinal products only) or 'Number of animals', whose value is the total, or empty when the total is zero.",
+      "kind": "data",
+      "ref": "app/routes.js:6984-6987 and 7019-7022",
+      "quote": "quantityLabel: hasGerminalProductsOnly(snapshot) ? 'Number of packages' : 'Number of animals',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-094",
+      "statement": "The notification saved with a draft or submission leaves out errors, the contact address success message and the commodity search text.",
+      "kind": "rule",
+      "ref": "app/routes.js:6903-6912",
+      "quote": "delete snapshot.errorList\n  delete snapshot.errors\n  delete snapshot.contactAddressSuccessMessage\n  delete snapshot.commoditySearch",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-095",
+      "statement": "Submitting an amendment replaces the original submitted notification (matched by submitted id or reference) and keeps its id; a new submission is added to the top of the submitted list with a new id.",
+      "kind": "rule",
+      "ref": "app/routes.js:7005-7039",
+      "quote": "if (existingIndex > -1) {\n    sessionData.submittedNotifications.splice(existingIndex, 1, submittedNotification)\n  } else {\n    sessionData.submittedNotifications.unshift(submittedNotification)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-096",
+      "statement": "A submitted notification's status is 'Submitted action required' with an orange tag when any conditional submission items are outstanding, otherwise 'Submitted' with a green tag.",
+      "kind": "rule",
+      "ref": "app/routes.js:7025-7030",
+      "quote": "statusText: getConditionalSubmissionItems(snapshot).length\n      ? 'Submitted action required'\n      : 'Submitted',\n    statusTagClass: getConditionalSubmissionItems(snapshot).length\n      ? 'govuk-tag--orange'\n      : 'govuk-tag--green',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-097",
+      "statement": "A submitted notification records the same dashboard details as a draft (reference, commodities, category, quantity, origin, arrival date), the submitted time and the full notification; its reference falls back to the default reference.",
+      "kind": "data",
+      "ref": "app/routes.js:7013-7033",
+      "quote": "reference: snapshot.notificationReference || PROTOTYPE_NOTIFICATION_REFERENCE,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-098",
+      "statement": "Submitting a notification removes its draft (the draft with the same reference).",
+      "kind": "behaviour",
+      "ref": "app/routes.js:7041-7043",
+      "quote": "sessionData.draftNotifications = sessionData.draftNotifications.filter((notification) => notification.reference !== snapshot.notificationReference)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-099",
+      "statement": "Submitting ends any amendment: the amend bookkeeping, the original copy and the status are cleared.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:7045-7047",
+      "quote": "delete sessionData.amendingFrom\n  delete sessionData.amendOriginalSnapshot\n  delete sessionData.notificationStatus",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-100",
+      "statement": "A seeded dashboard notification with no saved snapshot gets one built for it: the action-required variant gets the action-required snapshot, one whose commodity codes include 010410 or 010420 gets the sheep and goat snapshot, and any other gets the cattle snapshot.",
+      "kind": "rule",
+      "ref": "app/data/dashboard-notification-snapshots.js:208-222",
+      "quote": "if (reviewVariant === 'action-required') {\n    return buildActionRequiredSnapshot(notification)\n  }\n\n  const commodities = String(notification.commodities || '').trim()\n\n  if (commodities.includes('010410') || commodities.includes('010420')) {\n    return buildSheepGoatSnapshot(notification)\n  }\n\n  return buildCattleSnapshot(notification)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-101",
+      "statement": "A built snapshot takes its reference, country of origin and arrival date from the dashboard notification, defaulting to GBN-AG-26-7K8M2P, France and 26 October 2026 (sheep and goat) or 8 March 2026 (cattle).",
+      "kind": "data",
+      "ref": "app/data/dashboard-notification-snapshots.js:7, 39-40, 71, 111-112, 133",
+      "quote": "notificationReference: notification.reference || DESIGN_RELEASE_REFERENCE,\n    countryOfOrigin: notification.origin || 'France',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-102",
+      "statement": "The sheep and goat snapshot holds: no region of origin required, region code FR-01010101, internal reference LIV-2026-0142, commodity Sheep (010410) with species sheep (Ovis aries) and goat (Capra hircus) from commodities 010410 and 010420, 1 sheep and 2 goats.",
+      "kind": "data",
+      "ref": "app/data/dashboard-notification-snapshots.js:41-65",
+      "quote": "regionOfOriginRequired: 'No',\n    regionOfOriginCode: 'FR-01010101',\n    internalReference: 'LIV-2026-0142',\n    commodityId: 'sheep',\n    commodityCode: '010410',\n    commodityName: 'Sheep',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-103",
+      "statement": "The sheep and goat snapshot's reason and animal details are: import reason 'Internal market', purpose 'Transfer of ownership - Sale/gift', certified for 'Further keeping', unweaned animals 'No'.",
+      "kind": "data",
+      "ref": "app/data/dashboard-notification-snapshots.js:66-69",
+      "quote": "importReason: 'Internal market',\n    internalMarketPurpose: 'Transfer of ownership - Sale/gift',\n    certificationPurpose: 'Further keeping',\n    unweanedAnimals: 'No',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-104",
+      "statement": "The sheep and goat snapshot's transport is: port of entry 'Liverpool - SOLV', by Road, identification ABC-123, transport document QUICK-SHIP, transit through France, Germany and Spain, transporter Aberdeen livestock.",
+      "kind": "data",
+      "ref": "app/data/dashboard-notification-snapshots.js:70-84",
+      "quote": "portOfEntry: 'Liverpool - SOLV',\n    arrivalDateAtPort: notification.arrivalDate || '26 October 2026',\n    meansOfTransport: 'Road',\n    transportIdentification: 'ABC-123',\n    transportDocumentReference: 'QUICK-SHIP',\n    transitCountries: ['France', 'Germany', 'Spain'],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-105",
+      "statement": "Both built snapshots use the same parties: place of origin Green Valley Livestock Farm, consignor Nordic Livestock Export, consignee and importer Northern Livestock Imports, place of destination Riverside Holding Facility, CPH number 12/345/6789 and the first contact address, written as name, address lines and country on separate lines.",
+      "kind": "data",
+      "ref": "app/data/dashboard-notification-snapshots.js:25-35, 85-97, 102-107, 146-158",
+      "quote": "const placeOfOrigin = findConsignmentAddress('green-valley-livestock-farm')\n  const consignor = findConsignmentAddress('nordic-livestock-export')\n  const consignee = findConsignmentAddress('northern-livestock-imports-consignee')\n  const importer = findConsignmentAddress('northern-livestock-imports-importer')\n  const destination = findConsignmentAddress('riverside-holding-facility')",
+      "confidence": "verbatim",
+      "note": "Party display names are inferred from the address ids; the address data files belong to another part."
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-106",
+      "statement": "The sheep and goat snapshot has one uploaded document: reference DOC-123, an Intra Trade Animal Health Certificate (ITAHC) issued 22/10/2026, file 'Health Cert.pdf', virus check passed.",
+      "kind": "data",
+      "ref": "app/data/dashboard-notification-snapshots.js:181-188",
+      "quote": "documentReference: 'DOC-123',\n      documentType: 'itahc',\n      documentTypeLabel: 'Intra Trade Animal Health Certificate (ITAHC)',\n      dateOfIssue: '22/10/2026',\n      fileName: 'Health Cert.pdf',\n      virusStatus: 'passed'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-107",
+      "statement": "The sheep and goat snapshot has ear tags GB483754 and GB2643733 for the sheep and the same two for the goats.",
+      "kind": "data",
+      "ref": "app/data/dashboard-notification-snapshots.js:189-192",
+      "quote": "'sheep-ovis-aries': [{ 'ear-tag': 'GB483754' }, { 'ear-tag': 'GB2643733' }],\n      'goat-capra-hircus': [{ 'ear-tag': 'GB483754' }, { 'ear-tag': 'GB2643733' }]",
+      "confidence": "verbatim",
+      "note": "Two sheep ear tags are recorded although the snapshot has 1 sheep."
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-108",
+      "statement": "The action-required snapshot is the sheep and goat snapshot with no uploaded documents and only one goat ear tag, 123456789, so it is missing information.",
+      "kind": "data",
+      "ref": "app/data/dashboard-notification-snapshots.js:196-206",
+      "quote": "uploadedDocuments: [],\n    animalIdentifiers: {\n      'goat-capra-hircus': [{ 'ear-tag': '123456789' }]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-109",
+      "statement": "The cattle snapshot holds: no region of origin required (and no region code), internal reference LIV-2026-0142, commodity Cattle (0102) with species bison (Bison bison), 5 animals, import reason 'Internal market', purpose 'Transfer of ownership - Sale/gift', certified for 'Slaughter', unweaned animals 'No'.",
+      "kind": "data",
+      "ref": "app/data/dashboard-notification-snapshots.js:113-131",
+      "quote": "commodityId: 'cattle',\n    commodityCode: '0102',\n    commodityName: 'Cattle',\n    selectedSpecies: ['cattle-bison-bison'],",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-110",
+      "statement": "The cattle snapshot's transport is: port of entry 'London Heathrow', by Air, identification BA0123, transport document AWB-2026-8841, no transit countries, transporter Aberdeen livestock.",
+      "kind": "data",
+      "ref": "app/data/dashboard-notification-snapshots.js:132-145",
+      "quote": "portOfEntry: 'London Heathrow',\n    arrivalDateAtPort: notification.arrivalDate || '8 March 2026',\n    meansOfTransport: 'Air',\n    transportIdentification: 'BA0123',\n    transportDocumentReference: 'AWB-2026-8841',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-111",
+      "statement": "The cattle snapshot has one uploaded document: reference HC-2026-0198, an Intra Trade Animal Health Certificate (ITAHC) issued 01/03/2026, file 'health-certificate.pdf', virus check passed.",
+      "kind": "data",
+      "ref": "app/data/dashboard-notification-snapshots.js:159-166",
+      "quote": "documentReference: 'HC-2026-0198',\n      documentType: 'itahc',\n      documentTypeLabel: 'Intra Trade Animal Health Certificate (ITAHC)',\n      dateOfIssue: '01/03/2026',\n      fileName: 'health-certificate.pdf',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-112",
+      "statement": "The cattle snapshot has one identified animal with ear tag UK123456789012 and passport GB-CAT-8821, although it records 5 animals.",
+      "kind": "data",
+      "ref": "app/data/dashboard-notification-snapshots.js:125-127 and 167-172",
+      "quote": "'ear-tag': 'UK123456789012',\n        passport: 'GB-CAT-8821'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p12-113",
+      "statement": "A built snapshot's transporter is stored with its id, name, address, approval number, type and status.",
+      "kind": "data",
+      "ref": "app/data/dashboard-notification-snapshots.js:76-84",
+      "quote": "transporter: {\n      id: transporter.id,\n      name: transporter.name,\n      address: transporter.address,\n      approvalNumber: transporter.approvalNumber,\n      type: transporter.type,\n      status: transporter.status\n    },",
+      "confidence": "verbatim"
+    }
+  ]
+}

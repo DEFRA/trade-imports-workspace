@@ -142,7 +142,7 @@
     {
       "id": "REQ-FLOW-004",
       "name": "A page the hub links to directly offers both a discard-and-exit and a save-and-exit route back to Overview",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-FLOW-004-A",
@@ -164,11 +164,12 @@
         },
         {
           "id": "SCN-FLOW-004-C",
-          "name": "Save and return to overview saves a page with a required answer missing",
+          "name": "Save and return to overview refuses a page with a required answer missing",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/soft-save.spec.ts", "test": "main import reason: when a required answer is missing, saves, leaves the task not complete and keeps the answers", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should save a transit reason with its port and country left blank and go to the overview", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/soft-save.spec.ts", "test": "main import reason: when a required answer is missing, refuses the save, names each missing answer and keeps the answer given", "strength": "partial", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should refuse a transit reason with its port and country left blank, naming both, and save nothing", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/save-actions.test.js", "test": "Should refuse Save and return to overview with a required answer blank, with the same errors as Save and continue", "strength": "full", "notes": "" }
           ]
         },
         {
@@ -182,7 +183,7 @@
         },
         {
           "id": "SCN-FLOW-004-E",
-          "name": "Commodity details keeps its checks on save and return",
+          "name": "Commodity details with the number of animals blank is refused on save and return",
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/soft-save.spec.ts", "test": "commodity details: when the number of animals is blank, keeps its checks and stays on the page", "strength": "full", "notes": "" },
@@ -202,19 +203,16 @@
           "name": "Arrival details saved and returned without a means of transport keeps the other answers",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/soft-save.spec.ts", "test": "arrival details: when no means of transport is chosen, saves the other answers and leaves the task not complete", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "save and return to overview with no means of transport keeps the other answers and leaves arrival details not complete", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js", "test": "Should save the other answers and go to the overview on Save and return to overview with no means of transport", "strength": "partial", "notes": "asserts the save and redirect, not the task status" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/soft-save.spec.ts", "test": "arrival details: when no means of transport is chosen, saves the port, shows the overview and keeps the task to do", "strength": "full", "notes": "proves the overview, the To do status and the port on re-opening; red when the page requires a means of transport" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js", "test": "Should save the port and go to the overview on Save and return to overview with no means of transport", "strength": "partial", "notes": "proves the save and the redirect, not the task status; red when the page requires a means of transport" }
           ]
         },
         {
           "id": "SCN-FLOW-004-H",
           "name": "Transit countries saved and returned keeps the countries listed",
-          "coverage": "full",
-          "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/soft-save.spec.ts", "test": "transit countries: saves the countries listed and goes to the overview", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.test.js", "test": "Should save the listed countries and go to the overview on Save and return to overview", "strength": "partial", "notes": "asserts the save and redirect, not the task status" }
-          ]
+          "coverage": "none",
+          "tests": [],
+          "notes": "The tests that prove this are only on an open Design Release 2.1 theme branch, not on main yet."
         }
       ]
     },
@@ -229,7 +227,7 @@
           "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/gates.test.js", "test": "Should gate commodities until countryOfOrigin is answered", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/gates.test.js", "test": "Should gate every post-commodities section until an item-level commoditySelection is answered", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/gates.test.js", "test": "Should gate every post-commodities section until an item-level commodityCode is answered", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should skip the consignment details page while no line exists — with no line the whole tail is gated and the run collapses to the hub", "strength": "full", "notes": "" }
           ],
           "notes": "Thin Playwright: no E2E dedicated to prerequisite skipping; evidence is unit flow/gates."
@@ -273,7 +271,6 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "the opening run carries a new notification through to the review page in one pass", "strength": "full", "notes": "new dedicated test replacing the old six-step version — walks the full run (origin through consignment contact) and lands on check your answers" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/opening-run.spec.ts", "test": "walks a cattle-by-air notification through the opening run in Design Release 2.1 order, from create to submitted", "strength": "full", "notes": "each page's heading is awaited in order from origin to the review, then every task reads Complete and the notification is submitted" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/horse-temporary-admission.spec.ts", "test": "walks a horse-by-sea notification under temporary admission from create to submitted, with every task complete", "strength": "full", "notes": "horse by sea: origin → what you are importing → reason (temporary admission) → commodity details → identification → additional details → arrival → transporter → documents → roles and addresses → contact → review, each heading awaited in turn" }
           ]
         },
@@ -284,7 +281,7 @@
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should skip the consignment details page while no line exists — with no line the whole tail is gated and the run collapses to the hub", "strength": "partial", "notes": "re-read this pass: still present and still about a gated-out step, but it collapses the whole tail rather than stepping over one page" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should log the skip and carry a consignment with nothing to identify on to additional details mid-run", "strength": "full", "notes": "the scenario exactly: identification is out of scope for this consignment, so the run steps over it to the next step that is in scope" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should pass a zero-record identification Save-and-finish through to additional details mid-run", "strength": "full", "notes": "the same skip reached by finishing the page with no records rather than by never being offered it" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should pass an identification Enter post with no records through to additional details mid-run", "strength": "full", "notes": "the same skip reached by pressing Enter on the page with no records rather than by never being offered it" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/horse-temporary-admission.spec.ts", "test": "walks a horse-by-sea notification under temporary admission from create to submitted, with every task complete", "strength": "partial", "notes": "incidental only: Vessel takes transit countries out of scope and the walk awaits the transporter heading straight after arrival details, but no assertion names the skip or checks that the transit-countries page is absent" }
           ],
           "notes": "Unit tests in opening-run.test.js pin the skip. The horse-by-sea e2e walks the transit-countries skip (Vessel) incidentally, arrival details straight to the transporter, but does not assert it by name, so no FIT/E2E is a full witness yet."
@@ -315,8 +312,7 @@
           "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should send the roles and addresses straight on to the contact address, never the CPH number", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should return null for the CPH number page — it is not a run step", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/opening-run.spec.ts", "test": "walks a cattle-by-air notification through the opening run in Design Release 2.1 order, from create to submitted", "strength": "full", "notes": "Cattle need a CPH number, and the run goes from roles and addresses straight to the contact address" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should return null for the CPH number page — it is not a run step", "strength": "full", "notes": "" }
           ]
         },
         {
@@ -355,7 +351,7 @@
           "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should log the skip and carry a consignment with nothing to identify on to additional details mid-run", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should pass a zero-record identification Save-and-finish through to additional details mid-run", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should pass an identification Enter post with no records through to additional details mid-run", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should carry additional details on to the arrival details mid-run rather than ending on the hub", "strength": "full", "notes": "" }
           ]
         },
@@ -364,9 +360,7 @@
           "name": "Arrival details goes on to transit countries only for rail or road",
           "coverage": "partial",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should send the arrival details on to the transit countries mid-run, and to the overview outside the run", "strength": "partial", "notes": "Road half" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should send the arrival details on to the transporter list mid-run for a consignment by sea", "strength": "partial", "notes": "Sea half" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/opening-run.spec.ts", "test": "walks a cattle-by-air notification through the opening run in Design Release 2.1 order, from create to submitted", "strength": "partial", "notes": "Air leg only" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should send the arrival details on to the transit countries mid-run, and to the overview outside the run", "strength": "partial", "notes": "Road half" }
           ]
         },
         {
@@ -454,7 +448,7 @@
           "name": "Saving the entry page after a redirect leads to Overview",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should send a journey with no run record to the hub after origin, not into the opening run — origin is an ordinary page now", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should send a journey with no run record to the hub after origin, not into the opening run", "strength": "full", "notes": "" }
           ],
           "notes": "No FIT that saves origin after the stranger-session redirect; journey-smoke stranger test only asserts the redirect to /origin."
         }
@@ -544,7 +538,7 @@
           "name": "Cancel and return to overview sits on its own line below the two buttons",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "ends with Save and continue and Save and return to overview in the button group, then Cancel and return to overview", "strength": "full", "notes": "Save and continue and Save and return to overview inside the button group; Cancel and return to overview in the paragraph after the group" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "ends with Save and continue and Save and return to overview in the button group, then Cancel and return to overview", "strength": "partial", "notes": "the three controls found by role inside the journey form: Save and continue then Save and return to overview as its last two buttons, Cancel and return to overview after them in document order; the side-by-side and own-line layout is proved by the unit test beside it" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/save-actions.test.js", "test": "Should put Cancel and return to overview on its own line below the two buttons", "strength": "full", "notes": "the macro's default ending: both buttons in the group, the cancel link after it" }
           ]
         },

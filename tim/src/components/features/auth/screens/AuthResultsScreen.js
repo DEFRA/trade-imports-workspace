@@ -3,7 +3,7 @@ import { Box, Text } from 'ink'
 import TextInput from 'ink-text-input'
 
 const userLabel = (user = {}) =>
-  user.displayName ?? user.name ?? user.login ?? user.user ?? '(unknown user)'
+  user.displayName ?? user.user ?? '(unknown user)'
 
 const Row = ({ result }) => {
   if (result.ok) {

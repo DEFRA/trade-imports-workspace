@@ -1,0 +1,474 @@
+{
+  "chunk": "eng-templates-b",
+  "items": [
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-backend-BE-TPL-1",
+      "field": "what",
+      "before": "updateDetails, replaceFulfilments and save each call load() (findByIdAndOwnerId), change the entity and then call repository.save(). @Version is on the entity, but the frontend client (services/templates/client.js) never sends the version back, and no endpoint accepts an expected version. The only concurrency check is whether two requests overlap inside the backend. Overlapping requests get an OptimisticLockingFailureException, which the global handler turns into 409 STALE_CONCURRENCY_TOKEN. Requests that do not overlap silently overwrite each other, because PUT /fulfilments replaces the whole list.",
+      "after": "updateDetails, replaceFulfilments and save each do the same three steps:\n\n- call load() (findByIdAndOwnerId)\n- change the entity\n- call repository.save()\n\n@Version is on the entity. But the frontend client (services/templates/client.js) never sends the version back.\n\nNo endpoint accepts an expected version.\n\nThe only concurrency check is whether two requests overlap inside the backend:\n\n- Overlapping requests get an OptimisticLockingFailureException. The global handler turns it into 409 STALE_CONCURRENCY_TOKEN.\n- Requests that do not overlap silently overwrite each other, because PUT /fulfilments replaces the whole list."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-backend-BE-TPL-1",
+      "field": "scenario",
+      "before": "(a) The user double-clicks 'Save template' on the review page. Two POST /templates/{id}/save requests both load version 3. The first writes version 4. The second gets a 409, and the frontend's failed() throws a BackendRequestError, so the user sees an error page even though the template was saved. (b) The user opens a saved template in two tabs. Tab A changes origin, then tab B changes the consignee. Tab B's PUT /fulfilments sends the full answer list it read before A's change, so A's origin change is lost and no error is shown.",
+      "after": "(a) The user double-clicks 'Save template' on the review page.\n\n- Two POST /templates/{id}/save requests both load version 3.\n- The first writes version 4.\n- The second gets a 409. The frontend's failed() throws a BackendRequestError.\n- The user sees an error page, even though the template was saved.\n\n(b) The user opens a saved template in two tabs.\n\n- Tab A changes origin, then tab B changes the consignee.\n- Tab B's PUT /fulfilments sends the full answer list it read before A's change.\n- A's origin change is lost, and no error is shown."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-backend-BE-TPL-1",
+      "field": "fix",
+      "before": "Make save idempotent and atomic. Use MongoTemplate.findAndModify with Criteria where(_id).is(id).and(ownerId).is(ownerId), and Update set(status, SAVED), so a repeated save is a no-op instead of a 409. Set 'saved' with a separate conditional update (criteria saved: null) or $min. For replaceFulfilments and updateDetails, accept the expected version (a concurrencyToken, as notifications use) and match on it, returning 409 when it is stale. Have the frontend send back the version it read and handle the 409 as notifications already do.",
+      "after": "Make save idempotent and atomic:\n\n- Use MongoTemplate.findAndModify with Criteria where(_id).is(id).and(ownerId).is(ownerId), and Update set(status, SAVED). A repeated save is then a no-op instead of a 409.\n- Set 'saved' with a separate conditional update (criteria saved: null) or $min.\n\nFor replaceFulfilments and updateDetails, accept the expected version (a concurrencyToken, as notifications use). Match on it, and return 409 when it is stale.\n\nHave the frontend send back the version it read. Have it handle the 409 as notifications already do."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-backend-BE-TPL-1",
+      "field": "verifierNote",
+      "before": "Holds on the branch. NotificationTemplateService.save, replaceFulfilments and updateDetails all call load() and then repository.save() on an entity that carries @Version. The frontend client (services/templates/client.js) sends no version, and no endpoint accepts one. GlobalExceptionHandler maps OptimisticLockingFailureException to 409, and check-answers saveTemplate (controller.js:286) has no catch, so an overlapping save shows an error page. The template-records port sends the full fulfilment set it loaded earlier, so the two-tab lost update is real. Three things lower the severity. Notifications' own fulfilment replace has no expected-version check either (only /copy takes a concurrencyToken), so this copies the house pattern rather than falling short of it. A double-click gap (around 100ms) is usually longer than one Mongo find-and-save, so the second save normally runs after the first and leaves the template saved. And a lost update needs the same user editing in two tabs.",
+      "after": "Holds on the branch.\n\nNotificationTemplateService.save, replaceFulfilments and updateDetails all call load() and then repository.save(). The entity carries @Version.\n\nThe frontend client (services/templates/client.js) sends no version. No endpoint accepts one.\n\nGlobalExceptionHandler maps OptimisticLockingFailureException to 409. check-answers saveTemplate (controller.js:286) has no catch. So an overlapping save shows an error page.\n\nThe template-records port sends the full fulfilment set it loaded earlier. So the two-tab lost update is real.\n\nThree things lower the severity:\n\n- Notifications' own fulfilment replace has no expected-version check either (only /copy takes a concurrencyToken). So this copies the house pattern rather than falling short of it.\n- A double-click gap (around 100ms) is usually longer than one Mongo find-and-save. So the second save normally runs after the first and leaves the template saved.\n- A lost update needs the same user editing in two tabs."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "merge-resolution-TPL-MERGE-3",
+      "field": "what",
+      "before": "`startGet` is registered on `GET /start` and runs `openNewNotification`. That calls `startJourney`, which creates and persists a draft through `records.create`, then `beginOpeningRun`. No crumb or confirmation step is involved. The backlog's own rule (c-309, restated in the notes of inc-157, inc-158 and inc-160) is that every state change is a form post. This route breaks that rule so that the INS type question can hand over cross-origin. Plants' dashboard gained the same route in the same merge.",
+      "after": "`startGet` is registered on `GET /start` and runs `openNewNotification`.\n\nThat calls `startJourney`, which creates and persists a draft through `records.create`, then `beginOpeningRun`.\n\nNo crumb or confirmation step is involved.\n\nThe backlog's own rule is that every state change is a form post. This is c-309, restated in the notes of inc-157, inc-158 and inc-160.\n\nThis route breaks that rule so that the INS type question can hand over cross-origin.\n\nPlants' dashboard gained the same route in the same merge."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "merge-resolution-TPL-MERGE-3",
+      "field": "scenario",
+      "before": "While signed in, a trader opens any page that links to /live-animals/start, or a link preview or prefetch fetches it. Lax cookies are sent on top-level GET navigation, so each fetch stores a new empty GBN-AG draft. The draft then appears on the dashboard and needs deleting.",
+      "after": "A trader is signed in. Then either:\n\n- they open any page that links to /live-animals/start\n- a link preview or prefetch fetches it\n\nLax cookies are sent on top-level GET navigation. So each fetch stores a new empty GBN-AG draft.\n\nThe draft then appears on the dashboard and needs deleting."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "merge-resolution-TPL-MERGE-3",
+      "field": "fix",
+      "before": "Make /start idempotent and free of side effects. Render a GOV.UK confirmation page with its own crumb'd form post that creates the draft. Alternatively, have the INS type question hand over a short-lived signed token, and check it before creating anything. Apply the same change to plants' /start.",
+      "after": "Make /start idempotent and free of side effects. Either:\n\n- render a GOV.UK confirmation page with its own crumb'd form post that creates the draft\n- or have the INS type question hand over a short-lived signed token, and check it before creating anything\n\nApply the same change to plants' /start."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "merge-resolution-TPL-MERGE-3",
+      "field": "verifierNote",
+      "before": "The scenario holds. dashboard/controller.js:131-157 registers GET /start, which runs openNewNotification (startJourney followed by beginOpeningRun) and creates a draft with no crumb. The merge added this route (it is not in HEAD^1). The auth cookie is SameSite=Lax (config.js:19, auth.js:69), so a top-level cross-site GET or a prefetch carries the session and creates an empty draft. Two caveats lower the severity. First, it is a deliberate inc-148 design choice, documented in the code comment and backlog.json:182: a cross-origin POST cannot carry the crumb. It sat behind a human design gate (line 187). Second, the finding overstates c-309. In the backlog, c-309 covers storing and using templates through form posts, not every state change. The only impact is an unwanted empty draft, with no data exposure. This is not a merge-resolution defect, but it is real in the merged surface.",
+      "after": "The scenario holds.\n\ndashboard/controller.js:131-157 registers GET /start. It runs openNewNotification (startJourney followed by beginOpeningRun) and creates a draft with no crumb.\n\nThe merge added this route (it is not in HEAD^1).\n\nThe auth cookie is SameSite=Lax (config.js:19, auth.js:69). So a top-level cross-site GET or a prefetch carries the session and creates an empty draft.\n\nTwo caveats lower the severity:\n\n- It is a deliberate inc-148 design choice, documented in the code comment and backlog.json:182: a cross-origin POST cannot carry the crumb. It sat behind a human design gate (line 187).\n- The finding overstates c-309. In the backlog, c-309 covers storing and using templates through form posts, not every state change.\n\nThe only impact is an unwanted empty draft, with no data exposure.\n\nThis is not a merge-resolution defect, but it is real in the merged surface."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "merge-resolution-TPL-MERGE-3",
+      "field": "also[rank 25].what",
+      "before": "startGet (in the animals frontend and in the plants dashboard controller) creates a draft, adds it to the known-journeys cookie and begins the opening run on a plain GET, with no crumb or hand-off token. The 9 October afternoon ruling (ruling-sam-2026-10-09-pm.md:199) says every state change is a form post. A GET with side effects is also triggered by things that never meant to create anything.",
+      "after": "startGet is in the animals frontend and in the plants dashboard controller. On a plain GET, with no crumb or hand-off token, it:\n\n- creates a draft\n- adds it to the known-journeys cookie\n- begins the opening run\n\nThe 9 October afternoon ruling (ruling-sam-2026-10-09-pm.md:199) says every state change is a form post.\n\nA GET with side effects is also triggered by things that never meant to create anything."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "merge-resolution-TPL-MERGE-3",
+      "field": "also[rank 25].scenario",
+      "before": "Several things each mint a new empty draft in the trader's list: a link to <animals>/live-animals/start from any site (top-level navigation carries the Lax or Strict same-site session cookie within cdp-int.defra.cloud), browser prefetch or prerender of a typed or suggested URL, a link-preview bot running in the user's session, and a refresh of /start. inc-148's own AC says abandoning the question leaves no empty draft, which these paths break.",
+      "after": "Each of these mints a new empty draft in the trader's list:\n\n- a link to <animals>/live-animals/start from any site. Top-level navigation carries the Lax or Strict same-site session cookie within cdp-int.defra.cloud.\n- browser prefetch or prerender of a typed or suggested URL\n- a link-preview bot running in the user's session\n- a refresh of /start\n\ninc-148's own AC says abandoning the question leaves no empty draft. These paths break that."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "merge-resolution-TPL-MERGE-3",
+      "field": "also[rank 25].fix",
+      "before": "Have INS hand over with a short-lived signed hand-off token, as the address-book handshake does: INS mints an HMAC'd nonce, and /start creates the draft only when the token verifies and has not been used. Or make /start render a one-button, crumb-protected 'Continue' form that POSTs to the existing create route. Either way, an unauthenticated-intent GET no longer writes.",
+      "after": "Choose one:\n\n- Have INS hand over with a short-lived signed hand-off token, as the address-book handshake does. INS mints an HMAC'd nonce. /start creates the draft only when the token verifies and has not been used.\n- Make /start render a one-button, crumb-protected 'Continue' form that POSTs to the existing create route.\n\nEither way, an unauthenticated-intent GET no longer writes."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "merge-resolution-TPL-MERGE-3",
+      "field": "also[rank 25].verifierNote",
+      "before": "Holds. The merge added startGet (animals dashboard/controller.js:131-132), which on a plain GET with no crumb or token calls startJourney and beginOpeningRun, the same as createPost. That is deliberate: a comment says a cross-origin POST cannot carry the crumb. A top-level navigation, a refresh, or a prerender of /start each creates a new empty draft owned by the signed-in trader. That goes against the backlog AC that the question leaves no stray draft. The 9 Oct pm ruling's 'every state change is a form post' is mainly about working without JavaScript, but it still applies. The impact is nuisance drafts, not a data leak or a privilege problem, so I rated it low.",
+      "after": "Holds.\n\nThe merge added startGet (animals dashboard/controller.js:131-132). On a plain GET with no crumb or token, it calls startJourney and beginOpeningRun, the same as createPost.\n\nThat is deliberate: a comment says a cross-origin POST cannot carry the crumb.\n\nA top-level navigation, a refresh, or a prerender of /start each creates a new empty draft owned by the signed-in trader.\n\nThat goes against the backlog AC that the question leaves no stray draft.\n\nThe 9 Oct pm ruling's 'every state change is a form post' is mainly about working without JavaScript. But it still applies.\n\nThe impact is nuisance drafts, not a data leak or a privilege problem, so I rated it low."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-backend-BE-TPL-6",
+      "field": "what",
+      "before": "The whole template package arrives in this merge, and no environment has notification_templates rows. Even so, the Javadoc ('Rows written before templates could be created carry none and read as saved', 'or on a row saved before this was recorded') and the code (NotificationTemplateResponse.from treats a null status as SAVED, listFor's status-not-IN_PROGRESS filter lets null through, replaceFulfilments treats null as saved, and the sort orders by saved then created to place legacy rows) cater for rows from earlier increments on the same unmerged branch. That breaks the 'no migration comments' rule. It also means any row inserted without a status, for example by a raw seed or a future write path that forgets to set it, is listed and usable as a saved template.",
+      "after": "The whole template package arrives in this merge. No environment has notification_templates rows.\n\nEven so, the Javadoc and the code cater for rows from earlier increments on the same unmerged branch.\n\nThe Javadoc says:\n\n- 'Rows written before templates could be created carry none and read as saved'\n- 'or on a row saved before this was recorded'\n\nIn the code:\n\n- NotificationTemplateResponse.from treats a null status as SAVED\n- listFor's status-not-IN_PROGRESS filter lets null through\n- replaceFulfilments treats null as saved\n- the sort orders by saved then created to place legacy rows\n\nThat breaks the 'no migration comments' rule.\n\nIt also means any row inserted without a status is listed and usable as a saved template. For example, a row inserted by a raw seed, or by a future write path that forgets to set it."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-backend-BE-TPL-6",
+      "field": "scenario",
+      "before": "The IT seed() helper already inserts rows with no status, and they appear on Manage templates as saved. A future write path that builds a NotificationTemplate without .status(...) would quietly publish a half-made template to the user's list and let it start notifications.",
+      "after": "The IT seed() helper already inserts rows with no status. They appear on Manage templates as saved.\n\nA future write path might build a NotificationTemplate without .status(...). It would quietly publish a half-made template to the user's list, and let it start notifications."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-backend-BE-TPL-6",
+      "field": "fix",
+      "before": "Make status required: give it a @Builder.Default of IN_PROGRESS and drop the null branches. Have listFor query status == SAVED. Sort by saved descending only, or by (saved, _id). Remove the legacy wording from the Javadoc and the Schema descriptions, and make the IT seed() set status SAVED and saved explicitly.",
+      "after": "- Make status required: give it a @Builder.Default of IN_PROGRESS and drop the null branches.\n- Have listFor query status == SAVED.\n- Sort by saved descending only, or by (saved, _id).\n- Remove the legacy wording from the Javadoc and the Schema descriptions.\n- Make the IT seed() set status SAVED and saved explicitly."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-backend-BE-TPL-6",
+      "field": "verifierNote",
+      "before": "Confirmed. The whole template package is new in this merge (git log origin/main shows no history for it), and no seed in the tests repo or the frontend writes notification_templates, so no environment holds rows without a status. Even so, the NotificationTemplate Javadoc (lines 55-56 and 61-64) describes rows 'written before templates could be created' and 'saved before this was recorded'. The service Javadoc at line 17 says the same. NotificationTemplateResponse.from maps a null status to SAVED. The StatusNot(IN_PROGRESS) query lets a null status through, and the IT findAll_shouldStillListARowWithNoStatus seeds a 'Legacy' row to pin that behaviour. This is migration-style wording and handling, which the house rules ban. It also means a row written without a status shows up in the list as a saved template.",
+      "after": "Confirmed.\n\nThe whole template package is new in this merge (git log origin/main shows no history for it).\n\nNo seed in the tests repo or the frontend writes notification_templates. So no environment holds rows without a status.\n\nEven so:\n\n- The NotificationTemplate Javadoc (lines 55-56 and 61-64) describes rows 'written before templates could be created' and 'saved before this was recorded'.\n- The service Javadoc at line 17 says the same.\n- NotificationTemplateResponse.from maps a null status to SAVED.\n- The StatusNot(IN_PROGRESS) query lets a null status through.\n- The IT findAll_shouldStillListARowWithNoStatus seeds a 'Legacy' row to pin that behaviour.\n\nThis is migration-style wording and handling, which the house rules ban.\n\nIt also means a row written without a status shows up in the list as a saved template."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-backend-BE-TPL-5",
+      "field": "what",
+      "before": "listFor loads every saved template for the owner, with no limit or paging. Each NotificationTemplateSummary carries the complete fulfilments list, which is the whole notification answer payload, so the frontend can summarise cards. Nothing limits the number of templates per user or the size of the fulfilments.",
+      "after": "listFor loads every saved template for the owner, with no limit or paging.\n\nEach NotificationTemplateSummary carries the complete fulfilments list, so the frontend can summarise cards. That list is the whole notification answer payload.\n\nNothing limits:\n\n- the number of templates per user\n- the size of the fulfilments"
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-backend-BE-TPL-5",
+      "field": "scenario",
+      "before": "A high-volume importer keeps 200 templates, each holding a full set of commodity, party and transport answers. Every visit to Manage templates pulls all 200 documents and serialises them into one response, which the frontend then decodes. Latency and heap use grow linearly, and a large account can push the backend toward OOM under concurrent load.",
+      "after": "A high-volume importer keeps 200 templates. Each holds a full set of commodity, party and transport answers.\n\nEvery visit to Manage templates pulls all 200 documents and serialises them into one response. The frontend then decodes it.\n\nLatency and heap use grow linearly.\n\nUnder concurrent load, a large account can push the backend toward OOM."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-backend-BE-TPL-5",
+      "field": "fix",
+      "before": "Add paging, as notifications already have (page and size, plus totalItems from count). Alternatively, project only the fields the card needs (category, parties' addresses) on the server rather than returning the raw fulfilments. Consider a per-user cap on templates.",
+      "after": "Add paging, as notifications already have (page and size, plus totalItems from count).\n\nAlternatively, project only the fields the card needs (category, parties' addresses) on the server. Do not return the raw fulfilments.\n\nConsider a per-user cap on templates."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-backend-BE-TPL-5",
+      "field": "verifierNote",
+      "before": "Confirmed. listFor calls findAllByOwnerIdAndStatusNotOrderBySavedDescCreatedDesc with no Pageable and no limit. NotificationTemplateSummary carries the full fulfilments, and the frontend Manage templates page decodes every one through cardAnswersFor. Notifications have paging and templates do not. The impact is speculative at expected per-user volumes, so the severity is low.",
+      "after": "Confirmed.\n\nlistFor calls findAllByOwnerIdAndStatusNotOrderBySavedDescCreatedDesc with no Pageable and no limit.\n\nNotificationTemplateSummary carries the full fulfilments. The frontend Manage templates page decodes every one through cardAnswersFor.\n\nNotifications have paging and templates do not.\n\nThe impact is speculative at expected per-user volumes, so the severity is low."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-backend-BE-TPL-4",
+      "field": "what",
+      "before": "The template API is new and could follow the house REST rule (noun endpoints). /details and /fulfilments are sub-resources, but /save is a verb. It only changes a status field, so it fits the same sub-resource pattern.",
+      "after": "The template API is new and could follow the house REST rule (noun endpoints).\n\n/details and /fulfilments are sub-resources, but /save is a verb.\n\n/save only changes a status field, so it fits the same sub-resource pattern."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-backend-BE-TPL-4",
+      "field": "scenario",
+      "before": "Delete and discard (inc-164 and inc-165) will be added beside this endpoint. The verb style tends to spread into routes such as POST /templates/{id}/discard and POST /templates/{id}/delete, and then the API mixes styles and needs a breaking change to tidy up.",
+      "after": "Delete and discard (inc-164 and inc-165) will be added beside this endpoint.\n\nThe verb style tends to spread into routes such as POST /templates/{id}/discard and POST /templates/{id}/delete.\n\nThen the API mixes styles, and needs a breaking change to tidy up."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-backend-BE-TPL-4",
+      "field": "fix",
+      "before": "Model it as PUT /templates/{id}/status with body {\"status\":\"SAVED\"}, validated so it only accepts the transition from IN_PROGRESS to SAVED. Use DELETE /templates/{id} for the coming delete and discard rows.",
+      "after": "Model it as PUT /templates/{id}/status with body {\"status\":\"SAVED\"}.\n\nValidate it so it only accepts the transition from IN_PROGRESS to SAVED.\n\nUse DELETE /templates/{id} for the coming delete and discard rows."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-backend-BE-TPL-4",
+      "field": "verifierNote",
+      "before": "Confirmed at NotificationTemplateController.java:118: @PostMapping(\"/{id}/save\") is a verb path on a brand-new API, against the house rule for noun endpoints. It is mitigated because the existing backend already has verb paths such as POST /notifications/{ref}/copy, so this is a style point, not a functional defect.",
+      "after": "Confirmed at NotificationTemplateController.java:118.\n\n@PostMapping(\"/{id}/save\") is a verb path on a brand-new API, against the house rule for noun endpoints.\n\nIt is mitigated because the existing backend already has verb paths, such as POST /notifications/{ref}/copy.\n\nSo this is a style point, not a functional defect."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "workspace-tooling-laptop2-GATE-6",
+      "field": "what",
+      "before": "The new tests prove that parallelRepos 1 runs strictly one repo at a time, and that stackAfterLocal starts a stack that was down only after the unit rung. Nothing covers a cap of 2 of 3 repos: at most two overlapping, the third starting once the first finishes, results still in plan order. That is the setting ced1a1a3 shipped. Nothing covers stackAfterLocal on the build loop's real path, where the holder already leases the stack, so refreshLeasedStack, not run-stack.sh, is what has to wait for layer one.",
+      "after": "The new tests prove two things:\n\n- parallelRepos 1 runs strictly one repo at a time\n- stackAfterLocal starts a stack that was down only after the unit rung\n\nNothing covers a cap of 2 of 3 repos, where:\n\n- at most two overlap\n- the third starts once the first finishes\n- results are still in plan order\n\nThat is the setting ced1a1a3 shipped.\n\nNothing covers stackAfterLocal on the build loop's real path. There, the holder already leases the stack. So refreshLeasedStack, not run-stack.sh, is what has to wait for layer one."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "workspace-tooling-laptop2-GATE-6",
+      "field": "scenario",
+      "before": "A later change to runChainsAtMost (for example a worker that takes its next chain before the last one finishes, or limit handling that drops to all chains when limit > 1) or to where refresh is called breaks the 16 GB laptop protection. Every existing test still passes, and the baseline goes red on timeouts again.",
+      "after": "A later change breaks the 16 GB laptop protection.\n\nThe change could be to runChainsAtMost, for example:\n\n- a worker that takes its next chain before the last one finishes\n- limit handling that drops to all chains when limit > 1\n\nOr it could be a change to where refresh is called.\n\nEvery existing test still passes, and the baseline goes red on timeouts again."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "workspace-tooling-laptop2-GATE-6",
+      "field": "fix",
+      "before": "Add a timeline test with parallelRepos 2 and three repos. Assert the largest number of starts without a matching end is 2, and that the results come back in plan order. Add a stackAfterLocal test with a lease seeded for the same holder and the stack up. Assert the rebuild or restart log entry in stack-calls comes after the unit rung's marker.",
+      "after": "Add a timeline test with parallelRepos 2 and three repos. Assert that:\n\n- the largest number of starts without a matching end is 2\n- the results come back in plan order\n\nAdd a stackAfterLocal test with a lease seeded for the same holder and the stack up.\n\nAssert the rebuild or restart log entry in stack-calls comes after the unit rung's marker."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "workspace-tooling-laptop2-GATE-6",
+      "field": "verifierNote",
+      "before": "gate.test.js:793-821 tests only parallelRepos 1 (a strict sequence). :823-847 tests stackAfterLocal only on the cold-start path (run-stack.sh -d then stop-stack.sh) with no lease seeded. No test covers a cap between 1 and N (runChainsAtMost with a limit of 2 or more and fewer than all chains). No test covers stackAfterLocal with a lease already held by the same holder, where refreshLeasedStack is the call that has to wait. Both gaps are real.",
+      "after": "- gate.test.js:793-821 tests only parallelRepos 1 (a strict sequence).\n- :823-847 tests stackAfterLocal only on the cold-start path (run-stack.sh -d then stop-stack.sh), with no lease seeded.\n\nNo test covers a cap between 1 and N (runChainsAtMost with a limit of 2 or more and fewer than all chains).\n\nNo test covers stackAfterLocal with a lease already held by the same holder. There, refreshLeasedStack is the call that has to wait.\n\nBoth gaps are real."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "workspace-tooling-laptop2-GATE-5",
+      "field": "what",
+      "before": "gates.json now sets parallelRepos 1 and stackAfterLocal true. The gate's --help still says \"The stack gets ready during the first layer\". describeTiming prints \"unit and FIT first, repos at the same time\" in every plain-text report. The runGate JSDoc and the comment above FLAKY_COUNT in gate.js say the same. The README baseline row that 05ecdb98 edited still says \"unit, FIT and E2E side by side\".",
+      "after": "gates.json now sets parallelRepos 1 and stackAfterLocal true. But:\n\n- The gate's --help still says \"The stack gets ready during the first layer\".\n- describeTiming prints \"unit and FIT first, repos at the same time\" in every plain-text report.\n- The runGate JSDoc and the comment above FLAKY_COUNT in gate.js say the same.\n- The README baseline row that 05ecdb98 edited still says \"unit, FIT and E2E side by side\"."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "workspace-tooling-laptop2-GATE-5",
+      "field": "scenario",
+      "before": "Someone reading a slow baseline's text report, or the README, expects repos to run in parallel and the stack to come up early. They look for a hang or starvation bug that is really the configured one-at-a-time order. Readers of the user-facing strings are told something that is no longer true.",
+      "after": "Someone reads a slow baseline's text report, or the README. They expect repos to run in parallel and the stack to come up early.\n\nThey look for a hang or starvation bug that is really the configured one-at-a-time order.\n\nReaders of the user-facing strings are told something that is no longer true."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "workspace-tooling-laptop2-GATE-5",
+      "field": "fix",
+      "before": "Make describeTiming and the --help text depend on parallelRepos and stackAfterLocal (put both in the outcome so the report can say \"one repo at a time, stack readied after\"). Update the runGate JSDoc and the README baseline row to match.",
+      "after": "Make describeTiming and the --help text depend on parallelRepos and stackAfterLocal.\n\nPut both in the outcome, so the report can say \"one repo at a time, stack readied after\".\n\nUpdate the runGate JSDoc and the README baseline row to match."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "workspace-tooling-laptop2-GATE-5",
+      "field": "verifierNote",
+      "before": "The stale text is all there. describeTiming at index.js:156 always prints 'unit and FIT first, repos at the same time'. The --help at index.js:301 still says 'The stack gets ready during the first layer', without mentioning stackAfterLocal. The comments at gate.js:371-373 and :487-490 and the runGate JSDoc at :546-550 say the stack gets ready during or beside layer one. gates.json now sets parallelRepos 1 and stackAfterLocal true. The README line cited in the finding did not show up in tim/README.md (its only 'side by side' match is unrelated), so that part is unverified. This affects docs only.",
+      "after": "The stale text is all there:\n\n- describeTiming at index.js:156 always prints 'unit and FIT first, repos at the same time'.\n- The --help at index.js:301 still says 'The stack gets ready during the first layer', without mentioning stackAfterLocal.\n- The comments at gate.js:371-373 and :487-490 and the runGate JSDoc at :546-550 say the stack gets ready during or beside layer one.\n\ngates.json now sets parallelRepos 1 and stackAfterLocal true.\n\nThe README line cited in the finding did not show up in tim/README.md. Its only 'side by side' match is unrelated. So that part is unverified.\n\nThis affects docs only."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "merge-resolution-TPL-MERGE-2",
+      "field": "what",
+      "before": "The merged template-review describe asserts `cardsOf(context.sections).filter((card) => card.errorMessage)` equals `[]`. On the combined markup (and already on the templates side), a card's error is `card.error`, set by `withCardErrors` in incomplete-cards.js:164, and a section's error is `section.error`. Nothing in check-answers sets `errorMessage`, so the filter always returns `[]`. The template-mode part of `holdsSilently` in the merged controller, which suppresses card errors, has no card-level unit coverage. Only the `errorSummary` null check guards it.",
+      "after": "The merged template-review describe asserts `cardsOf(context.sections).filter((card) => card.errorMessage)` equals `[]`.\n\nOn the combined markup (and already on the templates side):\n\n- a card's error is `card.error`, set by `withCardErrors` in incomplete-cards.js:164\n- a section's error is `section.error`\n\nNothing in check-answers sets `errorMessage`. So the filter always returns `[]`.\n\nThe template-mode part of `holdsSilently` in the merged controller suppresses card errors. It has no card-level unit coverage.\n\nOnly the `errorSummary` null check guards it."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "merge-resolution-TPL-MERGE-2",
+      "field": "scenario",
+      "before": "Remove `inTemplateMode() ||` from `holdsSilently` in check-answers/controller.js. An unanswered template review then gets 'Complete origin of import' and similar errors on its cards. The `errorSummary` toBeNull assertion catches that today, but the card-level assertion would pass either way. A later change that keeps the summary empty but marks cards would slip through.",
+      "after": "Remove `inTemplateMode() ||` from `holdsSilently` in check-answers/controller.js.\n\nAn unanswered template review then gets 'Complete origin of import' and similar errors on its cards.\n\nThe `errorSummary` toBeNull assertion catches that today. But the card-level assertion would pass either way.\n\nA later change that keeps the summary empty but marks cards would slip through."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "merge-resolution-TPL-MERGE-2",
+      "field": "fix",
+      "before": "Assert on the real fields: no card has `error` and no section has `error` (`expect(cardsOf(context.sections).filter((card) => card.error)).toEqual([])` and the same over `context.sections`). That makes the check fail when card errors return in template mode.",
+      "after": "Assert on the real fields:\n\n- no card has `error`: `expect(cardsOf(context.sections).filter((card) => card.error)).toEqual([])`\n- no section has `error`: the same over `context.sections`\n\nThat makes the check fail when card errors return in template mode."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "merge-resolution-TPL-MERGE-2",
+      "field": "verifierNote",
+      "before": "I confirmed this one. check-answers.test.js:2725 filters cards on `card.errorMessage`, and that field appears nowhere else in check-answers. Cards carry `error` (incomplete-cards.js:161-164), so the filter always returns [] and the 'no card errors' half of the test is vacuous. The suppression comes from `inTemplateMode()` in holdsSilently (controller.js:221), and only the errorSummary toBeNull assertion guards it. The test came in with the templates surface (cab954f8), not a conflict hunk, but it is part of the merged diff. This is a test-coverage gap only, not a runtime defect.",
+      "after": "I confirmed this one.\n\ncheck-answers.test.js:2725 filters cards on `card.errorMessage`. That field appears nowhere else in check-answers.\n\nCards carry `error` (incomplete-cards.js:161-164). So the filter always returns [], and the 'no card errors' half of the test is vacuous.\n\nThe suppression comes from `inTemplateMode()` in holdsSilently (controller.js:221). Only the errorSummary toBeNull assertion guards it.\n\nThe test came in with the templates surface (cab954f8), not a conflict hunk. But it is part of the merged diff.\n\nThis is a test-coverage gap only, not a runtime defect."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-templates-F7",
+      "field": "what",
+      "before": "originOfImport.btnSaveAndReturn matches 'Save and return to overview' by substring, so toHaveCount(0) here and at template-review.spec.ts line 129 cannot see the plain 'Save and return' button that change mode renders. The change-template spec checks the full button list with submitButtons, but the create flow and the review's Change flow do not.",
+      "after": "originOfImport.btnSaveAndReturn matches 'Save and return to overview' by substring.\n\nChange mode renders a plain 'Save and return' button. toHaveCount(0) here and at template-review.spec.ts line 129 cannot see it.\n\nThe change-template spec checks the full button list with submitButtons. The create flow and the review's Change flow do not."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-templates-F7",
+      "field": "scenario",
+      "before": "Template creation's origin page starts showing the change-mode 'Save and return' button, for example because the ?change flag leaks from the review's Change link. Both absence checks still pass, because neither label contains 'Save and return to overview'.",
+      "after": "Template creation's origin page starts showing the change-mode 'Save and return' button. For example, because the ?change flag leaks from the review's Change link.\n\nBoth absence checks still pass, because neither label contains 'Save and return to overview'."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-templates-F7",
+      "field": "fix",
+      "before": "Assert the whole button set, as change-template does: expect(originOfImport.submitButtons).toHaveText(['Save and continue']) in both places.",
+      "after": "Assert the whole button set, as change-template does.\n\nIn both places, use: expect(originOfImport.submitButtons).toHaveText(['Save and continue'])"
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-templates-F7",
+      "field": "verifierNote",
+      "before": "In origin-of-import-page.ts, btnSaveAndReturn is getByRole('button', { name: 'Save and return to overview' }), a substring and case-insensitive match. A bare 'Save and return' button does not contain that string, so toHaveCount(0) at create-template.spec.ts:148 and template-review.spec.ts:129 cannot detect it. The same merge added btnSaveAndReturnToTemplate (exact) and submitButtons, and the contact-address side of template-review already checks btnSaveAndReturnBare at count 0, so the origin checks are the gap. Low impact.",
+      "after": "In origin-of-import-page.ts, btnSaveAndReturn is getByRole('button', { name: 'Save and return to overview' }). That is a substring and case-insensitive match.\n\nA bare 'Save and return' button does not contain that string. So toHaveCount(0) at create-template.spec.ts:148 and template-review.spec.ts:129 cannot detect it.\n\nThe same merge added btnSaveAndReturnToTemplate (exact) and submitButtons.\n\nThe contact-address side of template-review already checks btnSaveAndReturnBare at count 0. So the origin checks are the gap.\n\nLow impact."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-templates-F8",
+      "field": "what",
+      "before": "The animals frontend has no /germinal-products route yet. The ruling (inc-148 gate) allows the link to land before the set exists, so today the test passes on a 404 page. It checks only the landed pathname, with a non-retrying expect. When the germinal set is built and /start creates a draft and redirects to its first page, the landed path will no longer be /start, and the test will fail even though the hand-off works.",
+      "after": "The animals frontend has no /germinal-products route yet.\n\nThe ruling (inc-148 gate) allows the link to land before the set exists. So today the test passes on a 404 page.\n\nIt checks only the landed pathname, with a non-retrying expect.\n\nWhen the germinal set is built and /start creates a draft and redirects to its first page:\n\n- the landed path will no longer be /start\n- the test will fail, even though the hand-off works"
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-templates-F8",
+      "field": "scenario",
+      "before": "The germinal theme ships GET /germinal-products/start, which creates a draft and redirects to /germinal-products/notifications/<id>/origin. continueToService resolves on the final URL, so the toBe(`/germinal-products/start`) check fails.",
+      "after": "The germinal theme ships GET /germinal-products/start. It creates a draft and redirects to /germinal-products/notifications/<id>/origin.\n\ncontinueToService resolves on the final URL. So the toBe(`/germinal-products/start`) check fails."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-templates-F8",
+      "field": "fix",
+      "before": "Capture the hand-off request instead: wait for a request whose pathname is `${SET_BASES.germinalProducts}/start` on the animals origin. Keep the check that no /live-animals/ request was made. Do this before the germinal set lands, so the test holds up when it does.",
+      "after": "Capture the hand-off request instead. Wait for a request on the animals origin whose pathname is `${SET_BASES.germinalProducts}/start`.\n\nKeep the check that no /live-animals/ request was made.\n\nDo this before the germinal set lands, so the test holds up when it does."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-templates-F8",
+      "field": "verifierNote",
+      "before": "No germinal route exists in the animals frontend source (grep finds only copy and test references), so today the hand-off lands on a 404 and notification-type.spec.ts:158-160 passes on the URL alone, with plain non-retrying expects. continueToService waits only for the origin change and then for load, so the URL read is the final one after any redirect. The live-animals precedent in this merge (dashboard startGet) creates a draft and redirects to the origin page. When germinal follows that shape, the toBe('/germinal-products/start') check will fail even though the hand-off works. This is brittle but correct today, so the severity is low.",
+      "after": "No germinal route exists in the animals frontend source. grep finds only copy and test references.\n\nSo today the hand-off lands on a 404. notification-type.spec.ts:158-160 passes on the URL alone, with plain non-retrying expects.\n\ncontinueToService waits only for the origin change and then for load. So the URL read is the final one after any redirect.\n\nThe live-animals precedent in this merge (dashboard startGet) creates a draft and redirects to the origin page.\n\nWhen germinal follows that shape, the toBe('/germinal-products/start') check will fail, even though the hand-off works.\n\nThis is brittle but correct today, so the severity is low."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "shared-frontend-F6",
+      "field": "what",
+      "before": "audit-targets builds its targets from features/index.js allRoutes. The template-mode twins (/templates/{journeyId}, which is the template task list and the saved template page, and every /templates/{journeyId}/<slug>) are generated only in routes-live-animals.js by templateModeRoutes, so they are neither audited nor listed in SKIPPED. The 'stale reason fails the build' guard cannot see them either.",
+      "after": "audit-targets builds its targets from features/index.js allRoutes.\n\nThe template-mode twins are:\n\n- /templates/{journeyId}, which is the template task list and the saved template page\n- every /templates/{journeyId}/<slug>\n\nThey are generated only in routes-live-animals.js by templateModeRoutes. So they are neither audited nor listed in SKIPPED.\n\nThe 'stale reason fails the build' guard cannot see them either."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "shared-frontend-F6",
+      "field": "scenario",
+      "before": "An accessibility regression on the saved template page or the template review, such as a duplicate h1, an unlabelled Change link or the 'Template' strip, passes the Lighthouse gate, because only /templates, /templates/new and the notification pages are audited.",
+      "after": "An accessibility regression on the saved template page or the template review passes the Lighthouse gate. For example:\n\n- a duplicate h1\n- an unlabelled Change link\n- the 'Template' strip\n\nIt passes because only /templates, /templates/new and the notification pages are audited."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "shared-frontend-F6",
+      "field": "fix",
+      "before": "Feed auditPaths the same route list the server registers: allRoutes plus templateModeRoutes(allRoutes, {excludedSlugs}). Seed a saved template and an in-progress template in the Lighthouse setup, and map /templates/{journeyId}/* to those ids (a FILLED_BY-style map keyed to 'template'). Twins that are not worth auditing go into SKIPPED with reasons.",
+      "after": "Feed auditPaths the same route list the server registers: allRoutes plus templateModeRoutes(allRoutes, {excludedSlugs}).\n\nIn the Lighthouse setup:\n\n- seed a saved template and an in-progress template\n- map /templates/{journeyId}/* to those ids (a FILLED_BY-style map keyed to 'template')\n\nTwins that are not worth auditing go into SKIPPED with reasons."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "shared-frontend-F6",
+      "field": "verifierNote",
+      "before": "Holds. scripts/lighthouse/audit-targets.js builds auditPaths and assertTargetsAreCurrent from allRoutes (features/index.js). allRoutes includes the templates controller's own routes (/templates, /templates/new, and /templates/{journeyId}/name in SKIPPED), but not the twins. Those are generated only in routes-live-animals.js:136-140 through templateModeRoutes. So the saved-template page, the template task list and every template-mode page twin are neither audited nor listed in SKIPPED, and the stale-skip guard cannot see them.",
+      "after": "Holds.\n\nscripts/lighthouse/audit-targets.js builds auditPaths and assertTargetsAreCurrent from allRoutes (features/index.js).\n\nallRoutes includes the templates controller's own routes (/templates, /templates/new, and /templates/{journeyId}/name in SKIPPED). It does not include the twins.\n\nThose are generated only in routes-live-animals.js:136-140 through templateModeRoutes.\n\nSo these are neither audited nor listed in SKIPPED:\n\n- the saved-template page\n- the template task list\n- every template-mode page twin\n\nThe stale-skip guard cannot see them either."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-features-TPL-2",
+      "field": "what",
+      "before": "use-template.test.js stubs templates.getFor, engine/journey.startJourney and flow/run-state.beginOpeningRun with vi.spyOn. It then asserts `startJourney` toHaveBeenCalledWith `{ fulfilment: notificationSeedFrom(decoded) }`, so the expected value comes from the production function itself. The same pattern appears elsewhere. controller.test.js:62 spies templates.listFor and :128 spies countries.originDisplayLabel. check-answers.test.js (template review block) spies templates.saveFor, reads the session through the production helper takeSavedTemplate, and controller.test.js:225 asserts on the raw session key 'templateSaved'. None of these are network-boundary mocks, even though the templates service has a stub mode and an HTTP client that nock could intercept.",
+      "after": "use-template.test.js stubs these with vi.spyOn:\n\n- templates.getFor\n- engine/journey.startJourney\n- flow/run-state.beginOpeningRun\n\nIt then asserts `startJourney` toHaveBeenCalledWith `{ fulfilment: notificationSeedFrom(decoded) }`. So the expected value comes from the production function itself.\n\nThe same pattern appears elsewhere:\n\n- controller.test.js:62 spies templates.listFor, and :128 spies countries.originDisplayLabel.\n- check-answers.test.js (template review block) spies templates.saveFor, and reads the session through the production helper takeSavedTemplate.\n- controller.test.js:225 asserts on the raw session key 'templateSaved'.\n\nNone of these are network-boundary mocks. Yet the templates service has a stub mode, and an HTTP client that nock could intercept."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-features-TPL-2",
+      "field": "scenario",
+      "before": "A regression in notificationSeedFrom (for example, the arrival date no longer stripped) changes both sides of the use-template assertion, so the test stays green. Renaming the session key or moving startJourney's signature breaks tests while behaviour is unchanged.",
+      "after": "A regression in notificationSeedFrom changes both sides of the use-template assertion, so the test stays green. For example, the arrival date is no longer stripped.\n\nRenaming the session key or moving startJourney's signature breaks tests, while behaviour is unchanged."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-features-TPL-2",
+      "field": "fix",
+      "before": "Run these handlers against the templates stub (or nock the backend in real mode) and the in-memory store. Assert the resulting draft's stored answers and the redirect, not the calls to internal functions. For the banner, assert that the next GET /templates renders the heading, not the session contents.",
+      "after": "Run these handlers against the templates stub (or nock the backend in real mode) and the in-memory store.\n\nAssert the resulting draft's stored answers and the redirect, not the calls to internal functions.\n\nFor the banner, assert that the next GET /templates renders the heading, not the session contents."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-features-TPL-2",
+      "field": "verifierNote",
+      "before": "The spies are real: use-template.test.js:61-65 (templates.getFor, journey.startJourney, runState.beginOpeningRun), controller.test.js:62/128/232 (templates.listFor, countries.originDisplayLabel), the raw 'templateSaved' session key at controller.test.js:175-225, and check-answers.test.js:2811/2828 (templates.saveFor). use-template.test.js:86-88 does build its expected value with notificationSeedFrom. The claimed impact is smaller than stated, though. Line 90 also asserts a concrete value ('further-keeping'), seed-notification.test.js tests notificationSeedFrom directly, and use-template.fit.spec.js drives the real UI. So a seeding regression would not go unnoticed. What remains is a house-rule breach (mocks below the network boundary) in a codebase that already does this in places, for example check-answers.test.js:488 spying on records.load before the merge.",
+      "after": "The spies are real:\n\n- use-template.test.js:61-65 (templates.getFor, journey.startJourney, runState.beginOpeningRun)\n- controller.test.js:62/128/232 (templates.listFor, countries.originDisplayLabel)\n- the raw 'templateSaved' session key at controller.test.js:175-225\n- check-answers.test.js:2811/2828 (templates.saveFor)\n\nuse-template.test.js:86-88 does build its expected value with notificationSeedFrom.\n\nThe claimed impact is smaller than stated, though:\n\n- Line 90 also asserts a concrete value ('further-keeping').\n- seed-notification.test.js tests notificationSeedFrom directly.\n- use-template.fit.spec.js drives the real UI.\n\nSo a seeding regression would not go unnoticed.\n\nWhat remains is a house-rule breach (mocks below the network boundary).\n\nThe codebase already does this in places. For example, check-answers.test.js:488 spying on records.load before the merge."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-features-TPL-3",
+      "field": "what",
+      "before": "takeSavedTemplate clears the session key at line 60. `Promise.all(saved.map(toCard))` runs afterwards at line 70, and it awaits countries.originDisplayLabel, which loads reference data. The comment above line 60 claims the banner survives a failed render, but that only holds for a failed list call.",
+      "after": "takeSavedTemplate clears the session key at line 60.\n\n`Promise.all(saved.map(toCard))` runs afterwards, at line 70. It awaits countries.originDisplayLabel, which loads reference data.\n\nThe comment above line 60 claims the banner survives a failed render. That only holds for a failed list call."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-features-TPL-3",
+      "field": "scenario",
+      "before": "A user saves a template and is redirected to Manage templates. The list call succeeds, but the countries reference data fails to load on a cold cache, so the page errors. The banner has already been cleared, so on the next visit the user never sees the 'saved to templates' confirmation.",
+      "after": "A user saves a template and is redirected to Manage templates.\n\nThe list call succeeds. But the countries reference data fails to load on a cold cache, so the page errors.\n\nThe banner has already been cleared. So on the next visit, the user never sees the 'saved to templates' confirmation."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-features-TPL-3",
+      "field": "fix",
+      "before": "Build templateCards before calling takeSavedTemplate (or take it last, just before h.view). Then drop the comment, because the ordering shows the intent.",
+      "after": "Build templateCards before calling takeSavedTemplate (or take it last, just before h.view).\n\nThen drop the comment, because the ordering shows the intent."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-features-TPL-3",
+      "field": "verifierNote",
+      "before": "controller.js:60 calls takeSavedTemplate, which runs yar.clear, before line 70 awaits Promise.all(saved.map(toCard)). toCard goes through cardAnswersFor and then countries.originDisplayLabel, and ensureLoaded throws Boom.serverUnavailable outside stub mode when reference data fails to load. yar still saves the cleared session on an error response, so the one-time banner is lost. The comment at lines 58-59 only covers the list call failing. This needs a real-mode reference-data failure at the exact moment after a save, so it is low.",
+      "after": "controller.js:60 calls takeSavedTemplate, which runs yar.clear. That happens before line 70 awaits Promise.all(saved.map(toCard)).\n\ntoCard goes through cardAnswersFor and then countries.originDisplayLabel.\n\nOutside stub mode, ensureLoaded throws Boom.serverUnavailable when reference data fails to load.\n\nyar still saves the cleared session on an error response. So the one-time banner is lost.\n\nThe comment at lines 58-59 only covers the list call failing.\n\nThis needs a real-mode reference-data failure at the exact moment after a save, so it is low."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-features-TPL-5",
+      "field": "what",
+      "before": "The merge adds explanatory comments in several places. trade-imports-animals-frontend: check-answers/controller.js:218-219 and :283-285; check-answers/copy/copy.en.js:160-163; check-answers/view-model/index.js (the 'A template's review leaves out…' addition); templates/controller.js:58-59; templates/use-template.js:12-13; and the header comment in _review-sections.njk. trade-imports-ins-frontend: notification-type/controller.js:25-26 and :49-51.",
+      "after": "The merge adds explanatory comments in several places.\n\nIn trade-imports-animals-frontend:\n\n- check-answers/controller.js:218-219 and :283-285\n- check-answers/copy/copy.en.js:160-163\n- check-answers/view-model/index.js (the 'A template's review leaves out…' addition)\n- templates/controller.js:58-59\n- templates/use-template.js:12-13\n- the header comment in _review-sections.njk\n\nIn trade-imports-ins-frontend:\n\n- notification-type/controller.js:25-26 and :49-51"
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-features-TPL-5",
+      "field": "scenario",
+      "before": "These comments drift from the code. The controller.js:58 comment already overstates what the ordering protects (see TPL-3).",
+      "after": "These comments drift from the code.\n\nThe controller.js:58 comment already overstates what the ordering protects (see TPL-3)."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-features-TPL-5",
+      "field": "fix",
+      "before": "Delete them. Put rationale in docs/ or the commit message, and let names such as `usable` and `saveTemplate` carry intent.",
+      "after": "Delete them.\n\nPut rationale in docs/ or the commit message. Let names such as `usable` and `saveTemplate` carry intent."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "templates-features-TPL-5",
+      "field": "verifierNote",
+      "before": "The diff confirms the merge added these explanatory comments: check-answers/controller.js (the holdsSilently comment at about line 218 and the saveTemplate comment at about 283), copy.en.js (the template block comment), view-model/index.js (the added sentence), templates/controller.js:58-59, use-template.js:12-13, and INS notification-type/controller.js:25-26 and :49-51. This goes against the 'remove explanatory comments aggressively' rule. The codebase already carries many such comments, so this is style only.",
+      "after": "The diff confirms the merge added these explanatory comments:\n\n- check-answers/controller.js: the holdsSilently comment at about line 218, and the saveTemplate comment at about 283\n- copy.en.js: the template block comment\n- view-model/index.js: the added sentence\n- templates/controller.js:58-59\n- use-template.js:12-13\n- INS notification-type/controller.js:25-26 and :49-51\n\nThis goes against the 'remove explanatory comments aggressively' rule.\n\nThe codebase already carries many such comments, so this is style only."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "killed: Ownership rests entirely on a caller-asserted User-Id header, and organisationId is stored but never used",
+      "field": "refutation",
+      "before": "Refuted as a defect in this merge. (1) The 'undefined' owner scenario cannot happen: services/templates/index.js requireOwner() throws before every client call (listFor, startFor, getFor, updateDetailsFor, replaceFulfilmentsFor, saveFor) when ownerId is falsy, so the literal string 'undefined' is never sent. (2) A trusted User-Id header is the backend's existing model: NotificationController already takes HEADER_USER_ID as a required header at lines 225 and 258 without verifying it. The templates merge did not introduce it. (3) Scoping templates by user, not organisation, is the stated intent. The backlog constraint (backlog.json line 39) reads 'scoped to the signed-in user's organisation (or user, for templates)', and the field's Javadoc says organisationId is 'Recorded, not used to scope'. The multi-organisation case is a product question, not a bug.",
+      "after": "Refuted as a defect in this merge.\n\n(1) The 'undefined' owner scenario cannot happen.\n\n- services/templates/index.js requireOwner() throws when ownerId is falsy.\n- It does this before every client call (listFor, startFor, getFor, updateDetailsFor, replaceFulfilmentsFor, saveFor).\n- So the literal string 'undefined' is never sent.\n\n(2) A trusted User-Id header is the backend's existing model.\n\n- NotificationController already takes HEADER_USER_ID as a required header at lines 225 and 258, without verifying it.\n- The templates merge did not introduce it.\n\n(3) Scoping templates by user, not organisation, is the stated intent.\n\n- The backlog constraint (backlog.json line 39) reads 'scoped to the signed-in user's organisation (or user, for templates)'.\n- The field's Javadoc says organisationId is 'Recorded, not used to scope'.\n\nThe multi-organisation case is a product question, not a bug."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "killed: An argument or workspace-lookup error no longer writes, or clears, the --result file",
+      "field": "refutation",
+      "before": "The regression is real. Before 664beddd, `resultPath = opts.result ? resolve(opts.result) : null` came before parseOptions, so a parse or workspace-lookup error wrote an error envelope. Now index.js:309-328 sets resultPath only after both succeed. The harmful scenario does not hold, though. Those errors make the foreground gate call exit 2 at once with the error on stdout. It is never moved to the background, so GATE_WAIT_RULE never sends the agent to gate-wait, and GATE_RULE (increment-build-loop.js:982-983) says an error before any rung is RED. The holder is always the fixed RUN_HOLDER from gateCommand, so the 'regex refuses the holder' trigger cannot come from the loop. Even before the commit, a parse failure never cleared the file. To read a stale envelope, an agent would have to break the loop's rules.",
+      "after": "The regression is real.\n\nBefore 664beddd, `resultPath = opts.result ? resolve(opts.result) : null` came before parseOptions. So a parse or workspace-lookup error wrote an error envelope.\n\nNow index.js:309-328 sets resultPath only after both succeed.\n\nThe harmful scenario does not hold, though:\n\n- Those errors make the foreground gate call exit 2 at once, with the error on stdout.\n- It is never moved to the background, so GATE_WAIT_RULE never sends the agent to gate-wait.\n- GATE_RULE (increment-build-loop.js:982-983) says an error before any rung is RED.\n- The holder is always the fixed RUN_HOLDER from gateCommand. So the 'regex refuses the holder' trigger cannot come from the loop.\n- Even before the commit, a parse failure never cleared the file.\n\nTo read a stale envelope, an agent would have to break the loop's rules."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "killed: Retargeted 'no uploaded documents' check (Document 1 card) can never fail",
+      "field": "refutation",
+      "before": "Refuted. view-model/cards/documents.js always renders one 'Document 1' card when nothing is uploaded ('with none uploaded it carries the design's single \"Document 1\" card reading Not applicable'), and documentsSection is unconditional. The upload-health-certificate error applies only to SUBMITTED_ACTION_REQUIRED journeys, never to a template. So if asTemplateReview (template-review.js) stopped filtering DOCUMENTS_SECTION_ANCHOR, a 'Document 1' card would render and template-review.spec.ts:82 would fail. The merge log says this retarget was chosen for exactly that reason. One side note does hold: cardTitled('Identification details') at line 101 can never fail, because Identification details is the species block's identifier table heading (species-block.js), not a .govuk-summary-card__title. The heading-role check on line 102 is the one that can fail. That is a minor point, not this finding.",
+      "after": "Refuted.\n\nview-model/cards/documents.js always renders one 'Document 1' card when nothing is uploaded ('with none uploaded it carries the design's single \"Document 1\" card reading Not applicable').\n\ndocumentsSection is unconditional.\n\nThe upload-health-certificate error applies only to SUBMITTED_ACTION_REQUIRED journeys, never to a template.\n\nSo if asTemplateReview (template-review.js) stopped filtering DOCUMENTS_SECTION_ANCHOR:\n\n- a 'Document 1' card would render\n- template-review.spec.ts:82 would fail\n\nThe merge log says this retarget was chosen for exactly that reason.\n\nOne side note does hold:\n\n- cardTitled('Identification details') at line 101 can never fail.\n- That is because Identification details is the species block's identifier table heading (species-block.js), not a .govuk-summary-card__title.\n- The heading-role check on line 102 is the one that can fail.\n\nThat is a minor point, not this finding."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "killed: Choosing Germinal products for a template silently drops the trader back on Manage templates",
+      "field": "refutation",
+      "before": "The code does behave as described: newPost and namePost redirect to templatesPath() for germinal-products (template-name/controller.js:75-77, 92-93). But the theme backlog (line 739) says choosing Germinal products 'is observed here only as far as the template name page. What a germinal template asks after its name is req-1876's, in the germinal theme's row', and the germinal set does not exist yet. What happens after the name page is unbuilt, out-of-scope behaviour, which the brief says not to report as a defect of the merge. It is an interim placeholder, not a regression.",
+      "after": "The code does behave as described. newPost and namePost redirect to templatesPath() for germinal-products (template-name/controller.js:75-77, 92-93).\n\nBut the theme backlog (line 739) says choosing Germinal products 'is observed here only as far as the template name page. What a germinal template asks after its name is req-1876's, in the germinal theme's row'.\n\nThe germinal set does not exist yet.\n\nWhat happens after the name page is unbuilt, out-of-scope behaviour. The brief says not to report that as a defect of the merge.\n\nIt is an interim placeholder, not a regression."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "killed: Template saves drop the concurrency token: last write wins with no stale-action check",
+      "field": "refutation",
+      "before": "The two-tab scenario does not happen. state.commit (engine/write/commit.js:7) loads the current record fresh on every POST and applies only that page's patch to it. Tab B's Transport save therefore merges onto the stored fulfilment, which already includes tab A's Origin change, and does not overwrite it with a stale copy. Also, replaceJourneyFulfilment prefers the same-request memo (journey.js:147-150), so notification saves send the freshly loaded version, not the tab's rendered token, and would not reject this case either. What the template port drops is protection against a true simultaneous-write race, which is narrow and not the scenario described.",
+      "after": "The two-tab scenario does not happen.\n\nstate.commit (engine/write/commit.js:7) loads the current record fresh on every POST. It applies only that page's patch to it.\n\nSo tab B's Transport save merges onto the stored fulfilment, which already includes tab A's Origin change. It does not overwrite it with a stale copy.\n\nAlso, replaceJourneyFulfilment prefers the same-request memo (journey.js:147-150). So notification saves send the freshly loaded version, not the tab's rendered token. They would not reject this case either.\n\nWhat the template port drops is protection against a true simultaneous-write race. That is narrow, and not the scenario described."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "killed: Check-answers reaches into the templates feature folder",
+      "field": "refutation",
+      "before": "Cross-feature imports between sibling feature folders were already common before the merge. At HEAD^1, check-answers imports from ../addresses and ../documents, hub and notification-actions import from ../check-answers, declaration imports ../check-answers/refusal.js, contact imports ../addresses, and dashboard imports ../origin/page.js. Sam's 'feature folders independent by design' ruling forbids extracting shared controllers to remove duplication. It does not ban one feature importing a helper from another. The new imports follow the existing pattern, so this does not break a house rule the merge introduced.",
+      "after": "Cross-feature imports between sibling feature folders were already common before the merge. At HEAD^1:\n\n- check-answers imports from ../addresses and ../documents\n- hub and notification-actions import from ../check-answers\n- declaration imports ../check-answers/refusal.js\n- contact imports ../addresses\n- dashboard imports ../origin/page.js\n\nSam's 'feature folders independent by design' ruling forbids extracting shared controllers to remove duplication. It does not ban one feature importing a helper from another.\n\nThe new imports follow the existing pattern. So this does not break a house rule the merge introduced."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "killed: Germinal template's Use template button does nothing visible",
+      "field": "refutation",
+      "before": "A germinal template cannot be created today. INS does offer Germinal products in template mode and hands over to /templates/new?type=germinal-products. But template-name/controller.js newPost (lines 74-77) redirects to Manage templates before templates.startFor when type is germinal-products, and namePost (lines 91-94) refuses to update an existing template to germinal. No germinal template is ever stored, so no card shows a dead Use template button. The scenario ('chooses Germinal products, saves it, then presses Use template') cannot happen. The setId check in use-template.js is defensive and is tested. Choosing Germinal does silently bounce back to the list, but that is a different, known deferral (req-1876) and not this finding.",
+      "after": "A germinal template cannot be created today.\n\nINS does offer Germinal products in template mode, and hands over to /templates/new?type=germinal-products. But in template-name/controller.js:\n\n- newPost (lines 74-77) redirects to Manage templates before templates.startFor when type is germinal-products\n- namePost (lines 91-94) refuses to update an existing template to germinal\n\nNo germinal template is ever stored. So no card shows a dead Use template button.\n\nThe scenario ('chooses Germinal products, saves it, then presses Use template') cannot happen.\n\nThe setId check in use-template.js is defensive and is tested.\n\nChoosing Germinal does silently bounce back to the list. But that is a different, known deferral (req-1876), and not this finding."
+    }
+  ]
+}

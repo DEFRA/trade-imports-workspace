@@ -7,9 +7,7 @@ const MAIN_ITEMS = [
   { label: 'Start', value: 'start' },
   { label: 'Auth', value: 'auth' },
   { label: 'Jira', value: 'jira' },
-  { label: 'GitHub', value: 'github' },
   { label: 'Confluence', value: 'confluence' },
-  { label: 'GitHub Actions', value: 'gha' },
   { label: 'Quit', value: 'quit' }
 ]
 
@@ -17,9 +15,7 @@ export const useMainMenuFeature = ({
   workspace,
   auth,
   jira,
-  github,
   confluence,
-  gha,
   docker,
   start,
   exit
@@ -31,9 +27,7 @@ export const useMainMenuFeature = ({
     if (item.value === 'start') return start.handleMainMenuSelect()
     if (item.value === 'auth') return auth.handleMainMenuSelect()
     if (item.value === 'jira') return jira.handleMainMenuSelect()
-    if (item.value === 'github') return github.handleMainMenuSelect()
     if (item.value === 'confluence') return confluence.handleMainMenuSelect()
-    if (item.value === 'gha') return gha.handleMainMenuSelect()
   }
 
   const routes = {

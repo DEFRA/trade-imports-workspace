@@ -1,0 +1,475 @@
+{
+  "source": "trace:animals-fit",
+  "structure": "Part 21, Commercial transporter details validation. Read commercial-transporter-details.fit.spec.js in full (describes: adding a commercial transporter that is not on the list, 9 tests; commercial transporter required validations, 7 tests from requiredValidations; commercial transporter format validations, 9 tests from formatValidations; form accessibility, 2 tests) and mined all 16 traces the part names: 7 required-validation traces (570c1 approval number, 3454b name, dc4d8 address line 1, c115a town or city, 5e014 postcode, eb473 email, 534b9 phone) and 9 format-validation traces (0b3fa approval number 51 chars, 2721f name 256, fc03b address line 1 256, c51b9 address line 2 256, c86a2 town 101, 0415e county 101, 4919b postcode 13, 3a710 email 255, c3183 phone 21). The trace CLI's open extracts each zip but then refuses it (TraceVersionError: trace created by a newer Playwright), so each trace was opened through tim and its extracted 1-trace.trace, 1-trace.network and test.trace were read with jq: the fills, the frame snapshot taken at the error-summary link click, the error summary, inline errors, input classes, aria-describedby and preserved values, the /transporters network calls, and the test steps. Every trace walks the same path: sign in, start a notification (origin France, commodity Felis catus, 1 animal), Transporters, Add a transporter, Commercial radio, Save and continue, land on GET /live-animals/notifications/{ref}/transporters/add/commercial, fill all nine fields with the valid transporter (one field blanked or over-long), Save and continue. The POST re-renders the form with status 200 in its error state: page title prefixed 'Error: ', a 'There is a problem' error summary above the caption with one link per error, the field's form group in error with an inline message. The test then clicks the summary link and asserts the field is focused and its value (blank or over-long) and the authorisation number are preserved. The full error-state main of trace c3183 (phone over 20) was dumped to the work folder (phone-error.html) and gives the whole form skeleton: journey strip, caption, heading, guidance banner, nine fields, fixed country, contact heading, button. Every trace shows exactly one error at a time; none drives several at once, any format rule beyond length, or a value exactly at the limit, so those are recorded as gaps.",
+  "claims": [
+    {
+      "id": "trace-animals-fit-p21-001",
+      "statement": "Choosing Commercial on the add-transporter type question and saving posts to /transporters/add, which redirects (302) to the commercial transporter form at /transporters/add/commercial.",
+      "kind": "behaviour",
+      "ref": "trace transport-fit-commercial-t-570c1-focuses-the-preserved-field-features 1-trace.network; same in c3183",
+      "quote": "POST http://localhost:3000/live-animals/notifications/GBN-AG-26-RC49GF/transporters/add 302 http://localhost:3000/live-animals/notifications/GBN-AG-26-RC49GF/transporters/add/commercial",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-002",
+      "statement": "Submitting the commercial transporter form with a validation error does not redirect: the POST to /transporters/add/commercial answers 200 and re-renders the form in its error state.",
+      "kind": "behaviour",
+      "ref": "trace transport-fit-commercial-t-570c1-focuses-the-preserved-field-features 1-trace.network; same in transport-fit-commercial-t-c3183-focuses-the-preserved-value-features",
+      "quote": "POST http://localhost:3000/live-animals/notifications/GBN-AG-26-ASFM99/transporters/add/commercial 200",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-003",
+      "statement": "In its error state the commercial transporter page's title is prefixed with 'Error: '.",
+      "kind": "copy",
+      "ref": "all 16 traces, frame snapshot at the error-summary link click (e.g. 570c1 call@4507)",
+      "quote": "Error: Add commercial transporter - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-004",
+      "statement": "The error state shows a GOV.UK error summary titled 'There is a problem'.",
+      "kind": "copy",
+      "ref": "all 16 traces, h2.govuk-error-summary__title; phone-error.html line 15",
+      "quote": "There is a problem",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-005",
+      "statement": "The error summary sits at the top of the form column, after the journey strip and before the 'Add a new transporter' caption and the heading.",
+      "kind": "behaviour",
+      "ref": "trace transport-fit-commercial-t-c3183-focuses-the-preserved-value-features call@5381 main (phone-error.html lines 5-30)",
+      "quote": "<DIV class=\"govuk-error-summary\" data-module=\"govuk-error-summary\" ... <SPAN class=\"govuk-caption-l\">Add a new transporter</SPAN>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-006",
+      "statement": "Each error summary entry is a link whose href is the id of the field in error (#approvalNumber, #nameOrOrganisationName, #addressLine1, #addressLine2, #townOrCity, #county, #postalOrZipCode, #emailAddress, #telephoneNumber).",
+      "kind": "behaviour",
+      "ref": "all 16 traces, error summary links in the snapshot at the link click",
+      "quote": "<A href=\"#telephoneNumber\">Phone number must be 20 characters or less</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-007",
+      "statement": "Clicking an error summary link moves focus to the field in error.",
+      "kind": "behaviour",
+      "ref": "all 16 traces, test step Expect \"toBeFocused\" after the summary link click (e.g. 570c1 expect@80); spec lines 291-292, 316-317",
+      "quote": "await link.click()\n      await expect(page.locator(`#${field}`)).toBeFocused()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-008",
+      "statement": "The field in error shows an inline error message, the same text as its summary link, preceded by a visually hidden 'Error:'.",
+      "kind": "copy",
+      "ref": "all 16 traces, p.govuk-error-message; phone-error.html lines 145-147",
+      "quote": "<SPAN class=\"govuk-visually-hidden\">Error:</SPAN> Phone number must be 20 characters or less",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-009",
+      "statement": "The inline error message sits between the label (and hint) and the input, and has the id <field>-error.",
+      "kind": "behaviour",
+      "ref": "trace transport-fit-commercial-t-c3183-focuses-the-preserved-value-features phone-error.html lines 138-149",
+      "quote": "<P id=\"telephoneNumber-error\" class=\"govuk-error-message\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-010",
+      "statement": "Only the form group of the field in error takes the govuk-form-group--error modifier, and only that input takes govuk-input--error; every other field renders normally.",
+      "kind": "behaviour",
+      "ref": "all 16 traces, ERROR GROUP and INPUT classes in the error snapshot",
+      "quote": "<DIV class=\"govuk-form-group govuk-form-group--error\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-011",
+      "statement": "An input in error is described by its error message through aria-describedby; the phone number input is described by both its hint and its error.",
+      "kind": "non-functional",
+      "ref": "570c1 approvalNumber described=approvalNumber-error; 534b9 and c3183 telephoneNumber described=telephoneNumber-hint telephoneNumber-error",
+      "quote": "aria-describedby=\"telephoneNumber-hint telephoneNumber-error\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-012",
+      "statement": "When the form is rejected, every value the user entered is shown back in its field, including the value that failed (blank, or the over-long text).",
+      "kind": "behaviour",
+      "ref": "all 16 traces, INPUT values in the error snapshot; test steps Expect \"toHaveValue\" (e.g. 570c1 expect@81, expect@82); spec lines 293-296, 318-321",
+      "quote": "value=\"111111111111111111111\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-013",
+      "statement": "When one field fails, the other fields keep what the user typed: in every required and format trace the transporter authorisation number comes back as UK/BELF/T2/00104115 unless it was the field in error.",
+      "kind": "behaviour",
+      "ref": "all 16 traces, approvalNumber INPUT value=UK/BELF/T2/00104115 except 570c1 and 0b3fa; spec lines 294-296",
+      "quote": "await expect(page.locator(approvalNumberInput)).toHaveValue(\n        field === 'approvalNumber' ? '' : validTransporter.approvalNumber",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-014",
+      "statement": "The transporter authorisation number is required once any other transporter detail is entered: leaving it blank shows 'Enter the transporter authorisation number', linked to #approvalNumber.",
+      "kind": "rule",
+      "ref": "trace transport-fit-commercial-t-570c1-focuses-the-preserved-field-features call@4507",
+      "quote": "Enter the transporter authorisation number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-015",
+      "statement": "The name or organisation name is required once other transporter details are entered: leaving it blank shows 'Enter a name or organisation name', linked to #nameOrOrganisationName.",
+      "kind": "rule",
+      "ref": "trace transport-fit-commercial-t-3454b-focuses-the-preserved-field-features call@5109",
+      "quote": "Enter a name or organisation name",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-016",
+      "statement": "Address line 1 is required once other transporter details are entered: leaving it blank shows 'Enter address line 1', linked to #addressLine1.",
+      "kind": "rule",
+      "ref": "trace transport-fit-commercial-t-dc4d8-focuses-the-preserved-field-features call@4109",
+      "quote": "Enter address line 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-017",
+      "statement": "Town or city is required once other transporter details are entered: leaving it blank shows 'Enter a town or city', linked to #townOrCity.",
+      "kind": "rule",
+      "ref": "trace transport-fit-commercial-t-c115a-focuses-the-preserved-field-features call@4779",
+      "quote": "Enter a town or city",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-018",
+      "statement": "Postcode or zip code is required once other transporter details are entered: leaving it blank shows 'Enter a postcode or zip code', linked to #postalOrZipCode.",
+      "kind": "rule",
+      "ref": "trace transport-fit-commercial-t-5e014-focuses-the-preserved-field-features call@4869",
+      "quote": "Enter a postcode or zip code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-019",
+      "statement": "Email address is required once other transporter details are entered: leaving it blank shows 'Enter an email address', linked to #emailAddress.",
+      "kind": "rule",
+      "ref": "trace transport-fit-commercial-t-eb473-focuses-the-preserved-field-features call@4536",
+      "quote": "Enter an email address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-020",
+      "statement": "Phone number is required once other transporter details are entered: leaving it blank shows 'Enter a phone number', linked to #telephoneNumber.",
+      "kind": "rule",
+      "ref": "trace transport-fit-commercial-t-534b9-focuses-the-preserved-field-features call@4765",
+      "quote": "Enter a phone number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-021",
+      "statement": "The required rules apply only to a partly filled record: each required trace fills every other field and blanks one, while the spec's own sibling test says a completely blank commercial transporter record is optional and saves straight to the Overview. So the form validates as all-or-nothing rather than requiring each field outright.",
+      "kind": "rule",
+      "ref": "commercial-transporter-details.fit.spec.js lines 265-272 and 284-287",
+      "quote": "a completely blank commercial transporter record is optional",
+      "confidence": "inferred",
+      "note": "The blank-record trace belongs to another part; this part's traces only show the partly filled case."
+    },
+    {
+      "id": "trace-animals-fit-p21-022",
+      "statement": "Address line 2 and county are never required: no required-validation test exists for them, and their labels say '(optional)'.",
+      "kind": "rule",
+      "ref": "spec requiredValidations lines 58-70; phone-error.html lines 86, 102",
+      "quote": "Address line 2 (optional)",
+      "confidence": "inferred"
+    },
+    {
+      "id": "trace-animals-fit-p21-023",
+      "statement": "The transporter authorisation number must be 50 characters or fewer: 51 characters shows 'Transporter authorisation number must be 50 characters or less', linked to #approvalNumber.",
+      "kind": "rule",
+      "ref": "trace transport-fit-commercial-t-0b3fa-focuses-the-preserved-value-features call@5253 (fill of 51 'A's)",
+      "quote": "Transporter authorisation number must be 50 characters or less",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-024",
+      "statement": "The name or organisation name must be 255 characters or fewer: 256 characters shows 'Name or organisation name must be 255 characters or less', linked to #nameOrOrganisationName.",
+      "kind": "rule",
+      "ref": "trace transport-fit-commercial-t-2721f-focuses-the-preserved-value-features call@4635 (fill of 256 'N's)",
+      "quote": "Name or organisation name must be 255 characters or less",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-025",
+      "statement": "Address line 1 must be 255 characters or fewer: 256 characters shows 'Address line 1 must be 255 characters or less', linked to #addressLine1.",
+      "kind": "rule",
+      "ref": "trace transport-fit-commercial-t-fc03b-focuses-the-preserved-value-features call@5237 (fill of 256 'A's)",
+      "quote": "Address line 1 must be 255 characters or less",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-026",
+      "statement": "Address line 2, though optional, must be 255 characters or fewer when given: 256 characters shows 'Address line 2 must be 255 characters or less', linked to #addressLine2.",
+      "kind": "rule",
+      "ref": "trace transport-fit-commercial-t-c51b9-focuses-the-preserved-value-features call@4237 (fill of 256 'B's)",
+      "quote": "Address line 2 must be 255 characters or less",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-027",
+      "statement": "Town or city must be 100 characters or fewer: 101 characters shows 'Town or city must be 100 characters or less', linked to #townOrCity.",
+      "kind": "rule",
+      "ref": "trace transport-fit-commercial-t-c86a2-focuses-the-preserved-value-features call@4907 (fill of 101 'T's)",
+      "quote": "Town or city must be 100 characters or less",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-028",
+      "statement": "County, though optional, must be 100 characters or fewer when given: 101 characters shows 'County must be 100 characters or less', linked to #county.",
+      "kind": "rule",
+      "ref": "trace transport-fit-commercial-t-0415e-focuses-the-preserved-value-features call@4997 (fill of 101 'C's)",
+      "quote": "County must be 100 characters or less",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-029",
+      "statement": "Postcode or zip code must be 12 characters or fewer: 13 characters shows 'Postcode or zip code must be 12 characters or less', linked to #postalOrZipCode.",
+      "kind": "rule",
+      "ref": "trace transport-fit-commercial-t-4919b-focuses-the-preserved-value-features call@4664 (fill 'PPPPPPPPPPPPP')",
+      "quote": "Postcode or zip code must be 12 characters or less",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-030",
+      "statement": "Email address must be 254 characters or fewer: a 255-character address ending @example.com shows 'Email address must be 254 characters or less', linked to #emailAddress.",
+      "kind": "rule",
+      "ref": "trace transport-fit-commercial-t-3a710-focuses-the-preserved-value-features call@4893 (fill of 255 chars)",
+      "quote": "Email address must be 254 characters or less",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-031",
+      "statement": "Phone number must be 20 characters or fewer: 21 digits shows 'Phone number must be 20 characters or less', linked to #telephoneNumber.",
+      "kind": "rule",
+      "ref": "trace transport-fit-commercial-t-c3183-focuses-the-preserved-value-features call@5381 (fill '111111111111111111111')",
+      "quote": "Phone number must be 20 characters or less",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-032",
+      "statement": "The over-long value is kept in the field after a length error, not truncated: the error snapshot holds all 51, 256, 101, 13, 255 or 21 characters typed.",
+      "kind": "behaviour",
+      "ref": "format traces 0b3fa, 2721f, fc03b, c51b9, c86a2, 0415e, 4919b, 3a710, c3183: INPUT valuelen in the error snapshot",
+      "quote": "INPUT: postalOrZipCode class=govuk-input govuk-input--width-10 govuk-input--error described=postalOrZipCode-error valuelen=13 value=PPPPPPPPPPPPP",
+      "confidence": "verbatim",
+      "note": "Quote is the jq transcription of the snapshot's input attributes."
+    },
+    {
+      "id": "trace-animals-fit-p21-033",
+      "statement": "The inputs carry no maxlength attribute, so the browser lets the user type past each limit and the server reports it.",
+      "kind": "behaviour",
+      "ref": "phone-error.html input elements lines 64-148; format traces fill over-long values that reach the server",
+      "quote": "<INPUT __playwright_value_=\"111111111111111111111\" class=\"govuk-input govuk-input--width-20 govuk-input--error\" id=\"telephoneNumber\" name=\"telephoneNumber\" type=\"tel\"",
+      "confidence": "inferred"
+    },
+    {
+      "id": "trace-animals-fit-p21-034",
+      "statement": "The form page has a journey strip above the content: a blue 'Draft' tag and the notification reference in bold.",
+      "kind": "copy",
+      "ref": "phone-error.html lines 5-11",
+      "quote": "<STRONG class=\"govuk-tag govuk-tag--blue\">\n  Draft\n</STRONG>\n\n          <SPAN class=\"govuk-body govuk-!-font-weight-bold\">GBN-AG-26-ASFM99</SPAN>",
+      "confidence": "verbatim",
+      "note": "app-journey-strip is a non-govuk class wrapping standard govuk-tag and govuk-body."
+    },
+    {
+      "id": "trace-animals-fit-p21-035",
+      "statement": "The form's caption is 'Add a new transporter' and its heading is 'Add commercial transporter'.",
+      "kind": "copy",
+      "ref": "phone-error.html lines 29-30",
+      "quote": "<SPAN class=\"govuk-caption-l\">Add a new transporter</SPAN>\n  <H1 class=\"govuk-heading-l\">Add commercial transporter</H1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-036",
+      "statement": "The error state still shows the transporter-authorisation guidance banner, titled 'Help with transporter authorisation'.",
+      "kind": "copy",
+      "ref": "phone-error.html lines 33-37",
+      "quote": "Help with transporter authorisation",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-037",
+      "statement": "The banner says a transporter must hold a valid DAERA or APHA authorisation if they meet any of three conditions: transporting live vertebrate animals in, to, from or through GB; journeys over 65 km; transporting as part of an economic (commercial) activity.",
+      "kind": "copy",
+      "ref": "phone-error.html lines 40-45",
+      "quote": "Your transporter must hold a valid transporter authorisation, issued by DAERA or APHA in the UK if they are:",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-038",
+      "statement": "The banner links to GOV.UK guidance on transporting animals in connection with an economic activity, opening in a new tab.",
+      "kind": "copy",
+      "ref": "phone-error.html line 47",
+      "quote": "Find out how to transport animals in connection with an economic activity (opens in a new tab)",
+      "confidence": "verbatim",
+      "note": "href https://www.gov.uk/guidance/animal-welfare-in-transport#transporting-animals-in-connection-with-an-economic-activity"
+    },
+    {
+      "id": "trace-animals-fit-p21-039",
+      "statement": "The banner says DAERA documents are valid in GB and EU member state documents are not.",
+      "kind": "copy",
+      "ref": "phone-error.html lines 49-50",
+      "quote": "Documents issued by DAERA are valid for use in GB.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-040",
+      "statement": "The form asks for 'Transporter authorisation number' as a two-thirds-width text input named approvalNumber.",
+      "kind": "data",
+      "ref": "phone-error.html lines 60-65",
+      "quote": "Transporter authorisation number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-041",
+      "statement": "The form asks for 'Name or organisation name' as a full-width text input with autocomplete name.",
+      "kind": "data",
+      "ref": "phone-error.html lines 68-73",
+      "quote": "Name or organisation name",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-042",
+      "statement": "The form asks for 'Address line 1' (autocomplete address-line1) and 'Address line 2 (optional)' (autocomplete address-line2) as full-width text inputs.",
+      "kind": "data",
+      "ref": "phone-error.html lines 76-89",
+      "quote": "Address line 2 (optional)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-043",
+      "statement": "The form asks for 'Town or city' (autocomplete address-level2) and 'County (optional)' as two-thirds-width text inputs.",
+      "kind": "data",
+      "ref": "phone-error.html lines 92-105",
+      "quote": "County (optional)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-044",
+      "statement": "The form asks for 'Postcode or zip code' as a width-10 text input with autocomplete postal-code.",
+      "kind": "data",
+      "ref": "phone-error.html lines 108-113",
+      "quote": "Postcode or zip code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-045",
+      "statement": "Country is a disabled select with the single option 'Northern Ireland', and a hidden field posts country=Northern Ireland in its place.",
+      "kind": "data",
+      "ref": "phone-error.html lines 117-126",
+      "quote": "<SELECT class=\"govuk-select\" id=\"country\" name=\"country\" disabled=\"\">\n    <OPTION __playwright_selected_=\"true\" value=\"Northern Ireland\" selected=\"\">Northern Ireland</OPTION>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-046",
+      "statement": "The contact fields sit under a medium heading 'Enter contact details'.",
+      "kind": "copy",
+      "ref": "phone-error.html line 128",
+      "quote": "Enter contact details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-047",
+      "statement": "The form asks for 'Email address' as an input of type email with autocomplete email.",
+      "kind": "data",
+      "ref": "phone-error.html lines 130-135",
+      "quote": "<INPUT __playwright_value_=\"movements@lough-neagh.example.com\" class=\"govuk-input\" id=\"emailAddress\" name=\"emailAddress\" type=\"email\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-048",
+      "statement": "The form asks for 'Phone number' as a width-20 input of type tel with autocomplete tel and the hint 'For international numbers include the country code'.",
+      "kind": "data",
+      "ref": "phone-error.html lines 138-148",
+      "quote": "For international numbers include the country code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-049",
+      "statement": "The form ends with a single 'Save and continue' button in a button group.",
+      "kind": "copy",
+      "ref": "phone-error.html lines 153-157",
+      "quote": "Save and continue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-050",
+      "statement": "The form posts a hidden concurrency token (0 for a new transporter) and a CSRF crumb alongside the fields.",
+      "kind": "data",
+      "ref": "phone-error.html lines 56-57",
+      "quote": "<INPUT __playwright_value_=\"0\" type=\"hidden\" name=\"concurrencyToken\" value=\"0\"></INPUT>",
+      "confidence": "verbatim",
+      "note": "The crumb value is a CSRF token: [REDACTED]."
+    },
+    {
+      "id": "trace-animals-fit-p21-051",
+      "statement": "The form uses only GOV.UK Frontend components (error summary, notification banner, text inputs, select, button) with govuk width utilities; the one non-govuk class is the app-journey-strip wrapper.",
+      "kind": "constraint",
+      "ref": "phone-error.html classes throughout",
+      "quote": "<DIV class=\"app-journey-strip govuk-!-margin-bottom-4\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-052",
+      "statement": "The form sets novalidate, so browser validation does not stop the submit and the server's messages are the ones the user sees, even for the email and tel inputs.",
+      "kind": "behaviour",
+      "ref": "phone-error.html line 55",
+      "quote": "<FORM method=\"post\" novalidate=\"\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p21-053",
+      "statement": "No trace shows more than one error at once, so the order of summary links when several fields fail, and whether every failing field is reported together, is not shown.",
+      "kind": "behaviour",
+      "ref": "all 16 traces each show exactly one summary link",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p21-054",
+      "statement": "No trace checks an email address's format (for example, a missing @); only blank and over 254 characters are driven, so whether an invalid email is rejected, and with what message, is not shown.",
+      "kind": "rule",
+      "ref": "spec formatValidations lines 80-135; traces eb473, 3a710",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p21-055",
+      "statement": "No trace checks a phone number's characters or format; only blank and over 20 characters are driven, so whether letters or symbols are rejected is not shown.",
+      "kind": "rule",
+      "ref": "spec formatValidations lines 80-135; traces 534b9, c3183",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p21-056",
+      "statement": "No trace checks a postcode's or authorisation number's format (for example, a Northern Ireland postcode or the UK/... authorisation pattern); only blank and length are driven.",
+      "kind": "rule",
+      "ref": "spec formatValidations lines 80-135; traces 570c1, 0b3fa, 5e014, 4919b",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p21-057",
+      "statement": "No trace submits a value exactly at a limit (50, 255, 100, 12, 254 or 20 characters), so whether the limit itself is accepted is inferred from the message wording ('or less'), not shown.",
+      "kind": "rule",
+      "ref": "format traces each fill limit+1 characters",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p21-058",
+      "statement": "No trace shows whether leading or trailing spaces are trimmed, or whether a field of only spaces counts as blank for the required rules.",
+      "kind": "rule",
+      "ref": "required traces each fill an empty string",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

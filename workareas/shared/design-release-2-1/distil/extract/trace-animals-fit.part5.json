@@ -1,0 +1,664 @@
+{
+  "source": "trace:animals-fit",
+  "structure": "Part 5 mined all 23 traces of origin.fit.spec.js in three describe blocks: 'origin feature' (12 tests, spec lines 106-308), 'origin country and region validation' (9 tests, lines 553-695) and 'origin internal reference validation' (2 tests, lines 728-750), plus the spec file itself for titles and assertions. Each trace zip had been unpacked into the part5 working folder (a01-a12 = origin feature in read order, v01-v09 = country and region validation, r01-r02 = internal reference validation); each folder's test title was confirmed from its 0-trace.trace before mining. For every trace the test-runner actions (test.trace), the DOM snapshots (1-trace.trace frame-snapshots, rendered with jq) and the network log (1-trace.network, including POST form bodies, status and Location) were read. No test step in any of the 23 traces recorded an error. Refs below name the trace by its zip hash (for example 'origin-f-184d5') and either the test step id (pw:api@N / expect@N) or the library snapshot call id (call@N). Pages reached, in order: dashboard /live-animals -> 'Start a new notification' POST /live-animals/notifications (302) -> origin page /live-animals/notifications/{reference}/origin ('Origin of the import', always first) -> on a valid save with a country, /commodities ('What are you importing?'); with no country, the notification hub /live-animals/notifications/{reference} ('Overview'). Also touched in passing: the hub (via Back and 'Cancel and return to overview'), the dashboard (via Back) and /notification-view ('Review your notification', only its origin rows are claimed here). Conditional surface: the region of origin code box is revealed only under 'Yes'; the fixed country prefix beside it appears only once a country value is held or submitted. Error states driven: out-of-list country, invalid region requirement option, Yes with empty code, code over 5 characters, internal reference over 58 characters; every error re-render answered HTTP 400. The country type-ahead's own behaviour (filtering, focus listing) is part 6 and is not claimed here beyond what these traces render.",
+  "claims": [
+    {
+      "id": "trace-animals-fit-p5-001",
+      "statement": "Starting a new notification from the dashboard creates the notification (POST /live-animals/notifications, 302) and lands the user straight on the origin page of that notification, whose URL carries the new notification reference.",
+      "kind": "behaviour",
+      "ref": "trace origin-f-79392 request POST /live-animals/notifications (302, Location /live-animals/notifications/GBN-AG-26-Y6BMA9/origin)",
+      "quote": "/live-animals/notifications/GBN-AG-26-Y6BMA9/origin",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-002",
+      "statement": "The origin page's heading is 'Origin of the import'.",
+      "kind": "copy",
+      "ref": "trace origin-f-184d5 call@4005 H1.govuk-heading-l; expect@34",
+      "quote": "Origin of the import",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-003",
+      "statement": "The origin page carries the section caption 'About the consignment' above its heading.",
+      "kind": "copy",
+      "ref": "trace origin-f-184d5 call@4005 span.govuk-caption-l",
+      "quote": "About the consignment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-004",
+      "statement": "The origin page's browser title is 'Origin of the import - Import notification service - GOV.UK'.",
+      "kind": "copy",
+      "ref": "trace origin-f-79392 call@4069 TITLE",
+      "quote": "Origin of the import - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-005",
+      "statement": "When the origin page is re-shown with validation errors, its browser title is prefixed with 'Error: '.",
+      "kind": "copy",
+      "ref": "trace origin-c-38d31 call@4221 TITLE (same in origin-c-e0412 call@3233, origin-c-39dec call@3610, origin-i-a8d69 call@3881, origin-c-5d4bd call@4309)",
+      "quote": "Error: Origin of the import - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-006",
+      "statement": "A journey strip above the caption shows a 'Draft' status tag and the notification reference on the origin page, from the very first visit, before any answer has been saved.",
+      "kind": "behaviour",
+      "ref": "trace origin-f-61877 expect@35-37; origin-f-184d5 call@4005 div.app-journey-strip",
+      "quote": "Draft GBN-AG-26-C36QSE",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-007",
+      "statement": "The journey strip is a service-specific component (class 'app-journey-strip') containing a blue GOV.UK tag ('govuk-tag govuk-tag--blue') for the status; it is outside the govuk-frontend component set and could be expressed with a standard Tag plus body text.",
+      "kind": "constraint",
+      "ref": "trace origin-f-184d5 call@4005 div.app-journey-strip.govuk-!-margin-bottom-4 > strong.govuk-tag.govuk-tag--blue",
+      "quote": "app-journey-strip govuk-!-margin-bottom-4",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-008",
+      "statement": "The notification reference has the shape 'GBN-AG-26-' followed by six upper-case letters and digits, and is minted when the notification is created.",
+      "kind": "data",
+      "ref": "trace origin-f-61877 expect@37 (EXPECTED=GBN-AG-26-P79YXY); references seen across all 23 traces",
+      "quote": "GBN-AG-26-P79YXY",
+      "confidence": "inferred",
+      "note": "Shape inferred from 23 observed references (e.g. GBN-AG-26-C36QSE, GBN-AG-26-0QAFTC); the format rule itself is not stated."
+    },
+    {
+      "id": "trace-animals-fit-p5-009",
+      "statement": "The origin page asks for the country of origin in a field labelled 'Country of origin'.",
+      "kind": "data",
+      "ref": "trace origin-f-184d5 call@4005 label[for=countryOfOrigin]; expect@36",
+      "quote": "Country of origin",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-010",
+      "statement": "The country field's hint reads 'Start typing to search for a country.'",
+      "kind": "copy",
+      "ref": "trace origin-f-184d5 expect@37; call@4005 div#countryOfOrigin-hint",
+      "quote": "Start typing to search for a country.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-011",
+      "statement": "The country field is enhanced into a type-ahead combobox (accessible-autocomplete): the visible text input keeps the id countryOfOrigin and has role combobox, while the native select is renamed countryOfOrigin-select and still submits the country code under the name countryOfOrigin.",
+      "kind": "behaviour",
+      "ref": "trace origin-f-184d5 expect@35-36; call@4005 input#countryOfOrigin role=combobox, select#countryOfOrigin-select name=countryOfOrigin",
+      "quote": "<input type=text name= id=countryOfOrigin class=autocomplete__input autocomplete__input--show-all-values ... role=combobox",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-012",
+      "statement": "The country type-ahead uses the accessible-autocomplete classes (autocomplete__wrapper, autocomplete__input--show-all-values, autocomplete__menu--inline) rather than a govuk-frontend component; govuk-frontend has no native autocomplete, so this is the standard GOV.UK pattern library add-on over a govuk-select.",
+      "kind": "constraint",
+      "ref": "trace origin-f-184d5 call@4005 div.autocomplete__wrapper",
+      "quote": "autocomplete__input autocomplete__input--show-all-values",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-013",
+      "statement": "The country type-ahead carries visually hidden assistive guidance for screen-reader and touch users.",
+      "kind": "copy",
+      "ref": "trace origin-f-184d5 call@4005 #countryOfOrigin__assistiveHint (describedby of input#countryOfOrigin)",
+      "quote": "When autocomplete results are available use up and down arrows to review and enter to select.  Touch device users, explore by touch or with swipe gestures.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-014",
+      "statement": "The country list's first option is a blank-valued placeholder 'Select a country'.",
+      "kind": "copy",
+      "ref": "trace origin-f-184d5 expect@42; call@4005 select#countryOfOrigin-select option[value='']",
+      "quote": "Select a country",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-015",
+      "statement": "The country of origin list holds 40 entries, valued by ISO country or ISO subdivision code, in this order: AT Austria, PT-20 Azores, BE Belgium, BG Bulgaria, ES-CN Canary Islands, HR Croatia, CY Cyprus, CZ Czechia, DK Denmark, EE Estonia, FI Finland, FR France, FR-GF French Guiana, DE Germany, GR Greece, FR-GP Guadeloupe, HU Hungary, IS Iceland, IE Ireland, IT Italy, LV Latvia, LI Liechtenstein, LT Lithuania, LU Luxembourg, PT-30 Madeira, MT Malta, FR-MQ Martinique, FR-YT Mayotte, NL Netherlands (the), NO Norway, PL Poland, PT Portugal, FR-LRE Reunion, RO Romania, FR-MF Saint Martin (French part), SK Slovakia, SI Slovenia, ES Spain, SE Sweden, CH Switzerland.",
+      "kind": "data",
+      "ref": "trace origin-f-184d5 call@4005 select#countryOfOrigin-select options; expect@44 (40 entries)",
+      "quote": "=Select a country | AT=Austria | PT-20=Azores | BE=Belgium | BG=Bulgaria | ES-CN=Canary Islands | HR=Croatia | CY=Cyprus | CZ=Czechia | DK=Denmark | EE=Estonia | FI=Finland | FR=France | FR-GF=French Guiana | DE=Germany | GR=Greece | FR-GP=Guadeloupe | HU=Hungary | IS=Iceland | IE=Ireland | IT=Italy | LV=Latvia | LI=Liechtenstein | LT=Lithuania | LU=Luxembourg | PT-30=Madeira | MT=Malta | FR-MQ=Martinique | FR-YT=Mayotte | NL=Netherlands (the) | NO=Norway | PL=Poland | PT=Portugal | FR-LRE=Reunion | RO=Romania | FR-MF=Saint Martin (French part) | SK=Slovakia | SI=Slovenia | ES=Spain | SE=Sweden | CH=Switzerland",
+      "confidence": "verbatim",
+      "note": "Reference data: EU/EEA/EFTA countries plus EU outermost regions (Azores, Madeira, Canary Islands, French overseas departments)."
+    },
+    {
+      "id": "trace-animals-fit-p5-016",
+      "statement": "The country list rendered on the origin page equals the captured MDM (master data management) country list for origin, so the countries come from MDM reference data rather than page copy.",
+      "kind": "integration",
+      "ref": "trace origin-f-184d5 test title 'renders the captured MDM country options and feature copy'; expect@44 toEqual originPageCountryEntries()",
+      "quote": "renders the captured MDM country options and feature copy",
+      "confidence": "inferred",
+      "note": "The MDM lookup is server-side and does not appear in the browser network log; the test compares against a captured fixture (services/_capture/fixtures.js countriesOrigin)."
+    },
+    {
+      "id": "trace-animals-fit-p5-017",
+      "statement": "The server-side call that fetches the origin country list from MDM never appears in any trace, so its endpoint, request and response shape are not evidenced by this source.",
+      "kind": "integration",
+      "ref": "1-trace.network of all 23 part 5 traces: only localhost:3000 page, form and static asset requests",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p5-018",
+      "statement": "The second question is a Yes/No radio group with the legend 'Does the consignment have a region of origin code?'.",
+      "kind": "data",
+      "ref": "trace origin-f-184d5 expect@38-40; call@4005 legend.govuk-fieldset__legend--m, inputs name=regionOfOriginCodeRequirement values yes/no",
+      "quote": "Does the consignment have a region of origin code?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-019",
+      "statement": "The region of origin code question's hint reads 'If a region of origin code is required it will be shown on your health certificate.'",
+      "kind": "copy",
+      "ref": "trace origin-f-184d5 expect@38; call@4005 div#regionOfOriginCodeRequirement-hint",
+      "quote": "If a region of origin code is required it will be shown on your health certificate.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-020",
+      "statement": "The region of origin code radios offer exactly two options, 'Yes' (value yes) and 'No' (value no), with neither selected on a new notification.",
+      "kind": "data",
+      "ref": "trace origin-f-184d5 call@4005 input#regionOfOriginCodeRequirement value=yes, input#regionOfOriginCodeRequirement-2 value=no",
+      "quote": "Yes ... No",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-021",
+      "statement": "Choosing 'Yes' reveals a conditional text box labelled 'Enter the region of origin code'; under 'No' or no answer the box stays hidden (govuk-radios__conditional--hidden).",
+      "kind": "rule",
+      "ref": "trace origin-f-184d5 call@4005 div#conditional-regionOfOriginCodeRequirement.govuk-radios__conditional--hidden; origin-f-348e9 call@3019 (Yes checked, conditional shown)",
+      "quote": "Enter the region of origin code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-022",
+      "statement": "The region of origin code box's hint reads 'Enter up to 5 characters.'",
+      "kind": "copy",
+      "ref": "trace origin-f-184d5 call@4005 div#regionOfOriginCodeSuffix-hint",
+      "quote": "Enter up to 5 characters.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-023",
+      "statement": "The region of origin code box is a fixed-width 5-character GOV.UK text input (govuk-input--width-5) named regionOfOriginCodeSuffix, with no maxlength attribute, so over-long entry is caught by server validation rather than blocked in the browser.",
+      "kind": "data",
+      "ref": "trace origin-f-184d5 call@4005 input#regionOfOriginCodeSuffix",
+      "quote": "<input type=text name=regionOfOriginCodeSuffix id=regionOfOriginCodeSuffix class=govuk-input govuk-input--width-5",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-024",
+      "statement": "Once a country is held, the region code box shows that country's code as a fixed prefix (GOV.UK input prefix, aria-hidden) beside it, so the user types only the suffix; on a new notification with no country there is no prefix.",
+      "kind": "behaviour",
+      "ref": "trace origin-f-348e9 expect@42 and call@3019 div.govuk-input__wrapper > .govuk-input__prefix 'FR' aria-hidden=true; origin-f-184d5 call@4005 (no wrapper, no prefix)",
+      "quote": "FR",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-025",
+      "statement": "The region code prefix follows whichever country the user chose: choosing Ireland gives the prefix 'IE'.",
+      "kind": "rule",
+      "ref": "trace origin-f-4b2b8 expect@42; call@4047 PREFIX IE",
+      "quote": "IE",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-026",
+      "statement": "The prefix is drawn from the server-rendered page, not live from the type-ahead: picking a country client-side before saving does not add a prefix until the page is re-rendered.",
+      "kind": "behaviour",
+      "ref": "trace origin-f-348e9 call@3011 (France typed, no prefix) vs call@3019 (after save and reload, prefix FR)",
+      "quote": "PREFIX",
+      "confidence": "inferred",
+      "note": "Inferred from the before/after snapshots; no trace shows whether a client script would add the prefix after choosing."
+    },
+    {
+      "id": "trace-animals-fit-p5-027",
+      "statement": "The third question is a text box labelled 'Your internal reference for this consignment (optional)'.",
+      "kind": "data",
+      "ref": "trace origin-f-184d5 expect@41; call@4005 label[for=internalReferenceNumber]",
+      "quote": "Your internal reference for this consignment (optional)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-028",
+      "statement": "The internal reference hint, which is the field's accessible description, reads 'Enter any internal reference you want to use to identify this consignment, or leave blank. It can be up to 58 characters.'",
+      "kind": "copy",
+      "ref": "trace origin-f-184d5 expect@41 toHaveAccessibleDescription; call@4005 div#internalReferenceNumber-hint",
+      "quote": "Enter any internal reference you want to use to identify this consignment, or leave blank. It can be up to 58 characters.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-029",
+      "statement": "The internal reference box is a three-quarters-width text input named internalReferenceNumber with no maxlength attribute.",
+      "kind": "data",
+      "ref": "trace origin-f-184d5 call@4005 input#internalReferenceNumber class=govuk-input govuk-!-width-three-quarters",
+      "quote": "<input type=text name=internalReferenceNumber id=internalReferenceNumber class=govuk-input govuk-!-width-three-quarters",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-030",
+      "statement": "All three questions on the origin page are set at the same medium size: the country label and internal reference label carry govuk-label--m and the region code legend carries govuk-fieldset__legend--m.",
+      "kind": "constraint",
+      "ref": "trace origin-f-6ac5a expect@35-37; origin-f-184d5 call@4005",
+      "quote": "<label for=countryOfOrigin class=govuk-label govuk-label--m>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-031",
+      "statement": "The region of origin code box label inside the Yes reveal is a plain govuk-label without a size modifier.",
+      "kind": "constraint",
+      "ref": "trace origin-f-184d5 call@4005 label[for=regionOfOriginCodeSuffix] class=govuk-label",
+      "quote": "<label for=regionOfOriginCodeSuffix class=govuk-label>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-032",
+      "statement": "The origin page form has a primary 'Save and continue' button.",
+      "kind": "copy",
+      "ref": "trace origin-f-184d5 call@4005 button.govuk-button[type=submit]",
+      "quote": "Save and continue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-033",
+      "statement": "The origin page form has a secondary 'Save and return to overview' button that submits exit=hub.",
+      "kind": "copy",
+      "ref": "trace origin-f-184d5 call@4005 button.govuk-button--secondary name=exit value=hub",
+      "quote": "Save and return to overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-034",
+      "statement": "No trace in this part presses 'Save and return to overview', so where it lands and whether it validates are not evidenced here.",
+      "kind": "behaviour",
+      "ref": "all 23 part 5 traces: every submit clicks form button[type=submit] .first() (Save and continue)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p5-035",
+      "statement": "The origin page has a 'Cancel and return to overview' link to the notification hub.",
+      "kind": "copy",
+      "ref": "trace origin-f-184d5 call@4005 a.govuk-link href=/live-animals/notifications/GBN-AG-26-C36QSE",
+      "quote": "Cancel and return to overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-036",
+      "statement": "'Cancel and return to overview' takes the user to the notification hub ('Overview') even on a notification with no answers.",
+      "kind": "behaviour",
+      "ref": "trace origin-f-1b5d9 pw:api@35, expect@36; call@4077 (Overview)",
+      "quote": "Cancel and return to overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-037",
+      "statement": "While the notification has no saved answers, the origin page's Back link goes to the dashboard (/live-animals).",
+      "kind": "rule",
+      "ref": "trace origin-f-d6990 pw:api@35, expect@36 (EXPECTED=/live-animals); call@3051 (dashboard 'Import notification service')",
+      "quote": "<a href=/live-animals class=govuk-back-link>Back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-038",
+      "statement": "Once the notification has saved answers, the origin page's Back link goes to the notification hub instead of the dashboard.",
+      "kind": "rule",
+      "ref": "trace origin-f-750ee pw:api@41, expect@42; call@3745 back link /live-animals/notifications/GBN-AG-26-Z65ZB0",
+      "quote": "http://localhost:3000/live-animals/notifications/GBN-AG-26-Z65ZB0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-039",
+      "statement": "An origin page re-shown with errors on a notification that has nothing saved keeps its Back link to the dashboard.",
+      "kind": "rule",
+      "ref": "trace origin-c-38d31 call@4221, origin-c-5d4bd call@4309, origin-c-e0412 call@3233: BACK /live-animals",
+      "quote": "<a href=/live-animals class=govuk-back-link>Back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-040",
+      "statement": "The origin form posts back to the same origin URL as application/x-www-form-urlencoded with fields crumb (CSRF token), concurrencyToken, countryOfOrigin, regionOfOriginCodeRequirement, regionOfOriginCodeSuffix and internalReferenceNumber.",
+      "kind": "integration",
+      "ref": "trace origin-f-79392 request POST /live-animals/notifications/GBN-AG-26-Y6BMA9/origin",
+      "quote": "countryOfOrigin=FR, regionOfOriginCodeRequirement=yes, regionOfOriginCodeSuffix=75, internalReferenceNumber=Imports456_GB",
+      "confidence": "verbatim",
+      "note": "crumb value [REDACTED]."
+    },
+    {
+      "id": "trace-animals-fit-p5-041",
+      "statement": "The form carries a hidden concurrencyToken, which read 0 on every render in these traces, including after answers had been saved.",
+      "kind": "data",
+      "ref": "trace origin-f-79392 call@4069 (after save, concurrencyToken=0); origin-f-7fabb call@3699",
+      "quote": "<input type=hidden name=concurrencyToken id= class= value=0>",
+      "confidence": "verbatim",
+      "note": "That the token does not advance after a save may matter to the reconciler; what it guards is not shown."
+    },
+    {
+      "id": "trace-animals-fit-p5-042",
+      "statement": "Saving the origin page with a country, Yes, a region code and an internal reference redirects (302) to the commodities page 'What are you importing?'.",
+      "kind": "behaviour",
+      "ref": "trace origin-f-79392 pw:api@41, expect@42; request POST .../origin 302 Location .../commodities; call@4067",
+      "quote": "What are you importing?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-043",
+      "statement": "Returning to the origin page after a save shows every saved answer: the chosen country name in the type-ahead with its code selected in the select, Yes checked, the region code, and the internal reference.",
+      "kind": "behaviour",
+      "ref": "trace origin-f-79392 expect@44-48; call@4069",
+      "quote": "#countryOfOrigin=France || SELECTED FR=France || regionOfOriginCodeRequirement=yes[checked] || regionOfOriginCodeSuffix=75 || internalReferenceNumber=Imports456_GB",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-044",
+      "statement": "An internal reference containing an underscore ('Imports456_GB') is accepted and saved unchanged.",
+      "kind": "rule",
+      "ref": "trace origin-f-79392 pw:api@40, expect@48",
+      "quote": "Imports456_GB",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-045",
+      "statement": "An internal reference punctuated with hyphens, slashes, spaces and a full stop ('ACME-2026/01 batch 2.') is accepted, saved and shown back exactly as entered.",
+      "kind": "rule",
+      "ref": "trace origin-i-29196 pw:api@38-42; request POST .../origin 302 Location .../commodities",
+      "quote": "ACME-2026/01 batch 2.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-046",
+      "statement": "A country with the region code question left unanswered saves and moves on to the commodities page, so the region code question does not block the save.",
+      "kind": "rule",
+      "ref": "trace origin-i-29196 request POST .../origin (no regionOfOriginCodeRequirement field) 302 Location .../commodities",
+      "quote": "countryOfOrigin=FR, regionOfOriginCodeSuffix=, internalReferenceNumber=ACME-2026/01 batch 2.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-047",
+      "statement": "Choosing 'No' to the region code question with a country chosen saves without asking for a code and moves on to the commodities page.",
+      "kind": "rule",
+      "ref": "trace origin-c-f5030 pw:api@38-39, expect@40; request POST .../origin 302 Location /live-animals/notifications/GBN-AG-26-KZCN55/commodities",
+      "quote": "regionOfOriginCodeRequirement=no",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-048",
+      "statement": "Changing the region code answer from Yes to No keeps the previously entered code: the hidden box is still submitted and saved, and on return the code is still in the (hidden) box with No checked.",
+      "kind": "behaviour",
+      "ref": "trace origin-f-7fabb pw:api@43-48; second POST .../origin regionOfOriginCodeSuffix=75 regionOfOriginCodeRequirement=no 302; call@3699",
+      "quote": "regionOfOriginCodeSuffix#regionOfOriginCodeSuffix=75 || regionOfOriginCodeRequirement#regionOfOriginCodeRequirement-2=no[checked]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-049",
+      "statement": "After the region code answer is changed to No, the review page still shows the region of origin code, composed as country code, hyphen, suffix ('FR-75'), beside 'Region of origin code required No'.",
+      "kind": "behaviour",
+      "ref": "trace origin-f-7fabb expect@50; call@3705 /notification-view",
+      "quote": "Region of origin code required No Region of origin code FR-75",
+      "confidence": "verbatim",
+      "note": "The page shows a code alongside 'required No'; whether that is intended is for the reconciler."
+    },
+    {
+      "id": "trace-animals-fit-p5-050",
+      "statement": "The review page lists the origin answers under '1. About the consignment' > 'Where is this consignment coming from?' with rows 'Country of origin', 'Region of origin code required', 'Region of origin code' and 'Internal reference number'; an empty internal reference shows 'Not applicable'.",
+      "kind": "copy",
+      "ref": "trace origin-f-7fabb call@3705 /notification-view main text",
+      "quote": "Where is this consignment coming from? Import details Change import details (Import details) Country of origin France Region of origin code required No Region of origin code FR-75 Internal reference number Not applicable",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-051",
+      "statement": "Saving the origin page with no country (No checked and an internal reference entered) is accepted: the save goes through and, because the next page depends on the country, the user is set down on the notification hub rather than the commodities page.",
+      "kind": "behaviour",
+      "ref": "trace origin-c-69bff pw:api@35-37, expect@38; request POST .../origin countryOfOrigin= 302 Location /live-animals/notifications/GBN-AG-26-ATC4TX",
+      "quote": "/live-animals/notifications/GBN-AG-26-ATC4TX",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-052",
+      "statement": "When the country is left unanswered, the rest of the page's answers are still saved: on return the country is blank, No is checked and the internal reference is kept.",
+      "kind": "behaviour",
+      "ref": "trace origin-c-69bff pw:api@39, expect@40-42",
+      "quote": "Imports456GB",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-053",
+      "statement": "Country of origin is mandatory for completeness but not for saving: with no country saved, the hub's origin task row 'Where is this consignment coming from?' shows 'To do', not 'Complete'.",
+      "kind": "rule",
+      "ref": "trace origin-c-706f0 expect@37-38",
+      "quote": "To do",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-054",
+      "statement": "With a country chosen and No to the region code question, the hub's origin task row 'Where is this consignment coming from?' shows 'Complete'.",
+      "kind": "rule",
+      "ref": "trace origin-f-750ee call@3749 (Overview tasklist)",
+      "quote": "Where is this consignment coming from? Complete",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-055",
+      "statement": "The origin task appears on the hub tasklist as 'Where is this consignment coming from?', first under '1. About the consignment'.",
+      "kind": "copy",
+      "ref": "trace origin-f-1b5d9 call@4077 Overview tasklist",
+      "quote": "Notification tasklist 1. About the consignment Where is this consignment coming from? To do",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-056",
+      "statement": "Submitting a country value that is not in the list is rejected with 'Select a country from the list', shown in the error summary and inline above the country field.",
+      "kind": "rule",
+      "ref": "trace origin-c-38d31 expect@38; call@4221 summary link #countryOfOrigin, span#countryOfOrigin-error",
+      "quote": "Select a country from the list",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-057",
+      "statement": "The out-of-list country summary link targets #countryOfOrigin, and clicking it focuses the country type-ahead input, which is cleared (both the visible input and the submitted select are empty).",
+      "kind": "behaviour",
+      "ref": "trace origin-c-38d31 pw:api@39, expect@40-42; call@4221 '#countryOfOrigin => Select a country from the list'",
+      "quote": "#countryOfOrigin => Select a country from the list",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-058",
+      "statement": "On the out-of-list country error, the country form group gets govuk-form-group--error, the select gets govuk-select--error, and the type-ahead input's description includes the inline error (countryOfOrigin-error).",
+      "kind": "constraint",
+      "ref": "trace origin-c-38d31 call@4221 ERROR GROUPS and input#countryOfOrigin describedby",
+      "quote": "describedby=countryOfOrigin-hint countryOfOrigin-error countryOfOrigin__assistiveHint",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-059",
+      "statement": "On the out-of-list country error the rejected value is echoed as the region code prefix ('XX') beside the hidden region code box, even though the country field itself is cleared.",
+      "kind": "behaviour",
+      "ref": "trace origin-c-38d31 call@4221 PREFIX XX aria-hidden=true; origin-c-9cac3 call@3887 PREFIX XX",
+      "quote": "PREFIX XX aria-hidden=true",
+      "confidence": "verbatim",
+      "note": "Looks like a defect: an invalid code shown as the prefix. Recorded, not resolved."
+    },
+    {
+      "id": "trace-animals-fit-p5-060",
+      "statement": "The out-of-list country case can only be reached by tampering with the submitted select: the type-ahead offers nothing outside the list.",
+      "kind": "constraint",
+      "ref": "trace origin-c-38d31 pw:api@35 Evaluate locator('select#countryOfOrigin-select') (adds option 'XX'); spec comment at origin.fit.spec.js:65-72",
+      "quote": "Nothing in the type-ahead offers a value that is not a country, so the out-of-list case is reached the only way it could be reached at all",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-061",
+      "statement": "A validation failure on the origin page re-renders the page with HTTP 400 and does not redirect.",
+      "kind": "behaviour",
+      "ref": "trace origin-c-38d31, origin-c-5d4bd, origin-c-e0412, origin-c-39dec, origin-i-a8d69: POST .../origin status 400, no Location",
+      "quote": "400",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-062",
+      "statement": "The error summary has the title 'There is a problem', is announced as an alert, and sits after the journey strip and before the caption and heading.",
+      "kind": "copy",
+      "ref": "trace origin-c-5d4bd call@4309 div.govuk-error-summary > h2.govuk-error-summary__title; tests locate it with getByRole('alert')",
+      "quote": "There is a problem",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-063",
+      "statement": "Inline error messages on the origin page carry the visually hidden prefix 'Error: ' before the message text.",
+      "kind": "copy",
+      "ref": "trace origin-c-38d31 call@4221 countryOfOrigin-error; origin-c-e0412 call@3233 regionOfOriginCodeSuffix-error",
+      "quote": "Error: Select a country from the list",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-064",
+      "statement": "Submitting a region code answer that is neither yes nor no is rejected with 'Select a valid option' in the error summary, linking to the first radio (#regionOfOriginCodeRequirement), which is focused on click; no radio is left checked and the chosen country is kept.",
+      "kind": "rule",
+      "ref": "trace origin-c-5d4bd pw:api@38-41, expect@40-44; request POST regionOfOriginCodeRequirement=not-a-real-requirement 400; call@4309",
+      "quote": "Select a valid option",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-065",
+      "statement": "The invalid region code option error appears only in the error summary: the radio group gets no inline error message and no govuk-form-group--error styling.",
+      "kind": "constraint",
+      "ref": "trace origin-c-5d4bd call@4309 (INLINE empty, ERROR GROUPS empty)",
+      "quote": "<a href=#regionOfOriginCodeRequirement class=>Select a valid option",
+      "confidence": "verbatim",
+      "note": "Departs from the GOV.UK error message pattern, which pairs each summary entry with an inline message."
+    },
+    {
+      "id": "trace-animals-fit-p5-066",
+      "statement": "Choosing Yes and leaving the region code box empty holds the user on the origin page with 'Enter the region of origin code', linked from the summary to the code box, which is focused on click; Yes stays checked and the country is kept.",
+      "kind": "rule",
+      "ref": "trace origin-c-e0412 pw:api@38-42, expect@40-45; call@3233 summary link #regionOfOriginCodeSuffix",
+      "quote": "Enter the region of origin code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-067",
+      "statement": "On the empty region code error the Yes reveal stays open, the code box's form group gets govuk-form-group--error and the box gets govuk-input--error, with the inline error 'Error: Enter the region of origin code' in its description, and the FR prefix still shown.",
+      "kind": "constraint",
+      "ref": "trace origin-c-e0412 call@3233; origin-c-eba17 call@4267",
+      "quote": "Error: Enter the region of origin code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-068",
+      "statement": "A region code of more than 5 characters (for example 'ABCDEF') is rejected with 'Region of origin code must be 5 characters or less', linked to the code box, which is focused on click and keeps the entered value; the country and Yes are kept.",
+      "kind": "rule",
+      "ref": "trace origin-c-39dec pw:api@39-42, expect@41-47; call@3610",
+      "quote": "Region of origin code must be 5 characters or less",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-069",
+      "statement": "An internal reference of more than 58 characters is rejected with 'Internal reference must be 58 characters or less', linked to the internal reference box, which is focused on click and keeps the entered value.",
+      "kind": "rule",
+      "ref": "trace origin-i-a8d69 pw:api@38-41, expect@40-43; call@3881",
+      "quote": "Internal reference must be 58 characters or less",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-070",
+      "statement": "The internal reference error marks its form group with govuk-form-group--error and the input with govuk-input--error, and adds internalReferenceNumber-error to the input's description.",
+      "kind": "constraint",
+      "ref": "trace origin-i-a8d69 call@3881",
+      "quote": "Error: Internal reference must be 58 characters or less",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-071",
+      "statement": "On a validation error, the country chosen in the same submission is shown again in the type-ahead and selected, even though nothing was saved.",
+      "kind": "behaviour",
+      "ref": "trace origin-c-39dec expect@45-46; origin-c-5d4bd expect@43; call@4309 input#countryOfOrigin value=France, option FR SELECTED",
+      "quote": "#countryOfOrigin=France",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-072",
+      "statement": "The origin page and its error states use only govuk-frontend components (header, service navigation, phase banner, back link, caption, heading, error summary, fieldset, radios with conditional reveal, input with prefix, hint, error message, buttons, footer), apart from the app-journey-strip and the accessible-autocomplete type-ahead.",
+      "kind": "constraint",
+      "ref": "trace origin-f-184d5 call@4005; origin-f-348e9 call@3019; origin-c-5d4bd call@4309 (rendered classes)",
+      "quote": "govuk-radios__conditional govuk-radios__conditional--hidden",
+      "confidence": "inferred",
+      "note": "From rendered classes in three full snapshots; a full class inventory eval was not run."
+    },
+    {
+      "id": "trace-animals-fit-p5-073",
+      "statement": "The origin page, its saved state with the region code prefix, the out-of-list country error and the empty region code error each pass an axe WCAG 2 A/AA scan with no serious or critical violations, once the known govuk-frontend conditional-reveal false positive is excluded.",
+      "kind": "non-functional",
+      "ref": "trace origin-f-3c8b5 expect@46; origin-f-de9f3 expect@53; origin-c-9cac3 expect@49; origin-c-eba17 expect@52 (all passed)",
+      "quote": "has no serious or critical axe violations",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-074",
+      "statement": "Axe reports a critical 'aria-allowed-attr' violation on every origin page state scanned: the Yes radio carries aria-expanded, which a radio role does not support; the tests filter this out as a govuk-frontend conditional-reveal false positive.",
+      "kind": "non-functional",
+      "ref": "trace origin-f-3c8b5 expect@46 (aria-expanded=\"false\"); origin-f-de9f3 expect@53 (aria-expanded=\"true\")",
+      "quote": "ARIA attribute is not allowed: aria-expanded=\"false\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-075",
+      "statement": "No trace accepts an internal reference of exactly 58 characters or a region code of exactly 5 characters, so the boundary values themselves are not proven accepted.",
+      "kind": "rule",
+      "ref": "origin-i-a8d69 (59 characters rejected); origin-c-39dec (6 characters rejected); accepted values were 'Imports456_GB', 'ACME-2026/01 batch 2.' and '75'",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p5-076",
+      "statement": "No trace shows which characters a region code may contain (only '75' accepted and 'ABCDEF' rejected for length), nor whether surrounding spaces are trimmed from the code or the internal reference.",
+      "kind": "rule",
+      "ref": "all 23 part 5 traces",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p5-077",
+      "statement": "No trace shows the origin page reached from the review page's 'Change' link, so any return-to-review routing after a change is not evidenced here.",
+      "kind": "behaviour",
+      "ref": "all 23 part 5 traces",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p5-078",
+      "statement": "The origin page with errors from more than one field at once is never driven, so the order of several summary entries is not evidenced.",
+      "kind": "rule",
+      "ref": "all 23 part 5 traces: every error state shows one summary entry",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p5-079",
+      "statement": "The dashboard reached by Back is headed 'Import notification service' and lists 'Your notifications'.",
+      "kind": "copy",
+      "ref": "trace origin-f-d6990 call@3051",
+      "quote": "Import notification service || Your notifications",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-080",
+      "statement": "The notification hub reached from the origin page is headed 'Overview', with the same Draft journey strip, and has the sections 'Your commodities' and 'Notification tasklist'.",
+      "kind": "copy",
+      "ref": "trace origin-f-750ee call@3749; origin-f-1b5d9 call@4077",
+      "quote": "Draft GBN-AG-26-0QAFTC Overview Your commodities",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p5-081",
+      "statement": "The commodities page reached after saving the origin page is headed 'What are you importing?' under the caption 'About the consignment', and its Back link goes to the notification hub.",
+      "kind": "copy",
+      "ref": "trace origin-f-79392 call@4067",
+      "quote": "About the consignment What are you importing?",
+      "confidence": "verbatim"
+    }
+  ]
+}

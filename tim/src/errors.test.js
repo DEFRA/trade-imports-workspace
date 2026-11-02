@@ -3,10 +3,10 @@ import { TimError, isTimError } from './errors.js'
 
 describe('TimError', () => {
   test('constructs with a known code and message', () => {
-    const error = new TimError('AUTH', 'Set GITHUB_TOKEN.')
+    const error = new TimError('AUTH', 'Set JIRA_TOKEN.')
     expect(error.name).toBe('TimError')
     expect(error.code).toBe('AUTH')
-    expect(error.message).toBe('Set GITHUB_TOKEN.')
+    expect(error.message).toBe('Set JIRA_TOKEN.')
   })
 
   test('preserves an optional cause', () => {

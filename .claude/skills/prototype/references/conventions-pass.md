@@ -39,8 +39,31 @@ Decide from the changed files (`git -C ~/git/defra/trade-imports-workspace/repos
   `~/git/defra/trade-imports-workspace/docs/best-practices/node/govuk-frontend.md`
   and `~/git/defra/trade-imports-workspace/docs/best-practices/gds/components.md`
   against the changed template, and the prototype's `.claude/rules/templates.md`.
+- **Anything under the release's `assets/`, its `layout.njk` or its
+  `patterns.md` changed**: do the release-pattern judgement below, then
+  the full layer 2 for any `assets/*.js`.
 - **Any other `.js` changed** (a controller, a service, `fields.js`, a
   view model, a stub, a test, a fixture script): run the full layer 2 below.
+
+### The release-pattern judgement
+
+Read `~/git/defra/trade-imports-workspace/docs/best-practices/gds/components.md`
+"Stay in the GOV.UK toolbox" and the prototype's `.claude/rules/templates.md`,
+then check each changed pattern:
+
+1. Its Sass uses GOV.UK settings and mixins (`govuk-colour()`,
+   `govuk-spacing()`, `govuk-font()`, `govuk-media-query()`), and no raw
+   pixel or colour values.
+2. Every class and hook uses the `app-<release>-` prefix, and only the pages
+   its entry lists use it.
+3. Its script only enhances a page that works with JavaScript off, and its
+   test shows both.
+4. It has a `patterns.md` entry. A `Custom` entry's `GOV.UK:` and `MoJ:`
+   lines each name a real component and why it did not fit.
+5. Its `Asked by` quote is the whole of a `mandates.md` entry's words, or
+   one whole sentence of them, with that entry's id.
+
+Any miss is NEEDS_WORK (step 5 below), even where layer 1 passed.
 
 ### The full layer 2
 

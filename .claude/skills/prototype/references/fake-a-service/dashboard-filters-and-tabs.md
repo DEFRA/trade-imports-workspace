@@ -281,7 +281,10 @@ The status words are the same as the row's status tag (`journeyStrip` in
 and the tag it matches never read differently.
 
 Log the MoJ filter look as a design gap (`design-gaps.md`) if the design shows
-it.
+it. When the designer asks for the real MoJ filter, switch its Sass on in the
+release's `assets/styles.scss` with a Switch on entry instead
+(`references/custom-pattern.md`). The server-side GET form stays the same
+either way.
 
 **At phone width** the filter form is about 1,000 pixels tall and sits above
 the tabs and results. Put the filters inside a `govukDetails` ("Filter
@@ -303,7 +306,8 @@ screen, log that as a design gap.
 
 ## Step 3: tabs
 
-**Never use the `govukTabs` macro in a release.** The GOV.UK Tabs script is
+**Never use the `govukTabs` macro in a release unless the release switches
+the Tabs script on** (see the end of this step). The GOV.UK Tabs script is
 not started in this service, but the macro still marks every panel after the
 first `govuk-tabs__panel--hidden`, and the GOV.UK styles hide those panels. So
 only the first tab's list ever shows, and the other tabs cannot be opened. In
@@ -388,6 +392,12 @@ Either way, add the design gap row (same words as
 ```text
 | dashboard | Tabs for Drafts, Submitted and Amended | Server-side tab links styled as GOV.UK tabs, one page per tab | Script tabs need the Tabs script started in the real service (`createAll(Tabs)` in `src/client/javascripts/application.js`); the real backend also needs to list by status. | <frame> |
 ```
+
+**When the designer asks for tabs that really switch** ("can the dashboard
+tabs actually work?"), use `govukTabs` with every list rendered, and switch
+the Tabs script on in the release's `assets/scripts.js` with a Switch on
+entry (`references/custom-pattern.md`). The server-side links stay the
+default for every other release.
 
 ## One form for search, sort, filters and the open tab
 

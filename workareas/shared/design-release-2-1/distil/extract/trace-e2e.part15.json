@@ -1,0 +1,1000 @@
+{
+  "source": "trace:e2e",
+  "structure": "Part 15 of trace:e2e: the INS project. Read in full the ten spec files under repos/trade-imports-ins-tests/tests/ins/e2e/features (address-book-add-handshake-guard, address-book-auth, address-book-cross-user-visibility, address-book-delete, address-book-edit, address-book-persistence, address-book, aggregated-notification, cross-service-sessions, notification-dashboard-navigation) and mined all 13 trace zips, every one passed. The `tim distil trace ... -- open` command refuses these zips (TraceVersionError: the trace was created by a newer Playwright than the viewer tim installs), so each zip was mined from its unpacked copy already in this part's working folder (part15/<hash>/, checked against `unzip -l` of the zip: same entries and byte sizes), reading actions from <n>-trace.trace, rendered DOM from the frame snapshots and the network log from <n>-trace.network with jq. Refs name a trace by its hash: 6aeac = refuses an unrecognised journey type; bf1ec = lands on the sign in page past the landing page; 98ed4 = allows signing into a page past the landing page; 1e792 = an address added by one user is visible to another; 83967 = deleting tombstones the record; f92fd = an address deleted by one user is gone for another; 31c45 = an edit replaces the whole record; ee957 = the edited address replaces the old one; 54e97 = a created address persists with its full Standard Address Block; 3c6f9 = renders the address book after signing in; 28659 = aggregated notification through the submission lifecycle; 3157d = animals, then ins, then plants keeps all three sessions; 1de58 = INS dashboard View opens the owning journey frontend. Each ref is `trace <hash> action <call id>` (a snapshot taken at that action) or `trace <hash> request <method> <path>`, or a spec file and line. Page inventory, in the order a user meets it: (1) Defra ID stub sign-in (Sign in using Government Gateway), then (2) Choose your organisation only for a user with more than one organisation; (3) INS address book landing page /address-book (always after sign-in); (4) Add address details /address-book/add; (5) Edit address details /address-book/{id}/edit; (6) Delete address /address-book/{id}/delete; each of 4-6 returns to (3) with a success banner; (7) the 404 Page not found page for an add handshake with an unknown journey type; (8) INS Dashboard / with search, sort, table and View link; (9) the animals and plants dashboards, reached only as session checks; (10) the animals journey from Start a new notification to Import notification submitted (28659 and 1de58, used as set-up for the aggregate and the dashboard hand-off; its pages are recorded only where they bear on INS); (11) the animals Review your notification read-only view at /notification-view, reached from the INS dashboard. Not reached by any trace: the address detail page /address-book/{id}, address-book search results, page 2 of either list, every validation error on add and edit, every Cancel button, a recognised add handshake, sign-out, and an organisation that should not see another's addresses; these are recorded as gaps. The aggregated notification's stored fields come from the spec's Mongo assertions (the browser trace cannot show Mongo), which held because the test passed.",
+  "claims": [
+    {
+      "id": "trace-e2e-p15-001",
+      "statement": "Every INS frontend page carries a service navigation with the service name Import notification service, linking to the INS root.",
+      "kind": "copy",
+      "ref": "trace 6aeac action call@30",
+      "quote": "Import notification service",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-002",
+      "statement": "The INS service navigation has four items in this order: Dashboard (/), Address book (/address-book), Manage account and Log out (/auth/sign-out); the current section is marked active.",
+      "kind": "behaviour",
+      "ref": "trace 3157d action call@35 (INS dashboard); trace 98ed4 action call@25 (address book section active)",
+      "quote": "Dashboard | Address book | Manage account | Log out",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-003",
+      "statement": "The Manage account item in the INS, animals and plants service navigation goes nowhere: its link is a bare #, so the account-management destination is not built.",
+      "kind": "behaviour",
+      "ref": "trace 3157d action call@35; trace 3157d action call@23; trace 3157d action call@41",
+      "quote": "<A class=\"govuk-service-navigation__link\" href=\"#\">Manage account</A>",
+      "confidence": "inferred"
+    },
+    {
+      "id": "trace-e2e-p15-004",
+      "statement": "INS frontend page titles follow the pattern '<page> | Import notification service'.",
+      "kind": "copy",
+      "ref": "page TITLE elements across traces 3c6f9, 98ed4, 31c45, 83967, 6aeac, 3157d",
+      "quote": "Address book | Import notification service; Add address details | Import notification service; Edit address details | Import notification service; Delete address | Import notification service; Dashboard | Import notification service; Page not found | Import notification service",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-005",
+      "statement": "The INS frontend shows an Alpha phase banner with a feedback-by-email link to APHAServiceDesk@apha.gov.uk.",
+      "kind": "copy",
+      "ref": "trace 3c6f9 action call@62",
+      "quote": "Alpha This is a new service. Help us improve it and give your feedback by email.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-006",
+      "statement": "The address book add handshake takes four query parameters on /address-book/add: journey-type, notification-id, fulfilment-id and handshake-token.",
+      "kind": "data",
+      "ref": "trace 6aeac action call@30",
+      "quote": "/address-book/add?journey-type=not-a-journey&notification-id=GBN-AG-26-4F7K2P&fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&handshake-token=handshake-token-value",
+      "confidence": "verbatim",
+      "note": "The handshake-token value in the trace is a test placeholder, not a credential."
+    },
+    {
+      "id": "trace-e2e-p15-007",
+      "statement": "An add handshake whose journey-type is not a recognised journey is refused with HTTP 404, by a signed-in user.",
+      "kind": "rule",
+      "ref": "trace 6aeac request GET /address-book/add?journey-type=not-a-journey...",
+      "quote": "GET 404 http://localhost:3002/address-book/add?journey-type=not-a-journey",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-008",
+      "statement": "The refusal renders the INS 404 page: heading 404, body Page not found, title Page not found | Import notification service, with the Address book navigation item active and no back link or onward link in the page body.",
+      "kind": "copy",
+      "ref": "trace 6aeac action call@30",
+      "quote": "404 Page not found",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-009",
+      "statement": "No trace shows the add handshake with a recognised journey type: what the add page shows when a journey hands off to it, and how it returns the new address to the journey, are not evidenced.",
+      "kind": "behaviour",
+      "ref": "part 15 traces (only 6aeac exercises the handshake)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p15-010",
+      "statement": "Opening /address-book/add while signed out redirects (302) to /auth/sign-in with the requested path as the redirect parameter.",
+      "kind": "behaviour",
+      "ref": "trace 98ed4 request GET /address-book/add",
+      "quote": "GET 302 http://localhost:3002/address-book/add -> http://localhost:3002/auth/sign-in?redirect=%2Faddress-book%2Fadd",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-011",
+      "statement": "Opening the address book landing page /address-book while signed out also redirects to sign in, with redirect=/address-book.",
+      "kind": "behaviour",
+      "ref": "trace 1e792 request GET /address-book (second browser context)",
+      "quote": "GET 302 http://localhost:3002/address-book -> http://localhost:3002/auth/sign-in?redirect=%2Faddress-book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-012",
+      "statement": "INS sign-in hands off to Defra ID with an OIDC authorization-code request naming serviceId trade-imports-ins-frontend, the b2c_1a_cui_cpdev_signupsigninsfi policy, scope openid offline_access, and redirect_uri /auth/sign-in-oidc on the INS frontend.",
+      "kind": "integration",
+      "ref": "trace 98ed4 request GET /auth/sign-in?redirect=%2Faddress-book%2Fadd",
+      "quote": "oauth2/v2.0/authorize?serviceId=trade-imports-ins-frontend&p=b2c_1a_cui_cpdev_signupsigninsfi&response_mode=query&client_id=test-client-id&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3002%2Fauth%2Fsign-in-oidc",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-013",
+      "statement": "A signed-out user opening a page past the address book landing page lands on the Defra ID sign-in page, headed Sign in using Government Gateway, at .../oauth2/authresp.",
+      "kind": "behaviour",
+      "ref": "trace bf1ec action call@52; trace bf1ec action call@54",
+      "quote": "Sign in using Government Gateway",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-014",
+      "statement": "The Defra ID stub sign-in page asks for a Government Gateway user ID (hint: This could be up to 12 characters.) and a Password, with a Sign in button; the user ID is posted as crn.",
+      "kind": "data",
+      "ref": "trace 98ed4 action call@11",
+      "quote": "Government Gateway user ID / This could be up to 12 characters. / Password / Sign in",
+      "confidence": "verbatim",
+      "note": "This is the stub standing in for Defra ID, not a page the INS frontend owns. The password value is never recorded."
+    },
+    {
+      "id": "trace-e2e-p15-015",
+      "statement": "The stub sign-in page also offers an I have forgotten my password link (href #) and a Help signing in details block telling the user to contact the Rural Payments Agency if they have forgotten, lost or had their CRN not recognised.",
+      "kind": "copy",
+      "ref": "trace 98ed4 action call@11",
+      "quote": "I have forgotten my password / Help signing in / Contact the Rural Payments Agency by email or phone if: you have forgotten your CRN; you have lost your CRN; your CRN is not recognised",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-016",
+      "statement": "A user with a single organisation (CRN 2100010101) passes the organisation step without a choice: the stub's /organisations redirects straight back to the service.",
+      "kind": "behaviour",
+      "ref": "trace 98ed4 request GET /organisations",
+      "quote": "GET 302 http://localhost:3007/organisations -> http://localhost:3002/auth/sign-in-oidc?code=",
+      "confidence": "inferred",
+      "note": "Inferred from the redirect with no organisations page rendered; the stub decides this, not INS."
+    },
+    {
+      "id": "trace-e2e-p15-017",
+      "statement": "After signing in, the user is returned to the page they first asked for past the landing page (/address-book/add), which renders Add address details.",
+      "kind": "behaviour",
+      "ref": "trace 98ed4 action call@23; trace 98ed4 action call@25",
+      "quote": "GET 302 http://localhost:3002/auth/sign-in-oidc?... -> http://localhost:3002/address-book/add",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-018",
+      "statement": "A user with more than one organisation (CRN 2100010102) is asked to Choose your organisation, from radios labelled with organisation name and SBI, and continues with Continue.",
+      "kind": "behaviour",
+      "ref": "trace 1e792 action call@74 (organisations page); trace 1e792 action call@82",
+      "quote": "Choose your organisation / Farms Ltd - SBI 110100102 / Gatwick Airport - SBI 110100101 / Continue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-019",
+      "statement": "The organisation page shows the paragraph Organisation above the radios and a Help signing in details block with Rural Payments Agency contact details.",
+      "kind": "copy",
+      "ref": "trace 1e792 action call@74",
+      "quote": "Organisation / Help signing in / Contact the Rural Payments Agency by email or phone.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-020",
+      "statement": "The chosen organisation is posted to the stub as sbi and carried back to INS through the OIDC callback, after which INS opens the originally requested page.",
+      "kind": "integration",
+      "ref": "trace 1e792 request POST /organisations",
+      "quote": "POST 302 http://localhost:3007/organisations -> http://localhost:3002/auth/sign-in-oidc?code=... BODY sbi=110100101",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-021",
+      "statement": "A signed-in user opening /address-book sees the Address book page with no error summary.",
+      "kind": "behaviour",
+      "ref": "trace 3c6f9 action call@66; trace 3c6f9 action call@68",
+      "quote": "Address book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-022",
+      "statement": "The address book landing page is headed Address book (extra-large heading) with the intro Manage addresses used across import and export services.",
+      "kind": "copy",
+      "ref": "trace 3c6f9 action call@62",
+      "quote": "Address book / Manage addresses used across import and export services.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-023",
+      "statement": "The address book has a search form (GET /address-book) with one search input labelled Search addresses (name q) and a Search button.",
+      "kind": "data",
+      "ref": "trace 3c6f9 action call@62",
+      "quote": "Search addresses / Search",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-024",
+      "statement": "The address book has an Add a new address button that links to /address-book/add.",
+      "kind": "behaviour",
+      "ref": "trace 3c6f9 action call@62",
+      "quote": "Add a new address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-025",
+      "statement": "Above the table the address book states which records are shown out of the total, as Showing <first>-<last> of <total>.",
+      "kind": "copy",
+      "ref": "trace 3c6f9 action call@62",
+      "quote": "Showing 1-25 of 30",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-026",
+      "statement": "The address book table has the columns Name, Address and Country, and a fourth column with a visually hidden header Action.",
+      "kind": "data",
+      "ref": "trace 3c6f9 action call@62",
+      "quote": "Name / Address / Country / Action",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-027",
+      "statement": "The Address column shows only address line 1, town or city and postcode, comma-separated: address line 2 and county are left out even when stored.",
+      "kind": "rule",
+      "ref": "trace 54e97 action call@52 (row for Persistence Test Farm created with Unit 2 and Cumbria)",
+      "quote": "1 Test Lane, Carlisle, CA1 1AA",
+      "confidence": "inferred",
+      "note": "The same record shows as 1 Test Lane, Unit 2, Carlisle, Cumbria, CA1 1AA in the animals journey's consignor picker (claim trace-e2e-p15-122)."
+    },
+    {
+      "id": "trace-e2e-p15-028",
+      "statement": "The Country column shows the country name (United Kingdom, Denmark, Ireland, Switzerland, Norway, France), not its code.",
+      "kind": "data",
+      "ref": "trace 3c6f9 action call@62",
+      "quote": "United Kingdom; Denmark; Ireland; Switzerland; Norway; France",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-029",
+      "statement": "Each address row ends with a View link to /address-book/{id}, whose accessible name adds the address name in visually hidden text.",
+      "kind": "behaviour",
+      "ref": "trace 3c6f9 action call@62",
+      "quote": "<A class=\"govuk-link\" href=\"/address-book/6ac684406bdb2fc53f12861c\">View<SPAN class=\"govuk-visually-hidden\"> Cross User Farm 1791394879819</SPAN></A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-030",
+      "statement": "The address book shows 25 addresses a page, with GOV.UK pagination: numbered page links and a Next link to ?page=2.",
+      "kind": "rule",
+      "ref": "trace 3c6f9 action call@62",
+      "quote": "1 / 2 / Next page",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-031",
+      "statement": "The address book lists the most recently added address first: a newly saved address appears in the first row.",
+      "kind": "rule",
+      "ref": "trace 54e97 action call@52; trace 3c6f9 action call@62",
+      "quote": "Persistence Test Farm 1791394881309",
+      "confidence": "inferred",
+      "note": "Rows are in descending id order in every snapshot; whether the order is by creation or by last update is not separable here (ee957 shows the renamed row first, but it was also the newest created)."
+    },
+    {
+      "id": "trace-e2e-p15-032",
+      "statement": "Adding, editing or deleting an address returns the user to the address book with a success notification banner titled Success above the heading.",
+      "kind": "behaviour",
+      "ref": "trace 54e97 action call@52; trace 31c45 action call@66; trace 83967 action call@86",
+      "quote": "Success",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-033",
+      "statement": "After adding an address the banner reads '<name> added to your address book'.",
+      "kind": "copy",
+      "ref": "trace 54e97 action call@52",
+      "quote": "Persistence Test Farm 1791394881309 added to your address book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-034",
+      "statement": "After editing an address the banner reads '<new name> updated in your address book'.",
+      "kind": "copy",
+      "ref": "trace 31c45 action call@66",
+      "quote": "Edit Test Farm 1791394880572 Renamed updated in your address book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-035",
+      "statement": "After deleting an address the banner reads '<name> deleted from your address book'.",
+      "kind": "copy",
+      "ref": "trace 83967 action call@86",
+      "quote": "Delete Test Farm 1791394878684 deleted from your address book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-036",
+      "statement": "The success banner is the standard GOV.UK notification banner, success variant, with role alert.",
+      "kind": "constraint",
+      "ref": "trace 54e97 action call@52",
+      "quote": "govuk-notification-banner govuk-notification-banner--success\" role=\"alert\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-037",
+      "statement": "The address book pages are built entirely from govuk-frontend components (table, pagination, button, notification banner, input, select, back link); the only non-govuk class seen is app-header on the header wrapper.",
+      "kind": "constraint",
+      "ref": "trace 3c6f9 action call@62; trace 98ed4 action call@25; trace 31c45 action call@38; trace 83967 action call@80",
+      "quote": "<DIV class=\"govuk-header app-header\">",
+      "confidence": "inferred"
+    },
+    {
+      "id": "trace-e2e-p15-038",
+      "statement": "The address detail page /address-book/{id}, the target of every View link and of the Back link on the edit and delete pages, is never rendered in any trace: its content is unknown.",
+      "kind": "behaviour",
+      "ref": "trace 3c6f9 action call@62 (View links); trace 31c45 action call@38 (Back link)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p15-039",
+      "statement": "Searching the address book is never driven: what Search addresses matches on, the results label for a search and the no-results state are not evidenced.",
+      "kind": "behaviour",
+      "ref": "part 15 traces",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p15-040",
+      "statement": "No trace opens page 2 of the address book or shows an empty address book.",
+      "kind": "behaviour",
+      "ref": "part 15 traces",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p15-041",
+      "statement": "The add page is headed Add address details and has no back link.",
+      "kind": "copy",
+      "ref": "trace 98ed4 action call@25",
+      "quote": "Add address details",
+      "confidence": "verbatim",
+      "note": "No back link appears above main on the add page, while the edit and delete pages have one."
+    },
+    {
+      "id": "trace-e2e-p15-042",
+      "statement": "The add form is split by two medium subheadings: Enter address details above the address fields and Enter contact details above email and phone.",
+      "kind": "copy",
+      "ref": "trace 98ed4 action call@25",
+      "quote": "Enter address details / Enter contact details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-043",
+      "statement": "The add form asks for Name or organisation name (field name), a text input with no hint.",
+      "kind": "data",
+      "ref": "trace 98ed4 action call@25; trace 54e97 action call@32",
+      "quote": "Name or organisation name",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-044",
+      "statement": "The add form asks for Address line 1 (field addressLine1).",
+      "kind": "data",
+      "ref": "trace 98ed4 action call@25; trace 54e97 action call@34",
+      "quote": "Address line 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-045",
+      "statement": "The add form asks for Address line 2, marked optional in its label (field addressLine2).",
+      "kind": "data",
+      "ref": "trace 98ed4 action call@25; trace 54e97 action call@36",
+      "quote": "Address line 2 (optional)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-046",
+      "statement": "The add form asks for Town or city (field townOrCity), in a half-width input.",
+      "kind": "data",
+      "ref": "trace 98ed4 action call@25; trace 54e97 action call@38",
+      "quote": "Town or city",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-047",
+      "statement": "The add form asks for County, marked optional in its label (field county), in a half-width input.",
+      "kind": "data",
+      "ref": "trace 98ed4 action call@25; trace 54e97 action call@40",
+      "quote": "County (optional)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-048",
+      "statement": "The add form asks for Postcode or Zip code (field postcode), in a half-width input.",
+      "kind": "data",
+      "ref": "trace 98ed4 action call@25; trace 54e97 action call@42",
+      "quote": "Postcode or Zip code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-049",
+      "statement": "The add form asks for Country from a select (field countryCode) whose first option is the placeholder Select a country and whose values are two-letter country codes.",
+      "kind": "data",
+      "ref": "trace 98ed4 action call@25; trace 54e97 action call@44",
+      "quote": "<OPTION value=\"\">Select a country</OPTION> <OPTION value=\"GB\">United Kingdom</OPTION>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-050",
+      "statement": "The Country list holds 32 countries: United Kingdom first, then 31 European countries in alphabetical order. No country outside the UK, EU, EEA and Switzerland is offered.",
+      "kind": "data",
+      "ref": "trace 98ed4 action call@25",
+      "quote": "United Kingdom, Austria, Belgium, Bulgaria, Croatia, Cyprus, Czechia, Denmark, Estonia, Finland, France, Germany, Greece, Hungary, Iceland, Ireland, Italy, Latvia, Liechtenstein, Lithuania, Luxembourg, Malta, Netherlands (the), Norway, Poland, Portugal, Romania, Slovakia, Slovenia, Spain, Sweden, Switzerland",
+      "confidence": "verbatim",
+      "note": "Option values: GB AT BE BG HR CY CZ DK EE FI FR DE GR HU IS IE IT LV LI LT LU MT NL NO PL PT RO SK SI ES SE CH. Netherlands is labelled 'Netherlands (the)'."
+    },
+    {
+      "id": "trace-e2e-p15-051",
+      "statement": "The add form asks for Email address (field email), a plain text input with autocomplete email.",
+      "kind": "data",
+      "ref": "trace 98ed4 action call@25; trace 54e97 action call@46",
+      "quote": "Email address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-052",
+      "statement": "The add form asks for Phone number (field phone) with the hint For international numbers include the country code.",
+      "kind": "data",
+      "ref": "trace 98ed4 action call@25; trace 54e97 action call@48",
+      "quote": "Phone number / For international numbers include the country code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-053",
+      "statement": "The add page offers a primary Save and continue button and a secondary Cancel and return to address book button, which submits the form with cancel=true.",
+      "kind": "copy",
+      "ref": "trace 98ed4 action call@25; trace 54e97 action call@50",
+      "quote": "Save and continue / Cancel and return to address book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-054",
+      "statement": "Saving the add form posts every field, with a CSRF crumb, to /address-book/add and redirects (302) to /address-book.",
+      "kind": "behaviour",
+      "ref": "trace 54e97 request POST /address-book/add",
+      "quote": "POST 302 http://localhost:3002/address-book/add -> http://localhost:3002/address-book BODY name=Persistence Test Farm 1791394881309&addressLine1=1 Test Lane&addressLine2=Unit 2&townOrCity=Carlisle&county=Cumbria&postcode=CA1 1AA&countryCode=GB&email=farm@example.co.uk&phone=01228 555 0101",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-055",
+      "statement": "An address can be saved with address line 2 and county left blank; the blank optional fields are posted as empty values.",
+      "kind": "rule",
+      "ref": "trace 1e792 request POST /address-book/add",
+      "quote": "addressLine2=&townOrCity=Carlisle&county=&postcode=CA1 1AA",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-056",
+      "statement": "A created address persists with its full Standard Address Block: the record written to the address book store holds the address line 2 and county the user entered.",
+      "kind": "data",
+      "ref": "repos/trade-imports-ins-tests/tests/ins/e2e/features/address-book/address-book-persistence.spec.ts:35-40 (passed in trace 54e97)",
+      "quote": "expect(doc.addressLine2).toBe(details.addressLine2); expect(doc.county).toBe(details.county);",
+      "confidence": "verbatim",
+      "note": "Store is the trade-imports-address-book database, addresses collection. The browser trace cannot show Mongo; the assertion held because the test passed."
+    },
+    {
+      "id": "trace-e2e-p15-057",
+      "statement": "The add and edit forms switch off browser validation (novalidate), so validation is server-side, but no trace submits an invalid or incomplete form: which fields are required and every error message are not evidenced.",
+      "kind": "rule",
+      "ref": "trace 98ed4 action call@25; trace 31c45 action call@38",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p15-058",
+      "statement": "No trace presses any Cancel button (add, edit or delete), so where each returns the user is not evidenced.",
+      "kind": "behaviour",
+      "ref": "part 15 traces",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p15-059",
+      "statement": "The edit page at /address-book/{id}/edit is headed Edit address details and shows every field filled with the stored values, including the optional ones.",
+      "kind": "behaviour",
+      "ref": "trace 31c45 action call@38; trace 31c45 action call@42",
+      "quote": "Edit address details / value=\"Unit 9\" / value=\"Cumbria\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-060",
+      "statement": "The edit page has a Back link to the address's detail page /address-book/{id}.",
+      "kind": "copy",
+      "ref": "trace 31c45 action call@38",
+      "quote": "<A href=\"/address-book/6ac684406bdb2fc53f12861e\" class=\"govuk-back-link\">Back</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-061",
+      "statement": "The edit form uses the same field labels as the add form but has no Enter address details or Enter contact details subheadings, and puts Phone number before Email address.",
+      "kind": "copy",
+      "ref": "trace 31c45 action call@38",
+      "quote": "Name or organisation name / Address line 1 / Address line 2 (optional) / Town or city / County (optional) / Postcode or Zip code / Country / Phone number / Email address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-062",
+      "statement": "The edit form sizes its inputs differently from the add form: two-thirds width text inputs, a width-10 postcode input and a full-width country select, against half-width town, county, postcode, phone and country on the add form.",
+      "kind": "constraint",
+      "ref": "trace 31c45 action call@38; trace 98ed4 action call@25",
+      "quote": "govuk-input govuk-!-width-two-thirds / govuk-input govuk-input--width-10 / govuk-select",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-063",
+      "statement": "The edit form's Country select preselects the stored country.",
+      "kind": "data",
+      "ref": "trace 31c45 action call@38",
+      "quote": "<OPTION value=\"GB\" selected=\"\">United Kingdom</OPTION>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-064",
+      "statement": "The edit page offers a primary Save changes button and a secondary Cancel button (cancel=true).",
+      "kind": "copy",
+      "ref": "trace 31c45 action call@38; trace 31c45 action call@62",
+      "quote": "Save changes / Cancel",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-065",
+      "statement": "Saving the edit form posts every field to /address-book/{id}/edit and redirects (302) to /address-book with the updated success banner.",
+      "kind": "behaviour",
+      "ref": "trace 31c45 request POST /address-book/6ac684406bdb2fc53f12861e/edit; trace 31c45 action call@66",
+      "quote": "POST 302 http://localhost:3002/address-book/6ac684406bdb2fc53f12861e/edit -> http://localhost:3002/address-book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-066",
+      "statement": "An edit replaces the whole record: optional fields the user clears are cleared in the store rather than keeping their old values.",
+      "kind": "rule",
+      "ref": "trace 31c45 request GET /organisation/5900001/addresses/6ac684406bdb2fc53f12861e (after save)",
+      "quote": "\"addressLine2\":\"\",\"townOrCity\":\"Carlisle\",\"county\":\"\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-067",
+      "statement": "A cleared optional field is stored as an empty string, whereas an optional field never given is stored as null.",
+      "kind": "data",
+      "ref": "trace 31c45 request GET /organisation/5900001/addresses/6ac684406bdb2fc53f12861e; trace 83967 request POST /organisation/5900001/addresses (response)",
+      "quote": "\"addressLine2\":\"\" ... \"county\":\"\" (after edit); \"addressLine2\":null ... \"county\":null (created without them)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-068",
+      "statement": "An edit keeps the record live (deleted false), keeps its createdAt and moves its modifiedAt on.",
+      "kind": "data",
+      "ref": "trace 31c45 request GET /organisation/5900001/addresses/6ac684406bdb2fc53f12861e",
+      "quote": "\"deleted\":false,\"createdAt\":\"2026-10-07T17:41:20.585Z\",\"modifiedAt\":\"2026-10-07T17:41:21.058Z\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-069",
+      "statement": "Changing only the name and saving still resubmits every other field unchanged.",
+      "kind": "behaviour",
+      "ref": "trace ee957 request POST /address-book/6ac6843f6bdb2fc53f12861b/edit",
+      "quote": "name=Relisted Holding 1791394879215&addressLine1=3 Change Lane&addressLine2=Unit 9&townOrCity=Carlisle&county=Cumbria&postcode=CA1 3CC&countryCode=GB&phone=01228 555 0104&email=edit@example.co.uk",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-070",
+      "statement": "After a rename, the address book shows a row under the new name and no row under the old name: the edit replaces the entry rather than adding one.",
+      "kind": "behaviour",
+      "ref": "trace ee957 action call@126; trace ee957 action call@128",
+      "quote": "Relisted Holding 1791394879215",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-071",
+      "statement": "The delete page at /address-book/{id}/delete is headed Delete address, with a Back link to the address's detail page.",
+      "kind": "copy",
+      "ref": "trace 83967 action call@80",
+      "quote": "Delete address / <A href=\"/address-book/6ac6843e6bdb2fc53f12861a\" class=\"govuk-back-link\">Back</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-072",
+      "statement": "The delete page asks for confirmation, naming the address in bold.",
+      "kind": "copy",
+      "ref": "trace 83967 action call@80",
+      "quote": "Are you sure you want to delete Delete Test Farm 1791394878684 from your address book?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-073",
+      "statement": "The delete page offers a warning button Yes, delete this address and a secondary Cancel button (cancel=true).",
+      "kind": "copy",
+      "ref": "trace 83967 action call@84",
+      "quote": "Yes, delete this address / Cancel",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-074",
+      "statement": "Confirming the delete posts to /address-book/{id}/delete, redirects (302) to /address-book with the deleted banner, and the address no longer has a row.",
+      "kind": "behaviour",
+      "ref": "trace 83967 request POST /address-book/6ac6843e6bdb2fc53f12861a/delete; trace 83967 action call@88",
+      "quote": "POST 302 http://localhost:3002/address-book/6ac6843e6bdb2fc53f12861a/delete -> http://localhost:3002/address-book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-075",
+      "statement": "Deleting is a tombstone, not a removal: fetching the address by id afterwards still returns it, with its name intact and deleted set to true.",
+      "kind": "rule",
+      "ref": "trace 83967 request GET /organisation/5900001/addresses/6ac6843e6bdb2fc53f12861a",
+      "quote": "\"name\":\"Delete Test Farm 1791394878684\" ... \"deleted\":true,\"createdAt\":\"2026-10-07T17:41:18.693Z\",\"modifiedAt\":\"2026-10-07T17:41:18.920Z\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-076",
+      "statement": "Tombstoned addresses are left out of the address book list and search; only the by-id lookup returns them, so a notification that references a deleted address does not dangle.",
+      "kind": "rule",
+      "ref": "repos/trade-imports-ins-tests/tests/ins/e2e/features/address-book/address-book-delete.spec.ts:27-29",
+      "quote": "The record is still there, flagged — the by-id endpoint is the only way to see it, because list and search both omit tombstones. A hard delete would 404 here and leave any notification referencing it dangling.",
+      "confidence": "verbatim",
+      "note": "The list omission is shown in the trace (call@88); the search omission is stated by the spec only, since no trace searches."
+    },
+    {
+      "id": "trace-e2e-p15-077",
+      "statement": "The address book belongs to the organisation, not the user: an address one user adds is listed for another user signed in to the same organisation.",
+      "kind": "rule",
+      "ref": "trace 1e792 action call@86",
+      "quote": "Cross User Farm 1791394879819",
+      "confidence": "verbatim",
+      "note": "Added by CRN 2100010101 (single organisation); seen by CRN 2100010102 after choosing Gatwick Airport - SBI 110100101."
+    },
+    {
+      "id": "trace-e2e-p15-078",
+      "statement": "An address one user deletes is gone from the address book of another user in the same organisation.",
+      "kind": "rule",
+      "ref": "trace f92fd action call@78",
+      "quote": "role=row[name=/Delete Cross User Farm 1791394880562/] to.have.count 0",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-079",
+      "statement": "No trace shows a user in a different organisation, so it is not evidenced that one organisation cannot see another's addresses.",
+      "kind": "rule",
+      "ref": "part 15 traces",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p15-080",
+      "statement": "The address book API is scoped by organisation in its path: POST /organisation/{organisationId}/addresses creates an address (201, Location /organisation/{organisationId}/addresses/{id}), sent with an x-api-key header and a Trade-Imports-Organisation-Id header.",
+      "kind": "integration",
+      "ref": "trace 83967 request POST /organisation/5900001/addresses",
+      "quote": "POST 201 http://localhost:8089/organisation/5900001/addresses -> http://localhost:8089/organisation/5900001/addresses/6ac6843e6bdb2fc53f12861a",
+      "confidence": "verbatim",
+      "note": "x-api-key value [REDACTED]. The call is made by the test fixture directly; the INS frontend's own calls to this API are server-side and not in the trace."
+    },
+    {
+      "id": "trace-e2e-p15-081",
+      "statement": "GET /organisation/{organisationId}/addresses/{id} returns one address, including a tombstoned one.",
+      "kind": "integration",
+      "ref": "trace 83967 request GET /organisation/5900001/addresses/6ac6843e6bdb2fc53f12861a",
+      "quote": "GET 200 http://localhost:8089/organisation/5900001/addresses/6ac6843e6bdb2fc53f12861a",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-082",
+      "statement": "A stored address (the Standard Address Block) holds id, name, addressLine1, addressLine2, townOrCity, county, postcode, countryCode, phone, email, organisationId, deleted, createdAt and modifiedAt.",
+      "kind": "data",
+      "ref": "trace 83967 request POST /organisation/5900001/addresses (response body)",
+      "quote": "{\"id\":\"6ac6843e6bdb2fc53f12861a\",\"name\":\"Delete Test Farm 1791394878684\",\"addressLine1\":\"5 Vanishing Way\",\"addressLine2\":null,\"townOrCity\":\"Carlisle\",\"county\":null,\"postcode\":\"CA1 4DD\",\"countryCode\":\"GB\",\"phone\":\"01228 555 0105\",\"email\":\"delete@example.co.uk\",\"organisationId\":\"5900001\",\"deleted\":false,\"createdAt\":\"2026-10-07T17:41:18.693402213Z\",\"modifiedAt\":\"2026-10-07T17:41:18.693402213Z\"}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-083",
+      "statement": "Addresses created through the API under organisation id 5900001 appear in the INS address book of users signed in to Gatwick Airport (SBI 110100101), so INS maps the signed-in organisation to address-book organisation 5900001.",
+      "kind": "integration",
+      "ref": "trace 83967 request POST /organisation/5900001/addresses; trace f92fd action call@78; trace 3c6f9 action call@62",
+      "quote": "\"organisationId\":\"5900001\"",
+      "confidence": "inferred",
+      "note": "How the SBI chosen at sign-in becomes organisation id 5900001 is not visible in the trace."
+    },
+    {
+      "id": "trace-e2e-p15-084",
+      "statement": "The INS frontend's own calls to the address book API (list, create, update, delete) happen server-side and none appears in the browser trace.",
+      "kind": "integration",
+      "ref": "part 15 traces (network logs of 54e97, 31c45, 83967)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p15-085",
+      "statement": "The aggregated notification trace builds a live-animals notification through the animals journey (origin, commodity, commodity details, identification, reason for import, additional details, five consignment addresses, CPH number, arrival details, transit countries, transporter, contact address, review, declaration) and submits it as GBN-AG-26-BGJNRA.",
+      "kind": "behaviour",
+      "ref": "trace 28659 actions call@54 to call@316",
+      "quote": "POST 302 http://localhost:3000/live-animals/notifications/GBN-AG-26-BGJNRA/declaration -> http://localhost:3000/live-animals/notifications/GBN-AG-26-BGJNRA/confirmation BODY concurrencyToken=17&declaration=confirmed",
+      "confidence": "verbatim",
+      "note": "The journey's pages are set-up for the INS assertions; they are recorded in full by the animals parts of this source."
+    },
+    {
+      "id": "trace-e2e-p15-086",
+      "statement": "Submitting shows a confirmation panel Import notification submitted with Your reference number and the reference.",
+      "kind": "copy",
+      "ref": "trace 28659 action call@316",
+      "quote": "Import notification submitted / Your reference number GBN-AG-26-BGJNRA",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-087",
+      "statement": "The confirmation page then lists next steps under Before the consignment is imported, Transporting the consignment, How to view or amend this notification (with Return to your dashboard and Create a new notification) and Getting help.",
+      "kind": "copy",
+      "ref": "trace 28659 action call@316",
+      "quote": "Before the consignment is imported / You still need to: upload the health certificate and any other required documents / Transporting the consignment / How to view or amend this notification / You can view or amend this notification from your dashboard and resubmit it. / Return to your dashboard / Create a new notification / Getting help",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-088",
+      "statement": "INS keeps one aggregated read-model document per notification in the trade-imports-ins-backend notifications collection, with the id Imports.Notification.GBN-AG.<reference number>.",
+      "kind": "data",
+      "ref": "repos/trade-imports-ins-tests/tests/ins/e2e/features/aggregated-notification.spec.ts:10,33",
+      "quote": "const aggregateIdFor = (referenceNumber: string): string => `Imports.Notification.GBN-AG.${referenceNumber}`;",
+      "confidence": "verbatim",
+      "note": "Asserted against Mongo by the spec; the test passed in trace 28659."
+    },
+    {
+      "id": "trace-e2e-p15-089",
+      "statement": "The aggregated document exists as soon as the notification is created (a NOTIFICATION_CREATED event fires at creation, before transport details are filled in), with status DRAFT.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-ins-tests/tests/ins/e2e/features/aggregated-notification.spec.ts:38-40",
+      "quote": "NOTIFICATION_CREATED fires immediately at creation (before transport details are filled in), so we poll for the specific fully-populated state rather than bare status=DRAFT.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-090",
+      "statement": "Before submission the aggregated document reflects the edited draft: status DRAFT, the reference number, origin country, commodity Cow, an arrival date in the future, a lastUpdated date and an aggregateVersion above 0.",
+      "kind": "data",
+      "ref": "repos/trade-imports-ins-tests/tests/ins/e2e/features/aggregated-notification.spec.ts:60-71",
+      "quote": "expect(draftDoc.status).toBe('DRAFT'); expect(draftDoc.originCountry).toBe(defaultJourneyOptions.countryCode.value); expect(draftDoc.commodity).toBe(commodityCodes.cow); expect(draftDoc.arrivalDate.getTime()).toBeGreaterThan(Date.now()); expect(draftDoc.lastUpdated).toBeInstanceOf(Date); expect(draftDoc.aggregateVersion).toBeGreaterThan(0);",
+      "confidence": "verbatim",
+      "note": "The journey posted countryOfOrigin=FR and arrivalDateAtPort=7/11/2026 (trace 28659), so originCountry is the country code."
+    },
+    {
+      "id": "trace-e2e-p15-091",
+      "statement": "The aggregated document's commodity is the common name Cow, resolved from the Bos taurus species the user picked.",
+      "kind": "data",
+      "ref": "trace 28659 request POST /live-animals/notifications/GBN-AG-26-BGJNRA/commodities; aggregated-notification.spec.ts:64-67",
+      "quote": "species=Cow|1148346",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-092",
+      "statement": "Submitting updates the same aggregated document to SUBMITTED rather than creating a second one: exactly one document exists for the notification.",
+      "kind": "rule",
+      "ref": "repos/trade-imports-ins-tests/tests/ins/e2e/features/aggregated-notification.spec.ts:80-83",
+      "quote": "Then — same document is updated to SUBMITTED (no duplicate created) ... expect(await collection.countDocuments({ _id: aggregateId })).toBe(1);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-093",
+      "statement": "After submission the aggregated document keeps the reference, origin country, commodity, future arrival date and a lastUpdated date, and its aggregateVersion is higher than the draft's.",
+      "kind": "data",
+      "ref": "repos/trade-imports-ins-tests/tests/ins/e2e/features/aggregated-notification.spec.ts:85-94",
+      "quote": "expect(submittedDoc.status).toBe('SUBMITTED'); ... expect(submittedDoc.aggregateVersion).toBeGreaterThan(draftVersion);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-094",
+      "statement": "The aggregated store is updated asynchronously from journey events: it catches up with the journey some time after each change rather than in the same request.",
+      "kind": "non-functional",
+      "ref": "repos/trade-imports-ins-tests/tests/ins/e2e/features/aggregated-notification.spec.ts:42-56,81; trace 1de58 actions call@445 to call@463",
+      "quote": "await expect.poll(() => collection.findOne({ _id: aggregateId, status: 'SUBMITTED' }), { timeout: timeouts.long }).not.toBeNull();",
+      "confidence": "inferred",
+      "note": "The spec has to poll with a long timeout, and the INS dashboard still showed DRAFT for three searches after submission (claim trace-e2e-p15-106)."
+    },
+    {
+      "id": "trace-e2e-p15-095",
+      "statement": "The INS dashboard at / is headed Dashboard.",
+      "kind": "copy",
+      "ref": "trace 3157d action call@35; trace 3157d action call@39",
+      "quote": "Dashboard",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-096",
+      "statement": "The INS dashboard has a search form (GET /) with a search input labelled Search by notification reference (field referenceNumber) and a Search button; the current sort is carried as a hidden field.",
+      "kind": "data",
+      "ref": "trace 3157d action call@35; trace 1de58 action call@441",
+      "quote": "Search by notification reference / Search",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-097",
+      "statement": "The INS dashboard has a Sort by select with four options, defaulting to Arrival date (newest first), applied with a secondary Update sort button.",
+      "kind": "data",
+      "ref": "trace 3157d action call@35",
+      "quote": "Arrival date (newest first) / Arrival date (oldest first) / Last updated (newest first) / Last updated (oldest first) / Update sort",
+      "confidence": "verbatim",
+      "note": "Values arrivalDate,desc arrivalDate,asc lastUpdated,desc lastUpdated,asc."
+    },
+    {
+      "id": "trace-e2e-p15-098",
+      "statement": "The INS dashboard shows a results label Showing <first>-<last> of <total> above the table.",
+      "kind": "copy",
+      "ref": "trace 3157d action call@35; trace 1de58 action call@445",
+      "quote": "Showing 1-25 of 178; Showing 1-1 of 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-099",
+      "statement": "After a reference search the INS dashboard shows a Clear search link back to /.",
+      "kind": "behaviour",
+      "ref": "trace 1de58 action call@445",
+      "quote": "Clear search",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-100",
+      "statement": "The INS dashboard table, captioned Notifications for screen readers only, has the columns Reference number, Status, Origin country, Commodity, Arrival date and a visually hidden Action column.",
+      "kind": "data",
+      "ref": "trace 3157d action call@35",
+      "quote": "Notifications / Reference number / Status / Origin country / Commodity / Arrival date / Action",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-101",
+      "statement": "The Status column shows the raw upper-case status code as plain text (DRAFT, AMEND, SUBMITTED), not a tag or a human-readable status.",
+      "kind": "constraint",
+      "ref": "trace 3157d action call@35; trace 1de58 action call@463",
+      "quote": "DRAFT; AMEND; SUBMITTED",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-102",
+      "statement": "Rows show origin country by name, commodity by common name and arrival date as day, short month and year.",
+      "kind": "data",
+      "ref": "trace 3157d action call@35",
+      "quote": "GBN-AG-26-P7M7MP | DRAFT | France | Cow | 7 Nov 2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-103",
+      "statement": "The INS dashboard shows 25 notifications a page with numbered pagination and a Next link.",
+      "kind": "rule",
+      "ref": "trace 3157d action call@35",
+      "quote": "1 2 3 4 5 6 7 8 / Next page",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-104",
+      "statement": "Each INS dashboard row has a View link that opens the notification in the frontend of the journey that owns it, as an absolute URL into that frontend (here the live-animals frontend).",
+      "kind": "integration",
+      "ref": "trace 3157d action call@35",
+      "quote": "<A class=\"govuk-link\" href=\"http://localhost:3000/live-animals/notifications/GBN-AG-26-P7M7MP\">View<SPAN class=\"govuk-visually-hidden\"> GBN-AG-26-P7M7MP</SPAN></A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-105",
+      "statement": "For a DRAFT or AMEND notification the View link goes to the journey's notification hub (/live-animals/notifications/{ref}); for a SUBMITTED notification it goes to the read-only view (/live-animals/notifications/{ref}/notification-view).",
+      "kind": "rule",
+      "ref": "trace 1de58 action call@445 (DRAFT); trace 1de58 action call@463 (SUBMITTED)",
+      "quote": "http://localhost:3000/live-animals/notifications/GBN-AG-26-MBZG7Z ; http://localhost:3000/live-animals/notifications/GBN-AG-26-MBZG7Z/notification-view",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-106",
+      "statement": "Straight after a notification is submitted, the INS dashboard can still show it as DRAFT with a hub link; it shows SUBMITTED with a notification-view link once the aggregated store catches up.",
+      "kind": "behaviour",
+      "ref": "trace 1de58 actions call@445, call@451, call@457 (DRAFT), call@463 (SUBMITTED)",
+      "quote": "DRAFT ... DRAFT ... DRAFT ... SUBMITTED",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-107",
+      "statement": "Opening a submitted notification from the INS dashboard lands on the animals frontend's Review your notification page for it, signed in without another sign-in.",
+      "kind": "behaviour",
+      "ref": "trace 1de58 action call@467; trace 1de58 action call@469",
+      "quote": "Review your notification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-108",
+      "statement": "That read-only view shows a green Submitted tag with the reference, Copy as new and Delete buttons, a Back link to the notification hub, and sections 1. About the consignment to 6. Contact address.",
+      "kind": "copy",
+      "ref": "trace 1de58 action call@465 (snapshot at /notification-view)",
+      "quote": "Submitted GBN-AG-26-MBZG7Z / Review your notification / Copy as new / Delete / 1. About the consignment / 2. Description of the goods / 3. Transport and arrival / 4. Documents / 5. Consignment parties / 6. Contact address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-109",
+      "statement": "Only GBN-AG (live animals) notifications appear on the INS dashboard in every trace; no plants or other journey's notification is ever listed, so the cross-journey listing and its View link to another frontend are not evidenced.",
+      "kind": "behaviour",
+      "ref": "trace 3157d action call@35",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p15-110",
+      "statement": "No trace changes the INS dashboard sort, opens its page 2, or searches for a reference that does not match.",
+      "kind": "behaviour",
+      "ref": "part 15 traces",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p15-111",
+      "statement": "Signing in to the animals frontend first means INS and then plants sign the user in without the credentials being asked for again: the Defra ID stub answers their authorize request straight away.",
+      "kind": "behaviour",
+      "ref": "trace 3157d requests GET /dcidmtest.onmicrosoft.com/oauth2/authresp (INS and plants legs)",
+      "quote": "GET 302 http://localhost:3007/dcidmtest.onmicrosoft.com/oauth2/authresp -> http://localhost:3007/organisations",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-112",
+      "statement": "Each frontend signs in with its own serviceId and its own /auth/sign-in-oidc callback: trade-imports-animals-frontend on port 3000, trade-imports-ins-frontend on 3002, trade-imports-plants-frontend on 3003.",
+      "kind": "integration",
+      "ref": "trace 3157d requests GET /auth/sign-in (three services)",
+      "quote": "serviceId=trade-imports-animals-frontend ... serviceId=trade-imports-ins-frontend ... serviceId=trade-imports-plants-frontend",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-113",
+      "statement": "Having signed in to animals, INS and plants in one browser, revisiting each dashboard opens it directly (200) with no further sign-in: all three sessions are kept.",
+      "kind": "behaviour",
+      "ref": "trace 3157d actions call@45, call@53, call@61",
+      "quote": "GET 200 http://localhost:3000/live-animals / GET 200 http://localhost:3002/ / GET 200 http://localhost:3003/high-risk-plants",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-114",
+      "statement": "Each service keeps its session in its own cookie on the shared host, so the three do not overwrite each other: sid (animals), ins-sid and ins-session (INS), plants-sid (plants), plus the identity stub's trade-imports-defra-id-stub-session; all are HttpOnly, the -sid cookies SameSite Strict and the session cookies SameSite Lax.",
+      "kind": "constraint",
+      "ref": "trace 3157d action call@69 (BrowserContext.cookies result)",
+      "quote": "crumb, sid, ins-sid, ins-session, trade-imports-defra-id-stub-session, plants-sid, session",
+      "confidence": "verbatim",
+      "note": "Which service owns the plain 'session' cookie is not shown."
+    },
+    {
+      "id": "trace-e2e-p15-115",
+      "statement": "The animals dashboard (/live-animals) shows the caption Dashboard over the heading Import notification service, and its Address book navigation item links out to the INS address book.",
+      "kind": "behaviour",
+      "ref": "trace 3157d action call@23",
+      "quote": "Dashboard / Import notification service / <A class=\"govuk-service-navigation__link\" href=\"http://localhost:3002/address-book\">Address book</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-116",
+      "statement": "The animals dashboard introduces the service as Use this service to tell the authorities about live animals you are importing.",
+      "kind": "copy",
+      "ref": "trace 3157d action call@23",
+      "quote": "Use this service to tell the authorities about live animals you are importing. You will answer a short set of questions about the consignment, then submit your notification.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-117",
+      "statement": "The plants dashboard (/high-risk-plants) shows the same caption and heading, and its Address book navigation item also links to the INS address book.",
+      "kind": "behaviour",
+      "ref": "trace 3157d action call@41",
+      "quote": "Dashboard / Import notification service / <A class=\"govuk-service-navigation__link\" href=\"http://localhost:3002/address-book\">Address book</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-118",
+      "statement": "The plants dashboard introduces the service as notifying the plant health authorities about high-risk plants, potatoes, or wood and cut trees from EU member states under the Plant Health National Notification Scheme.",
+      "kind": "copy",
+      "ref": "trace 3157d action call@41",
+      "quote": "Use this service to tell the plant health authorities about high-risk plants for planting, potatoes, or wood and cut trees you are importing from EU member states, as required by the Plant Health National Notification Scheme. You will answer a short set of questions about the consignment, then submit your notification.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-119",
+      "statement": "A plants dashboard with no notifications shows No Results and You have not started any notifications in this session.",
+      "kind": "copy",
+      "ref": "trace 3157d action call@41",
+      "quote": "No Results / You have not started any notifications in this session.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-120",
+      "statement": "The animals and INS dashboards present the same notifications differently: animals uses summary cards with a Keyword or reference filter, Showing 1 to 25 of 178 Results and Date created sort options; INS uses a table with Search by notification reference, Showing 1-25 of 178 and Last updated sort options.",
+      "kind": "copy",
+      "ref": "trace 3157d action call@23; trace 3157d action call@35",
+      "quote": "Showing 1 to 25 of 178 Results / Date created (newest to oldest) ; Showing 1-25 of 178 / Last updated (newest first)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p15-121",
+      "statement": "No trace signs out, so whether Log out in one service ends the sessions of the others is not evidenced.",
+      "kind": "behaviour",
+      "ref": "part 15 traces",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p15-122",
+      "statement": "The animals journey's consignment-party pickers choose from the same organisation address book: the party posted is the address-book record id, and the picker shows the address in full including address line 2 and county.",
+      "kind": "integration",
+      "ref": "trace 28659 request POST /live-animals/notifications/GBN-AG-26-BGJNRA/consignors/select; trace 3c6f9 action call@62; trace 1de58 action call@275",
+      "quote": "party=6ac683ef6bdb2fc53f128604 (Astra Rosales, /address-book/6ac683ef6bdb2fc53f128604); 1 Test Lane, Unit 2, Carlisle, Cumbria, CA1 1AA",
+      "confidence": "verbatim"
+    }
+  ]
+}

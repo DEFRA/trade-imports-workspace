@@ -247,6 +247,18 @@ present in the original pass:
   cards. A proper fix spans frontend, backend and ins-backend — flagged as needing a
   follow-up ticket, not yet raised.
 
+**Correction (2026-10, EUDPA-617)** — checked against animals-frontend `46a0c74f`
+(EUDPA-617 branch) and animals-backend `a9d26fc`:
+
+- **Species identity** — a submitted line is identified by its CN code plus Latin name
+  (e.g. `0102` and `Bos taurus`); no MDM species id is stored or sent. Whether GBN-AG
+  needs any further species identifier is an open question, not scheduled against any
+  ticket yet.
+- **`TradeLineItem.commonName`** and `description` send the first line's CN code (e.g.
+  `0102`) on every line, from `commodity.name`; each line also stores MDM's common name,
+  which the frontend mapper does not send. `ins-backend` displays that same code on
+  notification cards. The real names and the payload changes come with EUDPA-669.
+
 ### Disputed / likely intentional
 
 - **`*.addressId`** (all party roles) — the address-book reference id is resolved
@@ -403,7 +415,7 @@ for what was intentionally omitted. **21 leaf fields have no PIMS destination.**
 | `LogisticsLocation.urlId`/`name`/`typeCode`/`postalAddress` | Only `identifier` (port code) survives | `PimsConsignmentMapper.java:77` |
 | `LogisticsTransportMovement.identifier`/`urlId`/`transportContractRelatedReferencedDocument` | Dropped (incl. field already null by hop 2) | `PimsTransportMapper.java:18` |
 | `TransportEvent.actualOccurrenceDateTime`/`occurrenceLogisticsLocation` | Only scheduled time survives | `PimsTransportMapper.java:33` |
-| `TradeLineItem.description`/`scientificName`/`commonName`/`typeCode`/`urlId` | Dropped (moot — already null by hop 2) | `PimsLineItemMapper.java:39` |
+| `TradeLineItem.typeCode`/`urlId` | Dropped (moot — already null by hop 2). As of 2026-10-24, `description`, `scientificName` and `commonName` are no longer dropped: `PimsLineItemMapperV2` on gateway `main` (`f79add8`) passes them to PIMS v0.2.0 | `PimsLineItemMapper.java:39` |
 | `applicableClassification` beyond the first | List narrowed to a single value | `PimsLineItemMapper.java:34` |
 | `systemName`, `className` | Dropped from classification | `PimsLineItemMapper.java:50` |
 | `ProductUnitQuantity.unitCode` | Dropped — only the count survives | `PimsLineItemMapper.java:63` |

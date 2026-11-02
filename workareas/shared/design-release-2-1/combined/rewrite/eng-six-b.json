@@ -1,0 +1,369 @@
+{
+  "chunk": "eng-six-b",
+  "items": [
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "workspace-tooling-f4",
+      "field": "what",
+      "before": "Every caller of stackContainers or stackContainerIds now goes through psStackWithDocker: lease status, gate held-port checks, writeStackLogs, recordLeaseContainers. On macOS that runs `open -a Docker` and polls for up to TIM_DOCKER_START_WAIT_MS (default 5 minutes) whenever the daemon is unreachable. On a machine whose docker context is Colima or OrbStack, the daemon-unreachable stderr matches but `open -a Docker` fails. The user then sees 'Docker Desktop would not open' instead of the real cause.",
+      "after": "Every caller of stackContainers or stackContainerIds now goes through psStackWithDocker. The callers are:\n\n- lease status\n- gate held-port checks\n- writeStackLogs\n- recordLeaseContainers\n\nOn macOS, whenever the daemon is unreachable, that runs `open -a Docker`. It then polls for up to TIM_DOCKER_START_WAIT_MS (default 5 minutes).\n\nSome machines have a docker context of Colima or OrbStack. There, the daemon-unreachable stderr matches, but `open -a Docker` fails.\n\nThe user then sees 'Docker Desktop would not open' instead of the real cause."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "workspace-tooling-f4",
+      "field": "scenario",
+      "before": "Someone runs `tim docker lease status` to check who holds the stack while Docker is deliberately stopped. Docker Desktop opens and the command hangs for up to 5 minutes. withStackLogs after a red e2e rung can stall the same way.",
+      "after": "Docker is deliberately stopped. Someone runs `tim docker lease status` to check who holds the stack.\n\nDocker Desktop opens and the command hangs for up to 5 minutes.\n\nwithStackLogs can stall the same way after a red e2e rung."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "workspace-tooling-f4",
+      "field": "fix",
+      "before": "Restart Docker only on the start paths (run-stack.sh and acquire). Let status reads report 'Docker not running' as up:false with a reason. Check `docker context show` before assuming Docker Desktop.",
+      "after": "- Restart Docker only on the start paths (run-stack.sh and acquire).\n- Let status reads report 'Docker not running' as up:false with a reason.\n- Check `docker context show` before assuming Docker Desktop."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "workspace-tooling-f4",
+      "field": "verifierNote",
+      "before": "Confirmed. stackStatus → stackContainerIds → psStackWithDocker → ensureDockerRunning (docker-daemon.js:81) runs `open -a Docker` and polls for up to TIM_DOCKER_START_WAIT_MS (5 minutes by default). So `tim docker lease status`, the gate's port checks and writeStackLogs all launch Docker Desktop as a side effect of a read. The 5-minute hang happens only when Desktop opens but never answers; a normal start takes well under a minute. The Colima and OrbStack case is real but hypothetical on this team, which runs Docker Desktop. It is a design wart rather than a breaking bug. It also feeds f1, because it makes the stack read heal the daemon silently. Low.",
+      "after": "Confirmed.\n\nThe chain stackStatus → stackContainerIds → psStackWithDocker → ensureDockerRunning (docker-daemon.js:81) runs `open -a Docker`. It polls for up to TIM_DOCKER_START_WAIT_MS (5 minutes by default).\n\nSo these all launch Docker Desktop as a side effect of a read:\n\n- `tim docker lease status`\n- the gate's port checks\n- writeStackLogs\n\nThe 5-minute hang happens only when Desktop opens but never answers. A normal start takes well under a minute.\n\nThe Colima and OrbStack case is real but hypothetical on this team, which runs Docker Desktop.\n\nIt is a design wart rather than a breaking bug.\n\nIt also feeds f1, because it makes the stack read heal the daemon silently.\n\nLow."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "perf-f2",
+      "field": "what",
+      "before": "openInsDashboard calls console.warn(describeMissedPage(...)) on every failed dashboard check, on the hot path of dashboardOnlySession, addressBookSession and every journey session. Every other console call in src/k6 and src/suites runs in setup or teardown. describeMissedPage puts the full page.url in the line. The commit's own test shows this is the /auth/sign-in-oidc?code=... callback when sign-in fails.",
+      "after": "openInsDashboard calls console.warn(describeMissedPage(...)) on every failed dashboard check.\n\nThat call is on the hot path of:\n\n- dashboardOnlySession\n- addressBookSession\n- every journey session\n\nEvery other console call in src/k6 and src/suites runs in setup or teardown.\n\ndescribeMissedPage puts the full page.url in the line. The commit's own test shows this is the /auth/sign-in-oidc?code=... callback when sign-in fails."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "perf-f2",
+      "field": "scenario",
+      "before": "Defra ID or the INS session store degrades during a peak-day or spike run on CDP. Every dashboard-opening session, hundreds a minute, writes a warn line holding the authorisation code from the callback URL. The k6 log fills with near-identical lines and hides the setup and teardown summary lines. The codes end up in CDP's log store. They are short-lived and come from the stub, but it is a bad pattern to copy across to real identity providers.",
+      "after": "Defra ID or the INS session store degrades during a peak-day or spike run on CDP.\n\nEvery dashboard-opening session writes a warn line holding the authorisation code from the callback URL. That is hundreds a minute.\n\nThe k6 log fills with near-identical lines. They hide the setup and teardown summary lines.\n\nThe codes end up in CDP's log store.\n\nThey are short-lived and come from the stub. But it is a bad pattern to copy across to real identity providers."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "perf-f2",
+      "field": "fix",
+      "before": "Strip the query string before logging (pathOf in pages.js already does this). Log once per VU, or add to a Counter tagged with status and heading so the summary shows what the missed page was without one line per iteration.",
+      "after": "- Strip the query string before logging. pathOf in pages.js already does this.\n- Log once per VU, or add to a Counter tagged with status and heading. With the Counter, the summary shows what the missed page was without one line per iteration."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "perf-f2",
+      "field": "verifierNote",
+      "before": "Confirmed in src/k6/front-door.js:61-65. console.warn(describeMissedPage(...)) runs on every failed dashboard check inside openInsDashboard, which is on the per-session hot path. describeMissedPage puts in the full url, query string included, and the commit's own test case shows a /auth/sign-in-oidc?code=... URL. The reviewer is slightly overstated in saying every other console call is in setup or teardown: call-counts.js and resilience.js also log at run time. Still, nothing else logs once per iteration on a failure path. The code reaching the log has already been spent on the failed callback, and in perf it comes from the Defra ID stub, so the security risk is minimal. The flooding during a degraded run is real. Fix: strip the query with pathOf, and either log once per VU or count failures with a tagged Counter.",
+      "after": "Confirmed in src/k6/front-door.js:61-65.\n\nconsole.warn(describeMissedPage(...)) runs on every failed dashboard check inside openInsDashboard. That is on the per-session hot path.\n\ndescribeMissedPage puts in the full url, query string included. The commit's own test case shows a /auth/sign-in-oidc?code=... URL.\n\nThe reviewer is slightly overstated in saying every other console call is in setup or teardown. call-counts.js and resilience.js also log at run time.\n\nStill, nothing else logs once per iteration on a failure path.\n\nThe security risk is minimal, because:\n\n- the code reaching the log has already been spent on the failed callback\n- in perf, it comes from the Defra ID stub\n\nThe flooding during a degraded run is real.\n\nFix:\n\n- strip the query with pathOf\n- either log once per VU or count failures with a tagged Counter"
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "perf-f1",
+      "field": "what",
+      "before": "The frontend's RUN_STEPS (animals-frontend src/server/app/sets/live-animals/journeys/linear/flow/run.js) now runs origin, commodities, import-reason, consignment-details, identification, additional-details, port-of-entry, transit-countries, transporters, documents, addresses (endsRunWhenComplete), contact, notification-view. This change also removed cph-number from the run: it is reached only from its row on the addresses page. The k6 draft fixes only the first six steps. It still walks additional-details, documents, addresses, cph-number, port-of-entry, transit-countries, transporters, contact. walker.reach (src/k6/pages.js) throws away the page a save landed on when its path differs from the next step's, and opens the expected page directly. The `saved` check only tests status 200, no stale redirect and no redirect loop. So every mismatch costs a GET a real user never makes, and nothing fails. The new live-animals.test.js claims the order is 'as Design Release 2.1 orders them' but pins only names.slice(0, 6), so the wrong tail is locked in, not caught.",
+      "after": "The frontend's RUN_STEPS (animals-frontend src/server/app/sets/live-animals/journeys/linear/flow/run.js) now runs:\n\n- origin\n- commodities\n- import-reason\n- consignment-details\n- identification\n- additional-details\n- port-of-entry\n- transit-countries\n- transporters\n- documents\n- addresses (endsRunWhenComplete)\n- contact\n- notification-view\n\nThis change also removed cph-number from the run. It is reached only from its row on the addresses page.\n\nThe k6 draft fixes only the first six steps. It still walks:\n\n- additional-details\n- documents\n- addresses\n- cph-number\n- port-of-entry\n- transit-countries\n- transporters\n- contact\n\nwalker.reach (src/k6/pages.js) throws away the page a save landed on when its path differs from the next step's. It opens the expected page directly instead.\n\nThe `saved` check only tests status 200, no stale redirect and no redirect loop.\n\nSo every mismatch costs a GET a real user never makes, and nothing fails.\n\nThe new live-animals.test.js claims the order is 'as Design Release 2.1 orders them'. But it pins only names.slice(0, 6), so the wrong tail is locked in, not caught."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "perf-f1",
+      "field": "scenario",
+      "before": "A single-session live-animals notification during peak-day. (1) The additional-details save lands on /port-of-entry; k6 discards it and GETs /documents. (2) The addresses save lands on /consignment/contact/select, or on the hub when nothing is outstanding; k6 GETs /cph-number, a page the run no longer visits. (3) The cph-number save falls through nextInTaskRow back to /addresses; k6 GETs /port-of-entry. (4) The transporters save lands on /documents; k6 GETs /consignment/contact/select. That is 4 extra page renders per notification, about 2 of them new since the opening-run change. Each is counted in page_requests and run.counter. reEditUntilTarget then cuts the padding re-edits to keep pagesPerNotification, so the per-endpoint mix (documents, cph-number, port-of-entry and contact GETs up, re-edit saves down) drifts from the traffic model. Every check stays green.",
+      "after": "A single-session live-animals notification during peak-day.\n\n- (1) The additional-details save lands on /port-of-entry. k6 discards it and GETs /documents.\n- (2) The addresses save lands on /consignment/contact/select, or on the hub when nothing is outstanding. k6 GETs /cph-number, a page the run no longer visits.\n- (3) The cph-number save falls through nextInTaskRow back to /addresses. k6 GETs /port-of-entry.\n- (4) The transporters save lands on /documents. k6 GETs /consignment/contact/select.\n\nThat is 4 extra page renders per notification. About 2 of them are new since the opening-run change.\n\nEach is counted in page_requests and run.counter.\n\nreEditUntilTarget then cuts the padding re-edits to keep pagesPerNotification. So the per-endpoint mix drifts from the traffic model:\n\n- documents, cph-number, port-of-entry and contact GETs go up\n- re-edit saves go down\n\nEvery check stays green."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "perf-f1",
+      "field": "fix",
+      "before": "Reorder the draft tail to match RUN_STEPS: additional-details, port-of-entry, transit-countries, transporters, documents, addresses, contact. Model cph-number as a detour inside the addresses step: open it from the addresses page, save it, land back on addresses, then save addresses. Drop it from its own top-level slot. Change live-animals.test.js to assert the full draft order. Better still, make reach record a counter or warn (reuse describeMissedPage) when, during the opening run, it has to open a page directly instead of landing on it, so the next frontend reorder fails loudly.",
+      "after": "- Reorder the draft tail to match RUN_STEPS: additional-details, port-of-entry, transit-countries, transporters, documents, addresses, contact.\n- Model cph-number as a detour inside the addresses step. Open it from the addresses page, save it, land back on addresses, then save addresses.\n- Drop cph-number from its own top-level slot.\n- Change live-animals.test.js to assert the full draft order.\n\nBetter still, make reach record a counter or warn (reuse describeMissedPage). It should do this when, during the opening run, it has to open a page directly instead of landing on it.\n\nThe next frontend reorder then fails loudly."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "perf-f1",
+      "field": "verifierNote",
+      "before": "Confirmed on the branch. The animals-frontend diff to flow/run.js removes cphNumberPage from RUN_STEPS and adds endsRunWhenComplete on addresses. The k6 draft in src/k6/live-animals.js (lines 208-218) still walks documents, addresses, cph-number, port-of-entry, transit-countries, transporters, contact. walker.reach in src/k6/pages.js:150 keeps the landed page only when the status is 200 and the path matches. Otherwise it opens the expected path directly, and saved() only checks isSaved. Mismatches therefore cost extra GETs and nothing fails. live-animals.test.js pins only names.slice(0, 6). I am downgrading it from medium. Most of the tail mismatch was already on main, since main's frontend also ran port-of-entry before documents. The only new drift is addresses → cph-number: main's run went from addresses to cph-number, and now it goes to contact. That is about one extra direct GET per notification. Real users still open cph-number from its row on the addresses page, so it stays a real page in the mix. Thresholds and measurements are unchanged, so this is a small skew in the traffic model, not a broken measurement. The suggested fix is sound: reorder the tail, make cph-number a detour from addresses, assert the full order, and warn or count when reach falls back mid-run.",
+      "after": "Confirmed on the branch.\n\nThe animals-frontend diff to flow/run.js:\n\n- removes cphNumberPage from RUN_STEPS\n- adds endsRunWhenComplete on addresses\n\nThe k6 draft in src/k6/live-animals.js (lines 208-218) still walks documents, addresses, cph-number, port-of-entry, transit-countries, transporters, contact.\n\nwalker.reach in src/k6/pages.js:150 keeps the landed page only when the status is 200 and the path matches. Otherwise it opens the expected path directly. saved() only checks isSaved.\n\nMismatches therefore cost extra GETs and nothing fails.\n\nlive-animals.test.js pins only names.slice(0, 6).\n\nI am downgrading it from medium.\n\nMost of the tail mismatch was already on main, since main's frontend also ran port-of-entry before documents.\n\nThe only new drift is addresses → cph-number. Main's run went from addresses to cph-number, and now it goes to contact. That is about one extra direct GET per notification.\n\nReal users still open cph-number from its row on the addresses page. So it stays a real page in the mix.\n\nThresholds and measurements are unchanged. So this is a small skew in the traffic model, not a broken measurement.\n\nThe suggested fix is sound:\n\n- reorder the tail\n- make cph-number a detour from addresses\n- assert the full order\n- warn or count when reach falls back mid-run"
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "stub-ref-f3",
+      "field": "what",
+      "before": "fromTraffic matches 'Airport', 'Port' and 'Rail' exactly, ignoring case only. It does not trim, and no log or metric records a miss. PortOfEntry maps a miss to null, and PortListOrder puts null types after rail. Every observed value is one of the three, but only CDP-test MDM was captured, not production, and MDM's data is known to be messy (duplicates, 'Teestort', non-breaking spaces).",
+      "after": "fromTraffic matches 'Airport', 'Port' and 'Rail' exactly, ignoring case only.\n\nIt does not trim. No log or metric records a miss.\n\nPortOfEntry maps a miss to null. PortListOrder puts null types after rail.\n\nEvery observed value is one of the three. But only CDP-test MDM was captured, not production.\n\nMDM's data is known to be messy:\n\n- duplicates\n- 'Teestort'\n- non-breaking spaces"
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "stub-ref-f3",
+      "field": "scenario",
+      "before": "Production MDM returns traffic 'Port ' (trailing space), 'Seaport', 'Sea Port' or 'Airport/Port' for a real port. reference-data serves it with \"type\":null after Folkestone, below every rail port. A user scanning the seaports A to Z does not find it, and nothing in the logs shows that MDM's vocabulary has changed.",
+      "after": "Production MDM returns traffic 'Port ' (trailing space), 'Seaport', 'Sea Port' or 'Airport/Port' for a real port.\n\nreference-data serves it with \"type\":null after Folkestone, below every rail port.\n\nA user scanning the seaports A to Z does not find it.\n\nNothing in the logs shows that MDM's vocabulary has changed."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "stub-ref-f3",
+      "field": "fix",
+      "before": "Strip the traffic value before matching. Log a warning once per unrecognised value (code plus raw traffic) when a PortOfEntry is built, so production drift shows up. Optionally capture production or pre-production MDM traffic values before release.",
+      "after": "- Strip the traffic value before matching.\n- Log a warning once per unrecognised value (code plus raw traffic) when a PortOfEntry is built. Production drift then shows up.\n- Optionally, capture production or pre-production MDM traffic values before release."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "stub-ref-f3",
+      "field": "verifierNote",
+      "before": "Confirmed in PortType.fromTraffic (lines 41-48). It uses equalsIgnoreCase with no strip() and logs nothing on a miss. The test keepsAPortOfUnknownTypeLast pins a null type that sorts last. Every captured value matches one of the three, so the trailing-space or 'Seaport' scenario is hypothetical drift in production MDM, not a current fault. Low, and the fix is cheap (strip the value and log a warning on a miss).",
+      "after": "Confirmed in PortType.fromTraffic (lines 41-48).\n\nIt uses equalsIgnoreCase with no strip(). It logs nothing on a miss.\n\nThe test keepsAPortOfUnknownTypeLast pins a null type that sorts last.\n\nEvery captured value matches one of the three. So the trailing-space or 'Seaport' scenario is hypothetical drift in production MDM, not a current fault.\n\nLow.\n\nThe fix is cheap: strip the value and log a warning on a miss."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "stub-ref-f2",
+      "field": "what",
+      "before": "The Javadoc says blocks 'keeps the records that carry that block whatever includeCountry says, as MDM does', and carriesBlock looks only at the country-level blocks[].name. The accepted spec (stub-tidy-up-spec.md:48-49) admits a second explanation: GB may come back because of its GB-NIR subdivision bloc. GB's own 'GBNAG_SPS_EX' block name is also an inference: the jq program renamed every masked '******_EX' token. 35 other block entries have no name at all (masked), so filtering on any block other than GBNAG_SPS_EX returns []. Matching is exact and case-sensitive. Real MDM's behaviour for an unknown block, a comma-separated list or different case is unknown, but [] for an unknown block is now pinned by a test.",
+      "after": "The Javadoc says blocks 'keeps the records that carry that block whatever includeCountry says, as MDM does'.\n\ncarriesBlock looks only at the country-level blocks[].name.\n\nThe accepted spec (stub-tidy-up-spec.md:48-49) admits a second explanation. GB may come back because of its GB-NIR subdivision bloc.\n\nGB's own 'GBNAG_SPS_EX' block name is also an inference. The jq program renamed every masked '******_EX' token.\n\n35 other block entries have no name at all (masked). So filtering on any block other than GBNAG_SPS_EX returns [].\n\nMatching is exact and case-sensitive.\n\nReal MDM's behaviour is unknown for:\n\n- an unknown block\n- a comma-separated list\n- different case\n\nBut a test now pins [] for an unknown block."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "stub-ref-f2",
+      "field": "scenario",
+      "before": "A future consumer asks for blocks=EU, or for a block that a country reaches only through a subdivision bloc. The stub returns [] or a different set from real MDM, and local and CDP-dev tests pass against behaviour that production will not show. Nothing breaks today: reference-data is the only caller, it keeps only includeCountry=true and it drops GB.",
+      "after": "A future consumer asks for blocks=EU, or for a block that a country reaches only through a subdivision bloc.\n\nThe stub returns [] or a different set from real MDM.\n\nLocal and CDP-dev tests then pass against behaviour that production will not show.\n\nNothing breaks today:\n\n- reference-data is the only caller\n- it keeps only includeCountry=true\n- it drops GB"
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "stub-ref-f2",
+      "field": "fix",
+      "before": "Change the Javadoc and the 'High fidelity' doc row to say what was observed (one SPS capture) and that unnamed blocks are not filterable. Confirm the selection rule with the MDM team, or with one more capture of a block reached only through a subdivision, before relying on it.",
+      "after": "- Change the Javadoc and the 'High fidelity' doc row to say what was observed (one SPS capture). They should also say that unnamed blocks are not filterable.\n- Confirm the selection rule before relying on it. Confirm it with the MDM team, or with one more capture of a block reached only through a subdivision."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "stub-ref-f2",
+      "field": "verifierNote",
+      "before": "Confirmed. The CountriesController Javadoc (lines 28-31) says 'as MDM does'. stub-tidy-up-spec.md:48-49 itself gives a second explanation (GB could come back through its GB-NIR bloc), and line 79 says the masked block names were left out and GBNAG_SPS_EX was used for the proven entries. carriesBlock is an exact, case-sensitive match on the country-level blocks[].name only. Nothing breaks today: the only caller is reference-data, and it asks for GBNAG_SPS_EX alone (the fixture has 32 matches). The risk is the Javadoc and the fidelity row overclaiming, so low is right.",
+      "after": "Confirmed.\n\nThe CountriesController Javadoc (lines 28-31) says 'as MDM does'.\n\nstub-tidy-up-spec.md:48-49 itself gives a second explanation: GB could come back through its GB-NIR bloc.\n\nLine 79 says the masked block names were left out. It says GBNAG_SPS_EX was used for the proven entries.\n\ncarriesBlock is an exact, case-sensitive match on the country-level blocks[].name only.\n\nNothing breaks today. The only caller is reference-data, and it asks for GBNAG_SPS_EX alone (the fixture has 32 matches).\n\nThe risk is the Javadoc and the fidelity row overclaiming, so low is right."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "stub-ref-f4",
+      "field": "what",
+      "before": "The test uses @ExtendWith(MockitoExtension) with @InjectMocks on the controller and mocks MdmService, an in-process collaborator, not the HTTP boundary. docs/best-practices/java/testing/unit.md says never to use @InjectMocks and to test controllers with @WebMvcTest, and Sam's rule is to mock only at the network boundary. The edge cases (null or unknown traffic giving \"type\":null on the wire, non-breaking spaces, ties broken by code, case-insensitive matching) are proved only on Java objects, never through Feign decoding and Jackson serialisation. The WireMock IT covers six well-formed ports.",
+      "after": "The test uses @ExtendWith(MockitoExtension) with @InjectMocks on the controller.\n\nIt mocks MdmService. That is an in-process collaborator, not the HTTP boundary.\n\ndocs/best-practices/java/testing/unit.md says:\n\n- never use @InjectMocks\n- test controllers with @WebMvcTest\n\nSam's rule is to mock only at the network boundary.\n\nThese edge cases are proved only on Java objects, never through Feign decoding and Jackson serialisation:\n\n- null or unknown traffic giving \"type\":null on the wire\n- non-breaking spaces\n- ties broken by code\n- case-insensitive matching\n\nThe WireMock IT covers six well-formed ports."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "stub-ref-f4",
+      "field": "scenario",
+      "before": "Someone later adds @JsonInclude(NON_NULL), or changes PortType's @JsonValue or deserialisation. Unknown-type ports then lose their type key, or the frontend gets a different wire shape. Every unit test stays green because none of them serialises, and the IT has no unknown-traffic or missing-traffic port to catch it.",
+      "after": "Someone later adds @JsonInclude(NON_NULL), or changes PortType's @JsonValue or deserialisation.\n\nUnknown-type ports then lose their type key, or the frontend gets a different wire shape.\n\nEvery unit test stays green, because none of them serialises.\n\nThe IT has no unknown-traffic or missing-traffic port to catch it."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "stub-ref-f4",
+      "field": "fix",
+      "before": "Add a port with unknown traffic, one with no traffic and one with a non-breaking space to src/test/resources/integration/mdm-poe-response.json, and assert the order and the \"type\":null wire shape in PortsOfEntryControllerIT. Test PortListOrder and PortType directly as pure units, with no mocks, and drop the @InjectMocks controller test.",
+      "after": "- Add a port with unknown traffic, one with no traffic and one with a non-breaking space to src/test/resources/integration/mdm-poe-response.json.\n- Assert the order and the \"type\":null wire shape in PortsOfEntryControllerIT.\n- Test PortListOrder and PortType directly as pure units, with no mocks.\n- Drop the @InjectMocks controller test."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "stub-ref-f4",
+      "field": "verifierNote",
+      "before": "Confirmed. PortsOfEntryControllerTest uses @ExtendWith(MockitoExtension), @Mock MdmService and @InjectMocks on the controller. docs/best-practices/java/testing/unit.md:42 says 'Never use @InjectMocks', and the test mocks an in-process service, not the network boundary. Every edge case (unknown or null traffic, NBSP, tie on code, case) is asserted only on Java objects. None of them goes through Feign decoding or the JSON wire shape (\"type\":null). The breakage scenario is a later regression slipping through, not a present bug, so low.",
+      "after": "Confirmed.\n\nPortsOfEntryControllerTest uses @ExtendWith(MockitoExtension), @Mock MdmService and @InjectMocks on the controller.\n\ndocs/best-practices/java/testing/unit.md:42 says 'Never use @InjectMocks'.\n\nThe test mocks an in-process service, not the network boundary.\n\nEvery edge case (unknown or null traffic, NBSP, tie on code, case) is asserted only on Java objects. None of them goes through Feign decoding or the JSON wire shape (\"type\":null).\n\nThe breakage scenario is a later regression slipping through, not a present bug. So low."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "stub-ref-f1",
+      "field": "what",
+      "before": "The 256 KB countries fixture and the ports fixture can only be rebuilt from the raw masked captures by workareas/shared/design-release-2-1/mdm/regenerate/{countries,ports}.jq. `git status` shows that folder as untracked (??). The docs/repos/trade-imports-stub.md edit that names those programs and raises the stub's fidelity from 'Shape only' to 'High' is uncommitted (' M'). The plan said 'the orchestrator commits the workspace', but nothing was committed. The stub repo's own README and the commit say nothing about where the fixtures came from.",
+      "after": "The 256 KB countries fixture and the ports fixture can only be rebuilt from the raw masked captures. The programs that do this are workareas/shared/design-release-2-1/mdm/regenerate/{countries,ports}.jq.\n\n`git status` shows that folder as untracked (??).\n\nThe docs/repos/trade-imports-stub.md edit is uncommitted (' M'). That edit:\n\n- names those programs\n- raises the stub's fidelity from 'Shape only' to 'High'\n\nThe plan said 'the orchestrator commits the workspace', but nothing was committed.\n\nThe stub repo's own README and the commit say nothing about where the fixtures came from."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "stub-ref-f1",
+      "field": "scenario",
+      "before": "Someone resets or cleans the workspace checkout, or reviews only the stub PR. The jq programs are lost, and with them the only record of which masked fields were left out and which were recovered from cdp-test captures (effectiveAlias, the GBNAG_SPS_EX block names, GB MID's spaces, the townCity values). MDM changes, and nobody can regenerate the fixture the same way. The next person hand-edits 10k lines or recaptures without the masking rules.",
+      "after": "Someone resets or cleans the workspace checkout, or reviews only the stub PR.\n\nThe jq programs are lost. With them goes the only record of:\n\n- which masked fields were left out\n- which were recovered from cdp-test captures (effectiveAlias, the GBNAG_SPS_EX block names, GB MID's spaces, the townCity values)\n\nMDM changes, and nobody can regenerate the fixture the same way.\n\nThe next person hand-edits 10k lines or recaptures without the masking rules."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "stub-ref-f1",
+      "field": "fix",
+      "before": "Commit regenerate/*.jq and the stub doc edit on the workspace branch of the same name. Add one line to the stub README (or to the commit history the PR carries) pointing to the captures and the regenerate programs.",
+      "after": "- Commit regenerate/*.jq and the stub doc edit on the workspace branch of the same name.\n- Add one line to the stub README (or to the commit history the PR carries). It should point to the captures and the regenerate programs."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "stub-ref-f1",
+      "field": "verifierNote",
+      "before": "Confirmed: `git status` shows workareas/shared/design-release-2-1/mdm/regenerate/ as untracked and docs/repos/trade-imports-stub.md as modified but not staged. Nothing breaks at runtime. The fixtures are committed in the stub repo and the raw captures are tracked, so regenerating them would be harder but still possible. This is a handover task (commit the programs and the doc on the workspace branch), not a code defect, so I have lowered it to low.",
+      "after": "Confirmed. `git status` shows:\n\n- workareas/shared/design-release-2-1/mdm/regenerate/ as untracked\n- docs/repos/trade-imports-stub.md as modified but not staged\n\nNothing breaks at runtime.\n\nThe fixtures are committed in the stub repo and the raw captures are tracked. So regenerating them would be harder but still possible.\n\nThis is a handover task (commit the programs and the doc on the workspace branch), not a code defect. So I have lowered it to low."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-repo-f3",
+      "field": "what",
+      "before": "After `reviewAndSubmitButton.click()` the test immediately runs `expect(getByText('Includes unweaned animals')).toHaveCount(0)` without waiting for the review heading. The Overview never shows that text, so the assertion passes at once while the browser is still on the Overview. As written it can never fail.",
+      "after": "After `reviewAndSubmitButton.click()`, the test immediately runs `expect(getByText('Includes unweaned animals')).toHaveCount(0)`.\n\nIt does not wait for the review heading.\n\nThe Overview never shows that text. So the assertion passes at once while the browser is still on the Overview.\n\nAs written, it can never fail."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-repo-f3",
+      "field": "scenario",
+      "before": "The commodity change stops clearing the unweaned answer, so the review still shows the 'Includes unweaned animals: Yes' row. The check at line 87 runs before navigation finishes and passes on the Overview. Only the later re-open check (radios unchecked) would catch the regression, and only if the review row and the stored answer go wrong together.",
+      "after": "The commodity change stops clearing the unweaned answer. So the review still shows the 'Includes unweaned animals: Yes' row.\n\nThe check at line 87 runs before navigation finishes and passes on the Overview.\n\nOnly the later re-open check (radios unchecked) would catch the regression. It would catch it only if the review row and the stored answer go wrong together."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-repo-f3",
+      "field": "fix",
+      "before": "Wait for the review first (`await expect(animalsPages.notificationView.heading).toBeVisible()` plus a URL check for /notification-view$), then run the toHaveCount(0) check. Better still, check that the 'Additional details' card's terms are exactly the expected list.",
+      "after": "- Wait for the review first: `await expect(animalsPages.notificationView.heading).toBeVisible()` plus a URL check for /notification-view$.\n- Then run the toHaveCount(0) check.\n\nBetter still, check that the 'Additional details' card's terms are exactly the expected list."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-repo-f3",
+      "field": "verifierNote",
+      "before": "Confirmed at additional-details-scope.spec.ts:86-87. The reviewAndSubmitButton.click() is followed straight away by toHaveCount(0), with no wait for the review heading or URL. The Overview does not carry that text, so the check can pass before navigation finishes. The impact is smaller than claimed: if the stored answer were not cleared, the re-open check at :96 (Yes not checked after cattle is chosen again) would catch it. Only a regression where the review still shows the row while the stored answer is cleared would go unnoticed. Fix as suggested: wait for the review URL and heading first.",
+      "after": "Confirmed at additional-details-scope.spec.ts:86-87.\n\nThe reviewAndSubmitButton.click() is followed straight away by toHaveCount(0). There is no wait for the review heading or URL.\n\nThe Overview does not carry that text, so the check can pass before navigation finishes.\n\nThe impact is smaller than claimed. If the stored answer were not cleared, the re-open check at :96 would catch it (Yes not checked after cattle is chosen again).\n\nOnly one regression would go unnoticed: the review still shows the row while the stored answer is cleared.\n\nFix as suggested: wait for the review URL and heading first."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-repo-f5",
+      "field": "what",
+      "before": "Commit f510245 loosened the post-save check to `url.pathname !== importReason url`, 'whatever page comes next'. That let the reference-lists theme pass both with and without journey-foundation underneath. On the combined branch the destination is settled: a reason opened from its Overview task saves back to the Overview. The loose predicate is still there at destination-country-list.spec.ts:48 and :69 and port-of-exit-list.spec.ts:52. The test at :69 also no longer checks that there is no error summary.",
+      "after": "Commit f510245 loosened the post-save check to `url.pathname !== importReason url`, 'whatever page comes next'.\n\nThat let the reference-lists theme pass both with and without journey-foundation underneath.\n\nOn the combined branch, the destination is settled. A reason opened from its Overview task saves back to the Overview.\n\nThe loose predicate is still there at:\n\n- destination-country-list.spec.ts:48 and :69\n- port-of-exit-list.spec.ts:52\n\nThe test at :69 also no longer checks that there is no error summary."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-repo-f5",
+      "field": "scenario",
+      "before": "A regression makes Save and continue on Main import reason go to an error page or the wrong task. The URL changes, so the predicate passes. The test then opens the Overview itself and checks only the stored value, so the wrong navigation goes unnoticed in these specs.",
+      "after": "A regression makes Save and continue on Main import reason go to an error page or the wrong task.\n\nThe URL changes, so the predicate passes.\n\nThe test then opens the Overview itself and checks only the stored value. So the wrong navigation goes unnoticed in these specs."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-repo-f5",
+      "field": "fix",
+      "before": "Now that all themes are merged, change these to `await expect(animalsPages.overview.heading).toBeVisible()` plus the 'There is a problem' toHaveCount(0) check. That matches what reason-purpose-scope.spec.ts already asserts for the same save.",
+      "after": "All themes are now merged. So change these to `await expect(animalsPages.overview.heading).toBeVisible()` plus the 'There is a problem' toHaveCount(0) check.\n\nThat matches what reason-purpose-scope.spec.ts already asserts for the same save."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-repo-f5",
+      "field": "verifierNote",
+      "before": "Confirmed at destination-country-list.spec.ts:48 and :69 (a new file on the branch). The predicate only requires the pathname to differ from the import-reason page. A server error re-rendered at the same POST path would still fail it, so the reviewer's 'error page' example is weaker than stated. A misroute to the wrong task would pass, though, and :69 has no 'There is a problem' check. The tests' main intent (the answer is stored and re-selected) is still covered, and reason-purpose-scope.spec covers the navigation. Tightening to overview.heading plus the error-summary check is cheap now that the themes are merged.",
+      "after": "Confirmed at destination-country-list.spec.ts:48 and :69 (a new file on the branch).\n\nThe predicate only requires the pathname to differ from the import-reason page.\n\nA server error re-rendered at the same POST path would still fail it. So the reviewer's 'error page' example is weaker than stated.\n\nA misroute to the wrong task would pass, though. And :69 has no 'There is a problem' check.\n\nThe tests' main intent (the answer is stored and re-selected) is still covered. reason-purpose-scope.spec covers the navigation.\n\nTightening to overview.heading plus the error-summary check is cheap now that the themes are merged."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-repo-f6",
+      "field": "what",
+      "before": "65b6afc exists only on backup/inc-107-leaked-commit; no other branch contains it, and none of its content is on the combined branch. It adds: (1) the 'reads each saved document back on the review in its own Document card' test, using references PWA/PWB and a new 250-byte PNG; (2) a new tracked fixture resources/file-upload/safe-file-250b.png plus a `.gitignore` negation `!resources/file-upload/*.png`; (3) a rename of `PW-TXT-` to `PWTXT` in the unsupported-file-type test. Commit 02dd6bc (inc-107, on the combined branch) landed the same test with alphanumeric references PWDOCA/PWDOCB and the existing safeFile100kbJpg fixture, so items 1 and 2 are not needed. Item 3 is not needed either: the frontend's file-type check (documents/form/errors.js fileErrors) rejects the .txt before the backend's `@Pattern(^[a-zA-Z0-9]*$)` on documentReference is reached, so the hyphenated reference does not change which error appears.",
+      "after": "65b6afc exists only on backup/inc-107-leaked-commit.\n\nNo other branch contains it, and none of its content is on the combined branch.\n\nIt adds:\n\n- (1) the 'reads each saved document back on the review in its own Document card' test, using references PWA/PWB and a new 250-byte PNG\n- (2) a new tracked fixture resources/file-upload/safe-file-250b.png plus a `.gitignore` negation `!resources/file-upload/*.png`\n- (3) a rename of `PW-TXT-` to `PWTXT` in the unsupported-file-type test\n\nItems 1 and 2 are not needed. Commit 02dd6bc (inc-107, on the combined branch) landed the same test with alphanumeric references PWDOCA/PWDOCB and the existing safeFile100kbJpg fixture.\n\nItem 3 is not needed either. The frontend's file-type check (documents/form/errors.js fileErrors) rejects the .txt before the backend's `@Pattern(^[a-zA-Z0-9]*$)` on documentReference is reached.\n\nSo the hyphenated reference does not change which error appears."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-repo-f6",
+      "field": "scenario",
+      "before": "Cherry-picking 65b6afc onto the combined branch would add a second copy of the document-card test under the same title, which conflicts with 02dd6bc. It would also widen .gitignore to track PNGs under resources/file-upload/ for no current user.",
+      "after": "Cherry-picking 65b6afc onto the combined branch would:\n\n- add a second copy of the document-card test under the same title, which conflicts with 02dd6bc\n- widen .gitignore to track PNGs under resources/file-upload/ for no current user"
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-repo-f6",
+      "field": "fix",
+      "before": "Delete backup/inc-107-leaked-commit; nothing needs carrying over. Optionally change the unsupported-file-type test (promoted-documents.spec.ts:91) to assert the file-type message rather than the generic 'There is a problem', so it cannot pass because of a different error.",
+      "after": "Delete backup/inc-107-leaked-commit. Nothing needs carrying over.\n\nOptionally, change the unsupported-file-type test (promoted-documents.spec.ts:91). Make it assert the file-type message rather than the generic 'There is a problem'.\n\nIt then cannot pass because of a different error."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "tests-repo-f6",
+      "field": "verifierNote",
+      "before": "This is a housekeeping verdict, not a code defect. Checked: `git branch -a --contains 65b6afc` shows only backup/inc-107-leaked-commit. promoted-documents.spec.ts:39 on the combined branch already has the document-card test with PWDOCA/PWDOCB. The unsupported-file test still uses PW-TXT- (:88). As claimed, the animals frontend's documentAddErrors runs fileErrors (FILE_TYPE_MESSAGE for a .txt) locally, so the hyphenated reference never reaches the backend's @Pattern. Deleting the backup branch is safe. Tightening :91 to the file-type message is a good optional improvement.",
+      "after": "This is a housekeeping verdict, not a code defect.\n\nChecked:\n\n- `git branch -a --contains 65b6afc` shows only backup/inc-107-leaked-commit.\n- promoted-documents.spec.ts:39 on the combined branch already has the document-card test with PWDOCA/PWDOCB.\n- The unsupported-file test still uses PW-TXT- (:88).\n- As claimed, the animals frontend's documentAddErrors runs fileErrors (FILE_TYPE_MESSAGE for a .txt) locally. So the hyphenated reference never reaches the backend's @Pattern.\n\nDeleting the backup branch is safe.\n\nTightening :91 to the file-type message is a good optional improvement."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "backend-fetch-f3",
+      "field": "what",
+      "before": "The retry runs for every method, including POST /notifications (create), /{id}/copy, /{id}/submit, /amend, /soft-delete, /notifications/{id}/document-uploads and /document-uploads/{id}/file. It fires if any cause in the chain has UND_ERR_CONNECT_TIMEOUT, ECONNREFUSED or ETIMEDOUT. The first two can only happen before any request bytes are sent, including during the TLS handshake for an https target, so retrying on them is safe. ETIMEDOUT can also be raised on an established keep-alive socket, from a kernel keepalive or retransmission failure after the request has been written. The logs only show ETIMEDOUT nested under UND_ERR_CONNECT_TIMEOUT (AggregateError from internalConnectMultiple), so it adds no coverage.",
+      "after": "The retry runs for every method, including:\n\n- POST /notifications (create)\n- /{id}/copy\n- /{id}/submit\n- /amend\n- /soft-delete\n- /notifications/{id}/document-uploads\n- /document-uploads/{id}/file\n\nIt fires if any cause in the chain has UND_ERR_CONNECT_TIMEOUT, ECONNREFUSED or ETIMEDOUT.\n\nThe first two can only happen before any request bytes are sent. That includes during the TLS handshake for an https target. So retrying on them is safe.\n\nETIMEDOUT can also be raised on an established keep-alive socket. It comes from a kernel keepalive or retransmission failure after the request has been written.\n\nThe logs only show ETIMEDOUT nested under UND_ERR_CONNECT_TIMEOUT (AggregateError from internalConnectMultiple). So it adds no coverage."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "backend-fetch-f3",
+      "field": "scenario",
+      "before": "POST /notifications/{id}/submit is written on a reused keep-alive socket and the backend commits it. The path then drops before the response arrives and the socket errors with ETIMEDOUT. backendFetch sends the submit again, and the second call gets a 409 or state error, or (on create or copy) a duplicate notification. Unlikely within undici's 300s headersTimeout, but possible, and nothing guards against it.",
+      "after": "POST /notifications/{id}/submit is written on a reused keep-alive socket. The backend commits it.\n\nThe path then drops before the response arrives. The socket errors with ETIMEDOUT.\n\nbackendFetch sends the submit again. The second call gets a 409 or state error. On create or copy, it gets a duplicate notification.\n\nThis is unlikely within undici's 300s headersTimeout, but possible.\n\nNothing guards against it."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "backend-fetch-f3",
+      "field": "fix",
+      "before": "If the retry survives, limit CONNECT_ERROR_CODES to UND_ERR_CONNECT_TIMEOUT and ECONNREFUSED, and preferably retry only GET/PUT/DELETE, or require an idempotency key for POST.",
+      "after": "If the retry survives:\n\n- limit CONNECT_ERROR_CODES to UND_ERR_CONNECT_TIMEOUT and ECONNREFUSED\n- preferably retry only GET/PUT/DELETE, or require an idempotency key for POST"
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "backend-fetch-f3",
+      "field": "verifierNote",
+      "before": "ETIMEDOUT is in CONNECT_ERROR_CODES at line 14, and isConnectError walks the whole cause chain for every method, including POST submit, create and copy. undici's h1 client passes a socket error on an established socket straight to in-flight requests as the raw error, unless it is ECONNRESET at message end. So a kernel ETIMEDOUT after the request was written would be retried. The unit test at backend-fetch.test.js:110 shows the intent is not to resend once the connection has opened, and ETIMEDOUT contradicts that intent. It is rare and needs a mid-flight path drop. Low.",
+      "after": "ETIMEDOUT is in CONNECT_ERROR_CODES at line 14.\n\nisConnectError walks the whole cause chain for every method, including POST submit, create and copy.\n\nundici's h1 client passes a socket error on an established socket straight to in-flight requests as the raw error. The exception is ECONNRESET at message end.\n\nSo a kernel ETIMEDOUT after the request was written would be retried.\n\nThe unit test at backend-fetch.test.js:110 shows the intent is not to resend once the connection has opened. ETIMEDOUT contradicts that intent.\n\nIt is rare and needs a mid-flight path drop.\n\nLow."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "backend-fetch-f2",
+      "field": "what",
+      "before": "A global setupFiles vi.mock('undici') replaces undici.fetch with a shim that strips `dispatcher` and converts undici FormData back to Node FormData before calling the mocked global fetch. That mocks a library and rewrites its arguments, rather than mocking at the network boundary. Every unit test of a backend call therefore sees a request shape production never sends, and the conversion code in backend-fetch.js (forUndici/asUndiciFormData) is not observable to them. In backend-fetch.real.test.js, 'tries a refused connection once more' (line 104) only asserts the final ECONNREFUSED, which it gets with or without a retry. 'reaches the backend through its connect-bounded agent' (line 18) passes with the agent removed. No test exercises the 2s bound.",
+      "after": "A global setupFiles vi.mock('undici') replaces undici.fetch with a shim. Before calling the mocked global fetch, the shim:\n\n- strips `dispatcher`\n- converts undici FormData back to Node FormData\n\nThat mocks a library and rewrites its arguments, rather than mocking at the network boundary.\n\nSo every unit test of a backend call sees a request shape production never sends.\n\nThe conversion code in backend-fetch.js (forUndici/asUndiciFormData) is not observable to them.\n\nIn backend-fetch.real.test.js:\n\n- 'tries a refused connection once more' (line 104) only asserts the final ECONNREFUSED. It gets that with or without a retry.\n- 'reaches the backend through its connect-bounded agent' (line 18) passes with the agent removed.\n\nNo test exercises the 2s bound."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "backend-fetch-f2",
+      "field": "scenario",
+      "before": "Delete the retry branch (lines 74-78) or the `dispatcher` from forUndici: every real-connection test still passes. A FormData conversion bug like the one 19a76c54 shipped passes the whole unit suite, because the shim reconverts the body before any assertion sees it.",
+      "after": "Delete the retry branch (lines 74-78) or the `dispatcher` from forUndici. Every real-connection test still passes.\n\nA FormData conversion bug like the one 19a76c54 shipped passes the whole unit suite.\n\nThis is because the shim reconverts the body before any assertion sees it."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "backend-fetch-f2",
+      "field": "fix",
+      "before": "If the code is removed (f1), delete the shim and the real test. If any of it is kept, test only against a real local server: count 'connection' events to prove exactly two attempts, and use a listener that accepts the TCP connection but never answers TLS, or MockAgent, to prove the time bound. Do not mock undici globally in setupFiles.",
+      "after": "If the code is removed (f1), delete the shim and the real test.\n\nIf any of it is kept, test only against a real local server:\n\n- count 'connection' events to prove exactly two attempts\n- to prove the time bound, use a listener that accepts the TCP connection but never answers TLS, or MockAgent\n\nDo not mock undici globally in setupFiles."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "backend-fetch-f2",
+      "field": "verifierNote",
+      "before": "Partly real. The setupFiles vi.mock('undici') in test/setup-backend-fetch.js:9-26 strips the dispatcher and converts undici FormData back to Node FormData. Unit tests therefore cannot see the agent or the FormData conversion, and it mocks a library rather than the network boundary. In the real-connection tests, test 1 passes with no agent and test 4 (line 104) asserts only the final ECONNREFUSED, so neither proves a second attempt. Nothing tests the 2s bound. The scenario overstates one point: deleting the retry branch at lines 74-78 WOULD fail backend-fetch.test.js:73-89, which drives the retry through the shim. The FormData gap is now partly closed by the real multipart test at lines 37-77. What remains is an unproven timeout and agent, plus a library-level mock, so low rather than medium.",
+      "after": "Partly real.\n\nThe setupFiles vi.mock('undici') in test/setup-backend-fetch.js:9-26:\n\n- strips the dispatcher\n- converts undici FormData back to Node FormData\n\nUnit tests therefore cannot see the agent or the FormData conversion. And it mocks a library rather than the network boundary.\n\nIn the real-connection tests:\n\n- test 1 passes with no agent\n- test 4 (line 104) asserts only the final ECONNREFUSED\n\nSo neither proves a second attempt.\n\nNothing tests the 2s bound.\n\nThe scenario overstates one point. Deleting the retry branch at lines 74-78 WOULD fail backend-fetch.test.js:73-89, which drives the retry through the shim.\n\nThe real multipart test at lines 37-77 now partly closes the FormData gap.\n\nWhat remains is an unproven timeout and agent, plus a library-level mock. So low rather than medium."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "backend-fetch-f5",
+      "field": "what",
+      "before": "Lines 6-7, 10, 17-20 and 43-44, plus the 6-line header in test/setup-backend-fetch.js, explain the rationale (Docker Desktop forwarder, why there are two fetches, why FormData is copied). The house rule is no explanatory comments; rationale belongs in docs and git history. The comment at 17-20 is also factually misleading (see f1).",
+      "after": "These comments explain the rationale:\n\n- lines 6-7, 10, 17-20 and 43-44\n- the 6-line header in test/setup-backend-fetch.js\n\nThey explain:\n\n- the Docker Desktop forwarder\n- why there are two fetches\n- why FormData is copied\n\nThe house rule is no explanatory comments. Rationale belongs in docs and git history.\n\nThe comment at 17-20 is also factually misleading (see f1)."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "backend-fetch-f5",
+      "field": "scenario",
+      "before": "A reader trusts lines 17-20 ('Node's built-in fetch cannot take an agent from the undici package') and keeps the fork, when the logs show built-in fetch already running on npm undici's Agent.",
+      "after": "A reader trusts lines 17-20: 'Node's built-in fetch cannot take an agent from the undici package'.\n\nThey keep the fork.\n\nBut the logs show built-in fetch already running on npm undici's Agent."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "backend-fetch-f5",
+      "field": "fix",
+      "before": "Removed along with the code under f1. If anything is kept, move the rationale into the commit message or docs/repos/<repo>.md.",
+      "after": "Removed along with the code under f1.\n\nIf anything is kept, move the rationale into the commit message or docs/repos/<repo>.md."
+    },
+    {
+      "source": "workareas/shared/design-release-2-1/combined/engineering-review/page/findings.js",
+      "id": "backend-fetch-f5",
+      "field": "verifierNote",
+      "before": "Lines 6-7, 10, 17-20 and 43-44 and the 6-line header in test/setup-backend-fetch.js are rationale comments, which break the no-explanatory-comments rule. One nuance: lines 17-20 may be literally true for passing an npm undici Agent as a per-call 'dispatcher' to built-in fetch, because of the v1/v2 handler API split. They still mislead, since the global-dispatcher route works, as the 20:13Z log proves.",
+      "after": "These are rationale comments, which break the no-explanatory-comments rule:\n\n- lines 6-7, 10, 17-20 and 43-44\n- the 6-line header in test/setup-backend-fetch.js\n\nOne nuance: lines 17-20 may be literally true for passing an npm undici Agent as a per-call 'dispatcher' to built-in fetch. That is because of the v1/v2 handler API split.\n\nThey still mislead, since the global-dispatcher route works. The 20:13Z log proves it."
+    }
+  ]
+}

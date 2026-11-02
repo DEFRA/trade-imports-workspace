@@ -1,0 +1,454 @@
+{
+  "source": "trace:ins-fit",
+  "structure": "Part 2, address-book list and view. Read in full: list.fit.spec.js and view.fit.spec.js, and all 11 traces they recorded (list.fit 762a7 navigation, 3e618 table, fe734 add link, 49f4e axe, d7e93 pagination, 964e2 empty state; view.fit 4a433 open from a row, cd84f every field, 2e5d8 Edit and Delete, 4811a Back, 14089 axe). tim's bundled Playwright cannot open these traces (TraceVersionError), so each trace's unzipped contents in this part's working folder were read directly: test.trace for the action list (every action transcribed) and 1-trace.trace for the DOM snapshots, rendered to HTML with jq, plus 1-trace.network for the requests. Pages reached, in order: stub sign-in (302) lands on the Dashboard at / (part 4 owns its content; only the service navigation is claimed here); the Address book list at /address-book (title 'Address book | Import notification service', H1 'Address book', intro line, a Search addresses form, an Add a new address button-link, a 'Showing x-y of z' results label, a table of Name, Address, Country and a visually hidden Action column with a View link per row); the same list at /address-book?page=2 when an organisation has 30 addresses (25 per page, GOV.UK pagination with numbered links, Next and Previous); the empty state for an organisation with no addresses (message, no table, no results label, the Add a new address button still shown); the view address page at /address-book/{id} (title and H1 are the address name, a Back link to /address-book above main, a summary list of nine Standard Address Block rows, then Edit and Delete button-links in a button group). The Add a new address click is followed only as far as the add form's URL and heading; parts 1 and 3 own the add, edit and delete pages. Both pages are entirely govuk-frontend components (service navigation, table, pagination, button, summary list, back link, input, button group). Each page passed an axe check for serious or critical violations. All page loads are server-rendered GETs; no address-book API call is visible from the browser, so the backend integration is recorded as a gap. Search, an unknown address id, ordering rules and pagination beyond two pages were never exercised and are recorded as gaps.",
+  "claims": [
+    {
+      "id": "trace-ins-fit-p2-001",
+      "statement": "After the stub sign-in the user is redirected to the Dashboard at /, whose page title is 'Dashboard | Import notification service'.",
+      "kind": "behaviour",
+      "ref": "trace list.fit--762a7 action pw:api@29 (GET /auth/stub-sign-in 302, then GET / 200); DOM snapshot call@199",
+      "quote": "<TITLE>Dashboard | Import notification service</TITLE>",
+      "confidence": "verbatim",
+      "note": "Dashboard content belongs to part 4; recorded here only as the starting point of the navigation test."
+    },
+    {
+      "id": "trace-ins-fit-p2-002",
+      "statement": "The header's service navigation shows the service name 'Import notification service', linking to /.",
+      "kind": "copy",
+      "ref": "trace list.fit--3e618 DOM snapshot call@227, section.govuk-service-navigation",
+      "quote": "Import notification service",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-003",
+      "statement": "The service navigation has a 'Dashboard' link to /.",
+      "kind": "behaviour",
+      "ref": "trace list.fit--762a7 action expect@30; DOM snapshot call@227 in list.fit--3e618",
+      "quote": "getByRole('link', { name: 'Dashboard' })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-004",
+      "statement": "The service navigation has an 'Address book' link to /address-book; clicking it opens the page whose heading is 'Address book'.",
+      "kind": "behaviour",
+      "ref": "trace list.fit--762a7 actions expect@31, pw:api@32, expect@33, expect@34",
+      "quote": "getByRole('heading', { name: 'Address book', exact: true })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-005",
+      "statement": "The service navigation also shows a 'Manage account' item whose link goes nowhere yet (href '#').",
+      "kind": "behaviour",
+      "ref": "trace list.fit--3e618 DOM snapshot call@227, govuk-service-navigation__list",
+      "quote": "<A class=\"govuk-service-navigation__link\" href=\"#\">Manage account</A>",
+      "confidence": "verbatim",
+      "note": "No test drives this item."
+    },
+    {
+      "id": "trace-ins-fit-p2-006",
+      "statement": "The service navigation shows a 'Log out' link to /auth/sign-out.",
+      "kind": "behaviour",
+      "ref": "trace list.fit--3e618 DOM snapshot call@227, govuk-service-navigation__list",
+      "quote": "<A class=\"govuk-service-navigation__link\" href=\"/auth/sign-out\">Log out</A>",
+      "confidence": "verbatim",
+      "note": "No test in this part drives it."
+    },
+    {
+      "id": "trace-ins-fit-p2-007",
+      "statement": "The navigation item for the current section is marked active and aria-current: Dashboard on /, Address book on the address book list and on the view address page.",
+      "kind": "behaviour",
+      "ref": "trace view.fit--cd84f DOM snapshots call@227 (/) and call@229 (/address-book/000000000000000000000001); list.fit--3e618 call@227",
+      "quote": "<LI class=\"govuk-service-navigation__item govuk-service-navigation__item--active\"><A class=\"govuk-service-navigation__link\" href=\"/address-book\" aria-current=\"true\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-008",
+      "statement": "The address book list is at /address-book and its page title is 'Address book | Import notification service'.",
+      "kind": "copy",
+      "ref": "trace list.fit--3e618 action pw:api@30, DOM snapshot call@227",
+      "quote": "<TITLE>Address book | Import notification service</TITLE>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-009",
+      "statement": "The address book list's heading is 'Address book', as an extra-large heading.",
+      "kind": "copy",
+      "ref": "trace list.fit--3e618 DOM snapshot call@227, main h1",
+      "quote": "<H1 class=\"govuk-heading-xl\">Address book</H1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-010",
+      "statement": "Under the heading the list page says 'Manage addresses used across import and export services.'",
+      "kind": "copy",
+      "ref": "trace list.fit--3e618 DOM snapshot call@227, main p.govuk-body",
+      "quote": "Manage addresses used across import and export services.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-011",
+      "statement": "The list page has a search form: a search input labelled 'Search addresses' (name q) and a 'Search' button, submitting by GET to /address-book.",
+      "kind": "data",
+      "ref": "trace list.fit--3e618 DOM snapshot call@227, main form[action=/address-book]",
+      "quote": "<LABEL class=\"govuk-label\" for=\"q\">Search addresses</LABEL><INPUT class=\"govuk-input govuk-!-width-two-thirds\" id=\"q\" name=\"q\" type=\"search\" value=\"\">",
+      "confidence": "verbatim",
+      "note": "The search form renders on the list page and on the empty state, but no test in this part submits it."
+    },
+    {
+      "id": "trace-ins-fit-p2-012",
+      "statement": "No trace shows what the address search matches on, what results it returns, or what the page says when a search finds nothing.",
+      "kind": "behaviour",
+      "ref": "list.fit.spec.js (no search test); all 6 list.fit traces",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p2-013",
+      "statement": "The list page has an 'Add a new address' control, a link styled as a button (role button) to /address-book/add.",
+      "kind": "behaviour",
+      "ref": "trace list.fit--3e618 action expect@37; DOM snapshot call@227",
+      "quote": "<A href=\"/address-book/add\" role=\"button\" draggable=\"false\" class=\"govuk-button\" data-module=\"govuk-button\">Add a new address</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-014",
+      "statement": "Clicking 'Add a new address' opens /address-book/add, headed 'Add address details'.",
+      "kind": "behaviour",
+      "ref": "trace list.fit--fe734 actions pw:api@31, expect@32, expect@33; DOM snapshot call@181",
+      "quote": "<H1 class=\"govuk-heading-l\">Add address details</H1>",
+      "confidence": "verbatim",
+      "note": "The add form itself is part 1's."
+    },
+    {
+      "id": "trace-ins-fit-p2-015",
+      "statement": "Above the table the list page shows a results label in the form 'Showing <first>-<last> of <total>', for example 'Showing 1-1 of 1' for one address.",
+      "kind": "copy",
+      "ref": "trace list.fit--3e618 DOM snapshot call@227, p[data-testid=address-book-results-label]",
+      "quote": "Showing 1-1 of 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-016",
+      "statement": "Addresses are listed in a table whose column headers are 'Name', 'Address' and 'Country', plus a fourth column whose header 'Action' is visually hidden.",
+      "kind": "data",
+      "ref": "trace list.fit--3e618 actions expect@31 to expect@33; DOM snapshot call@227, table thead",
+      "quote": "<TH scope=\"col\" class=\"govuk-table__header\">Name</TH><TH scope=\"col\" class=\"govuk-table__header\">Address</TH><TH scope=\"col\" class=\"govuk-table__header\">Country</TH><TH scope=\"col\" class=\"govuk-table__header\"><SPAN class=\"govuk-visually-hidden\">Action</SPAN></TH>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-017",
+      "statement": "The Name column shows the address's name or organisation name.",
+      "kind": "data",
+      "ref": "trace list.fit--3e618 action expect@34",
+      "quote": "getByRole('cell', { name: 'Stub Farm 1', exact: true })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-018",
+      "statement": "The Address column shows address line 1, town or city and postcode joined into one line by commas.",
+      "kind": "data",
+      "ref": "trace list.fit--3e618 action expect@35; view.fit--cd84f shows the same address's fields",
+      "quote": "getByRole('cell', { name: '1 Stub Way, Stubton, ST1 1UB', exact: true })",
+      "confidence": "verbatim",
+      "note": "The seed address has no address line 2 or county, so the trace does not show whether those fields join the Address cell when present."
+    },
+    {
+      "id": "trace-ins-fit-p2-019",
+      "statement": "No trace shows whether address line 2 and county appear in the Address column when an address has them.",
+      "kind": "data",
+      "ref": "all list.fit traces: every listed address leaves address line 2 and county empty",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p2-020",
+      "statement": "The Country column shows the country's name, such as 'United Kingdom', not a code.",
+      "kind": "data",
+      "ref": "trace list.fit--3e618 action expect@36",
+      "quote": "getByRole('cell', { name: 'United Kingdom', exact: true })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-021",
+      "statement": "Each row ends in a 'View' link to /address-book/{id}, whose accessible name adds the address's name in visually hidden text ('View Stub Farm 1').",
+      "kind": "behaviour",
+      "ref": "trace list.fit--3e618 DOM snapshot call@227, tbody td:last-child; view.fit--4a433 action pw:api@31",
+      "quote": "<A class=\"govuk-link\" href=\"/address-book/000000000000000000000001\">View<SPAN class=\"govuk-visually-hidden\"> Stub Farm 1</SPAN></A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-022",
+      "statement": "The list shows only the addresses of the signed-in user's organisation: signing in as different organisations gives one address, 30 addresses or none.",
+      "kind": "rule",
+      "ref": "traces list.fit--3e618 (stub-org-1), list.fit--d7e93 (stub-org-paginated), list.fit--964e2 (stub-org-empty), action pw:api@29 in each",
+      "quote": "Navigate {\"url\":\"/auth/stub-sign-in?organisationId=stub-org-empty\"}",
+      "confidence": "inferred",
+      "note": "Inferred from each organisation id producing a different list; no trace signs in as two users of one organisation or shows another organisation's addresses being hidden."
+    },
+    {
+      "id": "trace-ins-fit-p2-023",
+      "statement": "The list shows 25 addresses per page: with 30 addresses page 1 says 'Showing 1-25 of 30' and holds 25 rows.",
+      "kind": "rule",
+      "ref": "trace list.fit--d7e93 action expect@31; DOM snapshot call@43 (25 rows, Stub Farm 1 to Stub Farm 25)",
+      "quote": "Showing 1-25 of 30",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-024",
+      "statement": "When there is more than one page, a GOV.UK pagination block appears under the table with numbered page links, each with an accessible name 'Page N', and the current page marked aria-current.",
+      "kind": "behaviour",
+      "ref": "trace list.fit--d7e93 DOM snapshot call@43, nav.govuk-pagination",
+      "quote": "<A class=\"govuk-link govuk-pagination__link\" href=\"/address-book?page=2\" aria-label=\"Page 2\">2</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-025",
+      "statement": "On page 1 the pagination shows a 'Next' link (with visually hidden ' page') to /address-book?page=2 and no Previous link.",
+      "kind": "behaviour",
+      "ref": "trace list.fit--d7e93 DOM snapshot call@43, div.govuk-pagination__next",
+      "quote": "<A class=\"govuk-link govuk-pagination__link\" href=\"/address-book?page=2\" rel=\"next\"><SPAN class=\"govuk-pagination__link-title\">Next<SPAN class=\"govuk-visually-hidden\"> page</SPAN></SPAN>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-026",
+      "statement": "Clicking 'Page 2' loads /address-book?page=2, which says 'Showing 26-30 of 30' and lists the remaining 5 addresses.",
+      "kind": "behaviour",
+      "ref": "trace list.fit--d7e93 actions pw:api@32, expect@33, expect@34; DOM snapshot call@47 (/address-book?page=2)",
+      "quote": "Showing 26-30 of 30",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-027",
+      "statement": "The page is chosen by a 'page' query parameter; the Page 1 link goes to /address-book without one.",
+      "kind": "rule",
+      "ref": "trace list.fit--d7e93 DOM snapshot call@47, nav.govuk-pagination",
+      "quote": "<A class=\"govuk-link govuk-pagination__link\" href=\"/address-book\" aria-label=\"Page 1\">1</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-028",
+      "statement": "On the last page the pagination shows a 'Previous' link (with visually hidden ' page') to /address-book and no Next link.",
+      "kind": "behaviour",
+      "ref": "trace list.fit--d7e93 DOM snapshot call@47, div.govuk-pagination__prev",
+      "quote": "<A class=\"govuk-link govuk-pagination__link\" href=\"/address-book\" rel=\"prev\">",
+      "confidence": "verbatim",
+      "note": "The link title text is 'Previous' followed by visually hidden ' page'."
+    },
+    {
+      "id": "trace-ins-fit-p2-029",
+      "statement": "With 25 or fewer addresses no pagination block is shown.",
+      "kind": "rule",
+      "ref": "trace list.fit--3e618 DOM snapshot call@227 (one address: table, no nav.govuk-pagination)",
+      "quote": "Showing 1-1 of 1",
+      "confidence": "inferred",
+      "note": "Inferred from the single-address page having no pagination; no trace shows exactly 25 addresses."
+    },
+    {
+      "id": "trace-ins-fit-p2-030",
+      "statement": "No trace shows the pagination with more than two pages, so whether it collapses page numbers with ellipses is unknown.",
+      "kind": "behaviour",
+      "ref": "trace list.fit--d7e93 (30 addresses, two pages only)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p2-031",
+      "statement": "Addresses were listed in the order Stub Farm 1 to Stub Farm 30 (numeric, not plain alphabetical, since 2 comes before 10); the trace does not say what the ordering rule is.",
+      "kind": "rule",
+      "ref": "trace list.fit--d7e93 DOM snapshots call@43 and call@47, tbody rows",
+      "quote": "<TD class=\"govuk-table__cell\">Stub Farm 2</TD>",
+      "confidence": "inferred",
+      "note": "The seed ids also run 000…001 to 000…030 in the same order, so the list may be in id or creation order. No test asserts an order."
+    },
+    {
+      "id": "trace-ins-fit-p2-032",
+      "statement": "When the organisation has no addresses, the list page says 'You have no addresses yet.'",
+      "kind": "copy",
+      "ref": "trace list.fit--964e2 action expect@31; DOM snapshot call@211",
+      "quote": "You have no addresses yet.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-033",
+      "statement": "In the empty state the 'Add a new address' button-link is still shown, as the option to add one.",
+      "kind": "behaviour",
+      "ref": "trace list.fit--964e2 action expect@32; DOM snapshot call@215",
+      "quote": "getByRole('button', { name: 'Add a new address' })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-034",
+      "statement": "In the empty state no table and no 'Showing' results label are shown; the heading, intro line and search form still are.",
+      "kind": "behaviour",
+      "ref": "trace list.fit--964e2 DOM snapshot call@211, main",
+      "quote": "<P class=\"govuk-body\">You have no addresses yet.</P>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-035",
+      "statement": "The address book list page has no serious or critical axe accessibility violations.",
+      "kind": "non-functional",
+      "ref": "trace list.fit--49f4e action expect@42",
+      "quote": "Address book list has serious/critical accessibility violations.\\nFull axe violations:\\n[]",
+      "confidence": "verbatim",
+      "note": "Checked with one address listed (stub-org-1); the paginated and empty states were not axe-checked."
+    },
+    {
+      "id": "trace-ins-fit-p2-036",
+      "statement": "Clicking a row's View link opens that address at /address-book/{id}, headed with the address's name.",
+      "kind": "behaviour",
+      "ref": "trace view.fit--4a433 actions pw:api@31, expect@32, expect@33",
+      "quote": "getByRole('heading', { name: 'Stub Farm 1', level: 1 })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-037",
+      "statement": "The view address page's title is the address's name followed by ' | Import notification service'.",
+      "kind": "copy",
+      "ref": "trace view.fit--cd84f DOM snapshot call@229",
+      "quote": "<TITLE>Stub Farm 1 | Import notification service</TITLE>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-038",
+      "statement": "The view address page's heading is the address's name, as a large heading in a two-thirds column.",
+      "kind": "copy",
+      "ref": "trace view.fit--cd84f DOM snapshot call@229, main",
+      "quote": "<H1 class=\"govuk-heading-l\">Stub Farm 1</H1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-039",
+      "statement": "The view address page shows the address in a summary list of nine rows, in this order: 'Name or organisation name', 'Address line 1', 'Address line 2 (optional)', 'Town or city', 'County', 'Postcode or Zip code', 'Country', 'Email address', 'Phone number'.",
+      "kind": "data",
+      "ref": "trace view.fit--cd84f action expect@31; DOM snapshot call@229, dl.govuk-summary-list",
+      "quote": "[Name or organisation name, Address line 1, Address line 2 (optional), Town or city, County, Postcode or Zip code, Country, Email address, Phone number]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-040",
+      "statement": "Each summary list row shows the stored value against its label, for example '1 Stub Way', 'Stubton', 'ST1 1UB', 'United Kingdom', 'stub-farm-1@example.com' and '01234567890'.",
+      "kind": "data",
+      "ref": "trace view.fit--cd84f action expect@32",
+      "quote": "[Stub Farm 1, 1 Stub Way, , Stubton, , ST1 1UB, United Kingdom, stub-farm-1@example.com, 01234567890]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-041",
+      "statement": "An optional field with no value still has its row on the view page, with an empty value and no placeholder text (Address line 2 and County are blank).",
+      "kind": "behaviour",
+      "ref": "trace view.fit--cd84f action expect@32; DOM snapshot call@229, rows 3 and 5",
+      "quote": "<DT class=\"govuk-summary-list__key\">County</DT><DD class=\"govuk-summary-list__value\"></DD>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-042",
+      "statement": "The view page's 'County' label carries no '(optional)' marker although the value is empty, while 'Address line 2 (optional)' does.",
+      "kind": "copy",
+      "ref": "trace view.fit--cd84f action expect@31",
+      "quote": "Address line 2 (optional), Town or city, County",
+      "confidence": "verbatim",
+      "note": "Recorded as rendered; whether County is required is the add form's to say (part 1)."
+    },
+    {
+      "id": "trace-ins-fit-p2-043",
+      "statement": "The view page's summary list rows have no per-row Change links; the only actions are the Edit and Delete buttons below it.",
+      "kind": "behaviour",
+      "ref": "trace view.fit--cd84f DOM snapshot call@229, dl.govuk-summary-list (no govuk-summary-list__actions)",
+      "quote": "<DIV class=\"govuk-summary-list__row\"><DT class=\"govuk-summary-list__key\">Name or organisation name</DT><DD class=\"govuk-summary-list__value\">Stub Farm 1</DD></DIV>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-044",
+      "statement": "The view page offers an 'Edit' button-link to /address-book/{id}/edit.",
+      "kind": "behaviour",
+      "ref": "trace view.fit--2e5d8 actions expect@31, expect@32; DOM snapshot in view.fit--cd84f call@229, div.govuk-button-group",
+      "quote": "<A href=\"/address-book/000000000000000000000001/edit\" role=\"button\" draggable=\"false\" class=\"govuk-button\" data-module=\"govuk-button\">Edit</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-045",
+      "statement": "The view page offers a 'Delete' button-link, styled as a warning button, to /address-book/{id}/delete.",
+      "kind": "behaviour",
+      "ref": "trace view.fit--2e5d8 actions expect@33, expect@34; DOM snapshot in view.fit--cd84f call@229",
+      "quote": "<A href=\"/address-book/000000000000000000000001/delete\" role=\"button\" draggable=\"false\" class=\"govuk-button govuk-button--warning\" data-module=\"govuk-button\">Delete</A>",
+      "confidence": "verbatim",
+      "note": "The delete confirmation page is part 3's."
+    },
+    {
+      "id": "trace-ins-fit-p2-046",
+      "statement": "The Edit and Delete buttons sit together in a GOV.UK button group below the summary list.",
+      "kind": "constraint",
+      "ref": "trace view.fit--cd84f DOM snapshot call@229",
+      "quote": "<DIV class=\"govuk-button-group\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-047",
+      "statement": "The view page has a 'Back' link above the main content, linking to /address-book.",
+      "kind": "behaviour",
+      "ref": "trace view.fit--cd84f DOM snapshot call@229, a.govuk-back-link before main",
+      "quote": "<A href=\"/address-book\" class=\"govuk-back-link\">Back</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-048",
+      "statement": "Clicking Back on the view page returns to /address-book, headed 'Address book'.",
+      "kind": "behaviour",
+      "ref": "trace view.fit--4811a actions pw:api@31, expect@32, expect@33",
+      "quote": "getByRole('heading', { name: 'Address book', level: 1 })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-049",
+      "statement": "The view address page has no serious or critical axe accessibility violations.",
+      "kind": "non-functional",
+      "ref": "trace view.fit--14089 action expect@42",
+      "quote": "Address details has serious/critical accessibility violations.\\nFull axe violations:\\n[]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-050",
+      "statement": "The view page can be opened directly by its URL, /address-book/{id}, without going through the list first.",
+      "kind": "behaviour",
+      "ref": "traces view.fit--cd84f, view.fit--2e5d8, view.fit--4811a, view.fit--14089, action pw:api@30 in each",
+      "quote": "Navigate {\"url\":\"/address-book/000000000000000000000001\"}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p2-051",
+      "statement": "Address ids in the URLs are 24-character hexadecimal strings.",
+      "kind": "data",
+      "ref": "trace list.fit--d7e93 DOM snapshot call@43, View link hrefs",
+      "quote": "/address-book/000000000000000000000030",
+      "confidence": "inferred",
+      "note": "Inferred from every id seen having 24 hex digits, the shape of a MongoDB ObjectId; the seed ids are synthetic."
+    },
+    {
+      "id": "trace-ins-fit-p2-052",
+      "statement": "No trace shows what happens when the view page is opened for an address id that does not exist, or that belongs to another organisation.",
+      "kind": "behaviour",
+      "ref": "view.fit.spec.js (no such test); all 5 view.fit traces open the seed address of the signed-in organisation",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p2-053",
+      "statement": "The list and view pages are rendered on the server: the browser only issues page GETs (/address-book, /address-book?page=2, /address-book/{id}) and static assets, so the address-book data service the frontend reads from is not visible in these traces.",
+      "kind": "integration",
+      "ref": "trace list.fit--d7e93 1-trace.network (GET /address-book 200, GET /address-book?page=2 200)",
+      "quote": "GET http://localhost:3002/address-book?page=2 200",
+      "confidence": "gap",
+      "note": "The backend call shape (path, paging parameters, organisation scoping) must come from another source."
+    },
+    {
+      "id": "trace-ins-fit-p2-054",
+      "statement": "The list and view pages use only govuk-frontend components: service navigation, input, button, table, pagination, summary list, back link and button group, with govuk-! spacing and width overrides.",
+      "kind": "constraint",
+      "ref": "traces list.fit--3e618 call@227, list.fit--d7e93 call@43, view.fit--cd84f call@229, class names in main",
+      "quote": "<NAV class=\"govuk-pagination\" aria-label=\"Pagination\">",
+      "confidence": "inferred",
+      "note": "Inferred from reading every class in each page's main: none fall outside govuk-*. The header carries one extra class, app-header, outside main."
+    }
+  ]
+}

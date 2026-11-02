@@ -1,0 +1,808 @@
+{
+  "source": "trace:animals-fit",
+  "structure": "Part 2, Dashboard and notification actions. Read in full: dashboard.fit.spec.js (15 tests in 6 describes) and notification-actions.fit.spec.js (4 tests), and all 19 trace zips the part names. The zips were written by a newer Playwright than tim's trace viewer can open (TraceVersionError on `open`), so each trace was read from its unpacked folder in the part2 working folder (d01-d15 = the 15 dashboard traces in read order, n1-n4 = the 4 notification-actions traces; each folder's title was checked against its spec line). Rendered DOM came from the frame snapshots in each trace's 1-trace.trace, the action list from test.trace, and the network log from 1-trace.network. Pages in this slice, in journey order: (1) sign-in stub redirect into the dashboard; (2) the dashboard at /live-animals, seen empty (d01, d14), with one draft (d05, d06, d12, d15, n1), one submitted (d03, d04), one amending (d07), two drafts (d08, d10, n3), 21 drafts over two pages (d11), and with a no-match search (d09); (3) the origin page reached from Start a new notification (d02), and the origin page reopened on a copied draft (n2); (4) the notification overview (hub) reached after amend (d07), after copy (n1, n2, n4) and at the end of the start helper (d13). Conditional: row actions depend on status (Draft, Submitted, Amending); the empty text shows only with no notifications and no search; the no-match copy shows only with a search; pagination shows only above 20 rows. Delete and cancel-amend destinations are part 3 and were not followed here; the full journey pages the staging helpers walk through (commodities to declaration) belong to other parts and are only cited where they set up a dashboard state.",
+  "claims": [
+    {
+      "id": "trace-animals-fit-p2-001",
+      "statement": "Signing in through the stub sign-in URL redirects to the site root, which redirects to the live animals dashboard at /live-animals.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-94a15-ation-list-and-default-sort-features (and every trace in the part) network: GET /auth/stub-sign-in, GET /",
+      "quote": "GET /auth/stub-sign-in?organisationId=stub-org-1 -> 302 / ; GET / -> 302 /live-animals",
+      "confidence": "verbatim",
+      "note": "The stub sign-in is the FIT test harness, not the real Defra ID flow; it carries an organisationId."
+    },
+    {
+      "id": "trace-animals-fit-p2-002",
+      "statement": "The dashboard page shows the caption 'Dashboard' above the main heading 'Import notification service'.",
+      "kind": "copy",
+      "ref": "trace dashboard-dashboard.fit-da-94a15-ation-list-and-default-sort-features snapshot call@2511, main",
+      "quote": "<span class=\"govuk-caption-xl\">Dashboard <h1 class=\"govuk-heading-xl\">Import notification service",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-003",
+      "statement": "The dashboard explains the service in one paragraph under the heading.",
+      "kind": "copy",
+      "ref": "trace dashboard-dashboard.fit-da-94a15-ation-list-and-default-sort-features snapshot call@2511, main p.govuk-body",
+      "quote": "Use this service to tell the authorities about live animals you are importing. You will answer a short set of questions about the consignment, then submit your notification.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-004",
+      "statement": "The dashboard offers a GOV.UK start button 'Start a new notification', which submits a POST form to /live-animals/notifications.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-94a15-ation-list-and-default-sort-features snapshot call@2511, form[action=/live-animals/notifications]",
+      "quote": "<form method=\"post\" action=\"/live-animals/notifications\"> <button type=\"submit\" class=\"govuk-button govuk-button--start\">Start a new notification",
+      "confidence": "verbatim",
+      "note": "The form carries a hidden CSRF crumb field, value [REDACTED]."
+    },
+    {
+      "id": "trace-animals-fit-p2-005",
+      "statement": "Starting a new notification creates it straight away, with no question asked first, and redirects to that notification's origin page.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-3877e-fication-at-the-origin-page-features network: POST /live-animals/notifications",
+      "quote": "POST /live-animals/notifications -> 302 /live-animals/notifications/GBN-AG-26-P2WX1Y/origin",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-006",
+      "statement": "A new notification gets its reference number as soon as it is started, in the form GBN-AG-26- followed by six letters and digits.",
+      "kind": "data",
+      "ref": "trace dashboard-dashboard.fit-da-3877e-fication-at-the-origin-page-features network and origin snapshot; same pattern in every trace of the part",
+      "quote": "GBN-AG-26-P2WX1Y",
+      "confidence": "inferred",
+      "note": "Pattern read across many references in the part (GBN-AG-26-MGHY42, GBN-AG-26-JYTM58, GBN-AG-26-47VS3W and others); '26' matches the year 2026 of the run, which is inference."
+    },
+    {
+      "id": "trace-animals-fit-p2-007",
+      "statement": "The page the start button lands on has the caption 'About the consignment' and the heading 'Origin of the import'.",
+      "kind": "copy",
+      "ref": "trace dashboard-dashboard.fit-da-3877e-fication-at-the-origin-page-features origin snapshot (d02-origin), main",
+      "quote": "<span class=\"govuk-caption-l\">About the consignment <h1 class=\"govuk-heading-l\">Origin of the import",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-008",
+      "statement": "The origin page of a new notification shows a strip with a blue 'Draft' tag and the notification's reference in bold above the caption.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-3877e-fication-at-the-origin-page-features origin snapshot, div.app-journey-strip",
+      "quote": "<strong class=\"govuk-tag govuk-tag--blue\">Draft <span class=\"govuk-body govuk-!-font-weight-bold\">GBN-AG-26-P2WX1Y",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-009",
+      "statement": "The origin page reached from the start button has a Back link to the dashboard.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-3877e-fication-at-the-origin-page-features origin snapshot, a.govuk-back-link",
+      "quote": "<a href=\"/live-animals\" class=\"govuk-back-link\">Back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-010",
+      "statement": "The origin page asks for the country of origin through a type-ahead box over a select, labelled 'Country of origin' with the hint 'Start typing to search for a country.'; the select's first option is 'Select a country' and it holds 83 options in total.",
+      "kind": "data",
+      "ref": "trace dashboard-dashboard.fit-da-3877e-fication-at-the-origin-page-features origin snapshot, select#countryOfOrigin-select",
+      "quote": "Country of origin / Start typing to search for a country. / <option value=\"\">Select a country <option value=\"AT\">Austria <option value=\"PT-20\">Azores <option value=\"BE\">Belgium ... [83 options in total]",
+      "confidence": "verbatim",
+      "note": "Options seen before truncation: Austria (AT), Azores (PT-20), Belgium (BE), Bulgaria (BG), Canary Islands (ES-CN), Croatia (HR), Cyprus (CY), Czechia (CZ), Denmark (DK), Estonia (EE), Finland (FI), France (FR), French Guiana (FR-GF), Germany (DE). Reference data; the page itself is detailed by the part that owns the origin feature."
+    },
+    {
+      "id": "trace-animals-fit-p2-011",
+      "statement": "The origin page asks 'Does the consignment have a region of origin code?' as Yes or No radios, with the hint 'If a region of origin code is required it will be shown on your health certificate.'",
+      "kind": "data",
+      "ref": "trace dashboard-dashboard.fit-da-3877e-fication-at-the-origin-page-features origin snapshot, fieldset regionOfOriginCodeRequirement",
+      "quote": "Does the consignment have a region of origin code? / If a region of origin code is required it will be shown on your health certificate.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-012",
+      "statement": "Choosing Yes for a region of origin code reveals 'Enter the region of origin code' with the hint 'Enter up to 5 characters.'",
+      "kind": "rule",
+      "ref": "trace dashboard-dashboard.fit-da-3877e-fication-at-the-origin-page-features origin snapshot, div#conditional-regionOfOriginCodeRequirement",
+      "quote": "Enter the region of origin code / Enter up to 5 characters.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-013",
+      "statement": "The origin page has an optional field 'Your internal reference for this consignment (optional)' that takes up to 58 characters.",
+      "kind": "data",
+      "ref": "trace dashboard-dashboard.fit-da-3877e-fication-at-the-origin-page-features origin snapshot, input#internalReferenceNumber",
+      "quote": "Your internal reference for this consignment (optional) / Enter any internal reference you want to use to identify this consignment, or leave blank. It can be up to 58 characters.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-014",
+      "statement": "The origin page offers 'Save and continue', a secondary 'Save and return to overview' button, and a 'Cancel and return to overview' link to the notification's overview.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-3877e-fication-at-the-origin-page-features origin snapshot, div.govuk-button-group",
+      "quote": "Save and continue / <button type=\"submit\" value=\"hub\" name=\"exit\" class=\"govuk-button govuk-button--secondary\">Save and return to overview / <a class=\"govuk-link\" href=\"/live-animals/notifications/GBN-AG-26-P2WX1Y\">Cancel and return to overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-015",
+      "statement": "Below the start button the dashboard has the heading 'Your notifications'.",
+      "kind": "copy",
+      "ref": "trace dashboard-dashboard.fit-da-94a15-ation-list-and-default-sort-features snapshot call@2511, h2",
+      "quote": "<h2 class=\"govuk-heading-m\">Your notifications",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-016",
+      "statement": "The notifications list sits in two columns: a one-third column of filters headed 'Filter notifications' and a two-thirds column with the results count, sort and cards.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-94a15-ation-list-and-default-sort-features snapshot call@2511, div.notification-list__layout",
+      "quote": "<div class=\"govuk-grid-column-one-third\"> <aside class=\"notification-list__filters\"> <h3 class=\"govuk-heading-m\" id=\"filter-notifications-heading\">Filter notifications ... <div class=\"govuk-grid-column-two-thirds\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-017",
+      "statement": "The filter panel has one text field labelled 'Keyword or reference' and a 'Search' button.",
+      "kind": "data",
+      "ref": "trace dashboard-dashboard.fit-da-94a15-ation-list-and-default-sort-features snapshot call@2511, form.notification-list__search-form",
+      "quote": "<label class=\"govuk-label govuk-label--s\" for=\"referenceNumber\">Keyword or reference <input class=\"govuk-input\" id=\"referenceNumber\" name=\"referenceNumber\" type=\"text\" value=\"\"> <button type=\"submit\" class=\"govuk-button\">Search",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-018",
+      "statement": "The search form is a GET to /live-animals that carries the current sort as a hidden field, so searching keeps the chosen sort.",
+      "kind": "rule",
+      "ref": "trace dashboard-dashboard.fit-da-dee46-fication-and-preserves-sort-features dashboard snapshot after sort (d08-b), form.notification-list__search-form",
+      "quote": "<form method=\"get\" action=\"/live-animals\" class=\"notification-list__search-form\"> <input type=\"hidden\" name=\"sort\" value=\"createdAt,asc\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-019",
+      "statement": "The dashboard has a 'Sort by' select with four options and a secondary 'Update sort' button.",
+      "kind": "data",
+      "ref": "trace dashboard-dashboard.fit-da-94a15-ation-list-and-default-sort-features snapshot call@2511, form.notification-list__sort-form",
+      "quote": "Sort by / <option value=\"arrivalDate,desc\" selected=\"\">Arrival (newest to oldest) <option value=\"arrivalDate,asc\">Arrival (oldest to newest) <option value=\"createdAt,desc\">Date created (newest to oldest) <option value=\"createdAt,asc\">Date created (oldest to newest) / Update sort",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-020",
+      "statement": "The default sort is 'Arrival (newest to oldest)' (arrivalDate,desc).",
+      "kind": "rule",
+      "ref": "trace dashboard-dashboard.fit-da-94a15-ation-list-and-default-sort-features step Expect toHaveValue on getByLabel('Sort by'); snapshot call@2511",
+      "quote": "<option value=\"arrivalDate,desc\" selected=\"\">Arrival (newest to oldest)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-021",
+      "statement": "Sorting is a GET to /live-animals with the sort in the query string, and the chosen option stays selected after the page reloads.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-dee46-fication-and-preserves-sort-features network and snapshot d08-b",
+      "quote": "GET /live-animals?sort=createdAt%2Casc -> 200 ; <option value=\"createdAt,asc\" selected=\"\">Date created (oldest to newest)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-022",
+      "statement": "Sorting by 'Date created (oldest to newest)' puts the earlier-created notification first.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-dee46-fication-and-preserves-sort-features snapshots d08-a (default sort) and d08-b (createdAt,asc)",
+      "quote": "default sort first card: GBN-AG-26-DWS7FA ; after Update sort first card: GBN-AG-26-GZV5J6",
+      "confidence": "inferred",
+      "note": "GZV5J6 was the first of the two notifications the test started (it is the firstReference the test then searches for), so the reorder fits oldest-first; the trace does not show the created times."
+    },
+    {
+      "id": "trace-animals-fit-p2-023",
+      "statement": "With no notifications, the results line reads 'No Results'.",
+      "kind": "copy",
+      "ref": "trace dashboard-dashboard.fit-da-94a15-ation-list-and-default-sort-features snapshot call@2511, p.notification-list__results",
+      "quote": "No Results",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-024",
+      "statement": "With no notifications and no search, the dashboard shows the empty text 'You have not started any notifications in this session.' below the sort.",
+      "kind": "copy",
+      "ref": "trace dashboard-dashboard.fit-da-94a15-ation-list-and-default-sort-features snapshot call@2511, p.govuk-body after sort form",
+      "quote": "You have not started any notifications in this session.",
+      "confidence": "verbatim",
+      "note": "The words 'in this session' describe a session-scoped list, although the list in these traces is loaded per signed-in organisation; recorded as the source renders it."
+    },
+    {
+      "id": "trace-animals-fit-p2-025",
+      "statement": "The empty dashboard still shows the filter panel and the sort control.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-94a15-ation-list-and-default-sort-features snapshot call@2511",
+      "quote": "Filter notifications ... Keyword or reference ... No Results ... Sort by ... Update sort",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-026",
+      "statement": "With exactly one notification the results line reads 'Showing 1 Result'.",
+      "kind": "copy",
+      "ref": "trace dashboard-dashboard.fit-da-bcfb6-rs-its-row-data-and-actions-features final dashboard snapshot (d03-dash), p.notification-list__results",
+      "quote": "Showing 1 Result",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-027",
+      "statement": "With more than one notification on a single page the results line reads 'Showing 1 to N of N Results'.",
+      "kind": "copy",
+      "ref": "trace dashboard-dashboard.fit-da-dee46-fication-and-preserves-sort-features snapshot d08-a; same in notification-actions-notif-70130 snapshot n3-dash",
+      "quote": "Showing 1 to 2 of 2 Results",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-028",
+      "statement": "Each notification shows as a GOV.UK summary card whose title is the notification reference as a level-3 heading.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-bcfb6-rs-its-row-data-and-actions-features snapshot d03-dash, div.govuk-summary-card",
+      "quote": "<div class=\"govuk-summary-card notification-list\"> <h3 class=\"govuk-summary-card__title\">GBN-AG-26-MGHY42",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-029",
+      "statement": "Each card's body shows eight fields in three rows of up to three columns: Commodity, Origin, Arrival at destination; Consignee, Consignor, Status; Date created, Date submitted.",
+      "kind": "data",
+      "ref": "trace dashboard-dashboard.fit-da-bcfb6-rs-its-row-data-and-actions-features snapshot d03-dash, div.govuk-summary-card__content",
+      "quote": "<dt>Commodity ... <dt>Origin ... <dt>Arrival at destination ... <dt>Consignee ... <dt>Consignor ... <dt>Status ... <dt>Date created ... <dt>Date submitted",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-030",
+      "statement": "A submitted notification's card shows the commodity's common name, the origin country name, the arrival date, the consignee and consignor names, and the created and submitted dates.",
+      "kind": "data",
+      "ref": "trace dashboard-dashboard.fit-da-bcfb6-rs-its-row-data-and-actions-features snapshot d03-dash, steps expect@ text Cow, France, 7 Nov 2026, Astra Rosales, British Livestock Ltd",
+      "quote": "<dt>Commodity <dd>Cow <dt>Origin <dd>France <dt>Arrival at destination <dd>7 Nov 2026 <dt>Consignee <dd>British Livestock Ltd <dt>Consignor <dd>Astra Rosales ... <dt>Date created <dd>7 Oct 2026 <dt>Date submitted <dd>7 Oct 2026",
+      "confidence": "verbatim",
+      "note": "The commodity was chosen as 'Bos taurus' and is shown as 'Cow'; the consignor is the party picked for 'Consignor or exporter'."
+    },
+    {
+      "id": "trace-animals-fit-p2-031",
+      "statement": "Dates on the card are shown as day, short month name and four-digit year.",
+      "kind": "rule",
+      "ref": "trace dashboard-dashboard.fit-da-bcfb6-rs-its-row-data-and-actions-features snapshot d03-dash",
+      "quote": "7 Nov 2026",
+      "confidence": "verbatim",
+      "note": "The arrival date was entered as 7/11/2026."
+    },
+    {
+      "id": "trace-animals-fit-p2-032",
+      "statement": "A card field with no answer yet is shown with an empty value rather than placeholder text.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-fda21--only-its-available-actions-features snapshot d05-dash",
+      "quote": "<dt>Commodity <dd> ... <dt>Arrival at destination <dd> ... <dt>Consignee <dd> <dt>Consignor <dd> ... <dt>Date submitted <dd>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-033",
+      "statement": "A submitted notification shows a green 'Submitted' status tag.",
+      "kind": "copy",
+      "ref": "trace dashboard-dashboard.fit-da-bcfb6-rs-its-row-data-and-actions-features snapshot d03-dash, Status",
+      "quote": "<strong class=\"govuk-tag govuk-tag--green\">Submitted",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-034",
+      "statement": "A draft notification shows a blue 'Draft' status tag.",
+      "kind": "copy",
+      "ref": "trace dashboard-dashboard.fit-da-fda21--only-its-available-actions-features snapshot d05-dash, Status",
+      "quote": "<strong class=\"govuk-tag govuk-tag--blue\">Draft",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-035",
+      "statement": "A notification being amended shows a yellow 'Amending' status tag.",
+      "kind": "copy",
+      "ref": "trace dashboard-dashboard.fit-da-921e2-me-and-cancel-amend-actions-features snapshot d07-dash, Status",
+      "quote": "<strong class=\"govuk-tag govuk-tag--yellow\">Amending",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-036",
+      "statement": "Every card action carries visually hidden text ' notification <reference>', so its accessible name is, for example, 'View notification GBN-AG-26-MGHY42'.",
+      "kind": "rule",
+      "ref": "trace dashboard-dashboard.fit-da-bcfb6-rs-its-row-data-and-actions-features call@2775 to call@2781 and snapshot d03-dash",
+      "quote": "<span class=\"govuk-visually-hidden\"> notification GBN-AG-26-MGHY42 ; internal:role=link[name=\"View notification GBN-AG-26-MGHY42\"i]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-037",
+      "statement": "A submitted notification's card offers four actions, in this order: View, Amend, Copy as new and Delete.",
+      "kind": "rule",
+      "ref": "trace dashboard-dashboard.fit-da-bcfb6-rs-its-row-data-and-actions-features snapshot d03-dash, ul.govuk-summary-card__actions",
+      "quote": "View ... Amend ... Copy as new ... Delete",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-038",
+      "statement": "View on a submitted card is a link to the notification's view page at /notifications/<reference>/notification-view.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-bcfb6-rs-its-row-data-and-actions-features snapshot d03-dash",
+      "quote": "<a class=\"govuk-link\" href=\"/live-animals/notifications/GBN-AG-26-MGHY42/notification-view\">View",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-039",
+      "statement": "Amend on a submitted card is a button that POSTs to /notifications/<reference>/amend, styled to look like a link.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-bcfb6-rs-its-row-data-and-actions-features snapshot d03-dash",
+      "quote": "<form method=\"post\" action=\"/live-animals/notifications/GBN-AG-26-MGHY42/amend\" class=\"app-form-inline\"> <button type=\"submit\" class=\"govuk-link app-link-button\">Amend",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-040",
+      "statement": "Copy as new is a button that POSTs to /notifications/<reference>/copy with hidden fields concurrencyToken and copyOrigin=dashboard, styled to look like a link.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-bcfb6-rs-its-row-data-and-actions-features snapshot d03-dash",
+      "quote": "<form method=\"post\" action=\"/live-animals/notifications/GBN-AG-26-MGHY42/copy\" class=\"app-form-inline\"> <input type=\"hidden\" name=\"concurrencyToken\" value=\"0\"> <input type=\"hidden\" name=\"copyOrigin\" value=\"dashboard\"> <button type=\"submit\" class=\"govuk-link app-link-button\">Copy as new",
+      "confidence": "verbatim",
+      "note": "copyOrigin=dashboard suggests copy can start from somewhere else too; not seen in this part. The CSRF crumb value is [REDACTED]."
+    },
+    {
+      "id": "trace-animals-fit-p2-041",
+      "statement": "Delete on a card is a link to /notifications/<reference>/delete.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-bcfb6-rs-its-row-data-and-actions-features snapshot d03-dash",
+      "quote": "<a class=\"govuk-link\" href=\"/live-animals/notifications/GBN-AG-26-MGHY42/delete\">Delete",
+      "confidence": "verbatim",
+      "note": "Where Delete leads is part 3."
+    },
+    {
+      "id": "trace-animals-fit-p2-042",
+      "statement": "A draft notification's card offers only Resume, Copy as new and Delete; it has no View and no Amend.",
+      "kind": "rule",
+      "ref": "trace dashboard-dashboard.fit-da-fda21--only-its-available-actions-features snapshot d05-dash, steps expecting View and Amend toHaveCount(0)",
+      "quote": "Resume ... Copy as new ... Delete",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-043",
+      "statement": "Resume on a card is a link to the notification's overview at /notifications/<reference>.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-fda21--only-its-available-actions-features snapshot d05-dash",
+      "quote": "<a class=\"govuk-link\" href=\"/live-animals/notifications/GBN-AG-26-JYTM58\">Resume",
+      "confidence": "verbatim",
+      "note": "No trace in this part clicks Resume; the destination is read from the href."
+    },
+    {
+      "id": "trace-animals-fit-p2-044",
+      "statement": "A notification being amended offers Resume, Copy as new, Cancel amendment and Delete, in that order.",
+      "kind": "rule",
+      "ref": "trace dashboard-dashboard.fit-da-921e2-me-and-cancel-amend-actions-features snapshot d07-dash",
+      "quote": "Resume ... Copy as new ... Cancel amendment ... Delete",
+      "confidence": "verbatim",
+      "note": "The test asserts only Resume and Cancel amendment; Copy as new and Delete are also rendered."
+    },
+    {
+      "id": "trace-animals-fit-p2-045",
+      "statement": "Cancel amendment on an amending card is a link to /notifications/<reference>/cancel-amend.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-921e2-me-and-cancel-amend-actions-features snapshot d07-dash",
+      "quote": "<a class=\"govuk-link\" href=\"/live-animals/notifications/GBN-AG-26-47VS3W/cancel-amend\">Cancel amendment",
+      "confidence": "verbatim",
+      "note": "Where it leads is part 3."
+    },
+    {
+      "id": "trace-animals-fit-p2-046",
+      "statement": "Clicking Amend on a submitted notification redirects to that notification's overview, where the strip shows a yellow 'Amending' tag and the reference.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-921e2-me-and-cancel-amend-actions-features action pw:api@132, network POST /amend, snapshot d07-hub",
+      "quote": "POST /live-animals/notifications/GBN-AG-26-47VS3W/amend -> 302 /live-animals/notifications/GBN-AG-26-47VS3W ; <strong class=\"govuk-tag govuk-tag--yellow\">Amending <span ...>GBN-AG-26-47VS3W <h1 class=\"govuk-heading-xl\">Overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-047",
+      "statement": "Amending keeps the notification's existing answers: on the overview after Amend every answered task shows Complete and the commodity totals are kept.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-921e2-me-and-cancel-amend-actions-features snapshot d07-hub",
+      "quote": "Where is this consignment coming from? Complete ... Contact address for this consignment Complete ; app-commodity-total__value 1 Animals, 5 Packages/boxes",
+      "confidence": "verbatim",
+      "note": "Upload documents shows 'To do' because the setup never uploads documents."
+    },
+    {
+      "id": "trace-animals-fit-p2-048",
+      "statement": "Once a notification is being amended, the card's Date submitted is empty, although the notification had been submitted.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-921e2-me-and-cancel-amend-actions-features snapshot d07-dash",
+      "quote": "<dt>Date submitted <dd>",
+      "confidence": "verbatim",
+      "note": "On the submitted card in another trace Date submitted shows '7 Oct 2026'; whether clearing it on amend is intended is not stated."
+    },
+    {
+      "id": "trace-animals-fit-p2-049",
+      "statement": "The amend action is offered on submitted notifications, and an amendment in progress is listed as one card under the same reference, not as a second notification.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-921e2-me-and-cancel-amend-actions-features snapshot d07-dash",
+      "quote": "Showing 1 Result ... GBN-AG-26-47VS3W ... Amending",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-050",
+      "statement": "'Copy as new' renders in the same typeface as the neighbouring Delete link, the GOV.UK font stack '\"GDS Transport\", arial, sans-serif'.",
+      "kind": "non-functional",
+      "ref": "trace dashboard-dashboard.fit-da-fd45f-s-neighbouring-link-actions-features test.trace expect@45 and expect@47",
+      "quote": "Expect \"poll toBe\" expected: \"\\\"GDS Transport\\\", arial, sans-serif\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-051",
+      "statement": "The dashboard with a submitted notification does not scroll horizontally at the default 1280px viewport or at 769px, the desktop breakpoint.",
+      "kind": "non-functional",
+      "ref": "trace dashboard-dashboard.fit-da-199db-low-horizontally-at-desktop-features actions expect@134 and expect@137",
+      "quote": "Dashboard overflows at 1280px: [] ; Dashboard overflows at 769px: []",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-052",
+      "statement": "Searching by an exact reference shows only that notification, keeps the reference in the box, and keeps the sort.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-dee46-fication-and-preserves-sort-features network and snapshot d08-c",
+      "quote": "GET /live-animals?sort=createdAt%2Casc&referenceNumber=GBN-AG-26-GZV5J6 -> 200 ; value=\"GBN-AG-26-GZV5J6\" ; Showing 1 Result ; <option value=\"createdAt,asc\" selected=\"\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-053",
+      "statement": "While a search is active, the sort form carries the reference as a hidden field, so changing the sort keeps the search.",
+      "kind": "rule",
+      "ref": "trace dashboard-dashboard.fit-da-dee46-fication-and-preserves-sort-features snapshot d08-c, form.notification-list__sort-form",
+      "quote": "<form method=\"get\" action=\"/live-animals\" class=\"notification-list__sort-form\"> <input type=\"hidden\" name=\"referenceNumber\" value=\"GBN-AG-26-GZV5J6\">",
+      "confidence": "verbatim",
+      "note": "Read from the markup; no trace changes the sort after searching."
+    },
+    {
+      "id": "trace-animals-fit-p2-054",
+      "statement": "A search that matches nothing replaces the results line with 'No notifications found', keeps the searched text in the box and shows no cards.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-5909e-and-renders-its-empty-state-features snapshot d09-dash",
+      "quote": "<p class=\"govuk-label govuk-label--s notification-list__results\">No notifications found ; value=\"GBN-AG-26-ZZZZZZ\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-055",
+      "statement": "A search with no match does not show the 'You have not started any notifications' empty text.",
+      "kind": "rule",
+      "ref": "trace dashboard-dashboard.fit-da-5909e-and-renders-its-empty-state-features snapshot d09-dash",
+      "quote": "No notifications found ... Update sort (then footer, no further body text)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-056",
+      "statement": "Searching from the dashboard without having changed the sort sends the default sort with the reference.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-5909e-and-renders-its-empty-state-features network",
+      "quote": "GET /live-animals?sort=arrivalDate%2Cdesc&referenceNumber=GBN-AG-26-ZZZZZZ -> 200",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-057",
+      "statement": "Searching with an empty box clears the filter: the full list comes back, the box is empty and the sort is kept.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-a32b8--and-restores-the-full-list-features network and snapshot d10-dash",
+      "quote": "GET /live-animals?sort=createdAt%2Casc&referenceNumber= -> 200 ; value=\"\" ; Showing 1 to 2 of 2 Results ; <option value=\"createdAt,asc\" selected=\"\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-058",
+      "statement": "The dashboard shows 20 notifications a page.",
+      "kind": "rule",
+      "ref": "trace dashboard-dashboard.fit-da-33fe9-preserves-the-selected-sort-features snapshot d11-p1 (20 cards) and step expecting 20 'Delete notification' links",
+      "quote": "Showing 1 to 20 of 21 Results",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-059",
+      "statement": "Above 20 notifications the list gets GOV.UK block-style pagination with only Previous and Next links and no page numbers.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-33fe9-preserves-the-selected-sort-features snapshot d11-p1, nav.govuk-pagination",
+      "quote": "<nav class=\"govuk-pagination govuk-pagination--block\" aria-label=\"Pagination\"> <div class=\"govuk-pagination__next\"> <a class=\"govuk-link govuk-pagination__link\" href=\"/live-animals?page=2\" rel=\"next\">Next",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-060",
+      "statement": "The first page shows Next and no Previous link.",
+      "kind": "rule",
+      "ref": "trace dashboard-dashboard.fit-da-33fe9-preserves-the-selected-sort-features snapshot d11-p1, step Previous toHaveCount(0)",
+      "quote": "<div class=\"govuk-pagination__next\"> ... Next",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-061",
+      "statement": "Next goes to /live-animals?page=2; the last page shows Previous and no Next.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-33fe9-preserves-the-selected-sort-features network GET /live-animals?page=2, snapshot d11-p2",
+      "quote": "GET /live-animals?page=2 -> 200 ; <div class=\"govuk-pagination__prev\"> <a class=\"govuk-link govuk-pagination__link\" href=\"/live-animals\" rel=\"prev\">Previous",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-062",
+      "statement": "On a later page holding one notification the results line reads 'Showing 21 of 21 Results'.",
+      "kind": "copy",
+      "ref": "trace dashboard-dashboard.fit-da-33fe9-preserves-the-selected-sort-features snapshot d11-p2",
+      "quote": "Showing 21 of 21 Results",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-063",
+      "statement": "Changing the sort on page 2 stays on page 2, because the sort form carries the page as a hidden field.",
+      "kind": "rule",
+      "ref": "trace dashboard-dashboard.fit-da-33fe9-preserves-the-selected-sort-features snapshot d11-p2 and network",
+      "quote": "<input type=\"hidden\" name=\"page\" value=\"2\"> ; GET /live-animals?page=2&sort=createdAt%2Casc -> 200",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-064",
+      "statement": "The pagination links carry the chosen sort: after sorting, Previous on page 2 links to /live-animals?sort=createdAt%2Casc.",
+      "kind": "rule",
+      "ref": "trace dashboard-dashboard.fit-da-33fe9-preserves-the-selected-sort-features snapshot d11-p2s",
+      "quote": "<a class=\"govuk-link govuk-pagination__link\" href=\"/live-animals?sort=createdAt%2Casc\" rel=\"prev\">Previous",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-065",
+      "statement": "The search form does not carry the page number, so a new search starts again from page 1.",
+      "kind": "rule",
+      "ref": "trace dashboard-dashboard.fit-da-33fe9-preserves-the-selected-sort-features snapshot d11-p2, form.notification-list__search-form",
+      "quote": "<form method=\"get\" action=\"/live-animals\" class=\"notification-list__search-form\"> <input type=\"hidden\" name=\"sort\" value=\"arrivalDate,desc\">",
+      "confidence": "inferred",
+      "note": "Inferred from the form's hidden fields (sort only, no page); no trace searches from page 2."
+    },
+    {
+      "id": "trace-animals-fit-p2-066",
+      "statement": "Every press of 'Start a new notification' creates another draft notification, even with no answers given.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-33fe9-preserves-the-selected-sort-features network",
+      "quote": "POST /live-animals/notifications -> 302 x21 ; Showing 1 to 20 of 21 Results",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-067",
+      "statement": "Every page in the slice shows the GOV.UK phase banner with a grey 'Alpha' tag and the text 'This is a new service. Help us improve it and give your feedback by email.'",
+      "kind": "copy",
+      "ref": "trace dashboard-dashboard.fit-sh-79257-n-alpha-and-offers-feedback-features dashboard snapshot, div.govuk-phase-banner",
+      "quote": "<strong class=\"govuk-tag govuk-phase-banner__content__tag govuk-tag--grey\">Alpha <span class=\"govuk-phase-banner__text\">This is a new service. Help us improve it and <a class=\"govuk-link\" href=\"mailto:APHAServiceDesk@apha.gov.uk\">give your feedback by email.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-068",
+      "statement": "The phase banner's feedback link is an email link to APHAServiceDesk@apha.gov.uk.",
+      "kind": "integration",
+      "ref": "trace dashboard-dashboard.fit-sh-79257-n-alpha-and-offers-feedback-features step toHaveAttribute href",
+      "quote": "href=\"mailto:APHAServiceDesk@apha.gov.uk\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-069",
+      "statement": "The phase banner is part of the shared layout: it also shows on a notification's pages, such as the overview.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-sh-2cf24-yout-onto-an-answering-page-features overview snapshot (d13-hub)",
+      "quote": "Alpha / This is a new service. Help us improve it and give your feedback by email. ... <h1 class=\"govuk-heading-xl\">Overview",
+      "confidence": "verbatim",
+      "note": "The test is titled 'onto an answering page', but the start helper ends on the notification overview (GET /live-animals/notifications/GBN-AG-26-2P91C6), and that is where the banner was asserted. The banner is also present on the origin page in other traces of this part."
+    },
+    {
+      "id": "trace-animals-fit-p2-070",
+      "statement": "The service header uses GOV.UK service navigation: the service name 'Import notification service' links to /live-animals, followed by Dashboard (marked current on the dashboard), Address book, Manage account and Log out.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-94a15-ation-list-and-default-sort-features snapshot call@2511, section.govuk-service-navigation",
+      "quote": "<a href=\"/live-animals\" class=\"govuk-service-navigation__link\">Import notification service ... <a class=\"govuk-service-navigation__link\" href=\"/live-animals\" aria-current=\"true\">Dashboard ... Address book ... Manage account ... <a class=\"govuk-service-navigation__link\" href=\"/auth/sign-out\">Log out",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-071",
+      "statement": "The Address book navigation item links out to a separate service (the INS frontend) rather than a page of the animals frontend.",
+      "kind": "integration",
+      "ref": "trace dashboard-dashboard.fit-da-94a15-ation-list-and-default-sort-features snapshot call@2511, service navigation",
+      "quote": "<a class=\"govuk-service-navigation__link\" href=\"http://localhost:3002/address-book\">Address book",
+      "confidence": "inferred",
+      "note": "localhost:3002 is a different origin from the animals frontend on :3000; that it is the INS frontend is inference from the port."
+    },
+    {
+      "id": "trace-animals-fit-p2-072",
+      "statement": "The 'Manage account' navigation item is a placeholder link that goes nowhere.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-94a15-ation-list-and-default-sort-features snapshot call@2511, service navigation",
+      "quote": "<a class=\"govuk-service-navigation__link\" href=\"#\">Manage account",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-073",
+      "statement": "The empty dashboard has no serious or critical axe violations against WCAG 2 A and AA rules.",
+      "kind": "non-functional",
+      "ref": "trace dashboard-dashboard.fit-da-b3691--or-critical-axe-violations-features (passed)",
+      "quote": "empty dashboard has no serious or critical axe violations",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-074",
+      "statement": "The dashboard with a draft notification card has no serious or critical axe violations against WCAG 2 A and AA rules.",
+      "kind": "non-functional",
+      "ref": "trace dashboard-dashboard.fit-da-8abc9--or-critical-axe-violations-features (passed)",
+      "quote": "dashboard with a notification card has no serious or critical axe violations",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-075",
+      "statement": "Copy as new creates a separate notification with a new reference and takes the user straight to its overview.",
+      "kind": "behaviour",
+      "ref": "trace notification-actions-notif-d9085-separate-draft-notification-features network POST /copy and snapshot n1-hub",
+      "quote": "POST /live-animals/notifications/GBN-AG-26-8XQG5P/copy -> 302 /live-animals/notifications/GBN-AG-26-197Z8C ; <h1 class=\"govuk-heading-xl\">Overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-076",
+      "statement": "The copy starts as a draft: its overview strip shows a blue 'Draft' tag and the new reference.",
+      "kind": "behaviour",
+      "ref": "trace notification-actions-notif-d9085-separate-draft-notification-features snapshot n1-hub, div.app-journey-strip",
+      "quote": "<strong class=\"govuk-tag govuk-tag--blue\">Draft <span class=\"govuk-body govuk-!-font-weight-bold\">GBN-AG-26-197Z8C",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-077",
+      "statement": "The copy keeps the source's answers: on the copy's overview every task the source had answered shows Complete and the commodity totals carry across.",
+      "kind": "behaviour",
+      "ref": "trace notification-actions-notif-d9085-separate-draft-notification-features snapshot n1-hub",
+      "quote": "Where is this consignment coming from? Complete ... Roles and addresses Complete ... Contact address for this consignment Complete ; app-commodity-total__value 1 Animals, 5 Packages/boxes",
+      "confidence": "verbatim",
+      "note": "Upload documents is 'To do' on the copy, as the source never uploaded any; whether documents are copied is not shown."
+    },
+    {
+      "id": "trace-animals-fit-p2-078",
+      "statement": "On a copied notification, the origin page comes back prefilled from the source: France selected, region of origin code Yes with value 75 shown after a 'FR' prefix, and the internal reference 'Imports456GB'.",
+      "kind": "behaviour",
+      "ref": "trace notification-actions-notif-89f9d-ce-answers-in-the-new-draft-features action expect@131 and snapshot n2-origin",
+      "quote": "<option value=\"FR\" selected=\"\">France ; <input ... value=\"yes\" checked=\"\"> ; <div class=\"govuk-input__prefix\">FR <input ... id=\"regionOfOriginCodeSuffix\" ... value=\"75\"> ; id=\"internalReferenceNumber\" ... value=\"Imports456GB\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-079",
+      "statement": "The region of origin code field shows the chosen country's code as a fixed prefix before the input.",
+      "kind": "rule",
+      "ref": "trace notification-actions-notif-89f9d-ce-answers-in-the-new-draft-features snapshot n2-origin, div.govuk-input__wrapper",
+      "quote": "<div class=\"govuk-input__prefix\">FR",
+      "confidence": "verbatim",
+      "note": "The prefix is absent on the start page snapshot, where no country was chosen yet."
+    },
+    {
+      "id": "trace-animals-fit-p2-080",
+      "statement": "The origin page opened from a copied notification's overview has a Back link to that overview.",
+      "kind": "behaviour",
+      "ref": "trace notification-actions-notif-89f9d-ce-answers-in-the-new-draft-features snapshot n2-origin, a.govuk-back-link",
+      "quote": "<a href=\"/live-animals/notifications/GBN-AG-26-5P5M2T\" class=\"govuk-back-link\">Back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-081",
+      "statement": "After copying, the dashboard lists both the source and the copy as separate cards with the same card data.",
+      "kind": "behaviour",
+      "ref": "trace notification-actions-notif-70130-ifications-on-the-dashboard-features snapshot n3-dash",
+      "quote": "Showing 1 to 2 of 2 Results ... GBN-AG-26-QXBPS4 ... Cow ... France ... 7 Nov 2026 ... GBN-AG-26-5VYF1Z ... Cow ... France ... 7 Nov 2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-082",
+      "statement": "The copy's Date created is the day it was copied.",
+      "kind": "data",
+      "ref": "trace notification-actions-notif-70130-ifications-on-the-dashboard-features snapshot n3-dash",
+      "quote": "<dt>Date created <dd>7 Oct 2026",
+      "confidence": "inferred",
+      "note": "Source and copy were both made on the run day, so the trace cannot tell a reset date from a copied one."
+    },
+    {
+      "id": "trace-animals-fit-p2-083",
+      "statement": "The overview of a copied notification has no serious or critical axe violations against WCAG 2 A and AA rules.",
+      "kind": "non-functional",
+      "ref": "trace notification-actions-notif-dc593--or-critical-axe-violations-features (passed)",
+      "quote": "copied notification hub has no serious or critical axe violations",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-084",
+      "statement": "Every dashboard action posts or links to the animals frontend itself; the browser makes no direct call to a backend.",
+      "kind": "integration",
+      "ref": "all 19 traces, 1-trace.network filtered to non-static requests",
+      "quote": "POST /live-animals/notifications ; POST /live-animals/notifications/<ref>/copy ; POST /live-animals/notifications/<ref>/amend ; GET /live-animals?sort=...&referenceNumber=...&page=...",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-085",
+      "statement": "The server-side calls behind the dashboard list, search, sort, paging, start, copy and amend (which backend endpoints the frontend calls and with what) are not visible in the browser traces.",
+      "kind": "integration",
+      "ref": "all 19 traces, 1-trace.network",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The spec comment says copy on the real backend emits a NotificationCreated event and needs the acting user's organisationId (EUDPA-389); the trace cannot confirm it."
+    },
+    {
+      "id": "trace-animals-fit-p2-086",
+      "statement": "The search box is labelled 'Keyword or reference', but only exact-reference searches are exercised; whether partial references or keywords (such as a consignor name or commodity) match is not shown.",
+      "kind": "behaviour",
+      "ref": "dashboard.fit.spec.js reference search describe; traces da-dee46, da-5909e, da-a32b8",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p2-087",
+      "statement": "Pagination is only seen with two pages; more pages, an out-of-range page number, and paging while a search is active are not exercised.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-33fe9-preserves-the-selected-sort-features",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p2-088",
+      "statement": "Statuses other than Draft, Submitted and Amending (such as cancelled, deleted, rejected or validated), with their tag colours and card actions, never appear on the dashboard in these traces.",
+      "kind": "rule",
+      "ref": "all dashboard snapshots in part 2",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p2-089",
+      "statement": "View is never clicked, so the notification view page it leads to is not shown in this part.",
+      "kind": "behaviour",
+      "ref": "trace dashboard-dashboard.fit-da-bcfb6-rs-its-row-data-and-actions-features",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p2-090",
+      "statement": "Copy is only exercised on a draft source; copying a submitted or amending notification, what the copy keeps from it, and what happens when the concurrency token is stale are not shown.",
+      "kind": "behaviour",
+      "ref": "notification-actions.fit.spec.js, traces notif-d9085, notif-89f9d, notif-70130, notif-dc593",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p2-091",
+      "statement": "The traces never show a dashboard list that mixes notifications from more than one user or organisation, so whether the list is scoped to the signed-in user or the organisation is not shown.",
+      "kind": "rule",
+      "ref": "all dashboard traces in part 2 (single stub user, organisationId=stub-org-1)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p2-092",
+      "statement": "The arrival-date sorts are only seen on drafts with no arrival date, so where notifications without an arrival date fall in 'Arrival (newest to oldest)' and 'Arrival (oldest to newest)' is not shown.",
+      "kind": "rule",
+      "ref": "traces da-dee46, da-a32b8, da-33fe9",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-animals-fit-p2-093",
+      "statement": "The dashboard's notifications list is built from a GOV.UK summary card holding custom description-list rows on the grid, not a summary list; a standard summary list or a table could replace the custom rows.",
+      "kind": "constraint",
+      "ref": "trace dashboard-dashboard.fit-da-bcfb6-rs-its-row-data-and-actions-features snapshot d03-dash, classes",
+      "quote": "<div class=\"govuk-summary-card notification-list\"> ... <dl class=\"govuk-grid-row notification-list__card-row\"> <div class=\"govuk-grid-column-one-third\"> <dt>Commodity <dd>Cow",
+      "confidence": "verbatim",
+      "note": "Non-govuk classes on the dashboard: app-header, notification-list, notification-list__layout, notification-list__filters, notification-list__search-form, notification-list__toolbar, notification-list__results, notification-list__sort-form, notification-list__card-row, app-form-inline, app-link-button."
+    },
+    {
+      "id": "trace-animals-fit-p2-094",
+      "statement": "The POST actions on a card (Amend and Copy as new) are buttons styled as links through custom classes, so they sit in line with the real links in the card's action list.",
+      "kind": "constraint",
+      "ref": "trace dashboard-dashboard.fit-da-bcfb6-rs-its-row-data-and-actions-features snapshot d03-dash",
+      "quote": "<form ... class=\"app-form-inline\"> <button type=\"submit\" class=\"govuk-link app-link-button\">",
+      "confidence": "verbatim",
+      "note": "govuk-frontend has no link-styled button component; the typeface test exists to stop these drifting from the link font."
+    },
+    {
+      "id": "trace-animals-fit-p2-095",
+      "statement": "The results count is a paragraph given GOV.UK label classes, not a label for any control.",
+      "kind": "constraint",
+      "ref": "trace dashboard-dashboard.fit-da-94a15-ation-list-and-default-sort-features snapshot call@2511",
+      "quote": "<p class=\"govuk-label govuk-label--s notification-list__results\">No Results",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-096",
+      "statement": "A notification's pages carry a custom journey strip (status tag and reference) above the heading, and the overview shows commodity totals in custom tiles; neither is a govuk-frontend component.",
+      "kind": "constraint",
+      "ref": "trace notification-actions-notif-d9085-separate-draft-notification-features snapshot n1-hub",
+      "quote": "<div class=\"app-journey-strip govuk-!-margin-bottom-4\"> ... <div class=\"app-commodity-total\"> <p class=\"app-commodity-total__value\">1 <h3 class=\"app-commodity-total__label\">Animals <p class=\"app-commodity-total__caption\">Total number of animals in this consignment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-animals-fit-p2-097",
+      "statement": "The overview ends with a 'Review and submit' button linking to the notification view page and a secondary 'Return to dashboard' button linking to /live-animals.",
+      "kind": "behaviour",
+      "ref": "trace notification-actions-notif-d9085-separate-draft-notification-features snapshot n1-hub, div.govuk-button-group",
+      "quote": "<a href=\"/live-animals/notifications/GBN-AG-26-197Z8C/notification-view\" role=\"button\" class=\"govuk-button\">Review and submit <a href=\"/live-animals\" role=\"button\" class=\"govuk-button govuk-button--secondary\">Return to dashboard",
+      "confidence": "verbatim",
+      "note": "The overview's task list is detailed by the hub part; it is cited here as the landing page for copy and amend."
+    }
+  ]
+}

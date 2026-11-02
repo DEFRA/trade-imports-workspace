@@ -8,7 +8,7 @@ Asks how much of each chosen species the consignment carries — one number of a
 
 ### Requirement: The page asks a number of animals, and where owed a number of packages, per species chosen — starting empty
 **ID**: REQ-COMMODITY-DETAILS-001
-The system MUST ask, for every species the user chose on the previous page, a number of animals and, where that species' commodity calls for one, a number of packages, grouping each species' questions under its own heading nested under its commodity's heading, offering a save-and-continue action, and MUST leave every field empty when the page is first opened.
+The system MUST ask, for every species the user chose on the previous page, a number of animals and, where that species' commodity calls for one, a number of packages, grouping each species' questions under its own heading, its Latin name, nested under a heading of its commodity code, offering a save-and-continue action, and MUST leave every field empty when the page is first opened.
 
 #### Scenario: The page presents one set of questions per chosen species, all empty
 **ID**: SCN-COMMODITY-DETAILS-001-A
@@ -30,13 +30,13 @@ The system MUST accept the commodity details once every species' number of anima
 
 ### Requirement: A collection table lists the chosen commodities and species, each row removable on its own
 **ID**: REQ-COMMODITY-DETAILS-003
-The system MUST list the chosen commodities in a table with the columns "Commodity code", "Common name" and "Species", the Species cell listing the Latin names of the species chosen under that row, and MUST let the user remove a row on its own without affecting another row's saved counts.
+The system MUST list the chosen commodities in a table with the columns "Commodity code" and "Species" — one row per commodity code, except under commodity code 01061900, where each chosen species has its own row — the Species cell listing the Latin name of each species chosen under that row, and MUST let the user remove a row on its own: removing a commodity row drops every species under that code, removing a species row drops that one species and leaves the rest of its code, and neither affects another row's saved counts. Removing the last species under a code removes that code's row too.
 
 #### Scenario: The table lists each commodity with its code
 **ID**: SCN-COMMODITY-DETAILS-003-A
 - **GIVEN** the user has chosen more than one species
 - **WHEN** they view the commodity details page
-- **THEN** the table lists each commodity by name and code, one row per commodity except under code 01061900 (see SCN-COMMODITY-DETAILS-003-C)
+- **THEN** the table lists each commodity by its code and the Latin name of each species chosen under it; one row per code except under code 01061900 (see SCN-COMMODITY-DETAILS-003-C)
 
 #### Scenario: Removing one species leaves another's saved counts untouched
 **ID**: SCN-COMMODITY-DETAILS-003-B
@@ -48,16 +48,16 @@ The system MUST list the chosen commodities in a table with the columns "Commodi
 **ID**: SCN-COMMODITY-DETAILS-003-C
 - **GIVEN** the user has chosen a species under commodity code 01061900 (for example, cats) alongside one under another code
 - **WHEN** they view the commodity details page
-- **THEN** the 01061900 species has its own row, named by the species, with the commodity's code
+- **THEN** the 01061900 species has its own row, with the commodity's code and the species' Latin name
 - **AND** removing that row drops only that species, while a row under any other code removes its whole commodity
 - **AND** removing the last species under a commodity removes that commodity's row too
 
 #### Scenario: Each row's Species cell lists the Latin names chosen under it
 **ID**: SCN-COMMODITY-DETAILS-003-D
-- **GIVEN** the user has chosen two species under the Cow commodity
+- **GIVEN** the user has chosen two species under commodity code 0102
 - **WHEN** they view the commodity details page
-- **THEN** the table has the columns "Commodity code", "Common name" and "Species"
-- **AND** the Cow row reads 0102, Cow, and the Latin name of each of the two species
+- **THEN** the table has the columns "Commodity code" and "Species"
+- **AND** the 0102 row reads 0102 and the Latin name of each of the two species
 
 ### Requirement: A number of animals or a number of packages must be a positive whole number
 **ID**: REQ-COMMODITY-DETAILS-004
@@ -107,14 +107,20 @@ The system MUST persist each species' saved counts, so a reload of the page show
 
 ### Requirement: Adding another commodity from this page preserves what was already entered
 **ID**: REQ-COMMODITY-DETAILS-007
-The system MUST let the user add a further commodity from the commodity details page, returning them to commodity selection with what they already chose still selected, and MUST preserve every already-saved species' counts once the new one is added.
+The system MUST let the user add a further commodity from the commodity details page, returning them to commodity selection with what they already chose still selected, MUST return them to commodity details once the new one is saved, and MUST preserve every already-saved species' counts once the new one is added.
 
 #### Scenario: Adding another commodity keeps the earlier species selected and their counts intact
 **ID**: SCN-COMMODITY-DETAILS-007-A
 - **GIVEN** the user has saved a count for one species
 - **WHEN** they choose to add another commodity, select a further species and save
 - **THEN** the earlier species was still shown as selected on the selection page
-- **AND** its saved count is unchanged, and the new species starts with an empty count
+- **AND** commodity details is shown again, the earlier species' saved number of animals and number of packages are unchanged, and the new species starts with an empty count
+
+#### Scenario: In the opening sequence, adding another commodity returns to commodity details
+**ID**: SCN-COMMODITY-DETAILS-007-B
+- **GIVEN** the user is in the opening sequence on commodity details
+- **WHEN** they choose to add another commodity, select a further species and save
+- **THEN** commodity details is shown, not the reason for import
 
 ### Requirement: Removing every species returns the user to commodity selection
 **ID**: REQ-COMMODITY-DETAILS-008

@@ -1,0 +1,718 @@
+{
+  "source": "prototype:dr2-1-source",
+  "structure": "Part 6, Arrival details and transit countries, read at commit 04a073b (the checkout's HEAD). Read in full: app/views/design-release-2.1/arrival-details.html (160 lines; extends layouts/journey.html: phase banner, back link, notification status, error summary, caption 'Transport and arrival', heading 'Arrival details', a form posting to /design-release-2.1/arrival-details holding the arrival-date picker partial (hidden while creating a template), a port-of-entry type-ahead search over the UK airport and port list with a hidden portOfEntry value, a means-of-transport select, transport identification and transport document reference text inputs, and the shared DR2.1 journey form actions); app/views/design-release-2.1/transit-countries.html (156 lines; extends layouts/main.html: caption 'Movement', heading 'Which countries will the consignment travel through?', two intro paragraphs, a country type-ahead search that adds countries to a 'Country' summary list with a Remove link per row, a hidden JSON transitCountries value, and the shared form actions); app/views/partials/arrival-date-picker.html (MoJ date picker, label, hint, minDate and maxDate); app/data/uk-airports.js (205 entries: 28 airports with IATA codes, then 177 sea ports with GB UN/LOCODEs); app/data/means-of-transport.js (Air, Rail, Road, Sea); routes.js 2225-2369 (port-of-entry display options and validity, exit border control post validity, means-of-transport normalisation and select items, arrival completeness and save, transit requirement, transit list parsing, completeness and render); routes.js 4284-4417 (arrival and transit redirects, continue path, d/m/yyyy date parsing, date-picker bounds of today minus 7 days to today plus 6 months, allowed-range check, validateArrivalDetails, body parsing, renderArrivalDetailsPage); routes.js 12529-12643 (GET and POST /arrival-details and /transit-countries). For meaning only, without claiming their pages, I also looked at routes.js 48-58 (TRANSIT_MEANS_OF_TRANSPORT and the means-of-transport aliases my range uses), 1495-1520 (journey step order around arrival and transit), 1560-1602 (form action and save-redirect helpers), 436-505 and 1753-1755 (from flags, back link, and the origin and import-reason guards, both of which return false), 8949 (template-create test), app/data/countries.js (the transit search list) and partials/design-release-2.1/journey-form-actions.html (the buttons). Covered: both pages' routes, back links, captions, headings, every field with label, hint, options and date bounds, the one validation rule and its error, soft-save and continue branches, what each page saves, when transit countries is required and skipped, completeness rules for the overview, and the UK port and means-of-transport lists. Not in the DR2.1 arrival page: an exit border control post field (only its validity helper sits in my range, used by the reason-for-import pages). Client-side search behaviour lives in app/assets, out of scope.",
+  "claims": [
+    {
+      "id": "prototype-dr2-1-source-p6-001",
+      "statement": "The arrival details page is served at /arrival-details (under /design-release-2.1) on GET and POST.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12529, app/routes.js:12543",
+      "quote": "router.get('/arrival-details', (req, res) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-002",
+      "statement": "In the linear journey the arrival details page comes after consignment details, and after the animal identification and additional animal details pages when those apply.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:1495-1511 (getJourneySteps)",
+      "quote": "if (requiresAdditionalAnimalDetailsPage(sessionData)) {\n    steps.push('/additional-animal-details')\n  }\n\n  steps.push('/arrival-details')",
+      "confidence": "verbatim",
+      "note": "Read for context; getJourneySteps belongs to the journey-control part."
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-003",
+      "statement": "The arrival details page has no entry guard in effect: the origin, import-reason and arrival-details guards it calls all return false, so a user can open it at any point.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12532-12538, app/routes.js:436, app/routes.js:1753, app/routes.js:4284",
+      "quote": "function redirectIfNoArrivalDetails (req, res) {\n  return false\n}",
+      "confidence": "inferred",
+      "note": "The guards are called but are stubs that never redirect."
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-004",
+      "statement": "Each visit to the arrival details or transit countries page makes sure the notification has a prototype notification reference.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12530, app/routes.js:12583",
+      "quote": "ensurePrototypeNotificationReference(req.session.data)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-005",
+      "statement": "The arrival details page uses the journey layout and shows the Alpha phase banner with a feedback link.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/arrival-details.html:1, 13-18",
+      "quote": "html: 'This is a new service. Help us improve it and <a class=\"govuk-link\" href=\"#\">give your feedback by email</a>.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-006",
+      "statement": "The arrival details page's Back link goes to the notification overview (/notification-hub), or to the template review page when the user is editing a template from its review.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:4406, app/routes.js:488-498",
+      "quote": "backLink: getJourneyBackLink(req, '/notification-hub'),",
+      "confidence": "verbatim",
+      "note": "The linear back link is the overview, not the previous journey page."
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-007",
+      "statement": "The arrival details page shows the notification status panel above its content.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/arrival-details.html:28",
+      "quote": "{% include \"partials/notification-status.html\" %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-008",
+      "statement": "When the arrival details page has errors, an error summary titled 'There is a problem' lists them.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/arrival-details.html:30-35",
+      "quote": "titleText: \"There is a problem\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-009",
+      "statement": "The arrival details page's caption is 'Transport and arrival'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/arrival-details.html:38",
+      "quote": "<p class=\"app-arrival-details-page__caption\">Transport and arrival</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-010",
+      "statement": "The arrival details page's heading is 'Arrival details'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/arrival-details.html:39",
+      "quote": "<h1 class=\"app-arrival-details-page__heading\">Arrival details</h1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-011",
+      "statement": "The arrival details form posts to /design-release-2.1/arrival-details and turns off browser validation.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/arrival-details.html:42",
+      "quote": "<form method=\"post\" action=\"/design-release-2.1/arrival-details\" novalidate class=\"app-arrival-details-form\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-012",
+      "statement": "When the user reached arrival details from the notification overview, the form carries from=hub so that saving returns to the overview.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/arrival-details.html:44-46, app/routes.js:1593-1595",
+      "quote": "<input type=\"hidden\" name=\"from\" value=\"hub\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-013",
+      "statement": "The arrival details page asks for the arrival date at the port of entry with the field label 'Arrival date at port of entry'.",
+      "kind": "copy",
+      "ref": "app/views/partials/arrival-date-picker.html:9",
+      "quote": "text: \"Arrival date at port of entry\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-014",
+      "statement": "The arrival date field's hint is 'The expected date of arrival at the port of entry. For example, 27/3/2026'.",
+      "kind": "copy",
+      "ref": "app/views/partials/arrival-date-picker.html:13",
+      "quote": "text: \"The expected date of arrival at the port of entry. For example, 27/3/2026\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-015",
+      "statement": "The arrival date is entered with a single date-picker input (MoJ date picker), named arrivalDateAtPort, not three day/month/year boxes.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/arrival-date-picker.html:1-7",
+      "quote": "{{ mojDatePicker({\n    id: \"arrival-date-at-port\",\n    name: \"arrivalDateAtPort\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-016",
+      "statement": "The arrival date picker's earliest selectable date is 7 days before today.",
+      "kind": "rule",
+      "ref": "app/routes.js:4333-4336, app/views/partials/arrival-date-picker.html:16",
+      "quote": "minDate.setDate(minDate.getDate() - 7)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-017",
+      "statement": "The arrival date picker's latest selectable date is 6 months after today.",
+      "kind": "rule",
+      "ref": "app/routes.js:4337-4338, app/views/partials/arrival-date-picker.html:17",
+      "quote": "maxDate.setMonth(maxDate.getMonth() + 6)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-018",
+      "statement": "Dates are written and read in d/m/yyyy form without leading zeros (for example 27/3/2026).",
+      "kind": "data",
+      "ref": "app/routes.js:4325-4327",
+      "quote": "return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-019",
+      "statement": "An arrival date only counts as a real date when it matches day/month/four-digit year (one or two digits for day and month) and is a real calendar date, so 31/2/2026 is not a date.",
+      "kind": "rule",
+      "ref": "app/routes.js:4301-4323 (parseArrivalDisplayDate)",
+      "quote": "const match = trimmed.match(/^(\\d{1,2})\\/(\\d{1,2})\\/(\\d{4})$/)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-020",
+      "statement": "An arrival date is within the allowed range when it falls between 7 days before today and 6 months after today, both ends included.",
+      "kind": "rule",
+      "ref": "app/routes.js:4358-4370 (isArrivalDateWithinAllowedRange)",
+      "quote": "return date >= minDate && date <= maxDate",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-021",
+      "statement": "No error message is shown for a missing, badly formed or out-of-range arrival date: validation never checks the date, so the date only affects whether the section counts as complete.",
+      "kind": "rule",
+      "ref": "app/routes.js:4372-4387 (validateArrivalDetails)",
+      "quote": "// Soft validation: other arrival fields are optional to proceed, but means of\n  // transport is required",
+      "confidence": "inferred",
+      "note": "The date picker binds data.errors.arrivalDateAtPort but nothing ever sets that error."
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-022",
+      "statement": "While creating a template (DR2.1), the arrival date field is not shown on the arrival details page.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/arrival-details.html:48-50",
+      "quote": "{% if not data.isCreatingTemplate %}\n        {% include \"partials/arrival-date-picker.html\" %}\n      {% endif %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-023",
+      "statement": "While creating a template (DR2.1), the arrival date is saved as empty whatever is submitted.",
+      "kind": "rule",
+      "ref": "app/routes.js:2294-2296",
+      "quote": "sessionData.arrivalDateAtPort = isDesignRelease21TemplateCreate(sessionData)\n    ? null\n    : (values.arrivalDateAtPort || null)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-024",
+      "statement": "The arrival details page asks for the port of entry with the label 'Port of entry'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/arrival-details.html:53-55",
+      "quote": "Port of entry",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-025",
+      "statement": "The port of entry hint is 'Select where the transporter will enter with the consignment. Start typing to search by port or airport name or code.'",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/arrival-details.html:57",
+      "quote": "Select where the transporter will enter with the consignment. Start typing to search by port or airport name or code.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-026",
+      "statement": "The port of entry is chosen through a type-ahead search box with the placeholder 'Select a port', a search button and a results list labelled 'Port search results'; the chosen port is submitted in a hidden portOfEntry field.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/arrival-details.html:65-109",
+      "quote": "placeholder=\"Select a port\"",
+      "confidence": "verbatim",
+      "note": "The search's client-side behaviour is in app/assets, out of this source's scope."
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-027",
+      "statement": "The port search announces its status to screen readers through a polite live region.",
+      "kind": "non-functional",
+      "ref": "app/views/design-release-2.1/arrival-details.html:108",
+      "quote": "<div class=\"app-airport-search__status govuk-visually-hidden\" aria-live=\"polite\"></div>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-028",
+      "statement": "The port of entry options are every entry of the UK airports and ports list, each shown as 'name - code' (for example 'London Heathrow - LHR').",
+      "kind": "data",
+      "ref": "app/routes.js:2225-2227, app/routes.js:4410",
+      "quote": "return ukAirports.map((airport) => `${airport.name} - ${airport.code}`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-029",
+      "statement": "The UK port of entry list holds 205 entries: 28 airports with three-letter codes (London Heathrow LHR first, Dundee DND last) followed by 177 sea ports with GB-prefixed five-letter codes (Aberdeen GBABD first, Yarmouth GBYMO last).",
+      "kind": "data",
+      "ref": "app/data/uk-airports.js:2-206",
+      "quote": "{ name: 'London Heathrow', code: 'LHR' },",
+      "confidence": "inferred",
+      "note": "Counted from the file: lines 2-29 are airports, 30-206 are ports. Despite its name the file lists sea ports too."
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-030",
+      "statement": "The airports in the port of entry list are London Heathrow (LHR), London Gatwick (LGW), Manchester (MAN), London Stansted (STN), Edinburgh (EDI), Birmingham (BHX), London Luton (LTN), Glasgow (GLA), Bristol (BRS), Newcastle (NCL), Liverpool John Lennon (LPL), Aberdeen (ABZ), Belfast International (BFS), Belfast City (George Best) (BHD), East Midlands (EMA), Cardiff (CWL), Inverness (INV), Leeds Bradford (LBA), London City (LCY), London Southend (SEN), Jersey (JER), Guernsey (GCI), Isle of Man (IOM), Southampton (SOU), Exeter (EXT), Norwich (NWI), Newquay (NQY) and Dundee (DND).",
+      "kind": "data",
+      "ref": "app/data/uk-airports.js:2-29",
+      "quote": "{ name: 'London Gatwick', code: 'LGW' },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-031",
+      "statement": "Some place names appear twice in the port of entry list, once as an airport and once as a sea port, told apart only by code (for example Aberdeen ABZ and Aberdeen GBABD, Bristol BRS and GBBRS, Cardiff CWL and GBCDF, Glasgow GLA and GBGLW, Inverness INV and GBINV, Manchester MAN and GBMNC, Southampton SOU and GBSOU, Dundee DND and GBDUN).",
+      "kind": "data",
+      "ref": "app/data/uk-airports.js:13, 30, 10, 50, 17, 58",
+      "quote": "{ name: 'Aberdeen', code: 'GBABD' },",
+      "confidence": "inferred",
+      "note": "The display string includes the code, so the duplicates stay distinguishable."
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-032",
+      "statement": "A port of entry is valid only when it matches one of the 'name - code' options exactly, ignoring case and surrounding spaces.",
+      "kind": "rule",
+      "ref": "app/routes.js:2229-2233 (isValidPortOfEntry)",
+      "quote": "return getUkAirportDisplayOptions().some((option) => option.toLowerCase() === normalised)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-033",
+      "statement": "No error message is shown for a missing or unrecognised port of entry: validation does not check it, and an invalid port only stops the section counting as complete.",
+      "kind": "rule",
+      "ref": "app/routes.js:4372-4387, app/routes.js:2283",
+      "quote": "// Soft validation: other arrival fields are optional to proceed",
+      "confidence": "inferred",
+      "note": "The view renders data.errors.portOfEntry but nothing sets it."
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-034",
+      "statement": "The arrival details page asks for the means of transport with a select labelled 'Means of transport to the port of entry'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/arrival-details.html:112-122",
+      "quote": "text: \"Means of transport to the port of entry\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-035",
+      "statement": "The means of transport select has no hint.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/arrival-details.html:112-122",
+      "quote": "{{ govukSelect({\n        id: \"means-of-transport\",\n        name: \"meansOfTransport\",",
+      "confidence": "inferred",
+      "note": "The select macro call passes no hint."
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-036",
+      "statement": "The means of transport select's options are 'Select one' (empty, selected when nothing is chosen), then Air, Rail, Road and Sea in that order.",
+      "kind": "data",
+      "ref": "app/routes.js:2255-2270, app/data/means-of-transport.js:1-6",
+      "quote": "text: 'Select one',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-037",
+      "statement": "A saved means of transport is re-selected when the page is shown again.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:2264-2268, app/routes.js:4411",
+      "quote": "selected: normalisedValue === option",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-038",
+      "statement": "Means of transport values are normalised: Air, Rail, Road and Sea are kept, the older names airplane, railway, road vehicle and vessel (in any case) map to Air, Rail, Road and Sea, and anything else counts as not chosen.",
+      "kind": "rule",
+      "ref": "app/routes.js:2241-2253, app/routes.js:49-58",
+      "quote": "airplane: 'Air',\n  air: 'Air',\n  railway: 'Rail',\n  rail: 'Rail',\n  'road vehicle': 'Road',\n  road: 'Road',\n  vessel: 'Sea',\n  sea: 'Sea'",
+      "confidence": "verbatim",
+      "note": "The alias map sits at routes.js 49-58, outside my range, but only this slice's normalisation uses it."
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-039",
+      "statement": "Means of transport is the only required field on the arrival details page; port, date, transport identification and document reference are optional to continue.",
+      "kind": "rule",
+      "ref": "app/routes.js:4376-4384",
+      "quote": "// Soft validation: other arrival fields are optional to proceed, but means of\n  // transport is required (it also drives whether transit countries are shown).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-040",
+      "statement": "When no means of transport is chosen on Save and continue, the field and the error summary both show 'Select a means of transport to the port of entry', and the summary links to the select.",
+      "kind": "copy",
+      "ref": "app/routes.js:4378-4384",
+      "quote": "errors.meansOfTransport = { text: 'Select a means of transport to the port of entry' }\n    errorList.push({\n      text: 'Select a means of transport to the port of entry',\n      href: '#means-of-transport'\n    })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-041",
+      "statement": "When the means of transport error is shown, everything the user entered on the page is still saved and shown back on the re-rendered page.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12567-12573",
+      "quote": "req.session.data.errors = validation.errors\n    saveArrivalDetailsToSession(req.session.data, values)\n\n    return renderArrivalDetailsPage(req, res)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-042",
+      "statement": "The arrival details page asks for transport identification with the label 'Transport identification'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/arrival-details.html:124-128",
+      "quote": "text: \"Transport identification\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-043",
+      "statement": "The transport identification hint says 'Enter one of the following:' and lists flight number, train number, road vehicle registration number, and vessel name (for ferries, also the road vehicle registration number).",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/arrival-details.html:129-131",
+      "quote": "Enter one of the following:</p><ul class=\"govuk-list govuk-list--bullet govuk-hint app-arrival-details-page__hint-list\"><li>flight number</li><li>train number</li><li>road vehicle registration number</li><li>vessel name (for ferries, also the road vehicle registration number)</li></ul>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-044",
+      "statement": "Transport identification is a free-text field with no format or length check; spaces at either end are trimmed.",
+      "kind": "rule",
+      "ref": "app/routes.js:4394, app/routes.js:4372-4387",
+      "quote": "transportIdentification: (body.transportIdentification || '').trim(),",
+      "confidence": "inferred",
+      "note": "validateArrivalDetails checks only means of transport."
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-045",
+      "statement": "The arrival details page asks for the transport document reference with the label 'Transport document reference'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/arrival-details.html:139-143",
+      "quote": "text: \"Transport document reference\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-046",
+      "statement": "The transport document reference hint is 'Enter the reference number on the air waybill, bill of lading, sea waybill, road consignment note (CMR) or other transport document.'",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/arrival-details.html:145",
+      "quote": "text: \"Enter the reference number on the air waybill, bill of lading, sea waybill, road consignment note (CMR) or other transport document.\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-047",
+      "statement": "Transport document reference is a free-text field with no format or length check; spaces at either end are trimmed.",
+      "kind": "rule",
+      "ref": "app/routes.js:4395, app/routes.js:4372-4387",
+      "quote": "transportDocumentReference: (body.transportDocumentReference || '').trim()",
+      "confidence": "inferred"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-048",
+      "statement": "The arrival details page has no exit border control post field in Design Release 2.1; the exit border control post check in this slice serves the transit and temporary admission reasons on the reason-for-import pages.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/arrival-details.html (whole file), app/routes.js:2235-2239",
+      "quote": "function isValidExitBorderControlPost (exitBorderControlPost) {",
+      "confidence": "inferred",
+      "note": "The part scope mentions an exit border control post 'where used'; the arrival page does not use one."
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-049",
+      "statement": "An exit border control post is valid only when it matches an entry of the exit border control posts list exactly, ignoring case and surrounding spaces.",
+      "kind": "rule",
+      "ref": "app/routes.js:2235-2239",
+      "quote": "return exitBorderControlPosts.some((option) => option.toLowerCase() === normalised)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-050",
+      "statement": "The arrival details page ends with the shared DR2.1 journey actions: Save and continue, Save and return to overview, and a Cancel and return to overview link (or the amend and template-review variants of those buttons).",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/arrival-details.html:155-156, app/views/partials/design-release-2.1/journey-form-actions.html",
+      "quote": "{% include \"partials/design-release-2.1/journey-form-actions.html\" %}",
+      "confidence": "verbatim",
+      "note": "The buttons themselves belong to the shell part."
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-051",
+      "statement": "Save and return to overview (and Save and return in an amend) on arrival details saves everything entered without any validation, clears errors and goes to the notification overview (or the review page for an amend), so a user can leave without choosing a means of transport.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12557-12563, app/routes.js:1564-1586",
+      "quote": "if (isJourneySoftSaveAction(getJourneyFormAction(req))) {\n    saveArrivalDetailsToSession(req.session.data, values)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-052",
+      "statement": "Save and continue on arrival details with a means of transport chosen saves the page and goes to the next journey page: transit countries when the means is Rail or Road, otherwise the transporter page.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12575-12579, app/routes.js:4297-4299, app/routes.js:1511-1517",
+      "quote": "return res.redirect(getSectionContinueRedirect(req, getArrivalDetailsContinuePath(req.session.data)))",
+      "confidence": "inferred",
+      "note": "The next path comes from getJourneySteps, read for context."
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-053",
+      "statement": "Save and continue on arrival details returns to the notification overview when the user came from it, to the review page when they came from review, and to the template review when editing a template from its review.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12579, app/routes.js:1588-1602",
+      "quote": "if (isFromHub(req)) {\n    return '/notification-hub'\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-054",
+      "statement": "The arrival details page saves the arrival date, port of entry, means of transport, transport identification and transport document reference, storing an empty value for any field left blank.",
+      "kind": "data",
+      "ref": "app/routes.js:2293-2300",
+      "quote": "sessionData.portOfEntry = values.portOfEntry || null\n  sessionData.meansOfTransport = normaliseMeansOfTransport(values.meansOfTransport) || null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-055",
+      "statement": "Saving arrival details with a means of transport other than Rail or Road clears any transit countries already saved.",
+      "kind": "rule",
+      "ref": "app/routes.js:2302-2304",
+      "quote": "if (!requiresTransitCountries(values)) {\n    sessionData.transitCountries = null\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-056",
+      "statement": "The arrival details section counts as complete only when the arrival date is a real date within the allowed range (not needed while creating a template), the port of entry is a valid list entry, a means of transport is chosen, and both transport identification and transport document reference are filled in.",
+      "kind": "rule",
+      "ref": "app/routes.js:2272-2291 (hasArrivalDetailsComplete)",
+      "quote": "const dateComplete = isDesignRelease21TemplateCreate(sessionData) || Boolean(\n    arrivalDateAtPort &&\n    isArrivalDateWithinAllowedRange(sessionData.arrivalDateAtPort)\n  )",
+      "confidence": "verbatim",
+      "note": "Used for the overview task status and the review card (routes.js 6550, 5223), which other parts claim."
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-057",
+      "statement": "A saved arrival date that later falls more than 7 days into the past makes the arrival details section incomplete again, because the range is measured from today each time.",
+      "kind": "rule",
+      "ref": "app/routes.js:2276, app/routes.js:4358-4370",
+      "quote": "function isArrivalDateWithinAllowedRange (value, referenceDate = new Date()) {",
+      "confidence": "inferred"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-058",
+      "statement": "The transit countries page is served at /transit-countries (under /design-release-2.1) on GET and POST.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12582, app/routes.js:12604",
+      "quote": "router.get('/transit-countries', (req, res) => {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-059",
+      "statement": "Transit countries is required only when the means of transport to the port of entry is Rail or Road; it is a journey step between arrival details and transporter only then.",
+      "kind": "rule",
+      "ref": "app/routes.js:48, app/routes.js:2307-2313, app/routes.js:1513-1515",
+      "quote": "const TRANSIT_MEANS_OF_TRANSPORT = ['Rail', 'Road']",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-060",
+      "statement": "Opening or posting the transit countries page when the means of transport is not Rail or Road (including when none is chosen) redirects to the notification overview.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:4288-4295, app/routes.js:12597-12599, app/routes.js:12619-12621",
+      "quote": "if (!requiresTransitCountries(req.session.data)) {\n    res.redirect('/notification-hub')\n    return true\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-061",
+      "statement": "The transit countries page's Back link goes to the notification overview when the user came from it, otherwise to arrival details.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:2357",
+      "quote": "const backLink = isFromHub(req) ? '/notification-hub' : '/arrival-details'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-062",
+      "statement": "The transit countries page uses the main layout, not the journey layout, and shows the Alpha phase banner, the notification status panel and an error summary titled 'There is a problem' when there are errors.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/transit-countries.html:1, 11-16, 31-38",
+      "quote": "{% extends \"layouts/main.html\" %}",
+      "confidence": "verbatim",
+      "note": "Unlike arrival details, which extends layouts/journey.html."
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-063",
+      "statement": "The transit countries page's caption is 'Movement'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/transit-countries.html:41",
+      "quote": "<p class=\"app-transit-countries-page__caption\">Movement</p>",
+      "confidence": "verbatim",
+      "note": "Arrival details' caption is 'Transport and arrival'."
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-064",
+      "statement": "The transit countries page's heading is 'Which countries will the consignment travel through?'",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/transit-countries.html:42",
+      "quote": "Which countries will the consignment travel through?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-065",
+      "statement": "The transit countries page explains 'Countries the consignment will travel through are countries between the country of origin and the destination country.'",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/transit-countries.html:46",
+      "quote": "Countries the consignment will travel through are countries between the country of origin and the destination country.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-066",
+      "statement": "The transit countries page says 'This does not include the United Kingdom.'",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/transit-countries.html:47",
+      "quote": "This does not include the United Kingdom.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-067",
+      "statement": "The transit countries form posts to /design-release-2.1/transit-countries, turns off browser validation, and carries from=hub when the user came from the overview.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/transit-countries.html:50-54",
+      "quote": "<form method=\"post\" action=\"/design-release-2.1/transit-countries\" novalidate class=\"app-transit-countries-form\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-068",
+      "statement": "The transit country search field is labelled 'Enter a country'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/transit-countries.html:58-60",
+      "quote": "Enter a country",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-069",
+      "statement": "The transit country search hint is 'Enter each country that the consignment will travel through'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/transit-countries.html:62",
+      "quote": "Enter each country that the consignment will travel through",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-070",
+      "statement": "Transit countries are added one at a time through a type-ahead search with the placeholder 'Search for a country', a search button and a results list labelled 'Country search results'; the search box itself is always empty when the page loads.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/transit-countries.html:85-117",
+      "quote": "placeholder=\"Search for a country\"",
+      "confidence": "verbatim",
+      "note": "Client-side search behaviour is in app/assets, out of scope."
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-071",
+      "statement": "The transit country search offers the EU member states, EU outermost territories shown with their parent country (for example 'Canary Islands (Spain)') and the Crown Dependencies shown with 'United Kingdom' (for example 'Jersey (United Kingdom)'), sorted alphabetically.",
+      "kind": "data",
+      "ref": "app/routes.js:2363, app/data/countries.js:1-71",
+      "quote": "countriesJson: JSON.stringify(countryOptions),",
+      "confidence": "inferred",
+      "note": "countries.js is read for meaning only; the list itself is claimed by the origin part. It includes Crown Dependencies although the page says transit does not include the United Kingdom."
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-072",
+      "statement": "Countries already added show in a summary list with a 'Country' column header, one row per country and a 'Remove' link on each row.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/transit-countries.html:120-139",
+      "quote": "<a class=\"govuk-link app-transit-country-search__remove-country\" href=\"#\">Remove</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-073",
+      "statement": "The added-countries list is hidden when no country has been added.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/transit-countries.html:120-124",
+      "quote": "{% if not transitCountries.length %}hidden{% endif %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-074",
+      "statement": "The transit country search announces changes to screen readers through a polite live region.",
+      "kind": "non-functional",
+      "ref": "app/views/design-release-2.1/transit-countries.html:83",
+      "quote": "<div class=\"app-transit-country-search__status govuk-visually-hidden\" aria-live=\"polite\"></div>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-075",
+      "statement": "The chosen transit countries are submitted as a JSON list in one hidden transitCountries field; a value that is not a JSON list counts as no countries, and empty entries are dropped.",
+      "kind": "data",
+      "ref": "app/views/design-release-2.1/transit-countries.html:77-82, app/routes.js:2315-2335, app/routes.js:2350-2352",
+      "quote": "const parsed = JSON.parse(value)\n\n      return Array.isArray(parsed) ? parsed.filter(Boolean) : []",
+      "confidence": "verbatim",
+      "note": "The hidden field renders empty; the client script fills it from the initial list."
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-076",
+      "statement": "Transit countries are optional: the page has no validation and no error message, and saving an empty list is accepted.",
+      "kind": "rule",
+      "ref": "app/routes.js:2337-2340, app/routes.js:12634-12641",
+      "quote": "// Transit countries are optional — any saved list (including empty) is acceptable.",
+      "confidence": "verbatim",
+      "note": "The view still renders data.errors.transitCountries, but nothing sets it."
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-077",
+      "statement": "The server does not check that a submitted transit country is on the country list or that it is not repeated.",
+      "kind": "rule",
+      "ref": "app/routes.js:2315-2352",
+      "quote": "return value.filter(Boolean)",
+      "confidence": "inferred"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-078",
+      "statement": "The transit countries task shows as complete on the overview only when at least one country has been added.",
+      "kind": "rule",
+      "ref": "app/routes.js:2342-2344, app/routes.js:6555",
+      "quote": "return normalizeTransitCountries(sessionData && sessionData.transitCountries).length > 0",
+      "confidence": "verbatim",
+      "note": "hasTransitCountriesComplete always returns true while the overview status uses hasTransitCountriesSelected, so 'optional' and 'complete' disagree."
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-079",
+      "statement": "The transit countries page ends with the shared DR2.1 journey actions (Save and continue, Save and return to overview, Cancel and return to overview, or their amend and template-review variants).",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/transit-countries.html:144-147",
+      "quote": "wrapperClass: \"app-origin-form-actions app-transit-countries-page__form-actions\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-080",
+      "statement": "Save and return to overview (or Save and return in an amend) on transit countries saves the list and goes to the overview (or review for an amend).",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12626-12632",
+      "quote": "return res.redirect(getJourneySaveRedirect(getJourneyFormAction(req), '/notification-hub', req.session.data))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-081",
+      "statement": "Save and continue on transit countries saves the list and goes to the next journey page, the transporter page, or back to the overview, review or template review when the user came from there.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:12634-12641, app/routes.js:1517",
+      "quote": "getNextJourneyPath('/transit-countries', req.session.data)",
+      "confidence": "inferred"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-082",
+      "statement": "Transit countries is reached from arrival details only through Save and continue with Rail or Road; there is no link to it on the arrival details page itself.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/arrival-details.html (whole file), app/routes.js:12579",
+      "quote": "return res.redirect(getSectionContinueRedirect(req, getArrivalDetailsContinuePath(req.session.data)))",
+      "confidence": "inferred",
+      "note": "The overview's task list also links to it (routes.js 6555), claimed by the hub part."
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-083",
+      "statement": "The arrival details page does not pass a from=review or from=template-review marker in its form, so the review return depends on the request query or on template-edit state held in the session.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/arrival-details.html:44-46, app/routes.js:4403",
+      "quote": "const fromTemplateReview = isFromTemplateReview(req) || isEditingTemplateFromReview(sessionData)",
+      "confidence": "inferred",
+      "note": "fromTemplateReview is passed to the view but the view does not use it."
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-084",
+      "statement": "The source does not say why a means of transport of Air or Sea needs no transit countries, or whether a mixed route (for example road then ferry) should ask for them.",
+      "kind": "rule",
+      "ref": "app/routes.js:48, app/routes.js:2307-2313",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-085",
+      "statement": "The source shows no check that the port of entry suits the means of transport (for example an airport chosen with Sea or Road).",
+      "kind": "rule",
+      "ref": "app/routes.js:2229-2233, app/routes.js:4372-4387",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-source-p6-086",
+      "statement": "The source gives no error message for an arrival date outside the allowed range, an invalid date, or a port not on the list, although the views have places to show such errors.",
+      "kind": "copy",
+      "ref": "app/views/partials/arrival-date-picker.html:18, app/views/design-release-2.1/arrival-details.html:59-64, app/routes.js:4372-4387",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

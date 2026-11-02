@@ -90,10 +90,13 @@ const group = (folder, keyPath = 'sections.consignmentParties') => ({
 
 const PLAN = { groups: [group(CAPTIONS)], skipped: [], shared: [] }
 
+const BASE_COMMIT = '3f2a9c1d'
+
 const LOCATED = {
   ok: true,
   kind: 'release',
   frozen: false,
+  baseCommit: BASE_COMMIT,
   copy: [LEAF],
   templates: []
 }
@@ -258,9 +261,34 @@ describe('wording-sweep workflow: the run', () => {
     expect(labels(agent)).toEqual(['find "Consignment parties"'])
   })
 
+  it('Should check against the starting commit and refuse any release pattern change', async () => {
+    const agent = answers()
+    await runWorkflow(ARGS, { agent })
+    expect(promptFor(agent, 'find "Consignment parties"')).toContain(
+      `Then run: git -C ${REPO} rev-parse HEAD, and return the commit it prints in baseCommit.`
+    )
+    expect(promptFor(agent, 'check')).toContain(
+      `npm --prefix ${REPO} run designer:check -- --set plants-working --quick --since ${BASE_COMMIT} --no-new-patterns`
+    )
+  })
+
+  it('Should stop before any edit when the find gives no starting commit', async () => {
+    const agent = answers({ locate: { ...LOCATED, baseCommit: '' } })
+    await expect(runWorkflow(ARGS, { agent })).rejects.toThrow(
+      'could not read the commit the sweep starts from'
+    )
+    expect(labels(agent)).toEqual(['find "Consignment parties"'])
+  })
+
   it('Should stop with a note when nothing matched', async () => {
     const agent = answers({
-      locate: { ok: true, kind: 'release', copy: [], templates: [] }
+      locate: {
+        ok: true,
+        kind: 'release',
+        baseCommit: BASE_COMMIT,
+        copy: [],
+        templates: []
+      }
     })
     const result = await runWorkflow(ARGS, { agent })
     expect(result.note).toContain('Nothing matched')

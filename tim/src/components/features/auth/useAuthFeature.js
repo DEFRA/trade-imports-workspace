@@ -10,7 +10,7 @@ export const useAuthFeature = ({
   probe = probeAll
 }) => {
   const handleMainMenuSelect = async () => {
-    setLoadingMessage('Checking sign-in for GitHub, Jira and Confluence…')
+    setLoadingMessage('Checking sign-in for Jira and Confluence…')
     setScreen(SCREENS.LOADING)
     try {
       const results = await probe()

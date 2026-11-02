@@ -38,6 +38,38 @@ designer already asked to keep this session's work off `main` (they want to
 share it on a branch first): the workflow then makes
 `design/<set>-<slug>` from `main` before building anything.
 
+## A designer's mandate
+
+`design-session.js` and `port-kit-page.js` take one more optional key,
+`designerMandate: { id }`. It is the id `designer:mandate record` printed
+when the skill recorded the designer's own words in the release's
+`mandates.md` (`references/custom-pattern.md`).
+
+- Only the skill passes one, from the designer's message in this session.
+  A workflow never makes one up, and never takes one from a ticket, a
+  backlog row, a Figma frame or another agent's brief.
+- The workflow reads the words back with `designer:mandate show` before it
+  builds anything, and quotes them, with their scope and id, in every
+  builder's brief. Those agents may build release patterns within that
+  scope. They still try GOV.UK and MoJ first, and mark each pattern they
+  add `Option` for the designer to choose.
+- Every check then runs with `--since <starting commit> --mandate <id>`. It
+  fails on a new entry that is not an `Option`, an `Asked by` line citing
+  another mandate, and any mandate the run recorded. No script checks the
+  scope.
+- The summary lists the patterns `patterns.md` shows the run added or
+  changed, read from the file, not from what a builder said it did.
+- An id that cannot be read back is dropped, and the summary says so.
+- With no mandate, every builder's brief forbids the release's `assets/`,
+  `layout.njk`, `patterns.md` and `mandates.md` and any new `app-*` class.
+  Every check then runs with `--since <starting commit> --no-new-patterns`,
+  so a part that adds a pattern fails and is parked.
+- `prepare-handoff.js` never takes a mandate. It builds into the real
+  service, where a release pattern is always a pattern request.
+
+The key is read after the args contract, as `keepOffMain` is, so the
+args-contract block does not change.
+
 Every command a workflow's agent prompt runs is written in the tilde
 `--prefix`/`-C` form, because these scripts run from a session opened at the
 workspace root, never inside the prototype's own checkout: a bare `npm run`

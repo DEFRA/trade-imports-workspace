@@ -143,11 +143,52 @@ elif [ -f package.json ]; then
     echo "npm ci failed — push blocked" >&2
     exit 2
   fi
+  # Cheapest checks first. These cost seconds; the build and suite below cost
+  # minutes, and the scanner upload after them is a side effect on SonarCloud
+  # that a lint-dirty branch should never have produced in the first place.
+  # `npm ci` still has to come first, because format and lint need the
+  # devDependencies it installs.
+  #
+  # `npm run --if-present` so repos without these scripts are unaffected —
+  # this one script is shared by every Sonar-integrated repo.
+  npm run --if-present format:check 1>&2
+  if [ $? -ne 0 ]; then
+    echo "" >&2
+    echo "Formatting check failed — push blocked. Fix it with:" >&2
+    echo "  npm run format" >&2
+    echo "then amend or add a commit." >&2
+    exit 2
+  fi
+
+  npm run --if-present lint 1>&2
+  if [ $? -ne 0 ]; then
+    echo "" >&2
+    echo "Lint failed — push blocked. Auto-fixable problems:" >&2
+    echo "  npm run lint:js:fix" >&2
+    echo "then amend or add a commit." >&2
+    exit 2
+  fi
+
   npm test 1>&2
   TEST_RESULT=$?
   if [ $TEST_RESULT -ne 0 ]; then
     echo "npm test failed — push blocked" >&2
     exit 2
+  fi
+  # Tell the repo's own git pre-push hook that this exact commit has already
+  # passed the whole gate — format, lint and the suite — so it can skip
+  # outright instead of repeating any of it. This hook runs BEFORE the `git
+  # push` command, so the git hook fires afterwards and reads the marker we
+  # leave here. Written only once all three have passed above.
+  #
+  # Only when the tree is clean: `npm test` above ran against the working
+  # tree, so a dirty tree means what was tested is not what HEAD will push,
+  # and the marker would be a lie. Falling back to testing twice is the safe
+  # outcome. `.cache/` is gitignored in these repos.
+  #
+  # Harmless for repos with no pre-push hook yet — nothing reads the file.
+  if [ -z "$(git status --porcelain 2>/dev/null)" ]; then
+    mkdir -p .cache && git rev-parse HEAD > .cache/prepush-verified
   fi
   # Static analysis only — does not re-run the tests that just produced coverage.
   sonar-scanner "${COMMON_ARGS[@]}" "${PR_ARGS[@]}" 1>&2

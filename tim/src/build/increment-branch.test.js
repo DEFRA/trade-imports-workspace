@@ -473,6 +473,92 @@ describe('branchIncrementRepos', () => {
       expect(outcome.repos[0].carried).toEqual([])
     })
 
+    const resumedBranch = async (workspace, file) => {
+      const name = 'chore/EUDPA-9-perf-mode'
+      await git(workspace.path, 'config', 'user.name', 'tim-test')
+      await git(workspace.path, 'config', 'user.email', 't@example.invalid')
+      await git(workspace.path, 'checkout', '--quiet', '-b', name)
+      await commitIn(workspace.path, file)
+      await git(workspace.path, 'checkout', '--quiet', 'main')
+      return name
+    }
+
+    test('merges origin/<base> into a branch with commits of its own, keeping what it carries', async () => {
+      fresh()
+      const workspace = await workspaceClone()
+      const name = await resumedBranch(workspace, 'mine.md')
+      const later = await pushCommit(workspace.workPath, 'main', 'later.md')
+      writeFileSync(join(workspace.path, 'notes.txt'), 'mine\n')
+
+      const outcome = await branch([workspace], name)
+
+      expect({
+        ok: outcome.ok,
+        mergedBase: outcome.repos[0].mergedBase,
+        parents: (
+          await git(workspace.path, 'rev-list', '--parents', '-n', '1', 'HEAD')
+        ).split(' ').length,
+        branchesHoldingBase: await git(
+          workspace.path,
+          'branch',
+          '--contains',
+          later,
+          '--format=%(refname:short)'
+        ),
+        stillEdited: await git(workspace.path, 'status', '--short')
+      }).toEqual({
+        ok: true,
+        mergedBase: 'origin/main',
+        parents: 3,
+        branchesHoldingBase: name,
+        stillEdited: '?? notes.txt'
+      })
+    })
+
+    test('merges nothing into a branch that already holds origin/<base>', async () => {
+      fresh()
+      const workspace = await workspaceClone()
+      const name = await resumedBranch(workspace, 'mine.md')
+      const head = await git(workspace.path, 'rev-parse', name)
+
+      const outcome = await branch([workspace], name)
+
+      expect({
+        ok: outcome.ok,
+        mergedBase: outcome.repos[0].mergedBase,
+        head: await git(workspace.path, 'rev-parse', 'HEAD')
+      }).toEqual({ ok: true, mergedBase: undefined, head })
+    })
+
+    test('undoes a merge of origin/<base> that conflicts, naming the files', async () => {
+      fresh()
+      const workspace = await workspaceClone()
+      const name = await resumedBranch(workspace, 'README.md')
+      writeFileSync(join(workspace.workPath, 'README.md'), '# theirs\n')
+      await git(workspace.workPath, 'commit', '--quiet', '-am', 'theirs')
+      await git(workspace.workPath, 'push', '--quiet', 'origin', 'main')
+
+      const outcome = await branch([workspace], name)
+
+      expect({
+        ok: outcome.ok,
+        reason: outcome.reason,
+        mergeHead: await git(
+          workspace.path,
+          'rev-parse',
+          '--verify',
+          '--quiet',
+          'MERGE_HEAD'
+        ),
+        status: await git(workspace.path, 'status', '--short')
+      }).toEqual({
+        ok: false,
+        reason: `workspace: merging origin/main into ${name} conflicts in README.md. The merge was undone. Merge origin/main into ${name} by hand, then run again.`,
+        mergeHead: '',
+        status: ''
+      })
+    })
+
     test('still refuses an ordinary repo with uncommitted work beside it', async () => {
       fresh()
       const workspace = await workspaceClone()

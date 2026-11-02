@@ -45,8 +45,9 @@ passes.
   `'[Welsh needed] <the English>'`.
 - **No words in the model.** Obligations never carry a label, title, hint,
   legend or widget.
-- **GOV.UK toolbox only.** Nunjucks macros and `govuk-*` or `moj-*` classes.
-  No Sass, no inline styles, no new client JavaScript, no webpack entries.
+- **GOV.UK first, then MoJ, then a release pattern.** Styles and scripts
+  only in the release's own `assets/`, and only on a designer's mandate
+  (`references/custom-pattern.md`). Never inline.
 - **Never edit shared code.** Not
   `src/server/app/{engine,model,bridge,flow,shared,services,lib}/**`,
   `src/client/**`, `webpack.config.js`, `src/server/app/contract.test.js` or

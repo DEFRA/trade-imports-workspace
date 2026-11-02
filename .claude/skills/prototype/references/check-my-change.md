@@ -17,7 +17,7 @@ runs, in order:
 
 | Level               | Steps                                                                                                                                                                                                                                                                        |
 | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--quick` (default) | Tidy the changed files (Prettier), whose files they are (a frozen release changed after its freeze fails here), English and Welsh copy shape, every template compiles, the code rules (ESLint) on every changed `.js` file, every page opens (`src/server/prototype-checks`) |
+| `--quick` (default) | Tidy the changed files (Prettier), whose files they are (a frozen release changed after its freeze fails here), English and Welsh copy shape, every template compiles, release styles and scripts (below), the code rules (ESLint) on every changed `.js` file, every page opens (`src/server/prototype-checks`) |
 | `--full`            | Quick, then `format:check`, `lint` and `test` (in the prototype): exactly what its `.husky/pre-commit` runs (`git:pre-commit-hook`)                                                                                                                                     |
 | `--walk`            | Full, then `test:fit:journeys`: every journey walked in a real browser. It includes the full check, so never run `--full` and then `--walk`: run `--walk` alone                                                                                                            |
 
@@ -30,6 +30,28 @@ Every error it can explain is listed in
 `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype/docs/designers/checks-and-errors.md`,
 with the same headings the check prints. Read that file when you need more
 than the check printed.
+
+**Release styles and scripts** is the step for a release's own `assets/`,
+`layout.njk`, `patterns.md` and `mandates.md`. It also refuses inline
+styles and scripts in any set template. Every message names the file and
+the line to add or change: an asset missing from its entry's `Files` line,
+a class without the `app-<release>-` prefix, a raw colour, a quote that
+does not match `mandates.md`, a layout that overrides more than `head` and
+`bodyEnd`. Fix it the way `references/custom-pattern.md` builds it.
+
+A workflow with no designer's mandate runs the check with
+`--since <commit> --no-new-patterns`. Then any change to those files, or a
+new `app-` class, fails with "This run has no designer's mandate, so it
+cannot add a pattern". Never repair that by editing the files: build the
+nearest GOV.UK option and log a design gap. A change to a pattern the
+release already has fails with "It changes a release pattern this release
+already has": the designer asks for it, and it runs under the mandate the
+entry already cites.
+
+A workflow with a mandate runs the check with
+`--since <commit> --mandate <id>`. Then a new entry that is not an
+`Option`, an `Asked by` line citing another mandate, or a new mandate
+fails. Fix the entry, or take the new mandate out.
 
 ## Guard rails
 

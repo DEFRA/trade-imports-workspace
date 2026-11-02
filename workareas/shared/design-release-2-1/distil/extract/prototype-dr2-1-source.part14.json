@@ -1,0 +1,826 @@
+{
+  "source": "prototype:dr2-1-source",
+  "structure": "Part 14, Templates. Read in full at commit 04a073b (the checkout's HEAD): app/views/design-release-2.1/dashboard-templates.html (86 lines), create-template.html (61), view-template.html (74), delete-template.html (25); app/views/partials/design-release-2.1/dashboard-template-card.html (36) and delete-confirmation.html (22); app/data/dashboard-templates.js (255, five seeded templates); app/routes.js 6195-6200 (buildDeleteTemplateSummaryRows), 7676-8666 (saved and seeded template lists, template ids from names, building and saving a template from the session, GBN-AG reference generation, species matching, seeding a notification session from a template, the template review view models, and the view, change-section, edit, discard and delete handlers), 8927-9019 (templates list render, create-template journey flags, create page render and post, save from hub) and 11555-11620 (every /templates route). For context only, not claimed as this part's pages, I looked at the dashboard sort and results-text helpers (routes.js 7644-7674), dashboardData.sortItems (app/data/dashboard-notifications.js 288-293), the review-sections partial's use of dr2Review, and the hub, review, notification-type and origin handlers that link into /templates (routes.js 452-462, 6040-6056, 6470-6495, 10580-10610, 11150-11165). Pages and routes covered: GET /templates (Manage templates list), GET and POST /templates/create (Enter template name), GET /templates/save (save from the notification hub), GET and POST /templates/discard (discard a template being created), GET and POST /templates/:templateId (view template), GET /templates/:templateId/change/:section, GET /templates/:templateId/use, GET /templates/:templateId/edit, GET and POST /templates/:templateId/delete. All paths are under /design-release-2.1 once version-mount prefixes them. Templates live only in the session: saved templates in savedTemplates, deleted seeded ones in deletedTemplateIds.",
+  "claims": [
+    {
+      "id": "prototype-dr2-1-source-p14-001",
+      "statement": "The templates list page is served at /templates and its page title and heading are \"Manage templates\".",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/dashboard-templates.html:9,43; app/routes.js:11555",
+      "quote": "{% set pageName = \"Manage templates\" %} ... <h1 class=\"app-dr2-dashboard-intro__heading\" id=\"dashboard-templates-heading\">Manage templates</h1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-002",
+      "statement": "Under the Manage templates heading the page shows the description \"Select, manage or create new notification templates\".",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/dashboard-templates.html:44",
+      "quote": "<p class=\"app-dr2-dashboard-intro__description\">Select, manage or create new notification templates</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-003",
+      "statement": "The templates list page has a \"Create new template\" button linking to /design-release-2.1/templates/create?new=1.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/dashboard-templates.html:50-53",
+      "quote": "text: \"Create new template\",\n          href: \"/design-release-2.1/templates/create?new=1\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-004",
+      "statement": "The templates list page shows an Alpha phase banner reading \"This is a new service. Help us improve it and give your feedback by email.\", where the feedback link goes nowhere (href \"#\").",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/dashboard-templates.html:12-17 (same banner on create-template.html, view-template.html, delete-template.html)",
+      "quote": "text: \"Alpha\"\n    },\n    html: 'This is a new service. Help us improve it and <a class=\"govuk-link\" href=\"#\">give your feedback by email</a>.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-005",
+      "statement": "Every templates page marks \"templates\" as the active item in the service navigation.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8939, 8978, 8490, 8579, 8617",
+      "quote": "serviceNavActive: 'templates',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-006",
+      "statement": "The list of templates sits under a second-level heading \"My templates\".",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/dashboard-templates.html:58",
+      "quote": "<h2 class=\"app-dr2-dashboard-templates__heading\" id=\"dashboard-templates-list-heading\">My templates</h2>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-007",
+      "statement": "Above the template cards a results count reads \"Show 1-N of N results\", where N is the number of templates shown; with no templates it reads \"Show 0 of 0 results\".",
+      "kind": "copy",
+      "ref": "app/routes.js:8462 (getDashboardTemplatesViewModel) with buildDashboardResultsText at 7644-7658; dashboard-templates.html:61",
+      "quote": "resultsText: buildDashboardResultsText(1, templates.length, templates.length) ... return `Show ${start}-${end} of ${total} results`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-008",
+      "statement": "The templates list has a \"Sort by:\" select named sort, with the options \"Select one\", \"Newest first\", \"Oldest first\" and \"Arrival date\", and the option matching the sort query value is preselected.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/dashboard-templates.html:64-73; app/routes.js:8461 and 7660-7674; app/data/dashboard-notifications.js:288-293",
+      "quote": "label: {\n              text: \"Sort by:\", ... { value: '', text: 'Select one' },\n    { value: 'newest', text: 'Newest first' },\n    { value: 'oldest', text: 'Oldest first' },\n    { value: 'arrival-date', text: 'Arrival date' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-009",
+      "statement": "The sort select does not reorder the templates: the view model reads the sort value only to preselect an option, and the select is not inside a form and has no apply button, so sorting is not built.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8444-8464; dashboard-templates.html:63-74",
+      "quote": "const sort = (query.sort || '').trim() ... sortItems: buildDashboardSortItems(sort),",
+      "confidence": "inferred",
+      "note": "The sort options are the notifications dashboard's own list, including \"Arrival date\", which has no meaning for a template."
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-010",
+      "statement": "The templates list has no filter or search.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/dashboard-templates.html (whole file)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in dashboard-templates.html and getDashboardTemplatesViewModel: only a sort select."
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-011",
+      "statement": "The templates list has no empty-state message: with no templates the page shows only the results count and an empty list.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/dashboard-templates.html:77-81",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The loop over templates has no else branch."
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-012",
+      "statement": "The templates list shows the user's saved templates first, newest saved first, followed by the seeded templates, leaving out any template the user has deleted and any seeded template a saved template with the same id replaces.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:7680-7689 (getAllDashboardTemplates), 7808-7818 (saveTemplateFromSession unshift)",
+      "quote": "return [\n    ...savedTemplates,\n    ...dashboardTemplates.filter((template) => !deletedIds.has(template.id) && !savedIds.has(template.id))\n  ]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-013",
+      "statement": "Templates, and deletions of seeded templates, are held only in the user's session, so they are not shared between users or kept beyond the session.",
+      "kind": "constraint",
+      "ref": "app/routes.js:7676-7678, 8639-8652",
+      "quote": "return Array.isArray(sessionData.savedTemplates) ? sessionData.savedTemplates : [] ... req.session.data.deletedTemplateIds.push(templateId)",
+      "confidence": "inferred",
+      "note": "Prototype persistence; a real service would store templates server side."
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-014",
+      "statement": "Each template card is labelled \"Template <title>\" and shows the template's category label above the template title as a third-level heading.",
+      "kind": "copy",
+      "ref": "app/views/partials/design-release-2.1/dashboard-template-card.html:2-7",
+      "quote": "<article class=\"app-dr2-dashboard-template-card\" aria-label=\"Template {{ template.title }}\"> ... <p class=\"app-dr2-dashboard-template-card__category\">{{ template.categoryLabel }}</p>\n      <h3 class=\"app-dr2-dashboard-template-card__title\">{{ template.title }}</h3>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-015",
+      "statement": "Each template card has a \"View template\" link to /templates/<id> and a \"Use template\" link to /templates/<id>/use, both under the release base path.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/design-release-2.1/dashboard-template-card.html:10-11; app/routes.js:8454-8455",
+      "quote": "href=\"{{ template.viewHref }}\">View template</a> ... href=\"{{ template.createHref }}\">Use template</a> ... viewHref: `${basePath}/templates/${template.id}`,\n    createHref: `${basePath}/templates/${template.id}/use`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-016",
+      "statement": "Each template card lists four details in this order: Commodity, Origin, Consignee and Consignor.",
+      "kind": "copy",
+      "ref": "app/views/partials/design-release-2.1/dashboard-template-card.html:15-34",
+      "quote": "<dt class=\"app-dr2-dashboard-template-card__key\">Commodity</dt> ... Origin</dt> ... Consignee</dt> ... Consignor</dt>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-017",
+      "statement": "When the templates page has a success message it shows a green success banner titled \"Success\" with the message as its heading, which dismisses itself after 5 seconds, and the message is shown only once.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/dashboard-templates.html:24-37; app/routes.js:8932-8936",
+      "quote": "type: \"success\",\n        titleText: \"Success\", ... \"data-auto-dismiss-ms\": \"5000\" ... delete req.session.data.templatesSuccessMessage",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-018",
+      "statement": "Saving a template from the notification hub shows the banner message \"<template title> saved to templates\" on the templates page.",
+      "kind": "copy",
+      "ref": "app/routes.js:9010",
+      "quote": "const successMessage = `${savedTemplate.title} saved to templates`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-019",
+      "statement": "Deleting a template shows the banner message \"<template title> has been deleted\" on the templates page.",
+      "kind": "copy",
+      "ref": "app/routes.js:8654",
+      "quote": "req.session.data.templatesSuccessMessage = `${template.title} has been deleted`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-020",
+      "statement": "Every templates route sends a user who is not in a Design Release 2 or 2.1 session to the start page, except the discard routes, which send them to the templates list.",
+      "kind": "rule",
+      "ref": "app/routes.js:8467-8469, 8510-8512, 8552-8554, 8572-8574, 8590-8592, 8603-8605, 8628-8630, 8660-8662, 8928-8930, 8954-8956, 8985-8987, 9005-9007, 11592-11594",
+      "quote": "if (!isDesignRelease2SessionData(req.session.data)) {\n    return res.redirect('/')\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-021",
+      "statement": "Opening a template id that does not exist, or that the user has deleted, on the view, change, use, edit or delete routes redirects to the templates list.",
+      "kind": "rule",
+      "ref": "app/routes.js:8471-8475, 8514-8518, 8556-8560, 8608-8612, 8633-8637, 11596-11600",
+      "quote": "if (!template) {\n    return res.redirect('/templates')\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-022",
+      "statement": "In Design Release 2.1, \"Create new template\" clears any notification in progress, marks the session as creating a template and sends the user to the notification type page first, rather than straight to the template name page.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8958-8964",
+      "quote": "if (isDr21 && String(req.query.new || '') === '1') {\n    resetNotificationJourneySession(req.session.data)\n    req.session.data.isCreatingTemplate = true\n    return res.redirect('/notification-type')\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-023",
+      "statement": "The create-template journey in Design Release 2.1 runs: notification type, then Enter template name, then the notification journey from Origin of the import.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8963, 9001; context 11158-11161 (notification type post redirects to /templates/create when creating a template)",
+      "quote": "return res.redirect('/notification-type') ... return res.redirect('/origin-of-the-import')",
+      "confidence": "inferred",
+      "note": "The notification-type post that returns to /templates/create is in another part's range; read here for context only."
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-024",
+      "statement": "The template name page is served at /templates/create, has the caption \"Create a new template\" and the heading and page title \"Enter template name\".",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/create-template.html:8,30-31; app/routes.js:11559",
+      "quote": "<span class=\"govuk-caption-l\">Create a new template</span>\n        <h1 class=\"govuk-heading-l\" id=\"template-name-heading\">Enter template name</h1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-025",
+      "statement": "The template name page has one text input, templateName, whose label \"Enter template name\" is visually hidden and which is labelled by the page heading.",
+      "kind": "data",
+      "ref": "app/views/design-release-2.1/create-template.html:34-45",
+      "quote": "id: \"template-name\",\n        name: \"templateName\",\n        label: {\n          text: \"Enter template name\",\n          classes: \"govuk-visually-hidden\"\n        }, ... \"aria-labelledby\": \"template-name-heading\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-026",
+      "statement": "The template name input has no hint text.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/create-template.html:34-45",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-027",
+      "statement": "The template name is not validated: the post accepts a blank name with no error message, and a template saved with a blank name is titled \"Untitled template\".",
+      "kind": "rule",
+      "ref": "app/routes.js:8984-9002 (handleCreateTemplatePage), 7729 (buildTemplateFromSession)",
+      "quote": "const templateName = String(req.body.templateName || '').trim() ... const title = String(sessionData.templateName || '').trim() || 'Untitled template'",
+      "confidence": "inferred",
+      "note": "No required, length, character or uniqueness rule and no error message exist for the template name. A real service would need them: recorded as missing."
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-028",
+      "statement": "The template name page has no validation error messages for the name, such as for a blank or duplicate name.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/create-template.html; app/routes.js:8984-9002",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Two templates may share a title: only their ids are made unique (see the template id claim)."
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-029",
+      "statement": "The template name page has a \"Save and continue\" button and a \"Cancel and return to manage templates\" link to the templates list.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/create-template.html:48-55",
+      "quote": "text: \"Save and continue\", ... <a class=\"govuk-link\" href=\"{{ journeyBasePath }}/templates\">Cancel and return to manage templates</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-030",
+      "statement": "The template name page's back link goes to the notification type page in Design Release 2.1 when a notification type has been chosen, and otherwise to the templates list.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8980",
+      "quote": "backLink: isDr21 && getNotificationType(req.session.data) ? '/notification-type' : '/templates'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-031",
+      "statement": "The template name field is prefilled with the name already entered only while the user is part way through creating a template; otherwise it is empty and any earlier name is cleared.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8966-8975",
+      "quote": "// Only keep the name when the user is mid-create and navigates back to this page.\n  // After a template is saved, starting create again must show an empty name field.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-032",
+      "statement": "Submitting the template name trims it, starts a fresh draft notification journey in template-creation mode keeping the chosen notification type, and sends the user to Origin of the import.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8989-9001",
+      "quote": "resetNotificationJourneySession(req.session.data)\n  req.session.data.templateName = templateName\n  req.session.data.isCreatingTemplate = true\n  req.session.data.notificationStatus = 'Draft'\n\n  if (notificationType) {\n    req.session.data.notificationType = notificationType\n  }\n\n  return res.redirect('/origin-of-the-import')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-033",
+      "statement": "A template being created is saved by going to /templates/save (the hub's \"Save template\" action), which saves the template, clears the notification journey and the template-creation mode, and returns the user to the templates list with a success banner.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:9004-9018, 11567-11569; context 6480-6484 (hub primary action \"Save template\" href /templates/save)",
+      "quote": "const savedTemplate = saveTemplateFromSession(req.session.data) ... resetNotificationJourneySession(req.session.data)\n  req.session.data.templatesSuccessMessage = successMessage\n  delete req.session.data.templateName\n  delete req.session.data.isCreatingTemplate\n\n  return res.redirect('/templates')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-034",
+      "statement": "Saving a template is a GET request with no confirmation step.",
+      "kind": "constraint",
+      "ref": "app/routes.js:11567-11569",
+      "quote": "router.get('/templates/save', (req, res) => {\n  return handleSaveTemplateFromHub(req, res)\n})",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-035",
+      "statement": "A saved template replaces any existing saved template with the same id and goes to the top of the list, so saving an edited template overwrites it rather than adding a copy.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:7808-7818, 7751",
+      "quote": "sessionData.savedTemplates = sessionData.savedTemplates.filter((item) => item.id !== template.id)\n  sessionData.savedTemplates.unshift(template)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-036",
+      "statement": "A new template's id is its title in lower case with every run of other characters replaced by a hyphen (\"template\" if nothing is left), with -2, -3 and on added when that id is already taken.",
+      "kind": "rule",
+      "ref": "app/routes.js:7695-7712",
+      "quote": "const base = String(title || 'template')\n    .toLowerCase()\n    .replace(/[^a-z0-9]+/g, '-')\n    .replace(/^-+|-+$/g, '') || 'template' ... return `${base}-${suffix}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-037",
+      "statement": "A template being edited keeps its existing id when saved.",
+      "kind": "rule",
+      "ref": "app/routes.js:7751",
+      "quote": "id: sessionData.templateId || buildTemplateIdFromName(title, sessionData),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-038",
+      "statement": "A saved template's category is \"Germinal products\" when the notification has only germinal products, and otherwise \"Live animals\".",
+      "kind": "rule",
+      "ref": "app/routes.js:7752",
+      "quote": "categoryLabel: hasGerminalProductsOnly(sessionData) ? 'Germinal products' : 'Live animals',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-039",
+      "statement": "A saved template's card shows the commodity common names, the country of origin, the consignee name and the consignor name, each shown as \"Not applicable\" when missing.",
+      "kind": "data",
+      "ref": "app/routes.js:7730, 7738-7743, 7754-7757",
+      "quote": "const commodityLabel = getReviewAnimalDetailsCommonNames(sessionData) || 'Not applicable' ... : 'Not applicable' ... origin: sessionData.countryOfOrigin || 'Not applicable',\n    consignee: consigneeName,\n    consignor: consignorName,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-040",
+      "statement": "A template's date created is set to the day it is saved, and is reset each time an edited template is saved again.",
+      "kind": "data",
+      "ref": "app/routes.js:7758",
+      "quote": "dateCreated: formatDeclarationDate(),",
+      "confidence": "inferred",
+      "note": "formatDeclarationDate() with no argument is read as today's date; buildTemplateFromSession sets it on every save, edits included."
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-041",
+      "statement": "A template saves these answers from the notification: country of origin, region of origin code (\"N/A\" if none), internal reference (\"N/A\" if none), commodity codes, common names, species, reason for import, purpose in the market, certified for, unweaned animals, storage temperature, the number of animals and packages in total and per species, the commodity selections, net weight, package type and animal identification details.",
+      "kind": "data",
+      "ref": "app/routes.js:7759-7783",
+      "quote": "regionOfOriginCode: sessionData.regionOfOriginCode || 'N/A',\n      internalReferenceNumber: sessionData.internalReference || 'N/A', ... numberOfAnimalsBySpecies: sessionData.numberOfAnimals || {},\n      numberOfPackagesBySpecies: sessionData.numberOfPackages || {},\n      netWeight: sessionData.netWeight || {},\n      packageType: sessionData.packageType || {},",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-042",
+      "statement": "A template also saves the port of entry, means of transport, transport identification, transport document reference, the transporter's name, address, country, approval number and type, the place of origin, the contact address and the CPH number.",
+      "kind": "data",
+      "ref": "app/routes.js:7787-7803",
+      "quote": "portOfEntry: sessionData.portOfEntry || null,\n      meansOfTransport: sessionData.meansOfTransport || null,\n      transportIdentification: sessionData.transportIdentification || null,\n      transportDocumentReference: sessionData.transportDocumentReference || null, ... cphNumber: sessionData.cphNumber || null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-043",
+      "statement": "A template created in Design Release 2.1 never saves an arrival date; in Design Release 2 it does.",
+      "kind": "rule",
+      "ref": "app/routes.js:7784-7786",
+      "quote": "arrivalDateAtPort: isDesignRelease21TemplateCreate(sessionData)\n        ? null\n        : (sessionData.arrivalDateAtPort || null),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-044",
+      "statement": "A template does not save the transit countries, documents, consignor, consignee, importer or place of destination addresses as separate values: it saves only the place of origin and a contact address, and records that the same address is used for every party.",
+      "kind": "data",
+      "ref": "app/routes.js:7800-7802",
+      "quote": "placeOfOrigin,\n      contactAddress: contactAddress.name ? contactAddress : placeOfOrigin,\n      useSameAddressForParties: true,",
+      "confidence": "inferred",
+      "note": "buildTemplateFromSession has no transitCountries or documents key, and stores only placeOfOrigin and contactAddress; the consignor and consignee names are kept only for the card."
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-045",
+      "statement": "A template's contact address is the notification's chosen contact address, or the place of origin when no contact address was chosen.",
+      "kind": "rule",
+      "ref": "app/routes.js:7733-7737, 7801",
+      "quote": "contactAddress: contactAddress.name ? contactAddress : placeOfOrigin,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-046",
+      "statement": "The view template page is served at /templates/<id>, has the caption \"Templates\" and shows the template's title as its heading and page title.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/view-template.html:8,46-47; app/routes.js:11579",
+      "quote": "<p class=\"app-view-template-page__caption\">Templates</p>\n        <h1 class=\"app-view-template-page__title\">{{ template.title }}</h1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-047",
+      "statement": "The view template page shows \"Date created:\" followed by the template's date created, or \"15 April 2026\" when it has none.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/view-template.html:50-53; app/routes.js:8500",
+      "quote": "<span class=\"app-view-template-page__date-label\">Date created:</span> ... dateCreated: template.dateCreated || '15 April 2026',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-048",
+      "statement": "The view template page has a \"Use template\" button linking to /templates/<id>/use and a red \"Delete\" warning button linking to /templates/<id>/delete.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/view-template.html:55-66; app/routes.js:8501-8503",
+      "quote": "text: \"Use template\",\n          href: useHref ... text: \"Delete\",\n          href: deleteHref,\n          classes: \"govuk-button--warning\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-049",
+      "statement": "The view template page's back link goes to the templates list.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8504",
+      "quote": "backLink: '/templates',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-050",
+      "statement": "The view template page has no Edit button or link in Design Release 2.1, although the handler passes an edit link to the page.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8478, 8502; app/views/design-release-2.1/view-template.html:55-66",
+      "quote": "const editHref = `${basePath}/templates/${template.id}/edit`",
+      "confidence": "inferred",
+      "note": "editHref is passed but view-template.html never renders it; the edit route still works if visited (see the edit claim). Editing happens per section through change links instead."
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-051",
+      "statement": "In Design Release 2.1 the view template page shows the template's answers in the same summary cards as the notification review page, built by seeding a draft from the template, with change links shown.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8487-8496, 8277-8298; view-template.html:69 (includes partials/design-release-2.1/review-sections.html, which renders dr2Review with showActions)",
+      "quote": "showActions: true,\n    dr2Review: isDr21\n      ? buildTemplateCheckAnswersPresentation(template, req.session.data)\n      : null,",
+      "confidence": "verbatim",
+      "note": "The card titles and rows themselves are the review page's, claimed by the review-and-submit part."
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-052",
+      "statement": "On the view template page, the change links for origin of the import, what you are importing, reason for import, consignment details, animal identification details, additional animal details, arrival details, transit countries, transporter, roles and addresses, and contact address go to /templates/<id>/change/<section> instead of the journey page.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8219-8250, 8252-8275",
+      "quote": "'/origin-of-the-import': 'origin-of-the-import',\n  '/what-are-you-importing': 'what-are-you-importing',\n  '/reason-for-import': 'reason-for-import',\n  '/consignment-details': 'consignment-details',\n  '/animal-identification-details': 'animal-identification-details',\n  '/additional-animal-details': 'additional-animal-details',\n  '/arrival-details': 'arrival-details',\n  '/transit-countries': 'transit-countries',\n  '/transporter': 'transporter',\n  '/roles-and-addresses': 'roles-and-addresses',\n  '/contact-address-for-consignment': 'contact-address-for-consignment'",
+      "confidence": "verbatim",
+      "note": "A change link to any other page (documents, for example) is left pointing at the journey page."
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-053",
+      "statement": "The view template page also builds a separate template summary (cards titled Origin of import, What are you importing?, Additional animal details, Additional details for germinal products, Arrival details, Transport details, Import details and Contact address), but the Design Release 2.1 page does not show it, and it hides the arrival date row in 2.1.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8300-8442, 8497-8499",
+      "quote": "templateReview: buildTemplateReviewViewModel(template, basePath, {\n      hideArrivalDate: isDr21\n    }),",
+      "confidence": "inferred",
+      "note": "review-sections.html renders only dr2Review; templateReview is passed but unused in the DR2.1 view. Recorded so the reconciler knows the hideArrivalDate intent: a template has no arrival date in DR2.1."
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-054",
+      "statement": "When the view template page has a success message it shows a success banner titled \"Success\" that dismisses itself after 5 seconds, shown once, and opening the page clears any half-finished edit of a template.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/view-template.html:28-41; app/routes.js:8479-8485",
+      "quote": "const successMessage = req.session.data.templateReviewSuccessMessage || null\n\n  if (successMessage) {\n    delete req.session.data.templateReviewSuccessMessage\n  }\n\n  clearTemplateReviewEditState(req.session.data)",
+      "confidence": "verbatim",
+      "note": "The message text is set by the journey handlers when a template section change is saved, outside this part's range."
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-055",
+      "statement": "Posting to /templates/<id> simply redirects back to the view template page.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8659-8665, 11583-11585",
+      "quote": "return res.redirect(`/templates/${req.params.templateId}`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-056",
+      "statement": "Following a template change link starts a fresh draft seeded from the template in template-editing mode, then opens that section's journey page with from=template-review in the address.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8539-8548",
+      "quote": "resetNotificationJourneySession(req.session.data)\n  seedNotificationSessionFromTemplate(req.session.data, template)\n  req.session.data.isCreatingTemplate = true\n  req.session.data.isEditingTemplateFromReview = true\n  req.session.data.editingTemplateId = template.id ... return res.redirect(`/${section}?from=template-review`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-057",
+      "statement": "A change link for a section not in the allowed list redirects back to the view template page.",
+      "kind": "rule",
+      "ref": "app/routes.js:8520-8537",
+      "quote": "if (!allowedSections.includes(section)) {\n    return res.redirect(`/templates/${template.id}`)\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-058",
+      "statement": "Editing a whole template at /templates/<id>/edit starts a fresh draft seeded from the template in template-creation mode and opens the notification hub.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8551-8569, 11609-11611",
+      "quote": "seedNotificationSessionFromTemplate(req.session.data, template)\n  req.session.data.isCreatingTemplate = true\n  req.session.data.notificationStatus = 'Draft'\n  req.session.data.templateName = template.title\n\n  return res.redirect('/notification-hub')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-059",
+      "statement": "Using a template clears any notification in progress, seeds a new draft notification from the template, saves it as a draft and opens the notification hub.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11591-11607",
+      "quote": "resetNotificationJourneySession(req.session.data)\n  seedNotificationSessionFromTemplate(req.session.data, template)\n  persistDraftNotification(req.session.data)\n\n  return res.redirect('/notification-hub')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-060",
+      "statement": "Using a template gives the new notification status Draft and a new reference in the form GBN-AG-26- followed by six upper-case letters or digits, not already used by any seeded, draft or submitted notification.",
+      "kind": "rule",
+      "ref": "app/routes.js:7820-7850, 8012-8013",
+      "quote": "const reference = `GBN-AG-26-${code}` ... sessionData.notificationStatus = 'Draft'",
+      "confidence": "verbatim",
+      "note": "After 25 clashing attempts it falls back to a reference made from the current time."
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-061",
+      "statement": "A notification started from a template remembers the template's id and title.",
+      "kind": "data",
+      "ref": "app/routes.js:8014-8015",
+      "quote": "sessionData.templateId = template.id\n  sessionData.templateName = template.title",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-062",
+      "statement": "Using a template seeds the country of origin, and seeds region of origin as \"Yes\" with the code (and the part after the first hyphen as the code suffix) when the template has a region code, or \"No\" when it does not.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8006-8008, 8016-8019",
+      "quote": "sessionData.regionOfOriginRequired = regionOfOriginCode ? 'Yes' : 'No'\n  sessionData.regionOfOriginCode = regionOfOriginCode || null\n  sessionData.regionOfOriginCodeSuffix = regionOfOriginCode ? regionSuffix : null",
+      "confidence": "verbatim",
+      "note": "A saved template stores \"N/A\" for a missing region code, which this seeding treats as a code (\"Yes\", code N/A)."
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-063",
+      "statement": "Using a template seeds the internal reference, leaving it blank when the template's value is empty or \"N/A\".",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8020-8022",
+      "quote": "sessionData.internalReference = !internalReference || internalReference.toUpperCase() === 'N/A'\n    ? null\n    : internalReference",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-064",
+      "statement": "Using a template selects species by matching the template's commodity code and species names against the commodity list (exact name or common name first, then a looser match), falling back to the first species of each matching commodity; it does not use the template's stored species ids.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:7897-7966, 8005, 8024",
+      "quote": "const speciesIds = resolveSpeciesIdsFromTemplateReview(review) ... applySpeciesSelectionToSession(sessionData, speciesIds)",
+      "confidence": "inferred",
+      "note": "seedNotificationSessionFromTemplate never reads review.selectedSpecies; only buildTemplateSessionFromReview (template commodity cards) prefers it."
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-065",
+      "statement": "Using a template sets the notification type from the template's category label, falling back to the type the species selection implies.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8025",
+      "quote": "sessionData.notificationType = normaliseNotificationType(template.categoryLabel) || getNotificationType(sessionData)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-066",
+      "statement": "Using a template seeds the commodity selections, the number of animals and packages per species, net weight, package type and animal identification details when the template has them.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8027-8049",
+      "quote": "sessionData.numberOfAnimals = { ...review.numberOfAnimalsBySpecies } ... sessionData.animalIdentifiers = JSON.parse(JSON.stringify(review.animalIdentifiers))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-067",
+      "statement": "Using a template seeds the main reason for import, and seeds the purpose in the internal market only when the reason is \"Internal market\".",
+      "kind": "rule",
+      "ref": "app/routes.js:8051-8054",
+      "quote": "sessionData.internalMarketPurpose = review.reasonForImport === 'Internal market'\n    ? (review.purposeInTheMarket || null)\n    : null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-068",
+      "statement": "Using a template seeds \"certified for\" with the template's value when it is a valid option, maps \"Breeding\" and \"Breeding and/or production\" to \"Further keeping\" and \"Slaughter\" to \"Slaughter\", and defaults anything else to \"Further keeping\".",
+      "kind": "rule",
+      "ref": "app/routes.js:7987-8001, 8055",
+      "quote": "const aliases = {\n    Breeding: 'Further keeping',\n    'Breeding and/or production': 'Further keeping',\n    Slaughter: 'Slaughter'\n  }\n\n  return aliases[value] || 'Further keeping'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-069",
+      "statement": "Using a template seeds the storage temperature only when it is one of the germinal product temperature options.",
+      "kind": "rule",
+      "ref": "app/routes.js:8056-8058",
+      "quote": "sessionData.storageTemperature = germinalTemperatureOptions.includes(review.storageTemperature)\n    ? review.storageTemperature\n    : null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-070",
+      "statement": "Using a template seeds the unweaned animals answer from the template when it is a valid option for the selected species, defaults it to \"No\" when the species have unweaned options, and leaves it blank when they have none.",
+      "kind": "rule",
+      "ref": "app/routes.js:8060-8067",
+      "quote": "sessionData.unweanedAnimals = getUnweanedOptions(sessionData).includes(unweanedAnimals)\n      ? unweanedAnimals\n      : 'No'\n  } else {\n    sessionData.unweanedAnimals = null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-071",
+      "statement": "Using a template copies its place of origin into the place of origin, consignor, consignee, importer and place of destination addresses, taking the last address line as the country when it is a known country.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:7968-7985, 8069-8086",
+      "quote": "const addressSections = [\n      'placeOfOrigin',\n      'consignor',\n      'consignee',\n      'importer',\n      'placeOfDestination'\n    ]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-072",
+      "statement": "Using a template seeds the CPH number, port of entry, means of transport, transport identification, transport document reference, arrival date and transit countries from the template.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8088-8094",
+      "quote": "sessionData.cphNumber = review.cphNumber || null\n  sessionData.portOfEntry = review.portOfEntry || null\n  sessionData.meansOfTransport = review.meansOfTransport || null\n  sessionData.transportIdentification = review.transportIdentification || null\n  sessionData.transportDocumentReference = review.transportDocumentReference || null\n  sessionData.arrivalDateAtPort = review.arrivalDateAtPort || null\n  sessionData.transitCountries = Array.isArray(review.transitCountries) ? review.transitCountries : []",
+      "confidence": "verbatim",
+      "note": "Template values of \"N/A\" (such as Arena Aintree's transport document reference) are seeded as the literal text N/A."
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-073",
+      "statement": "Using a template seeds the transporter's name, address (joined with commas when it is a list of lines), approval number and type, but not the transporter's country.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8096-8106",
+      "quote": "sessionData.transporter = {\n      name: review.transporter.name || null,\n      address: Array.isArray(transporterAddress)\n        ? transporterAddress.join(', ')\n        : (transporterAddress || null),\n      approvalNumber: review.transporter.approvalNumber || null,\n      type: review.transporter.type || null\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-074",
+      "statement": "Using a template adds its contact address (or its place of origin when it has none) as the notification's one contact address and selects it.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8108-8120",
+      "quote": "const contactPlace = review.contactAddress || review.placeOfOrigin ... sessionData.contactAddedAddresses = [contactAddress]\n    syncContactAddressSession(sessionData, contactAddress)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-075",
+      "statement": "Using a template does not seed any documents, and clears any validation errors.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8003-8124",
+      "quote": "sessionData.errorList = null\n  sessionData.errors = null",
+      "confidence": "inferred",
+      "note": "seedNotificationSessionFromTemplate sets no document fields; the journey reset before it clears any earlier ones."
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-076",
+      "statement": "The delete template page is served at /templates/<id>/delete with the heading and page title \"Delete this template?\".",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/delete-template.html:6; app/views/partials/design-release-2.1/delete-confirmation.html:4; app/routes.js:8616-8618, 11613",
+      "quote": "pageName: 'Delete this template?',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-077",
+      "statement": "The delete template page shows a summary list with one row, \"Name\", holding the template's title.",
+      "kind": "copy",
+      "ref": "app/routes.js:6195-6199, 8621; delete-confirmation.html:6-8",
+      "quote": "buildDeleteSummaryRow('Name', templateName)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-078",
+      "statement": "Under the summary the delete template page says \"Confirm that you want to delete this template.\" and \"This action cannot be undone.\"",
+      "kind": "copy",
+      "ref": "app/views/partials/design-release-2.1/delete-confirmation.html:10-11; app/routes.js:8619",
+      "quote": "confirmText: 'Confirm that you want to delete this template.', ... <p class=\"govuk-body\">This action cannot be undone.</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-079",
+      "statement": "The delete template page has a red \"Yes, delete\" warning button that posts the deletion, and a \"No, cancel\" link back to the template.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/design-release-2.1/delete-confirmation.html:13-21; app/routes.js:8622-8623",
+      "quote": "text: \"Yes, delete\",\n      classes: \"govuk-button--warning\" ... <a class=\"govuk-link\" href=\"{{ backLink }}\">No, cancel</a> ... backLink: `/templates/${template.id}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-080",
+      "statement": "The delete template page's back link goes to the view template page.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8622; delete-template.html:17-20",
+      "quote": "backLink: `/templates/${template.id}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-081",
+      "statement": "The delete template page uses the journey layout rather than the dashboard layout.",
+      "kind": "constraint",
+      "ref": "app/views/design-release-2.1/delete-template.html:1,23",
+      "quote": "{% extends \"layouts/journey.html\" %} ... {% block journeyContent %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-082",
+      "statement": "Confirming deletion removes a template the user saved, hides a seeded template for the rest of the session, and returns to the templates list with the \"<title> has been deleted\" banner.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8627-8657, 11617-11619",
+      "quote": "if (isSavedTemplate) {\n    req.session.data.savedTemplates = savedTemplates.filter((item) => item.id !== templateId)\n  } else { ... req.session.data.deletedTemplateIds.push(templateId)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-083",
+      "statement": "Deleting a saved template that shares an id with a seeded template makes the seeded template appear in the list again.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8642-8652, 7680-7689",
+      "quote": "if (isSavedTemplate) {\n    req.session.data.savedTemplates = savedTemplates.filter((item) => item.id !== templateId)\n  }",
+      "confidence": "inferred",
+      "note": "Editing and saving a seeded template stores a saved copy with the seeded id; deleting it removes only the saved copy and does not add the id to deletedTemplateIds, so the seeded original returns."
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-084",
+      "statement": "The notification review page, while a template is being created or edited, has a delete action that goes to /templates/<id>/delete for an existing template, or to /templates/discard for a new one.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:6048-6053 (context, review-and-submit part's range)",
+      "quote": "? `/templates/${sessionData.editingTemplateId || sessionData.templateId}/delete`\n          : '/templates/discard')",
+      "confidence": "verbatim",
+      "note": "Read for context to place the discard page; the review page itself belongs to another part."
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-085",
+      "statement": "Discarding a template being created (/templates/discard) shows the same \"Delete this template?\" page, with the Name row holding the template name entered (or \"this template\" when none), a back link and \"No, cancel\" link to the review page, and a \"Yes, delete\" button that posts to /templates/discard.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8571-8587, 11571-11573",
+      "quote": "const title = String(req.session.data.templateName || '').trim() || 'this template' ... backLink: '/review-notification',\n    deleteAction: '/templates/discard'",
+      "confidence": "verbatim",
+      "note": "deleteAction '/templates/discard' is not prefixed with the release base path in the handler; version-mount is relied on to prefix it."
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-086",
+      "statement": "The discard page is only shown while a template is being created; otherwise it redirects to the templates list.",
+      "kind": "rule",
+      "ref": "app/routes.js:8572-8574",
+      "quote": "if (!isDesignRelease2SessionData(req.session.data) || !isCreatingTemplateJourney(req.session.data)) {\n    return res.redirect('/templates')\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-087",
+      "statement": "Confirming discard throws away the template being created without saving it and returns to the templates list with the banner \"<template name> has been deleted\", or \"Template has been deleted\" when no name was entered.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:8589-8600, 11575-11577",
+      "quote": "const title = String(req.session.data.templateName || '').trim() || 'Template'\n\n  resetNotificationJourneySession(req.session.data)\n  req.session.data.templatesSuccessMessage = `${title} has been deleted`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-088",
+      "statement": "The service seeds five templates, all with the category \"Live animals\" and date created \"15 April 2026\": Arena Aintree, Rice Lane City Farm, Monk Park Farm, Acorn Farm and Glen Keen Farm, listed in that order.",
+      "kind": "data",
+      "ref": "app/data/dashboard-templates.js:3-10, 85-92, 128-135, 175-182, 223-230",
+      "quote": "title: 'Arena Aintree', ... title: 'Rice Lane City Farm', ... title: 'Monk Park Farm', ... title: 'Acorn Farm', ... title: 'Glen Keen Farm',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-089",
+      "statement": "The Arena Aintree template card shows Commodity Horse, Origin Republic of Ireland, Consignee Valea Mare Farm and Consignor Valea Mare Farm.",
+      "kind": "data",
+      "ref": "app/data/dashboard-templates.js:3-9",
+      "quote": "commodityLabel: 'Horse',\n    origin: 'Republic of Ireland',\n    consignee: 'Valea Mare Farm',\n    consignor: 'Valea Mare Farm',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-090",
+      "statement": "The Arena Aintree template holds: country of origin Republic of Ireland, region code ROI-092032, commodity code 0101, species \"Horse (Equus cabalus)\", 2 horses (0 packages) identified by microchip, passport and horse name (\"I Am Maximus\" and \"Johnnywho\"), Internal market for \"Racing, competition, show or training\", certified for \"Registered equine animal\".",
+      "kind": "data",
+      "ref": "app/data/dashboard-templates.js:11-42",
+      "quote": "regionOfOriginCode: 'ROI-092032', ... commodityCode: '0101', ... species: 'Horse (Equus cabalus)', ... 'horse-name': 'I Am Maximus' ... 'horse-name': 'Johnnywho' ... purposeInTheMarket: 'Racing, competition, show or training',\n      certifiedFor: 'Registered equine animal',",
+      "confidence": "verbatim",
+      "note": "\"cabalus\" is misspelt in the seed (the species id is equus-caballus)."
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-091",
+      "statement": "The Arena Aintree template is the only seeded template with movement details: arrival 21/06/2026, port Liverpool - GBLIV, by Sea, transport identification AB12 CDE, and the transporter Dylan O’Malley Livestock Transport (Co. Galway, Republic of Ireland, approval IE/GALWAY/T1/00092015, Commercial).",
+      "kind": "data",
+      "ref": "app/data/dashboard-templates.js:43-59",
+      "quote": "arrivalDateAtPort: '21/06/2026',\n      portOfEntry: 'Liverpool - GBLIV',\n      meansOfTransport: 'Sea',\n      transportIdentification: 'AB12 CDE', ... approvalNumber: 'IE/GALWAY/T1/00092015',\n        type: 'Commercial'",
+      "confidence": "verbatim",
+      "note": "Its seeded arrival date contradicts the DR2.1 rule that a template has no arrival date (claim p14-043)."
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-092",
+      "statement": "Every seeded template has internal reference \"N/A\", reason for import \"Internal market\", CPH number 00/000/0000, and uses its place of origin for all parties.",
+      "kind": "data",
+      "ref": "app/data/dashboard-templates.js:14, 80-81, 111, 123-124, 158, 170-171, 204, 218-219, 234, 251-252",
+      "quote": "internalReferenceNumber: 'N/A', ... reasonForImport: 'Internal market', ... useSameAddressForParties: true,\n      cphNumber: '00/000/0000'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-093",
+      "statement": "The Rice Lane City Farm template card shows Commodity Pigs, Origin Republic of Ireland, Consignee Glen Keen Farm and Consignor Rice Lane City Farm; it holds region IE-041, code 0103, 2 pigs (Sus scrofa domesticus) with ear tags UK123456001 and UK123456002, \"Transfer of ownership - Sale/gift\", certified for Further keeping, and place of origin Rice Lane City Farm, Rice Lane, Liverpool, L9 1AD, United Kingdom.",
+      "kind": "data",
+      "ref": "app/data/dashboard-templates.js:84-126",
+      "quote": "commodityLabel: 'Pigs', ... consignee: 'Glen Keen Farm',\n    consignor: 'Rice Lane City Farm', ... regionOfOriginCode: 'IE-041', ... { 'ear-tag': 'UK123456001' },\n          { 'ear-tag': 'UK123456002' }",
+      "confidence": "verbatim",
+      "note": "The place of origin is in the United Kingdom though the origin country is the Republic of Ireland."
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-094",
+      "statement": "The Monk Park Farm template card shows Commodity Goats and Sheep, Origin Republic of Ireland, Consignee Glen Keen Farm and Consignor Monk Park Farm; it holds region IE-022, code 0104, 1 goat (ear tag UK987654001) and 2 sheep (UK987654101, UK987654102), \"Transfer of ownership - Sale/gift\", Further keeping, and place of origin Monk Park Farm, Monk Park, Thirsk, YO7 3AW, United Kingdom.",
+      "kind": "data",
+      "ref": "app/data/dashboard-templates.js:127-173",
+      "quote": "commodityLabel: 'Goats and Sheep', ... regionOfOriginCode: 'IE-022', ... 'goat-capra-hircus': '1',\n        'sheep-ovis-aries': '2'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-095",
+      "statement": "The Acorn Farm template card shows Commodity Cattle, Origin Republic of Ireland, Consignee Glen Keen Farm and Consignor Acorn Farm, but its answers hold country of origin France, region FR-092032, code 0102, 1 Bison bison and 1 Bos taurus with ear tags and passports, and place of origin Valea Mare Farm in Romania.",
+      "kind": "data",
+      "ref": "app/data/dashboard-templates.js:174-221",
+      "quote": "origin: 'Republic of Ireland', ... countryOfOrigin: 'France',\n      regionOfOriginCode: 'FR-092032', ... { 'ear-tag': 'UK112233001', passport: 'FR-BB-001' } ... { 'ear-tag': 'UK112233002', passport: 'FR-BT-001' }",
+      "confidence": "verbatim",
+      "note": "The card's Origin and the template's country of origin disagree in the seed data."
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-096",
+      "statement": "The Glen Keen Farm template card shows Commodity Poultry, Origin Republic of Ireland, Consignee and Consignor Glen Keen Farm; it holds region IE-011, code 0105, species Gallus gallus, Further keeping, and place of origin Glen Keen Farm, Glen Keen, Letterkenny, Co. Donegal, F92 XK58, Republic of Ireland, with no animal numbers or identification.",
+      "kind": "data",
+      "ref": "app/data/dashboard-templates.js:222-254",
+      "quote": "commodityLabel: 'Poultry', ... regionOfOriginCode: 'IE-011', ... commodityCode: '0105',\n      commonName: 'Poultry',\n      species: 'Gallus gallus',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-097",
+      "statement": "The seeded templates other than Arena Aintree have no contact address and no transport or arrival details, so using them leaves those answers empty and uses the place of origin as the contact address.",
+      "kind": "data",
+      "ref": "app/data/dashboard-templates.js:84-254; app/routes.js:8108",
+      "quote": "const contactPlace = review.contactAddress || review.placeOfOrigin",
+      "confidence": "inferred"
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-098",
+      "statement": "Templates have no owner, sharing or organisation scope: every user sees the same five seeded templates plus their own session's saved ones.",
+      "kind": "constraint",
+      "ref": "app/routes.js:7680-7689; app/data/dashboard-templates.js",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Nothing in this slice says who a template belongs to or whether templates are shared within an organisation."
+    },
+    {
+      "id": "prototype-dr2-1-source-p14-099",
+      "statement": "There is no way to rename a template once it is created.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/view-template.html; app/routes.js:8509-8569",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The change sections and the edit route keep templateName as the template's existing title; the name page is reached only when creating."
+    }
+  ]
+}

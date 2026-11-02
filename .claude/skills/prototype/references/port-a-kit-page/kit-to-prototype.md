@@ -67,6 +67,12 @@ instead.
 - Custom JavaScript (`data-module="app-..."`, files in
   `app/assets/javascripts`): dropped. Use the nearest GOV.UK component (see
   `references/match-the-design/nearest-equivalent.md`) and log a gap.
+- With the designer's mandate (`references/custom-pattern.md`), either of
+  those can be rebuilt instead of dropped: as an `app-<release-id>-`
+  pattern in the release's `assets/`, its Sass on GOV.UK settings and
+  mixins, its script a progressive enhancement with a test. Never copy the
+  Kit's Sass or JavaScript as it is. Mark it **pattern** in the fidelity
+  table and give it a `patterns.md` entry.
 - Links to other Kit pages: point them at the matching page in the release if
   it exists; otherwise at the overview (`hubHref`). Say which in the fidelity
   table.

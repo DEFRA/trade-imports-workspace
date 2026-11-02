@@ -1,0 +1,1189 @@
+{
+  "about": {
+    "purpose": "Plan for the Design Release 2.1 business review page: one card per change a user would notice, the open questions to put first, and the screenshots to capture. Built from the 40 rows marked done across journey-foundation, reference-lists, commodities-and-reason, arrival-and-transit, origin-page and overview-and-review. The templates theme is not in yet.",
+    "before": "main (origin/main in each repo)",
+    "after": "feat/NO_JIRA-design-release-2-1-combined",
+    "capture": "Same data, same viewport (desktop 1280 wide, full page), JavaScript on unless a shot says otherwise. Each shot is taken once on a main stack and once on a combined-branch stack, unless compare is 'after-only'. Where a shot is about a browser title, a dropdown's options or what a screen reader hears, alsoCapture says what to record beside the picture.",
+    "routes": {
+    "live animals": "List /live-animals. Create: the create button on the list POSTs /live-animals/notifications and opens /live-animals/notifications/{id}/origin. Overview /live-animals/notifications/{id}. Pages /live-animals/notifications/{id}/{slug}: origin, commodities (What are you importing?), import-reason, consignment-details (Commodity details), commodities/identification, additional-details, port-of-entry (Arrival details), transit-countries, transporters, accompanying-documents (Upload documents), addresses (Roles and addresses), cph-number, consignment/contact/select (Contact address), notification-view (review, draft review and submitted view share this route), declaration, confirmation, cancel-amend, delete. Amend is a POST to .../amend from the list row's Amend action or the view's 'Amend this notification'.",
+    "plants": "List /high-risk-plants. Create: the start button POSTs and opens /high-risk-plants/notifications/{id}/commodity-type. Overview /high-risk-plants/notifications/{id}. Opening run: commodity-type, commodities/details, commodities, origin, arrival-status (not for potatoes), arrival-details, destinations/select, consignors/select, identification-numbers, consignment/contact/select, notification-view (check your answers), declaration, confirmation.",
+    "INS": "Home / (Dashboard), address book /address-book, add address /address-book/add."
+    },
+    "testData": {
+      "cattle-by-road": "The tests repo's full journey (flows/animals/journey.ts completeAnswerSections): origin France, region code Yes with 75, internal reference Imports456GB, Bos taurus with 1 animal and 5 packages, ear tag UK123456789012, Internal market and Breeding, certified for Slaughter, unweaned No, five parties plus a CPH number, arrival by Road at 'Aberdeen Harbour - GB ABD' with transit countries France and Belgium, transporter García Livestock Transport SL, contact Animal and Plant Health Agency, no documents.",
+      "cattle-by-air": "The tests repo's opening-run walk (flows/animals/journey.ts walkOpeningRunCattleByAir): origin France with region code and internal reference CATTLE-2026-01, 2 Bos taurus with ear tags and passports, Internal market and Breeding, certified for Further keeping, Heathrow Airport by Air, transporter García Livestock Transport SL, one uploaded veterinary health certificate, five parties and a CPH number, contact Animal and Plant Health Agency.",
+      "plants-for-planting": "A high-risk plants notification for plants for planting (flows/plants/journey.ts): one commodity line, origin a non-EU country, arrival status and arrival details answered, place of destination, consignor, identification numbers and contact chosen."
+    },
+    "notYetAvailable": "combined/openspec-audit.md (step 2's code-looks-wrong items) does not exist yet, so none of its questions are included. Add them to openQuestions when it is written."
+  },
+  "groups": [
+    {
+      "name": "Opening run and moving between pages",
+      "cards": [
+        {
+          "id": "opening-run-order",
+          "group": "Opening run and moving between pages",
+          "title": "A new notification asks for the import reason before the commodity details",
+          "whatChanged": "Before, a trader starting a live-animals notification gave the commodity details straight after choosing what they were importing, and gave the import reason later. Now the first run goes: origin of the import, what are you importing, main import reason, commodity details, identification details (when the animals need them), additional details, then arrival details. The end-to-end tests now walk this order for cattle by air and for a horse by sea.",
+          "services": ["live animals"],
+          "rows": [
+            {"id": "inc-001", "title": "Opening run follows the Design Release 2.1 step order and ends on the review page"},
+            {"id": "inc-015", "title": "Commodity pages chain as journey steps around the main import reason"},
+            {"id": "inc-021", "title": "Reason and additional details sit in Design Release 2.1's journey order"},
+            {"id": "inc-005", "title": "End-to-end proof: horse by sea under temporary admission"}
+          ],
+          "rulings": [
+            {"source": "sources/ruling-sam-2026-10-09.md", "ref": "claim 16", "heading": "(b) What the prototype decides", "quote": "The prototype decides look and feel only: content, wording, layout, components, question order, and which questions are asked of which goods."},
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-015", "heading": "Commodity pages' place in the journey", "quote": "DR2.1's journey chaining is adopted: the prototype decides question order and outranks the frontend's own design choice."}
+          ],
+          "prototypeScreens": ["what-are-you-importing--one-selected.png", "reason-for-import.png", "consignment-details.png", "additional-animal-details--cattle.png"],
+          "shots": ["a-run-after-what-importing", "a-run-after-reason"]
+        },
+        {
+          "id": "cph-not-in-run",
+          "group": "Opening run and moving between pages",
+          "title": "The CPH number is no longer a step in the first run",
+          "whatChanged": "Before, the first run went from roles and addresses on to the county parish holding (CPH) number page for animals that need one. Now it goes straight to the contact address. The CPH number page opens only from its row on roles and addresses, and saving it returns there. If every task on the overview is already complete, roles and addresses goes to the overview instead.",
+          "services": ["live animals"],
+          "rows": [
+            {"id": "inc-001", "title": "Opening run follows the Design Release 2.1 step order and ends on the review page"}
+          ],
+          "rulings": [],
+          "prototypeScreens": ["roles-and-addresses--cattle-empty.png", "cph-number.png", "contact-address-for-consignment.png"],
+          "shots": ["a-run-after-addresses"]
+        },
+        {
+          "id": "run-ends-on-review",
+          "group": "Opening run and moving between pages",
+          "title": "The first run always ends on the review page, even when something is missing",
+          "whatChanged": "Before, the first run could finish on the overview. Now saving the contact address always opens the review, which lists anything still to do at the top and marks each unfinished card. In plants, Continue on the consignment contact page now opens check your answers even when the notification is unfinished, and Continue there shows the missing answers again instead of going to the overview. Plants keeps its own page order.",
+          "services": ["live animals", "plants"],
+          "rows": [
+            {"id": "inc-001", "title": "Opening run follows the Design Release 2.1 step order and ends on the review page"},
+            {"id": "inc-187", "title": "A draft's review shows the view header with its Draft status and stays editable"}
+          ],
+          "rulings": [
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claims 43 and 45", "heading": "(i) Plants changes in the same increment", "quote": "inc-001, the run ends on the review page. Plants: after its last step, the opening run goes to the review page even when incomplete, and the review names what is outstanding. Plants keeps its own step order."},
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-312", "heading": "Plants' run ends on check your answers", "quote": "Plants' run ends on its check your answers page even when incomplete, the review page opens on an unfinished notification and names what is outstanding."}
+          ],
+          "prototypeScreens": ["review-notification--incomplete.png"],
+          "shots": ["a-run-after-contact-incomplete", "p-run-after-contact-incomplete", "p-cya-continue-incomplete"]
+        },
+        {
+          "id": "overview-return",
+          "group": "Opening run and moving between pages",
+          "title": "A page opened from the overview goes back to the overview when saved",
+          "whatChanged": "Before, opening a task from the overview and pressing 'Save and continue' carried the trader on through the next pages: main import reason on to additional details, arrival details on to transit countries, and roles and addresses on to the CPH number. Now each page opened from its overview task returns to the overview, and its task shows Complete when its answers are finished. Arrival details opened from a Change link on the review returns to the review. In plants, arrival details opened from the overview returns there instead of going on to the place of destination; plants tasks made of several pages still move through their own pages first.",
+          "services": ["live animals", "plants"],
+          "rows": [
+            {"id": "inc-002", "title": "A page opened from an overview task returns to the overview when saved"},
+            {"id": "inc-015", "title": "Commodity pages chain as journey steps around the main import reason"},
+            {"id": "inc-021", "title": "Reason and additional details sit in Design Release 2.1's journey order"},
+            {"id": "inc-028", "title": "Arrival details requires a means of transport, and arrival and transit return to where the trader came from"}
+          ],
+          "rulings": [
+            {"source": "sources/ruling-sam-2026-10-09.md", "ref": "claim 39", "heading": "(g) Overview-opened pages", "quote": "A page opened from its overview task returns to the overview on Save and continue (req-1615). ... No ?from=hub marker is added; only the live flow's fallback changes."},
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-243", "heading": "Return to the overview without a marker", "quote": "The return-to-hub behaviour is built (req-808), but by the live flow's fallback, with no from=hub query or hidden field."},
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claim 45", "heading": "(i) Plants changes in the same increment", "quote": "inc-002, a page opened from the overview returns there. Plants: kit.nextTarget's fallback returns to the overview. Plants' multi-page task rows still move within their own row."}
+          ],
+          "prototypeScreens": ["notification-hub--cattle-air-complete.png"],
+          "shots": ["a-reason-from-overview-saved", "a-arrival-from-overview-saved", "a-addresses-from-overview-saved", "p-arrival-from-overview-saved"]
+        },
+        {
+          "id": "back-links",
+          "group": "Opening run and moving between pages",
+          "title": "Back links step to the page before in the journey",
+          "whatChanged": "Before, Back on main import reason and on additional details always went to the overview. Now, during the first run, Back on the commodity page goes to origin, Back on main import reason goes to what are you importing, Back on commodity details goes to the commodity page, and Back on additional details goes to identification details (or to commodity details when no identification is needed). A page opened from the overview still has Back to the overview.",
+          "services": ["live animals"],
+          "rows": [
+            {"id": "inc-015", "title": "Commodity pages chain as journey steps around the main import reason"},
+            {"id": "inc-021", "title": "Reason and additional details sit in Design Release 2.1's journey order"}
+          ],
+          "rulings": [
+            {"source": "sources/ruling-sam-2026-10-09.md", "ref": "claim 39", "heading": "(g) Overview-opened pages", "quote": "A page opened from its overview task returns to the overview on Save and continue (req-1615)."}
+          ],
+          "prototypeScreens": ["what-are-you-importing.png", "reason-for-import.png", "consignment-details.png", "additional-animal-details--cattle.png"],
+          "shots": ["a-commodities-opening-run", "a-import-reason-opening-run", "a-consignment-details-opening-run", "a-additional-details-opening-run"]
+        },
+        {
+          "id": "soft-save",
+          "group": "Opening run and moving between pages",
+          "title": "'Save and return to overview' keeps a half-finished page",
+          "whatChanged": "Before, 'Save and return to overview' ran the page's required-answer checks, so a trader could not leave a half-finished page. Now it saves whatever was entered and returns to the overview with no error, and the task does not show Complete. This applies on origin, what are you importing, main import reason, identification details, additional details, arrival details, transit countries, transport details, upload documents and roles and addresses, and on the plants pages. Commodity details and the contact address still check their answers before saving.",
+          "services": ["live animals", "plants"],
+          "rows": [
+            {"id": "inc-003", "title": "'Save and return to overview' saves without the page's required-answer checks"},
+            {"id": "inc-011", "title": "Commodity page and Commodity details wording, the Species column, the 'Select a commodity' error, the soft Save and return, and the error order match Design Release 2.1"},
+            {"id": "inc-022", "title": "Main import reason completes on its own answers, and both pages soft-save as Design Release 2.1 does"},
+            {"id": "inc-028", "title": "Arrival details requires a means of transport, and arrival and transit return to where the trader came from"}
+          ],
+          "rulings": [
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-211", "heading": "Save and return to overview", "quote": "'Save and return to overview' saves without the required-answer checks, but an answer failing its own format rule, such as an impossible date, is still refused."},
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-313", "heading": "Plants' lenient save", "quote": "'Save and return to overview' saves without the page's required checks and still refuses a malformed answer."},
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claim 45", "heading": "(i) Plants changes in the same increment", "quote": "inc-003, 'Save and return to overview' saves without required checks. Plants: the same on its pages with exit=hub; malformed answers are still refused. This overlaps EUDPA-667's mandatory-to-submit work."}
+          ],
+          "prototypeScreens": [],
+          "shots": ["a-origin-soft-save", "a-arrival-soft-save", "a-consignment-details-soft-save", "p-arrival-soft-save"]
+        },
+        {
+          "id": "format-refused",
+          "group": "Opening run and moving between pages",
+          "title": "An answer in the wrong format still stops the page saving",
+          "whatChanged": "An answer that breaks its own format rule is still refused, even on 'Save and return to overview': for example an impossible arrival date such as 31/2/2027, a region code that is not valid, or an exit date that is not a real date. The page shows that answer's error and nothing on the page is saved. In plants the same applies to a date that is not real, a future date once the goods have arrived, a time not on the 24-hour clock, a port not on the list or a quantity that is not a whole number.",
+          "services": ["live animals", "plants"],
+          "rows": [
+            {"id": "inc-003", "title": "'Save and return to overview' saves without the page's required-answer checks"},
+            {"id": "inc-022", "title": "Main import reason completes on its own answers, and both pages soft-save as Design Release 2.1 does"},
+            {"id": "inc-028", "title": "Arrival details requires a means of transport, and arrival and transit return to where the trader came from"}
+          ],
+          "rulings": [
+            {"source": "sources/ruling-sam-2026-10-07.md", "ref": "claim 6", "heading": "Ruling: Sam, 7 October 2026", "quote": "Only two things override the prototype: a DR1 judgement on the same difference, or a real constraint the prototype cannot express, such as persistence, validation, authentication or cross-service behaviour."},
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-045", "heading": "Arrival field checks stay", "quote": "The real service keeps every server-side field check and its message: the real-date and window checks on the arrival date ..."},
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-211", "heading": "Save and return to overview", "quote": "An answer failing its own format rule, such as an impossible date, is still refused."}
+          ],
+          "prototypeScreens": ["reason-for-import--error-temporary-admission-real-date.png"],
+          "shots": ["a-arrival-soft-save-impossible-date", "a-reason-soft-save-bad-exit-date", "p-arrival-soft-save-bad-date"]
+        }
+      ]
+    },
+    {
+      "name": "Origin of the import",
+      "cards": [
+        {
+          "id": "origin-country-box",
+          "group": "Origin of the import",
+          "title": "Country of origin shows 'Search for a country' and no hint",
+          "whatChanged": "Before, the country of origin box had the hint 'Start typing to search for a country.' Now there is no hint, and with JavaScript the empty box shows 'Search for a country'. Without JavaScript it is still a dropdown that starts with 'Select a country'. The plants origin page makes the same change and keeps its own country list, guidance and errors.",
+          "services": ["live animals", "plants"],
+          "rows": [
+            {"id": "inc-009", "title": "Country of origin: no hint and a 'Search for a country' placeholder, in animals and plants"}
+          ],
+          "rulings": [
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claims 1 to 3", "heading": "(a) Search boxes: the component against the content", "quote": "A search box uses the component the real frontends already use and have found accessible. The prototype does not win by default on how a search box works."},
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claim 10", "heading": "(c) Rows that ask design", "quote": "Waits: the separate 'Search' button beside the country of origin, port of entry and transit country boxes."},
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-009", "heading": "Country of origin control", "quote": "The country of origin control stays the real frontend's accessible autocomplete ..."}
+          ],
+          "prototypeScreens": ["origin-of-the-import.png", "origin-of-the-import--country-search-open.png"],
+          "shots": ["a-origin-empty", "p-origin-empty"]
+        },
+        {
+          "id": "origin-subdivisions",
+          "group": "Origin of the import",
+          "title": "Places within a country show their country, for example 'Canary Islands (Spain)'",
+          "whatChanged": "Before, places such as the Canary Islands appeared in the country of origin list under their own name only. Now each one shows its country in brackets, and the list is sorted by the name shown. Choosing one still saves the same code. Which places are listed is still whatever the master reference data (MDM) serves.",
+          "services": ["live animals"],
+          "rows": [
+            {"id": "inc-175", "title": "Country of origin list labels subdivisions with their parent country"}
+          ],
+          "rulings": [
+            {"source": "sources/ruling-sam-2026-10-09.md", "ref": "claim 25", "heading": "(d) Reference lists and MDM", "quote": "Every list is built now against reference-data as it is, and its content is what MDM serves."},
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-221", "heading": "Subdivision labels", "quote": "The country of origin list labels its subdivisions '<territory> (<parent>)' (for example 'Canary Islands (Spain)') and is sorted alphabetically by the shown label."}
+          ],
+          "prototypeScreens": ["origin-of-the-import--country-search-open.png"],
+          "shots": ["a-origin-country-search"]
+        },
+        {
+          "id": "origin-wording",
+          "group": "Origin of the import",
+          "title": "New hints for the region of origin code and the internal reference",
+          "whatChanged": "The region of origin code hint now reads 'Check the health certificate for a region of origin code. You can add the code later if you do not have the certificate now.' The internal reference hint no longer says 'It can be up to 58 characters.'; a longer reference is still refused with an error that names the limit.",
+          "services": ["live animals"],
+          "rows": [
+            {"id": "inc-010", "title": "Region of origin code, internal reference hint and the finished origin page"}
+          ],
+          "rulings": [
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-010", "heading": "Region code", "quote": "The hint changes, the box caps typing at 5 characters (the server check stays), and No clears the saved code."},
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-011", "heading": "Internal reference hint", "quote": "The hint drops the 58-character sentence (the limit itself is a real validation constraint and stays enforced with its error, which names it)."}
+          ],
+          "prototypeScreens": ["origin-of-the-import--region-code-reveal.png"],
+          "shots": ["a-origin-region-yes"]
+        },
+        {
+          "id": "region-code-behaviour",
+          "group": "Origin of the import",
+          "title": "The region code box stops at 5 characters, and answering No clears a saved code",
+          "whatChanged": "The region code box now stops typing at 5 characters. Changing a saved 'Yes' to 'No' clears the code, so the review shows 'Not applicable' and choosing Yes again shows an empty box. A code typed before a country is chosen stays on the page but is not saved until a country gives it its prefix. The country prefix is still added after saving; showing it live as the country is picked waits on design.",
+          "services": ["live animals"],
+          "rows": [
+            {"id": "inc-010", "title": "Region of origin code, internal reference hint and the finished origin page"}
+          ],
+          "rulings": [
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claim 11", "heading": "(c) Rows that ask design", "quote": "Built now: inc-010 without req-040 and req-041. The country prefix is added on the server after saving, as DR1 shipped it ... Waits: the live prefix that changes as a country is picked."},
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-010", "heading": "Region code", "quote": "No clears the saved code."}
+          ],
+          "prototypeScreens": ["origin-of-the-import--region-code-prefix.png", "origin-of-the-import--error-region-code.png"],
+          "shots": ["a-origin-region-yes", "a-review-region-cleared"]
+        },
+        {
+          "id": "origin-complete",
+          "group": "Origin of the import",
+          "title": "Origin shows Complete only once the region code question is answered",
+          "whatChanged": "Before, the origin task could show Complete with only a country. Now it needs the country and an answer to the region of origin code question, plus a code when the answer is Yes.",
+          "services": ["live animals"],
+          "rows": [
+            {"id": "inc-010", "title": "Region of origin code, internal reference hint and the finished origin page"}
+          ],
+          "rulings": [],
+          "prototypeScreens": ["notification-hub--empty.png"],
+          "shots": ["a-overview-origin-region-unanswered"]
+        }
+      ]
+    },
+    {
+      "name": "What are you importing and commodity details",
+      "cards": [
+        {
+          "id": "commodity-page-wording",
+          "group": "What are you importing and commodity details",
+          "title": "The commodity page explains the one-notification-per-ITAHC rule and has a shorter search hint",
+          "whatChanged": "The commodity page now has inset text: 'You must submit a separate notification for every single ITAHC. You must also submit a notification for goods that do not need an ITAHC.' The search hint reads 'You can search by common name (for example, cattle), commodity code (0102), or Latin name (Bos taurus).' and no longer says 'Enter at least 3 characters.', although 3 characters are still needed. In 'Help with commodity codes', '(opens in a new tab)' now sits on its own line after the Trade Tariff link. The search itself and the commodity list are unchanged until commodities come from the master reference data.",
+          "services": ["live animals"],
+          "rows": [
+            {"id": "inc-011", "title": "Commodity page and Commodity details wording, the Species column, the 'Select a commodity' error, the soft Save and return, and the error order match Design Release 2.1"}
+          ],
+          "rulings": [
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claims 28 to 30", "heading": "(e) Commodities wait on MDM", "quote": "Commodity catalogue and commodity search work is blocked until commodities come from MDM ... the rest of the commodities area goes ahead on today's commodity data: the commodity pages' wording (inc-011)."},
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-013", "heading": "Commodity search hint", "quote": "DR2.1's wording is adopted ... the data reason DR1 recorded no longer holds, as common names are now searchable."}
+          ],
+          "prototypeScreens": ["what-are-you-importing.png", "what-are-you-importing--help-open.png"],
+          "shots": ["a-commodities-help-open"]
+        },
+        {
+          "id": "select-commodity-error",
+          "group": "What are you importing and commodity details",
+          "title": "The 'Select a commodity' error always sits on the search box",
+          "whatChanged": "Pressing 'Save and continue' on the commodity page with nothing chosen now shows 'Select a commodity' on the search box, between its label and hint, whether or not search results are listed, and the error summary link goes to the search box.",
+          "services": ["live animals"],
+          "rows": [
+            {"id": "inc-011", "title": "Commodity page and Commodity details wording, the Species column, the 'Select a commodity' error, the soft Save and return, and the error order match Design Release 2.1"}
+          ],
+          "rulings": [
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claim 29", "heading": "(e) Commodities wait on MDM", "quote": "Its req-085 (the 'Select a commodity' error on the search field), req-088 (Save and return to overview without checks) and req-102 (clearing the unweaned answer) are not catalogue or search work. They move to inc-011 and go ahead."}
+          ],
+          "prototypeScreens": ["what-are-you-importing--error.png", "what-are-you-importing--search-results.png"],
+          "shots": ["a-commodities-error-after-search"]
+        },
+        {
+          "id": "unweaned-cleared",
+          "group": "What are you importing and commodity details",
+          "title": "Choosing only cats or dogs clears the unweaned animals answer",
+          "whatChanged": "The unweaned animals question is not asked for cats and dogs. Now, if a trader changes their choice so that every animal is a cat or a dog, a saved answer to that question is cleared and no longer shows on the review.",
+          "services": ["live animals"],
+          "rows": [
+            {"id": "inc-011", "title": "Commodity page and Commodity details wording, the Species column, the 'Select a commodity' error, the soft Save and return, and the error order match Design Release 2.1"}
+          ],
+          "rulings": [
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claim 29", "heading": "(e) Commodities wait on MDM", "quote": "req-102 (clearing the unweaned answer) ... not catalogue or search work ... go ahead."}
+          ],
+          "prototypeScreens": ["additional-animal-details--cattle.png"],
+          "shots": ["a-review-after-switch-to-cats"]
+        },
+        {
+          "id": "commodity-details-caption-species",
+          "group": "What are you importing and commodity details",
+          "title": "Commodity details is captioned 'Description of the goods' and lists the species chosen",
+          "whatChanged": "The commodity details page caption now reads 'Description of the goods'. The selected commodities table gains a 'Species' column listing the Latin names chosen under each commodity, for example '0102 | Cow | Bos taurus'. The name 'Cow' stays until commodities come from the master reference data.",
+          "services": ["live animals"],
+          "rows": [
+            {"id": "inc-011", "title": "Commodity page and Commodity details wording, the Species column, the 'Select a commodity' error, the soft Save and return, and the error order match Design Release 2.1"}
+          ],
+          "rulings": [
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claim 30", "heading": "(e) Commodities wait on MDM", "quote": "The rest of the commodities area goes ahead on today's commodity data."}
+          ],
+          "prototypeScreens": ["consignment-details.png", "consignment-details--two-commodities.png"],
+          "shots": ["a-consignment-details-opening-run"]
+        },
+        {
+          "id": "commodity-details-errors",
+          "group": "What are you importing and commodity details",
+          "title": "Commodity details lists its errors question by question, and needs the number of packages where it is asked",
+          "whatChanged": "With two species missing their answers, the error summary now lists every 'number of animals' error first, then every 'number of packages' error, each linking to its box. The number of packages is now required on each line that asks for it; a line that does not ask for it can still be saved without one.",
+          "services": ["live animals"],
+          "rows": [
+            {"id": "inc-011", "title": "Commodity page and Commodity details wording, the Species column, the 'Select a commodity' error, the soft Save and return, and the error order match Design Release 2.1"},
+            {"id": "inc-018", "title": "Hard stops: means of transport on arrival details and number of packages on commodity details"}
+          ],
+          "rulings": [],
+          "prototypeScreens": ["consignment-details--error-required.png"],
+          "shots": ["a-consignment-details-two-species-errors"]
+        }
+      ]
+    },
+    {
+      "name": "Main import reason and additional details",
+      "cards": [
+        {
+          "id": "reason-rename",
+          "group": "Main import reason and additional details",
+          "title": "'Main reason for import' is now 'Main import reason' everywhere",
+          "whatChanged": "The reason page's heading and browser title, its task on the overview and its card on the review now all read 'Main import reason', in English and Welsh.",
+          "services": ["live animals"],
+          "rows": [
+            {"id": "inc-020", "title": "Main import reason and additional details copy matches Design Release 2.1"},
+            {"id": "inc-098", "title": "Hub regions for assistive technology and the 'Main import reason' row"},
+            {"id": "inc-101", "title": "Review sections and cards take Design Release 2.1's headings, titles and unfinished-card messages"}
+          ],
+          "rulings": [],
+          "prototypeScreens": ["reason-for-import.png", "notification-hub--empty.png", "review-notification--cattle-air-complete.png"],
+          "shots": ["a-import-reason-opening-run", "a-overview-complete", "a-review-road-transit"]
+        },
+        {
+          "id": "reason-select-one",
+          "group": "Main import reason and additional details",
+          "title": "Destination country and port of exit dropdowns start with 'Select one'",
+          "whatChanged": "Each destination country and port of exit dropdown on the reason page now starts with 'Select one', followed straight by the list with no divider line. They stay plain dropdowns, without type-ahead search, in this release.",
+          "services": ["live animals"],
+          "rows": [
+            {"id": "inc-020", "title": "Main import reason and additional details copy matches Design Release 2.1"}
+          ],
+          "rulings": [
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claim 4", "heading": "(a) Search boxes: the component against the content", "quote": "A field the prototype shows as a plain select stays a plain select in this programme. That includes the import reason's exit fields (inc-020)."}
+          ],
+          "prototypeScreens": ["reason-for-import--transit-reveal.png", "reason-for-import--transhipment-reveal.png", "reason-for-import--temporary-admission-reveal.png"],
+          "shots": ["a-import-reason-transit-reveal", "a-import-reason-tempadmission-reveal", "a-import-reason-transhipment-reveal"]
+        },
+        {
+          "id": "certification-hint",
+          "group": "Main import reason and additional details",
+          "title": "Additional details tells traders where to find the certification",
+          "whatChanged": "The certification question on additional details now has the hint 'You can find this information on the ITAHC.' The review keeps reading these answers back as 'Certified for' and 'Includes unweaned animals'.",
+          "services": ["live animals"],
+          "rows": [
+            {"id": "inc-020", "title": "Main import reason and additional details copy matches Design Release 2.1"}
+          ],
+          "rulings": [],
+          "prototypeScreens": ["additional-animal-details--cattle.png"],
+          "shots": ["a-additional-details-opening-run"]
+        },
+        {
+          "id": "reason-complete-alone",
+          "group": "Main import reason and additional details",
+          "title": "The main import reason task completes without additional details",
+          "whatChanged": "Before, the main import reason task waited for the additional details answers too. Now it shows Complete once the reason and its follow-up answers are given, and additional details is its own task.",
+          "services": ["live animals"],
+          "rows": [
+            {"id": "inc-022", "title": "Main import reason completes on its own answers, and both pages soft-save as Design Release 2.1 does"}
+          ],
+          "rulings": [
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-038", "heading": "Reason task completion", "quote": "The prototype wins by default: the reason task completes on its own answers, and Additional details is its own task."}
+          ],
+          "prototypeScreens": [],
+          "shots": ["a-overview-reason-only"]
+        },
+        {
+          "id": "reason-change-clears",
+          "group": "Main import reason and additional details",
+          "title": "Changing the reason clears the answers given for the old one",
+          "whatChanged": "Saving a different reason, including with 'Save and return to overview', now clears the follow-up answers given for the old one: switching from Internal market to Transit drops the saved purpose. Pressing 'Save and return to overview' with no reason chosen keeps everything saved before.",
+          "services": ["live animals"],
+          "rows": [
+            {"id": "inc-022", "title": "Main import reason completes on its own answers, and both pages soft-save as Design Release 2.1 does"}
+          ],
+          "rulings": [],
+          "prototypeScreens": [],
+          "shots": ["a-import-reason-after-switch"]
+        }
+      ]
+    },
+    {
+      "name": "Arrival details and transit",
+      "cards": [
+        {
+          "id": "arrival-wording",
+          "group": "Arrival details and transit",
+          "title": "Arrival details has larger labels, a new port hint and shorter transport options",
+          "whatChanged": "The five question labels on arrival details are now medium size. The port of entry hint reads 'Select where the transporter will enter with the consignment. Start typing to search by port or airport name or code.', and the empty box shows 'Select a port'. The means of transport options read Air, Rail, Road and Sea, and the transport identification hint starts 'Enter one of the following:'. What is stored does not change. Plants' arrival details labels are also medium size, and its place of landing hint follows the same pattern.",
+          "services": ["live animals", "plants"],
+          "rows": [
+            {"id": "inc-026", "title": "Arrival details wording: labels, hints, placeholder and means of transport options, in animals and plants"}
+          ],
+          "rulings": [
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claim 45", "heading": "(i) Plants changes in the same increment", "quote": "inc-026, arrival details wording. Plants: arrival labels move to medium, and the place of landing hint follows the same pattern."},
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-047", "heading": "Means of transport stays stored as its code", "quote": "The stored answer is read by the backend and other services, a persistence and cross-service constraint the prototype cannot express."}
+          ],
+          "prototypeScreens": ["arrival-details.png"],
+          "shots": ["a-arrival-empty", "p-arrival-details-empty"]
+        },
+        {
+          "id": "port-labels",
+          "group": "Arrival details and transit",
+          "title": "Ports read as name and code, for example 'Port of Dover - GB DVR'",
+          "whatChanged": "Each port in the port of entry search, and in plants' place of landing search, now reads as its name, a dash and its code. The chosen port shows the same way in the box. Without JavaScript it is still a dropdown. The separate Search button the prototype shows waits on design.",
+          "services": ["live animals", "plants"],
+          "rows": [
+            {"id": "inc-027", "title": "Port options read '<port name> - <port code>', in animals and plants"}
+          ],
+          "rulings": [
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claim 3", "heading": "(a) Search boxes: the component against the content", "quote": "inc-027, built now: req-295 ('<port name> - <port code>' labels). inc-027, waiting on design: req-296 (the Search button)."},
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claim 45", "heading": "(i) Plants changes in the same increment", "quote": "inc-027, port labels. Plants: its port labels read 'Name - CODE'."}
+          ],
+          "prototypeScreens": ["arrival-details--port-search-open.png"],
+          "shots": ["a-arrival-port-search", "p-arrival-port-search"]
+        },
+        {
+          "id": "means-required",
+          "group": "Arrival details and transit",
+          "title": "Means of transport is the only answer arrival details insists on",
+          "whatChanged": "Before, 'Save and continue' on live-animals arrival details needed every answer. Now only the means of transport is required, because it decides whether transit countries are asked; leaving it blank shows 'Select a means of transport to the port of entry'. The other answers can be left for later, though any answer given still has to be in the right format. Plants' arrival details keeps its own rules.",
+          "services": ["live animals"],
+          "rows": [
+            {"id": "inc-018", "title": "Hard stops: means of transport on arrival details and number of packages on commodity details"},
+            {"id": "inc-028", "title": "Arrival details requires a means of transport, and arrival and transit return to where the trader came from"}
+          ],
+          "rulings": [
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claim 49", "heading": "(i) Plants changes in the same increment", "quote": "inc-028, arrival details' own rules: animals only. Plants gets return to the overview and the lenient save from inc-002 and inc-003."},
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-045", "heading": "Arrival field checks stay", "quote": "The real service keeps every server-side field check and its message."}
+          ],
+          "prototypeScreens": ["arrival-details--error.png"],
+          "shots": ["a-arrival-blank-submit", "a-arrival-means-only"]
+        },
+        {
+          "id": "transit-page",
+          "group": "Arrival details and transit",
+          "title": "The transit countries page has a clearer title, Back link and empty state",
+          "whatChanged": "The browser title now reads 'Transit countries'. Reached from arrival details, Back goes to arrival details; opened from the overview, Back goes to the overview. With no countries added, the page no longer shows an empty list or 'You have not added any countries yet.' Opening the page when the means of transport is Air or Sea, or not given, goes to the overview.",
+          "services": ["live animals"],
+          "rows": [
+            {"id": "inc-029", "title": "Transit countries page: title, Back link, empty state and redirect when it does not apply"}
+          ],
+          "rulings": [],
+          "prototypeScreens": ["transit-countries.png"],
+          "shots": ["a-transit-empty", "a-transit-air-redirect"]
+        }
+      ]
+    },
+    {
+      "name": "Overview",
+      "cards": [
+        {
+          "id": "overview-regions",
+          "group": "Overview",
+          "title": "Screen reader users can move around the overview by section",
+          "whatChanged": "Nothing changes on screen. Screen reader users now hear the commodity total cards ('Animals summary' and 'Packages summary'), 'Your commodities', the task list and each numbered section as named regions they can jump between. Plants' overview gets the same regions for its task groups, with no visible heading added.",
+          "services": ["live animals", "plants"],
+          "rows": [
+            {"id": "inc-098", "title": "Hub regions for assistive technology and the 'Main import reason' row"}
+          ],
+          "rulings": [
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-129", "heading": "Task list stays the GOV.UK Task list", "quote": "The real service must meet the public sector accessibility regulations ... The GOV.UK Task list gives the same visible rows, tags and hint as DR2.1."},
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claim 47", "heading": "(i) Plants changes in the same increment", "quote": "inc-098, regions on the overview. Plants: each task group and the task list sit in a region named by its caption."}
+          ],
+          "prototypeScreens": ["notification-hub--empty.png", "notification-hub--cattle-air-complete.png"],
+          "shots": ["a-overview-complete", "p-overview-new"]
+        },
+        {
+          "id": "transit-task",
+          "group": "Overview",
+          "title": "The Transit countries task shows only when it is needed, and reads To do until a country is added",
+          "whatChanged": "Before, the Transit countries task appeared as soon as arrival details were saved, even with no commodity chosen. Now it shows only when the consignment needs transit countries, such as travelling by rail or road, and reads To do until at least one country is added.",
+          "services": ["live animals"],
+          "rows": [
+            {"id": "inc-100", "title": "The live-animals Transit countries task shows only when transit countries are required"},
+            {"id": "inc-103", "title": "Arrival and transit task statuses on the overview, and transit countries on the review"}
+          ],
+          "rulings": [],
+          "prototypeScreens": ["notification-hub--poultry-rail-complete.png", "notification-hub--cat-air-complete.png"],
+          "shots": ["a-overview-no-commodity-arrival-saved", "a-overview-road-no-transit"]
+        },
+        {
+          "id": "stale-arrival",
+          "group": "Overview",
+          "title": "Arrival details goes back to To do when the arrival date has passed",
+          "whatChanged": "A saved arrival date that is now more than 7 days in the past turns the Arrival details task back to To do, so the trader updates it before submitting.",
+          "services": ["live animals"],
+          "rows": [
+            {"id": "inc-103", "title": "Arrival and transit task statuses on the overview, and transit countries on the review"}
+          ],
+          "rulings": [],
+          "prototypeScreens": [],
+          "shots": ["a-overview-stale-arrival"]
+        }
+      ]
+    },
+    {
+      "name": "Review your notification",
+      "cards": [
+        {
+          "id": "review-structure",
+          "group": "Review your notification",
+          "title": "Review sections and cards are renamed, and the extra headings above cards are gone",
+          "whatChanged": "Before, the review had a heading above each card, such as 'Where is this consignment coming from?' and 'Roles and addresses'. Now each card sits straight under its numbered section, with card titles one level below. Section 4 is '4. Uploaded documents', section 5 is '5. Consignment addresses' with one 'Addresses' card, and section 6 holds a 'Contact address' card. Cards are titled 'Origin of import', 'Main import reason' and 'Additional details'.",
+          "services": ["live animals"],
+          "rows": [
+            {"id": "inc-101", "title": "Review sections and cards take Design Release 2.1's headings, titles and unfinished-card messages"}
+          ],
+          "rulings": [
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-142", "heading": "Subsection headings on the review", "quote": "The prototype outranks the frontend and wins: subsection headings go."}
+          ],
+          "prototypeScreens": ["review-notification--cattle-air-complete.png"],
+          "shots": ["a-review-road-transit"]
+        },
+        {
+          "id": "review-unfinished",
+          "group": "Review your notification",
+          "title": "Unfinished cards say what to complete, species by species",
+          "whatChanged": "An unfinished card's message now follows its new title, on the card and in the error summary: 'Complete origin of import', 'Complete what are you importing?', 'Complete main import reason', 'Complete additional details' and 'Complete commodity details'. When more than one species needs identification, each species short of a number or an identifier is named, for example 'Enter at least 1 animal identifier for bos taurus', and the link goes to that species.",
+          "services": ["live animals"],
+          "rows": [
+            {"id": "inc-101", "title": "Review sections and cards take Design Release 2.1's headings, titles and unfinished-card messages"},
+            {"id": "inc-104", "title": "Review reads the commodity selection back in a 'What are you importing?' card and groups species under their commodity"},
+            {"id": "inc-106", "title": "Identification details on the review: heading, animal labels, its own Change link and per-species unfinished messages"}
+          ],
+          "rulings": [
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-134", "heading": "Unfinished commodity and species messages", "quote": "DR1 parity row inc-150 deferred species marking for a design ruling and made no judgement of its own, so Design Release 2.1 supplies it."}
+          ],
+          "prototypeScreens": ["review-notification--incomplete.png"],
+          "shots": ["a-review-draft-empty", "a-review-two-species-incomplete"]
+        },
+        {
+          "id": "review-commodities",
+          "group": "Review your notification",
+          "title": "The review lists the commodities once, then one card per commodity with a block for each species",
+          "whatChanged": "Before, each species had its own card repeating the commodity code, name and species. Now section 1 has a 'What are you importing?' card listing the commodity code, common name and species once. Section 2 has one card per commodity, titled with its name and code, holding a block for each species with the number of animals and, where asked, 'Number of packages (when required)'. Species names are shown with every word capitalised, for example 'Bos Taurus'. The card has a Change link at the top, and each species block's first row has its own Change link to the same page.",
+          "services": ["live animals"],
+          "rows": [
+            {"id": "inc-104", "title": "Review reads the commodity selection back in a 'What are you importing?' card and groups species under their commodity"}
+          ],
+          "rulings": [
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claim 30", "heading": "(e) Commodities wait on MDM", "quote": "Species grouping: inc-046, inc-104 [go ahead on today's commodity data]."}
+          ],
+          "prototypeScreens": ["review-notification--cattle-air-complete.png", "review-notification--cat-air-complete.png"],
+          "shots": ["a-review-cattle-air"]
+        },
+        {
+          "id": "review-identification",
+          "group": "Review your notification",
+          "title": "Identification details on the review have their own table and Change link",
+          "whatChanged": "Each species block's identifier table is now headed 'Identification details', each animal is labelled by its species and number under an 'Animal' column, and the table has its own Change link to the identification page.",
+          "services": ["live animals"],
+          "rows": [
+            {"id": "inc-106", "title": "Identification details on the review: heading, animal labels, its own Change link and per-species unfinished messages"}
+          ],
+          "rulings": [],
+          "prototypeScreens": ["review-notification--cattle-air-complete.png"],
+          "shots": ["a-review-cattle-air"]
+        },
+        {
+          "id": "review-about-rows",
+          "group": "Review your notification",
+          "title": "Origin, reason and additional details cards show different rows",
+          "whatChanged": "The origin card now always shows 'Region of origin code', reading 'Not applicable' when none was needed, and drops the 'Region of origin code required' row. For a transit import, the reason card shows 'Exit border control post' and 'Destination country' instead of 'Port of exit'. The additional details card shows only when it has something to show, with a Change link only when that page is part of the notification's journey.",
+          "services": ["live animals"],
+          "rows": [
+            {"id": "inc-102", "title": "Review rows for origin, import reason, additional details and transport and arrival follow Design Release 2.1"},
+            {"id": "inc-020", "title": "Main import reason and additional details copy matches Design Release 2.1"}
+          ],
+          "rulings": [],
+          "prototypeScreens": ["review-notification--cattle-air-complete.png", "review-notification--horse-sea-complete.png"],
+          "shots": ["a-review-road-transit", "a-review-transit-reason"]
+        },
+        {
+          "id": "review-transport-rows",
+          "group": "Review your notification",
+          "title": "Arrival and transport cards read back the way the questions are asked",
+          "whatChanged": "The arrival date row is now 'Arrival date at destination', and the means of transport reads with the question's own words, for example 'Air' instead of 'Airplane'. Transit countries now sit inside the arrival details card, under 'Countries that the consignment will travel through', with their own Change link; there is no separate transit card. The transport details card always shows name, address, country, approval number and type, with 'Not applicable' for anything empty.",
+          "services": ["live animals"],
+          "rows": [
+            {"id": "inc-102", "title": "Review rows for origin, import reason, additional details and transport and arrival follow Design Release 2.1"},
+            {"id": "inc-103", "title": "Arrival and transit task statuses on the overview, and transit countries on the review"}
+          ],
+          "rulings": [
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-141", "heading": "Transit countries inside the arrival card", "quote": "DR1 parity row inc-146 deferred the card structure to a design decision without judging it, so Design Release 2.1 supplies it."},
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-130", "heading": "Transporter country", "quote": "The real service holds each transporter's country, so the card shows the stored country."}
+          ],
+          "prototypeScreens": ["review-notification--poultry-rail-complete.png"],
+          "shots": ["a-review-road-transit", "a-review-cattle-air"]
+        },
+        {
+          "id": "transit-optional",
+          "group": "Review your notification",
+          "title": "Transit countries are no longer needed to submit",
+          "whatChanged": "Before, a consignment travelling by rail or road could not go on to the declaration until transit countries were added. Now the review shows no 'Complete transit countries' message and Continue goes on to the declaration. The overview still shows the Transit countries task as To do until a country is added.",
+          "services": ["live animals"],
+          "rows": [
+            {"id": "inc-102", "title": "Review rows for origin, import reason, additional details and transport and arrival follow Design Release 2.1"},
+            {"id": "inc-103", "title": "Arrival and transit task statuses on the overview, and transit countries on the review"}
+          ],
+          "rulings": [],
+          "prototypeScreens": ["review-notification--poultry-rail-complete.png"],
+          "shots": ["a-review-road-no-transit", "a-overview-road-no-transit"]
+        },
+        {
+          "id": "review-documents",
+          "group": "Review your notification",
+          "title": "Each uploaded document gets its own card showing the file name",
+          "whatChanged": "Before, all documents shared one card and showed the file type. Now each document has its own 'Document 1', 'Document 2' card with its own Change link, showing the reference, type, date of issue and the attached file's name. With nothing uploaded, one 'Document 1' card reads 'Not applicable' in place of 'You have not added any documents yet.'",
+          "services": ["live animals"],
+          "rows": [
+            {"id": "inc-107", "title": "Each uploaded document has its own card on the review, showing its file name"}
+          ],
+          "rulings": [
+            {"source": "sources/ruling-sam-2026-10-09.md", "ref": "claim 20", "heading": "(c) The URL and architecture findings", "quote": "c-059, overruled, so the documents page stays at accompanying-documents."}
+          ],
+          "prototypeScreens": ["review-notification--cattle-air-complete.png"],
+          "shots": ["a-review-cattle-air", "a-review-road-transit"]
+        },
+        {
+          "id": "review-parties",
+          "group": "Review your notification",
+          "title": "Addresses on the review show the name, address lines and country only",
+          "whatChanged": "Before, each party's address on the review showed every field, including telephone and email. Now it reads the name, then each address line, town and postcode, then the country, each on its own line, with 'United Kingdom' for GB and no telephone or email. The contact address reads the same way. Plants' check your answers makes the same change to the place of destination, consignor and contact cards, replacing its one-line address joined by commas.",
+          "services": ["live animals", "plants"],
+          "rows": [
+            {"id": "inc-109", "title": "The review page reads each party's copied address back as name, address lines and country, in live animals and plants"}
+          ],
+          "rulings": [
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-293", "heading": "Plants' party cards", "quote": "Plants' party cards, the contact card among them, drop the Telephone number and Email address rows and read the address back line by line."},
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claim 47", "heading": "(i) Plants changes in the same increment", "quote": "inc-109, party cards. Plants: the cards drop telephone and email and read the address back line by line."}
+          ],
+          "prototypeScreens": ["review-notification--cattle-air-complete.png"],
+          "shots": ["a-review-road-transit", "p-cya-draft-complete"]
+        },
+        {
+          "id": "review-draft-header",
+          "group": "Review your notification",
+          "title": "A draft's review is headed by its reference with a Draft tag",
+          "whatChanged": "Before, a draft's review was headed 'Review your notification' under the status strip. Now it is headed by the notification reference with a 'Draft' tag and 'Date created', and offers 'Copy as new' and a red 'Delete' at the top, followed by the 'Import reference numbers' section. The page stays editable, lists anything unfinished, and ends with Continue. Back goes to the notification list. Plants' draft check your answers takes the same header, without 'Copy as new'.",
+          "services": ["live animals", "plants"],
+          "rows": [
+            {"id": "inc-187", "title": "A draft's review shows the view header with its Draft status and stays editable"},
+            {"id": "inc-110", "title": "Review ends with Continue and Delete, and an amendment's review offers Cancel amend and tells the trader they are re-submitting"}
+          ],
+          "rulings": [
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-246", "heading": "A draft's review header", "quote": "A draft's review, at the real service's one review route (notification-view, reached from the hub's 'Review and submit', with dashboard draft rows still going to the hub), shows the view header."},
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claim 40", "heading": "(h) Who owns the overview, check answers, declaration and confirmation", "quote": "A page that needs a different header switches the strip off and draws its own header in the set's template. This covers ... the draft view header (inc-187)."},
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claim 47", "heading": "(i) Plants changes in the same increment", "quote": "inc-187, draft view header. Plants: the same header with a Draft tag and 'Date created', keeping its Change links and Continue. Copy as new is left out."}
+          ],
+          "prototypeScreens": ["review-notification--draft.png"],
+          "shots": ["a-review-cattle-air", "p-cya-draft-complete"]
+        }
+      ]
+    },
+    {
+      "name": "Declaration and submission",
+      "cards": [
+        {
+          "id": "declaration",
+          "group": "Declaration and submission",
+          "title": "The declaration uses a smaller checkbox and has no status strip",
+          "whatChanged": "The declaration checkbox is now the smaller GOV.UK style, inside a group whose label only screen readers hear. The page no longer shows the Draft or Amend tag, the reference or Cancel amend above its heading, on a first submission or an amendment. Plants' declaration makes the same changes.",
+          "services": ["live animals", "plants"],
+          "rows": [
+            {"id": "inc-114", "title": "Declaration page: small checkbox in a hidden-legend fieldset, and no status strip"}
+          ],
+          "rulings": [
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claim 40", "heading": "(h) Who owns the overview, check answers, declaration and confirmation", "quote": "A page that needs a different header switches the strip off ... This covers ... the declaration with no strip (inc-114)."},
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claim 47", "heading": "(i) Plants changes in the same increment", "quote": "inc-114, declaration. Plants: a small checkbox in a fieldset with a hidden legend, and no status strip."}
+          ],
+          "prototypeScreens": ["declaration.png", "declaration--error.png"],
+          "shots": ["a-declaration", "a-declaration-amend", "p-declaration"]
+        },
+        {
+          "id": "confirmation-wording",
+          "group": "Declaration and submission",
+          "title": "The submitted page asks for the ITAHC by name",
+          "whatChanged": "The 'Before the consignment is imported' list now says 'upload the ITAHC and any other required documents'. It shows only when no uploaded document is an ITAHC or health certificate, even if other documents were uploaded; before, any uploaded document hid it. 'How to view or amend this notification' now reads 'You can view or change this notification from your dashboard.'",
+          "services": ["live animals"],
+          "rows": [
+            {"id": "inc-115", "title": "Notification submitted page follows Design Release 2.1's guard, wording and links"},
+            {"id": "inc-113", "title": "Submitting records its date and outstanding items, and a notification still missing its health certificate shows as 'Submitted action required'"}
+          ],
+          "rulings": [],
+          "prototypeScreens": ["notification-submitted--cattle-air.png"],
+          "shots": ["a-confirmation-no-documents", "a-confirmation-with-certificate"]
+        },
+        {
+          "id": "hmrc-links",
+          "group": "Declaration and submission",
+          "title": "HMRC help links on the submitted page open in a new tab",
+          "whatChanged": "The 'contact HMRC' and 'Find out about call charges' links on the submitted page now open in a new tab. The words '(opens in a new tab)' are read out by screen readers but are not shown on screen.",
+          "services": ["live animals"],
+          "rows": [
+            {"id": "inc-115", "title": "Notification submitted page follows Design Release 2.1's guard, wording and links"}
+          ],
+          "rulings": [],
+          "prototypeScreens": ["notification-submitted--cattle-air.png"],
+          "shots": ["a-confirmation-no-documents"]
+        },
+        {
+          "id": "confirmation-guard",
+          "group": "Declaration and submission",
+          "title": "Opening the submitted page too early goes to the declaration",
+          "whatChanged": "Before, opening the submitted page for a notification not yet submitted went to the overview. Now it goes to the declaration page, in live animals and plants. 'Return to your dashboard' already went to the set's own notification list and has not changed.",
+          "services": ["live animals", "plants"],
+          "rows": [
+            {"id": "inc-115", "title": "Notification submitted page follows Design Release 2.1's guard, wording and links"}
+          ],
+          "rulings": [
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claim 47", "heading": "(i) Plants changes in the same increment", "quote": "inc-115, confirmation. Plants: a notification not yet submitted goes to the declaration, and the return link goes to plants' own list."},
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claim 57", "heading": "(j) The INS dashboard and the animals frontend's own dashboard", "quote": "Every page that Design Release 2.1 sends to 'the overall dashboard' goes to the set's own notification list. That covers ... the confirmation's 'Return to your dashboard'."}
+          ],
+          "prototypeScreens": [],
+          "shots": ["a-confirmation-early", "p-confirmation-early"]
+        }
+      ]
+    },
+    {
+      "name": "Submitted notification view",
+      "cards": [
+        {
+          "id": "view-header",
+          "group": "Submitted notification view",
+          "title": "A submitted notification's view is headed by its reference, status and date submitted",
+          "whatChanged": "Before, viewing a submitted notification showed 'Review your notification' under the status strip. Now the heading is the notification reference with a 'Submitted' tag beside it and 'Date submitted' underneath, with no status strip, and the browser tab title starts with the reference. Back goes to the set's own notification list, and asking for a notification that does not exist goes there too. Plants' read-only view takes the same header in place of 'Check your answers'.",
+          "services": ["live animals", "plants"],
+          "rows": [
+            {"id": "inc-111", "title": "A submitted notification's view has a header: reference, status, date submitted and a Back link to the set's own notification list"},
+            {"id": "inc-113", "title": "Submitting records its date and outstanding items, and a notification still missing its health certificate shows as 'Submitted action required'"}
+          ],
+          "rulings": [
+            {"source": "sources/ruling-sam-2026-10-09.md", "ref": "claim 21", "heading": "(c) The URL and architecture findings", "quote": "inc-111 ... (the view header is keyed on the real route and status; dashboard draft rows keep going to the hub)."},
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claim 40", "heading": "(h) Who owns the overview, check answers, declaration and confirmation", "quote": "A page that needs a different header switches the strip off (journeyStrip: null) and draws its own header in the set's template. This covers the submitted view header (inc-111)."},
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claim 57", "heading": "(j) The INS dashboard and the animals frontend's own dashboard", "quote": "Every page that Design Release 2.1 sends to 'the overall dashboard' goes to the set's own notification list. That covers: the view's Back link."},
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-143, c-198", "heading": "Where Back and a missing notification go", "quote": "'Return to your dashboard' on the confirmation page and a viewed notification's Back link both go to the set's own notification list."}
+          ],
+          "prototypeScreens": ["review-notification--submitted.png", "review-notification--just-submitted.png"],
+          "shots": ["a-view-submitted", "p-view-submitted"]
+        },
+        {
+          "id": "view-actions",
+          "group": "Submitted notification view",
+          "title": "Amend, Copy as new and Delete sit at the top of a submitted notification",
+          "whatChanged": "The view now offers 'Amend this notification' as the main button, with 'Copy as new' beside it and a red 'Delete'. Each still goes through the service's own amend, copy and delete steps, with no pop-ups. Plants' view offers Amend and a red 'Delete notification', moved up from the foot of the page, and no Copy as new.",
+          "services": ["live animals", "plants"],
+          "rows": [
+            {"id": "inc-112", "title": "View header offers Amend, Copy as new and Delete, and shows the import reference numbers as text to copy"}
+          ],
+          "rulings": [
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claim 41", "heading": "(h) Who owns the overview, check answers, declaration and confirmation", "quote": "inc-110 (review end buttons) and inc-112 (view header actions) reuse 'Copy as new' and 'Delete' as they read today."},
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claim 19", "heading": "(c) Rows that ask design", "quote": "The pop-ups are not built, and anything in the area that is not a pop-up survives."},
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-189", "heading": "State changes are form posts", "quote": "A state change is a POST with the CSRF crumb ... Each control looks and reads as Design Release 2.1 draws it."}
+          ],
+          "prototypeScreens": ["review-notification--submitted.png"],
+          "shots": ["a-view-submitted", "p-view-submitted"]
+        },
+        {
+          "id": "import-reference-numbers",
+          "group": "Submitted notification view",
+          "title": "Import reference numbers are shown ready to copy into the customs declaration",
+          "whatChanged": "A new 'Import reference numbers' section warns 'You must use the correct reference and code on the customs declaration or your consignment will be delayed.' and shows the notification reference and the customs document code 'C640' as plain text the trader can select. It also shows on a draft's review. The prototype's Copy buttons wait on design. Plants shows the notification reference only, until plants' own customs document code is confirmed.",
+          "services": ["live animals", "plants"],
+          "rows": [
+            {"id": "inc-112", "title": "View header offers Amend, Copy as new and Delete, and shows the import reference numbers as text to copy"},
+            {"id": "inc-187", "title": "A draft's review shows the view header with its Draft status and stays editable"}
+          ],
+          "rulings": [
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claim 18", "heading": "(c) Rows that ask design", "quote": "Built now: ... the 'Import reference numbers' section with the reference and customs document code as selectable text. Waits: the Copy buttons."},
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claim 47", "heading": "(i) Plants changes in the same increment", "quote": "Plants' customs document code row is added only once plants' own code is confirmed (C640 is the animals code)."},
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-294", "heading": "Import reference numbers without Copy buttons", "quote": "The section, its warning and its rows are built now with each value as text the trader can select, and the Copy buttons become their own increment."}
+          ],
+          "prototypeScreens": ["review-notification--submitted.png", "review-notification--draft.png"],
+          "shots": ["a-view-submitted", "p-view-submitted"]
+        },
+        {
+          "id": "action-required",
+          "group": "Submitted notification view",
+          "title": "A notification submitted without a health certificate shows 'Submitted action required'",
+          "whatChanged": "Before, a notification submitted without its health certificate looked like any other submitted one. Now its view shows an orange 'Submitted action required' tag, the warning 'You need to upload a health certificate', and 'Upload a valid health certificate' in the uploaded documents section. Continue at the foot starts an amendment and opens the overview, so the trader can upload it. The INS home's notification table links these notifications to their view, as it does submitted ones. This is live animals only, because it rests on the ITAHC.",
+          "services": ["live animals", "INS"],
+          "rows": [
+            {"id": "inc-113", "title": "Submitting records its date and outstanding items, and a notification still missing its health certificate shows as 'Submitted action required'"}
+          ],
+          "rulings": [
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claim 42", "heading": "(h) Who owns the overview, check answers, declaration and confirmation", "quote": "New notification statuses are added only, never changed or removed ... 'Submitted action required' rests on the ITAHC and is animals only."},
+            {"source": "sources/ruling-sam-2026-10-09.md", "ref": "claim 21", "heading": "(c) The URL and architecture findings", "quote": "req-909, inc-113 and inc-119 (how action-required is stored is the real team's)."},
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-144", "heading": "Continue on an action-required notification", "quote": "The real service changes a submitted notification only through an amendment, so Continue on the action-required view starts an amendment and opens the hub."}
+          ],
+          "prototypeScreens": ["review-notification--action-required.png"],
+          "shots": ["a-view-action-required", "i-home-action-required"]
+        }
+      ]
+    },
+    {
+      "name": "Amending a notification",
+      "cards": [
+        {
+          "id": "amend-bar",
+          "group": "Amending a notification",
+          "title": "During an amendment, the overview and question pages show an 'Amend' tag with 'Cancel amend'",
+          "whatChanged": "Before, an amended notification's tag read 'Amending' and only the review page offered a 'Cancel amendment' link. Now the overview and every question page show the 'Amend' tag, the reference and a 'Cancel amend' link above the heading, which opens the cancel amendment confirmation page. Drafts show 'Draft' with no Cancel amend. Plants makes the same change, in English and Welsh.",
+          "services": ["live animals", "plants"],
+          "rows": [
+            {"id": "inc-122", "title": "An amendment shows an 'Amend' status bar with Cancel amend on the overview, the review and every question page, in every set that amends"}
+          ],
+          "rulings": [
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claim 40", "heading": "(h) Who owns the overview, check answers, declaration and confirmation", "quote": "The one exception is inc-122: the Amend bar with 'Cancel amend' on every page during an amendment ... It adds the Cancel amend control for status AMEND, and changes 'Amending' to 'Amend' in every set at once."},
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claim 19", "heading": "(c) Rows that ask design", "quote": "inc-122's Amend status bar, whose 'Cancel amend' goes to the cancel confirmation page."},
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-311", "heading": "'Amend' in every set", "quote": "The strip reads 'Amend' in every set, plants included, through the same shared strip change as the Amend bar."}
+          ],
+          "prototypeScreens": ["origin-of-the-import--amend.png", "arrival-details--amend.png"],
+          "shots": ["a-overview-amend", "a-origin-amend", "p-overview-amend"]
+        },
+        {
+          "id": "amend-endings",
+          "group": "Amending a notification",
+          "title": "Pages being amended end with Save and return, Save and continue, and Save and return to overview",
+          "whatChanged": "Before, during an amendment a page opened from a Change link saved straight back to the notification view. Now each page the overview links to ends with 'Save and return' (back to the amend review), 'Save and continue' (on to the next page) and a link-styled 'Save and return to overview', with no cancel link. The address pickers, the CPH number page and the permanent address page show only the first two. Back links stay as they are in the journey. Plants pages and pickers get the same buttons.",
+          "services": ["live animals", "plants"],
+          "rows": [
+            {"id": "inc-004", "title": "During an amendment, pages end with Save and return, Save and continue and Save and return to overview, and Continue on the amend review is held while anything is incomplete, in animals and plants"}
+          ],
+          "rulings": [
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-210", "heading": "Amend endings", "quote": "Overview-linked pages get Design Release 2.1's full amend ending; the party pickers, the CPH number page and the permanent address page show 'Save and return' (primary, to the review) and 'Save and continue'."},
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-267", "heading": "Amend buttons post the service's own fields", "quote": "The three buttons and where each goes are built as Design Release 2.1 draws them, posting the real service's own fields (exit=hub, ?change=1)."},
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claim 45", "heading": "(i) Plants changes in the same increment", "quote": "inc-004, page endings while amending. Plants: its save actions get the same three amend controls, its pickers the same two buttons."}
+          ],
+          "prototypeScreens": ["origin-of-the-import--amend.png", "arrival-details--amend.png"],
+          "shots": ["a-origin-amend", "a-cph-amend", "p-arrival-amend", "p-consignor-amend"]
+        },
+        {
+          "id": "amend-review",
+          "group": "Amending a notification",
+          "title": "The amend review says when the trader is re-submitting and ends with Cancel amend",
+          "whatChanged": "An amendment's review now opens with no errors showing and is headed 'Review your notification'; once an answer differs from what was submitted, it becomes 'Review before re-submitting'. It ends with Continue, a 'Cancel amend' button and a red 'Delete', replacing the 'Cancel amendment' link under the heading. Continue on an unfinished amendment does not submit it: the review shows again, naming what is missing. Plants makes the same change, except that its heading does not yet change when answers change.",
+          "services": ["live animals", "plants"],
+          "rows": [
+            {"id": "inc-110", "title": "Review ends with Continue and Delete, and an amendment's review offers Cancel amend and tells the trader they are re-submitting"},
+            {"id": "inc-004", "title": "During an amendment, pages end with Save and return, Save and continue and Save and return to overview, and Continue on the amend review is held while anything is incomplete, in animals and plants"}
+          ],
+          "rulings": [
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-136", "heading": "The amendment review's errors", "quote": "The prototype wins for the amendment review on opening: no error summary and no card errors. The ruling's validation override wins when an amendment that is not complete is submitted."},
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-201", "heading": "Held Continue on the amend review", "quote": "Continue on the amend review is held while any answer is invalid or incomplete ... the trader stays on the amend review."},
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claim 51", "heading": "(i) Plants changes in the same increment", "quote": "A plants change that needs trade-imports-plants-backend ... is left out of the increment ... Today this covers inc-110's heading for changed answers."}
+          ],
+          "prototypeScreens": ["review-notification--amend.png"],
+          "shots": ["a-review-amend-opened", "a-review-amend-changed", "a-review-amend-continue-incomplete", "p-cya-amend"]
+        }
+      ]
+    },
+    {
+      "name": "Page titles",
+      "cards": [
+        {
+          "id": "page-titles",
+          "group": "Page titles",
+          "title": "Browser tab titles follow the GOV.UK pattern on INS and plants pages",
+          "whatChanged": "Before, INS and plants pages were titled like 'Address book | Import notification service'. Now they read 'Address book - Import notification service - GOV.UK', as live animals pages already did, with 'Error: ' in front when the page shows errors. The INS home is titled 'Dashboard - Import notification service - GOV.UK'.",
+          "services": ["INS", "plants"],
+          "rows": [
+            {"id": "inc-127", "title": "Page titles on the INS front door and in plants follow the GOV.UK title pattern, including the INS home's 'Dashboard' title"}
+          ],
+          "rulings": [
+            {"source": "sources/ruling-sam-2026-10-09-pm.md", "ref": "claim 53", "heading": "(j) The INS dashboard and the animals frontend's own dashboard", "quote": "inc-127 (INS page titles in the GOV.UK pattern) is not summary information and goes ahead."},
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-146", "heading": "INS home title", "quote": "Title 'Dashboard - Import notification service - GOV.UK'."}
+          ],
+          "prototypeScreens": ["dashboard.png"],
+          "shots": ["i-home", "i-address-book", "i-address-book-add-error", "p-origin-empty"]
+        }
+      ]
+    },
+    {
+      "name": "Reference lists",
+      "cards": [
+        {
+          "id": "destination-country-lists",
+          "group": "Reference lists",
+          "title": "Destination country lists include places within countries",
+          "whatChanged": "The transhipment and transit 'Destination country' dropdowns on the reason page now offer the same places as the country of origin list: countries plus the places within them, labelled like 'Canary Islands (Spain)', in one alphabetical order. A destination saved before this change still shows when the page is reopened.",
+          "services": ["live animals"],
+          "rows": [
+            {"id": "inc-006", "title": "Destination country selects offer reference-data's countries and their subdivisions"}
+          ],
+          "rulings": [
+            {"source": "sources/ruling-sam-2026-10-09.md", "ref": "claim 26", "heading": "(d) Reference lists and MDM", "quote": "The destination select offers reference-data's GBNAG_SPS_EX countries plus their subdivisions, labelled '<territory> (<parent>)', alphabetically, as the origin page does."},
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-026", "heading": "Destination country list", "quote": "The 9 October ruling ranks first. It lifts DR1's MDM block ... The destination select is built now."}
+          ],
+          "prototypeScreens": ["reason-for-import--transhipment-reveal.png", "reason-for-import--transit-reveal.png"],
+          "shots": ["a-import-reason-transhipment-reveal", "a-import-reason-transit-reveal"]
+        },
+        {
+          "id": "transit-country-list",
+          "group": "Reference lists",
+          "title": "Transit country search offers the same places as country of origin",
+          "whatChanged": "Before, the transit country search offered a 31-country list with no places within countries. Now it offers the same countries and places as country of origin, each place named with its country, for example 'Canary Islands (Spain)'. A country not on the list is still refused with 'Select countries from the list'.",
+          "services": ["live animals"],
+          "rows": [
+            {"id": "inc-174", "title": "Transit country search offers the GBNAG_SPS_EX countries and their subdivisions"}
+          ],
+          "rulings": [
+            {"source": "sources/ruling-sam-2026-10-09.md", "ref": "claim 27", "heading": "(d) Reference lists and MDM", "quote": "The transit country search offers the GBNAG_SPS_EX countries plus their subdivisions, labelled the same way."},
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-048", "heading": "Transit and port lists", "quote": "No list waits on MDM: the port list and the transit country list are built now against reference-data as it is, and their content is what MDM serves."}
+          ],
+          "prototypeScreens": ["transit-countries--two-countries.png"],
+          "shots": ["a-transit-search-subdivision"]
+        },
+        {
+          "id": "port-order",
+          "group": "Reference lists",
+          "title": "Port lists show airports first, then seaports, then rail",
+          "whatChanged": "Before, ports were listed by name alone, mixing airports and seaports, with names in capitals first. Now the port of entry search, both port of exit dropdowns and plants' place of landing list show airports, then seaports, then rail ports, each A to Z ignoring capitals. Port of exit options now read like port of entry ones, for example 'Holyhead Port - GB HLY'. The port of exit lists still offer every port, because the master data has no 'approved for animals' flag.",
+          "services": ["live animals", "plants"],
+          "rows": [
+            {"id": "inc-007", "title": "Port lists ordered airports, then seaports, then rail, from MDM's port type, with the port of exit reading and ordering like the port of entry, in animals and plants"}
+          ],
+          "rulings": [
+            {"source": "sources/ruling-sam-2026-10-09.md", "ref": "claim 33", "heading": "(d) Reference lists and MDM", "quote": "The port list is ordered airports first, then seaports, then rail, each group A to Z by name ignoring letter case, with non-breaking and doubled spaces normalised before comparing."},
+            {"source": "sources/ruling-sam-2026-10-09.md", "ref": "claim 31", "heading": "(d) Reference lists and MDM", "quote": "The port of exit selects (transit and temporary admission) offer the whole ports-of-entry list for now. MDM has no approved-for-animals flag."},
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-226", "heading": "Port of exit labels", "quote": "Each option reads '<port name> - <port code>', matching the port of entry options."}
+          ],
+          "prototypeScreens": ["arrival-details--port-search-open.png", "reason-for-import--temporary-admission-reveal.png"],
+          "shots": ["a-arrival-port-search", "a-import-reason-tempadmission-reveal", "p-arrival-port-search"]
+        },
+        {
+          "id": "stub-lists",
+          "group": "Reference lists",
+          "title": "Country and port lists on local and development environments now match the real master data",
+          "whatChanged": "Before, local and development environments used a short hand-kept list of 31 countries and 78 ports. Now they serve the full master data lists, about 250 countries and every port with its type, the same content as the test environment. The INS address book's country dropdown offers the full country list instead of four typed-in countries. Traders on the live service see no difference; anyone reviewing on a local or development environment will.",
+          "services": ["live animals", "plants", "INS"],
+          "rows": [
+            {"id": "inc-173", "title": "The stub's countries and ports match real MDM, and every captured country and port fixture is recaptured from it"}
+          ],
+          "rulings": [
+            {"source": "sources/ruling-sam-2026-10-09.md", "ref": "claim 30", "heading": "(d) Reference lists and MDM", "quote": "One new row sits at the head of the reference-lists theme: the stub tidy-up ... The port duplicates and misspellings stay in the stub, because they are in MDM's real data."},
+            {"source": "distil/conflicts.json (decisions page)", "ref": "c-177", "heading": "INS address book country list", "quote": "The Country select offers reference data's unfiltered country list, which is what MDM serves."}
+          ],
+          "prototypeScreens": [],
+          "shots": ["i-address-book-add-country", "a-origin-country-search"]
+        }
+      ]
+    }
+  ],
+  "openQuestions": [
+    {
+      "id": "q-opening-run-order",
+      "title": "Is the new order of the first run right?",
+      "question": "Is this the right order for a trader filling in a new notification? In particular: should the CPH number stop being a step in the first run, so a trader who needs one has to notice its row on roles and addresses? And should the run end on the review page, listing what is missing, rather than on the overview?",
+      "asBuilt": "Live animals: origin, what are you importing, main import reason, commodity details, identification details (only if the animals need it), additional details, arrival details, transit countries (rail or road only), transport details, upload documents, roles and addresses, contact address, then the review. The CPH number page is never shown in the run and opens only from its row on roles and addresses. If every overview task is already complete, roles and addresses goes to the overview. The contact address always goes to the review, even when unfinished; the review of a draft is now headed by the reference with a Draft tag (not 'Review your notification') and its Back link goes to the notification list, not the overview. Plants keeps its own order, but its last step (consignment contact) now goes to check your answers even when unfinished, and Continue there shows the missing answers instead of going to the overview.",
+      "rows": ["inc-001"],
+      "cards": ["opening-run-order", "cph-not-in-run", "run-ends-on-review", "review-draft-header"]
+    },
+    {
+      "id": "q-soft-save-format",
+      "title": "Is it right to let traders leave a page half-done, but stop them when one answer is in the wrong format?",
+      "question": "Should 'Save and return to overview' save a half-finished page? And when one answer is in the wrong format, is it right that the whole page is refused, so the trader's other answers on that page are not saved either? Should commodity details and the contact address keep insisting on their answers?",
+      "asBuilt": "On origin, what are you importing, main import reason, identification details, additional details, arrival details, transit countries, transport details, upload documents and roles and addresses, 'Save and return to overview' saves whatever was entered with no error and the task does not show Complete. An answer that breaks its own format rule (for example an arrival date of 31/2/2027, a malformed region code, an exit date of 31/2/2026) is refused with its error and nothing on the page is saved. Commodity details and the contact address still show their errors and save nothing. Plants behaves the same, refusing a date that is not real, a future date once arrived, a time not on the 24-hour clock, a port not on the list or a quantity that is not a whole number. This overlaps EUDPA-667's mandatory-to-submit work.",
+      "rows": ["inc-003", "inc-022", "inc-028"],
+      "cards": ["soft-save", "format-refused"]
+    },
+    {
+      "id": "q-amend-endings",
+      "title": "Are the amend buttons right, and what should Continue do on an unfinished amendment?",
+      "question": "Are three ways off each page (back to the amend review, on to the next page, or to the overview) right for a trader making an amendment? And when a trader presses Continue on an unfinished amendment, should the page stay put silently, as Design Release 2.1 draws it, or show an error summary naming what is missing, as built? The row asked for the silent hold; the review-page row asked for the error summary; the build followed the second.",
+      "asBuilt": "While amending, each page the overview links to ends with 'Save and return' (primary, to the amend review), 'Save and continue' (secondary, to the next page) and a link-styled 'Save and return to overview', with no cancel link. The address pickers, the CPH number page, the permanent address page and the contact address page show only the first two. Back links stay as in the journey and never go to the amend review. Continue on an unfinished amend review does not submit: the review is shown again with 'There is a problem' and, for example, 'Complete arrival details' (tests repo amend-endings.spec.ts:113-131). It opens with no errors showing. Plants: the same three controls, its pickers two buttons, and the same refusal on Continue.",
+      "rows": ["inc-004", "inc-110"],
+      "cards": ["amend-endings", "amend-review"]
+    },
+    {
+      "id": "q-commodity-walk",
+      "title": "Does asking the reason between the two commodity pages read right?",
+      "question": "Walking from origin to arrival details, does it make sense to a trader to choose the animals, then give the import reason, then say how many animals there are? Are the Back links on both commodity pages right?",
+      "asBuilt": "The commodity page's Back goes to origin; its Save and continue goes to main import reason. Commodity details now comes after main import reason, and its Back goes to the commodity page. From commodity details, Save and continue goes to identification details when any chosen species needs identifiers, otherwise to additional details when it applies, otherwise to arrival details. Opened from the overview each page returns to the overview; opened from the review it returns to the review. Both pages keep 'Save and return to overview' and 'Cancel and return to overview'. The performance tests walk the same order.",
+      "rows": ["inc-015"],
+      "cards": ["opening-run-order", "back-links", "overview-return"]
+    },
+    {
+      "id": "q-reason-walk",
+      "title": "Is the order right for cattle and for horses only, and are both Back links right?",
+      "question": "For a cattle notification and for a horses-only notification, does the run what are you importing, main import reason, commodity details, identification details, additional details, arrival details read right? Should Back on main import reason go to what are you importing, and Back on additional details go to the page before it?",
+      "asBuilt": "In the first run, main import reason's Back goes to what are you importing and its Save and continue goes to commodity details. Additional details is reached from identification details when a chosen species needs identifiers, otherwise from commodity details, never straight from main import reason; its Back mirrors that, and its Save and continue goes to arrival details. Opened from the overview, both pages have Back to the overview and return there on save. The tests walk cattle by air and a horse by sea (temporary admission) in this order.",
+      "rows": ["inc-021", "inc-005"],
+      "cards": ["opening-run-order", "back-links"]
+    },
+    {
+      "id": "q-review-structure",
+      "title": "Is the flatter review page, with renamed cards, right?",
+      "question": "Is it right to remove the heading above each card on the review, so cards sit straight under the numbered sections, and to rename the sections and cards? Do 'Origin of import', 'Main import reason', '4. Uploaded documents', '5. Consignment addresses' with one 'Addresses' card, and '6. Contact address' read right to traders?",
+      "asBuilt": "No heading sits between a numbered section and its cards ('Where is this consignment coming from?', 'Main reason for import', 'Upload documents', 'Roles and addresses' and 'Contact address for this consignment' are gone as headings), and card titles moved up one heading level. Section 4 is '4. Uploaded documents' and section 5 '5. Consignment addresses' with a single 'Addresses' card whose Change link opens roles and addresses. Unfinished messages follow the new names: 'Complete origin of import', 'Complete main import reason', 'Complete additional details'.",
+      "rows": ["inc-101"],
+      "cards": ["review-structure", "review-unfinished"]
+    },
+    {
+      "id": "q-commodity-card",
+      "title": "Is the commodity card layout right, and where should its Change links go?",
+      "question": "Is one card per commodity with a block per species clear? Is it right to have two Change links to the same page on one card: one at the top of the card and one on each species' first row? And should Latin species names be capitalised word by word ('Bos Taurus'), as the prototype shows, when the scientific convention is 'Bos taurus'?",
+      "asBuilt": "Section 1 has a 'What are you importing?' card (commodity code, common name, species, each listed once). Section 2 has one card per commodity titled '<name> (<code>)', with a block per species headed by its title-cased Latin name, showing 'Number of animals', 'Number of packages (when required)' where packaging applies, and an 'Identification details' table. The card's top Change link and the 'Number of animals' row's Change link both open commodity details; the identification table has its own Change link to the identification page (species-block.js:36-68). Species error messages use the lower-case name, for example 'Enter at least 1 animal identifier for bos taurus'.",
+      "rows": ["inc-104", "inc-106"],
+      "cards": ["review-commodities", "review-identification", "review-unfinished"]
+    },
+    {
+      "id": "q-submitted-view",
+      "title": "Can traders tell a submitted notification's view from the review?",
+      "question": "Is a page headed only by the notification reference and a status tag clear enough for a trader to know they are looking at a submitted notification and not reviewing one? Is it right to drop the status strip there? Should Back go to the notification list, even when the trader came from the INS home?",
+      "asBuilt": "The submitted view, the draft review and the amend review share one page address (notification-view). The page decides by the notification's stored status: Submitted or Submitted action required gives a read-only view headed by the reference (also the browser title), a status tag, 'Date submitted: <d Month yyyy>', no status strip, Amend this notification, Copy as new and Delete at the top, and the Import reference numbers section. A Draft gets the same header with a Draft tag and 'Date created', and stays editable. An amendment keeps 'Review your notification' with the status strip. Back on the submitted view and the draft review goes to the set's own list (/live-animals or /high-risk-plants); the INS home also links here, so Back from there lands on the live animals list, not the INS home. An unknown notification goes to the list.",
+      "rows": ["inc-111", "inc-187"],
+      "cards": ["view-header", "review-draft-header"]
+    },
+    {
+      "id": "q-hmrc-new-tab",
+      "title": "Should '(opens in a new tab)' be visible on the HMRC links?",
+      "question": "The 'contact HMRC' and 'Find out about call charges' links on the submitted page now open in a new tab, but the warning is hidden from sight, so sighted users get no warning. Should '(opens in a new tab)' be visible link text, as GOV.UK guidance and the commodity page's Trade Tariff link do?",
+      "asBuilt": "repos/trade-imports-animals-frontend/src/server/app/sets/live-animals/journeys/linear/features/confirmation/template.njk:54 and :56: each link has target=\"_blank\" and the text inside <span class=\"govuk-visually-hidden\"> (opens in a new tab)</span>, so only screen readers hear it. The text comes from copy/copy.en.js:41 (newTab). Design Release 2.1 gives the link text as 'contact HMRC' and 'Find out about call charges', so changing the visible text is a design call.",
+      "rows": ["inc-115"],
+      "cards": ["hmrc-links"]
+    },
+    {
+      "id": "q-transit-optional",
+      "title": "Should a consignment by rail or road be submittable without transit countries?",
+      "question": "The review now lets a rail or road consignment go to the declaration with no transit countries, but the overview still shows the Transit countries task as To do. Which is right: are transit countries required, or optional?",
+      "asBuilt": "Review: with transit countries in scope but none added, no 'Complete transit countries' message and Continue goes to the declaration. Overview: 'Transit countries' reads To do until at least one country is added. The tests repo's journey helper notes 'Transit countries are optional for submission'.",
+      "rows": ["inc-102", "inc-103"],
+      "cards": ["transit-optional", "transit-task"]
+    },
+    {
+      "id": "q-amend-review-cancel",
+      "title": "Where should Cancel amend sit on the amend review?",
+      "question": "During an amendment, the overview and question pages show 'Cancel amend' in the status strip above the heading, but the amend review shows it only as a button at the foot of the page. Is that right?",
+      "asBuilt": "One row asked for the strip's Cancel amend on the review as well; another asked for a Cancel amend button at the foot instead of the old link. As built, the amend review's strip shows the Amend tag and reference with no Cancel amend (check-answers/controller.js:155-157, offerCancelAmend: false), and the foot has Continue, Cancel amend and Delete.",
+      "rows": ["inc-122", "inc-110"],
+      "cards": ["amend-bar", "amend-review"]
+    },
+    {
+      "id": "q-draft-header",
+      "title": "Should a draft show import reference numbers and put Delete at the top?",
+      "question": "A draft's review now shows 'Import reference numbers' with the warning 'You must use the correct reference and code on the customs declaration or your consignment will be delayed.' before the notification is submitted. Is that right for a draft? And is Delete at the top of the page, rather than beside Continue at the foot, where traders expect it?",
+      "asBuilt": "Draft review: reference heading, Draft tag, 'Date created', Copy as new and a red Delete at the top, the Import reference numbers section with the reference and C640, then the editable cards and errors, ending with Continue only. The review-ending row had put Delete beside Continue; the later draft-header row moved it to the top (check-answers/template.njk:41-81 and 145-165). Plants' draft check your answers has its delete button in the header and no Copy as new.",
+      "rows": ["inc-187", "inc-110"],
+      "cards": ["review-draft-header", "import-reference-numbers"]
+    },
+    {
+      "id": "q-ins-status-text",
+      "title": "The INS home shows the new status as a code",
+      "question": "The INS home's notification table shows each status exactly as stored, so a notification needing action reads 'SUBMITTED_ACTION_REQUIRED'. Should the table show 'Submitted action required', or wait for the INS dashboard rework?",
+      "asBuilt": "repos/trade-imports-ins-frontend/src/server/app/features/dashboard/controller.js:54 puts notification.status into the table as text (unchanged from main, where it already shows 'SUBMITTED' and 'DRAFT'). The build only changed where the row links (view-model/list.js:89-100). The INS dashboard's summary rework is blocked until its requirements firm up.",
+      "rows": ["inc-113"],
+      "cards": ["action-required"]
+    },
+    {
+      "id": "q-plants-gaps",
+      "title": "Two plants gaps left by this release",
+      "question": "What is the customs document code for a plants notification, so it can be added to plants' Import reference numbers? And is it acceptable that plants' amend review never changes its heading to 'Review before re-submitting', until plants' backend can say whether answers changed?",
+      "asBuilt": "Plants' Import reference numbers shows the notification reference only (C640 is the animals code). Plants' amend review keeps its heading whatever changes. The afternoon ruling (claim 51) says this heading is recorded in deferred.md for plants to follow later, but deferred.md has no entry for it yet.",
+      "rows": ["inc-112", "inc-110"],
+      "cards": ["import-reference-numbers", "amend-review"]
+    },
+    {
+      "id": "q-port-of-exit-all-ports",
+      "title": "Port of exit offers every port, not only those approved for animals",
+      "question": "Is it acceptable for now that both port of exit dropdowns offer every port, including ones not approved for animals, because the master data has no flag to filter on?",
+      "asBuilt": "Transit and temporary admission port of exit dropdowns list every port reference data serves, airports then seaports then rail. deferred.md records a ticket under EUDPA-190 if MDM ever adds the flag.",
+      "rows": ["inc-007"],
+      "cards": ["port-order"]
+    },
+    {
+      "id": "q-mdm-list-quality",
+      "title": "Traders will see MDM's duplicate and misspelt ports",
+      "question": "The port lists show master data as it is, including duplicate Pembroke and Sheerness ports and names such as 'Teestort', 'TILBURY' and 'Portsmouth  Port'. Has the MDM team been told, and is it acceptable to show them until MDM corrects them?",
+      "asBuilt": "Lists are never edited in code. deferred.md: Slack message to the MDM team drafted 9 October, for Sam to send.",
+      "rows": ["inc-007", "inc-173"],
+      "cards": ["port-order", "stub-lists", "port-labels"]
+    },
+    {
+      "id": "q-welsh-drafts",
+      "title": "New Welsh text is machine-drafted",
+      "question": "Who will review the Welsh for the changed commodity page and commodity details wording before release?",
+      "asBuilt": "Every English string the commodity row changed or added has a Welsh counterpart marked as a machine draft for translator review. Other rows added Welsh for their changes (main import reason, origin hints, Amend and Cancel amend), but the rows do not say whether a translator has checked them.",
+      "rows": ["inc-011", "inc-020", "inc-009", "inc-010", "inc-122", "inc-098"],
+      "cards": ["commodity-page-wording", "reason-rename", "origin-country-box", "amend-bar"]
+    },
+    {
+      "id": "q-plain-selects",
+      "title": "Some country lists search as you type, others are plain dropdowns",
+      "question": "Is it acceptable for this release that country of origin and transit countries search as you type, but the transhipment destination country, port of exit and the INS address book country stay plain dropdowns of about 250 entries?",
+      "asBuilt": "Rolling the search component out is EUDPA-635's work. deferred.md lists a follow-on ticket (not raised) for the transhipment destination country, the animals address country and the INS address book country.",
+      "rows": ["inc-006", "inc-020", "inc-173"],
+      "cards": ["destination-country-lists", "reason-select-one", "stub-lists"]
+    },
+    {
+      "id": "q-waiting-on-design",
+      "title": "Parts of these pages wait on design",
+      "question": "Design needs to answer before these are built: the Search button beside the country and port boxes, the live region code prefix, custom screen reader announcements on the country search, and the Copy buttons on Import reference numbers. Are the pages acceptable without them?",
+      "asBuilt": "Each is its own blocked increment in the waiting-on-design theme (afternoon ruling claims 8 to 22). The 12 design questions in js-triage/triage-2026-10-09.md are still to be sent to design (deferred.md).",
+      "rows": ["inc-009", "inc-010", "inc-027", "inc-112"],
+      "cards": ["origin-country-box", "region-code-behaviour", "port-labels", "import-reference-numbers"]
+    }
+  ],
+  "shots": [
+    {"key": "a-run-after-what-importing", "service": "animals", "page": "Page after 'What are you importing?' in the first run", "state": "New notification, origin answered, Bos taurus ticked, Save and continue pressed", "howToReach": "/live-animals, create button, fill origin (France, region code No), Save and continue to /live-animals/notifications/{id}/commodities, search 'cow', tick Bos taurus, Save and continue. Capture the page it lands on (main: Commodity details; combined: Main import reason).", "compare": "before-and-after"},
+    {"key": "a-run-after-reason", "service": "animals", "page": "Page after 'Main import reason' in the first run", "state": "First run, Internal market and Breeding chosen, Save and continue pressed", "howToReach": "Continue the first run in each branch's own order until /import-reason is reached (combined: straight after the commodity page; main: after commodity details and identification). Choose Internal market, Breeding, Save and continue. Capture the landing page (main: Additional details; combined: Commodity details).", "compare": "before-and-after"},
+    {"key": "a-run-after-addresses", "service": "animals", "page": "Page after 'Roles and addresses' in the first run", "state": "First run for cattle, five parties chosen, no CPH number, Save and continue pressed", "howToReach": "Walk the first run for Bos taurus as flows/animals/journey.ts walkOpeningRunToRolesAndAddressesWithoutCph does, then on /addresses pick the five parties and press Continue without adding a CPH number. Capture the landing page (main: CPH number; combined: Contact address for this consignment).", "compare": "before-and-after"},
+    {"key": "a-run-after-contact-incomplete", "service": "animals", "page": "Page after 'Contact address' at the end of the first run", "state": "First run with arrival details, transporter and documents left blank (Save and continue through them), contact address chosen", "howToReach": "Walk the first run pressing Save and continue on each page with the fewest answers it accepts, choose 'Animal and Plant Health Agency' on /consignment/contact/select and Save and continue. Capture the full landing page (combined: the draft review with its error summary).", "compare": "before-and-after"},
+    {"key": "a-reason-from-overview-saved", "service": "animals", "page": "Page after saving Main import reason opened from the overview", "state": "Notification with origin and Bos taurus answered; Main import reason opened from its overview task; Internal market, Breeding; Save and continue", "howToReach": "flows/animals/journey.ts startNotification then answerCommodity, open the overview /live-animals/notifications/{id}, click 'Main import reason' (main: 'Main reason for import'), answer, Save and continue. Capture the landing page (main: Additional details; combined: Overview).", "compare": "before-and-after"},
+    {"key": "a-arrival-from-overview-saved", "service": "animals", "page": "Page after saving Arrival details opened from the overview", "state": "Arrival details opened from its overview task, all answers given with means Road, Save and continue", "howToReach": "Overview task 'Arrival details' (/port-of-entry), fill as fillArrivalDetails('Road') does, Save and continue. Capture the landing page (main: Transit countries; combined: Overview).", "compare": "before-and-after"},
+    {"key": "a-addresses-from-overview-saved", "service": "animals", "page": "Page after saving Roles and addresses opened from the overview", "state": "Cattle notification needing a CPH number, Roles and addresses opened from its overview task, five parties chosen, Continue", "howToReach": "Overview task 'Roles and addresses' (/addresses), pick the five parties as addFiveParties does, press Continue. Capture the landing page (main: CPH number; combined: Overview).", "compare": "before-and-after"},
+    {"key": "a-commodities-opening-run", "service": "animals", "page": "What are you importing?", "state": "First run, reached from origin, nothing chosen", "howToReach": "Create a notification, answer origin, Save and continue to /commodities.", "compare": "before-and-after", "alsoCapture": "The Back link's href."},
+    {"key": "a-import-reason-opening-run", "service": "animals", "page": "Main import reason", "state": "First run, reached in the branch's own order, nothing chosen", "howToReach": "Combined: create, origin, commodity page with Bos taurus, Save and continue to /import-reason. Main: reach /import-reason in main's run order.", "compare": "before-and-after", "alsoCapture": "Browser title and the Back link's href."},
+    {"key": "a-consignment-details-opening-run", "service": "animals", "page": "Commodity details", "state": "First run, Bos taurus chosen, boxes empty", "howToReach": "Combined: after Main import reason in the first run. Main: straight after the commodity page. Path /consignment-details.", "compare": "before-and-after", "alsoCapture": "The Back link's href."},
+    {"key": "a-additional-details-opening-run", "service": "animals", "page": "Additional details", "state": "First run for cattle, reached after identification details, nothing answered", "howToReach": "Walk the first run for Bos taurus to /additional-details (combined: after identification details; main: after main reason for import).", "compare": "before-and-after", "alsoCapture": "The Back link's href."},
+    {"key": "a-origin-soft-save", "service": "animals", "page": "Page after 'Save and return to overview' on a blank origin", "state": "New notification, origin left blank, 'Save and return to overview' pressed", "howToReach": "Create a notification to /origin, press 'Save and return to overview' with nothing entered. Capture the landing page (main: origin with errors; combined: Overview, origin task not Complete).", "compare": "before-and-after"},
+    {"key": "a-arrival-soft-save", "service": "animals", "page": "Page after 'Save and return to overview' on arrival details without a means of transport", "state": "Arrival date and port of entry given, means of transport blank, 'Save and return to overview'", "howToReach": "Overview task 'Arrival details' (/port-of-entry), enter the arrival date and port only, press 'Save and return to overview'. Capture the landing page and then reopen Arrival details to show the saved answers.", "compare": "before-and-after"},
+    {"key": "a-consignment-details-soft-save", "service": "animals", "page": "Commodity details after 'Save and return to overview' with a box blank", "state": "Bos taurus chosen, number of animals blank, 'Save and return to overview'", "howToReach": "Overview task 'Commodity details' (/consignment-details), leave number of animals blank, press 'Save and return to overview'. Expect the page's errors on both branches.", "compare": "before-and-after"},
+    {"key": "a-arrival-soft-save-impossible-date", "service": "animals", "page": "Arrival details refusing an impossible date", "state": "Arrival date 31/2/2027, other answers blank, 'Save and return to overview'", "howToReach": "Overview task 'Arrival details', type 31 / 2 / 2027, press 'Save and return to overview'. Expect 'Enter a real arrival date'.", "compare": "before-and-after"},
+    {"key": "a-reason-soft-save-bad-exit-date", "service": "animals", "page": "Main import reason refusing an exit date that is not real", "state": "Temporary admission horses chosen, exit date 31/2/2026, 'Save and return to overview'", "howToReach": "Notification with Equus caballus chosen; overview task 'Main import reason' (/import-reason), choose 'Temporary admission horses', exit date 31/2/2026, press 'Save and return to overview'.", "compare": "before-and-after"},
+    {"key": "a-origin-empty", "service": "animals", "page": "Origin of the import", "state": "New notification, nothing entered", "howToReach": "/live-animals, create button, lands on /live-animals/notifications/{id}/origin.", "compare": "before-and-after"},
+    {"key": "a-origin-country-search", "service": "animals", "page": "Origin of the import, country search open", "state": "Typed 'Can' in the country box, list open", "howToReach": "On /origin, focus 'Country of origin' and type 'Can'.", "compare": "before-and-after", "alsoCapture": "The full option text list of the country select (both branches), to compare names, order and count."},
+    {"key": "a-origin-region-yes", "service": "animals", "page": "Origin of the import, region code revealed", "state": "France chosen, region code 'Yes', code box shown, internal reference empty", "howToReach": "On /origin, choose France, choose Yes for the region code question.", "compare": "before-and-after"},
+    {"key": "a-review-region-cleared", "service": "animals", "page": "Review, Origin card after changing region code to No", "state": "Origin saved with Yes and code 75 (FR-75), then changed to No and saved", "howToReach": "Answer origin with Yes and 75, then reopen /origin, choose No, Save and continue; open the review from the overview's 'Review and submit' (/notification-view). Capture the origin card.", "compare": "before-and-after"},
+    {"key": "a-overview-origin-region-unanswered", "service": "animals", "page": "Overview with origin's region question unanswered", "state": "Country France saved, region code question unanswered", "howToReach": "Combined: on /origin choose France only, press 'Save and return to overview'. Main cannot save this state through the page, so there is no before shot.", "compare": "after-only"},
+    {"key": "a-commodities-help-open", "service": "animals", "page": "What are you importing?, help open", "state": "Nothing chosen, 'Help with commodity codes' expanded", "howToReach": "Overview task 'What are you importing?' (/commodities), expand 'Help with commodity codes'.", "compare": "before-and-after"},
+    {"key": "a-commodities-error-after-search", "service": "animals", "page": "What are you importing?, error after a search", "state": "Searched 'cow', results listed, none ticked, Save and continue", "howToReach": "On /commodities search 'cow', press Search, then Save and continue with nothing ticked.", "compare": "before-and-after"},
+    {"key": "a-review-after-switch-to-cats", "service": "animals", "page": "Review, additional details after switching to cats", "state": "Cattle notification with 'Includes unweaned animals: No' saved, then commodity changed to Felis catus only and saved", "howToReach": "Complete commodity and additional details for Bos taurus; reopen 'What are you importing?', untick Bos taurus, tick Felis catus, Save and continue; open the review (/notification-view) and capture section 1 and 2.", "compare": "before-and-after"},
+    {"key": "a-consignment-details-two-species-errors", "service": "animals", "page": "Commodity details with two species' errors", "state": "Bos taurus and Equus caballus chosen, every box blank, Save and continue", "howToReach": "On /commodities tick Bos taurus and Equus caballus, Save and continue to /consignment-details (combined: via Main import reason), leave every box blank and press Save and continue.", "compare": "before-and-after"},
+    {"key": "a-overview-complete", "service": "animals", "page": "Overview, every task complete", "state": "cattle-by-road notification complete", "howToReach": "flows/animals/journey.ts startNotification then completeAnswerSections, open /live-animals/notifications/{id}.", "compare": "before-and-after", "alsoCapture": "The accessibility tree's region list (for the regions card)."},
+    {"key": "a-review-road-transit", "service": "animals", "page": "Review your notification (draft), whole page", "state": "cattle-by-road notification complete, transit France and Belgium, no documents", "howToReach": "As a-overview-complete, then 'Review and submit' on the overview (/notification-view). Capture the full page.", "compare": "before-and-after"},
+    {"key": "a-import-reason-transit-reveal", "service": "animals", "page": "Main import reason, Transit chosen", "state": "Transit chosen, port of exit and destination country revealed, nothing picked", "howToReach": "Overview task 'Main import reason' (/import-reason), choose Transit.", "compare": "before-and-after", "alsoCapture": "The option text lists of both dropdowns."},
+    {"key": "a-import-reason-tempadmission-reveal", "service": "animals", "page": "Main import reason, Temporary admission horses chosen", "state": "Equus caballus notification, Temporary admission horses chosen, exit date and port of exit revealed", "howToReach": "Notification with Equus caballus; /import-reason, choose 'Temporary admission horses'.", "compare": "before-and-after", "alsoCapture": "The port of exit option text list."},
+    {"key": "a-import-reason-transhipment-reveal", "service": "animals", "page": "Main import reason, Transhipment chosen", "state": "Transhipment or onward travel chosen, destination country revealed", "howToReach": "/import-reason, choose 'Transhipment or onward travel'.", "compare": "before-and-after", "alsoCapture": "The destination country option text list."},
+    {"key": "a-overview-reason-only", "service": "animals", "page": "Overview with the reason answered but not additional details", "state": "Origin and Bos taurus answered, Internal market and Breeding saved, additional details unanswered", "howToReach": "flows/animals/journey.ts toAdditionalDetails without answering it, then open the overview.", "compare": "before-and-after"},
+    {"key": "a-import-reason-after-switch", "service": "animals", "page": "Main import reason reopened after switching reason", "state": "Internal market with Breeding saved; then Transit chosen and 'Save and return to overview'; reopened and Internal market chosen again", "howToReach": "/import-reason: save Internal market and Breeding; reopen, choose Transit, 'Save and return to overview'; reopen, choose Internal market. Capture whether a purpose is still selected.", "compare": "before-and-after"},
+    {"key": "a-arrival-empty", "service": "animals", "page": "Arrival details", "state": "Nothing entered, JavaScript on", "howToReach": "Overview task 'Arrival details' (/port-of-entry).", "compare": "before-and-after", "alsoCapture": "The means of transport option labels."},
+    {"key": "a-arrival-port-search", "service": "animals", "page": "Arrival details, port search open", "state": "Typed 'Dover' in the port of entry box, list open; then 'Port of Dover - GB DVR' chosen", "howToReach": "On /port-of-entry, type 'Dover'; capture; choose it; capture the box.", "compare": "before-and-after", "alsoCapture": "The full port of entry option text list in order (both branches)."},
+    {"key": "a-arrival-blank-submit", "service": "animals", "page": "Arrival details, Save and continue with nothing entered", "state": "Nothing entered, Save and continue", "howToReach": "On /port-of-entry press Save and continue.", "compare": "before-and-after"},
+    {"key": "a-arrival-means-only", "service": "animals", "page": "Page after arrival details with only the means of transport", "state": "Means of transport Air, everything else blank, Save and continue, reached in the first run", "howToReach": "First run to /port-of-entry, choose Air only, Save and continue. Capture the landing page (main: arrival errors; combined: Transport details).", "compare": "before-and-after"},
+    {"key": "a-transit-empty", "service": "animals", "page": "Transit countries, nothing added", "state": "Reached from arrival details with means Road, no countries added", "howToReach": "Save arrival details with Road in the first run (or from the overview on main), landing on /transit-countries.", "compare": "before-and-after", "alsoCapture": "Browser title and the Back link's href."},
+    {"key": "a-transit-air-redirect", "service": "animals", "page": "Opening transit countries when travelling by air", "state": "Arrival details saved with Air; transit countries address opened directly", "howToReach": "Save arrival with Air, then open /live-animals/notifications/{id}/transit-countries. Capture the landing page.", "compare": "before-and-after"},
+    {"key": "a-transit-search-subdivision", "service": "animals", "page": "Transit countries, search open", "state": "Typed 'Can' in the country search", "howToReach": "On /transit-countries (means Road), type 'Can' in the country box.", "compare": "before-and-after", "alsoCapture": "The full option text list of the transit country select."},
+    {"key": "a-overview-no-commodity-arrival-saved", "service": "animals", "page": "Overview with arrival saved and no commodity", "state": "Origin answered, no commodity chosen, arrival details saved with Road", "howToReach": "startNotification, overview task 'Arrival details', fill as fillArrivalDetails('Road'), Save and continue (main may run on to transit; then open the overview).", "compare": "before-and-after"},
+    {"key": "a-overview-road-no-transit", "service": "animals", "page": "Overview, road consignment with no transit countries", "state": "cattle-by-road notification complete except transit countries left empty", "howToReach": "startNotification then completeAnswerSections({ transitCountries: [] }), open the overview.", "compare": "before-and-after"},
+    {"key": "a-overview-stale-arrival", "service": "animals", "page": "Overview with an arrival date now more than 7 days past", "state": "Arrival details saved, then the stored arrival date set 8 days in the past through the backend", "howToReach": "Follow tests/animals/e2e/features/stale-arrival-date.spec.ts set-up on each stack, then open the overview.", "compare": "before-and-after"},
+    {"key": "a-review-draft-empty", "service": "animals", "page": "Review of a brand-new draft", "state": "New notification, nothing answered, review opened", "howToReach": "Create a notification, open the overview /live-animals/notifications/{id}, press 'Review and submit' (or open /notification-view), then press Continue to show every message.", "compare": "before-and-after"},
+    {"key": "a-review-two-species-incomplete", "service": "animals", "page": "Review with two species short of identifiers", "state": "Bos taurus and Equus caballus chosen; Bos taurus given a number but no identifier; Equus caballus given no number; review Continue pressed", "howToReach": "Choose both species, on /consignment-details give Bos taurus 1 animal (and packages) and leave Equus caballus blank via 'Save and return to overview' where allowed, skip identification, open the review and press Continue.", "compare": "before-and-after"},
+    {"key": "a-review-cattle-air", "service": "animals", "page": "Review your notification (draft), whole page", "state": "cattle-by-air notification at the end of the first run, one health certificate uploaded", "howToReach": "flows/animals/journey.ts walkOpeningRunCattleByAir (combined lands on /notification-view; on main open it from the overview's 'Review and submit').", "compare": "before-and-after"},
+    {"key": "a-review-transit-reason", "service": "animals", "page": "Review, Main import reason card for Transit", "state": "cattle-by-road notification with reason Transit, port of exit and destination country chosen", "howToReach": "As a-review-road-transit, but on /import-reason choose Transit with a port of exit and destination country. Capture section 1.", "compare": "before-and-after"},
+    {"key": "a-review-road-no-transit", "service": "animals", "page": "Review, road consignment with no transit countries, after Continue", "state": "As a-overview-road-no-transit; review opened and Continue pressed", "howToReach": "From that overview press 'Review and submit', then Continue. Capture the landing page (combined: Declaration).", "compare": "before-and-after"},
+    {"key": "a-declaration", "service": "animals", "page": "Declaration", "state": "cattle-by-road notification complete, first submission", "howToReach": "From a-review-road-transit press Continue to /declaration.", "compare": "before-and-after"},
+    {"key": "a-declaration-amend", "service": "animals", "page": "Declaration during an amendment", "state": "Submitted cattle-by-road notification being amended, review Continue pressed", "howToReach": "Submit, then Amend from the list row (/live-animals) or the view, open the overview's 'Review and submit', press Continue to /declaration.", "compare": "before-and-after"},
+    {"key": "a-confirmation-no-documents", "service": "animals", "page": "Import notification submitted", "state": "cattle-by-road notification submitted with no documents", "howToReach": "flows/animals/journey.ts submitNotification; lands on /confirmation. Capture the full page.", "compare": "before-and-after", "alsoCapture": "Each HMRC link's target and accessible name."},
+    {"key": "a-confirmation-with-certificate", "service": "animals", "page": "Import notification submitted, health certificate uploaded", "state": "Submitted with one veterinary health certificate uploaded", "howToReach": "flows/animals/journey.ts submitNotificationWithDocument with type VETERINARY_HEALTH_CERTIFICATE.", "compare": "before-and-after"},
+    {"key": "a-confirmation-early", "service": "animals", "page": "Opening the submitted page for a draft", "state": "Draft notification, confirmation address opened directly", "howToReach": "Create a notification and open /live-animals/notifications/{id}/confirmation. Capture the landing page (main: Overview; combined: Declaration).", "compare": "before-and-after"},
+    {"key": "a-view-submitted", "service": "animals", "page": "Submitted notification's view", "state": "cattle-by-air notification submitted with its health certificate", "howToReach": "Submit as a-review-cattle-air then submitFromReview; open /live-animals, press the row's View (/notification-view).", "compare": "before-and-after", "alsoCapture": "Browser title and the Back link's href."},
+    {"key": "a-view-action-required", "service": "animals", "page": "Submitted notification's view, no health certificate", "state": "cattle-by-road notification submitted with no documents", "howToReach": "As a-confirmation-no-documents, then /live-animals, the row's View.", "compare": "before-and-after"},
+    {"key": "a-overview-amend", "service": "animals", "page": "Overview during an amendment", "state": "Submitted cattle-by-road notification, Amend pressed", "howToReach": "Submit, then on /live-animals press the row's Amend (POST .../amend); lands on the overview.", "compare": "before-and-after"},
+    {"key": "a-origin-amend", "service": "animals", "page": "Origin of the import during an amendment", "state": "As a-overview-amend, origin opened from its overview task", "howToReach": "From a-overview-amend click 'Where is this consignment coming from?' (/origin).", "compare": "before-and-after", "alsoCapture": "The Back link's href."},
+    {"key": "a-cph-amend", "service": "animals", "page": "CPH number during an amendment", "state": "As a-overview-amend, CPH number opened from roles and addresses", "howToReach": "From a-overview-amend open 'Roles and addresses', then the CPH number row (/cph-number).", "compare": "before-and-after"},
+    {"key": "a-review-amend-opened", "service": "animals", "page": "Amend review on opening", "state": "As a-overview-amend, nothing changed, review opened", "howToReach": "From a-overview-amend press 'Review and submit' (/notification-view).", "compare": "before-and-after"},
+    {"key": "a-review-amend-changed", "service": "animals", "page": "Amend review after changing an answer", "state": "As a-overview-amend, internal reference changed and saved with 'Save and return'", "howToReach": "Open the review, use the origin card's Change link, change the internal reference, press 'Save and return' (main: Save and continue).", "compare": "before-and-after"},
+    {"key": "a-review-amend-continue-incomplete", "service": "animals", "page": "Amend review after Continue with an answer missing", "state": "As a-overview-amend, arrival details cleared with 'Save and return to overview', review Continue pressed", "howToReach": "Follow tests/animals/e2e/features/amend-endings.spec.ts:113-131 on each stack.", "compare": "before-and-after"},
+    {"key": "p-run-after-contact-incomplete", "service": "plants", "page": "Page after the consignment contact at the end of the first run", "state": "Plants-for-planting first run with arrival details and identification numbers left as blank as allowed, contact chosen, Continue", "howToReach": "/high-risk-plants, start button, walk commodity-type, commodities/details, commodities, origin, arrival-status, arrival-details, destinations/select, consignors/select, identification-numbers, consignment/contact/select; press Continue. Capture the landing page (main: Overview; combined: check your answers).", "compare": "before-and-after"},
+    {"key": "p-cya-continue-incomplete", "service": "plants", "page": "Check your answers, Continue on an unfinished draft", "state": "As p-run-after-contact-incomplete, Continue pressed on check your answers", "howToReach": "From the plants check your answers (/notification-view) press Continue. Capture the landing page.", "compare": "before-and-after"},
+    {"key": "p-arrival-from-overview-saved", "service": "plants", "page": "Page after saving arrival details opened from the overview", "state": "Plants draft, arrival details opened from its overview task, valid answers, Save and continue", "howToReach": "Plants overview /high-risk-plants/notifications/{id}, arrival task (arrival-status then arrival-details), Save and continue. Capture the landing page (main: place of destination; combined: Overview).", "compare": "before-and-after"},
+    {"key": "p-arrival-soft-save", "service": "plants", "page": "Page after 'Save and return to overview' on blank plants arrival details", "state": "Arrival details with date, time and place of landing blank, 'Save and return to overview'", "howToReach": "Open /arrival-details from the overview, press 'Save and return to overview'.", "compare": "before-and-after"},
+    {"key": "p-arrival-soft-save-bad-date", "service": "plants", "page": "Plants arrival details refusing a date that is not real", "state": "Arrival date 31/2/2027, 'Save and return to overview'", "howToReach": "Open /arrival-details, enter 31/2/2027, press 'Save and return to overview'.", "compare": "before-and-after"},
+    {"key": "p-origin-empty", "service": "plants", "page": "Plants origin", "state": "Draft with a commodity line, origin not answered, JavaScript on", "howToReach": "flows/plants/journey.ts startNotification, chooseCommodityType, addCommodityLine, toOrigin; lands on /origin.", "compare": "before-and-after", "alsoCapture": "Browser title."},
+    {"key": "p-arrival-details-empty", "service": "plants", "page": "Plants arrival details", "state": "Plants for planting, arrival status answered, details blank", "howToReach": "flows/plants/journey.ts toArrivalStatus then answerArrivalStatus; lands on /arrival-details.", "compare": "before-and-after"},
+    {"key": "p-arrival-port-search", "service": "plants", "page": "Plants arrival details, place of landing search open", "state": "Typed 'Dover' in the place of landing box", "howToReach": "On /arrival-details type 'Dover' in 'Proposed place of landing'.", "compare": "before-and-after", "alsoCapture": "The full place of landing option text list in order."},
+    {"key": "p-overview-new", "service": "plants", "page": "Plants overview", "state": "New plants draft on first render", "howToReach": "flows/plants/journey.ts startNotification then toOverview.", "compare": "before-and-after", "alsoCapture": "The accessibility tree's region list."},
+    {"key": "p-cya-draft-complete", "service": "plants", "page": "Plants check your answers (draft), whole page", "state": "Complete plants-for-planting draft", "howToReach": "Complete every plants task, then the overview's review button (/notification-view).", "compare": "before-and-after"},
+    {"key": "p-declaration", "service": "plants", "page": "Plants declaration", "state": "Complete plants draft, check your answers Continue", "howToReach": "From p-cya-draft-complete press Continue to /declaration.", "compare": "before-and-after"},
+    {"key": "p-confirmation-early", "service": "plants", "page": "Opening plants' submitted page for a draft", "state": "Plants draft, confirmation address opened directly", "howToReach": "Open /high-risk-plants/notifications/{id}/confirmation for a draft. Capture the landing page (main: Overview; combined: Declaration).", "compare": "before-and-after"},
+    {"key": "p-view-submitted", "service": "plants", "page": "Plants submitted notification's view", "state": "Plants notification submitted", "howToReach": "Submit from p-declaration, then open /high-risk-plants and the row's View (/notification-view).", "compare": "before-and-after", "alsoCapture": "Browser title and the Back link's href."},
+    {"key": "p-overview-amend", "service": "plants", "page": "Plants overview during an amendment", "state": "Submitted plants notification, Amend pressed", "howToReach": "From /high-risk-plants use the row's Amend (combined also: 'Amend this notification' on the view).", "compare": "before-and-after"},
+    {"key": "p-arrival-amend", "service": "plants", "page": "Plants arrival details during an amendment", "state": "As p-overview-amend, arrival details opened from the overview", "howToReach": "From p-overview-amend open the arrival task (/arrival-details).", "compare": "before-and-after"},
+    {"key": "p-consignor-amend", "service": "plants", "page": "Plants consignor picker during an amendment", "state": "As p-overview-amend, consignor opened from the overview", "howToReach": "From p-overview-amend open the consignor task (/consignors/select).", "compare": "before-and-after"},
+    {"key": "p-cya-amend", "service": "plants", "page": "Plants check your answers during an amendment", "state": "As p-overview-amend, review opened, then Continue with an answer cleared", "howToReach": "From p-overview-amend open check your answers (/notification-view); capture; clear arrival details with 'Save and return to overview', reopen and press Continue; capture.", "compare": "before-and-after"},
+    {"key": "i-home", "service": "ins", "page": "INS home", "state": "Signed-in trader", "howToReach": "Open / on the INS front door after sign-in.", "compare": "before-and-after", "alsoCapture": "Browser title."},
+    {"key": "i-home-action-required", "service": "ins", "page": "INS home, table row for a notification needing action", "state": "Live-animals notification submitted with no documents (as a-view-action-required)", "howToReach": "Open / and find the row by reference.", "compare": "before-and-after", "alsoCapture": "The row's status text and link href."},
+    {"key": "i-address-book", "service": "ins", "page": "Address book", "state": "Signed-in trader with at least one address", "howToReach": "Open /address-book.", "compare": "before-and-after", "alsoCapture": "Browser title."},
+    {"key": "i-address-book-add-error", "service": "ins", "page": "Add address details with errors", "state": "Add address form submitted blank", "howToReach": "Open /address-book/add, go to the address details form, submit with nothing entered.", "compare": "before-and-after", "alsoCapture": "Browser title."},
+    {"key": "i-address-book-add-country", "service": "ins", "page": "Add address details, country dropdown", "state": "Address form open, local or dev stack", "howToReach": "Open /address-book/add to the address details form.", "compare": "before-and-after", "alsoCapture": "The Country option text list and count."}
+  ]
+}

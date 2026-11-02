@@ -106,7 +106,9 @@
           "name": "A refused Continue leaves an unfinished card's blank answers blank, marked only by the card",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "keeps the card marking and leaves the blank answer blank with a hidden Missing after a refused Continue at desktop and phone width", "strength": "full", "notes": "after a refused Continue the card keeps its red border and Complete line while the arrival date cell is left blank with a hidden Missing, at both widths" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "shows the unfinished card with its Complete line and leaves the blank answer with a hidden Missing after a refused Continue at desktop and phone width", "strength": "partial", "notes": "after a refused Continue the card holds its Complete line while the arrival date cell is left blank with a hidden Missing, at both widths; the red left border is proved by the refused review screenshots" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/visual/refused-review.visual.spec.ts", "test": "shows the unfinished card with its red left border and Complete line at desktop width", "strength": "full", "notes": "probed against the stack: the card's error modifier removed went red, restored went green" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/visual/refused-review.visual.spec.ts", "test": "shows the unfinished card with its red left border and Complete line at phone width", "strength": "full", "notes": "probed against the stack: the card's error modifier removed went red, restored went green" }
           ]
         }
       ]
@@ -171,10 +173,9 @@
         {
           "id": "SCN-CYA-004-B",
           "name": "Changing the contact address from its card returns to the review",
-          "coverage": "full",
-          "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/change-from-cya.spec.ts", "test": "a Change link opens the answering page with change context and the save returns to check your answers with the new value, for origin, additional details, arrival details and contact address, and the Addresses card opens the addresses page", "strength": "full", "notes": "contact address leg: opens the contact page under change context, saves and returns to the review showing the address" }
-          ]
+          "coverage": "none",
+          "tests": [],
+          "notes": "change-from-cya.spec.ts in trade-imports-ins-tests now changes only origin and additional details from the review; no test opens the contact address page from its review card and returns to the review."
         },
         {
           "id": "SCN-CYA-004-C",
@@ -236,7 +237,7 @@
           "name": "An unfinished review names every outstanding card and links to it",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "names every unfinished card and marks the card it names", "strength": "full", "notes": "asserts the summary on load, the entry's href into the card anchor, the same words inside the card, and the card's error class" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "names every unfinished card in the error summary and shows its error message on the card", "strength": "full", "notes": "asserts the summary on load, the entry's href into the card anchor, and the same words inside the card" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should head a brand-new draft with one entry per unfinished card, in page order", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should anchor each entry to the card it names", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should repeat the message inside the card it names", "strength": "full", "notes": "" },
@@ -338,7 +339,7 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/declaration.fit.spec.js", "test": "refuses Continue and shows the current notification when it changed after the review rendered", "strength": "full", "notes": "edits the internal reference in a second page, then asserts the review URL with the banner and the changed value; fails with the token check disabled" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.test.js", "test": "Should send the trader back to the review with the changed banner when the notification changed after the review", "strength": "partial", "notes": "asserts the redirect, not the rendered review" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/declaration/controller.test.js", "test": "Should log the refusal and send the trader back to the review with the changed banner when the notification changed after the review", "strength": "partial", "notes": "asserts the redirect, not the rendered review" }
           ]
         }
       ]
@@ -381,7 +382,7 @@
     },
     {
       "id": "REQ-CYA-013",
-      "name": "Ports and destination countries read back exactly as they were offered",
+      "name": "Ports, destination countries and document types read back exactly as they were offered",
       "coverage": "full",
       "scenarios": [
         {
@@ -408,6 +409,47 @@
           "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should name a subdivision destination country with its parent country", "strength": "full", "notes": "FR-MQ reads 'Martinique (France)'" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-013-D",
+          "name": "A document's type row reads the option the user chose",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should name a CITES_PERMIT_OR_CERTIFICATE document with the label the documents page offers it under", "strength": "full", "notes": "one case per label shape, each asserting the rendered row against the documents feature's own types map; red probe: delete the type's entry from the documents copy module and the row falls back to undefined" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CYA-014",
+      "name": "Continuing a draft is refused while it holds a species the reference data no longer lists",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-CYA-014-A",
+          "name": "A draft holding a species no longer listed is refused, naming it",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should refuse Continue on a draft holding a species not listed under its code, naming it", "strength": "full", "notes": "drives the declaration POST then the refused review; Bos spp. is not listed under 0102 in the stub data" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/refusal.test.js", "test": "Should refuse a draft holding a species not listed under its code", "strength": "full", "notes": "" }
+          ],
+          "notes": "No fit test: a species can only be chosen from the data the stub serves, so one that has since gone cannot be set up through the page."
+        },
+        {
+          "id": "SCN-CYA-014-B",
+          "name": "The species is not named before the user continues",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should not name a species not listed under its code until Continue is refused", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-014-C",
+          "name": "An amendment continues to the declaration without a species check",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/refusal.test.js", "test": "Should return no species error for an amendment holding an unlisted species", "strength": "partial", "notes": "the species check alone; not driven through an amend Continue" }
           ]
         }
       ]

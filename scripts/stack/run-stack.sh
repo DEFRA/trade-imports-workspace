@@ -26,6 +26,14 @@ for entry in "${services[@]}"; do
   valid_labels+=("${entry%%|*}")
 done
 
+# A sidecar publishes its service's host port and proxies to that service, so
+# excluding the service takes the sidecar with it. Left in, the sidecar holds
+# the port the natively-run service binds and forwards to a container that is
+# no longer up. Third field: what a host-side run of that service loses.
+sidecars=(
+  "frontend|animals-frontend-nginx|host port 3000 is the natively-run frontend's, and /upload-and-scan is no longer proxied to cdp-uploader"
+)
+
 # shellcheck source=lib/colour.sh
 source "$LIB_DIR/colour.sh"
 # shellcheck source=lib/compose.sh
@@ -123,10 +131,17 @@ for label in ${excluded_labels[@]+"${excluded_labels[@]}"}; do
   done
 done
 
+removed_sidecars=()
+for entry in "${sidecars[@]}"; do
+  IFS='|' read -r label sidecar _ <<< "$entry"
+  is_excluded "$label" && removed_sidecars+=("$sidecar")
+done
+
 up_services=()
 for svc in ${active_services[@]+"${active_services[@]}"}; do
   skip=0
-  for excl in ${excluded_compose_names[@]+"${excluded_compose_names[@]}"}; do
+  for excl in ${excluded_compose_names[@]+"${excluded_compose_names[@]}"} \
+    ${removed_sidecars[@]+"${removed_sidecars[@]}"}; do
     if [ "$svc" = "$excl" ]; then
       skip=1
       break
@@ -163,9 +178,74 @@ recheck_tmpdir=""
 cleanup_probe_tmpdir() {
   [ -n "$probe_tmpdir" ] && rm -rf "$probe_tmpdir"
   [ -n "$recheck_tmpdir" ] && rm -rf "$recheck_tmpdir"
+  local pid log
+  for pid in ${early_pull_pids[@]+"${early_pull_pids[@]}"}; do
+    [ -n "$pid" ] && { kill "$pid" 2>/dev/null || true; }
+  done
+  for log in ${early_pull_logs[@]+"${early_pull_logs[@]}"}; do
+    rm -f "$log"
+  done
   return 0
 }
 trap cleanup_probe_tmpdir EXIT
+
+# The stack up below still pulls with --pull always, so these downloads are
+# only a head start: a failure costs the time saved, and a tag that moves is
+# still picked up. Images whose tag does not depend on the branch start before
+# the branch-tag probe, and mongo has its own job so it can start the moment
+# its image is in.
+early_pull_pids=()
+early_pull_logs=()
+early_pull_names=()
+pull_early() {
+  local name="$1" log
+  shift
+  [ $# -gt 0 ] || return 0
+  log="$(mktemp)"
+  docker compose "${COMPOSE_FILES[@]}" "${profile_args[@]}" \
+    pull --quiet --ignore-buildable "$@" >"$log" 2>&1 &
+  early_pull_pids+=("$!")
+  early_pull_logs+=("$log")
+  early_pull_names+=("$name")
+}
+
+wait_early_pull() {
+  local name="$1" i
+  for i in ${early_pull_names[@]+"${!early_pull_names[@]}"}; do
+    [ "${early_pull_names[$i]}" = "$name" ] || continue
+    [ -n "${early_pull_pids[$i]}" ] || return 0
+    if ! wait "${early_pull_pids[$i]}"; then
+      print_error "the early $name image download failed; the stack up below downloads it again"
+      cat "${early_pull_logs[$i]}" >&2
+    fi
+    early_pull_pids[i]=""
+  done
+  return 0
+}
+
+is_repo_image() {
+  local svc="$1" entry image
+  for entry in "${services[@]}"; do
+    IFS='|' read -r _ image _ <<< "$entry"
+    [ "$svc" = "$image" ] && return 0
+  done
+  return 1
+}
+
+mongo_pull=()
+fixed_tag_pulls=()
+branch_tag_pulls=()
+for svc in ${up_services[@]+"${up_services[@]}"}; do
+  if [ "$svc" = "mongodb" ]; then
+    mongo_pull+=("$svc")
+  elif is_repo_image "$svc"; then
+    branch_tag_pulls+=("$svc")
+  else
+    fixed_tag_pulls+=("$svc")
+  fi
+done
+pull_early mongo ${mongo_pull[@]+"${mongo_pull[@]}"}
+pull_early third-party ${fixed_tag_pulls[@]+"${fixed_tag_pulls[@]}"}
 if [ -n "$sanitised" ] && [ "$dev" -ne 1 ]; then
   probe_tmpdir="$(mktemp -d)"
   probe_pids=()
@@ -209,6 +289,17 @@ for entry in "${services[@]}"; do
   fi
 done
 
+for entry in "${sidecars[@]}"; do
+  IFS='|' read -r label sidecar loss <<< "$entry"
+  is_excluded "$label" || continue
+  in_active=0
+  for s in ${active_services[@]+"${active_services[@]}"}; do
+    [ "$s" = "$sidecar" ] && { in_active=1; break; }
+  done
+  [ "$in_active" -eq 0 ] && continue
+  printf '  %-16s %sremoved with %s - %s%s\n' "$sidecar:" "$COLOUR_GREY" "$label" "$loss" "$COLOUR_RESET"
+done
+
 [ ${#up_services[@]} -gt 0 ] || { print_error "error: would start no services"; exit 1; }
 
 # Mongo's entrypoint races itself on a fresh volume and exits 48, taking every
@@ -236,12 +327,18 @@ start_mongodb_first() {
   done
 }
 
+pull_early service ${branch_tag_pulls[@]+"${branch_tag_pulls[@]}"}
+
+wait_early_pull mongo
 for svc in "${up_services[@]}"; do
   if [ "$svc" = "mongodb" ]; then
     start_mongodb_first
     break
   fi
 done
+
+wait_early_pull third-party
+wait_early_pull service
 
 up_args=(up --wait --detach --pull always)
 [ "$dev" -eq 1 ] && up_args+=(--build)

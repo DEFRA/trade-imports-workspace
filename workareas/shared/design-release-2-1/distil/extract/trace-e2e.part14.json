@@ -1,0 +1,1258 @@
+{
+  "source": "trace:e2e",
+  "structure": "Part 14 of trace:e2e: lifecycle, declaration, persistence and the full promoted journey for live animals (GBN-AG), on the live-animals frontend at localhost:3000/live-animals plus direct backend calls at localhost:8085. Read in full: the 8 spec files named in the part (pages/declaration, features/cancel-amend-ui, features/amend-resubmit, features/promoted-lifecycle, journeys/promoted-notification, journeys/persistence/api-seed-parity, persistence-accompanying-document, persistence-notification), and all 14 trace zips, each unpacked in the part14 working folder and mined from its own trace, network and resource files: decl (declaration renders the page controls), declerr (declaration error summary), clink (Cancel amendment link while amending), cconfirm (cancel-amend confirmation page), cno (No keeps the amendment), cyes (Yes restores the submitted answers), amend (Submitted to Amending to Submitted with the edited answer kept), lifeapi (API-only lifecycle: create, fulfilments read, submit, amend, cancel-amend, copy twice, soft-delete twice), lifero (submitted view read-only, then Amend from the dashboard re-enters at Overview), parity (browser-driven and seeded submissions), pdoc (accompanying document upload, virus scan, reload), pdraft (journey up to declaration), psub (full submission then read-only reload), promoted (full journey dashboard to confirmation). Pages seen, in journey order: Dashboard (/live-animals) > Origin of the import (/origin) > What are you importing? (/commodities, search then species checkbox) > Overview hub (/notifications/{ref}) > Commodity details (/consignment-details) > Identification details (/commodities/identification) > Main reason for import (/import-reason) > Additional details (/additional-details) > Consignment addresses (/addresses) with four party select pages (consignors, destinations, place-of-origin, consignees, importers /select) > Add the county parish holding number (CPH) (/cph-number) > Arrival details (/port-of-entry) > Which countries will the consignment travel through? (/transit-countries) > Transporter details (/transporters) > Contact address for consignment (/consignment/contact/select) > Review your notification (/notification-view) > Declaration (/declaration) > Import notification submitted (/confirmation). Conditional pages: Upload documents (/accompanying-documents, only pdoc walks it), Cancel this amendment? (/cancel-amend, only while Amending), notification-view?cancelled=1 (after Yes). The read-only Submitted view and the Amending view are the same URL as the Draft review. Several traces drive state through the browser, but the seeding fixtures (readyToSubmit, createAmendNotification, createSubmittedNotification) also go through the frontend's own form POSTs without a concurrency token, which shows the linear Save and continue order. The Mongo reads in the persistence specs leave no trace: the stored-document shapes are taken from the spec assertions, which passed, and are marked as such.",
+  "claims": [
+    {
+      "id": "trace-e2e-p14-001",
+      "statement": "The declaration page is reached from Review your notification by pressing Continue, which posts the notification view and redirects to /declaration.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals network: POST /live-animals/notifications/GBN-AG-26-A0JJJK/notification-view 302",
+      "quote": "POST /notification-view 302 -> /live-animals/notifications/GBN-AG-26-A0JJJK/declaration",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-002",
+      "statement": "The declaration page heading is Declaration and its browser title is Declaration - Import notification service - GOV.UK.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-pages-declarat-940e5-e-renders-the-page-controls-animals action call@1058",
+      "quote": "Declaration - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-003",
+      "statement": "The declaration page shows the journey strip with the status tag (Draft on first submission, Amending on resubmission) and the notification reference number above the heading.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-pages-declarat-940e5-e-renders-the-page-controls-animals action call@1058; trace animals-e2e-features-amend-da280-with-the-edited-answer-kept-animals action call@536",
+      "quote": "Draft GBN-AG-26-RFZPXP / Amending GBN-AG-26-204Y08",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-004",
+      "statement": "The declaration's first statement is a medium heading saying the user is the contact for the authorities and located in the UK, followed by a paragraph on complying with Regulation (EU) 2017/625.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-pages-declarat-940e5-e-renders-the-page-controls-animals action call@1058",
+      "quote": "I am the contact for the authorities and located in the UK. I am complying with the requirements of Regulation (EU) 2017/625 including on animal health and welfare.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-005",
+      "statement": "The declaration's second statement confirms responsibility for the consignment from submission until it either clears official checks at the border or reaches the Place of Destination.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-pages-declarat-940e5-e-renders-the-page-controls-animals action call@1058",
+      "quote": "I confirm I am responsible for this consignment. I am responsible from the submission of this notification to when it enters Great Britain. And I am responsible until it has either: cleared official checks at the border; reached the Place of Destination as stated on the health certificate or notification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-006",
+      "statement": "The declaration's third statement lists four costs or arrangements the user is accountable for, as a bulleted list.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-pages-declarat-940e5-e-renders-the-page-controls-animals action call@1058",
+      "quote": "I confirm that I am accountable for: any payment for the official controls at the border; any arrangements to re-dispatch the consignment; any costs needed for quarantine or isolation of consignments; any costs needed for destruction and disposal of consignments, when instructed by the authorities",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-007",
+      "statement": "The declaration closes with two paragraphs about acting on behalf of a third party.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-pages-declarat-940e5-e-renders-the-page-controls-animals action call@1058",
+      "quote": "I am authorised as being accountable for these things if raising notifications on behalf of a third party. I can legally act on behalf of a third party in relation to the conditions of this declaration.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-008",
+      "statement": "The declaration page has a single checkbox, name declaration with value confirmed, that the user must tick to confirm the declaration.",
+      "kind": "data",
+      "ref": "trace animals-e2e-pages-declarat-940e5-e-renders-the-page-controls-animals action call@1058",
+      "quote": "I confirm that I have reviewed and comply with this declaration and that the information submitted in this notification is true and correct.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-009",
+      "statement": "The declaration page shows the date of declaration as today's date in long form, below the checkbox.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-pages-declarat-940e5-e-renders-the-page-controls-animals action call@1058",
+      "quote": "Date of declaration: 7 October 2026",
+      "confidence": "verbatim",
+      "note": "The trace ran on 7 October 2026; that the date is today's date is read from the run date, not stated by the page."
+    },
+    {
+      "id": "trace-e2e-p14-010",
+      "statement": "The declaration page's submit button is labelled Continue.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-pages-declarat-940e5-e-renders-the-page-controls-animals action call@1058",
+      "quote": "Continue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-011",
+      "statement": "The declaration page's back link goes to Review your notification (/notification-view).",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-pages-declarat-940e5-e-renders-the-page-controls-animals action call@1058 (govuk-back-link)",
+      "quote": "href=/live-animals/notifications/GBN-AG-26-RFZPXP/notification-view Back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-012",
+      "statement": "The declaration form posts the notification's concurrency token as a hidden field along with the checkbox value.",
+      "kind": "integration",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals network: POST /declaration",
+      "quote": "concurrencyToken=17&declaration=confirmed",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-013",
+      "statement": "Submitting the declaration without ticking the checkbox re-renders the page with status 400 and does not submit.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-pages-declarat-c01f2--when-submitted-unconfirmed-animals network: POST /declaration 400; action call@923",
+      "quote": "POST /live-animals/notifications/GBN-AG-26-G5ZHYS/declaration 400 concurrencyToken=16",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-014",
+      "statement": "When the declaration is submitted unconfirmed, an error summary titled There is a problem appears above the heading, linking to the checkbox.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-pages-declarat-c01f2--when-submitted-unconfirmed-animals action call@925",
+      "quote": "There is a problem — Confirm that you have reviewed and comply with this declaration (href=#declaration)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-015",
+      "statement": "When the declaration is submitted unconfirmed, the checkbox group shows an inline error message, prefixed for screen readers with Error:, and the checkbox is described by it.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-pages-declarat-c01f2--when-submitted-unconfirmed-animals action call@925",
+      "quote": "Error: Confirm that you have reviewed and comply with this declaration",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-016",
+      "statement": "When the declaration page has an error, the browser title is prefixed with Error:.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-pages-declarat-c01f2--when-submitted-unconfirmed-animals action call@925",
+      "quote": "Error: Declaration - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-017",
+      "statement": "A confirmed declaration redirects to the confirmation page for that notification.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals network: POST /declaration 302",
+      "quote": "POST /declaration 302 -> /live-animals/notifications/GBN-AG-26-A0JJJK/confirmation",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-018",
+      "statement": "The declaration page uses only GOV.UK Frontend components (headings, body, bullet lists, checkboxes, button, error summary) apart from the app-journey-strip status band above the heading.",
+      "kind": "constraint",
+      "ref": "trace animals-e2e-pages-declarat-c01f2--when-submitted-unconfirmed-animals action call@925 (classes)",
+      "quote": "app-journey-strip govuk-!-margin-bottom-4; govuk-checkboxes; govuk-error-summary",
+      "confidence": "verbatim",
+      "note": "app-journey-strip wraps a govuk-tag and a bold govuk-body span; a GOV.UK Tag plus caption could replace it."
+    },
+    {
+      "id": "trace-e2e-p14-019",
+      "statement": "On resubmission of an amended notification, the declaration checkbox is rendered already ticked when the page first loads.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-amend-da280-with-the-edited-answer-kept-animals action call@536 (checked before the check action at call@538); first submission call@466 rendered unticked",
+      "quote": "id=declaration name=declaration type=checkbox value=confirmed checked",
+      "confidence": "verbatim",
+      "note": "The first declaration in the same trace rendered unticked; the stored declaration appears to be carried into the amendment. The verifier may want to confirm against another trace."
+    },
+    {
+      "id": "trace-e2e-p14-020",
+      "statement": "The amend-resubmit spec states that the declaration resubmit is gated on every task row being fulfilled, which is why that test submits through the full UI rather than an API seed.",
+      "kind": "rule",
+      "ref": "repos/trade-imports-ins-tests/tests/animals/e2e/features/amend-resubmit.spec.ts header comment",
+      "quote": "the declaration resubmit is gated on every task row being fulfilled, and the API seed answers only the origin and commodity sections.",
+      "confidence": "verbatim",
+      "note": "Stated in the spec's comment; no trace in this part drives a declaration with unfulfilled task rows, so the gate itself is not observed."
+    },
+    {
+      "id": "trace-e2e-p14-021",
+      "statement": "No trace in this part shows what happens when the declaration is submitted while task rows are incomplete (for example Upload documents still To do is accepted, but a missing required section is never tried).",
+      "kind": "rule",
+      "ref": "all 14 traces of part 14",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p14-022",
+      "statement": "The confirmation page shows a green confirmation panel titled Import notification submitted with the reference number in bold.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals action call@873",
+      "quote": "Import notification submitted — Your reference number GBN-AG-26-A0JJJK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-023",
+      "statement": "The confirmation page is served at /live-animals/notifications/{reference}/confirmation and its panel contains the reference number.",
+      "kind": "behaviour",
+      "ref": "repos/trade-imports-ins-tests/tests/animals/e2e/journeys/promoted-notification.spec.ts; trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals action call@873",
+      "quote": "toHaveURL(new RegExp(`${SET_BASES.liveAnimals}/notifications/${journeyContext.journeyId}/confirmation$`)); locator('.govuk-panel').toContainText(journeyContext.journeyId)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-024",
+      "statement": "The confirmation page tells the user they still need to upload the health certificate and any other required documents before the consignment is imported.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals action call@873",
+      "quote": "Before the consignment is imported — You still need to: upload the health certificate and any other required documents",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-025",
+      "statement": "The confirmation page has a Transporting the consignment section on direct travel to the place of destination and the inspection holding period.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals action call@873",
+      "quote": "Tell the transporter that this consignment must go directly to the place of destination on entry to Great Britain. The animals or consignment may need to be inspected. If so, the animals must stay at the place of destination for either: the time stated on the health certificate; 48 hours if no time is specified",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-026",
+      "statement": "The confirmation page has a How to view or amend this notification section with a link back to the dashboard.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals action call@873",
+      "quote": "You can view or amend this notification from your dashboard and resubmit it. Return to your dashboard",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-027",
+      "statement": "The confirmation page offers Create a new notification as a link-styled button that posts to /live-animals/notifications.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals action call@873",
+      "quote": "form method=post action=/live-animals/notifications — Create a new notification",
+      "confidence": "verbatim",
+      "note": "Uses a non-govuk class app-link-button to style a submit button as a link."
+    },
+    {
+      "id": "trace-e2e-p14-028",
+      "statement": "The confirmation page has a Getting help section giving the imports risk management email, the APHA service desk phone and email, opening hours, an HMRC contact link and a call charges link.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals action call@873",
+      "quote": "To get help with import notifications for live animals or germinal products, email importsriskmanagement@apha.gov.uk. ... Telephone: 0330 041 6999 ... Email: APHAServiceDesk@apha.gov.uk ... Monday to Friday, 8:30am to 5pm, except bank holidays ... contact HMRC ... Find out about call charges",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-029",
+      "statement": "The same confirmation page, with the same copy, is shown after resubmitting an amended notification.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-amend-da280-with-the-edited-answer-kept-animals action call@542",
+      "quote": "Import notification submitted — Your reference number GBN-AG-26-204Y08",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-030",
+      "statement": "A notification being amended shows a Cancel amendment link directly under the Review your notification heading.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-cance-6f4d1-he-notification-is-amending-animals; trace animals-e2e-features-cance-49fd4-tores-the-submitted-answers-animals action call@344",
+      "quote": "Review your notification — Cancel amendment (href=/live-animals/notifications/GBN-AG-26-HR4WJ6/cancel-amend)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-031",
+      "statement": "While amending, the notification view's journey strip shows a yellow Amending tag with the reference number.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-features-cance-49fd4-tores-the-submitted-answers-animals action call@344",
+      "quote": "govuk-tag--yellow Amending GBN-AG-26-HR4WJ6",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-032",
+      "statement": "While amending, the notification view keeps a Change link on every section card and Edit details links on each party, and ends with a Continue button.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-cance-49fd4-tores-the-submitted-answers-animals action call@344",
+      "quote": "Change import details; Change reason for import; Change commodity 1; Change additional animal details; Change arrival details; Change transit countries; Change transport details; Change uploaded documents; Change roles and addresses; Change contact address for this consignment; Edit details ... ; Continue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-033",
+      "statement": "The amending notification view shows at least four Change links, including Change import details and Change commodity 1.",
+      "kind": "rule",
+      "ref": "repos/trade-imports-ins-tests/tests/animals/e2e/features/amend-resubmit.spec.ts; trace animals-e2e-features-amend-da280-with-the-edited-answer-kept-animals actions call@502-call@506",
+      "quote": "expect(await pages.page.getByRole('link', { name: /^Change/ }).count()).toBeGreaterThanOrEqual(4)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-034",
+      "statement": "The Cancel amendment link opens a confirmation page at /cancel-amend.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-cance-12c6e-ancel-amendment-is-selected-animals network: GET /cancel-amend 200",
+      "quote": "GET /live-animals/notifications/GBN-AG-26-SS0RWN/cancel-amend 200",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-035",
+      "statement": "The cancel amendment confirmation page heading is Cancel this amendment? and its browser title is Cancel this amendment? - Import notification service - GOV.UK.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-features-cance-12c6e-ancel-amendment-is-selected-animals action call@359",
+      "quote": "Cancel this amendment? - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-036",
+      "statement": "The cancel amendment confirmation page explains that changes since amending began will be discarded and the submitted version restored.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-features-cance-49fd4-tores-the-submitted-answers-animals action call@376",
+      "quote": "Your changes since you started amending will be discarded and the submitted version restored.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-037",
+      "statement": "The cancel amendment page keeps the yellow Amending journey strip with the reference number.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-features-cance-49fd4-tores-the-submitted-answers-animals action call@376",
+      "quote": "Amending GBN-AG-26-HR4WJ6",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-038",
+      "statement": "The cancel amendment page offers a primary button Yes, cancel amendment, which submits a form to /cancel-amend with the concurrency token.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-cance-49fd4-tores-the-submitted-answers-animals action call@376; network POST /cancel-amend",
+      "quote": "Yes, cancel amendment — POST /live-animals/notifications/GBN-AG-26-HR4WJ6/cancel-amend concurrencyToken=19",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-039",
+      "statement": "The cancel amendment page offers a secondary button-styled link No, return to notification, which goes back to the notification view without posting anything.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-cance-9a765-amendment-still-in-progress-animals action call@308-call@310; network shows only GET /notification-view",
+      "quote": "No, return to notification (href=/live-animals/notifications/GBN-AG-26-9J1TJR/notification-view, role=button)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-040",
+      "statement": "The cancel amendment page's back link returns to the notification view.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-cance-12c6e-ancel-amendment-is-selected-animals (govuk-back-link on /cancel-amend)",
+      "quote": "href=/live-animals/notifications/GBN-AG-26-SS0RWN/notification-view Back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-041",
+      "statement": "Choosing No leaves the notification Amending: the view still shows the Amending tag, the Cancel amendment link and the Change import details link.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-cance-9a765-amendment-still-in-progress-animals action call@312",
+      "quote": "Amending ... Cancel amendment ... Change import details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-042",
+      "statement": "Choosing Yes cancels the amendment and redirects to the notification view with ?cancelled=1.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-cance-49fd4-tores-the-submitted-answers-animals network: POST /cancel-amend 302",
+      "quote": "POST /cancel-amend 302 -> /live-animals/notifications/GBN-AG-26-HR4WJ6/notification-view?cancelled=1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-043",
+      "statement": "After cancelling an amendment, a success notification banner with role alert confirms the cancellation and restoration.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-features-cance-49fd4-tores-the-submitted-answers-animals action call@378",
+      "quote": "Success — The amendment has been cancelled and the submitted version restored.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-044",
+      "statement": "After cancelling an amendment, the notification returns to Submitted: the journey strip shows a green Submitted tag, the Cancel amendment link and all Change links are gone.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-cance-49fd4-tores-the-submitted-answers-animals action call@378",
+      "quote": "govuk-tag--green Submitted",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-045",
+      "statement": "Cancelling an amendment restores the submitted answers: a country of origin changed to Belgium during the amendment shows France again afterwards.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-cance-49fd4-tores-the-submitted-answers-animals actions call@370 (Belgium, BE-75) and call@378 (France, FR-75)",
+      "quote": "Country of origin Belgium / Region of origin code BE-75 -> Country of origin France / Region of origin code FR-75",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-046",
+      "statement": "Changing the country of origin keeps the stored region suffix and re-prefixes it with the new country code: after changing France to Belgium with suffix 75, the region of origin code shows BE-75.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-cance-49fd4-tores-the-submitted-answers-animals network POST /origin?change=1 and action call@370",
+      "quote": "countryOfOrigin=BE&regionOfOriginCodeRequirement=yes&regionOfOriginCodeSuffix=75 -> Region of origin code BE-75",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-047",
+      "statement": "A Change link from the notification view opens the question page with ?change=1, and saving it returns to the notification view rather than continuing the journey.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-cance-49fd4-tores-the-submitted-answers-animals network POST /origin?change=1 302",
+      "quote": "POST /origin?change=1 302 -> /live-animals/notifications/GBN-AG-26-HR4WJ6/notification-view",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-048",
+      "statement": "A Submitted notification's view is read-only: it shows no Change or Edit details links and no Continue button.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-features-promo-167b7-rs-an-amendment-at-Overview-animals action call@798; spec promoted-lifecycle.spec.ts:55",
+      "quote": "expect(pages.page.getByRole('link', { name: /^Change/ })).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-049",
+      "statement": "A Submitted notification's view offers a secondary Copy as new button and a warning-styled Delete button under the heading.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-promo-167b7-rs-an-amendment-at-Overview-animals action call@798",
+      "quote": "Copy as new (POST /copy, copyOrigin=notification-view) ; Delete (href=/live-animals/notifications/GBN-AG-26-AG2080/delete, govuk-button--warning)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-050",
+      "statement": "A Submitted notification's view has no Amend button; amending starts from the dashboard card.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-promo-167b7-rs-an-amendment-at-Overview-animals actions call@798 and call@826",
+      "quote": "Copy as new ... Delete (view) / Amend notification GBN-AG-26-AG2080 (dashboard card)",
+      "confidence": "inferred",
+      "note": "Inferred from the view's button group holding only Copy as new and Delete while the dashboard card holds the Amend button."
+    },
+    {
+      "id": "trace-e2e-p14-051",
+      "statement": "A Draft notification's view has no Copy as new, Delete or Cancel amendment controls; it shows Change links and ends with Continue.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals action call@863",
+      "quote": "Draft GBN-AG-26-A0JJJK — Review your notification — 1. About the consignment ... Change ... Continue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-052",
+      "statement": "The notification view's back link goes to the Overview hub.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-cance-49fd4-tores-the-submitted-answers-animals (govuk-back-link on /notification-view)",
+      "quote": "href=/live-animals/notifications/GBN-AG-26-HR4WJ6 Back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-053",
+      "statement": "Pressing Amend on a submitted notification's dashboard card posts to /amend and lands on the Overview hub with the journey strip showing Amending.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-promo-167b7-rs-an-amendment-at-Overview-animals network POST /amend 302 and action call@828",
+      "quote": "POST /live-animals/notifications/GBN-AG-26-AG2080/amend 302 -> /live-animals/notifications/GBN-AG-26-AG2080 ; Amending ... Overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-054",
+      "statement": "On re-entering an amendment, every task row on the Overview hub stays Complete except Upload documents, which shows To do when no documents were added.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-promo-167b7-rs-an-amendment-at-Overview-animals action call@828",
+      "quote": "Upload documents To do; all other rows Complete",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-055",
+      "statement": "The amending Overview hub shows no Cancel amendment link; the link appears only on the notification view and the dashboard card.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-promo-167b7-rs-an-amendment-at-Overview-animals action call@828; trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals action call@603 (dashboard card)",
+      "quote": "Review and submit / Return to dashboard",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of the link in the amending hub's markup while it is present on /notification-view and on the Amending dashboard card."
+    },
+    {
+      "id": "trace-e2e-p14-056",
+      "statement": "From the amending hub, Review and submit opens Review your notification, and Continue there goes to the declaration; confirming it returns the notification to Submitted.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-amend-da280-with-the-edited-answer-kept-animals actions call@498-call@542",
+      "quote": "Review and submit -> Review your notification -> Continue -> Declaration -> Import notification submitted",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-057",
+      "statement": "A resubmitted amendment keeps the edited answer: after amending the country of origin from France to Belgium and resubmitting, the read-only view shows Submitted and Belgium.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-amend-da280-with-the-edited-answer-kept-animals actions call@544-call@554",
+      "quote": "Submitted ... Country of origin ... Belgium",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-058",
+      "statement": "After resubmission the view is read-only again: no Change links and no Cancel amendment link.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-features-amend-da280-with-the-edited-answer-kept-animals actions call@552 and call@554",
+      "quote": "expect(pages.page.getByRole('link', { name: /^Change/ })).toHaveCount(0); expect(animalsPages.notificationView.cancelAmendment).not.toBeVisible()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-059",
+      "statement": "After resubmission the dashboard offers Amend again for the notification, so a notification can be amended more than once.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-amend-da280-with-the-edited-answer-kept-animals action call@574",
+      "quote": "Amend notification GBN-AG-26-204Y08",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-060",
+      "statement": "Dashboard cards show different actions by status: Draft shows Resume, Copy as new and Delete; Submitted shows View, Amend, Copy as new and Delete; Amending shows Resume, Copy as new, Cancel amendment and Delete.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals action call@603 (cards GBN-AG-26-0TXX5N Draft, GBN-AG-26-T00M74 Submitted, GBN-AG-26-SS0RWN Amending)",
+      "quote": "Resume / Copy as new / Delete ; View / Amend / Copy as new / Delete ; Resume / Copy as new / Cancel amendment / Delete",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-061",
+      "statement": "On the dashboard, Amend and Copy as new are link-styled buttons that post forms (Amend to /amend; Copy as new to /copy with the concurrency token and copyOrigin=dashboard); Resume, View, Cancel amendment and Delete are plain links.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals action call@603",
+      "quote": "form method=post action=/live-animals/notifications/GBN-AG-26-T00M74/amend ; form action=/copy concurrencyToken=20 copyOrigin=dashboard",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-062",
+      "statement": "Submitted notifications on the dashboard show an empty Date submitted value, even though the backend records a submittedAt time.",
+      "kind": "data",
+      "ref": "trace animals-e2e-features-promo-167b7-rs-an-amendment-at-Overview-animals action call@826 (card GBN-AG-26-AG2080); trace animals-e2e-features-promo-0698d-tion-copy-no-longer-dedupes-animals submit response",
+      "quote": "Status Submitted ... Date submitted (empty) ; \"submittedAt\":\"2026-10-07T17:40:32.214376427Z\"",
+      "confidence": "verbatim",
+      "note": "Looks like a defect: every Submitted and Amending card in the traces shows an empty Date submitted."
+    },
+    {
+      "id": "trace-e2e-p14-063",
+      "statement": "The dashboard search filters by reference number with a GET request carrying the current sort, and shows a result count.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-promo-167b7-rs-an-amendment-at-Overview-animals network GET /live-animals?sort=arrivalDate%2Cdesc&referenceNumber=GBN-AG-26-AG2080; action call@826",
+      "quote": "Showing 1 Result",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-064",
+      "statement": "Through the API, creating a notification with an empty fulfilments list returns a DRAFT notification with a backend-minted GBN-AG reference number, concurrency token 0 and every content section null.",
+      "kind": "integration",
+      "ref": "trace animals-e2e-features-promo-0698d-tion-copy-no-longer-dedupes-animals request POST http://localhost:8085/notifications",
+      "quote": "request {\"notification\":{\"fulfilments\":[]}} -> {\"referenceNumber\":\"GBN-AG-26-2DSD3E\",\"concurrencyToken\":0,\"status\":\"DRAFT\",\"submittedAt\":null,\"notification\":{\"origin\":null,...},\"fulfilments\":[]}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-065",
+      "statement": "The backend notification entity carries id, referenceNumber, concurrencyToken, status, created, updated, submittedAt, a notification object (origin, commodity, reasonForImport, additionalDetails, placeOfOrigin, consignor, consignee, importer, destination, consignment, cphNumber, transport, purposeInInternalMarket, destinationCountry, portOfExit, exitDate) and fulfilments.",
+      "kind": "data",
+      "ref": "trace animals-e2e-features-promo-0698d-tion-copy-no-longer-dedupes-animals response to POST /notifications",
+      "quote": "\"notification\":{\"origin\":null,\"commodity\":null,\"reasonForImport\":null,\"additionalDetails\":null,\"placeOfOrigin\":null,\"consignor\":null,\"consignee\":null,\"importer\":null,\"destination\":null,\"consignment\":null,\"cphNumber\":null,\"transport\":null,\"purposeInInternalMarket\":null,\"destinationCountry\":null,\"portOfExit\":null,\"exitDate\":null}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-066",
+      "statement": "The fulfilment view (GET /notifications/{ref}/fulfilments) returns a reduced projection: referenceNumber, status, concurrencyToken, created, submittedAt and fulfilments.",
+      "kind": "integration",
+      "ref": "trace animals-e2e-features-promo-0698d-tion-copy-no-longer-dedupes-animals request GET /notifications/GBN-AG-26-2DSD3E/fulfilments",
+      "quote": "{\"submittedAt\":null,\"referenceNumber\":\"GBN-AG-26-2DSD3E\",\"fulfilments\":[],\"created\":\"2026-10-07T17:40:32.142Z\",\"concurrencyToken\":0,\"status\":\"DRAFT\"}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-067",
+      "statement": "POST /notifications/{ref}/submit moves a notification from DRAFT to SUBMITTED, increments its concurrency token and stamps submittedAt.",
+      "kind": "integration",
+      "ref": "trace animals-e2e-features-promo-0698d-tion-copy-no-longer-dedupes-animals request POST /submit",
+      "quote": "\"concurrencyToken\":1,\"status\":\"SUBMITTED\",...,\"submittedAt\":\"2026-10-07T17:40:32.214376427Z\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-068",
+      "statement": "The backend accepts a submit for a notification whose content sections are all null; the API submit does not check completeness.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-features-promo-0698d-tion-copy-no-longer-dedupes-animals request POST /submit 200",
+      "quote": "POST /notifications/GBN-AG-26-2DSD3E/submit 200 ... \"status\":\"SUBMITTED\" ... \"origin\":null",
+      "confidence": "inferred",
+      "note": "Inferred from a 200 SUBMITTED response to an empty notification. Completeness gating, if any, sits in the frontend."
+    },
+    {
+      "id": "trace-e2e-p14-069",
+      "statement": "The fulfilment view reflects each transition: after submit it reports SUBMITTED with submittedAt set; after amend it reports AMEND.",
+      "kind": "integration",
+      "ref": "trace animals-e2e-features-promo-0698d-tion-copy-no-longer-dedupes-animals requests GET /fulfilments after submit and after amend",
+      "quote": "{\"submittedAt\":\"2026-10-07T17:40:32.214Z\",...,\"concurrencyToken\":1,\"status\":\"SUBMITTED\"} ; {...,\"concurrencyToken\":2,\"status\":\"AMEND\"}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-070",
+      "statement": "POST /notifications/{ref}/amend moves a SUBMITTED notification to AMEND, increments the concurrency token and keeps submittedAt.",
+      "kind": "integration",
+      "ref": "trace animals-e2e-features-promo-0698d-tion-copy-no-longer-dedupes-animals request POST /amend",
+      "quote": "\"concurrencyToken\":2,\"status\":\"AMEND\",...,\"submittedAt\":\"2026-10-07T17:40:32.214Z\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-071",
+      "statement": "The backend status for a notification being amended is AMEND, which the frontend shows as Amending.",
+      "kind": "data",
+      "ref": "trace animals-e2e-features-promo-0698d-tion-copy-no-longer-dedupes-animals request POST /amend; trace animals-e2e-features-cance-49fd4-tores-the-submitted-answers-animals action call@344",
+      "quote": "\"status\":\"AMEND\" / Amending",
+      "confidence": "inferred",
+      "note": "The pairing is inferred from the same lifecycle step in API and UI traces."
+    },
+    {
+      "id": "trace-e2e-p14-072",
+      "statement": "POST /notifications/{ref}/cancel-amend returns an AMEND notification to SUBMITTED and increments the concurrency token.",
+      "kind": "integration",
+      "ref": "trace animals-e2e-features-promo-0698d-tion-copy-no-longer-dedupes-animals request POST /cancel-amend",
+      "quote": "\"concurrencyToken\":3,\"status\":\"SUBMITTED\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-073",
+      "statement": "Copy takes the source's current concurrency token as a query parameter (POST /notifications/{ref}/copy?concurrencyToken=N) and returns a new DRAFT notification with a new reference number.",
+      "kind": "integration",
+      "ref": "trace animals-e2e-features-promo-0698d-tion-copy-no-longer-dedupes-animals request POST /copy?concurrencyToken=3",
+      "quote": "POST /notifications/GBN-AG-26-2DSD3E/copy?concurrencyToken=3 -> {\"referenceNumber\":\"GBN-AG-26-J93GN4\",\"concurrencyToken\":0,\"status\":\"DRAFT\"}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-074",
+      "statement": "Copy no longer de-duplicates: two copies of the same source with the same token produce two distinct DRAFT notifications.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-features-promo-0698d-tion-copy-no-longer-dedupes-animals requests POST /copy x2",
+      "quote": "GBN-AG-26-J93GN4 and GBN-AG-26-HM59ST, both \"status\":\"DRAFT\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-075",
+      "statement": "Copying does not change the source notification, so a second copy can reuse the same concurrency token.",
+      "kind": "rule",
+      "ref": "repos/trade-imports-ins-tests/tests/animals/e2e/features/promoted-lifecycle.spec.ts copy comment; trace animals-e2e-features-promo-0698d-tion-copy-no-longer-dedupes-animals",
+      "quote": "copy does not mutate the source, so both calls carry the same token.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-076",
+      "statement": "A copy of a notification whose content was empty is itself empty; the trace does not show whether a copy of a filled notification carries its answers.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-promo-0698d-tion-copy-no-longer-dedupes-animals copy responses",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The spec calls copy a WYSIWYG operation post-EUDPA-314, but no trace in this part copies a filled notification or walks the Copy as new button in the UI."
+    },
+    {
+      "id": "trace-e2e-p14-077",
+      "statement": "POST /notifications/{ref}/soft-delete sets the status to DELETED and increments the concurrency token, keeping the record.",
+      "kind": "integration",
+      "ref": "trace animals-e2e-features-promo-0698d-tion-copy-no-longer-dedupes-animals request POST /soft-delete (first)",
+      "quote": "\"concurrencyToken\":4,\"status\":\"DELETED\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-078",
+      "statement": "Soft delete is idempotent: a repeat call returns the same DELETED notification without incrementing the concurrency token.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-features-promo-0698d-tion-copy-no-longer-dedupes-animals request POST /soft-delete (second)",
+      "quote": "second response \"concurrencyToken\":4,\"status\":\"DELETED\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-079",
+      "statement": "A SUBMITTED notification can be soft-deleted through the API (the deleted notification had already been submitted).",
+      "kind": "rule",
+      "ref": "trace animals-e2e-features-promo-0698d-tion-copy-no-longer-dedupes-animals requests POST /cancel-amend then POST /soft-delete",
+      "quote": "\"status\":\"SUBMITTED\" -> \"status\":\"DELETED\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-080",
+      "statement": "No trace in this part walks the Delete page (/delete) in the UI or shows how a soft-deleted notification appears, or stops appearing, on the dashboard.",
+      "kind": "behaviour",
+      "ref": "all 14 traces of part 14",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p14-081",
+      "statement": "No trace in this part shows the fulfilment view after cancel-amend, copy or soft delete, or a fulfilments list that is not empty.",
+      "kind": "integration",
+      "ref": "trace animals-e2e-features-promo-0698d-tion-copy-no-longer-dedupes-animals",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p14-082",
+      "statement": "No trace in this part shows what happens when a stale concurrency token is posted (a conflicting edit).",
+      "kind": "rule",
+      "ref": "all 14 traces of part 14",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p14-083",
+      "statement": "Every write from the journey forms carries a hidden concurrencyToken that increases by one with each saved change; the party select pages post it empty.",
+      "kind": "integration",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals network (origin 0, 1; commodities 2; consignment-details 3; ... declaration 17; consignors/select concurrencyToken=)",
+      "quote": "concurrencyToken=0 ... concurrencyToken=17 ; concurrencyToken=&page=1&q=Astra Rosales&party=6ac683ef6bdb2fc53f128604&action=save",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-084",
+      "statement": "The dashboard (caption Dashboard, heading Import notification service) introduces the service and offers a Start a new notification start button.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals action call@603",
+      "quote": "Use this service to tell the authorities about live animals you are importing. You will answer a short set of questions about the consignment, then submit your notification. Start a new notification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-085",
+      "statement": "Start a new notification posts to /live-animals/notifications, which creates the notification and redirects to its Origin of the import page.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals network POST /live-animals/notifications 302",
+      "quote": "POST /live-animals/notifications 302 -> /live-animals/notifications/GBN-AG-26-A0JJJK/origin",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-086",
+      "statement": "The dashboard lists Your notifications with a Keyword or reference filter, a Sort by select (Arrival newest/oldest, Date created newest/oldest) with Update sort, 25 results a page and a Next pagination link.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals action call@603",
+      "quote": "Filter notifications; Keyword or reference; Showing 1 to 25 of 70 Results; Sort by: Arrival (newest to oldest) | Arrival (oldest to newest) | Date created (newest to oldest) | Date created (oldest to newest); Update sort; Next",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-087",
+      "statement": "Each dashboard card shows the reference number as its title and Commodity, Origin, Arrival at destination, Consignee, Consignor, Status, Date created and Date submitted.",
+      "kind": "data",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals action call@603",
+      "quote": "Commodity Cow; Origin France; Arrival at destination 7 Nov 2026; Consignee British Livestock Ltd; Consignor Astra Rosales; Status Submitted; Date created 7 Oct 2026; Date submitted",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-088",
+      "statement": "Every journey page shows the journey strip (status tag and reference) above a caption and heading, and offers Save and continue, Save and return to overview, and a Cancel and return to overview link.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals action call@611 (origin)",
+      "quote": "Save and continue / Save and return to overview / Cancel and return to overview",
+      "confidence": "verbatim",
+      "note": "The party select pages and the CPH page show only Save and continue."
+    },
+    {
+      "id": "trace-e2e-p14-089",
+      "statement": "Origin of the import (caption About the consignment) asks Country of origin (autocomplete over a select of 40 countries and territories), Does the consignment have a region of origin code? (Yes reveals Enter the region of origin code with a country prefix) and an optional internal reference.",
+      "kind": "data",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals actions call@611 and call@645",
+      "quote": "Country of origin — Start typing to search for a country. ; Does the consignment have a region of origin code? — If a region of origin code is required it will be shown on your health certificate. ; Enter the region of origin code — Enter up to 5 characters. ; Your internal reference for this consignment (optional) — Enter any internal reference you want to use to identify this consignment, or leave blank. It can be up to 58 characters.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-090",
+      "statement": "The region of origin code prefix (for example FR) appears only once a country of origin has been saved; on a new notification the suffix input has no prefix.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals actions call@611 (no prefix) and call@645 (govuk-input__prefix FR)",
+      "quote": "govuk-input__prefix FR",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-091",
+      "statement": "From a new notification, saving Origin of the import continues to What are you importing?; when the same page is entered from the Overview hub, saving returns to the hub.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals network POST /origin (twice)",
+      "quote": "POST /origin 302 -> /commodities (concurrencyToken=0) ; POST /origin 302 -> /live-animals/notifications/GBN-AG-26-A0JJJK (concurrencyToken=1)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-092",
+      "statement": "What are you importing? (caption About the consignment) has an inset note that each health certificate needs a separate notification, a Search for a commodity field with a Search button, a Help with commodity codes details, and species checkboxes grouped under the matching commodity.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals actions call@633 and call@671",
+      "quote": "A separate notification is required for each health certificate. Consignments that do not require a health certificate must still be notified. ; Search for a commodity — You can search by commodity name (for example, Cow), commodity code (0102), or species name (Bos taurus). Enter at least 3 characters. ; Cow (0102) — Domestic cattle (Bos taurus)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-093",
+      "statement": "The Overview hub (heading Overview) shows Your commodities totals for Animals and Packages/boxes, then a Notification tasklist in six numbered sections with a status tag per row, and Review and submit and Return to dashboard buttons.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals actions call@635 and call@859",
+      "quote": "Your commodities — Animals: Total number of animals in this consignment; Packages/boxes: Total number of packages in this consignment ; Notification tasklist: 1. About the consignment, 2. Description of the goods, 3. Transport and arrival, 4. Documents, 5. Consignment parties, 6. Contact address ; Review and submit / Return to dashboard",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-094",
+      "statement": "The hub's task rows, once complete, are: Where is this consignment coming from?, What are you importing?, Main reason for import; Commodity details, Identification details, Additional details; Arrival details, Transit countries, Transport details; Upload documents; Roles and addresses (hint Consignor or Exporter, Consignee, Importer and Place of Destination); Contact address for this consignment.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-features-promo-167b7-rs-an-amendment-at-Overview-animals action call@828",
+      "quote": "Where is this consignment coming from? ... Identification details ... Transit countries ... Roles and addresses — Consignor or Exporter, Consignee, Importer and Place of Destination ... Contact address for this consignment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-095",
+      "statement": "Task rows appear as answers unlock them: Identification details appears only after commodity details are saved, and Transit countries appears only once arrival details are saved.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals actions call@635 (2 rows in section 2, 2 in section 3), call@683 (3 in section 2), call@851 (3 in section 3)",
+      "quote": "description-of-the-goods-3-status ; transport-and-arrival-3-status",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-096",
+      "statement": "Identification details is marked Complete on the hub as soon as commodity details are saved, before any ear tag or passport has been entered.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals action call@683",
+      "quote": "Identification details — Complete",
+      "confidence": "verbatim",
+      "note": "Possible defect or deliberate (identifiers optional); the reconciler should check the rule."
+    },
+    {
+      "id": "trace-e2e-p14-097",
+      "statement": "Review and submit is available on the hub while task rows are still To do.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals action call@635",
+      "quote": "Review and submit (href=/live-animals/notifications/GBN-AG-26-A0JJJK/notification-view) with rows To do",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-098",
+      "statement": "A notification can be submitted with Upload documents still To do; uploading documents is not required to submit.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals actions call@859 (Upload documents To do) and call@873 (submitted)",
+      "quote": "Upload documents To do ... Import notification submitted",
+      "confidence": "inferred",
+      "note": "Inferred from a successful submission with the documents row To do; the confirmation page then tells the user they still need to upload documents."
+    },
+    {
+      "id": "trace-e2e-p14-099",
+      "statement": "Commodity details (caption About the consignment) lists the chosen commodity in a table with a Remove action and Add another commodity link, then asks Number of animals and Number of packages (when required) per species.",
+      "kind": "data",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals action call@675",
+      "quote": "Commodity details ; Commodity code / Common name ; Remove Cow ; Add another commodity ; Cow (0102) — Bos taurus ; Number of animals ; Number of packages (when required) — Such as crates, bags or boxes",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-100",
+      "statement": "Identification details (caption About the consignment) shows the commodity table, a Change number of animals link and, per animal, Ear tag and Passport fields.",
+      "kind": "data",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals action call@685",
+      "quote": "Identification details ; Enter details for Bos taurus 1 of 1 ; Ear tag — For example, UK123456789012 ; Passport — For example, UK123456789",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-101",
+      "statement": "The Identification details form has a visually hidden Save and finish submit button before the visible fields.",
+      "kind": "constraint",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals action call@685",
+      "quote": "button type=submit name=action value=finish class=govuk-visually-hidden Save and finish",
+      "confidence": "verbatim",
+      "note": "A hidden default submit, outside normal GOV.UK patterns."
+    },
+    {
+      "id": "trace-e2e-p14-102",
+      "statement": "Main reason for import (caption About the consignment) offers Internal market (with Purpose in the internal market options), Transhipment or onward travel, Transit, Re-entry and Temporary admission horses, each revealing its own follow-up fields.",
+      "kind": "data",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals action call@695",
+      "quote": "Internal market; Transhipment or onward travel (Destination country); Transit (Port of exit, Destination country); Re-entry; Temporary admission horses (Exit date, Port of exit) ; Purpose in the internal market: Transfer of ownership - Sale/gift, Transfer of ownership - Rescue, Breeding, Research, Racing, competition, show or training, Approved premises or body, Companion animal not for resale or rehoming, Production, Slaughter, Fattening, Restocking",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-103",
+      "statement": "Main reason for import's question legend is visually hidden; the page heading stands in for it.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals action call@695",
+      "quote": "govuk-fieldset__legend govuk-visually-hidden What is the main reason for importing the animals?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-104",
+      "statement": "Additional details carries the caption Commodity details (not the section name) and asks What are the animals certified for? (16 options, hint pointing to the ITAHC) and Does the consignment contain any unweaned animals?",
+      "kind": "data",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals action call@701",
+      "quote": "Commodity details / Additional details ; What are the animals certified for? — This information can be found on the ITAHC. ; Further keeping, Slaughter, Confined establishment, Germinal products, Registered equine animal, Travelling circus/animal act, Exhibition, Event or activity near borders, Release into the wild, Dispatch centre, Relaying area / purification centre, Ornamental aquaculture establishment, Technical use, Quarantine or similar establishment, Live aquatic animals for human consumption, Other ; Does the consignment contain any unweaned animals? — These are animals that are still feeding from their mother.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-105",
+      "statement": "Consignment addresses (caption Consignment parties) lists Place of origin, Consignor or exporter, Consignee, Importer, Place of destination and County parish holding (CPH) number, each with an Add link to its own select page.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals action call@713; actions file call@312-call@360",
+      "quote": "Place of origin; Consignor or exporter; Consignee; Importer; Place of destination; County parish holding (CPH) number ; Add",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-106",
+      "statement": "Each party select page (Consignor or exporter, Place of destination, Place of origin, Consignee, Importer) explains the role, links to Add a new address in the address book, and lets the user search by name, address or country and pick one row by radio.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals actions call@715, call@725, call@739, call@751, call@763",
+      "quote": "This is the sender of the consignment. ; This is where the animals will be unloaded and accommodated for at least 48 hours. If a health certificate is required, it will show this address. ; The address where the animals begin their journey to Great Britain ; This is the receiver or buyer of the consignment being shipped or transported. ; This is usually the same as the consignee. You can select a different person if needed. ; Search — Name, address or country",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-107",
+      "statement": "Add a new address on each party page links out to the address book service at /address-book/add with the journey type, notification id, a fulfilment id per role and a one-off handshake token.",
+      "kind": "integration",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals action call@715",
+      "quote": "http://localhost:3002/address-book/add?journey-type=gbn-ag&notification-id=GBN-AG-26-A0JJJK&fulfilment-id=9ad1e2f3-a4b5-4c60-8d1c-9e0f1a2b3c4d&handshake-token=[REDACTED]",
+      "confidence": "verbatim",
+      "note": "The handshake token changes on every render of the page."
+    },
+    {
+      "id": "trace-e2e-p14-108",
+      "statement": "Saving a party select page returns to Consignment addresses; Save and continue there goes to the CPH page.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals network POST /consignors/select 302, POST /addresses 302",
+      "quote": "POST /consignors/select 302 -> /addresses ; POST /addresses 302 -> /cph-number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-109",
+      "statement": "Add the county parish holding number (CPH) (caption Consignment parties) asks for the CPH number in three parts, County, Parish and Holding number, with an explanation in a details component.",
+      "kind": "data",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals action call@775",
+      "quote": "CPH number — For example, 12/345/6789. ; County ; Parish ; Holding number ; A county parish holding (CPH) number is a unique 9-digit number used to identify land and buildings where livestock are kept, moved or handled. You can find your CPH number on documents from the Animal and Plant Health Agency (APHA).",
+      "confidence": "verbatim",
+      "note": "The three fields reuse govuk-date-input layout classes for a non-date input."
+    },
+    {
+      "id": "trace-e2e-p14-110",
+      "statement": "Arrival details (caption Transport and arrival) asks Arrival date at port of entry (MOJ date picker), Port of entry (autocomplete), Means of transport to the port of entry, Transport identification and Transport document reference.",
+      "kind": "data",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals action call@789",
+      "quote": "Arrival date at port of entry — The expected date of arrival at the port of entry. For example, 7/10/2026 ; Port of entry — Choose where the transporter will enter with the consignment. Start typing to search by port or airport name or code. ; Means of transport to the port of entry ; Transport identification ; Transport document reference — Enter the reference number on the air waybill, bill of lading, sea waybill, road consignment note (CMR) or other transport document.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-111",
+      "statement": "The arrival date picker marks dates more than about a week in the past as excluded (on 7 October 2026, 28 and 29 September are excluded and 30 September onwards are selectable).",
+      "kind": "rule",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals action call@789 (datepicker cells)",
+      "quote": "Excluded date, Monday 28 September 2026 ; Excluded date, Tuesday 29 September 2026 ; Wednesday 30 September 2026",
+      "confidence": "inferred",
+      "note": "The exact window is inferred from the first visible calendar weeks only."
+    },
+    {
+      "id": "trace-e2e-p14-112",
+      "statement": "Which countries will the consignment travel through? (caption Movement) lets the user add countries one at a time with Add country, lists them in a table with Remove actions, and says the list excludes the United Kingdom.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals actions call@805, call@823, call@841",
+      "quote": "Countries the consignment will travel through are countries between the country of origin and the destination country. This does not include the United Kingdom. ; Enter a country — Enter each country that the consignment will travel through ; Add country ; You have not added any countries yet. ; Remove France",
+      "confidence": "verbatim",
+      "note": "The caption Movement differs from the hub section name Transport and arrival."
+    },
+    {
+      "id": "trace-e2e-p14-113",
+      "statement": "Transporter details (caption Transport and arrival) explains when a transporter authorisation is needed, lets the user search and select a transporter from a table showing Name, Address, Approval number, Type and Status (New or Approved), and offers Add a transporter.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals action call@845",
+      "quote": "This is the person or company responsible for transporting the consignment. Your transporter must hold a valid transporter authorisation, issued by DAERA or APHA in the UK if they are: transporting any live vertebrate animals in, to, from or through Great Britain (GB); travelling on journeys of over 65 km; transporting as part of an economic (commercial) activity ... Documents issued by DAERA are valid for use in GB. Documents issued in any EU member state are not valid for use in GB. ; Select a transporter ; Add a transporter",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-114",
+      "statement": "Contact address for consignment is a page whose heading is the radio legend; it lists every address book entry as a radio and copies the chosen contact into the notification.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals action call@853",
+      "quote": "Contact address for consignment — Selecting a contact copies their name and address into this notification.",
+      "confidence": "verbatim",
+      "note": "No caption is shown on this page, unlike the other journey pages; 28 radios were listed in this run."
+    },
+    {
+      "id": "trace-e2e-p14-115",
+      "statement": "Review your notification groups the answers into six numbered sections of summary cards (Import details, Reason for import, the commodity card with an Animal details table, Additional animal details, Arrival details, Transit countries, Transport details, Uploaded documents, Roles and addresses, Contact address for this consignment).",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals action call@863",
+      "quote": "1. About the consignment ... 2. Description of the goods ... 3. Transport and arrival ... 4. Documents ... 5. Consignment parties ... 6. Contact address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-116",
+      "statement": "On Review your notification, the CPH number row in Roles and addresses has no action, while each party row has an Edit details link returning to the review.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-cance-49fd4-tores-the-submitted-answers-animals action call@344",
+      "quote": "govuk-summary-list__row--no-actions County parish holding (CPH) number 123456789 ; Edit details (href=/consignors/edit?return=notification-view)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-117",
+      "statement": "When no documents were added, the review shows You have not added any documents yet. in the Uploaded documents card.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals action call@863",
+      "quote": "You have not added any documents yet.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-118",
+      "statement": "Without the hub in between, Save and continue follows a fixed order: origin, commodities, consignment-details, import-reason, identification, additional-details, port-of-entry, transit-countries, transporters, accompanying-documents; party select returns to addresses; addresses to cph-number; cph-number to contact select; contact select to notification-view.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-cance-49fd4-tores-the-submitted-answers-animals seeding network (POSTs without concurrencyToken)",
+      "quote": "origin -> commodities -> consignment-details -> import-reason -> commodities/identification -> additional-details -> port-of-entry -> transit-countries -> transporters -> accompanying-documents ; cph-number -> consignment/contact/select -> notification-view",
+      "confidence": "verbatim",
+      "note": "Seen in the seeding fixtures' form POSTs, which omit the concurrency token and are still accepted."
+    },
+    {
+      "id": "trace-e2e-p14-119",
+      "statement": "The frontend accepts journey form POSTs that carry no concurrency token (the seeding fixtures post without one and every step is saved).",
+      "kind": "rule",
+      "ref": "trace animals-e2e-pages-declarat-940e5-e-renders-the-page-controls-animals seeding network",
+      "quote": "POST /origin 302 countryOfOrigin=FR&regionOfOriginCodeRequirement=yes&regionOfOriginCodeSuffix=75&internalReferenceNumber=Imports456GB",
+      "confidence": "inferred",
+      "note": "Inferred from 302 responses to POSTs without the hidden concurrencyToken field."
+    },
+    {
+      "id": "trace-e2e-p14-120",
+      "statement": "The test fixtures look up party records in the address book API by name (GET /organisation/{orgId}/addresses?q=) before seeding or asserting.",
+      "kind": "integration",
+      "ref": "trace animals-e2e-pages-declarat-940e5-e-renders-the-page-controls-animals network (localhost:8089)",
+      "quote": "GET http://localhost:8089/organisation/5900001/addresses?q=Astra%20Rosales 200",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-121",
+      "statement": "A notification walked up to the declaration (not yet confirmed) is stored in Mongo collection notification of database trade-imports-animals-backend with status DRAFT and its reference number.",
+      "kind": "data",
+      "ref": "repos/trade-imports-ins-tests/tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:21; trace animals-e2e-journeys-persi-a7b8c--as-DRAFT-up-to-declaration-animals (passed; ends at GET /declaration)",
+      "quote": "expect(doc.referenceNumber).toBe(referenceNumber); expect(doc.status).toBe('DRAFT');",
+      "confidence": "verbatim",
+      "note": "The Mongo read is not in the trace; the stored values come from the spec's assertions, which passed."
+    },
+    {
+      "id": "trace-e2e-p14-122",
+      "statement": "The stored notification document keeps referenceNumber, status and fulfilments at the document root and all content under doc.notification.",
+      "kind": "data",
+      "ref": "repos/trade-imports-ins-tests/tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:39 comment",
+      "quote": "Content fields live under doc.notification.* after the aggregate refactor (EUDPA-335). Aggregate-level fields — referenceNumber, status, fulfilments — stay at the document root.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-123",
+      "statement": "A submitted notification is stored with status SUBMITTED and origin countryCode FR, requiresRegionCode yes, regionOfOriginCode FR-75 and internalReference Imports456GB.",
+      "kind": "data",
+      "ref": "repos/trade-imports-ins-tests/tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:39; trace animals-e2e-journeys-persi-b779b-swers-and-reloads-read-only-animals (passed)",
+      "quote": "expect(doc.status).toBe('SUBMITTED'); expect(notification.origin.countryCode).toBe('FR'); expect(notification.origin.requiresRegionCode).toBe('yes'); expect(notification.origin.regionOfOriginCode).toBe('FR-75'); expect(notification.origin.internalReference).toBe('Imports456GB');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-124",
+      "statement": "The stored commodity has name Cow and a commodityComplement whose species carries text Bos taurus, the scalar earTag and an animalIdentifiers list in which an unanswered passport is stored as an empty string.",
+      "kind": "data",
+      "ref": "repos/trade-imports-ins-tests/tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:39",
+      "quote": "expect(notification.commodity.name).toBe('Cow'); expect(species.text).toBe('Bos taurus'); expect(species.earTag).toBe('UK123456789012'); expect(species.animalIdentifiers).toEqual([{ earTag: 'UK123456789012', passport: '' }]);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-125",
+      "statement": "The stored commodity complement holds totalNoOfAnimals 1 and totalNoOfPackages 5.",
+      "kind": "data",
+      "ref": "repos/trade-imports-ins-tests/tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:39",
+      "quote": "expect(complement.totalNoOfAnimals).toBe(1); expect(complement.totalNoOfPackages).toBe(5);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-126",
+      "statement": "The stored import reason is reasonForImport internalMarket with purposeInInternalMarket breeding, and additionalDetails holds certifiedFor slaughter and unweanedAnimals no.",
+      "kind": "data",
+      "ref": "repos/trade-imports-ins-tests/tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:39",
+      "quote": "expect(notification.reasonForImport).toBe('internalMarket'); expect(notification.purposeInInternalMarket).toBe('breeding'); expect(notification.additionalDetails.certifiedFor).toBe('slaughter'); expect(notification.additionalDetails.unweanedAnimals).toBe('no');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-127",
+      "statement": "Each stored party (consignor, destination, consignee, importer, placeOfOrigin and the consignment contact) is a copy of the chosen address book record with name, email, phone and address, and carries no addressId link back to the address book.",
+      "kind": "rule",
+      "ref": "repos/trade-imports-ins-tests/tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:39",
+      "quote": "Every party is a copy of the record picked for it, with no link back to the address book ... expect(notification.consignor).not.toHaveProperty('addressId');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-128",
+      "statement": "The stored party address has addressLine1, townOrCity, postcode and countryCode.",
+      "kind": "data",
+      "ref": "repos/trade-imports-ins-tests/tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:39",
+      "quote": "address: { addressLine1: consignor.addressLine1, townOrCity: consignor.townOrCity, postcode: consignor.postcode, countryCode: consignor.countryCode }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-129",
+      "statement": "The consignment contact address is stored in the notification field consignment.",
+      "kind": "data",
+      "ref": "repos/trade-imports-ins-tests/tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:39",
+      "quote": "expect(notification.consignment).toMatchObject({ name: contact.name, address: { postcode: contact.postcode } });",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-130",
+      "statement": "A notification that has never been amended has no preAmendNotification snapshot stored.",
+      "kind": "data",
+      "ref": "repos/trade-imports-ins-tests/tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:39",
+      "quote": "expect(doc.preAmendNotification).toBeUndefined();",
+      "confidence": "verbatim",
+      "note": "Implies an amendment stores the submitted version as preAmendNotification so cancel-amend can restore it; no trace here reads that field."
+    },
+    {
+      "id": "trace-e2e-p14-131",
+      "statement": "The stored CPH number is the nine digits joined without separators (123456789).",
+      "kind": "data",
+      "ref": "repos/trade-imports-ins-tests/tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:39; network POST /cph-number cphCounty=12&cphParish=345&cphHolding=6789",
+      "quote": "expect(notification.cphNumber).toBe('123456789');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-132",
+      "statement": "The stored transport holds portOfEntry GB ABD, meansOfTransport ROAD_VEHICLE, transportIdentification, transportDocumentReference, transitedCountries in the order added (FR, BE) and a transporter with name and type.",
+      "kind": "data",
+      "ref": "repos/trade-imports-ins-tests/tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:39",
+      "quote": "expect(notification.transport.portOfEntry).toBe('GB ABD'); expect(notification.transport.meansOfTransport).toBe('ROAD_VEHICLE'); ... expect(notification.transport.transitedCountries).toEqual(['FR', 'BE']); expect(notification.transport.transporter?.name).toBe('García Livestock Transport SL'); expect(notification.transport.transporter?.type).toBe('Commercial');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-133",
+      "statement": "The arrival date is stored as a YYYY-MM-DD string of the chosen calendar date, so it cannot drift with the backend's timezone.",
+      "kind": "rule",
+      "ref": "repos/trade-imports-ins-tests/tests/animals/e2e/journeys/persistence/persistence-notification.spec.ts:39 (EUDPA-282 comment)",
+      "quote": "the stored value must be the chosen calendar date, whatever timezone the backend JVM runs in. It is stored as a `YYYY-MM-DD` string, which has no zone to drift in.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-134",
+      "statement": "After submission the notification view reloads from storage as read-only with the Submitted status.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-journeys-persi-b779b-swers-and-reloads-read-only-animals network final GET /notification-view",
+      "quote": "await expect(animalsPages.notificationView.journeyStrip).toContainText('Submitted');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-135",
+      "statement": "A notification seeded through the frontend's form posts stores the same status, notification content and fulfilments as the same journey walked in the browser.",
+      "kind": "rule",
+      "ref": "repos/trade-imports-ins-tests/tests/animals/e2e/journeys/persistence/api-seed-parity.spec.ts:12; trace animals-e2e-journeys-persi-d751b--stores-through-the-browser-animals (passed)",
+      "quote": "expect(seededDoc.status).toBe(browserDoc.status); expect(seededDoc.notification).toEqual(browserDoc.notification); expect(seededDoc.fulfilments).toEqual(browserDoc.fulfilments);",
+      "confidence": "verbatim",
+      "note": "In the trace the seeded notification (GBN-AG-26-Y17M0A) is created by POSTs to the frontend routes without a concurrency token, ending with the declaration; parity holds even though the seed skips the hub."
+    },
+    {
+      "id": "trace-e2e-p14-136",
+      "statement": "The seeded parity journey omits the empty passport field that the browser posts, yet the stored notifications still match.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-journeys-persi-d751b--stores-through-the-browser-animals network: browser POST /commodities/identification vs seeded POST",
+      "quote": "animalIdentifierEarTag-0=UK123456789012&animalIdentifierPassport-0= ; animalIdentifierEarTag-0=UK123456789012",
+      "confidence": "inferred",
+      "note": "Inferred from the two payloads and the passing equality assertion; a missing and an empty passport are stored the same way."
+    },
+    {
+      "id": "trace-e2e-p14-137",
+      "statement": "Upload documents (caption Documents) explains that an ITAHC must be attached if required, may be added later, must be in English with all pages, and lists other documents that may be needed.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-journeys-persi-01ee3-rsists-to-Mongo-and-reloads-animals action call@759",
+      "quote": "You must attach an ITAHC if this consignment requires one. If you do not have it now, you can add it later. All documents should be uploaded before the consignment arrives at the UK port. Documents must be in English and you must upload all pages. Other documents you may need to attach include: import licences or authorisations; commercial documents or invoices",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-138",
+      "statement": "Upload documents has a details component listing additional documents by type of consignment.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-journeys-persi-01ee3-rsists-to-Mongo-and-reloads-animals action call@759",
+      "quote": "Check which additional documents you must upload: Animals that do not need a health certificate — An exporter's declaration that they are fit to travel; Livestock transiting bluetongue restricted territories — Bluetongue declaration GBHC172; Rodents imported for research purposes — An RM39 licence and supplementary health certificate; Check the documents you need on GOV.UK (opens in a new tab)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-139",
+      "statement": "The File upload card asks for Document reference, Document type (a select of 14 types), Date of issue (date picker) and an Attachment file.",
+      "kind": "data",
+      "ref": "trace animals-e2e-journeys-persi-01ee3-rsists-to-Mongo-and-reloads-animals action call@759",
+      "quote": "Document reference — For example, GBHC1234567890. ; Document type: Intra Trade Animal Health Certificate (ITAHC), Veterinary health certificate, Air waybill, Import permit, Letter of authority (Directive 2008/61/EC), Commercial invoice, Sea waybill, Rail waybill, Bill of lading, Catch certificate, Laboratory sampling results for aflatoxin (Reg 2019/1793), Health certificate, Journey log, Other ; Date of issue — For example, 12/12/2025 ; Attachment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-140",
+      "statement": "The attachment must be smaller than 10MB, one of PDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX, with up to 15 files and no ZIP files.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-journeys-persi-01ee3-rsists-to-Mongo-and-reloads-animals action call@759 (file-hint)",
+      "quote": "Your file must be: smaller than 10MB; a PDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX; up to a maximum of 15 files; ZIP files are not allowed for security reasons",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-141",
+      "statement": "Upload documents offers Save and add another, Save and continue, Save and return to overview and Cancel and return to overview.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-journeys-persi-01ee3-rsists-to-Mongo-and-reloads-animals action call@771",
+      "quote": "Save and add another (value=add) ; Save and continue (value=continue) ; Save and return to overview ; Cancel and return to overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-142",
+      "statement": "Save and add another posts the form and file as multipart to the frontend's /accompanying-documents route, which redirects back to the same page.",
+      "kind": "integration",
+      "ref": "trace animals-e2e-journeys-persi-01ee3-rsists-to-Mongo-and-reloads-animals network POST /accompanying-documents 302",
+      "quote": "POST /live-animals/notifications/GBN-AG-26-Z2CVFE/accompanying-documents 302 multipart/form-data -> /accompanying-documents",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-143",
+      "statement": "After upload, the document appears in a Documents you have added table (Document reference, Document type, Date of issue, Status) with a blue Scanning for virus tag and a Remove action.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-journeys-persi-01ee3-rsists-to-Mongo-and-reloads-animals action call@771",
+      "quote": "PW1791394840494 | Intra Trade Animal Health Certificate (ITAHC) | 03/01/2026 | Scanning for virus | Remove",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-144",
+      "statement": "While a scan is pending, the page polls /accompanying-documents/status and offers a hidden fallback link Refresh virus scan status (?attempt=1) and a timeout hint.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-journeys-persi-01ee3-rsists-to-Mongo-and-reloads-animals network GET /accompanying-documents/status; action call@771",
+      "quote": "Refresh virus scan status ; Still checking some documents. Refresh again in a moment.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-145",
+      "statement": "Once the virus scan completes, the status shows a green Check completed tag and a View file link appears beside Remove.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-journeys-persi-01ee3-rsists-to-Mongo-and-reloads-animals action call@773",
+      "quote": "Check completed ; View file for document 1 (href=/accompanying-documents/eea4f361-a2da-4ee8-a222-c03fa827b575/file)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-146",
+      "statement": "An uploaded document is stored in Mongo collection accompanying_documents with notificationReferenceNumber, documentReference, a UUID uploadId, dateOfIssue as an ISO date, scanStatus COMPLETE and documentType ITAHC.",
+      "kind": "data",
+      "ref": "repos/trade-imports-ins-tests/tests/animals/e2e/journeys/persistence/persistence-accompanying-document.spec.ts:23",
+      "quote": "expect(doc.notificationReferenceNumber).toBe(referenceNumber); expect(doc.documentReference).toBe(documentReference); expect(doc.uploadId).toMatch(/^[0-9a-f]{8}-.../i); expect(doc.dateOfIssue).toBe(toIsoDate(persistedIssueDate)); ... toBe('COMPLETE'); expect(doc.documentType).toBe('ITAHC');",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-147",
+      "statement": "Each stored document file records filename, contentType, contentLength, an s3Key prefixed with the notification reference and uploadId, detectedContentType and a checksumSha256.",
+      "kind": "data",
+      "ref": "repos/trade-imports-ins-tests/tests/animals/e2e/journeys/persistence/persistence-accompanying-document.spec.ts:23",
+      "quote": "expect(file.contentType).toBe('application/pdf'); expect(file.contentLength).toBe(uploaded.length); expect(file.s3Key).toMatch(new RegExp(`^${referenceNumber}/${doc.uploadId}/`)); expect(file.detectedContentType).toBe('application/pdf'); expect(file.checksumSha256).toBeDefined();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-148",
+      "statement": "An uploaded document row is still listed after a fresh load of the Upload documents page.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-journeys-persi-01ee3-rsists-to-Mongo-and-reloads-animals network final GET /accompanying-documents",
+      "quote": "await expect(animalsPages.accompanyingDocuments.documentRow(documentReference)).toBeVisible();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p14-149",
+      "statement": "The browser never calls the file uploader or virus scanner directly; the trace does not show the frontend's call to cdp-uploader, S3 or the scan callback.",
+      "kind": "integration",
+      "ref": "trace animals-e2e-journeys-persi-01ee3-rsists-to-Mongo-and-reloads-animals network (all requests go to localhost:3000)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The spec says the seam uses a real uploader through cdp-uploader; that hop is server-side and not visible in the trace."
+    },
+    {
+      "id": "trace-e2e-p14-150",
+      "statement": "The Mongo document reads behind every persistence test are not recorded in the traces, so the stored shapes above rest on the spec assertions rather than captured documents.",
+      "kind": "data",
+      "ref": "traces animals-e2e-journeys-persi-* (parity, document, draft, submitted)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p14-151",
+      "statement": "No trace in this part walks Copy as new from the notification view or dashboard, so the copy page flow and where copyOrigin sends the user are not seen.",
+      "kind": "behaviour",
+      "ref": "all 14 traces of part 14",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p14-152",
+      "statement": "No trace in this part shows Cancel amendment started from the dashboard card, or a validation error on the cancel amendment page.",
+      "kind": "behaviour",
+      "ref": "all 14 traces of part 14",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p14-153",
+      "statement": "The journey uses GOV.UK Frontend throughout, plus MOJ date pickers, accessible-autocomplete selects and several app-specific classes (app-journey-strip, app-commodity-total, app-task-list, app-link-button, app-form-inline, notification-list).",
+      "kind": "constraint",
+      "ref": "trace animals-e2e-journeys-promo-b0425-through-the-hub-owned-spine-animals actions call@603, call@635, call@789",
+      "quote": "moj-datepicker; data-module=app-accessible-autocomplete; app-commodity-total; app-task-list; app-link-button; notification-list__card-row",
+      "confidence": "verbatim",
+      "note": "app-commodity-total is a bespoke counter tile; app-link-button styles submit buttons as links for POST-only actions (Amend, Copy as new, Create a new notification)."
+    }
+  ]
+}

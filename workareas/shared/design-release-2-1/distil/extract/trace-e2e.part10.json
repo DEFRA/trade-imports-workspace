@@ -1,0 +1,633 @@
+{
+  "source": "trace:e2e",
+  "structure": "Part 10 mined all 14 trace zips its read names, from three spec files in the tests repo's animals project: features/transit-means-scope.spec.ts (1: the transit-countries page is routed only for rail or road; changing the means wipes saved countries [c1ede, worked here as 'scope']), pages/arrival-details.spec.ts (7: renders the page controls [7cfe8]; leaves the arrival details unanswered on load [a7777]; accepts valid arrival details [230ae]; saves a draft and moves on when submitted empty [2893e]; restricts the date picker to one week back and six months ahead [28173]; rejects a typed arrival date outside the allowed window [201d0]; does not save an arrival date outside the allowed window [327f9]) and pages/transited-countries.spec.ts (6: renders the country search and an empty list [09be0]; accepts and persists multiple transited countries [313f8]; removes a country from the list, leaving the others [7fdf3]; transit countries are optional, first attempt timed out [263c1] and retry 1 passed [263c1-retry1]; shows an error summary when Add country is pressed with no country chosen [d89f3]). The three spec files were read in full to know what each test asserts. The bundled trace viewer refuses every zip (TraceVersionError: recorded by a newer Playwright), confirmed again on this run, so each zip was unzipped into this part's work folder and read directly: N-trace.trace (actions and frame-snapshot DOM rendered back to HTML), N-trace.network (the browser's requests) and test.trace (steps and errors). Refs name the trace by its folder hash fragment, then the call id. The run was recorded on 7 October 2026, which fixes the dates seen. Pages in this slice, in the order a user meets them: (1) the notification overview's section '3. Transport and arrival', mined only for the 'Arrival details' and conditional 'Transit countries' task rows and their status tags; (2) Arrival details at /notifications/{ref}/port-of-entry (caption Transport and arrival): arrival date at port of entry (MOJ date picker, window one week back to six months ahead), port of entry (autocomplete over 78 GB ports), means of transport (Airplane, Railway, Road Vehicle, Vessel), transport identification and transport document reference, then Save and continue, Save and return to overview and Cancel and return to overview; its states are blank on load, saved and re-shown, saved empty as a draft, and the out-of-window error (HTTP 400, nothing saved); (3) the transit countries page at /notifications/{ref}/transit-countries (caption Movement, h1 Which countries will the consignment travel through?): an autocomplete country field over 31 European countries, an Add country button, the empty-list text or a table of added countries with Remove buttons, a live status announcement, the 'Enter a country to add' error, and the same button group. What is conditional: the transit countries page and its hub row appear only when the saved means is road (rail per the test title only; no trace picks Railway); Airplane, Vessel and a blank means go straight to Transporter details; changing the means away from road wipes the saved countries. Transporter details is reached here only as the landing page after a save and belongs to another part. The optional-countries test's first attempt never reached this slice's pages: it timed out in beforeEach when the commodities post returned HTTP 500. Network logs show only browser-to-frontend traffic: the port and country lists arrive in the page HTML.",
+  "claims": [
+    {
+      "id": "trace-e2e-p10-001",
+      "statement": "The Arrival details page is reached from the notification overview by the 'Arrival details' task link in section '3. Transport and arrival', which points at the notification's /port-of-entry path.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-trans-c1ede (scope) call@638 hub snapshot; trace animals-e2e-pages-arrival--7cfe8 call@842",
+      "quote": "<H3 class=\"govuk-heading-m\">3. Transport and arrival</H3> ... <A class=\"govuk-link govuk-task-list__link\" href=\"/live-animals/notifications/GBN-AG-26-SE6FEG/port-of-entry\">Arrival details</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-002",
+      "statement": "The Arrival details page has the H1 'Arrival details' under the caption 'Transport and arrival'.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-pages-arrival--7cfe8 call@844 main",
+      "quote": "<SPAN class=\"govuk-caption-l\">Transport and arrival</SPAN> <H1 class=\"govuk-heading-l\">Arrival details</H1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-003",
+      "statement": "The Arrival details page title is 'Arrival details - Import notification service - GOV.UK', prefixed with 'Error: ' when the page shows validation errors.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-pages-arrival--7cfe8 call@844 TITLE; trace animals-e2e-pages-arrival--201d0 call@796 TITLE",
+      "quote": "Arrival details - Import notification service - GOV.UK | Error: Arrival details - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-004",
+      "statement": "Above the caption, the Arrival details page shows a journey strip with a blue 'Draft' tag and the notification reference in bold.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-pages-arrival--7cfe8 call@844 .app-journey-strip",
+      "quote": "<DIV class=\"app-journey-strip govuk-!-margin-bottom-4\"><STRONG class=\"govuk-tag govuk-tag--blue\">Draft</STRONG><SPAN class=\"govuk-body govuk-!-font-weight-bold\">GBN-AG-26-TERB0C</SPAN></DIV>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-005",
+      "statement": "The Arrival details page has a 'Back' link that returns to the notification overview.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-pages-arrival--7cfe8 call@844 .govuk-back-link; trace animals-e2e-pages-arrival--327f9 call@881",
+      "quote": "<A href=\"/live-animals/notifications/GBN-AG-26-TERB0C\" class=\"govuk-back-link\">Back</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-006",
+      "statement": "The first field on Arrival details is a text input 'Arrival date at port of entry' (name arrivalDateAtPort), empty on a new notification.",
+      "kind": "data",
+      "ref": "trace animals-e2e-pages-arrival--7cfe8 call@844 #arrivalDateAtPort",
+      "quote": "<LABEL class=\"govuk-label govuk-label--s\" for=\"arrivalDateAtPort\">Arrival date at port of entry</LABEL> ... <INPUT class=\"govuk-input moj-js-datepicker-input  govuk-input--width-10\" id=\"arrivalDateAtPort\" name=\"arrivalDateAtPort\" type=\"text\" value=\"\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-007",
+      "statement": "The arrival date has the hint 'The expected date of arrival at the port of entry. For example, 7/10/2026'. The example matches the day the run was recorded, so it is probably today's date rather than fixed copy.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-pages-arrival--7cfe8 call@844 #arrivalDateAtPort-hint",
+      "quote": "The expected date of arrival at the port of entry. For example, 7/10/2026",
+      "confidence": "verbatim",
+      "note": "That the example is generated from today's date is inferred: the run was on 7 October 2026 and the hint shows 7/10/2026."
+    },
+    {
+      "id": "trace-e2e-p10-008",
+      "statement": "The arrival date takes a day/month/year date with slashes: '7/11/2026' is accepted, and '07/10/2025' with leading zeros is read as a date, not rejected as malformed.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-pages-arrival--230ae call@822 and call@836; trace animals-e2e-pages-arrival--201d0 call@792 and call@796",
+      "quote": "fill input[name=\"arrivalDateAtPort\"] = 7/11/2026 | fill input[name=\"arrivalDateAtPort\"] = 07/10/2025 -> Arrival date at port of entry must be between 30/9/2026 and 7/4/2027",
+      "confidence": "inferred",
+      "note": "Inferred from what the page accepted and from the out-of-range message (not a format message) for 07/10/2025."
+    },
+    {
+      "id": "trace-e2e-p10-009",
+      "statement": "The arrival date uses the MOJ date picker: a 'Choose date' toggle button beside the input opens a calendar dialog.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-pages-arrival--7cfe8 call@844 second snapshot .moj-datepicker__toggle",
+      "quote": "<BUTTON class=\"moj-datepicker__toggle moj-js-datepicker-toggle\" type=\"button\" aria-haspopup=\"dialog\" aria-controls=\"datepicker-arrivalDateAtPort\" aria-expanded=\"false\"><SPAN class=\"govuk-visually-hidden\">Choose date</SPAN>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-010",
+      "statement": "The date picker dialog has 'Previous year', 'Previous month', 'Next month' and 'Next year' buttons around a month-and-year title (for example 'October 2026'), a Monday-to-Sunday calendar grid, and 'Select' and 'Close' buttons.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-pages-arrival--7cfe8 call@844 second snapshot #datepicker-arrivalDateAtPort",
+      "quote": "Previous year | Previous month | October 2026 | Next month | Next year | Mon Tue Wed Thu Fri Sat Sun | Select | Close",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-011",
+      "statement": "The date picker allows dates from one week before today to six months after today: on 7 October 2026 its minimum was 30/9/2026 and its maximum 7/4/2027.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-pages-arrival--28173 call@766 and call@768; trace animals-e2e-pages-arrival--7cfe8 call@844",
+      "quote": "<DIV class=\"moj-datepicker\" data-module=\"moj-date-picker\" data-min-date=\"30/9/2026\" data-max-date=\"7/4/2027\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-012",
+      "statement": "In the date picker calendar, days before the minimum date are disabled and announced to screen readers as 'Excluded date'.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-pages-arrival--7cfe8 call@844 second snapshot calendar grid",
+      "quote": "<BUTTON type=\"button\" aria-disabled=\"true\" data-testid=\"28/9/2026\"><SPAN class=\"govuk-visually-hidden\">Excluded date, Monday 28 September 2026</SPAN>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-013",
+      "statement": "The second field on Arrival details is 'Port of entry' (name portOfEntry), a select enhanced into a type-ahead autocomplete that shows all values and starts with no port chosen.",
+      "kind": "data",
+      "ref": "trace animals-e2e-pages-arrival--7cfe8 call@844 #portOfEntry",
+      "quote": "<LABEL class=\"govuk-label govuk-label--s\" for=\"portOfEntry\">Port of entry</LABEL> ... <SELECT class=\"govuk-select\" id=\"portOfEntry\" name=\"portOfEntry\" data-module=\"app-accessible-autocomplete\" data-min-length=\"0\" data-show-all-values=\"true\" data-auto-select=\"false\" data-default-value=\"\" data-no-results=\"No ports found\"><OPTION value=\"\">Select port of entry</OPTION>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-014",
+      "statement": "Port of entry has the hint 'Choose where the transporter will enter with the consignment. Start typing to search by port or airport name or code.'",
+      "kind": "copy",
+      "ref": "trace animals-e2e-pages-arrival--7cfe8 call@844 #portOfEntry-hint",
+      "quote": "Choose where the transporter will enter with the consignment. Start typing to search by port or airport name or code.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-015",
+      "statement": "When the typed text matches no port, the port autocomplete says 'No ports found'.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-pages-arrival--7cfe8 call@844 #portOfEntry data-no-results",
+      "quote": "data-no-results=\"No ports found\"",
+      "confidence": "verbatim",
+      "note": "Configured on the element; no test typed a non-matching port, so the message was never seen rendered."
+    },
+    {
+      "id": "trace-e2e-p10-016",
+      "statement": "The port of entry list is 78 GB ports and airports, each shown as name then code in brackets, sorted by name: the first twenty are Aberdeen Airport (GB DYC), Aberdeen Harbour (GB ABD), Avonmouth Docks (GB AVO), Ayr Port (GB AYR), Barking Port (GB BKG), Birmingham International Airport (GB BHM), Cambridge Airport (GB CBG), Chatham Docks (GB CTM), Coventry Airport (GB CVT), Dartford, Thames Europort (GB DFD), Dundee Port (GB DUN), East Midlands Airport (GB EMA), Edinburgh Airport (GB EDI), Farnborough Airport (GB FBO), Felixstowe Port (GB FXT), Fishguard Port (GB FIS), Folkestone (GB FOL), Fraserburgh Harbour (GB FRB), Gatwick Airport (GB LGW) and Glasgow Airport (GB GLW). The list is truncated here; it is reference data.",
+      "kind": "data",
+      "ref": "trace animals-e2e-pages-arrival--7cfe8 call@844 #portOfEntry options",
+      "quote": "<OPTION value=\"GB DYC\">Aberdeen Airport (GB DYC)</OPTION> <OPTION value=\"GB ABD\">Aberdeen Harbour (GB ABD)</OPTION> ... <OPTION value=\"GB TILL\">Tilbury Port (GB TILL)</OPTION>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-017",
+      "statement": "The port list contains data-quality oddities as rendered: two entries named 'Pembroke Port' (GB PED and GB PEM), two named 'Port of Sheerness' (codes 'GBSHS' with no space and 'GB SHS'), 'Portsmouth  Port' with a double space, 'Teestort', and 'TILBURY' in capitals.",
+      "kind": "data",
+      "ref": "trace animals-e2e-pages-arrival--7cfe8 call@844 #portOfEntry options",
+      "quote": "<OPTION value=\"GB PED\">Pembroke Port (GB PED)</OPTION> <OPTION value=\"GB PEM\">Pembroke Port (GB PEM)</OPTION> ... <OPTION value=\"GBSHS\">Port of Sheerness (GBSHS)</OPTION> <OPTION value=\"GB SHS\">Port of Sheerness (GB SHS)</OPTION> ... <OPTION value=\"GB PME\">Portsmouth  Port (GB PME)</OPTION> ... <OPTION value=\"GB TIL\">TILBURY (GB TIL)</OPTION> ... <OPTION value=\"GB TEE\">Teestort (GB TEE)</OPTION>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-018",
+      "statement": "The user picks a port by typing its name into the autocomplete and choosing the matching option; the form submits the port code (for example 'GB ABD').",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-pages-arrival--230ae call@824 to call@828; scope trace network POST /port-of-entry",
+      "quote": "fill internal:label=\"Port of entry\"s = Aberdeen Harbour (GB ABD) | click internal:role=option[name=\"Aberdeen Harbour (GB ABD)\"s] | {\"name\":\"portOfEntry\",\"value\":\"GB ABD\"}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-019",
+      "statement": "The third field on Arrival details is 'Means of transport to the port of entry' (name meansOfTransport), a plain select with no hint, defaulting to 'Select one' with an empty value.",
+      "kind": "data",
+      "ref": "trace animals-e2e-pages-arrival--7cfe8 call@844 #meansOfTransport; trace animals-e2e-pages-arrival--a7777 call@657",
+      "quote": "<LABEL class=\"govuk-label govuk-label--s\" for=\"meansOfTransport\">Means of transport to the port of entry</LABEL> <SELECT class=\"govuk-select\" id=\"meansOfTransport\" name=\"meansOfTransport\"><OPTION value=\"\">Select one</OPTION>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-020",
+      "statement": "The means of transport options are Airplane (AIRPLANE), Railway (RAILWAY), Road Vehicle (ROAD_VEHICLE) and Vessel (VESSEL).",
+      "kind": "data",
+      "ref": "trace animals-e2e-pages-arrival--7cfe8 call@844 #meansOfTransport options",
+      "quote": "<OPTION value=\"AIRPLANE\">Airplane</OPTION> <OPTION value=\"RAILWAY\">Railway</OPTION> <OPTION value=\"ROAD_VEHICLE\">Road Vehicle</OPTION> <OPTION value=\"VESSEL\">Vessel</OPTION>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-021",
+      "statement": "The fourth field on Arrival details is a text input 'Transport identification' (name transportIdentification).",
+      "kind": "data",
+      "ref": "trace animals-e2e-pages-arrival--7cfe8 call@844 #transportIdentification",
+      "quote": "<LABEL class=\"govuk-label govuk-label--s\" for=\"transportIdentification\">Transport identification</LABEL> ... <INPUT class=\"govuk-input govuk-!-width-one-half\" id=\"transportIdentification\" name=\"transportIdentification\" type=\"text\" value=\"\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-022",
+      "statement": "Transport identification has a hint with a bulleted list: 'To identify the means of transport, enter (one of the following):' flight number, train number, road vehicle registration number, vessel name (for ferries, also the road vehicle registration number).",
+      "kind": "copy",
+      "ref": "trace animals-e2e-pages-arrival--7cfe8 call@844 #transportIdentification-hint",
+      "quote": "To identify the means of transport, enter (one of the following): flight number | train number | road vehicle registration number | vessel name (for ferries, also the road vehicle registration number)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-023",
+      "statement": "The fifth field on Arrival details is a text input 'Transport document reference' (name transportDocumentReference).",
+      "kind": "data",
+      "ref": "trace animals-e2e-pages-arrival--7cfe8 call@844 #transportDocumentReference",
+      "quote": "<LABEL class=\"govuk-label govuk-label--s\" for=\"transportDocumentReference\">Transport document reference</LABEL> ... <INPUT class=\"govuk-input govuk-!-width-one-half\" id=\"transportDocumentReference\" name=\"transportDocumentReference\" type=\"text\" value=\"\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-024",
+      "statement": "Transport document reference has the hint 'Enter the reference number on the air waybill, bill of lading, sea waybill, road consignment note (CMR) or other transport document.'",
+      "kind": "copy",
+      "ref": "trace animals-e2e-pages-arrival--7cfe8 call@844 #transportDocumentReference-hint",
+      "quote": "Enter the reference number on the air waybill, bill of lading, sea waybill, road consignment note (CMR) or other transport document.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-025",
+      "statement": "Arrival details ends with a button group: a primary 'Save and continue' button, a secondary 'Save and return to overview' button, and a 'Cancel and return to overview' link to the overview.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-pages-arrival--7cfe8 call@844 .govuk-button-group",
+      "quote": "<BUTTON type=\"submit\" class=\"govuk-button\">Save and continue</BUTTON> <BUTTON type=\"submit\" value=\"hub\" name=\"exit\" class=\"govuk-button govuk-button--secondary\">Save and return to overview</BUTTON> <A class=\"govuk-link\" href=\"/live-animals/notifications/GBN-AG-26-TERB0C\">Cancel and return to overview</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-026",
+      "statement": "On a new notification, every arrival details field starts unanswered: no date, no port, no means of transport and empty text inputs.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-pages-arrival--a7777 call@653 to call@657; trace animals-e2e-pages-arrival--7cfe8 call@844",
+      "quote": "expect internal:label=\"Means of transport to the port of entry\"s to.have.value \"\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-027",
+      "statement": "Arrival details is one form post of all five fields together with a hidden concurrency token (the CSRF crumb is also posted).",
+      "kind": "integration",
+      "ref": "trace animals-e2e-features-trans-c1ede network POST /live-animals/notifications/GBN-AG-26-SE6FEG/port-of-entry",
+      "quote": "[{\"name\":\"crumb\",\"value\":\"[REDACTED]\"},{\"name\":\"concurrencyToken\",\"value\":\"3\"},{\"name\":\"arrivalDateAtPort\",\"value\":\"7/11/2026\"},{\"name\":\"portOfEntry\",\"value\":\"GB ABD\"},{\"name\":\"meansOfTransport\",\"value\":\"AIRPLANE\"},{\"name\":\"transportIdentification\",\"value\":\"FR-892-LK\"},{\"name\":\"transportDocumentReference\",\"value\":\"CMR-2026-884721\"}]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-028",
+      "statement": "Submitting valid arrival details with Save and continue shows no error summary and moves on.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-pages-arrival--230ae call@836 and call@838; network POST /port-of-entry 302",
+      "quote": "expect internal:role=heading[name=\"There is a problem\"i] n=0 | POST .../port-of-entry 302 -> .../transit-countries",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-029",
+      "statement": "A draft can be saved from Arrival details with every field blank: Save and continue on an empty page shows no error and goes on to 'Transporter details'.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-pages-arrival--2893e call@738 to call@742; network POST /port-of-entry 302 -> /transporters",
+      "quote": "expect internal:role=heading[name=\"There is a problem\"i] n=0 | expect internal:role=heading[level=1][name=\"Transporter details\"i] | {\"name\":\"arrivalDateAtPort\",\"value\":\"\"} ... 302 /transporters",
+      "confidence": "verbatim",
+      "note": "The spec says presence is a completeness rule enforced when the trader continues the notification, not on this page; this slice holds no trace of that."
+    },
+    {
+      "id": "trace-e2e-p10-030",
+      "statement": "A typed arrival date outside the window (one year in the past here) is rejected: the page re-renders with the error summary 'There is a problem' and the message 'Arrival date at port of entry must be between 30/9/2026 and 7/4/2027', the window's two ends in the message.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-pages-arrival--201d0 call@796 to call@802",
+      "quote": "Arrival date at port of entry must be between 30/9/2026 and 7/4/2027",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-031",
+      "statement": "The out-of-window error summary's single link points to the arrival date input.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-pages-arrival--201d0 call@796 .govuk-error-summary",
+      "quote": "<A href=\"#arrivalDateAtPort\">Arrival date at port of entry must be between 30/9/2026 and 7/4/2027</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-032",
+      "statement": "The out-of-window message also shows inline above the arrival date input, prefixed with a visually hidden 'Error:', and the input and form group take the GOV.UK error styling.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-pages-arrival--201d0 call@796 #arrivalDateAtPort-error",
+      "quote": "<P id=\"arrivalDateAtPort-error\" class=\"govuk-error-message\"><SPAN class=\"govuk-visually-hidden\">Error:</SPAN> Arrival date at port of entry must be between 30/9/2026 and 7/4/2027</P>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-033",
+      "statement": "The rejected post returns HTTP 400 and keeps the user on Arrival details with everything they entered still filled in, the rejected date included.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-pages-arrival--201d0 network POST /port-of-entry 400; call@796 field values",
+      "quote": "value=\"07/10/2025\" ... <OPTION value=\"GB ABD\" selected=\"\">Aberdeen Harbour (GB ABD) ... <OPTION value=\"ROAD_VEHICLE\" selected=\"\">Road Vehicle ... value=\"FR-892-LK\" ... value=\"CMR-2026-884721\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-034",
+      "statement": "When the arrival date is out of window nothing on the page is saved, not even the valid fields: after Back and back in through the overview, the date, transport identification and document reference are empty and the hub row still reads 'To do'.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-pages-arrival--327f9 call@883 hub and call@885 page",
+      "quote": "<STRONG class=\"govuk-tag govuk-tag--blue\">To do</STRONG> | id=\"arrivalDateAtPort\" ... value=\"\" | id=\"transportIdentification\" ... value=\"\" | id=\"transportDocumentReference\" ... value=\"\"",
+      "confidence": "verbatim",
+      "note": "The spec only asserts the date was not saved; the blank valid fields and unchanged concurrency token (3) are what the trace shows besides."
+    },
+    {
+      "id": "trace-e2e-p10-035",
+      "statement": "Saved arrival details come back filled in when the user returns to the page: date, selected port, selected means, transport identification and document reference.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-trans-c1ede call@574",
+      "quote": "value=\"7/11/2026\" | <OPTION value=\"GB ABD\" selected=\"\">Aberdeen Harbour (GB ABD) | <OPTION value=\"AIRPLANE\" selected=\"\">Airplane | value=\"FR-892-LK\" | value=\"CMR-2026-884721\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-036",
+      "statement": "Once arrival details are saved complete, the hub 'Arrival details' row shows a green 'Complete' tag; before that it shows a blue 'To do' tag.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-trans-c1ede call@570 hub; trace animals-e2e-pages-arrival--327f9 call@883 hub",
+      "quote": "Arrival details ... <STRONG class=\"govuk-tag govuk-tag--green\">Complete</STRONG> | Arrival details ... <STRONG class=\"govuk-tag govuk-tag--blue\">To do</STRONG>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-037",
+      "statement": "When the means of transport is Airplane, Save and continue on Arrival details skips the transit countries page and goes straight to Transporter details.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-features-trans-c1ede call@564 and call@566; network POST /port-of-entry 302 -> /transporters",
+      "quote": "selectOption ... [{\"label\":\"Airplane\"}] | expect internal:role=heading[level=1][name=\"Transporter details\"i]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-038",
+      "statement": "When the means of transport is Vessel, Save and continue on Arrival details skips the transit countries page and goes straight to Transporter details.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-features-trans-c1ede call@660 and call@662",
+      "quote": "selectOption ... [{\"label\":\"Vessel\"}] | expect internal:role=heading[level=1][name=\"Transporter details\"i]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-039",
+      "statement": "When the means of transport is Road Vehicle, Save and continue on Arrival details goes to 'Which countries will the consignment travel through?'.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-features-trans-c1ede call@592 and call@594; network POST /port-of-entry 302 -> /transit-countries",
+      "quote": "selectOption ... [{\"label\":\"Road Vehicle\"}] | expect internal:role=heading[level=1][name=\"Which countries will the consignment travel through?\"i]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-040",
+      "statement": "No trace chooses Railway, so the claim that the transit countries page is routed for rail as well as road rests only on the test's title, not on anything rendered.",
+      "kind": "rule",
+      "ref": "transit-means-scope.spec.ts:4 test title; no trace selects Railway",
+      "quote": "the transit-countries page is routed only for rail or road; changing the means wipes saved countries",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p10-041",
+      "statement": "When no means of transport is given (blank save), Arrival details goes to Transporter details, skipping transit countries.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-pages-arrival--2893e network POST /port-of-entry 302 -> /transporters",
+      "quote": "{\"name\":\"meansOfTransport\",\"value\":\"\"} ... 302 http://localhost:3000/live-animals/notifications/GBN-AG-26-HFYK8T/transporters",
+      "confidence": "inferred",
+      "note": "The routing outcome is seen; that the blank means is why transit is skipped follows from the Airplane and Vessel routing."
+    },
+    {
+      "id": "trace-e2e-p10-042",
+      "statement": "The hub shows a 'Transit countries' task row in section 3, between 'Arrival details' and 'Transport details', only when the saved means is road; with Airplane or Vessel saved the row is absent.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-features-trans-c1ede call@570 (no row), call@638 (row), call@668 (no row)",
+      "quote": "expect .govuk-task-list__item >> internal:has-text=\"Transit countries\"i n=0 | <A class=\"govuk-link govuk-task-list__link\" href=\"/live-animals/notifications/GBN-AG-26-SE6FEG/transit-countries\">Transit countries</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-043",
+      "statement": "After two transit countries are saved, the hub 'Transit countries' row shows a green 'Complete' tag.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-trans-c1ede call@638 and call@640",
+      "quote": "Transit countries ... <STRONG class=\"govuk-tag govuk-tag--green\">Complete</STRONG>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-044",
+      "statement": "No trace shows the hub 'Transit countries' row status when the means is road but no countries are saved, so whether an empty list reads Complete or To do is not shown.",
+      "kind": "behaviour",
+      "ref": "transited-countries.spec.ts:36 and transit-means-scope.spec.ts; no hub snapshot for road with no countries",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p10-045",
+      "statement": "Changing the means from road to a non-overland means (Vessel) and saving deletes the saved transit countries: switching back to Road Vehicle shows the transit page with an empty list and 'You have not added any countries yet.'",
+      "kind": "rule",
+      "ref": "trace animals-e2e-features-trans-c1ede call@660, call@688 to call@694, call@690 snapshot",
+      "quote": "expect internal:role=cell[name=\"France\"s] n=0 | expect internal:role=cell[name=\"Belgium\"s] n=0 | <P class=\"govuk-body\">You have not added any countries yet.</P>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-046",
+      "statement": "The transit countries page lives at the notification's /transit-countries path and has the H1 'Which countries will the consignment travel through?' under the caption 'Movement'.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-features-trans-c1ede call@594 main",
+      "quote": "<SPAN class=\"govuk-caption-l\">Movement</SPAN> <H1 class=\"govuk-heading-l\">Which countries will the consignment travel through?</H1>",
+      "confidence": "verbatim",
+      "note": "The page caption is 'Movement' while the hub row sits under '3. Transport and arrival' and is labelled 'Transit countries'."
+    },
+    {
+      "id": "trace-e2e-p10-047",
+      "statement": "The transit countries page title is 'Which countries will the consignment travel through? - Import notification service - GOV.UK', prefixed 'Error: ' in the error state.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-features-trans-c1ede call@594 TITLE; trace animals-e2e-pages-transite-d89f3 call@1419 TITLE",
+      "quote": "Which countries will the consignment travel through? - Import notification service - GOV.UK | Error: Which countries will the consignment travel through? - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-048",
+      "statement": "The transit countries page has the same Draft journey strip and a 'Back' link to the overview as other journey pages.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-features-trans-c1ede call@594",
+      "quote": "<A href=\"/live-animals/notifications/GBN-AG-26-SE6FEG\" class=\"govuk-back-link\">Back</A> ... <STRONG class=\"govuk-tag govuk-tag--blue\">Draft</STRONG> <SPAN class=\"govuk-body govuk-!-font-weight-bold\">GBN-AG-26-SE6FEG</SPAN>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-049",
+      "statement": "Below the heading the transit page explains: 'Countries the consignment will travel through are countries between the country of origin and the destination country.' and 'This does not include the United Kingdom.'",
+      "kind": "copy",
+      "ref": "trace animals-e2e-features-trans-c1ede call@594 main paragraphs",
+      "quote": "Countries the consignment will travel through are countries between the country of origin and the destination country. | This does not include the United Kingdom.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-050",
+      "statement": "The transit page has one country field labelled 'Enter a country' (name transitedCountry) with the hint 'Enter each country that the consignment will travel through', a select enhanced into a show-all-values autocomplete with the placeholder option 'Search for a country'.",
+      "kind": "data",
+      "ref": "trace animals-e2e-features-trans-c1ede call@594 #transitedCountry",
+      "quote": "<LABEL class=\"govuk-label govuk-label--s\" for=\"transitedCountry\">Enter a country</LABEL> <DIV id=\"transitedCountry-hint\" class=\"govuk-hint\">Enter each country that the consignment will travel through</DIV> ... <OPTION value=\"\">Search for a country</OPTION>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-051",
+      "statement": "When the typed text matches no country, the country autocomplete says 'No countries found'.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-features-trans-c1ede call@594 #transitedCountry-select data-no-results",
+      "quote": "data-no-results=\"No countries found\"",
+      "confidence": "verbatim",
+      "note": "Configured on the element; never seen rendered."
+    },
+    {
+      "id": "trace-e2e-p10-052",
+      "statement": "The transit country list holds 31 European countries, by ISO code: Austria, Belgium, Bulgaria, Croatia, Cyprus, Czechia, Denmark, Estonia, Finland, France, Germany, Greece, Hungary, Iceland, Ireland, Italy, Latvia, Liechtenstein, Lithuania, Luxembourg, Malta, Netherlands (the), Norway, Poland, Portugal, Romania, Slovakia, Slovenia, Spain, Sweden, Switzerland (the EU plus Iceland, Liechtenstein, Norway and Switzerland).",
+      "kind": "data",
+      "ref": "trace animals-e2e-features-trans-c1ede call@594 #transitedCountry-select options",
+      "quote": "<OPTION value=\"AT\">Austria</OPTION> <OPTION value=\"BE\">Belgium</OPTION> ... <OPTION value=\"NL\">Netherlands (the)</OPTION> ... <OPTION value=\"CH\">Switzerland</OPTION>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-053",
+      "statement": "Countries are added one at a time: the user types a country, chooses it from the autocomplete and presses the secondary 'Add country' button, which submits the form and re-renders the page with the country in the list.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-pages-transite-313f8 call@1279 to call@1287; network POST /transit-countries action=add 200",
+      "quote": "<BUTTON type=\"submit\" value=\"add\" name=\"action\" class=\"govuk-button govuk-button--secondary\">Add country</BUTTON>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-054",
+      "statement": "Before any country is added, the page shows 'You have not added any countries yet.' in place of the list.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-features-trans-c1ede call@594; trace animals-e2e-pages-transite-263c1-retry1 call@116",
+      "quote": "You have not added any countries yet.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-055",
+      "statement": "Added countries show in a table with a visually hidden caption 'Countries you have added', a 'Country' column and a visually hidden 'Actions' column, one row per country in the order added.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-features-trans-c1ede call@630 table",
+      "quote": "<CAPTION class=\"govuk-table__caption govuk-visually-hidden\">Countries you have added</CAPTION> ... <TH scope=\"col\" class=\"govuk-table__header\">Country</TH> <TH scope=\"col\" class=\"govuk-table__header\"><SPAN class=\"govuk-visually-hidden\">Actions</SPAN></TH> ... France ... Belgium",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-056",
+      "statement": "Each country row has a 'Remove' button styled as a link, whose accessible name includes the country (for example 'Remove France').",
+      "kind": "copy",
+      "ref": "trace animals-e2e-features-trans-c1ede call@630; trace animals-e2e-pages-transite-7fdf3 call@1298",
+      "quote": "<BUTTON type=\"submit\" class=\"govuk-link app-link-button\" name=\"action\" value=\"remove:FR\">Remove<SPAN class=\"govuk-visually-hidden\"> France</SPAN></BUTTON>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-057",
+      "statement": "Pressing Remove on one country takes only that country out of the list and leaves the others.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-pages-transite-7fdf3 call@1298 to call@1302, call@1300 snapshot",
+      "quote": "click internal:role=button[name=\"Remove France\"i] | expect internal:role=cell[name=\"France\"s] n=0 | expect internal:role=cell[name=\"Belgium\"s]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-058",
+      "statement": "After an add or a remove, a polite live region announces the change to screen readers, for example 'Belgium added.' or 'France removed.'",
+      "kind": "copy",
+      "ref": "trace animals-e2e-features-trans-c1ede call@630 #transit-countries-status; trace animals-e2e-pages-transite-7fdf3 call@1300",
+      "quote": "data-module=\"app-status-announcer\" data-message=\"Belgium added.\" | data-message=\"France removed.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-059",
+      "statement": "Adding or removing a country does not save it: the list is carried in hidden form fields between posts, the concurrency token does not change, and the list is only saved when the user presses Save and continue.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-pages-transite-313f8 network POSTs /transit-countries; call@1311 concurrencyToken 5",
+      "quote": "{\"name\":\"concurrencyToken\",\"value\":\"4\"},{\"name\":\"transitedCountries\",\"value\":\"FR\"},{\"name\":\"transitedCountry\",\"value\":\"BE\"},{\"name\":\"action\",\"value\":\"add\"} | <INPUT type=\"hidden\" name=\"transitedCountries\" value=\"FR\">",
+      "confidence": "inferred",
+      "note": "Inferred from the hidden fields and the token staying at 4 across adds and removes, rising to 5 only after Save and continue. No trace leaves the page without saving after an add, so the loss of unsaved countries is not directly shown."
+    },
+    {
+      "id": "trace-e2e-p10-060",
+      "statement": "Pressing 'Add country' with no country chosen shows the error summary 'There is a problem' with the message 'Enter a country to add', linked to the country field.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-pages-transite-d89f3 call@1417 to call@1421, call@1419 snapshot",
+      "quote": "<A href=\"#transitedCountry\">Enter a country to add</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-061",
+      "statement": "The 'Enter a country to add' message also shows inline above the country field with a visually hidden 'Error:' prefix, and the post returns HTTP 400.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-pages-transite-d89f3 call@1419 #transitedCountry-error; network POST /transit-countries 400",
+      "quote": "<P id=\"transitedCountry-error\" class=\"govuk-error-message\"><SPAN class=\"govuk-visually-hidden\">Error:</SPAN> Enter a country to add</P>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-062",
+      "statement": "Transit countries are optional: Save and continue with no countries added raises no error and goes on to Transporter details, and returning shows the empty-list text and no rows.",
+      "kind": "rule",
+      "ref": "trace animals-e2e-pages-transite-263c1-retry1 call@108 to call@118; network POST /transit-countries 302 -> /transporters",
+      "quote": "expect internal:role=heading[level=1][name=\"Transporter details\"i] | expect internal:role=heading[name=\"There is a problem\"i] n=0 | expect internal:text=\"You have not added any countries yet.\"i",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-063",
+      "statement": "Saving two transit countries persists them: after Save and continue (which goes to Transporter details), reopening the transit page lists France then Belgium.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-pages-transite-313f8 call@1307 to call@1315, call@1311 snapshot",
+      "quote": "<TD class=\"govuk-table__cell\">France</TD> ... <TD class=\"govuk-table__cell\">Belgium</TD>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-064",
+      "statement": "The transit page ends with the same button group as Arrival details: 'Save and continue', 'Save and return to overview' and the 'Cancel and return to overview' link.",
+      "kind": "copy",
+      "ref": "trace animals-e2e-features-trans-c1ede call@594 .govuk-button-group",
+      "quote": "Save and continue | Save and return to overview | Cancel and return to overview",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-065",
+      "statement": "Save and continue from the transit countries page goes to Transporter details.",
+      "kind": "behaviour",
+      "ref": "trace animals-e2e-features-trans-c1ede call@632 and call@634",
+      "quote": "expect internal:role=heading[level=1][name=\"Transporter details\"i]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-066",
+      "statement": "No trace presses 'Save and return to overview' or 'Cancel and return to overview' on either page, so what they save and where they land is not shown.",
+      "kind": "behaviour",
+      "ref": "all 14 traces in part 10: no action on these controls",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p10-067",
+      "statement": "No trace drives a validation error on port of entry, means of transport, transport identification or transport document reference (format, length or an unknown port), so any rules on those fields are not shown.",
+      "kind": "rule",
+      "ref": "arrival-details.spec.ts; all 7 arrival traces",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p10-068",
+      "statement": "Only a date a year in the past is tried; no trace types a date beyond six months ahead, a date on either boundary, or a date that is not a real date, so the upper bound, inclusivity and any format error message are not shown in use.",
+      "kind": "rule",
+      "ref": "arrival-details.spec.ts:56 and :67; traces 201d0 and 327f9",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p10-069",
+      "statement": "No trace adds the same country twice or tries to add more countries than some limit, so duplicate handling and any maximum are not shown.",
+      "kind": "rule",
+      "ref": "transited-countries.spec.ts; all 6 transited-countries traces",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p10-070",
+      "statement": "No trace opens the date picker dialog and picks a date with it; every test types the date into the input.",
+      "kind": "behaviour",
+      "ref": "all 7 arrival traces: fill input[name=\"arrivalDateAtPort\"]",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p10-071",
+      "statement": "The port and country lists arrive rendered into the page HTML; the browser makes no separate lookup call for them, and only form posts to the frontend appear in the network log.",
+      "kind": "integration",
+      "ref": "trace animals-e2e-features-trans-c1ede 1-trace.network (non-static requests)",
+      "quote": "GET http://localhost:3000/live-animals/notifications/GBN-AG-26-SE6FEG/port-of-entry 200 | POST .../port-of-entry 302 | GET .../transit-countries 200 | POST .../transit-countries 200",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-072",
+      "statement": "Where the frontend gets the port of entry list and the transit country list, and how it saves arrival details and transit countries to the backend, is not visible: the trace records the browser's traffic only.",
+      "kind": "integration",
+      "ref": "all 14 traces' 1-trace.network",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-e2e-p10-073",
+      "statement": "Each journey form carries a hidden concurrency token that rises with each saved change to the notification (3 on first arrival save, up to 8 by the end of the scope test), suggesting optimistic concurrency on saves.",
+      "kind": "non-functional",
+      "ref": "trace animals-e2e-features-trans-c1ede POST /port-of-entry concurrencyToken 3, 4, 6, 7; call@690 concurrencyToken 8",
+      "quote": "<INPUT type=\"hidden\" name=\"concurrencyToken\" value=\"8\">",
+      "confidence": "inferred",
+      "note": "No trace shows a conflict, so what happens on a stale token is not shown."
+    },
+    {
+      "id": "trace-e2e-p10-074",
+      "statement": "The first attempt at 'transit countries are optional' timed out in setup before reaching this slice's pages: the commodity search post returned HTTP 500 and a 'Something went wrong' page, so the 'Bos taurus' checkbox never appeared and the 30-second test timeout fired in beforeEach. The retry passed.",
+      "kind": "non-functional",
+      "ref": "trace animals-e2e-pages-transite-263c1 (first attempt) test.trace errors; network POST /commodities 500; resources/b49ae3c1a16d40f30370021de869a17e36315956.html",
+      "quote": "Test timeout of 30000ms exceeded while running \"beforeEach\" hook. | Error: locator.check: Test timeout of 30000ms exceeded. waiting for getByRole('checkbox', { name: 'Bos taurus' }) | <title>Something went wrong - Import notification service - GOV.UK | <h1 class=\"govuk-heading-l\">500 | <p class=\"govuk-body\">Something went wrong",
+      "confidence": "verbatim",
+      "note": "The failure is in the commodities step, not arrival or transit; recorded because the brief puts the failed attempt in scope. The cause of the 500 is not in the browser trace."
+    },
+    {
+      "id": "trace-e2e-p10-075",
+      "statement": "The arrival date uses the MOJ Pattern Library date picker (moj-datepicker), which sits outside govuk-frontend; GOV.UK's own pattern for a known date is the Date input with day, month and year boxes.",
+      "kind": "constraint",
+      "ref": "trace animals-e2e-pages-arrival--7cfe8 call@844 .moj-datepicker",
+      "quote": "<DIV class=\"moj-datepicker\" data-module=\"moj-date-picker\" ...><DIV class=\"govuk-form-group app-date-picker\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-076",
+      "statement": "Port of entry and transit country use an app module (app-accessible-autocomplete) that turns a govuk-select into an accessible-autocomplete combobox; this is not a govuk-frontend component.",
+      "kind": "constraint",
+      "ref": "trace animals-e2e-pages-arrival--7cfe8 call@844 second snapshot; trace animals-e2e-features-trans-c1ede call@594",
+      "quote": "<SELECT class=\"govuk-select\" id=\"portOfEntry-select\" name=\"portOfEntry\" data-module=\"app-accessible-autocomplete\" style=\"display: none;\"> ... <INPUT class=\"autocomplete__input autocomplete__input--show-all-values\" id=\"portOfEntry\" role=\"combobox\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-e2e-p10-077",
+      "statement": "The transit page's Remove control is a submit button styled as a link (app-link-button), and its live announcements use an app module (app-status-announcer); neither is a govuk-frontend component. The rest of both pages uses govuk-frontend classes: Back link, Tag, caption, Hint, Input, Select, Table, Button group, Error summary and Error message.",
+      "kind": "constraint",
+      "ref": "trace animals-e2e-features-trans-c1ede call@630 main classes",
+      "quote": "class=\"govuk-link app-link-button\" | data-module=\"app-status-announcer\" | class=\"app-journey-strip govuk-!-margin-bottom-4\"",
+      "confidence": "verbatim"
+    }
+  ]
+}

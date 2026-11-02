@@ -79,11 +79,13 @@ repos         the backlog envelope's `repos` map, whatever its keys, copied
               No entry carries requireApproval, the workspace's included
 models        {} for the recommended split, pass that unless the user asks
               for something else. Three tiers, each optional. think (default
-              opus) plans and judges: plan, plan review, judge, the
-              consistency reviewer, and a theme's engineering reviewers
-              and judge.
+              opus) plans and judges: plan (a fast row's plan goes to the
+              code tier instead), plan review, judge, the consistency
+              reviewer, the one reviewer a fast row's whole change gets,
+              and a theme's engineering reviewers and judge.
               code (default sonnet) writes and repairs code: implement, the
-              per-group style and code reviewers, the finding verifiers, fix,
+              per-group style and code reviewers the row's rigour runs, the
+              finding verifiers, fix,
               the style re-review of the fix, the ladder, CI fix, the style
               review of a CI fix and its style fix, and a theme's fixer and
               ladder. light (default haiku) runs a command and
@@ -91,7 +93,76 @@ models        {} for the recommended split, pass that unless the user asks
               included. A tier left out takes
               its default; 'inherit' uses the session model instead. heavy is
               a deprecated alias for setting think and code together
+e2e           where a row's end-to-end proof comes from: local (the gate's e2e
+              phase against the workspace stack) or ci (no local e2e, no stack
+              lease, no images built; the baseline reads each repo's open pull
+              request with `gh pr checks`). Settle it at the launch from what
+              this machine can do, and say which evidence decided it — see
+              "Choosing e2e" below
+resumeFrom    the earliest stage the FIRST row may enter at: null (default) to
+              take it from the row's own attempt record, or build to ignore
+              that record and rebuild the row from the top. Set build when a
+              row has stopped twice at the same stage and the preserved work
+              is suspect; leave it null otherwise — see "Resuming a row" below
+rigour        how much of the pipeline every row of this run gets: full (the
+              whole pipeline), standard (one plan review, and style
+              reviewed across the theme rather than per row) or fast (a code-tier plan, no plan review and one
+              code reviewer across the whole change). Default standard; pass
+              that unless the user asks otherwise. One value governs the
+              whole run, and a row may carry its own, which wins for that
+              row. Nothing has to be set per row — see "Choosing rigour"
+              below
 ```
+
+### Resuming a row
+
+A row that stopped before it landed carries an `attempt` record, and the next
+launch restores its work, proves it with the gate's unit and FIT phases, reads
+its reviewed plan back, and enters the pipeline at the stage the attempt
+reached. A relaunch therefore costs the ladder rather than the whole pipeline.
+Nothing to set up: it happens from what the backlog already records.
+
+Where the work is not on this machine, or will not go green, the row drops back
+on its own — to the top, or to the implementor. `resumeFrom: 'build'` is for the
+case where you want the record ignored anyway.
+
+Record `resumeFrom` in `build-args.json` with the rest, but **default it back to
+null on a relaunch** rather than carrying last time's value over, which is the
+opposite of what `e2e` does. `e2e` is a property of the machine; a forced
+`resumeFrom` is an answer to one specific stop, and carrying it into the next
+launch would silently rebuild rows that had nothing wrong with them.
+
+### Choosing e2e
+
+This is the one parameter to work out from the machine rather than the backlog.
+Run each, one call per command:
+
+```
+docker info --format '{{.NCPU}} CPUs, {{.MemTotal}} bytes'
+ls config/machine.json
+tim docker lease status --json
+```
+
+Recommend `ci` when Docker holds under half the machine's memory, or when
+`config/machine.json` is absent so `tim build tune --write` has never run here,
+and say which of the two decided it. Recommend `local` otherwise. Give the
+recommendation and its evidence rather than asking cold.
+
+A `ci` run leaves the end-to-end proof to the pull requests, which run each
+repo's own domain plus the specs elsewhere carrying its service tag
+(`config/e2e-tests-pr-scope.json`), and CDP runs each service's whole family
+after deployment. The loop still stops at `ci-red`.
+
+Record the answer in the theme's `build-args.json` so a relaunch after a stop
+defaults to it and needs a confirm rather than the question again. A relaunch is
+the moment to change it: a stack failure, or a unit rung timing out in files
+that pass alone, both say `ci`.
+
+Every `build-args.json` written before this parameter existed lacks it, and the
+loop stops before its first agent naming the missing key. That is deliberate
+rather than a migration left undone: the right value depends on the machine the
+launch runs on, and a theme can move between machines, so no value was guessed
+on anyone's behalf. Work it out from the three commands above and add it.
 
 A `lifecycle: 'full'` run goes ticket → branch → build → PR → CI → merge → ticket
 done. A `lifecycle: 'branch'` run goes branch check → build → push → find the
@@ -108,9 +179,19 @@ consistency reviewer across the whole change, a verifier that tries to refute
 every functional finding and keeps every code-quality finding that code does
 not prove wrong, a judge that rules every survivor fix-now, defer or reject,
 a style re-review of the fixer's own hunks, and a style review of every commit a CI fixer
-pushes, without a human in the loop. **That multi-agent
-review, verification and judgement IS the review.** A GitHub approving
-review on top of it is a second, *human* gate, and a run that has to stop
+pushes, without a human in the loop.
+
+What a given increment got depends on its `rigour` — see "Choosing rigour"
+below. On a branch run, `standard` moves style review from each row to one
+review of the theme's whole change once its last row lands. `fast` reads the whole change with
+one reviewer, and the judge does the verifier's work on each of its findings
+before it rules. The plan lint, the gate, the ladder — which at `fast` also
+judges the spec sync and the `Probes:` and `Docs updated:` lines — the style
+re-review of the fixer's hunks and the style review of every commit a CI fixer
+pushes run whatever it is.
+
+**That multi-agent review, verification and judgement IS the review.** A GitHub
+approving review on top of it is a second, *human* gate, and a run that has to stop
 and wait for one cannot run 24/7 — which is the whole point of this loop.
 
 Set `requireApproval: true` only when the user asks, in as many words, for a
@@ -133,6 +214,69 @@ any of them, so a reviewer who approves the frontend and leaves the tests
 repo waiting no longer gets half an increment on `main`. Tell a reviewer
 they owe the increment *all* of its PRs — approving one of two is the same
 as approving neither.
+
+### Choosing rigour
+
+`rigour` says how much a change is planned and read. It never says whether its
+tests pass: the plan lint, the gate at whatever phases the row owes, the ladder,
+the style re-review of the fixer's hunks, the style review of every CI fixer
+commit and, on a branch run, the theme's engineering review all run at every
+preset. Style review always runs too. On a branch run at `standard` or `fast`,
+it runs once over the theme's whole change rather than on each row. A run that
+builds no theme keeps the row's style reviewers at every preset.
+
+| preset | what runs |
+|---|---|
+| `full` | A `think`-tier plan, reviewed, and revised and re-reviewed whenever that review sends it back; a style reviewer for every (repo, language) group but a documentation one, and a code reviewer for every group; a consistency reviewer across the change; a verifier per group of findings; then judge, fix, ladder |
+| `standard` | The same, with one plan review — the revised plan re-read only when a finding is structural, or when the review sends the plan back naming nothing — and the style review moved from each row to the theme's whole change on a branch run |
+| `fast` | A `code`-tier plan with no review; one `think`-tier code reviewer across the whole change, which also takes the consistency reviewer's cross-file lens, the plan's own decisions and the implementor's notes; no consistency reviewer; no verifier — the judge does the verifier's work on each finding before it rules; and style review as at `standard` |
+
+**One value governs the whole run, and that is the only answer a launch owes.**
+Pass `standard` unless the user asks otherwise. Every row takes it, and a theme
+can be built start to finish without a single row setting anything.
+
+**A row may carry its own, which wins for that row.** It lives in
+`backlog.json`, not in the args, so it persists across launches and machines:
+
+```
+tim backlog set <workarea> <id> --rigour full
+```
+
+So the question at a launch is "what does this theme get?", and the per-row
+override is there for the row that argues for something else.
+
+To see where a row might:
+
+```
+tim build rigour <workarea>
+```
+
+It writes nothing, and it reads no code. It keys on each todo row alone — its
+repos and its kind: no backlog repo, or a docs or test row, proposes `fast`;
+more than one service repo proposes `full`; anything else proposes `standard`. A
+row that already sets its own keeps it, reported as set on the row. Show the
+output with the other answers, say in as many words that the proposal cannot see
+the code, and treat "press on" as a complete answer to the whole table:
+
+```
+e2e: ci   (Docker 8.2/19.3GB, no machine.json — local e2e not viable)
+rigour: standard
+
+inc-031  standard  Address list page
+                   one service repo, frontend
+inc-033  full      Submit a notification
+                   backend and frontend: a contract between repos
+inc-039  fast      Record the journey in the behaviour spec
+                   a docs row changes no production behaviour
+```
+
+Raise a row to `full` when the change extends something other rows build on, or
+when it is the one a reviewer would want to read twice. Drop one to `fast` when
+the behaviour is already on `main` and the row is a test and a spec sentence.
+
+Record `rigour` in the theme's `build-args.json` with the rest, so a relaunch
+defaults to it. A relaunch is the moment to raise a row that has stopped twice:
+`tim backlog set <workarea> <id> --rigour full`.
 
 ### The workspace repo
 
@@ -219,18 +363,20 @@ exact name, moves it onto the board, and puts the increment's repos on its
 branch. A branch an earlier attempt left behind is reused; if it has no
 commits of its own and the base has moved on, it is fast-forwarded to
 `origin/<base>` first, so the baseline never runs on a stale base. A branch
-with commits of its own is left as it is. A failure names its step and its exact reason, and the loop maps it to
+with commits of its own is left as it is, except the workspace repo's: that one
+gets `origin/<base>` merged into it, so the tim every later stage runs is the
+base's. A merge that conflicts stops the row, naming the files. A failure names its step and its exact reason, and the loop maps it to
 `derive-failed`, `no-buildable`, `ticket-failed` or `branch-failed`. See
 [`../workflow/README.md`](../workflow/README.md#the-start-stage).
 
 ## Before the first increment
 
 1. **Raise the workflow size limit** — `/config` → *Dynamic workflow size*. One
-   increment is up to 56 agents on Claude and 64 on Codex with `ciFixAttempts: 3`, and 4 more for each attempt
+   increment is up to 60 agents on Claude and 68 on Codex with `ciFixAttempts: 3`, and 4 more for each attempt
    beyond three, against a default guideline of 15. You cannot set
    this for the user and the run is throttled without it. The tool's own hard
-   cap of 1000 agents per run is what `agent-budget` below stops at, around 17
-   increments on Claude and 15 on Codex. Under the branch lifecycle the run also
+   cap of 1000 agents per run is what `agent-budget` below stops at, around 16
+   increments on Claude and 14 on Codex. Under the branch lifecycle the run also
    keeps room for one theme's engineering review: twice the number of repos, plus 9.
 2. **Pull the workspace repo.** `backlog.json` is the state.
 3. **Check the backlog's shape:** `tim backlog check <workarea> --json`. It checks the
@@ -257,8 +403,13 @@ with commits of its own is left as it is. A failure names its step and its exact
    implementor and fixer run its unit and FIT phases to check themselves. No
    agent picks a repo's test scripts. How hard the gate drives this machine
    (FIT and E2E worker counts, `parallelRepos`, `stackAfterLocal`) comes from
-   the machine's own `~/.config/tim/machine.json`, never from `gates.json`:
-   see [`machine-tuning.md`](machine-tuning.md).
+   the machine's own gitignored `config/machine.json`, never from `gates.json`;
+   `tim build tune` writes it once per machine: see
+   [`machine-tuning.md`](machine-tuning.md). The loop reads the same counts
+   once at launch (`tim build workers`) and gives them to every stage, so a probe,
+   plan check or reviewer's FIT or E2E run outside the gate passes the same
+   `--workers`. A change to the file reaches the gate at its next run and the
+   stages at the next launch.
 
    Every repo's unit phase has a `duplication` rung, `tim build duplication`. It
    fails when a changed test file holds a block of 10 lines or more that also
@@ -285,7 +436,11 @@ with commits of its own is left as it is. A failure names its step and its exact
    stack down. A refused acquire stops the run at `stack-held` before any
    increment; a stack that will not start stops it at `stack-failed`. A stage
    that finds the stack in somebody else's hands returns `stackHeld`, and the
-   run stops at `stack-held` for you to rule on. When Docker Desktop has quit,
+   run stops at `stack-held` for you to rule on. A stage that finds the run's
+   lease gone, with nobody else holding it, gets the lease taken again under
+   the run's holder and runs once more instead. A gate under the run's holder
+   that finds the stack down while the run still holds the lease starts it
+   again and leaves it up, still leased to the run. When Docker Desktop has quit,
    tim starts it again (`open -a Docker`, up to five minutes) wherever it reads
    or starts the stack, and a stage that finds the stack gone from under the
    run's own lease returns `stackDown`: the loop takes the lease again, which
@@ -420,7 +575,10 @@ Build the args object with every key below:
   },
   models: {}, // {} for the recommended split (think opus, code sonnet, light haiku); pass that unless the user asks for something else
   increments: null, // null drains the backlog. A list only where the user named the ids
-  stopAfter: '<a positive number, or "all">'
+  stopAfter: '<a positive number, or "all">',
+  e2e: '<local or ci>', // where a row's end-to-end proof comes from — see "Choosing e2e"
+  resumeFrom: null, // null takes each row's own attempt record; 'build' rebuilds the first row from the top
+  rigour: 'standard' // full, standard or fast — see "Choosing rigour". A row's own wins for that row
 }
 ```
 
@@ -479,7 +637,13 @@ changes nothing the spec records reports `Spec sync: none — <reason>`, which t
 reviewer checks. A row owns every capability it writes, whole: a validate or lint failure
 already there before the row is the row's to fix, not to report as pre-existing. Once a theme's last row lands, the run lints the spec and lists unproven
 scenarios under every prefix the theme touched. Report each `specChecks` entry in one line:
-its theme, outcome and any problems. A `theme-unread` entry stops the run too: read the theme
+its theme, outcome and any problems, and its `preexisting` gaps, which predate the theme and
+did not stop it.
+
+**The spec diff comment.** Under the full lifecycle, each landed row's ticket gets a Jira
+comment saying what the spec now says because of it, written to
+`<workarea>/tickets/<id>-spec-diff.txt`. Each landed entry carries `specDiffComment`. Report
+any with `posted: false` and its `detail`: post that file by hand with `tim jira comment`. A `theme-unread` entry stops the run too: read the theme
 by hand and, if its last row has landed, run "catch-up and cover" for its prefixes. See
 [`../workflow/README.md`](../workflow/README.md#the-behaviour-spec).
 
@@ -694,7 +858,9 @@ the code is a code defect: that stop is reported and waits, as below.
    tim backlog set <workarea> <id> --status deferred --note "Parked at <reason>: needs <the fix> from <who>" --json
    ```
 
-   Its ticket, branch and PRs stay recorded, so a later run resumes it.
+   Its ticket, branch, PRs and attempt record stay in place, so a later run resumes it
+   at the stage it had reached rather than rebuilding it. Leave the attempt alone: the
+   work is preserved and the platform fix does not invalidate it.
 2. Re-chain its dependants in `backlog.json`. A row that needs the parked row's output
    keeps it in `dependsOn`, so it waits too. A row that names it only for ordering, which
    is most of them, gets the parked row's own `dependsOn` in its place, so it becomes
@@ -729,6 +895,10 @@ Relaunch with the same args, straight after archiving, when the run stopped at:
 - `agent-budget`
 - a platform or access stop you have parked (step 3d)
 - `gate`, under the full lifecycle. A branch run never stops there ([STOP CONDITIONS](#stop-conditions))
+
+**A preserved stop is not one of them.** A row that resumes at its ladder still resumes
+into the same red ladder against the same code, and rule 6 of `CLAUDE.md` makes that
+failure somebody's to fix. Resuming cheaply is not the same as relaunching now.
 
 Then report what the stopped run did while the new one builds.
 
@@ -773,23 +943,24 @@ handover prompt.
 | `agent-budget` | Another increment would take the run past the `Workflow` tool's 1000-agent cap. Nothing is wrong: launch again with the same args |
 | `derive-failed` | `tim build start` (or, under the branch lifecycle, `tim backlog next`) could not derive the increment: the backlog would not read, a listed id is not in it, or the command failed before any step. **Not** a finished backlog — fix the args or the workarea and launch again |
 | `gate` | Full lifecycle only. The increment carried a designed HALT-FOR-REVIEW gate. The loop lands it, then stops |
-| `spec-check-red` | The increment landed and was its theme's last row to build, and the spec under a prefix the theme touched is red: a `tim spec lint` finding, a scenario no test proves, or a prefix a row reported writing that does not exist. The detail names each problem, its log and the `catch-up and cover <set>` to run. Nothing re-runs this check, so run those skills (spec-catchup, then spec-cover), then launch again |
+| `spec-check-red` | The increment landed and was its theme's last row to build, and the spec under a prefix the theme touched is red: a `tim spec lint` finding, a scenario no test proves that the theme's own row commits added, changed or re-proved (by `tim spec diff`), or a prefix a row reported writing that does not exist. An unproven scenario that predates the theme never stops it: the check lists it under `preexisting`. The detail names each problem, its log and the `catch-up and cover <set>` to run. Nothing re-runs this check, so run those skills (spec-catchup, then spec-cover), then launch again |
 | `not-landed` | The same id came back twice, so the previous attempt at it did not land |
 | `ticket-failed` / `branch-failed` | The increment never got a ticket on the board, or its repos never got the branch. The detail is `tim build start`'s own reason, word for word: a status the board offers no transition to lists the transitions it does offer |
-| `stack-held` | Somebody else holds the workspace stack: another run (a dead one included), another session, or a stack somebody started by hand with no lease. Before any increment, the run could not take its lease; part-way through, a stage found the stack was no longer the run's. The loop reads the lease itself before it believes a stage: a stage that reports the stack held while the lease is still the run's is ignored, and its other result stands. The detail names the holder, its mode and its branches. **Nothing took it down.** Find out whose it is, have them release it (`tim docker lease release --holder "<holder>"`) — a dead run's you release yourself — or take down a hand-started stack yourself, then launch again |
+| `stack-held` | Somebody else holds the workspace stack: another run (a dead one included), another session, or a stack somebody started by hand with no lease. Before any increment, the run could not take its lease; part-way through, a stage found the stack was no longer the run's. The loop reads the lease itself before it believes a stage: a stage that reports the stack held while the lease is still the run's is ignored, and its other result stands; one that finds the lease gone with nobody holding it gets the run's lease taken again and runs once more, so the run stops here only when that acquire is refused. The detail names the holder, its mode and its branches. **Nothing took it down.** Find out whose it is, have them release it (`tim docker lease release --holder "<holder>"`) — a dead run's you release yourself — or take down a hand-started stack yourself, then launch again |
 | `stack-failed` | The run could not start the workspace stack before its first increment, so it built nothing. The detail quotes tim; the start's log is under `<workarea>/logs/<run id>-lease/`. Fix the stack, then launch again. A detail that quotes no tim output, such as "Bash is not loaded", means the lease taker never ran its command: read its transcript, and fix its prompt rather than relaunching in hope (see the workflow README's stack lease section) |
 | `baseline-red` | The tree was already red before the increment touched it. Nothing built on it would prove anything |
 | `plan-refused` / `plan-outside-branched-repos` | The planner would not plan it, or planned work in a repo the increment did not branch. Also a plan whose checks still use a command form the workspace denies (`curl`, a `VAR=value` prefix, `bash <script>`) after one send-back, or that still writes code text (a comment to add, a test title, a quoted log message), or that the plan lint could not read: the detail names each one. Also a plan with a structural plan review finding still open after one send-back, named in the detail, or a plan reviewer that returned nothing. Detail findings still open never stop a row: they are built as required work. Nothing was built. A check is a repo's own npm script, `mvn -f`, `tim`, or a test — see the workflow README's Plan checks and The plan contract |
-| `implement-failed` / `review-failed` / `fix-failed` | A stage died. The attempt is preserved as a pushed wip commit |
+| `implement-failed` / `review-failed` / `fix-failed` | A stage died. The attempt is preserved as a pushed wip commit, and recorded, so a relaunch re-enters at `implement` (for the first) or `review` (for the other two) rather than planning the row again |
 | `off-branch` | A repo left the run's branch and could not be moved back |
-| `ladder-red` | The verification ladder went red. Preserved, not discarded. A failure that reads "denied form: <command>" is a plan check the workspace will not run, not broken code. A plan check that disagrees only with a stated departure by the implementor or fixer is a note in the ladder's summary, never a `ladder-red` on a green gate. An E2E spec that hit its test timeout is red even when its retry passed: only a transient 500 in `beforeEach` that recovers counts as a pass, so a journey that outgrows a spec's budget is repaired in the row that lengthened it, not by a later baseline. An e2e rung that went red or retried leaves each stack container's log beside it, as `gate-stack-after-<repo>-<rung>-<container>.log`, written before the stack goes: a 500 page, a dropped socket or a timeout is explained there, and is named, not called transient |
+| `ladder-red` | The verification ladder went red. Preserved, not discarded, and recorded, so a relaunch re-enters at the ladder once somebody has fixed what went red. A failure that reads "denied form: <command>" is a plan check the workspace will not run, not broken code. A plan check that disagrees only with a stated departure by the implementor or fixer is a note in the ladder's summary, never a `ladder-red` on a green gate. An E2E spec that hit its test timeout is red even when its retry passed: only a transient 500 in `beforeEach` that recovers counts as a pass, so a journey that outgrows a spec's budget is repaired in the row that lengthened it, not by a later baseline. An e2e rung that went red or retried leaves each stack container's log beside it, as `gate-stack-after-<repo>-<rung>-<container>.log`, written before the stack goes: a 500 page, a dropped socket or a timeout is explained there, and is named, not called transient |
 | `land-failed` | The commit could not be made. Also a theme's engineering review whose fixes could not be committed: they are saved as patches |
 | `theme-review-red` | Branch lifecycle only. Every row of a theme landed, but its engineering review could not finish its fixes: the fixer died or its ladder went red. The fixes are saved as patches under `logs/` and nothing reached the branch. The detail quotes the failure. Rows already landed stand. Read the patches and the review checks, then launch again |
 | `land-leaked` | The workspace repo's commit holds a file the workspace carried in, or run state under `workareas/` no stage reported changing. Nothing is pushed: take it out of the commit on the increment branch by hand, then launch again |
 | `workspace-not-on-base` | The increment landed, but the workspace repo would not go back onto the base branch — usually a carried file the merged change also touches. The detail quotes git. Settle that file, switch back, then launch again |
 | `pr-failed` | The branch pushed but the PRs could not be raised |
-| `ci-red` | A PR did not go green inside `ciFixAttempts`. The PR stays open, the ticket stays In Dev. Under the branch lifecycle a PR that conflicts with its base is `ci-red` at once, with `stopReason: "pr-conflicting"` and no fix attempt spent. Also CI red after a theme's engineering review pushed its commit, with no fix attempt: the detail says so |
-| `main-red` | `main` went red after a merge. **Nothing auto-reverts** — that is a human's call |
+| `ci-red` | A PR did not go green inside `ciFixAttempts`. The PR stays open, the ticket stays In Dev. Also CI red after a theme's engineering review pushed its commit, with no fix attempt: the detail says so |
+| `pr-conflict` | A PR conflicts with its base, so GitHub runs no checks on it. The CI watcher reads every PR's `mergeable` and `mergeStateStatus` before it watches any checks, and stops on CONFLICTING or DIRTY, with `stopReason: "pr-conflict"` and no fix attempt spent. Nothing merged and every PR stays open. The detail names the PR: merge the base into the branch in that repo, push, then launch again. Both lifecycles |
+| `main-red` | `main` went red after a merge. **Nothing auto-reverts** — that is a human's call. With `stopReason: "base-branch-unverified"`, a workflow that `tim build push-workflows` says the merge commit starts has no run on `main`: check the repo's Actions page. A merge that starts no workflow at all (its files miss every push trigger's paths) is not a stop: it counts as green, and the run log names each workflow's reason. Nor is a run whose own status stays in progress after every job in it has passed, by `tim build run-jobs`: it counts as green, and the landed result lists it under `mainRunsGreenByJobs` |
 | `awaiting-approval` | Every PR is green but at least one that needs approval — every PR under `requireApproval: true`, otherwise a repo whose entry sets it — has no approving review inside `approvalWaitMinutes`. **Nothing merged** — all of them stay open, untouched. When the increment builds the workspace repo, the workspace stays on the increment branch |
 | `changes-requested` | A reviewer asked for changes. Nothing merged; every PR stays open and the run stops |
 | `pr-left-open` | The merge stage's final sweep found an open PR still on the increment's branch in some repo — usually one a CI fixer raised elsewhere. Part of the increment merged; the rest did not |
@@ -798,6 +969,15 @@ handover prompt.
 | `merge-failed` | Branch lifecycle only. A merge the row asks for would not start. The attempt is preserved as patches and the merge aborted |
 | `push-failed` | Branch lifecycle only. The land stage committed and recorded the commit, but the push was rejected: somebody else pushed to the branch. Nothing is lost; a human reconciles the branch. A theme's engineering review whose commit would not push stops here too |
 | `no-open-pr` | Branch lifecycle only. A repo the row builds has no open PR for the branch, and this lifecycle never raises one. Before any increment, the run also refuses to start when any repo checked out on the branch, built by the rows or not, has no open PR: CI publishes a branch image only from a PR, so without one a stacked branch's E2E runs that repo's `:latest` |
+
+**A stop that preserved its attempt resumes at the stage it reached.** The row records
+that stage; the next launch restores the work, proves it with the gate's unit and FIT
+phases, reads the reviewed plan back, and enters there. A relaunch therefore costs the
+ladder rather than the whole pipeline. Where the work is not on this machine, or will
+not go green, the row drops back on its own — to the top, or to the implementor. There
+is nothing to do by hand; `resumeFrom: 'build'` is there for the case where you want
+the record ignored. **This makes a relaunch cheap, not automatic**: a red ladder is
+still somebody's to fix before the row is launched again.
 
 **Every failure stops the whole run, not just that increment.** The loop never
 skips to the next id after one goes wrong: `tim backlog next` selects on status
@@ -926,6 +1106,21 @@ says a theme split off early waits on a row the parent no longer has, run
   in the split backlog for them, then update the parent's pointer as
   [`DISTIL.md`](DISTIL.md#8-splitting-a-theme-off-early) says.
 
+### Moving rows to a second machine
+
+To build some rows of a theme already building on one machine in parallel on another, move them into a new theme
+backlog with `tim backlog split <workarea>/themes/<theme id> --rows <ids> --to <new theme id> --write --json`
+([`DISTIL.md`](DISTIL.md#9-moving-rows-out-of-a-split-theme-to-a-second-machine)). It is safe while the loop runs
+on the old backlog: `tim backlog next` there no longer offers the moved rows, and the old backlog keeps a `movedOut`
+pointer to them.
+
+- **Cut the new branch from the old one's tip,** once the row in flight has landed, and open its draft pull requests.
+  The second machine runs the loop on `<workarea>/themes/<new theme id>` with that backlog's `repos` and `branch`.
+- **Bring it back with a merge row.** Add a `chore` row to the old backlog that waits for every moved row through
+  `externalDependsOn`, sets `merge` to `origin/<new branch>` for each repo, and says in its acceptance criteria
+  that both sets of behaviour survive the merge and the full gate is green. Make the old theme's final row depend
+  on it.
+
 ## Branch lifecycle
 
 `lifecycle: 'branch'` builds a backlog straight onto one long-lived branch that already exists in every backlog
@@ -977,7 +1172,7 @@ three.
   Absent: all three.
 - `awaitCi: false`: push and record the PRs without waiting for CI. GitHub runs no checks on a PR that conflicts
   with its base, so a row that lands before the merge that clears the conflict needs this, or it stops at
-  `ci-red` with `pr-conflicting`.
+  `pr-conflict`.
 
 A row with `repos: []` changes no backlog repo: its output is in the workspace repo itself, usually under
 `workareas/`. The workspace is not a backlog repo, so the loop does not commit it: the edits are left unstaged, the
@@ -997,12 +1192,12 @@ and the args name different repos. The worked example in
 A landed row is `done` in the backlog with its `commit` and `prs`, and is pushed to the branch. Nothing is merged,
 so there is no `main-red` to watch for. Each landed entry in the result carries `ci`: `green`, `not awaited` (the
 row set `awaitCi: false`) or `none` (the row changes no backlog repo). Report a row whose CI was not awaited as
-exactly that, never as green.
+exactly that, never as green. An entry that carries `resumedFrom` landed from an earlier attempt's work, picked up
+at that stage: say so when you report it, because it was not planned or implemented in this run.
 
 ### The stop reasons it adds
 
-`row-invalid`, `merge-failed`, `push-failed` and `no-open-pr`, in the table above. `ci-red` gains the
-`pr-conflicting` case. The ticket and merge stops (`ticket-failed`, `main-red`, `awaiting-approval`,
+`row-invalid`, `merge-failed`, `push-failed` and `no-open-pr`, in the table above. The ticket and merge stops (`ticket-failed`, `main-red`, `awaiting-approval`,
 `changes-requested`, `pr-left-open`) cannot fire.
 
 ## THE HANDOVER PROMPT
@@ -1030,6 +1225,9 @@ board        <board>
 repos        <the repos table, one JSON object>
 models       {}, the recommended split (think opus, code sonnet, light haiku)
 stopAfter    <a number, or all>
+e2e          <local or ci>
+resumeFrom   null
+rigour       <full, standard or fast>, and any row that sets its own
 
 Stopped: <reason>. Last landed <inc-NNN> (<PR url>, <ticket>).
 <N> todo remain, <M> blocked, <K> dropped.

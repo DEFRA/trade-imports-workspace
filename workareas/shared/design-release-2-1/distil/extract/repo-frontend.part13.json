@@ -1,0 +1,1102 @@
+{
+  "source": "repo:frontend",
+  "structure": "Part 13, Check your answers: the live-animals review page (page id and slug notification-view) in repos/trade-imports-animals-frontend at main 4c2119da. Read in full: features/check-answers/page.js, controller.js (GET renders the review, POST refuses or moves on), refusal.js (the shared refusal predicate also used by the declaration submit), template.njk (banner, error summary, h1, copy/delete buttons, cancel-amendment link, sections, groups, cards, identifier table, documents, Continue form), copy/copy.en.js (all English copy, quoted here) and copy/copy.cy.js (Welsh, read for parity only: same key tree, header marks it a machine draft), and every non-test file of view-model/: index.js (six sections in order), invalid-parties.js, applicability.js, incomplete-cards.js (REVIEW_CARDS, card errors, blanking), sections/ (about-consignment, description-of-goods, transport-and-arrival, documents, consignment-parties, contact-address), rows/ (change-link, summary-row, value-text, party-row), cards/documents.js, cards/movement/ (arrival-details, transit-countries, transport-details), cards/addresses/ (roles-and-addresses, contact-address), cards/consignment/ (import-details, reason-for-import, additional-animal-details) and cards/consignment/species/ (species-cards, species-card-title, species-card-rows, species-card-actions, species-text, identifier-table, identifier-columns, identifier-cell, units-for-commodity-line). Also read check-answers.fit.spec.js in full: 22 tests in 8 describe blocks (summary rows 2, section structure 3, documents section 1, exit answers 3, change links 2, navigation and submission 3, unfinished notification 5, submitted notification 2), each claimed. Looked up outside the slice only to resolve what this page shows: the documents feature's someRejected and someStillScanning copy, the order of PARTIES in addresses/parties.js, and the review section of flow/flow.js. Claims cover the page route and back link, heading, the six numbered sections and their anchors, the ten subsection headings, every card with its title, rows, value formats, conditional rows and its one Change link destination, species cards with their titles and identifier table, the documents card and its empty line, party rows with Edit details links and invalid-address messages, the Not applicable versus Missing treatment, incomplete-card messages and anchors, the error summary ordering, the refusal conditions, the read-only (submitted) and amend variants, and the cancel-amendment success banner.",
+  "claims": [
+    {
+      "id": "repo-frontend-p13-001",
+      "statement": "The review page is served at the slug notification-view under a notification, i.e. /notifications/{notificationId}/notification-view.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/page.js:1-4; check-answers.fit.spec.js:367-369",
+      "quote": "id: 'notification-view',\n  slug: 'notification-view'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-002",
+      "statement": "The review page sits in the flow's review section, first of three pages: the review, then the declaration, then the confirmation.",
+      "kind": "behaviour",
+      "ref": "src/server/app/sets/live-animals/journeys/linear/flow/flow.js:67",
+      "quote": "pages: [notificationViewPage, declarationPage, confirmationPage]",
+      "confidence": "verbatim",
+      "note": "Read outside the slice only to place the page; the flow itself is part 1's."
+    },
+    {
+      "id": "repo-frontend-p13-003",
+      "statement": "The review page's title and h1 heading are both 'Review your notification'.",
+      "kind": "copy",
+      "ref": "features/check-answers/copy/copy.en.js:2; controller.js:111-112; template.njk:39",
+      "quote": "title: 'Review your notification',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-004",
+      "statement": "The review page's Back link goes to the notification hub (task list).",
+      "kind": "behaviour",
+      "ref": "features/check-answers/controller.js:136; check-answers.fit.spec.js:405-413",
+      "quote": "backLink: hubPath(journey.journeyId)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-005",
+      "statement": "The review page shows the journey strip (the notification's context strip from the shared kit) above its content.",
+      "kind": "behaviour",
+      "ref": "features/check-answers/controller.js:116",
+      "quote": "journeyStrip: journeyStrip(journey),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-006",
+      "statement": "The review lays out six numbered sections in this order: '1. About the consignment', '2. Description of the goods', '3. Transport and arrival', '4. Documents', '5. Consignment parties', '6. Contact address'. The number is part of the heading text.",
+      "kind": "copy",
+      "ref": "features/check-answers/copy/copy.en.js:42-51; view-model/index.js:7-41",
+      "quote": "aboutTheConsignment: '1. About the consignment',\n    descriptionOfTheGoods: '2. Description of the goods',\n    transportAndArrival: '3. Transport and arrival',\n    documents: '4. Documents',\n    consignmentParties: '5. Consignment parties',\n    contactAddress: '6. Contact address'",
+      "confidence": "verbatim",
+      "note": "Comments say these are design release 1's six numbered sections in its order."
+    },
+    {
+      "id": "repo-frontend-p13-007",
+      "statement": "Each section heading is an h2 with an anchor id and tabindex -1; sections after the first are separated by a large visible section break.",
+      "kind": "behaviour",
+      "ref": "features/check-answers/template.njk:70-74",
+      "quote": "<hr class=\"govuk-section-break govuk-section-break--l govuk-section-break--visible\">\n    {% endif %}\n    <h2 class=\"govuk-heading-m\" id=\"{{ section.anchor }}\" tabindex=\"-1\">{{ section.heading }}</h2>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-008",
+      "statement": "The section anchors are about-the-consignment, description-of-the-goods, transport-and-arrival, documents-section, consignment-parties and contact-address-section; the documents and contact address sections are suffixed because their cards own the plain ids.",
+      "kind": "constraint",
+      "ref": "view-model/sections/about-consignment.js:18; description-of-goods.js:26; transport-and-arrival.js:23; documents.js:12-16; consignment-parties.js:18; contact-address.js:18-21",
+      "quote": "anchor: 'documents-section',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-009",
+      "statement": "Every card stands under its own subsection heading (h3), so card titles render at heading level 4; a card without a group heading would render at level 3.",
+      "kind": "behaviour",
+      "ref": "features/check-answers/template.njk:76-80; check-answers.fit.spec.js:181-200",
+      "quote": "{% set cardHeadingLevel = 4 if group.heading else 3 %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-010",
+      "statement": "Section 1 'About the consignment' holds two groups: 'Where is this consignment coming from?' with the Import details card, then 'Main reason for import' with the Reason for import card.",
+      "kind": "behaviour",
+      "ref": "view-model/sections/about-consignment.js:12-30; copy.en.js:54-55",
+      "quote": "whereFrom: 'Where is this consignment coming from?',\n    mainReasonForImport: 'Main reason for import',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-011",
+      "statement": "Section 2 'Description of the goods' holds a 'Commodity details' group of species cards (one per commodity line) only while there are lines, then always an 'Additional details' group with the Additional animal details card.",
+      "kind": "behaviour",
+      "ref": "view-model/sections/description-of-goods.js:18-38; copy.en.js:56-57",
+      "quote": "...(species.length\n        ? [{ heading: copy.groups.commodityDetails, cards: species }]\n        : []),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-012",
+      "statement": "The 'Description of the goods' section heading always stands, even with no commodity lines, because the species error entry anchors to it.",
+      "kind": "rule",
+      "ref": "view-model/sections/description-of-goods.js:14-17",
+      "quote": "The commodity group stands only while there are lines to show, but the\n * section heading always does — the error summary's species entry anchors to\n * it, and a trader with no lines yet still has to land somewhere.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-013",
+      "statement": "Section 3 'Transport and arrival' holds 'Arrival details' (Arrival details card), then 'Transit countries' (Transit countries card) only while transited countries are in scope, then 'Transport details' (Transport details card).",
+      "kind": "behaviour",
+      "ref": "view-model/sections/transport-and-arrival.js:17-43; copy.en.js:58-60",
+      "quote": "...(transitedCountriesApplies(answers, scope)\n      ? [\n          {\n            heading: copy.groups.transitCountries,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-014",
+      "statement": "Transit countries are asked only for an overland arrival, so the Transit countries card and group stand only then.",
+      "kind": "rule",
+      "ref": "view-model/cards/movement/transit-countries.js:12-17; sections/transport-and-arrival.js:11-16",
+      "quote": "The countries the consignment travels through, collected on their own page\n * and asked for only when the means of transport is overland.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-015",
+      "statement": "Section 4 'Documents' always stands, with one 'Upload documents' group holding the Uploaded documents card, whether or not anything has been uploaded.",
+      "kind": "behaviour",
+      "ref": "view-model/sections/documents.js:8-24; copy.en.js:61",
+      "quote": "// Unconditional: the section is part of the review whether or not anything has\n// been uploaded, so a trader with no documents still sees them named and still\n// has a link to the upload page.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-016",
+      "statement": "Section 5 'Consignment parties' holds one 'Roles and addresses' group with the Roles and addresses card.",
+      "kind": "behaviour",
+      "ref": "view-model/sections/consignment-parties.js:11-34; copy.en.js:62",
+      "quote": "rolesAndAddresses: 'Roles and addresses',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-017",
+      "statement": "Section 6 'Contact address' holds one 'Contact address for this consignment' group with the Contact address for this consignment card; it is a separate section so the contact address is not read as another party role.",
+      "kind": "behaviour",
+      "ref": "view-model/sections/contact-address.js:8-31; copy.en.js:63",
+      "quote": "contactAddress: 'Contact address for this consignment'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-018",
+      "statement": "Card titles are: 'Import details', 'Reason for import', 'Additional animal details', 'Arrival details', 'Transit countries', 'Transport details', 'Roles and addresses', 'Contact address for this consignment' and 'Uploaded documents'.",
+      "kind": "copy",
+      "ref": "features/check-answers/copy/copy.en.js:65-75",
+      "quote": "importDetails: 'Import details',\n    reasonForImport: 'Reason for import',\n    additionalAnimalDetails: 'Additional animal details',\n    arrivalDetails: 'Arrival details',\n    transitCountries: 'Transit countries',\n    transportDetails: 'Transport details',\n    rolesAndAddresses: 'Roles and addresses',\n    contactAddress: 'Contact address for this consignment',\n    documents: 'Uploaded documents'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-019",
+      "statement": "Each card carries exactly one Change link, in its title bar, and no summary row carries a Change link.",
+      "kind": "rule",
+      "ref": "view-model/rows/change-link.js:17-37; rows/summary-row.js:4-11; check-answers.fit.spec.js:377-397",
+      "quote": "The one Change link a card carries, level with its title (design release 1).\n * Rows carry none: a card is a page's worth of answers, so the card says once\n * where they are changed.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-020",
+      "statement": "A card's Change link reads 'Change' followed by visually hidden text naming the card in lower case, e.g. 'Change import details'.",
+      "kind": "copy",
+      "ref": "copy.en.js:34, 126-142; template.njk:20; check-answers.fit.spec.js:35-38",
+      "quote": "importDetails: 'import details',\n      reasonForImport: 'reason for import',\n      additionalAnimalDetails: 'additional animal details',\n      arrivalDetails: 'arrival details',\n      transitCountries: 'transit countries',\n      transportDetails: 'transport details',\n      rolesAndAddresses: 'roles and addresses',\n      contactAddress: 'contact address for this consignment',\n      documents: 'uploaded documents'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-021",
+      "statement": "Every Change link points at its page with ?change=1 appended, so the page returns to the review after saving.",
+      "kind": "behaviour",
+      "ref": "view-model/rows/change-link.js:12, 29-37; check-answers.fit.spec.js:345-373",
+      "quote": "export const withChange = (href) => `${href}?change=1`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-022",
+      "statement": "A card's Change link goes to the page the hub's task row leads with; a card whose rows span two pages (roles and addresses with the CPH number) still has only one link, and a conditional second page gets its own headed card instead.",
+      "kind": "rule",
+      "ref": "view-model/rows/change-link.js:22-28",
+      "quote": "A card has one destination, so it has to say which one, and\n * it says the page the hub's own task row leads with. A conditional second\n * page does not get a second link here: it gets a headed card of its own that\n * carries its own, as cards/movement/transit-countries.js does.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-023",
+      "statement": "On a submitted (read-only) notification no card carries a Change link.",
+      "kind": "behaviour",
+      "ref": "view-model/rows/change-link.js:39-40; controller.js:151",
+      "quote": "export const editableActions = (readOnly, actions) =>\n  readOnly ? {} : { actions }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-024",
+      "statement": "The Import details card's Change link goes to the origin page (/origin?change=1).",
+      "kind": "behaviour",
+      "ref": "view-model/cards/consignment/import-details.js:22; check-answers.fit.spec.js:355-363",
+      "quote": "cardAction(journeyId, originPage.slug, copy.hidden.cards.importDetails)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-025",
+      "statement": "The Import details card shows a 'Country of origin' row, displaying the subdivision's display label when a country subdivision code is stored, otherwise the country's.",
+      "kind": "data",
+      "ref": "view-model/cards/consignment/import-details.js:25-30",
+      "quote": "row(\n      copy.rows.countryOfOrigin,\n      (await countries.originDisplayLabel(\n        answers.countryOfOriginSubdivisionCode || answers.countryOfOrigin\n      )) ?? ''\n    ),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-026",
+      "statement": "The Import details card shows a 'Region of origin code required' row reading 'Yes' or 'No'.",
+      "kind": "data",
+      "ref": "view-model/cards/consignment/import-details.js:31-34; copy.en.js:10, 78",
+      "quote": "regionCodeRequired: 'Region of origin code required',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-027",
+      "statement": "The Import details card shows a 'Region of origin code' row only while the region of origin code is in scope; the fit spec shows it read back with its country prefix (e.g. 'FR-IDF75').",
+      "kind": "data",
+      "ref": "view-model/cards/consignment/import-details.js:35-37; applicability.js:9-10; check-answers.fit.spec.js:92",
+      "quote": "...(regionCodeApplies(answers, scope)\n      ? [row(copy.rows.regionCode, answers.regionOfOriginCode)]\n      : []),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-028",
+      "statement": "The Import details card shows an 'Internal reference number' row.",
+      "kind": "data",
+      "ref": "view-model/cards/consignment/import-details.js:38; copy.en.js:80",
+      "quote": "internalReference: 'Internal reference number',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-029",
+      "statement": "The Reason for import card's Change link goes to the import-reason page (/import-reason?change=1), and every row on the card comes from that page.",
+      "kind": "behaviour",
+      "ref": "view-model/cards/consignment/reason-for-import.js:46-67; check-answers.fit.spec.js:282-290",
+      "quote": "Every row here comes from the\n * reason-for-import page, so the card's one Change link reaches all of them",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-030",
+      "statement": "The Reason for import card always shows a 'Reason for import' row with the reason's label.",
+      "kind": "data",
+      "ref": "view-model/cards/consignment/reason-for-import.js:69-72; copy.en.js:83",
+      "quote": "reasonForImport: 'Reason for import',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-031",
+      "statement": "The Reason for import card shows a 'Purpose in the market' row only while the purpose in the internal market is in scope.",
+      "kind": "data",
+      "ref": "view-model/cards/consignment/reason-for-import.js:73-81; applicability.js:12-13; copy.en.js:84",
+      "quote": "purpose: 'Purpose in the market',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-032",
+      "statement": "The Reason for import card shows 'Destination country', 'Exit date' and 'Port of exit' rows, each only while its own question is in scope, so an exit answer shows exactly when one was asked for.",
+      "kind": "rule",
+      "ref": "view-model/cards/consignment/reason-for-import.js:20-44; applicability.js:15-23; copy.en.js:85-87",
+      "quote": "// The exit answers the chosen reason for import asks for. Each row stands only\n// while its obligation is in scope, so the review shows an exit answer exactly\n// when one was asked for.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-033",
+      "statement": "The destination country shows as the country name (e.g. 'Ireland' for IE) and the port of exit as its label with code (e.g. 'Port of Dover (GB DVR)'), falling back to the stored code if no label is found.",
+      "kind": "data",
+      "ref": "view-model/cards/consignment/reason-for-import.js:26-42; check-answers.fit.spec.js:242-245",
+      "quote": "const EXIT_PORT_LABEL = 'Port of Dover (GB DVR)'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-034",
+      "statement": "Dates on the review are written day/month/year with no zero padding, e.g. '27/3/2026'.",
+      "kind": "data",
+      "ref": "view-model/rows/value-text.js:30-31; check-answers.fit.spec.js:311",
+      "quote": "isBlank(value) ? null : `${value.day}/${value.month}/${value.year}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-035",
+      "statement": "The Additional animal details card's Change link goes to the additional-details page, which collects every row on it.",
+      "kind": "behaviour",
+      "ref": "view-model/cards/consignment/additional-animal-details.js:12-28",
+      "quote": "cardAction(\n      journeyId,\n      additionalDetailsPage.slug,\n      copy.hidden.cards.additionalAnimalDetails\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-036",
+      "statement": "The Additional animal details card shows a 'Certified for' row with the certification purpose's label.",
+      "kind": "data",
+      "ref": "view-model/cards/consignment/additional-animal-details.js:30-33; copy.en.js:81",
+      "quote": "certifiedFor: 'Certified for',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-037",
+      "statement": "The Additional animal details card shows an 'Includes unweaned animals' row (Yes or No) only when any commodity line's commodity calls for the unweaned question.",
+      "kind": "data",
+      "ref": "view-model/cards/consignment/additional-animal-details.js:34-41; applicability.js:28-29; copy.en.js:82",
+      "quote": "unweaned: 'Includes unweaned animals',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-038",
+      "statement": "There is one species card per commodity line, in line order.",
+      "kind": "behaviour",
+      "ref": "view-model/cards/consignment/species/species-cards.js:9-20; species-card-title.js:11-12",
+      "quote": "// One card per commodity line = one per species; the title carries\n// both the commodity and the species so same-commodity cards stay distinct.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-039",
+      "statement": "A species card's title is '<commodity name> (<commodity code>) — <species label>'; the code is left off when unknown, the species part is left off when no species is chosen, and the title reads 'Not applicable' when no commodity is chosen.",
+      "kind": "data",
+      "ref": "view-model/cards/consignment/species/species-card-title.js:13-22",
+      "quote": "const commodity = code ? `${name} (${code})` : name\n  const species = speciesText(entry)\n  return species ? `${commodity} — ${species}` : commodity",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-040",
+      "statement": "A species card shows rows 'Commodity code', 'Common name', 'Species' and 'Number of animals'.",
+      "kind": "data",
+      "ref": "view-model/cards/consignment/species/species-card-rows.js:11-18; copy.en.js:88-91",
+      "quote": "commodityCode: 'Commodity code',\n    commonName: 'Common name',\n    species: 'Species',\n    numberOfAnimals: 'Number of animals',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-041",
+      "statement": "A species card adds a 'Number of packages' row only when the line's commodity calls for a number of packages.",
+      "kind": "data",
+      "ref": "view-model/cards/consignment/species/species-card-rows.js:19-21; applicability.js:34-35; copy.en.js:92",
+      "quote": "...(packagesApply(entry.commoditySelection)\n    ? [row(copy.rows.numberOfPackages, entry.numberOfPackages)]\n    : [])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-042",
+      "statement": "The species row shows the species' label from the commodity reference data, falling back to the stored value, and is blank when no species is chosen.",
+      "kind": "data",
+      "ref": "view-model/cards/consignment/species/species-text.js:3-7",
+      "quote": "entry.speciesSelection === undefined\n    ? ''\n    : (commodities.speciesLabel(entry.speciesSelection) ??\n      entry.speciesSelection)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-043",
+      "statement": "A species card's single Change link goes to the consignment-details page, and its hidden text names the commodity by position ('Change commodity 1'); the animal identifiers it also shows are changed through their own hub task row, not from this card.",
+      "kind": "behaviour",
+      "ref": "view-model/cards/consignment/species/species-card-actions.js:9-18; copy.en.js:141",
+      "quote": "commodity: (n) => `commodity ${n}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-044",
+      "statement": "A species card with identified animals shows an 'Animal details' sub-heading and a table with an 'Animal' column, one row per animal labelled 'Animal 1', 'Animal 2' and so on, and one column per identifier.",
+      "kind": "data",
+      "ref": "view-model/cards/consignment/species/identifier-table.js:9-24; template.njk:93-99; copy.en.js:116-121",
+      "quote": "animalColumn: 'Animal',\n    permanentAddress: 'Permanent address',\n    animalN: (n) => `Animal ${n}`,\n    heading: 'Animal details'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-045",
+      "statement": "No identifier table is shown for a commodity line with no identified animals.",
+      "kind": "behaviour",
+      "ref": "view-model/cards/consignment/species/identifier-table.js:10-12",
+      "quote": "if (units.length === 0) {\n    return null\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-046",
+      "statement": "Identifier columns follow the order the commodity's animal identification page asks for them, and only identifiers at least one animal actually carries get a column.",
+      "kind": "rule",
+      "ref": "view-model/cards/consignment/species/identifier-columns.js:12-19",
+      "quote": "// The commodity sets the running order of its own identifiers, so check your\n// answers reads them back in the order the identification page asked for\n// them. Only identifiers a unit actually carries get a column here",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-047",
+      "statement": "A final 'Permanent address' column is added when any animal has a permanent address, showing the address's name.",
+      "kind": "data",
+      "ref": "view-model/cards/consignment/species/identifier-columns.js:20-22; identifier-cell.js:3-6",
+      "quote": "id === 'permanentAddress'\n    ? valueText(unit.permanentAddress?.name)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-048",
+      "statement": "An empty identifier cell reads 'Not applicable'.",
+      "kind": "data",
+      "ref": "view-model/cards/consignment/species/identifier-cell.js:3-6; rows/value-text.js:16-24",
+      "quote": "if (isBlank(value)) {\n    return NOT_APPLICABLE\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-049",
+      "statement": "The Arrival details card's Change link goes to the port-of-entry page, which collects every row on it.",
+      "kind": "behaviour",
+      "ref": "view-model/cards/movement/arrival-details.js:12-29",
+      "quote": "Every row here\n * comes from the port-of-entry page, so the card carries the one Change link\n * that page needs.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-050",
+      "statement": "The Arrival details card shows rows 'Port of entry' (port label, or the code if unknown), 'Arrival date at port of entry', 'Means of transport to the port of entry', 'Transport identification' and 'Transport document reference'.",
+      "kind": "data",
+      "ref": "view-model/cards/movement/arrival-details.js:30-42; copy.en.js:93-98",
+      "quote": "portOfEntry: 'Port of entry',\n    arrivalDate: 'Arrival date at port of entry',\n    meansOfTransport: 'Means of transport to the port of entry',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-051",
+      "statement": "Means of transport reads 'Airplane', 'Railway', 'Road Vehicle' or 'Vessel'.",
+      "kind": "copy",
+      "ref": "features/check-answers/copy/copy.en.js:11-16",
+      "quote": "AIRPLANE: 'Airplane',\n    RAILWAY: 'Railway',\n    ROAD_VEHICLE: 'Road Vehicle',\n    VESSEL: 'Vessel'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-052",
+      "statement": "The Transit countries card's Change link goes to the transit-countries page, and the card shows one row 'Countries that the consignment will travel through' listing country names separated by commas.",
+      "kind": "data",
+      "ref": "view-model/cards/movement/transit-countries.js:18-36; copy.en.js:96",
+      "quote": "rows: [row(copy.rows.transitedCountries, labels.join(', '))]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-053",
+      "statement": "The Transport details card's Change link goes to the transporters page.",
+      "kind": "behaviour",
+      "ref": "view-model/cards/movement/transport-details.js:51-58",
+      "quote": "cardAction(\n        journeyId,\n        transportersPage.slug,\n        copy.hidden.cards.transportDetails\n      )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-054",
+      "statement": "The Transport details card shows the transporter in scope: the commercial transporter if that is in scope, otherwise the private transporter if that is, otherwise no transporter rows.",
+      "kind": "rule",
+      "ref": "view-model/cards/movement/transport-details.js:13-21",
+      "quote": "if (scope.has('commercialTransporter')) {\n    return answers.commercialTransporter\n  }\n  if (scope.has('privateTransporter')) {\n    return answers.privateTransporter\n  }\n  return null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-055",
+      "statement": "For the active transporter the Transport details card shows 'Name', 'Address' (address lines, town, county and postcode on separate lines), 'Country', and 'Approval number' only when one is recorded.",
+      "kind": "data",
+      "ref": "view-model/cards/movement/transport-details.js:23-44; copy.en.js:99-103",
+      "quote": "row(copy.rows.name, transporter.name),\n        transporterAddressRow(transporter),\n        row(copy.rows.country, transporter.address?.country),\n        ...approvalNumberRow(transporter)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-056",
+      "statement": "The Transport details card always ends with a 'Type' row showing the transporter type answer.",
+      "kind": "data",
+      "ref": "view-model/cards/movement/transport-details.js:59-62; copy.en.js:104",
+      "quote": "row(copy.rows.type, answers.transporterType)",
+      "confidence": "verbatim",
+      "note": "The stored transporterType value is shown as is, with no label lookup."
+    },
+    {
+      "id": "repo-frontend-p13-057",
+      "statement": "The Uploaded documents card's Change link goes to the accompanying-documents page (/accompanying-documents?change=1).",
+      "kind": "behaviour",
+      "ref": "view-model/cards/documents.js:38-41; check-answers.fit.spec.js:225-233",
+      "quote": "/\\/notifications\\/[^/]+\\/accompanying-documents\\?change=1$/",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-058",
+      "statement": "Each uploaded document shows under its own sub-heading 'Document 1', 'Document 2' and so on, with rows 'Document reference', 'Document type', 'Date of issue' and 'Attachment type'.",
+      "kind": "data",
+      "ref": "view-model/cards/documents.js:18-34; copy.en.js:110-114, 122; template.njk:100-103",
+      "quote": "documentReference: 'Document reference',\n    documentType: 'Document type',\n    dateOfIssue: 'Date of issue',\n    attachmentType: 'Attachment type'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-059",
+      "statement": "Document type reads as one of: 'Intra Trade Animal Health Certificate (ITAHC)', 'Veterinary health certificate', 'Air waybill', 'Import permit', 'Letter of authority (Directive 2008/61/EC)', 'Commercial invoice', 'Sea waybill', 'Rail waybill', 'Bill of lading', 'Catch certificate', 'Laboratory sampling results for aflatoxin (Reg 2019/1793)', 'Health certificate', 'Journey log', 'Other'.",
+      "kind": "copy",
+      "ref": "features/check-answers/copy/copy.en.js:17-33",
+      "quote": "ITAHC: 'Intra Trade Animal Health Certificate (ITAHC)',\n    VETERINARY_HEALTH_CERTIFICATE: 'Veterinary health certificate',\n    AIR_WAYBILL: 'Air waybill',\n    IMPORT_PERMIT: 'Import permit',\n    LETTER_OF_AUTHORITY: 'Letter of authority (Directive 2008/61/EC)',\n    COMMERCIAL_INVOICE: 'Commercial invoice',\n    SEA_WAYBILL: 'Sea waybill',\n    RAIL_WAYBILL: 'Rail waybill',\n    BILL_OF_LADING: 'Bill of lading',\n    CATCH_CERTIFICATE: 'Catch certificate',\n    LABORATORY_SAMPLING_RESULTS_FOR_AFLATOXIN:\n      'Laboratory sampling results for aflatoxin (Reg 2019/1793)',\n    HEALTH_CERTIFICATE: 'Health certificate',\n    JOURNEY_LOG: 'Journey log',\n    OTHER: 'Other'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-060",
+      "statement": "With no documents uploaded the Uploaded documents card still stands and says 'You have not added any documents yet.'",
+      "kind": "copy",
+      "ref": "view-model/cards/documents.js:12-45; copy.en.js:123-125; check-answers.fit.spec.js:211-234",
+      "quote": "documentsEmpty: 'You have not added any documents yet.',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-061",
+      "statement": "The attachment type row shows the stored attachment type value as is, with no label lookup.",
+      "kind": "data",
+      "ref": "view-model/cards/documents.js:32",
+      "quote": "row(copy.rows.attachmentType, entry.accompanyingDocumentAttachmentType)",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of any mapping; how the raw value reads to a user depends on what the documents page stores."
+    },
+    {
+      "id": "repo-frontend-p13-062",
+      "statement": "The Roles and addresses card's Change link goes to the addresses page, which is the page the five roles come from.",
+      "kind": "behaviour",
+      "ref": "view-model/cards/addresses/roles-and-addresses.js:20-39",
+      "quote": "The one Change link goes to the addresses page — the page the hub's addresses\n * task row leads with, and the page the five roles come from.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-063",
+      "statement": "The Roles and addresses card shows one row per role in this order: 'Place of origin', 'Consignor', 'Consignee', 'Importer', 'Place of destination'.",
+      "kind": "data",
+      "ref": "view-model/cards/addresses/roles-and-addresses.js:40-48; addresses/parties.js:17-51; copy.en.js:105-109",
+      "quote": "placeOfOrigin: 'Place of origin',\n    consignor: 'Consignor',\n    consignee: 'Consignee',\n    importer: 'Importer',\n    placeOfDestination: 'Place of destination',",
+      "confidence": "verbatim",
+      "note": "Order taken from PARTIES in addresses/parties.js, read outside the slice for ordering only."
+    },
+    {
+      "id": "repo-frontend-p13-064",
+      "statement": "The Roles and addresses card adds a 'County parish holding (CPH) number' row only when any commodity line's commodity calls for a CPH number.",
+      "kind": "data",
+      "ref": "view-model/cards/addresses/roles-and-addresses.js:49-51; applicability.js:31-32; copy.en.js:110",
+      "quote": "cph: 'County parish holding (CPH) number',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-065",
+      "statement": "A party row shows the party's name in bold, then its address lines, town or city, county, postal or ZIP code, country, telephone number and email address, each on its own line, skipping blanks.",
+      "kind": "data",
+      "ref": "view-model/rows/party-row.js:9-34, 50",
+      "quote": "`<strong>${escapeHtml(party.name)}</strong>`,\n    ...[\n      ...addressLines(party.address),\n      party.address?.country,\n      party.address?.telephoneNumber,\n      party.address?.emailAddress\n    ]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-066",
+      "statement": "A party with no name is treated as unanswered and its row shows the empty-value treatment.",
+      "kind": "rule",
+      "ref": "view-model/rows/party-row.js:20-22, 47-49",
+      "quote": "if (isBlank(party?.name)) {\n    return null\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-067",
+      "statement": "An answered party row on an editable notification carries an 'Edit details' row action whose hidden text is the role name in lower case; it goes to the party edit page and returns to the review.",
+      "kind": "behaviour",
+      "ref": "view-model/rows/party-row.js:54-68; roles-and-addresses.js:44-46; copy.en.js:35",
+      "quote": "editDetails: 'Edit details',",
+      "confidence": "verbatim",
+      "note": "This is the one row-level action on the page; the fit test that counts no .govuk-summary-list__actions runs on a new journey with no parties answered."
+    },
+    {
+      "id": "repo-frontend-p13-068",
+      "statement": "On a submitted (read-only) notification party rows carry no Edit details link.",
+      "kind": "behaviour",
+      "ref": "view-model/cards/addresses/roles-and-addresses.js:44-46; contact-address.js:33-35",
+      "quote": "editHref: readOnly\n          ? undefined\n          : partyEditHref(journeyId, party, CYA_SLUG)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-069",
+      "statement": "The review shows party addresses from the stored party copies (the frozen copies saved on the notification), not live address-book records.",
+      "kind": "integration",
+      "ref": "features/check-answers/controller.js:152, 176; roles-and-addresses.js:15-18",
+      "quote": "const parties = await partiesFromStoredAnswers(answers)",
+      "confidence": "inferred",
+      "note": "Inferred from the module name frozen-parties.js and the doc comment 'parties carries the stored party copies in display shape'."
+    },
+    {
+      "id": "repo-frontend-p13-070",
+      "statement": "The Contact address for this consignment card's Change link goes to the consignment contact select page.",
+      "kind": "behaviour",
+      "ref": "view-model/cards/addresses/contact-address.js:22-29",
+      "quote": "cardAction(\n      journeyId,\n      consignmentContactSelectPage.slug,\n      copy.hidden.cards.contactAddress\n    )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-071",
+      "statement": "The Contact address for this consignment card shows one 'Contact address' party row with an Edit details link that returns to the review.",
+      "kind": "data",
+      "ref": "view-model/cards/addresses/contact-address.js:30-37; copy.en.js:101",
+      "quote": "contactAddress: 'Contact address',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-072",
+      "statement": "On a finished card an empty value reads 'Not applicable'.",
+      "kind": "copy",
+      "ref": "features/check-answers/copy/copy.en.js:3-5; rows/summary-row.js:8-11; check-answers.fit.spec.js:108-123",
+      "quote": "notApplicable: 'Not applicable',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-073",
+      "statement": "Inside a card that still has answers outstanding, every empty row, required or optional, shows no visible text, is drawn in the missing style, and tells screen readers 'Missing'.",
+      "kind": "rule",
+      "ref": "view-model/incomplete-cards.js:125-140; rows/value-text.js:48-57; copy.en.js:6-9; check-answers.fit.spec.js:450-461",
+      "quote": "Every empty row inside an unfinished card loses its placeholder, whether the\n * answer was required or optional.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-074",
+      "statement": "A free-text answer the trader typed as 'Not applicable' is kept as their answer and not blanked as missing.",
+      "kind": "rule",
+      "ref": "view-model/incomplete-cards.js:112-116; rows/value-text.js:42-46",
+      "quote": "a trader can type \"Not applicable\" into a\n * free-text answer, and that answer must survive the blanking pass.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-075",
+      "statement": "A review card is unfinished when any hub task row it covers is not ready; the cards and their task rows are: Import details (origin), Reason for import (importReason), species (commodities, consignmentDetails, animalIdentification), Additional animal details (additionalDetails), Arrival details (arrivalDetails), Transit countries (transitCountries), Transport details (transporter), Documents (documents), Roles and addresses (addresses), Contact address (contact).",
+      "kind": "rule",
+      "ref": "view-model/incomplete-cards.js:37-88",
+      "quote": "{ id: 'importDetails', anchor: 'import-details', rows: ['origin'] },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-076",
+      "statement": "The review page's 'nothing unfinished' verdict uses exactly the same readiness test as the notification's ready-to-submit state, so the two cannot disagree.",
+      "kind": "constraint",
+      "ref": "view-model/incomplete-cards.js:10-23",
+      "quote": "so a\n// notification with no unfinished card is exactly a notification that is ready\n// to submit and the two cannot diverge.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-077",
+      "statement": "Each unfinished card shows its error message inside the card (with a visually hidden 'Error:' prefix) and the card gets the error styling.",
+      "kind": "behaviour",
+      "ref": "features/check-answers/template.njk:7-13, 82-89; check-answers.fit.spec.js:463-487",
+      "quote": "<div class=\"govuk-summary-card{% if card.error %} app-summary-card--error{% endif %}\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-078",
+      "statement": "Unfinished card messages are: 'Complete import details', 'Complete reason for import', 'Complete additional animal details', 'Complete species details', 'Complete arrival details', 'Complete transit countries', 'Complete transport details', 'Complete roles and addresses', 'Complete contact address for this consignment', 'Complete documents'.",
+      "kind": "copy",
+      "ref": "features/check-answers/copy/copy.en.js:150-164",
+      "quote": "importDetails: 'Complete import details',\n      reasonForImport: 'Complete reason for import',\n      additionalAnimalDetails: 'Complete additional animal details',\n      species: 'Complete species details',\n      arrivalDetails: 'Complete arrival details',\n      transitCountries: 'Complete transit countries',\n      transportDetails: 'Complete transport details',\n      rolesAndAddresses: 'Complete roles and addresses',\n      contactAddress: 'Complete contact address for this consignment',\n      documents: 'Complete documents'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-079",
+      "statement": "The same message text is used for an unfinished card's error summary entry and for the message inside the card.",
+      "kind": "rule",
+      "ref": "features/check-answers/copy/copy.en.js:150-152",
+      "quote": "The same\n    // line carries the error summary entry and the message inside the card, so\n    // a trader reading either sees the same words.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-080",
+      "statement": "An unfinished notification's review shows an error summary titled 'There is a problem' (shared copy) on a plain visit, listing each unfinished card in page order.",
+      "kind": "behaviour",
+      "ref": "features/check-answers/controller.js:160-191; template.njk:37; check-answers.fit.spec.js:463-471",
+      "quote": "page.getByRole('heading', { name: sharedCopy.errorSummary.title })",
+      "confidence": "inferred",
+      "note": "The words 'There is a problem' come from the shared copy, not this slice; the spec comment at check-answers.fit.spec.js:439-441 names it."
+    },
+    {
+      "id": "repo-frontend-p13-081",
+      "statement": "Each unfinished-card entry in the error summary links to that card's in-page anchor: #import-details, #reason-for-import, #additional-animal-details, #arrival-details, #transit-countries, #transport-details, #documents, #roles-and-addresses, #contact-address.",
+      "kind": "behaviour",
+      "ref": "view-model/incomplete-cards.js:37-78, 105-110; check-answers.fit.spec.js:472-475",
+      "quote": "return card ? `#${card.anchor}` : undefined",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-082",
+      "statement": "The species error entry 'Complete species details' links to the '2. Description of the goods' section heading (#description-of-the-goods), and no individual species card is marked as in error.",
+      "kind": "behaviour",
+      "ref": "view-model/incomplete-cards.js:24-30, 44-50; check-answers.fit.spec.js:504-522",
+      "quote": "The species entry is the one entry whose anchor is not a card, and the one\n * entry that marks no card at all.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-083",
+      "statement": "Whether a short species card should be marked as in error on its own is recorded in the code as an open question.",
+      "kind": "constraint",
+      "ref": "view-model/incomplete-cards.js:30-31",
+      "quote": "Whether a short species card should be marked in its own right is an\n * open question on inc-150.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-084",
+      "statement": "The Transit countries card is never named as unfinished while it is out of scope, because its task row is then not applicable.",
+      "kind": "rule",
+      "ref": "view-model/incomplete-cards.js:32-35",
+      "quote": "while it is out of scope its\n * task row is NA, so `incompleteCardErrors` never names a card that is not on\n * the page.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-085",
+      "statement": "Each card's anchor element has tabindex -1 so an error summary link can move focus to it.",
+      "kind": "non-functional",
+      "ref": "features/check-answers/template.njk:83, 114",
+      "quote": "attributes: { id: card.anchor, tabindex: \"-1\" } if card.anchor else null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-086",
+      "statement": "When a party's copied address breaks the address-book rules (or its country is not in the address-book country list), the review names that role: 'Correct the address details for the place of origin', '... for the consignor', '... for the consignee', '... for the importer', '... for the place of destination', and 'Correct the contact address details for this consignment'.",
+      "kind": "copy",
+      "ref": "view-model/invalid-parties.js:13-24; copy.en.js:165-173",
+      "quote": "placeOfOrigin: 'Correct the address details for the place of origin',\n      consignor: 'Correct the address details for the consignor',\n      consignee: 'Correct the address details for the consignee',\n      importer: 'Correct the address details for the importer',\n      placeOfDestination:\n        'Correct the address details for the place of destination',\n      contactAddress: 'Correct the contact address details for this consignment'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-087",
+      "statement": "An unanswered role is never shown as an address error; a new notification shows no address error before a role is answered.",
+      "kind": "rule",
+      "ref": "view-model/invalid-parties.js:12-17; check-answers.fit.spec.js:422-436",
+      "quote": "/** An unanswered role is not an error: the user has not had a chance to answer. */",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-088",
+      "statement": "A party in error shows its error message (with visually hidden 'Error:' prefix) inside its row's value cell, above the address, which still shows so the trader can see what to correct.",
+      "kind": "behaviour",
+      "ref": "view-model/rows/party-row.js:36-52",
+      "quote": "/** An address that breaks the address-book rules still shows, under its error,\n * so the trader can see what needs correcting. */",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-089",
+      "statement": "In the error summary, party address errors come first, then the unfinished cards in page order.",
+      "kind": "rule",
+      "ref": "features/check-answers/controller.js:38-44, 59-68",
+      "quote": "One summary over both kinds of refusal: first the roles whose copied address\n * breaks the address-book rules, then the cards with answers still\n * outstanding.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-090",
+      "statement": "A party address error in the error summary links to that party's edit page, which returns to the review.",
+      "kind": "behaviour",
+      "ref": "features/check-answers/controller.js:70-76",
+      "quote": "? partyEditHref(\n              journeyId,\n              partyOf(key.slice(PARTY_KEY_PREFIX.length)),\n              CYA_SLUG\n            )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-091",
+      "statement": "A card error with no matching card anchor links in the error summary to the Change page of the obligation of that name.",
+      "kind": "behaviour",
+      "ref": "features/check-answers/controller.js:77; rows/change-link.js:14-15",
+      "quote": ": (cardAnchorHref(key) ?? changeHref(journeyId, key)),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-092",
+      "statement": "When a card is both unfinished and holds a stale (invalid) stored answer, the card says 'Complete ...' rather than naming the stale answer.",
+      "kind": "rule",
+      "ref": "features/check-answers/controller.js:178-189",
+      "quote": "// Incomplete wins over invalid on the same card: spread the invalid map\n    // first and the incomplete map second, so a card that is both unfinished\n    // and carrying a stale value says \"complete this section\" rather than\n    // naming the stale answer.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-093",
+      "statement": "A stored answer that is no longer valid for its card's page (stale) is shown as an error on that card on the review.",
+      "kind": "behaviour",
+      "ref": "features/check-answers/controller.js:157-162",
+      "quote": ": await cardStoredErrors(REVIEW_CARDS, answers, { request, storedAnswers })",
+      "confidence": "inferred",
+      "note": "The message text comes from each card's page rules in flow/stored-answers.js, outside this slice."
+    },
+    {
+      "id": "repo-frontend-p13-094",
+      "statement": "If any uploaded document's virus scan has rejected it, the Documents card shows 'One or more of your documents were rejected. Return to Documents to remove and re-upload.' on every visit to the review.",
+      "kind": "copy",
+      "ref": "features/check-answers/refusal.js:24-29; controller.js:163-168; documents/copy/copy.en.js:143-144",
+      "quote": "'One or more of your documents were rejected. Return to Documents to remove and re-upload.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-095",
+      "statement": "A document still being scanned is not shown as an error on a plain visit to the review; it is only raised when the trader presses Continue, as 'One or more of your documents are still being scanned. Wait a moment and try again.'",
+      "kind": "rule",
+      "ref": "features/check-answers/refusal.js:31-40, 71-75; controller.js:163-168, 200-206; documents/copy/copy.en.js:141-142",
+      "quote": "'One or more of your documents are still being scanned. Wait a moment and try again.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-096",
+      "statement": "The review ends with a 'Continue' button and nothing between the last card and the button: no heading and no sentence.",
+      "kind": "copy",
+      "ref": "features/check-answers/copy/copy.en.js:143-147; template.njk:128-134; check-answers.fit.spec.js:157-179",
+      "quote": "// The review ends with the button and nothing else. Its label carries the\n  // whole instruction, so no heading and no sentence stand above it.\n  submit: {\n    button: 'Continue'\n  },",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-097",
+      "statement": "Pressing Continue on a notification that is not ready (any hub task row not ready) is refused: the review is shown again with status 400 and the error summary focused.",
+      "kind": "rule",
+      "ref": "features/check-answers/refusal.js:58-60; controller.js:196-207; check-answers.fit.spec.js:489-502",
+      "quote": "if (!scope.readyForCheckYourAnswers) {\n    return { refused: true, extraCardErrors: {} }\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-098",
+      "statement": "Continue is refused while any answered party's copied address breaks the address-book rules.",
+      "kind": "rule",
+      "ref": "features/check-answers/refusal.js:61-63",
+      "quote": "if (Object.keys(await invalidPartyErrors(answers)).length > 0) {\n    return { refused: true, extraCardErrors: {} }\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-099",
+      "statement": "Continue is refused while any card holds a stale stored answer.",
+      "kind": "rule",
+      "ref": "features/check-answers/refusal.js:64-70",
+      "quote": "if (Object.keys(invalidCardErrors).length > 0) {\n    return { refused: true, extraCardErrors: {} }\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-100",
+      "statement": "Continue is refused while any uploaded document is rejected or still being scanned.",
+      "kind": "rule",
+      "ref": "features/check-answers/refusal.js:71-75",
+      "quote": "const extraCardErrors = await documentScanCardErrors(answers)\n  return {\n    refused: Object.keys(extraCardErrors).length > 0,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-101",
+      "statement": "A submitted notification is never refused.",
+      "kind": "rule",
+      "ref": "features/check-answers/refusal.js:55-57",
+      "quote": "if (journey.status === state.SUBMITTED) {\n    return NOT_REFUSED\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-102",
+      "statement": "The same refusal check guards the declaration submit, so a bookmark or the back button cannot get a stale notification past the review; on refusal the declaration sends the trader back to the review.",
+      "kind": "rule",
+      "ref": "features/check-answers/refusal.js:44-47, 78-83",
+      "quote": "Shared refusal predicate for the review page's Continue and the\n * declaration submit — a bookmark or back-button cannot sneak a stale\n * submission past.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-103",
+      "statement": "Pressing Continue on a notification that passes every check moves the trader to the next page in the review section, the declaration.",
+      "kind": "behaviour",
+      "ref": "features/check-answers/controller.js:208-209; flow/flow.js:67",
+      "quote": "return h.redirect(nextInSection(page.id, scope, journey.journeyId))",
+      "confidence": "inferred",
+      "note": "The next page is the declaration because flow.js lists the review section as [notificationViewPage, declarationPage, confirmationPage]; the fit spec's submitted-notification setup presses Continue and then meets the declaration checkbox."
+    },
+    {
+      "id": "repo-frontend-p13-104",
+      "statement": "The error summary takes focus only after the trader has just been refused; a plain visit keeps focus away from it.",
+      "kind": "non-functional",
+      "ref": "features/check-answers/controller.js:49-50, 194, 202-205",
+      "quote": "Focus is only moved to the summary when the user has just been refused, so a\n * plain visit does not yank the caret out of the page heading.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-105",
+      "statement": "The Continue form posts with a CSRF crumb and the notification's concurrency token.",
+      "kind": "constraint",
+      "ref": "features/check-answers/template.njk:129-133",
+      "quote": "<input type=\"hidden\" name=\"crumb\" value=\"{{ crumb }}\" />\n      <input type=\"hidden\" name=\"concurrencyToken\" value=\"{{ concurrencyToken }}\" />",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-106",
+      "statement": "A submitted notification's review is read-only: no Continue button, no form, and the page ends with the last card.",
+      "kind": "behaviour",
+      "ref": "features/check-answers/template.njk:123-134; check-answers.fit.spec.js:565-576",
+      "quote": "A submitted notification is a record, not a form.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-107",
+      "statement": "A submitted notification's review shows no unfinished-card, stale-answer, rejected-document or party-address errors.",
+      "kind": "rule",
+      "ref": "features/check-answers/controller.js:153-155, 160-189",
+      "quote": "// A submitted notification is a record of what was sent, so nothing on it\n  // is outstanding, and no stored answer of its is named as stale either",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-108",
+      "statement": "A submitted notification's review shows a secondary button to copy the notification, posting to the notification's copy route with copy origin 'notification-view'.",
+      "kind": "behaviour",
+      "ref": "features/check-answers/template.njk:41-53; controller.js:127; check-answers.fit.spec.js:568-572",
+      "quote": "<input type=\"hidden\" name=\"copyOrigin\" value=\"notification-view\" />",
+      "confidence": "verbatim",
+      "note": "Button text comes from shared copy notificationActions.copy.text, outside this slice."
+    },
+    {
+      "id": "repo-frontend-p13-109",
+      "statement": "A submitted notification's review shows a warning button to delete it, linking to the notification's delete page.",
+      "kind": "behaviour",
+      "ref": "features/check-answers/template.njk:54-60; controller.js:128-131",
+      "quote": "deleteHref:\n      readOnly && journey.status === state.SUBMITTED\n        ? pagePath(journey.journeyId, 'delete')\n        : null,",
+      "confidence": "verbatim",
+      "note": "Button text comes from shared copy notificationActions.delete.text, outside this slice."
+    },
+    {
+      "id": "repo-frontend-p13-110",
+      "statement": "While a notification is being amended, the review shows a 'Cancel amendment' link to the cancel-amend page.",
+      "kind": "behaviour",
+      "ref": "features/check-answers/template.njk:64-68; controller.js:132-135; copy.en.js:37",
+      "quote": "link: 'Cancel amendment',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-111",
+      "statement": "After an amendment is cancelled (submitted notification with ?cancelled=1), the review shows a success notification banner titled 'Success' reading 'The amendment has been cancelled and the submitted version restored.'",
+      "kind": "copy",
+      "ref": "features/check-answers/template.njk:28-35; controller.js:174; copy.en.js:36-41",
+      "quote": "successTitle: 'Success',\n    successBody:\n      'The amendment has been cancelled and the submitted version restored.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-112",
+      "statement": "A notification being amended (not yet resubmitted) is editable on the review, with Change links and Continue, because only SUBMITTED status makes it read-only.",
+      "kind": "rule",
+      "ref": "features/check-answers/controller.js:151",
+      "quote": "const readOnly = journey.status === state.SUBMITTED",
+      "confidence": "inferred"
+    },
+    {
+      "id": "repo-frontend-p13-113",
+      "statement": "The review page's Welsh copy has the same keys as the English and is a machine draft not reviewed by a translator.",
+      "kind": "constraint",
+      "ref": "features/check-answers/copy/copy.cy.js:1",
+      "quote": "// MACHINE-DRAFT Welsh — not reviewed by a translator. Do not ship user-facing without Welsh Language Standards sign-off.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-114",
+      "statement": "Fit test 'renders entered and missing answers in their summary rows' proves that after answering the origin page (France, region code required Yes, region code IDF75, internal reference ReviewRef1) the review shows heading 'Review your notification', section '1. About the consignment', Country of origin France, Region of origin code required Yes, Region of origin code FR-IDF75, Internal reference number ReviewRef1, and arrival date marked Missing.",
+      "kind": "behaviour",
+      "ref": "check-answers.fit.spec.js:64-99",
+      "quote": "await expect(rowFor(page, copy.rows.regionCode)).toContainText('FR-IDF75')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-115",
+      "statement": "Fit test 'journey with only the entry page answered writes the settled blanks out and marks the outstanding ones' proves a new notification's blank internal reference reads 'Not applicable' while the blank arrival date is marked Missing with no 'Not applicable'.",
+      "kind": "behaviour",
+      "ref": "check-answers.fit.spec.js:108-123",
+      "quote": "test('journey with only the entry page answered writes the settled blanks out and marks the outstanding ones'",
+      "confidence": "verbatim",
+      "note": "This implies a new notification's Import details card counts as finished from the entry page alone."
+    },
+    {
+      "id": "repo-frontend-p13-116",
+      "statement": "Fit test 'numbers the six sections in order' proves the six numbered h2 section headings appear in order on a new notification.",
+      "kind": "behaviour",
+      "ref": "check-answers.fit.spec.js:135-152",
+      "quote": "test('numbers the six sections in order'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-117",
+      "statement": "Fit test 'ends with the Continue button and nothing above it' proves the last h2 is '6. Contact address', the last block in the main column is the form, the element just before it is a summary card, and the form holds the Continue button.",
+      "kind": "behaviour",
+      "ref": "check-answers.fit.spec.js:157-179",
+      "quote": "test('ends with the Continue button and nothing above it'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-118",
+      "statement": "Fit test 'heads every card with its own subsection heading' proves a new notification shows exactly these h3 headings in order: 'Where is this consignment coming from?', 'Main reason for import', 'Additional details', 'Arrival details', 'Transport details', 'Upload documents', 'Roles and addresses', 'Contact address for this consignment', and as many h4 headings as summary cards.",
+      "kind": "behaviour",
+      "ref": "check-answers.fit.spec.js:181-200",
+      "quote": "test('heads every card with its own subsection heading'",
+      "confidence": "verbatim",
+      "note": "So on a new notification neither the Commodity details nor the Transit countries group stands."
+    },
+    {
+      "id": "repo-frontend-p13-119",
+      "statement": "Fit test 'shows the documents section and a Change route with nothing uploaded' proves the '4. Documents' heading, the 'Uploaded documents' card and 'You have not added any documents yet.' show with nothing uploaded, and the Change link opens /accompanying-documents?change=1.",
+      "kind": "behaviour",
+      "ref": "check-answers.fit.spec.js:211-234",
+      "quote": "test('shows the documents section and a Change route with nothing uploaded'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-120",
+      "statement": "Fit test 'shows the destination country and port of exit a transit collected, with the one Change link in the card heading' proves a transit reason with port GB DVR and destination IE reads back 'Ireland' and 'Port of Dover (GB DVR)', shows no Exit date row, has no link on the row, and the card's Change link opens /import-reason?change=1.",
+      "kind": "behaviour",
+      "ref": "check-answers.fit.spec.js:251-291",
+      "quote": "test('shows the destination country and port of exit a transit collected, with the one Change link in the card heading'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-121",
+      "statement": "Fit test 'shows the exit date and port of exit a temporary admission collected' proves a temporary admission (horses) reason reads back Exit date 27/3/2026 and Port of exit 'Port of Dover (GB DVR)', with no Destination country row.",
+      "kind": "behaviour",
+      "ref": "check-answers.fit.spec.js:293-318",
+      "quote": "test('shows the exit date and port of exit a temporary admission collected'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-122",
+      "statement": "Fit test 'leaves all three rows off the review for a reason that asks none of them' proves a re-entry reason shows none of Destination country, Exit date or Port of exit.",
+      "kind": "behaviour",
+      "ref": "check-answers.fit.spec.js:320-337",
+      "quote": "test('leaves all three rows off the review for a reason that asks none of them'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-123",
+      "statement": "Fit test 'Change link threads context and returns to the same review after saving' proves the Import details Change link opens /origin?change=1, and saving there returns to /notifications/{id}/notification-view with the cleared internal reference now reading 'Not applicable'.",
+      "kind": "behaviour",
+      "ref": "check-answers.fit.spec.js:345-373",
+      "quote": "test('Change link threads context and returns to the same review after saving'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-124",
+      "statement": "Fit test 'every Change link sits in a card heading and no summary row carries one' proves the count of 'Change' links equals the number of summary cards, no summary-list row actions exist, and each card has exactly one action link.",
+      "kind": "behaviour",
+      "ref": "check-answers.fit.spec.js:377-397",
+      "quote": "test('every Change link sits in a card heading and no summary row carries one'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-125",
+      "statement": "Fit test 'back link returns to the notification hub' proves the review's Back link opens the notification hub.",
+      "kind": "behaviour",
+      "ref": "check-answers.fit.spec.js:405-413",
+      "quote": "test('back link returns to the notification hub'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-126",
+      "statement": "The review page has no serious or critical WCAG 2 A/AA axe violations in three states: a new notification, an unfinished notification after a refused Continue, and a submitted notification.",
+      "kind": "non-functional",
+      "ref": "check-answers.fit.spec.js:40-52, 415-420, 524-535, 578-585",
+      "quote": "test('review has no serious or critical axe violations'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-127",
+      "statement": "Fit test 'new journey shows no address error before a role has been answered' proves on a new notification the Consignor row is marked Missing and no 'Correct the address details for the consignor' link appears.",
+      "kind": "behaviour",
+      "ref": "check-answers.fit.spec.js:424-436",
+      "quote": "test('new journey shows no address error before a role has been answered'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-128",
+      "statement": "Fit test 'gives every blank row in a marked card no text and a hidden Missing' proves the unfinished Arrival details card contains no 'Not applicable' and its blank rows read 'Missing' to assistive technology.",
+      "kind": "behaviour",
+      "ref": "check-answers.fit.spec.js:450-461",
+      "quote": "test('gives every blank row in a marked card no text and a hidden Missing'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-129",
+      "statement": "Fit test 'names every unfinished card and marks the card it names' proves a new notification shows 'There is a problem', a 'Complete arrival details' entry linking to #arrival-details, the same message inside that card with the 'Error:' prefix, and the card's error class.",
+      "kind": "behaviour",
+      "ref": "check-answers.fit.spec.js:463-487",
+      "quote": "test('names every unfinished card and marks the card it names'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-130",
+      "statement": "Fit test 'refuses Continue and keeps the trader on the review page' proves pressing Continue on a new notification stays on the review URL and shows the error summary.",
+      "kind": "behaviour",
+      "ref": "check-answers.fit.spec.js:489-502",
+      "quote": "test('refuses Continue and keeps the trader on the review page'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-131",
+      "statement": "Fit test 'refuses submit of a notification with no commodity line and names the missing species details' proves Continue with no commodity line stays on the review and shows a 'Complete species details' entry linking to #description-of-the-goods.",
+      "kind": "behaviour",
+      "ref": "check-answers.fit.spec.js:504-522",
+      "quote": "test('refuses submit of a notification with no commodity line and names the missing species details'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-frontend-p13-132",
+      "statement": "Fit test 'ends with the last card and offers no way to submit again' proves that a notification completed, reviewed, declared and then opened from the dashboard's View link shows 'Review your notification' with the copy button and no Continue button.",
+      "kind": "behaviour",
+      "ref": "check-answers.fit.spec.js:542-576",
+      "quote": "test('ends with the last card and offers no way to submit again'",
+      "confidence": "verbatim",
+      "note": "The setup shows a submitted notification is viewed from the dashboard through this same review page."
+    },
+    {
+      "id": "repo-frontend-p13-133",
+      "statement": "No fit test covers the review with a commodity line entered: species cards, their titles, rows, Change link or the identifier table are not exercised end to end in this spec.",
+      "kind": "behaviour",
+      "ref": "check-answers.fit.spec.js (whole file)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked through all 22 tests; only the submitted-notification setup completes commodities (via completeAnswerSections) and it asserts nothing about species cards."
+    },
+    {
+      "id": "repo-frontend-p13-134",
+      "statement": "No fit test covers party address errors being shown (an answered party whose address breaks the rules), the Edit details link, the rejected or still-scanning document errors, the cancel-amendment link or banner, or the delete button on a submitted notification.",
+      "kind": "behaviour",
+      "ref": "check-answers.fit.spec.js (whole file)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-frontend-p13-135",
+      "statement": "The review shows no row for transit countries inside Arrival details; they moved to their own card, and the reason for import moved out of Additional animal details into its own card.",
+      "kind": "behaviour",
+      "ref": "view-model/cards/movement/arrival-details.js:15-18; cards/consignment/additional-animal-details.js:15-16",
+      "quote": "The countries the consignment travels through used to be a\n * row here, reached from a second link; design release 1 gives them their own\n * card",
+      "confidence": "verbatim"
+    }
+  ]
+}

@@ -1,0 +1,918 @@
+{
+  "source": "prototype:dr2-1-source",
+  "structure": "Part 16, Address book: add an address. Read in full at commit 04a073b: the root views address-book-add.html (category choice), address-book-add-usage.html (usage checkboxes), address-book-lookup.html (root add-details page with address search and manual entry), the DR2.1 override design-release-2.1/consignment-add-address.html (claimed here only for how the address book renders it, isAddressBookAdd true), the partials address-book-manual-address-fields.html and design-release-2.1/consignment-manual-address-fields.html, consignment-uk-add-address-fields.html, consignment-uk-manual-address-fields.html, consignment-uk-contact-fields.html; the data files address-book-add-categories.js (4 categories), address-book-origin-uses.js (2 uses), address-book-destination-uses.js (3 uses), address-book-branch-uses.js (1 use), address-book-lookup-addresses.js (500 generated UK and EU lookup addresses plus 80 Northern Ireland ones); and app/routes.js 9644-9737 (add success message, buildAddressBookEntryFromManual, section-to-type map), 9805-9842 (back link and cancel href), 9866-9943 (saveAddressBookEntry), 10045-10370 (base path, categories and DR2.1 labels, usage options, add-details render and post, usage page, add page, type label, lookup page), 10412-10524 (country items, lookup-to-manual mapping, manual address parse and validation) and 11746-11977 (GET/POST /address-book/add, /add/lookup, /add/usage). To follow the flow I also looked, without claiming their own pages, at routes.js 36-41 (getUkConsignmentLookupAddresses), 4139-4166 (mergeManualAddressFromLookupAndBody and the start of the DR2.1 journey add-address post), 9738-9804 (consignment return helpers) and 10030-10044 (usage options by category). Flow covered: choose an address type (4 radios) -> Transporter goes to the transporter add journey; the other three go to the add-details step, which under DR2.1 renders consignment-add-address.html: a UK-only address search plus manual reveal for Destination and Branch, straight manual entry with a country select for Origin or Consignor, then usage checkboxes, Save and continue -> address book filtered by category with a success banner. Also covered: the ?from= return to a journey section or the contact address, the root lookup page that return flow falls back to, every field label, hint and validation message, the usage page and why it is not reachable, and what is saved. Edit and delete success messages in the same routes.js range belong to the edit and delete part and are not claimed here.",
+  "claims": [
+    {
+      "id": "prototype-dr2-1-source-p16-001",
+      "statement": "Under DR2.1 the address book add pages live under the version's address book path, /design-release-2.1/address-book/add and its sub-pages, because the base path is the journey base path plus /address-book whenever the DR2 version flag is set (DR2.1 sets it too).",
+      "kind": "behaviour",
+      "ref": "app/routes.js:10045-10051",
+      "quote": "if (res.locals.isDesignRelease2Version && res.locals.journeyBasePath) {\n    return `${res.locals.journeyBasePath}/address-book`\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-002",
+      "statement": "Opening the add page without a from parameter starts a fresh add: it clears any journey return, the chosen category and address type, the manual address, chosen uses and lookup selection.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11763-11776",
+      "quote": "clearAddressBookConsignmentReturn(req.session.data)\n  req.session.data.addressBookAddressType = null\n  req.session.data.addressBookAddressCategory = null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-003",
+      "statement": "The first add page has the caption 'Add a new address'.",
+      "kind": "copy",
+      "ref": "app/views/address-book-add.html:37",
+      "quote": "<p class=\"app-address-book-add-page__caption\">Add a new address</p>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-004",
+      "statement": "Under DR2 and DR2.1 the first add page's heading (and page title) is 'Choose an address type'; the older root version says 'What is the new address for?'.",
+      "kind": "copy",
+      "ref": "app/routes.js:10265; app/views/address-book-add.html:8,38",
+      "quote": "pageHeading: isDr2 ? 'Choose an address type' : 'What is the new address for?',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-005",
+      "statement": "The address type question is a single-choice radio group whose fieldset legend repeats the heading and is visually hidden.",
+      "kind": "behaviour",
+      "ref": "app/views/address-book-add.html:43-44,63",
+      "quote": "<legend class=\"govuk-fieldset__legend govuk-visually-hidden\">{{ pageHeading if pageHeading else \"What is the new address for?\" }}</legend>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-006",
+      "statement": "Under DR2.1 the first address type option is 'Origin or Consignor' with the hint 'Place of origin, Consignor'.",
+      "kind": "copy",
+      "ref": "app/data/address-book-add-categories.js:2-8",
+      "quote": "value: 'origin-and-consignor',\n    text: 'Origin and Consignor',\n    textDesignRelease21: 'Origin or Consignor',\n    hint: 'Place of origin, Consignor',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-007",
+      "statement": "Under DR2.1 the second address type option is 'Destination, Consignee or Importer' with the hint 'Place of destination, Consignee, Importer'.",
+      "kind": "copy",
+      "ref": "app/data/address-book-add-categories.js:9-15",
+      "quote": "value: 'destination-consignee-importer',\n    text: 'Destination, Consignee and Importer',\n    textDesignRelease21: 'Destination, Consignee or Importer',\n    hint: 'Place of destination, Consignee, Importer',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-008",
+      "statement": "The third address type option is 'Transporter' with the hint 'Private, Commercial'.",
+      "kind": "copy",
+      "ref": "app/data/address-book-add-categories.js:16-21",
+      "quote": "value: 'transporter',\n    text: 'Transporter',\n    hint: 'Private, Commercial',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-009",
+      "statement": "The fourth address type option is 'Branch' with the hint 'Branch address'.",
+      "kind": "copy",
+      "ref": "app/data/address-book-add-categories.js:22-27",
+      "quote": "value: 'branch',\n    text: 'Branch',\n    hint: 'Branch address',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-010",
+      "statement": "DR2.1 changes only the option labels from 'and' to 'or' wording ('Origin or Consignor', 'Destination, Consignee or Importer'); the values, hints and the Transporter and Branch labels are the same as DR2.",
+      "kind": "rule",
+      "ref": "app/routes.js:10057-10066",
+      "quote": "return addressBookAddCategories.map((item) => ({\n    ...item,\n    text: item.textDesignRelease21 || item.text\n  }))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-011",
+      "statement": "Coming back to the first add page pre-selects the category chosen earlier in this add.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:10269-10273; app/views/address-book-add.html:65",
+      "quote": "? sessionData.addressBookAddressCategory || ''",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-012",
+      "statement": "The first add page has a 'Continue' button.",
+      "kind": "copy",
+      "ref": "app/views/address-book-add.html:89-92",
+      "quote": "text: \"Continue\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-013",
+      "statement": "The first add page's 'Back' link goes to the address book.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:10263; app/views/address-book-add.html:18-21",
+      "quote": "backLink: addressBookBasePath,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-014",
+      "statement": "Every address book add page highlights 'address-book' in the service navigation.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:10137-10138,10243,10262,10342",
+      "quote": "serviceNavActive: 'address-book',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-015",
+      "statement": "The root address book add pages (choose a type, usage, lookup) and the DR2.1 add-details page all show the Alpha phase banner with a 'give your feedback by email' link above the Back link.",
+      "kind": "copy",
+      "ref": "app/views/address-book-add.html:11-16; app/views/design-release-2.1/consignment-add-address.html:11-16",
+      "quote": "html: 'This is a new service. Help us improve it and <a class=\"govuk-link\" href=\"#\">give your feedback by email</a>.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-016",
+      "statement": "Continuing without choosing an address type shows the error 'Select an address type' by the radios and in a 'There is a problem' error summary that links to the first option.",
+      "kind": "rule",
+      "ref": "app/routes.js:11790-11803; app/views/address-book-add.html:28-33",
+      "quote": "text: 'Select an address type',\n        href: '#address-type-origin-and-consignor'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-017",
+      "statement": "Choosing Transporter leaves the address book add and sends the user to the transporter add journey at /transporter/add, flagged as an address book transporter add.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11813-11817",
+      "quote": "if (category.value === 'transporter') {\n      req.session.data.addressBookAddingTransporter = true\n      req.session.data.transporterAddType = null\n      return res.redirect('/transporter/add')",
+      "confidence": "verbatim",
+      "note": "The redirect is written unprefixed; whether it lands under /design-release-2.1 depends on version-mount.js prefixing redirects (another part's slice)."
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-018",
+      "statement": "Choosing Origin or Consignor, Destination, or Branch stores the category with a default address type (place of origin, place of destination, branch address) and goes to the add-details step at /address-book/add/lookup.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11806-11819; app/data/address-book-add-categories.js:7,14,26",
+      "quote": "req.session.data.addressBookAddressCategory = category.value\n    req.session.data.addressBookAddressType = category.defaultAddressType",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-019",
+      "statement": "Under DR2 and DR2.1, for the Origin or Consignor, Destination and Branch categories, the add-details step renders the consignment-add-address view (the DR2.1 'Add address and contact details' page) in its address book mode, not the root address lookup page.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11844-11846,10136-10137",
+      "quote": "if (res.locals.isDesignRelease2Version && isAddressBookUsageCategory(req.session.data.addressBookAddressCategory)) {\n    return renderAddressBookAddDetailsPage(req, res)\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-020",
+      "statement": "Opening the add-details step directly with no address type chosen and no journey return in progress redirects to the first add page.",
+      "kind": "rule",
+      "ref": "app/routes.js:10308-10319,11840-11842",
+      "quote": "res.redirect(`${getAddressBookBasePath(res)}/add`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-021",
+      "statement": "The add-details step has the caption 'Add new address' and the heading and page title 'Add address and contact details'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/consignment-add-address.html:8,40-41",
+      "quote": "<span class=\"govuk-caption-l\">Add new address</span>\n      <h1 class=\"govuk-heading-l\">Add address and contact details</h1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-022",
+      "statement": "When reached from the address book the add-details step does not show the notification status banner that it shows inside a notification journey.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/consignment-add-address.html:28-30",
+      "quote": "{% if not isAddressBookAdd %}\n      {% include \"partials/notification-status.html\" %}\n    {% endif %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-023",
+      "statement": "The add-details step's 'Back' link goes to the first add page (choose an address type).",
+      "kind": "behaviour",
+      "ref": "app/routes.js:10139",
+      "quote": "backLink: `${addressBookBasePath}/add`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-024",
+      "statement": "The add-details step's form posts back to /address-book/add/lookup under the version's address book path.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:10141",
+      "quote": "formAction: `${addressBookBasePath}/add/lookup`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-025",
+      "statement": "Only the Destination, Consignee or Importer and the Branch categories offer an address search; Origin or Consignor goes straight to manual address fields.",
+      "kind": "rule",
+      "ref": "app/routes.js:10089-10091,10124; app/views/design-release-2.1/consignment-add-address.html:51-59",
+      "quote": "return category === 'destination-consignee-importer' || category === 'branch'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-026",
+      "statement": "The address search field is labelled 'Search for an address' and has the placeholder 'Start typing...'.",
+      "kind": "copy",
+      "ref": "app/views/partials/design-release-2.1/consignment-uk-add-address-fields.html:11-13,36",
+      "quote": "Search for an address",
+      "confidence": "verbatim",
+      "note": "Placeholder quote: placeholder=\"Start typing...\""
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-027",
+      "statement": "The address search has a search icon button with the accessible name 'Search' and its results appear in a list labelled 'Address search results'.",
+      "kind": "copy",
+      "ref": "app/views/partials/design-release-2.1/consignment-uk-add-address-fields.html:41-55",
+      "quote": "<button class=\"app-commodity-search__button\" type=\"button\" aria-label=\"Search\">",
+      "confidence": "verbatim",
+      "note": "Results list: aria-label=\"Address search results\"; a polite live region announces search status."
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-028",
+      "statement": "In the address book add-details step the search offers only United Kingdom addresses from the lookup list.",
+      "kind": "rule",
+      "ref": "app/routes.js:10159; app/routes.js:39-41",
+      "quote": "lookupAddressesJson: JSON.stringify(getUkConsignmentLookupAddresses()),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-029",
+      "statement": "The address search is a free-text type-ahead over organisation name, address and country, not a postcode-then-pick lookup.",
+      "kind": "behaviour",
+      "ref": "app/data/address-book-lookup-addresses.js:294-312",
+      "quote": "searchText: buildSearchText([\n      address.name,\n      formattedAddress,\n      address.country,\n      ...(address.addressLines || [])\n    ]),",
+      "confidence": "inferred",
+      "note": "Inferred from the data shape and the search widget; the matching itself runs client side in app/assets, outside the scope."
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-030",
+      "statement": "Each search result is shown as 'name, address, country'.",
+      "kind": "data",
+      "ref": "app/data/address-book-lookup-addresses.js:303",
+      "quote": "label: `${address.name}, ${formattedAddress}, ${address.country}`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-031",
+      "statement": "The prototype's lookup list holds 500 made-up UK and EU member state addresses: seeded consignment and contact addresses plus an 'Acorn Farm' Kirkby address, topped up with generated organisations, sorted by label.",
+      "kind": "data",
+      "ref": "app/data/address-book-lookup-addresses.js:5,97-104,385-412",
+      "quote": "const TARGET_ADDRESS_COUNT = 500",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-032",
+      "statement": "The lookup data also holds 80 generated Northern Ireland addresses, which can be resolved by id but are not part of the UK list the address book add search shows.",
+      "kind": "data",
+      "ref": "app/data/address-book-lookup-addresses.js:431,461-467",
+      "quote": "const NI_LOOKUP_ADDRESS_COUNT = 80",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-033",
+      "statement": "Picking a search result fills the name, address lines, town or city, postcode and country from the result; a trailing UK postcode line is split off as the postcode and the line before it gives the town.",
+      "kind": "behaviour",
+      "ref": "app/data/address-book-lookup-addresses.js:117-119,153-224; app/routes.js:10435-10451",
+      "quote": "if (isUkPostcode(lastLine)) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-034",
+      "statement": "Picking a search result does not fill email or phone on the server side: the lookup-to-address mapping used on save leaves them out, so the user's typed contact details are what is saved.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:10435-10451",
+      "quote": "return {\n    nameOrOrganisation: manual.nameOrOrganisation,\n    addressLine1: manual.addressLine1,\n    addressLine2: manual.addressLine2,\n    townOrCity: manual.townOrCity,\n    county: manual.county,\n    postcode: manual.postcode,\n    country: manual.country\n  }",
+      "confidence": "inferred",
+      "note": "Lookup records do carry placeholder email (info@<slug>.co.uk or .eu) and phone values (address-book-lookup-addresses.js:226-291) in their client-side JSON; whether the browser copies them into the contact fields is client code outside this part."
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-035",
+      "statement": "Typed values override the picked search result's values field by field; a blank typed field keeps the result's value.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:10181-10186; app/routes.js:4139-4153",
+      "quote": "if (value || !merged[key]) {\n      merged[key] = value\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-036",
+      "statement": "Below the search there is an 'Enter address manually' link-styled button that reveals the address and contact fields.",
+      "kind": "copy",
+      "ref": "app/views/partials/design-release-2.1/consignment-uk-add-address-fields.html:74-83",
+      "quote": "Enter address manually",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-037",
+      "statement": "In the search categories the address fields and the usage question start hidden and are revealed once an address is picked or manual entry is chosen; they open already revealed when address line 1 or a picked result is already present.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:10126-10134; app/views/partials/design-release-2.1/consignment-uk-add-address-fields.html:5-9,94-97; app/views/design-release-2.1/consignment-add-address.html:61",
+      "quote": "data-reveal-with-address=\".app-consignment-add-address-page__usage\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-038",
+      "statement": "The address fields sit under the heading 'Address'.",
+      "kind": "copy",
+      "ref": "app/views/partials/design-release-2.1/consignment-uk-manual-address-fields.html:5; consignment-manual-address-fields.html:5",
+      "quote": "<h2 class=\"app-address-book-lookup-page__section-heading\">Address</h2>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-039",
+      "statement": "The add-details step asks for 'Name or organisation' (required).",
+      "kind": "data",
+      "ref": "app/views/partials/design-release-2.1/consignment-manual-address-fields.html:7-16",
+      "quote": "text: \"Name or organisation\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-040",
+      "statement": "The add-details step asks for 'Address line 1' (required).",
+      "kind": "data",
+      "ref": "app/views/partials/design-release-2.1/consignment-manual-address-fields.html:18-27",
+      "quote": "text: \"Address line 1\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-041",
+      "statement": "The add-details step asks for 'Address line 2 (optional)'.",
+      "kind": "data",
+      "ref": "app/views/partials/design-release-2.1/consignment-manual-address-fields.html:29-38",
+      "quote": "text: \"Address line 2 (optional)\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-042",
+      "statement": "The add-details step asks for 'Town or city' (required).",
+      "kind": "data",
+      "ref": "app/views/partials/design-release-2.1/consignment-manual-address-fields.html:40-49",
+      "quote": "text: \"Town or city\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-043",
+      "statement": "The add-details step asks for 'Postcode or Zip code' (required).",
+      "kind": "data",
+      "ref": "app/views/partials/design-release-2.1/consignment-manual-address-fields.html:51-60",
+      "quote": "text: \"Postcode or Zip code\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-044",
+      "statement": "The add-details step asks for 'Country' from a select list (required).",
+      "kind": "data",
+      "ref": "app/views/partials/design-release-2.1/consignment-manual-address-fields.html:62-74",
+      "quote": "text: \"Country\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-045",
+      "statement": "The DR2.1 add-details step has no County field, unlike the root address book manual fields which ask 'County (optional)'.",
+      "kind": "data",
+      "ref": "app/views/partials/design-release-2.1/consignment-manual-address-fields.html; consignment-uk-manual-address-fields.html; app/views/partials/address-book-manual-address-fields.html:51-60",
+      "quote": "text: \"County (optional)\"",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of a county input in both DR2.1 partials; the quote is the root partial's field that DR2.1 drops."
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-046",
+      "statement": "For Destination and Branch (search categories) the country is fixed: the select holds only 'United Kingdom', pre-selected, and the save forces the country to United Kingdom whatever is posted.",
+      "kind": "rule",
+      "ref": "app/routes.js:10145-10150,10182-10186",
+      "quote": "showAddressLookup ? { country: 'United Kingdom' } : {}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-047",
+      "statement": "For Origin or Consignor the country select starts on 'Select one' and lists every country, including United Kingdom, in alphabetical order.",
+      "kind": "data",
+      "ref": "app/routes.js:10151-10158,10412-10423",
+      "quote": "value: '',\n          text: 'Select one',\n          selected: !manualAddress.country",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-048",
+      "statement": "For Origin or Consignor a horizontal section break separates the address and contact fields from the usage question.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/consignment-add-address.html:55-59",
+      "quote": "<hr class=\"app-consignment-add-address-page__section-break\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-049",
+      "statement": "Contact fields sit under the heading 'Contact details'.",
+      "kind": "copy",
+      "ref": "app/views/partials/design-release-2.1/consignment-uk-contact-fields.html:4; consignment-manual-address-fields.html:76",
+      "quote": "<h2 class=\"app-address-book-lookup-page__section-heading\">Contact details</h2>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-050",
+      "statement": "The add-details step asks for 'Email address' (required).",
+      "kind": "data",
+      "ref": "app/views/partials/design-release-2.1/consignment-uk-contact-fields.html:6-15",
+      "quote": "text: \"Email address\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-051",
+      "statement": "The add-details step asks for 'Phone number' (required) with the hint 'For international numbers include the country code'.",
+      "kind": "data",
+      "ref": "app/views/partials/design-release-2.1/consignment-uk-contact-fields.html:17-29",
+      "quote": "text: \"Phone number\"\n    },\n    hint: {\n      text: \"For international numbers include the country code\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-052",
+      "statement": "In the address book add-details step the usage question's legend is 'Address type' for the search categories (Destination, Branch) and 'What can this address be used for?' for Origin or Consignor.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/consignment-add-address.html:63-69",
+      "quote": "{% if showAddressLookup %}Address type{% else %}What can this address be used for?{% endif %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-053",
+      "statement": "In the address book add-details step the usage question has the hint 'Select where this address can be used'.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/consignment-add-address.html:70-76",
+      "quote": "Select where this address can be used",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-054",
+      "statement": "The usage question is a set of checkboxes showing only the uses for the chosen category, one group, with no per-option hints on the add-details step.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:10093-10104; app/views/design-release-2.1/consignment-add-address.html:85-110",
+      "quote": "return [{\n    id: category,\n    options\n  }]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-055",
+      "statement": "For Origin or Consignor the use options are 'Place of origin' and 'Consignor'.",
+      "kind": "data",
+      "ref": "app/routes.js:10039-10043; app/data/address-book-origin-uses.js",
+      "quote": "'origin-and-consignor': addressBookOriginUses,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-056",
+      "statement": "For Destination, Consignee or Importer the use options are 'Place of destination', 'Consignee' and 'Importer'.",
+      "kind": "data",
+      "ref": "app/routes.js:10039-10043; app/data/address-book-destination-uses.js",
+      "quote": "'destination-consignee-importer': addressBookDestinationUses,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-057",
+      "statement": "For Branch the only use option is 'Branch address'.",
+      "kind": "data",
+      "ref": "app/routes.js:10039-10043; app/data/address-book-branch-uses.js",
+      "quote": "branch: addressBookBranchUses",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-058",
+      "statement": "The 'Place of origin' use carries the hint 'The address where the animals begin their journey to Great Britain.' (shown on the usage page).",
+      "kind": "copy",
+      "ref": "app/data/address-book-origin-uses.js:2-6",
+      "quote": "text: 'Place of origin',\n    hint: 'The address where the animals begin their journey to Great Britain.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-059",
+      "statement": "The 'Consignor' use carries the hint 'This is the sender of the consignment.' (shown on the usage page).",
+      "kind": "copy",
+      "ref": "app/data/address-book-origin-uses.js:7-11",
+      "quote": "text: 'Consignor',\n    hint: 'This is the sender of the consignment.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-060",
+      "statement": "The 'Place of destination' use carries the hint 'This is where the animals will be unloaded and accommodated for at least 48 hours.' (shown on the usage page).",
+      "kind": "copy",
+      "ref": "app/data/address-book-destination-uses.js:2-6",
+      "quote": "text: 'Place of destination',\n    hint: 'This is where the animals will be unloaded and accommodated for at least 48 hours.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-061",
+      "statement": "The 'Consignee' use carries the hint 'This is the receiver or buyer of the consignment being shipped or transported.' (shown on the usage page).",
+      "kind": "copy",
+      "ref": "app/data/address-book-destination-uses.js:7-11",
+      "quote": "text: 'Consignee',\n    hint: 'This is the receiver or buyer of the consignment being shipped or transported.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-062",
+      "statement": "The 'Importer' use carries the hint 'This is usually the same as the consignee. You can select a different person if needed.' (shown on the usage page).",
+      "kind": "copy",
+      "ref": "app/data/address-book-destination-uses.js:12-16",
+      "quote": "text: 'Importer',\n    hint: 'This is usually the same as the consignee. You can select a different person if needed.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-063",
+      "statement": "The 'Branch address' use carries the hint 'The specific business location acting as the importer or consignee where an organisation has multiple premises. This ensures the correct site is associated with the notification.' (shown on the usage page).",
+      "kind": "copy",
+      "ref": "app/data/address-book-branch-uses.js:2-6",
+      "quote": "text: 'Branch address',\n    hint: 'The specific business location acting as the importer or consignee where an organisation has multiple premises. This ensures the correct site is associated with the notification.'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-064",
+      "statement": "The address book add-details step has one 'Save and continue' button.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/consignment-add-address.html:116-121",
+      "quote": "text: \"Save and continue\",\n              name: \"action\",\n              value: \"continue\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-065",
+      "statement": "The address book add-details step has a 'Cancel and return to address book' link that goes to the address book.",
+      "kind": "behaviour",
+      "ref": "app/views/design-release-2.1/consignment-add-address.html:138-142; app/routes.js:10140",
+      "quote": "{% if isAddressBookAdd %}Cancel and return to address book{% else %}Cancel and return to hub{% endif %}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-066",
+      "statement": "Saving without a name or organisation shows 'Enter a name or organisation name', linked to the name field.",
+      "kind": "rule",
+      "ref": "app/routes.js:10494-10496",
+      "quote": "addError('addressBookManualName', 'Enter a name or organisation name', '#address-book-manual-name')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-067",
+      "statement": "Saving without address line 1 shows 'Enter address line 1'.",
+      "kind": "rule",
+      "ref": "app/routes.js:10498-10500",
+      "quote": "addError('addressBookManualAddressLine1', 'Enter address line 1', '#address-book-manual-address-line-1')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-068",
+      "statement": "Saving without a town or city shows 'Enter a town or city'.",
+      "kind": "rule",
+      "ref": "app/routes.js:10502-10504",
+      "quote": "addError('addressBookManualTownOrCity', 'Enter a town or city', '#address-book-manual-town-or-city')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-069",
+      "statement": "Saving without a postcode shows 'Enter a postcode or Zip code'.",
+      "kind": "rule",
+      "ref": "app/routes.js:10506-10508",
+      "quote": "addError('addressBookManualPostcode', 'Enter a postcode or Zip code', '#address-book-manual-postcode')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-070",
+      "statement": "Saving without a country shows 'Select a country'.",
+      "kind": "rule",
+      "ref": "app/routes.js:10510-10512",
+      "quote": "addError('addressBookManualCountry', 'Select a country', '#address-book-manual-country')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-071",
+      "statement": "Saving without an email address shows 'Enter an email address'.",
+      "kind": "rule",
+      "ref": "app/routes.js:10514-10516",
+      "quote": "addError('addressBookManualEmail', 'Enter an email address', '#address-book-manual-email')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-072",
+      "statement": "Saving without a phone number shows 'Enter a phone number'.",
+      "kind": "rule",
+      "ref": "app/routes.js:10518-10520",
+      "quote": "addError('addressBookManualPhone', 'Enter a phone number', '#address-book-manual-phone')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-073",
+      "statement": "Address line 2 and county are optional: they have no validation.",
+      "kind": "rule",
+      "ref": "app/routes.js:10485-10523",
+      "quote": "if (!manualAddress.nameOrOrganisation) {",
+      "confidence": "inferred",
+      "note": "Inferred from validateAddressBookManualAddress checking only name, line 1, town, postcode, country, email and phone."
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-074",
+      "statement": "The prototype checks only that each required address field is filled in; it has no format rules or messages for email, phone number or postcode, and no length limits.",
+      "kind": "rule",
+      "ref": "app/routes.js:10485-10523",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in validateAddressBookManualAddress, the only validation the add flow calls."
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-075",
+      "statement": "Validation errors show in a 'There is a problem' error summary as well as against each field.",
+      "kind": "copy",
+      "ref": "app/views/design-release-2.1/consignment-add-address.html:32-37",
+      "quote": "titleText: \"There is a problem\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-076",
+      "statement": "The usage question is checked only once the address and contact fields are valid: with no use ticked, saving shows 'Select what this address can be used for', linked to the first use option.",
+      "kind": "rule",
+      "ref": "app/routes.js:10205-10224",
+      "quote": "text: 'Select what this address can be used for',\n      href: firstUseOption ? `#address-use-${firstUseOption.value}` : '#address-uses-error'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-077",
+      "statement": "When the add-details step is shown again with errors, what the user typed, the ticked uses and the search text are kept, and in the search categories the address fields stay revealed if anything was entered.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:10190-10203",
+      "quote": "showManualAddress: showAddressLookup\n      ? Boolean(\n        manualAddress.addressLine1 ||\n        req.body.manualAddressEntry ||\n        addressBookLookupAddressId\n      )",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-078",
+      "statement": "Only use values that belong to the chosen category are accepted; anything else posted is ignored.",
+      "kind": "rule",
+      "ref": "app/routes.js:10076-10087",
+      "quote": ".filter((value) => allowedValues.has(value))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-079",
+      "statement": "A saved address is added to the top of the user's address book with every ticked use as its address types; its first ticked use sets its primary type and its address book category.",
+      "kind": "data",
+      "ref": "app/routes.js:9681-9707,9885-9892",
+      "quote": "type: primaryType,\n    types: addressTypes,\n    typeLabel,\n    typeLabels,\n    category: addressBookData.getAddressCategoryId(primaryType),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-080",
+      "statement": "A saved address shows its address as address line 1, line 2, town or city, county and postcode joined with commas, skipping blanks, with the country held separately.",
+      "kind": "data",
+      "ref": "app/routes.js:9691-9709",
+      "quote": "const formattedAddress = addressParts.join(', ')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-081",
+      "statement": "A saved address keeps its name, each address field, country, email and phone as its details.",
+      "kind": "data",
+      "ref": "app/routes.js:9710-9720",
+      "quote": "email: manualAddress.email,\n      phone: manualAddress.phone",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-082",
+      "statement": "A saved address can be found by the address book search on its name, type labels, address and country.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:9721-9726",
+      "quote": "searchText: buildAddressBookSearchText([\n      manualAddress.nameOrOrganisation,\n      typeLabel,\n      formattedAddress,\n      manualAddress.country\n    ])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-083",
+      "statement": "A saved address gets its own view page at the address book path followed by its id.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:9889-9892",
+      "quote": "viewHref: `${addressBookPath}/${entry.id}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-084",
+      "statement": "Saved addresses are kept only in the user's session in the prototype; there is no persistence or integration behind the address book add.",
+      "kind": "constraint",
+      "ref": "app/routes.js:9885-9892",
+      "quote": "sessionData.addressBookAddedAddresses.unshift({",
+      "confidence": "inferred",
+      "note": "Prototype behaviour; inferred because the save writes only to session data."
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-085",
+      "statement": "After saving from the address book, the success message reads '<name> address added to your address book', or 'Address added to your address book' if there is no name.",
+      "kind": "copy",
+      "ref": "app/routes.js:9651-9659,9915-9917",
+      "quote": "return 'Address added to your address book'\n  }\n\n  return `${trimmed} address added to your address book`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-086",
+      "statement": "After saving from the address book the user returns to the address book filtered to the new address's category.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:9930-9941",
+      "quote": "? `${addressBookPath}?category=${encodeURIComponent(entry.category)}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-087",
+      "statement": "Saving clears all in-progress add details (category, type, manual address, uses and search) so the next add starts empty.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:9919-9928",
+      "quote": "sessionData.addressBookAddressType = null\n  sessionData.addressBookAddressCategory = null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-088",
+      "statement": "A journey section can start an address book add with /address-book/add?from=<section id>: for a selectable consignment address section it records where to return and suggests that section's address type, then goes to /address-book/add/lookup.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11755-11761; app/routes.js:9774-9795",
+      "quote": "if (fromSection) {\n    if (!setAddressBookConsignmentReturn(req.session.data, fromSection)) {\n      return res.redirect(`${addressBookBasePath}/add/lookup`)\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-089",
+      "statement": "The journey sections that suggest an address type are place of origin (Place of origin), consignor or exporter (Consignor), consignee (Consignee), importer (Importer) and place of destination (Place of destination).",
+      "kind": "data",
+      "ref": "app/routes.js:9730-9736",
+      "quote": "'place-of-origin': 'place-of-origin',\n  'consignor-or-exporter': 'consignor',\n  consignee: 'consignee',\n  importer: 'importer',\n  'place-of-destination': 'place-of-destination'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-090",
+      "statement": "The contact address can start an address book add with /address-book/add?from=contact-address, which records a return to the contact address and goes to the add-details step.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11750-11753,11834-11836",
+      "quote": "if (fromSection === CONTACT_ADDRESS_RETURN_ID) {\n    setAddressBookContactReturn(req.session.data)\n    return res.redirect(`${addressBookBasePath}/add/lookup`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-091",
+      "statement": "When the add started from a journey section and one of the ticked types matches that section, the new address becomes that section's selected address.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:9894-9900",
+      "quote": "if (section && sectionAddressType && addressTypes.includes(sectionAddressType)) {\n      syncConsignmentAddressToSection(sessionData, manualAddress, entry.id, section.id)\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-092",
+      "statement": "When the add started from a journey section, saving returns the user to that section's page with the '<name> address added to your address book' message shown there instead of in the address book.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:9902-9903,9934-9937",
+      "quote": "sessionData.consignmentAddressSuccessMessage = formatAddressBookSuccessMessage(entry.name)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-093",
+      "statement": "When the add started from the contact address, saving also adds it to the contact addresses, selects it as the contact address and returns the user there with the success message.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:9904-9914,9938-9939",
+      "quote": "sessionData.contactAddedAddresses.unshift(contactAddress)\n    syncContactAddressSession(sessionData, contactAddress)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-094",
+      "statement": "An add started from a journey section or the contact address sets no address book category, so under DR2.1 it shows the root 'Add address details' lookup page rather than the DR2.1 'Add address and contact details' page.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11831-11849,9774-9795",
+      "quote": "return renderAddressBookLookupPage(req, res)",
+      "confidence": "inferred",
+      "note": "Inferred: the from paths set addressBookAddressType but not addressBookAddressCategory, and only a usage category routes to the DR2.1 page. A stale category left in session from an earlier add would change this."
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-095",
+      "statement": "Under DR2.1 the journey's own add-address pages handle the add themselves and only send non-DR2.1 sessions to /address-book/add?from=<section>, so the address book return-to-section flow is not the DR2.1 journey's path.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:4155-4158",
+      "quote": "if (!isDesignRelease21SessionData(req.session.data)) {\n    return res.redirect(`/address-book/add?from=${section.id}`)\n  }",
+      "confidence": "inferred",
+      "note": "Outside this part's read ranges (the journey part owns it); recorded because it bounds where the return flow is reachable under DR2.1."
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-096",
+      "statement": "The root lookup page has the heading and page title 'Add address details' and no caption.",
+      "kind": "copy",
+      "ref": "app/views/address-book-lookup.html:8,36-38; app/routes.js:10349",
+      "quote": "pageHeading: 'Add address details',",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-097",
+      "statement": "The root lookup page's search offers the full lookup list of UK and EU addresses, not only UK ones.",
+      "kind": "rule",
+      "ref": "app/routes.js:10361",
+      "quote": "lookupAddressesJson: JSON.stringify(addressBookLookupAddresses.addresses),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-098",
+      "statement": "The root lookup page has the same 'Search for an address' field with 'Start typing...' placeholder and an 'Enter address manually' button that reveals the manual fields; the fields open revealed if a search result was picked or manual entry was already chosen.",
+      "kind": "behaviour",
+      "ref": "app/views/address-book-lookup.html:43-138; app/routes.js:10332-10338",
+      "quote": "Enter address manually",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-099",
+      "statement": "The root lookup page's manual fields are 'Name or organisation name', 'Address line 1', 'Address line 2 (optional)', 'Town or city', 'County (optional)', 'Postcode or Zip code', 'Country', then under 'Contact details' 'Email address' and 'Phone number' with the hint 'For international numbers include the country code'.",
+      "kind": "data",
+      "ref": "app/views/partials/address-book-manual-address-fields.html:5-112",
+      "quote": "text: \"Name or organisation name\"",
+      "confidence": "verbatim",
+      "note": "The name label differs from DR2.1's 'Name or organisation'."
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-100",
+      "statement": "The root lookup page's country select lists every country with no 'Select one' prompt, defaulting to United Kingdom.",
+      "kind": "data",
+      "ref": "app/routes.js:10365,10453-10469",
+      "quote": "countryItems: buildAddressBookCountryItems(manualAddress.country),",
+      "confidence": "inferred",
+      "note": "Inferred: the manual address defaults country to 'United Kingdom' and the item list has no empty option."
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-101",
+      "statement": "The root lookup page has a 'Save and continue' button and a secondary cancel button.",
+      "kind": "copy",
+      "ref": "app/views/address-book-lookup.html:140-154",
+      "quote": "text: \"Save changes\" if isEditMode else \"Save and continue\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-102",
+      "statement": "The root lookup page's cancel button reads 'Cancel and return to address book' only when cancelling goes to the address book; when it goes back to a journey section, the contact address or the dashboard it reads 'Cancel and return to dashboard'.",
+      "kind": "copy",
+      "ref": "app/routes.js:10339-10347,9824-9841",
+      "quote": "cancelButtonText: cancelHref === addressBookBasePath\n      ? 'Cancel and return to address book'\n      : 'Cancel and return to dashboard',",
+      "confidence": "verbatim",
+      "note": "So a cancel that returns to a journey section is labelled as returning to the dashboard."
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-103",
+      "statement": "Cancelling on the lookup page clears the in-progress add and goes to the return path of the journey section or contact address if there is one, else to the address book if a type was chosen, else to the dashboard.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11860-11875,9824-9841",
+      "quote": "return res.redirect(getAddressBookCancelHref(req.session.data, addressBookBasePath))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-104",
+      "statement": "The root lookup page's 'Back' link goes to the contact address or journey section that started the add, otherwise to the first add page when a type was chosen, otherwise to the address book.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:9805-9822,10343",
+      "quote": "if (hasAddressBookAddressType(sessionData) || sessionData.addressBookAddressCategory) {\n    return `${versionBasePath}/add`\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-105",
+      "statement": "The root lookup page validates with the same seven required-field messages and, on error, shows the manual fields again with what was typed.",
+      "kind": "rule",
+      "ref": "app/routes.js:11885-11901",
+      "quote": "req.session.data.addressBookShowManualAddress = true",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-106",
+      "statement": "The root lookup page saves the address with the single address type held for the add (the suggested section type), with no usage question.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11906,9867-9869",
+      "quote": ": [options.addressType || sessionData.addressBookAddressType].filter(Boolean)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-107",
+      "statement": "A separate usage page exists at /address-book/add/usage, DR2 and DR2.1 only, with the caption 'Add a new address', the heading 'What can this address be used for?', the category's use checkboxes each with its hint, and a 'Save address' button.",
+      "kind": "copy",
+      "ref": "app/views/address-book-add-usage.html:8,37-38,53-88; app/routes.js:11911-11928",
+      "quote": "<h1 class=\"app-address-book-add-page__heading\">What can this address be used for?</h1>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-108",
+      "statement": "The usage page's 'Back' link goes to /address-book/add/lookup.",
+      "kind": "behaviour",
+      "ref": "app/routes.js:10244",
+      "quote": "backLink: `${addressBookBasePath}/add/lookup`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-109",
+      "statement": "Submitting the usage page with nothing ticked shows 'Select what this address can be used for'; with uses ticked it saves the pending address with those uses.",
+      "kind": "rule",
+      "ref": "app/routes.js:11955-11975",
+      "quote": "text: 'Select what this address can be used for'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-110",
+      "statement": "The usage page is not reachable in practice: it redirects to the add-details step unless a pending address is held, and nothing in the prototype ever sets one (it is only ever cleared).",
+      "kind": "behaviour",
+      "ref": "app/routes.js:11923-11925,9921,11770,11867",
+      "quote": "if (!req.session.data.addressBookPendingManualAddress) {\n    return res.redirect(`${addressBookBasePath}/add/lookup`)\n  }",
+      "confidence": "inferred",
+      "note": "Inferred from a search of routes.js: addressBookPendingManualAddress is only assigned null. The DR2.1 add-details step asks the usage question on the same page instead."
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-111",
+      "statement": "The usage page redirects to the first add page when the version is not DR2 or DR2.1, or the chosen category has no uses (such as Transporter).",
+      "kind": "rule",
+      "ref": "app/routes.js:11915-11921",
+      "quote": "if (!isAddressBookUsageCategory(category)) {\n    return res.redirect(`${addressBookBasePath}/add`)\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "prototype-dr2-1-source-p16-112",
+      "statement": "The scope names a postcode lookup, but the address book add has no postcode-only lookup step: the only search is the free-text address search, and the prototype holds no rules for an unrecognised postcode or an empty search result.",
+      "kind": "behaviour",
+      "ref": "app/views/partials/design-release-2.1/consignment-uk-add-address-fields.html; app/views/address-book-lookup.html; app/routes.js:11831-11909",
+      "quote": "",
+      "confidence": "gap",
+      "note": "An addressLookup error slot exists in both views (data.errors.addressLookup) but no route in this slice ever sets it, so no search error message is defined."
+    }
+  ]
+}

@@ -76,9 +76,10 @@ passes.
   plumbing: only a service's `stub.js` and a release's gateway import it.
   `index.js` and `client.js` never do, so a developer can copy them across
   unchanged.
-- **GOV.UK toolbox only.** Nunjucks macros and `govuk-*` classes. No Sass, no
-  inline styles, no new client JavaScript, no webpack entries. The MoJ filter
-  and the GOV.UK Tabs script are not loaded here: see
+- **GOV.UK first, then MoJ, then a release pattern.** Styles and scripts
+  only in the release's own `assets/`, and only on a designer's mandate
+  (`references/custom-pattern.md`). Never inline. The MoJ filter and the
+  GOV.UK Tabs script are off by default: see
   `references/fake-a-service/dashboard-filters-and-tabs.md`.
 - **English and Welsh together.** Every new string goes in `copy.en.js` and
   `copy.cy.js` with the same keys. With no Welsh from the designer, write
@@ -86,7 +87,8 @@ passes.
 - **No test files in a release.** Never create `*.test.js` or
   `*.fit.spec.js` inside `sets/<release>/`. A prototype-owned service is the
   exception: it keeps its `<name>.test.js` beside it, and you extend it when
-  you change the service.
+  you change the service. A release pattern's script module is the other:
+  its `assets/<name>.test.js` sits beside it.
 - **One change at a time.** A request with two or three parts is done part by
   part in this run, each checked before the next. A request that needs other
   references too follows "Requests that need more than this reference" below.

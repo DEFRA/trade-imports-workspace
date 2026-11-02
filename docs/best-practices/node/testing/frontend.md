@@ -100,18 +100,49 @@ Feature folders stay independent in production code only. Test support is shared
 
 ### Handler tests: `src/server/app/engine/test-support.js`
 
-Both frontends have this file with the same exports.
+Both frontends have this file. The rows below are in both unless a row says otherwise.
 
 | Export | What it does |
 |---|---|
-| `driveHandler(handler, { payload, seed, params, query, state, amend, pathOf })` | Creates a journey, seeds its answers, optionally submits and opens an amendment, runs one handler, and returns `{ journeyId, before, after, response, view }` |
+| `driveHandler(handler, { payload, seed, params, query, amend, openingRun, saveFailure, pathOf })` | Creates a journey, seeds its answers, optionally submits and opens an amendment, runs one handler, and returns `{ journeyId, before, after, response, view, logger }`. Animals also takes `state` (the request's cookies), `flowOnly` (session-only answers to seed) and `journeyId` (drive an existing journey instead of creating one), and also returns `cookies` (the cookies the handler set) and `unstated` (the names of the cookies the handler unstated) |
+| `useStubbedJourney(setId, dispatchPages)` | Configures the stub stores and builds the dispatch before a describe, then restores the stub records and clears the store before each test. Put it and `useBackendRecords` on sibling describes, never nested |
+| `getHandlerOf(featureModule)` (animals only) | The GET handler from a feature's `routes` |
 | `postHandlerOf(featureModule)` | The POST handler from a feature's `routes` |
 | `postHandlerEndingWith(featureModule, pathSuffix)` | The POST handler whose path ends with `pathSuffix`, for features with several POST routes |
-| `stubH(request)` | A response toolkit that records the view, redirect and cookies a handler produced |
+| `stubH(request, { writesStateToRequest })` (the option is plants only) | A response toolkit that records the view, redirect and cookies a handler produced. With `writesStateToRequest`, each cookie is also written onto `request.state`, so a later read in the same request sees it |
+| `requestAsSessionHoldingNoJourney(journeyId, { get, post })` (plants only) | Runs a GET and a POST handler as a session that holds no journey and returns both requests and both responses |
 | `recordingH()` | A toolkit that records `state` and `unstate` cookie calls |
 | `journeyRequest(journeyId, overrides)` | A signed-in request for a known journey |
 | `registerTestSessionAuth(server)` | Signs every request in as `authenticatedCredentials` on a real server |
 | `authenticatedCredentials`, `authenticatedActor` | The signed-in user's credentials and the actor the backend sees |
+| `registerTestRequestLogger(server)` | Gives every request on a real server a `recordingLogger` |
+| `recordingLogger()` | A request logger that keeps every line it is given in `entries` |
+| `expectOneLogged(logger, { level, fields, message })` | Asserts the logger holds exactly one line |
+| `expectOneRefusalLogged(logger, refusal)` | Asserts the logger holds exactly the one refusal line `kit.logRefusal` writes |
+| `saveFallbackEntry({ journeyId, err, ...ids })` | The log line a save fallback writes, for comparing against |
+| `expectOneSaveFallbackLogged(logger, fallback)` | Asserts the logger holds exactly the one save-fallback line |
+| `unavailableBackendError(operation)` | The marked error a failed backend call throws, for seeding a failing store |
+| `backendJourneyId`, `backendNotification(options)` | A backend journey id and a backend notification to answer a read with |
+| `expectBackLinkIsPage(result, slug)` | Asserts the view's back link is the journey page at `slug` |
+| `sampleText(value, sampleArguments)` (animals only) | The text a copy leaf gives: the string itself, or what the copy function returns for the sample arguments |
+| `crumbProtectedServerMounting(routes, prefix)` (animals only) | A real server with the crumb plugin and test session auth, mounting the routes under the prefix |
+| `expectNoRefusalLogged(logger)` | Asserts the logger holds no refusal line |
+| `useReferenceDataServing()` | Registers `resetMocksAndConfigAfterTests()` itself and returns a function that serves given rows as the reference-data response |
+| `useBackendRecords(setId)` | Registers the real records and the stub session for a describe, enables the shared `fetchMock` and clears its calls before each test, and resets the mocks and config after each test. Put it and `useStubbedJourney` on sibling describes, never nested: the stubbed describe's per-test restore would put the stub records back under it |
+| `fetchMock` | The shared `vitest-fetch-mock` instance that `useBackendRecords`, `addressBookAnswering` and `useReferenceDataServing` drive; enable it and set its response in a test, with `resetMocksAndConfigAfterTests()` registered |
+| `resetMocksAndConfigAfterTests(...configKeys)` | Registers an `afterEach` that resets fetch mocks and restores `stubMode` and the named config keys |
+| `addressBookAnswering(addressResponse)`, `addressBookRefusingAddresses()`, `addressBookRequestUrls()` | Stub the address book's answers and report the URLs it was asked for |
+| `expectRemovalRefusedLogged({ logger, journeyId }, { message, ...ids })` (animals only) | Asserts the logger holds exactly the one info line a refused removal writes |
+| `expectBackLinkIsPath(result, path)` (plants only) | Asserts the view's back link is the given path |
+| `itHoldsCopyAtEveryLeaf(en, cy)` and `expectEveryLeafToBeCopy(locale, bundle)` (plants only) | Register or run the check that every leaf of a copy bundle is a non-empty string or copy function |
+
+### Address feature tests: `src/server/app/sets/live-animals/journeys/linear/features/addresses/test-support.js`
+
+Animals only.
+
+| Export | What it does |
+|---|---|
+| `addedAddressBannerState(addressName)`, `expectAddedAddressBannerShownOnce(getHandler)` | The request state of a trader who has just added an address in the address book, and the check that a landing page's GET shows the added address banner once, then unstates it |
 
 ### Server and helper tests: `src/server/common/test-helpers/`
 
@@ -121,7 +152,8 @@ Both frontends have this file with the same exports.
 | `mockOidcConfig` | A static OIDC discovery document |
 | `sessionAuth(sessionId, overrides)` | The `auth` option for `server.inject` |
 | `readEmfDocuments(logSpy)` | Parses the EMF metric documents written to stdout |
-| `runInZone(zone, assertions)` | Runs assertions with `TZ` moved off UTC, then restores it (animals only) |
+| `runInZone(zone, assertions)` | Runs assertions with `TZ` moved off UTC, then restores it |
+| `documentOf(html)`, `trimmedTextOf(element)` (`document-of.js`) | Parse rendered HTML into a document to query, and read an element's trimmed text |
 
 Shared fixtures live in `test/fixtures/`.
 
@@ -129,8 +161,8 @@ Shared fixtures live in `test/fixtures/`.
 
 | Repo | Helper | What it gives you |
 |---|---|---|
-| animals | `fit/live-animals-journey.js` | `signIn`, `startNotification`, one `answer…` function per section, `completeAnswerSections`, `openReviewFromHub`, `chooseAutocompleteByLabel`, `chooseCountryOfOrigin`, `choosePortOfEntry`, `journeyUrl`, `journeyIdFromPage` |
-| plants | `fit/high-risk-plants-journey.js` | `startNotification`, `chooseCommodityType`, `addCommodityLine`, `saveOrigin`, `chooseCountryOfOrigin`, `startPotatoNotification`, `completePotatoNotification`, `openDeclaration`, `saveAndContinue`, `chooseAutocompleteOption`, `expectNoSeriousOrCriticalViolations` |
+| animals | `fit/live-animals-journey.js` | `signIn`, `startNotification`, one `answer…` function per section, `completeAnswerSections`, `openReviewFromHub`, `chooseTypeAheadOption`, `chooseCountryOfOrigin`, `choosePortOfEntry`, `visitOverviewThenOpen`, `openNotificationView`, `expectThreeSaveControls`, `PHONE_VIEWPORT`, `journeyUrl`, `journeyIdFromPage` |
+| plants | `fit/high-risk-plants-journey.js` | `startNotification`, `chooseCommodityType`, `addCommodityLine`, `saveOrigin`, `chooseCountryOfOrigin`, `startPotatoNotification`, `completePotatoNotification`, `openDeclaration`, `saveAndContinue`, `chooseTypeAheadOption`, `visitOverviewThenOpen`, `expectThreeSaveControls`, `expectNoSeriousOrCriticalViolations` |
 | plants | `fit/set-base.js` | `BASE`, `setUrl`, `setPath`, `journeyIdFromPage` |
 | plants | `fit/seed-fields.js` | `seedFields(step)` |
 | both | `fit/sign-in.js` | `signIn(page, { organisationId })` |

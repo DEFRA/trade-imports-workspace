@@ -94,7 +94,10 @@ Talk to the designer in GDS plain English. Say "your research release", not
    prototype restarts.
 
 4. Write `src/server/app/sets/<set-id>/research-session.json` with the tasks
-   (see `references/research-session/session-file.md`). Leave `deployedUrl`
+   (see `references/research-session/session-file.md`). When the release
+   has `Open` or `Option` entries in its `patterns.md`, list them to the
+   designer as the hypotheses this round can test, and name each one in
+   the `notes` of the task that tests it. Leave `deployedUrl`
    out: the sheet reads the deployed address from
    `scripts/designer/prototype.json` (in the prototype repo). When that says
    `null`, the prototype is not deployed yet: tell the designer the sessions
@@ -229,6 +232,11 @@ task link once before the first participant." and the Reset line with
    `references/change-the-journey.md`, `references/match-the-design.md`,
    `references/example-data.md`, `references/fake-a-service.md`). Offer to
    start with the first row.
+
+   For each release pattern the round tested, the finding also goes on its
+   entry in the working release that step 3 picks: `Findings:` gets the
+   link, and a pattern the designer drops becomes
+   `Closed: dropped after <round>, <one-line finding>`.
 3. **Where a change after the round goes.** This is the one rule;
    `references/change-the-words.md`, `references/change-the-journey.md` and
    `references/match-the-design.md` all follow it. Any change asked for after

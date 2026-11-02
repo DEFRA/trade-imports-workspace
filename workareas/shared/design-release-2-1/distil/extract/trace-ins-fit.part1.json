@@ -1,0 +1,564 @@
+{
+  "source": "trace:ins-fit",
+  "structure": "Part 1 mined all 21 traces of repos/trade-imports-ins-frontend/src/server/app/features/address-book/fit/add.fit.spec.js (spec read in full, with its helper address-form.js for the labels and messages the tests drive). The Playwright CLI that tim runs refused these zips (TraceVersionError: trace created by a newer Playwright), so each trace was read from its already-unpacked copy in this part's work folder (render, axe, req-name, req-line1, req-town, req-postcode, req-country, req-phone, req-email, max-name, max-line1, max-line2, max-town, max-county, max-postcode, max-phone, max-email, bad-email, err-axe, save, cancel): actions from 1-trace.trace 'before' events, the network log from 1-trace.network, and every frame snapshot rendered to HTML with a jq filter (render.jq), plus test.trace for the axe results. Refs below name the trace by its folder hash (for example a-31686) and the action's callId. Pages, in order: (1) stub sign-in GET /auth/stub-sign-in?organisationId=... which 302s to / ('Dashboard | Import notification service'), always, as the harness entry; (2) the add address page GET /address-book/add, 'Add address details', always: two H2 sections ('Enter address details': Name or organisation name, Address line 1, Address line 2 (optional), Town or city, County (optional), Postcode or Zip code, Country select; 'Enter contact details': Email address, Phone number with hint), then 'Save and continue' and 'Cancel and return to address book' buttons; (3) the same page in its error state, conditional on a failed submit (POST returns 400, title prefixed 'Error: ', error summary 'There is a problem' with one link per error, inline error message, value preserved): driven for 7 empty required fields, 8 over-length fields and 1 malformed email, one error per trace; (4) the address book list GET /address-book after a successful save (POST 302) with the 'Success' notification banner and the new row, or after cancel (POST 302, no banner, nothing created). Two traces ran axe on page 2 and page 3: both reported zero serious or critical violations. The add page and its error state are built entirely from govuk-frontend components (Input, Select, Hint, Error summary, Error message, Button, secondary Button, Button group); no non-govuk class appears inside main. No caption and no back link render on the add page. The country list held only 4 countries. No backend call is visible: the frontend's calls to the address book service are server side and leave no trace in the browser network log.",
+  "claims": [
+    {
+      "id": "trace-ins-fit-p1-001",
+      "statement": "The fit harness signs in through a stub sign-in route that takes an organisation id and redirects (302) to the service root, which renders the Dashboard page.",
+      "kind": "behaviour",
+      "ref": "trace a-31686 action call@11; network GET /auth/stub-sign-in 302 Location /",
+      "quote": "Dashboard | Import notification service",
+      "confidence": "verbatim",
+      "note": "Harness entry only; the dashboard itself belongs to another part."
+    },
+    {
+      "id": "trace-ins-fit-p1-002",
+      "statement": "A signed-in user reaches the add address page at /address-book/add.",
+      "kind": "behaviour",
+      "ref": "trace a-31686 action call@13 (GET /address-book/add 200)",
+      "quote": "/address-book/add",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-003",
+      "statement": "The add address page's browser title is 'Add address details | Import notification service'.",
+      "kind": "copy",
+      "ref": "trace a-31686 action call@13 snapshot TITLE",
+      "quote": "Add address details | Import notification service",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-004",
+      "statement": "The add address page's H1 heading is 'Add address details'.",
+      "kind": "copy",
+      "ref": "trace a-31686 action call@15 (heading assertion); snapshot main H1.govuk-heading-l",
+      "quote": "Add address details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-005",
+      "statement": "The add address page shows no caption above the heading.",
+      "kind": "copy",
+      "ref": "trace a-31686 action call@13 snapshot main (no govuk-caption-* element)",
+      "quote": "<H1 class=\"govuk-heading-l\">Add address details</H1>",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of any caption element in the rendered main; the covers list expected a caption."
+    },
+    {
+      "id": "trace-ins-fit-p1-006",
+      "statement": "The add address page has no back link; the only ways off the page within main are the two form buttons.",
+      "kind": "behaviour",
+      "ref": "trace a-31686 action call@13 snapshot main (no govuk-back-link)",
+      "quote": "Cancel and return to address book",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of a govuk-back-link in the snapshot."
+    },
+    {
+      "id": "trace-ins-fit-p1-007",
+      "statement": "The add address page highlights 'Address book' as the current item in the service navigation (Dashboard, Address book, Manage account, Log out).",
+      "kind": "copy",
+      "ref": "trace a-31686 action call@13 snapshot header govuk-service-navigation__item--active",
+      "quote": "<STRONG class=\"govuk-service-navigation__active-fallback\">Address book</STRONG>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-008",
+      "statement": "The form's first section is headed 'Enter address details' (an H2).",
+      "kind": "copy",
+      "ref": "trace a-31686 action call@13 snapshot main H2.govuk-heading-m",
+      "quote": "Enter address details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-009",
+      "statement": "The user must give a name or organisation name, in a full-width text input labelled 'Name or organisation name' (name=name).",
+      "kind": "data",
+      "ref": "trace a-31686 action call@17; snapshot input#name",
+      "quote": "Name or organisation name",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-010",
+      "statement": "The user must give address line 1, in a full-width text input labelled 'Address line 1' (name=addressLine1).",
+      "kind": "data",
+      "ref": "trace a-31686 action call@19; snapshot input#addressLine1",
+      "quote": "Address line 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-011",
+      "statement": "The user may give address line 2, in a full-width text input labelled 'Address line 2 (optional)' (name=addressLine2).",
+      "kind": "data",
+      "ref": "trace a-31686 action call@31; snapshot input#addressLine2",
+      "quote": "Address line 2 (optional)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-012",
+      "statement": "The user must give a town or city, in a half-width text input labelled 'Town or city' (name=townOrCity).",
+      "kind": "data",
+      "ref": "trace a-31686 action call@21; snapshot input#townOrCity class govuk-!-width-one-half",
+      "quote": "Town or city",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-013",
+      "statement": "The user may give a county, in a half-width text input labelled 'County (optional)' (name=county).",
+      "kind": "data",
+      "ref": "trace a-31686 action call@33; snapshot input#county",
+      "quote": "County (optional)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-014",
+      "statement": "The user must give a postcode, in a half-width text input labelled 'Postcode or Zip code' (name=postcode).",
+      "kind": "data",
+      "ref": "trace a-31686 action call@23; snapshot input#postcode",
+      "quote": "Postcode or Zip code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-015",
+      "statement": "The user must choose a country from a half-width select labelled 'Country' (name=countryCode), which starts on the empty placeholder option 'Select a country'.",
+      "kind": "data",
+      "ref": "trace a-31686 actions call@25 and call@37 (toHaveValue ''); snapshot select#countryCode",
+      "quote": "<OPTION __playwright_selected_=\"true\" value=\"\">Select a country</OPTION>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-016",
+      "statement": "The Country select offers four countries after the placeholder, submitted as ISO codes: United Kingdom (GB), France (FR), Germany (DE), Ireland (IE).",
+      "kind": "data",
+      "ref": "trace a-31686 action call@39; snapshot select#countryCode options",
+      "quote": "<OPTION value=\"GB\">United Kingdom</OPTION> <OPTION value=\"FR\">France</OPTION> <OPTION value=\"DE\">Germany</OPTION> <OPTION value=\"IE\">Ireland</OPTION>",
+      "confidence": "verbatim",
+      "note": "Option tags quoted without Playwright's __playwright_selected_ attributes. Only four countries render here; the list's source (reference data or stub) is not visible in the trace."
+    },
+    {
+      "id": "trace-ins-fit-p1-017",
+      "statement": "The trace does not show where the country list comes from or whether the full set of countries is offered outside the fit stack; only four options rendered.",
+      "kind": "integration",
+      "ref": "trace a-31686 network log (no reference-data call visible)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p1-018",
+      "statement": "The form's second section is headed 'Enter contact details' (an H2) and comes after the Country select.",
+      "kind": "copy",
+      "ref": "trace a-31686 action call@13 snapshot main second H2.govuk-heading-m",
+      "quote": "Enter contact details",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-019",
+      "statement": "The user must give an email address, in a full-width text input labelled 'Email address' (name=email, type text, autocomplete=email), shown before the phone number.",
+      "kind": "data",
+      "ref": "trace a-31686 action call@29; snapshot input#email",
+      "quote": "Email address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-020",
+      "statement": "The user must give a phone number, in a half-width text input labelled 'Phone number' (name=phone).",
+      "kind": "data",
+      "ref": "trace a-31686 action call@27; snapshot input#phone",
+      "quote": "Phone number",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-021",
+      "statement": "The Phone number field carries the hint 'For international numbers include the country code', linked to the input by aria-describedby.",
+      "kind": "copy",
+      "ref": "trace a-31686 action call@35; snapshot div#phone-hint",
+      "quote": "For international numbers include the country code",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-022",
+      "statement": "No field on the add address page other than Phone number has a hint.",
+      "kind": "copy",
+      "ref": "trace a-31686 action call@13 snapshot main (one govuk-hint)",
+      "quote": "<DIV id=\"phone-hint\" class=\"govuk-hint\">",
+      "confidence": "inferred",
+      "note": "Inferred from only one govuk-hint element in the rendered form."
+    },
+    {
+      "id": "trace-ins-fit-p1-023",
+      "statement": "The primary button is 'Save and continue', which submits the form.",
+      "kind": "copy",
+      "ref": "trace a-df4d5 action call@33; snapshot button.govuk-button",
+      "quote": "Save and continue",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-024",
+      "statement": "A secondary button 'Cancel and return to address book' sits beside the primary button in a button group; it is a submit button that posts the form with cancel=true.",
+      "kind": "copy",
+      "ref": "trace c-03995 action call@121; snapshot button[name=cancel][value=true].govuk-button--secondary",
+      "quote": "Cancel and return to address book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-025",
+      "statement": "The form posts to its own URL with browser validation turned off (novalidate) and carries a hidden CSRF field named crumb.",
+      "kind": "constraint",
+      "ref": "trace a-31686 action call@13 snapshot FORM method=post novalidate; input[name=crumb]",
+      "quote": "<FORM method=\"post\" novalidate=\"\"> <INPUT type=\"hidden\" name=\"crumb\" value=\"[REDACTED]\">",
+      "confidence": "verbatim",
+      "note": "Token value redacted."
+    },
+    {
+      "id": "trace-ins-fit-p1-026",
+      "statement": "The add address page and its error state use only govuk-frontend components inside main: Input (with width-one-half modifiers), Select, Hint, Error summary, Error message, Button, secondary Button and Button group.",
+      "kind": "constraint",
+      "ref": "trace a-31686 action call@13 and a-df4d5 action call@35 snapshots, classes in main",
+      "quote": "govuk-form-group govuk-input govuk-select govuk-hint govuk-button-group govuk-button--secondary govuk-error-summary govuk-error-message",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-027",
+      "statement": "The add address page has no serious or critical axe accessibility violations.",
+      "kind": "non-functional",
+      "ref": "trace a-9c973 test.trace expect@51",
+      "quote": "Add address has serious/critical accessibility violations.\\nFull axe violations:\\n[]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-028",
+      "statement": "A submit that fails validation re-renders the add address page at the same URL with HTTP status 400.",
+      "kind": "behaviour",
+      "ref": "trace a-3fb1a network POST /address-book/add 400; action call@35 toHaveURL /address-book/add",
+      "quote": "POST http://localhost:3002/address-book/add 400",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-029",
+      "statement": "On a validation failure the browser title is prefixed with 'Error: '.",
+      "kind": "copy",
+      "ref": "trace a-df4d5 action call@35 snapshot TITLE",
+      "quote": "Error: Add address details | Import notification service",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-030",
+      "statement": "On a validation failure an error summary titled 'There is a problem' appears above the H1, in a role=alert region.",
+      "kind": "copy",
+      "ref": "trace a-df4d5 action call@35 snapshot div.govuk-error-summary",
+      "quote": "There is a problem",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-031",
+      "statement": "Each error in the summary is a link to its field's id; following it moves focus to that field.",
+      "kind": "behaviour",
+      "ref": "trace a-df4d5 actions call@39 (click summary link) and call@41 (toBeFocused)",
+      "quote": "<A href=\"#name\">Enter a name</A>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-032",
+      "statement": "The field in error shows the same message inline above its input, prefixed with visually hidden 'Error:', and the input takes the error style and aria-describedby the message.",
+      "kind": "copy",
+      "ref": "trace a-df4d5 action call@35 snapshot p#name-error and input.govuk-input--error",
+      "quote": "<SPAN class=\"govuk-visually-hidden\">Error:</SPAN> Enter a name",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-033",
+      "statement": "After a validation failure every value the user entered is shown again in its field, including the value that failed.",
+      "kind": "behaviour",
+      "ref": "trace a-df4d5 action call@35 snapshot (other fields keep 14 Drover's Way, Unit 3, Inverness, Highland, IV2 3JH, GB, exports@example.com, +44 1463 234567); action call@45",
+      "quote": "<INPUT class=\"govuk-input\" id=\"addressLine1\" name=\"addressLine1\" type=\"text\" value=\"14 Drover's Way\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-034",
+      "statement": "Leaving Name or organisation name empty shows 'Enter a name'.",
+      "kind": "rule",
+      "ref": "trace a-df4d5 action call@37",
+      "quote": "Enter a name",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-035",
+      "statement": "Leaving Address line 1 empty shows 'Enter address line 1'.",
+      "kind": "rule",
+      "ref": "trace a-e05ed action call@35 snapshot error summary",
+      "quote": "Enter address line 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-036",
+      "statement": "Leaving Town or city empty shows 'Enter a town or city'.",
+      "kind": "rule",
+      "ref": "trace a-2e436 action call@35 snapshot error summary",
+      "quote": "Enter a town or city",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-037",
+      "statement": "Leaving Postcode or Zip code empty shows 'Enter a postcode'.",
+      "kind": "rule",
+      "ref": "trace a-af791 action call@35 snapshot error summary",
+      "quote": "Enter a postcode",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-038",
+      "statement": "Leaving Country on the 'Select a country' placeholder shows 'Enter a country'.",
+      "kind": "rule",
+      "ref": "trace a-3fb1a action call@35 snapshot error summary",
+      "quote": "Enter a country",
+      "confidence": "verbatim",
+      "note": "The message says 'Enter' although the control is a select."
+    },
+    {
+      "id": "trace-ins-fit-p1-039",
+      "statement": "Leaving Phone number empty shows 'Enter a telephone number'.",
+      "kind": "rule",
+      "ref": "trace a-32110 action call@35 snapshot error summary",
+      "quote": "Enter a telephone number",
+      "confidence": "verbatim",
+      "note": "The message says 'telephone number' while the label says 'Phone number'."
+    },
+    {
+      "id": "trace-ins-fit-p1-040",
+      "statement": "Leaving Email address empty shows 'Enter an email address'.",
+      "kind": "rule",
+      "ref": "trace a-2f2aa action call@35 snapshot error summary",
+      "quote": "Enter an email address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-041",
+      "statement": "A Name or organisation name over 255 characters shows 'Name must be 255 characters or fewer' and keeps the value.",
+      "kind": "rule",
+      "ref": "trace a-8c033 action call@35 snapshot error summary",
+      "quote": "Name must be 255 characters or fewer",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-042",
+      "statement": "An Address line 1 over 255 characters shows 'Address line 1 must be 255 characters or fewer' and keeps the value.",
+      "kind": "rule",
+      "ref": "trace a-83fe4 action call@35 snapshot error summary",
+      "quote": "Address line 1 must be 255 characters or fewer",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-043",
+      "statement": "An Address line 2 over 255 characters shows 'Address line 2 must be 255 characters or fewer' and keeps the value.",
+      "kind": "rule",
+      "ref": "trace a-138a0 action call@35 snapshot error summary",
+      "quote": "Address line 2 must be 255 characters or fewer",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-044",
+      "statement": "A Town or city over 100 characters shows 'Town or city must be 100 characters or fewer' and keeps the value.",
+      "kind": "rule",
+      "ref": "trace a-351ad action call@35 snapshot error summary",
+      "quote": "Town or city must be 100 characters or fewer",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-045",
+      "statement": "A County over 100 characters shows 'County must be 100 characters or fewer' and keeps the value.",
+      "kind": "rule",
+      "ref": "trace a-6d292 action call@35 snapshot error summary",
+      "quote": "County must be 100 characters or fewer",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-046",
+      "statement": "A Postcode or Zip code over 12 characters shows 'Postcode must be 12 characters or fewer' and keeps the value.",
+      "kind": "rule",
+      "ref": "trace a-e58a8 action call@35 snapshot error summary",
+      "quote": "Postcode must be 12 characters or fewer",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-047",
+      "statement": "A Phone number over 20 characters shows 'Telephone number must be 20 characters or fewer' and keeps the value.",
+      "kind": "rule",
+      "ref": "trace a-0a2d0 action call@35 snapshot error summary",
+      "quote": "Telephone number must be 20 characters or fewer",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-048",
+      "statement": "An Email address over 254 characters shows 'Email address must be 254 characters or fewer' and keeps the value.",
+      "kind": "rule",
+      "ref": "trace a-f93b2 action call@35 snapshot error summary and input#email value (255 'A's)",
+      "quote": "Email address must be 254 characters or fewer",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-049",
+      "statement": "An over-length email address that is also malformed shows only the length error, not the format error, so the length check wins for that field.",
+      "kind": "rule",
+      "ref": "trace a-f93b2 action call@35 snapshot error summary (single link)",
+      "quote": "Email address must be 254 characters or fewer",
+      "confidence": "inferred",
+      "note": "Inferred: the test filled 255 'A's (no @) and only the length message rendered."
+    },
+    {
+      "id": "trace-ins-fit-p1-050",
+      "statement": "An email address in the wrong format (for example 'not-an-email') shows 'Enter an email address in the correct format' and keeps the value.",
+      "kind": "rule",
+      "ref": "trace a-29872 action call@35 snapshot error summary",
+      "quote": "Enter an email address in the correct format",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-051",
+      "statement": "The add address page in its validation error state has no serious or critical axe accessibility violations.",
+      "kind": "non-functional",
+      "ref": "trace a-66af9 test.trace expect step",
+      "quote": "Add address validation error has serious/critical accessibility violations.\\nFull axe violations:\\n[]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-052",
+      "statement": "No trace submits more than one invalid field at once, so how the summary orders several errors is not shown.",
+      "kind": "behaviour",
+      "ref": "all validation traces: one error link each",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p1-053",
+      "statement": "No trace exercises format checks on postcode or phone number, or a duplicate address check; whether any exist is not shown.",
+      "kind": "rule",
+      "ref": "add.fit.spec.js validation traces",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p1-054",
+      "statement": "A valid submit redirects (302) from /address-book/add to the address book list at /address-book.",
+      "kind": "behaviour",
+      "ref": "trace s-3e860 network POST /address-book/add 302 Location /address-book; action call@139",
+      "quote": "POST http://localhost:3002/address-book/add 302 /address-book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-055",
+      "statement": "After a save the address book shows a success notification banner titled 'Success', in a role=alert region.",
+      "kind": "copy",
+      "ref": "trace s-3e860 action call@139 snapshot div#address-book-success-banner",
+      "quote": "Success",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-056",
+      "statement": "The success banner's heading names the saved address: '<name> added to your address book'.",
+      "kind": "copy",
+      "ref": "trace s-3e860 action call@141 (getByText) snapshot p.govuk-notification-banner__heading",
+      "quote": "Highland Livestock Ltd added to your address book",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-057",
+      "statement": "The saved address appears as a row in the address book table with its name in the Name column.",
+      "kind": "behaviour",
+      "ref": "trace s-3e860 action call@143 snapshot table row 2",
+      "quote": "<TD class=\"govuk-table__cell\">Highland Livestock Ltd</TD>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-058",
+      "statement": "The new row's Address column shows address line 1, town or city and postcode joined by commas, without address line 2 or county.",
+      "kind": "data",
+      "ref": "trace s-3e860 action call@139 snapshot table row 2 Address cell",
+      "quote": "14 Drover's Way, Inverness, IV2 3JH",
+      "confidence": "verbatim",
+      "note": "The submitted address line 2 'Unit 3' and county 'Highland' do not appear in the list cell."
+    },
+    {
+      "id": "trace-ins-fit-p1-059",
+      "statement": "The new row's Country column shows the country's name, not its code.",
+      "kind": "data",
+      "ref": "trace s-3e860 action call@139 snapshot table row 2 Country cell",
+      "quote": "United Kingdom",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-060",
+      "statement": "The new row has a 'View' link to /address-book/<id>, with the address name as visually hidden text.",
+      "kind": "copy",
+      "ref": "trace s-3e860 action call@139 snapshot table row 2 action cell",
+      "quote": "View<SPAN class=\"govuk-visually-hidden\"> Highland Livestock Ltd</SPAN>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-061",
+      "statement": "A saved address is given a 24-character hexadecimal id that appears in its view URL.",
+      "kind": "data",
+      "ref": "trace s-3e860 action call@139 snapshot View href",
+      "quote": "/address-book/b3f7b42851c746d995efbcb2",
+      "confidence": "inferred",
+      "note": "Inferred from one id; its shape matches a MongoDB ObjectId."
+    },
+    {
+      "id": "trace-ins-fit-p1-062",
+      "statement": "In the fit stack a newly signed-in organisation's address book already holds one stub address, 'Stub Farm 1', so after one save the list reads 'Showing 1-2 of 2'.",
+      "kind": "data",
+      "ref": "trace s-3e860 action call@139 snapshot results label and table row 1",
+      "quote": "Showing 1-2 of 2",
+      "confidence": "inferred",
+      "note": "Inferred: the organisation id was random per run, yet 'Stub Farm 1, 1 Stub Way, Stubton, ST1 1UB' was already listed. Likely stub seeding, not service behaviour."
+    },
+    {
+      "id": "trace-ins-fit-p1-063",
+      "statement": "The address is saved by the frontend calling the address book service server side; the call's method, path and payload are not visible in the browser trace.",
+      "kind": "integration",
+      "ref": "trace s-3e860 network log (only browser-to-frontend requests recorded)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p1-064",
+      "statement": "Cancel and return to address book redirects (302) to /address-book without validating the form, even when required fields are empty.",
+      "kind": "behaviour",
+      "ref": "trace c-03995 action call@121; network POST /address-book/add 302 Location /address-book",
+      "quote": "POST http://localhost:3002/address-book/add 302 /address-book",
+      "confidence": "verbatim",
+      "note": "Only Name was filled ('Should not be saved'); every other required field was empty and no error page rendered."
+    },
+    {
+      "id": "trace-ins-fit-p1-065",
+      "statement": "Cancel creates no address: the typed name does not appear in the address book, which still reads 'Showing 1-1 of 1'.",
+      "kind": "behaviour",
+      "ref": "trace c-03995 action call@125 (toHaveCount 0); snapshot results label",
+      "quote": "Showing 1-1 of 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-ins-fit-p1-066",
+      "statement": "After cancel the address book shows no success banner.",
+      "kind": "behaviour",
+      "ref": "trace c-03995 address book snapshot (no govuk-notification-banner)",
+      "quote": "Address book | Import notification service",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of the banner element in the post-cancel snapshot."
+    },
+    {
+      "id": "trace-ins-fit-p1-067",
+      "statement": "No trace shows what happens when saving fails in the address book service (for example a service error) or what the user sees then.",
+      "kind": "behaviour",
+      "ref": "add.fit.spec.js save and confirm",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-ins-fit-p1-068",
+      "statement": "No trace shows the add address page reached without signing in, so its access control is not evidenced here.",
+      "kind": "rule",
+      "ref": "add.fit.spec.js (every test signs in first)",
+      "quote": "",
+      "confidence": "gap"
+    }
+  ]
+}

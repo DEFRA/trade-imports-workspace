@@ -1,0 +1,1028 @@
+{
+  "source": "trace:prototype-dr2-1",
+  "structure": "Part 14, Manage notifications: all 7 traces of manage-notifications.fit.spec.js, every one opened and mined (action list, network log, snapshots and DOM evals of each page reached). Trace zips under workareas/shared/design-release-2-1/sources/traces-prototype/, named in refs by basename: VIEW-AR = manage-notifications--view-a-notification-from-the-dashboard-submitted-with-action-required-warning-import-references-read-only-answers (34 actions); VIEW-SCD = manage-notifications--view-a-notification-from-the-dashboard-submitted-completed-and-draft-notifications (43 actions, 3 steps); AMEND = manage-notifications--amend-a-submitted-notification-confirm-change-an-answer-save-and-return-then-resubmit (95 actions); CANCEL = manage-notifications--amend-a-submitted-notification-cancel-an-amendment-from-the-amend-review (25 actions); GUARDS = manage-notifications--amend-and-copy-guards-cancel-amend-with-no-amendment-in-progress-and-unknown-references-return-to-the-dashboard (25 actions); COPY = manage-notifications--copy-as-new-copying-a-submitted-notification-opens-a-new-draft-on-the-hub (24 actions); DELETE = manage-notifications--delete-a-notification-confirm-the-deletion-the-dashboard-shows-a-success-banner (41 actions). Action ids are the numbers in each trace's `actions` list; request ids the numbers in its `requests` list. Pages reached, in the order a trader meets them: (1) the live-animals dashboard (/design-release-2.1/live-animals), entered only to click View or Copy as new (its own copy belongs to the dashboard part); (2) view notification (/review-notification?reference=...), one template in four states: Submitted action required (GBN-AG-26-7K8M2P), Submitted (GBN-AG-26-7K8M2U), Completed (GBN-AG-26-7K8M2W) and Draft (GBN-GP-26-7K8M2T), with a page header (reference h1, status tag, action buttons, date), an Import reference numbers section, and six numbered read-only answer sections; (3) the amend confirmation modal on the view page (Submitted and action-required only); (4) the amend review (/notifications/amend?reference=... redirects to /review-notification), with an Amend status bar, Change links, Continue, Cancel amend and Delete; (5) question pages opened from the amend review (Origin of the import, Arrival details), carrying the Amend status bar and Save and return / Save and continue / Save and return to overview; (6) the cancel-amendment modal; (7) the declaration and the Import notification submitted page at the end of an amendment; (8) copy as new (/notifications/copy-as-new?reference=...) redirecting to the notification hub (Overview) as a new Draft; (9) the delete confirmation page (/notifications/delete?reference=...) and, after Yes, delete, the overall dashboard (/design-release-2.1) then the live-animals dashboard with a success banner; (10) the guards: /notifications/cancel-amend with nothing in progress, and amend or copy-as-new with an unknown reference, each redirect to the overall dashboard. Conditional: the Amend button appears only for Submitted and Submitted action required; the warning line only for action required; Change links and the error summary only on Draft and the amend review; Continue only on Draft, action required and the amend review. Integrations: every call is a same-origin GOV.UK Prototype Kit page request or form post; no outbound API calls appear in any of the 7 network logs.",
+  "claims": [
+    {
+      "id": "trace-prototype-dr2-1-p14-001",
+      "statement": "From the live-animals dashboard, a trader opens a notification by its View link, which goes to the view notification page for that reference.",
+      "kind": "behaviour",
+      "ref": "trace VIEW-AR action 8 (click View), action 9 (toHaveURL); request 41 GET review-notification?reference=GBN-AG-26-7K8M2P",
+      "quote": "getByRole('link', { name: 'View', exact: true }) -> /design-release-2.1/review-notification?reference=GBN-AG-26-7K8M2P",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-002",
+      "statement": "The view notification page is addressed by the notification reference in a query string: /review-notification?reference=<reference>.",
+      "kind": "behaviour",
+      "ref": "trace VIEW-SCD actions 8, 18, 28 (Navigate to)",
+      "quote": "Navigate to \"/design-release-2.1/review-notification?reference=GBN-AG-26-7K8M2U\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-003",
+      "statement": "The view notification page's document title carries no page name, only the service name, in every state seen (Submitted, Completed, Draft, Submitted action required).",
+      "kind": "copy",
+      "ref": "trace VIEW-SCD action 20 (completed: document.title); VIEW-AR action 21 Page Title",
+      "quote": "Import notification service - GOV.UK",
+      "confidence": "verbatim",
+      "note": "Other pages in the service title as '<page> - Import notification service - GOV.UK'; this one does not. Possibly an omission in the prototype."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-004",
+      "statement": "The view notification page's h1 is the notification reference itself.",
+      "kind": "copy",
+      "ref": "trace VIEW-SCD action 10 snapshot (heading level 1)",
+      "quote": "heading \"GBN-AG-26-7K8M2U\" [level=1]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-005",
+      "statement": "Next to the reference, the view page shows the notification's status as a tag; a submitted notification reads Submitted.",
+      "kind": "copy",
+      "ref": "trace VIEW-SCD action 10 (.app-dr2-review-page-header)",
+      "quote": "<strong class=\"govuk-tag app-dr2-review-status__tag app-dr2-review-status__tag--submitted\">\n    Submitted\n  </strong>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-006",
+      "statement": "A completed notification's status tag reads Completed (modifier submission-complete).",
+      "kind": "copy",
+      "ref": "trace VIEW-SCD action 20 (.app-dr2-review-page-header)",
+      "quote": "app-dr2-review-status__tag--submission-complete\">\n    Completed\n  </strong>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-007",
+      "statement": "A draft notification's status tag reads Draft.",
+      "kind": "copy",
+      "ref": "trace VIEW-SCD action 31 (.app-dr2-review-page-header)",
+      "quote": "app-dr2-review-status__tag--draft\">\n    Draft\n  </strong>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-008",
+      "statement": "A submitted notification that needs the trader to act shows the status tag Submitted action required.",
+      "kind": "copy",
+      "ref": "trace VIEW-AR action 21 (.app-dr2-review-page-header)",
+      "quote": "app-dr2-review-status__tag--action-required\">\n    Submitted action required\n  </strong>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-009",
+      "statement": "A submitted or completed notification shows the date it was submitted under its header, labelled Date submitted:.",
+      "kind": "data",
+      "ref": "trace VIEW-SCD actions 10 and 20 (.app-dr2-review-page-header__date)",
+      "quote": "Date submitted: 16 June 2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-010",
+      "statement": "A draft notification shows the date it was created instead, labelled Date created:.",
+      "kind": "data",
+      "ref": "trace VIEW-SCD action 30 (.app-dr2-review-page-header__date)",
+      "quote": "Date created: 18 June 2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-011",
+      "statement": "A Submitted notification's header offers three actions: an Amend this notification button, a Copy as new secondary button and a Delete warning button.",
+      "kind": "behaviour",
+      "ref": "trace VIEW-SCD action 10 (.app-dr2-review-page-header__actions)",
+      "quote": "Amend this notification\nCopy as new\nDelete",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-012",
+      "statement": "A Submitted action required notification's header offers the same three actions: Amend this notification, Copy as new and Delete.",
+      "kind": "behaviour",
+      "ref": "trace VIEW-AR action 18 (Amend button visible), action 21 (.app-dr2-review-page-header__actions)",
+      "quote": "Amend this notification\nCopy as new\nDelete",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-013",
+      "statement": "A Completed notification cannot be amended: its header has no Amend this notification button, only Copy as new and Delete.",
+      "kind": "rule",
+      "ref": "trace VIEW-SCD action 20 (Expect toHaveCount 0 on Amend this notification; header HTML)",
+      "quote": "GBN-AG-26-7K8M2W\nCompleted\nCopy as new\nDelete",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-014",
+      "statement": "A Draft notification's header has no Amend this notification button, only Copy as new and Delete.",
+      "kind": "rule",
+      "ref": "trace VIEW-SCD action 31 (.app-dr2-review-page-header)",
+      "quote": "GBN-GP-26-7K8M2T\nDraft\nCopy as new\nDelete",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-015",
+      "statement": "Copy as new is a secondary button when Amend this notification sits beside it (Submitted, action required) and the primary button when it does not (Completed, Draft).",
+      "kind": "rule",
+      "ref": "trace VIEW-SCD actions 10, 20, 31 (header HTML class on Copy as new)",
+      "quote": "<a class=\"govuk-button govuk-button--secondary\" href=\"/design-release-2.1/notifications/copy-as-new?reference=GBN-AG-26-7K8M2U\">Copy as new</a> ... <a class=\"govuk-button\" href=\"/design-release-2.1/notifications/copy-as-new?reference=GBN-AG-26-7K8M2W\">Copy as new</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-016",
+      "statement": "Copy as new links to /notifications/copy-as-new with the notification's reference.",
+      "kind": "behaviour",
+      "ref": "trace VIEW-AR action 19 (toHaveAttribute href on Copy as new)",
+      "quote": "/design-release-2.1/notifications/copy-as-new?reference=GBN-AG-26-7K8M2P",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-017",
+      "statement": "Delete on the view page is a red warning button linking to /notifications/delete with the notification's reference, in every status seen including Submitted and Completed.",
+      "kind": "behaviour",
+      "ref": "trace VIEW-SCD actions 10, 20, 31 (header HTML)",
+      "quote": "<a class=\"govuk-button govuk-button--warning\" href=\"/design-release-2.1/notifications/delete?reference=GBN-AG-26-7K8M2W\">Delete</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-018",
+      "statement": "A Submitted action required notification shows a warning in its header saying what the trader must do.",
+      "kind": "copy",
+      "ref": "trace VIEW-AR action 21 (.app-dr2-review-page-header .govuk-warning-text)",
+      "quote": "You need to upload a health certificate",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-019",
+      "statement": "The action-required warning uses the GOV.UK Warning text component, with a visually hidden Warning prefix.",
+      "kind": "constraint",
+      "ref": "trace VIEW-AR action 21 (header HTML)",
+      "quote": "<div class=\"govuk-warning-text\">\n  <span class=\"govuk-warning-text__icon\" aria-hidden=\"true\">!</span>\n  <strong class=\"govuk-warning-text__text\">\n    <span class=\"govuk-visually-hidden\">Warning</span>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-020",
+      "statement": "The view page shows an Import reference numbers section in every state seen, including Draft.",
+      "kind": "copy",
+      "ref": "trace VIEW-SCD actions 10, 20, 31; VIEW-AR action 21 (h2 Import reference numbers)",
+      "quote": "Import reference numbers",
+      "confidence": "verbatim",
+      "note": "The draft GBN-GP-26-7K8M2T also shows a customs document code (C640) although it has not been submitted."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-021",
+      "statement": "The Import reference numbers section warns the trader to use the right reference and code on the customs declaration.",
+      "kind": "copy",
+      "ref": "trace VIEW-SCD action 10 (.app-dr2-import-reference-section__warning)",
+      "quote": "You must use the correct reference and code on the customs declaration or your consignment will be delayed.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-022",
+      "statement": "The Import reference numbers section shows the Notification reference.",
+      "kind": "data",
+      "ref": "trace VIEW-SCD action 10 (.app-dr2-import-reference-section__row 1)",
+      "quote": "Notification reference\n\nGBN-AG-26-7K8M2U",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-023",
+      "statement": "The Import reference numbers section shows the Customs document code, C640 for the live-animal notifications seen.",
+      "kind": "data",
+      "ref": "trace VIEW-AR action 15 (toContainText /Customs document code\\s+C640/); VIEW-SCD action 10",
+      "quote": "Customs document code\n\nC640",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-024",
+      "statement": "Each import reference row has its own Copy button, so the section has two Copy buttons, each carrying the value it copies.",
+      "kind": "behaviour",
+      "ref": "trace VIEW-AR action 17 (toHaveCount 2 on button Copy); VIEW-SCD action 10 (section HTML)",
+      "quote": "<button class=\"govuk-button govuk-button--secondary app-dr2-import-reference-section__copy-button\" type=\"button\" data-copy-text=\"C640\">Copy</button>",
+      "confidence": "verbatim",
+      "note": "No trace clicks Copy, so what it puts on the clipboard and any confirmation it shows are unobserved."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-025",
+      "statement": "The Import reference numbers section is a custom component (app-dr2-import-reference-section) of key, value and Copy button rows, not a GOV.UK Summary list; it wraps the GOV.UK Warning text and secondary Button.",
+      "kind": "constraint",
+      "ref": "trace VIEW-SCD action 10 (class inventory)",
+      "quote": "app-dr2-import-reference-section__copy-button\napp-dr2-import-reference-section__key\napp-dr2-import-reference-section__list\napp-dr2-import-reference-section__row",
+      "confidence": "verbatim",
+      "note": "A GOV.UK Summary list with a row action could carry the key and value; the copy-to-clipboard button has no GOV.UK component."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-026",
+      "statement": "The view page shows the notification's answers in six numbered sections: 1. About the consignment, 2. Description of the goods, 3. Transport and arrival, 4. Uploaded documents, 5. Consignment addresses, 6. Contact address.",
+      "kind": "copy",
+      "ref": "trace VIEW-SCD action 10 snapshot (h2 headings)",
+      "quote": "1. About the consignment ... 2. Description of the goods ... 3. Transport and arrival ... 4. Uploaded documents ... 5. Consignment addresses ... 6. Contact address",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-027",
+      "statement": "Section 1 has three cards: Origin of import (Country of origin, Region of origin code, Internal reference number), What are you importing? (Commodity code, Common name, Species) and Main import reason (Main import reason, Purpose in the market).",
+      "kind": "data",
+      "ref": "trace VIEW-SCD action 10 snapshot (region 1. About the consignment)",
+      "quote": "Origin of import\nCountry of origin\nRepublic of Ireland\nRegion of origin code\nNot applicable\nInternal reference number\nLIV-2026-0142\nWhat are you importing?\nCommodity code\n0102\nCommon name\nCattle\nSpecies\nBison Bison\nMain import reason\nMain import reason\nInternal market\nPurpose in the market\nTransfer of ownership - Sale/gift",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-028",
+      "statement": "When a notification has several commodities, What are you importing? lists their codes, common names and species comma-separated in one row each.",
+      "kind": "data",
+      "ref": "trace VIEW-AR action 21 (main innerText)",
+      "quote": "Commodity code\n010410, 010420\nCommon name\nSheep, Goat\nSpecies\nOvis Aries, Capra Hircus",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-029",
+      "statement": "A region of origin code, when given, shows as the code; when not, as Not applicable.",
+      "kind": "data",
+      "ref": "trace VIEW-AR action 21; VIEW-SCD action 10",
+      "quote": "Region of origin code\nFR-01010101 ... Region of origin code\nNot applicable",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-030",
+      "statement": "Section 2 shows one card per commodity, headed with the common name and code, then per species: Number of animals, Number of packages (when required), and an Identification details table of each animal and its identifiers.",
+      "kind": "data",
+      "ref": "trace VIEW-SCD action 10 (.app-dr2-review-commodity-card)",
+      "quote": "Cattle (0102)\nBison Bison\nNumber of animals\n5\nNumber of packages (when required)\nNot applicable\nIdentification details\nAnimal\nEar tag\nPassport\nBison bison 1\nUK123456789012\nGB-CAT-8821",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-031",
+      "statement": "The identification table's columns depend on the identifiers the species uses: cattle show Ear tag and Passport, goats show Ear tag only.",
+      "kind": "rule",
+      "ref": "trace VIEW-AR action 21 (Goat (010420) card); VIEW-SCD action 10 (Cattle card)",
+      "quote": "Goat (010420)\nCapra Hircus\nNumber of animals\n2\nNumber of packages (when required)\nNot applicable\nIdentification details\nAnimal\nEar tag\nCapra hircus 1\n123456789",
+      "confidence": "inferred",
+      "note": "Inferred from two seeded notifications; the rule that sets the columns is not shown."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-032",
+      "statement": "Section 2 also has an Additional details card with Certified for and, where answered, Includes unweaned animals.",
+      "kind": "data",
+      "ref": "trace VIEW-SCD action 10 snapshot; VIEW-AR action 21",
+      "quote": "Additional details\nCertified for\nSlaughter\nIncludes unweaned animals\nNo",
+      "confidence": "verbatim",
+      "note": "The action-required notification shows only Certified for (Further keeping), with no unweaned row."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-033",
+      "statement": "Section 3 has an Arrival details card: Port of entry, Arrival date at destination, Means of transport to the port of entry, Transport identification and Transport document reference.",
+      "kind": "data",
+      "ref": "trace VIEW-SCD action 10 snapshot (Arrival details)",
+      "quote": "Arrival details\nPort of entry\nLondon Heathrow\nArrival date at destination\n23 June 2026\nMeans of transport to the port of entry\nAir\nTransport identification\nBA0123\nTransport document reference\nAWB-2026-8841",
+      "confidence": "verbatim",
+      "note": "The row is labelled 'Arrival date at destination' while the question page asks for 'Arrival date at port of entry' (AMEND action 56)."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-034",
+      "statement": "When the consignment passes through other countries, the Arrival details card adds a Transit countries subsection listing them.",
+      "kind": "rule",
+      "ref": "trace VIEW-AR action 21 (.app-dr2-review-card__subsection)",
+      "quote": "Transit countries\nCountries that the consignment will travel through\nFrance, Germany, Spain",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-035",
+      "statement": "Section 3 has a Transport details card for the transporter: Name, Address, Country, Approval number and Type.",
+      "kind": "data",
+      "ref": "trace VIEW-SCD action 10 snapshot (Transport details)",
+      "quote": "Transport details\nName\nAberdeen Livestock Ltd\nAddress\n\n15 Union Street\n\nAberdeen\n\nAB11 5BN\n\nCountry\nUnited Kingdom\nApproval number\nUK/ABERDEEN/T1/00092001\nType\nPrivate",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-036",
+      "statement": "Section 4 shows one card per uploaded document (Document 1 and on): Document reference, Document type, Date of issue and Attachment file name.",
+      "kind": "data",
+      "ref": "trace VIEW-SCD action 10 snapshot (4. Uploaded documents)",
+      "quote": "Document 1\nDocument reference\nHC-2026-0198\nDocument type\nIntra Trade Animal Health Certificate (ITAHC)\nDate of issue\n01/03/2026\nAttachment\nhealth-certificate.pdf",
+      "confidence": "verbatim",
+      "note": "Date of issue shows as 01/03/2026 while other dates on the page are long-form (16 June 2026)."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-037",
+      "statement": "Section 5's Addresses card shows Place of origin, Consignor, Consignee, Importer and Place of destination as name plus address lines, then the County parish holding (CPH) number.",
+      "kind": "data",
+      "ref": "trace VIEW-SCD action 10 snapshot (5. Consignment addresses)",
+      "quote": "Place of origin\n\nGreen Valley Livestock Farm\n\n14 Meadow Lane\n\nLower Hartham\n\nUtrecht, 3511 AA, Netherlands\n\nConsignor\n\nNordic Livestock Export AB ... Consignee ... Importer ... Place of destination\n\nRiverside Holding Facility ... County parish holding (CPH) number\n12/345/6789",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-038",
+      "statement": "Section 6 shows the Contact address as name plus address lines.",
+      "kind": "data",
+      "ref": "trace VIEW-SCD action 10 snapshot (6. Contact address)",
+      "quote": "Contact address\nContact address\n\nAberdeen Livestock Ltd\n\n15 Union Street\n\nAberdeen, AB11 5BN\n\nUnited Kingdom",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-039",
+      "statement": "A Submitted, Completed or action-required notification's answers are read only: the page has no Change links.",
+      "kind": "rule",
+      "ref": "trace VIEW-AR action 22 (toHaveCount 0 on link Change); VIEW-SCD action 10 (card headers without action)",
+      "quote": "await expect(main.getByRole('link', { name: 'Change' })).toHaveCount(0)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-040",
+      "statement": "A Submitted or Completed notification's view page ends after section 6, with no Continue button or form.",
+      "kind": "behaviour",
+      "ref": "trace VIEW-SCD actions 10 and 20 (main innerText ends at United Kingdom)",
+      "quote": "Aberdeen, AB11 5BN\n\nUnited Kingdom",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-041",
+      "statement": "A Submitted action required notification's view page ends with a Continue link that goes to the notification hub.",
+      "kind": "behaviour",
+      "ref": "trace VIEW-AR action 21 (main links)",
+      "quote": "Continue -> /design-release-2.1/notification-hub",
+      "confidence": "verbatim",
+      "note": "No trace follows it, so what the hub shows for a submitted notification needing action is unobserved."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-042",
+      "statement": "On an action-required notification, a species with no identifiers shows an inline section error under Identification details instead of the table.",
+      "kind": "rule",
+      "ref": "trace VIEW-AR action 21 (.app-dr2-review-commodity-card__identification--error)",
+      "quote": "Enter a minimum of 1 identifier",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-043",
+      "statement": "On an action-required notification, section 4 shows a section error instead of document cards when the health certificate is missing.",
+      "kind": "rule",
+      "ref": "trace VIEW-AR action 21 (.app-dr2-review-section-error in 4. Uploaded documents)",
+      "quote": "Upload a valid health certificate",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-044",
+      "statement": "The action-required view shows its section errors without a GOV.UK error summary.",
+      "kind": "behaviour",
+      "ref": "trace VIEW-AR action 21 (.govuk-error-summary: none)",
+      "quote": "=====ERRSUM\nnone",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-045",
+      "statement": "The action-required section errors are a custom component (app-dr2-review-section-error, with a marker and a message paragraph), not the GOV.UK error message; a GOV.UK Error message, or an Error summary linking to each, could replace it.",
+      "kind": "constraint",
+      "ref": "trace VIEW-AR action 21 (section error HTML)",
+      "quote": "<div class=\"app-dr2-review-section-error app-dr2-review-section-error--inline\"> <span class=\"app-dr2-review-section-error__marker\" aria-hidden=\"true\"></span> <p class=\"app-dr2-review-section-error__message\">Enter a minimum of 1 identifier</p> </div>",
+      "confidence": "verbatim",
+      "note": "The message has no visually hidden 'Error:' prefix, unlike the draft's card error (claim p14-050)."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-046",
+      "statement": "A Submitted, Completed or action-required notification's Back link goes to the overall dashboard.",
+      "kind": "behaviour",
+      "ref": "trace VIEW-AR action 23 (.govuk-back-link href); VIEW-SCD action 20",
+      "quote": "<a href=\"/design-release-2.1\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim",
+      "note": "The trader came from /design-release-2.1/live-animals in VIEW-AR, but Back goes to /design-release-2.1."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-047",
+      "statement": "A Draft notification's view page is editable: every answer card has a Change link to its question page, the first going to Origin of the import.",
+      "kind": "behaviour",
+      "ref": "trace VIEW-SCD action 32 (toHaveAttribute href on first Change); draft links eval",
+      "quote": "Change -> /design-release-2.1/origin-of-the-import",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-048",
+      "statement": "The draft view's Change links go to origin-of-the-import, what-are-you-importing, reason-for-import, consignment-details (card and Number of animals row), animal-identification-details, additional-animal-details, arrival-details, transporter, upload-documents?from=review, roles-and-addresses and contact-address-for-consignment?from=review.",
+      "kind": "behaviour",
+      "ref": "trace VIEW-SCD action 31 (all main links)",
+      "quote": "Change -> /design-release-2.1/what-are-you-importing\nChange -> /design-release-2.1/reason-for-import\nChange -> /design-release-2.1/consignment-details\nChange -> /design-release-2.1/consignment-details\nChange -> /design-release-2.1/animal-identification-details\nChange -> /design-release-2.1/additional-animal-details\nChange -> /design-release-2.1/arrival-details\nChange -> /design-release-2.1/transporter\nChange -> /design-release-2.1/upload-documents?from=review\nChange -> /design-release-2.1/roles-and-addresses\nChange -> /design-release-2.1/contact-address-for-consignment?from=review",
+      "confidence": "verbatim",
+      "note": "Only upload-documents and contact-address carry ?from=review; the other links do not say where they came from."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-049",
+      "statement": "A Draft notification's view page lists its incomplete sections in a GOV.UK error summary headed There is a problem, each item linking to its card.",
+      "kind": "rule",
+      "ref": "trace VIEW-SCD action 31 (.govuk-error-summary)",
+      "quote": "There is a problem ... <a href=\"#review-arrival-details\">Complete arrival details</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-050",
+      "statement": "The incomplete card on a draft also shows a GOV.UK error message under its heading, with a visually hidden Error: prefix.",
+      "kind": "rule",
+      "ref": "trace VIEW-SCD action 31 (#review-arrival-details section)",
+      "quote": "<p class=\"govuk-error-message app-dr2-review-card__error-message\">\n      <span class=\"govuk-visually-hidden\">Error:</span>\n      Complete arrival details\n    </p>",
+      "confidence": "verbatim",
+      "note": "The seeded draft's arrival details hold all five answers (arrival 26 June 2026); the section is incomplete presumably because the date is outside the allowed window (see p14-074). The page does not say why."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-051",
+      "statement": "A Draft notification's view page ends with a Continue button that posts to /review-notification.",
+      "kind": "behaviour",
+      "ref": "trace VIEW-SCD action 31 (main form)",
+      "quote": "post /design-release-2.1/review-notification ::  <div class=\"govuk-button-group\"> <button type=\"submit\" class=\"govuk-button\" data-module=\"govuk-button\" data-govuk-button-init=\"\"> Continue </button> </div>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-052",
+      "statement": "A Draft notification's Back link also goes to the overall dashboard.",
+      "kind": "behaviour",
+      "ref": "trace VIEW-SCD action 31 (.govuk-back-link)",
+      "quote": "<a href=\"/design-release-2.1\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-053",
+      "statement": "The view page's header, answer cards, commodity cards and identification table are custom components (app-dr2-review-page-header, app-dr2-review-card, app-dr2-review-commodity-card, app-dr2-review-identification-table) built from dl/dt/dd rows, not the GOV.UK Summary list or Summary card; Summary card with Summary list rows, and a GOV.UK Table for the identifiers, could replace them.",
+      "kind": "constraint",
+      "ref": "trace VIEW-SCD action 10 (class inventory); VIEW-AR action 21 (non-govuk classes)",
+      "quote": "app-dr2-review-card\napp-dr2-review-card-wrapper\napp-dr2-review-card__header\napp-dr2-review-card__rows\napp-dr2-review-card__title\napp-dr2-review-commodity-card ... app-dr2-review-identification-table ... app-dr2-review-page-header",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-054",
+      "statement": "The page modifier class carries the state the view was rendered in: dr2-submitted for a Submitted notification, dr2-action-required for an action-required one, dr2-journey on the amend review.",
+      "kind": "behaviour",
+      "ref": "trace VIEW-SCD action 10 classes; VIEW-AR action 21 classes; AMEND action 27 HTML",
+      "quote": "app-review-notification-page--dr2-submitted ... app-review-notification-page--dr2-action-required ... app-review-notification-page--dr2-journey",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-055",
+      "statement": "Amend this notification does not leave the page: it opens a confirmation modal first.",
+      "kind": "behaviour",
+      "ref": "trace AMEND action 9 (click Amend this notification), action 10 (#amend-notification-modal visible)",
+      "quote": "<button class=\"govuk-button\" type=\"button\" data-amend-modal-open=\"\">\n        Amend this notification\n      </button>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-056",
+      "statement": "The amend confirmation modal is headed Amend notification.",
+      "kind": "copy",
+      "ref": "trace AMEND action 11 (heading Amend notification in #amend-notification-modal)",
+      "quote": "Amend notification",
+      "confidence": "verbatim",
+      "note": "The heading is an h1 inside the modal, so the view page has two h1s while it is open (the reference and this)."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-057",
+      "statement": "The amend confirmation modal asks the trader to confirm.",
+      "kind": "copy",
+      "ref": "trace AMEND action 12 (#amend-notification-modal text)",
+      "quote": "Are you sure you want to change this notification?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-058",
+      "statement": "The amend modal's Yes, continue is a button-styled link to /notifications/amend with the notification's reference.",
+      "kind": "behaviour",
+      "ref": "trace VIEW-SCD action 10 (#amend-notification-modal HTML); AMEND action 22",
+      "quote": "<a class=\"govuk-button\" href=\"/design-release-2.1/notifications/amend?reference=GBN-AG-26-7K8M2U\">Yes, continue</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-059",
+      "statement": "The amend modal's No, go back closes the modal and leaves the trader on the view page.",
+      "kind": "behaviour",
+      "ref": "trace AMEND action 19 (click No, go back), action 20 (modal toBeHidden)",
+      "quote": "No, go back",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-060",
+      "statement": "The amend modal also has a close (X) button labelled Close and a backdrop overlay, both marked to dismiss it.",
+      "kind": "behaviour",
+      "ref": "trace VIEW-SCD action 10 (#amend-notification-modal HTML)",
+      "quote": "<div class=\"app-dr2-amend-modal__overlay\" data-amend-modal-dismiss=\"\"></div> ... <button class=\"app-dr2-amend-modal__close\" type=\"button\" data-amend-modal-dismiss=\"\" aria-label=\"Close\">",
+      "confidence": "verbatim",
+      "note": "Neither the close button nor the overlay is clicked in any trace."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-061",
+      "statement": "The amend and cancel-amendment modals are a custom dialog (app-dr2-amend-modal: role dialog, aria-modal, hidden until opened, page body gains app-dr2-amend-modal-open); GOV.UK Frontend has no modal component, and a separate confirmation page (as delete uses) would keep to the toolbox.",
+      "kind": "constraint",
+      "ref": "trace AMEND action 12 (modal state and body class); VIEW-SCD action 10 (modal HTML)",
+      "quote": "<div class=\"app-dr2-amend-modal__dialog\" role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"amend-notification-modal-title\" aria-describedby=\"amend-notification-modal-description\" tabindex=\"-1\"> ... govuk-template__body js-enabled govuk-frontend-supported app-dr2-amend-modal-open",
+      "confidence": "verbatim",
+      "note": "The modal opens through JavaScript; with JavaScript off, the Amend button (type=button) would do nothing. Not exercised."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-062",
+      "statement": "Starting an amendment (/notifications/amend?reference=...) redirects to the review page, which now shows the notification as an amendment in progress.",
+      "kind": "behaviour",
+      "ref": "trace AMEND requests 40 (GET 302 amend?reference=GBN-AG-26-7K8M2U) and 41 (GET 200 review-notification); action 24",
+      "quote": "GET      302      amend?reference=GBN-AG-26-7K8M2U ... GET      200      review-notification",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-063",
+      "statement": "The amend review opens with an Amend status bar: an Amend tag, the reference, and a Cancel amend link-styled button.",
+      "kind": "copy",
+      "ref": "trace AMEND action 25 (toContainText /Amend\\s+GBN-AG-26-7K8M2U/), action 27 HTML (.app-dr2-notification-status--amend)",
+      "quote": "<strong class=\"govuk-tag app-dr2-review-status__tag app-dr2-review-status__tag--amend\">Amend</strong> <span class=\"app-dr2-notification-status__reference\">GBN-AG-26-7K8M2U</span> <button class=\"govuk-link app-dr2-notification-status__cancel-link\" type=\"button\" data-modal-open=\"cancel-amend-modal\"> Cancel amend </button>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-064",
+      "statement": "On first opening, the amend review is titled and headed Review your notification.",
+      "kind": "copy",
+      "ref": "trace AMEND action 27 (document.title and h1)",
+      "quote": "Review your notification - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-065",
+      "statement": "After the trader saves a changed answer and returns, the amend review is titled and headed Review before re-submitting.",
+      "kind": "copy",
+      "ref": "trace AMEND action 48 (document.title and main text after save and return)",
+      "quote": "Review before re-submitting - Import notification service - GOV.UK\nAmend\nGBN-AG-26-7K8M2U\nCancel amend\nReview before re-submitting",
+      "confidence": "verbatim",
+      "note": "The same URL carries two headings in one amendment; what switches it (an answer changed, or having visited a question page) is not shown."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-066",
+      "statement": "The amend review shows the same six numbered sections as the view page, with a Change link on every card.",
+      "kind": "behaviour",
+      "ref": "trace AMEND action 27 (main innerText and HTML)",
+      "quote": "1. About the consignment\nOrigin of import\nChange\nCountry of origin",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-067",
+      "statement": "The amend review has no Import reference numbers section and no Date submitted line.",
+      "kind": "behaviour",
+      "ref": "trace AMEND action 27 (main innerText from status bar to section 1)",
+      "quote": "Amend\nGBN-AG-26-7K8M2U\nCancel amend\nReview your notification\n1. About the consignment",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-068",
+      "statement": "The amend review ends with three actions: Continue (submits), Cancel amend (secondary, opens the cancel modal) and Delete (warning, links to the delete page).",
+      "kind": "behaviour",
+      "ref": "trace AMEND action 27 (main form HTML)",
+      "quote": "<button type=\"submit\" class=\"govuk-button\" data-module=\"govuk-button\" data-govuk-button-init=\"\"> Continue </button> <button class=\"govuk-button govuk-button--secondary\" type=\"button\" data-modal-open=\"cancel-amend-modal\"> Cancel amend </button> <a href=\"/design-release-2.1/notifications/delete?reference=GBN-AG-26-7K8M2U\" role=\"button\" draggable=\"false\" class=\"govuk-button govuk-button--warning\" data-module=\"govuk-button\" data-govuk-button-init=\"\"> Delete </a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-069",
+      "statement": "The amend review's Back link goes to the notification hub.",
+      "kind": "behaviour",
+      "ref": "trace AMEND action 27 (.govuk-back-link)",
+      "quote": "<a href=\"/design-release-2.1/notification-hub\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-070",
+      "statement": "A question page opened from the amend review shows the same Amend status bar (Amend tag, reference, Cancel amend) above its caption and heading.",
+      "kind": "behaviour",
+      "ref": "trace AMEND action 37 (Origin of the import, .app-dr2-notification-status)",
+      "quote": "Amend\nGBN-AG-26-7K8M2U\nCancel amend\n\nAbout the consignment\n\nOrigin of the import",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-071",
+      "statement": "A question page opened during an amendment offers three submit actions: Save and return (back to the amend review), Save and continue (secondary) and Save and return to overview (link-styled).",
+      "kind": "behaviour",
+      "ref": "trace AMEND action 37 (button[name=action] toHaveText; button inventory), action 56 (Arrival details)",
+      "quote": "BUTTON Save and return name=action value=review [govuk-button]\nBUTTON Save and continue name=action value=continue [govuk-button govuk-button--secondary]\nBUTTON Save and return to overview name=action value=hub [govuk-link app-govuk-body-link]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-072",
+      "statement": "Save and return posts the question page and redirects back to the amend review, which shows the changed answer.",
+      "kind": "behaviour",
+      "ref": "trace AMEND action 44 (fill #internal-reference AMENDED-REF), action 45 (click value=review), request 119 (POST origin-of-the-import 302, location /design-release-2.1/review-notification), action 48",
+      "quote": "location: /design-release-2.1/review-notification ... Internal reference number\nAMENDED-REF",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-073",
+      "statement": "During an amendment, the Origin of the import page's Back link goes to the notification type page, and the Arrival details page's to the notification hub, not to the amend review.",
+      "kind": "behaviour",
+      "ref": "trace AMEND action 37 (.govuk-back-link on Origin of the import), action 56 (on Arrival details)",
+      "quote": "<a href=\"/design-release-2.1/notification-type\" class=\"govuk-back-link\">Back</a> ... <a href=\"/design-release-2.1/notification-hub\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-074",
+      "statement": "Continue on the amend review is silently held while an answer is invalid: with the seeded June 2026 arrival date out of range, the post returns the same review page with no error summary or error message.",
+      "kind": "rule",
+      "ref": "trace AMEND action 50 (click Continue), request 159 (POST review-notification 200), action 53 (.govuk-error-summary count 0; error message eval empty)",
+      "quote": "=====ERR\nnone\n=====ERRMSG\n",
+      "confidence": "verbatim",
+      "note": "The spec says the arrival-date window is 7 days back to 6 months ahead; the page itself tells the trader nothing about why Continue did not move on."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-075",
+      "statement": "During an amendment the Arrival details page is prefilled with the notification's saved answers.",
+      "kind": "data",
+      "ref": "trace AMEND action 56 (Arrival details field values)",
+      "quote": "arrival-date-at-port|text|arrivalDateAtPort|value=23 June 2026\nport-of-entry|search||value=London Heathrow\n|hidden|portOfEntry|value=London Heathrow\nmeans-of-transport|select-one|meansOfTransport|value=Air\ntransport-identification|text|transportIdentification|value=BA0123\ntransport-document-reference|text|transportDocumentReference|value=AWB-2026-8841",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-076",
+      "statement": "Correcting the arrival date to one inside the window, saving and returning, then pressing Continue on the amend review moves on to the Declaration page.",
+      "kind": "behaviour",
+      "ref": "trace AMEND actions 57 (fill 17/10/2026), 73 (Save and return), 77 (Continue), 79 (toHaveURL declaration); requests 237, 276 (POST review-notification 302), 277",
+      "quote": "POST     302      review-notification ... GET      200      declaration",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-077",
+      "statement": "The declaration at the end of an amendment is the same Declaration page as a first submission, with no Amend status bar, and its Back link goes to the review page.",
+      "kind": "behaviour",
+      "ref": "trace AMEND action 79 (Declaration main text, back link, .app-dr2-notification-status: none)",
+      "quote": "Declaration - Import notification service - GOV.UK ... <a href=\"/design-release-2.1/review-notification\" class=\"govuk-back-link\">Back</a>\n=====STATUS\nnone",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-078",
+      "statement": "To resubmit an amendment the trader ticks the declaration confirmation and presses Continue.",
+      "kind": "rule",
+      "ref": "trace AMEND action 80 (check #declaration-confirmed), action 81 (Continue), request 316 (POST declaration 302)",
+      "quote": "I confirm that I have reviewed and comply with this declaration and that the information submitted in this notification is true and correct.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-079",
+      "statement": "Resubmitting an amendment shows the Import notification submitted confirmation with the same reference number the notification already had.",
+      "kind": "behaviour",
+      "ref": "trace AMEND action 84 (notification-submitted panel)",
+      "quote": "Import notification submitted\nYour reference number\nGBN-AG-26-7K8M2U",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-080",
+      "statement": "The confirmation after an amendment is the ordinary submitted page: no wording says the notification was amended or re-submitted.",
+      "kind": "copy",
+      "ref": "trace AMEND action 84 (main innerText)",
+      "quote": "How to view or amend this notification\n\nYou can view or change this notification from your dashboard.",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of any amendment wording on the page; the page reads as a first submission."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-081",
+      "statement": "After this amendment, the confirmation still lists outstanding work under Before the consignment is imported.",
+      "kind": "copy",
+      "ref": "trace AMEND action 84 (#submitted-incomplete-heading section)",
+      "quote": "Before the consignment is imported\n\nYou still need to:\n\ncomplete the animal identifier information in the notification",
+      "confidence": "verbatim",
+      "note": "The amended cattle notification shows a full identification table (Bison bison 1, ear tag and passport) on the review, yet the page asks for animal identifier information."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-082",
+      "statement": "The confirmation page offers Return to your dashboard and Create a new notification links, and a Getting help section with APHA contacts.",
+      "kind": "copy",
+      "ref": "trace AMEND action 84 (main HTML)",
+      "quote": "<a class=\"govuk-link\" href=\"/design-release-2.1\">Return to your dashboard</a> ... <a class=\"govuk-link\" href=\"/design-release-2.1/create-notification\">Create a new notification</a> ... Getting help",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-083",
+      "statement": "Cancel amend opens a confirmation modal asking whether to cancel the amendment.",
+      "kind": "copy",
+      "ref": "trace CANCEL action 9 (click Cancel amend), action 11 (heading in #cancel-amend-modal)",
+      "quote": "Are you sure you want to cancel this amendment?",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-084",
+      "statement": "The cancel-amendment modal offers Yes, cancel amendment (a button-styled link to /notifications/cancel-amend) and Go back (closes the modal), plus a Close (X) button and overlay.",
+      "kind": "behaviour",
+      "ref": "trace CANCEL action 11 (modal text); AMEND action 27 (#cancel-amend-modal HTML)",
+      "quote": "<a class=\"govuk-button\" href=\"/design-release-2.1/notifications/cancel-amend\">Yes, cancel amendment</a> <button class=\"govuk-link app-dr2-amend-modal__back-link\" type=\"button\" data-modal-dismiss=\"\"> Go back </button>",
+      "confidence": "verbatim",
+      "note": "The amend modal says 'No, go back'; this one says 'Go back'. Go back and Close are not clicked in any trace."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-085",
+      "statement": "The cancel-amendment modal is headed with an h2 and has no description line, unlike the amend modal's h1 plus description.",
+      "kind": "copy",
+      "ref": "trace AMEND action 27 (#cancel-amend-modal HTML); VIEW-SCD action 10 (#amend-notification-modal HTML)",
+      "quote": "<h2 class=\"app-dr2-amend-modal__title\" id=\"cancel-amend-modal-title\"> Are you sure you want to cancel this amendment? </h2>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-086",
+      "statement": "Cancel amend is offered in two places on the amend review (the status bar and the button group), and on every question page opened during the amendment (status bar), each opening the same modal.",
+      "kind": "behaviour",
+      "ref": "trace AMEND action 27 (LASTLINKS, status bar), action 37 (Origin of the import buttons)",
+      "quote": "BUTTON Cancel amend name= value= [govuk-link app-dr2-notification-status__cancel-link] ... A Yes, cancel amendment name= value=undefined [govuk-button]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-087",
+      "statement": "Confirming the cancellation ends the amendment and returns the trader to the view page for that reference, which shows the notification as Submitted again.",
+      "kind": "behaviour",
+      "ref": "trace CANCEL action 18 (click Yes, cancel amendment), requests 41 (GET 302 cancel-amend) and 42 (GET 200 review-notification?reference=GBN-AG-26-7K...), action 20",
+      "quote": "GBN-AG-26-7K8M2U\nSubmitted\nAmend this notification\nCopy as new\nDelete\n\nDate submitted: 16 June 2026",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-088",
+      "statement": "Cancelling an amendment shows no banner or message confirming the cancellation.",
+      "kind": "behaviour",
+      "ref": "trace CANCEL action 20 (.govuk-notification-banner)",
+      "quote": "=====BANNER\nnone",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-089",
+      "statement": "Whether cancelling an amendment discards answers already changed during it is not shown: the cancel trace changes nothing before cancelling.",
+      "kind": "rule",
+      "ref": "trace CANCEL actions 7 to 20",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-090",
+      "statement": "Opening /notifications/cancel-amend with no amendment in progress redirects to the overall dashboard.",
+      "kind": "rule",
+      "ref": "trace GUARDS action 7 (navigate), action 8 (toHaveURL root); requests 1 (GET 302 cancel-amend) and 2 (GET 200 design-release-2.1)",
+      "quote": "GET      302      cancel-amend ... GET      200      design-release-2.1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-091",
+      "statement": "Starting an amendment with an unknown reference redirects to the overall dashboard.",
+      "kind": "rule",
+      "ref": "trace GUARDS action 9, action 10; requests 41 (GET 302 amend?reference=GBN-AG-26-NOSUCH) and 42",
+      "quote": "GET      302      amend?reference=GBN-AG-26-NOSUCH",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-092",
+      "statement": "Copying a notification with an unknown reference redirects to the overall dashboard.",
+      "kind": "rule",
+      "ref": "trace GUARDS action 11, action 12; requests 81 (GET 302 copy-as-new?reference=GBN-AG-26-NOSUCH) and 82",
+      "quote": "GET      302      copy-as-new?reference=GBN-AG-26-NOSUCH",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-093",
+      "statement": "The guards redirect silently: the dashboard they land on shows no banner and no error.",
+      "kind": "behaviour",
+      "ref": "trace GUARDS action 8 snapshot (after)",
+      "quote": "Dashboard - Import notification service - GOV.UK | H1=Import notification service | BANNER=none | ERR=none",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-094",
+      "statement": "The overall dashboard the guards and delete return to is titled Dashboard with the h1 Import notification service.",
+      "kind": "copy",
+      "ref": "trace GUARDS action 8 snapshot; DELETE action 27",
+      "quote": "Dashboard - Import notification service - GOV.UK | H1=Import notification service",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-095",
+      "statement": "What happens when a trader views (/review-notification) or deletes an unknown reference is not shown; the guards trace covers only cancel-amend, amend and copy-as-new.",
+      "kind": "rule",
+      "ref": "trace GUARDS actions 7 to 12",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-096",
+      "statement": "Whether a Completed notification can be amended by going straight to /notifications/amend?reference=... (bypassing the hidden button) is not shown.",
+      "kind": "rule",
+      "ref": "trace GUARDS; VIEW-SCD action 20",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-097",
+      "statement": "Copy as new on the live-animals dashboard copies that row's notification: /notifications/copy-as-new?reference=<reference> redirects straight to the notification hub, with no confirmation step.",
+      "kind": "behaviour",
+      "ref": "trace COPY action 8 (click Copy as new nth(1)), requests 41 (GET 302 copy-as-new?reference=GBN-AG-26-7K8M2U) and 42 (GET 200 notification-hub)",
+      "quote": "GET      302      copy-as-new?reference=GBN-AG-26-7K8M2U ... GET      200      notification-hub",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-098",
+      "statement": "The copy opens on the notification hub, titled and headed Overview.",
+      "kind": "copy",
+      "ref": "trace COPY action 10 (h1 toHaveText Overview), action 13 (document.title)",
+      "quote": "Overview - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-099",
+      "statement": "The copy is a new Draft with its own new reference, not the source's: the hub's status bar shows a Draft tag and the new reference.",
+      "kind": "behaviour",
+      "ref": "trace COPY actions 11 to 13 (.app-dr2-notification-status)",
+      "quote": "<strong class=\"govuk-tag app-dr2-review-status__tag app-dr2-review-status__tag--draft\">Draft</strong> <span class=\"app-dr2-notification-status__reference\">GBN-AG-26-0OILZJ</span>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-100",
+      "statement": "The copy's new reference keeps the source's prefix (GBN-AG-26-) and a fresh suffix.",
+      "kind": "data",
+      "ref": "trace COPY action 13 (toContainText /GBN-AG-26-[A-Z0-9]+/; status bar)",
+      "quote": "GBN-AG-26-0OILZJ",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-101",
+      "statement": "Copying carries over only some sections: on the copy's task list, where it is coming from, what is imported, main import reason, additional details and roles and addresses are Complete, while commodity details, identification details, arrival details, transport details, upload documents and contact address are To do.",
+      "kind": "rule",
+      "ref": "trace COPY action 13 (hub main innerText)",
+      "quote": "Where is this consignment coming from?\nComplete\nWhat are you importing?\nComplete\nMain import reason\nComplete\n2. Description of the goods\nCommodity details\nTo do\nIdentification details\nTo do\nAdditional details\nComplete\n3. Transport and arrival\nArrival details\nTo do\nTransport details\nTo do\n4. Documents\nUpload documents\nTo do\n5. Consignment parties\nRoles and addresses\n\nConsignor or Exporter, Consignee, Importer and Place of Destination\n\nComplete\n6. Contact address\nContact address for this consignment\nTo do",
+      "confidence": "verbatim",
+      "note": "Which answers are copied is read from task statuses only; no trace opens a copied page to see the values."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-102",
+      "statement": "The copy's hub shows zero animals in its commodity totals, so animal numbers are not copied.",
+      "kind": "data",
+      "ref": "trace COPY action 13 (hub main innerText)",
+      "quote": "Your commodities\n\n0\n\nAnimals\n\nTotal number of animals in this consignment\n\n0",
+      "confidence": "inferred",
+      "note": "Inferred from the 0 totals beside Commodity details being To do."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-103",
+      "statement": "The copy's hub has no Back link and no success banner saying a copy was made; it ends with Review and submit and Return to dashboard.",
+      "kind": "behaviour",
+      "ref": "trace COPY action 13 (.govuk-back-link none; .govuk-notification-banner none; main innerText end)",
+      "quote": "Review and submit\nReturn to dashboard\n=====STATUS ... =====BACK\nnone\n=====BANNER\nnone",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-104",
+      "statement": "Copy as new is only exercised from a Submitted notification on the dashboard; copying a Completed, Draft or action-required notification, and copying from the view page, are not traced.",
+      "kind": "behaviour",
+      "ref": "trace COPY action 8",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-105",
+      "statement": "Delete on the view page goes to a confirmation page at /notifications/delete?reference=<reference>.",
+      "kind": "behaviour",
+      "ref": "trace DELETE action 8 (click Delete), action 9 (toHaveURL), request 40 (GET 200 delete?reference=GBN-AG-26-7K8M2P)",
+      "quote": "GET      200      delete?reference=GBN-AG-26-7K8M2P",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-106",
+      "statement": "The delete confirmation page is titled and headed Delete this notification?.",
+      "kind": "copy",
+      "ref": "trace DELETE action 10 (toHaveTitle), action 11 (h1)",
+      "quote": "Delete this notification? - Import notification service - GOV.UK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-107",
+      "statement": "The delete confirmation page identifies the notification in a summary list: Reference number, Commodity, Number and Origin.",
+      "kind": "data",
+      "ref": "trace DELETE action 16 (main innerText and HTML)",
+      "quote": "Reference number\tGBN-AG-26-7K8M2P\nCommodity\tSheep (Ovis Aries), Goat (Capra Hircus)\nNumber\t3\nOrigin\tRepublic of Ireland",
+      "confidence": "verbatim",
+      "note": "Number is the total animals across commodities (1 sheep + 2 goats on the view page); the row is labelled just 'Number'."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-108",
+      "statement": "The delete confirmation page asks the trader to confirm and warns the deletion is permanent.",
+      "kind": "copy",
+      "ref": "trace DELETE actions 14 and 15 (main toContainText)",
+      "quote": "Confirm that you want to delete this notification.\n\nThis action cannot be undone.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-109",
+      "statement": "The delete confirmation page's Yes, delete is a red warning button that posts to /notifications/delete?reference=<reference>.",
+      "kind": "behaviour",
+      "ref": "trace DELETE action 16 (form HTML), action 24 (click Yes, delete), request 79 (POST 302)",
+      "quote": "<form method=\"post\" action=\"/design-release-2.1/notifications/delete?reference=GBN-AG-26-7K8M2P\"> <div class=\"govuk-button-group\"> <button type=\"submit\" class=\"govuk-button govuk-button--warning\" data-module=\"govuk-button\" data-govuk-button-init=\"\"> Yes, delete </button>",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-110",
+      "statement": "The delete confirmation page's No, cancel link and its Back link both return to the notification's view page.",
+      "kind": "behaviour",
+      "ref": "trace DELETE action 16 (No, cancel href), action 17 (.govuk-back-link href)",
+      "quote": "<a class=\"govuk-link\" href=\"/design-release-2.1/review-notification?reference=GBN-AG-26-7K8M2P\">No, cancel</a> ... <a href=\"/design-release-2.1/review-notification?reference=GBN-AG-26-7K8M2P\" class=\"govuk-back-link\">Back</a>",
+      "confidence": "verbatim",
+      "note": "No, cancel is never clicked."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-111",
+      "statement": "The delete confirmation page is built entirely from GOV.UK components: heading-l, Summary list, body text, warning Button and a link in a Button group.",
+      "kind": "constraint",
+      "ref": "trace DELETE action 16 (main HTML)",
+      "quote": "<h1 class=\"govuk-heading-l\">Delete this notification?</h1> <dl class=\"govuk-summary-list\">",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-112",
+      "statement": "A Submitted action required notification can be deleted.",
+      "kind": "rule",
+      "ref": "trace DELETE actions 7 to 26 (GBN-AG-26-7K8M2P, shown as Submitted action required in VIEW-AR)",
+      "quote": "POST     302      delete?reference=GBN-AG-26-7K8M2P",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-113",
+      "statement": "After Yes, delete, the trader lands on the overall dashboard, which shows no banner.",
+      "kind": "behaviour",
+      "ref": "trace DELETE action 26 (toHaveURL root), action 27 (banner count 0); request 80 (GET 200 design-release-2.1)",
+      "quote": "Dashboard - Import notification service - GOV.UK | H1=Import notification service | BANNER=none",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-114",
+      "statement": "The deletion success banner appears on the live-animals dashboard instead, the next time the trader opens it.",
+      "kind": "behaviour",
+      "ref": "trace DELETE action 28 (navigate /live-animals), action 29 (.govuk-notification-banner)",
+      "quote": "GBN-AG-26-7K8M2P has been deleted",
+      "confidence": "verbatim",
+      "note": "The trader is not taken there; they must open the live-animals dashboard to see it."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-115",
+      "statement": "The deletion banner is a GOV.UK success Notification banner titled Success, with role alert.",
+      "kind": "copy",
+      "ref": "trace DELETE action 30 (banner HTML)",
+      "quote": "<div class=\"govuk-notification-banner govuk-notification-banner--success app-dr2-dashboard__success-banner\" role=\"alert\" aria-labelledby=\"govuk-notification-banner-title\" data-module=\"govuk-notification-banner\" data-auto-dismiss-ms=\"5000\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-116",
+      "statement": "The deletion banner is set to dismiss itself after 5 seconds.",
+      "kind": "behaviour",
+      "ref": "trace DELETE action 30 (banner attribute data-auto-dismiss-ms)",
+      "quote": "data-auto-dismiss-ms=\"5000\"",
+      "confidence": "inferred",
+      "note": "Read from the attribute; no trace waits to see it go. Auto-dismissing a success banner is outside the GOV.UK Notification banner's own behaviour."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-117",
+      "statement": "A deleted notification no longer appears in the live-animals dashboard's notification list.",
+      "kind": "rule",
+      "ref": "trace DELETE action 30 (.app-dr2-dashboard-notification-list not toContainText GBN-AG-26-7K8M2P)",
+      "quote": "GBN-AG-26-7K8M2U\nCopy as new\nView\nCommodity\nHorses\nArrival date\n23 June 2026\nConsignee\nWestbridge Equine Imports\nNotification status\nSubmitted",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-118",
+      "statement": "The amend review also offers Delete during an amendment, linking to the same delete confirmation page.",
+      "kind": "behaviour",
+      "ref": "trace AMEND action 27 (LASTLINKS)",
+      "quote": "A Delete -> /design-release-2.1/notifications/delete?reference=GBN-AG-26-7K8M2U [govuk-button govuk-button--warning]",
+      "confidence": "verbatim",
+      "note": "Deleting mid-amendment is not traced, so whether it deletes the submitted notification or only the amendment is unknown."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-119",
+      "statement": "Deleting a Draft or Completed notification, and cancelling a deletion, are not traced.",
+      "kind": "behaviour",
+      "ref": "trace DELETE",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-120",
+      "statement": "What the dashboards show for a notification after an amendment is resubmitted (status, date, any banner) is not traced; the amend trace ends on the submitted page.",
+      "kind": "behaviour",
+      "ref": "trace AMEND action 84",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-121",
+      "statement": "Amending a Submitted action required notification, which is offered the Amend button, is not traced; only a plain Submitted notification is amended.",
+      "kind": "behaviour",
+      "ref": "trace VIEW-AR action 18; AMEND",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-122",
+      "statement": "Every page in these traces is served by the prototype itself (GOV.UK Prototype Kit under /design-release-2.1, page GETs and form POSTs answered with 302 redirects); no call to any other system appears in the seven network logs.",
+      "kind": "integration",
+      "ref": "trace AMEND requests list; DELETE, COPY, CANCEL, GUARDS, VIEW-AR requests lists",
+      "quote": "POST     302      origin-of-the-import ... POST     302      delete?reference=GBN-AG-26-7K8M2P",
+      "confidence": "verbatim",
+      "note": "Notification state is held in the Prototype Kit session; the real service's store for amend, copy and delete is not shown."
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-123",
+      "statement": "How copying, amending and deleting reach the real notification store, and how an amendment is sent on after resubmission, is not shown by any trace.",
+      "kind": "integration",
+      "ref": "all 7 traces, requests lists",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "trace-prototype-dr2-1-p14-124",
+      "statement": "During an amendment the Arrival details question keeps its usual copy: Arrival date at port of entry with a date picker, Port of entry search, Means of transport to the port of entry (Air, Rail, Road, Sea), Transport identification and Transport document reference.",
+      "kind": "copy",
+      "ref": "trace AMEND action 56 (Arrival details main innerText)",
+      "quote": "Arrival details\nArrival date at port of entry\nThe expected date of arrival at the port of entry. For example, 27/3/2026\nChoose date\nPort of entry\nSelect where the transporter will enter with the consignment. Start typing to search by port or airport name or code.\nSearch\nMeans of transport to the port of entry\nSelect one\nAir\nRail\nRoad\nSea",
+      "confidence": "verbatim",
+      "note": "The question page's own copy belongs to the arrival-details part; recorded here as it renders in amend mode."
+    }
+  ]
+}

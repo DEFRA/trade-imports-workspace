@@ -6,7 +6,7 @@
     {
       "id": "REQ-INS-PAGE-TITLE-001",
       "name": "Every page's title names the page, then the service, then GOV.UK, joined by hyphens",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-INS-PAGE-TITLE-001-A",
@@ -23,7 +23,7 @@
           "name": "The parts are not separated by a pipe",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should not separate the title with a pipe", "strength": "full", "notes": "the negative that pins the separator" },
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should join the page name, the service name and GOV.UK with hyphens", "strength": "full", "notes": "asserts the whole title with toBe, so a pipe anywhere in it fails the test" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/page-titles.spec.ts", "test": "the home is titled Dashboard - Import notification service - GOV.UK", "strength": "partial", "notes": "asserts no pipe on the home only" }
           ]
         },
@@ -65,6 +65,25 @@
             { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/page-title.fit.spec.js", "test": "titles the edit page Edit address and contact details", "strength": "full", "notes": "" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/page-titles.spec.ts", "test": "the edit page is titled Edit address and contact details", "strength": "partial", "notes": "" },
             { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/edit/edit.controller.test.js", "test": "Should head the page and title the browser Edit address and contact details", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-INS-PAGE-TITLE-001-G",
+          "name": "The add page is titled Add address and contact details",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/add/add.controller.test.js", "test": "GET arriving through a journey handshake shows the page title, the blue Draft status and notification id above the caption and heading, then the section headings and every field label", "strength": "full", "notes": "red-probed: fails when the add title copy reverts" },
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/fit/add.fit.spec.js", "test": "shows the Draft status and notification id above the caption, heading, section headings and fields", "strength": "partial", "notes": "run by the gate; not red-probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts", "test": "the INS add page reached from the Consignor picker shows its page title, heading, caption, Draft status, notification reference, section headings, field labels and autocomplete hints", "strength": "partial", "notes": "run on the leased stack by the gate; not red-probed" }
+          ]
+        },
+        {
+          "id": "SCN-INS-PAGE-TITLE-001-H",
+          "name": "The add page reached from the address book is titled Add address and contact details",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/add/add.controller.test.js", "test": "GET renders the add address and contact details page with its caption, no status tag, and Back and cancel linking to the address book", "strength": "partial", "notes": "asserts the h1 only; no test reads the document title on this entry" },
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/fit/list.fit.spec.js", "test": "clicking Add a new address navigates to the add form", "strength": "partial", "notes": "asserts the heading after following Add a new address, not the document title" }
           ]
         }
       ]

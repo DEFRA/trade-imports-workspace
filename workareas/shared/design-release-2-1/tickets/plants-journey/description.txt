@@ -1,0 +1,234 @@
+h3. Background
+
+Design Release 2.1 changes how a high-risk plants notification moves through its journey: where a page sends the user once it is saved, what happens when someone saves a page without finishing it, how pages end while a submitted notification is being amended, and how page titles read.
+
+*The plants question order does not change.* Plants keeps its own steps, its own questions and its own data. What changes is where the opening run ends, where a saved page returns to, and what saving an unfinished page does — the rules the live animals journey is adopting at the same time, applied to plants' own pages.
+
+This ticket covers the *high-risk plants journey only*. The same increments changed the live animals journey and the Import notification service front door, each of which has its own ticket under the same epic. *This work is merged to {{main}}.*
+
+h3. What changes for the user
+
+h4. The opening run ends on check your answers, even when the notification is unfinished
+
+Before, continuing from the last step of the opening run sent the user to the hub. Now it ends on check your answers whatever state the notification is in, and that page names every task still to complete. Continuing from it is refused while anything is outstanding.
+
+h4. A page opened from Overview goes back to Overview
+
+Saving a page opened from a task on Overview now returns the user to Overview rather than running on into the next task. A task made of several pages still moves through its own pages first — opening "What are you importing?" from Overview saves the commodity type, shows the commodities list, and only then returns to Overview.
+
+h4. A page can be left unfinished
+
+"Save and return to overview" now saves whatever has been entered without insisting on the page's required answers, so someone can come back to it. A badly formatted answer is still refused — a time that is not on the 24-hour clock, for instance — because saving it would lose what they typed.
+
+h4. Amending a submitted notification has its own page endings
+
+While amending, pages end with "Save and return", "Save and continue" and "Save and return to overview". A status bar across the journey shows "Amend" and offers "Cancel amend". Opening check your answers for an incomplete amendment shows no error, but continuing from it is refused and the error summary names what is missing.
+
+h4. Page titles follow the GOV.UK pattern
+
+Page name, service name, GOV.UK, separated by hyphens — not pipes. A page showing errors opens its title with "Error:".
+
+h3. Acceptance criteria
+
+Copied from the service's behaviour specification. These 22 scenarios carry the change's core behaviour. The plants specification gained *44 scenarios across 12 files* in total — every file is linked under "Where this is specified" below, with the number it gained, so you can read any of them in full.
+
+h4. Where the opening run ends
+
+h5. The opening sequence ends on check your answers even when tasks are outstanding
+
+* *GIVEN* the user is in the opening sequence with tasks outstanding
+* *WHEN* they save the last step
+* *THEN* check your answers shows the unfinished notification and names every outstanding task
+
+h5. Viewing an unfinished notification names each unfinished card and links to it
+
+* *GIVEN* a draft notification with one or more cards still holding outstanding answers
+* *WHEN* the user views check-your-answers
+* *THEN* an error summary titled "There is a problem" names each unfinished card in page order, such as "Complete arrival details" and "Complete contact"
+* *AND* each entry links to the card it names, which is itself marked with the same words
+* *AND* "Complete commodity details" links to the "About the consignment" heading
+
+h5. A half-done card is named once and links to the card, not to a page
+
+* *GIVEN* a plants-for-planting draft whose arrival status is answered and whose arrival date is not
+* *WHEN* the user views check-your-answers
+* *THEN* the error summary names "Complete arrival details" once
+* *AND* that entry links to the Arrival details card on the page
+
+h5. Continuing from an unfinished notification is refused, keeping the user on the page
+
+* *GIVEN* a draft notification with a task still to complete is open on check-your-answers
+* *WHEN* the user continues
+* *THEN* they stay on check-your-answers, the error summary is shown and focus moves to it
+* *AND* the declaration is not opened
+
+h5. An unanswered destination reads Not provided, with no address error, and is named as outstanding
+
+* *GIVEN* a notification whose place of destination has not been answered
+* *WHEN* the user views check-your-answers
+* *THEN* the destination card's rows each read "Not provided", no address error is shown against it, and the error summary names the place of destination as a task still to complete
+
+h4. A page opened from Overview returns to Overview
+
+h5. A task of more than one page moves through its own pages first
+
+* *GIVEN* the opening sequence has ended
+* *WHEN* the user opens what are you importing from Overview and saves the commodity type
+* *THEN* the commodities list is shown
+* *WHEN* they continue from it
+* *THEN* Overview is shown
+
+h5. Arrival details opened from Overview returns to Overview, not the place of destination
+
+* *GIVEN* the opening sequence has ended and the arrival task opened from Overview
+* *WHEN* the user saves arrival status and then arrival details
+* *THEN* arrival details follows arrival status, and saving arrival details shows Overview, not the place of destination
+
+h5. Consignor opened from Overview returns to Overview, not identification numbers
+
+* *GIVEN* the consignor page opened from its task on Overview
+* *WHEN* the user saves it
+* *THEN* Overview is shown, not identification numbers
+
+h5. Choosing a consignor in the opening sequence still continues to identification numbers
+
+* *GIVEN* the user is in the opening sequence on the consignor page
+* *WHEN* they choose a consignor and save
+* *THEN* identification numbers is shown, and the choice persists on return
+
+h4. Leaving a page unfinished
+
+h5. Save and return to overview saves a blank arrival details page
+
+* *GIVEN* a potatoes notification is on the arrival details with nothing answered
+* *WHEN* the user selects "Save and return to overview"
+* *THEN* they return to Overview with no error shown
+* *AND* the arrival task row does not read "Completed"
+
+h5. A time not on the 24-hour clock is refused on save and return
+
+* *GIVEN* a potatoes notification is on the arrival details with a time that is not on the 24-hour clock
+* *WHEN* the user selects "Save and return to overview"
+* *THEN* they stay on the page, which shows "Enter a real time, like 14:30"
+* *AND* nothing is saved
+
+The same "save and return to overview" behaviour is specified page by page for arrival status, commodity type, identification numbers, origin, the consignor and the place of destination — in each case nothing chosen reaches Overview with no error and nothing saved.
+
+h4. Page endings while amending
+
+h5. A page opened while amending ends with the three amend controls, and Save and return goes back to the review showing the change
+
+* *GIVEN* a notification being amended
+* *WHEN* the user opens Identification numbers from Overview
+* *THEN* it ends with "Save and return", "Save and continue" and a link-styled "Save and return to overview", and no "Cancel and return to overview"
+* *WHEN* they change the producer number and select "Save and return"
+* *THEN* the review is shown with the new producer number
+
+h5. Save and continue while amending goes to the next page of the task
+
+* *GIVEN* a plants-for-planting notification being amended
+* *WHEN* the user selects "Save and continue" on Arrival status
+* *THEN* Arrival details is shown, whose Back link goes to Overview
+* *WHEN* they select "Save and return to overview" on Arrival details
+* *THEN* Overview is shown
+
+h5. An incomplete amendment's review opens with no error
+
+* *GIVEN* a notification being amended whose arrival date has been cleared and saved
+* *WHEN* the user opens check-your-answers
+* *THEN* no error summary and no error message is shown
+
+h5. Continuing from an incomplete amendment stays on check-your-answers, naming what is missing
+
+* *GIVEN* a notification being amended whose arrival date has been cleared and saved
+* *WHEN* the user continues
+* *THEN* they stay on check-your-answers, under an error summary titled "There is a problem" that names the unfinished Arrival details card and takes focus
+* *AND* the notification is still being amended
+* *AND* the declaration is not opened
+
+h5. The commodities list offers two controls while amending
+
+* *GIVEN* a notification being amended
+* *WHEN* the user opens the commodities list
+* *THEN* it ends with "Save and return" and "Save and continue", with no "Save and return to overview" and no "Cancel and return to overview"
+* *AND* "Save and return" returns to the review
+* *AND* "Save and continue" goes to Overview
+
+h4. Where the buttons sit
+
+h5. Cancel and return to overview sits on its own line below the two buttons
+
+* *GIVEN* a notification that is not being amended
+* *WHEN* the user opens a page the hub links to directly
+* *THEN* its primary action and "Save and return to overview" sit side by side
+* *AND* "Cancel and return to overview" sits on its own line below them
+
+h5. While amending, Save and return to overview sits on its own line below the two save buttons
+
+* *GIVEN* a notification being amended
+* *WHEN* the user opens a page the hub links to directly
+* *THEN* "Save and return" and "Save and continue" sit side by side
+* *AND* "Save and return to overview" sits on its own line below them
+
+h4. The amend status bar
+
+h5. Cancel amend on a question page opens the confirmation page
+
+* *GIVEN* a notification is being amended and the user is on a question page
+* *WHEN* the user selects "Cancel amend" in the status bar
+* *THEN* the cancel-amendment confirmation page opens
+* *AND* declining returns to the notification, still "Amend"
+
+h5. A draft offers no Cancel amend
+
+* *GIVEN* a draft notification
+* *WHEN* the user views Overview or a question page
+* *THEN* the status bar shows "Draft" and the reference, and no "Cancel amend"
+
+h4. Page titles
+
+h5. A page's title reads page name, service name, GOV.UK
+
+* *GIVEN* the user is on a page of the service that carries a name of its own, such as the commodity type page
+* *WHEN* the page's title is read
+* *THEN* it reads that page's name, then the service name, then GOV.UK, joined by hyphens, such as {{What are you importing? - Import notification service - GOV.UK}}
+
+h5. The error prefix opens the title while errors are shown
+
+* *GIVEN* the user has submitted a page that answers back with an error summary, such as the commodity type page with nothing chosen
+* *WHEN* the page's title is read
+* *THEN* it opens with the error prefix, followed by the page's name, the service name and GOV.UK as before
+
+h3. The work behind this change
+
+||Row||What it changed||State||
+|inc-001|Opening run ends on check your answers even when the notification is incomplete|Done|
+|inc-002|A page opened from an overview task returns to the overview when saved|Done|
+|inc-003|"Save and return to overview" saves without the page's required-answer checks|Done|
+|inc-004|During an amendment, pages end with Save and return, Save and continue and Save and return to overview|Done|
+|inc-122|An amendment shows an "Amend" status bar with Cancel amend on every page that amends|Done|
+|inc-127|Page titles follow the GOV.UK title pattern|Done|
+
+All six are built.
+
+h3. Where this is specified
+
+The full behaviour lives in the service's behaviour specification, in the workspace repository. The plants specification gained 44 scenarios across these 12 files. Each link opens the file as it stands on {{main}}.
+
+||Specification||New scenarios||
+|[Journey flow|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-flow/spec.md]|15|
+|[Check your answers|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/check-your-answers/spec.md]|10|
+|[Page titles|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/page-titles/spec.md]|4|
+|[Notification lifecycle|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/notification-lifecycle/spec.md]|4|
+|[Consignor select|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/consignor-select/spec.md]|3|
+|[Arrival details|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/arrival-details/spec.md]|2|
+|[Origin|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/origin/spec.md]|1|
+|[Identification numbers|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/identification-numbers/spec.md]|1|
+|[Commodity type|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/commodity-type/spec.md]|1|
+|[Arrival status|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/arrival-status/spec.md]|1|
+|[Review|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-obligations/review/spec.md]|1|
+|[Place of destination|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/place-of-destination/spec.md]|1|
+
+One further plants file was reworded without gaining scenarios: the notification dashboard.
+
+This description is generated from those specifications. If a specification changes, this ticket is regenerated to match.

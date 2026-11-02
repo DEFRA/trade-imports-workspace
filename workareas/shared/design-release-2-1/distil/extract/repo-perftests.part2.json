@@ -1,0 +1,462 @@
+{
+  "source": "repo:perftests",
+  "structure": "Part 2, INS front-door routes. Read in full: src/k6/front-door.js (286 lines: openInsDashboard, the dashboard-only session, the address-book session's nine page requests plus the optional worst-case search, and ensurePerfAddress), src/k6/browser-session.js (304 lines: the browser-like session that follows redirects, signs in at the Defra ID stub's sign-in page and reads each page's h1, crumb, hidden fields and form inputs), src/k6/returning-session.js (123 lines: the returning visit that keeps one browser and re-authenticates through Defra ID back to the page it asked for), src/k6/readiness.js (111 lines: the readiness probes, two of them against the INS frontend), src/k6/background-volume.js (177 lines: the INS read-model and journey-backend count reads, the address-book count read off the INS address-book page's results label, and the background add-address form), src/lib/address-book.js (32 lines: reading an address id from list links, and the worst-case search term), src/config/endpoints.js (173 lines: the endpoint catalogue; INS and live-animals frontend page names are claimed here once as a catalogue, plants and stub names are out of scope), src/config/target.js (233 lines: target URLs, local ports, the CDP gateway and the prod refusal), and the two unit tests browser-session.test.js and address-book.test.js (read only to confirm routes such as /auth/sign-in and /auth/callback). For the posted values I also looked up PERF_ADDRESS, ADDRESS_BOOK_LOAD_NAME_PREFIX and READINESS in src/config/smoke.js, WORST_CASE_SEARCH_LENGTH in src/config/test-data.js, and the returning-session entries in src/config/design-target.js. Covered: the INS dashboard at '/' and its sign-in hop and check; the dashboard-only and returning sessions; the address-book list, worst-case search, add, search, view, edit and delete requests with fields, values and checks; the two INS readiness probes and the four other readiness probes as context; the background-volume reads; the endpoint catalogue's INS and animals page names; and the target URL rules. Live-animals journey step behaviour is part 1's.",
+  "claims": [
+    {
+      "id": "repo-perftests-p2-001",
+      "statement": "The INS dashboard is the INS frontend's root route '/', which the suite requests under the endpoint name 'ins-dashboard'.",
+      "kind": "behaviour",
+      "ref": "src/k6/front-door.js:50",
+      "quote": "const page = walker.open('/', 'ins-dashboard')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-002",
+      "statement": "Opening the INS dashboard without a session redirects through Defra ID sign-in and lands back on the dashboard, so the sign-in is a hop of the dashboard request rather than a page the user asks for.",
+      "kind": "behaviour",
+      "ref": "src/k6/front-door.js:40-66",
+      "quote": "Opens the INS dashboard, which signs the session in on the way.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-003",
+      "statement": "The INS dashboard's h1 heading is 'Dashboard', and the suite checks the page answers 200 with that heading.",
+      "kind": "copy",
+      "ref": "src/k6/front-door.js:56-59",
+      "quote": "'INS dashboard opens signed in': (dashboardPage) =>\n      dashboardPage.status === HTTP_OK && dashboardPage.heading === 'Dashboard'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-004",
+      "statement": "The suite checks that the INS sign-in went through Defra ID (the identity provider), not a local sign-in.",
+      "kind": "integration",
+      "ref": "src/k6/front-door.js:60-63",
+      "quote": "'sign-in went through Defra ID': (session) =>\n      session.signedInThroughIdentityProvider()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-005",
+      "statement": "A user signs in by posting their credentials (a CRN and a password) to the Defra ID stub's sign-in page when a redirect chain reaches it.",
+      "kind": "integration",
+      "ref": "src/k6/browser-session.js:215-219",
+      "quote": "if (response.status === HTTP_OK && isIdentitySignInPage(url)) {\n        response = postForm(url, credentials, SIGN_IN_ENDPOINT)",
+      "confidence": "verbatim",
+      "note": "Credentials shape is { crn: string, password: string } (front-door.js:107). The password value is not copied."
+    },
+    {
+      "id": "repo-perftests-p2-006",
+      "statement": "A frontend's sign-in redirect chain passes through its own '/auth/sign-in' and '/auth/callback' routes before landing back on the page asked for.",
+      "kind": "behaviour",
+      "ref": "src/k6/browser-session.test.js:60,92",
+      "quote": "redirectTo(`${APP}/auth/sign-in`) ... redirectTo(`${APP}/auth/callback`)",
+      "confidence": "inferred",
+      "note": "Read from unit-test fixtures only, which model the frontend's sign-in routes; the route names are confirmed by the test, not by a request the suite builds itself."
+    },
+    {
+      "id": "repo-perftests-p2-007",
+      "statement": "Every request a session makes is tagged with an endpoint name from the catalogue, and the sign-in post is tagged 'sign-in'.",
+      "kind": "non-functional",
+      "ref": "src/k6/browser-session.js:17,163-178",
+      "quote": "const SIGN_IN_ENDPOINT = 'sign-in'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-008",
+      "statement": "A sign-in after the session's first completed sign-in is tagged as re-authentication.",
+      "kind": "non-functional",
+      "ref": "src/k6/browser-session.js:158-161",
+      "quote": "endpoint === SIGN_IN_ENDPOINT && completedSignIns > 0\n      ? RE_AUTHENTICATION_TAG",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-009",
+      "statement": "A redirect chain that reaches sign-in but ends in a server error is not counted as a sign-in.",
+      "kind": "rule",
+      "ref": "src/k6/browser-session.js:222-224; src/k6/browser-session.test.js:58-69",
+      "quote": "if ((chainSignedIn || passedThroughSignIn) && response.status === HTTP_OK) {\n      completedSignIns += 1",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-010",
+      "statement": "Frontend pages carry a CSRF crumb in a meta tag named 'csrf-token', which the session reads off each page.",
+      "kind": "constraint",
+      "ref": "src/k6/browser-session.js:122",
+      "quote": "crumb: html?.find('meta[name=\"csrf-token\"]').attr('content') ?? ''",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-011",
+      "statement": "A page with several POST forms is submitted through the last form that holds a 'concurrencyToken' input, or the first POST form when none does, and its hidden fields are posted back with the answers.",
+      "kind": "behaviour",
+      "ref": "src/k6/browser-session.js:42-52,248-256",
+      "quote": "const withToken = postForms.filter(\n    (form) => form.find('input[name=\"concurrencyToken\"]').size() > 0\n  )\n\n  return withToken.at(-1) ?? postForms[0]",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-012",
+      "statement": "A frontend answers a stale concurrency token with a redirect, which the suite counts as a handled outcome rather than an error.",
+      "kind": "behaviour",
+      "ref": "src/k6/browser-session.js:201-204",
+      "quote": "if (isStaleActionRedirect(location)) {\n        staleRedirects.add(1)\n        staleActionHandled = true",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-013",
+      "statement": "Forms are posted as application/x-www-form-urlencoded.",
+      "kind": "constraint",
+      "ref": "src/k6/browser-session.js:18,180-188",
+      "quote": "const FORM_ENCODED = 'application/x-www-form-urlencoded'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-014",
+      "statement": "A dashboard-only session signs in through the INS dashboard and then keeps reopening '/' until it has made its configured number of page requests, counting the sign-in and first dashboard as two.",
+      "kind": "behaviour",
+      "ref": "src/k6/front-door.js:18-19,111-129",
+      "quote": "for (let view = 0; view < further; view += 1) {\n    walker.open('/', 'ins-dashboard')\n  }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-015",
+      "statement": "The INS dashboard reads the dashboard read model (ins-backend GET /notifications) once per view; the journeys' own dashboards read their own backends.",
+      "kind": "integration",
+      "ref": "src/config/endpoints.js:153-154",
+      "quote": "// The INS dashboard reads the dashboard read model (ins-backend GET /notifications) once a view; the journeys' dashboards read their own backends.\nexport const READ_MODEL_ENDPOINTS = Object.freeze(['ins-dashboard'])",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-016",
+      "statement": "A returning user keeps one browser for the whole run and opens their frontend's dashboard on each visit: '/' on INS, and the live-animals set base on the animals frontend.",
+      "kind": "behaviour",
+      "ref": "src/k6/returning-session.js:83-112; src/config/design-target.js:342-350",
+      "quote": "exec: 'returningIns',\n    frontend: 'ins',\n    path: '/'\n  }),\n  'returning-animals': returningEntry({\n    exec: 'returningAnimals',\n    frontend: 'animals',\n    path: JOURNEYS['live-animals'].setBase",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-017",
+      "statement": "When a returning user's frontend session has expired, opening the dashboard goes back through Defra ID and lands back on the page the user asked for.",
+      "kind": "behaviour",
+      "ref": "src/k6/returning-session.js:77-80,88-91",
+      "quote": "'re-authenticated and returned to the page it asked for': (landed) =>\n      landed.status === HTTP_OK && pathOf(landed.url) === entry.path",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-018",
+      "statement": "Each returning visit is checked to land with a 200.",
+      "kind": "behaviour",
+      "ref": "src/k6/returning-session.js:119-121",
+      "quote": "'returning visit landed': (landed) => landed.status === HTTP_OK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-019",
+      "statement": "With session expiry set to 'client', the returning browser forgets its cookies for the frontend once the session lifetime has passed, standing in for a server-side session expiry a compressed run cannot reach.",
+      "kind": "non-functional",
+      "ref": "src/k6/returning-session.js:55-66,91-93",
+      "quote": "With\n * `sessionExpiry` set to `client` the browser forgets its cookies once the\n * session lifetime has passed, standing in for an expiry a compressed run\n * cannot reach.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-020",
+      "statement": "The INS address book list is at '/address-book' on the INS frontend (endpoint 'ins-address-book'), opened after the dashboard.",
+      "kind": "behaviour",
+      "ref": "src/k6/front-door.js:15,202-203",
+      "quote": "openInsDashboard(dashboard)\n  walker.open(ADDRESS_BOOK, 'ins-address-book')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-021",
+      "statement": "The INS address book page's h1 heading is 'Address book'.",
+      "kind": "copy",
+      "ref": "src/k6/readiness.js:50-52",
+      "quote": "return page.status === HTTP_OK && page.heading === 'Address book'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-022",
+      "statement": "The address book is searched by a free-text query string parameter 'q' on '/address-book' (endpoint 'ins-address-book-search').",
+      "kind": "behaviour",
+      "ref": "src/k6/front-door.js:29,207",
+      "quote": "const searchPath = (name) => `${ADDRESS_BOOK}?q=${encodeURIComponent(name)}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-023",
+      "statement": "The address book search matches a term against an address's name, town and postcode as an unanchored pattern, over every active address of the user's organisation.",
+      "kind": "rule",
+      "ref": "src/lib/address-book.js:20-30",
+      "quote": "The address book matches a term against name, town and postcode as an\n * unanchored regular expression, so the worst case is the longest term that\n * matches no stored address: it forces the match over every active address of\n * the organisation.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-024",
+      "statement": "The longest searchable address field is 255 characters, and the worst-case search term is 'Worst case search ' padded with 'x' to that length.",
+      "kind": "data",
+      "ref": "src/lib/address-book.js:17-32; src/config/test-data.js:2",
+      "quote": "export const WORST_CASE_SEARCH_LENGTH = 255 ... const WORST_CASE_PREFIX = 'Worst case search '\nconst WORST_CASE_FILLER = 'x'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-025",
+      "statement": "A share of address-book sessions runs the worst-case search after opening the list, and checks it answers 200.",
+      "kind": "non-functional",
+      "ref": "src/k6/front-door.js:162-175",
+      "quote": "'worst-case address search answered': (page) => page.status === HTTP_OK",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-026",
+      "statement": "An address-book session makes nine address-book page requests after the sign-in and dashboard (ten with the worst-case search): list, add form, add save, search, view, edit form, edit save, delete confirmation and delete save, and leaves nothing behind in the book.",
+      "kind": "behaviour",
+      "ref": "src/k6/front-door.js:177-239",
+      "quote": "Makes the nine address-book page requests after the sign-in and dashboard,\n * or ten when the session also runs a worst-case search, and leaves nothing\n * behind in the book.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-027",
+      "statement": "The add-address form is at '/address-book/add' (endpoint 'ins-address-add'), and posting it is 'ins-address-add-save'.",
+      "kind": "behaviour",
+      "ref": "src/k6/front-door.js:133-141",
+      "quote": "const form = walker.open(`${ADDRESS_BOOK}/add`, 'ins-address-add')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-028",
+      "statement": "The add-address form takes the fields name, addressLine1, addressLine2, townOrCity, county, postcode, countryCode, phone and email; the suite posts 'Perf Test Holding', '4 Nursery Lane', '', 'Perth', '', 'PH1 5EX', 'GB', '01738 555 0143' and 'perf@example.co.uk'.",
+      "kind": "data",
+      "ref": "src/config/smoke.js:13-23; src/k6/front-door.js:131,138",
+      "quote": "name: 'Perf Test Holding',\n  addressLine1: '4 Nursery Lane',\n  addressLine2: '',\n  townOrCity: 'Perth',\n  county: '',\n  postcode: 'PH1 5EX',\n  countryCode: 'GB',\n  phone: '01738 555 0143',\n  email: 'perf@example.co.uk'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-029",
+      "statement": "An address can be saved with addressLine2 and county left blank, so those fields are optional on the add form.",
+      "kind": "rule",
+      "ref": "src/config/smoke.js:16,18",
+      "quote": "addressLine2: '',\n  townOrCity: 'Perth',\n  county: '',",
+      "confidence": "inferred",
+      "note": "Inferred because the suite's add succeeds (it is later found by search) with both fields empty."
+    },
+    {
+      "id": "repo-perftests-p2-030",
+      "statement": "Each address-book session adds an address named 'Address Book Load <vu>-<iteration>', so names are unique per session.",
+      "kind": "data",
+      "ref": "src/k6/front-door.js:195; src/config/smoke.js:25",
+      "quote": "const name = `${ADDRESS_BOOK_LOAD_NAME_PREFIX} ${options.vu}-${options.iteration}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-031",
+      "statement": "Saving the add-address form, with no picker handshake, redirects to the address-book list, which the suite checks for a 200 on a URL ending '/address-book'.",
+      "kind": "behaviour",
+      "ref": "src/k6/background-volume.js:136-177",
+      "quote": "With no picker handshake, the save\n * redirects to the address-book list. ... 'background address added': (page) =>\n      page.status === HTTP_OK && page.url.endsWith(ADDRESS_BOOK)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-032",
+      "statement": "After adding, the session searches for the address by its name and reads its id from the first '/address-book/<id>' link on the results, skipping the '/address-book/add' link; the 'address added' check fails when no address link is found.",
+      "kind": "behaviour",
+      "ref": "src/k6/front-door.js:207-214; src/lib/address-book.js:1-15",
+      "quote": "const found = walker.open(searchPath(name), 'ins-address-book-search')\n  const id = addressIdFrom(hrefsOf(found))\n\n  check(found, { 'address added': () => id !== '' })",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-033",
+      "statement": "The address book list links each address to its own view page at '/address-book/<id>'.",
+      "kind": "behaviour",
+      "ref": "src/lib/address-book.js:1; src/k6/front-door.js:21-25",
+      "quote": "const ADDRESS_LINK = /^\\/address-book\\/([^/?#]+)$/",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-034",
+      "statement": "An address's view page is at '/address-book/<id>' (endpoint 'ins-address-view'), and the suite checks it answers 200 and shows the address's name.",
+      "kind": "behaviour",
+      "ref": "src/k6/front-door.js:216-221",
+      "quote": "const viewed = walker.open(`${ADDRESS_BOOK}/${id}`, 'ins-address-view')\n\n  check(viewed, {\n    'address viewed': (page) =>\n      page.status === HTTP_OK && textOf(page).includes(name)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-035",
+      "statement": "The edit-address form is at '/address-book/<id>/edit' (endpoint 'ins-address-edit'), prefilled with the address's current values; the suite posts them back with townOrCity changed to 'Dundee' ('ins-address-edit-save').",
+      "kind": "behaviour",
+      "ref": "src/k6/front-door.js:16,143-151",
+      "quote": "const form = walker.open(`${ADDRESS_BOOK}/${id}/edit`, 'ins-address-edit')\n\n  return walker.submit(\n    form,\n    { ...valuesOf(form), townOrCity: EDITED_TOWN },\n    'ins-address-edit-save'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-036",
+      "statement": "Saving the edit-address form lands on the address-book list, checked as a 200 on a URL ending '/address-book'.",
+      "kind": "behaviour",
+      "ref": "src/k6/front-door.js:223-228",
+      "quote": "'address edited': (page) =>\n      page.status === HTTP_OK && page.url.endsWith(ADDRESS_BOOK)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-037",
+      "statement": "Deleting an address opens a confirmation page at '/address-book/<id>/delete' (endpoint 'ins-address-delete') whose form is posted with no answers of its own ('ins-address-delete-save').",
+      "kind": "behaviour",
+      "ref": "src/k6/front-door.js:153-160",
+      "quote": "const confirmation = walker.open(\n    `${ADDRESS_BOOK}/${id}/delete`,\n    'ins-address-delete'\n  )\n\n  return walker.submit(confirmation, {}, 'ins-address-delete-save')",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-038",
+      "statement": "After a delete is confirmed the user lands on a 200 page that no longer links to the deleted address.",
+      "kind": "behaviour",
+      "ref": "src/k6/front-door.js:230-236",
+      "quote": "'address deleted': (page) =>\n      page.status === HTTP_OK &&\n      !hrefsOf(page).includes(`${ADDRESS_BOOK}/${id}`)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-039",
+      "statement": "Before a run, the suite makes sure the address 'Perf Test Holding' exists in the address book by searching for it and adding it through the INS add form when it is missing, and fails setup if it is still missing.",
+      "kind": "behaviour",
+      "ref": "src/k6/front-door.js:241-286",
+      "quote": "throw new Error('Could not make the performance-test address')",
+      "confidence": "verbatim",
+      "note": "The live-animals journey picks this address (part 1's concern); here it shows the address book is the source of the address a journey picks."
+    },
+    {
+      "id": "repo-perftests-p2-040",
+      "statement": "The INS frontend counts as ready when '/' answers 200 signed in with heading 'Dashboard' (probe 'INS signed-in page').",
+      "kind": "non-functional",
+      "ref": "src/k6/readiness.js:29-40,72-73",
+      "quote": "const page = session.open('/', 'ins-dashboard')\n\n  return page.status === HTTP_OK && page.heading === 'Dashboard'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-041",
+      "statement": "The INS address book counts as ready when '/address-book' answers 200 with heading 'Address book' (probe 'address book read').",
+      "kind": "non-functional",
+      "ref": "src/k6/readiness.js:42-53,74-75",
+      "quote": "const page = session.open('/address-book', 'ins-address-book')\n\n  return page.status === HTTP_OK && page.heading === 'Address book'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-042",
+      "statement": "The stack is functionally ready only when one pass succeeds for all six probes: the reference-data countries read, the animals, plants and INS backend notification reads at '/notifications?page=1', the INS signed-in page and the address book read; readiness polls every 5 seconds and fails after 300 seconds naming the failed probes.",
+      "kind": "non-functional",
+      "ref": "src/k6/readiness.js:63-111; src/config/smoke.js:10",
+      "quote": "throw new Error(\n      `The stack was not functionally ready within ${READINESS.timeoutSeconds}s: ${failed.join(', ')}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-043",
+      "statement": "Readiness and setup requests carry the tags phase 'readiness' and name 'readiness', which keep them out of every threshold.",
+      "kind": "non-functional",
+      "ref": "src/k6/readiness.js:10-11",
+      "quote": "export const READINESS_TAGS = { phase: 'readiness', name: 'readiness' }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-044",
+      "statement": "The INS backend's dashboard read model answers GET '/notifications?page=1' with a JSON body whose 'totalElements' is the count of notifications it holds.",
+      "kind": "integration",
+      "ref": "src/k6/background-volume.js:25-39,94-97",
+      "quote": "'dashboard-read-model': totalOf(\n    `${urls.insBackend}/notifications?page=1`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-045",
+      "statement": "The animals backend answers GET '/notifications/reference-numbers?page=0' with a 'totalElements' count of live-animals notifications.",
+      "kind": "integration",
+      "ref": "src/k6/background-volume.js:86-89",
+      "quote": "'live-animals': totalOf(\n    `${urls.animalsBackend}/notifications/reference-numbers?page=0`,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-046",
+      "statement": "The INS address-book page shows a results label (data-testid 'address-book-results-label') from which, with the heading, the number of addresses in the book can be read.",
+      "kind": "copy",
+      "ref": "src/k6/background-volume.js:18,41-65",
+      "quote": "const RESULTS_LABEL = '[data-testid=\"address-book-results-label\"]' ... const count = addressCountFrom({\n    heading: page.heading,\n    labelText: page.html.find(RESULTS_LABEL).text()",
+      "confidence": "verbatim",
+      "note": "The label's wording is parsed in src/lib/background-volume.js, outside this part's read list, so its exact text is not claimed here."
+    },
+    {
+      "id": "repo-perftests-p2-047",
+      "statement": "Background-volume addresses are added through the INS add-address form with the perf address's fields, a numbered background name and addressLine1 '<n> Background Road'.",
+      "kind": "data",
+      "ref": "src/k6/background-volume.js:162-171",
+      "quote": "name: backgroundAddressName(index),\n      addressLine1: `${index + 1} Background Road`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-048",
+      "statement": "The endpoint catalogue names eleven INS front-door pages: sign-in, the dashboard, and the address-book list, search, add, add save, view, edit, edit save, delete and delete save.",
+      "kind": "data",
+      "ref": "src/config/endpoints.js:12-24",
+      "quote": "'sign-in',\n  'ins-dashboard',\n  'ins-address-book',\n  'ins-address-book-search',\n  'ins-address-add',\n  'ins-address-add-save',\n  'ins-address-view',\n  'ins-address-edit',\n  'ins-address-edit-save',\n  'ins-address-delete',\n  'ins-address-delete-save'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-049",
+      "statement": "The endpoint catalogue names the animals frontend's pages: a dashboard with a search, a create step, a hub, and pages for origin, commodities (with search), consignment details, identification, import reason, additional details, documents (with status and an upload), addresses, a party picker (with search), CPH number, port of entry, transit countries (with add), transporters, contact, the notification view, declaration, amend and cancel amend, most with a matching save.",
+      "kind": "data",
+      "ref": "src/config/endpoints.js:26-71",
+      "quote": "'animals-dashboard',\n  'animals-dashboard-search',\n  'animals-create',\n  'animals-hub',\n  'animals-origin', ... 'animals-amend',\n  'animals-cancel-amend',\n  'animals-cancel-amend-save'\n]\n\nconst ANIMALS_UPLOADS = ['animals-documents-upload']",
+      "confidence": "verbatim",
+      "note": "Catalogue names only; which route each one requests and what it posts is part 1's live-animals journey."
+    },
+    {
+      "id": "repo-perftests-p2-050",
+      "statement": "The catalogue has no endpoint names for a germinal-products set or for any frontend page other than INS, animals and plants, so the suite requests no germinal-products route today.",
+      "kind": "data",
+      "ref": "src/config/endpoints.js:12-151",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked through every list in the catalogue (INS_PAGES, ANIMALS_PAGES, ANIMALS_UPLOADS, PLANTS_PAGES, BACKEND_APIS, REFERENCE_DATA_APIS, STUB_CALLS). The programme goal names germinal-products as a sibling set."
+    },
+    {
+      "id": "repo-perftests-p2-051",
+      "statement": "A request tagged with an endpoint name not in the catalogue fails the run, so every route the suite requests is named in the catalogue.",
+      "kind": "rule",
+      "ref": "src/config/endpoints.js:156-173",
+      "quote": "Throws for a name outside the catalogue, so a typo cannot leave a request\n * without a threshold.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-052",
+      "statement": "On the local workspace stack the animals frontend is on port 3000, the animals admin on 3001, the INS frontend on 3002, the plants frontend on 3003 and the Defra ID stub on 3007.",
+      "kind": "constraint",
+      "ref": "src/config/target.js:22-35",
+      "quote": "'trade-imports-animals-frontend': 3000,\n  'trade-imports-animals-admin': 3001,\n  'trade-imports-ins-frontend': 3002,\n  'trade-imports-plants-frontend': 3003,\n  'trade-imports-defra-id-stub': 3007,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-053",
+      "statement": "On the local stack the animals backend is on port 8085, reference data on 8086, the stub on 8087, the dynamics gateway on 8088, the address book on 8089, the INS backend on 8090 and the plants backend on 8091.",
+      "kind": "constraint",
+      "ref": "src/config/target.js:28-34",
+      "quote": "'trade-imports-animals-backend': 8085,\n  'trade-imports-reference-data': 8086,\n  'trade-imports-stub': 8087,\n  'trade-imports-dynamics-gateway': 8088,\n  'trade-imports-address-book': 8089,\n  'trade-imports-ins-backend': 8090,\n  'trade-imports-plants-backend': 8091",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-054",
+      "statement": "On CDP a service under test is reached at https://<service>.<environment>.cdp-int.defra.cloud, unless a <SERVICE_NAME>_URL override is set.",
+      "kind": "integration",
+      "ref": "src/config/target.js:149-191",
+      "quote": "return `https://${serviceName}.${environment}.${CDP_DOMAIN}`",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-perftests-p2-055",
+      "statement": "Run from a laptop with CDP_LOCAL=true, backend services go through CDP's protected gateway with a developer API key, while frontends and the Defra ID stub keep their direct address.",
+      "kind": "integration",
+      "ref": "src/config/target.js:12-20,144-147,185-188",
+      "quote": "With CDP_LOCAL=true, a\n * backend service goes through CDP's protected gateway instead, which needs\n * DEVELOPER_API_KEY. Frontends and the Defra ID stub keep their direct address.",
+      "confidence": "verbatim",
+      "note": "The key's value is never logged; none is copied here."
+    },
+    {
+      "id": "repo-perftests-p2-056",
+      "statement": "The suite refuses to run against production and requires ENVIRONMENT to be set.",
+      "kind": "rule",
+      "ref": "src/config/target.js:47-63",
+      "quote": "'Refusing to run against prod. Set ENVIRONMENT to a non-production environment.'",
+      "confidence": "verbatim"
+    }
+  ]
+}

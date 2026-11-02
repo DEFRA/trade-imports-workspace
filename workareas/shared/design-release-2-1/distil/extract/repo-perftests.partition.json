@@ -1,0 +1,60 @@
+{
+  "source": "repo:perftests",
+  "structure": "repos/trade-imports-performance-tests is the k6 performance-test suite for INS (dockerStack: null; it runs against the stack, not in it). Layout: src/suites/ (12 *.k6.js entry suites: smoke, peak-day, background-volume, design-target and others), src/k6/ (23 modules, about 4,800 lines: the journey walkers, INS front-door sessions, readiness, eventing, resilience, stub ceilings, reporting), src/config/ (catalogues: journey-endpoints.js names every step's endpoint tags, endpoints.js the endpoint catalogue, smoke.js the journey set bases such as setBase '/live-animals', target.js the target URLs, plus thresholds, traffic and call-ratio config), src/lib/ (helpers: redirects.js parses set roots and create paths, forms.js and form-fill.js fill journey forms, address-book.js), reports/ (generated run output), compose/, scripts/ and a 1,049-line README. Pages are reached by following links and forms from the set root, so routes appear as set bases, create paths, endpoint tags and walker.open calls rather than a route table. The scope is the animals frontend and INS front-door routes the k6 scripts request: the live-animals set root (opened as the animals journey dashboard, which inc-129 stops rendering when the notification list moves to the INS front door), the create path and notification journey pages, and the INS dashboard and address book. Cut in 2 parts along that seam: the animals live-animals journey (about 1,500 lines) and the INS front door (about 1,300 lines). Left out: the high-risk plants journey (src/k6/high-risk-plants.js and the plants steps; journeys.js is shared, and only its live-animals and shared-page behaviour is claimed), load shapes, thresholds, SLAs, stub ceilings, resilience faults, eventing and dead-letter checks, reference-data reads, design-target and generator reporting, src/suites/ wiring, reports/, compose/, scripts/, CI workflows and the *.test.js unit tests (read only to confirm a route, never claimed on their own).",
+  "parts": [
+    {
+      "part": 1,
+      "title": "Live-animals journey routes",
+      "scope": "The animals frontend routes the k6 live-animals journey requests: the set root /live-animals opened as the journey dashboard, the dashboard search by reference number, the create path /live-animals/notifications, the notification hub and every live-animals step page in order, documents upload, declaration, confirmation, notification view, amend and cancel-amend, and the backend checks the journey makes. Stops at the INS front door (part 2) and excludes every high-risk plants step.",
+      "read": [
+        "repos/trade-imports-performance-tests/src/k6/journeys.js",
+        "repos/trade-imports-performance-tests/src/k6/live-animals.js",
+        "repos/trade-imports-performance-tests/src/k6/journey-pages.js",
+        "repos/trade-imports-performance-tests/src/k6/documents.js",
+        "repos/trade-imports-performance-tests/src/k6/pages.js",
+        "repos/trade-imports-performance-tests/src/config/journey-endpoints.js",
+        "repos/trade-imports-performance-tests/src/config/smoke.js",
+        "repos/trade-imports-performance-tests/src/config/test-data.js",
+        "repos/trade-imports-performance-tests/src/lib/redirects.js",
+        "repos/trade-imports-performance-tests/src/lib/forms.js",
+        "repos/trade-imports-performance-tests/src/lib/form-fill.js",
+        "repos/trade-imports-performance-tests/src/lib/redirects.test.js",
+        "docs/repos/trade-imports-performance-tests.md (workspace page, for context on the journeys)"
+      ],
+      "covers": [
+        "The live-animals set base '/live-animals' (src/config/smoke.js) and that the journey opens it as the animals dashboard with a crumb, its check text, and its dashboard search by ?referenceNumber= and the 'submitted notification is on the dashboard' check: these are the requests inc-129 breaks",
+        "The create path <setBase>/notifications, how the notification id is read from the redirect, and the notification base <setBase>/notifications/<id>",
+        "Each of the 13 live-animals steps in STEP_ENDPOINTS order (origin, commodities with its search, consignment-details, identification, import-reason, additional-details, documents with upload and status, addresses with the party picker and its search, cph-number, port-of-entry, transit-countries with add, transporters, contact): the page it opens, the form fields and values it posts, the checks it makes on the response",
+        "The shared pages the animals journey requests (hub, notification view, declaration and its save, confirmation, amend, cancel-amend and its save) with their URL matches and checks",
+        "The backend requests the journey makes (fulfilments, list by referenceNumber, replace) and the staleAction and identity-sign-in redirect rules in redirects.js",
+        "Every page heading, field name, option value or test-data value the scripts assert or post, quoted verbatim"
+      ],
+      "prefix": "repo-perftests-p1"
+    },
+    {
+      "part": 2,
+      "title": "INS front-door routes",
+      "scope": "The INS front-door routes the k6 scripts request: sign-in through Defra ID, the INS dashboard at '/', the dashboard-only session, the returning session that lands back on a dashboard, the nine address-book page requests (list, add, edit, delete), readiness checks against the INS frontend, and the INS read-model and address-book volume reads. Excludes the live-animals journey pages (part 1).",
+      "read": [
+        "repos/trade-imports-performance-tests/src/k6/front-door.js",
+        "repos/trade-imports-performance-tests/src/k6/browser-session.js",
+        "repos/trade-imports-performance-tests/src/k6/returning-session.js",
+        "repos/trade-imports-performance-tests/src/k6/readiness.js",
+        "repos/trade-imports-performance-tests/src/k6/background-volume.js",
+        "repos/trade-imports-performance-tests/src/lib/address-book.js",
+        "repos/trade-imports-performance-tests/src/config/endpoints.js",
+        "repos/trade-imports-performance-tests/src/config/target.js",
+        "repos/trade-imports-performance-tests/src/k6/browser-session.test.js",
+        "repos/trade-imports-performance-tests/src/lib/address-book.test.js"
+      ],
+      "covers": [
+        "The INS dashboard route '/' (endpoint ins-dashboard), its sign-in hop, and the 'INS dashboard opens signed in' check that the heading is 'Dashboard'",
+        "The dashboard-only session and the returning session: which routes they open, and how an expired session goes back through Defra ID to the dashboard",
+        "Each of the nine address-book page requests: '/address-book' and its add, '/address-book/<id>/edit' and '/address-book/<id>/delete', with the form fields and values posted and every check on the response, quoted verbatim",
+        "The readiness checks that the INS frontend signs in and answers the address book",
+        "The INS read-model and address-book reads in background-volume.js, and every INS or animals frontend endpoint name in the endpoints.js catalogue and target URLs in target.js, so each route the suite knows is claimed once (live-animals step endpoints belong to part 1)"
+      ],
+      "prefix": "repo-perftests-p2"
+    }
+  ]
+}

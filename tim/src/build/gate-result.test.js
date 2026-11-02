@@ -2,11 +2,19 @@ import { describe, test, expect, afterEach } from 'vitest'
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
+import { execa } from 'execa'
 import {
   clearGateResult,
+  recordGateProcess,
   waitForGateResult,
   writeGateResult
 } from './gate-result.js'
+
+const pidOfEndedProcess = async () => {
+  const ended = execa('node', ['-e', ''])
+  await ended
+  return ended.pid
+}
 
 let folder
 
@@ -24,34 +32,80 @@ describe('gate result file', () => {
     const resultPath = seedFolder()
     writeGateResult(resultPath, { ok: true, result: { green: true } })
 
-    const envelope = await waitForGateResult({ resultPath, seconds: 1 })
+    const wait = await waitForGateResult({ resultPath, seconds: 1 })
 
-    expect(envelope).toEqual({ ok: true, result: { green: true } })
+    expect(wait).toEqual({
+      state: 'finished',
+      envelope: { ok: true, result: { green: true } }
+    })
   })
 
-  test('the wait returns null when no result arrives in time', async () => {
+  test('the wait says the gate is running when no result arrives in time', async () => {
     const resultPath = seedFolder()
 
-    const envelope = await waitForGateResult({
+    const wait = await waitForGateResult({
       resultPath,
       seconds: 0.05,
       pollIntervalMs: 10
     })
 
-    expect(envelope).toBeNull()
+    expect(wait).toEqual({ state: 'running' })
   })
 
   test('the wait picks up a result written while it waits', async () => {
     const resultPath = seedFolder()
     setTimeout(() => writeGateResult(resultPath, { ok: false }), 50)
 
-    const envelope = await waitForGateResult({
+    const wait = await waitForGateResult({
       resultPath,
       seconds: 5,
       pollIntervalMs: 10
     })
 
-    expect(envelope).toEqual({ ok: false })
+    expect(wait).toEqual({ state: 'finished', envelope: { ok: false } })
+  })
+
+  test('the wait says the gate died, at once, when its recorded process has gone with no result', async () => {
+    const resultPath = seedFolder()
+    recordGateProcess(resultPath, await pidOfEndedProcess())
+    const startedAt = Date.now()
+
+    const wait = await waitForGateResult({
+      resultPath,
+      seconds: 5,
+      pollIntervalMs: 10
+    })
+
+    expect({ wait, returnedEarly: Date.now() - startedAt < 1000 }).toEqual({
+      wait: { state: 'died' },
+      returnedEarly: true
+    })
+  })
+
+  test('the wait keeps waiting while the recorded process is still running', async () => {
+    const resultPath = seedFolder()
+    recordGateProcess(resultPath, process.pid)
+
+    const wait = await waitForGateResult({
+      resultPath,
+      seconds: 0.05,
+      pollIntervalMs: 10
+    })
+
+    expect(wait).toEqual({ state: 'running' })
+  })
+
+  test('a result the gate wrote before its process ended is what the wait returns', async () => {
+    const resultPath = seedFolder()
+    recordGateProcess(resultPath, await pidOfEndedProcess())
+    writeGateResult(resultPath, { ok: true, result: { green: true } })
+
+    const wait = await waitForGateResult({ resultPath, seconds: 1 })
+
+    expect(wait).toEqual({
+      state: 'finished',
+      envelope: { ok: true, result: { green: true } }
+    })
   })
 
   test('clearing removes an earlier result and leaves no part file behind', () => {

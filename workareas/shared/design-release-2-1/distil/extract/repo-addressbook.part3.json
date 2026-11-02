@@ -1,0 +1,652 @@
+{
+  "source": "repo:addressbook",
+  "structure": "Part 3, listing and searching addresses (repo at HEAD 83fd1dd). Read in full: address/OperatorController.java (367 lines; claimed only the list handler, lines 70-132), address/OperatorService.java (222 lines; claimed list, queryPage and toPartialMatchRegex, lines 37-117), address/OperatorRepository.java (49 lines; claimed the three search queries and the status finder), address/OperatorPageResponse.java (45 lines), docs/openapi/operators.yml (491 lines; the GET /organisation/{orgId}/addresses operation and the OperatorPageResponse schema), docs/openapi/api-contract.locked.yaml (441 lines; its description's Search and Pagination conventions and the list operation), README.md section API overview (lines 111-160; list row, list query parameters, wire conventions), and the tests OperatorListIT (9 tests), AddressSearchIT (10 tests), OperatorRepositoryIT (4 tests, 2 of them search) and OperatorServiceTest (list and search cases: 12 tests). Covered: the one list endpoint, its three query parameters (page, q, countryCode) with defaults, trimming and blank handling, its responses (200, 400 out-of-range or non-numeric page or missing header, 404, 500), the page size (server-configured, default 25, request parameters ignored), 1-based page numbering and the totals, every field of the page response, the search rules (fields matched, case-insensitive, partial, literal not regex, multi-word as one phrase), the OR combination of q and countryCode, the countryCode exact match, newest-first sort with an id tie-break, the ACTIVE-only and organisation-only listing, and the cv-025 and cv-048 rulings. The single-address operations, the address fields and validation, and the identity filter belong to other parts and are claimed only where the list operation depends on them.",
+  "claims": [
+    {
+      "id": "repo-addressbook-p3-001",
+      "statement": "The address book lists an organisation's addresses with GET /organisation/{orgId}/addresses.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:44,84-87",
+      "quote": "@RequestMapping(\"/organisation/{orgId}/addresses\") ... @GetMapping\n  @Operation(\n      operationId = \"list-addresses\",\n      summary = \"List the caller's ACTIVE addresses (paginated, searchable)\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-002",
+      "statement": "The list operation requires the Trade-Imports-Organisation-Id header, and the path orgId must match it before any listing happens.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:119-129",
+      "quote": "@RequestHeader(IdentityHeaderFilter.ORGANISATION_ID_HEADER) String sessionOrg, ... authoriseOrg(orgId, sessionOrg);",
+      "confidence": "verbatim",
+      "note": "How the header is enforced is part 4's; claimed here only as a precondition of the list."
+    },
+    {
+      "id": "repo-addressbook-p3-003",
+      "statement": "A list request whose path orgId does not match the caller's organisation header returns 404 as a problem response.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:103-109; docs/openapi/operators.yml:211-216",
+      "quote": "'404':\n          description: Path orgId does not match the caller's organisation header",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-004",
+      "statement": "The list searches using the organisation id taken from the caller's header, so it only ever returns that organisation's addresses.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:131",
+      "quote": "return operatorService.list(sessionOrg, page, q, countryCode);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-005",
+      "statement": "The list takes an optional page query parameter: a 1-based page number that defaults to 1.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:122-126; docs/openapi/operators.yml:179-187",
+      "quote": "description = \"1-based page number\",\n              schema = @Schema(type = \"integer\", format = \"int32\", minimum = \"1\", defaultValue = \"1\"))\n          @RequestParam(defaultValue = \"1\")\n          int page,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-006",
+      "statement": "The list takes an optional q query parameter: a free-text search term.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:127; docs/openapi/operators.yml:188-192",
+      "quote": "@RequestParam(required = false) String q,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-007",
+      "statement": "The list takes an optional countryCode query parameter: an ISO 3166-1 alpha-2 country code.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:81,128",
+      "quote": "@param countryCode optional ISO alpha-2 country code (FE-resolved, cv-048)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-008",
+      "statement": "Ruling cv-048: the countryCode filter value is resolved by the frontend, so the address book receives a country code rather than a country name.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:81; OperatorService.java:64",
+      "quote": "cv-048: \"optional ISO alpha-2 country code (FE-resolved, cv-048)\"",
+      "confidence": "verbatim",
+      "note": "No ruling ledger file exists in the repo; this is the ruling's only wording, in Javadoc."
+    },
+    {
+      "id": "repo-addressbook-p3-009",
+      "statement": "The list takes no page-size parameter: the page size is set on the server, defaulting to 25.",
+      "kind": "rule",
+      "ref": "README.md: API overview, Wire conventions; docs/openapi/api-contract.locked.yaml:20",
+      "quote": "Page size is server-configured (default **25** via `address-book.list.page-size`), not a request parameter.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-010",
+      "statement": "Ruling cv-025: the page size is a server-side configuration, not a request parameter.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:73-74; OperatorPageResponse.java:27",
+      "quote": "cv-025: \"The page size is a server-side config (cv-025),\n   * not a request parameter.\"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-011",
+      "statement": "The page size is read from the address-book.list.page-size setting and is 25 when that setting is absent; application.yml does not set it, so the running service uses 25.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:44",
+      "quote": "@Value(\"${address-book.list.page-size:25}\") int pageSize",
+      "confidence": "inferred",
+      "note": "The absence from application.yml was checked with a grep for a list: key, which found none."
+    },
+    {
+      "id": "repo-addressbook-p3-012",
+      "statement": "A page number below 1 is rejected as a bad request with the detail \"page must be 1 or greater\".",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:69-71",
+      "quote": "if (page < 1) {\n      throw new BadRequestException(\"page must be 1 or greater\");\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-013",
+      "statement": "An out-of-range or non-numeric page returns 400 as a bad-request problem with no errors map.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:71-73,96-102",
+      "quote": "an out-of-range or non-numeric value is a 400\n   * bad-request problem with no {@code errors} map.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-014",
+      "statement": "The list's 400 response covers an out-of-range page, a non-numeric page, and a missing organisation header.",
+      "kind": "behaviour",
+      "ref": "docs/openapi/operators.yml:205-210",
+      "quote": "'400':\n          description: An out-of-range or non-numeric page, or a missing org header",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-015",
+      "statement": "An unexpected failure while listing returns 500 as a problem response.",
+      "kind": "behaviour",
+      "ref": "docs/openapi/operators.yml:217-222",
+      "quote": "'500':\n          description: Unexpected server error",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-016",
+      "statement": "Every list error response is served as application/problem+json.",
+      "kind": "constraint",
+      "ref": "docs/openapi/operators.yml:205-222",
+      "quote": "application/problem+json:\n              schema:\n                $ref: '#/components/schemas/Problem'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-017",
+      "statement": "A page number beyond the last page returns 200 with an empty items list, the requested page number and the real totals, not an error.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java:227-243",
+      "quote": ".param(\"page\", \"3\"))\n        .andExpect(status().isOk())\n        .andExpect(jsonPath(\"$.items\").isEmpty())\n        .andExpect(jsonPath(\"$.page\").value(3))\n        .andExpect(jsonPath(\"$.totalItems\").value(30))\n        .andExpect(jsonPath(\"$.totalPages\").value(2));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-018",
+      "statement": "The list response is a top-level object with items and pagination metadata, never a bare array.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorPageResponse.java:7,15; README.md: Wire conventions",
+      "quote": "List responses are a top-level object (`items`, `page`, `pageSize`, `totalItems`, `totalPages`),\n  never a bare array.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-019",
+      "statement": "The page response field items holds the addresses on this page, each in the single-address response shape, and is always present.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorPageResponse.java:17-20; docs/openapi/operators.yml:455-459",
+      "quote": "description = \"Addresses on this page\",\n            requiredMode = Schema.RequiredMode.REQUIRED)\n        List<OperatorResponse> items,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-020",
+      "statement": "The page response field page is the current 1-based page number, at least 1, and is always present.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorPageResponse.java:21-25",
+      "quote": "description = \"Current 1-based page number\",\n            requiredMode = Schema.RequiredMode.REQUIRED,\n            minimum = \"1\")\n        int page,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-021",
+      "statement": "The page response field pageSize is the server-configured page size, at least 1, and is always present.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorPageResponse.java:26-30",
+      "quote": "description = \"Server-configured page size (cv-025)\",\n            requiredMode = Schema.RequiredMode.REQUIRED,\n            minimum = \"1\")\n        int pageSize,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-022",
+      "statement": "The page response field totalItems is the total number of matching addresses across all pages, at least 0, and is always present.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorPageResponse.java:31-35",
+      "quote": "description = \"Total number of matching addresses\",\n            requiredMode = Schema.RequiredMode.REQUIRED,\n            minimum = \"0\")\n        int totalItems,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-023",
+      "statement": "The page response field totalPages is the total number of pages, at least 0, and is always present.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorPageResponse.java:36-40",
+      "quote": "description = \"Total number of pages\",\n            requiredMode = Schema.RequiredMode.REQUIRED,\n            minimum = \"0\")\n        int totalPages)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-024",
+      "statement": "The page response echoes the page number the caller asked for, not one derived from the result.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:84-85",
+      "quote": "return new OperatorPageResponse(\n          items, page, pageSize, (int) result.getTotalElements(), result.getTotalPages());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-025",
+      "statement": "The page response fields are camelCase on the wire.",
+      "kind": "constraint",
+      "ref": "README.md: Wire conventions; OperatorPageResponse.java:7-9",
+      "quote": "JSON properties are **camelCase** (e.g. `addressLine1`, `countryCode`, `pageSize`).",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-026",
+      "statement": "The list returns only ACTIVE addresses: soft-deleted addresses (tombstones) never appear in it.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:53-55",
+      "quote": "One page of the organisation's ACTIVE addresses, newest first. Scoped to {@code organisationId};\n   * DELETED tombstones are excluded because the query pins {@code status ACTIVE}.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-027",
+      "statement": "Every list path, plain, q, countryCode or both, is pinned to the ACTIVE status and the caller's organisation.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorRepository.java:22-48; OperatorService.java:96-112",
+      "quote": "\"{ 'organisationId': ?0, 'status': ?1, ...\" ... AddressStatus.ACTIVE",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-028",
+      "statement": "The list is sorted newest first by creation time.",
+      "kind": "behaviour",
+      "ref": "README.md: API overview table; OperatorService.java:56-57,77",
+      "quote": "| `GET` | `/organisation/{orgId}/addresses` | Paginated list of ACTIVE addresses (newest first) |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-029",
+      "statement": "Addresses created at the same moment are ordered by id, descending, so the order is stable from page to page.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:77",
+      "quote": "Sort.by(Sort.Direction.DESC, \"createdAt\").and(Sort.by(Sort.Direction.DESC, \"id\"))",
+      "confidence": "verbatim",
+      "note": "That this makes paging stable is inferred from the tie-break; the code states only the sort."
+    },
+    {
+      "id": "repo-addressbook-p3-030",
+      "statement": "Search results use the same newest-first order as the plain list; the caller cannot choose a sort order.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:73-81",
+      "quote": "Pageable pageable =\n        PageRequest.of(\n            page - 1,\n            pageSize,\n            Sort.by(Sort.Direction.DESC, \"createdAt\")...",
+      "confidence": "inferred",
+      "note": "One pageable is built before the search path is chosen, and the endpoint has no sort parameter."
+    },
+    {
+      "id": "repo-addressbook-p3-031",
+      "statement": "The list read is served by the org_status_created index.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:56-57",
+      "quote": "the sort is {@code createdAt} descending, served by the\n   * {@code org_status_created} index.",
+      "confidence": "verbatim",
+      "note": "The index itself is part 1's (Address entity, README Indexes)."
+    },
+    {
+      "id": "repo-addressbook-p3-032",
+      "statement": "The q search matches the address's name, town or city, and postcode, and no other field.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorRepository.java:25-29; README.md: List query parameters",
+      "quote": "| `q` | Case-insensitive partial search over `name`, `townOrCity`, and `postcode` |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-033",
+      "statement": "The q search does not match address line 1, address line 2, county, phone or email.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorRepository.java:25-29; AddressSearchIT.java:48-65",
+      "quote": "{ 'name': { '$regex': ?2, '$options': 'i' } }, { 'townOrCity': { '$regex': ?2, '$options': 'i' } }, { 'postcode': { '$regex': ?2, '$options': 'i' } }",
+      "confidence": "inferred",
+      "note": "Follows from the three fields the query names; AddressSearchIT proves it for addressLine1 only."
+    },
+    {
+      "id": "repo-addressbook-p3-034",
+      "statement": "The q search is case-insensitive.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorRepository.java:27-29",
+      "quote": "'$options': 'i'",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-035",
+      "statement": "The q search is a partial match: the term can appear anywhere in a field, including inside a word.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:115-117",
+      "quote": "return \".*\" + Pattern.quote(q.trim()) + \".*\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-036",
+      "statement": "The q term is matched literally: characters with special meaning in a pattern are treated as plain text.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:116",
+      "quote": "Pattern.quote(q.trim())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-037",
+      "statement": "A q term of several words is matched as one phrase, not as separate words.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:116; AddressSearchIT.java:84-113",
+      "quote": ".param(\"q\", \"green valley\"))\n        .andExpect(status().isOk())\n        .andExpect(jsonPath(\"$.totalItems\").value(1))",
+      "confidence": "inferred",
+      "note": "The whole trimmed term is quoted as one literal; the test only proves a contiguous phrase matches, not that out-of-order words fail."
+    },
+    {
+      "id": "repo-addressbook-p3-038",
+      "statement": "Leading and trailing spaces are trimmed from q before searching.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:116",
+      "quote": "Pattern.quote(q.trim())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-039",
+      "statement": "A blank or whitespace-only q is ignored, and the list is returned unfiltered by text.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:93,96-99",
+      "quote": "boolean hasQuery = q != null && !q.isBlank();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-040",
+      "statement": "The countryCode filter matches the stored country code exactly.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorRepository.java:33-35",
+      "quote": "@Query(\"{ 'organisationId': ?0, 'status': ?1, 'countryCode': ?2 }\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-041",
+      "statement": "The countryCode filter is case-sensitive: a lower-case code does not match an upper-case stored code.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorRepository.java:33,42",
+      "quote": "'countryCode': ?2",
+      "confidence": "inferred",
+      "note": "An equality match with no case option; country codes are stored as given (cv-011, part 1). No test covers a lower-case filter."
+    },
+    {
+      "id": "repo-addressbook-p3-042",
+      "statement": "Leading and trailing spaces are trimmed from countryCode before filtering.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:103,112",
+      "quote": "countryCode.trim()",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-043",
+      "statement": "A blank or whitespace-only countryCode is ignored, and the list is returned unfiltered by country.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:94,96-99",
+      "quote": "boolean hasCountryCode = countryCode != null && !countryCode.isBlank();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-044",
+      "statement": "When q and countryCode are both given they combine with OR: an address is listed if the term matches its name, town or city, or postcode, or if its country code equals the filter.",
+      "kind": "rule",
+      "ref": "README.md: List query parameters; docs/openapi/api-contract.locked.yaml:18; OperatorRepository.java:37-42",
+      "quote": "| `countryCode` | When combined with `q`, matches addresses where **either** the search term appears in `name`/`townOrCity`/`postcode` **or** the stored `countryCode` equals this value (OR semantics, not AND) |",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-045",
+      "statement": "The locked contract fixes OR semantics for q with countryCode.",
+      "kind": "rule",
+      "ref": "docs/openapi/api-contract.locked.yaml:18",
+      "quote": "**Search:** `q` and `countryCode` combine with OR semantics when both are supplied.",
+      "confidence": "verbatim",
+      "note": "Because of the OR, adding a countryCode to a text search widens the results rather than narrowing them. Recorded, not reconciled."
+    },
+    {
+      "id": "repo-addressbook-p3-046",
+      "statement": "There is no filter on address type or usage in the list: the only filters are q and countryCode.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:119-128; docs/openapi/operators.yml:168-197",
+      "quote": "int page,\n      @RequestParam(required = false) String q,\n      @RequestParam(required = false) String countryCode)",
+      "confidence": "inferred",
+      "note": "Consistent with cv-044 (the address book is untyped and unroled), which another part claims."
+    },
+    {
+      "id": "repo-addressbook-p3-047",
+      "statement": "The list totals and page count reflect the search: totalItems counts only the matching addresses.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java:81-85; AddressSearchIT.java:60-62",
+      "quote": "Page<Address> result = queryPage(organisationId, q, countryCode, pageable);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-048",
+      "statement": "The list request is logged with the page, whether a search term was given (not the term itself), and the country code.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:130",
+      "quote": "log.info(\"GET addresses - page {}, q present {}, countryCode {}\", page, q != null, countryCode);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-049",
+      "statement": "The list endpoint and its database query are each timed as metrics.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:118; OperatorService.java:79-88",
+      "quote": "@Timed(\"controller.listOperators.time\") ... meterRegistry.timer(\"controller.listOperators.query.time\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-050",
+      "statement": "The locked contract does not state a minimum for page, while the generated contract states minimum 1.",
+      "kind": "constraint",
+      "ref": "docs/openapi/api-contract.locked.yaml:200-206; docs/openapi/operators.yml:179-187",
+      "quote": "- name: page\n        in: query\n        required: false\n        schema:\n          type: integer\n          format: int32\n          default: 1",
+      "confidence": "verbatim",
+      "note": "Both contracts agree on the default; the server rejects page below 1 either way."
+    },
+    {
+      "id": "repo-addressbook-p3-051",
+      "statement": "Tested: with 30 addresses, page 1 returns 25 items, page 1, pageSize 25, totalItems 30, totalPages 2, and the newest address first.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java:75-90 list_shouldReturn25ItemsAcross2Pages_when30AddressesSeeded",
+      "quote": ".andExpect(jsonPath(\"$.items.length()\").value(25))\n        .andExpect(jsonPath(\"$.page\").value(1))\n        .andExpect(jsonPath(\"$.pageSize\").value(25))\n        .andExpect(jsonPath(\"$.totalItems\").value(30))\n        .andExpect(jsonPath(\"$.totalPages\").value(2))\n        .andExpect(jsonPath(\"$.items[0].name\").value(\"Address 29\"));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-052",
+      "statement": "Tested: page 2 of 30 addresses returns the remaining 5, none of which appeared on page 1.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java:92-128 list_shouldReturnRemaining5OnPage2WithDisjointIds_when30AddressesSeeded",
+      "quote": "page1Ids.retainAll(page2Ids);\n    org.assertj.core.api.Assertions.assertThat(page1Ids).isEmpty();\n    org.assertj.core.api.Assertions.assertThat(page2Ids).hasSize(5);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-053",
+      "statement": "Tested: soft-deleted addresses are left out of the list and its totals, and every listed item has deleted false.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java:130-146 list_shouldExcludeDeletedTombstones_whenMixedStatusesSeeded",
+      "quote": ".andExpect(jsonPath(\"$.totalItems\").value(3))\n        .andExpect(jsonPath(\"$.items.length()\").value(3))\n        .andExpect(jsonPath(\"$.items[*].deleted\", everyItem(is(false))))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-054",
+      "statement": "Tested: another organisation's addresses never appear in the caller's list.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java:148-162 list_shouldReturnOnlyCallersOrganisation_whenOtherOrgHasAddresses",
+      "quote": ".andExpect(jsonPath(\"$.totalItems\").value(2))\n        .andExpect(jsonPath(\"$.items.length()\").value(2))\n        .andExpect(jsonPath(\"$.items[*].organisationId\", everyItem(is(ORGANISATION_ID))));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-055",
+      "statement": "Tested: page 0 or -1 returns 400 with problem type https://api.cdp.defra.cloud/problems/bad-request, title \"Bad Request\" and no errors map.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java:164-180 list_shouldReturn400BadRequestProblemWithNoErrorsMap_whenPageIsOutOfRange",
+      "quote": ".andExpect(jsonPath(\"$.type\").value(\"https://api.cdp.defra.cloud/problems/bad-request\"))\n        .andExpect(jsonPath(\"$.title\").value(\"Bad Request\"))\n        .andExpect(jsonPath(\"$.status\").value(400))\n        .andExpect(jsonPath(\"$.errors\").doesNotExist());",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-056",
+      "statement": "Tested: page_size and pageSize request parameters are ignored, and the server's 25 applies.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java:182-198 list_shouldIgnorePageSizeRequestParams_whenServerConfigSizeApplies",
+      "quote": ".param(\"page_size\", \"5\")\n                .param(\"pageSize\", \"5\"))\n        .andExpect(status().isOk())\n        .andExpect(jsonPath(\"$.items.length()\").value(25))\n        .andExpect(jsonPath(\"$.pageSize\").value(25))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-057",
+      "statement": "Tested: a non-numeric page such as abc returns 400 as a bad-request problem with no errors map.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java:200-213 list_shouldReturn400BadRequestProblem_whenPageIsNonNumeric",
+      "quote": ".param(\"page\", \"abc\"))\n        .andExpect(status().isBadRequest())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-058",
+      "statement": "Tested: a list request with no organisation header returns 400 as a bad-request problem with no errors map.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java:215-225 list_shouldReturn400BadRequestWithNoErrorsMap_whenOrgHeaderMissing",
+      "quote": ".perform(get(\"/organisation/{orgId}/addresses\", ORGANISATION_ID))\n        .andExpect(status().isBadRequest())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-059",
+      "statement": "Tested: a partial, lower-case term (gree) matches a name (Green Farm), and does not match an address whose only match is in address line 1.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java:48-65 partialWordSearchMatchesNameCaseInsensitively",
+      "quote": ".param(\"q\", \"gree\"))\n        .andExpect(status().isOk())\n        .andExpect(jsonPath(\"$.totalItems\").value(1))\n        .andExpect(jsonPath(\"$.items[0].id\").value(match.getId()))\n        .andExpect(jsonPath(\"$.items[*].id\", not(hasItem(addressLine1Only.getId()))));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-060",
+      "statement": "Tested: a partial term (inver) matches the town or city (Inverness).",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java:67-81 partialWordSearchMatchesTownOrCityCaseInsensitively",
+      "quote": ".param(\"q\", \"inver\"))\n        .andExpect(status().isOk())\n        .andExpect(jsonPath(\"$.totalItems\").value(1))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-061",
+      "statement": "Tested: a multi-word term (green valley) and an upper-case term (GREEN) both match the name Green Valley Livestock Farm.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java:83-113 multiWordSearchMatchesNameCaseInsensitively",
+      "quote": ".param(\"q\", \"green valley\")) ... .param(\"q\", \"GREEN\"))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-062",
+      "statement": "Tested: a partial lower-case term (iv2) matches the postcode IV2 3JH.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java:115-129 partialWordSearchMatchesPostcodeCaseInsensitively",
+      "quote": ".param(\"q\", \"iv2\"))\n        .andExpect(status().isOk())\n        .andExpect(jsonPath(\"$.totalItems\").value(1))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-063",
+      "statement": "Tested: the term .* is treated as literal text and matches nothing.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java:131-143 searchTermIsTreatedAsLiteralNotRegex",
+      "quote": ".param(\"q\", \".*\"))\n        .andExpect(status().isOk())\n        .andExpect(jsonPath(\"$.totalItems\").value(0));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-064",
+      "statement": "Tested: countryCode FR returns only the caller's addresses stored with FR, not GB ones and not another organisation's FR ones.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java:145-162 countryCodeParamMatchesStoredAlpha2CodeAndExcludesOtherOrgs",
+      "quote": ".param(\"countryCode\", \"FR\"))\n        .andExpect(status().isOk())\n        .andExpect(jsonPath(\"$.totalItems\").value(1))\n        .andExpect(jsonPath(\"$.items[0].id\").value(french.getId()))\n        .andExpect(jsonPath(\"$.items[*].id\", not(hasItem(otherOrgFrench.getId()))));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-065",
+      "statement": "Tested: the countryCode filter leaves out soft-deleted addresses.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java:164-178 countryCodeSearchExcludesSoftDeletedRows",
+      "quote": ".andExpect(jsonPath(\"$.totalItems\").value(1))\n        .andExpect(jsonPath(\"$.items[*].id\", not(hasItem(deleted.getId()))));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-066",
+      "statement": "Tested: q France with countryCode FR returns both an FR address that does not contain the text and a GB address whose name contains France.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java:180-204 combinedQueryAndCountryCodeMatchesTextOrCountryCode",
+      "quote": ".param(\"q\", \"France\")\n                .param(\"countryCode\", \"FR\"))\n        .andExpect(status().isOk())\n        .andExpect(jsonPath(\"$.totalItems\").value(2))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-067",
+      "statement": "Tested: a q search leaves out soft-deleted addresses and other organisations' addresses.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java:206-223 searchIsOrgScopedAndExcludesSoftDeletedForQueryPath",
+      "quote": ".param(\"q\", \"green\"))\n        .andExpect(status().isOk())\n        .andExpect(jsonPath(\"$.totalItems\").value(1))\n        .andExpect(jsonPath(\"$.items[0].id\").value(live.getId()))",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-068",
+      "statement": "Tested: 30 search matches paginate as 25 then 5, and the two pages together hold every match exactly once.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java:225-273 searchResultsPaginateWithDisjointPages",
+      "quote": "assertThat(pageIds).containsExactlyInAnyOrderElementsOf(allIds);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-069",
+      "statement": "Tested at the database: the countryCode query is organisation-scoped and leaves out deleted addresses.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorRepositoryIT.java:40-51 searchByCountryCode_isOrgScopedAndExcludesDeleted",
+      "quote": "assertThat(page.getTotalElements()).isEqualTo(1);\n    assertThat(page.getContent()).singleElement().extracting(Address::getOrganisationId).isEqualTo(ORG_A);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-070",
+      "statement": "Tested at the database: the combined q and countryCode query is organisation-scoped.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorRepositoryIT.java:53-64 searchByQueryAndCountryCode_isOrgScoped",
+      "quote": "operatorRepository.searchByQueryAndCountryCode(\n            ORG_A, AddressStatus.ACTIVE, \".*\\\\QParis\\\\E.*\", \"FR\", of(0, 10));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-071",
+      "statement": "Unit-tested: the service turns the 1-based page into the database's 0-based page, uses the configured size, and sorts by createdAt descending.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/OperatorServiceTest.java:412-429 list_scopesTheQueryToTheActiveOrgNewestFirstAndTranslatesToA0BasedPage",
+      "quote": "assertThat(pageable.getPageNumber()).isEqualTo(1);\n    assertThat(pageable.getPageSize()).isEqualTo(25);\n    assertThat(pageable.getSort().getOrderFor(\"createdAt\").getDirection())\n        .isEqualTo(Sort.Direction.DESC);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-072",
+      "statement": "Unit-tested: a configured page size (10) is used in the query and reported as pageSize.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/OperatorServiceTest.java:431-447 list_usesTheConfiguredPageSizeNotAValuePassedByTheCaller",
+      "quote": "assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(10);\n    assertThat(response.pageSize()).isEqualTo(10);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-073",
+      "statement": "Unit-tested: the service builds a 25-item first page and a 5-item second page from 30 matches, with totalPages 2, and rejects page 0 as a bad request.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/OperatorServiceTest.java:377-410,449-454 list_returnsAFullFirstPageOf25WithTotalPages2For30ActiveAddresses, list_pageTwoReturnsTheRemaining5AddressesWithTotalPagesStill2, list_withAPageBelow1IsABadRequest",
+      "quote": "assertThatExceptionOfType(BadRequestException.class)\n        .isThrownBy(() -> service.list(ORG, 0, null, null));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-074",
+      "statement": "Unit-tested: q alone uses the text search, countryCode alone uses the country filter, both use the combined search, and padded values are trimmed first.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/OperatorServiceTest.java:456-483,500-527,544-556 list_withQueryUsesTheSearchRepository, list_withWhitespacePaddedQueryTrimsBeforeSearching, list_withCountryCodeUsesTheCountrySearchRepository, list_withWhitespacePaddedCountryCodeTrimsBeforeSearching, list_withQueryAndCountryCodeUsesTheCombinedSearchRepository",
+      "quote": "service.list(ORG, 1, \"  farm  \", null);\n\n    // Then — trim is applied before regex construction",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-075",
+      "statement": "Unit-tested: a whitespace-only q or countryCode falls back to the unfiltered list.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/OperatorServiceTest.java:485-498,529-542 list_withBlankQueryFallsBackToUnfilteredListing, list_withBlankCountryCodeFallsBackToUnfilteredListing",
+      "quote": "OperatorPageResponse response = service.list(ORG, 1, \"   \", null);\n\n    // Then\n    assertThat(response.totalItems()).isZero();\n    verify(repository).findByOrganisationIdAndStatus(eq(ORG), eq(AddressStatus.ACTIVE), any(Pageable.class));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-addressbook-p3-076",
+      "statement": "No test proves the list's 404 for a path orgId that does not match the header; the list tests cover only a missing header.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorListIT.java (whole file)",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked in OperatorListIT, AddressSearchIT and the list cases of OperatorServiceTest. A mismatch test may live in part 4's identity tests."
+    },
+    {
+      "id": "repo-addressbook-p3-077",
+      "statement": "No test proves that the countryCode filter is case-sensitive, nor what a lower-case code returns.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java (whole file)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-addressbook-p3-078",
+      "statement": "No test proves that the q search does not match county, address line 2, phone or email; only address line 1 is proven excluded.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java (whole file)",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-addressbook-p3-079",
+      "statement": "The list sets no upper limit on the length of q or countryCode.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java:127-128; docs/openapi/operators.yml:188-197",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Neither the handler nor either contract gives a maxLength or validation for these two parameters."
+    }
+  ]
+}

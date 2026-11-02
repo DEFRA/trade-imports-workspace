@@ -1,0 +1,154 @@
+h3. Background
+
+Design Release 2.1 rewords the arrival details page of a live animals notification and tightens how it and the transit countries page behave.
+
+The arrival page now asks its questions in the design's own words, at a consistent size, and names the means of transport as Air, Rail, Road or Sea. A means of transport is required before the page is complete — but an unfinished page can still be saved and come back to. And the transit countries page, which only applies to a consignment arriving by rail or road, now has a proper title, a Back link that goes where the user came from, and it sends anyone who reaches it by other means back to Overview rather than showing a page that cannot apply.
+
+Transit countries can also now be territories as well as countries, so a consignment passing through the Canary Islands can say so rather than only "Spain".
+
+This ticket covers the *live animals journey only*. The same increments changed the high-risk plants journey, which has its own ticket under the same epic. The work is not yet merged.
+
+h3. What changes for the user
+
+h4. The arrival questions read as the design words them
+
+The port of entry hint and search placeholder, the means of transport options, and the transport identification hint are all reworded. Every question on the page is set at the same medium size, so none looks more important than another.
+
+h4. A means of transport is required, but the page can still be left unfinished
+
+Saving and continuing without a means of transport shows the other answers back and saves nothing, so the trader does not lose what they typed. "Save and return to overview" saves whatever has been entered without insisting on the means of transport, leaving the task incomplete to come back to.
+
+h4. Transit countries only applies to rail and road
+
+Saving arrival details with Rail or Road goes on to transit countries; with Air or Sea it goes straight to the transporter list. Opening the transit countries page when the means of transport is Air, Sea or unanswered sends the user to Overview instead. If the means of transport changes to Air while the page is open, submitting it saves nothing.
+
+h4. Transit countries can be territories
+
+The transit country search offers every country *and territory* the reference data service serves, alphabetically. A territory reads with its country — "Canary Islands (Spain)" — on the search, in the saved list and on the review. This works with or without JavaScript.
+
+h3. Acceptance criteria
+
+Copied from the service's behaviour specification. These 13 scenarios carry the change's core behaviour. The live animals specification gained *20 scenarios across 4 files* in total — every file is linked under "Where this is specified" below, with the number it gained, so you can read any of them in full.
+
+h4. How the arrival questions read
+
+h5. The port search reads as Design Release 2.1 words it
+
+* *GIVEN* the user is on the arrival details page with no port chosen
+* *WHEN* the page loads
+* *THEN* the port of entry hint reads "Select where the transporter will enter with the consignment. Start typing to search by port or airport name or code."
+* *AND* the port search shows "Select a port"
+
+h5. The means of transport options read Air, Rail, Road and Sea
+
+* *GIVEN* the user is on the arrival details page
+* *WHEN* the page loads
+* *THEN* the means of transport options read "Select one", "Air", "Rail", "Road", "Sea" in that order
+
+h5. The transport identification hint leads with its instruction
+
+* *GIVEN* the user is on the arrival details page
+* *WHEN* the page loads
+* *THEN* the transport identification hint opens with "Enter one of the following:"
+* *AND* it lists flight number, train number, road vehicle registration number, and vessel name (for ferries, also the road vehicle registration number)
+
+h5. The arrival questions read at medium size
+
+* *GIVEN* a user on the arrival details page
+* *WHEN* the page loads
+* *THEN* the arrival date, port of entry, means of transport, transport identification and transport document reference questions are each set in the medium label size
+
+h5. The arrival details card names the means of transport as the arrival page offers it
+
+* *GIVEN* a notification whose means of transport is road
+* *WHEN* the user views the review
+* *THEN* the "Means of transport to the port of entry" row reads "Road"
+* *AND* an air arrival reads "Air"
+
+h4. A required means of transport, and leaving the page unfinished
+
+h5. The other answers are shown back and nothing is saved
+
+* *GIVEN* the user has chosen a port of entry and an arrival date but no means of transport
+* *WHEN* they save and continue
+* *THEN* the port of entry and arrival date are still shown on the page
+* *AND* when they leave and return to the page on the same notification, neither answer was saved
+
+h5. Arrival details saved and returned without a means of transport keeps the other answers
+
+* *GIVEN* the Arrival details page with a port of entry chosen and no means of transport
+* *WHEN* the user selects "Save and return to overview"
+* *THEN* they return to Overview with no error shown
+* *AND* the Arrival details task does not read "Complete"
+* *AND* re-opening the page shows the port of entry chosen
+
+h5. Transit countries saved and returned keeps the countries listed
+
+* *GIVEN* the Transit countries page with France and Belgium added
+* *WHEN* the user selects "Save and return to overview"
+* *THEN* they return to Overview
+* *AND* re-opening the page lists France and Belgium
+
+h4. When transit countries applies
+
+h5. Arrival details goes on to transit countries only for rail or road
+
+* *GIVEN* the user is in the opening sequence on arrival details
+* *WHEN* they save it with Rail or Road chosen
+* *THEN* transit countries is shown
+* *WHEN* instead they save it with Air or Sea chosen
+* *THEN* the transporter list is shown
+
+h5. Opening the page without rail or road goes to Overview
+
+* *GIVEN* the saved means of transport is Air, Sea or not saved
+* *WHEN* the user opens the transited countries page
+* *THEN* Overview is shown instead
+
+h5. Submitting the page after the means changes saves nothing
+
+* *GIVEN* the transited countries page is open with a country added
+* *AND* the means of transport has since been saved as Air
+* *WHEN* the user saves and continues
+* *THEN* Overview is shown
+* *AND* no transited countries were saved
+
+h4. Transit countries as territories
+
+h5. The search offers the origin countries and their territories in alphabetical order
+
+* *GIVEN* the user is on the transited countries page
+* *WHEN* the search list is read in full
+* *THEN* after the placeholder "Search for a country" it holds exactly the countries and territories the reference data service serves for the country of origin, by name, in alphabetical order
+
+h5. A territory is listed, saved and shown again under the same name
+
+* *GIVEN* the user is on the transited countries page
+* *WHEN* they add a territory and save and continue
+* *THEN* no error is shown
+* *AND* when they reopen the page the territory is listed as "<territory> (<country>)"
+
+The specification also covers the transit countries page's browser title, including its "Error:" prefix, and its Back link going to arrival details in the opening run and to Overview when opened from its task.
+
+h3. The work behind this change
+
+||Row||What it changed||State||
+|inc-026|Arrival details wording: labels, hints, placeholder and the means of transport options|Done|
+|inc-027|Port options read "<port name> - <port code>"|Done|
+|inc-028|A means of transport is required, and arrival and transit pages can be saved unfinished|Done|
+|inc-029|Transit countries page: title, Back link, empty state and redirect when it does not apply|Done|
+|inc-174|Transit country search offers the origin countries and their territories|Done|
+
+All five are built. A sixth row in this theme was dropped and not built — it would have moved the arrival details page to a different address.
+
+h3. Where this is specified
+
+The full behaviour lives in the service's behaviour specification, in the workspace repository. The live animals specification gained 20 scenarios across these 4 files. Each link opens the file as it stands on the branch this work is on.
+
+||Specification||New scenarios||
+|[Transited countries|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/journey-pages/transited-countries/spec.md]|9|
+|[Arrival details|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/journey-pages/arrival-details/spec.md]|6|
+|[Journey flow|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/journey-flow/spec.md]|3|
+|[Check your answers|https://github.com/DEFRA/trade-imports-workspace/blob/feat/NO_JIRA-design-release-2-1/openspec/specs/live-animals/journey-pages/check-your-answers/spec.md]|2|
+
+This description is generated from those specifications. If a specification changes, this ticket is regenerated to match.

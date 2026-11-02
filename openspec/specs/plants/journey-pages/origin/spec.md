@@ -19,7 +19,7 @@ The system MUST ask the user for the country of origin, offering a searchable co
 
 ### Requirement: The country field is a searchable list that filters as the user types
 **ID**: REQ-PLANTS-ORIGIN-002
-The system MUST offer the country of origin as a searchable field that filters to matching countries as the user types, MUST offer the whole list as soon as the field is opened before anything is typed, and MUST show the chosen country's name in that field when the user returns to the page.
+The system MUST offer the country of origin as a searchable field that filters to matching countries as the user types (matching ignores case and accents, and the matched letters show in bold), MUST offer the whole list as soon as the field is opened before anything is typed, and MUST show the chosen country's name in that field when the user returns to the page.
 
 #### Scenario: Typing part of a country's name offers the matching country
 **ID**: SCN-PLANTS-ORIGIN-002-A
@@ -38,6 +38,12 @@ The system MUST offer the country of origin as a searchable field that filters t
 - **GIVEN** the user has chosen a country and saved the page
 - **WHEN** they return to the origin of the import page
 - **THEN** the country field shows the chosen country's name
+
+#### Scenario: An accented search finds a country listed without the accent
+**ID**: SCN-PLANTS-ORIGIN-002-D
+- **GIVEN** the user is on the origin of the import page with JavaScript
+- **WHEN** they type "Réunion" into the country field
+- **THEN** "Reunion" is offered, with "Reunion" in bold
 
 ### Requirement: The country field offers select text and every origin country the service primes, and submits a country code
 **ID**: REQ-PLANTS-ORIGIN-003
@@ -91,9 +97,9 @@ The system MUST accept a chosen country of origin, saving it without error.
 - **WHEN** they choose a country the notification may name and save and continue
 - **THEN** the answer is saved and no error summary is shown
 
-### Requirement: Saving and continuing without a country is refused, focusing the field
+### Requirement: Saving without a country is refused on either save control, focusing the field
 **ID**: REQ-PLANTS-ORIGIN-007
-The system MUST refuse to save and continue from the origin page when no country has been chosen, showing an error that names the missing country of origin, and MUST focus the country field when the user follows the error. It MUST NOT refuse the page for a missing country on save and return to overview.
+The system MUST refuse to save from the origin page when no country has been chosen, on save and continue and on save and return to overview alike, showing an error that names the missing country of origin, and MUST focus the country field when the user follows the error.
 
 #### Scenario: Saving with nothing chosen shows the error and focuses the field
 **ID**: SCN-PLANTS-ORIGIN-007-A
@@ -103,11 +109,11 @@ The system MUST refuse to save and continue from the origin page when no country
 - **WHEN** they follow the error
 - **THEN** the country field is focused
 
-#### Scenario: Save and return to overview with no country chosen reaches Overview without an error
+#### Scenario: Save and return to overview with no country chosen shows the error
 **ID**: SCN-PLANTS-ORIGIN-007-B
 - **GIVEN** the user is on the origin of the import page with no country chosen
 - **WHEN** they save and return to overview
-- **THEN** they return to Overview with no error shown
+- **THEN** an error summary is shown, naming the missing country of origin, and nothing is saved
 
 ### Requirement: A ware-potato consignment shows its origin-scope guidance
 **ID**: REQ-PLANTS-ORIGIN-008

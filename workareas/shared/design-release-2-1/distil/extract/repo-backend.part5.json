@@ -1,0 +1,849 @@
+{
+  "source": "repo:backend",
+  "structure": "Part 5, Outbox events and publishing (repos/trade-imports-animals-backend at main 15ae53f, tag 0.91.0). Read in full: the outbox/ package (OutboxEventType 62 lines, OutboxEvent 51, OutboxEventMetadata 13, OutboxEventRepository 20, StatusChange 15, Actor 20, OutboxService 147, OutboxPublishService 142, OutboxPoller 43, OutboxReplayService 66), notification/ReplayResponse, configuration/OutboxConfig, the outbox section of src/main/resources/application.yml, NotificationController (claimed for the two outbox endpoints and for how each lifecycle endpoint takes the correlation id and actor that the event carries), and the tests OutboxEventTypeTest (9 tests), OutboxServiceTest (21 tests in AppendEvent, VersionId, FindByReferenceNumber and BuildAggregateId), OutboxPollerIT (7 tests) and ReplayIT (6 tests). To map each event type to the lifecycle action that writes it, as covers asks, I also read NotificationService lines 86-509 (save, replace, copy, submit, amend, cancel-amend, soft-delete, hard delete, expiry, create and the shared writeWithOutbox and outbox-lock helpers), filter/AdminSecretFilter (who may call replay and outbox-events), notification/ActorRequest (the actor callers send), the OutboxWriteException handler in GlobalExceptionHandler, and the FIFO topic set-up in OutboxIntegrationBase. Claims run: the eight event types and their wire values and schema URLs; which lifecycle action writes which event; the event envelope (ids, versions, timestamp, data, versionId, metadata, actor, status changes, publishedAt); the write path (same transaction, per-notification lock, duplicate-version failure and its 500 response); the poller and SNS publish (interval, lock, batch and run limits, order, message group and deduplication ids, attributes, skip, failure and retry); the GET outbox-events and POST replay endpoints (response, order, admin secret, User-Id, audit, 404, 401); one proof claim for every test in OutboxPollerIT and ReplayIT; and gaps where the slice is silent. The GBN-AG payload's field mapping inside data is part 6's and is not claimed here.",
+  "claims": [
+    {
+      "id": "repo-backend-p5-001",
+      "statement": "The backend defines eight outbox event types for the notification lifecycle.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEventType.java:15-40",
+      "quote": "NOTIFICATION_SUBMITTED(... NOTIFICATION_SUBMISSION_AMENDED(... NOTIFICATION_EDITED(... NOTIFICATION_CREATED(... NOTIFICATION_AMENDMENT_REQUESTED(... NOTIFICATION_AMENDMENT_CANCELLED(... NOTIFICATION_DELETED(... NOTIFICATION_SUBMISSION_DELETED(",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-002",
+      "statement": "Every event type's wire value, the eventType string downstream consumers see, is the type name prefixed with uk.gov.defra.imports.notification.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEventType.java:51; src/test/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEventTypeTest.java:87-94 allEventTypes_haveCorrectNamespacePrefix",
+      "quote": "this.value = \"uk.gov.defra.imports.notification.\" + value;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-003",
+      "statement": "The NotificationSubmitted event has the wire value uk.gov.defra.imports.notification.NotificationSubmitted and the schema gbn-ag-event-notification-submitted-v1.schema.json.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEventType.java:17-19",
+      "quote": "NOTIFICATION_SUBMITTED(\n        \"NotificationSubmitted\",\n        \"gbn-ag-event-notification-submitted-v1.schema.json\"),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-004",
+      "statement": "The NotificationSubmissionAmended event has the wire value uk.gov.defra.imports.notification.NotificationSubmissionAmended and the schema gbn-ag-event-notification-submission-amended-v1.schema.json.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEventType.java:20-22",
+      "quote": "NOTIFICATION_SUBMISSION_AMENDED(\n        \"NotificationSubmissionAmended\",\n        \"gbn-ag-event-notification-submission-amended-v1.schema.json\"),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-005",
+      "statement": "The NotificationEdited event has the wire value uk.gov.defra.imports.notification.NotificationEdited and the schema gbn-ag-event-notification-edited-v1.schema.json.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEventType.java:23-25",
+      "quote": "NOTIFICATION_EDITED(\n        \"NotificationEdited\",\n        \"gbn-ag-event-notification-edited-v1.schema.json\"),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-006",
+      "statement": "The NotificationCreated event has the wire value uk.gov.defra.imports.notification.NotificationCreated and the schema gbn-ag-event-notification-created-v1.schema.json.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEventType.java:26-28",
+      "quote": "NOTIFICATION_CREATED(\n        \"NotificationCreated\",\n        \"gbn-ag-event-notification-created-v1.schema.json\"),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-007",
+      "statement": "The NotificationAmendmentRequested event has the wire value uk.gov.defra.imports.notification.NotificationAmendmentRequested and the schema gbn-ag-event-notification-amendment-requested-v1.schema.json.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEventType.java:29-31",
+      "quote": "NOTIFICATION_AMENDMENT_REQUESTED(\n        \"NotificationAmendmentRequested\",\n        \"gbn-ag-event-notification-amendment-requested-v1.schema.json\"),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-008",
+      "statement": "The NotificationAmendmentCancelled event has the wire value uk.gov.defra.imports.notification.NotificationAmendmentCancelled and the schema gbn-ag-event-notification-amendment-cancelled-v1.schema.json.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEventType.java:32-34",
+      "quote": "NOTIFICATION_AMENDMENT_CANCELLED(\n        \"NotificationAmendmentCancelled\",\n        \"gbn-ag-event-notification-amendment-cancelled-v1.schema.json\"),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-009",
+      "statement": "The NotificationDeleted event has the wire value uk.gov.defra.imports.notification.NotificationDeleted and the schema gbn-ag-event-notification-deleted-v1.schema.json.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEventType.java:35-37",
+      "quote": "NOTIFICATION_DELETED(\n        \"NotificationDeleted\",\n        \"gbn-ag-event-notification-deleted-v1.schema.json\"),",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-010",
+      "statement": "The NotificationSubmissionDeleted event has the wire value uk.gov.defra.imports.notification.NotificationSubmissionDeleted and the schema gbn-ag-event-notification-submission-deleted-v1.schema.json.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEventType.java:38-40",
+      "quote": "NOTIFICATION_SUBMISSION_DELETED(\n        \"NotificationSubmissionDeleted\",\n        \"gbn-ag-event-notification-submission-deleted-v1.schema.json\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-011",
+      "statement": "Each event type's schema URL points at its governing event schema in the DEFRA/trade-imports-schemas repo, under schemas/profiles/imports/gb/events/ on main, so consumers can discover and validate against it.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEventType.java:11-13,52-53; src/test/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEventTypeTest.java:14-84 (one test per type pins the exact URL)",
+      "quote": "this.schemaUrl = \"https://github.com/DEFRA/trade-imports-schemas/blob/main/\"\n            + \"schemas/profiles/imports/gb/events/\" + schemaUrl;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-012",
+      "statement": "Only NotificationSubmitted and NotificationSubmissionAmended count as submissions: they are the events that increment the submission version.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEventType.java:42-45",
+      "quote": "/** Event types that represent a submission and therefore increment versionId. */\n    public static final Set<OutboxEventType> SUBMISSION_EVENTS = EnumSet.of(\n        NOTIFICATION_SUBMITTED,\n        NOTIFICATION_SUBMISSION_AMENDED);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-013",
+      "statement": "Creating a notification (POST /notifications with no reference number) writes a NotificationCreated event for the new DRAFT notification.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:86-89,450-465",
+      "quote": "NotificationAggregate saved = writeWithOutbox(\n                    notificationAggregate,\n                    notificationAggregate.getReferenceNumber(),\n                    correlationId,\n                    NotificationStatus.DRAFT,\n                    OutboxEventType.NOTIFICATION_CREATED,\n                    actor);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-014",
+      "statement": "Copying a notification writes a NotificationCreated event for the new DRAFT copy, because a copy goes through the same create path; the source notification gets no event.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:120-144",
+      "quote": "return createNotification(notificationCopyMapper.toCopyDto(source), correlationId, actor);",
+      "confidence": "inferred",
+      "note": "Inferred: copyNotification calls createNotification, which writes NOTIFICATION_CREATED against the new reference. There is no copy-specific event type."
+    },
+    {
+      "id": "repo-backend-p5-015",
+      "statement": "Saving an existing DRAFT or AMEND notification through POST /notifications with its reference number writes a NotificationEdited event and leaves the status unchanged.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:476-494",
+      "quote": "return writeWithOutbox(existing, referenceNumber, correlationId, existing.getStatus(),\n            OutboxEventType.NOTIFICATION_EDITED, actor);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-016",
+      "statement": "Replacing a notification's content through PUT /notifications/{referenceNumber} writes a NotificationEdited event on every save.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:61-63; src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:100-118",
+      "quote": "Requires DRAFT or AMEND status. Emits a NotificationEdited outbox event on every save.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-017",
+      "statement": "Submitting a DRAFT notification writes a NotificationSubmitted event (the first submission).",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:196-199",
+      "quote": "// AMEND -> SUBMITTED is a re-submission; DRAFT -> SUBMITTED is the first submission.\n        OutboxEventType eventType = notificationAggregate.getStatus() == NotificationStatus.AMEND\n            ? OutboxEventType.NOTIFICATION_SUBMISSION_AMENDED\n            : OutboxEventType.NOTIFICATION_SUBMITTED;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-018",
+      "statement": "Submitting a notification that is in AMEND writes a NotificationSubmissionAmended event (a re-submission), not NotificationSubmitted.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:196-199",
+      "quote": "OutboxEventType eventType = notificationAggregate.getStatus() == NotificationStatus.AMEND\n            ? OutboxEventType.NOTIFICATION_SUBMISSION_AMENDED",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-019",
+      "statement": "Starting an amendment (POST /notifications/{referenceNumber}/amend, SUBMITTED to AMEND) writes a NotificationAmendmentRequested event.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:233-239; src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:121-123",
+      "quote": "NotificationStatus.AMEND,\n            OutboxEventType.NOTIFICATION_AMENDMENT_REQUESTED,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-020",
+      "statement": "Cancelling an amendment (POST /notifications/{referenceNumber}/cancel-amend, AMEND back to SUBMITTED) writes a NotificationAmendmentCancelled event.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:266-272",
+      "quote": "NotificationStatus.SUBMITTED,\n            OutboxEventType.NOTIFICATION_AMENDMENT_CANCELLED,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-021",
+      "statement": "Soft-deleting a DRAFT notification writes a NotificationDeleted event.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:355-358",
+      "quote": "// DRAFT -> DELETED has no submission history; SUBMITTED/AMEND -> DELETED does.\n        OutboxEventType eventType = notificationAggregate.getStatus() == NotificationStatus.DRAFT\n            ? OutboxEventType.NOTIFICATION_DELETED\n            : OutboxEventType.NOTIFICATION_SUBMISSION_DELETED;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-022",
+      "statement": "Soft-deleting a SUBMITTED or AMEND notification writes a NotificationSubmissionDeleted event.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:355-358",
+      "quote": ": OutboxEventType.NOTIFICATION_SUBMISSION_DELETED;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-023",
+      "statement": "Soft-deleting a notification that is already DELETED writes no event: the repeat call is a no-op.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:345-348",
+      "quote": "// Idempotent per REST DELETE convention — a repeat call after a lost response is a no-op.\n        if (notificationAggregate.getStatus() == NotificationStatus.DELETED) {\n            return notificationAggregate;\n        }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-024",
+      "statement": "The admin hard delete (DELETE /notifications) and the non-prod expiry sweep remove notifications without writing any outbox event, so other services are not told about them.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:377-434",
+      "quote": "private void deleteNotificationsAndDocuments(List<String> referenceNumbers) {\n        notificationRepository.deleteAllByReferenceNumberIn(referenceNumbers);\n        documentService.deleteForNotificationRefs(referenceNumbers);\n    }",
+      "confidence": "inferred",
+      "note": "Inferred from the absence of any outboxService.appendEvent call on the hard-delete and expiry paths. Their outbox events are not removed either."
+    },
+    {
+      "id": "repo-backend-p5-025",
+      "statement": "A lifecycle action saves the notification and writes its outbox event inside one transaction, so the event is written only if the change is.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:184,296-297",
+      "quote": "NotificationAggregate saved = notificationRepository.save(notification);\n                outboxService.appendEvent(saved, eventType, correlationId, actor);",
+      "confidence": "inferred",
+      "note": "Inferred: each lifecycle method is @Transactional and writeWithOutbox saves then appends inside it. application.yml calls the relay a transactional outbox (ADR-EUDP-001)."
+    },
+    {
+      "id": "repo-backend-p5-026",
+      "statement": "Writes to one notification's outbox are serialised under a lock named outbox-write: plus the aggregate id, held for at most 10 seconds.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:42,302-323",
+      "quote": "String lockName = \"outbox-write:\" + aggregateId;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-027",
+      "statement": "If the outbox lock is busy, the write is retried up to 2 more times, waiting notification.submit.lock-at-least-for (50ms) between tries; if it still cannot get the lock it fails with an outbox write error.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java:44,308-337; src/main/resources/application.yml:143-144",
+      "quote": "throw new OutboxWriteException(\n            \"Could not acquire outbox lock for \" + operationLabel,",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-028",
+      "statement": "Any outbox write failure returns HTTP 500 with the detail 'An error occurred during submission. Please try again.' and the title 'Internal Server Error'.",
+      "kind": "copy",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/exceptions/GlobalExceptionHandler.java:312-325",
+      "quote": "ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(\n            HttpStatus.INTERNAL_SERVER_ERROR,\n            \"An error occurred during submission. Please try again.\"\n        );\n        problemDetail.setType(URI.create(\"https://api.cdp.defra.cloud/problems/internal-error\"));\n        problemDetail.setTitle(\"Internal Server Error\");",
+      "confidence": "verbatim",
+      "note": "The same submission wording is returned whichever lifecycle action failed (create, save, amend, delete), not only submit."
+    },
+    {
+      "id": "repo-backend-p5-029",
+      "statement": "Outbox events are stored in the MongoDB collection named outbox.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEvent.java:16",
+      "quote": "@Document(collection = \"outbox\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-030",
+      "statement": "Each event carries the fields eventId, aggregateId, aggregateType, subType, aggregateVersion, eventType, timestamp, data, metadata, actor and statusChanges.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEvent.java:31-45",
+      "quote": "private String eventId;\n    ...\n    private String aggregateId;\n\n    private String aggregateType;\n    private String subType;\n    private long aggregateVersion;\n    private String eventType;\n    private Instant timestamp;\n    private Map<String, Object> data;\n    private OutboxEventMetadata metadata;\n    private Actor actor;\n    private List<StatusChange> statusChanges;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-031",
+      "statement": "An event's eventId is a new random UUID.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:98",
+      "quote": ".eventId(UUID.randomUUID().toString())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-032",
+      "statement": "An event's aggregateId is Imports.Notification.GBN-AG. followed by the notification's reference number.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:36,144-146; src/test/java/uk/gov/defra/trade/imports/animals/outbox/OutboxServiceTest.java:612-616",
+      "quote": "static final String AGGREGATE_ID_PREFIX = \"Imports.Notification.GBN-AG.\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-033",
+      "statement": "Every event has aggregateType Notification.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:33",
+      "quote": "static final String AGGREGATE_TYPE = \"Notification\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-034",
+      "statement": "Every event has subType GBN-AG.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:34",
+      "quote": "static final String SUB_TYPE = \"GBN-AG\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-035",
+      "statement": "A notification's first event has aggregateVersion 1, and each later event for it is one higher than the highest before it.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:59-62; src/test/java/uk/gov/defra/trade/imports/animals/outbox/OutboxServiceTest.java:62-125",
+      "quote": "long nextVersion = latestEvent.map(e -> e.getAggregateVersion() + 1).orElse(1L);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-036",
+      "statement": "No two events for one notification can share an aggregateVersion: a clash fails the write with 'Duplicate aggregateVersion on outbox insert'.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEvent.java:17-19; src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:115-121; src/test/java/uk/gov/defra/trade/imports/animals/outbox/OutboxServiceTest.java:462-486",
+      "quote": "@CompoundIndex(name = \"aggregate_version_uq\",\n    def = \"{'aggregateId': 1, 'aggregateVersion': 1}\",\n    unique = true)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-037",
+      "statement": "An event's timestamp is the time it was written, to the millisecond.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:64,104",
+      "quote": "Instant now = Instant.now().truncatedTo(ChronoUnit.MILLIS);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-038",
+      "statement": "An event's data is the GBN-AG payload built from the whole notification as it stands after the action, not the raw notification record.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:93-95; src/test/java/uk/gov/defra/trade/imports/animals/outbox/OutboxServiceTest.java:129-186",
+      "quote": "assertThat(data)\n                .containsKeys(\"$model\", \"$type\", \"exchangedDocument\", \"specifiedConsignment\")\n                .containsEntry(\"$type\", \"gbn-ag\")\n                .doesNotContainKey(\"referenceNumber\");",
+      "confidence": "verbatim",
+      "note": "Every event type, edits and deletes included, carries the full payload. The payload's field mapping is part 6's."
+    },
+    {
+      "id": "repo-backend-p5-039",
+      "statement": "An event lists only the notification's accompanying documents that passed the virus scan (scan status COMPLETE), oldest first, read at the same moment the event is written.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:87-91; src/test/java/uk/gov/defra/trade/imports/animals/outbox/OutboxServiceTest.java:188-221",
+      "quote": "// Only documents that passed the virus scan are referenced; read inside the outbox write so\n        // the event and the documents it lists are consistent.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-040",
+      "statement": "When a notification has no scanned documents, the payload leaves the document list out rather than sending an empty list.",
+      "kind": "data",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/outbox/OutboxServiceTest.java:181",
+      "quote": ".doesNotContainKey(\"referenceDocument\"); // no documents: key omitted, not an empty array",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-041",
+      "statement": "NotificationCreated, NotificationEdited and NotificationDeleted events carry no versionId, because the notification has never been submitted.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:43-49,128-130; src/test/java/uk/gov/defra/trade/imports/animals/outbox/OutboxServiceTest.java:518-530",
+      "quote": "// Event types where versionId is absent: notification has never been submitted.",
+      "confidence": "verbatim",
+      "note": "NotificationEdited also omits versionId when it is written during an amendment, after a submission. The code comment says only 'before a first submission'."
+    },
+    {
+      "id": "repo-backend-p5-042",
+      "statement": "A submission event's versionId is the number of earlier submission events for the notification plus one, so the first submission is version 1 and each amended re-submission adds one.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:131-136; src/test/java/uk/gov/defra/trade/imports/animals/outbox/OutboxServiceTest.java:532-544",
+      "quote": "// Submission events mint a new version; all others carry the current count forward.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-043",
+      "statement": "NotificationAmendmentRequested, NotificationAmendmentCancelled and NotificationSubmissionDeleted events carry the current versionId forward, the count of submissions so far, without adding one.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:134-136; src/test/java/uk/gov/defra/trade/imports/animals/outbox/OutboxServiceTest.java:546-565",
+      "quote": "return (int) (SUBMISSION_EVENT_WIRE_VALUES.contains(eventType.value())\n            ? submissionCount + 1\n            : submissionCount);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-044",
+      "statement": "An event's metadata holds correlationId, schemaVersion and schemaUrl.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEventMetadata.java:8-12",
+      "quote": "String correlationId;\n    String schemaVersion;\n    String schemaUrl;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-045",
+      "statement": "An event's correlationId is the x-cdp-request-id header of the request that caused it, or an empty string when the request had none.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:41,53; src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:107",
+      "quote": "@RequestHeader(value = HEADER_TRACE_ID, required = false, defaultValue = \"\") String traceId",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-046",
+      "statement": "Every event's schemaVersion is 1.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:35,108",
+      "quote": "static final String SCHEMA_VERSION = \"1\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-047",
+      "statement": "An event's metadata.schemaUrl is the schema URL of its event type.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:109",
+      "quote": ".schemaUrl(eventType.schemaUrl())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-048",
+      "statement": "An event's actor is the person who made the change, as the caller sends it; it is empty when the caller sends no actor.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:111; src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:249-251; src/test/java/uk/gov/defra/trade/imports/animals/outbox/OutboxServiceTest.java:93,275-310",
+      "quote": "private static Actor resolveActor(ActorRequest actorRequest) {\n        return actorRequest != null ? actorRequest.toActor() : null;\n    }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-049",
+      "statement": "An actor has the fields id, source, userType, displayName, organisationId and onBehalfOfOrganisationId, and fields with no value are left out of the published JSON.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/Actor.java:10-19",
+      "quote": "@JsonInclude(JsonInclude.Include.NON_NULL)\npublic class Actor {\n\n    @Field(\"id\")\n    String id;\n    String source;\n    String userType;\n    String displayName;\n    String organisationId;\n    String onBehalfOfOrganisationId;",
+      "confidence": "verbatim",
+      "note": "OutboxServiceTest uses source dynamics-contact and userType B2C as example values; the backend does not restrict them."
+    },
+    {
+      "id": "repo-backend-p5-050",
+      "statement": "Callers send the actor in the request body: inside the save body for POST and PUT /notifications, and as an optional body on copy, submit, amend, cancel-amend and soft-delete.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:56,74,92,115,134,152,243; src/main/java/uk/gov/defra/trade/imports/animals/notification/ActorRequest.java:11-18",
+      "quote": "@RequestBody(required = false) ActorRequest actorRequest",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-051",
+      "statement": "Each event carries the notification's full status history so far, copied from its latest earlier event.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:66-68; src/test/java/uk/gov/defra/trade/imports/animals/outbox/OutboxServiceTest.java:312-364",
+      "quote": "List<StatusChange> priorChanges = latestEvent\n            .map(e -> e.getStatusChanges() != null ? e.getStatusChanges() : List.<StatusChange>of())\n            .orElseGet(List::of);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-052",
+      "statement": "A status change is added to the history only when the notification's status differs from the last one recorded, so repeated saves in DRAFT or AMEND add none.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:70-83; src/test/java/uk/gov/defra/trade/imports/animals/outbox/OutboxServiceTest.java:366-459",
+      "quote": "if (notificationAggregate.getStatus() != lastStatus) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-053",
+      "statement": "Each status change records the status, when it changed (the event's time) and the actor who changed it.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/StatusChange.java:10-15; src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxService.java:75-79",
+      "quote": "NotificationStatus status;\n    Instant dateChanged;\n    Actor actor;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-054",
+      "statement": "The time an event was published is stored with it but left out of the published message.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEvent.java:47-50; src/test/java/uk/gov/defra/trade/imports/animals/integration/outbox/OutboxPollerIT.java:69",
+      "quote": "/** Publish timestamp set before SNS publish. \n     * Ignored from published event but stores the published timestamp */\n    @JsonIgnore\n    private Instant publishedAt;",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-055",
+      "statement": "A poller publishes waiting outbox events on a fixed delay of outbox.poller.interval-ms, 2000 ms by default.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxPoller.java:25; src/main/resources/application.yml:169-171",
+      "quote": "@Scheduled(fixedDelayString = \"${outbox.poller.interval-ms:2000}\")",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-056",
+      "statement": "The poller is on unless outbox.poller.enabled is set to false.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxPoller.java:16; src/main/resources/application.yml:176",
+      "quote": "@ConditionalOnProperty(prefix = \"outbox.poller\", name = \"enabled\", havingValue = \"true\", matchIfMissing = true)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-057",
+      "statement": "Only one backend instance publishes at a time: each poll takes a shared lock named outbox-poller, held for at least 1 second and at most 30 seconds.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxPoller.java:19,27-41; src/main/resources/application.yml:174-175",
+      "quote": "static final String LOCK_NAME = \"outbox-poller\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-058",
+      "statement": "The poller reads waiting events 10 at a time and publishes at most 500 in one run; the run limit can be set with OUTBOX_POLLER_MAX_EVENTS_PER_RUN.",
+      "kind": "non-functional",
+      "ref": "src/main/resources/application.yml:172-173; src/main/java/uk/gov/defra/trade/imports/animals/configuration/OutboxConfig.java:14",
+      "quote": "batch-size: 10\n    max-events-per-run: ${OUTBOX_POLLER_MAX_EVENTS_PER_RUN:500}",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-059",
+      "statement": "A batch size or run limit of zero or less falls back to 10 and 500, and lock times left unset fall back to 1 and 30 seconds; the poll interval must be positive or the service will not start.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/configuration/OutboxConfig.java:30-46",
+      "quote": "if (intervalMs <= 0) {\n                throw new IllegalArgumentException(\"outbox.poller.interval-ms must be positive\");\n            }\n            if (batchSize <= 0) {\n                batchSize = 10;\n            }\n            if (maxEventsPerRun <= 0) {\n                maxEventsPerRun = 500;\n            }",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-060",
+      "statement": "Events are published to one SNS topic, set by OUTBOX_SNS_TOPIC_ARN; when no topic is set, the poller publishes nothing and events stay waiting.",
+      "kind": "integration",
+      "ref": "src/main/resources/application.yml:177-178; src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxPublishService.java:42-46",
+      "quote": "if (topicArn == null || topicArn.isBlank()) {\n            log.debug(\"Outbox SNS topic ARN not configured; skipping publish\");\n            return 0;\n        }",
+      "confidence": "verbatim",
+      "note": "OutboxConfig marks topicArn @NotBlank while application.yml defaults it to empty, so a missing value may instead stop the service from starting. The publish code is written to tolerate it."
+    },
+    {
+      "id": "repo-backend-p5-061",
+      "statement": "The topic is an SNS FIFO topic: each message's group id is the notification's aggregateId and its deduplication id is the eventId.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxPublishService.java:113-119; src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:214-216",
+      "quote": ".messageGroupId(event.getAggregateId())\n            .messageDeduplicationId(event.getEventId())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-062",
+      "statement": "Waiting events are published oldest first by write time, then by aggregateVersion, so one notification's events are delivered in order while different notifications are delivered independently.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEventRepository.java:17; src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEvent.java:20-22",
+      "quote": "List<OutboxEvent> findByPublishedAtIsNullOrderByTimestampAscAggregateVersionAsc(Pageable pageable);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-063",
+      "statement": "The SNS message body is the whole event serialised as JSON.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxPublishService.java:111-115",
+      "quote": "String messageBody = objectMapper.writeValueAsString(event);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-064",
+      "statement": "Each SNS message carries the string attributes eventType, correlationId, schemaVersion and schemaUrl, with an empty string for any value that is missing.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxPublishService.java:24-27,124-141",
+      "quote": "return Map.of(\n            ATTR_EVENT_TYPE, stringAttribute(event.getEventType()),\n            ATTR_CORRELATION_ID, stringAttribute(correlationId),\n            ATTR_SCHEMA_VERSION, stringAttribute(schemaVersion),\n            ATTR_SCHEMA_URL, stringAttribute(schemaUrl));",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-065",
+      "statement": "Once an event is published it is marked with its publish time and is never published again by the poller.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxPublishService.java:83-88",
+      "quote": "event.setPublishedAt(publishedAt);\n                publishToSns(event, topicArn);\n                outboxEventRepository.save(event);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-066",
+      "statement": "A run keeps reading batches until no events are waiting, a publish fails, or the run limit is reached.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxPublishService.java:34-69",
+      "quote": "Publishes unpublished outbox events to SNS in the order they were written, taking further\n     * batches until the backlog is drained, a publish fails, or\n     * {@code outbox.poller.max-events-per-run} is reached.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-067",
+      "statement": "An event with no payload is skipped and logged as an error; it is never published and stays waiting.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxPublishService.java:76-82",
+      "quote": "log.error(\n                    \"Skipping outbox event with null payload: eventId={} aggregateId={} version={}\",",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-068",
+      "statement": "If SNS rejects a publish, the event stays waiting, the run stops at that event, and the next poll tries it again.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxPublishService.java:97-104",
+      "quote": "} catch (SnsException e) {\n                event.setPublishedAt(null);\n                log.error(\"Failed to publish outbox event eventId={} aggregateId={} version={}: {}\",",
+      "confidence": "inferred",
+      "note": "Inferred retry: the event is not saved as published, so the next poll selects it again. There is no retry count or back-off."
+    },
+    {
+      "id": "repo-backend-p5-069",
+      "statement": "If an event cannot be turned into JSON, the event stays waiting, the run stops and an error asks for manual investigation.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxPublishService.java:89-96",
+      "quote": "\"Outbox event payload is not serializable; manual investigation required: \"",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-070",
+      "statement": "An event that always fails to publish blocks every event queued after it, for every notification, because each run stops at the first failure and starts again from the oldest waiting event.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxPublishService.java:53-67,95-103",
+      "quote": "if (outcome.stoppedOnError() || events.size() < pageSize) {\n                break;\n            }",
+      "confidence": "inferred",
+      "note": "Inferred from ordering by timestamp across all notifications plus stop-on-error. There is no dead-letter or skip-after-N rule."
+    },
+    {
+      "id": "repo-backend-p5-071",
+      "statement": "GET /notifications/{referenceNumber}/outbox-events returns all the notification's outbox events in the order they were written (aggregateVersion ascending).",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:200-210; src/test/java/uk/gov/defra/trade/imports/animals/outbox/OutboxServiceTest.java:571-592",
+      "quote": "Returns all outbox events for a notification reference number in chronological write order (aggregateVersion ascending)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-072",
+      "statement": "GET /notifications/{referenceNumber}/outbox-events returns an empty list, not a 404, when the notification has no events or does not exist.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:203-210; src/test/java/uk/gov/defra/trade/imports/animals/outbox/OutboxServiceTest.java:594-606",
+      "quote": "@ApiResponse(responseCode = \"200\", description = \"Events returned\", content = @Content)",
+      "confidence": "inferred",
+      "note": "Inferred: the service returns the repository's list as is, and no 404 response is declared."
+    },
+    {
+      "id": "repo-backend-p5-073",
+      "statement": "The outbox-events and replay endpoints accept only a reference number that matches the notification reference-number pattern.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:207,223",
+      "quote": "@Pattern(regexp = ReferenceNumberGenerator.REFERENCE_NUMBER_PATTERN) @PathVariable String referenceNumber",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-074",
+      "statement": "The outbox-events read endpoint has no admin-secret check of its own, although its API description lists a 401 response; the service itself does not restrict who may read it.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/filter/AdminSecretFilter.java:47-57; src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:204",
+      "quote": "boolean isDeleteNotifications = \"DELETE\".equalsIgnoreCase(method)\n            && uri.startsWith(\"/notifications\");\n        boolean isReplayEndpoint = \"POST\".equalsIgnoreCase(method)\n            && uri.matches(\"/notifications/[^/]+/replay\");",
+      "confidence": "inferred",
+      "note": "Security finding, stated generally. The events include actor names and organisation ids. Access may be limited by the platform network, which this repo does not show."
+    },
+    {
+      "id": "repo-backend-p5-075",
+      "statement": "POST /notifications/{referenceNumber}/replay re-publishes every outbox event for the notification to the SNS FIFO topic in aggregateVersion order, with the same message group and deduplication ids as the first publish.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:212-229; src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxReplayService.java:27-46",
+      "quote": "Re-publishes all outbox events for a notification to SNS FIFO in aggregate version order. The outbox is read-only — no data is mutated. Each event is re-published with the same MessageGroupId (aggregateId) and MessageDeduplicationId (eventId) as the original publish.",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-076",
+      "statement": "Replay changes nothing in the outbox: events keep their original publish time, and replay publishes events the poller has not reached yet as well.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxReplayService.java:35-46",
+      "quote": "outboxPublishService.publishToSns(event, topicArn);",
+      "confidence": "inferred",
+      "note": "Replay calls publishToSns directly and never saves the event, so an unpublished event replayed is published again later by the poller (SNS FIFO deduplication suppresses it within five minutes)."
+    },
+    {
+      "id": "repo-backend-p5-077",
+      "statement": "A successful replay returns 200 with eventsReplayed, the number of events for the notification.",
+      "kind": "data",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/ReplayResponse.java:3; src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:227-228",
+      "quote": "public record ReplayResponse(int eventsReplayed) {",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-078",
+      "statement": "Replay returns 404 when the notification has no outbox events.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxReplayService.java:28-31",
+      "quote": "throw new NotFoundException(\"No outbox events found for: \" + referenceNumber);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-079",
+      "statement": "Only callers holding the shared admin secret may replay: a replay request without the Trade-Imports-Animals-Admin-Secret header, or with the wrong value, gets 401.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/filter/AdminSecretFilter.java:24,30-44,52-53",
+      "quote": "private static final String HEADER_NAME = \"Trade-Imports-Animals-Admin-Secret\";",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-080",
+      "statement": "If the service has no admin secret configured, every replay request is refused with 401.",
+      "kind": "constraint",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/filter/AdminSecretFilter.java:35-41",
+      "quote": "if (tradeImportsAnimalsAdminSecret.isBlank()\n                || providedSecret == null",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-081",
+      "statement": "A replay request must name the user making it in the User-Id header.",
+      "kind": "rule",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java:42,225",
+      "quote": "@RequestHeader(value = HEADER_USER_ID, required = true) String userId",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-082",
+      "statement": "Each replay writes an audit record with action REPLAY_EVENTS, its result, the reference number, 1 notification, the number of events, the trace id, the user id and a timestamp.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxReplayService.java:48,54-65",
+      "quote": ".action(Action.REPLAY_EVENTS)\n            .result(result)\n            .notificationReferenceNumbers(List.of(referenceNumber))\n            .numberOfNotifications(1)\n            .numberOfEvents(count)\n            .traceId(auditContext.traceId())\n            .userId(auditContext.userId())\n            .timestamp(Instant.now())",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-083",
+      "statement": "If an event cannot be turned into JSON during replay, replay stops there and the audit records FAILURE, yet the response still reports the total number of events as replayed.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxReplayService.java:36-51",
+      "quote": "writeAuditRecord(referenceNumber, events.size(), auditContext, failed ? Result.FAILURE : Result.SUCCESS);\n        log.info(\"Replayed {} event(s) for referenceNumber={} by userId={}\",\n            events.size(), referenceNumber, auditContext.userId());\n        return events.size();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-084",
+      "statement": "If SNS rejects a publish during replay, the request fails with an error and no audit record is written, because only JSON failures are caught.",
+      "kind": "behaviour",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxReplayService.java:35-48",
+      "quote": "} catch (JsonProcessingException e) {",
+      "confidence": "inferred",
+      "note": "Inferred: SnsException is not caught in replay, so it propagates before writeAuditRecord. The response then depends on GlobalExceptionHandler, part 1's."
+    },
+    {
+      "id": "repo-backend-p5-085",
+      "statement": "Proven by OutboxPollerIT publishUnpublishedEvents_shouldDeliverToSnsAndMarkPublishedAt: creating and submitting a notification publishes 2 events; the NotificationSubmitted message has aggregateVersion 2, its eventId and aggregateId, aggregateType Notification, subType GBN-AG, a timestamp, the request's correlationId, schemaVersion 1, a payload identifying the reference number and no publishedAt, and matching eventType, correlationId and schemaVersion attributes.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/outbox/OutboxPollerIT.java:38-77",
+      "quote": "assertThat(publishedMessage.get(\"eventType\").asText())\n            .isEqualTo(\"uk.gov.defra.imports.notification.NotificationSubmitted\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-086",
+      "statement": "Proven by OutboxPollerIT publishUnpublishedEvents_shouldNotRepublishAlreadyPublishedEvents: a second poll after everything is published publishes nothing and sends no message.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/outbox/OutboxPollerIT.java:79-90",
+      "quote": "assertThat(outboxPublishService.publishUnpublishedEvents()).isZero();\n        assertThat(receiveMessages()).isEmpty();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-087",
+      "statement": "Proven by OutboxPollerIT publishUnpublishedEvents_shouldPublishAggregateVersionsInOrder: a notification submitted twice publishes versions 1, 2 and 3, and each submission message carries its own request's correlationId.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/outbox/OutboxPollerIT.java:92-147",
+      "quote": "// v2 carries trace-v1 (first submit), v3 carries trace-v2 (second submit)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-088",
+      "statement": "Proven by OutboxPollerIT unpublishedEvents_shouldQueueOldestFirst_whenAggregateIdsSortAgainstWriteOrder: waiting events queue by write time, not by aggregate id.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/outbox/OutboxPollerIT.java:149-164",
+      "quote": "assertThat(queued).extracting(OutboxEvent::getEventId)\n            .containsExactly(\"event-older\", \"event-newer\");",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-089",
+      "statement": "Proven by OutboxPollerIT publishUnpublishedEvents_shouldDeliverNotificationEditedToSns: a page save after create publishes a NotificationEdited message at version 2 with the save's correlationId.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/outbox/OutboxPollerIT.java:166-196",
+      "quote": "// create → NOTIFICATION_CREATED (v1), page save → NOTIFICATION_EDITED (v2)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-090",
+      "statement": "Proven by OutboxPollerIT publishUnpublishedEvents_shouldIncrementAggregateVersion_acrossPageSaveAndSubmit: create, page save and submit publish NotificationCreated v1, NotificationEdited v2 and NotificationSubmitted v3.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/outbox/OutboxPollerIT.java:198-227",
+      "quote": "// create → NOTIFICATION_CREATED (v1), page save → NOTIFICATION_EDITED (v2),\n        // submit → NOTIFICATION_SUBMITTED (v3)",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-091",
+      "statement": "Proven by OutboxPollerIT publishUnpublishedEvents_shouldNotSerialiseEventsForDifferentNotifications: events for two different notifications are in flight at once, one per message group.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/outbox/OutboxPollerIT.java:229-251",
+      "quote": "// Then — both are in flight at once, which one message group could never be",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-092",
+      "statement": "Proven by ReplayIT replay_shouldRepublishEventToSns: replaying a just-created notification with the admin secret returns eventsReplayed 1 and delivers the event with its original eventId and aggregateVersion 1.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/outbox/ReplayIT.java:45-72",
+      "quote": "assertThat(response.eventsReplayed()).isEqualTo(1);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-093",
+      "statement": "Proven by ReplayIT replay_shouldNotMutateOutboxPublishedAt: replay leaves an already-published event's publish time unchanged.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/outbox/ReplayIT.java:74-100",
+      "quote": "// Then — publishedAt on the outbox event is NOT mutated by replay",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-094",
+      "statement": "Replaying events that were already published sends nothing for five minutes, because SNS FIFO deduplicates on the reused eventId.",
+      "kind": "constraint",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/outbox/ReplayIT.java:74-78",
+      "quote": "replaying an\n     * already-published event reuses its eventId as the deduplication id, so SNS FIFO suppresses\n     * the message for five minutes.",
+      "confidence": "verbatim",
+      "note": "So replay only re-delivers events published more than five minutes earlier (the SNS FIFO deduplication window)."
+    },
+    {
+      "id": "repo-backend-p5-095",
+      "statement": "Proven by ReplayIT replay_shouldRepublishMultipleEventsInVersionOrder: a notification with 3 events replays all 3, each delivered for that notification's reference number.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/outbox/ReplayIT.java:102-141",
+      "quote": "// Then — all 3 events replayed and delivered to SQS",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-096",
+      "statement": "Proven by ReplayIT replay_shouldWriteAuditRecord: one replay writes one REPLAY_EVENTS audit record with result SUCCESS, the reference number, 1 notification, 2 events, the trace id and the user id.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/outbox/ReplayIT.java:143-167",
+      "quote": "assertThat(audit.getAction()).isEqualTo(Action.REPLAY_EVENTS);\n        assertThat(audit.getResult()).isEqualTo(Result.SUCCESS);",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-097",
+      "statement": "Proven by ReplayIT replay_shouldReturn404_whenNoOutboxEventsExist: replay of a notification with no outbox events returns 404 and writes no audit record.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/outbox/ReplayIT.java:169-192",
+      "quote": ".expectStatus().isNotFound();\n\n        assertThat(auditRepository.findAll()).isEmpty();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-098",
+      "statement": "Proven by ReplayIT replay_shouldReturn401_whenAdminSecretIsMissing: replay without the admin secret returns 401 and writes no audit record.",
+      "kind": "behaviour",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/outbox/ReplayIT.java:194-206",
+      "quote": ".expectStatus().isUnauthorized();\n\n        assertThat(auditRepository.findAll()).isEmpty();",
+      "confidence": "verbatim"
+    },
+    {
+      "id": "repo-backend-p5-099",
+      "statement": "No test in this part proves that amend, cancel-amend, copy or soft-delete events reach SNS: OutboxPollerIT and ReplayIT only drive create, save and submit.",
+      "kind": "integration",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/outbox/OutboxPollerIT.java; src/test/java/uk/gov/defra/trade/imports/animals/integration/outbox/ReplayIT.java",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Looked through every test in both ITs. NotificationIT (another part's) may assert the event written per action, but not its publication."
+    },
+    {
+      "id": "repo-backend-p5-100",
+      "statement": "No test in this part calls GET /notifications/{referenceNumber}/outbox-events through the API.",
+      "kind": "integration",
+      "ref": "src/test/java/uk/gov/defra/trade/imports/animals/integration/outbox/OutboxPollerIT.java; src/test/java/uk/gov/defra/trade/imports/animals/integration/outbox/ReplayIT.java",
+      "quote": "",
+      "confidence": "gap",
+      "note": "Only OutboxServiceTest covers the read, at the service level."
+    },
+    {
+      "id": "repo-backend-p5-101",
+      "statement": "The repo does not say which services subscribe to the outbox topic or what each does with each event type.",
+      "kind": "integration",
+      "ref": "src/main/resources/application.yml:168-178; src/main/java/uk/gov/defra/trade/imports/animals/outbox/",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The backend publishes to one topic set by OUTBOX_SNS_TOPIC_ARN. Its consumers are configured outside this repo."
+    },
+    {
+      "id": "repo-backend-p5-102",
+      "statement": "The repo has no alerting, dead-letter handling or retry limit for an event that keeps failing to publish; only error logs record it.",
+      "kind": "non-functional",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxPublishService.java:76-104",
+      "quote": "",
+      "confidence": "gap"
+    },
+    {
+      "id": "repo-backend-p5-103",
+      "statement": "There is no outbox event type for copying a notification as such, nor for template use: both appear downstream only as a new notification's NotificationCreated.",
+      "kind": "integration",
+      "ref": "src/main/java/uk/gov/defra/trade/imports/animals/outbox/OutboxEventType.java:15-40",
+      "quote": "",
+      "confidence": "gap",
+      "note": "The programme scope names templates. Nothing in the outbox package or the controller's endpoints mentions them."
+    }
+  ]
+}

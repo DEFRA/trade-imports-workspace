@@ -25,14 +25,13 @@ const fileWith = (text) => {
 const fitRung = { repo: 'frontend', name: 'fit', phase: 'fit', refusal: null }
 
 describe('#defaultMachineConfigPath', () => {
-  test('Should prefer TIM_MACHINE_CONFIG, then XDG_CONFIG_HOME', () => {
+  test('Should prefer TIM_MACHINE_CONFIG, then the workspace config folder', () => {
     expect([
-      defaultMachineConfigPath({
-        TIM_MACHINE_CONFIG: '/a/machine.json',
-        XDG_CONFIG_HOME: '/b'
+      defaultMachineConfigPath('/ws', {
+        TIM_MACHINE_CONFIG: '/a/machine.json'
       }),
-      defaultMachineConfigPath({ XDG_CONFIG_HOME: '/b' })
-    ]).toEqual(['/a/machine.json', '/b/tim/machine.json'])
+      defaultMachineConfigPath('/ws', {})
+    ]).toEqual(['/a/machine.json', '/ws/config/machine.json'])
   })
 })
 

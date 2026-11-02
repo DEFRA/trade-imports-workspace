@@ -1,0 +1,126 @@
+{
+  "source": "prototype:dr2-1-specs",
+  "structure": "workareas/shared/design-release-2-1/prototype-specs is a small Playwright project that drove the Design Release 2.1 traces (trace:prototype-dr2-1) against the GB-notification-service prototype mounted at /design-release-2.1. In scope: the 10 fit specs in e2e/ (99 test() calls by grep, 103 tests reported by COVERAGE.md, about 2,620 lines): about-the-consignment (351 lines, 20 tests: notification type, origin, what are you importing, main import reason, germinal section 1), description-of-the-goods (249, 7), transport-and-arrival (272, 10), documents (124, 7), consignment-parties (398, 14: role pickers, add-address, permanent address, contact address), journeys (391, 5 plus the hub/review/declaration tests), dashboard (213, 8), manage-notifications (195, 7: view, amend, cancel-amend, copy, delete), templates (206, 12) and address-book (220, 9); the shared helper e2e/support/journey.js (270 lines: page actions and shared assertions every spec calls); and COVERAGE.md (201 lines: the route table of 67 routes with visiting tests and captured states, the 36 DR2.1 override views, what was not reached and why, and 15 behaviours worth knowing). Plumbing read for context only: README.md, e2e/support/fixtures.js and evidence.js, playwright.config.js. Left out: explore/ (ad hoc exploration scripts and their ~180 text dumps, which are not the driving suite; their findings that matter are restated in COVERAGE.md), the run/collect/coverage scripts and package files. Cut by feature area, one or two spec files per part following the journey order, with COVERAGE.md as its own part; every spec part reads journey.js in full but claims only the assertions its own tests make.",
+  "parts": [
+    {
+      "part": 1,
+      "title": "Section 1: type, origin, commodity, reason",
+      "scope": "e2e/about-the-consignment.fit.spec.js only: the first questions of the journey up to the reason for import, for live animals and germinal products. Stops before consignment details and identification (part 2).",
+      "read": [
+        "workareas/shared/design-release-2-1/prototype-specs/e2e/about-the-consignment.fit.spec.js",
+        "workareas/shared/design-release-2-1/prototype-specs/e2e/support/journey.js"
+      ],
+      "covers": [
+        "all 20 tests in about-the-consignment.fit.spec.js, each test that asserts something gets a claim with spec file and test name as ref",
+        "notification type (3 tests): create new asks the type first, a category dashboard start skips it, plants for planting reaches an empty commodity search",
+        "origin of the import (4 tests): every heading, label, hint, region code reveal with country prefix, empty-code error message verbatim, country optional, country search",
+        "what are you importing (5 tests): commodity search, nothing-selected error verbatim, species search and selection, multiple commodities and clear, save and return without validating",
+        "main import reason (7 tests): every reason with its hint, reason optional, internal market purposes required, transhipment destination, transit port of exit and destination, temporary admission horses exit date and port, the prototype seed route",
+        "germinal products section 1 (1 test): category start, germinal search hint, reduced list of reasons",
+        "the journey.js helpers and shared assertions these tests call, claimed as what the tests assert"
+      ],
+      "prefix": "prototype-dr2-1-specs-p1"
+    },
+    {
+      "part": 2,
+      "title": "Goods, transport and arrival, documents",
+      "scope": "e2e/description-of-the-goods.fit.spec.js, e2e/transport-and-arrival.fit.spec.js and e2e/documents.fit.spec.js: consignment details, animal identification, additional details, arrival details, transit countries, transporter and add-a-transporter pages, and upload documents.",
+      "read": [
+        "workareas/shared/design-release-2-1/prototype-specs/e2e/description-of-the-goods.fit.spec.js",
+        "workareas/shared/design-release-2-1/prototype-specs/e2e/transport-and-arrival.fit.spec.js",
+        "workareas/shared/design-release-2-1/prototype-specs/e2e/documents.fit.spec.js",
+        "workareas/shared/design-release-2-1/prototype-specs/e2e/support/journey.js"
+      ],
+      "covers": [
+        "all 7 tests in description-of-the-goods.fit.spec.js: consignment details (required and whole-number errors, germinal packages/weight/temperature), animal identification (one or several animals, germinal donor ID, dates and identification mark errors), additional details for cattle and poultry",
+        "all 10 tests in transport-and-arrival.fit.spec.js: arrival details fields and errors, port search, transit countries, transporter page, the legacy transport-details redirect, add a transporter (private and commercial: authorisation number, address search or manual entry, errors, cancel)",
+        "all 7 tests in documents.fit.spec.js: upload documents fields, errors (including real date), file chosen, listed document with virus check status, remove",
+        "every heading, label, hint, option, error message verbatim, conditional reveal and redirect each test asserts, with spec file and test name as ref"
+      ],
+      "prefix": "prototype-dr2-1-specs-p2"
+    },
+    {
+      "part": 3,
+      "title": "Consignment parties and contact address",
+      "scope": "e2e/consignment-parties.fit.spec.js only: the roles and addresses page, the five role pickers, add-address pages, CPH number, permanent address and the contact address for consignment.",
+      "read": [
+        "workareas/shared/design-release-2-1/prototype-specs/e2e/consignment-parties.fit.spec.js",
+        "workareas/shared/design-release-2-1/prototype-specs/e2e/support/journey.js"
+      ],
+      "covers": [
+        "all 14 tests in consignment-parties.fit.spec.js",
+        "consignment addresses (7 tests): cattle five roles plus CPH, cat permanent address replacing CPH, picking every role, same-as shortcuts, picker search, continue with nothing chosen, save and return to hub",
+        "add an address from the journey (2 tests) and for the other roles (1 test): international address by hand, UK address search and completion, lookup errors",
+        "permanent address (2 tests): one choice per animal, same as destination or new address, its errors, the retired enter-address redirect",
+        "contact address for consignment (2 tests): choose the contact address and its error, add a new branch address from the contact page",
+        "every heading, label, hint, option, error message verbatim, branch and redirect each test asserts"
+      ],
+      "prefix": "prototype-dr2-1-specs-p3"
+    },
+    {
+      "part": 4,
+      "title": "End-to-end journeys, hub, review and declaration",
+      "scope": "e2e/journeys.fit.spec.js only: the complete notification journeys (cattle by air, cat, horse by sea, poultry by rail, germinal semen and the rest it names) through hub, review, declaration and submitted page, plus the notification hub tests.",
+      "read": [
+        "workareas/shared/design-release-2-1/prototype-specs/e2e/journeys.fit.spec.js",
+        "workareas/shared/design-release-2-1/prototype-specs/e2e/support/journey.js"
+      ],
+      "covers": [
+        "every test in journeys.fit.spec.js: the notification journeys end to end (each journey's pages in order, what the hub and review show, the declaration and its error, the submitted page and reference format)",
+        "the notification hub (4 tests): fresh notification lists every task as to do, a hub task link returns to the hub, review with tasks missing lists each incomplete section with its error, the submitted page is guarded until the declaration is confirmed",
+        "every task name, status, summary row, error message verbatim and redirect the tests assert"
+      ],
+      "prefix": "prototype-dr2-1-specs-p4"
+    },
+    {
+      "part": 5,
+      "title": "Dashboards and managing notifications",
+      "scope": "e2e/dashboard.fit.spec.js and e2e/manage-notifications.fit.spec.js: the overall and category dashboards, at-a-glance drill-downs, and viewing, amending, cancelling an amendment, copying as new and deleting a notification.",
+      "read": [
+        "workareas/shared/design-release-2-1/prototype-specs/e2e/dashboard.fit.spec.js",
+        "workareas/shared/design-release-2-1/prototype-specs/e2e/manage-notifications.fit.spec.js",
+        "workareas/shared/design-release-2-1/prototype-specs/e2e/support/journey.js"
+      ],
+      "covers": [
+        "all 8 tests in dashboard.fit.spec.js: overall dashboard and its redirects, the prototype index, category dashboards (live animals tabs, search, filters; germinal products packages), action needed, status updated and inspection required drill-downs",
+        "all 7 tests in manage-notifications.fit.spec.js: view submitted with action required, submitted, completed and draft; amend (confirm, change, save and return, resubmit; cancel from the amend review); amend and copy guards; copy as new; delete with its confirmation and banner",
+        "every heading, tab, column, status tag, filter, link, button, banner and error message verbatim the tests assert"
+      ],
+      "prefix": "prototype-dr2-1-specs-p5"
+    },
+    {
+      "part": 6,
+      "title": "Templates and address book",
+      "scope": "e2e/templates.fit.spec.js and e2e/address-book.fit.spec.js: creating, naming, saving, discarding, viewing, changing, using, editing and deleting templates; the address book list, add (by usage), lookup, view, edit and delete.",
+      "read": [
+        "workareas/shared/design-release-2-1/prototype-specs/e2e/templates.fit.spec.js",
+        "workareas/shared/design-release-2-1/prototype-specs/e2e/address-book.fit.spec.js",
+        "workareas/shared/design-release-2-1/prototype-specs/e2e/support/journey.js"
+      ],
+      "covers": [
+        "all 12 tests in templates.fit.spec.js: create asks type then name, template mode journey (no documents, no declaration), Untitled template, discard, view, change one section and its banner, use, edit, delete and its banner",
+        "all 9 tests in address-book.fit.spec.js: add an address for each usage (origin or consignor, destination/consignee/importer, transporter, branch) with errors, the usage step guard, list search and paging, view, edit and save with errors, delete and its banner",
+        "every heading, label, hint, option, error message verbatim, banner and redirect the tests assert"
+      ],
+      "prefix": "prototype-dr2-1-specs-p6"
+    },
+    {
+      "part": 7,
+      "title": "COVERAGE.md",
+      "scope": "COVERAGE.md in full: the route table, the override view table, what was not reached and why, and the behaviours worth knowing. README.md and the support plumbing are read for context only.",
+      "read": [
+        "workareas/shared/design-release-2-1/prototype-specs/COVERAGE.md",
+        "workareas/shared/design-release-2-1/prototype-specs/README.md",
+        "workareas/shared/design-release-2-1/prototype-specs/e2e/support/fixtures.js",
+        "workareas/shared/design-release-2-1/prototype-specs/e2e/support/evidence.js"
+      ],
+      "covers": [
+        "the 67 routes in the route table: each route, the view it renders (DR2.1 override or shared root view or redirect) and the states captured",
+        "the 36 DR2.1 override views and which route renders each, including the unreachable permanent-address view",
+        "the 5 'Not reached, and why' items",
+        "the 15 'Behaviour worth knowing' items, each as its own claim, marked inferred where COVERAGE.md says observed but not asserted"
+      ],
+      "prefix": "prototype-dr2-1-specs-p7"
+    }
+  ]
+}

@@ -136,6 +136,115 @@
       ]
     },
     {
+      "id": "inc-240",
+      "title": "The theme branch takes in what main has landed since it was cut",
+      "kind": "chore",
+      "theme": "arrival-and-transit",
+      "status": "todo",
+      "repos": [
+        "frontend",
+        "plantsfrontend",
+        "tests"
+      ],
+      "merge": {
+        "frontend": "origin/main",
+        "plantsfrontend": "origin/main",
+        "tests": "origin/main"
+      },
+      "gatePhases": [],
+      "dependsOn": [],
+      "detail": "The branch was cut on 13 October, stacked on the journey foundation and reference lists branches, and last took main that day. Since then main has landed journey foundation and reference lists in their reviewed form, design snagging (EUDPA-720, 23 October), which reworked arrival details and the transit countries page and took this theme's arrival wording, port labels and transit Back link, and the 26 October Save and return ruling (animals frontend #436). The branch is now 26 commits behind main in the animals frontend, 30 in the plants frontend and 167 in the tests repo, and every one of its pull requests conflicts with main, so GitHub runs no checks on them. A trial merge conflicts in 16 animals frontend files (port-of-entry and transit-countries controllers, templates, validators, copy and tests, check-answers copy and tests, arrival-transit.fit.spec.js, shared/kit.js, services/countries/index.js, accessible-autocomplete.js), 6 plants frontend files (arrival-details copy, template, fit spec and shared/kit.js) and 17 tests repo files (the animals and plants arrival details page objects, the transited countries page object, flows/animals/journey.ts, resources/reference-data/reference-data.ts and the arrival, transit, soft-save, reference-list, hub and journey specs). Each conflict sets main's rewrite against an older copy of the same work: everything the branch carried is either on main in a newer form or belongs to a todo row of this theme (inc-241, inc-029, inc-174), which rebuilds it on main's code.",
+      "acceptanceCriteria": [
+        "origin/main is merged into feat/EUDPA-694-design-release-2-1-arrival-and-transit in the animals frontend, the plants frontend and the tests repo, as one two-parent merge commit each, with no conflict markers left in any file.",
+        "After the merge each repo's tree is identical to origin/main: git diff origin/main HEAD prints nothing. In every conflicting file, and in every file the merge applied cleanly, main's version wins, because the branch's hunks are older copies of work main now holds or work inc-241, inc-029 and inc-174 rebuild.",
+        "Animals frontend #402, plants frontend #95 and tests #24 each report no conflict with their base, so GitHub runs their checks again.",
+        "Every one of those pull requests is green."
+      ],
+      "notes": [
+        "Added 2 November by the re-analysis (reanalysis.md beside this backlog), under Sam's ruling of 2 November that the stale branch is reused, with main brought in, rather than replaced by a fresh one.",
+        "The branch's own commits stay in its history for the later rows to take code from: animals frontend 843821b8 (required means), 49e22db9 (transit title and redirect) and 7d42a714 (transit country list); tests 5246f57, 29c74b5, 22a54fa and bf126b6. Nothing from them survives this merge.",
+        "The stub (#20), reference data (#27) and INS frontend (#49) branches are not merged: they carry only journey foundation and reference lists work that main already holds (a trial merge of main is clean and leaves each tree identical to main), no row builds in them, and none of them has a branch image, so the pull requests' end-to-end runs use main's :latest image for those services.",
+        "gatePhases is [] because the baseline would run on the 13 October tree, which is not what the merge leaves. The pull requests prove the merged tree, and the next row's baseline runs unit and FIT on it."
+      ],
+      "sources": [],
+      "requirements": [],
+      "openQuestions": []
+    },
+    {
+      "id": "inc-241",
+      "title": "Arrival details requires a means of transport, on both save buttons",
+      "kind": "feat",
+      "theme": "arrival-and-transit",
+      "status": "todo",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "dependsOn": [
+        "inc-240"
+      ],
+      "detail": "Design Release 2.1 makes means of transport the one required answer on arrival details, because it decides whether transit countries are asked. Today an empty means of transport passes on both buttons, so a trader can save and continue past it. After this change the page refuses either save button while no means of transport is chosen. Sam's 26 October ruling makes Save and return to overview make exactly the same checks as Save and continue on every page, so the required means applies to both buttons: this replaces inc-028, whose third criterion let Save and return to overview save without one. The real service keeps every field check it has today (c-045): a page with any error saves nothing and shows the entries back.",
+      "acceptanceCriteria": [
+        "Save and continue on arrival details with no means of transport chosen stays on the page and shows 'Select a means of transport to the port of entry' in the error summary, linking to the means of transport select, and above the select, which is shown in its error style (prototype:dr2-1-source prototype-dr2-1-source-p6-039, prototype-dr2-1-source-p6-040; prototype:dr2-1-specs prototype-dr2-1-specs-p2-081; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-030, trace-prototype-dr2-1-p8-031)",
+        "When that error shows, the page title starts 'Error: ', nothing is saved and the other answers entered are shown back (conflict c-006; conflict c-045)",
+        "Save and return to overview on arrival details with no means of transport chosen does the same: it stays on the page with the same error, saves nothing and shows the other answers back (ruling:sam-2026-10-26 claim 1)",
+        "The Welsh page shows 'Dewiswch gyfrwng cludo i’r porthladd mynediad' for the same error"
+      ],
+      "sources": [
+        {
+          "source": "ruling:sam-2026-10-26",
+          "ref": "claim 1"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p6-012, p6-039, p6-040, p6-053, p6-067, p6-080, p6-083"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "prototype-dr2-1-specs-p2-081, p2-082"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p8-030, p8-031, p8-032, p8-033, p8-046"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "ruling-sam-2026-10-09-p1-196, p1-198"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p3-015"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "repo-frontend-p11-003, p11-019, p11-047, p11-048, p11-052, p11-054, p11-099"
+        },
+        {
+          "source": "repo:tests",
+          "ref": "repo-tests-p1-101, p1-102, p1-104"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "trace-animals-fit-p16-073, p16-079, p16-087, p16-088, p17-059"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p10-001, p10-028, p10-029, p10-041, p10-066"
+        }
+      ],
+      "requirements": [
+        "req-315"
+      ],
+      "notes": [
+        "Replaces inc-028 (2 November re-analysis, reanalysis.md beside this backlog). inc-028's third criterion, Save and return to overview with no means of transport saves and goes to the overview, follows c-211, which Sam's 26 October ruling replaced; main's animals frontend #436 already makes Save and return run the same checks as Save and continue. The prototype's own Save and return (prototype-dr2-1-source-p6-051) is unchanged since 04a073b, but the ruling outranks it.",
+        "Animals only: plants arrival details asks no means of transport. Return to the overview or the review and the continue to transit countries or Transporter details are on main (journey foundation inc-002, inc-003).",
+        "Main on 2 November: port-of-entry/validate.js still checks meansOfTransport with oneOf(transportReference.meansOfTransport()), so an empty means passes on both buttons; that is the gap. requiredOneOf is on main in lib/validate/validators.js. The empty option reads copy.portOfEntry.means.selectText ('Select one'): the error must fire when that is left chosen. With #436 there is no allowMissing on a hub exit, so the rule must not be skipped on Save and return.",
+        "Take code from the reused branch's history, not by cherry-pick (main rewrote these files): animals frontend 843821b8 has the en and cy strings and the meansRule shape; tests 5246f57 has the arrival-details page object and spec changes. Write the tests against main's rewritten port-of-entry.controller.test.js, arrival-transit.fit.spec.js, transporters.fit.spec.js and the tests repo's arrival-details page object and arrival-details.spec.ts. The FIT and e2e journeys that save arrival details without a means (transporters.fit.spec.js, commercial-transporter-details.fit.spec.js and the tests repo's journey helpers) need a means chosen.",
+        "Spec: main still says the opposite in two places, and this row owns both. openspec/specs/live-animals/journey-pages/arrival-details/spec.md REQ-ARRIVAL-006 'Saving the page empty keeps a draft and moves on' becomes the refusal on both buttons. openspec/coverage/live-animals/journey-flow/coverage.json links soft-save.spec.ts 'arrival details: when no means of transport is chosen, saves the port, shows the overview and keeps the task to do' and a port-of-entry controller test to the Save and return scenario for arrival details: rewrite that scenario in the journey-flow spec to the refusal, and those tests with it. The reused branch's spec commit 5a995a66 (workspace) has a REQ-ARRIVAL-006 rewrite to start from, but its 'Save and return to overview with no means of transport is not refused' sentence is wrong under the ruling."
+      ],
+      "openQuestions": []
+    },
+    {
       "id": "inc-028",
       "title": "Arrival details requires a means of transport to continue",
       "detail": "Design Release 2.1 makes means of transport the one required answer on arrival details, because it decides whether transit countries are asked. It also sends a trader back to where they started: the overview when they opened the page from the overview, the review when they came from the review. 'Save and return to overview' lets a trader leave a part-finished page without a means of transport. The real service keeps every field check it has today (c-045): a page with any error saves nothing and shows the entries back, and an answer that cannot be stored, such as an impossible date, is refused even on 'Save and return to overview' (c-211).",
@@ -146,7 +255,7 @@
       ],
       "dependsOn": [],
       "theme": "arrival-and-transit",
-      "status": "todo",
+      "status": "merged-into",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -198,7 +307,8 @@
         "Salvage: animals-frontend 843821b8 and ins-tests 5246f57 on stale branch feat/EUDPA-694-design-release-2-1-arrival-and-transit; rebuild on a fresh branch from main. Take from 843821b8: meansRule in port-of-entry/validate.js (requiredOneOf with copy.errors.meansOfTransportRequired; a stored answer keeps oneOf; requiredOneOf is already on main in lib/validate/validators.js), the en and cy strings ('Select a means of transport to the port of entry', 'Dewiswch gyfrwng cludo i’r porthladd mynediad'), the required-means and lenient Save and return tests in port-of-entry.controller.test.js and arrival-transit.fit.spec.js, and the one-line 'choose a means of transport' fixes in transporters.fit.spec.js and commercial-transporter-details.fit.spec.js. Take from 5246f57 the arrival-details page object and spec, soft-save, a11y error-state and journey-flow updates that choose a means. Leave out the routing-only tests: main already proves that behaviour.",
         "Animals only. This row now owns req-315 only. Return to the overview, return to the review, Save and return to overview and the continue to transit countries or Transporter details (req-327, req-328, req-329) are on main through journey-foundation inc-002 and inc-003, via kit.nextTarget and kit.isHubExit. Main's port-of-entry validate.js still uses oneOf('meansOfTransport', ...), so an empty means passes and is the gap.",
         "Main keeps the date and format checks on 'Save and return to overview' (c-045, c-211). The new required rule must not fire on that exit, and allowMissing via kit.isHubExit(request) already handles that. On main after design-snagging inc-208, the empty option reads 'Select one'; the error must fire when that is left chosen.",
-        "Design snagging merged to main 23 Oct: Arrival details was reworked on main by the snagging 'Arrival details wording' row, so salvage commits 843821b8 and 5246f57 will not apply cleanly. port-of-entry.controller.js now takes the empty option from copy.means.selectText ('Select one'), labels the options through transport/means-of-transport-label.js (Air, Rail, Road, Sea) and calls kit.recoverableSave(request, thunk, fallback), which returns { value }. port-of-entry.controller.test.js, arrival-transit.fit.spec.js and transporters.fit.spec.js were rewritten, as were the tests repo's arrival-details page object, arrival-details.spec.ts and domain/animals/constants/means-of-transport.ts. port-of-entry/validate.js is unchanged and still uses oneOf for meansOfTransport, so the gap stands. Builder: add the meansRule (requiredOneOf, left out on a hub exit through allowMissing) and the en and cy error to main's files by hand, and write the tests against main's rewritten specs rather than cherry-picking."
+        "Design snagging merged to main 23 Oct: Arrival details was reworked on main by the snagging 'Arrival details wording' row, so salvage commits 843821b8 and 5246f57 will not apply cleanly. port-of-entry.controller.js now takes the empty option from copy.means.selectText ('Select one'), labels the options through transport/means-of-transport-label.js (Air, Rail, Road, Sea) and calls kit.recoverableSave(request, thunk, fallback), which returns { value }. port-of-entry.controller.test.js, arrival-transit.fit.spec.js and transporters.fit.spec.js were rewritten, as were the tests repo's arrival-details page object, arrival-details.spec.ts and domain/animals/constants/means-of-transport.ts. port-of-entry/validate.js is unchanged and still uses oneOf for meansOfTransport, so the gap stands. Builder: add the meansRule (requiredOneOf, left out on a hub exit through allowMissing) and the en and cy error to main's files by hand, and write the tests against main's rewritten specs rather than cherry-picking.",
+        "Merged into inc-241 on 2 November (reanalysis.md). Its third criterion, Save and return to overview with no means of transport saves and goes to the overview, follows c-211, which Sam's 26 October ruling replaced: Save and return now makes the same checks as Save and continue, and main's animals frontend #436 already does so. inc-241 carries req-315 with the refusal on both buttons, so this row's notes about allowMissing on a hub exit no longer apply."
       ],
       "gate": null,
       "externalDependsOn": []
@@ -212,7 +322,9 @@
         "Opening the transit countries page when the saved means of transport is Air or Sea, or none is saved, goes to the overview (prototype:dr2-1-source prototype-dr2-1-source-p6-060; prototype:dr2-1-specs prototype-dr2-1-specs-p2-088; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-042)",
         "Submitting the transit countries form when the saved means of transport is Air or Sea, or none is saved, saves no countries and goes to the overview (prototype:dr2-1-source prototype-dr2-1-source-p6-060; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-045)"
       ],
-      "dependsOn": [],
+      "dependsOn": [
+        "inc-240"
+      ],
       "theme": "arrival-and-transit",
       "status": "todo",
       "kind": "feat",
@@ -262,7 +374,8 @@
         "kit.runBackLink comes to main with design-snagging inc-218, which also sets this page's Back link.",
         "Requirement req-356 (the empty state) is delivered on main by design-snagging inc-209. This row now owns req-338, req-343 and req-344 only.",
         "Trimmed 20 October: the two Back-link criteria and req-343 moved to design-snagging inc-218 (Back during the opening run goes to the previous step and the run carries on), under Sam's ruling that already-planned work moves into design snagging. This row now owns req-338 and req-344 only.",
-        "Design snagging merged to main 23 Oct: two parts of this page are already done on main. The Back link uses kit.runBackLink (snagging 'Back links' row), and the empty-state line and its 'empty' copy key are gone (snagging 'transit countries' row). The title and the redirect are not on main. The controller was rewritten: render(request, h, current, selected, options), separate postAdd, postRemove and postContinue, refusals logged with kit.logRefusal and answered 400, and the table built by rows.js and remove-action.js. So 49e22db9's title and redirect hunks will not apply. Builder: add the 'Transit countries' and 'Gwledydd tramwy' page title key beside main's copy.transitCountries.title and pass it to kit.base, and add the transitApplies(scope) redirect to get and to all three POST paths (Add, Remove, Save and continue) by hand. The tests repo's transited-countries page object, transited-countries.spec.ts and transit-means-scope.spec.ts were rewritten and a transited-countries visual baseline added: write the title and redirect tests against those. The workspace coverage for SCN-TRANSIT-COUNTRIES-006 and -008 already links title and redirect tests that are not on main; make sure each linked test exists once built."
+        "Design snagging merged to main 23 Oct: two parts of this page are already done on main. The Back link uses kit.runBackLink (snagging 'Back links' row), and the empty-state line and its 'empty' copy key are gone (snagging 'transit countries' row). The title and the redirect are not on main. The controller was rewritten: render(request, h, current, selected, options), separate postAdd, postRemove and postContinue, refusals logged with kit.logRefusal and answered 400, and the table built by rows.js and remove-action.js. So 49e22db9's title and redirect hunks will not apply. Builder: add the 'Transit countries' and 'Gwledydd tramwy' page title key beside main's copy.transitCountries.title and pass it to kit.base, and add the transitApplies(scope) redirect to get and to all three POST paths (Add, Remove, Save and continue) by hand. The tests repo's transited-countries page object, transited-countries.spec.ts and transit-means-scope.spec.ts were rewritten and a transited-countries visual baseline added: write the title and redirect tests against those. The workspace coverage for SCN-TRANSIT-COUNTRIES-006 and -008 already links title and redirect tests that are not on main; make sure each linked test exists once built.",
+        "Re-checked 2 November against main and the prototype now (reanalysis.md). Scope unchanged: the title and the redirect. The prototype's transit-countries.html and its routes are unchanged since 04a073b. Main's transit-countries.controller.js still passes copy.transitCountries.title (the heading, 'Which countries will the consignment travel through?') to kit.base and has no transitApplies redirect on GET or on the Add, Remove and Save and continue POST paths. Main's spec has no REQ-TRANSIT-COUNTRIES-006 (title) or -008 (redirect) and no coverage for them: this row writes both, and may start from the reused branch's workspace commit 5a995a66, which has their wording. It now builds on the reused branch after inc-240 merges main, whose tree is main's: take code from 49e22db9 and tests 29c74b5 and bf126b6 in the branch's history as the earlier notes say. A trader whose saved means changes off Rail or Road loses the saved countries already (port-of-entry wipes them), so the redirect on POST only has to save nothing."
       ],
       "gate": null,
       "externalDependsOn": []
@@ -277,7 +390,9 @@
         "Adding a subdivision lists it as '<territory> (<parent country>)', Save and continue saves its code, and reopening the page lists it again under the same name (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-139; conflict c-047; repo:frontend repo-frontend-p11-102)",
         "A country or subdivision that is not on the offered list is still refused with 'Select countries from the list' (conflict c-045)"
       ],
-      "dependsOn": [],
+      "dependsOn": [
+        "inc-240"
+      ],
       "theme": "arrival-and-transit",
       "status": "todo",
       "kind": "feat",
@@ -315,7 +430,8 @@
         "Its own row because it changes the transit countries page's options, code the arrival-and-transit theme owns, while the port order is reference data's.",
         "Salvage: animals-frontend 7d42a714, and ins-tests 22a54fa plus bf126b6 (which drops the retired @integration tag from transit-country-list.spec.ts and transited-countries.spec.ts), on stale branch feat/EUDPA-694-design-release-2-1-arrival-and-transit; rebuild on a fresh branch from main. Take offeredCountries and offeredLabel in transit-countries/validate.js (built over countries.destinationCountryOptions(), already on main), their use in the controller, the review card's subdivision label (cards/movement/transit-countries.js), and the controller, check-answers, fit and ins-tests tests (transit-country-list.spec.ts, transited-countries page object and spec, reference-data fixture).",
         "On main, the helper the stale commit calls countries.originDisplayLabel is named countries.countryDisplayLabel. The placeholder line in countryItems follows main's copy after design-snagging inc-209. No criterion states a count, because the stub and real MDM differ. The subdivision labelling already exists for the country of origin page; reuse it. Animals only: transit is never mirrored to plants.",
-        "Design snagging merged to main 23 Oct: countries.destinationCountryOptions(), which this row's notes say is on main, no longer exists. Snagging renamed it countries.countryAndSubdivisionOptionsNamedWithCountry() in services/countries/index.js (the import reason page already uses it) and removed originCountryOptions. The transit page was also rewritten. validate.js now has offeredCodes, partitionByOffered, TRANSIT_REFUSAL and refusalMessage built over countries.originCountries(). The controller and the review card (cards/movement/transit-countries.js) label countries with countries.originLabel. So 7d42a714's offeredCountries and offeredLabel will not apply. Builder: point offeredCodes and countryItems at countryAndSubdivisionOptionsNamedWithCountry(), and change every originLabel call on this page and its review card to countries.countryDisplayLabel. countryItems' first entry is now copy.transitCountries.country.selectText ('Select a country'); the search placeholder is country.searchPlaceholder. Coverage: the snagging branch replaced this theme's full test links on SCN-TRANSIT-COUNTRIES-009-A and -009-B with partial ones (openspec/coverage/live-animals/journey-pages/transited-countries/coverage.json; see deferred.md). Restore the full links and re-prove them in this row. The tests linked from 009-B ('Should name each subdivision in the search list with its parent country') and from 010-A are not on main, so port or write them. The tests repo's transited-countries page object and spec were rewritten, and utils/transit-countries-assertions.ts added: port 22a54fa's list and territory tests onto them."
+        "Design snagging merged to main 23 Oct: countries.destinationCountryOptions(), which this row's notes say is on main, no longer exists. Snagging renamed it countries.countryAndSubdivisionOptionsNamedWithCountry() in services/countries/index.js (the import reason page already uses it) and removed originCountryOptions. The transit page was also rewritten. validate.js now has offeredCodes, partitionByOffered, TRANSIT_REFUSAL and refusalMessage built over countries.originCountries(). The controller and the review card (cards/movement/transit-countries.js) label countries with countries.originLabel. So 7d42a714's offeredCountries and offeredLabel will not apply. Builder: point offeredCodes and countryItems at countryAndSubdivisionOptionsNamedWithCountry(), and change every originLabel call on this page and its review card to countries.countryDisplayLabel. countryItems' first entry is now copy.transitCountries.country.selectText ('Select a country'); the search placeholder is country.searchPlaceholder. Coverage: the snagging branch replaced this theme's full test links on SCN-TRANSIT-COUNTRIES-009-A and -009-B with partial ones (openspec/coverage/live-animals/journey-pages/transited-countries/coverage.json; see deferred.md). Restore the full links and re-prove them in this row. The tests linked from 009-B ('Should name each subdivision in the search list with its parent country') and from 010-A are not on main, so port or write them. The tests repo's transited-countries page object and spec were rewritten, and utils/transit-countries-assertions.ts added: port 22a54fa's list and territory tests onto them.",
+        "Re-checked 2 November against main (reanalysis.md). Scope unchanged. Main's transit page still offers countries.originCountries() (the 31-country list, no subdivisions) in countryItems and in validate.js offeredCodes, and labels with countries.originLabel; the country of origin and import reason pages use countries.countryAndSubdivisionOptionsNamedWithCountry(), so pointing the transit page at it is the change. The 23 October note that snagging left partial coverage on SCN-TRANSIT-COUNTRIES-009-A and -009-B is out of date: main's spec has no REQ-TRANSIT-COUNTRIES-009 or -010 at all, so this row writes both requirements and their coverage (the reused branch's workspace commit 5a995a66 has their wording). The tests repo's main has countryAndSubdivisionNamesWithCountry() in resources/reference-data/reference-data.ts, which the origin and destination list specs already use: build the transit list assertions on it rather than porting 22a54fa's own list."
       ],
       "gate": null,
       "externalDependsOn": []

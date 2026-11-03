@@ -143,6 +143,32 @@
       ]
     },
     {
+      "id": "REQ-TRANSIT-COUNTRIES-006",
+      "name": "The browser title names the page as Transit countries",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TRANSIT-COUNTRIES-006-A",
+          "name": "The browser title is Transit countries when the page loads",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "transit page titles the browser tab with the task name, and prefixes Error when it shows an error", "strength": "full", "notes": "asserts the exact title; red with the controller passing the question heading as the title" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/transited-countries.spec.ts", "test": "titles the browser tab Transit countries", "strength": "full", "notes": "asserts the exact title through the stack; red with the controller passing the question heading as the title" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.test.js", "test": "Should supply the short task name as the browser title and keep the question as the heading", "strength": "partial", "notes": "view model: the title the layout is given" }
+          ]
+        },
+        {
+          "id": "SCN-TRANSIT-COUNTRIES-006-B",
+          "name": "The browser title starts with Error when the page shows an error",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "transit page titles the browser tab with the task name, and prefixes Error when it shows an error", "strength": "full", "notes": "asserts the exact title after Add country with nothing chosen" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/transited-countries.spec.ts", "test": "prefixes the browser tab title with Error when Add country is pressed with no country chosen", "strength": "full", "notes": "asserts the exact title after Add country with nothing chosen, through the stack" }
+          ]
+        }
+      ]
+    },
+    {
       "id": "REQ-TRANSIT-COUNTRIES-007",
       "name": "Back returns to where the user came from",
       "coverage": "full",
@@ -165,6 +191,33 @@
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "transit back link returns to the overview when the page was opened from its task", "strength": "full", "notes": "red with the controller's Back link pointing at the page itself" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.test.js", "test": "Should go Back to the overview when the page is opened from the overview", "strength": "partial", "notes": "href only" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TRANSIT-COUNTRIES-008",
+      "name": "The page shows Overview when the means of transport is not rail or road",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TRANSIT-COUNTRIES-008-A",
+          "name": "Opening the page with air, sea or no means saved shows Overview",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "opening the transit page by its address goes to the overview with no means saved, then with air saved", "strength": "full", "notes": "red with the controller's check on GET removed: the transit page renders and the overview heading never shows" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/transit-means-scope.spec.ts", "test": "opening the transit-countries page by its address shows the overview when no means, air or sea is saved", "strength": "full", "notes": "asserts the overview heading and its exact URL for no means, Air and Sea; red with the check removed" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.test.js", "test": "Should go to the overview, rendering nothing, when the page is opened with $name", "strength": "partial", "notes": "the response only" }
+          ]
+        },
+        {
+          "id": "SCN-TRANSIT-COUNTRIES-008-B",
+          "name": "Submitting the page after the means became air shows Overview and saves no countries",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.test.js", "test": "Should go to the overview without attempting a save when $name is submitted and saves are refused", "strength": "full", "notes": "every submit path (Add country, Remove, Save and continue, Save and return to overview) is driven with saves refused and still goes to the overview; a redirect and not a 500 or a render shows no save was attempted; red for all four with the POST check removed. Stored countries are also cleared by the write path's scope purge whatever the page does, so no test claims stored answers as the proof" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "adding a country from a transit page left open after the means changed to air goes to the overview", "strength": "full", "notes": "Overview shown for Add country from a stale page; red with the POST check removed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/transit-means-scope.spec.ts", "test": "adding a country from a transit-countries page left open after the means changed to air shows the overview", "strength": "full", "notes": "Overview shown for Add country from a stale page, through the stack; red with the POST check removed" }
           ]
         }
       ]

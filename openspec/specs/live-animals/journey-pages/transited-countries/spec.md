@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Asks which countries the consignment travels through on its way, adding them one at a time to a list rather than choosing from a fixed group. The page is titled "Which countries will the consignment travel through?".
+Asks which countries the consignment travels through on its way, adding them one at a time to a list rather than choosing from a fixed group. The page is titled "Which countries will the consignment travel through?", its browser title is "Transit countries - Import notification service - GOV.UK", and it is asked only when the means of transport to the port of entry is rail or road.
 
 ## Requirements
 
@@ -105,6 +105,22 @@ The system MUST refuse to add a thirteenth transited country, and once twelve ar
 - **WHEN** the page responds
 - **THEN** an error names the limit of twelve, linking to and focusing the search field
 
+### Requirement: The browser title names the page as Transit countries
+**ID**: REQ-TRANSIT-COUNTRIES-006
+The system MUST title the browser tab "Transit countries - Import notification service - GOV.UK", and "Error: Transit countries - Import notification service - GOV.UK" while the page shows an error.
+
+#### Scenario: The browser title is Transit countries when the page loads
+**ID**: SCN-TRANSIT-COUNTRIES-006-A
+- **GIVEN** the user opens the transited countries page
+- **WHEN** the page loads
+- **THEN** the browser title is "Transit countries - Import notification service - GOV.UK"
+
+#### Scenario: The browser title starts with Error when the page shows an error
+**ID**: SCN-TRANSIT-COUNTRIES-006-B
+- **GIVEN** the user is on the transited countries page
+- **WHEN** they press "Add country" with nothing chosen
+- **THEN** the browser title is "Error: Transit countries - Import notification service - GOV.UK"
+
 ### Requirement: Back returns to where the user came from
 **ID**: REQ-TRANSIT-COUNTRIES-007
 The system MUST point the page's Back link at the arrival details page when the user reached the page by saving and continuing from arrival details in the opening sequence, and at Overview when they opened it from its task on Overview.
@@ -121,6 +137,23 @@ The system MUST point the page's Back link at the arrival details page when the 
 - **GIVEN** the user opened the transited countries page from its task on Overview
 - **WHEN** they select Back
 - **THEN** Overview is shown
+
+### Requirement: The page shows Overview when the means of transport is not rail or road
+**ID**: REQ-TRANSIT-COUNTRIES-008
+The system MUST show Overview when the transited countries page is opened and the saved means of transport is Air or Sea, or none is saved. The system MUST save no countries and show Overview when the page is submitted in that state.
+
+#### Scenario: Opening the page with air, sea or no means saved shows Overview
+**ID**: SCN-TRANSIT-COUNTRIES-008-A
+- **GIVEN** the saved means of transport is Air or Sea, or none is saved
+- **WHEN** the user opens the transited countries page
+- **THEN** Overview is shown
+
+#### Scenario: Submitting the page after the means became air shows Overview and saves no countries
+**ID**: SCN-TRANSIT-COUNTRIES-008-B
+- **GIVEN** the transited countries page is open and the means of transport has since been saved as Air
+- **WHEN** the user submits the page with Add country, Remove, Save and continue or Save and return to overview
+- **THEN** Overview is shown
+- **AND** no transited countries are saved
 
 ### Requirement: The country search is labelled, and its empty box and no-JavaScript list carry their own wording
 **ID**: REQ-TRANSIT-COUNTRIES-011

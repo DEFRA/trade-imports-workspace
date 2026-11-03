@@ -3660,6 +3660,12 @@ const PREFLIGHT_SCHEMA = {
       description:
         "Whether any increment still to build owes the gate's e2e phase: true when a todo row's gatePhases names e2e, or is null or absent"
     },
+    backlogCheckProblems: {
+      type: 'array',
+      items: { type: 'string' },
+      description:
+        'Every problem tim backlog check named, verbatim, or [] when it exited 0. These are preconditions the run cannot build past: a split theme holding requirements a re-distil handed it, a dependency that does not exist, a cycle'
+    },
     todoRows: {
       type: 'array',
       items: {
@@ -3692,17 +3698,24 @@ ${IS_BRANCH ? 4 : 3}. \`jq -c '[.increments[] | select(.status=="todo") | (.gate
 const TODO_ROWS_STEP = `
 ${IS_BRANCH ? 5 : 4}. \`jq -c '[.increments[] | select(.status=="todo") | {id, repos: (.repos // []), rigour}]' ${BACKLOG_TILDE}\``
 
+const BACKLOG_CHECK_STEP = `
+${IS_BRANCH ? 6 : 5}. \`tim backlog check ${WORKAREA_REL} --workspace ${TILDE} --json\`. It exits 1 when the backlog
+   has a problem, which is expected — read its output either way. It prints one JSON line shaped
+   \`{ok, schema_version, tim_version, result, errors, metadata}\`. On ok:false each entry of \`errors\` carries a
+   \`message\` whose first line counts the problems and whose later lines are one problem each: copy those problem
+   lines into backlogCheckProblems verbatim, leaving out the counting line. On ok:true put [].`
+
 const preflight = await agent(
   `Report whether this run's backlog exists and is readable, which repos its envelope names, whether any
 increment still to build owes the gate's e2e phase, which repos those increments name and what each asks of the
 pipeline. Run exactly these commands, one Bash call each, and read their output:
 1. \`jq -e '.increments | length' ${BACKLOG_TILDE}\`
-2. \`jq -c '.repos | if . == null then null else to_entries | map({key, path: .value.path, github: .value.github, requireApproval: (.value.requireApproval // false)}) end' ${BACKLOG_TILDE}\`${BRANCH_PR_STEP}${E2E_PHASES_STEP}${TODO_ROWS_STEP}
+2. \`jq -c '.repos | if . == null then null else to_entries | map({key, path: .value.path, github: .value.github, requireApproval: (.value.requireApproval // false)}) end' ${BACKLOG_TILDE}\`${BRANCH_PR_STEP}${E2E_PHASES_STEP}${TODO_ROWS_STEP}${BACKLOG_CHECK_STEP}
 If the first prints a number, return ok:true with that number in summary. If the file is missing or is not valid
 JSON, return ok:false quoting the error. Copy the second command's output into envelopeRepos exactly as printed:
 the list, every entry and field as it is, or null when it printed null. Do not compare it with anything. Put the
 gatePhases command's output in e2ePhasesOwed: true when it printed true, false when it printed false.
-Copy the last command's output into todoRows exactly as printed, every id, repos list and rigour as it is. Do
+Copy the todoRows command's output into todoRows exactly as printed, every id, repos list and rigour as it is. Do
 nothing else. No Grep/Glob tools, tilde paths only.
 ${RUN_WITH_BASH}`,
   light({ label: 'preflight', phase: 'Baseline', schema: PREFLIGHT_SCHEMA })
@@ -3734,6 +3747,13 @@ const envelopeRepoProblems = (envelopeRepos) => {
           `"${entry.key}" ${entry.requireApproval ? 'needs' : 'does not need'} approval in the envelope and ${REPOS[entry.key].requireApproval ? 'needs' : 'does not need'} it in the args`
       )
   ]
+}
+
+const backlogCheckProblems = preflight.backlogCheckProblems ?? []
+if (backlogCheckProblems.length > 0) {
+  throw new Error(
+    `${WORKFLOW_NAME}: tim backlog check refuses ${WORKAREA_REL}, so the run built nothing — ${backlogCheckProblems.join('; ')}. Fix each one, then launch again. Where this is a split theme the parent has handed requirements, walk them with the skill's references/PREFLIGHT_WALKER.md rather than applying them silently`
+  )
 }
 
 const branchWithoutPr = IS_BRANCH ? (preflight.branchWithoutPr ?? []) : []

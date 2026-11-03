@@ -1,5 +1,5 @@
 import { describe, test, expect, afterEach } from 'vitest'
-import { readFileSync, rmSync } from 'node:fs'
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { adoptSource } from './adopt.js'
 import {
@@ -17,13 +17,23 @@ afterEach(() => {
 const extractPath = (slug) => join(workspace.layout.extractDir, `${slug}.json`)
 const verifyPath = (slug) => join(workspace.layout.verifyDir, `${slug}.json`)
 
-const adopt = (sourceId = 'repo:tests') =>
+const adopt = (sourceId = 'repo:tests', workspaceRoot) =>
   adoptSource({
     layout: workspace.layout,
     schemas: workspace.schemas,
     workarea: DEMO_WORKAREA,
-    sourceId
+    sourceId,
+    workspaceRoot
   })
+
+const HEAD_NOW = '7777777777777777777777777777777777777777'
+const HEAD_ELSEWHERE = '8888888888888888888888888888888888888888'
+
+const makeCheckout = (relative, head) => {
+  const gitDir = join(workspace.root, relative, '.git')
+  mkdirSync(gitDir, { recursive: true })
+  writeFileSync(join(gitDir, 'HEAD'), `${head}\n`)
+}
 
 /** The demo's repo:tests files as a hand-run DISTIL left them: no hashes. */
 const unhashed = () => {
@@ -119,6 +129,32 @@ describe('adoptSource', () => {
 
     expect(() => adopt()).toThrow(
       'distil/extract/repo-tests.json has no "structure".'
+    )
+  })
+})
+
+describe('adoptSource, for a repo source', () => {
+  test('records the commit the checkout is on, so the adopted extract is watched', () => {
+    unhashed()
+    makeCheckout('repos/trade-imports-ins-tests', HEAD_NOW)
+
+    adopt('repo:tests', workspace.root)
+
+    expect(
+      JSON.parse(readFileSync(extractPath('repo-tests'), 'utf8')).repoHead
+    ).toBe(HEAD_NOW)
+  })
+
+  test('refuses an extract whose recorded commit is not the one the checkout is on', () => {
+    unhashed()
+    makeCheckout('repos/trade-imports-ins-tests', HEAD_NOW)
+    workspace.editJson(extractPath('repo-tests'), (extract) => ({
+      ...extract,
+      repoHead: HEAD_ELSEWHERE
+    }))
+
+    expect(() => adopt('repo:tests', workspace.root)).toThrow(
+      /was extracted from commit/
     )
   })
 })

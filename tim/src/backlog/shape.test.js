@@ -444,6 +444,93 @@ describe('checkBacklog', () => {
     })
   })
 
+  describe('a split theme whose parent has handed it requirements', () => {
+    const splitBacklog = (overrides = {}) => ({
+      theme: 'origin',
+      branch: 'feat/NO_JIRA-hrp-origin',
+      parent: { workarea: 'shared/hrp', wave: 1, landsAfter: [] },
+      increments: [row({ theme: 'origin' })],
+      ...overrides
+    })
+
+    const parentWith = (pointer) => ({
+      ...backlogOf(row()),
+      splitOff: [
+        {
+          theme: 'origin',
+          workarea: 'shared/hrp/themes/origin',
+          branch: 'feat/NO_JIRA-hrp-origin',
+          ...pointer
+        }
+      ]
+    })
+
+    const checkWithParent = (split, parent) =>
+      checkAgainst(split, schema, {
+        readWorkareaBacklog: (workarea) =>
+          workarea === 'shared/hrp' ? parent : null
+      })
+
+    test('refuses it while the parent still holds requirements it has never placed in a row', () => {
+      const { problems } = checkWithParent(
+        splitBacklog(),
+        parentWith({ pickUp: ['req-204', 'req-311'] })
+      )
+
+      expect(problems).toEqual([
+        'shared/hrp hands this theme 2 requirements it has not placed in a row yet: req-204, req-311. Read the "For the split branches" section of shared/hrp/report.md, add or rewrite this backlog\'s rows for them, then move each id from the parent pointer\'s "pickUp" to its "requirements".'
+      ])
+    })
+
+    test('names one requirement in the singular', () => {
+      const { problems } = checkWithParent(
+        splitBacklog(),
+        parentWith({ pickUp: ['req-204'] })
+      )
+
+      expect(problems[0]).toContain('1 requirement it has not placed')
+    })
+
+    test('accepts it once the pointer has been cleared', () => {
+      const { problems } = checkWithParent(
+        splitBacklog(),
+        parentWith({ pickUp: [], requirements: ['req-204'] })
+      )
+
+      expect(problems).toEqual([])
+    })
+
+    test('accepts a parent pointer that lists no pick-up at all', () => {
+      const { problems } = checkWithParent(splitBacklog(), parentWith({}))
+
+      expect(problems).toEqual([])
+    })
+
+    test('says nothing when the parent backlog cannot be read, so a check off the workspace still runs', () => {
+      const { problems } = checkAgainst(splitBacklog(), schema, {
+        readWorkareaBacklog: () => null
+      })
+
+      expect(problems).toEqual([])
+    })
+
+    test('says nothing when no reader is given', () => {
+      expect(checkBacklog(splitBacklog()).problems).toEqual([])
+    })
+
+    test('ignores a pointer for a different theme', () => {
+      const { problems } = checkWithParent(
+        splitBacklog({
+          theme: 'commodity',
+          increments: [row({ theme: 'commodity' })]
+        }),
+        parentWith({ pickUp: ['req-204'] })
+      )
+
+      expect(problems).toEqual([])
+    })
+  })
+
   describe('externalDependsOn', () => {
     const waiting = backlogOf(
       row({

@@ -25,7 +25,7 @@
     },
     {
       "id": "req-778",
-      "statement": "Each live-animals notification has its own hub page in the live-animals set, keyed by the notification (today /live-animals/notifications/{reference}), rather than one hub page for whichever notification is in the session.",
+      "statement": "Each live-animals notification has its own hub page in the live-animals set, addressed by the notification (today /live-animals/notifications/{reference}).",
       "why": "The real service stores many notifications per trader, so the hub must say which one it shows; the prototype holds a single notification in its session and cannot express this, and the prototype never decides URL paths (ruling:sam-2026-10-09).",
       "claims": [
         "repo-frontend-p4-001",
@@ -40,7 +40,7 @@
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "repo-frontend-p4-001 serves the hub at /notifications/{journeyId} under the live-animals set; c-128 keeps it over the prototype's single /notification-hub route.",
+      "deltaNote": "repo-frontend-p4-001 serves the hub at /notifications/{journeyId} under the live-animals set; c-128 keeps it over the prototype's single /notification-hub route for whichever notification is in the session.",
       "conflicts": [
         "c-128"
       ]
@@ -83,8 +83,8 @@
     },
     {
       "id": "req-782",
-      "statement": "While a submitted notification is being amended (status 'Amend'), the hub's status line also shows a 'Cancel amend' link-style control, which goes to the cancel-amendment confirmation page the review page uses (a page, never a pop-up). It comes from the shared status strip, so the live-animals, germinal-products and high-risk plants Overview pages all show it, with no plants-specific work.",
-      "why": "Design Release 2.1's shared status line offers Cancel amend on every page that includes it, and the hub's missing modal include is a prototype omission (c-127); the 9 October afternoon ruling keeps the Amend bar's 'Cancel amend' going to the confirmation page, changes it in the shared strip because every set that amends needs it, and holds the pop-up back as a waiting-on-design question.",
+      "statement": "While a submitted notification is being amended (status 'Amend'), the hub's status line also shows a 'Cancel amend' link-style control, which goes to the cancel-amendment confirmation page the review page uses. The control comes from the shared status strip, so the live-animals, germinal-products and high-risk plants Overview pages all show it.",
+      "why": "Design Release 2.1's shared status line offers Cancel amend on every page that includes it, and the hub's missing modal include is a prototype omission (c-127); the 9 October afternoon ruling keeps the Amend bar's 'Cancel amend' going to a confirmation page rather than a pop-up, changes it in the shared strip because every set that amends needs it, and holds the pop-up back as a waiting-on-design question. Building it in the shared strip means the plants Overview needs no work of its own.",
       "claims": [
         "prototype-dr2-1-source-p12-009",
         "ruling-sam-2026-10-09-pm-p1-078",
@@ -310,7 +310,7 @@
     },
     {
       "id": "req-794",
-      "statement": "The third row of section 1 reads 'Main import reason' (not 'Main reason for import'), in English and in the Welsh copy.",
+      "statement": "The third row of section 1 reads 'Main import reason', in English and in the Welsh copy.",
       "why": "Design Release 2.1 renamed the task; DR1 named it after its own prototype, which is not a judgement departing from the design, so Design Release 2.1 wins.",
       "claims": [
         "prototype-dr2-1-source-p12-023",
@@ -331,7 +331,7 @@
     },
     {
       "id": "req-795",
-      "statement": "Section 1 holds, in order, 'Where is this consignment coming from?', 'What are you importing?' and the main import reason row; there is no separate exit details row, and the import reason row is complete only once the reason and any follow-up it reveals are answered (Re-entry alone completes it).",
+      "statement": "Section 1 holds, in order, 'Where is this consignment coming from?', 'What are you importing?' and the main import reason row; it has no exit details row, and the import reason row is complete only once the reason and any follow-up it reveals are answered (Re-entry alone completes it).",
       "why": "Design Release 2.1 shows three rows in section 1; DR1 already folded exit details into the import reason task.",
       "claims": [
         "prototype-dr2-1-source-p12-021",
@@ -551,9 +551,10 @@
     {
       "id": "req-804",
       "statement": "Each hub row shows one of two status tags only: a green 'Complete' when the task is finished and its saved answers still pass their page's rules, otherwise a blue 'To do'; there is no 'In progress', optional or other state.",
-      "why": "Design Release 2.1 uses exactly two task states on the hub.",
+      "why": "Design Release 2.1 uses exactly two task states on the hub. What finishes each task is the rule of the page behind the row, decided where that page is reconciled (prototype-dr2-1-source-p12-037).",
       "claims": [
         "prototype-dr2-1-source-p12-018",
+        "prototype-dr2-1-source-p12-037",
         "trace-prototype-dr2-1-p11-032",
         "trace-prototype-dr2-1-p11-051",
         "trace-prototype-dr2-1-p11-098",
@@ -629,7 +630,7 @@
     },
     {
       "id": "req-808",
-      "statement": "A page opened from a hub row returns to the hub on 'Save and continue', rather than carrying on into the rest of its section: the main import reason no longer goes on to Additional details, Arrival details no longer goes on to Transit countries and Transport details, and the consignment addresses page no longer goes on to the CPH number page. No marker is added to the row links to do this.",
+      "statement": "A page opened from a hub row goes to the hub on 'Save and continue', so the main import reason page, the arrival details page and the consignment addresses page each end at the hub. The row links and the forms on those pages carry no marker saying the page was opened from the hub.",
       "why": "In Design Release 2.1 a task opened from the hub comes back to the hub when saved, so the trader chooses what to do next; ruling:sam-2026-10-09 claim 39 adopts this by changing only the live flow's fallback, with no ?from=hub marker.",
       "claims": [
         "trace-prototype-dr2-1-p11-050",
@@ -650,7 +651,7 @@
       ],
       "status": "adopted",
       "delta": "change",
-      "deltaNote": "Today, from the hub, Save and continue moves on through the rest of the section before returning: import reason goes on to Additional details (trace-animals-fit-p4-030), port of entry on to transit countries and transporters (trace-animals-fit-p4-046, trace-e2e-p13-041), and addresses on to the CPH number (trace-e2e-p13-041). The same change as req-1615, which the ruling names.",
+      "deltaNote": "Today, from the hub, Save and continue moves on through the rest of the section before returning: import reason goes on to Additional details (trace-animals-fit-p4-030), port of entry on to transit countries and transporters (trace-animals-fit-p4-046, trace-e2e-p13-041), and addresses on to the CPH number page (trace-e2e-p13-041). The same change as req-1615, which the ruling names.",
       "conflicts": [
         "c-243"
       ]
@@ -760,8 +761,8 @@
     },
     {
       "id": "req-814",
-      "statement": "When the hub is showing a template being created, the status tag reads 'Template' and the template's name is shown beside it in place of a notification reference. The shared status strip is not changed for this: in template mode the hub switches the shared strip off and draws this header in the set's own hub template.",
-      "why": "Design Release 2.1 reuses the hub to build a template and labels it as one; template mode walks the same journey pages as a notification, with no copied pages, so the template's hub is the set's own hub in template mode. The 9 October afternoon ruling never changes the shared strip in place except for the Amend bar: a page that needs a different header switches the strip off and draws its own. Template mode is for the animals sets only: the plants Overview gets no template mode.",
+      "statement": "When the hub is showing a template being created, the status strip above the heading reads 'Template' as its tag and shows the template's name beside it in place of a notification reference.",
+      "why": "Design Release 2.1 reuses the hub to build a template and labels it as one; template mode walks the same journey pages as a notification, with no copied pages, so the template's hub is the set's own hub in template mode. The 9 October afternoon ruling never changes the shared status strip in place except for the Amend bar, so the hub switches the shared strip off in template mode and draws this header in the set's own hub template. Template mode is for the animals sets only: the plants Overview gets no template mode.",
       "claims": [
         "prototype-dr2-1-source-p12-007",
         "prototype-dr2-1-source-p12-008",
@@ -830,8 +831,8 @@
     },
     {
       "id": "req-819",
-      "statement": "A 'Save template' button going straight to saving the template is not built on the hub.",
-      "why": "The prototype shows it only outside Design Release 2.1; in Design Release 2.1 every template creation gets 'Review template' instead, and the goal is Design Release 2.1.",
+      "statement": "The hub offers a 'Save template' button that saves the template straight away, without going through the review page.",
+      "why": "Out of scope: the prototype offers that button only outside Design Release 2.1, and the goal is to bring the real services up to Design Release 2.1, where a template being created goes to 'Review template' instead (req-817).",
       "claims": [
         "prototype-dr2-1-source-p12-041"
       ],
@@ -842,8 +843,8 @@
     },
     {
       "id": "req-1836",
-      "statement": "Each germinal-products notification has its own hub page in the germinal-products set, keyed by the notification in the same way as the live-animals hub (under /germinal-products/notifications/), a copy of the live-animals hub taken once this programme has built it, plus the germinal differences.",
-      "why": "Germinal products is a sibling set of live-animals with its own journey and flow (ruling:sam-2026-10-09 claims 1 and 2); its notifications need an overview of their own, and the prototype's flat route is not copied.",
+      "statement": "Each germinal-products notification has its own hub page in the germinal-products set, addressed by the notification in the same way as the live-animals hub (under /germinal-products/notifications/), showing the live-animals hub's content with the germinal differences.",
+      "why": "Germinal products is a sibling set of live-animals with its own journey and flow (ruling:sam-2026-10-09 claims 1 and 2); its notifications need an overview of their own, the page is a copy of the live-animals hub taken once this programme has built it, and the prototype's flat route is not copied.",
       "claims": [
         "ruling-sam-2026-10-09-p1-006",
         "ruling-sam-2026-10-09-p1-008",
@@ -882,7 +883,7 @@
     },
     {
       "id": "req-1839",
-      "statement": "In the germinal-products set, 'Transit countries' shows in section 3, between 'Arrival details' and 'Transport details', when transit countries are required for the notification, as Design Release 2.1 shows for germinal products, and reads 'Complete' once at least one transit country is selected.",
+      "statement": "In the germinal-products set, 'Transit countries' shows in section 3, between 'Arrival details' and 'Transport details', when transit countries are required for the notification, and reads 'Complete' once at least one transit country is selected.",
       "why": "Design Release 2.1 adds the transit countries task for germinal products; claim 13 of ruling:sam-2026-10-09 splits req-800 into this germinal half and its live half.",
       "claims": [
         "prototype-dr2-1-source-p12-030",
@@ -914,8 +915,8 @@
     },
     {
       "id": "req-1934",
-      "statement": "In the high-risk plants frontend, a page opened from a task row on the Overview returns to the Overview on 'Save and continue' once the row's own pages are done, rather than carrying on into the next row: the same fallback rule as live animals (req-808, req-1615), built in the same increment by the same flow fallback, keyed to the task row rather than the flow section, with no marker on the row links. A row made of more than one page still moves through its own pages first (commodity type to the commodities list and details, arrival status to arrival details), so arrival details opened from the Overview returns there instead of going on to the place of destination.",
-      "why": "Design Release 2.1 returns a task opened from the overview to the overview when it is saved, and the 9 October afternoon ruling makes that change (inc-002) reach plants in the same increment, keeping plants' multi-page task rows moving within their own row.",
+      "statement": "In the high-risk plants frontend, a page opened from a task row on the Overview goes to the Overview on 'Save and continue' once the row's own pages are done: a row made of more than one page moves through its own pages first (commodity type to the commodities list and details, arrival status to arrival details), so arrival details opened from the Overview ends at the Overview. The row links carry no marker saying the page was opened from the Overview.",
+      "why": "Design Release 2.1 returns a task opened from the overview to the overview when it is saved, and the 9 October afternoon ruling makes that change (inc-002) reach plants in the same increment as live animals (req-808, req-1615), built by the same flow fallback keyed to the task row rather than the flow section, keeping plants' multi-page task rows moving within their own row.",
       "claims": [
         "prototype-dr2-1-specs-p4-080",
         "trace-prototype-dr2-1-p11-050",
@@ -940,17 +941,25 @@
     },
     {
       "id": "req-1935",
-      "statement": "In the high-risk plants frontend, 'Save and return to overview' (exit=hub) saves what was entered and goes to the overview without refusing the page for a missing required answer (on arrival status and arrival details, a blank arrival status, date, time or place of landing), while an answer that fails its own format rule is still refused with its error: a date that is not real, a future date once arrived, a time not on the 24-hour clock, a port not on the list or a quantity that is not a whole number. 'Continue' keeps today's checks.",
-      "why": "Sam's 9 October afternoon ruling makes inc-003's lenient save change plants in the same increment, with malformed answers still refused. Which blank answers 'Continue' refuses stays with EUDPA-667, which owns mandatory-to-proceed against mandatory-to-submit; this changes only the exit to the overview.",
+      "statement": "In the high-risk plants frontend, 'Save and return to overview' makes exactly the same checks as 'Save and continue' on every page that offers both buttons, with no page an exception: on any missing or not valid answer the trader stays on the page, sees an error message for each one and keeps what they entered, and with none the answers are saved and the Overview is shown.",
+      "why": "The 26 October ruling gives the service the behaviour the business analyst asked for and refuses a page-by-page exception, and it names the high-risk plants frontend alongside live animals; the 9 October afternoon ruling puts the plants half of the change in the same increment as the animals half.",
       "claims": [
+        "ruling-sam-2026-10-26-p1-002",
+        "ruling-sam-2026-10-26-p1-003",
+        "ruling-sam-2026-10-26-p1-006",
+        "ruling-sam-2026-10-26-p1-007",
+        "ruling-sam-2026-10-26-p1-008",
+        "ruling-sam-2026-10-26-p1-009",
+        "ruling-sam-2026-10-26-p1-010",
+        "ruling-sam-2026-10-26-p1-011",
+        "ruling-sam-2026-10-26-p1-013",
+        "ruling-sam-2026-10-09-pm-p3-013",
         "ruling-sam-2026-10-07-p1-010",
-        "ruling-sam-2026-10-09-pm-p3-027",
-        "ruling-sam-2026-10-09-pm-p3-027-m1",
-        "ruling-sam-2026-10-09-pm-p3-063"
+        "repo-plantsfrontend-p2-084"
       ],
       "status": "adopted",
-      "delta": "change",
-      "deltaNote": "Today plants answers every validation failure, required-ness included, with HTTP 400 and an error summary, whichever button was pressed (plants decision d-059).",
+      "delta": "exists",
+      "deltaNote": "repo-plantsfrontend-p2-084 shows plants pages already carrying the 'Save and return to overview' exit and saving through it, and plants answers every validation failure, required-ness included, with HTTP 400 and a GOV.UK error summary on the page the trader was on, with what they entered re-rendered, whichever button was pressed (plants decision d-059). Both buttons therefore already make the same checks, so plants needs no change; the lenient save the 9 October afternoon ruling had asked of plants is withdrawn by c-313.",
       "conflicts": [
         "c-313"
       ]
@@ -1044,8 +1053,8 @@
     },
     {
       "id": "req-1979",
-      "statement": "On the plants Overview, assistive technology can move by region: each numbered group, its heading and its task list, is a region named by that group's heading, and the groups together sit in one task list region named 'Notification tasklist' (Welsh as a machine draft like the rest of the hub's Welsh), an accessible name only: plants gains no visible task list heading. This is built in the same increment as the live-animals hub's regions.",
-      "why": "The 9 October afternoon ruling makes the overview regions change (inc-098) reach plants too, with each task group and the task list in a named region; no row of this programme adds the 'Notification tasklist' heading to plants (the animals hub already has it), so plants gets the region without a new visible heading.",
+      "statement": "On the plants Overview, assistive technology can move by region: each numbered group, its heading and its task list, is a region named by that group's heading, and the groups together sit in one task list region named 'Notification tasklist' (Welsh as a machine draft like the rest of the Overview's Welsh). That region name is an accessible name only: the plants Overview shows no visible task list heading.",
+      "why": "The 9 October afternoon ruling makes the overview regions change (inc-098) reach plants too in the same increment as the live-animals hub's regions, with each task group and the task list in a named region; no row of this programme adds the 'Notification tasklist' heading to plants (the animals hub already has it), so plants gets the region without a new visible heading.",
       "claims": [
         "ruling-sam-2026-10-09-pm-p3-044",
         "ruling-sam-2026-10-09-pm-p3-001",
@@ -1061,7 +1070,7 @@
     },
     {
       "id": "req-1981",
-      "statement": "The plants Overview's task statuses are not changed to Design Release 2.1's two tags: plants keeps 'Completed' (green), 'In progress' (light blue), 'Not yet started' (blue) and the untagged 'Optional'.",
+      "statement": "The plants Overview's task rows show a green 'Completed' tag, a light blue 'In progress' tag, a blue 'Not yet started' tag and an untagged 'Optional', in English and Welsh.",
       "why": "Out of scope: plants changes only in the same increment as an animals row that changes the same page or behaviour, and the animals hub already shows Design Release 2.1's two tags, so no row changes them; there are no separate plants increments.",
       "claims": [
         "repo-plantsfrontend-p2-036",
@@ -1080,12 +1089,12 @@
       "delta": "change",
       "deltaNote": "Plants works out five task states (repo-plantsfrontend-p2-036, p2-037) and shows four of them on the Overview (repo-plantsfrontend-p2-065 to p2-068), where Design Release 2.1 shows 'Complete' and 'To do' only; no plants fit test yet covers an in-progress, completed or optional row (repo-plantsfrontend-p2-087).",
       "conflicts": [
-        "c-notification-hub-001"
+        "c-317"
       ]
     },
     {
       "id": "req-1982",
-      "statement": "The plants Overview's gated rows are not opened up: a plants row none of whose pages is reachable keeps showing 'Cannot start yet' with no link, as origin, arrival, destination, consignor and identification numbers do before the commodity type is answered and contact does before origin is answered.",
+      "statement": "On the plants Overview, a task row none of whose pages is reachable shows 'Cannot start yet' with no link, as origin, arrival, destination, consignor and identification numbers do before the commodity type is answered and contact does before origin is answered.",
       "why": "Out of scope: plants keeps its own step order, and the animals hub already lets every row open in any order, so no row of this programme changes plants' gating.",
       "claims": [
         "repo-plantsfrontend-p2-026",
@@ -1106,12 +1115,12 @@
       "delta": "change",
       "deltaNote": "Plants gates rows behind 'Cannot start yet' (repo-plantsfrontend-p2-069, p2-070, proved by p2-079 to p2-081 and p2-084 to p2-086), where Design Release 2.1 opens every row at once.",
       "conflicts": [
-        "c-notification-hub-001"
+        "c-317"
       ]
     },
     {
       "id": "req-1983",
-      "statement": "The plants Overview's '4. Check and submit' group, with its 'Check and submit' row that reads 'Cannot start yet' until the notification is ready, is not replaced by Design Release 2.1's always-active 'Review and submit' button.",
+      "statement": "The plants Overview ends with a '4. Check and submit' group whose 'Check and submit' row shows 'Cannot start yet' until the notification is ready for check your answers, and then links to the first reachable review page and shows the review section's status.",
       "why": "Out of scope: the animals hub already ends with the 'Review and submit' button, so no row of this programme changes the overview's ending, and plants keeps its own sections. The plants half of the run-ends-on-review row reaches plants' review page from the opening run, not from the Overview.",
       "claims": [
         "repo-plantsfrontend-p2-027",
@@ -1128,13 +1137,13 @@
       "delta": "change",
       "deltaNote": "Plants ends its Overview with a gated 'Check and submit' task row in its own group (repo-plantsfrontend-p2-060, p2-071) where Design Release 2.1 has a primary 'Review and submit' button.",
       "conflicts": [
-        "c-notification-hub-001"
+        "c-317"
       ]
     },
     {
       "id": "req-1984",
-      "statement": "The plants Overview keeps its Back link to the dashboard; it is not removed to match Design Release 2.1's hub, which has none.",
-      "why": "Out of scope: the animals hub already has no back link, so no row of this programme changes it, and there are no separate plants increments.",
+      "statement": "The plants Overview has a Back link to its dashboard.",
+      "why": "Out of scope: the animals hub already has no back link, so no row of this programme changes the plants one, and there are no separate plants increments.",
       "claims": [
         "repo-plantsfrontend-p2-073",
         "repo-plantsfrontend-p2-077",
@@ -1143,14 +1152,14 @@
       ],
       "status": "out-of-scope",
       "delta": "change",
-      "deltaNote": "repo-plantsfrontend-p2-073 and p2-077 give the plants Overview a Back link to the dashboard today.",
+      "deltaNote": "repo-plantsfrontend-p2-073 and p2-077 give the plants Overview a Back link to the dashboard today, where Design Release 2.1's hub has none.",
       "conflicts": [
-        "c-notification-hub-001"
+        "c-317"
       ]
     },
     {
       "id": "req-1985",
-      "statement": "The plants Overview keeps its own groups, rows, row titles and headings, in English and Welsh: its four numbered groups ('1. About the consignment', '2. Arrival and destination', '3. Consignment parties', '4. Check and submit'; Welsh '1. Am y llwyth', '2. Cyrraedd a chyrchfan', '3. Partïon y llwyth', '4. Gwirio a chyflwyno') as medium headings with no 'Notification tasklist' heading, a group with no rows left out; its seven task rows in its own order ('What are you importing?', 'Where is this consignment coming from?', 'Arrival details', 'Place of destination', 'Consignor or exporter' shown only for plants for planting and wood and cut trees, 'Identification numbers', 'Contact address for consignment') with no hints; and no 'Your commodities' totals. The Welsh stays a machine draft, not shipped without Welsh Language Standards sign-off.",
+      "statement": "The plants Overview has its own groups, rows, row titles and headings, in English and Welsh: four numbered groups ('1. About the consignment', '2. Arrival and destination', '3. Consignment parties', '4. Check and submit'; Welsh '1. Am y llwyth', '2. Cyrraedd a chyrchfan', '3. Partïon y llwyth', '4. Gwirio a chyflwyno') as medium headings with no 'Notification tasklist' heading, a group with no rows left out; seven task rows in its own order ('What are you importing?', 'Where is this consignment coming from?', 'Arrival details', 'Place of destination', 'Consignor or exporter' shown only for plants for planting and wood and cut trees, 'Identification numbers', 'Contact address for consignment') with no hints; and no 'Your commodities' totals. The Welsh stays a machine draft, not shipped without Welsh Language Standards sign-off.",
       "why": "Out of scope: plants keeps its own questions, sections, cards and step order when mirrored, no row of this programme changes the Overview's groups or row titles (the consignor rename changes the picker's heading, title and check-answers label only), and its provisional group headings wait on plants' own copy pass (d-069), not on this programme.",
       "claims": [
         "repo-plantsfrontend-p2-027",
@@ -1182,8 +1191,21 @@
       "delta": "change",
       "deltaNote": "Plants' Overview structure (repo-plantsfrontend-p2-027, p2-057, p2-060, p2-062) differs from Design Release 2.1's live-animals hub and stays as it is.",
       "conflicts": [
-        "c-notification-hub-001"
+        "c-317"
       ]
+    },
+    {
+      "id": "req-notification-hub-001",
+      "statement": "The origin page shows the caption 'About the consignment', the heading 'Origin of the import' and an optional field 'Your internal reference for this consignment (optional)' with the hint 'Enter any internal reference you want to use to identify this consignment, or leave blank. It can be up to 58 characters.'",
+      "why": "Out of scope here: these two end-to-end claims record the origin page the hub's exit and change tests happen to drive, and this area's scope stops at the pages the hub's rows open. The origin page's own caption, heading, fields, hints and copy are decided where that page is reconciled, so nothing in this area changes them.",
+      "claims": [
+        "trace-e2e-p13-045",
+        "trace-e2e-p13-046"
+      ],
+      "status": "out-of-scope",
+      "delta": "exists",
+      "deltaNote": "trace-e2e-p13-045 and trace-e2e-p13-046 show the origin page's caption, heading, optional internal reference field and its hint as the real service renders them today.",
+      "conflicts": []
     }
   ],
   "conflicts": [
@@ -1349,7 +1371,7 @@
         }
       ],
       "resolution": "precedence",
-      "outcome": "The ruling wins: the return-to-hub behaviour is built (req-808), but by the live flow's fallback, with no from=hub query or hidden field. The prototype claims that a row opens a given page (trace-prototype-dr2-1-p11-022 to p11-031) still stand for which page each row opens; only the marker claims are overruled. trace-e2e-p13-041-m1 shows the real flow already returns without a marker on re-entry and is kept.",
+      "outcome": "The ruling wins: the return-to-hub behaviour is built (req-808), but by the live flow's fallback, with no from=hub query or hidden field, and plants takes the same change by its own fallback (req-1934). The prototype claims that a row opens a given page (trace-prototype-dr2-1-p11-022 to p11-031) still stand for which page each row opens; only the marker claims are overruled. trace-e2e-p13-041-m1 shows the real flow already returns without a marker on re-entry and is kept.",
       "overruled": [
         "prototype-dr2-1-source-p12-019",
         "trace-prototype-dr2-1-p11-042",
@@ -1378,24 +1400,48 @@
     },
     {
       "id": "c-313",
-      "about": "Whether plants' 'Save and return to overview' refuses a page for a missing required answer",
+      "about": "Whether plants' 'Save and return to overview' makes the same checks as 'Save and continue', or saves past a missing required answer.",
       "positions": [
         {
+          "source": "ruling:sam-2026-10-26",
+          "says": "Save and return to overview makes exactly the same checks as Save and continue, on every page that has both buttons, in live animals and high-risk plants.",
+          "claim": "ruling-sam-2026-10-26-p1-008"
+        },
+        {
+          "source": "ruling:sam-2026-10-26",
+          "says": "No page is an exception to the same-checks rule.",
+          "claim": "ruling-sam-2026-10-26-p1-013"
+        },
+        {
+          "source": "ruling:sam-2026-10-26",
+          "says": "This decision replaces the earlier soft save for live animals and its plants counterpart, which let Save and return skip blank required answers.",
+          "claim": "ruling-sam-2026-10-26-p1-012"
+        },
+        {
           "source": "ruling:sam-2026-10-09-pm",
-          "says": "inc-003 also changes plants: its pages with exit=hub save without required checks, but malformed answers are still refused.",
+          "says": "The lenient-save row also changes plants: its pages with exit=hub save without required checks, but malformed answers are still refused.",
           "claim": "ruling-sam-2026-10-09-pm-p3-027"
         },
         {
+          "source": "ruling:sam-2026-10-09-pm",
+          "says": "That plants lenient save overlaps EUDPA-667's mandatory-to-submit work, and the ruling does not say how the two are reconciled.",
+          "claim": "ruling-sam-2026-10-09-pm-p3-027-m1"
+        },
+        {
           "source": "repo:plantsfrontend",
-          "says": "Plants pages already offer 'Save and return to hub' (exit=hub), and today that exit runs the same checks as continuing (plants decision d-059: required-ness and format checks, HTTP 400 and an error summary on every failure).",
+          "says": "Plants pages already carry the 'Save and return to overview' exit (exit=hub) and save through it.",
           "claim": "repo-plantsfrontend-p2-084"
         }
       ],
       "resolution": "precedence",
-      "outcome": "Sam's 9 October afternoon ruling outranks the plants frontend: 'Save and return to overview' saves without the page's required checks and still refuses a malformed answer. repo-plantsfrontend-p2-084 is not overruled, because the exit itself, plants' format checks, its required-ness at submit and its 'Continue' behaviour all stand; which blanks 'Continue' refuses stays with EUDPA-667."
+      "outcome": "The 26 October ruling ranks first and withdraws the 9 October afternoon ruling's lenient save for plants: on every plants page that offers both buttons, 'Save and return to overview' makes exactly the same checks as 'Save and continue', so a missing or not valid answer keeps the trader on the page with an error for each one and what they entered kept, and a clean page saves and shows the Overview (req-1935). ruling-sam-2026-10-09-pm-p3-027 and its EUDPA-667 overlap note are set aside, and with them the overlap itself. repo-plantsfrontend-p2-084 is not overruled: the exit stands, and plants already makes the same checks on both buttons, so nothing is built. ruling-sam-2026-10-09-pm-p3-063 is not overruled either, because its other clauses (arrival details' own rules are animals only, and plants takes the return to the overview) still stand; only its lenient-save clause falls with p3-027.",
+      "overruled": [
+        "ruling-sam-2026-10-09-pm-p3-027",
+        "ruling-sam-2026-10-09-pm-p3-027-m1"
+      ]
     },
     {
-      "id": "c-notification-hub-001",
+      "id": "c-317",
       "about": "Whether the high-risk plants Overview takes the Design Release 2.1 hub's look where it differs (two status tags, every row open, a 'Review and submit' button, no Back link, the hub's sections and totals) although no row of this programme changes those parts of the animals hub.",
       "positions": [
         {
@@ -1425,7 +1471,7 @@
         }
       ],
       "resolution": "precedence",
-      "outcome": "The 9 October afternoon ruling wins: plants changes only where an animals row of this programme changes the same page, and there are no separate plants increments. The live-animals hub already shows Design Release 2.1's two tags, open rows, 'Review and submit' button, missing Back link and sections, so no row changes them and the plants Overview keeps its own (req-1981 to req-1985). It does take the changes an animals hub row makes: the return to the Overview on save (req-1934), the lenient save and return (req-1935), the regions (req-1979) and the Amend bar through the shared strip (req-782). The prototype claims still back the animals hub, so nothing is overruled."
+      "outcome": "The 9 October afternoon ruling wins: plants changes only where an animals row of this programme changes the same page, and there are no separate plants increments. The live-animals hub already shows Design Release 2.1's two tags, open rows, 'Review and submit' button, missing Back link and sections, so no row changes them and the plants Overview keeps its own (req-1981 to req-1985). It does take the changes an animals hub row makes: the return to the Overview on save (req-1934), the regions (req-1979) and the Amend bar through the shared strip (req-782). The save-and-return behaviour needs no plants change at all, because the 26 October ruling asks for the same checks on both buttons and plants already makes them (req-1935, c-313). The prototype claims still back the animals hub, so nothing is overruled."
     }
   ]
 }

@@ -387,6 +387,12 @@ base's. A merge that conflicts stops the row, naming the files. A failure names 
    ([The plan and its review](#the-plan-and-its-review)). A backlog written before that shape existed may
    fail on recipe fields; the loop still reads it, treating those fields as hints,
    so report the failures and carry on. Do not rewrite another programme's backlog.
+
+   **The loop runs this check itself, in its preflight, and refuses to start when it reports a problem** — naming
+   each one and, for a split theme, pointing at [`PREFLIGHT_WALKER.md`](PREFLIGHT_WALKER.md). So skipping this step
+   does not get a run past a backlog out of shape, or past a split theme holding requirements a re-distil handed it.
+   Running it here is still worth it: you find out before the launch rather than after it, and you can walk the
+   problems with the user instead of reading them out of a failed run.
 4. **Check the gate covers every repo the programme builds.** Branching needs
    nothing from you — the loop's start stage cuts each increment's branch off a
    freshly fetched base, in the increment's repos only.
@@ -478,6 +484,75 @@ base's. A merge that conflicts stops the row, naming the files. A failure names 
    it if the run is long; do not carry a stale copy in your head. Read
    `<workarea>/deferred.md` too, if it exists: the register of work the
    programme has pushed out of its backlog ([step 3b](#3b-catch-anything-the-increments-deferred)).
+6. **Check the backlog was distilled against the code as it is now, and stop for the user if it was not.** A row's
+   status is a judgement about what `main` already does, and that judgement is only as fresh as the repo extract it
+   was made from.
+
+   `tim distil status` reports a repo source `stale` when its checkout is no longer on the commit it was extracted
+   from, so ask it first:
+
+   ```bash
+   tim distil status <workarea> --json | jq -r '.result.sources[] | select(.kind=="repo") | "\(.id): \(.state)"'
+   ```
+
+   **A `verified` here is not proof on its own.** That check compares a commit the extract records, and an extract
+   written before the commit was recorded has none to compare — so it reads `verified` however far the repo has
+   moved. The scope hash cannot cover for it either: it hashes the source's `kind`, `locator` and `scope`
+   (`scopeHashOf`, `tim/src/distil/files.js`), none of which change when code lands. For any repo source whose
+   extract predates
+   [the commit check](DISTIL.md#a-repo-source-goes-stale-when-its-checkout-moves), compare the dates by hand:
+
+   ```bash
+   jq -r '.repoHead // "no commit recorded"' workareas/<workarea>/distil/extract/<slug>.json
+   date -r workareas/<workarea>/distil/extract/<slug>.json '+%Y-%m-%d'
+   git -C repos/<repo> log origin/main -1 --format=%ad --date=short
+   ```
+
+   Where a repo has moved since its extract, by either route, **and the theme also has a pick-up list waiting, walk
+   both together rather than asking twice**: [`PREFLIGHT_WALKER.md`](PREFLIGHT_WALKER.md) presents every item in one
+   block and takes one keystroke string. Otherwise say so and give the user the choice before launching:
+
+   - **Reset those sources and re-distil** —
+     `tim distil reset <workarea> --source repo:<id> [--source repo:<id>…] --json`, then relaunch
+     [`distil.js`](../workflow/distil.js). Correct, and costs a full DISTIL run.
+   - **Or verify this theme's rows against current `main` by hand** and record what changed on each row. Cheaper,
+     and enough when only one theme is being played.
+
+   **Check the blocked rows first either way.** The two directions of staleness are not equally safe. A stale "not
+   built yet" is largely self-correcting: the loop plans each row against the real code, so a row asking for what
+   already exists is caught at plan time. A stale **`blocked`** is not — `tim backlog next` never offers a blocked
+   row, so a blocker that has since been lifted silently withholds work and the run just builds less. Read every
+   blocked row's `openQuestions` against what has landed.
+
+7. **If the theme was split off early, apply its pick-up list first.** A re-distil never rewrites a split theme's
+   own backlog, so its rows can be older than the parent's. The report's "For the split branches" section names,
+   per branch, every requirement new since the split, changed since the split, or no longer to build.
+
+   **Do not work through the list silently. Walk it:**
+   [`PREFLIGHT_WALKER.md`](PREFLIGHT_WALKER.md) presents every pending requirement in one block with what it now
+   says, takes one batch keystroke string (apply / leave / discuss), and slow-tracks what the user flags. It covers
+   step 6's moved repos in the same pass. On a theme with twenty-odd entries that is the difference between a
+   decision the user made and a diff they are handed.
+
+   **Step 3's `tim backlog check` refuses the theme while the parent still holds requirements it has never placed in
+   a row**, naming them, so a never-placed requirement cannot be missed:
+
+   ```
+   shared/design-release-2-1 hands this theme 5 requirements it has not placed in a row yet:
+   req-905, req-906, req-908, req-931, req-2138. Read the "For the split branches" section of
+   shared/design-release-2-1/report.md, add or rewrite this backlog's rows for them, then move
+   each id from the parent pointer's "pickUp" to its "requirements".
+   ```
+
+   **It does not refuse a requirement whose text merely changed**, because someone may have decided deliberately not
+   to apply a change. Those are not detected for you: read them from
+   `tim distil coverage <workarea> --json` (`result.backlog.splitOff[].changed`) or the report, and judge each one.
+
+   Then move each id from the parent pointer's `pickUp` to its `requirements` and copy the fingerprint from
+   `fingerprintsNow` in `tim distil coverage <workarea> --json`, as
+   [`DISTIL.md`](DISTIL.md#8-splitting-a-theme-off-early) sets out. Leave a requirement's fingerprint alone where you
+   decided not to apply its change: the report then re-raises it at the next re-distil instead of the disagreement
+   being buried, and the check stays quiet about it.
 
 ## THE RUN
 
@@ -938,6 +1013,7 @@ handover prompt.
 
 | Reason | What it means |
 |---|---|
+| (no reason: the run throws) | The preflight ran `tim backlog check` and it reported a problem, so the run built nothing and never reached the loop. The error names every problem. A split theme holding requirements a re-distil handed it is the common one: walk them with [`PREFLIGHT_WALKER.md`](PREFLIGHT_WALKER.md), then launch again |
 | `count-reached` | `stopAfter` increments have landed. The ordinary ending |
 | `no-buildable` | `tim backlog next` found nothing buildable, or an explicit `increments` list is built out |
 | `agent-budget` | Another increment would take the run past the `Workflow` tool's 1000-agent cap. Nothing is wrong: launch again with the same args |
@@ -1057,6 +1133,11 @@ theme, each at `workareas/<workarea>/themes/<theme id>/`. Each theme builds on i
 the others. Its themes never touch the same code ([`SHAPE.md`](SHAPE.md#themes)), so their pull requests do not
 conflict.
 
+- **A split theme's rows are the oldest in the programme, so check their freshness before you launch.** Two things
+  go stale here and neither announces itself: the repo extracts the rows were judged against
+  ([step 6](#before-the-first-increment)), and the theme's own pick-up list, because a re-distil never rewrites a
+  split backlog ([step 7](#before-the-first-increment)). Do both of those steps before the first increment of a
+  split theme, and take the choice they name to the user rather than picking for them.
 - **Build the theme's workarea, never the parent's.** The `workarea` arg is `<workarea>/themes/<theme id>`, and
   `repos` is that split backlog's envelope `repos`, which holds only the repos the theme builds in. The parent
   stays the source for re-distilling.

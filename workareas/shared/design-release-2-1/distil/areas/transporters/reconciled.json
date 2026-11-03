@@ -217,8 +217,8 @@
     },
     {
       "id": "req-389",
-      "statement": "The transporter search is run from an icon button with the accessible name 'Search' beside the box. With JavaScript it filters the listed rows in the browser as the trader searches, as Design Release 2.1 does; without JavaScript the icon button submits the term to a server-side filter that re-renders the filtered list. Until transporter requirements are settled, today's 'Search' button and server-side filter stay as they are, and the in-page filter is not lifted out into the waiting-on-design theme: it is decided when this area is re-distilled.",
-      "why": "Design Release 2.1 replaces today's 'Search' text button and server round trip with an icon button and in-page filtering, and a GOV.UK service must still work without JavaScript, so the server-side filter stays as the fallback (c-006). The afternoon ruling of 9 October blocks listing and searching transporters, the filter included (c-285).",
+      "statement": "The transporter search is run from the joined blue icon button with the accessible name 'Search' beside the box. With JavaScript it filters the listed rows in the page as the trader types, with matching letters in bold, as the other searches do; without JavaScript the icon button submits the term to the server-side filter, which re-renders the filtered list.",
+      "why": "Design Release 2.1 replaces today's 'Search' text button and server round trip with an icon button and in-page filtering, and a GOV.UK service must still work without JavaScript, so the server-side filter stays as the fallback (c-006). The afternoon ruling of 9 October blocks listing and searching transporters, the filter included (c-285). Sam ruled on 20 October: \"another one for the blue icon and same behaviour as the rest\" (design-snagging inc-210).",
       "claims": [
         "prototype-dr2-1-source-p7-003",
         "prototype-dr2-1-source-p7-017",
@@ -244,8 +244,7 @@
       "conflicts": [
         "c-006",
         "c-285"
-      ],
-      "blockedBy": "Transporter requirements: it is not yet decided whether the service will manage transporters at all, or whether the address book or some other functionality would do it (Sam's ruling of 9 October, afternoon, which names nobody to decide it). The transporter area is re-distilled once that is decided."
+      ]
     },
     {
       "id": "req-390",
@@ -572,13 +571,17 @@
     },
     {
       "id": "req-402",
-      "statement": "Saving the transporter list with no transporter chosen shows no error and carries on.",
-      "why": "DR2.1 and today both make the transporter optional to proceed.",
+      "statement": "On the transporter list, both 'Save and continue' and 'Save and return to overview' refuse a save with no transporter chosen: the trader stays on the list and sees 'Select a transporter from the list' in a 'There is a problem' summary linking to the first radio and repeated inline above the table.",
+      "why": "The Live Animals and Germinals Data Fields page makes both the commercial and the private transporter mandatory to proceed, so the transporter step cannot be left without one; that page outranks the prototype and the real frontend on whether a field is mandatory. Sam's ruling of 26 October makes 'Save and return to overview' run exactly the checks 'Save and continue' runs, with no page an exception, so both buttons refuse the blank save (c-transporters-001). The wording is the copy the service already holds under its transporterRequired key, so none is invented.",
       "claims": [
-        "prototype-dr2-1-source-p7-036",
+        "confluence-6497338582-p2-070",
+        "confluence-6497338582-p2-082",
+        "confluence-6497338582-p2-092",
+        "ruling-sam-2026-10-26-p1-002",
+        "ruling-sam-2026-10-26-p1-003",
+        "ruling-sam-2026-10-26-p1-008",
+        "ruling-sam-2026-10-26-p1-013",
         "prototype-dr2-1-source-p7-037",
-        "trace-prototype-dr2-1-p8-094",
-        "prototype-dr2-1-specs-p2-109",
         "repo-frontend-p12-047",
         "repo-frontend-p12-155",
         "repo-tests-p1-128",
@@ -586,9 +589,11 @@
         "trace-e2e-p11-093"
       ],
       "status": "adopted",
-      "delta": "exists",
-      "deltaNote": "repo-frontend-p12-047 and repo-tests-p1-128 show a blank save carries on with no error today.",
-      "conflicts": []
+      "delta": "change",
+      "deltaNote": "Today a blank save shows no error and carries on: the list has no required-selection check, and the 'Select a transporter from the list' copy under the transporterRequired key fires only for a value that is not on the list (repo-frontend-p12-047, repo-frontend-p12-155, repo-tests-p1-128). No fit or end-to-end trace submits the list empty (trace-animals-fit-p18-076, trace-e2e-p11-093), so neither shows the old behaviour being relied on.",
+      "conflicts": [
+        "c-transporters-001"
+      ]
     },
     {
       "id": "req-403",
@@ -665,8 +670,8 @@
     },
     {
       "id": "req-406",
-      "statement": "The transporter list ends with 'Save and continue', a secondary 'Save and return to overview' (which saves any chosen transporter and returns to the overview) and a 'Cancel and return to overview' link.",
-      "why": "DR2.1 and today agree.",
+      "statement": "The transporter list ends with 'Save and continue', a secondary 'Save and return to overview', which saves the chosen transporter and shows the overview, and a 'Cancel and return to overview' link.",
+      "why": "DR2.1 and today agree on the three controls, and Sam's ruling of 26 October states the same success path for 'Save and return to overview': with nothing missing or not valid it saves the answers and shows the overview. What the button does when the transporter is missing is req-402.",
       "claims": [
         "prototype-dr2-1-source-p7-040",
         "prototype-dr2-1-source-p7-042",
@@ -678,11 +683,12 @@
         "trace-animals-fit-p18-056",
         "trace-e2e-p11-020",
         "trace-e2e-p11-098",
-        "prototype-dr2-1-source-p7-013"
+        "prototype-dr2-1-source-p7-013",
+        "ruling-sam-2026-10-26-p1-011"
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "repo-frontend-p12-041 and trace-animals-fit-p18-055 show the same three controls today.",
+      "deltaNote": "repo-frontend-p12-041 and trace-animals-fit-p18-055 show the same three controls today, and trace-e2e-p11-020 shows 'Save and return to overview' saving and landing on the overview.",
       "conflicts": []
     },
     {
@@ -1309,7 +1315,7 @@
     {
       "id": "req-432",
       "statement": "The private transporter's Country select lists the United Kingdom plus reference-data's GBNAG_SPS_EX countries, exactly as MDM serves them (trade-imports-stub locally and in CDP dev, real MDM in CDP test); the list is never edited in code, and its names and count are the ones the tidied stub fixture serves.",
-      "why": "The 9 October ruling takes the MDM block off this list: no reference list waits on MDM integration, every list is built from reference-data as it is, and its content is MDM's. The afternoon ruling of 9 October then blocks this row (inc-008) with transporter management instead (c-054, c-285).",
+      "why": "The 9 October ruling takes the MDM block off this list: no reference list waits on MDM integration, every list is built from reference-data as it is, and its content is MDM's. The afternoon ruling of 9 October then blocks this row (inc-008) with transporter management instead (c-054, c-285). The Live Animals and Germinals Data Fields page states no country restriction and no picking list for the private transporter (confluence-6497338582-p2-095), so it does not narrow this list and the reference-data list stands.",
       "claims": [
         "document-dr1-parity-notes-p1-037",
         "trace-animals-fit-p19-015-m1",
@@ -1326,7 +1332,8 @@
         "ruling-sam-2026-10-09-p1-149",
         "ruling-sam-2026-10-09-pm-p2-031",
         "ruling-sam-2026-10-09-pm-p2-040",
-        "ruling-sam-2026-10-09-pm-p1-041"
+        "ruling-sam-2026-10-09-pm-p1-041",
+        "confluence-6497338582-p2-095"
       ],
       "status": "adopted",
       "delta": "change",
@@ -1903,7 +1910,7 @@
     {
       "id": "req-454",
       "statement": "A commercial transporter's country is fixed to Northern Ireland: a disabled 'Country' select showing only Northern Ireland, with a hidden field posting it, stored in English whatever the page language.",
-      "why": "DR2.1 and today agree that a commercial transporter added here can only be Northern Irish.",
+      "why": "DR2.1 and today agree that a commercial transporter added here can only be Northern Irish. The Live Animals and Germinals Data Fields page states the same restriction: a commercial transporter a trader creates themselves is restricted to Northern Ireland (confluence-6497338582-p2-078).",
       "claims": [
         "prototype-dr2-1-source-p7-104",
         "trace-prototype-dr2-1-p9-064",
@@ -1914,7 +1921,8 @@
         "trace-animals-fit-p20-039",
         "trace-animals-fit-p20-040",
         "trace-animals-fit-p21-045",
-        "trace-e2e-p11-044"
+        "trace-e2e-p11-044",
+        "confluence-6497338582-p2-078"
       ],
       "status": "adopted",
       "delta": "exists",
@@ -1990,7 +1998,7 @@
     },
     {
       "id": "req-458",
-      "statement": "With JavaScript, once the commercial transporter's address search is built and only if design keeps it under design question 10, the form's address fields and 'Enter contact details' section start hidden behind the address search and an 'Enter address manually' link-style button, which reveals them; they show already when an address has been looked up, when address line 1 holds a value, when an address field has an error, or after any failed save, with the search text and the picked address kept. The version without JavaScript, every field shown from the start, is req-transporters-001.",
+      "statement": "With JavaScript, once the commercial transporter's address search is built and only if design keeps it under design question 10, the form's address fields and 'Enter contact details' section start hidden behind the address search and an 'Enter address manually' link-style button, which reveals them; they show already when an address has been looked up, when address line 1 holds a value, when an address field has an error, or after any failed save, with the search text and the picked address kept. The version without JavaScript, every field shown from the start, is req-2105.",
       "why": "Design Release 2.1 hides the fields behind the search; this is JavaScript-only behaviour, so the afternoon ruling of 9 October puts it in the one waiting-on-design increment for design question 10, also blocked on the address lookup, and inc-042 is also blocked on transporter management (c-305, c-006).",
       "claims": [
         "prototype-dr2-1-source-p7-096",
@@ -2445,7 +2453,7 @@
     {
       "id": "req-1820",
       "statement": "The germinal products set has its own copy of today's transporter step, taken from the live-animals set as it stands when the copy is built: the transporter list, 'Choose a transporter type' and both add forms, with the same content, controls and validation, on the germinal journey's own pages. The copy leaves out the unused approved commercial transporter register page. A germinal notification offers the same organisation's transporters, the shipped ones and the ones the organisation has added, because added transporters belong to the organisation, not to a set. The live-animals transporter changes that wait on transporter requirements reach the germinal copy when the transporter area is re-distilled.",
-      "why": "Design Release 2.1's germinal journey chooses its transporter from the same transporter page as the live-animals journeys, and the 9 October ruling builds every germinal page as a copy of its live-animals feature folder in the germinal set. The afternoon ruling of 9 October lets the copy of today's step go ahead while transporter management itself is blocked (c-285).",
+      "why": "Design Release 2.1's germinal journey chooses its transporter from the same transporter page as the live-animals journeys, and the 9 October ruling builds every germinal page as a copy of its live-animals feature folder in the germinal set. The afternoon ruling of 9 October lets the copy of today's step go ahead while transporter management itself is blocked (c-285). The Live Animals and Germinals Data Fields page marks the transporter type and both transporter records as impacting the animals and the germinals journeys alike, so the germinal set captures the same transporter data, under the same mandatory-to-proceed rule as live animals (req-402).",
       "claims": [
         "trace-prototype-dr2-1-p12-102",
         "trace-prototype-dr2-1-p12-101",
@@ -2456,7 +2464,10 @@
         "ruling-sam-2026-10-09-p1-057",
         "repo-frontend-p12-146",
         "ruling-sam-2026-10-09-pm-p2-049",
-        "repo-frontend-p12-071"
+        "repo-frontend-p12-071",
+        "confluence-6497338582-p2-072",
+        "confluence-6497338582-p2-084",
+        "confluence-6497338582-p2-094"
       ],
       "status": "adopted",
       "delta": "new",
@@ -2481,7 +2492,7 @@
       "conflicts": []
     },
     {
-      "id": "req-transporters-001",
+      "id": "req-2105",
       "statement": "Without JavaScript, and until the commercial transporter's address search is built, every address and contact field on 'Add a commercial transporter' shows from the start, so a trader can always enter the address by hand.",
       "why": "Every page works fully without JavaScript, and manual address entry is never blocked on the address lookup (rulings of 9 October); the hidden-fields layout is only an enhancement on top (req-458).",
       "claims": [
@@ -2500,6 +2511,109 @@
         "c-218",
         "c-305"
       ]
+    },
+    {
+      "id": "req-transporters-001",
+      "statement": "The notification holds one transporter type for the consignment, either commercial or private, settled by the type the chosen transporter carries and by the type the trader picks when adding one.",
+      "why": "The Live Animals and Germinals Data Fields page makes the transporter type a notification-level, single-select field the trader sets, with exactly one of a commercial or a private value, needed before the notification can be submitted. Today's service already holds it that way. The page's two code values are its data values, not page labels: how the option and the Type column read stays the design's (req-393, req-418).",
+      "claims": [
+        "confluence-6497338582-p2-063",
+        "confluence-6497338582-p2-064",
+        "confluence-6497338582-p2-065",
+        "confluence-6497338582-p2-066",
+        "confluence-6497338582-p2-067",
+        "confluence-6497338582-p2-068",
+        "confluence-6497338582-p2-069",
+        "confluence-6497338582-p2-071",
+        "repo-frontend-p12-004",
+        "repo-frontend-p12-044",
+        "repo-frontend-p12-045"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p12-004 shows the transporter list settling transporterType from the chosen row, and repo-frontend-p12-044 and -045 show it saved as the commercial or the private value today.",
+      "conflicts": []
+    },
+    {
+      "id": "req-transporters-002",
+      "statement": "A notification holds the details of one transporter: a commercial transporter record when the transporter type is commercial and a private transporter record when it is private, never both, each held once for the whole consignment and taken from what the trader chooses.",
+      "why": "The Live Animals and Germinals Data Fields page makes each transporter record conditional on the transporter type, single per notification, notification-level and sourced from the trader. Today's obligation model already does this, so the page confirms the rule rather than changing it.",
+      "claims": [
+        "confluence-6497338582-p2-073",
+        "confluence-6497338582-p2-075",
+        "confluence-6497338582-p2-076",
+        "confluence-6497338582-p2-080",
+        "confluence-6497338582-p2-081",
+        "confluence-6497338582-p2-085",
+        "confluence-6497338582-p2-087",
+        "confluence-6497338582-p2-088",
+        "confluence-6497338582-p2-090",
+        "confluence-6497338582-p2-091",
+        "repo-frontend-p12-004",
+        "repo-frontend-p12-044",
+        "repo-frontend-p12-045",
+        "repo-frontend-p12-046"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p12-004 shows the page collecting transporterType with commercialTransporter and privateTransporter, and repo-frontend-p12-046 shows the obligation model removing the record of the other type when a transporter is picked, so only one is ever held.",
+      "conflicts": []
+    },
+    {
+      "id": "req-transporters-003",
+      "statement": "The commercial transporter form asks for a transporter authorisation number and the private transporter form asks for none, and both forms' address and contact fields carry the labels and limits the transporter pages already use, following the Standard Address Block's field rules wherever the two describe the same field in the same way.",
+      "why": "The Live Animals and Germinals Data Fields page types both transporter records as the Standard Address Block, the commercial one with an approval number added, and points their field-level validation at that block. The block's own field list, labels and limits sit in the page's Address Block sub-section rather than on the transporter rows, so whether these two forms take the block wholesale or keep the fields already adopted cannot be settled from the transporter evidence (c-transporters-002).",
+      "claims": [
+        "confluence-6497338582-p2-074",
+        "confluence-6497338582-p2-075-m1",
+        "confluence-6497338582-p2-079",
+        "confluence-6497338582-p2-086",
+        "confluence-6497338582-p2-089",
+        "repo-frontend-p12-121",
+        "repo-frontend-p12-123",
+        "repo-frontend-p12-124",
+        "repo-frontend-p12-083",
+        "repo-frontend-p12-091",
+        "repo-frontend-p12-092",
+        "repo-frontend-p12-111"
+      ],
+      "status": "question",
+      "delta": "change",
+      "deltaNote": "Today each form has its own field set and limits: the private form asks name, address lines, town or city, county, postcode, country, email and phone with no authorisation number (repo-frontend-p12-121, -123, -124), and the commercial form asks the authorisation number with the same address and contact fields and a fixed Northern Ireland country (repo-frontend-p12-083, -091, -092, -111).",
+      "conflicts": [
+        "c-transporters-002"
+      ]
+    },
+    {
+      "id": "req-transporters-004",
+      "statement": "The commercial transporters the transporter list offers are the approved transporters the service's approved-transporter list holds.",
+      "why": "The Live Animals and Germinals Data Fields page says commercial transporters are consumed from a list of approved transporters, and leaves which list as its one open point, so where the list comes from is part of what the transporter requirements must settle (c-285).",
+      "claims": [
+        "confluence-6497338582-p2-077",
+        "repo-frontend-p12-036",
+        "ruling-sam-2026-10-09-pm-p2-031",
+        "ruling-sam-2026-10-09-pm-p2-050"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today the commercial transporters on the list are seed records shipped in the frontend, with no approved-transporter list behind them (repo-frontend-p12-036).",
+      "conflicts": [
+        "c-285"
+      ],
+      "blockedBy": "Transporter requirements: it is not yet decided whether the service will manage transporters at all, or whether the address book or some other functionality would do it, and the data specification leaves which approved-transporter list commercial transporters come from as its one TBC (Sam's ruling of 9 October, afternoon, which names nobody to decide it). The transporter area is re-distilled once that is decided."
+    },
+    {
+      "id": "req-transporters-005",
+      "statement": "The service holds the two worked transporter addresses the data specification gives: the nine-line Northern Ireland transporter whose last line is the approval number UK/NEWCA/T1/00090953, and the eight-line United Kingdom livestock services address.",
+      "why": "Out of scope: the two addresses are worked examples showing each field's format, not records the service holds. The transporters the list ships come from the design (req-397, req-398) and from what a trader adds. Each example also carries a mailto link whose address differs from its visible text, which is the page's own typing rather than anything to build.",
+      "claims": [
+        "confluence-6497338582-p2-083",
+        "confluence-6497338582-p2-093"
+      ],
+      "status": "out-of-scope",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
     }
   ],
   "conflicts": [
@@ -2726,7 +2840,7 @@
         }
       ],
       "resolution": "precedence",
-      "outcome": "The 9 October ruling answers the question raised here and ranks first: the commercial transporter's search calls the same INS backend address lookup and keeps only results with BT postcodes (req-456), trade-imports-stub's lookup data gains Northern Ireland addresses so the search can be seen locally (req-1819), and both are built with address search, blocked until the address lookup is a real feature. Manual entry is built now and never waits: without JavaScript every field shows from the start (req-transporters-001), and hiding the fields behind the search (req-458) also waits on design question 10 (c-305). Nothing is overruled: the prototype's Northern Ireland-only search is what is built, from the real lookup. The afternoon ruling of 9 October keeps it blocked and adds a second wait: transporter requirements (c-285).",
+      "outcome": "The 9 October ruling answers the question raised here and ranks first: the commercial transporter's search calls the same INS backend address lookup and keeps only results with BT postcodes (req-456), trade-imports-stub's lookup data gains Northern Ireland addresses so the search can be seen locally (req-1819), and both are built with address search, blocked until the address lookup is a real feature. Manual entry is built now and never waits: without JavaScript every field shows from the start (req-2105), and hiding the fields behind the search (req-458) also waits on design question 10 (c-305). Nothing is overruled: the prototype's Northern Ireland-only search is what is built, from the real lookup. The afternoon ruling of 9 October keeps it blocked and adds a second wait: transporter requirements (c-285).",
       "id": "c-218"
     },
     {
@@ -2757,10 +2871,25 @@
           "source": "prototype:dr2-1-source",
           "says": "The transporter list, the type page and both add forms change to Design Release 2.1's layout, copy and validation.",
           "claim": "prototype-dr2-1-source-p7-015"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "Commercial transporters are consumed from a list of approved transporters, but which list is left as the page's one TBC.",
+          "claim": "confluence-6497338582-p2-077"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "says": "The transporter management rows stay in the backlog, blocked, because they could be useful for future work.",
+          "claim": "ruling-sam-2026-10-09-pm-p2-034"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "says": "The ruling names nobody to produce the transporter management requirements, and no ticket or date.",
+          "claim": "ruling-sam-2026-10-09-pm-p2-050"
         }
       ],
       "resolution": "precedence",
-      "outcome": "Sam's afternoon ruling of 9 October ranks first: every row that changes how transporters are added, listed or searched stays adopted and is blocked on transporter requirements (whether the service manages transporters at all, and whether the address book or other functionality does it), and the transporter area is re-distilled once that is decided. That covers the list's layout, search, columns and shipped records, the type page, both add forms and what follows a save, the private transporter's country list, the commercial address search (also blocked on the address lookup, and its hidden-fields layout on design question 10), the register page removal and the address book's transporter rows, including the 'View details' link. What goes ahead over today's step: its place in the journey (req-405), its amend and template-review buttons (req-407, req-408) and the germinal set's copy of today's step (req-1820). Nothing is overruled: the 9 October unblocking still unblocks inc-082, its keeping of inc-044 still holds (the row stays, blocked), and the prototype's design is what is built once unblocked."
+      "outcome": "Sam's afternoon ruling of 9 October ranks first: every row that changes how transporters are added, listed or searched stays adopted and is blocked on transporter requirements (whether the service manages transporters at all, and whether the address book or other functionality does it), and the transporter area is re-distilled once that is decided. That covers the list's layout, search, columns and shipped records, the type page, both add forms and what follows a save, the private transporter's country list, the commercial address search (also blocked on the address lookup, and its hidden-fields layout on design question 10), the register page removal and the address book's transporter rows, including the 'View details' link. What goes ahead over today's step: its place in the journey (req-405), its amend and template-review buttons (req-407, req-408) and the germinal set's copy of today's step (req-1820). Nothing is overruled: the 9 October unblocking still unblocks inc-082, its keeping of inc-044 still holds (the row stays, blocked), and the prototype's design is what is built once unblocked. The Live Animals and Germinals Data Fields page adds a second reason the block cannot be lifted here: which approved-transporter list the commercial transporters come from is the page's one open point (req-transporters-004). The ruling names nobody to produce the requirements and no date, and keeps the rows in the backlog, blocked, because they are useful for the future work. What the data specification settles on its own goes ahead regardless: the transporter step may not be left without a transporter (req-402, c-transporters-001), because that works on today's list and changes nothing about how transporters are added, listed or searched."
     },
     {
       "id": "c-286",
@@ -2784,6 +2913,84 @@
       ],
       "resolution": "precedence",
       "outcome": "The afternoon ruling ranks first and builds inc-170's template-review controls now, so req-408 stands: a single 'Save and return' and a 'Cancel' link back to the template. The templates ruling's line is read as its own principle applied to this page, that template mode works on pages as they stand: the controls go on today's transporter list without waiting for its blocked Design Release 2.1 changes. Read the other way, as keeping today's buttons in template mode, it would contradict the higher-ranked ruling. Nothing is overruled: the templates claim still holds for building on today's page."
+    },
+    {
+      "id": "c-transporters-001",
+      "about": "Whether the trader must choose a transporter before leaving the transporter list: the data specification makes the transporter mandatory to proceed, while the prototype and today's service let a blank save carry on.",
+      "positions": [
+        {
+          "source": "ruling:sam-2026-10-26",
+          "says": "'Save and return to overview' makes exactly the same checks as 'Save and continue', with no page an exception.",
+          "claim": "ruling-sam-2026-10-26-p1-008"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "The commercial transporter is mandatory to proceed: it must be given before the trader can leave the page with 'Save and continue' or 'Save and return to overview'.",
+          "claim": "confluence-6497338582-p2-082"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "The private transporter is mandatory to proceed.",
+          "claim": "confluence-6497338582-p2-092"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "Posting the transporter page with nothing selected carries on to the next page with no error, so choosing a transporter is optional.",
+          "claim": "prototype-dr2-1-source-p7-036"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "says": "Saving the transporter page with nothing selected moves on to upload documents with no error.",
+          "claim": "trace-prototype-dr2-1-p8-094"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "says": "A transporter is optional to proceed: continuing with none chosen goes to the upload documents page.",
+          "claim": "prototype-dr2-1-specs-p2-109"
+        },
+        {
+          "source": "repo:frontend",
+          "says": "The transporter list has no required-selection check: a blank save shows no error and saves nothing.",
+          "claim": "repo-frontend-p12-047"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The Live Animals and Germinals Data Fields page ranks above the prototype, its traces, its specs and the real frontend on whether a field is mandatory, so the transporter is mandatory to proceed: a save with no transporter chosen is refused and the trader stays on the list with an error (req-402). Sam's ruling of 26 October ranks first of all and settles which buttons check, namely both, with no page an exception, so 'Save and return to overview' refuses the blank save as well as 'Save and continue'. The message is the copy the service already holds under its transporterRequired key, so no wording is invented; the prototype supplies none (prototype-dr2-1-source-p7-037), which is why that claim still stands rather than being overruled. repo-frontend-p12-047 is also left out of what is overruled, because it still records today's behaviour and is cited as req-402's delta. The check works on today's transporter list and changes nothing about how transporters are added, listed or searched, so it goes ahead rather than waiting with transporter management (c-285).",
+      "overruled": [
+        "prototype-dr2-1-source-p7-036",
+        "trace-prototype-dr2-1-p8-094",
+        "prototype-dr2-1-specs-p2-109"
+      ]
+    },
+    {
+      "id": "c-transporters-002",
+      "about": "Whether the commercial and private transporter forms take the Standard Address Block's own field list, labels and limits, or keep the fields and limits the transporter pages already use.",
+      "positions": [
+        {
+          "source": "confluence:6497338582",
+          "says": "The commercial transporter is a Standard address block plus an approval number, and its field-level validation is the Standard Address Block's.",
+          "claim": "confluence-6497338582-p2-074"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "The private transporter is a Standard address block with no approval number, validated by the block's own rules.",
+          "claim": "confluence-6497338582-p2-086"
+        },
+        {
+          "source": "repo:frontend",
+          "says": "The private transporter form asks its own fields, with its own labels and limits and no authorisation number.",
+          "claim": "repo-frontend-p12-121"
+        },
+        {
+          "source": "repo:frontend",
+          "says": "The commercial transporter record holds the authorisation number with the form's own address and contact fields and the country Northern Ireland.",
+          "claim": "repo-frontend-p12-111"
+        }
+      ],
+      "resolution": "question",
+      "outcome": "Precedence puts the data specification above the real frontend on what a record holds, but it does not say what 'the Standard Address Block's validation' asks of these two forms: the block's field list, labels and limits are given in the page's Address Block sub-section, not on the transporter rows, and the transporter evidence here cannot be read against them. Taken one way the line replaces the labels and limits already adopted for both forms; taken the other it only confirms them. The two readings build different things, so it goes to the owner with a default that keeps what is adopted (req-transporters-003).",
+      "question": "Do the commercial and private transporter forms take the Standard Address Block's own field list, labels and limits, or keep the fields and limits the transporter pages already use?",
+      "default": "Keep what is adopted: the private form's fields, labels and limits with no authorisation number, and the commercial form's the same with a transporter authorisation number and a fixed Northern Ireland country, following the Standard Address Block's rules only where the address book's block describes the same field in the same way. Both forms are part of adding a transporter, so whichever reading wins is built only once transporter requirements are settled (c-285)."
     }
   ]
 }

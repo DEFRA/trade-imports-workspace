@@ -60,6 +60,7 @@
       "statement": "On a live-animals notification the commodity search hint reads 'You can search by common name (for example, cattle), commodity code (0102), or Latin name (Bos taurus).', with no 'Enter at least 3 characters.' sentence.",
       "why": "Design Release 2.1's wording wins by default; DR1 left the hint wording unruled, and the reason the frontend departed from it (no common names in the data) no longer holds, since 'cattle' now finds cattle species. Ruling 2026-10-09 afternoon lets the commodity pages' wording go ahead on today's data. The germinal set's own hint ('You can search for semen, ova or embryos, ...', prototype-dr2-1-source-p2-077) is the germinal-products area's requirement; it is cited here only to show the live-animals hint is the live set's alone.",
       "claims": [
+        "confluence-6497338582-p1-071",
         "document-dr1-parity-backlog-p5-002",
         "document-dr1-parity-backlog-p5-004",
         "document-dr1-parity-backlog-p5-006",
@@ -288,6 +289,7 @@
       "statement": "The commodity search matches a species' common name and Latin name, and a commodity's name and code, so 'horse' finds both Horse (0101) species and Horse (Equus spp.) under Other live mammals.",
       "why": "The hint promises search by common name, commodity code and Latin name.",
       "claims": [
+        "confluence-6497338582-p1-071",
         "prototype-dr2-1-specs-p1-053",
         "repo-frontend-p5-011",
         "repo-frontend-p5-012",
@@ -404,6 +406,9 @@
       "statement": "Species from several commodities can be chosen on one notification by searching again: choices made under an earlier search stay in the selection and are all saved together.",
       "why": "A consignment can hold several commodities.",
       "claims": [
+        "confluence-6497338582-p1-085",
+        "confluence-6497338582-p1-086",
+        "confluence-6497338582-p1-088",
         "prototype-dr2-1-specs-p1-059",
         "repo-frontend-p5-021",
         "repo-frontend-p5-091",
@@ -449,6 +454,8 @@
       "statement": "Pressing Save and continue with nothing chosen shows 'Select a commodity' in the error summary and inline on the search field, between its label and hint, and the summary link goes to the search field, whether or not search results are on screen.",
       "why": "Design Release 2.1 always ties the error to the search field, the control the trader uses to choose.",
       "claims": [
+        "confluence-6497338582-p1-074",
+        "confluence-6497338582-p1-090",
         "prototype-dr2-1-source-p2-090",
         "prototype-dr2-1-specs-p1-051",
         "prototype-dr2-1-specs-p1-052",
@@ -517,27 +524,31 @@
     },
     {
       "id": "req-088",
-      "statement": "'Save and return to overview' on the commodity page does not validate: it saves the selection as it stands, an empty one included, and goes to the overview, where 'What are you importing?' shows 'To do' when nothing is chosen.",
-      "why": "Design Release 2.1 lets a trader leave the page without choosing; Save and return is a soft save.",
+      "statement": "On the commodity page 'Save and return to overview' makes the same checks as 'Save and continue': with no species chosen it shows 'Select a commodity' in the error summary and inline on the search field and keeps the trader on the page with the query they typed still in the box, and with at least one species chosen it saves the selection and goes to the notification overview.",
+      "why": "Ruling 26 October makes the two save buttons behave the same on every page that has both, with no page an exception, so the commodity page refuses an empty selection whichever button is pressed, a trader never loses what they typed, and a valid selection saves and returns to the overview.",
       "claims": [
-        "prototype-dr2-1-source-p2-099",
-        "prototype-dr2-1-source-p2-099-m1",
-        "prototype-dr2-1-specs-p1-064",
-        "prototype-dr2-1-specs-p1-065",
+        "repo-frontend-p5-008",
+        "repo-frontend-p5-032",
         "repo-frontend-p5-032-m1",
-        "ruling-sam-2026-10-09-pm-p2-007",
+        "ruling-sam-2026-10-26-p1-002",
+        "ruling-sam-2026-10-26-p1-003",
+        "ruling-sam-2026-10-26-p1-008",
+        "ruling-sam-2026-10-26-p1-009",
+        "ruling-sam-2026-10-26-p1-010",
+        "ruling-sam-2026-10-26-p1-011",
+        "ruling-sam-2026-10-26-p1-013",
+        "prototype-dr2-1-specs-p1-065",
         "trace-animals-fit-p8-049",
         "trace-animals-fit-p8-050",
-        "trace-prototype-dr2-1-p3-047",
-        "trace-prototype-dr2-1-p3-048",
         "trace-prototype-dr2-1-p3-050",
         "trace-prototype-dr2-1-p5-102"
       ],
       "status": "adopted",
-      "delta": "change",
-      "deltaNote": "Today Save and return to overview with nothing chosen shows 'Select a commodity' with a 400, like Save and continue (repo-frontend-p5-032-m1).",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p5-032-m1 shows the empty-selection check already running before the hub exit, so 'Save and return to overview' shows 'Select a commodity' with a 400 like 'Save and continue'; no fit or end-to-end trace drove the button (trace-animals-fit-p8-050).",
       "conflicts": [
-        "c-211"
+        "c-211",
+        "c-commodities-001"
       ]
     },
     {
@@ -655,7 +666,8 @@
       "deltaNote": "Today the catalogue is five commodities, Cow, Horse, Cat, Dog and Fish (repo-tests-p1-042).",
       "conflicts": [
         "c-222",
-        "c-278"
+        "c-278",
+        "c-commodities-006"
       ],
       "blockedBy": "Commodities come from MDM: the MDM commodity list reaches the animals frontend through trade-imports-reference-data, after which the commodity catalogue and search area is re-distilled (ruling 2026-10-09 afternoon, point on MDM commodities)."
     },
@@ -685,7 +697,8 @@
       "deltaNote": "Today 0102 is named 'Cow' ('Cow (0102)', row '0102 Cow') (trace-e2e-p5-012, -p5-045).",
       "conflicts": [
         "c-225",
-        "c-278"
+        "c-278",
+        "c-commodities-006"
       ],
       "blockedBy": "Commodities come from MDM: the MDM commodity list reaches the animals frontend through trade-imports-reference-data, after which the commodity catalogue and search area is re-distilled (ruling 2026-10-09 afternoon, point on MDM commodities)."
     },
@@ -708,7 +721,8 @@
       "delta": "change",
       "deltaNote": "Today 0102 offers four species: American bison (Bison bison), Cattle (Bos spp.), Domestic cattle (Bos taurus) and Water buffalo (Bubalus bubalis) (trace-e2e-p5-012); Bison bison's common name changes from 'American bison' to 'Bison bison'.",
       "conflicts": [
-        "c-278"
+        "c-278",
+        "c-commodities-006"
       ],
       "blockedBy": "Commodities come from MDM: the MDM commodity list reaches the animals frontend through trade-imports-reference-data, after which the commodity catalogue and search area is re-distilled (ruling 2026-10-09 afternoon, point on MDM commodities)."
     },
@@ -733,7 +747,8 @@
       "deltaNote": "Today 0101 offers one species, Horse (Equus caballus) (trace-e2e-p5-013).",
       "conflicts": [
         "c-014",
-        "c-278"
+        "c-278",
+        "c-commodities-006"
       ],
       "blockedBy": "Commodities come from MDM: the MDM commodity list reaches the animals frontend through trade-imports-reference-data, after which the commodity catalogue and search area is re-distilled (ruling 2026-10-09 afternoon, point on MDM commodities)."
     },
@@ -762,7 +777,8 @@
       "deltaNote": "Today they read 'Cat (Felis catus)' and 'Dog (Canis lupus familiaris)', with rows 'Cat' and 'Dog' (trace-e2e-p5-014, trace-animals-fit-p9-016).",
       "conflicts": [
         "c-020",
-        "c-278"
+        "c-278",
+        "c-commodities-006"
       ],
       "blockedBy": "Commodities come from MDM: the MDM commodity list reaches the animals frontend through trade-imports-reference-data, after which the commodity catalogue and search area is re-distilled (ruling 2026-10-09 afternoon, point on MDM commodities)."
     },
@@ -789,7 +805,8 @@
       "deltaNote": "Today only Cat and Dog sit on 01061900, one species each (repo-tests-p1-045).",
       "conflicts": [
         "c-014",
-        "c-278"
+        "c-278",
+        "c-commodities-006"
       ],
       "blockedBy": "Commodities come from MDM: the MDM commodity list reaches the animals frontend through trade-imports-reference-data, after which the commodity catalogue and search area is re-distilled (ruling 2026-10-09 afternoon, point on MDM commodities)."
     },
@@ -810,7 +827,8 @@
       "delta": "change",
       "deltaNote": "Today the catalogue offers Fish (0301) with Atlantic salmon (Salmo salar) (trace-e2e-p5-015).",
       "conflicts": [
-        "c-278"
+        "c-278",
+        "c-commodities-006"
       ],
       "blockedBy": "Commodities come from MDM: the MDM commodity list reaches the animals frontend through trade-imports-reference-data, after which the commodity catalogue and search area is re-distilled (ruling 2026-10-09 afternoon, point on MDM commodities)."
     },
@@ -831,7 +849,8 @@
       "deltaNote": "DR2.1 shows 'Equus cabalus' and two 'Other mammal' entries; today's Horse reads 'Equus caballus' (trace-e2e-p5-013).",
       "conflicts": [
         "c-014",
-        "c-278"
+        "c-278",
+        "c-commodities-006"
       ],
       "blockedBy": "Commodities come from MDM: the MDM commodity list reaches the animals frontend through trade-imports-reference-data, after which the commodity catalogue and search area is re-distilled (ruling 2026-10-09 afternoon, point on MDM commodities)."
     },
@@ -1076,8 +1095,12 @@
     {
       "id": "req-111",
       "statement": "Each live-animal species asks 'Number of animals' with no hint; it is required ('Enter the number of animals') and must be a whole number of 1 or more ('Enter a whole number greater than 0'), each error linked to that species' field.",
-      "why": "The number of animals is needed for every live-animal species.",
+      "why": "The number of animals is needed for every live-animal species: the data fields page makes it mandatory to proceed, entered by the trader. The page's own conditions cell is empty, so the floor of 1 and the whole-number rule are Design Release 2.1's and the real service's, not the specification's.",
       "claims": [
+        "confluence-6497338582-p1-103",
+        "confluence-6497338582-p1-105",
+        "confluence-6497338582-p1-106",
+        "confluence-6497338582-p1-107",
         "prototype-dr2-1-source-p3-021",
         "prototype-dr2-1-source-p3-022",
         "prototype-dr2-1-source-p3-023",
@@ -1130,16 +1153,19 @@
     },
     {
       "id": "req-112",
-      "statement": "'Number of packages (when required)', hinted 'Such as crates, bags or boxes', is asked for Cattle, Horse, Pig, Sheep, Goat, Cat, Dog, Ferret and Other live mammals species, and not for Chicken, Turkey, Duck, Goose, Guinea fowl, Rabbit, Camel, Ostrich, Parrot, Reptile, Bees or Ornamental fish.",
-      "why": "Design Release 2.1 asks for packages only where animals travel in crates, bags or boxes.",
+      "statement": "'Number of packages (when required)', hinted 'Such as crates, bags or boxes', is asked for a chosen species only where the data fields page's package-count list names its commodity. That list covers bees; birds of prey (owls, falcons and other); cats; cattle; dogs; embryos or ova of cattle, goats, horses, sheep and pigs; ferrets; game birds (adult and day-old partridge and pheasant, and pheasant and partridge hatching eggs); goats; horses and donkeys; insects and other invertebrates, including the Asian hornet; domestic pigs and pig meat under safeguard measure; poultry (adult and day-old chickens, ducks, geese, turkeys and guinea fowl, and chicken, turkey, goose, duck and guinea fowl hatching eggs); psittaciformes, including parrots, parakeets, macaws and cockatoos; domestic European rabbits and other domestic rabbits; reptiles; rodents; semen of cattle, dogs or cats, horses, goats, pigs, rodents or rabbits and sheep; domestic sheep; and SPF eggs. A species whose commodity is not on that list is asked only for the number of animals.",
+      "why": "The Live Animals and Germinals data fields page is the specification for which commodity codes each conditional rule covers, and it outranks Design Release 2.1's demo commodity data on that; Design Release 2.1 still gives the field its label and its hint.",
       "claims": [
+        "confluence-6497338582-p1-094",
+        "confluence-6497338582-p1-095",
+        "confluence-6497338582-p1-096",
+        "confluence-6497338582-p1-097",
+        "confluence-6497338582-p1-101",
         "prototype-dr2-1-source-p3-026",
-        "prototype-dr2-1-source-p3-027",
         "prototype-dr2-1-specs-p2-022",
         "repo-frontend-p5-064",
         "repo-frontend-p5-065",
         "repo-tests-p1-055",
-        "ruling-sam-2026-10-09-p1-064",
         "ruling-sam-2026-10-09-pm-p2-001",
         "ruling-sam-2026-10-09-pm-p2-003",
         "ruling-sam-2026-10-09-pm-p2-005",
@@ -1148,15 +1174,14 @@
         "trace-e2e-p5-051",
         "trace-prototype-dr2-1-p12-049",
         "trace-prototype-dr2-1-p13-044",
-        "trace-prototype-dr2-1-p13-045",
-        "trace-prototype-dr2-1-p5-012",
-        "trace-prototype-dr2-1-p5-014"
+        "trace-prototype-dr2-1-p5-012"
       ],
       "status": "adopted",
       "delta": "change",
-      "deltaNote": "Today the package question follows the commodity service's package-count list, which covers Cow, Horse, Cat and Dog among the catalogue's commodities and lists Bees, which DR2.1 asks only for animals (repo-frontend-p5-065).",
+      "deltaNote": "Today the question follows the commodity service's own package-count list, which covers Cow, Horse, Cat and Dog among today's five commodities and also names Bees and the Birds of Prey commodities (repo-frontend-p5-065, trace-animals-fit-p9-027); Design Release 2.1 withholds the question from poultry, rabbits, parrots, reptiles, bees and ornamental fish, and the specification names all of those but ornamental fish.",
       "conflicts": [
-        "c-278"
+        "c-278",
+        "c-commodities-002"
       ],
       "blockedBy": "Commodities come from MDM: the MDM commodity list reaches the animals frontend through trade-imports-reference-data, after which the commodity catalogue and search area is re-distilled (ruling 2026-10-09 afternoon, point on MDM commodities)."
     },
@@ -1165,6 +1190,9 @@
       "statement": "For live animals the number of packages is optional, but when given must be a whole number of 1 or more, otherwise 'Number of packages must be a whole number, like 5'.",
       "why": "Design Release 2.1 makes the field optional; the real service still validates what it stores, a constraint the prototype does not model.",
       "claims": [
+        "confluence-6497338582-p1-098",
+        "confluence-6497338582-p1-099",
+        "confluence-6497338582-p1-100",
         "prototype-dr2-1-specs-p2-023",
         "repo-frontend-p5-068",
         "repo-frontend-p5-099",
@@ -1229,6 +1257,8 @@
         "repo-frontend-p5-076",
         "repo-frontend-p5-077",
         "repo-frontend-p5-104",
+        "ruling-sam-2026-10-26-p1-010",
+        "ruling-sam-2026-10-26-p1-019",
         "trace-animals-fit-p9-037",
         "trace-animals-fit-p9-054",
         "trace-animals-fit-p9-068",
@@ -1321,7 +1351,8 @@
       "delta": "exists",
       "deltaNote": "repo-frontend-p5-070 validates before any save, and trace-animals-fit-p9-036/-p9-038 show a valid soft save stored and returned to the overview today.",
       "conflicts": [
-        "c-211"
+        "c-211",
+        "c-commodities-001"
       ]
     },
     {
@@ -1431,6 +1462,10 @@
       "statement": "The commodity choice is saved as the notification's commodity lines, one per chosen commodity-and-species pair, in catalogue order: a submitted pair the set's catalogue does not hold is not saved, saving keeps the line of a pair still chosen with its quantities and identifier records, adds a line with blank quantities for a newly chosen pair, and drops the line of a pair no longer chosen. The prototype's hidden selection fields, its 'main commodity' and its generated species ids are not copied.",
       "why": "The commodity line is the real service's data model, which quantities and identifier records hang off; ruling 2026-10-09 says the prototype never decides field names or data-model shape (c-223).",
       "claims": [
+        "confluence-6497338582-p1-069",
+        "confluence-6497338582-p1-072",
+        "confluence-6497338582-p1-076",
+        "confluence-6497338582-p1-092",
         "prototype-dr2-1-source-p2-094",
         "repo-frontend-p5-022",
         "repo-frontend-p5-035",
@@ -1513,15 +1548,21 @@
     },
     {
       "id": "req-1759",
-      "statement": "Numbers typed into Commodity details but not yet saved are lost when a Remove is pressed, because Remove posts only the table form.",
-      "why": "Out of scope: Design Release 2.1 does not show what happens to unsaved quantities on a removal and no ruling asks for it to change, so it is a real-service gap for the report, not a parity change.",
+      "statement": "Pressing Remove on Commodity details keeps the numbers the trader has typed on the page but not yet saved, so they are still in their fields when the page comes back.",
+      "why": "Ruling 26 October states that what a trader typed is never dropped; the page's two separate forms do not honour that today, so a trader who corrects the selection loses the counts they were part way through entering.",
       "claims": [
-        "repo-frontend-p5-054-m1"
+        "repo-frontend-p5-054-m1",
+        "repo-frontend-p5-054-m2",
+        "ruling-sam-2026-10-26-p1-010",
+        "ruling-sam-2026-10-26-p1-019",
+        "trace-animals-fit-p9-068"
       ],
-      "status": "out-of-scope",
-      "delta": "exists",
-      "deltaNote": "repo-frontend-p5-054-m1 shows the two separate forms today.",
-      "conflicts": []
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today the Selected commodities table sits in its own form holding no quantity inputs, so Remove posts only that form and typed-but-unsaved numbers are lost when the page reloads (repo-frontend-p5-054-m1, trace-animals-fit-p9-068).",
+      "conflicts": [
+        "c-commodities-007"
+      ]
     },
     {
       "id": "req-1760",
@@ -1578,6 +1619,7 @@
       "statement": "On the germinal products set the overview's Commodity details task shows Complete only when every chosen species has a valid number of packages (a whole number of 1 or more, within the limit req-1789 sets) and any total gross weight entered is valid; total gross weight and temperature are optional and do not hold it back. With no species chosen it is not complete.",
       "why": "The task status tells the trader what is left to do; ruling 2026-10-09 splits req-126 per set. The V4 germinal data fields make the number of packages mandatory to proceed and total gross weight and temperature optional (c-232), so Design Release 2.1's bar of a weight above 0 and a temperature is not built.",
       "claims": [
+        "confluence-6497338582-p1-108",
         "prototype-dr2-1-source-p3-024",
         "prototype-dr2-1-source-p3-054",
         "ruling-sam-2026-10-09-p1-021",
@@ -1697,7 +1739,7 @@
     {
       "id": "req-1921",
       "statement": "The high-risk plants frontend's commodity type page ('What are you importing?' with Potatoes (seed or ware), Plants for planting and Wood and cut trees, its timing hints, its 'Select what you are importing' error, its lines-removed warning and its three save controls) stays as it is.",
-      "why": "Out of scope: no row in this area changes the plants commodity type page, a radios question that is plants' own entry question in the form plants has it. Ruling 2026-10-09 afternoon changes plants only where a row changes a page or behaviour plants also has, and plants keeps its own questions, answers, sections, step order and data; Design Release 2.1 covers the animals commodity search and Commodity details, which plants does not have. Where plants already follows the same pattern (removing a line at once with no confirmation, 'Add another commodity', keeping entered values after an error, carrying the change context), it stays as it is.",
+      "why": "Out of scope: no row in this area changes the plants commodity type page's own content, a radios question that is plants' own entry question in the form plants has it. Ruling 2026-10-09 afternoon changes plants only where a row changes a page or behaviour plants also has, and plants keeps its own questions, answers, sections, step order and data; Design Release 2.1 covers the animals commodity search and Commodity details, which plants does not have. Where plants already follows the same pattern (removing a line at once with no confirmation, 'Add another commodity', keeping entered values after an error, carrying the change context), it stays as it is. The one behaviour this area now reaches on the page is the save buttons' checks: ruling 26 October makes 'Save and return to overview' run the same checks as 'Save and continue' on every page that has both, in live animals and in plants, and this page has both (req-commodities-007). Everything else on it stays as it is.",
       "claims": [
         "repo-plantsfrontend-p4-001",
         "repo-plantsfrontend-p4-002",
@@ -1755,7 +1797,7 @@
     {
       "id": "req-1922",
       "statement": "The high-risk plants frontend's 'Commodities in the consignment' list (its table of Category, Genus or variety and Quantity, the Change and Remove actions, 'Add another commodity', the 'Commodities removed' banner, the 'Add at least one commodity' floor and its Save and continue alone) stays as it is.",
-      "why": "Out of scope: no row in this area changes the plants commodities list, which has no animals or Design Release 2.1 counterpart in the form plants has it. Ruling 2026-10-09 afternoon changes plants only where a row changes a page or behaviour plants also has, and plants keeps its own questions, answers, sections, step order and data; Design Release 2.1 covers the animals commodity search and Commodity details, which plants does not have. Where plants already follows the same pattern (removing a line at once with no confirmation, 'Add another commodity', keeping entered values after an error, carrying the change context), it stays as it is.",
+      "why": "Out of scope: no row in this area changes the plants commodities list, which has no animals or Design Release 2.1 counterpart in the form plants has it. Ruling 2026-10-09 afternoon changes plants only where a row changes a page or behaviour plants also has, and plants keeps its own questions, answers, sections, step order and data; Design Release 2.1 covers the animals commodity search and Commodity details, which plants does not have. Where plants already follows the same pattern (removing a line at once with no confirmation, 'Add another commodity', keeping entered values after an error, carrying the change context), it stays as it is. The list offers 'Save and continue' alone, so ruling 26 October's rule on the two save buttons (req-commodities-007) does not reach it either.",
       "claims": [
         "repo-plantsfrontend-p4-039",
         "repo-plantsfrontend-p4-040",
@@ -1801,7 +1843,7 @@
     {
       "id": "req-1923",
       "statement": "The high-risk plants frontend's per-line Commodity details page (its category question, the per-category fields genus, species, commodity code, variety, quantity, intended use, EPPO code, size of the trees and phytosanitary treatments, their hints, limits and errors, and its 'Save and continue' and 'Save and add another' buttons) stays as it is, keeping its 'About the consignment' caption.",
-      "why": "Out of scope: no row in this area changes the plants Commodity details page, which shares the animals page's heading but asks plants' own per-line questions; the animals caption change to 'Description of the goods' follows Design Release 2.1's animals sections, which plants does not share in the form plants has it. Ruling 2026-10-09 afternoon changes plants only where a row changes a page or behaviour plants also has, and plants keeps its own questions, answers, sections, step order and data; Design Release 2.1 covers the animals commodity search and Commodity details, which plants does not have. Where plants already follows the same pattern (removing a line at once with no confirmation, 'Add another commodity', keeping entered values after an error, carrying the change context), it stays as it is. One plants defect the code shows is for the report, not this programme: a POSTed index that names no saved line appends a new line instead of being refused (repo-plantsfrontend-p4-093-m1).",
+      "why": "Out of scope: no row in this area changes the plants Commodity details page, which shares the animals page's heading but asks plants' own per-line questions; the animals caption change to 'Description of the goods' follows Design Release 2.1's animals sections, which plants does not share in the form plants has it. Ruling 2026-10-09 afternoon changes plants only where a row changes a page or behaviour plants also has, and plants keeps its own questions, answers, sections, step order and data; Design Release 2.1 covers the animals commodity search and Commodity details, which plants does not have. Where plants already follows the same pattern (removing a line at once with no confirmation, 'Add another commodity', keeping entered values after an error, carrying the change context), it stays as it is. The page offers no 'Save and return to overview', so ruling 26 October's rule on the two save buttons (req-commodities-007) does not reach it. One plants defect the code shows is for the report, not this programme: a POSTed index that names no saved line appends a new line instead of being refused (repo-plantsfrontend-p4-093-m1).",
       "claims": [
         "repo-plantsfrontend-p4-064",
         "repo-plantsfrontend-p4-065",
@@ -1942,6 +1984,152 @@
       "delta": "exists",
       "deltaNote": "repo-plantsfrontend-p4-137 to -p4-149 show the vocabulary, constraints and obligations as they are today.",
       "conflicts": []
+    },
+    {
+      "id": "req-commodities-001",
+      "statement": "The commodity page's commodity, type and species lists come from MDM through trade-imports-reference-data, so what the commodity search offers is whatever MDM serves.",
+      "why": "The Live Animals and Germinals data fields page names MDM as the source of the commodity, type and species values, and ruling 2026-10-09 makes a reference list's content MDM's to change rather than something edited in code.",
+      "claims": [
+        "confluence-6497338582-p1-070",
+        "confluence-6497338582-p1-073",
+        "confluence-6497338582-p1-081",
+        "confluence-6497338582-p1-089",
+        "repo-referencedata-p1-089",
+        "repo-frontend-p5-065",
+        "ruling-sam-2026-10-09-p1-131",
+        "ruling-sam-2026-10-09-p1-132",
+        "ruling-sam-2026-10-09-pm-p2-001",
+        "ruling-sam-2026-10-09-pm-p2-003",
+        "trace-animals-fit-p8-028",
+        "trace-e2e-p5-040"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today the animals frontend answers the search from its own commodity service and stub, and trade-imports-reference-data serves no commodities or species list at all (repo-referencedata-p1-089, trace-animals-fit-p8-028).",
+      "conflicts": [
+        "c-278",
+        "c-commodities-006"
+      ],
+      "blockedBy": "MDM serves the commodity, type and species lists and trade-imports-reference-data passes them to the animals frontend; the commodity catalogue and search area is re-distilled once it does (ruling 2026-10-09 afternoon, point on MDM commodities)."
+    },
+    {
+      "id": "req-commodities-002",
+      "statement": "Where a type applies to the chosen commodity, the commodity page offers that commodity's types from MDM's type list and narrows the species on offer to the type the trader picks, and records that type against the commodity line; an example type is Game.",
+      "why": "The data fields page makes Type selection a commodity-level field, sourced from MDM and mandatory to proceed, that lets a trader filter species by type where a type applies to the commodity. The page names no commodity that carries a type and says nothing about a commodity that carries none, so which commodities offer the question, and whether an answer is required where no type applies, are settled against MDM's own list when this area is re-distilled.",
+      "claims": [
+        "confluence-6497338582-p1-077",
+        "confluence-6497338582-p1-078",
+        "confluence-6497338582-p1-079",
+        "confluence-6497338582-p1-080",
+        "confluence-6497338582-p1-081",
+        "confluence-6497338582-p1-082",
+        "confluence-6497338582-p1-083",
+        "confluence-6497338582-p1-084",
+        "repo-frontend-p5-013",
+        "trace-animals-fit-p8-020"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": [
+        "c-278"
+      ],
+      "blockedBy": "MDM serves the commodity types and which commodities carry them, through trade-imports-reference-data; the commodity catalogue and search area is re-distilled once it does (ruling 2026-10-09 afternoon, point on MDM commodities)."
+    },
+    {
+      "id": "req-commodities-003",
+      "statement": "A number of animals above 9,223,372,036,854,775,807 is refused with an error on that species' number of animals field, so the count fits the whole number the notification stores.",
+      "why": "The data fields page caps the number of animals at that whole number, and the real service must not accept a count it cannot store, a persistence constraint the prototype does not model.",
+      "claims": [
+        "confluence-6497338582-p1-102",
+        "repo-frontend-p5-069",
+        "ruling-sam-2026-10-07-p1-010",
+        "trace-animals-fit-p9-053",
+        "trace-prototype-dr2-1-p5-104"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today only a minimum of 1 is set on the number of animals, with no maximum and no message for one (repo-frontend-p5-069), and no trace drove a very large count (trace-animals-fit-p9-053).",
+      "conflicts": []
+    },
+    {
+      "id": "req-commodities-004",
+      "statement": "A number of packages longer than 10 digits is refused with an error on that species' number of packages field.",
+      "why": "The data fields page types the live-animal number of packages 'numeric - max 10' while giving 25 and 5000 as its own examples, so whether 10 limits the digits or the packages is unsettled; refusing only what cannot be stored keeps an example the specification itself gives savable.",
+      "claims": [
+        "confluence-6497338582-p1-093",
+        "confluence-6497338582-p1-093-m1",
+        "confluence-6497338582-p1-100",
+        "repo-frontend-p5-069"
+      ],
+      "status": "question",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": [
+        "c-commodities-003"
+      ]
+    },
+    {
+      "id": "req-commodities-005",
+      "statement": "The commodity page accepts every species a commodity offers, with no maximum on how many a trader chooses.",
+      "why": "The data fields page says a trader may select one or more species up to the agreed maximum but never gives the number, so nothing says what to enforce; keeping today's behaviour refuses nobody while the number is missing.",
+      "claims": [
+        "confluence-6497338582-p1-086",
+        "confluence-6497338582-p1-087",
+        "repo-frontend-p5-021",
+        "repo-frontend-p5-022",
+        "trace-animals-fit-p8-054"
+      ],
+      "status": "question",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p5-021 and trace-animals-fit-p8-054 show a selection built up across searches with no cap, paging or limit today.",
+      "conflicts": [
+        "c-commodities-004"
+      ]
+    },
+    {
+      "id": "req-commodities-006",
+      "statement": "On Commodity details the number of animals and the number of packages are each asked once for every chosen species, in that species' own block.",
+      "why": "The data fields page puts both fields at commodity level, which reads either as one count per commodity covering all its species or as one count per commodity line; the real service's commodity line is one commodity plus one species and each line's species travels downstream on its own, so a count per species is what the default keeps.",
+      "claims": [
+        "confluence-6497338582-p1-088",
+        "confluence-6497338582-p1-097",
+        "confluence-6497338582-p1-104",
+        "prototype-dr2-1-source-p3-021",
+        "repo-frontend-p5-035",
+        "trace-animals-fit-p9-025",
+        "trace-animals-fit-p9-030"
+      ],
+      "status": "question",
+      "delta": "exists",
+      "deltaNote": "trace-animals-fit-p9-025 and -p9-030 show one pair of quantity inputs per species line today, numbered by line in display order.",
+      "conflicts": [
+        "c-commodities-005"
+      ]
+    },
+    {
+      "id": "req-commodities-007",
+      "statement": "On the high-risk plants commodity type page 'Save and return to overview' makes the same checks as 'Save and continue': with nothing chosen, or a type the service does not offer, it shows 'Select what you are importing' in the error summary and inline and keeps the trader on the page; with a type chosen it saves the answer and goes to the notification overview.",
+      "why": "Ruling 26 October makes the two save buttons behave the same on every page that has both, in live animals and in high-risk plants, with no page an exception. The commodity type page is the one page in this area that has both buttons; the plants commodities list and the per-line Commodity details page offer 'Save and continue' alone, so the rule does not reach them.",
+      "claims": [
+        "repo-plantsfrontend-p4-016",
+        "repo-plantsfrontend-p4-018",
+        "repo-plantsfrontend-p4-019",
+        "repo-plantsfrontend-p4-024",
+        "repo-plantsfrontend-p4-029",
+        "repo-plantsfrontend-p4-059",
+        "repo-plantsfrontend-p4-084",
+        "ruling-sam-2026-10-09-pm-p3-013",
+        "ruling-sam-2026-10-26-p1-008",
+        "ruling-sam-2026-10-26-p1-009",
+        "ruling-sam-2026-10-26-p1-013"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "This area's evidence shows only that 'Save and return to overview' saves the choice and goes to the overview (repo-plantsfrontend-p4-029) and that a missing or unoffered type is refused with 'Select what you are importing' and a 400 on 'Save and continue' (repo-plantsfrontend-p4-016, -p4-019); whether the exit runs that check today is not recorded here, so the increment proves both buttons behave the same.",
+      "conflicts": [
+        "c-commodities-001"
+      ]
     }
   ],
   "conflicts": [
@@ -2596,6 +2784,296 @@
       "overruled": [
         "prototype-dr2-1-source-p3-078"
       ]
+    },
+    {
+      "id": "c-commodities-001",
+      "about": "Whether 'Save and return to overview' on the commodity pages skips the page's checks: Design Release 2.1 and the 9 October afternoon ruling make it a soft save, the 26 October ruling makes it run the same checks as 'Save and continue'.",
+      "positions": [
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "Saving the commodity page with the return-to-overview action skips validation, saves any valid selection and goes to the overview.",
+          "claim": "prototype-dr2-1-source-p2-099"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "The soft save overwrites the saved species with the empty submitted list, wiping an earlier selection.",
+          "claim": "prototype-dr2-1-source-p2-099-m1"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "says": "'Save and return to overview' goes to the overview without validating, even with no commodity selected.",
+          "claim": "prototype-dr2-1-specs-p1-064"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "says": "With nothing selected the button posts the empty selection and redirects to the overview with no error.",
+          "claim": "trace-prototype-dr2-1-p3-047"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "says": "After returning with nothing selected, the overview shows 'What are you importing?' as To do.",
+          "claim": "trace-prototype-dr2-1-p3-048"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "says": "req-088, Save and return to overview without checks, is not catalogue or search work and goes ahead in inc-011.",
+          "claim": "ruling-sam-2026-10-09-pm-p2-007"
+        },
+        {
+          "source": "ruling:sam-2026-10-26",
+          "says": "Save and return to overview makes exactly the same checks as Save and continue.",
+          "claim": "ruling-sam-2026-10-26-p1-008"
+        },
+        {
+          "source": "ruling:sam-2026-10-26",
+          "says": "The same-checks rule applies on every page that has both buttons, in live animals and in high-risk plants.",
+          "claim": "ruling-sam-2026-10-26-p1-009"
+        },
+        {
+          "source": "ruling:sam-2026-10-26",
+          "says": "No page is an exception to the same-checks rule.",
+          "claim": "ruling-sam-2026-10-26-p1-013"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "Each germinal page is a copy of its live-animals feature folder plus the prototype's germinal differences.",
+          "claim": "ruling-sam-2026-10-09-p1-014"
+        },
+        {
+          "source": "repo:frontend",
+          "says": "The empty-selection check runs before the hub exit, so the button already shows 'Select a commodity' with a 400.",
+          "claim": "repo-frontend-p5-032-m1"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "says": "'Save and return to overview' on the plants commodity type page saves the choice and goes to the notification overview.",
+          "claim": "repo-plantsfrontend-p4-029"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The 26 October ruling, the highest-ranked source, wins: on the commodity page, on Commodity details and on the plants commodity type page 'Save and return to overview' makes exactly the same checks as 'Save and continue', refusing a missing or invalid answer with its own error, keeping the trader on the page with what they entered, and saving and returning to the overview once the page is valid (req-088, req-120, req-commodities-007). This withdraws the soft save the 9 October afternoon ruling carried for the commodity page; ruling-sam-2026-10-09-pm-p2-007 is not overruled, because it also moves req-085 and req-102 out of the MDM-blocked search work, which still stands. The germinal set's copies of these two pages take the same checks, because each germinal page is a copy of its live-animals twin. trace-prototype-dr2-1-p3-048 is not overruled: the overview still shows 'What are you importing?' as To do while nothing is chosen, which a trader now reaches by cancelling rather than by saving and returning.",
+      "overruled": [
+        "prototype-dr2-1-source-p2-099",
+        "prototype-dr2-1-source-p2-099-m1",
+        "prototype-dr2-1-specs-p1-064",
+        "trace-prototype-dr2-1-p3-047"
+      ]
+    },
+    {
+      "id": "c-commodities-002",
+      "about": "Which commodities the Number of packages question is asked for: Design Release 2.1's packaging-fields list, or the data fields page's package-count list of 54 commodities.",
+      "positions": [
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "Only cattle, horse, pig, sheep, goat, cat, dog, ferret and other live mammals have packaging fields.",
+          "claim": "prototype-dr2-1-source-p3-026"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "Chicken, turkey, duck, goose, guinea fowl, rabbit, camel, ostrich, parrot, reptile, bees and ornamental fish show only Number of animals.",
+          "claim": "prototype-dr2-1-source-p3-027"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "says": "For poultry the species block asks only for Number of animals.",
+          "claim": "trace-prototype-dr2-1-p5-014"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "says": "For chickens the commodity details page shows no number of packages field.",
+          "claim": "trace-prototype-dr2-1-p13-045"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "Number of packages is shown only where a package count applies to the selected commodity.",
+          "claim": "confluence-6497338582-p1-094"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "The package count applies to 54 named commodities, poultry, game birds, rabbits, reptiles, psittaciformes, rodents, insects, bees and the semen, embryo and ova lines among them.",
+          "claim": "confluence-6497338582-p1-095"
+        },
+        {
+          "source": "repo:frontend",
+          "says": "The question follows the commodity service's own package-count list, which names Bees and the Birds of Prey commodities.",
+          "claim": "repo-frontend-p5-065"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "The prototype decides look and feel only: content, wording, layout, components, question order, and which questions are asked of which goods.",
+          "claim": "ruling-sam-2026-10-09-p1-064"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The data fields page wins on which commodities the rule covers: it ranks above the prototype and is the specification for which commodity codes each conditional rule applies to, while the prototype's commodity entries are demo fixture data. So the question is asked wherever the specification's package-count list names the chosen species' commodity, poultry, game birds, rabbits, reptiles, psittaciformes, rodents, insects, bees and the semen, embryo and ova lines included, and is withheld elsewhere (req-112). Ruling 2026-10-09's claim that the prototype decides which questions are asked of which goods is not overruled: it ranks the prototype above what the real services do today, not above the data specification, and the prototype still gives the field its label and hint. prototype-dr2-1-source-p3-026 is not overruled either, because it carries that label and hint; only its list of packaging commodities is set aside, which p3-027 states on its own. Which commodity code each list entry maps to in the catalogue is settled when commodities come from MDM.",
+      "overruled": [
+        "prototype-dr2-1-source-p3-027",
+        "trace-prototype-dr2-1-p5-014",
+        "trace-prototype-dr2-1-p13-045"
+      ]
+    },
+    {
+      "id": "c-commodities-003",
+      "about": "What 'numeric - max 10' limits on the live-animal Number of packages: the number of digits, or the number of packages.",
+      "positions": [
+        {
+          "source": "confluence:6497338582",
+          "says": "Number of packages is a numeric value of at most 10 digits.",
+          "claim": "confluence-6497338582-p1-093"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "The page does not say whether 'max 10' is a digit count or a maximum value, and its own examples for the field are 1, 25 and 5000.",
+          "claim": "confluence-6497338582-p1-093-m1"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "Example numbers of packages are 1, 25 and 5000.",
+          "claim": "confluence-6497338582-p1-100"
+        },
+        {
+          "source": "repo:frontend",
+          "says": "No upper limit is set on the number of packages today.",
+          "claim": "repo-frontend-p5-069"
+        }
+      ],
+      "resolution": "question",
+      "outcome": "Nothing ranks the two readings: the same table writes 'max 9,223,372,036,854,775,807' as a value for the number of animals and the germinal quantity row's 'max 1,000' was read as a value too, while this row's own examples of 25 and 5000 can only be digit counts. It goes to the owner with the digit reading as the default.",
+      "question": "Does the live-animal Number of packages allow up to 10 digits, or at most 10 packages, given that the same table's germinal quantity row reads 'max 1,000' as a maximum value while this row's own examples are 25 and 5000?",
+      "default": "Up to 10 digits is built, the only reading the row's own examples allow, with an error on that species' number of packages field above it; no cap of 10 packages is built, because it would refuse an example the specification itself gives and traders can enter any number today."
+    },
+    {
+      "id": "c-commodities-004",
+      "about": "The agreed maximum number of species a trader may choose under one commodity.",
+      "positions": [
+        {
+          "source": "confluence:6497338582",
+          "says": "The trader may select one or more species up to the agreed maximum.",
+          "claim": "confluence-6497338582-p1-086"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "The page does not give the number behind the agreed maximum, so the limit to enforce is unknown.",
+          "claim": "confluence-6497338582-p1-087"
+        },
+        {
+          "source": "repo:frontend",
+          "says": "Species chosen under earlier queries are carried through the form, so a selection can be built up across searches with no cap.",
+          "claim": "repo-frontend-p5-021"
+        },
+        {
+          "source": "trace:animals-fit",
+          "says": "No test runs a search that returns many results, so any limit on a large selection is not shown.",
+          "claim": "trace-animals-fit-p8-054"
+        }
+      ],
+      "resolution": "question",
+      "outcome": "The specification states that a maximum exists but not what it is, and no ruling gives a number, so it goes to the owner with no cap as the default.",
+      "question": "What is the agreed maximum number of species a trader may choose under one commodity?",
+      "default": "No maximum is enforced, as today, so a trader may choose every species a commodity offers; a cap and its error are built only once the number is given."
+    },
+    {
+      "id": "c-commodities-005",
+      "about": "Whether 'Applies at: Commodity Level' puts the number of animals and the number of packages once per commodity, covering all its species, or once per commodity line.",
+      "positions": [
+        {
+          "source": "confluence:6497338582",
+          "says": "Number of animals (quantity) applies at Commodity Level.",
+          "claim": "confluence-6497338582-p1-104"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "Number of packages applies at Commodity Level.",
+          "claim": "confluence-6497338582-p1-097"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "Species selection is a multi-select that also applies at Commodity Level, so one commodity may carry several species.",
+          "claim": "confluence-6497338582-p1-088"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "Number of animals is asked per species, in a field named for that species.",
+          "claim": "prototype-dr2-1-source-p3-021"
+        },
+        {
+          "source": "repo:frontend",
+          "says": "A commodity line is one commodity plus one species, and the quantities hang off the line.",
+          "claim": "repo-frontend-p5-035"
+        }
+      ],
+      "resolution": "question",
+      "outcome": "The two readings build different pages, one field per commodity or one per species, and nothing ranks them: the specification gives the level but never says what a commodity line holds. It goes to the owner with the per-species reading as the default.",
+      "question": "Does one number of animals and one number of packages cover every species chosen under a commodity, or does each chosen species have its own pair, as the real service's commodity line and Design Release 2.1 both have it?",
+      "default": "Each chosen species keeps its own number of animals and number of packages, as today and as Design Release 2.1 shows, because the real service's commodity line is one commodity plus one species and each line's species travels downstream on its own; the germinal set's per-species packages and total gross weight stay per species for the same reason."
+    },
+    {
+      "id": "c-commodities-006",
+      "about": "Which commodity and species names the live-animals catalogue shows: Design Release 2.1's list, the data fields page's examples, or whatever MDM serves.",
+      "positions": [
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "Cattle, code 0102, carries the 11 cattle species of the 0102 list.",
+          "claim": "prototype-dr2-1-source-p2-110"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "The cattle species and their common names run from Bibos spp. (Gaur) to Syncerus spp. (African buffalo), with Bos taurus named Domestic cattle and Bison bison named Bison bison.",
+          "claim": "prototype-dr2-1-source-p2-134"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "Species selection's values come from MDM.",
+          "claim": "confluence-6497338582-p1-089"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "An example commodity selection is 'Cattle, 0102, Bos taurus', so the page names code 0102 Cattle.",
+          "claim": "confluence-6497338582-p1-075"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "Example species selections are Bison bison (Bison), Bos spp. (Cattle species), Bos taurus (Cattle) and Bubalus bubalis (Water buffalo).",
+          "claim": "confluence-6497338582-p1-091"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "Where a list's content differs from Design Release 2.1, that is MDM's content to change, never a reason to block a row or to edit a list in code.",
+          "claim": "ruling-sam-2026-10-09-p1-132"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "says": "Commodity catalogue and commodity search work is blocked until commodities come from MDM, and the area is then re-distilled.",
+          "claim": "ruling-sam-2026-10-09-pm-p2-001"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The rulings and the data fields page agree that the catalogue's content is MDM's: the commodity and species names the page shows are whatever MDM serves through reference-data (req-commodities-001), so no name is edited in code to match Design Release 2.1 or the page's examples. The catalogue rows (req-094 to req-101) stay adopted and blocked until commodities come from MDM, and each commodity's and species' name, the three the page's examples spell differently (Bison bison, Bos spp. and Bos taurus) included, is settled against MDM's list at that re-distil. Nothing is overruled: Design Release 2.1's list still records what the design shows and the examples still record the specification's naming, and the re-distil weighs both against MDM's. The page's own example names code 0102 Cattle, which is what the rename adopts (req-095).",
+      "overruled": []
+    },
+    {
+      "id": "c-commodities-007",
+      "about": "Whether numbers typed on Commodity details but not yet saved survive a Remove.",
+      "positions": [
+        {
+          "source": "repo:frontend",
+          "says": "Remove submits only the table form, so numbers typed into the quantity fields are not sent and are lost when the page reloads.",
+          "claim": "repo-frontend-p5-054-m1"
+        },
+        {
+          "source": "trace:animals-fit",
+          "says": "The remove form does not carry unsaved typed counts, so the remaining species' inputs come back empty.",
+          "claim": "trace-animals-fit-p9-068"
+        },
+        {
+          "source": "ruling:sam-2026-10-26",
+          "says": "What a trader typed is never dropped.",
+          "claim": "ruling-sam-2026-10-26-p1-019"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The 26 October ruling wins: Remove keeps what the trader has typed, so the numbers are still in their fields when Commodity details comes back (req-1759). The frontend's two-form split and the trace of the empty inputs are not overruled, because they record today's behaviour, which that requirement's delta cites.",
+      "overruled": []
     }
   ]
 }

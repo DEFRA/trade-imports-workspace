@@ -1540,7 +1540,61 @@ describe('increment-build-loop', () => {
       ).prompt
 
       expect(prompt).toContain('{id, repos: (.repos // []), rigour}')
-      expect(prompt).toContain("Copy the last command's output into todoRows")
+      expect(prompt).toContain(
+        "Copy the todoRows command's output into todoRows"
+      )
+    })
+
+    test('asks the preflight to run tim backlog check and report what it refused', async () => {
+      const run = await runFrom(null)
+      const prompt = run.agents.find(
+        (entry) => entry.options.label === 'preflight'
+      ).prompt
+
+      expect(prompt).toContain('tim backlog check shared/args-fixture')
+      expect(prompt).toContain('backlogCheckProblems')
+    })
+
+    test('builds nothing when tim backlog check refuses the backlog, and names every problem', async () => {
+      const run = await runLoop(scriptPath, {
+        args: BASE_ARGS,
+        answers: [
+          WORKSPACE_ANSWER,
+          preflightAnswer({
+            backlogCheckProblems: [
+              'shared/hrp hands this theme 2 requirements it has not placed in a row yet: req-204, req-311.',
+              'inc-901 depends on inc-902, which is not in this backlog.'
+            ]
+          })
+        ]
+      })
+
+      expect(run.error.message).toMatch(
+        /tim backlog check refuses shared\/args-fixture/
+      )
+      expect(run.error.message).toContain('req-204, req-311')
+      expect(run.error.message).toContain('inc-901 depends on inc-902')
+      expect(stageLabels(run)).toEqual(['workspace', 'preflight'])
+    })
+
+    test('points a refused split theme at the pre-flight walker rather than a silent fix', async () => {
+      const run = await runLoop(scriptPath, {
+        args: BASE_ARGS,
+        answers: [
+          WORKSPACE_ANSWER,
+          preflightAnswer({
+            backlogCheckProblems: ['shared/hrp hands this theme 1 requirement']
+          })
+        ]
+      })
+
+      expect(run.error.message).toContain('PREFLIGHT_WALKER.md')
+    })
+
+    test('builds as usual when tim backlog check reports no problem', async () => {
+      const run = await runFrom(null)
+
+      expect(stageLabels(run)).toContain('inc-900 start')
     })
 
     test('starts the increment with one tim build start call before the baseline', async () => {

@@ -238,8 +238,8 @@
     },
     {
       "id": "req-641",
-      "statement": "The add-address page keeps the labels 'Address line 1', 'Address line 2 (optional)', 'Town or city', 'Postcode or Zip code' and 'Country' (a select), and address line 2 may be left blank.",
-      "why": "These labels already match Design Release 2.1.",
+      "statement": "The add-address page's address fields are labelled 'Address line 1', 'Address line 2 (optional)', 'Town or city', 'Postcode or Zip code' and 'Country' (a select), and address line 2 may be left blank.",
+      "why": "These labels are the ones the design gives.",
       "claims": [
         "prototype-dr2-1-source-p8-083",
         "trace-prototype-dr2-1-p7-007",
@@ -293,7 +293,7 @@
     },
     {
       "id": "req-644",
-      "statement": "The manual-entry Country select on the add-address page stays a plain select (not the accessible autocomplete) and offers the countries reference-data serves from MDM (its unfiltered country list), never a list typed or edited in code; where that content differs from Design Release 2.1's 42 entries (such as the EU outermost regions and the Crown Dependencies), the difference is MDM's content to change, and the page's tests take country names and counts from the captured reference-data fixture, not a hand-typed list.",
+      "statement": "The manual-entry Country select on the add-address page is a plain select rather than the accessible autocomplete, and offers the countries reference-data serves from MDM (its unfiltered country list), never a list typed or edited in code; the page's tests take country names and counts from the captured reference-data fixture rather than a hand-typed list.",
       "why": "No country or port list waits on MDM integration: countries already come from real MDM through trade-imports-reference-data (the stub locally and in CDP dev, real MDM in CDP test), and who owns list content is still DR1's MDM judgement (ruling 2026-10-09, c-107). A field the prototype shows as a plain select stays one, and the INS address book's country autocomplete is a follow-on ticket recorded in deferred.md (ruling 2026-10-09 pm).",
       "claims": [
         "document-dr1-parity-notes-p1-037",
@@ -317,7 +317,7 @@
       ],
       "status": "adopted",
       "delta": "change",
-      "deltaNote": "Today the INS add page's select shows the 32 sovereign states the local stub serves (trace-e2e-p9-064); once the stub tidy-up row regenerates the fixture from MDM the unfiltered list holds 249 locally (ruling-sam-2026-10-09-p1-162), so the add page's tests move to the recaptured names and counts. No list is edited in code, and the row depends on the stub tidy-up (ruling-sam-2026-10-09-p1-149).",
+      "deltaNote": "The design's 42-entry list, which adds the EU outermost regions and the Crown Dependencies, is not built: where the served content differs from the design, that is MDM's content to change and never a list edited in code (c-107). Today the INS add page's select shows the 32 sovereign states the local stub serves (trace-e2e-p9-064); once the stub tidy-up row regenerates the fixture from MDM the unfiltered list holds 249 locally (ruling-sam-2026-10-09-p1-162), so the add page's tests move to the recaptured names and counts. No list is edited in code, and the row depends on the stub tidy-up (ruling-sam-2026-10-09-p1-149).",
       "conflicts": [
         "c-106",
         "c-107"
@@ -553,8 +553,8 @@
     },
     {
       "id": "req-654",
-      "statement": "Submitting a search page before picking or entering anything shows the six field errors in order ('Enter a name or organisation name', 'Enter address line 1', 'Enter a town or city', 'Enter a postcode or Zip code', 'Enter an email address', 'Enter a phone number'), with no country error and no error of the search's own, and reveals the fields so each error summary link reaches a visible field.",
-      "why": "Design Release 2.1's messages for the search-only layout; the prototype's summary links point at hidden fields, which the GOV.UK error summary pattern does not allow. With the fields always visible the manual-entry messages (req-660 to req-667) already apply, so this waits on design question 10 as well as the lookup.",
+      "statement": "Submitting a search page with either save button before picking or entering anything shows the six field errors in order ('Enter a name or organisation name', 'Enter address line 1', 'Enter a town or city', 'Enter a postcode or Zip code', 'Enter an email address', 'Enter a phone number'), with no country error and no error of the search's own, and reveals the fields so each error summary link reaches a visible field.",
+      "why": "Design Release 2.1's messages for the search-only layout; the prototype's summary links point at hidden fields, which the GOV.UK error summary pattern does not allow, and the owner's 26 October decision makes both save buttons check alike with no page an exception. With the fields always visible the manual-entry messages (req-660 to req-667) already apply, so this waits on design question 10 as well as the lookup.",
       "claims": [
         "prototype-dr2-1-source-p8-099",
         "prototype-dr2-1-specs-p3-071",
@@ -563,6 +563,8 @@
         "ruling-sam-2026-10-09-p1-180",
         "ruling-sam-2026-10-09-p1-181",
         "ruling-sam-2026-10-09-pm-p1-090",
+        "ruling-sam-2026-10-26-p1-008",
+        "ruling-sam-2026-10-26-p1-013",
         "trace-prototype-dr2-1-p7-051"
       ],
       "status": "adopted",
@@ -794,13 +796,15 @@
     {
       "id": "req-667",
       "statement": "A failed submit of the add-address page shows an error summary titled 'There is a problem' listing every error in field order (seven on a blank manual page), each repeated inline with a visually hidden 'Error:' prefix and the field in its GOV.UK error style, and keeps everything the trader entered.",
-      "why": "The GOV.UK error pattern, which Design Release 2.1 and today's address forms share.",
+      "why": "The GOV.UK error pattern, which Design Release 2.1 and today's address forms share; the owner's 26 October decision adds that what a trader typed is never dropped.",
       "claims": [
         "prototype-dr2-1-source-p8-108",
-        "trace-prototype-dr2-1-p7-029",
-        "trace-prototype-dr2-1-p7-037",
         "repo-tests-p5-067",
-        "trace-e2e-p8-054"
+        "ruling-sam-2026-10-26-p1-010",
+        "ruling-sam-2026-10-26-p1-019",
+        "trace-e2e-p8-054",
+        "trace-prototype-dr2-1-p7-029",
+        "trace-prototype-dr2-1-p7-037"
       ],
       "status": "adopted",
       "delta": "exists",
@@ -811,7 +815,7 @@
     },
     {
       "id": "req-668",
-      "statement": "The add-address page keeps the address book's length and format checks beyond the required-field checks: name and address lines 255 characters or fewer, town or city and county 100, postcode 12, phone 20, email 254 and in a valid format, each with today's message (such as 'Postcode must be 12 characters or fewer' and 'Enter an email address in the correct format').",
+      "statement": "The add-address page applies the address book's length and format checks alongside the required-field checks: name and address lines 255 characters or fewer, town or city and county 100, postcode 12, phone 20, email 254 and in a valid format, each with its own message (such as 'Postcode must be 12 characters or fewer' and 'Enter an email address in the correct format').",
       "why": "The address book stores and validates these limits; a real validation constraint the prototype cannot express overrides its required-only checks.",
       "claims": [
         "repo-frontend-p9-107",
@@ -893,7 +897,7 @@
     },
     {
       "id": "req-672",
-      "statement": "'Save and select' saves the new address to the address book, puts a copy of it on the notification for the role it was added for, and returns the trader to the Consignment addresses page, where the role shows the address with a 'Change' link (after a consignee is saved this way, the unset importer and place of destination rows offer the 'Same as consignee' shortcut that page already carries, req-577 and req-578).",
+      "statement": "'Save and select' saves the new address to the address book, puts a copy of it on the notification for the role it was added for, and returns the trader to the Consignment addresses page, where the role shows the address with a 'Change' link; after a consignee is saved this way, the unset importer and place of destination rows offer the 'Same as consignee' shortcut that page already carries.",
       "why": "Design Release 2.1 finishes the role in one step.",
       "claims": [
         "prototype-dr2-1-source-p8-110",
@@ -916,7 +920,7 @@
       ],
       "status": "adopted",
       "delta": "change",
-      "deltaNote": "Today saving returns the trader to the role's picker with the new address preselected ('Selected address: <name>'), and they press Save and continue to reach the hub (trace-e2e-p9-071, trace-e2e-p9-073, repo-tests-p5-029, repo-tests-p5-030).",
+      "deltaNote": "Today saving returns the trader to the role's picker with the new address preselected ('Selected address: <name>'), and they press Save and continue to reach the hub (trace-e2e-p9-071, trace-e2e-p9-073, repo-tests-p5-029, repo-tests-p5-030). The 'Same as consignee' shortcut rows are req-577 and req-578.",
       "conflicts": [
         "c-106"
       ]
@@ -924,7 +928,7 @@
     {
       "id": "req-673",
       "statement": "A secondary 'Save and return to address page' button saves the new address to the address book without selecting it, and returns the trader to the role's picker, where the new address is listed first.",
-      "why": "Design Release 2.1 lets the trader add an address and still choose among the book.",
+      "why": "Design Release 2.1 lets the trader add an address and still choose among the book. Its checks are the primary save's, because the owner's 26 October decision makes the save buttons behave consistently.",
       "claims": [
         "prototype-dr2-1-source-p8-111",
         "prototype-dr2-1-specs-p3-068",
@@ -1059,7 +1063,7 @@
     },
     {
       "id": "req-680",
-      "statement": "On the review page each consignment party and the contact address read back as the name followed by the address lines and country (GB shown as 'United Kingdom'), each on its own line, without the telephone number or email address. In the same increment the plants frontend's check-answers place of destination, consignor and contact cards change the same way: they drop their 'Telephone number' and 'Email address' rows and read the address back one line per address line followed by the country, instead of joined by commas on one line.",
+      "statement": "On the review page each consignment party and the contact address read back as the name followed by the address lines and country (GB shown as 'United Kingdom'), each on its own line, without the telephone number or email address. The plants frontend's check-answers place of destination, consignor and contact cards read back the same way, in the same increment: the name, then one line per address line, then the country, with no telephone number and no email address row.",
       "why": "The trader checks the copy the notification holds before submitting; plants has the same party cards, so it takes the same change at the same time (ruling 2026-10-09 pm), which withdraws plants' own d-013 addition of telephone and email to the contact card (c-293). The address-book record still carries both.",
       "claims": [
         "repo-tests-p5-040",
@@ -1233,16 +1237,19 @@
     {
       "id": "req-688",
       "statement": "A refused edit answers 400, re-renders 'Edit address details' with the error summary and an error on each field, keeps what was typed (the country select resets to 'Select a country' for an unlisted value) and saves nothing; browser validation is off.",
-      "why": "A refused edit must leave the notification's copy as it was.",
+      "why": "A refused edit must leave the notification's copy as it was, and the owner's 26 October decision is that a save with a missing or invalid answer keeps the trader on the page with an error for each one and what they entered kept.",
       "claims": [
         "repo-frontend-p9-124",
         "repo-tests-p5-067",
         "repo-tests-p5-068",
+        "ruling-sam-2026-10-26-p1-002",
+        "ruling-sam-2026-10-26-p1-003",
+        "ruling-sam-2026-10-26-p1-010",
+        "trace-animals-fit-p15-062",
+        "trace-animals-fit-p15-066",
         "trace-e2e-p8-047",
         "trace-e2e-p8-053",
-        "trace-e2e-p8-055",
-        "trace-animals-fit-p15-062",
-        "trace-animals-fit-p15-066"
+        "trace-e2e-p8-055"
       ],
       "status": "adopted",
       "delta": "exists",
@@ -1251,7 +1258,7 @@
     },
     {
       "id": "req-689",
-      "statement": "A valid edit replaces only this notification's copy of the role: the address book record and any other notification holding a copy of it are unchanged, the picker no longer preselects the source record, and no banner is shown.",
+      "statement": "A valid edit replaces only this notification's copy of the role: the address book record and any other notification holding a copy of it are unchanged, the role's picker opens with no address preselected, and no banner is shown.",
       "why": "The copy belongs to the notification.",
       "claims": [
         "repo-frontend-p9-125",
@@ -1342,7 +1349,7 @@
     },
     {
       "id": "req-694",
-      "statement": "A copy is checked against the notification's address rules: the address book accepts a record the rules refuse (such as a country name instead of a listed code), the picker lets the trader pick it, and its edit form then opens with no country selected.",
+      "statement": "A copy is checked against the notification's address rules: the address book accepts a record the rules refuse (such as a country name rather than a listed code), the picker lets the trader pick it, and its edit form then opens with no country selected.",
       "why": "The address book only checks a country is present, so the notification must catch a copy that breaks its rules.",
       "claims": [
         "repo-frontend-p9-131",
@@ -1359,8 +1366,8 @@
     },
     {
       "id": "req-695",
-      "statement": "The review keeps today's validation errors that Design Release 2.1 cannot show: an answered party whose copied address breaks the address-book rules is named in a 'There is a problem' error summary ('Correct the address details for the <role>', 'Correct the contact address details for this consignment') linked to that party's edit page with return=notification-view and repeated inside the role's row, a stored answer that is no longer valid is named on its card, these come before the unfinished-card entries, and either stops Continue.",
-      "why": "The trader must see which copy to correct and get straight to it.",
+      "statement": "On the review page an answered party whose copied address breaks the address-book rules is named in a 'There is a problem' error summary ('Correct the address details for the <role>', 'Correct the contact address details for this consignment'), linked to that party's edit page with return=notification-view and repeated inside the role's row; a stored answer that has become invalid is named on its card; these entries come before the unfinished-card entries, and either stops Continue.",
+      "why": "The trader must see which copy to correct and get straight to it. The single-app prototype holds no copy that can break a rule, so it cannot express these errors (c-139).",
       "claims": [
         "repo-tests-p5-046",
         "repo-tests-p5-047",
@@ -1440,7 +1447,7 @@
     },
     {
       "id": "req-1830",
-      "statement": "Until address search is built, the consignee, importer and place of destination add-address pages open with the address and contact fields and the 'What else should this address be used for?' checkboxes shown at once, with no search box and no 'Enter address manually' control, so a trader can add any of those addresses by hand now.",
+      "statement": "Until address search is built, the consignee, importer and place of destination add-address pages open with the address and contact fields and the 'What else should this address be used for?' checkboxes shown at once, with no search box and no 'Enter address manually' control, so a trader can add any of those addresses by hand.",
       "why": "Ruling 2026-10-09 blocks address search on the address lookup becoming a real feature but builds manual address entry now; a destination-side page that hid its fields behind a search that does not exist would leave no way to add the address.",
       "claims": [
         "prototype-dr2-1-source-p8-082",
@@ -1528,7 +1535,7 @@
     },
     {
       "id": "req-1959",
-      "statement": "A picker search that matches nothing ('No addresses match your search.') still leaves the 'Add a new address' link on the page, so a trader whose address is not in the book can add it instead of being stuck on 'Select a consignor from the list'.",
+      "statement": "A picker search that matches nothing ('No addresses match your search.') still shows the 'Add a new address' link above the picker form, so a trader whose address is not in the book can add it from there.",
       "why": "DR1 found the empty search a dead end (inc-053); the add link now sits above the picker form whatever the search finds.",
       "claims": [
         "document-dr1-parity-backlog-p7-002",
@@ -1545,7 +1552,7 @@
     },
     {
       "id": "req-1960",
-      "statement": "Each picker row offers a link to that saved address's own record in the INS address book, carrying the picker in a return parameter, so the trader can correct or delete the book record and come back to the picker they left; whether the in-place 'View details' disclosure stays is the party picker area's call, and if it stays it drops the name, address lines and country the row's columns already show.",
+      "statement": "Each picker row offers a link to that saved address's own record in the INS address book, carrying the picker in a return parameter, so the trader can correct or delete the book record and come back to the picker they left; any in-place 'View details' disclosure the row keeps shows only details the row's own columns do not already carry.",
       "why": "DR1 asked for a way to correct a wrong saved address from the picker (inc-054), built together with the add route and leading to the same place; the INS frontend is the address book's only writer (c-106), so the record and its edit live there.",
       "claims": [
         "document-dr1-parity-backlog-p7-036",
@@ -1564,7 +1571,7 @@
       ],
       "status": "adopted",
       "delta": "change",
-      "deltaNote": "Today each picker row's 'View details' opens in place to show the record's fields, with no edit, delete or link out (document-dr1-parity-backlog-p7-036). Animals only: plants is not wired to the INS address book (ruling 2026-10-09 pm). Likely the same change as the party picker area's inc-090 'View' links; the cross-area pass merges them.",
+      "deltaNote": "Today each picker row's 'View details' opens in place to show the record's fields, with no edit, delete or link out (document-dr1-parity-backlog-p7-036). Animals only: plants is not wired to the INS address book (ruling 2026-10-09 pm). Likely the same change as the party picker area's inc-090 'View' links; the cross-area pass merges them. Whether the in-place disclosure is kept at all is the party picker area's call.",
       "conflicts": [
         "c-106"
       ]
@@ -1599,24 +1606,32 @@
     },
     {
       "id": "req-party-address-add-and-edit-001",
-      "statement": "While a trader is creating or changing a live animals or germinal products template, each party picker's 'Add a new address' round trip and each role's 'Edit details' page work as they do in a notification, on the same pages: the handshake identifies the template being worked on, saving or cancelling on the INS add page returns to that template's own picker or Consignment addresses page with the template's answer set as it would be for a notification, and an edit changes only the template's copy, never the address book record. Nothing returns the trader to a notification.",
-      "why": "Template mode is another way of walking the same journey pages and captures the same data; it never copies or forks the pages, and later page changes carry into it without rework (ruling 2026-10-09 templates). Today's handshake and edit pages are built around a notification, so without this a trader adding an address while building a template would lose their place.",
+      "statement": "On the add-address page reached from a party picker, 'Save and return to address page' makes exactly the same checks as 'Save and select': with any answer missing or not valid the trader stays on the add-address page, sees an error for each one in field order, keeps every value they entered and every use they ticked, and nothing is written to the address book; the address is saved only once every answer passes. A germinal products notification's add-address page behaves the same way.",
+      "why": "A second save button must not let a half-checked address into the trader's address book. The owner's 26 October decision is that the save buttons behave consistently, that a missing or invalid answer keeps the trader on the page with an error for each one, and that no page is an exception; the Design Release 2.1 suite only ever submits 'Save and return to address page' with a complete address, so it never settled the refused case. Germinal products is a sibling set reaching the same add page through the same handshake, so the page behaves the same way for it.",
       "claims": [
-        "ruling-sam-2026-10-09-templates-p1-032",
-        "ruling-sam-2026-10-09-templates-p1-033",
-        "ruling-sam-2026-10-09-templates-p1-036",
-        "ruling-sam-2026-10-09-templates-p1-037",
-        "ruling-sam-2026-10-09-templates-p1-038",
-        "ruling-sam-2026-10-09-templates-p1-052",
-        "repo-frontend-p9-134",
-        "repo-frontend-p9-139",
-        "repo-frontend-p9-149"
+        "prototype-dr2-1-source-p8-108",
+        "prototype-dr2-1-source-p8-111",
+        "prototype-dr2-1-specs-p3-064",
+        "prototype-dr2-1-specs-p3-066",
+        "prototype-dr2-1-specs-p3-068",
+        "ruling-sam-2026-10-26-p1-002",
+        "ruling-sam-2026-10-26-p1-003",
+        "ruling-sam-2026-10-26-p1-006",
+        "ruling-sam-2026-10-26-p1-007",
+        "ruling-sam-2026-10-26-p1-008",
+        "ruling-sam-2026-10-26-p1-009",
+        "ruling-sam-2026-10-26-p1-010",
+        "ruling-sam-2026-10-26-p1-011",
+        "ruling-sam-2026-10-26-p1-013",
+        "ruling-sam-2026-10-26-p1-024",
+        "trace-e2e-p9-067"
       ],
       "status": "adopted",
       "delta": "new",
-      "deltaNote": "Today there is no template mode; the add link sends the notification id (repo-frontend-p9-134) and the return lands on that notification's picker (repo-frontend-p9-139, repo-frontend-p9-149). Which validation template mode relaxes is the templates area's to settle, not this row's. Animals only: template mode is not added to plants.",
+      "deltaNote": "Today the INS add page carries a single primary 'Save and continue' and a secondary 'Cancel and return to address page', so there is no second save to differ (trace-e2e-p9-067); the Design Release 2.1 suite drives the error list only from 'Save and select' (prototype-dr2-1-specs-p3-066) and submits 'Save and return to address page' only with a complete address (prototype-dr2-1-specs-p3-068). The second save button itself is req-673, and the check set it applies is req-660 to req-668.",
       "conflicts": [
-        "c-106"
+        "c-106",
+        "c-108"
       ]
     }
   ],

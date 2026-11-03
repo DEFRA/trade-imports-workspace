@@ -271,7 +271,11 @@
           "repo": "trade-imports-ins-tests",
           "number": 79
         }
-      ]
+      ],
+      "merge": {
+        "frontend": "origin/main",
+        "tests": "origin/main"
+      }
     },
     {
       "id": "inc-015",
@@ -354,7 +358,12 @@
           "workarea": "shared/design-release-2-1/themes/journey-foundation",
           "id": "inc-001"
         }
-      ]
+      ],
+      "merge": {
+        "frontend": "origin/main",
+        "tests": "origin/main",
+        "perftests": "origin/main"
+      }
     },
     {
       "id": "inc-018",
@@ -404,7 +413,11 @@
         "Ordering risk, recorded 2 Nov: this row has no dependency on inc-024 and is buildable now, but building it first makes main's package list blocking rather than merely present. Today a trader importing chickens sees an optional 'Number of packages (when required)' box they can leave blank; after this row they cannot continue without filling it. If inc-024 then narrows the list, that hard stop comes off again. The criterion is written to inherit the list ('a line that asks for a number of packages'), so this row stays correct either way - but whoever plays it should know it raises the cost of getting inc-024 wrong, and may prefer to take inc-024's answer first, or to land the hard stop only on the six codes the prototype and main agree on (0101, 0102, 0103, 010410, 010420, 01061900).",
         "Design snagging merged to main 23 Oct: neither hard stop is on main yet, but both pages' code moved, so salvage commit f94b0823 will not apply cleanly. consignment-details/fields.js was split: fieldsFor now composes animalsValidatorsFor and packagesValidatorsFor, and the packages rule (still integerInRange, so optional) sits in packagesValidatorsFor. The consignment-details controller, its tests and the commodities copy files were rewritten, and its refusals now answer 400. On arrival details, port-of-entry.controller.js takes the empty option from copy.means.selectText ('Select one') and labels options through means-of-transport-label.js (Air, Rail, Road, Sea); validate.js still uses oneOf for meansOfTransport. Builder: change integerInRange to requiredIntegerInRange inside packagesValidatorsFor, add the meansRule to port-of-entry/validate.js, and add the two error strings to main's rewritten copy files by hand. Arrival-and-transit inc-028 adds the same means rule: whichever lands second reuses it."
       ],
-      "gate": null
+      "gate": null,
+      "merge": {
+        "frontend": "origin/main",
+        "tests": "origin/main"
+      }
     },
     {
       "id": "inc-019",
@@ -460,7 +473,10 @@
           "workarea": "shared/design-release-2-1/themes/journey-foundation",
           "id": "inc-001"
         }
-      ]
+      ],
+      "merge": {
+        "tests": "origin/main"
+      }
     },
     {
       "id": "inc-022",
@@ -587,7 +603,11 @@
         "Where the mechanism already is on main: every revealed field's rule is already conditional, stored ? oneOf(...) : requiredOneOf(...) (frontend origin/main:src/server/app/sets/live-animals/journeys/linear/features/import-reason/validate.js:58-72), and journey-foundation inc-003 built the generic soft-save seam this row now narrows - kit offers requestSaveChoice, hubExitTarget and returnedSaveChoice (shared/kit.js:158-183) and kit.recoverableSave returns { value, failure } (kit.js:392, used at features/import-reason/controller.js:110-123). So the change is to stop relaxing the checks on the hub-exit path, not to add a validation layer. Neither allowMissing nor kit.isHubExit exists on main despite what inc-022's older notes said.",
         "Design snagging merged to main on 23 October and rewrote both controllers, so neither of inc-022's salvage commits applies. Both pages now render through render(request, h, current, values, options) and take their Back link from kit.runBackLink; import-reason/validate.js renamed its blanks helper to fieldsToBlankWhenStale. Build against main's rewritten import-reason and additional-details unit tests and fit specs rather than the stale branch's.",
         "req-168's delta is recorded as change, with deltaNote saying main's 'Main reason for import' row completes only once the Additional details page after it is saved too (trace-e2e-p4-112, trace-e2e-p4-116), while inc-022's 2 November re-analysis note claimed it already held on main. The two disagree. The plan stage reads the real code, so settle it there: if criterion 6 already holds, say so in the plan and prove it with a regression test rather than changing code."
-      ]
+      ],
+      "merge": {
+        "frontend": "origin/main",
+        "tests": "origin/main"
+      }
     },
     {
       "id": "inc-023",
@@ -640,7 +660,11 @@
         "Widened 2 Nov by the V4 Data Fields page, which specifies five commodities for the unweaned question, not two: 0101 equines (horses, asses, mules, hinnies), 0102 cattle, 0103 pigs, 010410 sheep, 010420 goats (confluence:6497338582, the 'Contains Unweaned Animals' expand macro). The row previously said cattle and pigs, taken from the prototype. Main asks only cattle (UNWEANED_CODES = ['0102']), so four codes are missing, not one. Note the history: frontend 598c6045 removed horses under DR1 parity ('DR1 asks that question only of cattle and pigs'), which V4 contradicts - V4 is the later data-fields specification, so it wins, but the builder should expect that commit's tests to need changing and should say in the commit why horses are back. Full comparison: reanalysis/v4-data-fields-commodity-rules-2026-11-02.md.",
         "Re-analysis 2 Nov: the earlier note that main keys the unweaned list on the name 'Cow' is wrong now. UNWEANED_CODES is a list of codes holding CATTLE_CODE, which is '0102' (frontend origin/main:src/server/app/sets/live-animals/services/commodities/rules.js:2, :78), read through unweanedCommodityCodes (services/commodities/index.js:46) and applied by unweanedApplies, which both the additional details page and its validation use (features/additional-details/validate.js:7, :21-27). So the cattle half already holds and is keyed in a way a rename cannot break: the change is adding SWINE_CODE ('0103', already exported from rules.js) to UNWEANED_CODES. Criterion 2 is a regression check rather than work, already proved by the page's own tests, which seed commodityCode '0102' (features/additional-details/validate.test.js:6, controller.test.js:34). Criterion 3's review row reads from the same unweanedApplies rule, so it should follow without separate work."
       ],
-      "gate": null
+      "gate": null,
+      "merge": {
+        "frontend": "origin/main",
+        "tests": "origin/main"
+      }
     },
     {
       "id": "inc-024",
@@ -694,7 +718,11 @@
         "Related, and not this row's to fix: the service collects a package count but never a package type, and the backend sends LogisticsPackage(null, null, totalNoOfPackages) (repos/trade-imports-animals-backend src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/LogisticsPackage.java:12). The GBN-AG schema requires typeCode beside itemQuantity and types it as a string, and that record carries no @JsonInclude(NON_NULL) where its siblings do, so the payload serialises typeCode as an explicit null and fails the schema either way - present-but-null against the string type, or absent against required if NON_NULL were added. Nothing validates the outbox payload against gbn-ag-v1.schema.json anywhere outside the schemas repo, so this is unchecked. Raise it against the GBN-AG payload owner, not here; it matters to this row only in that answering 'which commodities need a package count' may also need 'and what type of package', which no page asks today.",
         "If the ruling goes Design Release 2.1's way, the change is PACKAGE_COUNT_CODES in services/commodities/rules.js plus the consignment-details and check-answers tests that pin the current list. If it goes MDM's way, reference-data must also pass packageType through, which reference-lists owns, so that would add a repo this theme does not have."
       ],
-      "gate": null
+      "gate": null,
+      "merge": {
+        "frontend": "origin/main",
+        "tests": "origin/main"
+      }
     },
     {
       "id": "inc-025",
@@ -743,7 +771,11 @@
         "In flight 2 Nov, EUDPA-669: it stores MDM's species commonName on every line and sends it downstream to PIMS, but leaves speciesLabel and legendFor untouched (verified by diff against origin/main). So that ticket confirms and secures this row's data source without doing its display work. Build this row after EUDPA-669 merges, so the stored commonName is already there to read.",
         "Pre-flight hand-verification, 3 Nov: the repo extracts are 26 Oct and record no commit, so they were checked by date. repo:frontend moved 18 commits to 30 Oct, all of it before the 2 Nov re-analysis that already read this row against main; repo:perftests has moved nothing since. The one change this row has never been read against is trade-imports-ins-tests 57f2716 (3 Nov), which renames the ostrich latin name in domain/animals/constants/commodity-lines.ts from 'Struthio' to 'Struthio spp.' because MDM no longer returns the short form. Species checkbox values are built from the commodity code and the latin name, so read that file from current main rather than the extract when writing this row's scientific-name assertions."
       ],
-      "gate": null
+      "gate": null,
+      "merge": {
+        "frontend": "origin/main",
+        "tests": "origin/main"
+      }
     },
     {
       "id": "inc-026",
@@ -779,7 +811,11 @@
         "The capture mechanism already exists (frontend origin/main:src/server/app/services/_capture/capture.js and fixtures.js), so the recapture is a run rather than new code. The check is the new part: compare the fixture against what the stub serves, in the frontend's own tests, so it runs without the stack.",
         "Pre-flight hand-verification, 3 Nov: trade-imports-ins-tests 57f2716 (3 Nov) is direct evidence for this row and postdates both the 26 Oct extract and the 2 Nov re-analysis. It reports that the stub and MDM disagreed on the ostrich latin name - the stub served 'Struthio' where MDM serves 'Struthio spp.' - which broke two specs on cdp test while they passed on cdp dev, and it worked round the divergence in the tests repo's own constants rather than in the stub. So a stub-versus-MDM species-name drift of exactly the kind this row exists to close is already proven in production-like environments. Builder: read repos/trade-imports-stub's mdmProductSearchResponses.json and the frontend's _capture/fixtures/commodities.json from current main, and check the ostrich specifically."
       ],
-      "gate": null
+      "gate": null,
+      "merge": {
+        "frontend": "origin/main",
+        "tests": "origin/main"
+      }
     },
     {
       "id": "inc-027",
@@ -816,7 +852,11 @@
         "Main has the seam: the remove action and its post handler sit in features/commodities/consignment-details/remove/actions.js and remove/post-remove.js, and the page's values come through view-model/groups.js, which reads values[animalsField(index)] (frontend origin/main). So the fix is carrying the submitted values through the remove round trip rather than re-reading the saved answers.",
         "Related but separate: inc-018 makes the number of packages a hard stop. A Remove that drops typed numbers would make that hard stop fire on numbers the trader had in fact entered, so this row is worth landing before or with inc-018."
       ],
-      "gate": null
+      "gate": null,
+      "merge": {
+        "frontend": "origin/main",
+        "tests": "origin/main"
+      }
     },
     {
       "id": "inc-028",
@@ -851,7 +891,11 @@
         "Main validates the number of animals with requiredIntegerInRange(animalsField(index), { min: 1 }) and no maximum (frontend origin/main:src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/fields.js:18-27), so the cap is new. The error belongs on the line's own field, as the animals and packages errors already do.",
         "Build this after question 5 is answered if the answer is quick; otherwise build the default (the value cap) and say so in the commit, since a length rule is a small change on top."
       ],
-      "gate": null
+      "gate": null,
+      "merge": {
+        "frontend": "origin/main",
+        "tests": "origin/main"
+      }
     },
     {
       "id": "inc-029",
@@ -893,7 +937,11 @@
         "Note the Domestic/Game split on 0102 came from the IPAFFS commodity-categories extract rather than from MDM, per the EUDPA-669 branch's own doc, so whoever builds this should check whether MDM's type list reproduces it before deleting the table.",
         "Pre-flight 3 Nov: the block was re-checked against current main rather than the 26 Oct extract, because a lifted block silently withholds work. It still holds. reference-data's commodity package on origin/main is CommoditiesController, CommodityGroup, CommodityLine, CommoditySearchResponse, CommoditySearchService, CommoditySpecies, SpeciesCheckRequest/Response/Service, and CommodityGroup is a record of code plus List<CommoditySpecies> only - no type field, no type list, and nothing matching commodityType, animalSubcategory or breedCategory anywhere in src/main/java. So there is still nothing for the commodity page to offer, and the row stays blocked."
       ],
-      "gate": null
+      "gate": null,
+      "merge": {
+        "frontend": "origin/main",
+        "tests": "origin/main"
+      }
     }
   ]
 }

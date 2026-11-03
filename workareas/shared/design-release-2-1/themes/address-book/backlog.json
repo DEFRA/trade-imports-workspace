@@ -1279,7 +1279,8 @@
         }
       ],
       "requirements": [
-        "req-1256"
+        "req-1256",
+        "req-611"
       ],
       "openQuestions": [
         "Same-defect follow-up: repos/trade-imports-address-book src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressDeleteIT.java needs its @SpyBean OperatorRepository replaced by @Autowired, and delete_shouldBeIdempotent204WithNoSecondSave_whenAlreadyDeleted needs its clearInvocations/verify(repository, never()).save(any()) spy assertion replaced by an assertion that the stored row (modifiedAt and version) is unchanged, as review finding 12 on inc-059 (never mock or spy on your own modules). The file is not edited by inc-059."
@@ -1287,7 +1288,8 @@
       "notes": [
         "Unchanged by the 9 October afternoon and templates rulings; the re-distil only renumbered claim references. Pass 1 slice on its own: the typed record is the foundation the add form's uses question, the list's type tabs (address-book-list area) and DR1's role-filtered pickers rest on, so it lands first and gates. Observable through the API in every environment the tests repo's address book API client reaches (local stack and CDP). The field names and shape are the address-book service's (c-176; ruling 9 October claims 66, 70, 116), so no criterion names the prototype's 'primary type' or 'address book type'. Type and uses stay optional on the API so a journey's handshake add and every existing record keep saving; the add form makes a use required outside a journey. Updates fully replace the editable fields, so the edit page must post the stored type and uses back; that is the edit row's criterion. Decision kept: refuse an unknown use with a 400 (validation clause of ruling:sam-2026-10-07).",
         "Ticket 1 (EUDPA-707), re-cut 2026-10-15: the address-book theme is delivered as six sequential tickets, each on its own branch, rather than one theme branch. See the envelope's `tickets`.",
-        "Moved 2026-10-19 from ticket 1 (EUDPA-707) to ticket 6 (EUDPA-711, types and uses): nothing in tickets 2 to 5 uses the type or uses, and building them optional in EUDPA-707 and required in EUDPA-711 would change one API twice across releases. The criterion that an address created without a type or uses, and every address saved before this change, is still accepted is dropped: all CDP non-prod address data expires 7 days after creation (EUDPA-644, since 2026-10-04) and prod has none, so no address needs to stay untyped. Type and uses become required (400 when missing) in inc-070, the first row whose add form sends them, so each row in between still passes its checks; the ticket merges as one, so the released API changes once. This supersedes the first note's 'stay optional on the API'. The earlier build (commits 19cf03b daa3d83, PRs address-book #13 and #14, ins-tests #32 and #35) was removed from EUDPA-707; this row is rebuilt on EUDPA-711's branch."
+        "Moved 2026-10-19 from ticket 1 (EUDPA-707) to ticket 6 (EUDPA-711, types and uses): nothing in tickets 2 to 5 uses the type or uses, and building them optional in EUDPA-707 and required in EUDPA-711 would change one API twice across releases. The criterion that an address created without a type or uses, and every address saved before this change, is still accepted is dropped: all CDP non-prod address data expires 7 days after creation (EUDPA-644, since 2026-10-04) and prod has none, so no address needs to stay untyped. Type and uses become required (400 when missing) in inc-070, the first row whose add form sends them, so each row in between still passes its checks; the ticket merges as one, so the released API changes once. This supersedes the first note's 'stay optional on the API'. The earlier build (commits 19cf03b daa3d83, PRs address-book #13 and #14, ins-tests #32 and #35) was removed from EUDPA-707; this row is rebuilt on EUDPA-711's branch.",
+        "2026-11-03: req-611 picked up from the parent re-distil (#200). Its address book half is built: this row's uses are the roles, and inc-067's use filter lists an organisation's addresses for one. Its word unpaginated is not applied: the list API stays paged (pageSize 1-100), by Paul's ruling on this ticket that the pickers keep pagination though the prototype has none, as organisations in dev and test hold thousands of addresses. The animals and plants pickers asking for their role are the parent backlog's rows, not this theme's."
       ],
       "gate": "Check the type and uses field names, the three type values and the six use values in the locked contract, before the address book list's type tabs, the type step and the uses question build on them.",
       "commit": "653f886 3fd8c10",
@@ -1759,7 +1761,8 @@
         "A 'Destination, Consignee or Importer' address offers the use checkboxes 'Place of destination', 'Consignee' and 'Importer' (prototype:dr2-1-source p16-056; trace:prototype-dr2-1 p16-097; prototype:dr2-1-specs p6-144)",
         "A 'Branch' address offers exactly one use checkbox, 'Branch address' (prototype:dr2-1-source p16-057; trace:prototype-dr2-1 p16-099; prototype:dr2-1-specs p6-147)",
         "Every field, error message and the uses check on these two types are the same as for 'Origin or Consignor', and a save stores the address with its type and ticked uses (ruling:sam-2026-10-09 p1-182; prototype:dr2-1-source p16-076, p16-078)",
-        "A saved Destination, Consignee or Importer address lands the user on the address book list showing Destination, Consignee or Importer addresses, and a Branch address on the list showing Branch addresses, each listed first (prototype:dr2-1-source p16-083; prototype:dr2-1-specs p6-139; ruling:sam-2026-10-09 p1-075, p1-091)"
+        "A saved Destination, Consignee or Importer address lands the user on the address book list showing Destination, Consignee or Importer addresses, and a Branch address on the list showing Branch addresses, each listed first (prototype:dr2-1-source p16-083; prototype:dr2-1-specs p6-139; ruling:sam-2026-10-09 p1-075, p1-091)",
+        "Going back from Add address and contact details to Choose an address type and continuing again, for any of the three types, shows the address, the contact details and the ticked uses already entered, so nothing typed is lost between the add's two steps (req-2199, picked up from the 3 November re-distil)"
       ],
       "dependsOn": [
         "inc-070",
@@ -1799,12 +1802,14 @@
         "req-1249",
         "req-1252",
         "req-1253",
-        "req-1862"
+        "req-1862",
+        "req-2199"
       ],
       "openQuestions": [],
       "notes": [
         "Unchanged by the 9 October afternoon and templates rulings. Depends on 'Saving a new address with its uses' (the uses question, its validation and the save it extends) and on 'The add-details form for an address entered by hand'. This is the manual entry Sam's 9 October ruling builds now (claims 178 to 182, c-217); the search-first layout (req-1214) and its error reveal (req-1285) are in the blocked waiting-on-design search row, and the search itself in the blocked lookup row. The 'Enter address manually' control is not needed while no search shows. The landing criterion restates req-1259 for these two types and needs the list area's type tabs.",
-        "Ticket 6 (types and uses), re-cut 2026-10-15: the address-book theme is delivered as six sequential tickets, each on its own branch, rather than one theme branch. See the envelope's `tickets`."
+        "Ticket 6 (types and uses), re-cut 2026-10-15: the address-book theme is delivered as six sequential tickets, each on its own branch, rather than one theme branch. See the envelope's `tickets`.",
+        "2026-11-03: req-2199 picked up from the parent re-distil (#200) and placed here, the next row on the add flow's two steps."
       ],
       "gate": null
     },
@@ -1819,7 +1824,8 @@
         "No checkbox is preselected and saving with none ticked raises no error (prototype:dr2-1-source p8-097, p8-098)",
         "A posted use not offered for the role is discarded, and the ticked uses stay ticked when the page is shown again with errors (prototype:dr2-1-source p8-108; trace:prototype-dr2-1 p7-038)",
         "Saving an address added from the consignee picker with 'Importer' ticked stores a record whose uses, as the address book's read-one API returns them to the services that read it, are consignee and importer (prototype:dr2-1-source p8-110, p8-114; trace:prototype-dr2-1 p7-061; prototype:dr2-1-specs p3-113; trace:e2e p8-012; ruling:sam-2026-10-09 p1-115, p1-116)",
-        "With Welsh selected, the list, add and edit pages show a Welsh string for every piece of copy this ticket's rows added or changed (the three tab names and headings, the Type column's labels, the Type filter's label and options, the uses question, its hint, options and error, the destination and branch layouts and the journey's 'What else should this address be used for?'), and no English string is left; each new Welsh string is marked as an unreviewed machine draft awaiting Welsh Language Standards sign-off. (repo:insfrontend repo-insfrontend-p2-098; repo:insfrontend p3-113 to p3-120; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-045)"
+        "With Welsh selected, the list, add and edit pages show a Welsh string for every piece of copy this ticket's rows added or changed (the three tab names and headings, the Type column's labels, the Type filter's label and options, the uses question, its hint, options and error, the destination and branch layouts and the journey's 'What else should this address be used for?'), and no English string is left; each new Welsh string is marked as an unreviewed machine draft awaiting Welsh Language Standards sign-off. (repo:insfrontend repo-insfrontend-p2-098; repo:insfrontend p3-113 to p3-120; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-045)",
+        "On the add-address page reached from a party picker, Save and return to address page makes exactly the same checks as Save and select: with any answer missing or not valid the trader stays on the page, sees an error for each one in field order, keeps every value entered and every use ticked, and nothing is written to the address book (req-2186, picked up from the 3 November re-distil)"
       ],
       "dependsOn": [
         "inc-077",
@@ -1861,13 +1867,15 @@
         "req-658",
         "req-659",
         "req-1186",
-        "req-1279"
+        "req-1279",
+        "req-2186"
       ],
       "openQuestions": [],
       "notes": [
         "Unchanged from the last distil. Combines the uses question (legend, hint, options, no preselection, discard) with saving the uses: the question has no observable effect until the save carries it. The address book record's uses field and its API contract are the address-book-add-and-edit area's, built in inc-059, so this row depends on it (and on inc-077) rather than adding addressbook to its repos. The address book's own add uses a different legend and hint; the journey page keeps Design Release 2.1's journey wording.",
         "Re-cut 2026-10-15: the last row to add copy, so it now lists req-1186 and req-1279 from the retired Welsh rows inc-083 and inc-084; every ticket's last row carries the Welsh for that ticket's pages.",
-        "Ticket 6 (types and uses), re-cut 2026-10-15: the address-book theme is delivered as six sequential tickets, each on its own branch, rather than one theme branch. See the envelope's `tickets`."
+        "Ticket 6 (types and uses), re-cut 2026-10-15: the address-book theme is delivered as six sequential tickets, each on its own branch, rather than one theme branch. See the envelope's `tickets`.",
+        "2026-11-03: req-2186 picked up from the parent re-distil (#200) and placed here, the row that adds the journey-mode uses this check must keep."
       ],
       "gate": "Ticket 6 (types and uses) and the address-book theme are complete once this row lands. Stop: open or update this ticket's pull requests on its branch and agree them with the team."
     },

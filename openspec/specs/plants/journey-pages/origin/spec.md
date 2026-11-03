@@ -204,3 +204,43 @@ The system MUST ask "Country of origin" with no hint text, with or without JavaS
 - **WHEN** they read the country list, choose a country from it and save and continue
 - **THEN** the list, labelled "Country of origin", began with its blank "Select a country" entry and no hint text was shown
 - **AND** returning to the page shows that country chosen
+
+### Requirement: With JavaScript, the country search has a joined search button
+**ID**: REQ-PLANTS-ORIGIN-013
+With JavaScript the system MUST show a square GOV.UK blue search button, with a white magnifying glass, joined to the country search box. The button MUST be hidden from assistive technology and not focusable, MUST NOT submit the page, and MUST put the caret in the box when clicked.
+
+#### Scenario: The search button is GOV.UK blue with a white magnifying glass
+**ID**: SCN-PLANTS-ORIGIN-013-A
+- **GIVEN** the user has JavaScript and has reached the origin of the import page
+- **WHEN** the page loads
+- **THEN** the search button beside the country search box is GOV.UK blue
+- **AND** its magnifying glass is white
+
+#### Scenario: The search button is hidden from assistive technology, not focusable, and never submits
+**ID**: SCN-PLANTS-ORIGIN-013-B
+- **GIVEN** the user has JavaScript and has reached the origin of the import page
+- **WHEN** they tab on from the country search box, then click the search button
+- **THEN** the search button is not announced and does not take focus
+- **AND** the caret moves into the country search box and the page is not submitted
+
+### Requirement: With JavaScript, the country search announces its results
+**ID**: REQ-PLANTS-ORIGIN-014
+With JavaScript the system MUST describe the country search box with the accessible autocomplete's assistive hint, and MUST announce through a polite live region the number of results and, once a suggestion is highlighted, which country is highlighted.
+
+#### Scenario: The search box is described by the assistive hint
+**ID**: SCN-PLANTS-ORIGIN-014-A
+- **GIVEN** the user has JavaScript and has reached the origin of the import page
+- **WHEN** the country search box is read by a screen reader
+- **THEN** it is described by "When autocomplete results are available use up and down arrows to review and enter to select. Touch device users, explore by touch or with swipe gestures."
+
+#### Scenario: The number of results is announced after typing
+**ID**: SCN-PLANTS-ORIGIN-014-B
+- **GIVEN** the user has JavaScript and has reached the origin of the import page
+- **WHEN** they type text that matches one country
+- **THEN** a polite live region announces "1 result is available."
+
+#### Scenario: The highlighted country is announced
+**ID**: SCN-PLANTS-ORIGIN-014-C
+- **GIVEN** the user has typed text that matches one country
+- **WHEN** they move onto the suggestion with the down arrow
+- **THEN** a polite live region announces "1 result is available." followed by the country's name, "1 of 1 is highlighted"

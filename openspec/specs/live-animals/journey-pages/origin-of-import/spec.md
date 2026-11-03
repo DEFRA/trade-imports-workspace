@@ -8,13 +8,15 @@ The journey's entry page, asking where the consignment is coming from. The page 
 
 ### Requirement: The page asks which country the consignment comes from and whether an origin code is needed
 **ID**: REQ-ORIGIN-001
-The system MUST ask the user which country the consignment is coming from, offering a country selector and a choice of whether an origin code is required, along with a save-and-continue action.
+The system MUST ask the user which country the consignment is coming from, offering a country selector and a choice of whether an origin code is required, and MUST end the page with "Save and continue" alone, offering neither "Save and return to overview" nor "Cancel and return to overview". While the notification is being amended, REQ-FLOW-013 governs how the page ends instead.
 
 #### Scenario: The page presents its question and controls
 **ID**: SCN-ORIGIN-001-A
 - **GIVEN** the user has started a notification and reached the origin of the import page
 - **WHEN** the page loads
-- **THEN** it asks where the consignment is coming from, offering a country selector, a choice of whether an origin code is required, and a save-and-continue action
+- **THEN** it asks where the consignment is coming from, offering a country selector and a choice of whether an origin code is required
+- **AND** "Save and continue" is shown
+- **AND** no "Save and return to overview" or "Cancel and return to overview" is offered
 
 ### Requirement: The country field is a searchable list that filters as the user types
 **ID**: REQ-ORIGIN-002
@@ -139,7 +141,7 @@ The system MUST let the user give an optional internal reference for the notific
 
 ### Requirement: The region of origin code has a maximum length of five characters
 **ID**: REQ-ORIGIN-010
-The system MUST stop the region of origin code box accepting more than five characters as the user types, with autocomplete and spellcheck turned off, and MUST still reject a longer region of origin code submitted without that cap, on either save control, with an error naming the limit, preserving the value submitted.
+The system MUST stop the region of origin code box accepting more than five characters as the user types, with autocomplete and spellcheck turned off, and MUST still reject a longer region of origin code submitted without that cap, with an error naming the limit, preserving the value submitted.
 
 #### Scenario: An over-length region code is rejected with the value preserved
 **ID**: SCN-ORIGIN-010-A
@@ -149,13 +151,6 @@ The system MUST stop the region of origin code box accepting more than five char
 - **AND** the field is focused, still holding the value typed
 - **AND** the chosen country and the answer to whether a region code is required are still held
 
-#### Scenario: An over-length region code is refused on save and return to overview
-**ID**: SCN-ORIGIN-010-B
-- **GIVEN** the user has answered that a region code is required
-- **WHEN** they submit a region code longer than five characters without the box's own cap and save and return to overview
-- **THEN** they remain on the origin of the import page with an error naming the region code's limit
-- **AND** the over-length code is not saved
-
 #### Scenario: Typing stops at five characters
 **ID**: SCN-ORIGIN-010-C
 - **GIVEN** the user has answered that a region code is required
@@ -163,9 +158,9 @@ The system MUST stop the region of origin code box accepting more than five char
 - **THEN** the box holds only the first five
 - **AND** the box offers no autocomplete and no spellcheck
 
-### Requirement: Answering that a region code is required but leaving it empty is rejected on either save control
+### Requirement: Answering that a region code is required but leaving it empty is rejected
 **ID**: REQ-ORIGIN-011
-The system MUST refuse to save from the origin page, on save and continue and on save and return to overview alike, when the user has answered that a region code is required but left the code itself empty, showing an error that focuses the region code field.
+The system MUST refuse to save from the origin page when the user has answered that a region code is required but left the code itself empty, showing an error that focuses the region code field.
 
 #### Scenario: An empty region code is rejected when one is required
 **ID**: SCN-ORIGIN-011-A
@@ -173,14 +168,6 @@ The system MUST refuse to save from the origin page, on save and continue and on
 - **WHEN** they leave the region code empty and save and continue
 - **THEN** they remain on the origin of the import page
 - **AND** an error focuses the region code field, with the chosen country and the required answer still held
-
-#### Scenario: Save and return to overview refuses "Yes" with the code left blank
-**ID**: SCN-ORIGIN-011-B
-- **GIVEN** the user has chosen a country and answered that a region code is required
-- **WHEN** they leave the region code empty and save and return to overview
-- **THEN** they remain on the origin of the import page
-- **AND** an error says "Enter the region of origin code", with "Yes" still chosen
-- **AND** nothing is saved
 
 ### Requirement: With JavaScript, the chosen country's code is shown as a fixed prefix beside the region code field
 **ID**: REQ-ORIGIN-012

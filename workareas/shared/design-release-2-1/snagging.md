@@ -80,10 +80,10 @@ programme's `sources.json` pins. Design Release 2.1 has no address book view of 
 ### S-06. One label per address use, or two
 
 - **Ticket:** [EUDPA-711](https://eaflood.atlassian.net/browse/EUDPA-711), [ins-frontend #71](https://github.com/DEFRA/trade-imports-ins-frontend/pull/71). inc-068 review, findings 9 and 16.
-- **Page:** the INS address book list: its Type column and its Type filter.
-- **Prototype:** two labels for the same use. The Type column ([address-book.js#L8-L15](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/data/address-book.js#L8-L15)) says 'Place of origin', 'Place of destination', 'Branch'. The Type filter ([address-book-address-types.js#L4-L37](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/data/address-book-address-types.js#L4-L37)) says 'Place of Origin', 'Place of Destination', 'Branch Address'.
-- **Built:** both, as the prototype has them (`copy.en.js:17-22` for the filter, `:45-50` for the column, and the Welsh).
-- **To ask:** should the column and the filter use one label per use, and which: the column's sentence case ('Place of origin', 'Branch') or the filter's ('Place of Origin', 'Branch Address')? The answer also decides which words a search by type matches.
+- **Page:** the INS address book list (its Type column and its Type filter) and the INS add form's uses question, 'What can this address be used for?'.
+- **Prototype:** three labels for the same use. The Type column ([address-book.js#L8-L15](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/data/address-book.js#L8-L15)) says 'Place of origin', 'Place of destination', 'Branch'. The Type filter ([address-book-address-types.js#L4-L37](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/data/address-book-address-types.js#L4-L37)) says 'Place of Origin', 'Place of Destination', 'Branch Address'. The uses question's options ([address-book-origin-uses.js](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/data/address-book-origin-uses.js)) say 'Place of origin' and 'Consignor', and the criteria for the Destination and Branch forms (inc-071) say 'Place of destination', 'Consignee', 'Importer' and 'Branch address'.
+- **Built:** all three, as the design source has them (`copy.en.js` `list.uses` for the column and the filter, and `uses.options` for the question, and the Welsh).
+- **To ask:** should the column, the filter and the uses question use one label per use, and which: the column's ('Place of origin', 'Branch'), the filter's ('Place of Origin', 'Branch Address') or the question's ('Place of origin', 'Branch address')? The answer also decides which words a search by type matches.
 
 ### S-07. What Clear search clears when a Type is chosen
 

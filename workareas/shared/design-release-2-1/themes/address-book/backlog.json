@@ -1517,8 +1517,8 @@
         "Going back from the address form to 'Choose an address type' shows the chosen type selected; opening 'Add a new address' again from the address book starts with no type selected and empty fields, and after a save the next add starts empty (prototype:dr2-1-source p16-002, p16-011, p16-087)",
         "The browser titles of 'Choose an address type', the address form and the edit page read '<page heading> - Import notification service - GOV.UK', such as 'Choose an address type - Import notification service - GOV.UK', keeping the 'Error: ' prefix when a page shows errors (trace:prototype-dr2-1 p16-038, p16-053, p16-107; prototype:dr2-1-specs p6-104, p6-117, p6-158; trace:ins-fit p1-003, p3-003)",
         "A notification journey's handshake into the address form still opens the form directly, without 'Choose an address type', and the save still hands the new address id back to the journey (repo:insfrontend p3-095 to p3-107; trace:e2e p15-006, p15-007; c-106)",
-        "Adding an address offers, in order, 'Place of Origin' with the hint 'The address where the animals begin their journey to Great Britain', 'Consignor' with 'This is the sender of the consignment.', 'Consignee' with 'This is the receiver or buyer of the consignment being shipped or transported.', 'Importer' with 'This is usually the same as the consignee. You can select a different person if needed.' and 'Place of Destination' with 'This is where the animals will be unloaded and accommodated for at least 48 hours. If a health certificate is required, it will show this address.' (prototype:dr2-1-source prototype-dr2-1-source-p15-105 to prototype-dr2-1-source-p15-109)",
-        "After a divider it offers 'Branch Address' with the hint 'This is the contact address of the person responsible for the consignment from when it enters Great Britain until authorities complete their checks.' (prototype:dr2-1-source prototype-dr2-1-source-p15-111)",
+        "Choosing an address type offers, in order, 'Origin or Consignor' with the hint 'Place of origin, Consignor', 'Destination, Consignee or Importer' with the hint 'Place of destination, Consignee, Importer' and 'Branch' with the hint 'Branch address'. (prototype:dr2-1-source app/data/address-book-add-categories.js and app/routes.js:10057-10066 at 04a073b; decision 2026-11-03, see notes)",
+        "No 'Transporter' option shows: transporter management is blocked on a requirements decision (deferred.md). (prototype:dr2-1-source app/data/address-book-add-categories.js at 04a073b)",
         "No 'Transporter' type is offered. (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-044)",
         "For 'Origin or Consignor' the Country select opens with United Kingdom selected, and its blank first option reads 'Select a country' (prototype:dr2-1-source p16-047-m1; trace:prototype-dr2-1 p16-078)"
       ],
@@ -1528,7 +1528,8 @@
       "kind": "feat",
       "repos": [
         "insfrontend",
-        "tests"
+        "tests",
+        "perftests"
       ],
       "sources": [
         {
@@ -1607,7 +1608,8 @@
         "Ticket 1 (EUDPA-707), re-cut 2026-10-15: the address-book theme is delivered as six sequential tickets, each on its own branch, rather than one theme branch. See the envelope's `tickets`.",
         "Moved 2026-10-16 from ticket 1 (EUDPA-707) to ticket 6 (EUDPA-711, types and uses): asking for a type that nothing saves until inc-070 read as a question with no effect, so the type step lands with the save. It had been built on EUDPA-707 (commits 7e70ca7 3676fba 3e5b6a1, PRs ins-frontend #56 and ins-tests #32, both superseded); that build is removed from EUDPA-707 and this row is rebuilt on EUDPA-711's branch. It takes inc-062's criterion that Origin or Consignor opens with United Kingdom selected, which needs a chosen type.",
         "Ticket 6 (types and uses), re-cut 2026-10-16: moved from ticket 1.",
-        "2026-10-30: the country select's blank option reads 'Select a country', not the prototype's 'Select one', following the designer's 23 October answer applied to every address page (snagging.md, Settled)."
+        "2026-10-30: the country select's blank option reads 'Select a country', not the prototype's 'Select one', following the designer's 23 October answer applied to every address page (snagging.md, Settled).",
+        "2026-11-03: perftests added to repos, because the type step means the k6 suite's adds (front-door.js addAddress and ensurePerfAddress, background-volume.js) must choose a type before the form. Criteria 9 and 10 rewritten to Design Release 2.1's type step (address-book-add-categories.js's textDesignRelease21 labels and hints, routes.js:10057-10066): the earlier wording listed the prototype's older six role options and a divider from address-book-address-types.js. Transporter is left out as the deferred transporter decision requires. Raised by the inc-061 planner."
       ],
       "gate": "Check the two-step add and its in-progress state, which the add-details, manual-entry and transporter rows copy, and that a notification journey's handshake into the address form still opens it directly, without 'Choose an address type', and returns the new address id (c-106)."
     },

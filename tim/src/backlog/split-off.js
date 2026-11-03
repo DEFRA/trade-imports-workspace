@@ -54,6 +54,22 @@ export const splitOffThemeIds = (backlog) =>
   new Set(splitOffOf(backlog).map((pointer) => pointer.theme))
 
 /**
+ * The requirements a re-distil has handed a split theme that it has not
+ * placed in a row yet: its own pointer's `pickUp` in the parent backlog.
+ *
+ * Empty whenever that cannot be read — no parent backlog on disk, or no
+ * pointer for the theme — so a check run away from the workspace, or
+ * against a backlog that was never split off, says nothing.
+ *
+ * @param {object} split - The split theme's own backlog
+ * @param {object|null} parent - The parent backlog it names, if it can be read
+ * @returns {string[]}
+ */
+export const pickUpAwaiting = (split, parent) =>
+  splitOffOf(parent).find((pointer) => pointer.theme === split?.theme)
+    ?.pickUp ?? []
+
+/**
  * Every requirement a split-off theme holds: the ones its rows covered when
  * it left, and the ones a later re-distil handed it to pick up.
  *

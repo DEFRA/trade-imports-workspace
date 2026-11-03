@@ -1,5 +1,5 @@
 import { describe, test, expect, afterEach } from 'vitest'
-import { existsSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { checkDistil, distilStatus, sourcesProblems } from './checks.js'
 import { scopeHashOf } from './files.js'
@@ -25,14 +25,31 @@ const setUp = () => {
 const extractPath = (slug) => join(workspace.layout.extractDir, `${slug}.json`)
 const verifyPath = (slug) => join(workspace.layout.verifyDir, `${slug}.json`)
 
-const status = () =>
+const status = (workspaceRoot) =>
   distilStatus({
     layout: workspace.layout,
     schemas: workspace.schemas,
-    workarea: DEMO_WORKAREA
+    workarea: DEMO_WORKAREA,
+    workspaceRoot
   })
 
-const sourceStatus = (id) => status().sources.find((source) => source.id === id)
+const sourceStatus = (id, workspaceRoot) =>
+  status(workspaceRoot).sources.find((source) => source.id === id)
+
+const HEAD_AT_EXTRACT = '1111111111111111111111111111111111111111'
+const HEAD_NOW = '2222222222222222222222222222222222222222'
+
+const makeCheckout = (relative, head) => {
+  const gitDir = join(workspace.root, relative, '.git')
+  mkdirSync(gitDir, { recursive: true })
+  writeFileSync(join(gitDir, 'HEAD'), `${head}\n`)
+}
+
+const recordRepoHead = (slug, head) =>
+  workspace.editJson(extractPath(slug), (extract) => ({
+    ...extract,
+    repoHead: head
+  }))
 
 const check = (options) =>
   checkDistil({
@@ -242,6 +259,57 @@ describe('distilStatus', () => {
       reason:
         "The source's kind, locator or scope changed after it was extracted."
     })
+  })
+
+  test('marks a repo source stale when its checkout moved after extraction', () => {
+    setUp()
+    makeCheckout('repos/trade-imports-ins-tests', HEAD_NOW)
+    recordRepoHead('repo-tests', HEAD_AT_EXTRACT)
+
+    expect(sourceStatus('repo:tests', workspace.root)).toMatchObject({
+      state: 'stale',
+      next: 'extract',
+      reason:
+        'The repo has moved since it was extracted, so the extract describes code that has changed.'
+    })
+  })
+
+  test('leaves a repo source verified when its checkout is on the commit it was extracted from', () => {
+    setUp()
+    makeCheckout('repos/trade-imports-ins-tests', HEAD_NOW)
+    recordRepoHead('repo-tests', HEAD_NOW)
+
+    expect(sourceStatus('repo:tests', workspace.root)).toMatchObject({
+      state: 'verified'
+    })
+  })
+
+  test('leaves a repo source verified when its extract records no commit, so an older workarea is not re-extracted wholesale', () => {
+    setUp()
+    makeCheckout('repos/trade-imports-ins-tests', HEAD_NOW)
+
+    expect(sourceStatus('repo:tests', workspace.root)).toMatchObject({
+      state: 'verified'
+    })
+  })
+
+  test('leaves a repo source verified when its checkout cannot be read, so a missing clone is never called stale', () => {
+    setUp()
+    recordRepoHead('repo-tests', HEAD_AT_EXTRACT)
+
+    expect(sourceStatus('repo:tests', workspace.root)).toMatchObject({
+      state: 'verified'
+    })
+  })
+
+  test('ignores the commit a non-repo source records, because only a repo moves under its extract', () => {
+    setUp()
+    makeCheckout('repos/trade-imports-ins-tests', HEAD_NOW)
+    recordRepoHead('confluence-6608160092', HEAD_AT_EXTRACT)
+
+    expect(sourceStatus('confluence:6608160092', workspace.root)).toMatchObject(
+      { state: 'verified' }
+    )
   })
 
   test('marks an extract that records no scope hash stale', () => {

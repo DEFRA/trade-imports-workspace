@@ -3,7 +3,7 @@
   "requirements": [
     {
       "id": "req-1488",
-      "statement": "Apart from what other requirements add to it (the declaration date and outstanding items recorded at submit, req-909; the new statuses, each only added, req-1987; the facts, filters and sorts each set's own notification list needs; the templates store, req-1310; the authorities' outcomes once they arrive, req-1082; and the germinal products set's category, held on the record only, its details and the trade-line codes, req-1884 to req-1895), the stored notification record, its validation at the API, its lifecycle writes and what it publishes stay as the animals backend has them today.",
+      "statement": "The animals backend's stored notification record, the validation it applies at its API, its lifecycle writes and what it publishes carry only the additions other requirements in this area name: the declaration date and outstanding items recorded at submit, each new status added beside the four the record already holds, the facts, filters and sorts each set's own notification list needs, the templates store, the authorities' outcomes once they arrive, and the germinal products set's category held on the record only with its details and its trade-line codes. Everything else about the record, its API validation, its writes and its events is as the backend already has it.",
       "why": "Design Release 2.1 shows no persistence, API, event or PIMS behaviour, so the backend changes only where another area's requirement needs it to.",
       "claims": [
         "ruling-sam-2026-10-07-p1-002",
@@ -24,7 +24,7 @@
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "Met by the backend behaviour the requirements below record from repo:backend, repo:tests, repo:perftests and trace:e2e; the additions named are each their own requirement.",
+      "deltaNote": "Met by the backend behaviour the requirements below record from repo:backend, repo:tests, repo:perftests and trace:e2e. Each addition named is its own requirement: the declaration date and outstanding items req-909, the new statuses req-1987, the templates store req-1310, the authorities' outcomes req-1082, and the germinal products set's category, details and trade-line codes req-1884 to req-1895.",
       "conflicts": []
     },
     {
@@ -46,20 +46,22 @@
     },
     {
       "id": "req-1490",
-      "statement": "A notification's reference number is unique across all notifications, through a sparse unique index that lets records without a reference number coexist.",
-      "why": "The reference number is how traders, PIMS and every endpoint find a notification.",
+      "statement": "A notification carries exactly one reference number, a string held at notification level rather than per commodity line, and it is unique across all notifications through a sparse unique index that lets records without a reference number coexist.",
+      "why": "The reference number is how traders, PIMS and every endpoint find a notification, and one notification never carries two.",
       "claims": [
-        "repo-backend-p1-004"
+        "repo-backend-p1-004",
+        "confluence-6497338582-p1-021",
+        "confluence-6497338582-p1-026"
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "repo-backend-p1-004: the sparse unique index on referenceNumber.",
+      "deltaNote": "repo-backend-p1-004: the sparse unique index on referenceNumber. The V4 data fields page's Reference Number row says the same: a string that applies at notification level, one per notification and not driven by commodity selection (confluence-6497338582-p1-021, p1-026).",
       "conflicts": []
     },
     {
       "id": "req-1491",
-      "statement": "The service, never the caller, gives a new notification its reference number in the form GBN-AG-{YY}-{XXXXXX}: YY the last two digits of the current year, then six random Crockford base32 characters (0-9, A-Z without I, L, O, U) drawn from a cryptographically secure source; several notifications created without a reference each get their own. Germinal products notifications take GBN-AG references too: no GBN-GP reference is built.",
-      "why": "References must be unguessable, readable aloud and unique per notification.",
+      "statement": "The service, never the trader or any other caller, gives a new notification its reference number in the form GBN-AG-{YY}-{XXXXXX}: GBN for Great Britain Notification, AG for Animals and Germinals, YY the last two digits of the year the reference is allocated in, then a six-character Crockford base32 body (0-9 and A-Z without I, L, O and U) drawn from a cryptographically secure source, for example GBN-AG-26-7K8M2P. Several notifications created without a reference each get their own. A germinal products notification takes a GBN-AG reference like a live-animals one, so no GBN-GP reference exists.",
+      "why": "References must be unguessable, readable aloud and unique per notification, and the AG in the prefix stands for Animals and Germinals, so one shape serves both sets.",
       "claims": [
         "repo-backend-p1-090",
         "repo-backend-p1-091",
@@ -68,11 +70,19 @@
         "repo-backend-p2-006",
         "repo-backend-p2-012",
         "ruling-sam-2026-10-09-p1-027",
-        "ruling-sam-2026-10-09-p1-028"
+        "ruling-sam-2026-10-09-p1-028",
+        "confluence-6497338582-p1-022",
+        "confluence-6497338582-p1-023",
+        "confluence-6497338582-p1-024",
+        "confluence-6497338582-p1-025",
+        "confluence-6497338582-p1-027",
+        "confluence-6497338582-p1-029",
+        "confluence-6497338582-p1-028-m1",
+        "confluence-6497338582-p1-030"
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "repo-backend-p1-090 to p1-093 (ReferenceNumberGenerator) and p2-006, p2-012 (create assigns it).",
+      "deltaNote": "repo-backend-p1-090 to p1-093 (ReferenceNumberGenerator) and p2-006, p2-012 (create assigns it) already meet it. The V4 data fields page's Reference Number row gives the same four parts, the same example and the same six-character Crockford base32 body, marks the field N/A for mandatory so no trader is asked for it (confluence-6497338582-p1-028-m1), and records that it impacts both the animals and the germinals journeys (p1-030). The page names no source for the value (p1-027), so the backend's own generation stands.",
       "conflicts": []
     },
     {
@@ -151,7 +161,7 @@
     },
     {
       "id": "req-1497",
-      "statement": "Today a notification has exactly one of four lifecycle statuses, DRAFT, SUBMITTED, AMEND or DELETED, in the notification API and its fulfilments view alike; there is no cancelled, rejected, in-progress or template status. These four stay unchanged, and every new status ('Submitted action required', and 'Completed' once a real source of completion exists, req-1082) is only added beside them (req-1987).",
+      "statement": "A notification has exactly one of four lifecycle statuses, DRAFT, SUBMITTED, AMEND or DELETED, in the notification API and its fulfilments view alike, with no cancelled, rejected, in-progress or template status among them; any further status sits beside these four rather than replacing one of them.",
       "why": "Every lifecycle rule and every published event keys off these four values.",
       "claims": [
         "repo-backend-p1-006",
@@ -169,7 +179,7 @@
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "repo-backend-p1-085 to p1-089 (NotificationStatus enum) and repo-tests-p3-059 hold the four values today; the additions are req-1987's.",
+      "deltaNote": "repo-backend-p1-085 to p1-089 (NotificationStatus enum) and repo-tests-p3-059 hold the four values today; the statuses added beside them are req-1987's, and 'Completed' waits for a real source of completion (req-1082).",
       "conflicts": []
     },
     {
@@ -362,16 +372,19 @@
     },
     {
       "id": "req-1510",
-      "statement": "The backend enforces no rule on the notification's content: no required field, length or format on any section or free-text field (CPH number, email, phone, postcode), and submit checks only the status, not completeness; the frontend's obligations decide what must be answered before submit.",
-      "why": "DR2.1's validation is built in the frontend journey, and the backend accepts drafts at any depth.",
+      "statement": "The backend enforces no rule on the notification's content: no required field, length or format on any section or free-text field (CPH number, email, phone, postcode), and submit checks only the status, not completeness. Every check a trader sees is the frontend journey's, which decides what a page must hold before it saves and what the notification must hold before it submits.",
+      "why": "Design Release 2.1's validation is built in the frontend journey, the owner's 26 October ruling keeps every page check there and applies it to both save buttons alike, and the backend accepts drafts at any depth.",
       "claims": [
         "repo-backend-p1-026",
         "repo-backend-p1-027",
-        "repo-backend-p2-071"
+        "repo-backend-p2-071",
+        "ruling-sam-2026-10-26-p1-002",
+        "ruling-sam-2026-10-26-p1-008",
+        "ruling-sam-2026-10-26-p1-013"
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "repo-backend-p1-026, p1-027 (no Bean Validation on domain types) and p2-071 (submit checks status only).",
+      "deltaNote": "repo-backend-p1-026, p1-027 (no Bean Validation on domain types) and p2-071 (submit checks status only) meet it. The owner's 26 October ruling puts the same checks on Save and return to overview as on Save and continue, with no page an exception (ruling-sam-2026-10-26-p1-002, p1-008, p1-013); those checks are the frontend's, so the backend's own validation does not change.",
       "conflicts": []
     },
     {
@@ -1810,7 +1823,7 @@
     },
     {
       "id": "req-1600",
-      "statement": "includedConsignmentItem holds one consignment item carrying a trade line per species of every complement, with that species' counts (the complement totals are sent only on a complement with no species, which yields one line without scientific name or animals); each line has a CN applicableClassification of the type of commodity (none when absent), a one-item description and commonName of the commodity name (none when absent), scientificName the species display text, no urlId (the line's typeCode is the change req-1800 and req-1894 make), productUnitQuantity.content the head count (delivery left out when missing) and physicalReferencedLogisticsPackage.itemQuantity the package count (left out when missing).",
+      "statement": "includedConsignmentItem holds one consignment item carrying a trade line per species of every complement, with that species' counts (the complement totals are sent only on a complement with no species, which yields one line without scientific name or animals); each line has a CN applicableClassification of the type of commodity (none when absent), a one-item description and commonName of the commodity name (none when absent), scientificName the species display text, no urlId, productUnitQuantity.content the head count (delivery left out when missing) and physicalReferencedLogisticsPackage.itemQuantity the package count (left out when missing).",
       "why": "PIMS receives what is being imported, line by line.",
       "claims": [
         "repo-backend-p6-039",
@@ -1831,7 +1844,7 @@
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "repo-backend-p6-039 and p6-100 to p6-112; the typeCode is the one change (c-273).",
+      "deltaNote": "repo-backend-p6-039 and p6-100 to p6-112 meet every part of it. The trade line's typeCode is the one change, made by req-1894 for live-animal lines and req-1800 for germinal ones (c-273); repo-backend-p6-109's other half, no urlId on a trade line, still holds and stays here.",
       "conflicts": [
         "c-273"
       ]
@@ -1924,7 +1937,7 @@
     },
     {
       "id": "req-1606",
-      "statement": "The page form fields saved into the record today are: origin countryOfOrigin, regionOfOriginCodeRequirement, regionOfOriginCodeSuffix (the country prefix filled in, so '75' becomes 'FR-75') and internalReferenceNumber; commodities 'commodity|speciesId' checkboxes; per-line animal and package counts and ear tags suffixed by line index; reasonForImport and purposeInInternalMarket; animalsCertifiedFor and containsUnweanedAnimals; the chosen address id as 'party' (or 'contactAddress'); arrivalDateAtPort, portOfEntry, meansOfTransport, transportIdentification and transportDocumentReference; repeated 'transitedCountries' and a 'transporter' id; and declaration=confirmed.",
+      "statement": "The page form fields saved into the record are: origin countryOfOrigin, regionOfOriginCodeRequirement, regionOfOriginCodeSuffix (the country prefix filled in, so '75' becomes 'FR-75') and internalReferenceNumber; commodities 'commodity|speciesId' checkboxes; per-line animal and package counts and ear tags suffixed by line index; reasonForImport and purposeInInternalMarket; animalsCertifiedFor and containsUnweanedAnimals; the chosen address id as 'party' (or 'contactAddress'); arrivalDateAtPort, portOfEntry, meansOfTransport, transportIdentification and transportDocumentReference; repeated 'transitedCountries' and a 'transporter' id; and declaration=confirmed.",
       "why": "Records how each page feeds the record; the journey areas own any change to the pages.",
       "claims": [
         "repo-tests-p3-149",
@@ -1938,7 +1951,7 @@
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "repo-tests-p3-149 and p3-181 to p3-188 (test-data builders).",
+      "deltaNote": "repo-tests-p3-149 and p3-181 to p3-188 (the tests repo's test-data builders) post exactly these fields.",
       "conflicts": []
     },
     {
@@ -1982,7 +1995,7 @@
     },
     {
       "id": "req-1884",
-      "statement": "The stored notification record holds its category, live animals or germinal products, beside its status and reference at the document root; a record with no category is read everywhere as live animals, so every notification stored before the germinal set exists stays a live-animals notification without a data migration. The category is held on the record only and is not published on any notification event, so trade-imports-schemas does not change (c-272, c-296). The field's name and values are the animals backend's to choose in its own conventions.",
+      "statement": "The stored notification record holds its category, live animals or germinal products, beside its status and reference at the document root, and a record with no category is read everywhere as live animals, so every notification stored before the germinal set exists stays a live-animals notification without a data migration. The category is held on the record only and travels on no notification event, so the event envelope and the shared event schemas stay as they are. The field's name and values are the animals backend's to choose in its own conventions.",
       "why": "Germinal products is a sibling set of live animals in the animals frontend and both keep their records in the one animals backend; the stored category is what tells the two apart.",
       "claims": [
         "repo-backend-p1-001",
@@ -1995,7 +2008,7 @@
       ],
       "status": "adopted",
       "delta": "new",
-      "deltaNote": "repo-backend-p1-002 shows the record today holds identity and metadata at the root and content under notification, with no category.",
+      "deltaNote": "repo-backend-p1-002 shows the record today holds identity and metadata at the root and content under notification, with no category. Keeping the category off the event, and trade-imports-schemas unchanged, is what c-272 and c-296 settled.",
       "conflicts": [
         "c-272",
         "c-296"
@@ -2003,7 +2016,7 @@
     },
     {
       "id": "req-1885",
-      "statement": "The backend's create (POST /notifications with no reference number) takes the category each set sends (req-1856, req-1857) and stores it, and no later save, submit, amend, cancel-amend or copy changes it; a notification holds commodities of its one category only, never a mix of live animals and germinal products, so a change of type in the journey is a new notification of the other category (req-008) and the abandoned draft's stored category stays as it was.",
+      "statement": "The backend's create (POST /notifications with no reference number) takes the category the set starting the notification sends and stores it, and no later save, submit, amend, cancel-amend or copy changes it. A notification holds commodities of its one category only, never a mix of live animals and germinal products, so choosing the other type in the journey starts a new notification of that category and the abandoned draft keeps the category it was created with.",
       "why": "One category per set and per notification is what lets each set open only its own notifications, and the ruling drops every mixed-load case.",
       "claims": [
         "ruling-sam-2026-10-09-p1-030",
@@ -2016,12 +2029,12 @@
       ],
       "status": "adopted",
       "delta": "new",
-      "deltaNote": "repo-backend-p2-001 shows create today takes no category.",
+      "deltaNote": "repo-backend-p2-001 shows create today takes no category. The sets send it under req-1856 and req-1857, and the change of type that starts the other category's notification is req-008.",
       "conflicts": []
     },
     {
       "id": "req-1886",
-      "statement": "The read the frontend opens a notification with (today the fulfilments view, GET /notifications/{referenceNumber}/fulfilments, req-1557) returns the stored category, absent read as live animals, so each set's cross-set guard can refuse to open the other category's notifications.",
+      "statement": "The read the frontend opens a notification with, the fulfilments view GET /notifications/{referenceNumber}/fulfilments, returns the stored category, an absent one read as live animals, so each set's cross-set guard can refuse to open the other category's notifications.",
       "why": "The frontend's cross-set guard reads the stored category, so the backend must hand it back where the frontend already rehydrates from.",
       "claims": [
         "ruling-sam-2026-10-09-p1-031",
@@ -2030,7 +2043,7 @@
       ],
       "status": "adopted",
       "delta": "new",
-      "deltaNote": "repo-backend-p3-019 lists what the fulfilments view returns today: no category.",
+      "deltaNote": "repo-backend-p3-019 lists what the fulfilments view returns today, which has no category; that view is req-1557's.",
       "conflicts": []
     },
     {
@@ -2074,8 +2087,8 @@
     },
     {
       "id": "req-1892",
-      "statement": "A germinal products notification stores the donor's name or ID, the collection date, the production date and the identification mark, each date a date-only YYYY-MM-DD value (req-1524); they are shown in the service and not published to PIMS. Where they sit on the record (on the per-item identifier entries of each line, as the record holds animal identifiers, or on the species line) is decided in the build from the real model, not from the prototype's shape.",
-      "why": "These are the germinal products details the service collects that the PIMS profile has no field for, so the animals backend is their only home.",
+      "statement": "A germinal products notification stores the donor's name or ID, the collection date, the production date and the identification mark, each date held as a date-only YYYY-MM-DD value; they are shown back in the service and are not published to PIMS. Where they sit on the record, on the per-item identifier entries of each line as the record holds animal identifiers, or on the species line, is decided in the build from the real model rather than from the prototype's shape.",
+      "why": "These are the germinal products details the service collects that the PIMS profile has no field for, so the animals backend is their only home, and the ruling leaves the record's shape to the real model.",
       "claims": [
         "ruling-sam-2026-10-09-p1-040",
         "ruling-sam-2026-10-09-p1-042",
@@ -2086,7 +2099,7 @@
       ],
       "status": "adopted",
       "delta": "new",
-      "deltaNote": "repo-backend-p1-046 and p1-047 show the per-unit identifier entries today hold only animal identifiers (microchip, passport, tattoo, ear tag, horse name, permanent address).",
+      "deltaNote": "repo-backend-p1-046 and p1-047 show the per-unit identifier entries today hold only animal identifiers (microchip, passport, tattoo, ear tag, horse name, permanent address). The date-only storage rule each date follows is req-1524's.",
       "conflicts": []
     },
     {
@@ -2107,8 +2120,8 @@
     },
     {
       "id": "req-1895",
-      "statement": "A germinal products notification is published on the same GBN-AG events and payload as a live-animals one, carrying only what the current PIMS profile (gbn-ag-pims v0.2.0 in trade-imports-schemas) already carries; the sections the germinal set never asks (unweaned animals, CPH number, per-animal permanent address) are left out as the mapper already leaves out an unanswered section (req-1597, req-1599, req-1601), and no PIMS profile, trade-imports-schemas data shape or trade-imports-dynamics-gateway mapping changes for the germinal set's details. The PIMS schema update for germinal products is EUDPA-686, outside this backlog, started after the programme lands.",
-      "why": "The ruling keeps the germinal set on today's PIMS profile; its own details wait for the PIMS schema update outside this programme.",
+      "statement": "A germinal products notification is published on the same GBN-AG events and payload as a live-animals one, carrying only what the current PIMS profile (gbn-ag-pims v0.2.0 in trade-imports-schemas) already carries; the sections the germinal set never asks (unweaned animals, CPH number, per-animal permanent address) are left out, as the mapper leaves out any unanswered section, and no PIMS profile, trade-imports-schemas data shape or trade-imports-dynamics-gateway mapping changes for the germinal set's details.",
+      "why": "The ruling keeps the germinal set on today's PIMS profile; its own details wait for the PIMS schema update (EUDPA-686), whose shape is not yet known and which starts after this programme lands, outside this backlog.",
       "claims": [
         "repo-backend-p6-001",
         "repo-backend-p6-033",
@@ -2126,12 +2139,12 @@
       ],
       "status": "adopted",
       "delta": "new",
-      "deltaNote": "repo-backend-p6-001 shows the GBN-AG mapper today maps live-animal notifications only; no notification of another category exists.",
+      "deltaNote": "repo-backend-p6-001 shows the GBN-AG mapper today maps live-animal notifications only; no notification of another category exists. The mapper's leaving out of an unanswered section is what req-1597, req-1599 and req-1601 record.",
       "conflicts": []
     },
     {
       "id": "req-1987",
-      "statement": "Notification statuses are only ever added, never renamed or removed: DRAFT, SUBMITTED, AMEND and DELETED stay as they are. 'Submitted action required', which inc-113's submit records and the list card shows as Action required, is added beside them, and 'Completed' once a real source of completion exists (blocked until then). Each new status is mapped in the animals frontend (its persistence records, its real status mapping, the stub and the status strip's copy, since the frontend throws on a status it does not know) and in the INS dashboard's notification links, which today send only SUBMITTED notifications to the review and then send it to the review too, before the animals backend first sends it, on one branch name shared by the animals backend, the animals frontend and the INS frontend. Plants takes a new status only where it has the same lifecycle, so 'Submitted action required', which rests on the ITAHC, is animals only, and whether plants takes 'Completed' is decided when that row unblocks.",
+      "statement": "Notification statuses are only ever added, never renamed or removed: DRAFT, SUBMITTED, AMEND and DELETED keep their names and meanings. 'Submitted action required', which a submit records and the notification list's card shows as Action required, sits beside them, and a 'Completed' status sits beside them too once a real source of completion exists. Each new status is mapped in the animals frontend (its persistence records, its real status mapping, the stub and the status strip's copy, since the frontend throws on a status it does not know) and in the INS dashboard's notification links, which send a notification of that status to the review as they do a SUBMITTED one, before the animals backend ever sends it, on one branch name shared by the animals backend, the animals frontend and the INS frontend. Plants takes a new status only where it has the same lifecycle, so 'Submitted action required', which rests on the ITAHC, is animals only.",
       "why": "The animals frontend throws on a status it does not know, and the INS dashboard sends only SUBMITTED notifications to the review, so a status the backend sends before they know it breaks every page that reads it; the 9 October afternoon ruling makes statuses add-only and keeps this one animals only.",
       "claims": [
         "repo-backend-p1-085",
@@ -2152,7 +2165,7 @@
       ],
       "status": "adopted",
       "delta": "new",
-      "deltaNote": "Today the backend and the tests repo know only DRAFT, SUBMITTED, AMEND and DELETED (repo-backend-p1-085, repo-tests-p3-059).",
+      "deltaNote": "Today the backend and the tests repo know only DRAFT, SUBMITTED, AMEND and DELETED (repo-backend-p1-085, repo-tests-p3-059), and the INS dashboard's links send only SUBMITTED notifications to the review. 'Submitted action required' is the status inc-113's submit records; 'Completed' waits on a real source of completion (req-1082), and whether plants takes it is decided when that row unblocks.",
       "conflicts": []
     },
     {
@@ -2169,8 +2182,8 @@
     },
     {
       "id": "req-2058",
-      "statement": "The plants frontend shows a notification's reference exactly as the plants backend mints it when the record is created on the list's Start, today {YY}-{XXXXXX} with no prefix, in the same places the animals frontend shows its reference (the status strip, the list card title, the confirmation panel and the read-only review); this programme does not change the plants reference.",
-      "why": "Plants mirrors the animals reference's places and shape, and plants' backend, which mints it, is not one of this programme's repos.",
+      "statement": "The plants frontend shows a notification's reference exactly as the plants backend mints it when the record is created on the list's Start, in the same places the animals frontend shows its reference: the status strip, the list card title, the confirmation panel and the read-only review. The frontend invents, parses and validates no part of it.",
+      "why": "Plants mirrors the animals reference's display places, and the plants backend, which mints the reference, is not one of this programme's repos, so the shape it mints ({YY}-{XXXXXX} with no prefix) is what plants shows.",
       "claims": [
         "repo-plantsfrontend-p9-109",
         "repo-plantsfrontend-p9-110",
@@ -2226,8 +2239,8 @@
     },
     {
       "id": "req-2063",
-      "statement": "Production retention of draft and submitted notifications, the lawful basis and the privacy notice's content and URL are not decided in this programme, for plants or animals; no expiry is set in production (req-1500).",
-      "why": "Design Release 2.1 shows no retention behaviour, the animals backend stamps expiry only outside production, and plants' retention rests on trade-imports-plants-backend, which is not one of the programme's repos.",
+      "statement": "Production retention of draft and submitted notifications, the lawful basis for it, and the privacy notice's content and URL are not decided in this programme, for plants or animals.",
+      "why": "Out of scope: Design Release 2.1 shows no retention behaviour, the animals backend stamps an expiry only outside production (req-1500), and plants' retention rests on trade-imports-plants-backend, which is not one of the programme's repos.",
       "claims": [
         "repo-backend-p1-011",
         "repo-backend-p3-057",
@@ -2252,7 +2265,22 @@
       "conflicts": []
     },
     {
-      "id": "req-notification-record-001",
+      "id": "req-2110",
+      "statement": "Inspector-side live access to a submitted plants notification, and a late-notification indicator projected into the plants backend's notification record for the regulator side, are not built.",
+      "why": "Out of scope: plants' own ledger places both outside the notifier journey this programme changes, and both need trade-imports-plants-backend, which is not one of the programme's repos. The two ledger claims this rested on left this area in the re-extraction; req-2025 now carries the inspector-side half, and this id is kept so earlier citations still resolve.",
+      "claims": [
+        "repo-plantsfrontend-p9-150-m1",
+        "repo-plantsfrontend-p9-120",
+        "ruling-sam-2026-10-09-pm-p3-072",
+        "ruling-sam-2026-10-09-pm-p3-073"
+      ],
+      "status": "out-of-scope",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-2115",
       "statement": "Submitting a plants notification stays a synchronous save of the whole fulfilment snapshot through the plants records port, with no outbox, GBN-AG or other event publishing and no PIMS routing, and plants' confirmation makes no promise about where the notification has gone; this programme adds no publishing to plants.",
       "why": "The GBN-AG events and PIMS route this area records are the animals backend's; plants' own ledger parks publishing, and Design Release 2.1 changes no plants persistence.",
       "claims": [
@@ -2265,7 +2293,7 @@
       "conflicts": []
     },
     {
-      "id": "req-notification-record-002",
+      "id": "req-2116",
       "statement": "Publishing plants notifications (an outbox, GBN-AG or another event, PIMS routing) and a plants backend mapper that carries every SI matter instead of only the reference number are not built in this programme.",
       "why": "Plants' ledger parks publishing (d-047), and it needs trade-imports-plants-backend, which is not one of the programme's repos.",
       "claims": [
@@ -2279,7 +2307,7 @@
       "conflicts": []
     },
     {
-      "id": "req-notification-record-003",
+      "id": "req-2117",
       "statement": "The plants journey keeps supplying coded values and its created and submitted times for management information and asks no question for it; 'time taken per notification' reads as created to submitted.",
       "why": "Plants' own ledger (d-082) settles what the journey records for MI; Design Release 2.1 changes none of it.",
       "claims": [

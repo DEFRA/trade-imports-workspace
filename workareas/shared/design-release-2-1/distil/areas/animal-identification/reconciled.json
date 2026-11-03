@@ -112,12 +112,11 @@
     },
     {
       "id": "req-200",
-      "statement": "The page is a journey step only when at least one selected species has identifier fields. Commodity details then continues to it; otherwise the journey skips it, and a direct GET or POST to it redirects to the next step after Commodity details.",
-      "why": "DR2.1 puts identification in the linear flow after commodity details and skips it when there is nothing to identify (poultry, fish).",
+      "statement": "The page is a journey step when at least one selected species has identifier fields. Commodity details then continues to it; otherwise the journey skips it, and a direct GET or POST to it redirects to the next step after Commodity details.",
+      "why": "DR2.1 puts identification in the linear flow after commodity details and skips it when there is nothing to identify. With the free-text fallback V4 asks for (req-animal-identification-008, req-animal-identification-009), every selected species has identifier fields, so in practice the page is a step for every consignment and the skip never fires.",
       "claims": [
         "prototype-dr2-1-source-p5-010",
         "prototype-dr2-1-source-p5-011",
-        "trace-prototype-dr2-1-p5-068",
         "prototype-dr2-1-specs-p4-017",
         "repo-frontend-p6-006",
         "repo-frontend-p6-009",
@@ -183,46 +182,52 @@
     },
     {
       "id": "req-203",
-      "statement": "In the live-animals set, 'Save and continue' and 'Save and return to overview' save the typed identifiers only for species with one animal; values typed into the form of a species with more than one animal are not saved unless its own panel button was pressed.",
-      "why": "DR2.1 saves a multi-animal species only through its 'Save and add another' / 'Save and finish' button. The 9 October ruling splits this requirement; the germinal half is req-250.",
+      "statement": "In the live-animals set, 'Save and continue' and 'Save and return to overview' save the typed identifiers of every species panel whose form holds a value, including a species with more than one animal.",
+      "why": "The 26 October ruling's principle that what a trader typed is never dropped, which is also what the service does today; DR2.1 instead drops a multi-animal species' typed values unless its own panel button was pressed, which its own source notes as a silent loss. Whether the principle reaches the page's save buttons is the open question the default settles for now. The 9 October ruling splits this requirement; the germinal half is req-250.",
       "claims": [
         "prototype-dr2-1-source-p5-054",
-        "prototype-dr2-1-source-p5-055",
         "repo-frontend-p6-072",
         "repo-frontend-p6-128",
         "trace-animals-fit-p10-080",
-        "ruling-sam-2026-10-09-p1-057"
+        "ruling-sam-2026-10-09-p1-057",
+        "ruling-sam-2026-10-26-p1-019"
       ],
-      "status": "adopted",
-      "delta": "change",
-      "deltaNote": "Today any save, the page's Save and continue included, saves one new record for every card whose form holds data (repo-frontend-p6-072, trace-animals-fit-p10-080).",
-      "conflicts": []
+      "status": "question",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p6-072 and trace-animals-fit-p10-080 show a save recording one new animal for every panel whose form holds data today.",
+      "conflicts": [
+        "c-animal-identification-005"
+      ]
     },
     {
       "id": "req-204",
-      "statement": "A species panel's own save button validates and saves only that species' current animal, then reloads the page showing that species' next animal; other species' forms are neither checked nor saved.",
-      "why": "DR2.1 saves one species' animal at a time; today one button saves and validates every card on the page.",
+      "statement": "A species panel's own save button checks every open species panel and saves one animal for each panel whose form holds a value, then reloads the page showing the next animal to enter.",
+      "why": "The 26 October ruling's principle that what a trader typed is never dropped, which is what the service does today; DR2.1 instead checks and saves only the panel whose button was pressed. Whether the principle reaches a panel save is the open question the default settles for now.",
       "claims": [
-        "prototype-dr2-1-source-p5-051",
         "prototype-dr2-1-source-p5-051-m1",
         "prototype-dr2-1-source-p5-067",
         "prototype-dr2-1-specs-p4-022",
         "trace-prototype-dr2-1-p12-063",
+        "repo-frontend-p6-071",
+        "repo-frontend-p6-072",
         "repo-frontend-p6-073",
         "repo-frontend-p6-079-m1",
         "repo-frontend-p6-081",
         "trace-animals-fit-p10-092",
-        "trace-animals-fit-p11-038"
+        "trace-animals-fit-p11-038",
+        "ruling-sam-2026-10-26-p1-019"
       ],
-      "status": "adopted",
-      "delta": "change",
-      "deltaNote": "Today an in-card add validates every open card and appends a record for every card holding data, card by card, so one card's failure can leave earlier cards' records saved (repo-frontend-p6-073, repo-frontend-p6-079-m1).",
-      "conflicts": []
+      "status": "question",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p6-072 and p6-073 show a panel save checking every open card and appending a record for each card holding data today, and repo-frontend-p6-071 the reload.",
+      "conflicts": [
+        "c-animal-identification-005"
+      ]
     },
     {
       "id": "req-205",
-      "statement": "Pressing Enter in a field submits the page as 'Save and continue', never as a species panel's save, through the hidden default submit button at the top of the form (visually hidden, aria-hidden, not focusable).",
-      "why": "A real-service safeguard DR2.1 does not show: without it Enter would press the first panel or Remove button. DR2.1 shows no other way to do the same job, so it is kept.",
+      "statement": "Pressing Enter in a field never presses a species panel's Remove button or another panel's save button: the field's default submit is a submit button that is visually hidden, aria-hidden and not focusable.",
+      "why": "A real-service safeguard DR2.1 does not show: without it Enter would press the first panel or Remove button. The 26 October ruling then decides what that default submit does (req-animal-identification-017, req-animal-identification-018), so the safeguard holds per panel rather than once for the whole form.",
       "claims": [
         "repo-frontend-p6-076",
         "trace-animals-fit-p10-081",
@@ -233,8 +238,8 @@
         "ruling-sam-2026-10-07-p1-022"
       ],
       "status": "adopted",
-      "delta": "exists",
-      "deltaNote": "repo-frontend-p6-076 and trace-e2e-p6-060 show the hidden default 'finish' button today.",
+      "delta": "change",
+      "deltaNote": "Today one hidden 'finish' submit button at the top of the form serves every field on the page (repo-frontend-p6-076, trace-e2e-p6-060), whichever panel the field belongs to.",
       "conflicts": []
     },
     {
@@ -330,18 +335,21 @@
     },
     {
       "id": "req-210",
-      "statement": "The summary lists every selected commodity, including one with nothing to identify, which gets no identification panel.",
-      "why": "Hiding a line the page asks nothing of invites the trader to add it a second time; both versions list them all.",
+      "statement": "The summary lists every selected commodity, and every selected species has an identification panel.",
+      "why": "Hiding a line the page asks nothing of invites the trader to add it a second time, and with V4's free-text fallback there is no longer a species the page asks nothing of.",
       "claims": [
         "prototype-dr2-1-source-p5-035",
         "repo-frontend-p6-094",
+        "repo-frontend-p6-007",
         "trace-animals-fit-p10-016",
         "trace-e2e-p6-011"
       ],
       "status": "adopted",
-      "delta": "exists",
-      "deltaNote": "trace-e2e-p6-011 shows Atlantic salmon listed with no card today.",
-      "conflicts": []
+      "delta": "change",
+      "deltaNote": "Today a line whose commodity declares no identifier is listed in the summary but gets no card at all, such as Atlantic salmon (repo-frontend-p6-007, trace-animals-fit-p10-016, trace-e2e-p6-011).",
+      "conflicts": [
+        "c-animal-identification-001"
+      ]
     },
     {
       "id": "req-211",
@@ -439,15 +447,16 @@
     },
     {
       "id": "req-216",
-      "statement": "Cattle (0102) are identified per animal by 'Ear tag' then 'Passport', and nothing else.",
-      "why": "DR2.1's identifier set for cattle; DR1's tattoo-on-every-cow defect is already fixed today.",
+      "statement": "Cattle (0102) are identified per animal by 'Ear tag' then 'Passport'.",
+      "why": "DR2.1's identifier set for cattle, and V4 lists 0102 in both its ear tag and its passport commodity lists, so all three sources agree on these two fields. Whether V4's tattoo list adds a third is req-animal-identification-013.",
       "claims": [
         "document-dr1-parity-notes-p1-052",
-        "document-dr1-parity-notes-p1-053",
-        "document-dr1-parity-notes-p1-087",
         "prototype-dr2-1-source-p5-015",
         "prototype-dr2-1-specs-p2-042",
         "prototype-dr2-1-specs-p4-018",
+        "confluence-6497338582-p4-014",
+        "confluence-6497338582-p4-026",
+        "confluence-6497338582-p4-034",
         "repo-frontend-p6-010",
         "repo-frontend-p6-103",
         "repo-frontend-p6-104",
@@ -460,33 +469,39 @@
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "trace-animals-fit-p10-028 shows a cattle line asking for ear tag then passport only.",
+      "deltaNote": "trace-animals-fit-p10-028 shows a cattle line asking for ear tag then passport.",
       "conflicts": []
     },
     {
       "id": "req-217",
-      "statement": "Horses (0101) are identified per animal by 'Microchip', 'Passport' and 'Horse name', in that order.",
-      "why": "DR2.1's identifier set for horses, already asked today.",
+      "statement": "Horses (0101) are identified per animal by 'Passport' then 'Horse name'.",
+      "why": "DR2.1's identifier set for horses less the microchip, which V4's field list leaves out and req-animal-identification-012 carries; V4 lists 0101 Horse for both the passport and the horse name.",
       "claims": [
         "prototype-dr2-1-source-p5-016",
         "trace-prototype-dr2-1-p12-064",
         "prototype-dr2-1-specs-p4-020",
+        "confluence-6497338582-p4-014",
+        "confluence-6497338582-p4-035",
+        "confluence-6497338582-p4-037",
+        "confluence-6497338582-p4-043",
         "trace-animals-fit-p10-029",
         "trace-animals-fit-p11-050",
         "trace-e2e-p6-097"
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "trace-animals-fit-p10-029 shows microchip, passport and horse name on a horse line.",
+      "deltaNote": "trace-animals-fit-p10-029 shows passport and horse name on a horse line, after the microchip.",
       "conflicts": []
     },
     {
       "id": "req-218",
-      "statement": "Other live mammals on 01061900 (cats, dogs, ferrets) are identified per animal by 'Microchip', 'Passport' and 'Tattoo', in that order.",
-      "why": "DR2.1's identifier set for pets, already asked today for cats and dogs.",
+      "statement": "Other live mammals on 01061900 (cats, dogs, ferrets) are identified per animal by 'Passport' then 'Tattoo'.",
+      "why": "DR2.1's identifier set for pets less the microchip, which V4's field list leaves out and req-animal-identification-012 carries; V4 lists 01061900 cats, dogs and ferrets for both the passport and the tattoo.",
       "claims": [
         "prototype-dr2-1-source-p5-014",
         "prototype-dr2-1-specs-p4-019",
+        "confluence-6497338582-p4-014",
+        "confluence-6497338582-p4-024",
         "repo-frontend-p6-139",
         "ruling-sam-2026-10-09-pm-p2-014",
         "ruling-sam-2026-10-09-pm-p2-015",
@@ -501,15 +516,17 @@
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "trace-animals-fit-p10-030 and p10-031 show microchip, passport and tattoo for cats and dogs today. Ferrets are not in today's live catalogue; they take the same identifiers once the MDM commodity catalogue holds them (the 9 October afternoon ruling waits the catalogue on MDM).",
+      "deltaNote": "trace-animals-fit-p10-030 and p10-031 show passport and tattoo for cats and dogs today, after the microchip. Ferrets are not in today's live catalogue; they take the same identifiers once the MDM commodity catalogue holds them (the 9 October afternoon ruling waits the catalogue on MDM).",
       "conflicts": []
     },
     {
       "id": "req-219",
-      "statement": "Pigs (0103) are identified per animal by 'Ear tag' only.",
-      "why": "DR2.1's identifier set for pigs; it applies once the commodities area offers pigs. The 9 October afternoon ruling holds inc-051 with the commodity catalogue: none of these commodities is in today's five-commodity live catalogue, and the catalogue waits on MDM.",
+      "statement": "Pigs (0103) are identified per animal by 'Ear tag'.",
+      "why": "DR2.1's identifier set for pigs, and V4 lists 0103 Pig (Domestic) in its ear tag commodity list; it applies once the commodities area offers pigs. Whether V4's tattoo list adds a second field is req-animal-identification-014. The 9 October afternoon ruling holds inc-051 with the commodity catalogue: none of these commodities is in today's five-commodity live catalogue, and the catalogue waits on MDM.",
       "claims": [
         "prototype-dr2-1-source-p5-017",
+        "confluence-6497338582-p4-026",
+        "confluence-6497338582-p4-034",
         "ruling-sam-2026-10-09-pm-p2-001",
         "ruling-sam-2026-10-09-pm-p2-024",
         "ruling-sam-2026-10-09-pm-p2-025"
@@ -523,9 +540,10 @@
     {
       "id": "req-220",
       "statement": "Sheep (010410) and goats (010420) are identified per animal by 'Ear tag' only.",
-      "why": "DR2.1 falls back to these commodities' own identifier, the ear tag; it applies once the commodities area offers them. The 9 October afternoon ruling holds inc-051 with the commodity catalogue: none of these commodities is in today's five-commodity live catalogue, and the catalogue waits on MDM.",
+      "why": "DR2.1 falls back to these commodities' own identifier, the ear tag, and V4's ear tag commodity list names both of them and no other identifier does; it applies once the commodities area offers them. The 9 October afternoon ruling holds inc-051 with the commodity catalogue: none of these commodities is in today's five-commodity live catalogue, and the catalogue waits on MDM.",
       "claims": [
         "prototype-dr2-1-source-p5-021",
+        "confluence-6497338582-p4-034",
         "ruling-sam-2026-10-09-pm-p2-001",
         "ruling-sam-2026-10-09-pm-p2-024",
         "ruling-sam-2026-10-09-pm-p2-025"
@@ -538,11 +556,13 @@
     },
     {
       "id": "req-221",
-      "statement": "A species whose commodity has no identifier (such as poultry or fish) gets no panel and no fields; there is no free-text identifier fallback.",
-      "why": "Both versions ask nothing where nothing identifies the animal.",
+      "statement": "A species whose commodity requires none of passport, tattoo, ear tag or horse name has an identification panel of its own, asking for the free-text identifiers instead, so every selected species can be identified.",
+      "why": "V4 is the specification of which data a notification captures and gives every commodity without a specific identifier type a free-text fallback; it outranks DR2.1, which asks nothing of such a species.",
       "claims": [
-        "prototype-dr2-1-source-p5-013",
-        "trace-prototype-dr2-1-p5-068",
+        "confluence-6497338582-p4-046",
+        "confluence-6497338582-p4-054",
+        "confluence-6497338582-p4-060",
+        "confluence-6497338582-p4-061",
         "repo-frontend-p6-007",
         "repo-frontend-p6-008",
         "repo-frontend-p6-102",
@@ -551,9 +571,11 @@
         "trace-e2e-p6-017"
       ],
       "status": "adopted",
-      "delta": "exists",
-      "deltaNote": "trace-animals-fit-p10-022 shows a salmon line with no card and no fields.",
-      "conflicts": []
+      "delta": "change",
+      "deltaNote": "Today a species whose commodity declares no identifier gets no card and no fields at all, such as Atlantic salmon, and the page offers no free-text identifier (repo-frontend-p6-008, trace-animals-fit-p10-022, trace-e2e-p6-017).",
+      "conflicts": [
+        "c-animal-identification-001"
+      ]
     },
     {
       "id": "req-222",
@@ -638,10 +660,11 @@
     {
       "id": "req-227",
       "statement": "Text identifier fields are 20-character-wide text inputs; 'Horse name' has no hint.",
-      "why": "Both versions size identifier inputs the same way.",
+      "why": "Both versions size identifier inputs the same way, and V4 gives the horse name no example of its own to show.",
       "claims": [
         "prototype-dr2-1-source-p5-022",
         "trace-prototype-dr2-1-p5-054-m1",
+        "confluence-6497338582-p4-041",
         "repo-frontend-p6-011",
         "repo-frontend-p6-016",
         "repo-frontend-p6-017",
@@ -655,8 +678,12 @@
     {
       "id": "req-228",
       "statement": "Each live-animal identifier (microchip, passport, tattoo, ear tag, horse name) is limited to 58 characters.",
-      "why": "Validation is a real constraint the prototype cannot express, so the real limit stays although DR2.1 sets none for these fields.",
+      "why": "V4 types every animal identifier as a string of at most 58 characters, which is also the real service's limit, so the limit stays although DR2.1 sets none for these fields.",
       "claims": [
+        "confluence-6497338582-p4-007",
+        "confluence-6497338582-p4-017",
+        "confluence-6497338582-p4-027",
+        "confluence-6497338582-p4-036",
         "repo-frontend-p6-020",
         "repo-frontend-p6-119",
         "trace-animals-fit-p11-010",
@@ -753,11 +780,19 @@
     {
       "id": "req-233",
       "statement": "In the live-animals set, an animal counts as entered once at least one identifier its species asks for has a value: it is saved, listed in the saved-animals table and the panel moves on to the next animal, with the other identifiers left blank.",
-      "why": "Sam's 9 October ruling: one identifier is enough, for the Complete status and for submit, and DR1 inc-103 (every identifier filled) is closed and not built. It holds 'for now' on the footing that it is no change, which today's service confirms.",
+      "why": "Sam's 9 October ruling: one identifier is enough, for the Complete status and for submit, and DR1 inc-103 (every identifier filled) is closed and not built. V4 says the same from the other side: every animal identifier field is optional on its own, and the block is satisfied by at least one of them. It holds 'for now' on the footing that it is no change, which today's service confirms.",
       "claims": [
         "document-dr1-parity-backlog-p5-016",
         "document-dr1-parity-notes-p1-085",
         "prototype-dr2-1-source-p5-026",
+        "confluence-6497338582-p4-003",
+        "confluence-6497338582-p4-005",
+        "confluence-6497338582-p4-011",
+        "confluence-6497338582-p4-021",
+        "confluence-6497338582-p4-031",
+        "confluence-6497338582-p4-040",
+        "confluence-6497338582-p4-049",
+        "confluence-6497338582-p4-057",
         "repo-frontend-p6-019",
         "repo-frontend-p6-124",
         "ruling-sam-2026-10-09-p1-188",
@@ -1086,11 +1121,12 @@
     {
       "id": "req-248",
       "statement": "In the live-animals set, the hub's Identification details row shows Complete on exactly the bar the notification must meet to submit (req-249), counting a saved animal with at least one identifier as identified: with one species selected it is Complete straight away; with several, it is Complete once each species with identifier fields has at least one such animal. There is no stricter bar, such as every animal of every species entered.",
-      "why": "Sam's 9 October ruling: one identifier is enough for the Complete status and for submit, and there is no separate, stricter bar for Complete. That sets aside DR2.1's every-animal-complete rule (c-041) and matches what the service does today.",
+      "why": "Sam's 9 October ruling: one identifier is enough for the Complete status and for submit, and there is no separate, stricter bar for Complete. That sets aside DR2.1's every-animal-complete rule (c-041) and matches what the service does today. V4 asks instead for an identifier for each animal, which the ruling does not settle, so the bar rests on the open question c-animal-identification-004.",
       "claims": [
         "ruling-sam-2026-10-09-p1-188",
         "ruling-sam-2026-10-09-p1-189",
         "ruling-sam-2026-10-09-p1-057",
+        "confluence-6497338582-p4-002",
         "trace-animals-fit-p10-002",
         "trace-animals-fit-p10-003",
         "trace-animals-fit-p10-003-m1",
@@ -1098,31 +1134,34 @@
         "trace-e2e-p6-002",
         "trace-e2e-p6-066"
       ],
-      "status": "adopted",
+      "status": "question",
       "delta": "exists",
       "deltaNote": "Today a single-species consignment shows Complete straight after Commodity details (trace-animals-fit-p10-003-m1, trace-e2e-p6-002) and stays Complete at 1 of 2 (trace-e2e-p6-066), while a two-species consignment shows To do before any record (trace-animals-fit-p10-002); the ruling records this as what the code does today.",
       "conflicts": [
-        "c-041"
+        "c-041",
+        "c-animal-identification-004"
       ]
     },
     {
       "id": "req-249",
       "statement": "In the live-animals set, to submit: identification details are optional when only one species is selected; when more than one species is selected, each species with identifier fields needs at least one saved animal with at least one identifier. The identification page itself shows no message for this rule.",
-      "why": "DR2.1's and DR1's minimum-identifier rule for submitting, with 'complete' read as one identifier per the 9 October ruling, which records it as the rule DR1 inc-100 built. The ruling leaves the wording of the several-lines rule to the Behaviour Spec; the review-and-submit area owns the gate and its message. The 9 October ruling splits this requirement; the germinal half is req-261.",
+      "why": "DR2.1's and DR1's minimum-identifier rule for submitting, with 'complete' read as one identifier per the 9 October ruling, which records it as the rule DR1 inc-100 built. The ruling leaves the wording of the several-lines rule to the Behaviour Spec; the review-and-submit area owns the gate and its message. V4 asks instead for an identifier for each animal, which the ruling does not settle, so the gate rests on the open question c-animal-identification-004. The 9 October ruling splits this requirement; the germinal half is req-261.",
       "claims": [
         "prototype-dr2-1-source-p5-070",
         "document-dr1-parity-backlog-p5-020",
+        "confluence-6497338582-p4-002",
         "ruling-sam-2026-10-09-p1-188",
         "ruling-sam-2026-10-09-p1-195",
         "ruling-sam-2026-10-09-p1-057",
         "trace-animals-fit-p10-002",
         "trace-animals-fit-p10-003-m1"
       ],
-      "status": "adopted",
+      "status": "question",
       "delta": "exists",
       "deltaNote": "ruling-sam-2026-10-09-p1-188 records the one-identifier rule as what the code does today (DR1 inc-100); trace-animals-fit-p10-003-m1 and p10-002 show the hub status already following the one-species and several-species halves of it.",
       "conflicts": [
-        "c-041"
+        "c-041",
+        "c-animal-identification-004"
       ]
     },
     {
@@ -1499,6 +1538,424 @@
       "delta": "new",
       "deltaNote": "",
       "conflicts": []
+    },
+    {
+      "id": "req-animal-identification-001",
+      "statement": "Each identifier belongs to one animal: the page holds a set of identifier values per animal, not one set for the commodity line or for the notification.",
+      "why": "V4 applies every animal identifier at unit level, so the trader is asked to identify each animal in turn rather than the line as a whole.",
+      "claims": [
+        "confluence-6497338582-p4-001",
+        "confluence-6497338582-p4-009",
+        "confluence-6497338582-p4-019",
+        "confluence-6497338582-p4-029",
+        "confluence-6497338582-p4-038",
+        "confluence-6497338582-p4-047",
+        "confluence-6497338582-p4-055",
+        "repo-frontend-p6-081",
+        "repo-frontend-p6-083",
+        "trace-animals-fit-p10-060",
+        "trace-e2e-p6-048"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p6-081 and p6-083 show each animal record holding its own identifier values today, and trace-animals-fit-p10-060 one saved row per animal.",
+      "conflicts": []
+    },
+    {
+      "id": "req-animal-identification-002",
+      "statement": "Every identifier value comes from the trader: the fields start empty and none is filled in from another system.",
+      "why": "V4 names the user as the source of every animal identifier, so no identifier is looked up or prefilled.",
+      "claims": [
+        "confluence-6497338582-p4-010",
+        "confluence-6497338582-p4-020",
+        "confluence-6497338582-p4-030",
+        "confluence-6497338582-p4-039",
+        "confluence-6497338582-p4-048",
+        "confluence-6497338582-p4-056",
+        "repo-frontend-p6-011",
+        "repo-tests-p1-065",
+        "trace-e2e-p6-023"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "trace-e2e-p6-023 and repo-tests-p1-065 show the ear tag field empty when the page loads today.",
+      "conflicts": []
+    },
+    {
+      "id": "req-animal-identification-003",
+      "statement": "A species panel shows only the identifier fields its commodity requires; a field for an identifier the commodity does not require is absent from the page, not hidden.",
+      "why": "V4 makes each identifier conditional on the selected commodity requiring it, which is also how the real service and DR2.1 build the panel.",
+      "claims": [
+        "confluence-6497338582-p4-008",
+        "confluence-6497338582-p4-018",
+        "confluence-6497338582-p4-028",
+        "confluence-6497338582-p4-037",
+        "repo-frontend-p6-010",
+        "trace-animals-fit-p11-049",
+        "trace-e2e-p6-024",
+        "trace-e2e-p6-027"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "trace-e2e-p6-027 shows the cat panel's markup holding no ear tag or horse name input today.",
+      "conflicts": []
+    },
+    {
+      "id": "req-animal-identification-004",
+      "statement": "A species may be asked for more than one kind of identifier at once, and no rule limits how many of them one animal's record holds.",
+      "why": "V4's identifier commodity lists overlap, so one commodity can require a passport, a tattoo and an ear tag together, and the page sets no upper bound on how many a trader fills in.",
+      "claims": [
+        "confluence-6497338582-p4-063",
+        "confluence-6497338582-p4-014-m2",
+        "confluence-6497338582-p4-034-m1",
+        "repo-frontend-p6-081-m1",
+        "trace-animals-fit-p10-061",
+        "trace-e2e-p6-044-m1",
+        "trace-e2e-p6-102"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p6-081-m1 shows a record holding a key for every identifier its commodity asks for, and trace-animals-fit-p10-061 a column for each of them.",
+      "conflicts": []
+    },
+    {
+      "id": "req-animal-identification-005",
+      "statement": "Which identifier fields a species panel shows follows the species, not the commodity code alone, so two species sharing a code can be asked for different identifiers: on 0101 a horse panel asks for a horse name while a donkey, pony, zebra or mule panel does not.",
+      "why": "V4's identifier commodity lists name a species beside each code, and code 0101 appears five times in the passport list but once in the horse name list, so a panel built on the code alone would ask the wrong questions.",
+      "claims": [
+        "confluence-6497338582-p4-014",
+        "confluence-6497338582-p4-014-m1",
+        "confluence-6497338582-p4-043",
+        "confluence-6497338582-p4-106-m1",
+        "prototype-dr2-1-source-p5-013",
+        "repo-frontend-p6-010",
+        "ruling-sam-2026-10-09-pm-p2-001",
+        "ruling-sam-2026-10-09-pm-p2-025"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": [],
+      "blockedBy": "Commodities come from MDM: donkeys and asses, ponies, zebras and mules, hinnies or other hybrids join the live-animals catalogue only through the MDM commodity integration, which this programme cannot build (ruling:sam-2026-10-09-pm, claim 32: today's five-commodity catalogue holds none of them, so no two species share a code today)."
+    },
+    {
+      "id": "req-animal-identification-006",
+      "statement": "A 'Passport' identifier is asked for on every species whose commodity V4 names: 0101 donkeys and asses, horses, ponies, zebras, and mules, hinnies or other hybrids; 0102 cattle; and 01061900 cats, dogs and ferrets.",
+      "why": "V4 is the specification of which commodities each identifier rule covers, and its passport list agrees with DR2.1 on every commodity today's catalogue holds.",
+      "claims": [
+        "confluence-6497338582-p4-006",
+        "confluence-6497338582-p4-011",
+        "confluence-6497338582-p4-012",
+        "confluence-6497338582-p4-013",
+        "confluence-6497338582-p4-014",
+        "confluence-6497338582-p4-015",
+        "prototype-dr2-1-source-p5-014",
+        "prototype-dr2-1-source-p5-015",
+        "prototype-dr2-1-source-p5-016",
+        "repo-frontend-p6-013",
+        "trace-animals-fit-p10-033",
+        "trace-e2e-p6-022"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "Today the passport is asked on every commodity in V4's list that the live catalogue holds, namely cattle, horses, cats and dogs (trace-animals-fit-p10-033, trace-e2e-p6-022); the rest join with the MDM catalogue.",
+      "conflicts": []
+    },
+    {
+      "id": "req-animal-identification-007",
+      "statement": "An identifier value is free text: within its length limit any value is accepted, and no identifier has a format rule.",
+      "why": "V4 types every animal identifier as a string with a maximum length and gives its example values as examples only, setting no pattern; the real service checks nothing but the length.",
+      "claims": [
+        "confluence-6497338582-p4-007",
+        "confluence-6497338582-p4-012",
+        "confluence-6497338582-p4-017",
+        "confluence-6497338582-p4-022",
+        "confluence-6497338582-p4-027",
+        "confluence-6497338582-p4-032",
+        "confluence-6497338582-p4-036",
+        "confluence-6497338582-p4-041",
+        "confluence-6497338582-p4-045",
+        "confluence-6497338582-p4-050",
+        "confluence-6497338582-p4-053",
+        "confluence-6497338582-p4-058",
+        "repo-frontend-p6-019",
+        "trace-animals-fit-p10-032",
+        "trace-e2e-p6-095"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p6-019 shows length as the only check on an identifier today, and trace-e2e-p6-095 that no format rule was ever driven.",
+      "conflicts": []
+    },
+    {
+      "id": "req-animal-identification-008",
+      "statement": "A species whose commodity requires none of passport, tattoo, ear tag or horse name is asked for 'Identification details', a 20-character-wide text input with a label and no hint, holding free text that identifies the animals.",
+      "why": "V4 gives every commodity without a specific identifier type a free-text identifier, so a trader importing salmon, bees or poultry can still say what identifies the animals; V4 is the specification of which data a notification captures and outranks DR2.1, which asks nothing of such a species.",
+      "claims": [
+        "confluence-6497338582-p4-044",
+        "confluence-6497338582-p4-045",
+        "confluence-6497338582-p4-046",
+        "confluence-6497338582-p4-049",
+        "confluence-6497338582-p4-050",
+        "confluence-6497338582-p4-060",
+        "confluence-6497338582-p4-061",
+        "prototype-dr2-1-source-p5-024",
+        "repo-frontend-p6-008",
+        "repo-frontend-p6-011",
+        "trace-animals-fit-p10-022",
+        "trace-e2e-p6-017"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": [
+        "c-animal-identification-001"
+      ]
+    },
+    {
+      "id": "req-animal-identification-009",
+      "statement": "The same species is asked for 'Description', a 20-character-wide text input with a label and no hint, holding a free-text description of the animals.",
+      "why": "V4 pairs a description with the free-text identification details for a commodity with no specific identifier type, so the pair together identifies the animals.",
+      "claims": [
+        "confluence-6497338582-p4-052",
+        "confluence-6497338582-p4-053",
+        "confluence-6497338582-p4-054",
+        "confluence-6497338582-p4-057",
+        "confluence-6497338582-p4-058",
+        "confluence-6497338582-p4-060",
+        "prototype-dr2-1-source-p5-024",
+        "repo-frontend-p6-008",
+        "trace-e2e-p6-017"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": [
+        "c-animal-identification-001"
+      ]
+    },
+    {
+      "id": "req-animal-identification-010",
+      "statement": "'Identification details' and 'Description' are each limited to 58 characters, and a longer value shows 'Identification details must be 58 characters or less' or 'Description must be 58 characters or less', in the error summary and inline.",
+      "why": "V4 types both free-text identifiers as strings of at most 58 characters, and DR2.1's wording for a length rule is used where a length rule is kept.",
+      "claims": [
+        "confluence-6497338582-p4-045",
+        "confluence-6497338582-p4-053",
+        "prototype-dr2-1-source-p5-028",
+        "repo-frontend-p6-020"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": [
+        "c-animal-identification-001"
+      ]
+    },
+    {
+      "id": "req-animal-identification-011",
+      "statement": "The page asks for no wing ring identifier.",
+      "why": "V4's change log de-scoped the wing ring on 29 May 2026, and a de-scoped row outranks any source that still describes the field.",
+      "claims": [
+        "confluence-6497338582-p6-058",
+        "repo-frontend-p6-011"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p6-011 lists today's identifier types (microchip, passport, tattoo, ear tag, horse name) with no wing ring.",
+      "conflicts": []
+    },
+    {
+      "id": "req-animal-identification-012",
+      "statement": "'Microchip' is the first identifier a cat, dog or ferret panel (01061900) and a horse panel (0101) asks for.",
+      "why": "DR2.1 and the real service both ask for a microchip first on these species. V4's six animal identifier fields leave the microchip out altogether, so whether the notification still captures one rests on the open question c-animal-identification-003.",
+      "claims": [
+        "prototype-dr2-1-source-p5-014",
+        "prototype-dr2-1-source-p5-016",
+        "prototype-dr2-1-specs-p4-019",
+        "prototype-dr2-1-specs-p4-020",
+        "confluence-6497338582-p4-005",
+        "confluence-6497338582-p4-062",
+        "repo-frontend-p6-011",
+        "repo-frontend-p6-012",
+        "trace-animals-fit-p10-029",
+        "trace-animals-fit-p10-034",
+        "trace-prototype-dr2-1-p12-064",
+        "trace-prototype-dr2-1-p13-052",
+        "trace-e2e-p6-024"
+      ],
+      "status": "question",
+      "delta": "exists",
+      "deltaNote": "trace-animals-fit-p10-030, p10-029 and trace-e2e-p6-024 show the microchip asked first on cat, dog and horse panels today.",
+      "conflicts": [
+        "c-animal-identification-003"
+      ]
+    },
+    {
+      "id": "req-animal-identification-013",
+      "statement": "A cattle panel (0102) asks for a 'Tattoo' identifier after 'Ear tag' and 'Passport'.",
+      "why": "V4's tattoo commodity list names 0102 as well as the pets, and V4 outranks DR2.1 on which commodities a rule covers; the tattoo goes last because that is where DR2.1 puts it on the species that already ask for one. The list's own title counts only two commodities, so whether the list is right rests on the open question c-animal-identification-002.",
+      "claims": [
+        "confluence-6497338582-p4-016",
+        "confluence-6497338582-p4-017",
+        "confluence-6497338582-p4-018",
+        "confluence-6497338582-p4-021",
+        "confluence-6497338582-p4-022",
+        "confluence-6497338582-p4-024",
+        "confluence-6497338582-p4-025",
+        "confluence-6497338582-p4-105",
+        "prototype-dr2-1-source-p5-015",
+        "document-dr1-parity-notes-p1-053",
+        "repo-frontend-p6-102",
+        "trace-animals-fit-p10-028",
+        "trace-e2e-p6-020"
+      ],
+      "status": "question",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": [
+        "c-animal-identification-002"
+      ]
+    },
+    {
+      "id": "req-animal-identification-014",
+      "statement": "A pig panel (0103) asks for a 'Tattoo' identifier as well as an 'Ear tag'.",
+      "why": "V4's tattoo commodity list names 0103 as well as the pets. The list's own title counts only two commodities and names 0103 'Pigs' where the ear tag list names it 'Pig (Domestic)', so whether the list is right rests on the open question c-animal-identification-002. Pigs are not in today's catalogue, so this is built with the MDM commodity catalogue, alongside req-219.",
+      "claims": [
+        "confluence-6497338582-p4-024",
+        "confluence-6497338582-p4-025",
+        "confluence-6497338582-p4-106",
+        "prototype-dr2-1-source-p5-017",
+        "ruling-sam-2026-10-09-pm-p2-024",
+        "ruling-sam-2026-10-09-pm-p2-025"
+      ],
+      "status": "question",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": [
+        "c-animal-identification-002"
+      ]
+    },
+    {
+      "id": "req-animal-identification-015",
+      "statement": "In the germinal products set, the identification page asks for none of the live-animal identifiers: it asks only for the germinal fields, donor name or ID, collection date, production date and identification number or mark.",
+      "why": "V4 marks every animal identifier field as applying to the animals journey and not to germinal products, so the germinal set's copy of the page carries only the germinal fields DR2.1 shows.",
+      "claims": [
+        "confluence-6497338582-p4-013",
+        "confluence-6497338582-p4-023",
+        "confluence-6497338582-p4-033",
+        "confluence-6497338582-p4-042",
+        "confluence-6497338582-p4-051",
+        "confluence-6497338582-p4-059",
+        "confluence-6497338582-p4-062",
+        "ruling-sam-2026-10-09-p1-110",
+        "trace-prototype-dr2-1-p12-066"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-animal-identification-016",
+      "statement": "On the identification page, 'Save and continue' and 'Save and return to overview' make the same checks: either button shows an error for each identifier that is not valid, the trader stays on the page and what they entered is kept. The germinal products set's copy of the page behaves the same way.",
+      "why": "The 26 October ruling: the two save buttons behave consistently and no page is an exception. Nothing on this page is mandatory to answer, so neither button asks for a missing identifier; only a value that is not valid, such as one over the length limit, raises an error. The germinal copy is taken from the live page, so it inherits the behaviour although the ruling names only live animals and plants.",
+      "claims": [
+        "ruling-sam-2026-10-26-p1-002",
+        "ruling-sam-2026-10-26-p1-003",
+        "ruling-sam-2026-10-26-p1-006",
+        "ruling-sam-2026-10-26-p1-007",
+        "ruling-sam-2026-10-26-p1-008",
+        "ruling-sam-2026-10-26-p1-009",
+        "ruling-sam-2026-10-26-p1-010",
+        "ruling-sam-2026-10-26-p1-011",
+        "ruling-sam-2026-10-26-p1-013",
+        "ruling-sam-2026-10-26-p1-024",
+        "ruling-sam-2026-10-09-p1-014",
+        "confluence-6497338582-p4-005",
+        "repo-frontend-p6-073",
+        "repo-frontend-p6-074",
+        "trace-animals-fit-p10-088",
+        "trace-animals-fit-p11-042",
+        "trace-animals-fit-p11-061"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p6-073 shows validation running across every open panel on any save today, and no identifier is required, so the two buttons already check the same things; no trace drives 'Save and return to overview' on this page (trace-animals-fit-p10-088, trace-animals-fit-p11-061).",
+      "conflicts": []
+    },
+    {
+      "id": "req-animal-identification-017",
+      "statement": "Pressing Enter in a field of a species panel that takes more than one animal saves that panel's current animal, as the panel's own save button does, and the trader stays on the page with what they entered kept.",
+      "why": "The 26 October ruling, which accepted the engineering review's recommendation on this behaviour, so a trader who types an animal's identifiers and presses Enter keeps the entry.",
+      "claims": [
+        "ruling-sam-2026-10-26-p1-016",
+        "ruling-sam-2026-10-26-p1-017",
+        "ruling-sam-2026-10-26-p1-018",
+        "ruling-sam-2026-10-26-p1-019",
+        "ruling-sam-2026-10-26-p1-020",
+        "repo-frontend-p6-076",
+        "trace-animals-fit-p10-081",
+        "trace-animals-fit-p11-040",
+        "trace-e2e-p6-060"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today Enter submits the page through one hidden 'finish' button at the top of the form, whichever panel the field belongs to (repo-frontend-p6-076, trace-animals-fit-p10-081).",
+      "conflicts": []
+    },
+    {
+      "id": "req-animal-identification-018",
+      "statement": "Pressing Enter in a field of a species panel that takes a single animal, or in a field outside any species panel, submits the page as 'Save and continue'.",
+      "why": "The 26 October ruling rules on Enter only in a panel for several animals, so what Enter does elsewhere on the page rests on the open question c-animal-identification-006; the default keeps what the service does today.",
+      "claims": [
+        "ruling-sam-2026-10-26-p1-017-m1",
+        "ruling-sam-2026-10-26-p1-019",
+        "repo-frontend-p6-076",
+        "repo-frontend-p6-069",
+        "trace-animals-fit-p10-081-m1",
+        "trace-animals-fit-p11-040-m1"
+      ],
+      "status": "question",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p6-076 shows every field's Enter submitting the page's own finish action today.",
+      "conflicts": [
+        "c-animal-identification-006"
+      ]
+    },
+    {
+      "id": "req-animal-identification-019",
+      "statement": "The 26 October ruling's decisions on other pages: the upload documents page refusing a part-filled document on either save button, the Notification submitted page listing the ITAHC as still to upload, and which earlier conflicts the ruling replaces.",
+      "why": "Weighed here and left out: the upload documents page belongs to the documents area, the Notification submitted page to the review-and-submit area, and the conflicts the ruling replaces to the journey-flow area that owns them. Recorded so the ruling's claims are weighed.",
+      "claims": [
+        "ruling-sam-2026-10-26-p1-001",
+        "ruling-sam-2026-10-26-p1-004",
+        "ruling-sam-2026-10-26-p1-005",
+        "ruling-sam-2026-10-26-p1-012",
+        "ruling-sam-2026-10-26-p1-014",
+        "ruling-sam-2026-10-26-p1-015",
+        "ruling-sam-2026-10-26-p1-021",
+        "ruling-sam-2026-10-26-p1-022",
+        "ruling-sam-2026-10-26-p1-023",
+        "ruling-sam-2026-10-26-p1-024-m1",
+        "ruling-sam-2026-10-26-p1-025",
+        "ruling-sam-2026-10-26-p1-026"
+      ],
+      "status": "out-of-scope",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-animal-identification-020",
+      "statement": "How the V4 data-fields page lays out each field's specification, in eight columns: field name, type, conditions or values, the level it applies at, source, whether it is mandatory, an example, and the journeys it impacts.",
+      "why": "Weighed here and left out: it describes how the source is written, not anything a user or another system can observe.",
+      "claims": [
+        "confluence-6497338582-p4-004"
+      ],
+      "status": "out-of-scope",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
     }
   ],
   "conflicts": [
@@ -1685,7 +2142,7 @@
         }
       ],
       "resolution": "precedence",
-      "outcome": "The 9 October ruling ranks first and answers this difference directly, withdrawing the earlier reading under which the 7 October ruling's prototype default made every identifier required. One identifier is enough: a live animal saved with at least one identifier is entered, listed in the saved table and moved past; the Complete status uses exactly the submit bar (optional with one species, at least one identified record per species with several), with no stricter every-animal bar; DR1 inc-103 is closed and not built. The same one-record bar applies to the germinal set's entries: a germinal entry counts once it holds at least one value, not merely because it was saved. This is what the service does today. repo-frontend-p6-019 and document-dr1-parity-backlog-p5-016 back the winning rule and are not overruled; ruling-sam-2026-10-07-p1-008 still stands as the general look-and-feel default and is not overruled. For the germinal set a lone species is not exempt: V4 asks for at least one germinal identifier per animal, so every selected germinal species, one or several, needs an entry holding at least one value (c-277).",
+      "outcome": "The 9 October ruling ranks first and answers this difference directly, withdrawing the earlier reading under which the 7 October ruling's prototype default made every identifier required. One identifier is enough: a live animal saved with at least one identifier is entered, listed in the saved table and moved past; the Complete status uses exactly the submit bar (optional with one species, at least one identified record per species with several), with no stricter every-animal bar; DR1 inc-103 is closed and not built. The same one-record bar applies to the germinal set's entries: a germinal entry counts once it holds at least one value, not merely because it was saved. This is what the service does today. repo-frontend-p6-019 and document-dr1-parity-backlog-p5-016 back the winning rule and are not overruled; ruling-sam-2026-10-07-p1-008 still stands as the general look-and-feel default and is not overruled. For the germinal set a lone species is not exempt: V4 asks for at least one germinal identifier per animal, so every selected germinal species, one or several, needs an entry holding at least one value (c-277). V4 agrees from the other side: every one of its six animal identifier fields is marked optional on its own while the field block is satisfied by at least one of them (confluence-6497338582-p4-003, p4-005), so one identifier is enough for a record. How many animals and species must hold such a record before submit is no longer settled here: V4 asks for an identifier for each animal, which the ruling expressly does not cover, and that question is c-animal-identification-004.",
       "overruled": [
         "prototype-dr2-1-source-p5-046",
         "prototype-dr2-1-source-p5-062",
@@ -1804,6 +2261,242 @@
         "document-dr1-parity-notes-p1-025",
         "document-dr1-parity-notes-p1-029"
       ]
+    },
+    {
+      "id": "c-animal-identification-001",
+      "about": "Whether a species whose commodity requires no specific identifier type is asked for free-text identifiers, or asked nothing at all.",
+      "positions": [
+        {
+          "source": "confluence:6497338582",
+          "says": "The identification details field is shown when the given commodity has no specific identifier type, and captures free-text identification details.",
+          "claim": "confluence-6497338582-p4-046"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "The animal description field is shown on the same condition and captures a free-text animal description.",
+          "claim": "confluence-6497338582-p4-054"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "Where the commodity has no specific identifier type the two free-text fields stand in for one, so every commodity has some way of identifying its animals.",
+          "claim": "confluence-6497338582-p4-060"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "The page does not list which commodities have no specific identifier type, so the set can only be read as everything absent from the passport, tattoo, ear tag and horse name lists.",
+          "claim": "confluence-6497338582-p4-061"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "A species' identifier fields come from its commodity's entry in the identifiers list, and where there is no entry there are none.",
+          "claim": "prototype-dr2-1-source-p5-013"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "says": "For poultry there is no identification page at all: commodity details goes straight to additional details.",
+          "claim": "trace-prototype-dr2-1-p5-068"
+        },
+        {
+          "source": "repo:frontend",
+          "says": "There is no free-text identifier fallback: a commodity with no declared identifiers is asked for none.",
+          "claim": "repo-frontend-p6-008"
+        },
+        {
+          "source": "trace:e2e",
+          "says": "No field labelled 'Identification details' or 'Animal description' appears for any commodity walked.",
+          "claim": "trace-e2e-p6-017"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "V4 ranks above the prototype, its traces and the real frontend, and sources.json makes it the specification of which data a notification captures, outranking the prototype on data even where a prototype claim says otherwise. The two free-text identifiers are built (req-animal-identification-008, req-animal-identification-009, req-animal-identification-010), so every selected species has a panel (req-210, req-221). Which commodities fall back is read as everything absent from V4's four identifier lists (confluence-6497338582-p4-061); in today's live catalogue that is Atlantic salmon alone, and poultry and the rest join with the MDM commodity catalogue. prototype-dr2-1-source-p5-013 is not overruled: its first half, that a species' identifier fields come from its commodity's own list, still stands and backs req-animal-identification-005, and only its 'otherwise there are none' half is set aside. prototype-dr2-1-specs-p4-017 keeps backing the half that still stands, that a species which needs identifying continues to the page. repo-frontend-p6-008 and trace-e2e-p6-017 describe today's page, which req-221 changes.",
+      "overruled": [
+        "trace-prototype-dr2-1-p5-068"
+      ]
+    },
+    {
+      "id": "c-animal-identification-002",
+      "about": "Whether a tattoo identifier is asked for on cattle (0102) and pigs (0103), as V4's tattoo commodity list says, or only on cats, dogs and ferrets, as its list title's count of two, DR2.1 and today's service suggest.",
+      "positions": [
+        {
+          "source": "confluence:6497338582",
+          "says": "The commodities that require a tattoo identifier are 01061900 cats, dogs and ferrets, 0103 pigs and 0102 bovine.",
+          "claim": "confluence-6497338582-p4-024"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "The tattoo list's title says two commodities while five entries are listed, and the page does not say which figure is right.",
+          "claim": "confluence-6497338582-p4-025"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "The page names code 0102 'Cattle' in the passport and ear tag lists but 'Bovine' in the tattoo list.",
+          "claim": "confluence-6497338582-p4-105"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "Commodity code 0102 asks for two identifiers only, ear tag and passport.",
+          "claim": "prototype-dr2-1-source-p5-015"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "Commodity code 0103 asks for one identifier, an ear tag.",
+          "claim": "prototype-dr2-1-source-p5-017"
+        },
+        {
+          "source": "document:dr1-parity-notes",
+          "says": "A tattoo asked for on every cow is a defect of the real frontend's tattoo allowlist, and inc-110 corrects the commodity identifier sets.",
+          "claim": "document-dr1-parity-notes-p1-053"
+        },
+        {
+          "source": "repo:frontend",
+          "says": "A cow line shows ear tag and passport but no tattoo or microchip.",
+          "claim": "repo-frontend-p6-102"
+        }
+      ],
+      "resolution": "question",
+      "outcome": "V4 outranks the prototype and the DR1 notes on which commodities a rule covers, so the default follows its list and asks for a tattoo on cattle and pigs (req-animal-identification-013, req-animal-identification-014). It is a question rather than settled by precedence because V4 contradicts itself here: the list holds five entries while its title counts two, and it names the same code 'Bovine' in this list and 'Cattle' in the others, so the page does not say whether the list or the count is right. DR1's inc-110 is a todo finding, not a judgement on the difference, so it does not override.",
+      "question": "Does V4 mean a tattoo to be asked for on cattle (0102) and pigs (0103), which neither Design Release 2.1 nor the live service asks for today, or is its tattoo commodity list wider than intended, as its title's count of two suggests?",
+      "default": "Follow V4's list: a cattle panel asks for a tattoo after the ear tag and passport, and a pig panel asks for one as well as an ear tag when pigs reach the catalogue."
+    },
+    {
+      "id": "c-animal-identification-003",
+      "about": "Whether the notification still captures a microchip identifier, which V4's six animal identifier fields leave out.",
+      "positions": [
+        {
+          "source": "confluence:6497338582",
+          "says": "Six animal identifier fields are specified, at least one of which must be given, and none of them is a microchip.",
+          "claim": "confluence-6497338582-p4-005"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "The six animal identifier fields apply to the live animals journey only.",
+          "claim": "confluence-6497338582-p4-062"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "The page de-scopes an identifier type explicitly when it means to: the wing ring was de-scoped on 29 May 2026.",
+          "claim": "confluence-6497338582-p6-058"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "Commodity code 01061900 asks for a microchip, a passport and a tattoo.",
+          "claim": "prototype-dr2-1-source-p5-014"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "Commodity code 0101 asks for a microchip, a passport and a horse name.",
+          "claim": "prototype-dr2-1-source-p5-016"
+        },
+        {
+          "source": "repo:frontend",
+          "says": "The identifier types the page can ask for are microchip, passport, tattoo, ear tag and horse name.",
+          "claim": "repo-frontend-p6-011"
+        }
+      ],
+      "resolution": "question",
+      "outcome": "The default keeps the microchip field, on cat, dog, ferret and horse panels, as DR2.1 shows it and the service asks for it today (req-animal-identification-012, req-222, req-223). V4 outranks the prototype on which data a notification captures, but it never says the microchip is out of scope, and it de-scopes a field explicitly when it means to, as it did for the wing ring; silence will not carry a user-visible field away.",
+      "question": "Does a notification still capture a microchip identifier, given that V4's animal identifier table specifies six fields and the microchip is not one of them, while the page de-scopes only the wing ring explicitly?",
+      "default": "The microchip field stays exactly as it is today and as Design Release 2.1 shows it, first on a cat, dog, ferret or horse panel."
+    },
+    {
+      "id": "c-animal-identification-004",
+      "about": "How much identification a live-animals notification must hold before it can be submitted: an identifier for every animal, or one identified animal per species and nothing at all when one species is selected.",
+      "positions": [
+        {
+          "source": "confluence:6497338582",
+          "says": "A notification cannot be submitted unless at least one animal identifier is given for each animal.",
+          "claim": "confluence-6497338582-p4-002"
+        },
+        {
+          "source": "document:dr1-parity-backlog",
+          "says": "Design release 1's submit gate needs only one complete animal per species, and only when more than one species is selected.",
+          "claim": "document-dr1-parity-backlog-p5-020"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "Identification details are optional when only one species is selected; with several, each species with identifier fields needs at least one entry.",
+          "claim": "prototype-dr2-1-source-p5-070"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "Sam's acceptance of one identifier being enough holds 'for now' and assumes it is a no-change, and the ruling does not say what happens if it turns out to need a change.",
+          "claim": "ruling-sam-2026-10-09-p1-190"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "The ruling does not state how many identification records a notification with several lines needs.",
+          "claim": "ruling-sam-2026-10-09-p1-195"
+        }
+      ],
+      "resolution": "question",
+      "outcome": "The default keeps the ruling: the 9 October ruling outranks V4 and accepted today's gate on the footing that it was no change, so identification stays optional with one species and needs one identified animal per species with several (req-248, req-249). V4's per-animal rule is recorded because the ruling expressly does not say how many records a notification needs, and because the germinal twin of this question went V4's way (c-277), which leaves the two sets on different bars until somebody settles this.",
+      "question": "Must every animal of every selected species carry at least one identifier before a live-animals notification can be submitted, as the V4 data-fields page says, or does today's gate stand, with identification optional for a single species?",
+      "default": "Today's gate stands: identification is optional when one species is selected, and with several each species with identifier fields needs at least one saved animal holding at least one identifier; the hub's Identification details row shows Complete on that same bar."
+    },
+    {
+      "id": "c-animal-identification-005",
+      "about": "Whether the 26 October ruling's principle that what a trader typed is never dropped reaches the identification page's own save buttons and a panel save, or only the Enter key on a panel for several animals.",
+      "positions": [
+        {
+          "source": "ruling:sam-2026-10-26",
+          "says": "What a trader typed is never dropped, stated as a general principle and not limited to the identification page.",
+          "claim": "ruling-sam-2026-10-26-p1-019"
+        },
+        {
+          "source": "ruling:sam-2026-10-26",
+          "says": "The recommendations Sam accepted are not quoted in the ruling, so how far the principle was meant to reach cannot be checked against his own words.",
+          "claim": "ruling-sam-2026-10-26-p1-023"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "Save and continue saves the typed details only for single-animal species; what was typed into a multi-animal species' form is not saved unless its panel button was used.",
+          "claim": "prototype-dr2-1-source-p5-054"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "A panel save validates and saves only that species' fields.",
+          "claim": "prototype-dr2-1-source-p5-051"
+        },
+        {
+          "source": "repo:frontend",
+          "says": "Any save on the page saves one new animal record for every panel whose form holds data, not only the panel whose button was pressed.",
+          "claim": "repo-frontend-p6-072"
+        }
+      ],
+      "resolution": "question",
+      "outcome": "The default keeps what the trader typed: every save on the page, whichever button, checks every open species panel and saves one animal for each panel holding a value, which is what the service does today (req-203, req-204). The 26 October ruling ranks above the prototype and states the principle in general terms, and the prototype's own source records its rule as a silent loss of a filled-in form; but the ruling's words reach only the Enter key, and the recommendation behind the principle is not quoted, so the two readings are left to the owner.",
+      "question": "Does 'what a trader typed is never dropped' apply to the identification page's 'Save and continue', 'Save and return to overview' and panel save buttons, so each of them saves every panel holding a value, or only to pressing Enter in a panel for several animals?",
+      "default": "Every save on the page checks every open species panel and saves one animal for each panel whose form holds a value, as the service does today; Design Release 2.1's rule of saving only the panel whose button was pressed is not built."
+    },
+    {
+      "id": "c-animal-identification-006",
+      "about": "What pressing Enter does in a field of a species panel for a single animal, or in a field outside any species panel.",
+      "positions": [
+        {
+          "source": "ruling:sam-2026-10-26",
+          "says": "Pressing Enter in a field of a panel for several animals saves that panel, as its own save button does.",
+          "claim": "ruling-sam-2026-10-26-p1-017"
+        },
+        {
+          "source": "ruling:sam-2026-10-26",
+          "says": "The ruling says nothing about pressing Enter in a single-animal panel or in a field outside a panel, so those cases are left open.",
+          "claim": "ruling-sam-2026-10-26-p1-017-m1"
+        },
+        {
+          "source": "ruling:sam-2026-10-26",
+          "says": "What a trader typed is never dropped, which would have Enter save wherever it is pressed.",
+          "claim": "ruling-sam-2026-10-26-p1-019"
+        },
+        {
+          "source": "repo:frontend",
+          "says": "Pressing Enter in a field submits the page as its default finish action, not as a panel save.",
+          "claim": "repo-frontend-p6-076"
+        }
+      ],
+      "resolution": "question",
+      "outcome": "The ruling settles the panel for several animals, which is adopted (req-animal-identification-017). For the rest of the page the default keeps today's behaviour: Enter in a single-animal panel and in a field outside any panel submits the page as 'Save and continue' (req-animal-identification-018), which saves that panel's animal anyway because a single-animal panel has no save button of its own.",
+      "question": "In a species panel for a single animal, and in a field outside any panel, should pressing Enter submit the page as 'Save and continue', as it does today, or save the panel the field belongs to?",
+      "default": "Enter in a single-animal panel, and in any field outside a panel, submits the page as 'Save and continue'; only a panel for several animals saves through its own panel save."
     }
   ]
 }

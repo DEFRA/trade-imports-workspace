@@ -123,10 +123,31 @@ and verify all of them again. Adopt the ones that are still good first:
 Never adopt a source an agent has just extracted again. Its old verification judged the earlier extract, so it
 must be verified again.
 
+### A repo source goes stale when its checkout moves
+
+A `repo` source is the one kind that changes under its own extract: a document or a Confluence page is captured
+once, but a repo moves every time someone merges. So a repo extract records the commit its checkout was on, and
+`tim distil status` reads the checkout again and reports the source `stale` when the two differ — "The repo has
+moved since it was extracted, so the extract describes code that has changed." The next launch extracts it again.
+
+The scope hash cannot see this on its own: it hashes the source's `kind`, `locator` and `scope`, none of which
+change when code lands, so a `git pull` or a `make reset` left a repo extract reading `verified` against code from
+weeks before.
+
+Nothing is called stale for want of information. A source that is not a repo, an extract written before the commit
+was recorded, and a checkout tim cannot read all leave the source exactly as the scope hash alone would. So an
+older workarea is not re-extracted wholesale, and a missing clone does not force a run; the protection starts at
+the next extract or `tim distil stamp`.
+
+`tim distil adopt` records the commit as well, and refuses a source whose extract names a commit the checkout is
+not on — adopting means "this extract is good for the source as it stands", which is not true of a repo that has
+moved since.
+
 ### Extracting a source again with an unchanged scope
 
-A launch skips every source already verified with an unchanged scope hash. When the extract method has changed, so
-an old extract is no longer good enough although its source is the same, reset the sources first:
+A launch skips every source already verified with an unchanged scope hash and, for a repo, an unchanged commit.
+When the extract method has changed, so an old extract is no longer good enough although its source is the same,
+reset the sources first:
 
 ```bash
 tim distil reset <workarea> --source repo:frontend --source trace:recorded-run --json   # the named sources
@@ -189,7 +210,8 @@ What each key does, and every stage, are in [`../workflow/README.md`](../workflo
 
 1. **Status.** `tim distil status` gives the work list: each source's state (pending, extracted, verified, stale
    or invalid) and what it needs next. A source already verified, with an unchanged scope hash and an unchanged
-   extract, is skipped.
+   extract, is skipped — and for a `repo` source, with its checkout still on the commit it was extracted from
+   ([a repo source goes stale when its checkout moves](#a-repo-source-goes-stale-when-its-checkout-moves)).
 2. **Characterise, extract and verify, as a pipeline.** Each source moves on as soon as its own step checks out.
    - **Characterise.** One Opus agent surveys the whole source and writes `distil/extract/<slug>.partition.json`:
      its structure, and its parts, each small enough for one agent to read in full and claim exhaustively (a group

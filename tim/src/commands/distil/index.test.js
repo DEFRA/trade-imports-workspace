@@ -1,6 +1,6 @@
 import { describe, test, expect, afterEach } from 'vitest'
 import { execa } from 'execa'
-import { existsSync, rmSync } from 'node:fs'
+import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
@@ -40,6 +40,42 @@ const runTim = (args, { json = true } = {}) =>
 const envelopeOf = (run) => JSON.parse(run.stdout.trim())
 
 describe('tim distil status', () => {
+  test('reports a repo source stale when its checkout has moved since the extract', async () => {
+    workspace = makeDistilWorkspace()
+    const gitDir = join(
+      workspace.root,
+      'repos',
+      'trade-imports-ins-tests',
+      '.git'
+    )
+    mkdirSync(gitDir, { recursive: true })
+    writeFileSync(
+      join(gitDir, 'HEAD'),
+      '4444444444444444444444444444444444444444\n'
+    )
+    workspace.editJson(
+      join(workspace.layout.extractDir, 'repo-tests.json'),
+      (extract) => ({
+        ...extract,
+        repoHead: '5555555555555555555555555555555555555555'
+      })
+    )
+
+    const run = await runTim(['status', DEMO_WORKAREA])
+
+    expect(run.exitCode).toBe(0)
+    expect(
+      envelopeOf(run).result.sources.find(
+        (source) => source.id === 'repo:tests'
+      )
+    ).toMatchObject({
+      state: 'stale',
+      next: 'extract',
+      reason:
+        'The repo has moved since it was extracted, so the extract describes code that has changed.'
+    })
+  })
+
   test('prints the work list in the JSON envelope', async () => {
     workspace = makeDistilWorkspace()
     rmSync(join(workspace.layout.verifyDir, 'repo-tests.json'))

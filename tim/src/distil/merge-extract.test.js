@@ -1,5 +1,6 @@
 import { describe, test, expect, afterEach } from 'vitest'
-import { existsSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { mergeExtractParts } from './merge-extract.js'
 import { checkDistil, distilStatus } from './checks.js'
 import { scopeHashOf } from './files.js'
@@ -21,13 +22,22 @@ const setUp = () => {
   return splitExtractIntoParts(workspace)
 }
 
-const merge = (sourceId = 'repo:tests') =>
+const merge = (sourceId = 'repo:tests', workspaceRoot) =>
   mergeExtractParts({
     layout: workspace.layout,
     schemas: workspace.schemas,
     workarea: DEMO_WORKAREA,
-    sourceId
+    sourceId,
+    workspaceRoot
   })
+
+const HEAD = '3333333333333333333333333333333333333333'
+
+const makeCheckout = (relative, head) => {
+  const gitDir = join(workspace.root, relative, '.git')
+  mkdirSync(gitDir, { recursive: true })
+  writeFileSync(join(gitDir, 'HEAD'), `${head}\n`)
+}
 
 const REFUSED =
   "merging repo:tests's extract parts in shared/demo. Nothing was written and the parts are kept"
@@ -38,6 +48,32 @@ const repoTestsSource = () =>
     .sources.find((source) => source.id === 'repo:tests')
 
 describe('mergeExtractParts', () => {
+  test('records the commit a repo source was extracted from', () => {
+    const { extractPath } = setUp()
+    makeCheckout('repos/trade-imports-ins-tests', HEAD)
+
+    merge('repo:tests', workspace.root)
+
+    expect(workspace.readJson(extractPath).repoHead).toBe(HEAD)
+  })
+
+  test('records no commit for a repo whose checkout it cannot read', () => {
+    const { extractPath } = setUp()
+
+    merge('repo:tests', workspace.root)
+
+    expect(workspace.readJson(extractPath).repoHead).toBeUndefined()
+  })
+
+  test('records no commit when it is given no workspace root', () => {
+    const { extractPath } = setUp()
+    makeCheckout('repos/trade-imports-ins-tests', HEAD)
+
+    merge()
+
+    expect(workspace.readJson(extractPath).repoHead).toBeUndefined()
+  })
+
   test('joins the parts into the one extract, every claim in part order', () => {
     const { whole, extractPath } = setUp()
 
@@ -64,6 +100,7 @@ describe('mergeExtractParts', () => {
       path: extractPath,
       replaced: false,
       scopeHash: scopeHashOf(repoTestsSource()),
+      repoHead: null,
       claims: 4,
       parts: [
         {

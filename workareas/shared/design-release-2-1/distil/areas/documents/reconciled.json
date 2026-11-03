@@ -309,6 +309,7 @@
       "statement": "The first field is a text input labelled 'Document reference'.",
       "why": "The design and the real page agree on the field and its label.",
       "claims": [
+        "confluence-6497338582-p4-086",
         "prototype-dr2-1-source-p10-026",
         "repo-tests-p3-004",
         "trace-animals-fit-p22-014",
@@ -318,7 +319,9 @@
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "trace-animals-fit-p22-014 shows the 'Document reference' input today.",
-      "conflicts": []
+      "conflicts": [
+        "c-documents-007"
+      ]
     },
     {
       "id": "req-494",
@@ -361,8 +364,9 @@
     {
       "id": "req-496",
       "statement": "A document reference longer than 58 characters shows 'Document reference must be 58 characters or fewer', and the over-long value stays in the field.",
-      "why": "The prototype sets no length limit, but a stored reference needs one: a real validation constraint the prototype cannot express, so the real limit stays.",
+      "why": "The prototype sets no length limit on the page, but the V4 data fields page specifies a reference of at most 58 characters and a stored reference needs a limit: policy and a real validation constraint the prototype cannot express, so the limit stays.",
       "claims": [
+        "confluence-6497338582-p4-087",
         "repo-backend-p4-006",
         "repo-frontend-p8-021",
         "trace-animals-fit-p23-048",
@@ -380,8 +384,10 @@
     {
       "id": "req-497",
       "statement": "A document reference may contain hyphens, slashes, spaces and other punctuation, as Design Release 2.1's references such as 'ITAHC-001' do: the backend accepts it rather than refusing anything but letters and digits.",
-      "why": "Design Release 2.1 accepts any non-blank reference. Today the backend refuses any reference that is not letters and digits, which reaches the trader only as 'The file could not be uploaded. Try again.', and nothing in the evidence shows a downstream system needs that rule.",
+      "why": "Design Release 2.1 accepts any non-blank reference, and the V4 data fields page sets no format or pattern for it, giving its example as GBHC1234567890. Today the backend refuses any reference that is not letters and digits, which reaches the trader only as 'The file could not be uploaded. Try again.', and nothing in the evidence shows a downstream system needs that rule.",
       "claims": [
+        "confluence-6497338582-p4-088",
+        "confluence-6497338582-p4-092",
         "prototype-dr2-1-specs-p4-032",
         "repo-backend-p4-005",
         "repo-frontend-p8-045",
@@ -402,6 +408,8 @@
       "statement": "The second field is a select labelled 'Document type' with no hint, opening on a 'Select one' placeholder with no value; the trader chooses the type on the page and the filename is never used to guess it.",
       "why": "The design and the real page agree.",
       "claims": [
+        "confluence-6497338582-p4-068",
+        "confluence-6497338582-p4-069",
         "document-dr1-parity-backlog-p5-021",
         "document-dr1-parity-backlog-p5-021-m2",
         "prototype-dr2-1-source-p10-027",
@@ -418,16 +426,22 @@
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "repo-frontend-p8-023 and trace-animals-fit-p22-016 show the select with its placeholder today.",
-      "conflicts": []
+      "conflicts": [
+        "c-documents-007"
+      ]
     },
     {
       "id": "req-499",
-      "statement": "The document type options are, in order: Intra Trade Animal Health Certificate (ITAHC), Veterinary health certificate, Air waybill, Import permit, Letter of authority (Directive 2008/61/EC), Commercial invoice, Sea waybill, Rail waybill, Bill of lading, Catch certificate, Laboratory sampling results for aflatoxin (Reg 2019/1793), Journey log, Other. 'Health certificate' is no longer offered; the backend still accepts and codes documents already saved with it.",
-      "why": "Design Release 2.1 and DR1's inc-136 judgement both leave out Health certificate, and EUDPA-310's re-offer is a frontend choice, not a constraint the prototype cannot express; the backend keeps HEALTH_CERTIFICATE so saved documents still load and are coded on the outbound event (c-085).",
+      "statement": "The Document type select offers, in order: Intra Trade Animal Health Certificate (ITAHC), Veterinary health certificate, Journey log, Import permit, Air waybill, Sea waybill, Rail waybill, Bill of lading, Commercial invoice, Other.",
+      "why": "The V4 data fields page is the specification for which document types a notification may carry, and its list was replaced with one the business supplied on 29 October 2026; it outranks the prototype's demo data on the permitted values (c-documents-001), while how each option reads stays Design Release 2.1's (c-documents-002). Design Release 2.1 and DR1's inc-136 judgement both leave out Health certificate, and EUDPA-310's re-offer is a frontend choice, not a constraint the prototype cannot express (c-085). The three types the business added that have no code yet are held separately (req-documents-006), and the backend keeps every code it has stored so saved documents still load (req-documents-007).",
       "claims": [
+        "confluence-6497338582-p4-070",
+        "confluence-6497338582-p4-074",
+        "confluence-6497338582-p4-076",
+        "confluence-6497338582-p6-056",
+        "confluence-6497338582-p6-061",
         "document-dr1-parity-backlog-p5-022",
         "prototype-dr2-1-source-p10-029",
-        "prototype-dr2-1-source-p10-030",
         "prototype-dr2-1-source-p10-063",
         "prototype-dr2-1-specs-p2-141",
         "repo-backend-p4-083",
@@ -435,14 +449,10 @@
         "repo-backend-p4-085",
         "repo-backend-p4-086",
         "repo-backend-p4-087",
-        "repo-backend-p4-088",
         "repo-backend-p4-089",
         "repo-backend-p4-090",
         "repo-backend-p4-091",
         "repo-backend-p4-092",
-        "repo-backend-p4-093",
-        "repo-backend-p4-094",
-        "repo-backend-p4-095",
         "repo-backend-p4-096",
         "repo-backend-p4-097",
         "repo-frontend-p8-024",
@@ -458,9 +468,12 @@
       ],
       "status": "adopted",
       "delta": "change",
-      "deltaNote": "Today the select offers fourteen types including Health certificate (repo-frontend-p8-024), and the fit and E2E specs assert fourteen.",
+      "deltaNote": "Today the select offers fourteen types in a different order: Intra Trade Animal Health Certificate (ITAHC), Veterinary health certificate, Air waybill, Import permit, Letter of authority (Directive 2008/61/EC), Commercial invoice, Sea waybill, Rail waybill, Bill of lading, Catch certificate, Laboratory sampling results for aflatoxin (Reg 2019/1793), Health certificate, Journey log, Other (repo-frontend-p8-024). Letter of authority (Directive 2008/61/EC), Catch certificate, Laboratory sampling results for aflatoxin (Reg 2019/1793) and Health certificate leave the list, Journey log moves to third and Commercial invoice to ninth; the fit and E2E specs assert fourteen (trace-animals-fit-p22-017, trace-e2e-p12-016).",
       "conflicts": [
-        "c-085"
+        "c-085",
+        "c-documents-001",
+        "c-documents-002",
+        "c-documents-003"
       ]
     },
     {
@@ -535,6 +548,7 @@
       "statement": "The third field is a single text input labelled 'Date of issue', typed as day/month/year and enhanced by the MOJ date picker: a 'Choose date' button opens a calendar dialog with Select and Close.",
       "why": "The design and the real page agree, and the MoJ date picker is one of the accepted components (Sam's 9 October afternoon ruling, claim on accepted components). That ruling sends the calendar on the germinal dates to design (design question 12, req-253) because MoJ advises against its picker for dates read from a document, but it names only those germinal dates and says the documents theme stands as distilled, so this existing picker, which enhances a typed text input that works without JavaScript, stays.",
       "claims": [
+        "confluence-6497338582-p4-094",
         "prototype-dr2-1-source-p10-032",
         "prototype-dr2-1-source-p10-033",
         "prototype-dr2-1-specs-p4-032",
@@ -562,7 +576,9 @@
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "repo-frontend-p8-028 and repo-frontend-p8-029 show the MOJ date picker on a single text input today.",
-      "conflicts": []
+      "conflicts": [
+        "c-documents-007"
+      ]
     },
     {
       "id": "req-505",
@@ -584,8 +600,12 @@
     {
       "id": "req-506",
       "statement": "A blank date of issue shows 'Enter a date of issue'; a date that is not a real day/month/four-digit-year calendar date (such as 31/2/2026) shows 'Enter a real date' and keeps the text typed. Any real date, past or future, is accepted.",
-      "why": "The design, the real page and the backend agree; neither sets a range on the date of issue.",
+      "why": "The design, the real page and the backend agree, and the V4 data fields page asks for a valid date in day, month and year order and gives no allowed range, so no source sets a limit on how far ahead or behind the date may be.",
       "claims": [
+        "confluence-6497338582-p4-095",
+        "confluence-6497338582-p4-096",
+        "confluence-6497338582-p4-100",
+        "confluence-6497338582-p4-102",
         "prototype-dr2-1-source-p10-034",
         "prototype-dr2-1-source-p10-051",
         "prototype-dr2-1-source-p10-052",
@@ -611,13 +631,16 @@
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "repo-frontend-p8-030, repo-frontend-p8-031 and repo-frontend-p8-032 give the same two messages and no range rule today.",
-      "conflicts": []
+      "conflicts": [
+        "c-documents-005"
+      ]
     },
     {
       "id": "req-507",
       "statement": "The fourth field is labelled 'Attachment', and its hint opens 'Your file must be:' followed by a bulleted list of file rules.",
       "why": "The design and the real page agree.",
       "claims": [
+        "confluence-6497338582-p4-077",
         "prototype-dr2-1-source-p10-035",
         "repo-frontend-p8-033",
         "trace-animals-fit-p22-024",
@@ -629,7 +652,9 @@
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "repo-frontend-p8-033 shows the same label and lead today.",
-      "conflicts": []
+      "conflicts": [
+        "c-documents-007"
+      ]
     },
     {
       "id": "req-508",
@@ -652,8 +677,9 @@
     {
       "id": "req-509",
       "statement": "A file may be up to 50MB (50,000,000 bytes): the size bullet says 50MB, the browser and server checks allow it, the route's payload cap is the limit plus 1KiB, and a larger file shows 'The selected file must be smaller than 50MB'. The unit is written '50MB', with no space. One limit applies in every environment.",
-      "why": "Design Release 2.1 states 50MB, and DR1's inc-138 judged the same change. The backend already accepts 50MB. The frontend was put back to 10MB only because CDP's nginx ingress caps request bodies at 10 MiB; a configurable limit was rejected by DR1 because it gives no parity anywhere. Sam's 9 October afternoon ruling keeps this change blocked on the CDP ingress body cap, tracked by EUDPA-518.",
+      "why": "Design Release 2.1 states 50MB, and DR1's inc-138 judged the same change. The backend already accepts 50MB. The frontend was put back to 10MB only because CDP's nginx ingress caps request bodies at 10 MiB; a configurable limit was rejected by DR1 because it gives no parity anywhere. Sam's 9 October afternoon ruling keeps this change blocked on the CDP ingress body cap, tracked by EUDPA-518. The V4 data fields page records the attachment's format but no maximum file size, so it does not contradict the 50MB.",
       "claims": [
+        "confluence-6497338582-p4-085",
         "document-dr1-parity-backlog-p5-028",
         "document-dr1-parity-backlog-p5-029",
         "document-dr1-parity-backlog-p5-030",
@@ -721,8 +747,9 @@
     {
       "id": "req-510",
       "statement": "The file-type bullet reads 'PDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX', without a leading 'a'.",
-      "why": "Design Release 2.1 lists the types with no article; the real page says 'a PDF, DOC, ...'.",
+      "why": "Design Release 2.1 lists the types with no article; the real page says 'a PDF, DOC, ...'. The V4 data fields page permits the same eight formats, so only the bullet's wording differs, and how the page reads is the prototype's.",
       "claims": [
+        "confluence-6497338582-p4-079",
         "prototype-dr2-1-source-p10-037",
         "repo-frontend-p8-035",
         "trace-animals-fit-p22-028",
@@ -741,8 +768,9 @@
     {
       "id": "req-511",
       "statement": "The hint's third bullet reads 'up to a maximum of 15 files', and it stays on the page once documents are listed.",
-      "why": "The design and the real page agree.",
+      "why": "The design and the real page agree, and the V4 data fields page sets no limit on how many files a notification may carry, so the page's own limit stands.",
       "claims": [
+        "confluence-6497338582-p4-085",
         "prototype-dr2-1-source-p10-038",
         "repo-frontend-p8-036",
         "repo-frontend-p8-056",
@@ -776,6 +804,7 @@
       "statement": "The service enforces the file rules it states: the file picker offers only .pdf, .doc, .docx, .jpeg, .jpg, .png, .xls and .xlsx; an empty file counts as no file; any other type (a ZIP or a .txt) shows 'The selected file must be a PDF, DOC, DOCX, JPEG, JPG, PNG, XLS or XLSX'; the checks run in the order missing, size, type, so one file error shows at a time.",
       "why": "Design Release 2.1 states these rules but does not enforce them. Refusing a file the service cannot accept is a real validation constraint the prototype cannot express, so the real checks stay.",
       "claims": [
+        "confluence-6497338582-p4-079",
         "prototype-dr2-1-source-p10-037",
         "prototype-dr2-1-specs-p2-144",
         "repo-backend-p4-023",
@@ -959,8 +988,10 @@
     {
       "id": "req-520",
       "statement": "Save and add another with nothing entered shows an error summary titled 'There is a problem' listing, in order, 'Enter a document reference', 'Select a document type', 'Enter a date of issue', 'Upload a document'; each links to its field and repeats inline with a visually hidden 'Error:' prefix in the GOV.UK error style.",
-      "why": "The design and the real page agree: every field is mandatory for a document because a saved document cannot be edited.",
+      "why": "The design and the real page agree: every field is mandatory for a document because a saved document cannot be edited, and the V4 data fields page makes the attachment, the reference and the date of issue mandatory to proceed once a document type is selected.",
       "claims": [
+        "confluence-6497338582-p4-066",
+        "confluence-6497338582-p4-067",
         "prototype-dr2-1-source-p10-054",
         "prototype-dr2-1-specs-p2-148",
         "repo-frontend-p8-046",
@@ -1076,8 +1107,10 @@
     {
       "id": "req-526",
       "statement": "A notification holds at most 15 documents. Adding a sixteenth shows only 'You can upload a maximum of 15 files', checks nothing else, adds nothing and keeps the entered reference, type and date.",
-      "why": "The design and the real page agree on the limit, the message and checking capacity first. The backend sets no limit of its own, so the frontend's check is the one in force.",
+      "why": "The design and the real page agree on the limit, the message and checking capacity first. Neither the backend nor the V4 data fields page sets a limit of its own, so the frontend's check is the one in force.",
       "claims": [
+        "confluence-6497338582-p4-085",
+        "confluence-6497338582-p4-103",
         "prototype-dr2-1-source-p10-055",
         "prototype-dr2-1-source-p10-056",
         "prototype-dr2-1-specs-p2-163",
@@ -1429,11 +1462,13 @@
     },
     {
       "id": "req-537",
-      "statement": "Uploading documents is optional: with no document type chosen, Save and continue moves on without any error and anything else typed is discarded; with a type chosen but other fields blank, the trader is held on the page with the missing-field errors and the chosen type stays selected.",
-      "why": "The design and the real page agree: the type is the one field a trader cannot fill by accident, so it marks a document on its way.",
+      "statement": "Uploading a document is optional: with none of the document details entered, Save and continue and Save and return to overview both leave the page with no error. With a document type chosen and another detail missing, the trader is held on the page with an error for each missing detail and the chosen type stays selected.",
+      "why": "The design and the real page agree, and the V4 data fields page makes accompanying documents optional at notification level: a notification can be submitted with none. Which entry makes a part-filled form a document to add is settled separately (req-documents-005).",
       "claims": [
+        "confluence-6497338582-p4-064",
+        "confluence-6497338582-p4-065",
         "prototype-dr2-1-source-p10-075",
-        "prototype-dr2-1-source-p10-077",
+        "prototype-dr2-1-source-p10-076",
         "prototype-dr2-1-specs-p2-135",
         "prototype-dr2-1-specs-p2-151",
         "prototype-dr2-1-specs-p2-152",
@@ -1450,7 +1485,7 @@
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "repo-frontend-p8-079 and repo-frontend-p8-081 skip an untouched form and hold a type-only form today.",
+      "deltaNote": "repo-frontend-p8-079 leaves an untouched form alone and repo-frontend-p8-081 holds a type-only form with the three missing-detail errors today.",
       "conflicts": []
     },
     {
@@ -1505,12 +1540,26 @@
     },
     {
       "id": "req-540",
-      "statement": "Save and return to overview treats a form with a document type chosen as a document to add: it checks every field, holds the trader on the page with the errors if any fail, and otherwise saves the document before returning to the overview (or to the review page when amending). With no type chosen it goes straight to the overview.",
-      "why": "Design Release 2.1 applies the same optional-upload check before leaving; the real page leaves at once and drops a part-filled document.",
+      "statement": "Save and return to overview makes exactly the same checks as Save and continue: a document detail that is missing or not valid holds the trader on the page with an error for each one and keeps everything entered, and a document whose details all pass is saved before the trader returns to the overview (or to the review page when amending). With none of the document details entered it goes straight to the overview.",
+      "why": "Sam's 26 October ruling gives the two save buttons one behaviour, withdraws the earlier decision that let Save and return skip a page's checks, and refuses a documents-only exception. Design Release 2.1 applies the same optional-upload check before leaving; the real page leaves at once and drops a part-filled document.",
       "claims": [
         "prototype-dr2-1-source-p10-079",
         "repo-frontend-p8-082",
         "repo-frontend-p8-083",
+        "ruling-sam-2026-10-26-p1-001",
+        "ruling-sam-2026-10-26-p1-002",
+        "ruling-sam-2026-10-26-p1-003",
+        "ruling-sam-2026-10-26-p1-004",
+        "ruling-sam-2026-10-26-p1-005",
+        "ruling-sam-2026-10-26-p1-006",
+        "ruling-sam-2026-10-26-p1-007",
+        "ruling-sam-2026-10-26-p1-008",
+        "ruling-sam-2026-10-26-p1-010",
+        "ruling-sam-2026-10-26-p1-011",
+        "ruling-sam-2026-10-26-p1-012",
+        "ruling-sam-2026-10-26-p1-013",
+        "ruling-sam-2026-10-26-p1-015",
+        "ruling-sam-2026-10-26-p1-026",
         "trace-animals-fit-p22-035",
         "trace-animals-fit-p22-037",
         "trace-animals-fit-p23-083",
@@ -1523,10 +1572,11 @@
       ],
       "status": "adopted",
       "delta": "change",
-      "deltaNote": "Today the exit to the overview always leaves and discards any part-filled document form (repo-frontend-p8-082).",
+      "deltaNote": "Today the exit to the overview always leaves and discards any part-filled document form (repo-frontend-p8-082), which is the behaviour Sam's 26 October ruling names on this page (ruling-sam-2026-10-26-p1-001).",
       "conflicts": [
         "c-082",
-        "c-211"
+        "c-211",
+        "c-documents-006"
       ]
     },
     {
@@ -1883,7 +1933,7 @@
     {
       "id": "req-1822",
       "statement": "The documents page keeps its address at the accompanying-documents slug within the notification's journey, with its JSON scan-status route and its file download beside it; acceptance criteria assert the page by its heading and destinations, not by a literal path.",
-      "why": "Sam's 9 October ruling overrules the move to upload-documents (claim 20): the prototype never decides URL paths, and no increment changes an existing real path to match it. The tests repo's page object and the k6 performance suite both open the page at this slug, so neither changes for the documents page (c-225).",
+      "why": "Sam's 9 October ruling drops the move to upload-documents (ruling-sam-2026-10-09-p1-077): the prototype never decides URL paths, and no increment changes an existing real path to match it. The tests repo's page object and the k6 performance suite both open the page at this slug, so neither changes for the documents page. The suite still changes wherever another row breaks one of its k6 scripts (c-225).",
       "claims": [
         "repo-frontend-p8-001",
         "repo-perftests-p1-034",
@@ -1894,7 +1944,6 @@
         "ruling-sam-2026-10-09-p1-075",
         "ruling-sam-2026-10-09-p1-077",
         "ruling-sam-2026-10-09-p1-078",
-        "ruling-sam-2026-10-09-p1-200",
         "trace-animals-fit-p24-002",
         "trace-e2e-p12-003"
       ],
@@ -1944,8 +1993,13 @@
     {
       "id": "req-1825",
       "statement": "The germinal-products set has its own documents page: a copy of the live-animals documents feature folder, taken after this programme's documents changes have landed in live-animals, served at the same slug within the germinal set's journey and behaving as every adopted documents requirement here says. It is one of the germinal set's pages, since only Additional details, CPH number and permanent address are left out of it; its end-to-end, accessibility and security specs sit under tests/animals/{e2e,a11y,security}/germinal-products/.",
-      "why": "Sam's 9 October ruling makes germinal products a sibling set whose pages are copies of their live-animals feature folders, taken after the live twin is built, with journey pages at the live-animals slugs (claims 1 to 3 and 15). Duplication is the app's architecture and is never weighed as a cost. The copy keeps the documents page's Date of issue picker: the afternoon ruling's design question 12 names only the germinal details dates (req-253), and it lets the documents theme stand as distilled.",
+      "why": "Sam's 9 October ruling makes germinal products a sibling set whose pages are copies of their live-animals feature folders, taken after the live twin is built, with journey pages at the live-animals slugs (claims 1 to 3 and 15). Duplication is the app's architecture and is never weighed as a cost. The copy keeps the documents page's Date of issue picker: the afternoon ruling's design question 12 names only the germinal details dates (req-253), and it lets the documents theme stand as distilled. The V4 data fields page marks all four document fields as impacting the ANIMALS and the GERMINALS journeys alike. Sam's 26 October ruling names only live animals and high-risk plants and says nothing about germinal products, which changes nothing here: the copy is taken after the live-animals page is built, so it carries that page's save-button behaviour with it.",
       "claims": [
+        "confluence-6497338582-p4-075",
+        "confluence-6497338582-p4-084",
+        "confluence-6497338582-p4-093",
+        "confluence-6497338582-p4-101",
+        "confluence-6497338582-p4-104",
         "ruling-sam-2026-10-09-p1-006",
         "ruling-sam-2026-10-09-p1-011",
         "ruling-sam-2026-10-09-p1-013",
@@ -1956,7 +2010,8 @@
         "ruling-sam-2026-10-09-p1-018",
         "ruling-sam-2026-10-09-p1-062",
         "ruling-sam-2026-10-09-pm-p1-092",
-        "ruling-sam-2026-10-09-pm-p2-051"
+        "ruling-sam-2026-10-09-pm-p2-051",
+        "ruling-sam-2026-10-26-p1-024"
       ],
       "status": "adopted",
       "delta": "new",
@@ -1966,19 +2021,181 @@
     {
       "id": "req-1950",
       "statement": "The documents rows change the animals frontend (and the animals backend) only: the high-risk plants frontend takes no part of them, because it has no Upload documents page, no Documents task on its overview, no virus scan and no document-upload service.",
-      "why": "Sam's 9 October afternoon ruling, and his templates ruling, have plants take a change in the same increment only where plants has the same page or behaviour, and a row with no plants equivalent leaves plants alone; the ITAHC and the animal document types are animals-only data that is never mirrored.",
+      "why": "Sam's 9 October afternoon ruling, and his templates ruling, have plants take a change in the same increment only where plants has the same page or behaviour, and a row with no plants equivalent leaves plants alone; the ITAHC and the animal document types are animals-only data that is never mirrored. Sam's 26 October same-checks rule reaches every page with both save buttons in live animals and high-risk plants, and plants has no Upload documents page for it to reach.",
       "claims": [
+        "repo-plantsfrontend-p9-087",
         "ruling-sam-2026-10-09-pm-p3-013",
         "ruling-sam-2026-10-09-pm-p3-015",
         "ruling-sam-2026-10-09-pm-p3-017",
         "ruling-sam-2026-10-09-pm-p3-022",
         "ruling-sam-2026-10-09-templates-p1-044",
         "ruling-sam-2026-10-09-templates-p1-046",
-        "repo-plantsfrontend-p9-087"
+        "ruling-sam-2026-10-26-p1-009"
       ],
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "repo-plantsfrontend-p9-087: the plants frontend's decisions ledger parks document uploads (d-046), with no documents collection, upload page, uploader route, virus-scan polling or document reference.",
+      "conflicts": []
+    },
+    {
+      "id": "req-documents-001",
+      "statement": "The document reference, document type, date of issue and attachment are asked once for the notification as a whole, not per commodity line, per animal or per unit, and a document belongs to the notification rather than to any line on it.",
+      "why": "The V4 data fields page puts all four accompanying document fields at Notification level, which is the level the real record already uses.",
+      "claims": [
+        "confluence-6497338582-p4-064",
+        "confluence-6497338582-p4-071",
+        "confluence-6497338582-p4-080",
+        "confluence-6497338582-p4-089",
+        "confluence-6497338582-p4-097",
+        "repo-backend-p4-073"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p4-073: documents are stored in their own collection linked to a notification by its reference number, with nothing tying one to a commodity line.",
+      "conflicts": []
+    },
+    {
+      "id": "req-documents-002",
+      "statement": "The trader types the document reference and the date of issue and chooses the document type: the service fills none of the three in from the file or from the rest of the notification.",
+      "why": "The V4 data fields page marks all three as supplied by the user, and the real page asks for each of them.",
+      "claims": [
+        "confluence-6497338582-p4-072",
+        "confluence-6497338582-p4-086",
+        "confluence-6497338582-p4-090",
+        "confluence-6497338582-p4-094",
+        "confluence-6497338582-p4-098",
+        "repo-backend-p4-098",
+        "repo-frontend-p8-023"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p8-023 and repo-backend-p4-098 show the three details taken from the trader and nothing else today.",
+      "conflicts": []
+    },
+    {
+      "id": "req-documents-003",
+      "statement": "Nothing on the upload documents page depends on the commodity: the same document types are offered and no document is demanded or hidden, whatever commodity, species or reason for import the notification carries.",
+      "why": "Unlike the animal identifier fields, no accompanying document field on the V4 data fields page carries a commodity condition or an 'Applicable to' list, and the real page has no such rule either.",
+      "claims": [
+        "confluence-6497338582-p4-103-m1",
+        "repo-frontend-p8-024",
+        "repo-frontend-p8-116"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p8-024 offers the same list whatever the consignment, and repo-frontend-p8-116 shows no rule tying a required document type to it.",
+      "conflicts": []
+    },
+    {
+      "id": "req-documents-004",
+      "statement": "The attachment's file format is taken from the file the trader attaches and is never asked as a question; the format must be one of PDF, DOC, DOCX, JPEG, JPG, PNG, XLS and XLSX.",
+      "why": "The V4 data fields page holds the attachment's format as data the notification captures and permits those eight formats, but neither Design Release 2.1 nor the real page asks the trader for it, and what a page asks is the prototype's (c-documents-008).",
+      "claims": [
+        "confluence-6497338582-p4-077",
+        "confluence-6497338582-p4-078",
+        "confluence-6497338582-p4-079",
+        "confluence-6497338582-p4-081",
+        "confluence-6497338582-p4-082",
+        "confluence-6497338582-p4-083",
+        "confluence-6497338582-p4-085",
+        "repo-frontend-p8-038",
+        "repo-frontend-p8-084"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p8-038 takes the format from the chosen file's extension against those eight types, with no question asking for it.",
+      "conflicts": [
+        "c-documents-008"
+      ]
+    },
+    {
+      "id": "req-documents-005",
+      "statement": "Entering any one of the document reference, document type, date of issue or attachment makes the add-a-document form a document to add: Save and continue and Save and return to overview both check all four, hold the trader on the page with an error for each one that is missing or not valid, and keep everything already entered.",
+      "why": "Sam's 26 October ruling says what a trader typed is never dropped and that a part-filled document is refused on every save button with an error for each missing detail, and the V4 data fields page marks all four document fields all-or-nothing. Design Release 2.1 and the real page instead treat the document type alone as the marker, and the page's own intro says the other three become mandatory only once a type is selected, so which entry starts a document is the open question c-documents-004 settles.",
+      "claims": [
+        "confluence-6497338582-p4-066",
+        "confluence-6497338582-p4-066-m1",
+        "confluence-6497338582-p4-067",
+        "confluence-6497338582-p4-073",
+        "confluence-6497338582-p4-082",
+        "confluence-6497338582-p4-091",
+        "confluence-6497338582-p4-099",
+        "prototype-dr2-1-source-p10-077",
+        "repo-frontend-p8-079",
+        "ruling-sam-2026-10-26-p1-010",
+        "ruling-sam-2026-10-26-p1-014",
+        "ruling-sam-2026-10-26-p1-015",
+        "ruling-sam-2026-10-26-p1-019"
+      ],
+      "status": "question",
+      "delta": "change",
+      "deltaNote": "Today a reference, date or file entered with no document type chosen is discarded without a word on either save button (repo-frontend-p8-079, prototype-dr2-1-source-p10-077).",
+      "conflicts": [
+        "c-documents-004"
+      ]
+    },
+    {
+      "id": "req-documents-006",
+      "statement": "The Document type select also offers Self-declaration after Veterinary health certificate, CITES permit/certificate after Import permit and Packing list / species list before Other, each stored and published by its own code.",
+      "why": "The document type list the business supplied on 29 October 2026 adds these three, and the V4 data fields page outranks the prototype's demo data on which values the field permits (c-documents-001). A type with no code in the document-type codelist the notification event carries cannot be published, so the three wait on that codelist while the rest of the list change goes ahead (req-499).",
+      "claims": [
+        "confluence-6497338582-p4-069",
+        "confluence-6497338582-p4-070",
+        "confluence-6497338582-p6-061",
+        "repo-backend-p4-083",
+        "repo-frontend-p8-024"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today neither the select nor the backend has these three: the select offers fourteen types (repo-frontend-p8-024) and the backend fourteen codes (repo-backend-p4-083), none of them Self-declaration, CITES permit/certificate or Packing list / species list.",
+      "conflicts": [
+        "c-documents-001"
+      ],
+      "blockedBy": "The owners of the GBN-AG document-type codelist add codes for Self-declaration, CITES permit/certificate and Packing list / species list and confirm the downstream services accept them, before documents of those types are published."
+    },
+    {
+      "id": "req-documents-007",
+      "statement": "The backend accepts, stores and codes every document type it holds, including types the page does not offer, so a document saved earlier still loads, is still shown with its own name and is still coded on the notification event the backend publishes.",
+      "why": "A trader must not lose a document because the offered list changed, and the outbound event still has to carry what was stored: a persistence and cross-service constraint the prototype cannot express.",
+      "claims": [
+        "repo-backend-p4-083",
+        "repo-backend-p4-088",
+        "repo-backend-p4-093",
+        "repo-backend-p4-094",
+        "repo-backend-p4-095",
+        "repo-frontend-p8-084"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-backend-p4-083 holds all fourteen codes and repo-frontend-p8-084 warns the trader when a saved document's type is no longer listed.",
+      "conflicts": [
+        "c-documents-001"
+      ]
+    },
+    {
+      "id": "req-documents-008",
+      "statement": "The V4 data fields page records what its 29 October 2026 document type list update changed, and gives an accompanying document type example that is one of the values the field permits.",
+      "why": "These are gaps in the policy page, which this programme reads rather than edits; they go to the report so the business can tidy them. Until then the list is taken as the business's latest and the example as stale.",
+      "claims": [
+        "confluence-6497338582-p4-076",
+        "confluence-6497338582-p6-061-m1"
+      ],
+      "status": "out-of-scope",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-documents-009",
+      "statement": "How the Notification submitted page lists the ITAHC as still to upload whenever no ITAHC was uploaded, whatever else was uploaded.",
+      "why": "The documents area stops at how documents show on the review page; the confirmation page is the review and confirmation area's.",
+      "claims": [
+        "ruling-sam-2026-10-26-p1-021",
+        "ruling-sam-2026-10-26-p1-022"
+      ],
+      "status": "out-of-scope",
+      "delta": "new",
+      "deltaNote": "",
       "conflicts": []
     }
   ],
@@ -2104,10 +2321,15 @@
           "source": "repo:frontend",
           "says": "A reference over 58 characters is refused.",
           "claim": "repo-frontend-p8-021"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "The accompanying document reference is a string of at most 58 characters.",
+          "claim": "confluence-6497338582-p4-087"
         }
       ],
       "resolution": "precedence",
-      "outcome": "The ruling ranks first: a stored reference needs a length limit, a validation constraint the prototype cannot express, so the 58-character limit and its message stay. The prototype's blank-reference rule still holds and is kept."
+      "outcome": "The ruling ranks first: a stored reference needs a length limit, a validation constraint the prototype cannot express, so the 58-character limit and its message stay. The V4 data fields page specifies the same 58 characters, so policy and the real service agree. The prototype's blank-reference rule still holds and is kept."
     },
     {
       "id": "c-065",
@@ -2561,7 +2783,7 @@
         }
       ],
       "resolution": "precedence",
-      "outcome": "The prototype wins by default: a type-chosen document is checked and saved (or the errors shown) before the trader leaves."
+      "outcome": "The prototype wins by default: a type-chosen document is checked and saved (or the errors shown) before the trader leaves. Sam's 26 October ruling confirms and widens this: the two save buttons make exactly the same checks, with no documents exception (c-documents-006)."
     },
     {
       "id": "c-083",
@@ -2661,10 +2883,15 @@
           "source": "repo:frontend",
           "says": "An existing ruling (EUDPA-310) offers every GBN-AG document type, Health certificate included, after DR1 held it back.",
           "claim": "repo-frontend-p8-025"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "The thirteen permitted document types the business supplied do not include Health certificate.",
+          "claim": "confluence-6497338582-p4-070"
         }
       ],
       "resolution": "precedence",
-      "outcome": "The documents page stops offering 'Health certificate': the document type select offers, in order, Intra Trade Animal Health Certificate (ITAHC), Veterinary health certificate, Air waybill, Import permit, Letter of authority (Directive 2008/61/EC), Commercial invoice, Sea waybill, Rail waybill, Bill of lading, Catch certificate, Laboratory sampling results for aflatoxin (Reg 2019/1793), Journey log, Other, matching Design Release 2.1 and the DR1 judgement in inc-136. The prototype wins by default, DR1 judged the same difference the same way, and EUDPA-310's re-offer is a choice the frontend made, not a constraint the prototype cannot express. The change is to the frontend's options (and the fit and E2E specs that assert fourteen); the backend's DocumentType enum keeps HEALTH_CERTIFICATE so documents already saved with it still load and are still coded on the outbound event.",
+      "outcome": "The documents page stops offering 'Health certificate'. The prototype wins by default, DR1 judged the same difference the same way in inc-136, the V4 data fields page's own list leaves it out too, and EUDPA-310's re-offer is a choice the frontend made, not a constraint the prototype cannot express. The offered list itself is settled by c-documents-001; the backend's DocumentType enum keeps HEALTH_CERTIFICATE so documents already saved with it still load and are still coded on the outbound event.",
       "overruled": [
         "repo-frontend-p8-025"
       ]
@@ -2722,6 +2949,212 @@
         "prototype-dr2-1-source-p10-004",
         "prototype-dr2-1-source-p10-005"
       ]
+    },
+    {
+      "id": "c-documents-001",
+      "about": "Which document types the Document type select offers.",
+      "positions": [
+        {
+          "source": "confluence:6497338582",
+          "says": "The thirteen permitted types are ITAHC, Other veterinary certificate / veterinary declaration, Self-declaration, Journey log, Import permit / authorisation, CITES permit/certificate, Air waybill, Sea waybill, Rail waybill, Bill of lading, Commercial invoice, Packing list / species list and Other supporting documents.",
+          "claim": "confluence-6497338582-p4-070"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "The Document Type list was replaced on 29 October 2026 with an updated list the business supplied, so the page's values are the newer list.",
+          "claim": "confluence-6497338582-p6-061"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "After ITAHC the options are Veterinary health certificate, Air waybill, Import permit, Letter of authority (Directive 2008/61/EC), Commercial invoice, Sea waybill, Rail waybill, Bill of lading, Catch certificate, Laboratory sampling results for aflatoxin (Reg 2019/1793), Journey log and Other.",
+          "claim": "prototype-dr2-1-source-p10-030"
+        },
+        {
+          "source": "repo:frontend",
+          "says": "The select offers all fourteen types the document-types service holds.",
+          "claim": "repo-frontend-p8-024"
+        },
+        {
+          "source": "repo:backend",
+          "says": "There are fourteen document type codes, aligned with the frontend's options as the complete V4 set.",
+          "claim": "repo-backend-p4-083"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The V4 data fields page outranks the prototype on which values a field permits, and its role says so in as many words: the prototype's app/data lists are demo fixtures and this page is the specification. The select therefore offers the business's thirteen types in their order. Ten of them already have a code and change now (req-499); Self-declaration, CITES permit/certificate and Packing list / species list need codes in the codelist the notification event carries, so they are adopted blocked (req-documents-006). The prototype's list is set aside; the frontend's and backend's own claims are not overruled, because each still describes what exists today and backs the deltas, and the backend keeps every code it holds so saved documents still load (req-documents-007).",
+      "overruled": [
+        "prototype-dr2-1-source-p10-030"
+      ]
+    },
+    {
+      "id": "c-documents-002",
+      "about": "How each document type option reads where the V4 data fields page and Design Release 2.1 name the same type differently.",
+      "positions": [
+        {
+          "source": "confluence:6497338582",
+          "says": "The types are named ITAHC (Intra Trade Animal Health Certificate), Other veterinary certificate / veterinary declaration, Import permit / authorisation and Other supporting documents.",
+          "claim": "confluence-6497338582-p4-070"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "The first option reads 'Intra Trade Animal Health Certificate (ITAHC)'.",
+          "claim": "prototype-dr2-1-source-p10-029"
+        },
+        {
+          "source": "repo:frontend",
+          "says": "The options read 'Intra Trade Animal Health Certificate (ITAHC)', 'Veterinary health certificate', 'Import permit' and 'Other'.",
+          "claim": "repo-frontend-p8-024"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The V4 data fields page's role reserves how pages look and read to Design Release 2.1, so its names are the specification's and the option keeps Design Release 2.1's wording wherever both name the same type: 'Intra Trade Animal Health Certificate (ITAHC)', 'Veterinary health certificate', 'Import permit' and 'Other'. A type Design Release 2.1 does not offer takes the business's own name, because there is no other wording for it: 'Self-declaration', 'CITES permit/certificate' and 'Packing list / species list'. Nothing is overruled: the page's names still stand as the specification's field names, and its own example 'Veterinary health certificate' shows the older wording is still in use there.",
+      "overruled": []
+    },
+    {
+      "id": "c-documents-003",
+      "about": "Whether 'Journey log' is still a document type a trader may choose.",
+      "positions": [
+        {
+          "source": "confluence:6497338582",
+          "says": "'Journey Log' is de-scoped, recorded on 14 May 2026, so a notification does not capture a journey log.",
+          "claim": "confluence-6497338582-p6-056"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "Journey log is one of the thirteen permitted document types in the list the business supplied on 29 October 2026.",
+          "claim": "confluence-6497338582-p4-070"
+        },
+        {
+          "source": "repo:frontend",
+          "says": "The select offers Journey log today.",
+          "claim": "repo-frontend-p8-024"
+        }
+      ],
+      "resolution": "question",
+      "outcome": "The V4 data fields page contradicts itself: its Change Log de-scopes Journey Log in May 2026, and its document type list, replaced in October 2026, still names it. Precedence cannot settle a disagreement inside one source, so it goes to the owner with a default that keeps the option.",
+      "question": "Is 'Journey log' still a document type a trader may choose, or did the May 2026 de-scoping remove it for good?",
+      "default": "Journey log stays among the document types. The business's October list names it, Design Release 2.1 offers it and the service offers it today, so nothing is taken away from traders on the strength of the earlier Change Log row alone."
+    },
+    {
+      "id": "c-documents-004",
+      "about": "What makes the add-a-document form a document to add: any detail entered, or the document type alone.",
+      "positions": [
+        {
+          "source": "ruling:sam-2026-10-26",
+          "says": "A part-filled document is refused on every save button, with an error for each missing detail, and what a trader typed is never dropped.",
+          "claim": "ruling-sam-2026-10-26-p1-014"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "The Accompanying Document block is all-or-nothing: either none of its fields is given or all of them are.",
+          "claim": "confluence-6497338582-p4-067"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "A reference, date or file entered with no document type chosen is silently discarded on either save button.",
+          "claim": "prototype-dr2-1-source-p10-077"
+        },
+        {
+          "source": "repo:frontend",
+          "says": "An untouched form, meaning no document type chosen, is left alone and the page is left with nothing added.",
+          "claim": "repo-frontend-p8-079"
+        }
+      ],
+      "resolution": "question",
+      "outcome": "Two readings build different pages. Sam's 26 October ruling and the V4 page's all-or-nothing marking on all four fields say any entered detail starts a document, so a reference typed alone is refused with errors; Design Release 2.1, the real page and the V4 page's own intro, which makes the other three mandatory only once a type is selected, make the document type the marker, so a reference typed alone is thrown away. The V4 page marks the same fields both ways and does not say which marking governs, so nothing ranks them and it goes to the owner.",
+      "question": "On Upload documents, does entering any one detail (a reference, a type, a date or a file) make the form a document both save buttons must check, or only choosing the document type?",
+      "default": "Any one of the four details makes it a document to add: both buttons check all four, hold the trader with an error for each one missing or not valid, and keep what was entered; a form with nothing entered leaves the page with no error. This follows Sam's 26 October ruling that what a trader typed is never dropped and the V4 page's all-or-nothing marking."
+    },
+    {
+      "id": "c-documents-005",
+      "about": "Whether the date of issue must be typed as a zero-padded DD/MM/YYYY.",
+      "positions": [
+        {
+          "source": "confluence:6497338582",
+          "says": "The date of issue must be a valid date given in DD/MM/YYYY format.",
+          "claim": "confluence-6497338582-p4-096"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "The Date of issue hint gives the example 27/3/2026.",
+          "claim": "prototype-dr2-1-source-p10-032"
+        },
+        {
+          "source": "repo:frontend",
+          "says": "A date that is not a real day, month and four-digit year shows 'Enter a real date'; a one-digit day or month is accepted.",
+          "claim": "repo-frontend-p8-031"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The V4 data fields page sets the order day, month then year rather than zero padding: read as zero-padded it would refuse Design Release 2.1's own hint example, 27/3/2026, and the page's own example, 12/12/2025, cannot tell the two readings apart. How the field reads and what it accepts on the page is Design Release 2.1's, so a one- or two-digit day and month with a four-digit year are accepted, as they are today (req-506). Nothing is overruled: the page's format rule still stands as day, month, year order.",
+      "overruled": []
+    },
+    {
+      "id": "c-documents-006",
+      "about": "Whether Save and return to overview on the documents page makes the same checks as Save and continue.",
+      "positions": [
+        {
+          "source": "ruling:sam-2026-10-26",
+          "says": "No page is an exception to the same-checks rule, and upload documents follows the same rule as every other page.",
+          "claim": "ruling-sam-2026-10-26-p1-013"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "Save and return to overview applies the same optional-upload validation before going to the hub or review.",
+          "claim": "prototype-dr2-1-source-p10-079"
+        },
+        {
+          "source": "repo:frontend",
+          "says": "The exit back to the overview always leaves and discards any part-filled document form.",
+          "claim": "repo-frontend-p8-082"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "Sam's 26 October ruling ranks first and withdraws the earlier decision that let Save and return skip a page's required checks, refusing a documents-only fix in as many words: on this page the two buttons make exactly the same checks (req-540). Design Release 2.1 says the same. repo-frontend-p8-082 is not overruled, because it still describes the behaviour today and backs the delta.",
+      "overruled": []
+    },
+    {
+      "id": "c-documents-007",
+      "about": "Whether the four document fields are labelled with the V4 data fields page's names or the page's own.",
+      "positions": [
+        {
+          "source": "confluence:6497338582",
+          "says": "The fields are shown to the user as 'Accompanying Document: Type', 'Accompanying Document: Attachment Type', 'Accompanying Document: Reference' and 'Accompanying Document: Date of Issue'.",
+          "claim": "confluence-6497338582-p4-086"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "The fields are labelled 'Document reference', 'Document type', 'Date of issue' and 'Attachment'.",
+          "claim": "prototype-dr2-1-source-p10-026"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The V4 data fields page's role reserves how pages look and read to Design Release 2.1, so its 'shown to the user as' names are the specification's own field names and the page keeps 'Document reference', 'Document type', 'Date of issue' and 'Attachment' (req-493, req-498, req-504, req-507). Nothing is overruled: the page's names still stand as the data a notification captures.",
+      "overruled": []
+    },
+    {
+      "id": "c-documents-008",
+      "about": "Whether the trader is asked for the attachment's file format or it is taken from the file.",
+      "positions": [
+        {
+          "source": "confluence:6497338582",
+          "says": "The accompanying document attachment type is a single-select enumeration supplied by the user.",
+          "claim": "confluence-6497338582-p4-081"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "The fourth field is the attachment itself, with a hint listing what the file must be; no field asks for its format.",
+          "claim": "prototype-dr2-1-source-p10-035"
+        },
+        {
+          "source": "repo:frontend",
+          "says": "The allowed formats are checked from the chosen file's extension and the file input's accept attribute; the trader is never asked.",
+          "claim": "repo-frontend-p8-038"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The V4 data fields page specifies the attachment's format as data the notification holds, and it holds no field for the file itself, so it cannot be read as a question the page asks. What a page asks is Design Release 2.1's, and neither it nor the real page asks: the format is taken from the attached file and checked against the eight permitted formats (req-documents-004). Nothing is overruled: the format is still captured, just not asked for.",
+      "overruled": []
     }
   ]
 }

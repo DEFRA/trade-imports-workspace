@@ -3,7 +3,11 @@
   "title": "One source's extract",
   "description": "workareas/<workarea>/distil/extract/<source slug>.json: what one source says, one claim per observable fact, with provenance, before any reconciling. A source is extracted in parts: the characterise agent cuts it into the parts partition.schema.json defines, one extract agent per part writes distil/extract/<source slug>.part<N>.json in this same shape (its `structure` says what the part covered, and it has no `scopeHash`), and `tim distil merge-extract` joins the parts into this one file, in part order, and stamps its scope hash. `tim distil check --stage extract` validates the file and every part against this schema, and also checks what a schema cannot: `source` names this file's source, `scopeHash` matches the source's kind, locator and scope today, claim ids are unique across every extract in the workarea, no claim id ends in -m<N> (that suffix is kept for claims a verifier finds missing), each part's claims use its prefix or an id it keeps, and the file is exactly its parts merged.",
   "type": "object",
-  "required": ["source", "structure", "claims"],
+  "required": [
+    "source",
+    "structure",
+    "claims"
+  ],
   "additionalProperties": false,
   "properties": {
     "source": {
@@ -22,7 +26,14 @@
     "claims": {
       "description": "Every claim, in the order the source makes them.",
       "type": "array",
-      "items": { "$ref": "#/$defs/claim" }
+      "items": {
+        "$ref": "#/$defs/claim"
+      }
+    },
+    "repoHead": {
+      "description": "For a `repo` source only, the commit its checkout was on when it was extracted: the 40-character sha1 of HEAD. `tim distil merge-extract` writes it and `tim distil stamp` adopts it. A different commit today means the repo has moved since, so the extract describes code that has changed and the source is stale — a repo moves under its extract where a document or a page does not, and the scope hash cannot see that because it hashes only the kind, locator and scope. Left out when the checkout cannot be read, which keeps a missing clone from being called stale; an extract written before this field existed is not stale for lacking it.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
     }
   },
   "$defs": {
@@ -34,7 +45,14 @@
     "claim": {
       "description": "One observable fact the source states: something a user, operator or other system can observe, never a file, class or function. It records what the source says, without reconciling it with other sources.",
       "type": "object",
-      "required": ["id", "statement", "kind", "ref", "quote", "confidence"],
+      "required": [
+        "id",
+        "statement",
+        "kind",
+        "ref",
+        "quote",
+        "confidence"
+      ],
       "additionalProperties": false,
       "properties": {
         "id": {
@@ -68,7 +86,11 @@
         },
         "confidence": {
           "description": "verbatim: the source says it. inferred: read between the lines, and the statement says why. gap: the source should say something here and does not.",
-          "enum": ["verbatim", "inferred", "gap"]
+          "enum": [
+            "verbatim",
+            "inferred",
+            "gap"
+          ]
         },
         "note": {
           "description": "Anything else the extractor wants the verifier or reconciler to know about this claim.",
@@ -76,12 +98,25 @@
         }
       },
       "if": {
-        "required": ["confidence"],
-        "properties": { "confidence": { "enum": ["verbatim", "inferred"] } }
+        "required": [
+          "confidence"
+        ],
+        "properties": {
+          "confidence": {
+            "enum": [
+              "verbatim",
+              "inferred"
+            ]
+          }
+        }
       },
       "then": {
         "description": "A verbatim or inferred claim quotes the words it rests on.",
-        "properties": { "quote": { "pattern": "\\S" } }
+        "properties": {
+          "quote": {
+            "pattern": "\\S"
+          }
+        }
       }
     }
   }

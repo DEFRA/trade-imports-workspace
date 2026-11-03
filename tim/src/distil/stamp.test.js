@@ -1,5 +1,5 @@
 import { describe, test, expect, afterEach } from 'vitest'
-import { readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { stampScopeHash } from './stamp.js'
 import { scopeHashOf } from './files.js'
@@ -14,11 +14,12 @@ afterEach(() => {
 
 const extractPath = () => join(workspace.layout.extractDir, 'repo-tests.json')
 
-const stamp = (sourceId = 'repo:tests') =>
+const stamp = (sourceId = 'repo:tests', workspaceRoot) =>
   stampScopeHash({
     layout: workspace.layout,
     schemas: workspace.schemas,
-    sourceId
+    sourceId,
+    workspaceRoot
   })
 
 const testsSource = () =>
@@ -68,6 +69,7 @@ describe('stampScopeHash', () => {
       source: 'repo:tests',
       path: extractPath(),
       scopeHash: scopeHashOf(testsSource()),
+      repoHead: null,
       before,
       changed: true
     })
@@ -105,5 +107,43 @@ describe('stampScopeHash', () => {
     expect(() => stamp('repo:gone')).toThrow(
       `Can't find source repo:gone in ${workspace.layout.sources}.`
     )
+  })
+})
+
+describe('stampScopeHash, for a repo source', () => {
+  const HEAD = '6666666666666666666666666666666666666666'
+
+  const makeCheckout = (relative, head) => {
+    const gitDir = join(workspace.root, relative, '.git')
+    mkdirSync(gitDir, { recursive: true })
+    writeFileSync(join(gitDir, 'HEAD'), `${head}\n`)
+  }
+
+  test('records the commit its checkout is on, so a stamped extract is watched too', () => {
+    workspace = makeDistilWorkspace()
+    makeCheckout('repos/trade-imports-ins-tests', HEAD)
+
+    stamp('repo:tests', workspace.root)
+
+    expect(JSON.parse(readFileSync(extractPath(), 'utf8')).repoHead).toBe(HEAD)
+  })
+
+  test('reports the commit it recorded', () => {
+    workspace = makeDistilWorkspace()
+    makeCheckout('repos/trade-imports-ins-tests', HEAD)
+
+    expect(stamp('repo:tests', workspace.root)).toMatchObject({
+      repoHead: HEAD
+    })
+  })
+
+  test('records no commit when the checkout cannot be read', () => {
+    workspace = makeDistilWorkspace()
+
+    stamp('repo:tests', workspace.root)
+
+    expect(
+      JSON.parse(readFileSync(extractPath(), 'utf8')).repoHead
+    ).toBeUndefined()
   })
 })

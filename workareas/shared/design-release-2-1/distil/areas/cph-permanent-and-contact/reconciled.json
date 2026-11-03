@@ -3,8 +3,8 @@
   "requirements": [
     {
       "id": "req-699",
-      "statement": "In the live-animals set, the CPH number question applies to every live-animal commodity except horses (0101) and commodity code 01061900 (cats, dogs, ferrets and other live mammals). The rule is built now over the commodities today's catalogue holds, and the same rule covers pigs, sheep, goats, poultry, rabbits, camels, ostriches, parrots, reptiles, bees and fish once the MDM catalogue holds them, with no further change. Where it does not apply, the CPH page cannot be opened and sends the user to the consignment addresses page. The plants frontend has no CPH number and gets nothing from this rule.",
-      "why": "Design Release 2.1 asks for a CPH number for every species kept on a holding, not only the few on today's list, and keeps the page out of reach for consignments that have no holding. This is the live half of the CPH rule: the 2026-10-09 ruling splits req-699 per set, and the germinal set has no CPH page at all (req-1832). The 2026-10-09 afternoon ruling blocks the new catalogue on MDM but lets the CPH page go ahead on today's five commodities, and never mirrors CPH into plants.",
+      "statement": "In the live-animals set, the CPH number question applies when the consignment holds a commodity line for cattle (0102), pigs (0103), sheep (010410), goats (010420) or poultry, whether day-old chicks (01051111, 01051200, 01051300, 01051400, 01051500), adult birds (01059400, 01059910, 01059920, 01059930, 01059950) or hatching eggs (04071100, 04071911, 04071919). The rule is built now over the commodities today's catalogue holds, and the same rule covers the rest once the MDM catalogue holds them, with no further change. Where it does not apply, the CPH page cannot be opened and sends the user to the consignment addresses page. The plants frontend has no CPH number and gets nothing from this rule.",
+      "why": "The Live Animals & Germinals Data Fields page names the commodities that need a CPH number, and it outranks the prototype on which commodity codes a conditional rule covers, so the question follows that list rather than the prototype's catch-all default. The page stays out of reach for a consignment whose commodities have no holding. This is the live half of the CPH rule: the 2026-10-09 ruling splits req-699 per set, and the germinal set has no CPH page at all (req-1832). The 2026-10-09 afternoon ruling blocks the new catalogue on MDM but lets the CPH page go ahead on today's commodities, and never mirrors CPH into plants.",
       "claims": [
         "prototype-dr2-1-source-p9-001",
         "prototype-dr2-1-source-p9-002",
@@ -17,12 +17,35 @@
         "ruling-sam-2026-10-09-pm-p3-022",
         "trace-e2e-p6-068",
         "trace-e2e-p6-070",
-        "trace-prototype-dr2-1-p7-106"
+        "trace-prototype-dr2-1-p7-106",
+        "confluence-6497338582-p2-099",
+        "confluence-6497338582-p2-107",
+        "confluence-6497338582-p2-108",
+        "confluence-6497338582-p2-109",
+        "confluence-6497338582-p2-110",
+        "confluence-6497338582-p2-111",
+        "confluence-6497338582-p2-112",
+        "confluence-6497338582-p2-113",
+        "confluence-6497338582-p2-114",
+        "confluence-6497338582-p2-115",
+        "confluence-6497338582-p2-116",
+        "confluence-6497338582-p2-117",
+        "confluence-6497338582-p2-118",
+        "confluence-6497338582-p2-119",
+        "confluence-6497338582-p2-120",
+        "confluence-6497338582-p2-121",
+        "confluence-6497338582-p2-122",
+        "confluence-6497338582-p2-123",
+        "confluence-6497338582-p2-124",
+        "confluence-6497338582-p2-125",
+        "confluence-6497338582-p2-126"
       ],
       "status": "adopted",
       "delta": "change",
-      "deltaNote": "Today the CPH question applies only when a commodity line's commodity is on the frontend's CPH commodity list (repo-frontend-p10-003): cattle bring it in and cats leave it out (trace-e2e-p6-068, trace-e2e-p6-070), but nothing shows pigs, sheep, goats, poultry and the rest on it, and no source shows what the page does when opened for a consignment it does not apply to. The germinal codes 05111000 and 05119985 leave the live-animals catalogue (ruling-sam-2026-10-09-p1-026), so the live rule no longer names them.",
-      "conflicts": []
+      "deltaNote": "Today the CPH question applies when a commodity line's commodity is on the frontend's CPH commodity list, which is every commodity whose code is not on Design release 1's exempt list (repo-frontend-p10-003): cattle bring it in and cats leave it out (trace-e2e-p6-068, trace-e2e-p6-070). So rabbits, camels, ostriches, parrots, reptiles, bees and fish bring the question in today and no longer will (c-cph-permanent-and-contact-001), and no source shows what the page does when opened for a consignment it does not apply to. The germinal codes 05111000 and 05119985 leave the live-animals catalogue (ruling-sam-2026-10-09-p1-026), so the live rule no longer names them.",
+      "conflicts": [
+        "c-cph-permanent-and-contact-001"
+      ]
     },
     {
       "id": "req-700",
@@ -60,7 +83,8 @@
       "delta": "change",
       "deltaNote": "Today the addresses page shows the saved number as nine bare digits, '123456789' (trace-e2e-p6-075); the Change link already exists (trace-e2e-p6-076).",
       "conflicts": [
-        "c-112"
+        "c-112",
+        "c-cph-permanent-and-contact-002"
       ]
     },
     {
@@ -77,7 +101,8 @@
       "delta": "exists",
       "deltaNote": "repo-frontend-p10-038 and trace-animals-fit-p13-025: the frontend joins the parts and stores 123456789.",
       "conflicts": [
-        "c-112"
+        "c-112",
+        "c-cph-permanent-and-contact-002"
       ]
     },
     {
@@ -193,11 +218,13 @@
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today the hint reads 'For example, 12/345/6789.', with a comma and a full stop (repo-frontend-p10-012, trace-animals-fit-p13-007); it already describes the group and never shows 123/456/789.",
-      "conflicts": []
+      "conflicts": [
+        "c-cph-permanent-and-contact-002"
+      ]
     },
     {
       "id": "req-709",
-      "statement": "The CPH number is entered in three boxes in one row, laid out with the GOV.UK date-input pattern, with visible labels 'County' (2 wide, at most 2 characters), 'Parish' (3 wide, at most 3) and 'Holding number' (4 wide, at most 4), each asking for a numeric keypad.",
+      "statement": "The CPH number is entered in three boxes in one row, laid out with the GOV.UK date-input pattern, with visible labels 'County' (2 wide), 'Parish' (3 wide) and 'Holding number' (4 wide), each asking for a numeric keypad. The boxes do not cut typing short (Sam, 20 Oct).",
       "why": "A CPH number is three parts of 2, 3 and 4 digits; boxes sized to the parts make each part easy to enter and check.",
       "claims": [
         "prototype-dr2-1-source-p9-011",
@@ -225,7 +252,9 @@
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "repo-frontend-p10-014 to repo-frontend-p10-020 and trace-animals-fit-p13-010 to trace-animals-fit-p13-015: the same three labelled, sized boxes in the date-input layout today.",
-      "conflicts": []
+      "conflicts": [
+        "c-cph-permanent-and-contact-002"
+      ]
     },
     {
       "id": "req-710",
@@ -261,7 +290,7 @@
         "c-006",
         "c-288"
       ],
-      "blockedBy": "Design answers design question 7 (CPH number JavaScript) in the waiting-on-design theme: whether the CPH boxes drop non-digits as they are typed. Built as design says, or dropped if design drops it."
+      "blockedBy": "Design question 7 is answered for the boxes (Sam, 20 Oct: three labelled boxes, no cursor jump, the whole number kept without JavaScript, design-snagging inc-219). Still waits on design: whether this JavaScript enhancement is wanted on top. Built as design says, or dropped if design drops it."
     },
     {
       "id": "req-712",
@@ -282,7 +311,7 @@
       "conflicts": [
         "c-288"
       ],
-      "blockedBy": "Design answers design question 7 (CPH number JavaScript) in the waiting-on-design theme: whether a paste spreads across the three CPH boxes, and whether one box taking '12/345/6789' replaces the three. Built as design says, or dropped if design drops it."
+      "blockedBy": "Design question 7 is answered for the boxes (Sam, 20 Oct: three labelled boxes, no cursor jump, the whole number kept without JavaScript, design-snagging inc-219). Still waits on design: whether this JavaScript enhancement is wanted on top. Built as design says, or dropped if design drops it."
     },
     {
       "id": "req-713",
@@ -304,18 +333,20 @@
     {
       "id": "req-714",
       "statement": "Saving the CPH page with all three boxes empty raises no error: it saves no CPH number (clearing any saved before), the trader moves on, and the CPH section stays incomplete, so the notification cannot be submitted until a number is added.",
-      "why": "Design Release 2.1 lets the trader move on and holds the gap at submission instead; required-to-proceed is a design choice the prototype can express, not a constraint it cannot.",
+      "why": "Design Release 2.1 lets the trader move on and holds the gap at submission instead; required-to-proceed is a design choice the prototype can express, not a constraint it cannot. The Live Animals & Germinals Data Fields page agrees: the CPH number is mandatory to submit, not mandatory to proceed. The 26 October ruling makes every save button on a page check the same thing as the others, which leaves this unchanged because there is nothing the page requires before the trader moves on (c-cph-permanent-and-contact-005).",
       "claims": [
         "prototype-dr2-1-source-p9-014",
         "prototype-dr2-1-source-p9-015",
         "prototype-dr2-1-source-p9-004",
-        "prototype-dr2-1-source-p8-135"
+        "prototype-dr2-1-source-p8-135",
+        "confluence-6497338582-p2-104"
       ],
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today an empty submit is refused with 400 and the single error 'Enter a CPH number' linked to the County box.",
       "conflicts": [
-        "c-113"
+        "c-113",
+        "c-cph-permanent-and-contact-005"
       ]
     },
     {
@@ -550,7 +581,7 @@
     {
       "id": "req-726",
       "statement": "Cats, dogs and ferrets need a permanent address; 'Other live mammals', which shares their commodity code 01061900, does not. It is built now for cats and dogs, and the same rule takes in ferrets once the commodity catalogue holds them.",
-      "why": "Design Release 2.1 asks for a permanent address only for pets that APHA must be able to check. The 2026-10-09 afternoon ruling builds the permanent address page for cats and dogs now, and ferrets once the catalogue, which waits on MDM, holds them.",
+      "why": "Design Release 2.1 asks for a permanent address only for pets that APHA must be able to check, and the Live Animals & Germinals Data Fields page names the same three commodities, all under the one code 01061900, so the rule needs the commodity name as well as the code. The 2026-10-09 afternoon ruling builds the permanent address page for cats and dogs now, and ferrets once the commodity catalogue, which waits on MDM, holds them.",
       "claims": [
         "document-dr1-parity-backlog-p6-012",
         "document-dr1-parity-backlog-p6-015",
@@ -558,12 +589,20 @@
         "ruling-sam-2026-10-09-pm-p2-014",
         "ruling-sam-2026-10-09-pm-p2-015",
         "trace-e2e-p6-028",
-        "trace-prototype-dr2-1-p7-109"
+        "trace-prototype-dr2-1-p7-109",
+        "confluence-6497338582-p2-049",
+        "confluence-6497338582-p2-058",
+        "confluence-6497338582-p2-059",
+        "confluence-6497338582-p2-060",
+        "confluence-6497338582-p2-061",
+        "confluence-6497338582-p2-062"
       ],
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today the frontend asks for a permanent address for cats and dogs only (trace-e2e-p6-028; DR1 inc-057 records the same); ferrets are not in today's commodity catalogue, so nothing changes for them until the MDM catalogue holds them.",
-      "conflicts": []
+      "conflicts": [
+        "c-cph-permanent-and-contact-007"
+      ]
     },
     {
       "id": "req-727",
@@ -589,7 +628,8 @@
         "document-dr1-parity-backlog-p6-004",
         "trace-e2e-p6-028",
         "ruling-sam-2026-10-09-p1-108",
-        "ruling-sam-2026-10-09-p1-073"
+        "ruling-sam-2026-10-09-p1-073",
+        "confluence-6497338582-p2-046"
       ],
       "status": "adopted",
       "delta": "change",
@@ -686,7 +726,8 @@
         "trace-prototype-dr2-1-p7-091",
         "trace-prototype-dr2-1-p13-111",
         "prototype-dr2-1-specs-p3-084",
-        "trace-e2e-p6-044"
+        "trace-e2e-p6-044",
+        "confluence-6497338582-p2-050"
       ],
       "status": "adopted",
       "delta": "new",
@@ -726,7 +767,8 @@
         "document-dr1-parity-backlog-p6-005",
         "document-dr1-parity-backlog-p6-008",
         "document-dr1-parity-backlog-p6-009",
-        "document-dr1-parity-backlog-p6-004"
+        "document-dr1-parity-backlog-p6-004",
+        "confluence-6497338582-p2-051"
       ],
       "status": "adopted",
       "delta": "new",
@@ -803,12 +845,16 @@
         "trace-prototype-dr2-1-p13-114",
         "trace-e2e-p6-033",
         "trace-e2e-p6-034",
-        "trace-e2e-p6-035"
+        "trace-e2e-p6-035",
+        "confluence-6497338582-p2-047",
+        "confluence-6497338582-p2-054"
       ],
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "trace-e2e-p6-032 to trace-e2e-p6-035: the identification form asks for the same eight fields with the same labels and phone hint, and no country, today.",
-      "conflicts": []
+      "conflicts": [
+        "c-cph-permanent-and-contact-004"
+      ]
     },
     {
       "id": "req-739",
@@ -847,13 +893,15 @@
         "trace-e2e-p6-039",
         "trace-e2e-p6-040",
         "trace-e2e-p6-041",
-        "trace-e2e-p6-042"
+        "trace-e2e-p6-042",
+        "confluence-6497338582-p2-052"
       ],
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today the same field messages exist, but they fire whenever any part of the address is given, with no choice behind them (trace-e2e-p6-036 to trace-e2e-p6-042); no source shows today's message for a blank name.",
       "conflicts": [
-        "c-119"
+        "c-119",
+        "c-cph-permanent-and-contact-004"
       ]
     },
     {
@@ -898,20 +946,22 @@
     {
       "id": "req-743",
       "statement": "An animal left with no option chosen raises no error: the page saves the other animals and moves on, and the permanent address section stays incomplete until every animal that needs one has an address with a name.",
-      "why": "Design Release 2.1 lets the trader save what they know and come back; completeness is checked at the section and at submission.",
+      "why": "Design Release 2.1 lets the trader save what they know and come back; completeness is checked at the section and at submission. The Live Animals & Germinals Data Fields page agrees: a permanent address is mandatory to submit, and only for an animal whose commodity is cats, dogs or ferrets (c-cph-permanent-and-contact-007).",
       "claims": [
         "prototype-dr2-1-source-p9-062",
         "prototype-dr2-1-source-p9-062-m1",
         "prototype-dr2-1-source-p9-063",
         "prototype-dr2-1-source-p9-074",
         "trace-prototype-dr2-1-p7-102",
-        "prototype-dr2-1-specs-p3-089"
+        "prototype-dr2-1-specs-p3-089",
+        "confluence-6497338582-p2-055"
       ],
       "status": "adopted",
       "delta": "new",
       "deltaNote": "",
       "conflicts": [
-        "c-119"
+        "c-119",
+        "c-cph-permanent-and-contact-007"
       ]
     },
     {
@@ -1176,7 +1226,8 @@
       "deltaNote": "Today the link goes to the INS address book's add page through the handshake (journey-type gbn-ag, notification-id, fulfilment-id, handshake-token) with no address type and no return path of its own (trace-e2e-p7-032, trace-e2e-p7-080).",
       "conflicts": [
         "c-120",
-        "c-121"
+        "c-121",
+        "c-cph-permanent-and-contact-004"
       ]
     },
     {
@@ -1227,7 +1278,7 @@
     {
       "id": "req-760",
       "statement": "The contact page offers only the signed-in organisation's own branch addresses, newest added first, not every record in its address book.",
-      "why": "The contact is the trader's own branch responsible for the consignment in Great Britain; offering overseas consignors and other parties is a live defect DR1 recorded.",
+      "why": "The contact is the trader's own branch responsible for the consignment in Great Britain; offering overseas consignors and other parties is a live defect DR1 recorded. Where the organisation's addresses ultimately come from is open: the Live Animals & Germinals Data Fields page gives the contact address a gov.identity row as well as a user-created one (c-cph-permanent-and-contact-003), and until that is settled the list stays the organisation's own address book.",
       "claims": [
         "prototype-dr2-1-source-p8-123",
         "trace-prototype-dr2-1-p12-141",
@@ -1251,7 +1302,8 @@
       "delta": "change",
       "deltaNote": "Today the page lists every record in the organisation's address book, overseas ones included (13 in the fit stub, 28 end to end), newest first (trace-e2e-p7-014).",
       "conflicts": [
-        "c-121"
+        "c-121",
+        "c-cph-permanent-and-contact-003"
       ]
     },
     {
@@ -1294,7 +1346,9 @@
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "trace-e2e-p7-012 and trace-e2e-p7-013: one unpaginated radio list keyed by record id today.",
-      "conflicts": []
+      "conflicts": [
+        "c-cph-permanent-and-contact-003"
+      ]
     },
     {
       "id": "req-763",
@@ -1321,18 +1375,21 @@
     {
       "id": "req-764",
       "statement": "'Save and continue' on the contact page with no address chosen shows 'Select a contact address' in the error summary and on the radios, linked to the first radio, and saves nothing.",
-      "why": "Design Release 2.1 requires the contact address before the trader moves on to review.",
+      "why": "Design Release 2.1 requires the contact address before the trader moves on to review, and the Live Animals & Germinals Data Fields page marks the user-created contact address mandatory to proceed and has the trader select one where more than one address exists. The 26 October ruling puts the same check on the second save button (req-cph-permanent-and-contact-001).",
       "claims": [
         "prototype-dr2-1-source-p8-126",
         "trace-prototype-dr2-1-p7-075",
         "prototype-dr2-1-specs-p3-100",
-        "trace-animals-fit-p12-069"
+        "trace-animals-fit-p12-069",
+        "confluence-6497338582-p2-189",
+        "confluence-6497338582-p2-201"
       ],
       "status": "adopted",
       "delta": "change",
       "deltaNote": "Today saving with nothing chosen is allowed, shows no error and exits to the overview with the task still 'To do'.",
       "conflicts": [
-        "c-122"
+        "c-122",
+        "c-cph-permanent-and-contact-005"
       ]
     },
     {
@@ -1522,11 +1579,13 @@
         "ruling-sam-2026-10-07-p1-010",
         "trace-animals-fit-p12-043",
         "trace-e2e-p7-030",
-        "trace-e2e-p7-064"
+        "trace-e2e-p7-064",
+        "confluence-6497338582-p2-190",
+        "confluence-6497338582-p2-199"
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "repo-frontend-p10-074 and repo-frontend-p10-075: a copy with pickedFromId, never flagged invalid on return, today; repo-plantsfrontend-p7-071, repo-plantsfrontend-p7-073 and repo-plantsfrontend-p9-036 for plants (where the review still re-reads the record, req-cph-permanent-and-contact-001).",
+      "deltaNote": "repo-frontend-p10-074 and repo-frontend-p10-075: a copy with pickedFromId, never flagged invalid on return, today; repo-plantsfrontend-p7-071, repo-plantsfrontend-p7-073 and repo-plantsfrontend-p9-036 for plants (where the review still re-reads the record, req-2108).",
       "conflicts": [
         "c-124"
       ]
@@ -1614,7 +1673,9 @@
         "ruling-sam-2026-10-09-p1-006",
         "ruling-sam-2026-10-09-p1-014",
         "ruling-sam-2026-10-09-p1-017",
-        "ruling-sam-2026-10-09-p1-057"
+        "ruling-sam-2026-10-09-p1-057",
+        "confluence-6497338582-p2-098",
+        "confluence-6497338582-p2-106"
       ],
       "status": "adopted",
       "delta": "new",
@@ -1629,7 +1690,9 @@
         "prototype-dr2-1-source-p9-024",
         "ruling-sam-2026-10-09-p1-014",
         "ruling-sam-2026-10-09-p1-018",
-        "ruling-sam-2026-10-09-p1-025"
+        "ruling-sam-2026-10-09-p1-025",
+        "confluence-6497338582-p2-048",
+        "confluence-6497338582-p2-057"
       ],
       "status": "adopted",
       "delta": "new",
@@ -1770,18 +1833,21 @@
     {
       "id": "req-1967",
       "statement": "On the plants consignment contact page a blank save is allowed: 'Save and continue' or 'Save and return to overview' with nothing ticked saves nothing, moves on and leaves the task 'Not yet started'. The contact address is mandatory and ungated for every plants commodity, and is enforced when the notification is submitted.",
-      "why": "The 2026-10-09 afternoon ruling gives plants only the contact page's new intro and 'Select an address' heading from inc-094; plants keeps its mandatory-to-submit rule rather than the 'Select a contact address' error the animals contact page gains (req-764, c-290).",
+      "why": "The 2026-10-09 afternoon ruling gives plants only the contact page's new intro and 'Select an address' heading from inc-094; plants keeps its mandatory-to-submit rule rather than the 'Select a contact address' error the animals contact page gains (req-764, c-290). The 26 October ruling has both save buttons make the same checks, which plants already does: neither button checks the choice, because the contact address is not required before the trader moves on.",
       "claims": [
         "repo-plantsfrontend-p7-080",
         "repo-plantsfrontend-p7-102",
         "ruling-sam-2026-10-09-pm-p3-043",
-        "ruling-sam-2026-10-09-pm-p3-027"
+        "ruling-sam-2026-10-09-pm-p3-027",
+        "ruling-sam-2026-10-26-p1-008",
+        "ruling-sam-2026-10-26-p1-009"
       ],
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "repo-plantsfrontend-p7-080 and repo-plantsfrontend-p7-102: plants allows a blank save and enforces the contact at submission today.",
       "conflicts": [
-        "c-290"
+        "c-290",
+        "c-cph-permanent-and-contact-005"
       ]
     },
     {
@@ -1834,15 +1900,113 @@
       "conflicts": []
     },
     {
-      "id": "req-cph-permanent-and-contact-001",
-      "statement": "The plants review page's contact card re-reads the contact from the organisation's address book by its id instead of showing the copy the contact page saved, so a record corrected since it was chosen shows its current details and a deleted one shows 'Not provided'.",
-      "why": "Out of scope: this is a plants-only inconsistency with the copy semantics plants' own decision d-013 and the animals contact page keep (req-773, c-124). No Design Release 2.1 row changes this behaviour in animals, so there is nothing to mirror into plants (the 2026-10-09 afternoon ruling leaves plants alone where no row has a plants equivalent); it goes to the report for plants to fix.",
+      "id": "req-2122",
+      "statement": "Typing or pasting the whole CPH number into County, as 123456789, 12/345/6789 or 12 345 6789, keeps every digit, and on save the server splits it into County, Parish and Holding when those two are empty. Focus never moves on its own. It works the same with or without JavaScript.",
+      "why": "The designers found that typing the 9 digits straight through kept only '12' (S37). Sam ruled on 20 October: three labelled boxes as drawn, no cursor jump, and the whole number kept when typed or pasted in one go. The Live Animals & Germinals Data Fields page has the field accept up to 11 characters, so a slash-separated number typed in one go is accepted too. Moving focus while someone types fails WCAG 3.2.2 unless users are told first, and GOV.UK forms do not do it.",
       "claims": [
-        "repo-plantsfrontend-p7-072-m1"
+        "prototype-dr2-1-source-p9-011",
+        "prototype-dr2-1-source-p9-012-m3",
+        "repo-frontend-p10-033",
+        "confluence-6497338582-p2-101"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "Today each box has a maxlength of 2, 3 or 4, so typing straight through keeps only 12 (snagging screens/main/S37--whole-number-typed.png).",
+      "conflicts": [
+        "c-006",
+        "c-cph-permanent-and-contact-002"
+      ]
+    },
+    {
+      "id": "req-cph-permanent-and-contact-001",
+      "statement": "On the contact address page in the live-animals and germinal-products sets, the secondary button that saves and returns to the overview makes the same checks as 'Save and continue': with no address chosen, or with an address that is not in the list, the trader stays on the page with 'Select a contact address' in the error summary and on the radios, nothing is saved, and any contact already held is kept.",
+      "why": "The 26 October ruling has every save button on a page make exactly the same checks, with no page an exception, and the Live Animals & Germinals Data Fields page marks the contact address mandatory to proceed, so a missing choice is refused whichever button the trader presses.",
+      "claims": [
+        "ruling-sam-2026-10-26-p1-001",
+        "ruling-sam-2026-10-26-p1-002",
+        "ruling-sam-2026-10-26-p1-003",
+        "ruling-sam-2026-10-26-p1-005",
+        "ruling-sam-2026-10-26-p1-006",
+        "ruling-sam-2026-10-26-p1-007",
+        "ruling-sam-2026-10-26-p1-008",
+        "ruling-sam-2026-10-26-p1-009",
+        "ruling-sam-2026-10-26-p1-010",
+        "ruling-sam-2026-10-26-p1-011",
+        "ruling-sam-2026-10-26-p1-013",
+        "ruling-sam-2026-10-26-p1-026",
+        "confluence-6497338582-p2-195",
+        "confluence-6497338582-p2-201",
+        "confluence-6497338582-p2-203",
+        "prototype-dr2-1-source-p8-126",
+        "repo-frontend-p10-081"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today the contact page carries the secondary save-and-return-to-overview button (repo-frontend-p10-081) and it makes no check at all: c-122 records that a blank save on either button is allowed, shows no error and leaves the task 'To do'. req-764 puts the check on 'Save and continue'; this puts the same check on the second button, so the two behave alike.",
+      "conflicts": [
+        "c-122",
+        "c-cph-permanent-and-contact-005",
+        "c-cph-permanent-and-contact-006"
+      ]
+    },
+    {
+      "id": "req-cph-permanent-and-contact-002",
+      "statement": "While a notification is being amended, both save buttons on the CPH number, permanent address and contact address pages, and on the plants consignment contact page, make the same checks as each other: an answer that is missing where the page needs it before the trader moves on, or an answer that is not valid, keeps the trader on the page with an error for each one and everything they entered still in its field.",
+      "why": "The 26 October ruling: the save buttons behave consistently, no page is an exception, and what a trader typed is never dropped, so the two buttons an amending trader sees cannot differ from each other either.",
+      "claims": [
+        "ruling-sam-2026-10-26-p1-007",
+        "ruling-sam-2026-10-26-p1-008",
+        "ruling-sam-2026-10-26-p1-010",
+        "ruling-sam-2026-10-26-p1-013",
+        "ruling-sam-2026-10-26-p1-019",
+        "prototype-dr2-1-source-p8-131",
+        "prototype-dr2-1-source-p9-078"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "No today source in this area shows these pages during an amendment (req-770), so the amend buttons are built with the same checks from the start.",
+      "conflicts": [
+        "c-cph-permanent-and-contact-005"
+      ]
+    },
+    {
+      "id": "req-cph-permanent-and-contact-003",
+      "statement": "A notification holds one CPH number for the whole notification, not one per commodity line or per animal; the trader enters it and it is held as a string of no more than 11 characters.",
+      "why": "The Live Animals & Germinals Data Fields page puts the CPH at notification level with a single entry and types it as a string of at most 11 characters, which leaves room for the slash-separated form as well as the nine digits.",
+      "claims": [
+        "confluence-6497338582-p2-096",
+        "confluence-6497338582-p2-097",
+        "confluence-6497338582-p2-100",
+        "confluence-6497338582-p2-102",
+        "confluence-6497338582-p2-103",
+        "repo-frontend-p10-038"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p10-038: the frontend already joins the three parts into one nine-digit value held against the notification, so there is one CPH for the notification and it is well inside 11 characters.",
+      "conflicts": [
+        "c-112",
+        "c-cph-permanent-and-contact-002"
+      ]
+    },
+    {
+      "id": "req-cph-permanent-and-contact-004",
+      "statement": "The notification records a responsible person for the load, made up of the person's name, telephone number and email address and their organisation's name, address and telephone number, taken at notification level from the signed-in user's identity, in both the live-animals and germinal-products sets.",
+      "why": "Out of scope. The goal is Design Release 2.1's look and feel together with the data the journey's own pages ask for, and this field is consumed on authentication: no page in this area asks for it, shows it or checks it, and the Live Animals & Germinals Data Fields page marks it N/A for mandatory. Two of its six values, the organisation's address and telephone number, would also need Defra ID to serve them, and the Defra ID stub is not one of the programme's repos. It comes back into scope if a ruling adds it to the data shape.",
+      "claims": [
+        "confluence-6497338582-p1-031",
+        "confluence-6497338582-p1-032",
+        "confluence-6497338582-p1-033",
+        "confluence-6497338582-p1-034",
+        "confluence-6497338582-p1-035",
+        "confluence-6497338582-p1-036",
+        "confluence-6497338582-p1-037",
+        "confluence-6497338582-p1-038",
+        "confluence-6497338582-p1-039"
       ],
       "status": "out-of-scope",
-      "delta": "change",
-      "deltaNote": "repo-plantsfrontend-p7-072-m1: the review re-reads the record by addressId rather than showing the saved copy.",
+      "delta": "new",
+      "deltaNote": "No today source in this area's working set shows what the notification records from the signed-in user's identity, so nothing here says whether the six values are held already.",
       "conflicts": []
     }
   ],
@@ -2748,6 +2912,298 @@
       "outcome": "Open. The ruling's 'plants' address pickers lose pagination and the inset' sits under inc-087, the role-filtered pickers, and the plants contact picker asks for no role and lists the whole address book (c-291), so it can be read either way: the contact picker keeps its paging and inset, or loses them with the consignor and place of destination pickers.",
       "question": "Does the plants contact picker, which lists the whole address book rather than one role's records, also drop its five-a-page pagination and 'Selected address' inset when inc-087 does so for the plants consignor and place of destination pickers?",
       "default": "No: inc-087 changes only the plants consignor and place of destination pickers; the plants contact picker keeps its five-a-page pagination and 'Selected address' inset as today, and takes only the shared layout change (req-1964)."
+    },
+    {
+      "id": "c-cph-permanent-and-contact-001",
+      "about": "Which commodities bring the CPH number question into the live-animals journey.",
+      "positions": [
+        {
+          "source": "confluence:6497338582",
+          "says": "A CPH number is needed only for the nineteen entries the 'CPH required commodities' list names: cattle, pigs, sheep, goats and poultry, hatching eggs included.",
+          "claim": "confluence-6497338582-p2-107"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "The CPH number is conditional, required when CPH applies to the selected commodity.",
+          "claim": "confluence-6497338582-p2-099"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "The list names nineteen entries but only seventeen distinct commodity codes, and the page never says whether the repetition is deliberate.",
+          "claim": "confluence-6497338582-p2-127-m1"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "The CPH section is active for cattle and pigs and for every commodity code not in the section map, which takes in sheep, goats, poultry, rabbits, camels, ostriches, parrots, reptiles, bees and fish, and is inactive for horses, 01061900 and the two germinal codes.",
+          "claim": "prototype-dr2-1-source-p9-002"
+        },
+        {
+          "source": "repo:frontend",
+          "says": "The CPH question applies when a commodity line's commodity is on the frontend's CPH commodity list, which is every commodity whose code is not on Design release 1's CPH-exempt list.",
+          "claim": "repo-frontend-p10-003"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The Live Animals & Germinals Data Fields page ranks above the prototype and the frontend, and its role says in so many words that it outranks the prototype on which commodity codes a conditional rule covers. So the CPH question applies to the seventeen codes its list names (0102, 0103, 010410, 010420, 01051111, 01051200, 01051300, 01051400, 01051500, 01059400, 01059910, 01059920, 01059930, 01059950, 04071100, 04071911 and 04071919) and to nothing else: rabbits, camels, ostriches, parrots, reptiles, bees and fish no longer bring it in, while horses, 01061900 and the germinal codes stay out, which every source agrees on. Both names behind each of the two duplicated codes are in the list, so the rule can still be keyed on the commodity code alone. prototype-dr2-1-source-p9-002 is not overruled: only its catch-all default list is set aside, and the exemptions it records still stand and still back req-699. repo-frontend-p10-003 is not overruled either: it describes today's rule, which req-699 changes."
+    },
+    {
+      "id": "c-cph-permanent-and-contact-002",
+      "about": "How the three parts of a CPH number are sized: county 2, parish 3 and holding 4 digits, or three parts of 3.",
+      "positions": [
+        {
+          "source": "confluence:6497338582",
+          "says": "A CPH number accepts up to 11 characters, for example 123456789 or 123/456/789.",
+          "claim": "confluence-6497338582-p2-101"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "The worked examples are 123456789 and 123/456/789.",
+          "claim": "confluence-6497338582-p2-105"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "The number is entered in three boxes labelled County (2 wide), Parish (3 wide) and Holding number (4 wide).",
+          "claim": "prototype-dr2-1-source-p9-011"
+        },
+        {
+          "source": "repo:frontend",
+          "says": "The hint reads 'For example, 12/345/6789.', so the number is grouped 2, 3 and 4.",
+          "claim": "repo-frontend-p10-012"
+        }
+      ],
+      "resolution": "question",
+      "outcome": "Open. The data page's slashed example groups the nine digits 3, 3 and 3, while Design Release 2.1, the service today and the decision recorded on req-709 and req-2122 all group them 2, 3 and 4. The data page outranks the prototype on a field's format and example, but leaves how a page reads to the prototype, and three labelled, sized boxes are both at once, so neither reading is ranked above the other and they build different labels, widths, hints and error messages.",
+      "question": "Is a CPH number three parts of 2, 3 and 4 digits, as the service and Design Release 2.1 show it, or three parts of 3 as the V4 data page's slashed example shows?",
+      "default": "Three parts of 2, 3 and 4: the boxes keep County, Parish and Holding number at 2, 3 and 4 wide with the hint 'For example 12/345/6789' (req-708, req-709), a saved number is shown as 12/345/6789 (req-701), the stored value stays nine digits (req-702), and V4's 123/456/789 is read as showing the slashed form rather than the grouping. A whole number typed or pasted into one box is still kept and split on the server (req-2122)."
+    },
+    {
+      "id": "c-cph-permanent-and-contact-003",
+      "about": "Where the addresses the contact address page offers come from: the signed-in user's gov.identity addresses, or the organisation's address book.",
+      "positions": [
+        {
+          "source": "confluence:6497338582",
+          "says": "The notification captures a Contact Address whose values are consumed from gov.identity.",
+          "claim": "confluence-6497338582-p2-187"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "The contact address is consumed from gov.identity rather than entered, and where more than one address exists the user must select one before continuing.",
+          "claim": "confluence-6497338582-p2-188"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "That contact address's source is gov.identity.",
+          "claim": "confluence-6497338582-p2-191"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "A second contact address row has the user create one, as a Standard address block, with the user as its source.",
+          "claim": "confluence-6497338582-p2-198"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "Two rows are both labelled Contact Address and share one anchor, so the page never says whether they are one field with two sources or two fields.",
+          "claim": "confluence-6497338582-p2-204"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "The gov.identity row names no type at all.",
+          "claim": "confluence-6497338582-p2-192"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "The gov.identity row carries no mandatory marking, only a dash.",
+          "claim": "confluence-6497338582-p2-193"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "The gov.identity row gives no worked example.",
+          "claim": "confluence-6497338582-p2-194"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "The contact options are the organisation's branch or contact addresses, in order and without duplicates.",
+          "claim": "prototype-dr2-1-source-p8-123"
+        },
+        {
+          "source": "trace:e2e",
+          "says": "Today the page lists the records in the signed-in organisation's address book, newest added first.",
+          "claim": "trace-e2e-p7-014"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "The notification also captures a user-created Contact Address, in a second row of its own.",
+          "claim": "confluence-6497338582-p2-196"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "That second row's source is the user.",
+          "claim": "confluence-6497338582-p2-200"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "Its worked example is a six-line APHA address with no telephone or email line, shorter than every other address-block example on the page.",
+          "claim": "confluence-6497338582-p2-202"
+        }
+      ],
+      "resolution": "question",
+      "outcome": "Open. The data page gives the contact address two rows: one consumed from gov.identity, where the user chooses between identity's addresses if there is more than one, and one the user creates as a Standard address block. The page never says whether those are one field with two sources or two fields (confluence-6497338582-p2-204), the gov.identity row names no type, no mandatory marking and no example, and the user-created row's worked example is APHA's own address rather than a trader's branch, while nothing in the journey reads an address from Defra ID today. The data page outranks the prototype on which data a notification captures, so it cannot simply be set aside; read literally, though, it rebuilds the contact page against a different service, which no ruling asks for and which the service's own architecture, kept by the 2026-10-09 ruling, puts outside this programme. The two readings build different pages.",
+      "question": "Does the contact address come from the signed-in user's gov.identity addresses, with a choice offered where identity holds more than one, or from the organisation's address book as Design Release 2.1 and the service do today?",
+      "default": "From the organisation's address book, narrowed to its own branch addresses as req-760 adopts, with new contacts added through the address book and no manual entry on the page (req-755, req-756, req-762): V4's gov.identity row is read as naming where an organisation's addresses ultimately come from, and 'the user must select one before continuing' as the choice the contact page already offers. This area is re-distilled if gov.identity is meant literally and Defra ID is to serve those addresses."
+    },
+    {
+      "id": "c-cph-permanent-and-contact-004",
+      "about": "Whether the permanent address, and a contact address the trader creates, ask every field of the Standard Address Block, a country among them, or the eight fields Design Release 2.1 draws.",
+      "positions": [
+        {
+          "source": "confluence:6497338582",
+          "says": "Permanent Address's type is the Standard address block.",
+          "claim": "confluence-6497338582-p2-047"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "Its field-level validation is the Standard Address Block's.",
+          "claim": "confluence-6497338582-p2-052"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "Its worked example runs to eight lines, with a country, a telephone number and an email address.",
+          "claim": "confluence-6497338582-p2-056"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "The new-address form has eight inputs and none for country, and the country is fixed to United Kingdom.",
+          "claim": "prototype-dr2-1-source-p9-052"
+        },
+        {
+          "source": "trace:e2e",
+          "says": "Today the identification form's permanent address asks the same eight fields and no country.",
+          "claim": "trace-e2e-p6-032"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "A contact address the user creates is the Standard address block too.",
+          "claim": "confluence-6497338582-p2-197"
+        }
+      ],
+      "resolution": "question",
+      "outcome": "Open. The data page types the permanent address, and a contact address the user creates, as the Standard Address Block, and sends field-level validation there; the permanent address example carries a country line. Design Release 2.1 and the service both ask eight fields with no country and fix the country to United Kingdom, and new contact addresses are collected by the address book rather than on the contact page. The Standard Address Block's own fields are specified in a part of the data page this area does not hold, so whether it adds a field to these pages cannot be read here, and the two readings build different forms.",
+      "question": "Do a new permanent address and a contact address the trader creates ask every field of the Standard Address Block, including a country, or the eight fields Design Release 2.1 draws, with the country saved as United Kingdom?",
+      "default": "The eight fields Design Release 2.1 draws, with no country field and the country saved as United Kingdom (req-738, req-746), and a contact address the trader creates keeps the fields the address book's add-address page already collects (req-756); the Standard Address Block's field-level validation applies only where it neither adds a field to the page nor takes one away."
+    },
+    {
+      "id": "c-cph-permanent-and-contact-005",
+      "about": "Whether making both save buttons check the same thing reinstates an error for a CPH number left blank.",
+      "positions": [
+        {
+          "source": "ruling:sam-2026-10-26",
+          "says": "On either save button the trader sees an error message for each answer that is missing or not valid.",
+          "claim": "ruling-sam-2026-10-26-p1-002"
+        },
+        {
+          "source": "ruling:sam-2026-10-26",
+          "says": "Save and return to overview makes exactly the same checks as Save and continue.",
+          "claim": "ruling-sam-2026-10-26-p1-008"
+        },
+        {
+          "source": "ruling:sam-2026-10-26",
+          "says": "The earlier ruling on this behaviour is not to be assumed right, because the BA is the one raising the issue.",
+          "claim": "ruling-sam-2026-10-26-p1-004"
+        },
+        {
+          "source": "ruling:sam-2026-10-26",
+          "says": "The decision replaces the soft save that let Save and return skip blank required answers.",
+          "claim": "ruling-sam-2026-10-26-p1-012"
+        },
+        {
+          "source": "ruling:sam-2026-10-26",
+          "says": "The ruling does not say which earlier ruling is withdrawn or what it decided.",
+          "claim": "ruling-sam-2026-10-26-p1-025"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "The CPH number is mandatory to submit.",
+          "claim": "confluence-6497338582-p2-104"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "The user-created contact address is mandatory to proceed.",
+          "claim": "confluence-6497338582-p2-201"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "Blank CPH boxes save no number and the trader moves on without an error.",
+          "claim": "prototype-dr2-1-source-p9-014"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The 26 October ruling ranks above every other source, and what it decides is that the save buttons on a page make the same checks as each other, with no page an exception. It does not decide which answers a page needs before the trader moves on: the Live Animals & Germinals Data Fields page does, through its mandatory markings. The contact address is mandatory to proceed, so a missing choice is refused on both buttons (req-764, req-cph-permanent-and-contact-001), and in plants, where the contact address is mandatory to submit, neither button checks it (req-1967). The CPH number is mandatory to submit, so all three boxes left empty still save and the gap is held until submission: c-113 stands, on both buttons. A part-filled or wrongly formed CPH is refused on every save button with an error for each wrong part and everything typed kept, as req-715 and req-716 already have it. prototype-dr2-1-source-p9-014 is not overruled: the ruling leaves it standing."
+    },
+    {
+      "id": "c-cph-permanent-and-contact-006",
+      "about": "Whether the same-checks rule reaches the germinal products set's contact address page, which the 26 October ruling does not name.",
+      "positions": [
+        {
+          "source": "ruling:sam-2026-10-26",
+          "says": "The ruling names only live animals and high-risk plants and says nothing about the germinal-products set or any other frontend with both save buttons.",
+          "claim": "ruling-sam-2026-10-26-p1-024"
+        },
+        {
+          "source": "ruling:sam-2026-10-26",
+          "says": "No page is an exception to the same-checks rule.",
+          "claim": "ruling-sam-2026-10-26-p1-013"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "says": "The germinal set is copied from the live-animals feature folders once their twins are built.",
+          "claim": "ruling-sam-2026-10-09-p1-014"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The 26 October ruling ranks above every other source and says no page is an exception, so the rule reaches the germinal set too; the 2026-10-09 ruling makes the germinal set a copy of the live-animals feature folders, so its contact address page carries the live-animals page's behaviour without needing a rule of its own. The ruling's silence on the germinal set is a gap in its wording, not a carve-out, and both rulings point the same way, so nothing waits on an answer."
+    },
+    {
+      "id": "c-cph-permanent-and-contact-007",
+      "about": "Whether every live-animal notification needs a permanent address, or only one whose commodity is cats, dogs or ferrets.",
+      "positions": [
+        {
+          "source": "confluence:6497338582",
+          "says": "Permanent Address is mandatory to submit.",
+          "claim": "confluence-6497338582-p2-055"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "Permanent Address is conditional, required per animal when the selected commodity is Cats, Dogs or Ferrets.",
+          "claim": "confluence-6497338582-p2-049"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "The two markings disagree and the page never resolves them.",
+          "claim": "confluence-6497338582-p2-055-m1"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "The row gives no 'Applies at' level, so the page never says at which level the condition is checked.",
+          "claim": "confluence-6497338582-p2-053"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "The row's own list of commodities that require a permanent address names three.",
+          "claim": "confluence-6497338582-p2-058"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "says": "Only cats, dogs and ferrets need a permanent address.",
+          "claim": "prototype-dr2-1-source-p9-023"
+        },
+        {
+          "source": "trace:e2e",
+          "says": "Today the frontend asks for a permanent address inside the animal identification form, for cats and dogs.",
+          "claim": "trace-e2e-p6-028"
+        }
+      ],
+      "resolution": "precedence",
+      "outcome": "The conditional reading stands: only cats, dogs and ferrets need a permanent address (req-726). The data page's own 'Permanent address required commodities' list names exactly those three, Design Release 2.1 asks for it only for them, and the service asks for it only for cats and dogs today, so three sources agree on the condition while only the Mandatory column reads the other way. 'Mandatory to submit' then says when the answer is checked rather than that every notification needs one: a notification that needs a permanent address cannot be submitted without it (req-743). The missing 'Applies at' level is settled by the row's own bullets, 'required per animal' and 'a different address can be entered for each animal': the answer sits on the animal, which is how req-732 asks for it. confluence-6497338582-p2-055 is not overruled: it still backs the submission check."
     }
   ]
 }

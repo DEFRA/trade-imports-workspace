@@ -502,7 +502,9 @@ base's. A merge that conflicts stops the row, naming the files. A failure names 
    git -C repos/<repo> log origin/main -1 --format=%ad --date=short
    ```
 
-   Where a repo has moved since its extract, by either route, say so and give the user the choice before launching:
+   Where a repo has moved since its extract, by either route, **and the theme also has a pick-up list waiting, walk
+   both together rather than asking twice**: [`PREFLIGHT_WALKER.md`](PREFLIGHT_WALKER.md) presents every item in one
+   block and takes one keystroke string. Otherwise say so and give the user the choice before launching:
 
    - **Reset those sources and re-distil** —
      `tim distil reset <workarea> --source repo:<id> [--source repo:<id>…] --json`, then relaunch
@@ -519,6 +521,12 @@ base's. A merge that conflicts stops the row, naming the files. A failure names 
 7. **If the theme was split off early, apply its pick-up list first.** A re-distil never rewrites a split theme's
    own backlog, so its rows can be older than the parent's. The report's "For the split branches" section names,
    per branch, every requirement new since the split, changed since the split, or no longer to build.
+
+   **Do not work through the list silently. Walk it:**
+   [`PREFLIGHT_WALKER.md`](PREFLIGHT_WALKER.md) presents every pending requirement in one block with what it now
+   says, takes one batch keystroke string (apply / leave / discuss), and slow-tracks what the user flags. It covers
+   step 6's moved repos in the same pass. On a theme with twenty-odd entries that is the difference between a
+   decision the user made and a diff they are handed.
 
    **Step 3's `tim backlog check` refuses the theme while the parent still holds requirements it has never placed in
    a row**, naming them, so a never-placed requirement cannot be missed:

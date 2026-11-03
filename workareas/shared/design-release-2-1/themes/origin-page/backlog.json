@@ -51,6 +51,10 @@
     "plantsfrontend": {
       "path": "repos/trade-imports-plants-frontend",
       "github": "DEFRA/trade-imports-plants-frontend"
+    },
+    "workspace": {
+      "path": ".",
+      "github": "DEFRA/trade-imports-workspace"
     }
   },
   "theme": "origin-page",
@@ -70,5 +74,49 @@
     "tests:page-objects/plants/origin-page.ts",
     "tests:tests/plants/e2e/features/origin.spec.ts"
   ],
-  "increments": []
+  "increments": [
+    {
+      "id": "inc-246",
+      "title": "Origin page: Back follows where the page was opened from, and tests prove the country type-ahead's search button and announcements, in animals and plants",
+      "detail": "The origin page theme was retired on 20 October once design snagging carried its branch to main. A done check on 3 November (themes/origin-page/done-check.md) read all 53 origin page requirements against main and found three gaps on the live animals origin page. Two are now in teammates' hands and are NOT built here: a mandatory country of origin is EUDPA-760 (animals frontend #457, tests #80, workspace #202, open), and EUDPA-759 (merged 3 November) ends the origin page with Save and continue alone, which makes req-2124's Save and return checks moot on that page. Do not touch the origin page's validation, its save buttons or the country-mandatory tests; build on whatever of EUDPA-760 has merged. This row builds the rest. (1) Back link (req-013, overview part): today Back is chosen by whether the notification has answers, so a notification with no answers opened from the overview sends Back to the list. Back must follow where the page was opened from. The type question and template-review destinations belong to the type question and templates themes. (2) Tests only (req-018, req-1909): the country type-ahead's joined search button (GOV.UK blue, white magnifying glass, hidden from assistive technology, not focusable, never submits) and the accessible autocomplete's own announcements (assistive hint, polite live region with the result count and the chosen country) already work on the live animals and high-risk plants origin pages, but no test proves them. Germinal products parts wait for the germinal products set, which is not on main.",
+      "acceptanceCriteria": [
+        "Given I opened the live animals origin page from the notification overview, when I select Back, then I return to the overview, whether or not the notification has any answers yet.",
+        "Given I opened the live animals origin page from the set's own notifications list, when I select Back, then I return to that list.",
+        "With JavaScript, a test proves the country type-ahead's search button is GOV.UK blue with a white magnifying glass, is hidden from assistive technology, cannot be focused and never submits the page, on the live animals and the high-risk plants origin pages.",
+        "With JavaScript, a test proves the country search uses the accessible autocomplete's own announcements: its assistive hint, and a polite live region announcing the number of results and the chosen country, on the live animals and the high-risk plants origin pages.",
+        "The origin page's validation and save buttons are unchanged by this row.",
+        "openspec's live animals origin page spec says Back follows where the page was opened from, and the type-ahead scenarios link to the tests that now prove them."
+      ],
+      "dependsOn": [],
+      "theme": "origin-page",
+      "status": "todo",
+      "kind": "fix",
+      "repos": [
+        "frontend",
+        "tests",
+        "workspace"
+      ],
+      "sources": [
+        {
+          "source": "confluence:6497338582",
+          "ref": "V4 Data Fields page: country of origin mandatory to proceed (c-319, widened 2 November)"
+        },
+        {
+          "source": "ruling:sam-2026-10-26",
+          "ref": "Save and return to overview makes the same checks as Save and continue (c-321)"
+        },
+        {
+          "source": "review:origin-page-done-check-2026-11-03",
+          "ref": "themes/origin-page/done-check.md: the three gaps on main"
+        }
+      ],
+      "requirements": [
+        "req-013",
+        "req-018",
+        "req-1909"
+      ],
+      "openQuestions": [],
+      "gate": null
+    }
+  ]
 }

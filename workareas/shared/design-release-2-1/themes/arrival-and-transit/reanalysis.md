@@ -99,9 +99,15 @@ from `5a995a66`'s wording.
 
 Each carries only the reference lists and journey foundation commits it was stacked on. A trial merge of `main` is
 clean and leaves each tree identical to `main`, so none of the three adds anything. No row builds there, so they are
-not in `build-args.json`'s `repos` and take no merge row. None of them has a branch image on Docker Hub, so the theme's
-pull requests run end to end against `main`'s image for those services. They are carry-only pull requests whose
-themes have merged: HOW-TO-BUILD says to close such a pull request, and Sam decides when.
+not in `build-args.json`'s `repos` and take no merge row. They are carry-only pull requests whose themes have merged:
+HOW-TO-BUILD says to close such a pull request, and Sam decides when.
+
+**Corrected 3 November.** This said none of the three had a branch image. All three did, from 13 October, and the
+stack took them for the theme's end-to-end runs: the old reference data had no commodity search, which turned inc-240's
+pull requests red. With Sam's go, `main` was merged into all three theme branches (reference data `5976c37`, stub
+`12a4c2a`, INS frontend `625ca19`), each tree identical to `main`, and their branch images rebuilt. Those images stay
+pinned to that point: anything these repos land on `main` later reaches the theme's stack only if their branches take
+`main` again.
 
 ## What the branch built that `main` does not yet have
 

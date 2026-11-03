@@ -48,7 +48,7 @@ The [core services](#core-services), below, have no family.
 |---|---|---|---|---|
 | address-book | `ins:e2e`, `animals:e2e`, `plants:e2e` | as dev | | |
 | ins-backend | `ins:e2e`, `animals:e2e`, `plants:e2e` | as dev | | |
-| ins-frontend | `ins:e2e`, `animals:e2e`, `plants:e2e` | as dev, plus `ins:a11y (TODO)` | | |
+| ins-frontend | `ins:e2e`, `animals:e2e`, `plants:e2e` | as dev, plus `ins:a11y` | | |
 
 #### Animals family
 

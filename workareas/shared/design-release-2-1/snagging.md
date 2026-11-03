@@ -43,7 +43,7 @@ programme's `sources.json` pins. Design Release 2.1 has no address book view of 
 - **Page:** the INS add page reached from a notification's 'Contact address for this consignment' page.
 - **Prototype:** the contact does not use the journey's add page. Its add link goes to the address book's own add page with `from=contact-address` ([routes.js#L2388](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/routes.js#L2388), [#L11746-L11753](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/routes.js#L11746-L11753)), which renders the older `address-book-lookup` page. Design Release 2.1's own add details page is used only when an address category is chosen, and the contact's return sets none ([#L1336-L1343](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/routes.js#L1336-L1343), [#L11831-L11848](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/routes.js#L11831-L11848)). Its Country select lists every country, United Kingdom included, with no blank option, so the first country is selected until the trader changes it ([#L10365](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/routes.js#L10365), [#L10412-L10423](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/routes.js#L10412-L10423)). The United Kingdom-only list is for the five consignment roles on the journey's add page, not for the contact.
 - **Built:** consignee, importer and place of destination get United Kingdom alone, selected. Place of origin, consignor and the consignment contact get 'Select a country' and the full list (`journey-registry.js`). The blank option follows the designer's 23 October answer for the address book's add and edit pages (see Settled).
-- **To confirm:** the contact can pick any country, as the prototype's page allows. Is that intended, or should the consignment contact be United Kingdom only, like the destination side? Low priority: built as the prototype behaves.
+- **To confirm:** the contact can pick any country, as the prototype's page allows. Is that intended, or should the consignment contact be United Kingdom only, like the destination side? Low priority: built as the prototype behaves. A Branch address added from the address book now takes the United Kingdom alone, while the consignment contact, saved as a Branch address, offers every country: should they match?
 
 ### S-05. The cancel button on the consignment contact's add page
 
@@ -77,7 +77,23 @@ programme's `sources.json` pins. Design Release 2.1 has no address book view of 
 - **Built:** the add page always shows a blue 'Draft' tag beside the reference ([kit.js#L45-L51](https://github.com/DEFRA/trade-imports-ins-frontend/blob/2f0a825/src/server/app/shared/kit.js#L45-L51)), because the handshake carries no status. The animals journey's own pages show the tag for the notification's status: Draft in blue, Submitted in green, Amend in yellow, Deleted in grey ([animals kit.js#L35-L52](https://github.com/DEFRA/trade-imports-animals-frontend/blob/e3eef6bf/src/server/app/shared/kit.js#L35-L52)). The picker offers the add link whatever the status, amending included ([party-picker.controller.js#L87-L88](https://github.com/DEFRA/trade-imports-animals-frontend/blob/e3eef6bf/src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.js#L87-L88)). So a trader amending a submitted notification sees a yellow 'Amend' tag on the picker, then a blue 'Draft' tag on the add page.
 - **To ask:** on the add page reached while amending, (a) keep the 'Draft' tag, as built and as the prototype shows; (b) show the journey's own tag ('Amend', yellow), which means the handshake carries the status; or (c) show the reference with no status tag?
 
-### S-06. One label per address use, or two
+### S-09. 'Address type' as the uses question's legend for Destination and Branch
+
+- **Ticket:** [EUDPA-711](https://eaflood.atlassian.net/browse/EUDPA-711), [ins-frontend #71](https://github.com/DEFRA/trade-imports-ins-frontend/pull/71). inc-071.
+- **Page:** the INS add form after choosing 'Destination, Consignee or Importer' or 'Branch'.
+- **Prototype:** [consignment-add-address.html#L65](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/views/design-release-2.1/consignment-add-address.html#L65): `{% if showAddressLookup %}Address type{% else %}What can this address be used for?{% endif %}`.
+- **Built:** as the prototype: 'Address type' for those two types, 'What can this address be used for?' for 'Origin or Consignor' (`copy.en.js` `uses.legendByAddressType`).
+- **To ask:** keep 'Address type' for those two types, or use 'What can this address be used for?' for every type, since the options are uses and the type was chosen on the page before?
+
+### S-10. The section break before the uses question for Destination and Branch entered by hand
+
+- **Ticket:** [EUDPA-711](https://eaflood.atlassian.net/browse/EUDPA-711), [ins-frontend #71](https://github.com/DEFRA/trade-imports-ins-frontend/pull/71). inc-071.
+- **Page:** as S-09.
+- **Prototype:** Destination and Branch use the search layout. [consignment-add-address.html#L51-L59](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/views/design-release-2.1/consignment-add-address.html#L51-L59) includes the search fields for them (`{% if showAddressLookup %}`), and only the other branch (`{% else %}`) has `<hr class="app-consignment-add-address-page__section-break">` before the uses question. The source does show these two types entered by hand: the search fields' 'Enter address manually' button ([consignment-uk-add-address-fields.html#L81](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/views/partials/design-release-2.1/consignment-uk-add-address-fields.html#L81)) reveals `#consignment-manual-address`, which holds the address and contact fields ([#L96-L99](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/views/partials/design-release-2.1/consignment-uk-add-address-fields.html#L96-L99)), and `data-reveal-with-address` ([#L9](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/views/partials/design-release-2.1/consignment-uk-add-address-fields.html#L9)) reveals the uses question straight after them, with no section break. What the source does not show is the form with no search box above the manual fields.
+- **Built:** with the search deferred, these two types show the address and contact fields with no search box, and the code keeps the visible section break every address-book add has (`add.njk:29`, `<hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">`), as 'Origin or Consignor' has in the prototype. This is a choice the code made for a case the source does not show.
+- **To ask:** should Destination and Branch entered by hand keep the section break before the uses question, as built and as 'Origin or Consignor' has it, or drop it, as the source's manual entry under the search shows?
+
+### S-11. One label per address use, or two
 
 - **Ticket:** [EUDPA-711](https://eaflood.atlassian.net/browse/EUDPA-711), [ins-frontend #71](https://github.com/DEFRA/trade-imports-ins-frontend/pull/71). inc-068 review, findings 9 and 16.
 - **Page:** the INS address book list (its Type column and its Type filter) and the INS add form's uses question, 'What can this address be used for?'.
@@ -85,7 +101,7 @@ programme's `sources.json` pins. Design Release 2.1 has no address book view of 
 - **Built:** all three, as the design source has them (`copy.en.js` `list.uses` for the column and the filter, and `uses.options` for the question, and the Welsh).
 - **To ask:** should the column, the filter and the uses question use one label per use, and which: the column's ('Place of origin', 'Branch'), the filter's ('Place of Origin', 'Branch Address') or the question's ('Place of origin', 'Branch address')? The answer also decides which words a search by type matches.
 
-### S-07. What Clear search clears when a Type is chosen
+### S-12. What Clear search clears when a Type is chosen
 
 - **Ticket:** [EUDPA-711](https://eaflood.atlassian.net/browse/EUDPA-711), [ins-frontend #71](https://github.com/DEFRA/trade-imports-ins-frontend/pull/71). inc-068 review, findings 17 and 27.
 - **Page:** the INS address book list.
@@ -93,13 +109,21 @@ programme's `sources.json` pins. Design Release 2.1 has no address book view of 
 - **Built:** Clear search keeps the chosen Type and drops only the search text (`list.controller.js:150`), and shows only when there is search text. The spec records this as SCN-INS-ADDR-028-E.
 - **To ask:** (a) should Clear search keep the chosen Type, as built, or clear every filter? (b) Should a way to clear the filters show when only a Type is chosen?
 
-### S-08. Pressing Enter on the Type filter
+### S-13. Pressing Enter on the Type filter
 
 - **Ticket:** [EUDPA-711](https://eaflood.atlassian.net/browse/EUDPA-711), [ins-frontend #71](https://github.com/DEFRA/trade-imports-ins-frontend/pull/71). inc-068 review, finding 23; the third open question on inc-068 in the theme backlog.
 - **Page:** the INS address book list's 'Filter addresses' disclosure.
 - **Requirement:** inc-068's criteria 2 and 8 say pressing Enter on the Type select submits the filter, with JavaScript on or off.
 - **Built:** a standard GOV.UK select. Choosing a Type changes nothing until the Search button is pressed, or Enter in the search field. Browsers do not submit a form on Enter in a native select, so with JavaScript off the criterion cannot hold, and nothing tests it.
 - **To ask:** (a) the filter submits only from the Search button or Enter in the search field, as built and as GOV.UK forms behave; or (b) a small script also submits on Enter in the Type select, with JavaScript on only?
+
+### S-14. The order of a Destination, Consignee or Importer address's uses
+
+- **Ticket:** [EUDPA-711](https://eaflood.atlassian.net/browse/EUDPA-711), [ins-frontend #71](https://github.com/DEFRA/trade-imports-ins-frontend/pull/71). inc-071 review.
+- **Page:** the INS add form's uses question, and the address book list's Type filter on the Destination, Consignee and Importer tab.
+- **Prototype:** two orders. The uses question ([address-book-destination-uses.js#L1-L17](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/data/address-book-destination-uses.js#L1-L17)) lists 'Place of destination', 'Consignee', 'Importer'. The Type filter ([address-book-address-types.js#L4-L37](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/data/address-book-address-types.js#L4-L37)) lists 'Consignee', 'Importer', 'Place of Destination'.
+- **Built:** both, as the prototype has them: the filter in the address book's own order (`services/address-book/address-types.js` `USES_BY_ADDRESS_TYPE`), and the question with the place use first (`add.controller.js` `useItemsOf`).
+- **To ask:** should the question and the filter list the uses in one order, and which: place first ('Place of destination', 'Consignee', 'Importer') or 'Consignee', 'Importer', 'Place of destination'? One order would let the code hold it in one place.
 
 ## Settled
 

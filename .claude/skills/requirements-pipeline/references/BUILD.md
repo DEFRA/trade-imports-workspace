@@ -387,6 +387,12 @@ base's. A merge that conflicts stops the row, naming the files. A failure names 
    ([The plan and its review](#the-plan-and-its-review)). A backlog written before that shape existed may
    fail on recipe fields; the loop still reads it, treating those fields as hints,
    so report the failures and carry on. Do not rewrite another programme's backlog.
+
+   **The loop runs this check itself, in its preflight, and refuses to start when it reports a problem** — naming
+   each one and, for a split theme, pointing at [`PREFLIGHT_WALKER.md`](PREFLIGHT_WALKER.md). So skipping this step
+   does not get a run past a backlog out of shape, or past a split theme holding requirements a re-distil handed it.
+   Running it here is still worth it: you find out before the launch rather than after it, and you can walk the
+   problems with the user instead of reading them out of a failed run.
 4. **Check the gate covers every repo the programme builds.** Branching needs
    nothing from you — the loop's start stage cuts each increment's branch off a
    freshly fetched base, in the increment's repos only.
@@ -1007,6 +1013,7 @@ handover prompt.
 
 | Reason | What it means |
 |---|---|
+| (no reason: the run throws) | The preflight ran `tim backlog check` and it reported a problem, so the run built nothing and never reached the loop. The error names every problem. A split theme holding requirements a re-distil handed it is the common one: walk them with [`PREFLIGHT_WALKER.md`](PREFLIGHT_WALKER.md), then launch again |
 | `count-reached` | `stopAfter` increments have landed. The ordinary ending |
 | `no-buildable` | `tim backlog next` found nothing buildable, or an explicit `increments` list is built out |
 | `agent-budget` | Another increment would take the run past the `Workflow` tool's 1000-agent cap. Nothing is wrong: launch again with the same args |

@@ -1,6 +1,7 @@
 import { TimError } from '../errors.js'
 import { writeJsonAtomic } from '../backlog/io.js'
 import { extractPathOf, readJsonLenient, scopeHashOf, slugOf } from './files.js'
+import { extractedRepoHead } from './repo-head.js'
 import {
   claimOwnersOf,
   extractReadsOf,
@@ -37,10 +38,16 @@ const findSource = (layout, sources, sourceId) => {
  * @param {object} args.schemas - From `loadDistilSchemas`
  * @param {string} args.workarea
  * @param {string} args.sourceId
- * @returns {{source: string, path: string, replaced: boolean, scopeHash: string, claims: number, parts: {part: number, title: string, claims: number, from: string|null, to: string|null}[]}}
+ * @returns {{source: string, path: string, replaced: boolean, scopeHash: string, repoHead: string|null, claims: number, parts: {part: number, title: string, claims: number, from: string|null, to: string|null}[]}}
  * @throws {TimError} NOT_FOUND for an unknown source or no partition, LINT with every problem
  */
-export const mergeExtractParts = ({ layout, schemas, workarea, sourceId }) => {
+export const mergeExtractParts = ({
+  layout,
+  schemas,
+  workarea,
+  sourceId,
+  workspaceRoot
+}) => {
   const sources = readSources(layout, schemas.sources)
   const source = findSource(layout, sources, sourceId)
   const slug = slugOf(source.id)
@@ -65,13 +72,21 @@ export const mergeExtractParts = ({ layout, schemas, workarea, sourceId }) => {
   const path = extractPathOf(layout, slug)
   const replaced = readJsonLenient(path).exists
   const scopeHash = scopeHashOf(source)
+  const repoHead = extractedRepoHead({ source, workspaceRoot })
   const { structure, claims } = mergedExtractOf(inspected)
-  writeJsonAtomic(path, { source: source.id, structure, scopeHash, claims })
+  writeJsonAtomic(path, {
+    source: source.id,
+    structure,
+    scopeHash,
+    ...(repoHead ? { repoHead } : {}),
+    claims
+  })
   return {
     source: source.id,
     path,
     replaced,
     scopeHash,
+    repoHead,
     claims: claims.length,
     parts: partRangesOf(inspected.parts)
   }

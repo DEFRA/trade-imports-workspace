@@ -5,11 +5,15 @@ import { inspectSources, readSources } from './checks.js'
 import { problemsError } from './problems.js'
 import { stampScopeHash } from './stamp.js'
 
-const entryOf = ({ layout, schemas, workarea, sourceId }) => {
+const entryOf = ({ layout, schemas, workarea, sourceId, workspaceRoot }) => {
   const sources = readSources(layout, schemas.sources)
-  const entry = inspectSources({ layout, schemas, sources, workarea }).find(
-    (candidate) => candidate.source.id === sourceId
-  )
+  const entry = inspectSources({
+    layout,
+    schemas,
+    sources,
+    workarea,
+    workspaceRoot
+  }).find((candidate) => candidate.source.id === sourceId)
   if (!entry) {
     throw new TimError(
       'NOT_FOUND',
@@ -35,6 +39,7 @@ const refusals = (entry, workarea) => {
           `distil/extract/${slug}.json was extracted for a different scope. Extract it again, or, if the change does not touch what it holds, run: tim distil stamp ${workarea} --source ${id}`
         ]
       : []),
+    ...(entry.problems.repoHead ? [entry.problems.repoHead] : []),
     ...(verifyRead.exists ? entry.problems.verify : []),
     ...(verifyRead.extractHash === 'changed' ? [entry.problems.verifyHash] : [])
   ]
@@ -60,13 +65,19 @@ const recordExtractHash = (path, { source, verdicts, missed }, extractHash) =>
  * @returns {{source: string, state: string, extract: {path: string, stamped: boolean}, verify: {path: string, exists: boolean, stamped: boolean}}}
  * @throws {TimError} NOT_FOUND for an unknown source, LINT with every reason it cannot be adopted
  */
-export const adoptSource = ({ layout, schemas, workarea, sourceId }) => {
-  const entry = entryOf({ layout, schemas, workarea, sourceId })
+export const adoptSource = ({
+  layout,
+  schemas,
+  workarea,
+  sourceId,
+  workspaceRoot
+}) => {
+  const entry = entryOf({ layout, schemas, workarea, sourceId, workspaceRoot })
   const problems = refusals(entry, workarea)
   if (problems.length) {
     throw problemsError(problems, `adopting ${sourceId}. Nothing was written`)
   }
-  const stamp = stampScopeHash({ layout, schemas, sourceId })
+  const stamp = stampScopeHash({ layout, schemas, sourceId, workspaceRoot })
   const verifyPath = verifyPathOf(layout, entry.report.slug)
   const needsHash =
     entry.report.verify.exists && entry.report.verify.extractHash === 'missing'
@@ -79,7 +90,8 @@ export const adoptSource = ({ layout, schemas, workarea, sourceId }) => {
   }
   return {
     source: sourceId,
-    state: entryOf({ layout, schemas, workarea, sourceId }).report.state,
+    state: entryOf({ layout, schemas, workarea, sourceId, workspaceRoot })
+      .report.state,
     extract: {
       path: extractPathOf(layout, entry.report.slug),
       stamped: stamp.changed

@@ -1,6 +1,8 @@
 import { unlinkSync } from 'node:fs'
+import { join } from 'node:path'
 import { TimError } from '../errors.js'
 import { readJsonFile } from '../backlog/io.js'
+import { repoHeadOf } from './repo-head.js'
 import {
   DISTIL_SCHEMA_FILES,
   canonicalJsonOf,
@@ -276,6 +278,36 @@ export const scopeHashCheck = ({ source, value, workarea }) => {
     }
   }
   return { state: 'current', problem: null }
+}
+
+/**
+ * Whether a repo source's checkout is still on the commit it was extracted
+ * from.
+ *
+ * `unknown` wherever the comparison cannot be made — a source that is not a
+ * repo, no workspace root to resolve its locator against, an extract written
+ * before the commit was recorded, or a checkout tim cannot read. Only a
+ * commit that differs from the recorded one is `changed`, so nothing is
+ * extracted again for want of information.
+ *
+ * @param {object} args
+ * @param {object} args.source - The source from sources.json
+ * @param {object} args.value - The parsed extract
+ * @param {string} [args.workspaceRoot] - The workspace root, for the locator
+ * @returns {{state: 'current'|'unknown'|'changed', problem: string|null}}
+ */
+export const repoHeadCheck = ({ source, value, workspaceRoot }) => {
+  const unknown = { state: 'unknown', problem: null }
+  if (source.kind !== 'repo' || !isText(workspaceRoot)) return unknown
+  if (!isText(value?.repoHead)) return unknown
+  const head = repoHeadOf(join(workspaceRoot, source.locator))
+  if (head === null) return unknown
+  if (head === value.repoHead) return { state: 'current', problem: null }
+  const label = extractLabelOf(slugOf(source.id))
+  return {
+    state: 'changed',
+    problem: `${label} was extracted from commit ${shortHash(value.repoHead)}, but ${source.locator} is on ${shortHash(head)} now, so the extract describes code that has changed. Extract it again.`
+  }
 }
 
 const readPartFile = ({ layout, schemas, source, entry, claimOwners }) => {
@@ -574,7 +606,14 @@ export const verifyCheck = ({
 
 const unreadable = (label, read) => [`${label} ${read.error}`]
 
-const inspectExtract = ({ source, read, schemas, claimOwners, workarea }) => {
+const inspectExtract = ({
+  source,
+  read,
+  schemas,
+  claimOwners,
+  workarea,
+  workspaceRoot
+}) => {
   if (!read.exists) return { exists: false, valid: false, problems: [] }
   if (read.error) {
     return {
@@ -593,7 +632,8 @@ const inspectExtract = ({ source, read, schemas, claimOwners, workarea }) => {
     exists: true,
     valid: problems.length === 0,
     problems,
-    hash: scopeHashCheck({ source, value: read.value, workarea })
+    hash: scopeHashCheck({ source, value: read.value, workarea }),
+    repoHead: repoHeadCheck({ source, value: read.value, workspaceRoot })
   }
 }
 
@@ -657,6 +697,14 @@ const stateOf = ({ extract, verifyRead, verify, parts, partition }) => {
           : "The source's kind, locator or scope changed after it was extracted."
     }
   }
+  if (extract.repoHead?.state === 'changed') {
+    return {
+      state: 'stale',
+      next: 'extract',
+      reason:
+        'The repo has moved since it was extracted, so the extract describes code that has changed.'
+    }
+  }
   if (!verifyRead.exists) {
     return {
       state: 'extracted',
@@ -710,7 +758,13 @@ const publicVerify = ({ path, read, verify, parts }) => ({
  * @returns {{report: object, source: object, extract: object|undefined, verify: object|undefined, raw: {extract: unknown, verify: unknown}, problems: object}[]}
  *   `extract` and `verify` are set only when in shape; `raw` holds whatever parsed
  */
-export const inspectSources = ({ layout, schemas, sources, workarea }) => {
+export const inspectSources = ({
+  layout,
+  schemas,
+  sources,
+  workarea,
+  workspaceRoot
+}) => {
   const reads = extractReadsOf(layout, sources)
   const claimOwners = claimOwnersOf(reads)
   return sources.sources.map((source) => {
@@ -721,7 +775,8 @@ export const inspectSources = ({ layout, schemas, sources, workarea }) => {
       read: extractRead,
       schemas,
       claimOwners,
-      workarea
+      workarea,
+      workspaceRoot
     })
     const extractValue = extract.valid ? extractRead.value : undefined
     const verifyPath = verifyPathOf(layout, slug)
@@ -751,6 +806,7 @@ export const inspectSources = ({ layout, schemas, sources, workarea }) => {
       problems: {
         extract: extract.problems,
         hash: extract.hash?.problem ?? null,
+        repoHead: extract.repoHead?.problem ?? null,
         verify: verify?.problems ?? [],
         verifyHash: verify?.hash.problem ?? null
       },
@@ -801,11 +857,15 @@ const countStates = (reports) =>
  * @returns {{workarea: string, path: string, sources: object[], counts: Record<string, number>, work: object[], orphans: string[]}}
  * @throws {TimError} when sources.json is missing or out of shape
  */
-export const distilStatus = ({ layout, schemas, workarea }) => {
+export const distilStatus = ({ layout, schemas, workarea, workspaceRoot }) => {
   const sources = readSources(layout, schemas.sources)
-  const reports = inspectSources({ layout, schemas, sources, workarea }).map(
-    (entry) => entry.report
-  )
+  const reports = inspectSources({
+    layout,
+    schemas,
+    sources,
+    workarea,
+    workspaceRoot
+  }).map((entry) => entry.report)
   return {
     workarea,
     path: layout.dir,

@@ -2,6 +2,7 @@ import { TimError } from '../errors.js'
 import { writeJsonAtomic } from '../backlog/io.js'
 import { extractPathOf, readJsonLenient, scopeHashOf, slugOf } from './files.js'
 import { readSources } from './checks.js'
+import { extractedRepoHead } from './repo-head.js'
 
 const isObject = (value) =>
   value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -12,14 +13,25 @@ const isObject = (value) =>
  * agent runs this once its extract is written; the main session can run it
  * to adopt an extract written before scope hashes existed.
  *
+ * For a repo source it also records the commit its checkout is on, so the
+ * extract is watched for the repo moving under it as well as for its scope
+ * changing. Without `workspaceRoot` there is no path to read the commit
+ * from, and only the scope hash is recorded.
+ *
  * @param {object} args
  * @param {object} args.layout - From `distilLayout`
  * @param {object} args.schemas - From `loadDistilSchemas`
  * @param {string} args.sourceId
- * @returns {{source: string, path: string, scopeHash: string, before: string|null, changed: boolean}}
+ * @param {string} [args.workspaceRoot] - The workspace root, for the locator
+ * @returns {{source: string, path: string, scopeHash: string, repoHead: string|null, before: string|null, changed: boolean}}
  * @throws {TimError} NOT_FOUND for an unknown source or a missing extract, PARSE when the extract is not JSON, LINT when it is not an object
  */
-export const stampScopeHash = ({ layout, schemas, sourceId }) => {
+export const stampScopeHash = ({
+  layout,
+  schemas,
+  sourceId,
+  workspaceRoot
+}) => {
   const sources = readSources(layout, schemas.sources)
   const source = sources.sources.find((candidate) => candidate.id === sourceId)
   if (!source) {
@@ -41,11 +53,18 @@ export const stampScopeHash = ({ layout, schemas, sourceId }) => {
     throw new TimError('LINT', `${path} must be an object.`)
   }
   const scopeHash = scopeHashOf(source)
+  const repoHead = extractedRepoHead({ source, workspaceRoot })
   const before = read.value.scopeHash ?? null
-  if (before === scopeHash) {
-    return { source: source.id, path, scopeHash, before, changed: false }
+  const stamped = { source: source.id, path, scopeHash, repoHead, before }
+  if (before === scopeHash && repoHead === (read.value.repoHead ?? null)) {
+    return { ...stamped, changed: false }
   }
   const { claims, ...head } = read.value
-  writeJsonAtomic(path, { ...head, scopeHash, claims })
-  return { source: source.id, path, scopeHash, before, changed: true }
+  writeJsonAtomic(path, {
+    ...head,
+    scopeHash,
+    ...(repoHead ? { repoHead } : {}),
+    claims
+  })
+  return { ...stamped, changed: true }
 }

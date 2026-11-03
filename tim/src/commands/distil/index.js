@@ -140,7 +140,8 @@ const contextFor = (workspaceRoot, workarea) => {
   return {
     workarea: workarea.trim().replace(/\/+$/, ''),
     layout,
-    schemas: loadDistilSchemas(workspaceRoot)
+    schemas: loadDistilSchemas(workspaceRoot),
+    workspaceRoot
   }
 }
 

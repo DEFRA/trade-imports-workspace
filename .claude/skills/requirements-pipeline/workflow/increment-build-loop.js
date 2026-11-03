@@ -1860,6 +1860,17 @@ const recoverRunStack = async (id, stage, runStage) => {
   const first = await checkStackHeld(id, stage, await runStage())
   const why = whyRetakeRunLease(stage, first)
   if (!why) return first.result
+  // A run that never holds a lease has no lease to take again, so a stage
+  // reporting the stack down or held is reporting the state this run chose. Under
+  // `e2e: "ci"` the stack is MEANT to be absent, and acquiring a lease here would
+  // start the whole stack from local source and build every repo-backed image —
+  // the opposite of what ci promises, off the back of one stage's report.
+  if (!E2E_IS_LOCAL) {
+    log(
+      `${id}: ${why}. This run holds no stack lease (e2e is proved by the pull requests), so the stack being absent is this run's own choice, not a fault: leaving it down and taking ${stage}'s result as it is. A plan that names a check needing the workspace stack cannot run it under e2e: "ci"`
+    )
+    return first.result
+  }
   log(`${id}: ${why}. Taking the lease again and running ${stage} once more`)
   const retaken = await acquireRunLease()
   if (!retaken?.acquired) {

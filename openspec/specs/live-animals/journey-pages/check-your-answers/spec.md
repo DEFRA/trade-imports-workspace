@@ -249,9 +249,9 @@ While a notification is being amended, the system MUST show the review with no e
 - **AND** the notification is still being amended
 - **AND** the declaration is not opened
 
-### Requirement: Ports, destination countries and document types read back exactly as they were offered
+### Requirement: Ports, destination and transited countries and document types read back exactly as they were offered
 **ID**: REQ-CYA-013
-The system MUST show the port of entry and the port of exit on the review exactly as the port was offered when it was chosen, reading "<port name> - <port code>", MUST name a territory chosen as the destination country "<territory> (<country>)", as the destination country list does, and MUST name each document's type with the same wording the upload documents page offered that type under.
+The system MUST show the port of entry and the port of exit on the review exactly as the port was offered when it was chosen, reading "<port name> - <port code>", MUST name a territory chosen as the destination country "<territory> (<country>)", as the destination country list does, MUST name a territory among the transited countries "<territory> (<country>)", as the transit search does, and MUST name each document's type with the same wording the upload documents page offered that type under.
 
 #### Scenario: The port of exit row reads the option the user chose
 **ID**: SCN-CYA-013-A
@@ -276,6 +276,12 @@ The system MUST show the port of entry and the port of exit on the review exactl
 - **GIVEN** a notification holding a document whose type was chosen as "CITES permit/certificate"
 - **WHEN** the user views the review
 - **THEN** that document's type row reads "CITES permit/certificate", the same text as the option they chose
+
+#### Scenario: A transited territory is named with its country
+**ID**: SCN-CYA-013-E
+- **GIVEN** a road notification transiting the Canary Islands and France
+- **WHEN** the user views the review
+- **THEN** the transited countries row reads "Canary Islands (Spain), France"
 
 ### Requirement: Continuing a draft is refused while it holds a species the reference data no longer lists
 **ID**: REQ-CYA-014

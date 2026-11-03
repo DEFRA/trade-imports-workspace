@@ -1,37 +1,25 @@
 {
-  "theme": "documents",
+  "theme": "arrival-and-transit",
   "workarea": "shared/design-release-2-1",
-  "branch": "main",
+  "branch": "feat/EUDPA-694-design-release-2-1-arrival-and-transit",
   "commits": [
     {
-      "sha": "87fceaf3",
-      "subject": "feat(design-release-2-1-documents): The theme branch takes in what main has landed since it was cut"
+      "sha": "1a0cba54",
+      "subject": "feat(design-release-2-1-arrival-and-transit): Transit country search offers the GBNAG_SPS_EX countries and their subdivisions"
     },
     {
-      "sha": "6017735e",
-      "subject": "chore(design-release-2-1-documents): The Upload documents specification states the file size and reference rules the service now applies"
+      "sha": "5f516498",
+      "subject": "feat(design-release-2-1-arrival-and-transit): Transit countries page: title, and redirect when it does not apply"
     },
     {
-      "sha": "4bebe152",
-      "subject": "feat(design-release-2-1-documents): A document still being scanned no longer holds the trader on Upload documents"
-    },
-    {
-      "sha": "690b21f8",
-      "subject": "feat(design-release-2-1-documents): Upload documents remembers where the trader came from and returns them there"
-    },
-    {
-      "sha": "92f6c6ba",
-      "subject": "feat(design-release-2-1-documents): The document type list drops Health certificate, leaving the thirteen types Design Release 2.1 offers"
-    },
-    {
-      "sha": "7d2b97d0",
-      "subject": "feat(design-release-2-1-documents): Upload documents can be opened as soon as the origin is answered"
+      "sha": "9469d59b",
+      "subject": "feat(design-release-2-1-arrival-and-transit): Arrival details requires a means of transport, on both save buttons"
     }
   ],
   "totals": {
-    "scenarios": 11,
-    "files": 1,
-    "rows": 9,
+    "scenarios": 12,
+    "files": 4,
+    "rows": 6,
     "domains": 1
   },
   "domains": {
@@ -40,179 +28,100 @@
       "title": "Live animals journey",
       "scenarios": [
         {
-          "heading": "A reference written in one of the shapes real documents carry is taken on",
-          "id": "SCN-DOCS-006-F",
+          "heading": "A transited territory is named with its country",
+          "id": "SCN-CYA-013-E",
           "steps": [
             {
               "keyword": "GIVEN",
-              "text": "the user enters a reference written as an air waybill with a hyphen, a certificate with full stops, or an invoice with a space and a forward slash"
+              "text": "a road notification transiting the Canary Islands and France"
             },
             {
               "keyword": "WHEN",
-              "text": "they add the document"
+              "text": "the user views the review"
             },
             {
               "keyword": "THEN",
-              "text": "it is taken on and held against the notification with that reference as typed"
+              "text": "the transited countries row reads \"Canary Islands (Spain), France\""
             }
           ],
-          "file": "live-animals/journey-pages/upload-documents/spec.md",
-          "row": "inc-039",
+          "file": "live-animals/journey-pages/check-your-answers/spec.md",
+          "row": "inc-174",
           "missing": false
         },
         {
-          "heading": "A reference carrying a disallowed character is refused",
-          "id": "SCN-DOCS-006-G",
+          "heading": "The search offers the origin countries and their territories in alphabetical order",
+          "id": "SCN-TRANSIT-COUNTRIES-009-A",
           "steps": [
             {
               "keyword": "GIVEN",
-              "text": "the user enters a reference carrying a character other than a letter, number, space, hyphen, full stop or forward slash"
+              "text": "the user is on the transited countries page"
             },
             {
               "keyword": "WHEN",
-              "text": "they try to add the document"
+              "text": "the search list is read in full"
             },
             {
               "keyword": "THEN",
-              "text": "an error reading \"Document reference must only include letters, numbers, spaces, hyphens, full stops and forward slashes\" is shown on the Document reference field"
+              "text": "it holds exactly the countries and territories the reference data service serves for the country of origin, by name, in alphabetical order"
+            }
+          ],
+          "file": "live-animals/journey-pages/transited-countries/spec.md",
+          "row": "inc-174",
+          "missing": false
+        },
+        {
+          "heading": "Each territory is named with its country, with or without JavaScript",
+          "id": "SCN-TRANSIT-COUNTRIES-009-B",
+          "steps": [
+            {
+              "keyword": "GIVEN",
+              "text": "the transited countries search, with or without JavaScript"
+            },
+            {
+              "keyword": "WHEN",
+              "text": "a territory is read"
+            },
+            {
+              "keyword": "THEN",
+              "text": "it reads \"<territory> (<country>)\", for example \"Canary Islands (Spain)\""
+            }
+          ],
+          "file": "live-animals/journey-pages/transited-countries/spec.md",
+          "row": "inc-174",
+          "missing": false
+        },
+        {
+          "heading": "A territory is listed, saved and shown again under the same name",
+          "id": "SCN-TRANSIT-COUNTRIES-010-A",
+          "steps": [
+            {
+              "keyword": "GIVEN",
+              "text": "the user is on the transited countries page"
+            },
+            {
+              "keyword": "WHEN",
+              "text": "they add a territory and save and continue"
+            },
+            {
+              "keyword": "THEN",
+              "text": "no error is shown"
             },
             {
               "keyword": "AND",
-              "text": "no document is added to the notification"
+              "text": "when they reopen the page the territory is listed as \"<territory> (<country>)\""
             }
           ],
-          "file": "live-animals/journey-pages/upload-documents/spec.md",
-          "row": "inc-039",
+          "file": "live-animals/journey-pages/transited-countries/spec.md",
+          "row": "inc-174",
           "missing": false
         },
         {
-          "heading": "Continuing is not blocked while a scan is still running",
-          "id": "SCN-DOCS-008-A",
+          "heading": "The browser title is Transit countries when the page loads",
+          "id": "SCN-TRANSIT-COUNTRIES-006-A",
           "steps": [
             {
               "keyword": "GIVEN",
-              "text": "a document on the page is still \"Scanning for virus\""
-            },
-            {
-              "keyword": "WHEN",
-              "text": "the user tries to continue"
-            },
-            {
-              "keyword": "THEN",
-              "text": "continuing takes them onward"
-            },
-            {
-              "keyword": "WHEN",
-              "text": "they come back to the page"
-            },
-            {
-              "keyword": "THEN",
-              "text": "the document is still listed, and its row settles to \"Check completed\" once the scan finishes"
-            }
-          ],
-          "file": "live-animals/journey-pages/upload-documents/spec.md",
-          "row": "inc-038",
-          "missing": false
-        },
-        {
-          "heading": "The back link opens Overview for a draft opened from Overview",
-          "id": "SCN-DOCS-002-A",
-          "steps": [
-            {
-              "keyword": "GIVEN",
-              "text": "the user opens the upload documents page from Overview, on a draft that is not being amended"
-            },
-            {
-              "keyword": "WHEN",
-              "text": "they follow the back link"
-            },
-            {
-              "keyword": "THEN",
-              "text": "Overview is shown"
-            }
-          ],
-          "file": "live-animals/journey-pages/upload-documents/spec.md",
-          "row": "inc-034",
-          "missing": false
-        },
-        {
-          "heading": "The back link opens the review when changing an answer from the review",
-          "id": "SCN-DOCS-002-B",
-          "steps": [
-            {
-              "keyword": "GIVEN",
-              "text": "the user opens the upload documents page by changing the uploaded documents from the review"
-            },
-            {
-              "keyword": "WHEN",
-              "text": "they follow the back link"
-            },
-            {
-              "keyword": "THEN",
-              "text": "the review is shown"
-            }
-          ],
-          "file": "live-animals/journey-pages/upload-documents/spec.md",
-          "row": "inc-034",
-          "missing": false
-        },
-        {
-          "heading": "The back link opens the review while the notification is being amended, however the page was opened",
-          "id": "SCN-DOCS-002-C",
-          "steps": [
-            {
-              "keyword": "GIVEN",
-              "text": "the notification is being amended"
-            },
-            {
-              "keyword": "WHEN",
-              "text": "the user opens the upload documents page from Overview and follows the back link"
-            },
-            {
-              "keyword": "THEN",
-              "text": "the review is shown"
-            }
-          ],
-          "file": "live-animals/journey-pages/upload-documents/spec.md",
-          "row": "inc-034",
-          "missing": false
-        },
-        {
-          "heading": "The back link still opens the review after the page refuses a part-filled document",
-          "id": "SCN-DOCS-002-D",
-          "steps": [
-            {
-              "keyword": "GIVEN",
-              "text": "the user opened the upload documents page by changing an answer from the review"
-            },
-            {
-              "keyword": "WHEN",
-              "text": "they try to add a document with only the reference filled in, and it is refused"
-            },
-            {
-              "keyword": "THEN",
-              "text": "the back link still opens the review"
-            },
-            {
-              "keyword": "WHEN",
-              "text": "they follow it"
-            },
-            {
-              "keyword": "THEN",
-              "text": "the review is shown"
-            }
-          ],
-          "file": "live-animals/journey-pages/upload-documents/spec.md",
-          "row": "inc-034",
-          "missing": false
-        },
-        {
-          "heading": "The type question offers thirteen types behind a placeholder, in position",
-          "id": "SCN-DOCS-013-A",
-          "steps": [
-            {
-              "keyword": "GIVEN",
-              "text": "the user is adding a document"
+              "text": "the user opens the transited countries page"
             },
             {
               "keyword": "WHEN",
@@ -220,104 +129,220 @@
             },
             {
               "keyword": "THEN",
-              "text": "a document type field is shown between the reference and the date of issue, offering a placeholder and then: Intra Trade Animal Health Certificate (ITAHC), Veterinary health certificate, Air waybill, Import permit, Letter of authority (Directive 2008/61/EC), Commercial invoice, Sea waybill, Rail waybill, Bill of lading, Catch certificate, Laboratory sampling results for aflatoxin (Reg 2019/1793), Journey log, Other"
+              "text": "the browser title is \"Transit countries - Import notification service - GOV.UK\""
             }
           ],
-          "file": "live-animals/journey-pages/upload-documents/spec.md",
-          "row": "inc-037",
+          "file": "live-animals/journey-pages/transited-countries/spec.md",
+          "row": "inc-029",
           "missing": false
         },
         {
-          "heading": "A document recorded as Health certificate is listed with that type while the type question offers thirteen",
-          "id": "SCN-DOCS-013-D",
+          "heading": "The browser title starts with Error when the page shows an error",
+          "id": "SCN-TRANSIT-COUNTRIES-006-B",
           "steps": [
             {
               "keyword": "GIVEN",
-              "text": "a notification holds a document recorded as Health certificate"
+              "text": "the user is on the transited countries page"
             },
             {
               "keyword": "WHEN",
-              "text": "the upload documents page opens"
+              "text": "they press \"Add country\" with nothing chosen"
             },
             {
               "keyword": "THEN",
-              "text": "that document is listed with Health certificate as its type"
+              "text": "the browser title is \"Error: Transit countries - Import notification service - GOV.UK\""
+            }
+          ],
+          "file": "live-animals/journey-pages/transited-countries/spec.md",
+          "row": "inc-029",
+          "missing": false
+        },
+        {
+          "heading": "Opening the page with air, sea or no means saved shows Overview",
+          "id": "SCN-TRANSIT-COUNTRIES-008-A",
+          "steps": [
+            {
+              "keyword": "GIVEN",
+              "text": "the saved means of transport is Air or Sea, or none is saved"
+            },
+            {
+              "keyword": "WHEN",
+              "text": "the user opens the transited countries page"
+            },
+            {
+              "keyword": "THEN",
+              "text": "Overview is shown"
+            }
+          ],
+          "file": "live-animals/journey-pages/transited-countries/spec.md",
+          "row": "inc-029",
+          "missing": false
+        },
+        {
+          "heading": "Submitting the page after the means became air shows Overview and saves no countries",
+          "id": "SCN-TRANSIT-COUNTRIES-008-B",
+          "steps": [
+            {
+              "keyword": "GIVEN",
+              "text": "the transited countries page is open and the means of transport has since been saved as Air"
+            },
+            {
+              "keyword": "WHEN",
+              "text": "the user submits the page with Add country, Remove, Save and continue or Save and return to overview"
+            },
+            {
+              "keyword": "THEN",
+              "text": "Overview is shown"
             },
             {
               "keyword": "AND",
-              "text": "the type question offers thirteen document types"
+              "text": "no transited countries are saved"
             }
           ],
-          "file": "live-animals/journey-pages/upload-documents/spec.md",
-          "row": "inc-037",
+          "file": "live-animals/journey-pages/transited-countries/spec.md",
+          "row": "inc-029",
           "missing": false
         },
         {
-          "heading": "Reaching the page from Overview with only the origin answered",
-          "id": "SCN-DOCS-020-A",
+          "heading": "Arrival details saved and returned without a means of transport is refused",
+          "id": "SCN-FLOW-004-G",
           "steps": [
             {
               "keyword": "GIVEN",
-              "text": "a new notification with only the origin of the import answered"
+              "text": "the Arrival details page with a port of entry chosen and no means of transport"
             },
             {
               "keyword": "WHEN",
-              "text": "the user follows Overview's \"Upload documents\" row"
+              "text": "the user selects \"Save and return to overview\""
             },
             {
               "keyword": "THEN",
-              "text": "the page titled \"Upload documents\" is shown"
+              "text": "they stay on the page showing \"Select a means of transport to the port of entry\" and the port of entry is still chosen"
+            },
+            {
+              "keyword": "AND",
+              "text": "the Arrival details task reads \"To do\""
+            },
+            {
+              "keyword": "AND",
+              "text": "re-opening the page shows the port of entry empty"
             }
           ],
-          "file": "live-animals/journey-pages/upload-documents/spec.md",
-          "row": "inc-031",
+          "file": "live-animals/journey-flow/spec.md",
+          "row": "inc-241",
           "missing": false
         },
         {
-          "heading": "Opening the page with the origin and what they are importing answered",
-          "id": "SCN-DOCS-020-B",
+          "heading": "Save and continue with no means of transport is refused",
+          "id": "SCN-ARRIVAL-006-A",
           "steps": [
             {
               "keyword": "GIVEN",
-              "text": "a new notification with the origin of the import and what they are importing answered, and nothing else"
+              "text": "the user is on the arrival details page with nothing answered"
             },
             {
               "keyword": "WHEN",
-              "text": "the user opens the upload documents page"
+              "text": "they save and continue"
             },
             {
               "keyword": "THEN",
-              "text": "the page titled \"Upload documents\" is shown"
+              "text": "they stay on the arrival details page"
+            },
+            {
+              "keyword": "AND",
+              "text": "the error summary and the means of transport both show \"Select a means of transport to the port of entry\""
+            },
+            {
+              "keyword": "AND",
+              "text": "the browser page title starts \"Error: \""
             }
           ],
-          "file": "live-animals/journey-pages/upload-documents/spec.md",
-          "row": "inc-031",
+          "file": "live-animals/journey-pages/arrival-details/spec.md",
+          "row": "inc-241",
+          "missing": false
+        },
+        {
+          "heading": "A refused save shows the other answers back and saves nothing",
+          "id": "SCN-ARRIVAL-006-B",
+          "steps": [
+            {
+              "keyword": "GIVEN",
+              "text": "the user has chosen a port of entry and entered an arrival date but no means of transport"
+            },
+            {
+              "keyword": "WHEN",
+              "text": "they save and continue"
+            },
+            {
+              "keyword": "THEN",
+              "text": "the port of entry and arrival date are shown back"
+            },
+            {
+              "keyword": "AND",
+              "text": "re-opening the page from the overview shows them empty"
+            }
+          ],
+          "file": "live-animals/journey-pages/arrival-details/spec.md",
+          "row": "inc-241",
+          "missing": false
+        },
+        {
+          "heading": "The Welsh page words the missing means of transport in Welsh",
+          "id": "SCN-ARRIVAL-006-C",
+          "steps": [
+            {
+              "keyword": "GIVEN",
+              "text": "the user is on the arrival details page in Welsh with no means of transport chosen"
+            },
+            {
+              "keyword": "WHEN",
+              "text": "they save, with either button"
+            },
+            {
+              "keyword": "THEN",
+              "text": "the error summary and the means of transport both show \"Dewiswch gyfrwng cludo i’r porthladd mynediad\""
+            }
+          ],
+          "file": "live-animals/journey-pages/arrival-details/spec.md",
+          "row": "inc-241",
           "missing": false
         }
       ],
       "files": [
         {
-          "path": "live-animals/journey-pages/upload-documents/spec.md",
-          "added": 11,
-          "url": "https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/upload-documents/spec.md"
+          "path": "live-animals/journey-pages/transited-countries/spec.md",
+          "added": 7,
+          "url": "https://github.com/DEFRA/trade-imports-workspace/blob/feat/EUDPA-694-design-release-2-1-arrival-and-transit/openspec/specs/live-animals/journey-pages/transited-countries/spec.md"
+        },
+        {
+          "path": "live-animals/journey-pages/arrival-details/spec.md",
+          "added": 3,
+          "url": "https://github.com/DEFRA/trade-imports-workspace/blob/feat/EUDPA-694-design-release-2-1-arrival-and-transit/openspec/specs/live-animals/journey-pages/arrival-details/spec.md"
+        },
+        {
+          "path": "live-animals/journey-flow/spec.md",
+          "added": 1,
+          "url": "https://github.com/DEFRA/trade-imports-workspace/blob/feat/EUDPA-694-design-release-2-1-arrival-and-transit/openspec/specs/live-animals/journey-flow/spec.md"
+        },
+        {
+          "path": "live-animals/journey-pages/check-your-answers/spec.md",
+          "added": 1,
+          "url": "https://github.com/DEFRA/trade-imports-workspace/blob/feat/EUDPA-694-design-release-2-1-arrival-and-transit/openspec/specs/live-animals/journey-pages/check-your-answers/spec.md"
         }
       ],
       "rows": [
-        "inc-031",
-        "inc-033",
-        "inc-034",
-        "inc-035",
-        "inc-037",
-        "inc-038",
-        "inc-039",
-        "inc-040"
+        "inc-028",
+        "inc-029",
+        "inc-174",
+        "inc-240",
+        "inc-241"
       ],
-      "scenarioCount": 11,
-      "fileCount": 1,
+      "scenarioCount": 12,
+      "fileCount": 4,
       "excludedRows": [
         {
-          "id": "inc-036",
-          "title": "Attach files up to 50MB",
+          "id": "inc-025",
+          "title": "Arrival details page moves to the 'arrival-details' address",
           "why": "dropped"
         }
       ]
@@ -325,187 +350,8 @@
   },
   "rows": [
     {
-      "id": "inc-031",
-      "title": "Upload documents can be opened as soon as the origin is answered",
-      "status": "done",
-      "gate": null,
-      "repos": [
-        {
-          "key": "frontend",
-          "repo": "trade-imports-animals-frontend",
-          "domain": "animals"
-        },
-        {
-          "key": "tests",
-          "repo": "trade-imports-ins-tests",
-          "domain": "ignore"
-        }
-      ],
-      "domains": [
-        "animals"
-      ],
-      "sharedRepos": [],
-      "testRepos": [
-        "trade-imports-ins-tests"
-      ],
-      "attributedBy": "repos",
-      "commit": "7d2b97d0bec3de6712949375762a19ad113983b3",
-      "testOnly": false,
-      "excluded": null
-    },
-    {
-      "id": "inc-033",
-      "title": "Document references accept punctuation, and the document type list drops Health certificate",
-      "status": "merged-into",
-      "gate": null,
-      "repos": [
-        {
-          "key": "backend",
-          "repo": "trade-imports-animals-backend",
-          "domain": "animals"
-        },
-        {
-          "key": "frontend",
-          "repo": "trade-imports-animals-frontend",
-          "domain": "animals"
-        },
-        {
-          "key": "tests",
-          "repo": "trade-imports-ins-tests",
-          "domain": "ignore"
-        }
-      ],
-      "domains": [
-        "animals"
-      ],
-      "sharedRepos": [],
-      "testRepos": [
-        "trade-imports-ins-tests"
-      ],
-      "attributedBy": "repos",
-      "commit": null,
-      "testOnly": false,
-      "excluded": null
-    },
-    {
-      "id": "inc-037",
-      "title": "The document type list drops Health certificate, leaving the thirteen types Design Release 2.1 offers",
-      "status": "done",
-      "gate": null,
-      "repos": [
-        {
-          "key": "frontend",
-          "repo": "trade-imports-animals-frontend",
-          "domain": "animals"
-        },
-        {
-          "key": "tests",
-          "repo": "trade-imports-ins-tests",
-          "domain": "ignore"
-        }
-      ],
-      "domains": [
-        "animals"
-      ],
-      "sharedRepos": [],
-      "testRepos": [
-        "trade-imports-ins-tests"
-      ],
-      "attributedBy": "repos",
-      "commit": "92f6c6badb0e7c02b80ae9a0d7c3d938a535126c",
-      "testOnly": false,
-      "excluded": null
-    },
-    {
-      "id": "inc-034",
-      "title": "Upload documents remembers where the trader came from and returns them there",
-      "status": "done",
-      "gate": null,
-      "repos": [
-        {
-          "key": "frontend",
-          "repo": "trade-imports-animals-frontend",
-          "domain": "animals"
-        },
-        {
-          "key": "tests",
-          "repo": "trade-imports-ins-tests",
-          "domain": "ignore"
-        }
-      ],
-      "domains": [
-        "animals"
-      ],
-      "sharedRepos": [],
-      "testRepos": [
-        "trade-imports-ins-tests"
-      ],
-      "attributedBy": "repos",
-      "commit": "690b21f86fb3db13154febd3e3e8fd38978eada9",
-      "testOnly": false,
-      "excluded": null
-    },
-    {
-      "id": "inc-035",
-      "title": "Save and continue no longer waits for virus scans, and Save and return to overview keeps a typed-in document",
-      "status": "merged-into",
-      "gate": null,
-      "repos": [
-        {
-          "key": "frontend",
-          "repo": "trade-imports-animals-frontend",
-          "domain": "animals"
-        },
-        {
-          "key": "tests",
-          "repo": "trade-imports-ins-tests",
-          "domain": "ignore"
-        }
-      ],
-      "domains": [
-        "animals"
-      ],
-      "sharedRepos": [],
-      "testRepos": [
-        "trade-imports-ins-tests"
-      ],
-      "attributedBy": "repos",
-      "commit": null,
-      "testOnly": false,
-      "excluded": null
-    },
-    {
-      "id": "inc-038",
-      "title": "A document still being scanned no longer holds the trader on Upload documents",
-      "status": "done",
-      "gate": null,
-      "repos": [
-        {
-          "key": "frontend",
-          "repo": "trade-imports-animals-frontend",
-          "domain": "animals"
-        },
-        {
-          "key": "tests",
-          "repo": "trade-imports-ins-tests",
-          "domain": "ignore"
-        }
-      ],
-      "domains": [
-        "animals"
-      ],
-      "sharedRepos": [],
-      "testRepos": [
-        "trade-imports-ins-tests"
-      ],
-      "attributedBy": "repos",
-      "commit": "4bebe1520875ff8f82be703d8e9dc8d5f82b6051",
-      "testOnly": false,
-      "excluded": null
-    },
-    {
-      "id": "inc-036",
-      "title": "Attach files up to 50MB",
+      "id": "inc-025",
+      "title": "Arrival details page moves to the 'arrival-details' address",
       "status": "dropped",
       "gate": null,
       "repos": [
@@ -533,8 +379,8 @@
       "excluded": "dropped"
     },
     {
-      "id": "inc-039",
-      "title": "The Upload documents specification states the file size and reference rules the service now applies",
+      "id": "inc-240",
+      "title": "The theme branch takes in what main has landed since it was cut",
       "status": "done",
       "gate": null,
       "repos": [
@@ -542,21 +388,34 @@
           "key": "frontend",
           "repo": "trade-imports-animals-frontend",
           "domain": "animals"
+        },
+        {
+          "key": "plantsfrontend",
+          "repo": "trade-imports-plants-frontend",
+          "domain": "plants"
+        },
+        {
+          "key": "tests",
+          "repo": "trade-imports-ins-tests",
+          "domain": "ignore"
         }
       ],
       "domains": [
-        "animals"
+        "animals",
+        "plants"
       ],
       "sharedRepos": [],
-      "testRepos": [],
+      "testRepos": [
+        "trade-imports-ins-tests"
+      ],
       "attributedBy": "repos",
-      "commit": "6017735e04f49459206fdad5ace4ef24a1f230fe",
+      "commit": null,
       "testOnly": false,
       "excluded": null
     },
     {
-      "id": "inc-040",
-      "title": "The theme branch takes in what main has landed since it was cut",
+      "id": "inc-241",
+      "title": "Arrival details requires a means of transport, on both save buttons",
       "status": "done",
       "gate": null,
       "repos": [
@@ -579,7 +438,94 @@
         "trade-imports-ins-tests"
       ],
       "attributedBy": "repos",
-      "commit": "87fceaf3646854f117fa5b40c55a7da42a6947e4",
+      "commit": "9469d59b0b44f1280b1d321bfd8959d841770566",
+      "testOnly": false,
+      "excluded": null
+    },
+    {
+      "id": "inc-028",
+      "title": "Arrival details requires a means of transport to continue",
+      "status": "merged-into",
+      "gate": null,
+      "repos": [
+        {
+          "key": "frontend",
+          "repo": "trade-imports-animals-frontend",
+          "domain": "animals"
+        },
+        {
+          "key": "tests",
+          "repo": "trade-imports-ins-tests",
+          "domain": "ignore"
+        }
+      ],
+      "domains": [
+        "animals"
+      ],
+      "sharedRepos": [],
+      "testRepos": [
+        "trade-imports-ins-tests"
+      ],
+      "attributedBy": "repos",
+      "commit": null,
+      "testOnly": false,
+      "excluded": null
+    },
+    {
+      "id": "inc-029",
+      "title": "Transit countries page: title, and redirect when it does not apply",
+      "status": "done",
+      "gate": null,
+      "repos": [
+        {
+          "key": "frontend",
+          "repo": "trade-imports-animals-frontend",
+          "domain": "animals"
+        },
+        {
+          "key": "tests",
+          "repo": "trade-imports-ins-tests",
+          "domain": "ignore"
+        }
+      ],
+      "domains": [
+        "animals"
+      ],
+      "sharedRepos": [],
+      "testRepos": [
+        "trade-imports-ins-tests"
+      ],
+      "attributedBy": "repos",
+      "commit": "5f51649848c78d96b22aae89388102f4e674b789",
+      "testOnly": false,
+      "excluded": null
+    },
+    {
+      "id": "inc-174",
+      "title": "Transit country search offers the GBNAG_SPS_EX countries and their subdivisions",
+      "status": "done",
+      "gate": null,
+      "repos": [
+        {
+          "key": "frontend",
+          "repo": "trade-imports-animals-frontend",
+          "domain": "animals"
+        },
+        {
+          "key": "tests",
+          "repo": "trade-imports-ins-tests",
+          "domain": "ignore"
+        }
+      ],
+      "domains": [
+        "animals"
+      ],
+      "sharedRepos": [],
+      "testRepos": [
+        "trade-imports-ins-tests"
+      ],
+      "attributedBy": "repos",
+      "commit": "1a0cba548e1be6b9daf9e85ffb0c9dcb1cabc1fd",
       "testOnly": false,
       "excluded": null
     }
@@ -588,8 +534,8 @@
   "outsideFootprint": [],
   "checks": {
     "scenarioSum": "ok",
-    "perDomainSum": 11,
+    "perDomainSum": 12,
     "unknownAreas": [],
-    "footprintFiles": 1
+    "footprintFiles": 4
   }
 }

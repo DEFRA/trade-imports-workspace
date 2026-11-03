@@ -35,6 +35,23 @@ Each split theme also has a pick-up list in the report's "For the split branches
 until the theme's `splitOff` pointer takes it in, so nothing is lost by applying a theme's list when it is played.
 commodities-and-reason's 19 are applied; the other nine are not.
 
+`tim backlog check` now **refuses** a theme whose pick-up holds requirements it has never placed in a row, and names
+them, so playing one of those stops at the pre-flight. Six do today:
+
+| Theme | Requirements it has never placed |
+|---|---|
+| `type-question-and-templates` | req-1299, req-2107, req-2202, req-2136 |
+| `overview-and-review` | req-905, req-906, req-908, req-931, req-2138 |
+| `address-book` | req-611, req-2186, req-2199 |
+| `journey-foundation` | req-405, req-582 |
+| `origin-page` | req-032, req-2124 |
+| `documents` | req-2179 |
+
+`reference-lists`, `arrival-and-transit` and `design-snagging` pass: they have nothing new, only requirements whose
+text changed. **Those the check deliberately does not refuse**, because a change may have been judged and declined —
+commodities-and-reason carries 10 such on purpose. Read them from
+`tim distil coverage shared/design-release-2-1 --json` (`result.backlog.splitOff[].changed`) and judge each.
+
 ## Stale branches (ruled 20 October)
 
 Five themes were built on branches that will **not** be merged. Each is now a stale branch: a quarry to take code from,

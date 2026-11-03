@@ -518,12 +518,27 @@ base's. A merge that conflicts stops the row, naming the files. A failure names 
 
 7. **If the theme was split off early, apply its pick-up list first.** A re-distil never rewrites a split theme's
    own backlog, so its rows can be older than the parent's. The report's "For the split branches" section names,
-   per branch, every requirement new since the split, changed since the split, or no longer to build. Add or rewrite
-   that theme's rows for them, then move each id from the parent pointer's `pickUp` to its `requirements` and copy
-   the fingerprint from `fingerprintsNow` in `tim distil coverage <workarea> --json`, as
+   per branch, every requirement new since the split, changed since the split, or no longer to build.
+
+   **Step 3's `tim backlog check` refuses the theme while the parent still holds requirements it has never placed in
+   a row**, naming them, so a never-placed requirement cannot be missed:
+
+   ```
+   shared/design-release-2-1 hands this theme 5 requirements it has not placed in a row yet:
+   req-905, req-906, req-908, req-931, req-2138. Read the "For the split branches" section of
+   shared/design-release-2-1/report.md, add or rewrite this backlog's rows for them, then move
+   each id from the parent pointer's "pickUp" to its "requirements".
+   ```
+
+   **It does not refuse a requirement whose text merely changed**, because someone may have decided deliberately not
+   to apply a change. Those are not detected for you: read them from
+   `tim distil coverage <workarea> --json` (`result.backlog.splitOff[].changed`) or the report, and judge each one.
+
+   Then move each id from the parent pointer's `pickUp` to its `requirements` and copy the fingerprint from
+   `fingerprintsNow` in `tim distil coverage <workarea> --json`, as
    [`DISTIL.md`](DISTIL.md#8-splitting-a-theme-off-early) sets out. Leave a requirement's fingerprint alone where you
    decided not to apply its change: the report then re-raises it at the next re-distil instead of the disagreement
-   being buried.
+   being buried, and the check stays quiet about it.
 
 ## THE RUN
 

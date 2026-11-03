@@ -2,7 +2,7 @@ import { TimError } from '../errors.js'
 import { recipeFieldsOf, rowSchemaOf } from './backlog-schema.js'
 import { findCycle } from './graph.js'
 import { followRef } from './schema-ref.js'
-import { splitOffOf } from './split-off.js'
+import { pickUpAwaiting, splitOffOf } from './split-off.js'
 import {
   externalDependenciesDone,
   externalDependencyProblems,
@@ -310,7 +310,8 @@ export const checkBacklog = (backlog, schema, { readWorkareaBacklog } = {}) => {
   if (readWorkareaBacklog) {
     problems.push(
       ...externalDependencyProblems(backlog, readWorkareaBacklog),
-      ...splitOffDependencyProblems(backlog, readWorkareaBacklog)
+      ...splitOffDependencyProblems(backlog, readWorkareaBacklog),
+      ...pickUpProblems(backlog, readWorkareaBacklog)
     )
   }
   return { problems, counts: countByStatus(rows), total: rows.length }
@@ -325,6 +326,17 @@ const splitOffDependencyProblems = (backlog, readWorkareaBacklog) =>
         `In ${pointer.workarea}, split off early: ${problem} If another early split moved that row, run tim backlog split --relink to point at its new workarea.`
     )
   })
+
+const pickUpProblems = (backlog, readWorkareaBacklog) => {
+  const parentWorkarea = backlog?.parent?.workarea
+  if (!isText(parentWorkarea)) return []
+  const waiting = pickUpAwaiting(backlog, readWorkareaBacklog(parentWorkarea))
+  if (waiting.length === 0) return []
+  const count = `${waiting.length} requirement${waiting.length === 1 ? '' : 's'}`
+  return [
+    `${parentWorkarea} hands this theme ${count} it has not placed in a row yet: ${waiting.join(', ')}. Read the "For the split branches" section of ${parentWorkarea}/report.md, add or rewrite this backlog's rows for them, then move each id from the parent pointer's "pickUp" to its "requirements".`
+  ]
+}
 
 const NO_OTHER_BACKLOGS = () => null
 

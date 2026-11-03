@@ -131,15 +131,34 @@
     },
     {
       "id": "REQ-ARRIVAL-006",
-      "name": "Saving the page empty keeps a draft and moves on",
-      "coverage": "full",
+      "name": "A means of transport is required to save the page",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-ARRIVAL-006-A",
-          "name": "Saving with nothing answered keeps a draft and moves on",
-          "coverage": "full",
+          "name": "Save and continue with no means of transport is refused",
+          "coverage": "partial",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/arrival-details.spec.ts", "test": "saves a draft and returns to the overview with the Arrival details task still to do when submitted empty", "strength": "full", "notes": "lands on the overview with the Arrival details task at To do; the page was opened from its overview task, so the next page is the overview (see journey-flow)" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js", "test": "Should refuse %s with no means of transport, show the port back and commit nothing", "strength": "partial", "notes": "proves the 400, the exact required message, the summary link to the means of transport and nothing committed; does not prove the 'Error: ' title or the inline error on the select; red when the means rule is optional on submit" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "means validation: Save and continue with no means stays on the page and shows the required error", "strength": "partial", "notes": "proves the summary, inline error, error style, title and focus in a browser; not probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/arrival-details.spec.ts", "test": "refuses Save and continue with no means of transport and names the missing answer", "strength": "partial", "notes": "proves the same through the real stack; not probed" }
+          ]
+        },
+        {
+          "id": "SCN-ARRIVAL-006-B",
+          "name": "A refused save shows the other answers back and saves nothing",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js", "test": "Should refuse %s with no means of transport, show the port back and commit nothing", "strength": "partial", "notes": "proves the port shown back and the journey unchanged; does not prove the arrival date shown back or the empty page on reopening from the overview; red when the means rule is optional on submit" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/arrival-details.spec.ts", "test": "shows the port and date back and saves nothing when Save and continue is refused for no means of transport", "strength": "partial", "notes": "proves the answers shown back and empty on reopening; not probed" }
+          ]
+        },
+        {
+          "id": "SCN-ARRIVAL-006-C",
+          "name": "The Welsh page words the missing means of transport in Welsh",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.test.js", "test": "Should word the means of transport required error exactly in $language", "strength": "partial", "notes": "proves the Welsh copy string, not the page rendering it; not probed" }
           ]
         }
       ]

@@ -8,14 +8,15 @@ The journey's entry page, asking where the consignment is coming from. The page 
 
 ### Requirement: The page asks which country the consignment comes from and whether an origin code is needed
 **ID**: REQ-ORIGIN-001
-The system MUST ask the user which country the consignment is coming from, offering a country selector and a choice of whether an origin code is required, and MUST end the page with "Save and continue" as its only save action. While the notification is being amended, REQ-FLOW-013 governs how the page ends instead.
+The system MUST ask the user which country the consignment is coming from, offering a country selector and a choice of whether an origin code is required, and MUST end the page with "Save and continue" alone, offering neither "Save and return to overview" nor "Cancel and return to overview". While the notification is being amended, REQ-FLOW-013 governs how the page ends instead.
 
 #### Scenario: The page presents its question and controls
 **ID**: SCN-ORIGIN-001-A
 - **GIVEN** the user has started a notification and reached the origin of the import page
 - **WHEN** the page loads
-- **THEN** it asks where the consignment is coming from, offering a country selector, a choice of whether an origin code is required, and a save-and-continue action
-- **AND** the page ends with "Save and continue" as its only save action
+- **THEN** it asks where the consignment is coming from, offering a country selector and a choice of whether an origin code is required
+- **AND** "Save and continue" is shown
+- **AND** no "Save and return to overview" or "Cancel and return to overview" is offered
 
 ### Requirement: The country field is a searchable list that filters as the user types
 **ID**: REQ-ORIGIN-002

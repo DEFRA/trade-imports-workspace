@@ -233,21 +233,33 @@ With JavaScript, the system MUST show the chosen country's code as a fixed prefi
 - **THEN** the prefix is not announced
 - **AND** the field is named by its label and described by the hint "Enter up to 5 characters."
 
-### Requirement: On a notification, the back link's target depends on whether the journey already has answers
+### Requirement: On a notification, the back link follows where the origin page was opened from
 **ID**: REQ-ORIGIN-013
-For a notification, the system MUST return the user to the notification dashboard when they follow the back link from the origin page of a journey that holds no answers, and to Overview once the journey holds at least one.
+For a notification, the system MUST return the user from the origin page to the notification dashboard when the page was opened from the dashboard, including by going back along the opening sequence, and to Overview when the page was opened from Overview, whether or not the journey holds any answers. For a notification not opened in this session that holds no answers, the back link MUST open the notification dashboard.
 
-#### Scenario: The back link opens the dashboard before any answer is saved
+#### Scenario: The back link opens the dashboard when the page was opened from the dashboard
 **ID**: SCN-ORIGIN-013-A
-- **GIVEN** the user has just started a notification and reached the origin of the import page for a notification, without saving anything
+- **GIVEN** the user has just started a notification from the dashboard and reached the origin of the import page, without saving anything
 - **WHEN** they follow the back link
 - **THEN** the notification dashboard is shown
 
-#### Scenario: The back link opens Overview once the journey has an answer
+#### Scenario: The back link opens Overview when the page was opened from Overview with an answer saved
 **ID**: SCN-ORIGIN-013-B
-- **GIVEN** the user has saved at least one answer on a notification
-- **WHEN** they return to the origin of the import page and follow the back link
+- **GIVEN** the user has saved at least one answer on a notification and has opened Overview
+- **WHEN** they open the origin of the import page from Overview and follow the back link
 - **THEN** Overview is shown
+
+#### Scenario: The back link opens Overview when the page was opened from Overview before any answer is saved
+**ID**: SCN-ORIGIN-013-C
+- **GIVEN** the user has started a notification, saved nothing and opened Overview
+- **WHEN** they open the origin of the import page from Overview and follow the back link
+- **THEN** Overview is shown
+
+#### Scenario: The back link opens the dashboard when the page is reached by going back along the opening sequence
+**ID**: SCN-ORIGIN-013-D
+- **GIVEN** the user has started a notification, saved the origin of the import page and followed the back link from "What are you importing?"
+- **WHEN** they follow the back link from the origin of the import page
+- **THEN** the notification dashboard is shown
 
 ### Requirement: A country not in the offered list is rejected
 **ID**: REQ-ORIGIN-014
@@ -362,3 +374,43 @@ Without JavaScript the system MUST show no region code prefix, on first view, af
 - **GIVEN** the user has no JavaScript
 - **WHEN** the region code field is shown on first view, after a save, or after an error
 - **THEN** the field has no prefix, empty or filled
+
+### Requirement: With JavaScript, the country search has a joined search button
+**ID**: REQ-ORIGIN-022
+With JavaScript the system MUST show a square GOV.UK blue search button, with a white magnifying glass, joined to the country search box. The button MUST be hidden from assistive technology and not focusable, MUST NOT submit the page, and MUST put the caret in the box when clicked.
+
+#### Scenario: The search button is GOV.UK blue with a white magnifying glass
+**ID**: SCN-ORIGIN-022-A
+- **GIVEN** the user has JavaScript and has reached the origin of the import page
+- **WHEN** the page loads
+- **THEN** the search button beside the country search box is GOV.UK blue
+- **AND** its magnifying glass is white
+
+#### Scenario: The search button is hidden from assistive technology, not focusable, and never submits
+**ID**: SCN-ORIGIN-022-B
+- **GIVEN** the user has JavaScript and has reached the origin of the import page
+- **WHEN** they tab on from the country search box, then click the search button
+- **THEN** the search button is not announced and does not take focus
+- **AND** the caret moves into the country search box and the page is not submitted
+
+### Requirement: With JavaScript, the country search announces its results
+**ID**: REQ-ORIGIN-023
+With JavaScript the system MUST describe the country search box with the accessible autocomplete's assistive hint, and MUST announce through a polite live region the number of results and, once a suggestion is highlighted, which country is highlighted.
+
+#### Scenario: The search box is described by the assistive hint
+**ID**: SCN-ORIGIN-023-A
+- **GIVEN** the user has JavaScript and has reached the origin of the import page
+- **WHEN** the country search box is read by a screen reader
+- **THEN** it is described by "When autocomplete results are available use up and down arrows to review and enter to select. Touch device users, explore by touch or with swipe gestures."
+
+#### Scenario: The number of results is announced after typing
+**ID**: SCN-ORIGIN-023-B
+- **GIVEN** the user has JavaScript and has reached the origin of the import page
+- **WHEN** they type text that matches one country
+- **THEN** a polite live region announces "1 result is available."
+
+#### Scenario: The highlighted country is announced
+**ID**: SCN-ORIGIN-023-C
+- **GIVEN** the user has typed text that matches one country
+- **WHEN** they move onto the suggestion with the down arrow
+- **THEN** a polite live region announces "1 result is available." followed by the country's name, "1 of 1 is highlighted"

@@ -35,7 +35,7 @@
     "Shared wording in a frontend's shared copy is never reworded in place; a set-specific string goes in the feature's own copy (ruling:sam-2026-10-09-pm claim 41).",
     "Notification statuses are only ever added, never renamed or removed, and each new status is mapped in every frontend that reads it before the animals backend first sends it (ruling:sam-2026-10-09-pm claim 42).",
     "A page in its error state keeps the 'Error: ' prefix on its browser title (conflicts:c-006).",
-    "'Save and return to overview' saves without the page's required-answer checks, but still refuses an answer that fails its own format rule (conflicts:c-211; ruling:sam-2026-10-07).",
+    "'Save and return to overview' makes exactly the same checks as 'Save and continue' (ruling:sam-2026-10-26 claim 1; conflicts:c-341, which replaced c-211).",
     "Notifications, templates and address book entries stay scoped to the signed-in user's organisation (or user, for templates); nothing lists another organisation's records.",
     "Each increment updates the tests repo's specs, page objects and journey helpers its change breaks, in the same change."
   ],
@@ -196,7 +196,7 @@
       "title": "Arrival details requires a means of transport, on both save buttons",
       "kind": "feat",
       "theme": "arrival-and-transit",
-      "status": "todo",
+      "status": "done",
       "repos": [
         "frontend",
         "tests"
@@ -265,7 +265,20 @@
         "Spec: main still says the opposite in two places, and this row owns both. openspec/specs/live-animals/journey-pages/arrival-details/spec.md REQ-ARRIVAL-006 'Saving the page empty keeps a draft and moves on' becomes the refusal on both buttons. openspec/coverage/live-animals/journey-flow/coverage.json links soft-save.spec.ts 'arrival details: when no means of transport is chosen, saves the port, shows the overview and keeps the task to do' and a port-of-entry controller test to the Save and return scenario for arrival details: rewrite that scenario in the journey-flow spec to the refusal, and those tests with it. The reused branch's spec commit 5a995a66 (workspace) has a REQ-ARRIVAL-006 rewrite to start from, but its 'Save and return to overview with no means of transport is not refused' sentence is wrong under the ruling.",
         "Pick-up from the 3 November re-distil (workspace PR #200): req-329 changed since the split and now says Save and return to overview on arrival details and on transit countries makes the same checks as Save and continue (c-341, the 26 October ruling). This row already builds its arrival details half, so req-329 is added here. The transit countries half is on main: transit-countries/controller.js sends every action other than add and remove through postContinue, which runs validation.onSubmit before saving, so both buttons refuse the same answers. How far the checks reach is PR #200's question 30, still Sam's; until answered this row refuses only the answers the page already refuses, plus the newly required means of transport."
       ],
-      "openQuestions": []
+      "openQuestions": [],
+      "commit": "b012c72a1ef86b559e67dead86f64f948e838d55 55c3d1bb1b7fbcfda001590f0893b281d63b96c9",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/402",
+          "repo": "trade-imports-animals-frontend",
+          "number": 402
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/24",
+          "repo": "trade-imports-ins-tests",
+          "number": 24
+        }
+      ]
     },
     {
       "id": "inc-028",
@@ -349,7 +362,7 @@
         "inc-240"
       ],
       "theme": "arrival-and-transit",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -401,7 +414,20 @@
         "Re-checked 2 November against main and the prototype now (reanalysis.md). Scope unchanged: the title and the redirect. The prototype's transit-countries.html and its routes are unchanged since 04a073b. Main's transit-countries.controller.js still passes copy.transitCountries.title (the heading, 'Which countries will the consignment travel through?') to kit.base and has no transitApplies redirect on GET or on the Add, Remove and Save and continue POST paths. Main's spec has no REQ-TRANSIT-COUNTRIES-006 (title) or -008 (redirect) and no coverage for them: this row writes both, and may start from the reused branch's workspace commit 5a995a66, which has their wording. It now builds on the reused branch after inc-240 merges main, whose tree is main's: take code from 49e22db9 and tests 29c74b5 and bf126b6 in the branch's history as the earlier notes say. A trader whose saved means changes off Rail or Road loses the saved countries already (port-of-entry wipes them), so the redirect on POST only has to save nothing."
       ],
       "gate": null,
-      "externalDependsOn": []
+      "externalDependsOn": [],
+      "commit": "c02967cb3032d61d29d264ce771d20886633e094 025beacc510a500f27203d3dec101f4487aadfbf",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/402",
+          "repo": "trade-imports-animals-frontend",
+          "number": 402
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/24",
+          "repo": "trade-imports-ins-tests",
+          "number": 24
+        }
+      ]
     },
     {
       "id": "inc-174",
@@ -417,7 +443,7 @@
         "inc-240"
       ],
       "theme": "arrival-and-transit",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -457,7 +483,20 @@
         "Re-checked 2 November against main (reanalysis.md). Scope unchanged. Main's transit page still offers countries.originCountries() (the 31-country list, no subdivisions) in countryItems and in validate.js offeredCodes, and labels with countries.originLabel; the country of origin and import reason pages use countries.countryAndSubdivisionOptionsNamedWithCountry(), so pointing the transit page at it is the change. The 23 October note that snagging left partial coverage on SCN-TRANSIT-COUNTRIES-009-A and -009-B is out of date: main's spec has no REQ-TRANSIT-COUNTRIES-009 or -010 at all, so this row writes both requirements and their coverage (the reused branch's workspace commit 5a995a66 has their wording). The tests repo's main has countryAndSubdivisionNamesWithCountry() in resources/reference-data/reference-data.ts, which the origin and destination list specs already use: build the transit list assertions on it rather than porting 22a54fa's own list."
       ],
       "gate": null,
-      "externalDependsOn": []
+      "externalDependsOn": [],
+      "commit": "8668830e 06fa9cf",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/402",
+          "repo": "trade-imports-animals-frontend",
+          "number": 402
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/24",
+          "repo": "trade-imports-ins-tests",
+          "number": 24
+        }
+      ]
     }
   ]
 }

@@ -1282,19 +1282,42 @@ const STACK_GUARD = `- THE WORKSPACE STACK IS LEASED TO THIS RUN, with \`tim doc
   \`stop-stack.sh\`, no \`docker compose\` against it. The gate is the only thing that rebuilds it.
 ${OTHER_COMPOSE_GUARD}`
 
+// Under `e2e: "ci"` the run takes no lease and the stack is deliberately down, so
+// STACK_GUARD's opening promise would be false. A stage told the stack is leased
+// to the run goes looking for that lease, finds none, and reports `stackHeld` —
+// which is how one plan naming a local end-to-end check stopped a whole run.
+const NO_STACK_GUARD = `- THERE IS NO WORKSPACE STACK IN THIS RUN, and that is deliberate: its end-to-end behaviour is
+  proved by each repo's own pull request in CI, so the run takes no \`tim docker lease\` and the stack stays down.
+  Never start it — no \`tim docker up\`, \`dev\` or \`down\`, no \`tim docker lease acquire\` or \`release\`, no
+  \`run-stack.sh\` or \`stop-stack.sh\`, no \`docker compose\` against it.
+- SKIP any check that needs the stack up: anything driving a browser against it, and anything calling a service over
+  \`localhost\`. Say in your summary which you skipped and why. Its absence is NOT a finding, and a stack that is
+  down is NOT \`stackHeld\` or \`stackDown\` — never report either, whatever \`tim docker lease status\` says. The
+  unit and FIT phases, which need no stack, still run and still have to pass.
+${OTHER_COMPOSE_GUARD}`
+
 const leaseStackGuard = (verb) => `- THE WORKSPACE STACK: your task below is to ${verb === 'acquire' ? 'take' : 'give back'} its lease for this run, as
   \`${RUN_HOLDER}\`, with \`tim docker lease ${verb}\`. Run that command exactly as given: it is the one stack command
   you run. Never start, stop, restart or rebuild the stack any other way — no \`tim docker up\`, \`dev\` or \`down\`, no
   \`run-stack.sh\` or \`stop-stack.sh\`, no \`docker compose\` against it.
 ${OTHER_COMPOSE_GUARD}`
 
-const SECTION_5_STACK_LINE = `A section 5 check that needs the workspace stack up runs against the
+const SECTION_5_STACK_LINE = E2E_IS_LOCAL
+  ? `A section 5 check that needs the workspace stack up runs against the
 stack the run already holds, as THE WORKSPACE STACK below says.`
+  : `Skip a section 5 check that needs the workspace stack up — one that drives a browser against it,
+or calls a service over \`localhost\`. This run proves its end-to-end behaviour on each repo's pull request instead,
+so the stack is deliberately down. Say which checks you skipped and why; their absence is not a finding.`
 
-const CODEX_SECTION_5_STACK_LINE = `A section 5 check that needs the workspace stack up runs against
+const CODEX_SECTION_5_STACK_LINE = E2E_IS_LOCAL
+  ? `A section 5 check that needs the workspace stack up runs against
 the stack as it is: it is already up, leased to this run as \`${RUN_HOLDER}\`. Never acquire or release that lease, and
 never start, stop or rebuild the stack. Skip a check that launches a browser, or one that cannot reach the stack: the
 gate's E2E phase proves it, after review. Its absence is not a finding.`
+  : `This run takes no stack lease and the stack is deliberately down: its end-to-end behaviour is
+proved by each repo's own pull request in CI. Never start the stack and never acquire a lease. Skip every section 5
+check that needs it up — one launching a browser against it, or calling a service over \`localhost\` — and say which
+you skipped. Its absence is not a finding, and a stack that is down is not \`stackHeld\` or \`stackDown\`.`
 
 const DENIED_PROGRAMS = [
   'bash',
@@ -1395,7 +1418,7 @@ ${IS_BRANCH ? BRANCH_PUSH_GUARD : FULL_PUSH_GUARD}
 - Headless: never ask a question. Decide, record the decision, keep going.
 `
 
-const BASE_GUARDRAILS = baseGuardrails(STACK_GUARD)
+const BASE_GUARDRAILS = baseGuardrails(E2E_IS_LOCAL ? STACK_GUARD : NO_STACK_GUARD)
 
 const guardrails = () => `${BASE_GUARDRAILS}${workspaceRepoRule()}`
 
@@ -1867,9 +1890,9 @@ const recoverRunStack = async (id, stage, runStage) => {
   // the opposite of what ci promises, off the back of one stage's report.
   if (!E2E_IS_LOCAL) {
     log(
-      `${id}: ${why}. This run holds no stack lease (e2e is proved by the pull requests), so the stack being absent is this run's own choice, not a fault: leaving it down and taking ${stage}'s result as it is. A plan that names a check needing the workspace stack cannot run it under e2e: "ci"`
+      `${id}: ${why}. This run holds no stack lease (e2e is proved by the pull requests), so the stack being absent is this run's own choice, not a fault: ignoring that report and leaving the stack down. The end-to-end proof is the pull request's own CI run`
     )
-    return first.result
+    return { ...first.result, stackHeld: undefined, stackDown: undefined }
   }
   log(`${id}: ${why}. Taking the lease again and running ${stage} once more`)
   const retaken = await acquireRunLease()

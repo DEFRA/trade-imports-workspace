@@ -103,16 +103,17 @@ The system MUST accept an origin answer that names a country and answers whether
 - **WHEN** they choose a country and answer that no origin code is required, then save and continue
 - **THEN** the answer is saved and no error summary is shown
 
-### Requirement: Saving without a country is accepted, but leaves the origin task outstanding
+### Requirement: Save and continue requires a country of origin
 **ID**: REQ-ORIGIN-008
-The system MUST accept the origin page being saved with no country chosen, without showing an error, and MUST leave the origin task row on Overview outstanding while no country is chosen. When the task reads Complete is specified by `live-animals/journey-pages/overview`.
+The system MUST refuse save and continue when the user has not chosen a country of origin, showing an error summary and a message on the country field, and MUST keep the user on the origin of the import page.
 
-#### Scenario: Saving with no country chosen succeeds and moves on
+#### Scenario: Save and continue without a country is refused
 **ID**: SCN-ORIGIN-008-A
 - **GIVEN** the user is on the origin of the import page with no country chosen
 - **WHEN** they save and continue
-- **THEN** the page saves without an error summary, and the user moves to the next step
-- **AND** the origin task row on Overview shows as outstanding
+- **THEN** an error summary is shown
+- **AND** a message is shown on the country of origin field
+- **AND** the user remains on the origin of the import page
 
 ### Requirement: The page also asks for an optional internal reference, capped at 58 characters
 **ID**: REQ-ORIGIN-009

@@ -1507,7 +1507,7 @@
     {
       "id": "inc-061",
       "title": "Adding an address starts by choosing its type",
-      "detail": "Design Release 2.1 asks what kind of address is being added before any fields, because the type decides the form and the uses offered next. Today the address book's add is the address form itself. Afterwards 'Add a new address' on the address book opens a new 'Choose an address type' page, on a path of its own in the INS front door's path shape, offering three types: 'Origin or Consignor', 'Destination, Consignee or Importer' and 'Branch'. 'Transporter' is left out until transporter management is decided (ruling 9 October pm, c-306). Choosing a type moves on to the address form, which stays where it is today (the page the animals frontend's handshake links to), retitled 'Add address and contact details' and able to go back to the type page. The chosen type is remembered while the add is in progress and cleared when it starts afresh or saves. The address types offered when adding an address read as Design Release 2.1 has them, each with its hint, in order, with Branch Address after a divider. Transporter is left out until transporter management is decided. This is the add-and-edit area's 'Choose an address type' step; the requirement came to this area because its claims sit beside the list's type labels, so the combiner merges it into that row.",
+      "detail": "Design Release 2.1 asks what kind of address is being added before any fields, because the type decides the form and the uses offered next. Today the address book's add is the address form itself. Afterwards 'Add a new address' on the address book opens a new 'Choose an address type' page, on a path of its own in the INS front door's path shape, offering three types: 'Origin or Consignor', 'Destination, Consignee or Importer' and 'Branch'. 'Transporter' is left out until transporter management is decided (ruling 9 October pm, c-306). Choosing a type moves on to the address form, which stays where it is today (the page the animals frontend's handshake links to), retitled 'Add address and contact details' and able to go back to the type page. The chosen type is remembered while the add is in progress and cleared when it starts afresh or saves. The address types offered when adding an address read as Design Release 2.1 has them, each with its hint, in order. Transporter is left out until transporter management is decided. This is the add-and-edit area's 'Choose an address type' step; the requirement came to this area because its claims sit beside the list's type labels, so the combiner merges it into that row.",
       "acceptanceCriteria": [
         "From the address book list, 'Add a new address' opens a page with the caption 'Add a new address', the heading 'Choose an address type', a radio group whose legend repeats the heading visually hidden, and a 'Back' link to the address book list (prototype:dr2-1-source p16-001, p16-003, p16-004, p16-005, p16-013; trace:prototype-dr2-1 p16-038, p16-039; prototype:dr2-1-specs p6-104, p6-105, p6-106, p6-112)",
         "The options are, in order: 'Origin or Consignor' (hint 'Place of origin, Consignor'), 'Destination, Consignee or Importer' (hint 'Place of destination, Consignee, Importer') and 'Branch' (hint 'Branch address'), with no 'Transporter' option, and a 'Continue' button (prototype:dr2-1-source p16-006 to p16-010, p16-012; trace:prototype-dr2-1 p16-040 to p16-043; prototype:dr2-1-specs p6-107 to p6-111, p6-113; ruling:sam-2026-10-09-pm p2-041, p2-044; c-306)",
@@ -1524,7 +1524,7 @@
       ],
       "dependsOn": [],
       "theme": "address-book",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "insfrontend",
@@ -1609,9 +1609,28 @@
         "Moved 2026-10-16 from ticket 1 (EUDPA-707) to ticket 6 (EUDPA-711, types and uses): asking for a type that nothing saves until inc-070 read as a question with no effect, so the type step lands with the save. It had been built on EUDPA-707 (commits 7e70ca7 3676fba 3e5b6a1, PRs ins-frontend #56 and ins-tests #32, both superseded); that build is removed from EUDPA-707 and this row is rebuilt on EUDPA-711's branch. It takes inc-062's criterion that Origin or Consignor opens with United Kingdom selected, which needs a chosen type.",
         "Ticket 6 (types and uses), re-cut 2026-10-16: moved from ticket 1.",
         "2026-10-30: the country select's blank option reads 'Select a country', not the prototype's 'Select one', following the designer's 23 October answer applied to every address page (snagging.md, Settled).",
-        "2026-11-03: perftests added to repos, because the type step means the k6 suite's adds (front-door.js addAddress and ensurePerfAddress, background-volume.js) must choose a type before the form. Criteria 9 and 10 rewritten to Design Release 2.1's type step (address-book-add-categories.js's textDesignRelease21 labels and hints, routes.js:10057-10066): the earlier wording listed the prototype's older six role options and a divider from address-book-address-types.js. Transporter is left out as the deferred transporter decision requires. Raised by the inc-061 planner."
+        "2026-11-03: perftests added to repos, because the type step means the k6 suite's adds (front-door.js addAddress and ensurePerfAddress, background-volume.js) must choose a type before the form. Criteria 9 and 10 rewritten to Design Release 2.1's type step (address-book-add-categories.js's textDesignRelease21 labels and hints, routes.js:10057-10066): the earlier wording listed the prototype's older six role options and a divider from address-book-address-types.js. Transporter is left out as the deferred transporter decision requires. Raised by the inc-061 planner.",
+        "2026-11-03: the open question on United Kingdom preselected for every type is answered by the backlog: inc-071 fixes the country to the UK for Destination, Consignee or Importer and for Branch, so preselecting it for all three types (add.controller.js openingFormValuesFor, REQ-INS-ADDR-027) is right. inc-071 adds the witnesses for those two types."
       ],
-      "gate": "Check the two-step add and its in-progress state, which the add-details, manual-entry and transporter rows copy, and that a notification journey's handshake into the address form still opens it directly, without 'Choose an address type', and returns the new address id (c-106)."
+      "gate": "Check the two-step add and its in-progress state, which the add-details, manual-entry and transporter rows copy, and that a notification journey's handshake into the address form still opens it directly, without 'Choose an address type', and returns the new address id (c-106).",
+      "commit": "ae1522fdebc590443c63455ee55224fdbbb0bb6c d3b400af7a3db1eff3a6e642526fe0c5ce77619a ba84f1100153095afb1d15ee4265e1463eba158f (insfrontend, tests, perftests) and 023eaa96 (workspace openspec)",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/71",
+          "repo": "trade-imports-ins-frontend",
+          "number": 71
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/77",
+          "repo": "trade-imports-ins-tests",
+          "number": 77
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-performance-tests/pull/27",
+          "repo": "trade-imports-performance-tests",
+          "number": 27
+        }
+      ]
     },
     {
       "id": "inc-070",

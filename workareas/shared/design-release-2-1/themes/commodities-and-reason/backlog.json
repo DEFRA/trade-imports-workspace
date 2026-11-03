@@ -157,6 +157,45 @@
       ]
     },
     {
+      "id": "inc-247",
+      "title": "The theme branch takes in what main has landed since it was cut",
+      "detail": "inc-013 committed to the theme branch and opened its pull requests, but the run stopped at pr-conflict: trade-imports-ins-tests #79 conflicts with its base, so GitHub runs no checks on it at all and the row cannot be proved. Main has moved under the branch since it was cut this afternoon - the animals frontend by 2 commits and the tests repo by 3 (f36cedd test(EUDPA-669) multi-commodity persistence E2E, 7ce3c4e fix(EUDPA-759) the origin page ending with Save and continue alone, 18407cf marking the contact address return test slow). The performance tests repo has not moved and is left out. Two files conflict, both in the tests repo, and both because EUDPA-669 touched exactly the files inc-013 rewrote.",
+      "dependsOn": [],
+      "theme": "commodities-and-reason",
+      "status": "todo",
+      "kind": "chore",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "merge": {
+        "frontend": "origin/main",
+        "tests": "origin/main"
+      },
+      "gatePhases": [],
+      "sources": [],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null,
+      "externalDependsOn": [],
+      "acceptanceCriteria": [
+        "origin/main is merged into feat/EUDPA-693-commodities-and-reason in the animals frontend and in the tests repo, as one two-parent merge commit each, with no conflict markers left in any file.",
+        "page-objects/animals/commodity-selection-page.ts keeps main's independent additions: the errorSummaryOn import from @page-objects/shared/govuk-banners and the errorSummary getter, and main's renamed signatures species(species: CommodityLine) and searchAndCheckSpecies(speciesList: CommodityLine[]).",
+        "page-objects/animals/commodity-selection-page.ts RESTORES the commodityGroups getter that main removed, returning this.page.getByRole('group', { name: /^\\d+$/ }). Main removed it only as a by-product of deleting the one assertion block that used it, and inc-013's rewritten ordering assertions read it three times. Without it the merged spec does not compile.",
+        "page-objects/animals/commodity-selection-page.ts keeps inc-013's four appended members unchanged - commodityLine, speciesEntry, removeSpecies and pressRemoveSpecies - which read this.selectedSummary and touch nothing main changed.",
+        "In tests/animals/e2e/pages/commodities.spec.ts inc-013's rewritten test \"groups the matching species under their commodity code, in reference-data's order\" wins over main's deletion. Main deleted the commodityGroups count-and-accessible-name block over `groups`; inc-013 replaces it with the same assertions over `orderedGroups` plus the emphasis assertions, so main's deletion is subsumed rather than reverted.",
+        "Nothing else main landed in either repo is lost: the tests repo keeps 7ce3c4e's origin-page change and 18407cf's slow marker, and the frontend keeps both of its two new commits.",
+        "Every pull request reports no conflict with its base, so GitHub runs its checks again: trade-imports-ins-tests #79 reads MERGEABLE rather than CONFLICTING, and trade-imports-animals-frontend #456 stays MERGEABLE.",
+        "Every pull request is green."
+      ],
+      "notes": [
+        "Written at the pr-conflict stop rather than hand-merged, per workareas/shared/design-release-2-1/themes/HOW-TO-BUILD.md: 'Never merge main in by hand on a theme branch. A hand merge is unreviewed, unproved and invisible to the backlog, and leaves the next row to discover it.' The loop's own stop detail advises the hand merge instead; HOW-TO-BUILD is the programme's rule and wins. Follows the inc-040 template from the documents theme.",
+        "Placed before inc-013 so it builds first. inc-013 is status todo with its commit (frontend fc7aafec, tests 196a087) and both pull requests already recorded, and attempt cleared - recording a commit clears the attempt - so it has no stage to resume at. Watch whether it re-plans from the top rather than going straight to CI; if it does, that is a gap worth reporting, because a row holding a commit and a pr but still todo has lost its resume point.",
+        "gatePhases is [] because the theme runs e2e: 'ci': the rows prove themselves on their pull requests, so this row owes no local gate phase either.",
+        "Only the tests repo conflicts. The frontend is merely 2 commits behind and is included because HOW-TO-BUILD has one row cover every repo that needs the merge, which stops the next row discovering the same drift. The performance tests repo is behind by 0 and is left out."
+      ]
+    },
+    {
       "id": "inc-013",
       "title": "Commodity search results sorted and bolded, and a selected panel of removable species chips",
       "detail": "The server-rendered commodity page lists results alphabetically with the matched text in bold, and shows what has been chosen as one bold commodity line followed by a chip per species, by Latin name, each with its own remove button, so a trader can drop one choice without clearing everything. This is how the list reads and behaves, not what is in it: the entries are whatever MDM serves (ruling:sam-2026-10-09-pm claim 2), and only the reading follows the prototype. Ruling 2026-10-09 afternoon blocked these four until commodities came from MDM; they came on 27 October, so the row goes ahead. The rest of the old row (the error on the search field, the soft Save and return, clearing the unweaned answer) moved to the commodity wording row and goes ahead.",
@@ -215,10 +254,24 @@
         "Re-analysis 2 Nov: no text is bolded today, because the checkbox items take speciesLabel, which is the plain Latin name (frontend origin/main:.../features/commodities/species-label.js:1). The selected panel already exists and is grouped the right way but with the wrong parts: selectedSummary groups the selection by commodity code and lists its species (search/view-model/selected-summary.js:11-21), and the template renders each group as a bold legend followed by the species joined with ', ' in one list item (search/search.njk:66-73). So criterion 3's structure is half there with the bare code where the name belongs, and criterion 4 is absent entirely: there is no per-species remove control, only one 'Clear all' button (search.njk:74-79). Criterion 5 holds for what exists, since the page is one form posting to itself with Search and Clear as named submit buttons and no client-side behaviour, so the chips' remove buttons need only be submit buttons too.",
         "Design snagging merged to main 23 Oct: the 'Select a commodity' error now always sits on the search box (SEARCH_FIELD 'commoditySearch' in search.controller.js), not on the tick boxes, and the refusal is logged. The page's Back link follows the opening run. The animals frontend has a bold-matching helper for type-aheads (src/client/common/helpers/bold-matches.js and search-fold.js, strong class app-autocomplete__match, with accent folding) and a server escapeHtml in shared/escape-html.js. Builder: reuse both for the bold matches rather than adding a third. The look of the commodity search box moved to waiting-on-design inc-014 and is not this row's.",
         "In flight 2 Nov, EUDPA-616 (the commodity search type-ahead) is a complement to this row, not a substitute, and nothing is in flight today: all three of its pull requests were closed unmerged on 23 Oct (animals frontend #425, ins-tests #51, workspace #147) and the branch is gone from the remote, four days before EUDPA-617 rewrote the feature. Jira still says In Dev. That ticket delivers this row's criterion 2 and part of criterion 3 as a JavaScript enhancement and explicitly keeps the server-rendered flow as the no-JavaScript fallback, so it covers neither criterion 1 (alphabetical sorting) nor criterion 4 (a remove button per chip), and cannot satisfy criterion 5, which needs those buttons to work by posting the page. This row owns the server-rendered behaviour; EUDPA-616 owns the enhancement over it. Whichever lands second reuses the other's matching and emphasis. Worth quarrying from the closed frontend #425 diff: a reusable live-search macro and client module outside the commodities feature, a GET .../commodities/results route rendering the same results partial the page uses, and matching.js reporting the ranges it matched so the template renders them as <strong> with no HTML built in JavaScript.",
-        "Re-analysis 2 Nov: the earlier note that the commodity heading rule has one owner called commodities.commodityLabel, used by search/view-model/legend.js, is out of date. EUDPA-617 rewrote the feature: the owner is legendFor (search/view-model/labels.js:1), which is the identity function on the code, used by the result groups, the selected panel and, through buildCommodityGroups (features/commodities/view-model/commodity-groups.js:6), Commodity details. The selected panel's bold line should take legendFor too, so it picks up inc-012's naming decision in one place. The row's label format in criterion 1 ('common name (Latin name)') rests on inc-025, which restores the common name to speciesLabel."
+        "Re-analysis 2 Nov: the earlier note that the commodity heading rule has one owner called commodities.commodityLabel, used by search/view-model/legend.js, is out of date. EUDPA-617 rewrote the feature: the owner is legendFor (search/view-model/labels.js:1), which is the identity function on the code, used by the result groups, the selected panel and, through buildCommodityGroups (features/commodities/view-model/commodity-groups.js:6), Commodity details. The selected panel's bold line should take legendFor too, so it picks up inc-012's naming decision in one place. The row's label format in criterion 1 ('common name (Latin name)') rests on inc-025, which restores the common name to speciesLabel.",
+        "ATTEMPT FAILED: workspace stack was unavailable (lease released by previous holder); E2E spec written but not executed; all staged changes preserved in patches; stash refs: frontend stash@{0}, tests stash@{0}, openspec stash@{0}; patch files at logs/inc-013-preserve-*.patch"
       ],
       "gate": null,
-      "externalDependsOn": []
+      "externalDependsOn": [],
+      "commit": "fc7aafecd01dc140931241f098d0f5b4d29e96a9 196a0878a268ebd81a569aa3f9a146289d93816b",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/456",
+          "repo": "trade-imports-animals-frontend",
+          "number": 456
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/79",
+          "repo": "trade-imports-ins-tests",
+          "number": 79
+        }
+      ]
     },
     {
       "id": "inc-015",

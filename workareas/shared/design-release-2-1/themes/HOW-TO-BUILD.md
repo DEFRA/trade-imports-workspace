@@ -7,9 +7,13 @@ request per repo. Nothing merges to `main` until Sam checks the finished theme.
 
 The 2 November re-distil folded the V4 data fields page in whole — 648 claims where the germinals-only scope had
 produced 109 — and the parent `backlog.json` is now 100 rows in 10 themes. **But it reconciled against repo extracts
-taken on 26 October**, because `tim distil status` decides a source is stale from a hash over its `kind`, `locator`
-and `scope` strings only, never over the repo's contents. A `git pull` or a `make reset` cannot mark a repo extract
-stale, so all five repo sources read "verified" and were skipped.
+taken on 26 October**, because at the time `tim distil status` decided staleness from a hash over a source's `kind`,
+`locator` and `scope` only, never over the repo's contents, so all 12 repo sources read "verified" and were skipped.
+
+`tim` now records a repo extract's commit and reports the source `stale` when the checkout has moved
+(3 November). That protects extracts written from now on, but **not these**: they record no commit, so there is
+nothing to compare and they still read `verified`. Until a source is re-extracted, or
+`tim distil stamp shared/design-release-2-1 --source repo:<id>` records its commit, the check is silent for it.
 
 Code has landed in five areas since: commodities (EUDPA-617 and follow-ups), the **soft-save reversal**
 (`25c23ef8`, inc-232 — already on `main`), the **whole documents theme** (EUDPA-724, plus EUDPA-751, -753, -754),

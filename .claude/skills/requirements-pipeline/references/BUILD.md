@@ -480,19 +480,29 @@ base's. A merge that conflicts stops the row, naming the files. A failure names 
    programme has pushed out of its backlog ([step 3b](#3b-catch-anything-the-increments-deferred)).
 6. **Check the backlog was distilled against the code as it is now, and stop for the user if it was not.** A row's
    status is a judgement about what `main` already does, and that judgement is only as fresh as the repo extract it
-   was made from. `tim distil status` decides a source is stale from a hash over its `kind`, `locator` and `scope`
-   strings alone (`scopeHashOf`, `tim/src/distil/files.js`), never over the repo's contents — so a `git pull`, a
-   `make reset` or any amount of merged work leaves a repo extract reading `verified`, and the last re-distil will
-   have skipped it. Nothing detects this for you.
+   was made from.
+
+   `tim distil status` reports a repo source `stale` when its checkout is no longer on the commit it was extracted
+   from, so ask it first:
 
    ```bash
    tim distil status <workarea> --json | jq -r '.result.sources[] | select(.kind=="repo") | "\(.id): \(.state)"'
-   # then, for each repo source, how far its extract is behind the code:
+   ```
+
+   **A `verified` here is not proof on its own.** That check compares a commit the extract records, and an extract
+   written before the commit was recorded has none to compare — so it reads `verified` however far the repo has
+   moved. The scope hash cannot cover for it either: it hashes the source's `kind`, `locator` and `scope`
+   (`scopeHashOf`, `tim/src/distil/files.js`), none of which change when code lands. For any repo source whose
+   extract predates
+   [the commit check](DISTIL.md#a-repo-source-goes-stale-when-its-checkout-moves), compare the dates by hand:
+
+   ```bash
+   jq -r '.repoHead // "no commit recorded"' workareas/<workarea>/distil/extract/<slug>.json
    date -r workareas/<workarea>/distil/extract/<slug>.json '+%Y-%m-%d'
    git -C repos/<repo> log origin/main -1 --format=%ad --date=short
    ```
 
-   Where a repo has moved since its extract, say so and give the user the choice before launching:
+   Where a repo has moved since its extract, by either route, say so and give the user the choice before launching:
 
    - **Reset those sources and re-distil** —
      `tim distil reset <workarea> --source repo:<id> [--source repo:<id>…] --json`, then relaunch

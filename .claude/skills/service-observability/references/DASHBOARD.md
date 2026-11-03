@@ -74,6 +74,21 @@ Split each panel by every dimension its metric is published with, as in
 the table. CloudWatch does not add up across a published dimension, so
 a panel on `ExternalCallFailure` split by `Dependency` alone is empty.
 
+One more panel per `@Timed("<name>")` annotation in the service's
+`src/main` (`METRICS.md` → "Publish" puts one on every controller
+endpoint and public service method). `EmfMeterRegistry` publishes each
+timer as the metric `<name>`, one value per call in milliseconds, with
+the `@Timed` tags `class`, `method` and `exception` as dimensions.
+
+| Panel | Series | Query |
+|---|---|---|
+| `<name>` | Average, p95, Slowest | `<name>`, `Average`, `p95`, `Maximum` (ms) |
+| | Calls | `<name>`, `SampleCount`, on the right axis |
+
+Each series splits by `exception`, so failed calls show apart from
+`none`. A timer registered in code (`meterRegistry.timer("…")`)
+publishes the same way; give it a panel only if the team asks.
+
 One panel reads logs, not metrics:
 
 | Panel | Data source | Query |
@@ -90,9 +105,10 @@ write the fields"). CDP drops the flat MDC form.
 The dimension values for the service come from its code. For
 reference-data: `Dependency` is `mdm` or `trade-token`; `Cache` is
 `MDM_COUNTRIES_CACHE` or `MDM_POE_CACHE`; `LookupType` is `countries` or
-`ports-of-entry`. A service with a database also has its ping
-(`METRICS.md` → "A database"), for example `Dependency` `mongodb` with
-`Operation` `ping`.
+`ports-of-entry`. A service with a database has `Dependency` `mongodb`,
+its status from the driver's heartbeats and, if its commands are
+measured, one `Operation` per command name (`METRICS.md` → "A
+database").
 
 ## Generate
 
@@ -105,12 +121,25 @@ Claude writes the service's dashboard to
    `namespace` fields and the name everywhere else.
 3. Make one copy of the `<business-metric> by <business-dimension>`
    panel per business metric on the agreed list (Step 2), filling in the
-   metric and its dimension, and laying each copy out on the grid. Delete
-   the panel if there are none.
+   metric and its dimension everywhere they appear in the panel (the
+   title, `metricName`, `dimensions` and the legend `label`), and laying
+   each copy out on the grid. Delete the panel if there are none.
 4. Delete "Cache hits and misses" if the service has no cache.
-5. Check the result is valid JSON (`jq empty <file>`) and that no
-   placeholder is left (`grep -nE '<service>|<business-' <file>` finds
-   nothing).
+5. List the service's `@Timed` names:
+   `grep -rhoE '@Timed\((value *= *)?"[^"]+"' <repo>/src/main/java | sed -E 's/.*"([^"]+)"/\1/'`.
+   Make one copy of the `<timed-name>` panel per name, replacing
+   `<timed-name>` everywhere in the copy (title, description and each
+   `metricName`), and lay the copies out two to a row from the template
+   panel's position down. Where a controller and a service time the same
+   operation (`controller.listOperators.time`,
+   `service.listOperators.time`), put the pair on one row, controller on
+   the left, so the time spent outside the service reads across. Delete
+   the panel if there are none. Check each name is let through the
+   service's `management.metrics.enable` allowlist (`METRICS.md` →
+   "Rules"); a denied timer publishes nothing.
+6. Check the result is valid JSON (`jq empty <file>`) and that no
+   placeholder is left (`grep -nE '<service>|<business-|<timed-' <file>`
+   finds nothing).
 
 ## Import
 

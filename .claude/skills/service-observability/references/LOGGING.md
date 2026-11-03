@@ -10,8 +10,8 @@ request can be traced to the dependency call that made it slow.
 
 ## The line
 
-Write it where the call is already timed, and before any "metrics
-disabled" check, so logging does not depend on `aws.emf.enabled`.
+Write it where the call is recorded, in `ExternalCallMetrics`, so every
+measured call has one. It does not depend on `aws.emf.enabled`.
 
 ```
 External call mdm/get-countries success in 2 ms
@@ -32,7 +32,8 @@ Never put a token, a subscription key, a request body or a full URL
 with query parameters in the line.
 
 The reference implementation is `ExternalCallMetrics.logCall` in
-`trade-imports-reference-data`.
+`trade-imports-address-book` (the line and fields are the ones first
+proven on reference-data, below).
 
 ### How to write the fields (Java)
 
@@ -48,7 +49,7 @@ It drops the flat form without any error. Do not set these fields
 through the MDC. `logback-ecs-encoder` (1.6.0) writes every MDC entry
 as a flat key with a string value, so CDP drops them all.
 
-Two pieces, both copied from reference-data:
+Two pieces, both in address-book:
 
 1. **Set the fields as SLF4J key-value pairs**, with the duration as a
    `long`:
@@ -63,7 +64,7 @@ Two pieces, both copied from reference-data:
        .log("External call {} {} in {} ms", action, outcome, elapsed.toMillis());
    ```
 
-2. **Copy `EcsEventEncoder`** (package `...imports.logging`) and name it
+2. **Copy `EcsEventEncoder`** into the service's `logging` package and name it
    as the CONSOLE appender's encoder in `logback-spring.xml`, in place of
    `co.elastic.logging.logback.EcsEncoder`. It extends the ECS encoder
    and overrides its `addCustomFields` hook to write the line's `event.*`
@@ -110,14 +111,14 @@ reaches OpenSearch flat.
 |---|---|
 | Encoder unit test: log through a real logger, then `encoder.encode(event)` and parse the JSON | A nested `event` object; `duration` is an integral number; no flat `event.category`, `event.action`, `event.outcome` or `event.duration` keys (the ECS encoder's own flat `event.dataset` stays); `trace.id` and `error.*` kept; a null value written as JSON `null` and a non-finite number as a string; a line with no `event.*` pairs is byte-for-byte the ECS encoder's |
 | Unit test with a capturing log appender | One line per call, with the four `event.*` key-value pairs, and the duration a `Long` |
-| Same, with metrics disabled | The line is still written |
 | Integration test sending `x-cdp-request-id`, encoding the line with the root logger's `CONSOLE` encoder | `logback-spring.xml` names the new encoder, and the line carries `trace.id` and the nested `event` object |
 
 The integration test is the one that fails if `logback-spring.xml` is
 left on the plain ECS encoder. The unit tests alone would still pass.
 
-`CapturingLogAppender` in the reference-data tests is the helper to
-copy. It must call `event.prepareForDeferredProcessing()` or the MDC
+`CapturedLogs` in address-book's `testsupport` is the helper to copy,
+or extend the service's own log-capturing helper the same way. Its
+appender must call `event.prepareForDeferredProcessing()` or the MDC
 values are gone by the time the test reads them. Its `keyValues(event)`
 reads an event's key-value pairs.
 

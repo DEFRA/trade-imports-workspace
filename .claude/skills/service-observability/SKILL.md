@@ -12,8 +12,11 @@ templates in `assets/`; the developer imports and builds them in the
 CDP dev Grafana, because nothing else can write to it.
 
 It was written from EUDPA-632, the spike on
-`trade-imports-reference-data`. Read "What is proven" below before
-trusting any step.
+`trade-imports-reference-data`, and its code recipe from EUDPA-674 on
+`trade-imports-address-book`: every metric a Micrometer meter, published
+by `EmfMeterRegistry` (`references/METRICS.md` → "Publish"). That is
+the one way this skill builds metrics. Read "What is proven" below
+before trusting any step.
 
 ## Path conventions
 
@@ -43,7 +46,7 @@ skill and point its plan at these steps.
 
 | Part | State |
 |---|---|
-| Metrics, Java service | Proven by tests on `trade-imports-reference-data` |
+| Metrics, Java service | Proven by tests on `trade-imports-address-book` (`EmfMeterRegistry`, the EMF documents it writes, the allowlist, `@Timed` through the Spring proxy). `[UNPROVEN]` in dev CloudWatch until that release is checked there. reference-data's older direct-EMF metrics reached dev CloudWatch; moving it to this way keeps their names and dimensions |
 | Log line, Java service | Proven by tests on `trade-imports-reference-data`: the encoded JSON holds a nested `event` object with a numeric duration (`references/LOGGING.md` → "How to write the fields"). `[UNPROVEN]` in dev OpenSearch until a release with `EcsEventEncoder` is checked there; the earlier MDC version was dropped by CDP |
 | Metrics and log line, Node service | Not written. `trade-imports-animals-frontend`, `-ins-frontend` and `-plants-frontend` already have `src/server/common/helpers/external-call-metrics.js`; the first Node ticket adds a Node reference here |
 | Dashboard and alert templates | Written from the reference-data code and the CDP docs; not yet imported into Grafana |
@@ -122,7 +125,10 @@ is a #cdp-support request, made in Step 5.
 ## Step 3: Publish the metrics and log each dependency call
 
 Follow `references/METRICS.md` → "Publish" and `references/LOGGING.md`.
-Raise the PR from a `feat/EUDPA-X-<slug>` branch and deploy to dev.
+Copy the registry classes from `trade-imports-address-book`. If the
+service already writes EMF directly or has an `EmfMetricsPublisher`,
+move it to the registry first (`references/METRICS.md` → "A service
+built the old way"). Raise the PR from a `feat/EUDPA-X-<slug>` branch and deploy to dev.
 Steps 4 to 6 need the metrics to be arriving in dev.
 
 `/health` must not change. CDP uses it to decide whether a task is

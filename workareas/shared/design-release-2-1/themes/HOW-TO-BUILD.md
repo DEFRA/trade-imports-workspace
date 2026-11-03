@@ -3,6 +3,34 @@
 Nine Design Release 2.1 themes are split off the main backlog. Each one builds on its own branch, with one draft pull
 request per repo. Nothing merges to `main` until Sam checks the finished theme.
 
+## Before you play any theme: the repo extracts are a week behind (2 November)
+
+The 2 November re-distil folded the V4 data fields page in whole — 648 claims where the germinals-only scope had
+produced 109 — and the parent `backlog.json` is now 100 rows in 10 themes. **But it reconciled against repo extracts
+taken on 26 October**, because `tim distil status` decides a source is stale from a hash over its `kind`, `locator`
+and `scope` strings only, never over the repo's contents. A `git pull` or a `make reset` cannot mark a repo extract
+stale, so all five repo sources read "verified" and were skipped.
+
+Code has landed in five areas since: commodities (EUDPA-617 and follow-ups), the **soft-save reversal**
+(`25c23ef8`, inc-232 — already on `main`), the **whole documents theme** (EUDPA-724, plus EUDPA-751, -753, -754),
+the address picker (EUDPA-706), and identification and the type-ahead (EUDPA-734, EUDPA-735).
+
+So before playing a theme, do one of:
+
+- **Reset the repo sources and re-distil** —
+  `tim distil reset shared/design-release-2-1 --source repo:frontend --source repo:referencedata --source repo:stub --source repo:tests --source repo:perftests`,
+  then relaunch `workflow/distil.js`. About four hours.
+- **Or verify that theme's rows against current `main` by hand**, as commodities-and-reason was on 2 November.
+
+**Which direction of staleness matters.** A stale "not built yet" is largely self-correcting: the loop plans each row
+against the real code, so a row asking for what already exists is caught at plan time. A stale **`blocked`** marking
+is not — `tim backlog next` never offers a blocked row, so it silently withholds work. Check the blocked rows first.
+
+Each split theme also has a pick-up list in the report's "For the split branches" section — 126 entries across the
+10 themes, which the re-distil never applies to a split backlog. The report re-lists each one at every re-distil
+until the theme's `splitOff` pointer takes it in, so nothing is lost by applying a theme's list when it is played.
+commodities-and-reason's 19 are applied; the other nine are not.
+
 ## Stale branches (ruled 20 October)
 
 Five themes were built on branches that will **not** be merged. Each is now a stale branch: a quarry to take code from,
@@ -11,7 +39,7 @@ not something to finish.
 | Theme | Stale branch | Rows left | Open PRs to close when the theme is played |
 |---|---|---|---|
 | Type question and templates (EUDPA-690) | `feat/NO_JIRA-design-release-2-1-type-question-and-templates` | 19 | animals frontend #398, animals backend #106, INS frontend #45, plants frontend #92, tests #20 |
-| Commodities and import reason (EUDPA-693) | `feat/EUDPA-693-design-release-2-1-commodities-and-reason` | 8 | animals frontend #401, tests #23, performance tests #17 |
+| Commodities and import reason (EUDPA-693) | `feat/EUDPA-693-design-release-2-1-commodities-and-reason` | 13, of which 11 todo | animals frontend #401, tests #23, performance tests #17 |
 | Arrival and transit (EUDPA-694) | `feat/EUDPA-694-design-release-2-1-arrival-and-transit` | 4 | animals frontend #402, plants frontend #95, tests #24 |
 | Origin page (EUDPA-695) | `feat/EUDPA-695-design-release-2-1-origin-page` | 0: retired | animals frontend #403, plants frontend #96, tests #25 (close once design snagging lands) |
 | Overview and review (EUDPA-696) | `feat/EUDPA-696-design-release-2-1-overview-and-review` | 21 | animals frontend #404, animals backend #107, INS frontend #51, plants frontend #98, tests #26 |
@@ -169,11 +197,40 @@ To check nothing has drifted: "which theme tickets are stale". Tickets and their
 ## Commodities and import reason: EUDPA-693 (stale branch)
 
 - **Ticket:** [EUDPA-693](https://eaflood.atlassian.net/browse/EUDPA-693)
-- **Stale branch:** `feat/EUDPA-693-design-release-2-1-commodities-and-reason`. Salvage from it.
-- **When played:** a fresh branch from `main` after design snagging.
-- **Rows:** 7: 3 to rebuild with salvage notes (the k6 walk, hard stops, blank saves), 4 waiting until commodities come
-  from MDM. inc-011 and inc-020 were removed: design snagging inc-205 and inc-207 port them to `main`. inc-021 was
+- **Stale branch:** `feat/EUDPA-693-design-release-2-1-commodities-and-reason`. Salvage from it. EUDPA-617 rewrote the
+  whole commodity search feature on 27 October, so the search-related salvage commits will not apply: rebuild from
+  `main`, do not rebase.
+- **When played:** a fresh branch from `main`. Both `landsAfter` conditions are now met — journey foundation merged
+  13 October, design snagging part A 23 October — so the theme is playable.
+- **Rows:** 13, of which 11 todo, 1 dropped (inc-012) and 1 blocked (inc-029), after the 2 November re-analysis and the re-distil pick-up
+  ([`../reanalysis/REPORT-commodities-and-reason-2026-11-02.md`](../reanalysis/REPORT-commodities-and-reason-2026-11-02.md)).
+  inc-011 and inc-020 were removed earlier: design snagging inc-205 and inc-207 port them to `main`. inc-021 was
   removed and inc-015's Back links moved out: design snagging inc-218 builds them.
+- **What the 2 November re-analysis changed:** the MDM commodity integration (EUDPA-617) completed, so inc-013
+  (sorted and bolded results, removable species chips), inc-019 (poultry by rail) and inc-023 (unweaned for pigs) are
+  unblocked and `todo`. **inc-012, the catalogue row, is `dropped`** — not built, but never a requirement: all of its
+  criteria were the prototype's hard-coded demo data (`app/data/commodities.js`, extracted as claims of
+  `kind: "data"`), and claim 25 of `ruling:sam-2026-10-09` makes a list's content "what MDM serves […] never a reason
+  to block a row or edit a list in code". Claim 28's commodity carve-out expired when commodities arrived from MDM.
+  Three rows are new — inc-024 (which commodities ask for a number of packages, `blocked` on a product question),
+  inc-025 (species labels regressed to the Latin name alone) and inc-026 (the frontend's stub commodity fixture is
+  behind the MDM stub's).
+- **Nothing is blocked.** inc-024 was unblocked later the same day: the V4 Data Fields page
+  (`confluence:6497338582`) specifies the package-count commodity list in a collapsed `expand` macro the distil never
+  opened, and **main's `PACKAGE_COUNT_CODES` matches it exactly** — all 23 chapter-01 codes. The row's work shrank to
+  pinning the list against the page with a test. The prototype's nine-mammal list is simply wrong. inc-023 widened
+  with the same source, from "cattle and pigs" to V4's five codes (equines, cattle, pigs, sheep, goats).
+- **Read [`../reanalysis/v4-data-fields-commodity-rules-2026-11-02.md`](../reanalysis/v4-data-fields-commodity-rules-2026-11-02.md)
+  before touching any commodity rule.** That page holds the authoritative list for eight rules — packages, CPH,
+  passport, ear tag, tattoo, permanent address, unweaned and horse name — and the comparison found main right on
+  packages, permanent address and passport, and wrong on unweaned, ear tag, tattoo and CPH. The last three belong to
+  other themes and are in `deferred.md`. It also confirms by specification the dog/raccoon-dog defect raised on
+  animals frontend PR #432.
+- **Two things recorded in `deferred.md` rather than as rows,** because claim 25 puts them outside this programme:
+  content requests to MDM (camel is absent; the horse is spelled `Equus cabalus`; two elephants sit under 0102), and
+  one design question — the commodity heading in the journey is the bare CN code, because MDM holds no trader-facing
+  name in any field. Fish needs nothing: it is absent from MDM and correct to be, since live aquatic animals are not
+  a GBN-AG live-animal commodity and fish is managed under the IUU regime.
 - **Old PRs to close when played:** animals frontend #401, tests #23, performance tests #17.
 
 ## Arrival and transit: EUDPA-694 (stale branch)

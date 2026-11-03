@@ -4,7 +4,7 @@
     {
       "id": "req-1610",
       "statement": "In the opening run, 'Save and continue' on 'What are you importing?' goes to 'Main reason for import', and 'Main reason for import' goes on to 'Commodity details' (consignment details): the reason for import is asked before the numbers of animals and packages.",
-      "why": "Design Release 2.1 asks origin, what you are importing, the reason for import and then commodity details, in that order. Today the real journey asks commodity details before the reason.",
+      "why": "The target design asks origin, what you are importing, the reason for import and then commodity details, in that order. Today the real journey asks commodity details before the reason.",
       "claims": [
         "prototype-dr2-1-source-p1-054",
         "repo-frontend-p1-096",
@@ -25,8 +25,8 @@
     },
     {
       "id": "req-1611",
-      "statement": "In the opening run, 'Save and continue' on 'Roles and addresses' (consignment addresses) goes to 'Contact address for this consignment', not to the CPH number page. The CPH number page is not a step of the journey: it is reached only from its row on 'Roles and addresses', and saving it returns to 'Roles and addresses'.",
-      "why": "Design Release 2.1's step order has no CPH step: roles and addresses is followed by the contact address, and the CPH number and permanent address are reached from inside roles and addresses. Today the run and the section both walk on from the addresses page to the CPH page.",
+      "statement": "In the opening run, 'Save and continue' on 'Roles and addresses' (consignment addresses) goes to 'Contact address for this consignment'. The CPH number page is not a step of the journey: it is reached only from its row on 'Roles and addresses', and saving it returns to 'Roles and addresses'.",
+      "why": "The target design's step order has no CPH step: roles and addresses is followed by the contact address, and the CPH number and permanent address are reached from inside roles and addresses. Today the run and the section both walk on from the addresses page to the CPH page.",
       "claims": [
         "prototype-dr2-1-source-p1-062",
         "prototype-dr2-1-source-p1-064",
@@ -49,21 +49,21 @@
     },
     {
       "id": "req-1612",
-      "statement": "When every section on the overview is already complete, 'Save and continue' on 'Roles and addresses' returns to the overview instead of going on to the contact address page.",
-      "why": "Design Release 2.1 skips the rest of the linear run once nothing is left to answer, so a trader who finishes roles and addresses last lands on the overview.",
+      "statement": "When every section on the overview is already complete, 'Save and continue' on 'Roles and addresses' returns to the overview.",
+      "why": "The target design skips the rest of the linear run once nothing is left to answer, so a trader who finishes roles and addresses last lands on the overview.",
       "claims": [
         "prototype-dr2-1-source-p1-066",
         "repo-tests-p2-135"
       ],
       "status": "adopted",
       "delta": "new",
-      "deltaNote": "Today 'Save and continue' on the addresses page always walks on to the next page (repo-tests-p2-135), whatever the rest of the notification holds.",
+      "deltaNote": "Today 'Save and continue' on the addresses page always walks on to the next page (repo-tests-p2-135), whatever the rest of the notification holds, so it carries on to the contact address page.",
       "conflicts": []
     },
     {
       "id": "req-1613",
       "statement": "A new notification's opening run takes 'Save and continue' from page to page through every question that applies, in the journey's order, without stopping at the overview; the overview is reached only by 'Save and return to overview' or 'Cancel and return to overview'.",
-      "why": "Design Release 2.1 sends each saved step to the next step in a fixed order. The real journey already does this for a new notification.",
+      "why": "The target design sends each saved step to the next step in a fixed order. The real journey already does this for a new notification.",
       "claims": [
         "prototype-dr2-1-source-p1-057",
         "prototype-dr2-1-source-p1-060",
@@ -100,7 +100,7 @@
     {
       "id": "req-1614",
       "statement": "'Save and continue' on the contact address page at the end of the opening run always goes to the review page, even when the notification is incomplete; the review page then names what is outstanding.",
-      "why": "In Design Release 2.1 review is an ordinary step after the contact address, and completeness is enforced only by the overview and the review page. Today a run that arrives incomplete is diverted to the overview.",
+      "why": "In the target design review is an ordinary step after the contact address, and completeness is enforced only by the overview and the review page. Today a run that arrives incomplete is diverted to the overview.",
       "claims": [
         "prototype-dr2-1-source-p1-062",
         "prototype-dr2-1-specs-p7-143",
@@ -120,8 +120,8 @@
     },
     {
       "id": "req-1615",
-      "statement": "A page opened from a task on the overview returns to the overview on 'Save and continue'. It does not chain on to the next page of its section: 'What are you importing?' no longer goes on to commodity details, 'Main reason for import' to additional details, 'Arrival details' to transit countries and the transporter, or 'Roles and addresses' to the CPH number. The service tells such a page by its own state, not by a marker in the URL: any save made outside the opening run and outside a change from the review page returns to the overview.",
-      "why": "Every Design Release 2.1 overview task returns to the overview when saved, and Sam's 9 October ruling confirms it while ruling out a ?from=hub marker: only the live flow's fallback changes (c-276). Each page the real journey chains to has its own row on the overview, so nothing becomes unreachable.",
+      "statement": "A page opened from a task on the overview returns to the overview on 'Save and continue': 'What are you importing?', 'Main reason for import', 'Arrival details' and 'Roles and addresses' each end there rather than carrying the trader on through the rest of their section. The service tells such a page by its own state, not by a marker in the URL: any save made outside the opening run and outside a change from the review page returns to the overview.",
+      "why": "Every overview task in the target design returns to the overview when saved, and Sam's 9 October ruling confirms it while ruling out a ?from=hub marker: only the live flow's fallback changes (c-276). Each page the real journey chains to has its own row on the overview, so nothing becomes unreachable.",
       "claims": [
         "prototype-dr2-1-source-p1-071",
         "repo-frontend-p1-167",
@@ -162,8 +162,8 @@
     },
     {
       "id": "req-1616",
-      "statement": "A journey page's Back link goes to the overview when the page was opened from the overview (outside the opening run), to the template's review page when it was opened from a template review, and otherwise, in the opening run, to the previous page in the journey's step order. A page opened from the review page's Change link also goes back to the previous journey page, not to the review page. The context comes from the service's own journey state (the opening run, ?change=1), not from a from=hub or from=review marker.",
-      "why": "Design Release 2.1 builds every journey page's Back link this way. The prototype tells the contexts apart by URL markers, which Sam's 9 October ruling leaves out (c-276). Today the real task pages point Back at the overview whatever context they were opened in.",
+      "statement": "A journey page's Back link goes to the overview when the page was opened from the overview (outside the opening run), to the template's review page when it was opened from a template review, and otherwise, in the opening run, to the previous page in the journey's step order. A page opened from the review page's Change link also goes back to the previous journey page. The context comes from the service's own journey state (the opening run, ?change=1), not from a from=hub or from=review marker.",
+      "why": "The target design builds every journey page's Back link this way. The prototype tells the contexts apart by URL markers, which Sam's 9 October ruling leaves out (c-276). Today the real task pages point Back at the overview whatever context they were opened in.",
       "claims": [
         "prototype-dr2-1-source-p1-052",
         "prototype-dr2-1-source-p1-053",
@@ -185,8 +185,8 @@
     },
     {
       "id": "req-1617",
-      "statement": "'Save and return to overview' saves the page and takes the user to the notification's overview instead of the next page. The button keeps the real service's own form field (exit=hub); no action=continue|hub|review field is added.",
-      "why": "Design Release 2.1 treats it as a save that leaves the linear flow. The real journey already does this; form field names are architecture, which the prototype does not decide (c-275).",
+      "statement": "'Save and return to overview' saves the page and takes the user to the notification's overview rather than to the next page of the journey. The button submits the service's own exit=hub form field.",
+      "why": "The target design treats it as a save that leaves the linear flow. The real journey already does this; form field names are architecture, which the prototype does not decide (c-275).",
       "claims": [
         "prototype-dr2-1-source-p1-068",
         "prototype-dr2-1-source-p1-069",
@@ -204,23 +204,24 @@
     },
     {
       "id": "req-1618",
-      "statement": "'Cancel and return to overview' is a link to the overview that leaves the page without saving what was typed.",
-      "why": "Design Release 2.1's cancel control is a plain link to the overview. The real journey already does this.",
+      "statement": "'Cancel and return to overview' is a link to the overview that leaves the page without saving what was typed, and it is always available, whatever the page still has unanswered.",
+      "why": "The target design's cancel control is a plain link to the overview, and the data specification makes cancel always allowed whatever is unfilled. The real journey already does this.",
       "claims": [
         "prototype-dr2-1-source-p1-072",
         "trace-prototype-dr2-1-p13-026",
         "repo-frontend-p1-075",
-        "repo-tests-p2-111"
+        "repo-tests-p2-111",
+        "confluence-6497338582-p1-013"
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "repo-tests-p2-111: 'Cancel and return to overview' discards anything typed and returns to the overview.",
+      "deltaNote": "repo-tests-p2-111: 'Cancel and return to overview' discards anything typed and returns to the overview, and it is a plain link with no checks of its own (repo-frontend-p1-075).",
       "conflicts": []
     },
     {
       "id": "req-1619",
       "statement": "Every page the overview links to ends with a primary 'Save and continue' button, a secondary 'Save and return to overview' button and a 'Cancel and return to overview' link, in that order.",
-      "why": "This is Design Release 2.1's default page ending, and the DR1 rule (b) ruling gives exactly the overview-linked pages these three controls. The real journey already does this.",
+      "why": "This is the target design's default page ending, and the DR1 rule (b) ruling gives exactly the overview-linked pages these three controls. The real journey already does this.",
       "claims": [
         "document-dr1-parity-notes-p1-055",
         "prototype-dr2-1-source-p1-072",
@@ -247,8 +248,8 @@
     },
     {
       "id": "req-1622",
-      "statement": "The contact address for consignment page's return controls read 'Save and return to hub' and 'Cancel and return to hub', not 'Save and return to overview' and 'Cancel and return to overview'.",
-      "why": "Design Release 2.1 words the contact address page's return controls with 'hub'. The prototype wins over the real service's own rule that 'hub' never appears to users, which is not a DR1 judgement: DR1's rename to 'overview' (inc-006) followed DR1's design rather than departing from it.",
+      "statement": "The contact address for consignment page's return controls read 'Save and return to hub' and 'Cancel and return to hub'.",
+      "why": "The target design words the contact address page's return controls with 'hub'. The prototype wins over the frontend's own rule that 'hub' never appears to users, which is not a DR1 judgement: DR1's rename to 'overview' (inc-006) followed DR1's design rather than departing from it.",
       "claims": [
         "trace-prototype-dr2-1-p13-027",
         "trace-animals-fit-p1-050",
@@ -263,8 +264,8 @@
     },
     {
       "id": "req-1624",
-      "statement": "While a notification is being amended, the party pickers, the CPH number page and the permanent address page, which end with the primary button alone outside amend, show a primary 'Save and return' button (to the review page) and a secondary 'Save and continue' button, and no link-styled 'Save and return to overview'. The buttons use the real service's own form fields, not the prototype's action field.",
-      "why": "DR1 rule (b) judged where return-to-overview controls go and keeps the hub control off these pages, while the amend-only 'Save and return' and 'Save and continue', which DR1 never judged, follow Design Release 2.1's amend ending (c-210).",
+      "statement": "While a notification is being amended, the party pickers, the CPH number page and the permanent address page, which end with the primary button alone outside amend, show a primary 'Save and return' button (to the review page) and a secondary 'Save and continue' button, and no link-styled 'Save and return to overview'. The buttons submit the service's own form fields.",
+      "why": "DR1 rule (b) judged where return-to-overview controls go and keeps the hub control off these pages, while the amend-only 'Save and return' and 'Save and continue', which DR1 never judged, follow the target design's amend ending (c-210).",
       "claims": [
         "document-dr1-parity-notes-p1-057",
         "document-dr1-parity-notes-p1-058",
@@ -285,24 +286,41 @@
     },
     {
       "id": "req-1625",
-      "statement": "Pressing 'Save and return to overview' does not refuse the page for an unanswered question: it saves what was entered and goes to the overview. An answer that fails its own format rule is still refused with its error, and consignment details, the CPH number page and the contact address page check their answers before saving.",
-      "why": "Design Release 2.1 lets a trader leave most pages for the overview without the page's checks, so they can come back later, and the backend stores missing or empty answers freely; but it cannot store a value that does not fit its field's type, a persistence and validation constraint that overrides the prototype for malformed answers (c-211).",
+      "statement": "On every page that offers both, 'Save and continue' and 'Save and return to overview' make exactly the same checks, with no page an exception. A page whose answers all pass saves them, and 'Save and return to overview' then shows the notification's overview. A page with an answer that is missing or does not pass its own rule keeps the trader on the page, shows an error for each such answer, and shows back everything they entered, so nothing they typed is dropped. The answers checked are the page's own hard stops together with any the data specification marks mandatory to proceed; an answer that is only mandatory to submit can still be left blank on either button.",
+      "why": "The owner's 26 October ruling adopts the business analyst's expected behaviour: both save buttons behave the same way, upload documents included, and what the trader typed is kept. The data specification says the same, making an answer that is mandatory to proceed, or any invalid answer, stop the trader leaving the page by either button.",
       "claims": [
-        "prototype-dr2-1-source-p1-068",
+        "ruling-sam-2026-10-26-p1-001",
+        "ruling-sam-2026-10-26-p1-002",
+        "ruling-sam-2026-10-26-p1-003",
+        "ruling-sam-2026-10-26-p1-005",
+        "ruling-sam-2026-10-26-p1-006",
+        "ruling-sam-2026-10-26-p1-007",
+        "ruling-sam-2026-10-26-p1-008",
+        "ruling-sam-2026-10-26-p1-009",
+        "ruling-sam-2026-10-26-p1-010",
+        "ruling-sam-2026-10-26-p1-011",
+        "ruling-sam-2026-10-26-p1-013",
+        "ruling-sam-2026-10-26-p1-024",
+        "ruling-sam-2026-10-26-p1-025",
+        "ruling-sam-2026-10-26-p1-026",
+        "confluence-6497338582-p1-012",
+        "confluence-6497338582-p1-018",
         "repo-frontend-p1-074",
+        "repo-frontend-p2-144",
         "trace-e2e-p13-113"
       ],
       "status": "adopted",
       "delta": "change",
-      "deltaNote": "Today a page runs its validation before any exit, so 'Save and return to overview' is refused on the same errors as 'Save and continue' (the page controllers validate first; repo-frontend-p1-074 saves the page's answers before going to the overview). No trace shows it with invalid input (trace-e2e-p13-113).",
+      "deltaNote": "Today 'Save and return to overview' skips the checks 'Save and continue' makes, found on the upload documents, origin and main reason for import pages (ruling-sam-2026-10-26-p1-001); it saves the page's answers and goes to the overview (repo-frontend-p1-074), and no trace drives invalid input through it (trace-e2e-p13-113). An invalid submission already re-shows the trader's raw entries (repo-frontend-p2-144); that part stays.",
       "conflicts": [
-        "c-211"
+        "c-211",
+        "c-journey-flow-001"
       ]
     },
     {
       "id": "req-1630",
       "statement": "Pages inside a notification (the overview, the question pages and the review page) show a status strip above the caption: a blue 'Draft' tag (or the notification's own status) followed by the notification reference in bold, a GBN-AG-<two-digit year>-<six characters> reference minted by the backend when the notification is created. The strip shows from the first request on the origin page and never on the dashboard. The shared strip is not changed in place: a page that needs a different header (the submitted and draft view headers, the declaration) switches the shared strip off and draws its own header in the set's template.",
-      "why": "Design Release 2.1 shows the status and reference on every journey page, with Draft when the notification has no other status. The real journey already does this, and Sam's 9 October afternoon ruling keeps the shared strip as it is, with pages that need another header switching it off.",
+      "why": "The target design shows the status and reference on every journey page, with Draft when the notification has no other status. The real journey already does this, and Sam's 9 October afternoon ruling keeps the shared strip as it is, with pages that need another header switching it off.",
       "claims": [
         "prototype-dr2-1-source-p1-077-m1",
         "prototype-dr2-1-source-p1-078",
@@ -337,7 +355,7 @@
     {
       "id": "req-1635",
       "statement": "Starting a new notification creates a fresh, empty notification; the trader's other drafts, submitted notifications, templates and address book are kept.",
-      "why": "Design Release 2.1 clears the journey's answers when a notification is started but keeps everything else. The real service already creates a new record for each start.",
+      "why": "The target design clears the journey's answers when a notification is started but keeps everything else. The real service already creates a new record for each start.",
       "claims": [
         "prototype-dr2-1-source-p1-044",
         "prototype-dr2-1-source-p1-045",
@@ -384,7 +402,7 @@
     {
       "id": "req-1638",
       "statement": "Every page needs a signed-in session: a signed-out user who opens any page is sent to the service's /auth/sign-in, with the page they asked for kept in a 'redirect' parameter, and after signing in returns to that page, such as a journey page with its saved answers intact, or to the dashboard when none was asked for. A redirect is followed only when it is a relative path on the same service, and it is used once.",
-      "why": "Authentication is a real constraint the prototype cannot express (its sign-in is outside Design Release 2.1), so it overrides the prototype.",
+      "why": "Authentication is a real constraint the prototype cannot express (its sign-in is outside the target design), so it overrides the prototype.",
       "claims": [
         "ruling-sam-2026-10-07-p1-010",
         "prototype-dr2-1-specs-p7-118",
@@ -403,7 +421,7 @@
     {
       "id": "req-1639",
       "statement": "A page opened from the review page (with ?change=1) returns to the review page on 'Save and continue', and keeps that context through its own in-page actions (add, remove, upload) until it does; 'Save and return to overview' still goes to the overview first.",
-      "why": "Design Release 2.1 returns a page reached from review to review, with the overview taking precedence over review. The real journey already does this with its ?change=1 context, which Sam's 9 October ruling keeps in place of the prototype's from=review marker (c-276).",
+      "why": "The target design returns a page reached from review to review, with the overview taking precedence over review. The real journey already does this with its ?change=1 context, which Sam's 9 October ruling keeps in place of the prototype's from=review marker (c-276).",
       "claims": [
         "prototype-dr2-1-source-p1-071",
         "repo-frontend-p1-077",
@@ -435,7 +453,7 @@
     {
       "id": "req-1640",
       "statement": "Every journey page is a server-rendered form: a successful save is a full-page POST answered by a redirect to the next page, each save stores the notification as a draft, and every option list arrives in the page rather than from a browser call to another service.",
-      "why": "Design Release 2.1 posts each page and redirects, persisting a draft each time, with every list rendered by the server. The real journey already works this way.",
+      "why": "The target design posts each page and redirects, persisting a draft each time, with every list rendered by the server. The real journey already works this way.",
       "claims": [
         "prototype-dr2-1-source-p1-069",
         "repo-perftests-p1-082",
@@ -455,8 +473,8 @@
     },
     {
       "id": "req-1641",
-      "statement": "A page refuses 'Save and continue' only for its own hard stops; every other answer can be left blank to proceed, and completeness is enforced by the overview's statuses and the review page's submit. For example, a blank main reason for import and a blank transporter are allowed, a reason's follow-up question is required once that reason is chosen, the number of animals is required, and documents are optional unless the user has started one by picking a document type.",
-      "why": "Design Release 2.1 separates what blocks a page from what blocks submission. The real journey already keeps that separation on the pages the evidence shows.",
+      "statement": "A page refuses a save only for its own hard stops; every other answer can be left blank to proceed, and completeness is enforced by the overview's statuses and the review page's submit. For example, a blank main reason for import and a blank transporter are allowed, a reason's follow-up question is required once that reason is chosen, the number of animals is required, and documents are optional unless the user has started one by picking a document type.",
+      "why": "The target design separates what blocks a page from what blocks submission, and the data specification does the same by marking an answer optional, mandatory to proceed or mandatory to submit. The real journey already keeps that separation on the pages the evidence shows.",
       "claims": [
         "prototype-dr2-1-specs-p7-126",
         "prototype-dr2-1-specs-p7-127",
@@ -483,17 +501,21 @@
         "repo-tests-p2-068-m1",
         "trace-animals-fit-p1-057",
         "trace-e2e-p14-097",
-        "trace-e2e-p14-098"
+        "trace-e2e-p14-098",
+        "confluence-6497338582-p1-011",
+        "confluence-6497338582-p1-014"
       ],
       "status": "adopted",
       "delta": "exists",
       "deltaNote": "repo-tests-p2-037 and repo-tests-p2-031: blank saves on Main reason for import and on the transporter page are allowed and enforced only at submit; repo-tests-p2-068: a blank purpose with Internal market blocks the save; repo-frontend-p2-140: an incomplete mandatory row holds back only the submit.",
-      "conflicts": []
+      "conflicts": [
+        "c-journey-flow-001"
+      ]
     },
     {
       "id": "req-1642",
-      "statement": "On 'Arrival details', in the live-animals and germinal products sets, 'Save and continue' is refused only when the means of transport is missing; the arrival date, port of entry, transport identification and transport document reference can be left blank to proceed. Plants' arrival details keeps its own rules.",
-      "why": "Design Release 2.1 makes the means of transport the arrival page's only hard stop, because it decides whether transit countries apply. Sam's 9 October afternoon ruling makes arrival details' own rules animals only: plants takes only the return to the overview and the lenient save.",
+      "statement": "On 'Arrival details', in the live-animals and germinal products sets, a save is refused only when the means of transport is missing; the arrival date, port of entry, transport identification and transport document reference can be left blank to proceed. Plants' arrival details keeps its own rules.",
+      "why": "The target design makes the means of transport the arrival page's only hard stop, because it decides whether transit countries apply. Sam's 9 October afternoon ruling makes arrival details' own rules animals only: plants takes only the return to the overview and the lenient save.",
       "claims": [
         "prototype-dr2-1-specs-p7-129",
         "prototype-dr2-1-specs-p7-140",
@@ -508,8 +530,8 @@
     },
     {
       "id": "req-1643",
-      "statement": "On commodity details (consignment details), 'Save and continue' is refused when a line that asks for a number of packages has none.",
-      "why": "Design Release 2.1 makes the number of packages a hard stop on that page alongside the number of animals.",
+      "statement": "On commodity details (consignment details), a save is refused when a line that asks for a number of packages has none.",
+      "why": "The target design makes the number of packages a hard stop on that page alongside the number of animals.",
       "claims": [
         "prototype-dr2-1-specs-p7-139",
         "repo-frontend-p2-063",
@@ -522,8 +544,8 @@
     },
     {
       "id": "req-1644",
-      "statement": "The transit countries step, and its row on the overview, apply only when the means of transport is rail or road; choosing any other means skips the step, removes the row and deletes any saved transit countries. Transit countries are optional to proceed.",
-      "why": "Design Release 2.1 adds the transit countries step only for Rail or Road. The real journey already does this.",
+      "statement": "The transit countries step, and its row on the overview, apply only when the means of transport is rail or road; choosing any other means skips the step, takes the row off the overview and deletes any saved transit countries. Transit countries are optional to proceed.",
+      "why": "The target design adds the transit countries step only for Rail or Road. The real journey already does this.",
       "claims": [
         "prototype-dr2-1-source-p1-058",
         "prototype-dr2-1-source-p1-059",
@@ -546,7 +568,7 @@
     {
       "id": "req-1645",
       "statement": "The animal identification step follows commodity details only when at least one chosen species has identifiers of its own; a consignment with none never reaches the identification page, and a commodity with none gets no panel on it.",
-      "why": "Design Release 2.1 adds the identification step only when a selected species has identifier fields. The real journey already does this.",
+      "why": "The target design adds the identification step only when a selected species has identifier fields. The real journey already does this.",
       "claims": [
         "prototype-dr2-1-source-p1-055",
         "repo-frontend-p1-124",
@@ -567,7 +589,7 @@
     {
       "id": "req-1646",
       "statement": "The additional details step applies to every live-animals consignment because it always asks what the animals are certified for; its unweaned animals question appears only when a commodity line is one that triggers it, such as cattle.",
-      "why": "Design Release 2.1 adds the additional details page whenever it would ask the certification purpose or the unweaned question, and live animals are always asked the purpose. The real journey already does this.",
+      "why": "The target design adds the additional details page whenever it would ask the certification purpose or the unweaned question, and live animals are always asked the purpose. The real journey already does this.",
       "claims": [
         "prototype-dr2-1-source-p1-056",
         "repo-tests-p2-034",
@@ -583,8 +605,8 @@
     },
     {
       "id": "req-1647",
-      "statement": "The CPH number applies unless every commodity in the consignment is exempt (horses 0101, and cats, dogs and ferrets 01061900); for cats, dogs and ferrets each animal's permanent address is asked instead of a CPH number.",
-      "why": "Design Release 2.1 brings the CPH number in by commodity code with the same exemptions, and asks a cat's permanent address in its place. The real journey already scopes it this way.",
+      "statement": "The CPH number applies unless every commodity in the consignment is exempt (horses 0101, and cats, dogs and ferrets 01061900); for cats, dogs and ferrets each animal's permanent address is asked in place of a CPH number.",
+      "why": "The target design brings the CPH number in by commodity code with the same exemptions, and asks a cat's permanent address in its place. The real journey already scopes it this way.",
       "claims": [
         "prototype-dr2-1-specs-p7-195",
         "trace-prototype-dr2-1-p13-181",
@@ -605,8 +627,8 @@
     },
     {
       "id": "req-1648",
-      "statement": "Each reason for import brings in only its own follow-up questions, revealed on the same page: the purpose for internal market; the exit port and destination country for transit; the destination country for transhipment or onward travel; the exit date and port of exit for temporary admission of horses. Changing the reason deletes the follow-up answers that no longer apply.",
-      "why": "Design Release 2.1 requires a reason's follow-ups once that reason is chosen and walks each branch this way. The real journey already scopes them like this.",
+      "statement": "Each reason for import brings in only its own follow-up questions, revealed on the same page: the purpose for internal market; the exit port and destination country for transit; the destination country for transhipment or onward travel; the exit date and port of exit for temporary admission of horses. Changing the reason deletes the follow-up answers that are out of scope for the new reason.",
+      "why": "The target design requires a reason's follow-ups once that reason is chosen and walks each branch this way. The real journey already scopes them like this.",
       "claims": [
         "prototype-dr2-1-specs-p4-071",
         "prototype-dr2-1-specs-p7-127",
@@ -650,7 +672,7 @@
     },
     {
       "id": "req-1650",
-      "statement": "An answer to a question that no longer applies is not shown, checked or saved, and any stored value is removed in the same save; when one field of a collection entry leaves scope only that field is wiped.",
+      "statement": "An answer to a question that is out of scope is not shown, checked or saved, and any stored value is cleared in the same save; when one field of a collection entry leaves scope only that field is cleared.",
       "why": "The real service must not store answers the notification no longer needs: a real persistence and validation constraint that holds whatever the prototype shows.",
       "claims": [
         "ruling-sam-2026-10-07-p1-010",
@@ -667,7 +689,7 @@
     {
       "id": "req-1651",
       "statement": "A notification's arrival date counts as complete only when it falls between 7 days in the past and 6 months ahead.",
-      "why": "Design Release 2.1 holds the arrival details task back outside that window. The real journey already applies the same window.",
+      "why": "The target design holds the arrival details task back outside that window. The real journey already applies the same window.",
       "claims": [
         "prototype-dr2-1-specs-p7-161",
         "repo-tests-p2-075",
@@ -681,7 +703,7 @@
     {
       "id": "req-1653",
       "statement": "Each journey page carries the caption of the part of the notification it belongs to: 'About the consignment' (origin, what are you importing, main reason for import, identification), 'Commodity details' (additional details), 'Transport and arrival' (arrival details, transporter), 'Movement' (transit countries), 'Add a new transporter' (the add-a-transporter pages), 'Documents' (upload documents) and 'Consignment parties' (roles and addresses, party pickers, CPH number); the overview, contact address, review, declaration and confirmation pages carry none, and nor do the delete-notification and cancel-amend pages, which interrupt the journey rather than belong to a section.",
-      "why": "Design Release 2.1's pages carry these captions. The real journey already captions them the same way, except commodity details.",
+      "why": "The target design's pages carry these captions. The real journey already captions them the same way, except commodity details.",
       "claims": [
         "repo-frontend-p1-080",
         "repo-frontend-p1-136",
@@ -711,8 +733,8 @@
     },
     {
       "id": "req-1655",
-      "statement": "The tests repo walks a cattle-by-air notification (identification, the unweaned question and a CPH number) from create to submitted in the Design Release 2.1 step order, checks every overview task reads Complete before review, and checks the review shows the answers given.",
-      "why": "Design Release 2.1 proves this journey end to end. The real suite proves a cattle journey by road in today's step order, which the step-order changes will break.",
+      "statement": "The tests repo walks a cattle-by-air notification (identification, the unweaned question and a CPH number) from create to submitted in the journey's step order, checks every overview task reads Complete before review, and checks the review shows the answers given.",
+      "why": "The target design proves this journey end to end. The real suite proves a cattle journey by road in today's step order, which the step-order changes will break.",
       "claims": [
         "prototype-dr2-1-specs-p4-068",
         "prototype-dr2-1-specs-p7-204",
@@ -732,7 +754,7 @@
     {
       "id": "req-1656",
       "statement": "A poultry-by-rail notification (Chicken 010511 Gallus domesticus, Transit with an exit port and destination country, transit countries and a CPH number, no identification step) can be walked from create to submitted, and the tests repo proves it.",
-      "why": "Design Release 2.1 proves this journey end to end. Today the commodity list offers only Cow, Horse, Cat, Dog and Fish, so poultry cannot be chosen, and Sam's 9 October afternoon ruling makes the journey wait with the MDM commodity catalogue.",
+      "why": "The target design proves this journey end to end. Today the commodity list offers only Cow, Horse, Cat, Dog and Fish, so poultry cannot be chosen, and Sam's 9 October afternoon ruling makes the journey wait with the MDM commodity catalogue.",
       "claims": [
         "prototype-dr2-1-specs-p2-011",
         "prototype-dr2-1-specs-p4-069",
@@ -757,7 +779,7 @@
     {
       "id": "req-1657",
       "statement": "A pet-cats-by-air notification (microchip, passport and tattoo per cat, a companion-animal purpose, and each cat's permanent address chosen on its own page in roles and addresses, one the same as the place of destination and one new) can be walked from create to submitted, and the tests repo proves it.",
-      "why": "Design Release 2.1 proves this journey end to end. Today the permanent address is typed in full on the identification form; conflict c-119 settles that it moves to its own page in roles and addresses now.",
+      "why": "The target design proves this journey end to end. Today the permanent address is typed in full on the identification form; conflict c-119 settles that it moves to its own page in roles and addresses now.",
       "claims": [
         "prototype-dr2-1-specs-p4-070",
         "trace-prototype-dr2-1-p13-001",
@@ -776,7 +798,7 @@
     {
       "id": "req-1658",
       "statement": "A horse-by-sea notification (temporary admission of horses with an exit date and port of exit, microchip, passport and horse name, a registered equine animal) can be walked from create to submitted, and the tests repo proves it.",
-      "why": "Design Release 2.1 proves this journey end to end; no real end-to-end journey walks a horse or temporary admission today.",
+      "why": "The target design proves this journey end to end; no real end-to-end journey walks a horse or temporary admission today.",
       "claims": [
         "prototype-dr2-1-specs-p4-071",
         "repo-frontend-p2-086",
@@ -803,7 +825,7 @@
     },
     {
       "id": "req-1660",
-      "statement": "Journey changes keep the frontend's standing structure: the obligation model decides what applies and whether it is mandatory, the flow decides page order, task rows decide grouping on the overview, each answer is owned by exactly one page, and the model holds no display copy.",
+      "statement": "The animals frontend's journey structure holds: the obligation model decides what applies and whether it is mandatory, the flow decides page order, task rows decide grouping on the overview, each answer is owned by exactly one page, and the model holds no display copy.",
       "why": "These are the real frontend's recorded rulings on how scope, order and grouping are kept apart; every flow change in this area lands through them.",
       "claims": [
         "repo-frontend-p1-086",
@@ -860,7 +882,7 @@
     },
     {
       "id": "req-1662",
-      "statement": "Every changed page passes axe with no serious or critical WCAG 2 A or AA violation on first render and in its error state, and the audited pages keep their Lighthouse thresholds.",
+      "statement": "Every page this programme touches passes axe with no serious or critical WCAG 2 A or AA violation on first render and in its error state, and the audited pages keep their Lighthouse thresholds.",
       "why": "Accessibility is a real constraint of a GOV.UK service that the prototype does not check.",
       "claims": [
         "repo-frontend-p2-162",
@@ -881,7 +903,7 @@
     {
       "id": "req-1663",
       "statement": "A page with validation errors shows a GOV.UK error summary titled 'There is a problem' ('Mae problem' in Welsh) at the top of the content, above the caption and heading, listing one entry per field in field order with the first failing rule's message, each linking to its field. The summary is exposed as an alert and takes focus when the user has just been refused. Each field shows the same message inline, read out with a visually hidden 'Error:' prefix. A page with no errors shows no summary.",
-      "why": "Design Release 2.1 shows every error this way. The real journey already does.",
+      "why": "The target design shows every error this way. The real journey already does.",
       "claims": [
         "prototype-dr2-1-specs-p1-102",
         "prototype-dr2-1-specs-p1-103",
@@ -900,7 +922,7 @@
     {
       "id": "req-1664",
       "statement": "Date fields take a date as d/m/yyyy with single-digit days and months allowed, through an MOJ date picker the user can also type into.",
-      "why": "Design Release 2.1's date pickers work this way. The real journey already does.",
+      "why": "The target design's date pickers work this way. The real journey already does.",
       "claims": [
         "prototype-dr2-1-specs-p2-007",
         "prototype-dr2-1-specs-p2-008",
@@ -1094,8 +1116,8 @@
     },
     {
       "id": "req-1668",
-      "statement": "The plants for planting, potatoes and wood products journeys are not built in the animals frontend: in Design Release 2.1 they reach a commodity search that offers nothing.",
-      "why": "Those types belong to the high-risk plants journey in its own frontend. Germinal products is no longer excluded: Sam's 9 October ruling makes it a sibling set of live animals in the animals frontend, and its journey is carried by req-1898 and req-1899.",
+      "statement": "The plants for planting, potatoes and wood products journeys are not built in the animals frontend.",
+      "why": "Those types belong to the high-risk plants journey in its own frontend, and in the target design they reach a commodity search that offers nothing. Germinal products is no longer excluded: Sam's 9 October ruling makes it a sibling set of live animals in the animals frontend, and its journey is carried by req-1898 and req-1899.",
       "claims": [
         "prototype-dr2-1-specs-p7-123",
         "ruling-sam-2026-10-09-p1-086",
@@ -1108,7 +1130,7 @@
     },
     {
       "id": "req-1669",
-      "statement": "What the Design Release 2.1 traces and specs do not exercise is recorded, not built: page validation before the declaration, the save and cancel return controls, amend, copy and delete, multi-commodity and mixed-species consignments, transhipment, the review's Change links, finished virus scans, the region code and package totals, no-JavaScript searches, and observed but unasserted behaviour such as a cattle animal with only an ear tag staying To do.",
+      "statement": "What the target design's traces and specs do not exercise is recorded, not built: page validation before the declaration, the save and cancel return controls, amend, copy and delete, multi-commodity and mixed-species consignments, transhipment, the review's Change links, finished virus scans, the region code and package totals, no-JavaScript searches, and observed but unasserted behaviour such as a cattle animal with only an ear tag staying To do.",
       "why": "These are gaps in the target evidence; nothing in them says what to build differently.",
       "claims": [
         "trace-prototype-dr2-1-p12-191",
@@ -1214,7 +1236,7 @@
     },
     {
       "id": "req-1897",
-      "statement": "Journey pages keep the real service's URL paths whatever path Design Release 2.1 uses: the live-animals set at /live-animals, a notification's overview at /live-animals/notifications/{reference}, and each page at /live-animals/notifications/{reference}/{slug} with today's slugs (origin, commodities, consignment-details, commodities/identification, import-reason, additional-details, port-of-entry, transit-countries, transporters, accompanying-documents, addresses, cph-number, consignment/contact/select, notification-view). The prototype's flat paths (/reason-for-import, /arrival-details, /upload-documents, /roles-and-addresses, /notification-hub, /review-notification and the rest) are not copied, and every flow change is specified and tested by the page, heading and destination it reaches, not by a literal path.",
+      "statement": "Journey pages keep today's URL paths: the live-animals set at /live-animals, a notification's overview at /live-animals/notifications/{reference}, and each page at /live-animals/notifications/{reference}/{slug} with today's slugs (origin, commodities, consignment-details, commodities/identification, import-reason, additional-details, port-of-entry, transit-countries, transporters, accompanying-documents, addresses, cph-number, consignment/contact/select, notification-view). The prototype's flat paths (/reason-for-import, /arrival-details, /upload-documents, /roles-and-addresses, /notification-hub, /review-notification and the rest) are not copied, and every flow change is specified and tested by the page, heading and destination it reaches, not by a literal path.",
       "why": "Sam's 9 October ruling says the prototype never decides URL paths, no increment changes an existing real path to match it, and acceptance criteria assert pages, headings and destinations rather than paths (c-274).",
       "claims": [
         "repo-frontend-p1-084",
@@ -1252,8 +1274,8 @@
     },
     {
       "id": "req-1898",
-      "statement": "The germinal products set (mounted at /germinal-products, its pages at /germinal-products/notifications/{reference}/{slug} with the live-animals slugs) follows the same Design Release 2.1 step order, opening run, return rules, shared journey buttons and status strip as the live-animals set, taken from copies of the live-animals pages (overview, check answers, declaration and confirmation included) once they have changed, except that the additional details, CPH number and permanent address steps never apply: the run goes from identification (when it applies) straight to arrival details, 'Roles and addresses' has no CPH or permanent address row, and the overview has no 'Additional details' row. The certified-for answer is set to 'Germinal products' when the draft is created, so nothing asks it and the review shows it with no Change link. A germinal notification's strip shows a GBN-AG reference, like a live-animals one.",
-      "why": "Sam's 9 October ruling makes germinal products a sibling set of live animals built by duplicating the live-animals feature pages, with its own journey, flow and obligations, leaves out the additional details, CPH number and permanent address pages, and keeps GBN-AG references for germinal notifications; the afternoon ruling has the germinal set copy the overview, check answers, declaration and confirmation. Design Release 2.1 likewise gives germinal products no additional details page and a GBN-AG reference. Today only the live-animals set exists.",
+      "statement": "The germinal products set (mounted at /germinal-products, its pages at /germinal-products/notifications/{reference}/{slug} with the live-animals slugs) follows the same step order, opening run, return rules, shared journey buttons and status strip as the live-animals set, taken from copies of the live-animals pages (overview, check answers, declaration and confirmation included) once they have changed, except that the additional details, CPH number and permanent address steps never apply: the run goes from identification (when it applies) straight to arrival details, 'Roles and addresses' has no CPH or permanent address row, and the overview has no 'Additional details' row. The certified-for answer is set to 'Germinal products' when the draft is created, so nothing asks it and the review shows it with no Change link. A germinal notification's strip shows a GBN-AG reference, like a live-animals one.",
+      "why": "Sam's 9 October ruling makes germinal products a sibling set of live animals built by duplicating the live-animals feature pages, with its own journey, flow and obligations, leaves out the additional details, CPH number and permanent address pages, and keeps GBN-AG references for germinal notifications; the afternoon ruling has the germinal set copy the overview, check answers, declaration and confirmation. The target design likewise gives germinal products no additional details page and a GBN-AG reference. Today only the live-animals set exists.",
       "claims": [
         "ruling-sam-2026-10-09-p1-006",
         "ruling-sam-2026-10-09-p1-007",
@@ -1307,8 +1329,8 @@
     },
     {
       "id": "req-1901",
-      "statement": "Each set opens only notifications of its own category: a germinal products notification is never shown or changed through the live-animals set's pages, nor a live-animals notification through the germinal set's pages. The guard reads the category each set records when it creates the draft (req-1856, req-1857), and treats a notification with no recorded category as live animals (req-1884), so only the live-animals set opens one.",
-      "why": "Sam's 9 October ruling keeps one category per set and has the frontend's cross-set guard read the category stored on the notification record, so a notification can only be worked in the set that owns it.",
+      "statement": "Each set opens only notifications of its own category: a germinal products notification is never shown or changed through the live-animals set's pages, nor a live-animals notification through the germinal set's pages. The guard reads the category each set records when it creates the draft, and treats a notification with no recorded category as live animals, so only the live-animals set opens one.",
+      "why": "Sam's 9 October ruling keeps one category per set and has the frontend's cross-set guard read the category stored on the notification record, so a notification can only be worked in the set that owns it. The category each set records is req-1856 and req-1857, and the untagged default req-1884.",
       "claims": [
         "ruling-sam-2026-10-09-p1-023",
         "ruling-sam-2026-10-09-p1-029",
@@ -1324,7 +1346,7 @@
     },
     {
       "id": "req-1902",
-      "statement": "The k6 performance suite keeps driving a live-animals draft through the journey after the step-order and return changes: it creates the draft from the set's create path, saves each step by its slug, reopens and resaves answered pages, and every save still lands on a page that renders, with no redirect loop and no staleAction redirect.",
+      "statement": "The k6 performance suite drives a live-animals draft through the journey: it creates the draft from the set's create path, saves each step by its slug, reopens and resaves answered pages, and every save lands on a page that renders, with no redirect loop and no staleAction redirect.",
       "why": "The performance suite requests the journey's pages directly and fails a step whose save does not land on a rendering page; the flow changes alter where saves land (the contact address, the overview, the review page) but each destination still renders.",
       "claims": [
         "repo-perftests-p1-006",
@@ -1347,8 +1369,8 @@
     },
     {
       "id": "req-1917",
-      "statement": "In the high-risk plants frontend, a journey page's Back link, the origin page's included, follows the context it was opened in, as in live animals (req-1616): to the overview when opened from the overview, and otherwise in the opening run to the previous page in plants' own step order. Back from plants' first page stays as it is, because plants' first page is its own commodity type question; no plants page's Back link goes to the INS type question, which is animals only. Plants pages get no template mode.",
-      "why": "The templates ruling has back links follow the context a page was opened in, in plants as in animals, with plants using its own step order; only animals has a Back link from its first page to the INS type question, because plants' first page is its own type question, and the afternoon ruling makes that Back link animals only. Template mode is animals only.",
+      "statement": "In the high-risk plants frontend, a journey page's Back link, the origin page's included, follows the context it was opened in, as in live animals: to the overview when opened from the overview, and otherwise in the opening run to the previous page in plants' own step order. Back from plants' first page points where it does today, because plants' first page is its own commodity type question; no plants page's Back link goes to the INS type question, which is animals only. Plants pages have no template mode.",
+      "why": "The templates ruling has back links follow the context a page was opened in, in plants as in animals, with plants using its own step order; only animals has a Back link from its first page to the INS type question, because plants' first page is its own type question, and the afternoon ruling makes that Back link animals only. Template mode is animals only. The live-animals rule is req-1616.",
       "claims": [
         "ruling-sam-2026-10-09-pm-p3-068",
         "ruling-sam-2026-10-09-templates-p1-049",
@@ -1365,8 +1387,8 @@
     },
     {
       "id": "req-1988",
-      "statement": "In the high-risk plants frontend, 'Continue' on the last step of the opening run (the consignment contact page) goes to plants' check your answers page even when the notification is incomplete, and that page renders an unfinished notification and names what is outstanding; Continue on an incomplete notification re-shows check answers with its errors instead of sending the trader to the hub, and only the declaration and confirmation still wait for a complete notification. Plants keeps its own step order. The plants rulings ledger records the change as a new decision superseding d-069's 'landing on the hub', added the ledger's own way (spec-add-decision.sh) rather than by editing d-069.",
-      "why": "Sam's 9 October afternoon ruling makes the run-ends-on-review change (inc-001) change plants in the same increment, with plants keeping its own steps. The plants ledger records no ruling after 6 September 2026 and is changed only by a superseding decision.",
+      "statement": "In the high-risk plants frontend, 'Continue' on the last step of the opening run (the consignment contact page) goes to plants' check your answers page even when the notification is incomplete, and that page renders an unfinished notification and names what is outstanding; Continue on an incomplete notification re-shows check answers with its errors, and only the declaration and confirmation wait for a complete notification. Plants keeps its own step order. The plants rulings ledger carries a decision, added the ledger's own way (spec-add-decision.sh), that the opening run ends on check your answers, superseding the earlier decision that it lands on the hub.",
+      "why": "Sam's 9 October afternoon ruling makes the run-ends-on-review change (inc-001) change plants in the same increment, with plants keeping its own steps. The plants ledger records no ruling after 6 September 2026 and is changed only by a superseding decision; the earlier decision is d-069.",
       "claims": [
         "ruling-sam-2026-10-09-pm-p3-025",
         "ruling-sam-2026-10-09-pm-p3-013",
@@ -1387,7 +1409,7 @@
     },
     {
       "id": "req-2070",
-      "statement": "The high-risk plants journey keeps its own sections, steps and step order when the live-animals flow changes are mirrored: sections start, commodity, commodity details, origin, arrival, destination, parties, contact and review, with the hub in none of them; an opening run of commodity type, commodities list, origin, arrival status, arrival details, place of destination, consignor, identification numbers and consignment contact that skips any step whose page is gated out (potatoes skip arrival status and the consignor); the commodity details sub-page reached from the commodities list and returning to it, never a run step; every page after commodity type needing it answered; origin after the commodity details sub-page; the arrival status not a prerequisite of the place of destination; and the declaration held as a flow-only key that never counts as progress. Animals-only data (species, identification, CPH, transit) is never mirrored into plants.",
+      "statement": "The high-risk plants journey has its own sections, steps and step order: sections start, commodity, commodity details, origin, arrival, destination, parties, contact and review, with the hub in none of them; an opening run of commodity type, commodities list, origin, arrival status, arrival details, place of destination, consignor, identification numbers and consignment contact that skips any step whose page is gated out (potatoes skip arrival status and the consignor); the commodity details sub-page reached from the commodities list and returning to it, never a run step; every page after commodity type needing it answered; origin after the commodity details sub-page; the arrival status not a prerequisite of the place of destination; and the declaration held as a flow-only key that never counts as progress. Animals-only data (species, identification, CPH, transit) is never mirrored into plants.",
       "why": "Sam's 9 October afternoon ruling has plants mirror structure, wording patterns, components and behaviour while keeping its own questions, sections, step order and data, and never mirrors animals-only data; plants' flow already works this way.",
       "claims": [
         "ruling-sam-2026-10-09-pm-p3-013",
@@ -1473,7 +1495,7 @@
     },
     {
       "id": "req-2073",
-      "statement": "Plants flow changes keep the plants set's standing structure: thirteen journey pages are dispatch pages that take part in gating and task rows, the dashboard and hub are not, and delete notification and cancel-amend are action pages, not journey pages; answers are judged complete through evaluation bindings; its obligation set (25 obligations, grouped into review, contact, parties, arrival, commodity, destination and origin, a repeating group for the commodity line) decides what applies; answers read for display leave out party references that no longer resolve; and the server refuses to start when a journey-flow setting is unconfigured, an obligation is owned by no evaluation binding or by two, or an obligation carries display keys.",
+      "statement": "The plants set's structure holds: thirteen journey pages are dispatch pages that take part in gating and task rows, the dashboard and hub are not, and delete notification and cancel-amend are action pages, not journey pages; answers are judged complete through evaluation bindings; its obligation set (25 obligations, grouped into review, contact, parties, arrival, commodity, destination and origin, a repeating group for the commodity line) decides what applies; answers read for display leave out party references that no longer resolve; and the server refuses to start when a journey-flow setting is unconfigured, an obligation is owned by no evaluation binding or by two, or an obligation carries display keys.",
       "why": "These are the plants frontend's recorded structure and boot checks; every plants flow change in this area lands through them, as live animals' do (req-1660, req-1661), and each set keeps owning its own pages.",
       "claims": [
         "ruling-sam-2026-10-09-pm-p3-016",
@@ -1495,7 +1517,7 @@
     },
     {
       "id": "req-2074",
-      "statement": "Plants changes made in this programme keep the plants rulings ledger in force: its 84 decisions of 6 September 2026 stand, a ruling changes only by a new superseding decision added with spec-add-decision.sh, every question traces to the SI matters or the Common Data list and any optional one is labelled '(optional)' and never gates readiness, elements with a sourced list stay stored codes from a set-owned or platform service and everything else free text with animals' max lengths, commodity type, category, genus and origin lists stay data in the set-owned commodities service, validation stays required-ness per the SI, coded membership, real dates, HH:MM times and whole-number quantities with HTTP 400 and a GOV.UK error summary, contact telephone and email are not validated in the frontend, labels switch on commodity type and arrival status, nothing gates submission by time of day, every plants string lands in both locale files with no invented Welsh, and the confirmation keeps naming APHA, the Forestry Commission and Scottish Government without preferring one.",
+      "statement": "The plants rulings ledger is in force: its 84 decisions of 6 September 2026 stand, a ruling changes only by a new superseding decision added with spec-add-decision.sh, every question traces to the SI matters or the Common Data list and any optional one is labelled '(optional)' and never gates readiness, elements with a sourced list stay stored codes from a set-owned or platform service and everything else free text with animals' max lengths, commodity type, category, genus and origin lists stay data in the set-owned commodities service, validation stays required-ness per the SI, coded membership, real dates, HH:MM times and whole-number quantities with HTTP 400 and a GOV.UK error summary, contact telephone and email are not validated in the frontend, labels switch on commodity type and arrival status, nothing gates submission by time of day, every plants string lands in both locale files with no invented Welsh, and the confirmation keeps naming APHA, the Forestry Commission and Scottish Government without preferring one.",
       "why": "Sam's 9 October afternoon ruling has plants keep its own questions and data while mirroring structure and behaviour, and plants' ledger records no ruling on Design Release 2 or 2.1, so its standing decisions bound what a mirrored change may do.",
       "claims": [
         "ruling-sam-2026-10-09-pm-p3-019",
@@ -1521,7 +1543,7 @@
       ],
       "status": "adopted",
       "delta": "exists",
-      "deltaNote": "repo-plantsfrontend-p9-006 and p9-155: all 84 decisions are current and none is dated after 6 September 2026, so none covers Design Release 2.1; repo-plantsfrontend-p9-005: the superseding-decision rule; repo-plantsfrontend-p9-107, p9-108 and p9-147: the data, validation and minimise-effort decisions.",
+      "deltaNote": "repo-plantsfrontend-p9-006 and p9-155: all 84 decisions are current and none is dated after 6 September 2026, so none covers the target design; repo-plantsfrontend-p9-005: the superseding-decision rule; repo-plantsfrontend-p9-107, p9-108 and p9-147: the data, validation and minimise-effort decisions.",
       "conflicts": []
     },
     {
@@ -1595,8 +1617,8 @@
     },
     {
       "id": "req-2079",
-      "statement": "Readiness keeps today's rules in every set: a trader can start any task in any order and no task row is locked, though a page's own gate can still hold it until origin and the commodity are answered; a row that does not apply is Not applicable and owes nothing; a row whose stored answers no longer pass its pages' rules shows 'To do' even with every answer present; every page behind a row renders and saves sensibly when nothing else is answered; the rows roll up into readiness for check your answers; and the overview's 'Review and submit' button reaches the review page whatever is still owed.",
-      "why": "Design Release 2.1 enforces completeness through the overview's statuses and the review page, which is how the real journey already works; the step-order and return changes in this area rely on it.",
+      "statement": "In every set, readiness works like this: a trader can start any task in any order and no task row is locked, though a page's own gate can still hold it until origin and the commodity are answered; a row that does not apply is Not applicable and owes nothing; a row whose stored answers do not pass its pages' rules shows 'To do' even with every answer present; every page behind a row renders and saves sensibly when nothing else is answered; the rows roll up into readiness for check your answers; and the overview's 'Review and submit' button reaches the review page whatever is still owed.",
+      "why": "The target design enforces completeness through the overview's statuses and the review page, which is how the real journey already works; the step-order and return changes in this area rely on it.",
       "claims": [
         "repo-frontend-p1-106",
         "repo-frontend-p1-118",
@@ -1636,8 +1658,8 @@
     },
     {
       "id": "req-2080",
-      "statement": "The live-animals obligation model keeps today's scope and mandatory rules for the answers the flow changes do not touch: country of origin, the region-code question, the reason for import, the arrival date, port of entry, means of transport, transport identification and transport document reference, the five consignment addresses and the contact address are always asked and mandatory to submit; the internal reference and the country subdivision are optional; the region of origin code is always in scope, mandatory only when a code is required, and kept if the answer changes to no; at least one commodity line is required; the reference number is system-populated and never asked; option lists are reference data, not obligations; an address block is one answer whose subfield rules live outside the model; a collection entry with no saved field is not persisted and a collection is complete only when its floor is met and every entry is complete; and a field the backend notification has no home for stays out of the payload.",
-      "why": "These are today's obligation rules for the journey's shared answers; nothing in Design Release 2.1 or the rulings changes them, and the step-order and return changes must not either.",
+      "statement": "The live-animals obligation model's scope and mandatory rules for the journey's shared answers are these: country of origin, the region-code question, the reason for import, the arrival date, port of entry, means of transport, transport identification and transport document reference, the five consignment addresses and the contact address are always asked and mandatory to submit; the internal reference and the country subdivision are optional; the region of origin code is always in scope, mandatory only when a code is required, and kept if the answer changes to no; at least one commodity line is required; the reference number is system-populated and never asked; option lists are reference data, not obligations; an address block is one answer whose subfield rules live outside the model; a collection entry with no saved field is not persisted and a collection is complete only when its floor is met and every entry is complete; and a field the backend notification has no home for stays out of the payload.",
+      "why": "These are today's obligation rules for the journey's shared answers; nothing in the target design or the rulings changes them, and the step-order and return changes must not either.",
       "claims": [
         "repo-frontend-p2-004",
         "repo-frontend-p2-005",
@@ -2022,6 +2044,127 @@
       "delta": "exists",
       "deltaNote": "repo-plantsfrontend-p2-088 and p2-094: the set registers these routes in its own sandboxed plugin; repo-plantsfrontend-p2-042: the guard runs before every route handler.",
       "conflicts": []
+    },
+    {
+      "id": "req-2096",
+      "statement": "Out of scope: a plants eligibility checker ('Is my consignment high-risk?') or a before-you-start page ahead of the plants journey's first page. The plants journey starts on its own commodity type question.",
+      "why": "No source asks for one: the target design has no such page for plants, no ruling asks for it, and the afternoon ruling has plants keep its own questions and step order, with the opening run starting on commodity type. The plants ledger parked the idea as a later start-section page in its own decision.",
+      "claims": [
+        "ruling-sam-2026-10-09-pm-p3-020",
+        "ruling-sam-2026-10-09-templates-p1-051",
+        "repo-plantsfrontend-p2-017"
+      ],
+      "status": "out-of-scope",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
+    },
+    {
+      "id": "req-journey-flow-001",
+      "statement": "An answer the notification's data specification marks mandatory to proceed must be given before its page can be left by either save button. An answer marked mandatory to submit can be left blank while the notification is being filled in and is needed only before it is submitted. An answer marked optional can be left blank throughout. An answer marked conditional is needed only while its stated condition holds, judged at the level the answer applies at.",
+      "why": "The data specification's Mandatory column is the policy on which answers are a page's hard stop and which only hold back submission, and the specification outranks the prototype on data. The journey's obligation model carries only mandatory or optional today, so a mandatory-to-proceed answer has nowhere to be recorded.",
+      "claims": [
+        "confluence-6497338582-p1-011",
+        "confluence-6497338582-p1-012",
+        "confluence-6497338582-p1-014",
+        "confluence-6497338582-p1-016",
+        "confluence-6497338582-p1-011-m1",
+        "repo-frontend-p2-140",
+        "repo-frontend-p2-055-m1",
+        "repo-frontend-p2-171",
+        "repo-frontend-p2-143"
+      ],
+      "status": "adopted",
+      "delta": "change",
+      "deltaNote": "Today the model marks an in-scope answer mandatory or optional only (repo-frontend-p2-171), an in-scope obligation whose gate states no status counts as mandatory (repo-frontend-p2-055-m1), and a mandatory answer is enforced by the check your answers submit rather than on its own page (repo-frontend-p2-140), with each page's hard stops coded in the page itself. Conditional scope already works this way (repo-frontend-p2-143).",
+      "conflicts": [
+        "c-journey-flow-001"
+      ]
+    },
+    {
+      "id": "req-journey-flow-002",
+      "statement": "A group of answers the data specification marks all-or-nothing can be left blank as a whole, and once any answer in the group is given every answer in it is needed: the page refuses either save button with an error for each answer still missing from that group, and the group's row on the overview counts as complete only when all of the group is given or none of it is.",
+      "why": "The data specification marks some answers as a group that must be filled in together, so a half-filled group is never stored or submitted. The notification model has no such rule today.",
+      "claims": [
+        "confluence-6497338582-p1-015",
+        "confluence-6497338582-p1-011-m1",
+        "repo-frontend-p2-004",
+        "repo-frontend-p2-160",
+        "repo-frontend-p2-159-m1"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "Today no all-or-nothing rule across a notification's scalar answers exists (repo-frontend-p2-004); the nearest rules are the collection ones, which drop an entry with no saved field and count a collection complete only when its floor is met and every entry is complete (repo-frontend-p2-160, repo-frontend-p2-159-m1).",
+      "conflicts": []
+    },
+    {
+      "id": "req-journey-flow-003",
+      "statement": "Whatever level an answer applies at, an answer the trader gives is checked before it is saved: the right format, within the length allowed, and one of the list's entries where the answer has a list. An answer that fails is refused with its error and the trader's own entry is shown back.",
+      "why": "The data specification makes validity a rule of every answer, whatever its level, and the real service cannot store a value that does not fit its field. The journey already works this way.",
+      "claims": [
+        "confluence-6497338582-p1-017",
+        "repo-frontend-p2-144",
+        "repo-frontend-p2-143",
+        "ruling-sam-2026-10-07-p1-010"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p2-144: an invalid submission re-shows the trader's raw entries with status 400, so a failing answer is refused and what was typed stays on screen.",
+      "conflicts": []
+    },
+    {
+      "id": "req-journey-flow-004",
+      "statement": "A notification's answers sit at three levels, and each level's count holds. The answers true of the whole movement (the reason for import, transport, the parties, the place of destination, the border control post and the gross weight) are given once for the notification and are not driven by the commodity chosen. A commodity line, one or more per notification, carries a commodity code with its type, class and species, and a quantity. A unit record, none or more per commodity line, carries one animal's or germinal product's own identifiers, such as an ear tag, a passport, a donor name or identifier and a collection date. An answer's level says whether the trader is asked it once for the notification or per commodity, and a commodity-level answer is driven by the commodity the trader selected.",
+      "why": "The data specification sets the notification out at these three levels, and the model the journey already uses is that specification's model. The levels decide which answers are asked once and which repeat.",
+      "claims": [
+        "confluence-6497338582-p1-006",
+        "confluence-6497338582-p1-007",
+        "confluence-6497338582-p1-008",
+        "confluence-6497338582-p1-009",
+        "confluence-6497338582-p1-010",
+        "confluence-6497338582-p1-020",
+        "repo-frontend-p2-001",
+        "repo-frontend-p2-003"
+      ],
+      "status": "adopted",
+      "delta": "exists",
+      "deltaNote": "repo-frontend-p2-001 and repo-frontend-p2-003: the live-animals model is the specification's V4 model and already holds repeatable groups for commodity lines and for the animal-identifier records inside a line, alongside its notification-level answers; its third group, accompanying documents, sits at notification level, which the specification's three levels do not name.",
+      "conflicts": []
+    },
+    {
+      "id": "req-journey-flow-005",
+      "statement": "An answer the data specification sets out is asked in both the live-animals and the germinal-products sets unless the specification marks it for one of them, and where both sets ask it but allow different values each set offers its own list.",
+      "why": "The data specification covers both sets in one page and marks the exceptions, so the germinal set's questions are the live-animals set's except where the specification says otherwise. The germinal set does not exist yet, so every one of its answers comes from this rule.",
+      "claims": [
+        "confluence-6497338582-p1-003",
+        "confluence-6497338582-p1-004",
+        "confluence-6497338582-p1-005",
+        "repo-frontend-p2-001",
+        "repo-perftests-p1-004"
+      ],
+      "status": "adopted",
+      "delta": "new",
+      "deltaNote": "Today the animals frontend serves live animals only (repo-perftests-p1-004), so no answer is marked by set and no set-specific value list exists.",
+      "conflicts": []
+    },
+    {
+      "id": "req-journey-flow-006",
+      "statement": "The data specification page's own bookkeeping is not built: its page version and title, its statement that the fields are agreed, the eight headings each field is specified under, and its change log's columns, its unnamed authors, its missing reasons for the six de-scopings and its silence on the address block.",
+      "why": "These describe the specification document rather than anything a user, operator or other system can observe. Each field the change log records as de-scoped is weighed where that field's page is weighed.",
+      "claims": [
+        "confluence-6497338582-p1-001",
+        "confluence-6497338582-p1-002",
+        "confluence-6497338582-p1-019",
+        "confluence-6497338582-p6-054",
+        "confluence-6497338582-p6-063",
+        "confluence-6497338582-p6-064",
+        "confluence-6497338582-p6-065",
+        "confluence-6497338582-p6-066"
+      ],
+      "status": "out-of-scope",
+      "delta": "new",
+      "deltaNote": "",
+      "conflicts": []
     }
   ],
   "conflicts": [
@@ -2278,6 +2421,26 @@
       "about": "Whether 'Save and return to overview' skips a page's checks",
       "positions": [
         {
+          "source": "ruling:sam-2026-10-26",
+          "says": "Save and return to overview makes exactly the same checks as Save and continue, on every page that has both buttons.",
+          "claim": "ruling-sam-2026-10-26-p1-008"
+        },
+        {
+          "source": "ruling:sam-2026-10-26",
+          "says": "The earlier ruling on this behaviour is not to be assumed right, because the business analyst raised the issue.",
+          "claim": "ruling-sam-2026-10-26-p1-004"
+        },
+        {
+          "source": "ruling:sam-2026-10-26",
+          "says": "This decision replaces the soft save recorded here, which let Save and return skip blank required answers.",
+          "claim": "ruling-sam-2026-10-26-p1-012"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "An invalid answer stops the trader leaving the page with Save and continue or Save and return to overview.",
+          "claim": "confluence-6497338582-p1-018"
+        },
+        {
           "source": "prototype:dr2-1-specs",
           "says": "'Save and return to overview' keeps the selection without validating.",
           "claim": "prototype-dr2-1-specs-p7-202"
@@ -2289,7 +2452,7 @@
         }
       ],
       "resolution": "precedence",
-      "outcome": "On origin, what are you importing, main reason for import, identification, additional details, arrival details, transit countries, transporter, upload documents and roles and addresses, 'Save and return to overview' saves every answer given and returns to the overview even when a required answer is missing, as Design Release 2.1 does (the backend accepts any field missing or empty). An answer that fails its own format rule, such as an impossible date or a malformed region code, is refused with its error, because the real service cannot store a value that does not fit its field: a real persistence and validation constraint the prototype cannot express, which the ruling says overrides it. Consignment details, the CPH number page and the contact address page check their answers before saving, as Design Release 2.1 does.",
+      "outcome": "The owner's 26 October ruling outranks every other source and withdraws the soft save this conflict used to record. On every page that offers both buttons, 'Save and return to overview' makes exactly the same checks as 'Save and continue', with no page an exception: a missing or invalid answer keeps the trader on the page with an error for each one and everything they typed shown back, and with none the answers are saved and the overview is shown. The data specification says the same for an invalid answer and for one that is mandatory to proceed, so the prototype's unvalidated save is set aside. The ruling names live animals and high-risk plants; the germinal products set takes the rule too, because it is built from copies of the live-animals pages and the ruling makes no page an exception (ruling-sam-2026-10-26-p1-009, ruling-sam-2026-10-26-p1-013, ruling-sam-2026-10-26-p1-024). The earlier decision being withdrawn is Sam's own and no source records it as a claim of its own (ruling-sam-2026-10-26-p1-004, ruling-sam-2026-10-26-p1-025), so only the prototype's claim is set aside here; the plants counterpart is c-313 and the commodity page's is its own requirement in the commodities area. How far the checks reach is c-journey-flow-001.",
       "overruled": [
         "prototype-dr2-1-specs-p7-202"
       ]
@@ -2453,6 +2616,41 @@
         "repo-plantsfrontend-p2-020",
         "repo-plantsfrontend-p2-014"
       ]
+    },
+    {
+      "id": "c-journey-flow-001",
+      "about": "How far the checks on both save buttons reach: every mandatory answer on the page, or only the answers the page already refuses",
+      "positions": [
+        {
+          "source": "ruling:sam-2026-10-26",
+          "says": "Selecting either save button shows an error message for each answer that is missing or not valid.",
+          "claim": "ruling-sam-2026-10-26-p1-002"
+        },
+        {
+          "source": "ruling:sam-2026-10-26",
+          "says": "Save and return to overview makes exactly the same checks as Save and continue, which is the page's existing set of checks.",
+          "claim": "ruling-sam-2026-10-26-p1-008"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "An answer that is mandatory to submit can be left blank while the trader is filling in the notification.",
+          "claim": "confluence-6497338582-p1-014"
+        },
+        {
+          "source": "confluence:6497338582",
+          "says": "Only an answer that is mandatory to proceed must be given before the page is left by either save button.",
+          "claim": "confluence-6497338582-p1-012"
+        },
+        {
+          "source": "repo:frontend",
+          "says": "An incomplete mandatory task row holds back submission, and it is the check your answers submit that refuses, not the page.",
+          "claim": "repo-frontend-p2-140"
+        }
+      ],
+      "resolution": "question",
+      "outcome": "Unsettled, and the two readings build different services. 'Exactly the same checks as Save and continue' keeps each page's existing hard stops and adds nothing, while 'an error message for each answer that is missing or not valid' would refuse a page whenever any mandatory answer is blank, which would stop a trader leaving a part-filled page at all and undo the leave-and-come-back model the overview's statuses and the review page's submit enforce. Both readings are the top-ranked source's own words, so precedence ranks neither, and the data specification's split between mandatory to proceed and mandatory to submit sits below it. Built to the default until it is answered.",
+      "question": "On both save buttons, is a page refused only for the answers it refuses today plus any the data specification marks mandatory to proceed, or must every mandatory answer on the page be given before either button is accepted?",
+      "default": "Both buttons make the same checks, and those checks are the page's own hard stops together with any answer the data specification marks mandatory to proceed: an answer that is only mandatory to submit can still be left blank on either button, and the overview's statuses and the review page's submit hold it back. On the pages the business analyst named this makes upload documents refuse a part-filled document, and origin and main reason for import refuse on 'Save and return to overview' whatever they refuse on 'Save and continue' today."
     }
   ]
 }

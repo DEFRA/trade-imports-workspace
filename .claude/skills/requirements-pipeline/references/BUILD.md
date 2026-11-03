@@ -478,6 +478,42 @@ base's. A merge that conflicts stops the row, naming the files. A failure names 
    it if the run is long; do not carry a stale copy in your head. Read
    `<workarea>/deferred.md` too, if it exists: the register of work the
    programme has pushed out of its backlog ([step 3b](#3b-catch-anything-the-increments-deferred)).
+6. **Check the backlog was distilled against the code as it is now, and stop for the user if it was not.** A row's
+   status is a judgement about what `main` already does, and that judgement is only as fresh as the repo extract it
+   was made from. `tim distil status` decides a source is stale from a hash over its `kind`, `locator` and `scope`
+   strings alone (`scopeHashOf`, `tim/src/distil/files.js`), never over the repo's contents — so a `git pull`, a
+   `make reset` or any amount of merged work leaves a repo extract reading `verified`, and the last re-distil will
+   have skipped it. Nothing detects this for you.
+
+   ```bash
+   tim distil status <workarea> --json | jq -r '.result.sources[] | select(.kind=="repo") | "\(.id): \(.state)"'
+   # then, for each repo source, how far its extract is behind the code:
+   date -r workareas/<workarea>/distil/extract/<slug>.json '+%Y-%m-%d'
+   git -C repos/<repo> log origin/main -1 --format=%ad --date=short
+   ```
+
+   Where a repo has moved since its extract, say so and give the user the choice before launching:
+
+   - **Reset those sources and re-distil** —
+     `tim distil reset <workarea> --source repo:<id> [--source repo:<id>…] --json`, then relaunch
+     [`distil.js`](../workflow/distil.js). Correct, and costs a full DISTIL run.
+   - **Or verify this theme's rows against current `main` by hand** and record what changed on each row. Cheaper,
+     and enough when only one theme is being played.
+
+   **Check the blocked rows first either way.** The two directions of staleness are not equally safe. A stale "not
+   built yet" is largely self-correcting: the loop plans each row against the real code, so a row asking for what
+   already exists is caught at plan time. A stale **`blocked`** is not — `tim backlog next` never offers a blocked
+   row, so a blocker that has since been lifted silently withholds work and the run just builds less. Read every
+   blocked row's `openQuestions` against what has landed.
+
+7. **If the theme was split off early, apply its pick-up list first.** A re-distil never rewrites a split theme's
+   own backlog, so its rows can be older than the parent's. The report's "For the split branches" section names,
+   per branch, every requirement new since the split, changed since the split, or no longer to build. Add or rewrite
+   that theme's rows for them, then move each id from the parent pointer's `pickUp` to its `requirements` and copy
+   the fingerprint from `fingerprintsNow` in `tim distil coverage <workarea> --json`, as
+   [`DISTIL.md`](DISTIL.md#8-splitting-a-theme-off-early) sets out. Leave a requirement's fingerprint alone where you
+   decided not to apply its change: the report then re-raises it at the next re-distil instead of the disagreement
+   being buried.
 
 ## THE RUN
 
@@ -1057,6 +1093,11 @@ theme, each at `workareas/<workarea>/themes/<theme id>/`. Each theme builds on i
 the others. Its themes never touch the same code ([`SHAPE.md`](SHAPE.md#themes)), so their pull requests do not
 conflict.
 
+- **A split theme's rows are the oldest in the programme, so check their freshness before you launch.** Two things
+  go stale here and neither announces itself: the repo extracts the rows were judged against
+  ([step 6](#before-the-first-increment)), and the theme's own pick-up list, because a re-distil never rewrites a
+  split backlog ([step 7](#before-the-first-increment)). Do both of those steps before the first increment of a
+  split theme, and take the choice they name to the user rather than picking for them.
 - **Build the theme's workarea, never the parent's.** The `workarea` arg is `<workarea>/themes/<theme id>`, and
   `repos` is that split backlog's envelope `repos`, which holds only the repos the theme builds in. The parent
   stays the source for re-distilling.

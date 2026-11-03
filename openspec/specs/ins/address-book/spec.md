@@ -69,7 +69,7 @@ The system MUST persist every field entered for a new address, including its opt
 
 ### Requirement: The add and edit forms ask for the same Standard Address Block, with two fields optional
 **ID**: REQ-INS-ADDR-005
-The system MUST ask for name, address line 1, town or city, postcode, country, phone number and email address as mandatory, and address line 2 and county as optional, on both the add and the edit form, MUST hint that an international phone number should include its country code, and MUST offer every country the reference data service serves in the country field, by its served name, in alphabetical order, with United Kingdom in its alphabetical place.
+The system MUST ask for name, address line 1, town or city, postcode, country, phone number and email address as mandatory, and address line 2 and county as optional, on both the add and the edit form, MUST hint that an international phone number should include its country code, and MUST offer every country the reference data service serves in the country field wherever the country is not fixed, by its served name, in alphabetical order, with United Kingdom in its alphabetical place.
 
 #### Scenario: The add form asks for every field, marking address line 2 and county optional
 **ID**: SCN-INS-ADDR-005-A
@@ -81,7 +81,7 @@ The system MUST ask for name, address line 1, town or city, postcode, country, p
 
 #### Scenario: The country field lists every country alphabetically, United Kingdom in its place
 **ID**: SCN-INS-ADDR-005-B
-- **GIVEN** the user opens the address book's add or edit address form, or the add form reached from a notification's place of origin or consignor picker or its consignment contact page
+- **GIVEN** the user opens the address book's add form after choosing 'Origin or Consignor', the address book's edit form, or the add form reached from a notification's place of origin or consignor picker or its consignment contact page
 - **WHEN** the country list is read in full
 - **THEN** after any placeholder it offers United Kingdom and every country the reference data service serves, by their served names, in alphabetical order
 
@@ -319,11 +319,11 @@ The system MUST refuse the add-address page when the request carries a journey h
 
 ### Requirement: A missing name, postcode, country or phone number is named in the words the form uses for it
 **ID**: REQ-INS-ADDR-018
-The system MUST tell the user 'Enter a name or organisation', 'Enter a postcode or Zip code', 'Select a country' (also when the country is not one offered) or 'Enter a phone number' when that field is missing, in the 'There is a problem' summary and against the field, on the add and the edit form. The address book MUST refuse a create or update missing any of them with the same message, keyed by that field.
+The system MUST tell the user 'Enter a name or organisation', 'Enter a postcode or Zip code', 'Select a country' (also when the country is not one offered) or 'Enter a phone number' when that field is missing, in the 'There is a problem' summary and against the field, on the edit form and on each add form that offers a choice of country. The address book MUST refuse a create or update missing any of them with the same message, keyed by that field.
 
 #### Scenario: Leaving name, postcode, country and phone blank on add names each in the form's words
 **ID**: SCN-INS-ADDR-018-A
-- **GIVEN** the user is adding an address on the address book's add form, or on the add form reached from a notification's place of origin or consignor picker or its consignment contact page
+- **GIVEN** the user is adding an address on the address book's add form after choosing 'Origin or Consignor', or on the add form reached from a notification's place of origin or consignor picker or its consignment contact page
 - **WHEN** they leave the name, postcode and phone number blank, with no country chosen (clearing the United Kingdom the address book's add form opens with), and save
 - **THEN** the summary and each field show 'Enter a name or organisation', 'Enter a postcode or Zip code', 'Select a country' and 'Enter a phone number'
 
@@ -336,7 +336,7 @@ The system MUST tell the user 'Enter a name or organisation', 'Enter a postcode 
 
 #### Scenario: A country that is not offered is refused as if none were chosen
 **ID**: SCN-INS-ADDR-018-C
-- **GIVEN** the user is adding or editing an address on the address book's add or edit form, or on the add form reached from a notification's place of origin or consignor picker or its consignment contact page
+- **GIVEN** the user is adding an address on the address book's add form after choosing 'Origin or Consignor', editing an address on the edit form, or adding one from a notification's place of origin or consignor picker or its consignment contact page
 - **WHEN** the form is saved with a country that is not one the list offers
 - **THEN** the save is blocked and 'Select a country' is shown
 
@@ -546,9 +546,9 @@ The system MUST show the edit form's Country select with no blank option and the
 - **THEN** the Country select opens on a blank option
 - **AND** no country is selected
 
-### Requirement: The add form names its first field 'Name or organisation' and opens its Country select on 'Select a country' first, with United Kingdom selected from the address book and no country chosen from the place of origin and consignor pickers and the consignment contact page
+### Requirement: The add form names its first field 'Name or organisation' and, wherever it offers every country, opens its Country select on 'Select a country' first, with United Kingdom selected from the address book after choosing 'Origin or Consignor' and no country chosen from the place of origin and consignor pickers and the consignment contact page
 **ID**: REQ-INS-ADDR-027
-The system MUST label the add form's name 'Name or organisation', as the edit form does, keep 'County (optional)' on it between 'Town or city' and 'Postcode or Zip code', and open its Country select on a blank first option reading 'Select a country'. Opened from the address book, the Country select MUST have United Kingdom selected. Opened from a notification's place of origin or consignor picker or its consignment contact page, it MUST have no country selected.
+The system MUST label the add form's name 'Name or organisation', keep 'County (optional)' on it, and, wherever the add form offers every country, open its Country select on a blank first option reading 'Select a country'. The address book's add form after choosing 'Destination, Consignee or Importer' or 'Branch' offers United Kingdom alone, as REQ-INS-ADDR-044 and REQ-INS-ADDR-035 state. After 'Origin or Consignor' it MUST select United Kingdom; from the pickers and the contact page, none.
 
 #### Scenario: The add form names the name field 'Name or organisation' and keeps County
 **ID**: SCN-INS-ADDR-027-A
@@ -559,7 +559,7 @@ The system MUST label the add form's name 'Name or organisation', as the edit fo
 
 #### Scenario: The add form opened from the address book selects United Kingdom
 **ID**: SCN-INS-ADDR-027-B
-- **GIVEN** the user opens the add form from the address book after choosing an address type
+- **GIVEN** the user opens the add form from the address book after choosing 'Origin or Consignor'
 - **WHEN** the page is shown
 - **THEN** United Kingdom is selected
 - **AND** the Country select's blank first option reads 'Select a country'
@@ -1101,7 +1101,7 @@ The address book service MUST, asked for a use, return only the caller's organis
 
 ### Requirement: Adding an address from the address book starts by choosing its address type
 **ID**: REQ-INS-ADDR-043
-The system MUST open 'Choose an address type', offering the three types as radio options, when the user chooses 'Add a new address' on the address book. Continuing with a type chosen MUST open the add form, and with none chosen MUST show 'Select an address type'. The system MUST remember the chosen type while the add is in progress, and clear it on a new add or a save. A save from the address book with no type chosen MUST open 'Choose an address type' and save nothing.
+The system MUST open 'Choose an address type' when the user chooses 'Add a new address' on the address book. Continuing with a type chosen MUST open the add form, and with none chosen MUST show 'Select an address type'. The system MUST remember the chosen type and what was posted with the add form while the add is in progress, reopening the form with it, and clear both on a new add or a save. A save with no type chosen MUST open 'Choose an address type' and save nothing.
 
 #### Scenario: The address type page offers the three types with their hints
 **ID**: SCN-INS-ADDR-043-A
@@ -1155,9 +1155,16 @@ The system MUST open 'Choose an address type', offering the three types as radio
 - **THEN** 'Choose an address type' opens instead
 - **AND** no address is saved
 
+#### Scenario: Going back after a refused save and choosing the type again shows what was entered
+**ID**: SCN-INS-ADDR-043-H
+- **GIVEN** the user has chosen 'Origin or Consignor', 'Destination, Consignee or Importer' or 'Branch', filled in the address and contact details with a malformed email address, ticked a use and saved the add form, which refuses the save
+- **WHEN** they select 'Back', then choose the same type and select 'Continue'
+- **THEN** the add form shows the address and contact details entered
+- **AND** the use ticked is still ticked
+
 ### Requirement: Adding an address from the address book saves it with its type and the uses ticked
 **ID**: REQ-INS-ADDR-044
-The system MUST, on the add form opened from the address book, follow the contact fields with the question 'What can this address be used for?', offering a checkbox for each use of the chosen type. It MUST require a use, checking it only once the address and contact fields are valid. A successful save MUST store the chosen type and the ticked uses the type offers, and return the user to the address book list on that type's tab with the new address first.
+The system MUST, on the add form opened from the address book, follow the contact fields with a checkbox for each use of the chosen type, MUST require a use, checking it only once the address and contact fields are valid, and MUST fix the country to United Kingdom for 'Destination, Consignee or Importer' and 'Branch'. A successful save MUST store the chosen type and the ticked uses the type offers, and return the user to the address book list on that type's tab with the new address first.
 
 #### Scenario: Origin or Consignor offers Place of origin and Consignor after the contact fields
 **ID**: SCN-INS-ADDR-044-A
@@ -1168,14 +1175,14 @@ The system MUST, on the add form opened from the address book, follow the contac
 
 #### Scenario: Valid fields and no use ticked show the uses error linked to the first option
 **ID**: SCN-INS-ADDR-044-B
-- **GIVEN** the user has filled in valid address and contact fields and ticked no use
+- **GIVEN** the user has chosen any address type and filled in valid address and contact fields and ticked no use
 - **WHEN** they save the form
 - **THEN** 'Select what this address can be used for' shows against the question and in the 'There is a problem' summary
 - **AND** the summary link goes to the first option
 
 #### Scenario: An invalid field and no use ticked show only the field's error
 **ID**: SCN-INS-ADDR-044-C
-- **GIVEN** the user has left a mandatory field blank and ticked no use
+- **GIVEN** the user has chosen any address type and left a mandatory field blank and ticked no use
 - **WHEN** they save the form
 - **THEN** only the blank field's error shows, against the field and in the summary
 - **AND** the uses error is not shown
@@ -1188,12 +1195,41 @@ The system MUST, on the add form opened from the address book, follow the contac
 - **WHEN** a save also carries a use that 'Origin or Consignor' does not offer
 - **THEN** that use is not stored
 
-#### Scenario: Saving an Origin or Consignor address lands on its tab with the address first
+#### Scenario: Saving an address lands on its type's tab with the address first
 **ID**: SCN-INS-ADDR-044-E
-- **GIVEN** the user has chosen 'Origin or Consignor' and filled in a valid address with a use ticked
+- **GIVEN** the user has chosen 'Origin or Consignor', 'Destination, Consignee or Importer' or 'Branch' and filled in a valid address with a use ticked
 - **WHEN** they save the form
-- **THEN** the address book list opens on the 'Origin and Consignor' tab
+- **THEN** the address book list opens on the tab for that type, 'Origin and Consignor', 'Destination, Consignee and Importer' or 'Branch'
 - **AND** the new address is listed first, with the labels of its uses as its Type
+
+#### Scenario: Destination, Consignee or Importer fixes the country to United Kingdom
+**ID**: SCN-INS-ADDR-044-F
+- **GIVEN** the user has chosen 'Destination, Consignee or Importer' and opened the add form
+- **THEN** the address and contact fields show straight away, with no address search
+- **AND** after the contact fields come a section break and the question 'Address type' with the hint 'Select where this address can be used'
+- **AND** the question offers the checkboxes 'Place of destination', 'Consignee' and 'Importer', in that order, none ticked and none with a hint
+- **AND** the Country select holds only 'United Kingdom', selected
+
+#### Scenario: Branch offers the one use and fixes the country to United Kingdom
+**ID**: SCN-INS-ADDR-044-G
+- **GIVEN** the user has chosen 'Branch' and opened the add form
+- **THEN** the address and contact fields show straight away, with no address search
+- **AND** after the contact fields come a section break and the question 'Address type' with the hint 'Select where this address can be used'
+- **AND** the question offers the checkbox 'Branch address' alone, not ticked and without a hint
+- **AND** the Country select holds only 'United Kingdom', selected
+
+#### Scenario: A Destination or Branch address is saved as United Kingdom whatever country is posted
+**ID**: SCN-INS-ADDR-044-H
+- **GIVEN** the user has chosen 'Destination, Consignee or Importer' or 'Branch', filled in a valid address and ticked a use
+- **WHEN** the form is saved with a country other than United Kingdom posted
+- **THEN** the address is stored with the country United Kingdom
+
+#### Scenario: A Destination or Branch address names only the missing name, postcode and phone number
+**ID**: SCN-INS-ADDR-044-I
+- **GIVEN** the user has chosen 'Destination, Consignee or Importer' or 'Branch' and opened the add form
+- **WHEN** they leave the name, postcode and phone number blank and save
+- **THEN** the summary and each field show 'Enter a name or organisation', 'Enter a postcode or Zip code' and 'Enter a phone number'
+- **AND** the Country select still holds only 'United Kingdom', selected
 
 ### Requirement: An address added from a notification journey is saved with the type and use of the party it is for
 **ID**: REQ-INS-ADDR-045

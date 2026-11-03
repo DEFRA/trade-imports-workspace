@@ -2538,7 +2538,7 @@
     },
     {
       "id": "REQ-INS-ADDR-027",
-      "name": "The add form names its first field 'Name or organisation' and opens its Country select on 'Select a country' first, with United Kingdom selected from the address book and no country chosen from the place of origin and consignor pickers and the consignment contact page",
+      "name": "The add form names its first field 'Name or organisation' and, wherever it offers every country, opens its Country select on 'Select a country' first, with United Kingdom selected from the address book after choosing 'Origin or Consignor' and no country chosen from the place of origin and consignor pickers and the consignment contact page",
       "coverage": "partial",
       "scenarios": [
         {
@@ -5039,6 +5039,22 @@
               "test": "Add a new address from the address book list again starts with no type chosen",
               "strength": "partial",
               "notes": "run on the leased stack by the gate; not red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET after starting a new address opens empty text fields with United Kingdom selected",
+              "strength": "partial",
+              "notes": "Not probed with an inverted production line."
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET after a refused save, a successful save and choosing a type again opens empty text fields",
+              "strength": "partial",
+              "notes": "Not probed with an inverted production line."
             }
           ]
         },
@@ -5110,6 +5126,53 @@
               "notes": "red-probed: fails when the POST is not guarded"
             }
           ]
+        },
+        {
+          "id": "SCN-INS-ADDR-043-H",
+          "name": "Going back after a refused save and choosing the type again shows what was entered",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET after a refused save of %s and choosing it again shows every field entered and the ticked use %s",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET after a refused save and choosing another type keeps the fields and shows no tick for a use the type does not offer",
+              "strength": "partial",
+              "notes": "Proves the fields are kept for a different type; the invariant that the previous type's ticks are not shown is not probed."
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/address-type.fit.spec.js",
+              "test": "after a refused save of %s, choosing it again shows the address, the contact details and the ticked use entered",
+              "strength": "partial",
+              "notes": "Not probed with an inverted production line."
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/address-type.fit.spec.js",
+              "test": "after a refused save of Branch, choosing it again shows the address, the contact details and the ticked use entered",
+              "strength": "partial",
+              "notes": "Without JavaScript. Not probed with an inverted production line."
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-type.spec.ts",
+              "test": "after a refused save of %s, choosing it again shows the address, the contact details and the ticked use entered",
+              "strength": "partial",
+              "notes": "Not probed with an inverted production line."
+            }
+          ]
         }
       ]
     },
@@ -5135,7 +5198,7 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "GET after %s is chosen offers exactly the uses that type holds, in order",
+              "test": "GET after %s is chosen asks %j with the hint and offers unticked, without hints, exactly the uses that type holds, the place uses first",
               "strength": "partial",
               "notes": "not red-probed"
             },
@@ -5151,7 +5214,7 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-add-uses.spec.ts",
-              "test": "Origin or Consignor opens the form with no address search, then a section break and the uses question offering Place of origin and Consignor without hints",
+              "test": "Adding a Origin or Consignor address > opens the form with only the address and contact text fields, a section break, and the uses question with its legend, hint and options",
               "strength": "partial",
               "notes": "run on the leased stack by the gate; not red-probed"
             }
@@ -5166,7 +5229,7 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "POST with valid fields and no use ticked shows the uses error inline and as the summary link to the first option, and sends nothing",
+              "test": "POST after %s is chosen with valid fields and no use ticked shows the uses error inline and as the summary link to the first option, and sends nothing",
               "strength": "full",
               "notes": "red-probed: fails when the required-use check gives no error"
             },
@@ -5179,12 +5242,36 @@
               "notes": "not red-probed"
             },
             {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "%s saved with no use shows the uses error, whose summary link focuses the first option",
+              "strength": "partial",
+              "notes": "Not probed with an inverted production line."
+            },
+            {
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-add-uses.spec.ts",
-              "test": "saving valid fields with no use shows the uses error against the question and in the summary, whose link focuses Place of origin",
+              "test": "Adding a Origin or Consignor address > saving valid fields with no use shows the uses error against the question and in the summary, whose link focuses the first option",
               "strength": "partial",
-              "notes": "run on the leased stack by the gate; not red-probed"
+              "notes": "Not probed with an inverted production line."
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-uses.spec.ts",
+              "test": "Adding a Destination, Consignee or Importer address > saving valid fields with no use shows the uses error against the question and in the summary, whose link focuses the first option",
+              "strength": "partial",
+              "notes": "Not probed with an inverted production line."
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-uses.spec.ts",
+              "test": "Adding a Branch address > saving valid fields with no use shows the uses error against the question and in the summary, whose link focuses the first option",
+              "strength": "partial",
+              "notes": "Not probed with an inverted production line."
             }
           ]
         },
@@ -5210,12 +5297,36 @@
               "notes": "not red-probed"
             },
             {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST after %s is chosen with the name, postcode and phone blank and France posted lists those three errors only",
+              "strength": "partial",
+              "notes": "Not probed with an inverted production line."
+            },
+            {
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-add-uses.spec.ts",
-              "test": "saving with an invalid field and no use shows only the field error",
+              "test": "Adding a Origin or Consignor address > saving with an invalid field and no use shows only the field error",
               "strength": "partial",
-              "notes": "run on the leased stack by the gate; not red-probed"
+              "notes": "Not probed with an inverted production line."
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-uses.spec.ts",
+              "test": "Adding a Destination, Consignee or Importer address > saving with an invalid field and no use shows only the field error",
+              "strength": "partial",
+              "notes": "Not probed with an inverted production line."
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-uses.spec.ts",
+              "test": "Adding a Branch address > saving with an invalid field and no use shows only the field error",
+              "strength": "partial",
+              "notes": "Not probed with an inverted production line."
             }
           ]
         },
@@ -5251,24 +5362,40 @@
             {
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
-              "file": "tests/ins/e2e/features/address-book/address-book-add-uses.spec.ts",
-              "test": "ticking Place of origin and Consignor and saving lands on the Origin and Consignor tab with the address first, its Type listing both uses, and both stored in order",
-              "strength": "partial",
-              "notes": "run on the leased stack by the gate; not red-probed; the Then that both uses are stored in order is not proven by a probed test"
-            },
-            {
-              "type": "e2e",
-              "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-persistence.spec.ts",
               "test": "a created address persists with its full Standard Address Block, its address type and its ticked uses",
               "strength": "partial",
               "notes": "run on the leased stack by the gate; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-uses.spec.ts",
+              "test": "Adding a Origin or Consignor address > ticking every offered use and saving lands on its tab, lists the address with its Type, and stores its type, its uses and its country",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed; stored uses are compared sorted, so the order they are stored in is not proven by this test"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-uses.spec.ts",
+              "test": "Adding a Destination, Consignee or Importer address > ticking every offered use and saving lands on its tab, lists the address with its Type, and stores its type, its uses and its country",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed; stored uses are compared sorted, so the order they are stored in is not proven by this test"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-uses.spec.ts",
+              "test": "Adding a Branch address > ticking every offered use and saving lands on its tab, lists the address with its Type, and stores its type, its uses and its country",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed; stored uses are compared sorted, so the order they are stored in is not proven by this test"
             }
           ]
         },
         {
           "id": "SCN-INS-ADDR-044-E",
-          "name": "Saving an Origin or Consignor address lands on its tab with the address first",
+          "name": "Saving an address lands on its type's tab with the address first",
           "coverage": "partial",
           "tests": [
             {
@@ -5296,12 +5423,186 @@
               "notes": "JavaScript disabled; not red-probed"
             },
             {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "%s saved with every offered use ticked lands on its tab with the new address first",
+              "strength": "partial",
+              "notes": "Not probed with an inverted production line."
+            },
+            {
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-add-uses.spec.ts",
-              "test": "ticking Place of origin and Consignor and saving lands on the Origin and Consignor tab with the address first, its Type listing both uses, and both stored in order",
+              "test": "Adding a Origin or Consignor address > ticking every offered use and saving lands on its tab, lists the address with its Type, and stores its type, its uses and its country",
               "strength": "partial",
-              "notes": "run on the leased stack by the gate; not red-probed; the Then that the address is listed first with the labels of its uses as its Type is not proven by a probed test"
+              "notes": "Not probed with an inverted production line. It finds the address by search; the Then that it is listed first is left to the FIT tests add.fit.spec.js:163 and :268."
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-uses.spec.ts",
+              "test": "Adding a Destination, Consignee or Importer address > ticking every offered use and saving lands on its tab, lists the address with its Type, and stores its type, its uses and its country",
+              "strength": "partial",
+              "notes": "Not probed with an inverted production line. It finds the address by search; the Then that it is listed first is left to the FIT tests add.fit.spec.js:163 and :268."
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-uses.spec.ts",
+              "test": "Adding a Branch address > ticking every offered use and saving lands on its tab, lists the address with its Type, and stores its type, its uses and its country",
+              "strength": "partial",
+              "notes": "Not probed with an inverted production line. It finds the address by search; the Then that it is listed first is left to the FIT tests add.fit.spec.js:163 and :268."
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-044-F",
+          "name": "Destination, Consignee or Importer fixes the country to United Kingdom",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET after %s is chosen asks %j with the hint and offers unticked, without hints, exactly the uses that type holds, the place uses first",
+              "strength": "partial",
+              "notes": "Probed on the legend and the order of the uses; the section break and the absent address search are not proven by it."
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET after %s is chosen offers United Kingdom alone, selected",
+              "strength": "partial",
+              "notes": "Proves the country only; the section break and the absent address search are not proven by it."
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "%s opens with the address and contact fields, a section break, then the uses question, and United Kingdom alone selected",
+              "strength": "partial",
+              "notes": "Not probed with an inverted production line."
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "Destination, Consignee or Importer form has no serious or critical axe violations",
+              "strength": "partial",
+              "notes": "Accessibility only."
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-uses.spec.ts",
+              "test": "Adding a Destination, Consignee or Importer address > opens the form with only the address and contact text fields, a section break, and the uses question with its legend, hint and options",
+              "strength": "partial",
+              "notes": "Not probed with an inverted production line."
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-uses.spec.ts",
+              "test": "Adding a Destination, Consignee or Importer address > opens the Country select offering United Kingdom alone, selected",
+              "strength": "partial",
+              "notes": "Not probed with an inverted production line."
+            }
+          ],
+          "notes": "The 'no address search' and 'section break' Thens rest on fit and e2e tests not probed with an inverted production line."
+        },
+        {
+          "id": "SCN-INS-ADDR-044-G",
+          "name": "Branch offers the one use and fixes the country to United Kingdom",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET after %s is chosen asks %j with the hint and offers unticked, without hints, exactly the uses that type holds, the place uses first",
+              "strength": "partial",
+              "notes": "Probed on the legend and the order of the uses; the section break and the absent address search are not proven by it."
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET after %s is chosen offers United Kingdom alone, selected",
+              "strength": "partial",
+              "notes": "Proves the country only; the section break and the absent address search are not proven by it."
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "%s opens with the address and contact fields, a section break, then the uses question, and United Kingdom alone selected",
+              "strength": "partial",
+              "notes": "Not probed with an inverted production line."
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-uses.spec.ts",
+              "test": "Adding a Branch address > opens the form with only the address and contact text fields, a section break, and the uses question with its legend, hint and options",
+              "strength": "partial",
+              "notes": "Not probed with an inverted production line."
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-uses.spec.ts",
+              "test": "Adding a Branch address > opens the Country select offering United Kingdom alone, selected",
+              "strength": "partial",
+              "notes": "Not probed with an inverted production line."
+            }
+          ],
+          "notes": "The 'no address search' and 'section break' Thens rest on fit and e2e tests not probed with an inverted production line."
+        },
+        {
+          "id": "SCN-INS-ADDR-044-H",
+          "name": "A Destination or Branch address is saved as United Kingdom whatever country is posted",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST after %s is chosen with France posted saves United Kingdom",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-uses.spec.ts",
+              "test": "Adding a Destination, Consignee or Importer address > ticking every offered use and saving lands on its tab, lists the address with its Type, and stores its type, its uses and its country",
+              "strength": "partial",
+              "notes": "The select offers United Kingdom alone, so France cannot be posted through the page."
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-uses.spec.ts",
+              "test": "Adding a Branch address > ticking every offered use and saving lands on its tab, lists the address with its Type, and stores its type, its uses and its country",
+              "strength": "partial",
+              "notes": "The select offers United Kingdom alone, so France cannot be posted through the page."
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-044-I",
+          "name": "A Destination or Branch address names only the missing name, postcode and phone number",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST after %s is chosen with the name, postcode and phone blank and France posted lists those three errors only",
+              "strength": "full",
+              "notes": ""
             }
           ]
         }

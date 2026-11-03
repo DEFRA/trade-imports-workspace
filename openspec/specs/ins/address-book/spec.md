@@ -35,7 +35,7 @@ The system MUST remove a deleted address from the list and from search for every
 
 ### Requirement: Editing an address replaces the whole record, clearing any optional field left blank
 **ID**: REQ-INS-ADDR-003
-The system MUST replace an address's entire record on edit, so an optional field left blank in the edit is cleared, not left holding its previous value, and MUST show the edited address under its new name in the list, in place of the old one.
+The system MUST replace an address's entire record on edit, so an optional field left blank in the edit is cleared, not left holding its previous value, and MUST show the edited address under its new name in the list, in place of the old one. The edit page MUST offer no address type or uses, and an edit MUST keep the address's type and every use it was saved with.
 
 #### Scenario: Leaving an optional field blank on edit clears it
 **ID**: SCN-INS-ADDR-003-A
@@ -48,6 +48,14 @@ The system MUST replace an address's entire record on edit, so an optional field
 - **GIVEN** an address exists under one name
 - **WHEN** the user edits it to a new name
 - **THEN** the address book list shows the address under its new name
+
+#### Scenario: An edit keeps the address's type and every use
+**ID**: SCN-INS-ADDR-003-C
+- **GIVEN** an address saved with the type 'Origin or Consignor' and the uses place of origin and consignor
+- **WHEN** the user opens its edit page
+- **THEN** the page asks only for the address and contact fields, with no address type and no uses
+- **WHEN** they change a field and save
+- **THEN** the stored address still has the type 'Origin or Consignor' and the uses place of origin and consignor
 
 ### Requirement: A newly created address persists its full set of details
 **ID**: REQ-INS-ADDR-004
@@ -119,13 +127,13 @@ The system MUST reject an email address that is not validly formatted, with an e
 
 ### Requirement: Saving a new or edited address shows a confirmation naming it
 **ID**: REQ-INS-ADDR-009
-The system MUST return the user to the address book list on a successful save from the add form opened from the address book or from the edit form, and MUST show a confirmation naming the address as it is stored and stating whether it was added or updated. An add's confirmation reads '<Name> address added to your address book', and the new address MUST be listed first, with a way to view it. An edit's confirmation reads '<Name> address updated'.
+The system MUST return the user to the address book list on a successful save from the add form opened from the address book, on the tab of the address's type, or from the edit form, and MUST show a confirmation naming the address as it is stored and stating whether it was added or updated. An add's confirmation reads '<Name> address added to your address book', and the new address MUST be listed first, with a way to view it. An edit's confirmation reads '<Name> address updated'.
 
 #### Scenario: Adding an address confirms it and lists it first
 **ID**: SCN-INS-ADDR-009-A
-- **GIVEN** the user has filled in a valid new address on the add form opened from the address book
+- **GIVEN** the user has filled in a valid new address on the add form opened from the address book after choosing 'Origin or Consignor', and ticked a use
 - **WHEN** they save it
-- **THEN** they return to the address book, and a 'Success' confirmation reads '<name> address added to your address book'
+- **THEN** they return to the address book on the 'Origin and Consignor' tab, and a 'Success' confirmation reads '<name> address added to your address book'
 - **AND** the new address is listed first, with a View link that opens its own details page
 
 #### Scenario: Editing an address's name confirms it under its new name
@@ -709,6 +717,12 @@ The system MUST match the trimmed search text, ignoring case and anywhere inside
 - **WHEN** the user searches for 'consignor'
 - **THEN** the list shows that address, with 'Place of origin, Consignor' as its Type
 
+#### Scenario: An address just added with a use is found by that use's label
+**ID**: SCN-INS-ADDR-032-F
+- **GIVEN** the user has just added an address with the consignor use ticked, whose name and address do not contain the word 'consignor'
+- **WHEN** they search for 'Consignor'
+- **THEN** the list shows the added address
+
 ### Requirement: The add page is headed 'Add address and contact details' under the caption 'Add new address', and shows the notification's status block when reached from a journey
 **ID**: REQ-INS-ADDR-033
 The system MUST head the add page 'Add address and contact details' under the caption 'Add new address', from the address book or from a notification journey. Reached from a journey's 'Add a new address', it MUST also show the notification's status block above the caption, and keep it when a refused save shows the page again.
@@ -851,9 +865,9 @@ The system MUST, on the add page reached from a notification's role picker, offe
 - **WHEN** they choose 'Cancel and return to address page' instead
 - **THEN** the journey is handed back with no address
 
-### Requirement: The address book service records an address's type and uses and refuses values outside the allowed lists
+### Requirement: The address book service records an address's type and uses and refuses a missing type or use and values outside the allowed lists
 **ID**: REQ-INS-ADDR-037
-The address book service MUST record an address's type (origin or consignor; destination, consignee or importer; branch) and its uses (place of origin, consignor, place of destination, consignee, importer, branch address), and return them on read. An update MUST replace the address's type and its uses with those it gives, and clear both when it gives neither. It MUST refuse a type or use outside those lists with a validation error naming the field, and save nothing.
+The address book service MUST record an address's type and uses and return them on read. A create or an update MUST give one of the three types and at least one of the six uses, and an update MUST replace the stored type and uses with those it gives. It MUST refuse a missing type or use, or a value outside the allowed lists, with a validation error naming the field, and save nothing. Its published contract MUST mark both required.
 
 #### Scenario: An address created with a type and uses reads back with the same type and uses
 **ID**: SCN-INS-ADDR-037-A
@@ -881,11 +895,24 @@ The address book service MUST record an address's type (origin or consignor; des
 - **WHEN** a saved address is updated with a type that is not one of the three
 - **THEN** the service responds with a 400 validation error that names the address type, and the address keeps its original type
 
-#### Scenario: An update that omits the type and uses clears both
+#### Scenario: An update that omits the type and uses is refused and the address keeps both
 **ID**: SCN-INS-ADDR-037-E
 - **GIVEN** an address saved with a type and uses
 - **WHEN** it is updated with neither
-- **THEN** the update response and a later read show no type and no uses
+- **THEN** the service responds with a 400 validation error that names the address type and the uses
+- **AND** a later read shows the address with its original type and uses
+
+#### Scenario: A create without a type, without uses or with an empty list of uses is refused naming the field
+**ID**: SCN-INS-ADDR-037-F
+- **WHEN** an address is created with no type
+- **THEN** the service responds with a 400 validation error that names the address type, and no address is saved
+- **WHEN** an address is created with no uses, or with an empty list of uses
+- **THEN** the service responds with a 400 validation error that names the uses, and no address is saved
+
+#### Scenario: The published contract marks the type and the uses required
+**ID**: SCN-INS-ADDR-037-G
+- **WHEN** the service's published contract is read
+- **THEN** it lists both the address type and the uses among the properties a create or update requires
 
 ### Requirement: The address book list is split into three tabs, each a link that loads the list on that tab
 **ID**: REQ-INS-ADDR-038
@@ -1074,7 +1101,7 @@ The address book service MUST, asked for a use, return only the caller's organis
 
 ### Requirement: Adding an address from the address book starts by choosing its address type
 **ID**: REQ-INS-ADDR-043
-The system MUST open 'Choose an address type' when the user chooses 'Add a new address' on the address book, offering 'Origin or Consignor', 'Destination, Consignee or Importer' and 'Branch' as radio options with a 'Continue' button. Continuing with a type chosen MUST open the add form, and with none chosen MUST show 'Select an address type'. The system MUST remember the chosen type while the add is in progress, and clear it when the user starts a new add from the address book or saves.
+The system MUST open 'Choose an address type', offering the three types as radio options, when the user chooses 'Add a new address' on the address book. Continuing with a type chosen MUST open the add form, and with none chosen MUST show 'Select an address type'. The system MUST remember the chosen type while the add is in progress, and clear it on a new add or a save. A save from the address book with no type chosen MUST open 'Choose an address type' and save nothing.
 
 #### Scenario: The address type page offers the three types with their hints
 **ID**: SCN-INS-ADDR-043-A
@@ -1120,3 +1147,62 @@ The system MUST open 'Choose an address type' when the user chooses 'Add a new a
 - **WHEN** they choose 'Add a new address'
 - **THEN** the add form opens without 'Choose an address type'
 - **AND** saving it hands the new address back to the notification
+
+#### Scenario: Saving the add form from the address book with no type chosen asks for the type first
+**ID**: SCN-INS-ADDR-043-G
+- **GIVEN** the user is signed in, has chosen no address type, and has filled in a valid address and ticked a use on the add form
+- **WHEN** they save it outside a notification journey
+- **THEN** 'Choose an address type' opens instead
+- **AND** no address is saved
+
+### Requirement: Adding an address from the address book saves it with its type and the uses ticked
+**ID**: REQ-INS-ADDR-044
+The system MUST, on the add form opened from the address book, follow the contact fields with the question 'What can this address be used for?', offering a checkbox for each use of the chosen type. It MUST require a use, checking it only once the address and contact fields are valid. A successful save MUST store the chosen type and the ticked uses the type offers, and return the user to the address book list on that type's tab with the new address first.
+
+#### Scenario: Origin or Consignor offers Place of origin and Consignor after the contact fields
+**ID**: SCN-INS-ADDR-044-A
+- **GIVEN** the user has chosen 'Origin or Consignor' and opened the add form
+- **THEN** the address and contact fields show straight away, with no address search
+- **AND** after the contact fields come a section break and the question 'What can this address be used for?' with the hint 'Select where this address can be used'
+- **AND** the question offers the checkboxes 'Place of origin' and 'Consignor', in that order, none ticked and neither with a hint
+
+#### Scenario: Valid fields and no use ticked show the uses error linked to the first option
+**ID**: SCN-INS-ADDR-044-B
+- **GIVEN** the user has filled in valid address and contact fields and ticked no use
+- **WHEN** they save the form
+- **THEN** 'Select what this address can be used for' shows against the question and in the 'There is a problem' summary
+- **AND** the summary link goes to the first option
+
+#### Scenario: An invalid field and no use ticked show only the field's error
+**ID**: SCN-INS-ADDR-044-C
+- **GIVEN** the user has left a mandatory field blank and ticked no use
+- **WHEN** they save the form
+- **THEN** only the blank field's error shows, against the field and in the summary
+- **AND** the uses error is not shown
+
+#### Scenario: Saving stores the type and every ticked use, and a use the type does not offer is not stored
+**ID**: SCN-INS-ADDR-044-D
+- **GIVEN** the user has chosen 'Origin or Consignor' and filled in a valid address
+- **WHEN** they tick 'Place of origin' and 'Consignor' and save
+- **THEN** the address is stored with the type 'Origin or Consignor' and the uses place of origin and consignor, in that order
+- **WHEN** a save also carries a use that 'Origin or Consignor' does not offer
+- **THEN** that use is not stored
+
+#### Scenario: Saving an Origin or Consignor address lands on its tab with the address first
+**ID**: SCN-INS-ADDR-044-E
+- **GIVEN** the user has chosen 'Origin or Consignor' and filled in a valid address with a use ticked
+- **WHEN** they save the form
+- **THEN** the address book list opens on the 'Origin and Consignor' tab
+- **AND** the new address is listed first, with the labels of its uses as its Type
+
+### Requirement: An address added from a notification journey is saved with the type and use of the party it is for
+**ID**: REQ-INS-ADDR-045
+The system MUST save an address added from a role's picker with that role's address type and use, and an address added from the consignment contact page as a branch address.
+
+#### Scenario: An address added from a role's picker or the consignment contact page is saved with that party's type and use
+**ID**: SCN-INS-ADDR-045-A
+- **GIVEN** a trader on the add page reached from the place of origin, consignor, consignee, importer or place of destination picker
+- **WHEN** they save a valid address
+- **THEN** the address is saved with that role's address type and exactly that role's use
+- **WHEN** a trader saves a valid address from the consignment contact page
+- **THEN** the address is saved with the type 'Branch' and the branch address use

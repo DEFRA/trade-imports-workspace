@@ -128,6 +128,37 @@
               "notes": "the seed address's View link names the new name"
             }
           ]
+        },
+        {
+          "id": "SCN-INS-ADDR-003-C",
+          "name": "An edit keeps the address's type and every use",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/edit/edit.controller.test.js",
+              "test": "Should send the edited fields with the stored address type and uses, ignoring any posted uses, and redirect to the address book",
+              "strength": "full",
+              "notes": "red-probed: fails when the edit save sends only the validated fields"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/edit/edit.controller.test.js",
+              "test": "Should ask for exactly the nine address fields in the add form order, prefilled, under the Address and Contact details headings",
+              "strength": "full",
+              "notes": "red-probed: fails when a checkbox is added to the edit form"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-edit.spec.ts",
+              "test": "an edit through the edit page keeps the address type and every use",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            }
+          ]
         }
       ]
     },
@@ -145,7 +176,7 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-persistence.spec.ts",
-              "test": "a created address persists with its full Standard Address Block",
+              "test": "a created address persists with its full Standard Address Block, its address type and its ticked uses",
               "strength": "partial",
               "notes": "fills every field including optionals, finds Mongo doc by name, but only asserts addressLine2 and county — not the other fields"
             },
@@ -161,7 +192,7 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "POST sends the address to the address book for the organisation and redirects to the address book",
+              "test": "POST sends the address to the address book for the organisation and redirects to the list of the chosen address type",
               "strength": "partial",
               "notes": "asserts createAddress payload has required fields; omits optional addressLine2/county from the payload under test"
             }
@@ -493,9 +524,25 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
-              "test": "an address added through the form lands on the list with its success banner, its address and country, and a View link to its own page",
+              "test": "an address added through the form lands on the Origin and Consignor tab of the list with its success banner, its address and country, and a View link to its own page",
               "strength": "partial",
               "notes": "run on the leased stack by the gate; not red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST sends the address to the address book for the organisation and redirects to the list of the chosen address type",
+              "strength": "full",
+              "notes": "red-probed: fails when the save redirects to the address book without the tab"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "saving with Place of origin ticked lands on the Origin and Consignor list with the new address first",
+              "strength": "partial",
+              "notes": "not red-probed"
             }
           ]
         },
@@ -996,7 +1043,7 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
-              "test": "an address added through the form lands on the list with its success banner, its address and country, and a View link to its own page",
+              "test": "an address added through the form lands on the Origin and Consignor tab of the list with its success banner, its address and country, and a View link to its own page",
               "strength": "partial",
               "notes": "run on the leased stack by the gate; not red-probed"
             }
@@ -1042,7 +1089,7 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
-              "test": "an address added through the form lands on the list with its success banner, and is listed ahead of an older address",
+              "test": "an address added through the form lands on the Origin and Consignor tab of the list with its success banner, and is listed ahead of an older address",
               "strength": "partial",
               "notes": "run on the leased stack by the gate; not red-probed"
             }
@@ -3147,6 +3194,29 @@
               "notes": "passed against the stack; not red-probed"
             }
           ]
+        },
+        {
+          "id": "SCN-INS-ADDR-032-F",
+          "name": "An address just added with a use is found by that use's label",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "finds an address saved with Consignor ticked by searching Consignor",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-uses.spec.ts",
+              "test": "an address saved with Consignor ticked is found by searching Consignor",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            }
+          ]
         }
       ]
     },
@@ -3458,7 +3528,7 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
-              "test": "Save and select on the INS add page reached from the Consignee picker saves the address, selects it for the role and lands on Roles and addresses with the added banner",
+              "test": "Save and select on the INS add page reached from the Consignee picker saves the address with the role's type and use, selects it for the role and lands on Roles and addresses with the added banner",
               "strength": "partial",
               "notes": "run on the leased stack by the gate; not red-probed"
             }
@@ -3619,7 +3689,7 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
-              "test": "Save and select on the INS add page reached from the Consignor picker saves the address, selects it for the role and lands on Roles and addresses with the added banner",
+              "test": "Save and select on the INS add page reached from the Consignor picker saves the address with the role's type and use, selects it for the role and lands on Roles and addresses with the added banner",
               "strength": "partial",
               "notes": "run on the leased stack by the gate; not red-probed"
             }
@@ -3714,8 +3784,8 @@
     },
     {
       "id": "REQ-INS-ADDR-037",
-      "name": "The address book service records an address's type and uses and refuses values outside the allowed lists",
-      "coverage": "full",
+      "name": "The address book service records an address's type and uses and refuses a missing type or use and values outside the allowed lists",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-INS-ADDR-037-A",
@@ -3851,16 +3921,102 @@
         },
         {
           "id": "SCN-INS-ADDR-037-E",
-          "name": "An update that omits the type and uses clears both",
-          "coverage": "full",
+          "name": "An update that omits the type and uses is refused and the address keeps both",
+          "coverage": "partial",
           "tests": [
             {
               "type": "unit",
               "repo": "trade-imports-address-book",
               "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressUpdateIT.java",
-              "test": "put_shouldClearAddressTypeAndUses_whenBodyOmitsThem",
-              "strength": "full",
-              "notes": "red-probed: fails when the update mapping ignores a null type and uses"
+              "test": "put_shouldReturn400NamingBothAndKeepStoredValues_whenBodyOmitsTypeAndUses",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-types-and-uses.spec.ts",
+              "test": "an update without an address type and without uses is refused naming both and the address keeps its original type and uses",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-037-F",
+          "name": "A create without a type, without uses or with an empty list of uses is refused naming the field",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressCrudIT.java",
+              "test": "post_shouldReturn400KeyedByAddressTypeAndSaveNothing_whenTheTypeIsMissing",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressCrudIT.java",
+              "test": "post_shouldReturn400KeyedByUsesAndSaveNothing_whenUsesAreMissing",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressCrudIT.java",
+              "test": "post_shouldReturn400KeyedByUsesAndSaveNothing_whenUsesAreEmpty",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequestValidationTest.java",
+              "test": "invalidFieldProducesAViolationOnThatFieldWithTheDeclaredMessage",
+              "strength": "partial",
+              "notes": "the table rows for a missing and a blank type and for missing and empty uses; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-types-and-uses.spec.ts",
+              "test": "a create without an address type is refused naming the address type and saves nothing",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-types-and-uses.spec.ts",
+              "test": "a create without uses is refused naming the uses and saves nothing",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-types-and-uses.spec.ts",
+              "test": "a create with an empty list of uses is refused naming the uses and saves nothing",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-037-G",
+          "name": "The published contract marks the type and the uses required",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/OperatorComplianceIT.java",
+              "test": "liveAddressRequestHasTheLockedRequiredProperties",
+              "strength": "partial",
+              "notes": "not red-probed"
             }
           ]
         }
@@ -4147,14 +4303,6 @@
               "test": "Should list an address with no uses under Origin or Consignor only",
               "strength": "partial",
               "notes": "not red-probed"
-            },
-            {
-              "type": "e2e",
-              "repo": "trade-imports-ins-tests",
-              "file": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts",
-              "test": "each tab opens with its own panel heading, the columns Name, Type, Address, Country and Action, and exactly its stamped addresses with their Type",
-              "strength": "partial",
-              "notes": "run by the gate; not run or red-probed here"
             }
           ]
         },
@@ -4284,7 +4432,7 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts",
-              "test": "listing by an address type returns exactly the addresses holding one of its uses, an address with no uses under Origin and Consignor only",
+              "test": "listing by an address type returns exactly the addresses holding one of its uses",
               "strength": "partial",
               "notes": "run by the gate; not run or red-probed here"
             }
@@ -4942,9 +5090,264 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
-              "test": "Save and select on the INS add page reached from the Consignor picker saves the address, selects it for the role and lands on Roles and addresses with the added banner",
+              "test": "Save and select on the INS add page reached from the Consignor picker saves the address with the role's type and use, selects it for the role and lands on Roles and addresses with the added banner",
               "strength": "partial",
               "notes": "an existing test that reaches the add form from the picker and hands the address back; run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-043-G",
+          "name": "Saving the add form from the address book with no type chosen asks for the type first",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST with valid fields and no address type chosen redirects to the address type page, logs it once and sends the address book nothing",
+              "strength": "full",
+              "notes": "red-probed: fails when the POST is not guarded"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-044",
+      "name": "Adding an address from the address book saves it with its type and the uses ticked",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-044-A",
+          "name": "Origin or Consignor offers Place of origin and Consignor after the contact fields",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET after Origin or Consignor is chosen shows a section break after the contact fields, then the uses question with Place of origin and Consignor unticked and without hints",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET after %s is chosen offers exactly the uses that type holds, in order",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "follows the contact fields with a section break, the legend, the hint and Place of origin then Consignor, unticked",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-uses.spec.ts",
+              "test": "Origin or Consignor opens the form with no address search, then a section break and the uses question offering Place of origin and Consignor without hints",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-044-B",
+          "name": "Valid fields and no use ticked show the uses error linked to the first option",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST with valid fields and no use ticked shows the uses error inline and as the summary link to the first option, and sends nothing",
+              "strength": "full",
+              "notes": "red-probed: fails when the required-use check gives no error"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "saving valid fields with no use shows the uses error, whose summary link focuses Place of origin, and the error page has no serious or critical axe violations",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-uses.spec.ts",
+              "test": "saving valid fields with no use shows the uses error against the question and in the summary, whose link focuses Place of origin",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-044-C",
+          "name": "An invalid field and no use ticked show only the field's error",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST with an invalid field and no use ticked shows only the field error",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST with an invalid field keeps the ticks the user made",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-uses.spec.ts",
+              "test": "saving with an invalid field and no use shows only the field error",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-044-D",
+          "name": "Saving stores the type and every ticked use, and a use the type does not offer is not stored",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST with Consignor ticked and a use the type does not offer saves only Consignor, logs the discarded use and lands on the Origin and Consignor list",
+              "strength": "partial",
+              "notes": "red-probed: fails when a posted use the type does not offer is kept"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST with only a use the type does not offer shows the uses error",
+              "strength": "partial",
+              "notes": "red-probed: fails when a posted use the type does not offer is kept"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST after %s is chosen saves that type with the ticked use and lands on that type of the list",
+              "strength": "partial",
+              "notes": "red-probed: fails when the save redirects to the address book without the tab"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-uses.spec.ts",
+              "test": "ticking Place of origin and Consignor and saving lands on the Origin and Consignor tab with the address first, its Type listing both uses, and both stored in order",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed; the Then that both uses are stored in order is not proven by a probed test"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-persistence.spec.ts",
+              "test": "a created address persists with its full Standard Address Block, its address type and its ticked uses",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-044-E",
+          "name": "Saving an Origin or Consignor address lands on its tab with the address first",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST after %s is chosen saves that type with the ticked use and lands on that type of the list",
+              "strength": "partial",
+              "notes": "red-probed: fails when the save redirects to the address book without the tab"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "saving with Place of origin ticked lands on the Origin and Consignor list with the new address first",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "saves with a use ticked and lands on the Origin and Consignor list with the address listed",
+              "strength": "partial",
+              "notes": "JavaScript disabled; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-uses.spec.ts",
+              "test": "ticking Place of origin and Consignor and saving lands on the Origin and Consignor tab with the address first, its Type listing both uses, and both stored in order",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed; the Then that the address is listed first with the labels of its uses as its Type is not proven by a probed test"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-045",
+      "name": "An address added from a notification journey is saved with the type and use of the party it is for",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-045-A",
+          "name": "An address added from a role's picker or the consignment contact page is saved with that party's type and use",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST from the %s handshake saves the address with its type and exactly its one use, whatever uses are posted",
+              "strength": "full",
+              "notes": "red-probed: fails when the registry maps the consignor to another use"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST from the consignment contact handshake saves the address as a Branch address",
+              "strength": "full",
+              "notes": "red-probed: fails when the registry maps the consignment contact to another use"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/journey-registry.test.js",
+              "test": "gives the %s handshake its type and its one use",
+              "strength": "full",
+              "notes": "red-probed: fails when the registry maps the consignor to another use"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
+              "test": "Save and select on the INS add page reached from the Consignor picker saves the address with the role's type and use, selects it for the role and lands on Roles and addresses with the added banner",
+              "strength": "partial",
+              "notes": "reads the stored address back for the role's type and use; run on the leased stack by the gate; not red-probed"
             }
           ]
         }

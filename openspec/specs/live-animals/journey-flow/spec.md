@@ -94,7 +94,7 @@ The system MUST, outside the opening sequence and outside a change made from che
 - **WHEN** they save and continue
 - **THEN** Overview is shown, not commodity details or arrival details
 
-### Requirement: A page the hub links to directly offers both a discard-and-exit and a save-and-exit route back to Overview
+### Requirement: A page the hub links to directly, other than the origin of the import page, offers both a discard-and-exit and a save-and-exit route back to Overview
 **ID**: REQ-FLOW-004
 Outside an amendment (REQ-FLOW-013), the system MUST let the user leave a page the hub links to directly, other than the origin of the import page, by discarding unsaved input or committing it, returning to Overview either way. Saving and returning MUST make the same checks as saving and continuing: a missing required answer, or an answer that breaks its rule, keeps the user on the page with an error for each, what they entered kept and nothing saved. A blank optional answer is accepted by either save.
 
@@ -365,7 +365,7 @@ While a notification is being amended, each page the hub links to directly MUST 
 - **WHEN** the user opens the CPH number page or the origin of the import page
 - **THEN** only "Save and continue" is offered
 
-### Requirement: A page the hub links to directly keeps its two buttons side by side and its overview exit below them
+### Requirement: A page the hub links to directly, other than the origin of the import page, keeps its two buttons side by side and its overview exit below them
 **ID**: REQ-FLOW-014
 Outside an amendment, the system MUST end a page the hub links to directly, other than the origin of the import page, with its primary action and "Save and return to overview" side by side, and "Cancel and return to overview" on its own line below them. While a notification is being amended, it MUST instead put "Save and return" and "Save and continue" side by side, and "Save and return to overview" on its own line below them.
 

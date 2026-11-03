@@ -315,8 +315,8 @@ The system MUST tell the user 'Enter a name or organisation', 'Enter a postcode 
 
 #### Scenario: Leaving name, postcode, country and phone blank on add names each in the form's words
 **ID**: SCN-INS-ADDR-018-A
-- **GIVEN** the user is adding an address on the address book's add form or on the add form reached from a notification's place of origin or consignor picker or its consignment contact page
-- **WHEN** they leave the name, postcode, country and phone number blank and save
+- **GIVEN** the user is adding an address on the address book's add form, or on the add form reached from a notification's place of origin or consignor picker or its consignment contact page
+- **WHEN** they leave the name, postcode and phone number blank, with no country chosen (clearing the United Kingdom the address book's add form opens with), and save
 - **THEN** the summary and each field show 'Enter a name or organisation', 'Enter a postcode or Zip code', 'Select a country' and 'Enter a phone number'
 
 #### Scenario: Clearing name, postcode and phone on edit with no country chosen shows the same messages, and nothing is saved
@@ -538,9 +538,9 @@ The system MUST show the edit form's Country select with no blank option and the
 - **THEN** the Country select opens on a blank option
 - **AND** no country is selected
 
-### Requirement: The add form names its first field 'Name or organisation', opens its Country select on 'Select a country' from the address book, the place of origin and consignor pickers and the consignment contact page, and is opened directly from the address book
+### Requirement: The add form names its first field 'Name or organisation' and opens its Country select on 'Select a country' first, with United Kingdom selected from the address book and no country chosen from the place of origin and consignor pickers and the consignment contact page
 **ID**: REQ-INS-ADDR-027
-The system MUST label the add form's name 'Name or organisation', as the edit form does, keep 'County (optional)' on it between 'Town or city' and 'Postcode or Zip code', and open its Country select on a blank first option reading 'Select a country', with no country chosen. 'Add a new address' on the address book MUST open the add form directly, with a 'Back' link to the address book.
+The system MUST label the add form's name 'Name or organisation', as the edit form does, keep 'County (optional)' on it between 'Town or city' and 'Postcode or Zip code', and open its Country select on a blank first option reading 'Select a country'. Opened from the address book, the Country select MUST have United Kingdom selected. Opened from a notification's place of origin or consignor picker or its consignment contact page, it MUST have no country selected.
 
 #### Scenario: The add form names the name field 'Name or organisation' and keeps County
 **ID**: SCN-INS-ADDR-027-A
@@ -549,20 +549,19 @@ The system MUST label the add form's name 'Name or organisation', as the edit fo
 - **THEN** the fields read 'Name or organisation', 'Address line 1', 'Address line 2 (optional)', 'Town or city', 'County (optional)' and 'Postcode or Zip code', in that order
 - **AND** the edit form labels the name 'Name or organisation' too
 
-#### Scenario: The add form opens the Country select on Select a country
+#### Scenario: The add form opened from the address book selects United Kingdom
 **ID**: SCN-INS-ADDR-027-B
-- **GIVEN** the user opens the add form from the address book or from a notification's place of origin or consignor picker or its consignment contact page
+- **GIVEN** the user opens the add form from the address book after choosing an address type
+- **WHEN** the page is shown
+- **THEN** United Kingdom is selected
+- **AND** the Country select's blank first option reads 'Select a country'
+
+#### Scenario: The add form opened from a journey's pickers selects no country
+**ID**: SCN-INS-ADDR-027-D
+- **GIVEN** the user opens the add form from a notification's place of origin or consignor picker or its consignment contact page
 - **WHEN** the page is shown
 - **THEN** no country is selected
 - **AND** the Country select's blank first option reads 'Select a country'
-
-#### Scenario: Add a new address opens the add form, with a Back link to the address book
-**ID**: SCN-INS-ADDR-027-C
-- **GIVEN** the user is on the address book
-- **WHEN** they choose 'Add a new address'
-- **THEN** the add form opens
-- **WHEN** they select Back
-- **THEN** they return to the address book list
 
 ### Requirement: The address book is searched from a collapsed 'Filter addresses' disclosure by a field and button labelled 'Search'
 **ID**: REQ-INS-ADDR-028
@@ -736,7 +735,7 @@ The system MUST head the add page 'Add address and contact details' under the ca
 #### Scenario: Opened from the address book, the page shows its heading and caption with no status block
 **ID**: SCN-INS-ADDR-033-D
 - **GIVEN** the user is on the address book
-- **WHEN** they choose 'Add a new address'
+- **WHEN** they choose 'Add a new address' and then an address type
 - **THEN** the add page is headed 'Add address and contact details' under the caption 'Add new address'
 - **AND** no status tag shows
 
@@ -1072,3 +1071,52 @@ The address book service MUST, asked for a use, return only the caller's organis
 **ID**: SCN-INS-ADDR-042-D
 - **WHEN** the list is asked for a use or a search use that is not one of the six
 - **THEN** the service responds with a 400 error
+
+### Requirement: Adding an address from the address book starts by choosing its address type
+**ID**: REQ-INS-ADDR-043
+The system MUST open 'Choose an address type' when the user chooses 'Add a new address' on the address book, offering 'Origin or Consignor', 'Destination, Consignee or Importer' and 'Branch' as radio options with a 'Continue' button. Continuing with a type chosen MUST open the add form, and with none chosen MUST show 'Select an address type'. The system MUST remember the chosen type while the add is in progress, and clear it when the user starts a new add from the address book or saves.
+
+#### Scenario: The address type page offers the three types with their hints
+**ID**: SCN-INS-ADDR-043-A
+- **GIVEN** the user is on the address book
+- **WHEN** they choose 'Add a new address'
+- **THEN** 'Choose an address type' opens under the caption 'Add a new address', with a 'Continue' button and a 'Back' link to the address book
+- **AND** the options are 'Origin or Consignor' with the hint 'Place of origin, Consignor', 'Destination, Consignee or Importer' with the hint 'Place of destination, Consignee, Importer' and 'Branch' with the hint 'Branch address', in that order and with none chosen
+- **AND** the options sit in a group whose legend repeats the heading for screen readers
+
+#### Scenario: Continuing with no type chosen shows the problem on the options
+**ID**: SCN-INS-ADDR-043-B
+- **GIVEN** the user is on 'Choose an address type' with no type chosen
+- **WHEN** they select 'Continue'
+- **THEN** 'Select an address type' shows against the options and in a 'There is a problem' summary
+- **AND** the summary link goes to the first option
+
+#### Scenario: Choosing a type opens the add form
+**ID**: SCN-INS-ADDR-043-C
+- **GIVEN** the user is on 'Choose an address type'
+- **WHEN** they choose 'Origin or Consignor', 'Destination, Consignee or Importer' or 'Branch' and select 'Continue'
+- **THEN** the add form opens under the caption 'Add new address', headed 'Add address and contact details', with no status tag
+- **AND** its 'Back' link goes to 'Choose an address type'
+
+#### Scenario: The chosen type is remembered until a new add starts or the address is saved
+**ID**: SCN-INS-ADDR-043-D
+- **GIVEN** the user has chosen a type and opened the add form
+- **WHEN** they select 'Back'
+- **THEN** 'Choose an address type' shows the chosen type selected
+- **WHEN** they go to the address book and choose 'Add a new address' again
+- **THEN** no type is selected
+- **WHEN** they save an address and choose 'Add a new address' again
+- **THEN** no type is selected, and once one is chosen the add form's text fields are empty
+
+#### Scenario: Opening the add form from the address book with no type chosen asks for the type first
+**ID**: SCN-INS-ADDR-043-E
+- **GIVEN** the user is signed in and has chosen no address type
+- **WHEN** they open the add form outside a notification journey
+- **THEN** 'Choose an address type' opens instead
+
+#### Scenario: A notification journey's handshake opens the add form directly
+**ID**: SCN-INS-ADDR-043-F
+- **GIVEN** a trader on a notification's role picker
+- **WHEN** they choose 'Add a new address'
+- **THEN** the add form opens without 'Choose an address type'
+- **AND** saving it hands the new address back to the notification

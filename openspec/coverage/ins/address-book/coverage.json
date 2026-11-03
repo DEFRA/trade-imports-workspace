@@ -1456,7 +1456,7 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "GET renders the add address and contact details page with its caption, no status tag, and Back and cancel linking to the address book",
+              "test": "GET renders the add address and contact details page with its caption, no status tag, Back linking to the address type page and Cancel linking to the address book",
               "strength": "partial",
               "notes": "the two section headings"
             },
@@ -2491,7 +2491,7 @@
     },
     {
       "id": "REQ-INS-ADDR-027",
-      "name": "The add form names its first field 'Name or organisation', opens its Country select on 'Select a country' from the address book, the place of origin and consignor pickers and the consignment contact page, and is opened directly from the address book",
+      "name": "The add form names its first field 'Name or organisation' and opens its Country select on 'Select a country' first, with United Kingdom selected from the address book and no country chosen from the place of origin and consignor pickers and the consignment contact page",
       "coverage": "partial",
       "scenarios": [
         {
@@ -2519,7 +2519,7 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "GET renders the add address and contact details page with its caption, no status tag, and Back and cancel linking to the address book",
+              "test": "GET renders the add address and contact details page with its caption, no status tag, Back linking to the address type page and Cancel linking to the address book",
               "strength": "partial",
               "notes": "the name label and County"
             },
@@ -2535,24 +2535,24 @@
         },
         {
           "id": "SCN-INS-ADDR-027-B",
-          "name": "The add form opens the Country select on Select a country",
-          "coverage": "partial",
+          "name": "The add form opened from the address book selects United Kingdom",
+          "coverage": "full",
           "tests": [
-            {
-              "type": "e2e",
-              "repo": "trade-imports-ins-tests",
-              "file": "tests/ins/e2e/features/address-book/address-book-add-form.spec.ts",
-              "test": "the Country select opens on its blank first option, Select a country, with nothing pre-selected",
-              "strength": "partial",
-              "notes": "no test opens the add form from the consignment contact page"
-            },
             {
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "GET opens the Country select on its blank first option, Select a country, with nothing selected",
+              "test": "GET opens the Country select on its blank first option, Select a country, with United Kingdom selected",
+              "strength": "full",
+              "notes": "red-probed: fails when the address book's opening values leave the country blank"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-type.spec.ts",
+              "test": "Origin or Consignor opens the Country select on Select a country first with United Kingdom selected",
               "strength": "partial",
-              "notes": "the rendered markup"
+              "notes": "run on the leased stack by the gate; not red-probed"
             },
             {
               "type": "fit",
@@ -2560,46 +2560,30 @@
               "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
               "test": "renders every field, hints and populated country options",
               "strength": "partial",
-              "notes": "Select a country first, nothing selected on open"
+              "notes": "Select a country first, United Kingdom selected on open; run by the gate; not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/address-type.fit.spec.js",
+              "test": "Origin or Consignor opens the address form with United Kingdom selected, Back shows it chosen and a new add starts with none chosen",
+              "strength": "partial",
+              "notes": "run by the gate; not red-probed"
             }
           ]
         },
         {
-          "id": "SCN-INS-ADDR-027-C",
-          "name": "Add a new address opens the add form, with a Back link to the address book",
-          "coverage": "full",
+          "id": "SCN-INS-ADDR-027-D",
+          "name": "The add form opened from a journey's pickers selects no country",
+          "coverage": "partial",
           "tests": [
-            {
-              "type": "e2e",
-              "repo": "trade-imports-ins-tests",
-              "file": "tests/ins/e2e/features/address-book/address-book-add-form.spec.ts",
-              "test": "Add a new address on the address book opens the add-details form, whose Back link returns to the address book",
-              "strength": "full",
-              "notes": ""
-            },
-            {
-              "type": "fit",
-              "repo": "trade-imports-ins-frontend",
-              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
-              "test": "clicking Add a new address navigates to the add form",
-              "strength": "partial",
-              "notes": "the hop to the form"
-            },
-            {
-              "type": "fit",
-              "repo": "trade-imports-ins-frontend",
-              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-              "test": "has a Back link to the address book",
-              "strength": "partial",
-              "notes": "the Back link's target"
-            },
             {
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "GET renders the add address and contact details page with its caption, no status tag, and Back and cancel linking to the address book",
+              "test": "GET from the %s handshake opens the Country select on Select a country, offers every served country and shows every field",
               "strength": "partial",
-              "notes": "the Back link to the address book"
+              "notes": "role handshakes; no test opens the add form from the consignment contact page"
             }
           ]
         }
@@ -3257,17 +3241,17 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "GET renders the add address and contact details page with its caption, no status tag, and Back and cancel linking to the address book",
+              "test": "GET renders the add address and contact details page with its caption, no status tag, Back linking to the address type page and Cancel linking to the address book",
               "strength": "full",
               "notes": "red-probed: fails when the caption is removed or the title copy reverts, and when the journey strip is made unconditional (the strip length-0 assertion)"
             },
             {
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
-              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
-              "test": "clicking Add a new address navigates to the add form",
+              "file": "src/server/app/features/address-book/fit/address-type.fit.spec.js",
+              "test": "Origin or Consignor opens the address form with United Kingdom selected, Back shows it chosen and a new add starts with none chosen",
               "strength": "partial",
-              "notes": "reads the heading only; run by the gate; not red-probed"
+              "notes": "reads the form heading and caption after choosing a type; run by the gate; not red-probed"
             }
           ]
         }
@@ -4712,6 +4696,255 @@
               "test": "liveApiDocsHaveTheLockedAllowedValuesForAddressTypeUsesAndTheListFilterParameters",
               "strength": "partial",
               "notes": "locks the allowed values of use and searchUse; not red-probed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-043",
+      "name": "Adding an address from the address book starts by choosing its address type",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-043-A",
+          "name": "The address type page offers the three types with their hints",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/address-type/address-type.controller.test.js",
+              "test": "GET shows the caption, the heading, a visually hidden legend, the three address types with their hints in order and none chosen, Continue and Back to the address book",
+              "strength": "full",
+              "notes": "red-probed: fails when a hint reads differently"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/address-type.fit.spec.js",
+              "test": "opens from Add a new address with the caption, heading, the three types and their hints in order, and Back to the address book",
+              "strength": "partial",
+              "notes": "run by the gate; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-type.spec.ts",
+              "test": "Add a new address opens Choose an address type with its caption, the three types and their hints in order, Continue and Back to the address book",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-043-B",
+          "name": "Continuing with no type chosen shows the problem on the options",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/address-type/address-type.controller.test.js",
+              "test": "POST with no address type answers 400 with the message inline and as the summary link to the first option",
+              "strength": "full",
+              "notes": "red-probed: fails when the first option's id is not the one the summary link names"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/address-type/address-type.controller.test.js",
+              "test": "POST with a value that is not an offered address type answers as a missing type does",
+              "strength": "partial",
+              "notes": "the refusal of a value outside the three types; not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/address-type.fit.spec.js",
+              "test": "Continue with nothing chosen shows the problem summary and the inline error, and the summary link focuses the first type",
+              "strength": "partial",
+              "notes": "run by the gate; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-type.spec.ts",
+              "test": "Continue with no type chosen shows Select an address type against the options and in the summary, whose link focuses the first option",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-043-C",
+          "name": "Choosing a type opens the add form",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET renders the add address and contact details page with its caption, no status tag, Back linking to the address type page and Cancel linking to the address book",
+              "strength": "full",
+              "notes": "red-probed: fails when Back goes to the address book"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/address-type/address-type.controller.test.js",
+              "test": "POST of %s goes to the add form and the type page then shows it chosen",
+              "strength": "partial",
+              "notes": "the redirect to the add form for each of the three types; not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/address-type.fit.spec.js",
+              "test": "Origin or Consignor opens the address form with United Kingdom selected, Back shows it chosen and a new add starts with none chosen",
+              "strength": "partial",
+              "notes": "run by the gate; not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "has a Back link to Choose an address type",
+              "strength": "partial",
+              "notes": "the Back link's target; run by the gate; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-type.spec.ts",
+              "test": "choosing Origin or Consignor opens the add form with its caption and heading and no status tag, and Back shows the type chosen",
+              "strength": "partial",
+              "notes": "also run for the other two types; run on the leased stack by the gate; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-form.spec.ts",
+              "test": "Add a new address on the address book opens the add-details form after a type is chosen, whose Back link returns to Choose an address type",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-043-D",
+          "name": "The chosen type is remembered until a new add starts or the address is saved",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/address-type/address-type.controller.test.js",
+              "test": "POST of %s goes to the add form and the type page then shows it chosen",
+              "strength": "full",
+              "notes": "red-probed: fails when the chosen type is not stored"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/address-type/address-type.controller.test.js",
+              "test": "GET of the start address with a type already chosen shows none chosen",
+              "strength": "full",
+              "notes": "red-probed: fails when the start marker does not clear the add in progress"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET after a successful save redirects to the address type page",
+              "strength": "full",
+              "notes": "red-probed: fails when a successful save does not clear the add in progress"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/address-type.fit.spec.js",
+              "test": "after an address is saved the next add starts with no type chosen and empty text fields",
+              "strength": "partial",
+              "notes": "run by the gate; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-type.spec.ts",
+              "test": "after a save the next add starts with no type chosen and empty fields",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-type.spec.ts",
+              "test": "Back from the address form shows the type chosen",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-type.spec.ts",
+              "test": "Add a new address from the address book list again starts with no type chosen",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-043-E",
+          "name": "Opening the add form from the address book with no type chosen asks for the type first",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET with no address type chosen redirects to the address type page and logs it once",
+              "strength": "full",
+              "notes": "red-probed: fails when the guard is removed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/address-type.fit.spec.js",
+              "test": "opening the address form with no type chosen lands on Choose an address type",
+              "strength": "partial",
+              "notes": "run by the gate; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-add-type.spec.ts",
+              "test": "opening the add form with no type chosen lands on Choose an address type",
+              "strength": "partial",
+              "notes": "run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-043-F",
+          "name": "A notification journey's handshake opens the add form directly",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET from a role handshake offers Save and select, Save and return to address page and a Cancel and return to hub link, and carries the journey forward in hidden fields",
+              "strength": "partial",
+              "notes": "an existing test that runs with no type chosen; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
+              "test": "Save and select on the INS add page reached from the Consignor picker saves the address, selects it for the role and lands on Roles and addresses with the added banner",
+              "strength": "partial",
+              "notes": "an existing test that reaches the add form from the picker and hands the address back; run on the leased stack by the gate; not red-probed"
             }
           ]
         }

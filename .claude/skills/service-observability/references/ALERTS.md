@@ -62,6 +62,7 @@ agree, not tested values.
 | Alert | Fires when | If there is no data |
 |---|---|---|
 | Dependency unavailable | `ExternalCallFailure`, `Minimum`, equal to 1 over 5 minutes (every call in the window failed), per `Dependency` and `Operation` | Normal |
+| Database unavailable (in place of the row above for a database) | `DependencyAvailable`, `Maximum`, below 1 over 5 minutes (every reading from every task said down), `Dependency` = the database | Normal |
 | Dependency calls failing | `ExternalCallFailure`, `Sum`, 3 or more over 15 minutes, per `Dependency` and `Operation` | Normal |
 | Dependency slow | `ExternalCallDuration`, `p95`, above two thirds of the call's read timeout, over 15 minutes, per `Dependency` and `Operation` | Normal |
 
@@ -73,12 +74,21 @@ alone finds no data. With "no data" set to Normal, that alert would
 never fire and nobody would know. Each alert has one series per
 dependency and operation, and the thresholds above apply to each series.
 
-**Do not alert on `DependencyAvailable`.** It reports the outcome of
-the last call, however old. Behind a cache it can read 1 for up to the
-cache lifetime after the dependency goes down, and one failed call holds
-it at 0 until the next call succeeds. It is for the dashboard. The
-"Dependency unavailable" alert uses `ExternalCallFailure` instead, which
-only reports calls that happened in the window.
+**Do not alert on `DependencyAvailable` for an HTTP dependency.** There
+it reports the outcome of the last call, however old. Behind a cache it
+can read 1 for up to the cache lifetime after the dependency goes down,
+and one failed call holds it at 0 until the next call succeeds. It is
+for the dashboard. The "Dependency unavailable" alert uses
+`ExternalCallFailure` instead, which only reports calls that happened in
+the window.
+
+**Do alert on it for a database.** A database's `DependencyAvailable`
+comes from the driver's heartbeats every 10 seconds (`METRICS.md` → "A
+database"), so it is fresh. And a database's outage never shows in
+`ExternalCallFailure`: a command that cannot reach a server fails
+before it is sent and is not recorded. Use `Maximum`, so the alert fires
+only when every task saw the database down for the whole window, not on
+one task's passing failure.
 
 **Never set "no data" to Alerting on these.** Calls only happen when a
 request needs the dependency, so nothing is published until the first

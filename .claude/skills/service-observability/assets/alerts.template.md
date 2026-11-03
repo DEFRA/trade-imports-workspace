@@ -46,6 +46,27 @@ values.
 Before saving, Preview should show one row per dependency and operation.
 If it shows none, check Match exact is off and both dimensions are set.
 
+## 1a. <service> <database> unavailable
+
+For a database, its availability comes from the driver's heartbeats
+(`references/METRICS.md` → "A database"). Build this rule in place of
+rule 1 when the database is the only dependency, beside it otherwise,
+and keep this section only if the service has a database.
+
+| Field | Value |
+|---|---|
+| Rule name | `<service> <database> unavailable` |
+| Metric | `DependencyAvailable` |
+| Dimensions | `Dependency` = `<database>`, the only dimension, with Match exact off |
+| Statistic | `Maximum` |
+| Period | `300` (5 minutes) |
+| Alert condition | `Last` `IS BELOW` `1` (every reading from every task in the window said down) |
+| Summary | `<database> has been unavailable to every task for 5 minutes` |
+
+Where this rule replaces rule 1, rules 2 and 3 duplicate it instead, so
+also set their Metric and their dimensions, `Dependency` = `*` and
+`Operation` = `*`.
+
 ## 2. <service> dependency calls failing
 
 Duplicate rule 1, then change:
@@ -87,5 +108,6 @@ each Normal, none in Error. Then prove each one fires
 
 ## Not alerted on
 
-- `DependencyAvailable`: it reports the last call's outcome however old,
-  so it lags. It is for the dashboard only.
+- `DependencyAvailable` for an HTTP dependency: it reports the last
+  call's outcome however old, so it lags. It is for the dashboard only.
+  A database's is fresh, and rule 1a alerts on it.

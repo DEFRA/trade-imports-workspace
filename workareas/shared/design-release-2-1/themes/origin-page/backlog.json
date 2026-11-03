@@ -51,6 +51,10 @@
     "plantsfrontend": {
       "path": "repos/trade-imports-plants-frontend",
       "github": "DEFRA/trade-imports-plants-frontend"
+    },
+    "workspace": {
+      "path": ".",
+      "github": "DEFRA/trade-imports-workspace"
     }
   },
   "theme": "origin-page",
@@ -70,5 +74,60 @@
     "tests:page-objects/plants/origin-page.ts",
     "tests:tests/plants/e2e/features/origin.spec.ts"
   ],
-  "increments": []
+  "increments": [
+    {
+      "id": "inc-246",
+      "title": "Origin page: a country of origin is required on both save buttons, Back follows where the page was opened from, and the country type-ahead's look and announcements are proved, in animals and plants",
+      "detail": "The origin page theme was retired on 20 October once design snagging carried its branch to main. A done check on 3 November (themes/origin-page/done-check.md) read all 53 origin page requirements against main, including the two Ian's 3 November re-distil added (req-032 and req-2124), and found three gaps on the live animals origin page, built here as one row because they touch the same feature. (1) A country of origin is mandatory (V4 Data Fields page, widened 2 November; c-319, c-321): live animals still saves an origin page with no country and moves on. With no country, Save and continue and Save and return to overview must both keep the trader on the page, save nothing and show 'Select a country from the list' (report question 5's default, req-2123) in the error summary and inline, keeping every other answer, including a region code typed with no country (req-1743, which the old branch's e2e test proved and main now asserts the opposite of). Turn round the FIT test 'an unanswered country saves the rest of the page and moves on', the controller unit test and the tests repo e2e 'saves what the user has when submitted without a country'. Plants already refuses a blank country with its own message (req-1913) and needs no change for this. (2) Back link (req-013, overview part): today Back is chosen by whether the notification has answers, so a notification with no answers opened from the overview sends Back to the list; Back must follow where the page was opened from. The type question and template-review destinations belong to the type question and templates themes and are not built here. (3) Tests only (req-018, req-1909): the country type-ahead's joined search button (GOV.UK blue, white magnifying glass, hidden from assistive technology, not focusable, never submits) and the accessible autocomplete's own announcements (assistive hint, polite live region with the result count and the chosen country) already work in animals and plants, but no test proves them. Germinal products parts of these requirements wait for the germinal products set, which is not on main.",
+      "acceptanceCriteria": [
+        "Given I am on the live animals origin page with no country of origin chosen, when I select Save and continue, then I stay on the page, nothing is saved, and I see 'Select a country from the list' in the error summary and under the country box, with the summary link focusing the country box.",
+        "Given I am on the live animals origin page with no country of origin chosen, when I select Save and return to overview, then I get exactly the same result as Save and continue: I stay on the page, nothing is saved and the same error shows.",
+        "Given I answered Yes to the region of origin code question, typed a region code and an internal reference, and chose no country, when either save button refuses the page, then Yes stays chosen with the box revealed, the typed region code and internal reference are still shown, and no region of origin code is saved until a country gives it its prefix.",
+        "Given every answer on the origin page is valid, when I select Save and return to overview, then my answers are saved and Overview is shown; when I select Save and continue, then I go on as today.",
+        "Given a notification whose origin page has never been saved, then its overview task 'Where is this consignment coming from?' shows 'To do' and the check page stops its submission (unchanged, and still proved).",
+        "Given I opened the origin page from the notification overview, when I select Back, then I return to the overview, whether or not the notification has any answers yet; opened from the set's own notifications list, Back returns to that list.",
+        "With JavaScript, a test proves the country type-ahead's search button is GOV.UK blue with a white magnifying glass, is hidden from assistive technology, cannot be focused and never submits the page, on the live animals and the high-risk plants origin pages.",
+        "With JavaScript, a test proves the country search uses the accessible autocomplete's own announcements: its assistive hint, and a polite live region announcing the number of results and the chosen country, on the live animals and the high-risk plants origin pages.",
+        "Without JavaScript the live animals origin page refuses a missing country on both buttons in the same way.",
+        "The tests that asserted a countryless origin save (the FIT test 'an unanswered country saves the rest of the page and moves on', the controller unit test and the tests repo e2e 'saves what the user has when submitted without a country') now assert the refusal, and a tests repo e2e test covers both buttons refusing a blank country.",
+        "openspec's live animals origin page spec says the country is mandatory on both buttons and Back follows where the page was opened from, with coverage links to the tests that prove it; the visual baseline is retaken only if the page's look changes."
+      ],
+      "dependsOn": [],
+      "theme": "origin-page",
+      "status": "todo",
+      "kind": "fix",
+      "repos": [
+        "frontend",
+        "plantsfrontend",
+        "tests",
+        "workspace"
+      ],
+      "sources": [
+        {
+          "source": "confluence:6497338582",
+          "ref": "V4 Data Fields page: country of origin mandatory to proceed (c-319, widened 2 November)"
+        },
+        {
+          "source": "ruling:sam-2026-10-26",
+          "ref": "Save and return to overview makes the same checks as Save and continue (c-321)"
+        },
+        {
+          "source": "review:origin-page-done-check-2026-11-03",
+          "ref": "themes/origin-page/done-check.md: the three gaps on main"
+        }
+      ],
+      "requirements": [
+        "req-032",
+        "req-2124",
+        "req-1743",
+        "req-013",
+        "req-018",
+        "req-1909"
+      ],
+      "openQuestions": [],
+      "gate": null,
+      "ticket": "EUDPA-765",
+      "branch": "fix/EUDPA-765-origin-page-a-country-of-origin-is-requi"
+    }
+  ]
 }

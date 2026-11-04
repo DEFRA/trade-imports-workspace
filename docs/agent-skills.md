@@ -344,10 +344,20 @@ later commits, follow the handover's intent with the newer tooling.
 
 - **Skills** — `.claude/skills/` works for both Claude Code (native) and
   Cursor (per <https://cursor.com/docs/context/skills>).
-- **Worker fan-out** — Claude Code spawns `general-purpose` Task
-  subagents in parallel. Cursor has no parallel subagent primitive; it
-  will execute the worker prose serially in the active session, which
-  is acceptable (just slower).
+- **Worker fan-out** — Both hosts use Task subagents (`general-purpose`
+  in Claude Code, `generalPurpose` in Cursor). Parallelism requires
+  emitting **all** Task calls in **one** assistant turn; serial spawn
+  is a bug. Cursor adapters and [`.cursor/skills/HOST.md`](../.cursor/skills/HOST.md)
+  document the host map; worker prose stays in `.claude/skills/`.
+- **Cursor adapters** — host `SKILL.md` files default to
+  `~/.cursor/skills/trade-imports-workspace/` (local git); the workspace
+  symlinks `.cursor/skills` there via
+  `bash ~/git/defra/trade-imports-workspace/tools/cursor/install-cursor-skills.sh`.
+  Catalogue in [`.cursor/skills/README.md`](../.cursor/skills/README.md)
+  (through that symlink). After changing `.claude/skills/<name>/references/`
+  or `assets/`, run
+  `bash ~/git/defra/trade-imports-workspace/tools/skill-creator/sync-cursor-skills.sh`
+  to repair symlinks under the adapter store.
 - **Subdirectory launches** — Claude Code's `.claude/skills/` does NOT walk
   up parent directories (#26489). The workspace ships `docs/.claude → ../.claude`
   so a session launched from `docs/` still discovers the skills.

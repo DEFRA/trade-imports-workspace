@@ -28,14 +28,14 @@ off epic **EUDPA-328**.
 | `reference-lists-plants/` | [EUDPA-701](https://eaflood.atlassian.net/browse/EUDPA-701) | High-risk plants journey | 2 | 3 | 2 |
 | `reference-lists-ins/` | [EUDPA-702](https://eaflood.atlassian.net/browse/EUDPA-702) | Front door | 1 | 1 | 1 |
 
-### Arrival and transit — 12 scenarios, 4 files
+### Arrival and transit — 14 scenarios, 5 files
 
 | Folder | Jira | Domain | Rows | Scenarios | Spec files |
 |---|---|---|---|---|---|
-| `arrival-and-transit-animals/` | [EUDPA-694](https://eaflood.atlassian.net/browse/EUDPA-694) | Live animals journey | 4 built (inc-240, inc-241, inc-029, inc-174) | 12 | 4 |
+| `arrival-and-transit-animals/` | [EUDPA-694](https://eaflood.atlassian.net/browse/EUDPA-694) | Live animals journey | 4 built (inc-240, inc-241, inc-029, inc-174) | 14 | 5 |
 | `arrival-and-transit-plants/` | [EUDPA-703](https://eaflood.atlassian.net/browse/EUDPA-703) | High-risk plants journey | 1 (inc-240, the main merge) | 0 | 0 |
 
-12 + 0 = 12, the theme's total. The Welsh means of transport scenario SCN-ARRIVAL-006-C was added and then removed, so it is not counted. Rewritten 3 November after the reused branch was rebuilt on `main`: the 13 October wording and port label rows reached `main` through design snagging and reference lists, so neither ticket claims them. Plants gains no behaviour change; the plants pull request carries only the joi 18.3.1 and @hapi/content 6.0.3 security fix.
+14 + 0 = 14, the theme's total. The two overview scenarios are counted through `footprint-overrides.json`. The Welsh means of transport scenario SCN-ARRIVAL-006-C was added and then removed, so it is not counted. Rewritten 3 November after the reused branch was rebuilt on `main`: the 13 October wording and port label rows reached `main` through design snagging and reference lists, so neither ticket claims them. Plants gains no behaviour change; the plants pull request carries only the joi 18.3.1 and @hapi/content 6.0.3 security fix.
 
 ### Accompanying documents — 11 scenarios, 1 file
 

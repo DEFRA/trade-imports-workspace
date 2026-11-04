@@ -94,9 +94,9 @@ The system MUST, outside the opening sequence and outside a change made from che
 - **WHEN** they save and continue
 - **THEN** Overview is shown, not commodity details or arrival details
 
-### Requirement: A page the hub links to directly offers both a discard-and-exit and a save-and-exit route back to Overview
+### Requirement: A page the hub links to directly, other than the origin of the import page, offers both a discard-and-exit and a save-and-exit route back to Overview
 **ID**: REQ-FLOW-004
-Outside an amendment (REQ-FLOW-013), the system MUST let the user leave a page the hub links to directly by discarding unsaved input or committing it, returning to Overview either way. Saving and returning MUST make the same checks as saving and continuing: a missing required answer, or an answer that breaks its rule, keeps the user on the page with an error for each, what they entered kept and nothing saved. A blank optional answer is accepted by either save.
+Outside an amendment (REQ-FLOW-013), the system MUST let the user leave a page the hub links to directly, other than the origin of the import page, by discarding unsaved input or committing it, returning to Overview either way. Saving and returning MUST make the same checks as saving and continuing: a missing required answer, or an answer that breaks its rule, keeps the user on the page with an error for each, what they entered kept and nothing saved. A blank optional answer is accepted by either save.
 
 #### Scenario: Cancel and return to overview discards unsaved input
 **ID**: SCN-FLOW-004-A
@@ -329,7 +329,7 @@ The system MUST NOT offer a discard-and-exit or a save-and-exit route back to Ov
 
 ### Requirement: While a notification is being amended, a page ends with Save and return, Save and continue and Save and return to overview
 **ID**: REQ-FLOW-013
-While a notification is being amended, each page the hub links to directly MUST end with a primary "Save and return" to the review, a secondary "Save and continue" going on as usual, and "Save and return to overview", with no "Cancel and return to overview", except the CPH number page, the address pickers and the contact address page, which end with the first two. Every such page but upload documents MUST keep its usual Back link, not the review; upload documents MUST open the review instead.
+While a notification is being amended, each page the hub links to directly MUST end with a primary "Save and return" to the review, a secondary "Save and continue" going on as usual, and "Save and return to overview", with no "Cancel and return to overview", except the origin of the import page, the CPH number page, the address pickers and the contact address page, which end with the first two. Every such page but upload documents MUST keep its usual Back link, not the review; upload documents MUST open the review instead.
 
 #### Scenario: A page opened from Overview while amending ends with the three amend controls
 **ID**: SCN-FLOW-013-A
@@ -352,22 +352,22 @@ While a notification is being amended, each page the hub links to directly MUST 
 - **WHEN** the user selects "Save and continue"
 - **THEN** Overview is shown, not the review
 
-#### Scenario: The CPH number page, the address pickers and the contact address page offer two controls while amending
+#### Scenario: The origin page, the CPH number page, the address pickers and the contact address page offer two controls while amending
 **ID**: SCN-FLOW-013-D
 - **GIVEN** a notification being amended
-- **WHEN** the user opens the CPH number page, an address picker or the contact address page
+- **WHEN** the user opens the origin of the import page, the CPH number page, an address picker or the contact address page
 - **THEN** each ends with "Save and return" and "Save and continue" and no "Save and return to overview"
-- **AND** "Save and return" on the CPH number page and on an address picker returns to the review
+- **AND** "Save and return" on the origin page, on the CPH number page and on an address picker returns to the review
 
-#### Scenario: Outside an amendment the CPH number page keeps its primary action alone
+#### Scenario: Outside an amendment the CPH number page and the origin page keep their primary action alone
 **ID**: SCN-FLOW-013-E
 - **GIVEN** a draft notification
-- **WHEN** the user opens the CPH number page
+- **WHEN** the user opens the CPH number page or the origin of the import page
 - **THEN** only "Save and continue" is offered
 
-### Requirement: A page the hub links to directly keeps its two buttons side by side and its overview exit below them
+### Requirement: A page the hub links to directly, other than the origin of the import page, keeps its two buttons side by side and its overview exit below them
 **ID**: REQ-FLOW-014
-Outside an amendment, the system MUST end a page the hub links to directly with its primary action and "Save and return to overview" side by side, and "Cancel and return to overview" on its own line below them. While a notification is being amended, it MUST instead put "Save and return" and "Save and continue" side by side, and "Save and return to overview" on its own line below them.
+Outside an amendment, the system MUST end a page the hub links to directly, other than the origin of the import page, with its primary action and "Save and return to overview" side by side, and "Cancel and return to overview" on its own line below them. While a notification is being amended, it MUST instead put "Save and return" and "Save and continue" side by side, and "Save and return to overview" on its own line below them.
 
 #### Scenario: Cancel and return to overview sits on its own line below the two buttons
 **ID**: SCN-FLOW-014-A

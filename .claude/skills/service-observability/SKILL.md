@@ -46,7 +46,7 @@ skill and point its plan at these steps.
 
 | Part | State |
 |---|---|
-| Metrics, Java service | Proven by tests on `trade-imports-address-book` (`EmfMeterRegistry`, the EMF documents it writes, the allowlist, `@Timed` through the Spring proxy). `[UNPROVEN]` in dev CloudWatch until that release is checked there. reference-data's older direct-EMF metrics reached dev CloudWatch; moving it to this way keeps their names and dimensions |
+| Metrics, Java service | Proven by tests on `trade-imports-address-book` (`EmfMeterRegistry`, the EMF documents it writes, the allowlist, `@Timed` through the Spring proxy). `[UNPROVEN]` in dev CloudWatch until that release is checked there. reference-data's older direct-EMF metrics reached dev CloudWatch; moving it to this way keeps every name and dimension, `CacheHit` and `CacheMiss` by `Cache` included (`references/METRICS.md` → "A service built the old way") |
 | Log line, Java service | Proven by tests on `trade-imports-reference-data`: the encoded JSON holds a nested `event` object with a numeric duration (`references/LOGGING.md` → "How to write the fields"). `[UNPROVEN]` in dev OpenSearch until a release with `EcsEventEncoder` is checked there; the earlier MDC version was dropped by CDP |
 | Metrics and log line, Node service | Not written. `trade-imports-animals-frontend`, `-ins-frontend` and `-plants-frontend` already have `src/server/common/helpers/external-call-metrics.js`; the first Node ticket adds a Node reference here |
 | Dashboard and alert templates | Written from the reference-data code and the CDP docs; not yet imported into Grafana |

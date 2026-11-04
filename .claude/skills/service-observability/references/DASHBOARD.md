@@ -80,13 +80,15 @@ endpoint and public service method). `EmfMeterRegistry` publishes each
 timer as the metric `<name>`, one value per call in milliseconds, with
 the `@Timed` tags `class`, `method` and `exception` as dimensions.
 
-| Panel | Series | Query |
+| Panel title | Series | Query |
 |---|---|---|
-| `<name>` | Average, p95, Slowest | `<name>`, `Average`, `p95`, `Maximum` (ms) |
-| | Calls | `<name>`, `SampleCount`, on the right axis |
+| `<timed-name>` | Average, p95, Slowest | `<timed-name>`, `Average`, `p95`, `Maximum` (ms) |
+| | Calls | `<timed-name>`, `SampleCount`, on the right axis |
 
-Each series splits by `exception`, so failed calls show apart from
-`none`. A timer registered in code (`meterRegistry.timer("…")`)
+Every query sets all three dimensions, `class`, `method` and
+`exception`, each to `*`, as the template does: a query missing one finds
+no data. Each series is labelled by `exception`, so failed calls show
+apart from `none`. A timer registered in code (`meterRegistry.timer("…")`)
 publishes the same way; give it a panel only if the team asks.
 
 One panel reads logs, not metrics:
@@ -107,8 +109,8 @@ reference-data: `Dependency` is `mdm` or `trade-token`; `Cache` is
 `MDM_COUNTRIES_CACHE` or `MDM_POE_CACHE`; `LookupType` is `countries` or
 `ports-of-entry`. A service with a database has `Dependency` `mongodb`,
 its status from the driver's heartbeats and, if its commands are
-measured, one `Operation` per command name (`METRICS.md` → "A
-database").
+measured, an `Operation` from a fixed set of command names, with every
+other command as `other` (`METRICS.md` → "A database").
 
 ## Generate
 
@@ -125,16 +127,19 @@ Claude writes the service's dashboard to
    title, `metricName`, `dimensions` and the legend `label`), and laying
    each copy out on the grid. Delete the panel if there are none.
 4. Delete "Cache hits and misses" if the service has no cache.
-5. List the service's `@Timed` names:
-   `grep -rhoE '@Timed\((value *= *)?"[^"]+"' <repo>/src/main/java | sed -E 's/.*"([^"]+)"/\1/'`.
-   Make one copy of the `<timed-name>` panel per name, replacing
+5. List the service's `@Timed` names, in one command:
+   `grep -rhoE --include='*.java' --exclude-dir=target --exclude-dir=node_modules --exclude-dir=test '@Timed\((value *= *)?"[^"]+"' <repo>`.
+   Each line is `@Timed("<name>"`; the name is between the quotes. No
+   output means the service has no timers, a Node service included:
+   delete the panel.
+   Otherwise make one copy of the `<timed-name>` panel per name, replacing
    `<timed-name>` everywhere in the copy (title, description and each
    `metricName`), and lay the copies out two to a row from the template
    panel's position down. Where a controller and a service time the same
    operation (`controller.listOperators.time`,
    `service.listOperators.time`), put the pair on one row, controller on
-   the left, so the time spent outside the service reads across. Delete
-   the panel if there are none. Check each name is let through the
+   the left, so the time spent outside the service reads across. Check
+   each name is let through the
    service's `management.metrics.enable` allowlist (`METRICS.md` →
    "Rules"); a denied timer publishes nothing.
 6. Check the result is valid JSON (`jq empty <file>`) and that no

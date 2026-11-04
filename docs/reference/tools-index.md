@@ -11,7 +11,8 @@ text) and a `planId`, and only writes with a matching `--confirm <planId>`;
 `attach`, `link` and `assign` write with `--confirm`. `link` takes
 `relates <key>`, `--blocks <key>` or `--blocked-by <key>` and reads back the
 direction Jira stored. `assign` takes an account id or `me` and reads the
-assignee back. `tim jira epics` is read-only. The `ticket-creator` skill and the
+assignee back. `tim jira epics` and `tim jira search` are read-only; `search`
+takes search words (a text search in the project) or `--jql <query>`. The `ticket-creator` skill and the
 `prototype` skill's hand-off both create through it rather than
 `tools/jira/create-ticket.sh` below, which stays as the plain-bash
 alternative and the one the build loop still calls directly.

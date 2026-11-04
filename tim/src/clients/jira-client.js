@@ -151,6 +151,9 @@ export const createJiraClient = ({
     } catch (error) {
       throw new TimError('NETWORK', `${action}: ${error.message}`, error)
     }
+    if (response.status === 400) {
+      throw mapBadRequest(action, await parseBody(response, action))
+    }
     const mapped = mapStatus(response.status, action)
     if (mapped) throw mapped
     try {
@@ -653,8 +656,45 @@ export const createJiraClient = ({
         if (!pageToken) break
       }
       return children
+    },
+
+    /**
+     * The issues a JQL query matches, in the query's order, reading pages
+     * until `limit` issues are in hand or the results run out.
+     *
+     * @param {string} jql
+     * @param {object} [options]
+     * @param {number} [options.limit=50] - The most issues to return
+     * @returns {Promise<Array<{key: string, summary: string, status: string|null, type: string|null}>>}
+     */
+    searchIssues: async (jql, { limit = 50 } = {}) => {
+      const base = `/rest/api/3/search/jql?jql=${encodeURIComponent(jql)}&fields=summary,status,issuetype`
+      const issues = []
+      let pageToken = null
+      while (issues.length < limit) {
+        const pageSize = Math.min(limit - issues.length, MAX_SEARCH_PAGE_SIZE)
+        const page = `${base}&maxResults=${pageSize}`
+        const data = await get(
+          pageToken
+            ? `${page}&nextPageToken=${encodeURIComponent(pageToken)}`
+            : page,
+          'searchIssues'
+        )
+        for (const issue of data.issues ?? []) {
+          issues.push({
+            key: issue.key,
+            summary: issue.fields?.summary ?? '',
+            status: issue.fields?.status?.name ?? null,
+            type: issue.fields?.issuetype?.name ?? null
+          })
+        }
+        pageToken = data.nextPageToken ?? null
+        if (!pageToken) break
+      }
+      return issues.slice(0, limit)
     }
   }
 }
 
 const MAX_CHILD_PAGES = 50
+const MAX_SEARCH_PAGE_SIZE = 100

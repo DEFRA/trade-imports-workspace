@@ -997,3 +997,61 @@ describe('listOpenChildren', () => {
     ])
   })
 })
+
+describe('searchIssues', () => {
+  const issue = (key, summary) => ({
+    key,
+    fields: {
+      summary,
+      status: { name: 'To Do' },
+      issuetype: { name: 'Task' }
+    }
+  })
+
+  test('returns key, summary, status and type for each match', async () => {
+    mockPool(BASE)
+      .get(
+        /^\/rest\/api\/3\/search\/jql\?jql=project%20%3D%20EUDPA&fields=summary,status,issuetype&maxResults=50$/
+      )
+      .reply(200, { issues: [issue('EUDPA-7', 'Check codes')] })
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    expect(await client.searchIssues('project = EUDPA')).toEqual([
+      { key: 'EUDPA-7', summary: 'Check codes', status: 'To Do', type: 'Task' }
+    ])
+  })
+
+  test('reads further pages until the limit is reached', async () => {
+    mockPool(BASE)
+      .get(/maxResults=3$/)
+      .reply(200, {
+        issues: [issue('EUDPA-1', 'One'), issue('EUDPA-2', 'Two')],
+        nextPageToken: 'page-2'
+      })
+    mockPool(BASE)
+      .get(/maxResults=1&nextPageToken=page-2$/)
+      .reply(200, {
+        issues: [issue('EUDPA-3', 'Three')],
+        nextPageToken: 'page-3'
+      })
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    const keys = (
+      await client.searchIssues('project = EUDPA', { limit: 3 })
+    ).map(({ key }) => key)
+    expect(keys).toEqual(['EUDPA-1', 'EUDPA-2', 'EUDPA-3'])
+  })
+
+  test('maps a 400 for bad JQL to TimError(USAGE)', async () => {
+    mockPool(BASE)
+      .get(/^\/rest\/api\/3\/search\/jql/)
+      .reply(400, { errorMessages: ["Field 'nope' does not exist"] })
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    await expect(client.searchIssues('nope = 1')).rejects.toMatchObject({
+      name: 'TimError',
+      code: 'USAGE',
+      message: "searchIssues: Field 'nope' does not exist"
+    })
+  })
+})

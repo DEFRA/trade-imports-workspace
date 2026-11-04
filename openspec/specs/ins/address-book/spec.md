@@ -554,7 +554,7 @@ The system MUST show the edit form's Country select with no blank option and the
 
 ### Requirement: The add form names its first field 'Name or organisation' and, wherever it offers every country, opens its Country select on 'Select a country' first, with United Kingdom selected from the address book after choosing 'Origin or Consignor' and no country chosen from the place of origin and consignor pickers and the consignment contact page
 **ID**: REQ-INS-ADDR-027
-The system MUST label the add form's name 'Name or organisation', keep 'County (optional)' on it, and, wherever the add form offers every country, open its Country select on a blank first option reading 'Select a country'. The address book's add form after choosing 'Destination, Consignee or Importer' or 'Branch' offers United Kingdom alone, as REQ-INS-ADDR-044 and REQ-INS-ADDR-035 state. After 'Origin or Consignor' it MUST select United Kingdom; from the pickers and the contact page, none.
+The system MUST label the add form's name 'Name or organisation', keep 'County (optional)' on it, and, wherever the add form offers every country, open its Country select on a blank first option reading 'Select a country'. The address book's add form after choosing 'Destination, Consignee or Importer' or 'Branch' offers United Kingdom alone, as REQ-INS-ADDR-044 and REQ-INS-ADDR-035 state. After 'Origin or Consignor' it MUST select United Kingdom; from the place of origin and consignor pickers and the consignment contact page, none.
 
 #### Scenario: The add form names the name field 'Name or organisation' and keeps County
 **ID**: SCN-INS-ADDR-027-A

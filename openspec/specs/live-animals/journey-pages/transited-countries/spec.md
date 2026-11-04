@@ -157,13 +157,13 @@ The system MUST show Overview when the transited countries page is opened and th
 
 ### Requirement: The search offers the origin countries and their territories, each territory named with its country
 **ID**: REQ-TRANSIT-COUNTRIES-009
-The system MUST offer in the transited country search the countries and territories the reference data service serves for the country of origin, in one alphabetical list, naming each territory "<territory> (<country>)" with its country's served name, with or without JavaScript.
+The system MUST offer in the transited country search the same countries and territories the country of origin page offers, one fixed list the reference data service serves, in alphabetical order, naming each territory "<territory> (<country>)" with its country's served name, with or without JavaScript.
 
 #### Scenario: The search offers the origin countries and their territories in alphabetical order
 **ID**: SCN-TRANSIT-COUNTRIES-009-A
 - **GIVEN** the user is on the transited countries page
 - **WHEN** the search list is read in full
-- **THEN** it holds exactly the countries and territories the reference data service serves for the country of origin, by name, in alphabetical order
+- **THEN** it holds exactly the countries and territories the country of origin page offers, by name, in alphabetical order
 
 #### Scenario: Each territory is named with its country, with or without JavaScript
 **ID**: SCN-TRANSIT-COUNTRIES-009-B

@@ -143,8 +143,9 @@ Outside an amendment (REQ-FLOW-013), the system MUST let the user leave a page t
 - **GIVEN** the Arrival details page with a port of entry chosen and no means of transport
 - **WHEN** the user selects "Save and return to overview"
 - **THEN** they stay on the page showing "Select a means of transport to the port of entry" and the port of entry is still chosen
-- **AND** the Arrival details task reads "To do"
-- **AND** re-opening the page shows the port of entry empty
+- **WHEN** they then open Overview
+- **THEN** the Arrival details task reads "To do"
+- **AND** opening the task shows the port of entry empty
 
 #### Scenario: Transit countries saved and returned keeps the countries listed
 **ID**: SCN-FLOW-004-H

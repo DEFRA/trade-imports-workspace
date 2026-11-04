@@ -113,12 +113,6 @@ The system MUST refuse to save the arrival details page, on both "Save and conti
 - **THEN** the port of entry and arrival date are shown back
 - **AND** re-opening the page from the overview shows them empty
 
-#### Scenario: The Welsh page words the missing means of transport in Welsh
-**ID**: SCN-ARRIVAL-006-C
-- **GIVEN** the user is on the arrival details page in Welsh with no means of transport chosen
-- **WHEN** they save, with either button
-- **THEN** the error summary and the means of transport both show "Dewiswch gyfrwng cludo i’r porthladd mynediad"
-
 ### Requirement: The arrival date is confined to one week back and six months ahead
 **ID**: REQ-ARRIVAL-007
 The system MUST confine the arrival date to a window from one week back to six months ahead, MUST offer that window as the date picker's range, MUST reject a date typed outside it with an error naming the range (saving nothing), and MUST name a saved arrival date that has since fallen outside the window when the page is reopened, with the error "The saved arrival date is no longer a date you can choose. Enter a new arrival date."

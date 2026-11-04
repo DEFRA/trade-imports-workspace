@@ -199,3 +199,17 @@ The system MUST measure a saved arrival date against the allowed arrival window 
 - **GIVEN** arrival details were saved complete, and the saved arrival date is exactly 7 days in the past
 - **WHEN** the user views Overview
 - **THEN** "Arrival details" reads Complete
+
+### Requirement: Additional details completes on its own two answers, whether or not Main import reason is saved
+**ID**: REQ-OVERVIEW-014
+The system MUST mark the Additional details task To do while neither of its questions is answered, In progress while only what the animals are certified for is answered and the unweaned question is in scope, and Complete once both are answered, whether or not an import reason is saved.
+
+#### Scenario: The Additional details task walks To do, In progress and Complete on its own answers alone
+**ID**: SCN-OVERVIEW-014-A
+- **GIVEN** a consignment whose commodities put the unweaned question in scope, with no import reason saved
+- **WHEN** the user views Overview before either question is answered
+- **THEN** Additional details reads To do
+- **WHEN** only what the animals are certified for is answered and the user views Overview
+- **THEN** Additional details reads In progress
+- **WHEN** the unweaned question is also answered and the user views Overview
+- **THEN** Additional details reads Complete

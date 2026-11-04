@@ -103,6 +103,12 @@ The system MUST block the save when a mandatory field is left blank, MUST show a
 - **THEN** the save is blocked, an error names the cleared field
 - **AND** the other field's new value is still shown, not the value the record held before editing
 
+#### Scenario: Several mandatory fields left blank are listed in the order the form asks them
+**ID**: SCN-INS-ADDR-006-C
+- **GIVEN** the user is adding or editing an address
+- **WHEN** they leave the address line 1, town or city, postcode, email address and phone number blank and save
+- **THEN** the error summary lists 'Enter address line 1', 'Enter a town or city', 'Enter a postcode or Zip code', 'Enter an email address' and 'Enter a phone number', in that order, which is the order the form asks for them
+
 ### Requirement: Every field has a maximum length, and exceeding it blocks the save without losing the value
 **ID**: REQ-INS-ADDR-007
 The system MUST reject a value exceeding a field's maximum length — 255 characters for name, address line 1 and address line 2; 100 for town or city and county; 12 for postcode; 20 for phone number; 254 for email address — naming the limit in the error, and MUST preserve the over-length value so the user can edit it down rather than retype it.
@@ -865,6 +871,13 @@ The system MUST, on the add page reached from a notification's role picker, offe
 - **WHEN** they choose 'Cancel and return to address page' instead
 - **THEN** the journey is handed back with no address
 
+#### Scenario: Save and return to address page makes the same checks as Save and select
+**ID**: SCN-INS-ADDR-036-F
+- **GIVEN** a trader on the add page reached from the consignee picker who has entered a name, ticked 'Importer' and left the address line 1, town or city, postcode, email address and phone number blank
+- **WHEN** they choose 'Save and return to address page'
+- **THEN** they stay on the add page and the error summary lists 'Enter address line 1', 'Enter a town or city', 'Enter a postcode or Zip code', 'Enter an email address' and 'Enter a phone number', in that order, each also shown on its field
+- **AND** the name entered and 'Importer' are still shown, and the address book holds nothing new
+
 ### Requirement: The address book service records an address's type and uses and refuses a missing type or use and values outside the allowed lists
 **ID**: REQ-INS-ADDR-037
 The address book service MUST record an address's type and uses and return them on read. A create or an update MUST give one of the three types and at least one of the six uses, and an update MUST replace the stored type and uses with those it gives. It MUST refuse a missing type or use, or a value outside the allowed lists, with a validation error naming the field, and save nothing. Its published contract MUST mark both required.
@@ -1233,12 +1246,62 @@ The system MUST, on the add form opened from the address book, follow the contac
 
 ### Requirement: An address added from a notification journey is saved with the type and use of the party it is for
 **ID**: REQ-INS-ADDR-045
-The system MUST save an address added from a role's picker with that role's address type and use, and an address added from the consignment contact page as a branch address.
+The system MUST save an address added from a role's picker with that role's address type, its use and every other use on the role's side that the trader ticked, and an address added from the consignment contact page as a branch address.
 
 #### Scenario: An address added from a role's picker or the consignment contact page is saved with that party's type and use
 **ID**: SCN-INS-ADDR-045-A
 - **GIVEN** a trader on the add page reached from the place of origin, consignor, consignee, importer or place of destination picker
-- **WHEN** they save a valid address
+- **WHEN** they save a valid address with nothing ticked
 - **THEN** the address is saved with that role's address type and exactly that role's use
 - **WHEN** a trader saves a valid address from the consignment contact page
 - **THEN** the address is saved with the type 'Branch' and the branch address use
+
+#### Scenario: A role's save carries the other roles on its side that were ticked
+**ID**: SCN-INS-ADDR-045-B
+- **GIVEN** a trader on the add page reached from the consignee picker
+- **WHEN** they tick 'Importer' and save a valid address
+- **THEN** the address book's read of the saved address gives the type 'Destination, Consignee or Importer' and exactly the uses consignee and importer
+
+#### Scenario: A posted use the role's page does not offer is not saved
+**ID**: SCN-INS-ADDR-045-C
+- **GIVEN** a trader on the add page reached from the consignee picker
+- **WHEN** a use from outside the consignee's side is posted with a valid address
+- **THEN** the address is saved with exactly the consignee use
+
+### Requirement: The add page reached from a role picker asks what else the address should be used for, offering the other roles on its side
+**ID**: REQ-INS-ADDR-046
+The system MUST, on the add page reached from a role's picker, ask 'What else should this address be used for?' as a group of checkboxes after a visible section break, with a hint naming the role and offering only the other roles on the same side, none ticked. Ticking none MUST raise no error, and the ticked roles MUST stay ticked when the page is shown again with errors. The consignment contact page MUST NOT ask the question.
+
+#### Scenario: The place of origin side offers the other role on its side
+**ID**: SCN-INS-ADDR-046-A
+- **GIVEN** a trader on a notification's place of origin picker
+- **WHEN** they choose 'Add a new address'
+- **THEN** the add page asks 'What else should this address be used for?' after a visible section break, with the hint 'This address is being added as a Place of origin address. Select any other roles or addresses this address should be used for.'
+- **AND** it offers only 'Consignor', unticked
+- **WHEN** they choose 'Add a new address' from the consignor picker
+- **THEN** the hint reads 'This address is being added as a Consignor address. Select any other roles or addresses this address should be used for.' and it offers only 'Place of origin', unticked
+
+#### Scenario: The destination side offers the other two roles on its side
+**ID**: SCN-INS-ADDR-046-B
+- **GIVEN** a trader on a notification's consignee, importer or place of destination picker
+- **WHEN** they choose 'Add a new address'
+- **THEN** the add page asks 'What else should this address be used for?' with a hint naming the role, 'a Consignee', 'an Importer' or 'a Place of destination'
+- **AND** the consignee page offers 'Importer' then 'Place of destination', the importer page 'Consignee' then 'Place of destination', and the place of destination page 'Consignee' then 'Importer', all unticked
+
+#### Scenario: Saving with nothing ticked raises no error
+**ID**: SCN-INS-ADDR-046-C
+- **GIVEN** a trader on the add page reached from a role's picker
+- **WHEN** they save a valid address with none of the other roles ticked
+- **THEN** no error is shown and the address is saved for the role it was added from alone
+
+#### Scenario: The ticked roles stay ticked when the page is shown again with errors
+**ID**: SCN-INS-ADDR-046-D
+- **GIVEN** a trader on the add page reached from the consignee picker
+- **WHEN** they tick 'Importer', leave the postcode blank and save
+- **THEN** the page is shown again with the postcode error and 'Importer' still ticked
+
+#### Scenario: The consignment contact page asks no such question
+**ID**: SCN-INS-ADDR-046-E
+- **GIVEN** a trader on the consignment contact page
+- **WHEN** they choose to add a new address
+- **THEN** the add page shows the address fields and no uses question

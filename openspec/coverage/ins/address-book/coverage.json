@@ -359,6 +359,21 @@
               "notes": "clears name while editing town; error focuses name; Fort William preserved"
             }
           ]
+        },
+        {
+          "id": "SCN-INS-ADDR-006-C",
+          "name": "Several mandatory fields left blank are listed in the order the form asks them",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fields.test.js",
+              "test": "Should list every failing field in the order the form asks",
+              "strength": "full",
+              "notes": "red-probed: fails when the field rules list phone before email"
+            }
+          ]
         }
       ]
     },
@@ -3779,6 +3794,37 @@
               "notes": "run by the gate; not red-probed"
             }
           ]
+        },
+        {
+          "id": "SCN-INS-ADDR-036-F",
+          "name": "Save and return to address page makes the same checks as Save and select",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST from the consignee handshake with Save action %s and answers missing re-renders the errors in field order, keeps the name and the tick, and writes nothing",
+              "strength": "full",
+              "notes": "red-probed: fails when the field rules list phone before email, and when the re-render stops ticking the posted uses"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "Save and return to address page with answers missing keeps the page, lists the errors in field order and keeps the tick",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
+              "test": "Save and return to address page on the INS add page reached from the Consignee picker with answers missing keeps the page, lists each error in field order, keeps the name and the Importer tick and saves nothing",
+              "strength": "partial",
+              "notes": "reads the address book back for nothing saved; run on the leased stack by the gate; not red-probed"
+            }
+          ]
         }
       ]
     },
@@ -5622,14 +5668,6 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "POST from the %s handshake saves the address with its type and exactly its one use, whatever uses are posted",
-              "strength": "full",
-              "notes": "red-probed: fails when the registry maps the consignor to another use"
-            },
-            {
-              "type": "unit",
-              "repo": "trade-imports-ins-frontend",
-              "file": "src/server/app/features/address-book/add/add.controller.test.js",
               "test": "POST from the consignment contact handshake saves the address as a Branch address",
               "strength": "full",
               "notes": "red-probed: fails when the registry maps the consignment contact to another use"
@@ -5637,7 +5675,7 @@
             {
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
-              "file": "src/server/app/features/address-book/journey-registry.test.js",
+              "file": "src/server/app/features/address-book/journey-registry.parties.test.js",
               "test": "gives the %s handshake its type and its one use",
               "strength": "full",
               "notes": "red-probed: fails when the registry maps the consignor to another use"
@@ -5649,6 +5687,182 @@
               "test": "Save and select on the INS add page reached from the Consignor picker saves the address with the role's type and use, selects it for the role and lands on Roles and addresses with the added banner",
               "strength": "partial",
               "notes": "reads the stored address back for the role's type and use; run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-045-B",
+          "name": "A role's save carries the other roles on its side that were ticked",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST from the consignee handshake with Importer ticked saves the consignee and importer uses and hands back with the select landing",
+              "strength": "full",
+              "notes": "red-probed: fails when the journey save stops keeping the posted uses"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/journey-registry.parties.test.js",
+              "test": "gives the %s handshake its own use and the posted %j its side offers, in the type order",
+              "strength": "full",
+              "notes": "red-probed: fails when the journey save stops keeping the posted uses"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "Save and select with Importer ticked on the consignee page lists the address under the Consignee and Importer uses",
+              "strength": "partial",
+              "notes": "reads the stubbed address book back through the list; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
+              "test": "Save and select on the INS add page reached from the Consignee picker with Importer ticked saves the address under the destination type with the consignee and importer uses",
+              "strength": "partial",
+              "notes": "reads the address back through the address book read-one API; run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-045-C",
+          "name": "A posted use the role's page does not offer is not saved",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST from the %s handshake saves the address with its type and only its own use when the posted use is from outside its side",
+              "strength": "full",
+              "notes": "red-probed: fails when the journey save keeps any posted use"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST from the consignee handshake with a use from outside its side logs the discarded use against the notification and fulfilment",
+              "strength": "full",
+              "notes": "red-probed: fails when the journey save keeps any posted use"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-046",
+      "name": "The add page reached from a role picker asks what else the address should be used for, offering the other roles on its side",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-046-A",
+          "name": "The place of origin side offers the other role on its side",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET from the %s handshake asks what else the address should be used for after a section break, naming the role and offering only the other uses on its side, unticked",
+              "strength": "full",
+              "notes": "red-probed: fails when the journey question is not shown"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "from the placeOfOrigin handshake asks what else the address should be used for, naming the role and offering only the other uses on its side, unticked",
+              "strength": "partial",
+              "notes": "not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-046-B",
+          "name": "The destination side offers the other two roles on its side",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET from the %s handshake asks what else the address should be used for after a section break, naming the role and offering only the other uses on its side, unticked",
+              "strength": "full",
+              "notes": "red-probed: fails when the journey question is not shown"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "from the consignee handshake asks what else the address should be used for, naming the role and offering only the other uses on its side, unticked",
+              "strength": "partial",
+              "notes": "not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
+              "test": "Save and select on the INS add page reached from the Consignee picker with Importer ticked saves the address under the destination type with the consignee and importer uses",
+              "strength": "partial",
+              "notes": "reads the question, hint and options on the Consignee picker's add page; run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-046-C",
+          "name": "Saving with nothing ticked raises no error",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST from the %s handshake saves the address with its type and only its own use when the posted use is from outside its side",
+              "strength": "partial",
+              "notes": "saves a valid address with no offered use ticked; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
+              "test": "Save and select on the INS add page reached from the Consignor picker saves the address with the role's type and use, selects it for the role and lands on Roles and addresses with the added banner",
+              "strength": "partial",
+              "notes": "saves with nothing ticked and lands on the journey; run on the leased stack by the gate; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-046-D",
+          "name": "The ticked roles stay ticked when the page is shown again with errors",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST from the consignee handshake with a field error re-renders with exactly the offered use ticked",
+              "strength": "full",
+              "notes": "red-probed: fails when the checkbox items stop marking the ticked uses"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-046-E",
+          "name": "The consignment contact page asks no such question",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET from the consignment contact handshake shows the address fields and no uses question",
+              "strength": "full",
+              "notes": "red-probed: fails when the question is shown for a party with no other uses"
             }
           ]
         }

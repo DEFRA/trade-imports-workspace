@@ -531,7 +531,7 @@
       "detail": "Replaces inc-019, which the plan stage refused because its first criterion could not be built in the tests repo. This row keeps everything the branch can prove today: the poultry-by-rail walk itself, that no Identification details step or task appears for a chicken line, and that every overview task reads Complete with the review showing the journey's answers. Reaching 'Import notification submitted' is split out to inc-249, which is blocked on the stub serving a chicken species.",
       "dependsOn": [],
       "theme": "commodities-and-reason",
-      "status": "todo",
+      "status": "done",
       "kind": "test",
       "repos": [
         "tests"
@@ -566,6 +566,24 @@
         "Criterion 3's task list is ELEVEN rows, not the prototype's ten: the prototype's HUB_ROWS omits 'Transit countries'. Assert against the real hub order above, not against the prototype.",
         "Why the three criteria hold on the branch today, from the plan stage's reading: IDENTIFIED_CODES is ['0102','0101','01061900'] (frontend services/commodities/rules.js:6-35), so for a chicken line the identification gate fails (flow/gates.js inScopeReachable over collectsOf('animalIdentification')), the opening run skips the step (flow/run.js:46-50) and the animalIdentification task row is conditional with applies: identifiesAnAnimal so rowStatus is NA and the hub drops it (flow/task-rows.js:55-61, features/hub/controller.js:56). CPH_EXEMPT_CODES is ['0101','01061900'] (rules.js:79), so a chicken consignment does owe a CPH number. transitedCountries is in scope for RAILWAY and optional (obligations/sections/transport.js:96-111), so with a country added the row reads Complete (bridge/status/index.js:56-63). numberOfPackages is optional for every code (obligations/sections/commodities/lines.js:54-62), so Commodity details reads Complete with the animal count alone.",
         "Exemplar: walkOpeningRunHorseBySea (tests flows/animals/journey.ts:708-766) with tests/animals/e2e/journeys/horse-temporary-admission.spec.ts as the spec shape. Its whole-list taskNames/taskStatuses assertion proves criteria 2 and 3 together in one positive assertion rather than asserting an absence."
+      ],
+      "commit": "e55fe5c7eb37b5ade343e6c2924fde266aadf725",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/456",
+          "repo": "trade-imports-animals-frontend",
+          "number": 456
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/79",
+          "repo": "trade-imports-ins-tests",
+          "number": 79
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-performance-tests/pull/30",
+          "repo": "trade-imports-performance-tests",
+          "number": 30
+        }
       ]
     },
     {
@@ -677,7 +695,7 @@
       "detail": "The 26 October ruling makes 'Save and return to overview' run exactly the checks 'Save and continue' runs, on every page that offers both buttons, with no page an exception. It withdrew the soft save this theme's earlier row was built on. On these two pages the button therefore differs from 'Save and continue' only in where it goes when the page passes: the notification overview rather than the next journey page, and the review page when the trader is amending. How far the checks reach is still open (c-372) and this row builds the default reading: each page keeps the hard stops it already applies on 'Save and continue' and gains none, so the follow-up answers a chosen reason reveals are refused on both buttons alike, and no answer becomes newly mandatory. Separately, the main import reason task is judged on the reason's own answers, with Additional details its own task.",
       "dependsOn": [],
       "theme": "commodities-and-reason",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -739,7 +757,20 @@
       "merge": {
         "frontend": "origin/main",
         "tests": "origin/main"
-      }
+      },
+      "commit": "d6fb730af6e45487a69be2276fa96175806c30de 64860e21dfe5ccea2495d7cca1b5f5e47ff09589",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/456",
+          "repo": "trade-imports-animals-frontend",
+          "number": 456
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/79",
+          "repo": "trade-imports-ins-tests",
+          "number": 79
+        }
+      ]
     },
     {
       "id": "inc-023",
@@ -752,7 +783,7 @@
       ],
       "dependsOn": [],
       "theme": "commodities-and-reason",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -796,7 +827,20 @@
       "merge": {
         "frontend": "origin/main",
         "tests": "origin/main"
-      }
+      },
+      "commit": "6843ef057b8e281dfc0de93dd126f7c6da9c2527 efab23bf049e021d024aeecb8069287344a36a83",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/456",
+          "repo": "trade-imports-animals-frontend",
+          "number": 456
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/79",
+          "repo": "trade-imports-ins-tests",
+          "number": 79
+        }
+      ]
     },
     {
       "id": "inc-024",
@@ -848,13 +892,27 @@
         "MDM offers no package-type options today, checked 2 Nov. packageType is an empty array on all 49 commodity rows in the capture (repos/trade-imports-stub origin/main:src/main/resources/responses/mdmProductSearchResponses.json; same in repos/trade-imports-reference-data src/test/resources/integration/mdm-product-search-0102-response.json:32), and the field is not on the /commodities?codes= endpoint reference-data actually calls, which returns only code, description, isGerminal, isSelectable and speciesCount (stub mdmProductCommoditiesResponses.json). So reading packageType would need MDM to populate it and reference-data to read it from the search response or a widened by-code response. The vocabulary would not be MDM's own either: the GBN-AG schema holds the package type as an open string from the UNECE PackageTypeCode list, UN/EDIFACT Recommendation 21, with cage and crate as its examples (repos/trade-imports-schemas schemas/core/defra-unvtd-canonical-core-v1.schema.json:511-527 and schemas/profiles/imports/gb/gbn-ag-v1.schema.json:365-379). MDM's packageType[] would therefore be a per-commodity shortlist of UNECE codes, not a list of its own.",
         "The physical logic favours main's list over the prototype's, which weakens the prototype side further than the demo-data provenance alone does. The GBN-AG schema says the package group is optional and names the reason: 'consignments where the animals are loose-loaded (for example livestock in a single trailer compartment) omit it' (gbn-ag-v1.schema.json:283). The prototype asks for a package count on exactly the livestock that travel loose - cattle, horses, pigs, sheep, goats - and not on the commodities that really do arrive in packages: day-old chicks in boxes, bees in hives, reptiles and parrots in crates, ornamental fish in bags. The frontend's own hint says 'Such as crates, bags or boxes'. So if anything the prototype's list is inverted, and main including the poultry, bee, reptile and parrot codes is defensible. What is still unexplained is main's inconsistency inside its own groups: domestic rabbits (01061410) are asked but other rabbits (01061490) are not, and birds of prey, parrots and other birds are asked while ratites (01063300) and pigeons (01063910) are not.",
         "Related, and not this row's to fix: the service collects a package count but never a package type, and the backend sends LogisticsPackage(null, null, totalNoOfPackages) (repos/trade-imports-animals-backend src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/LogisticsPackage.java:12). The GBN-AG schema requires typeCode beside itemQuantity and types it as a string, and that record carries no @JsonInclude(NON_NULL) where its siblings do, so the payload serialises typeCode as an explicit null and fails the schema either way - present-but-null against the string type, or absent against required if NON_NULL were added. Nothing validates the outbox payload against gbn-ag-v1.schema.json anywhere outside the schemas repo, so this is unchecked. Raise it against the GBN-AG payload owner, not here; it matters to this row only in that answering 'which commodities need a package count' may also need 'and what type of package', which no page asks today.",
-        "If the ruling goes Design Release 2.1's way, the change is PACKAGE_COUNT_CODES in services/commodities/rules.js plus the consignment-details and check-answers tests that pin the current list. If it goes MDM's way, reference-data must also pass packageType through, which reference-lists owns, so that would add a repo this theme does not have."
+        "If the ruling goes Design Release 2.1's way, the change is PACKAGE_COUNT_CODES in services/commodities/rules.js plus the consignment-details and check-answers tests that pin the current list. If it goes MDM's way, reference-data must also pass packageType through, which reference-lists owns, so that would add a repo this theme does not have.",
+        "CI evidence from the 4 Nov ci-red stop, recorded because the loop's own stop message misattributed it. The loop said 'E2E Tests failed (Playwright; evidence in test-results/*/error-context.md)'. That is wrong: in run 41856254618 all three Playwright shards passed (e2e/e2e 1,3 2,3 and 3,3 all success) and the ONLY failing job was 'e2e / smoke / Smoke run', the k6 suite. There is no Playwright error-context to read, so do not look there. The real failure: k6 threshold 'checks{scenario:live-animals}' crossed at rate=96.55% against 'rate>0.99'. The other three scenarios - high-risk-plants, ins-address-book, ins-front-door - were all 100%, so this is specific to the live-animals walk and not a stack or platform fault. The named check that failed is 'submitted through the declaration page' at 50%, 1 pass and 1 fail across iterations, alongside a 'value>=1' check reading 0. It failed identically on attempts 2 and 3, so it is deterministic rather than flaky. Candidate cause: the live-animals k6 walk no longer supplies an answer the journey now demands before the declaration will submit - inc-018 added hard stops on means of transport and number of packages, inc-024 pins which commodities ask for packages, and inc-015 moved the main import reason into the walk between the commodity page and Commodity details. Read repos/trade-imports-performance-tests src/k6/live-animals.js and src/config/test-data.js against the frontend's current obligations before changing anything. Note also that the smoke job passes on main - main's E2E failures are Playwright shard jobs, never smoke - so the branch is what differs."
       ],
       "gate": null,
       "merge": {
         "frontend": "origin/main",
         "tests": "origin/main"
-      }
+      },
+      "commit": "615c48bf df3cef9",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/456",
+          "repo": "trade-imports-animals-frontend",
+          "number": 456
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/79",
+          "repo": "trade-imports-ins-tests",
+          "number": 79
+        }
+      ]
     },
     {
       "id": "inc-025",

@@ -154,16 +154,17 @@
     },
     {
       "id": "REQ-ORIGIN-008",
-      "name": "Saving without a country is accepted, but leaves the origin task outstanding",
+      "name": "Save and continue requires a country of origin",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-ORIGIN-008-A",
-          "name": "Saving with no country chosen succeeds and moves on",
+          "name": "Save and continue without a country is refused",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "country: an unanswered country saves the rest of the page and moves on", "strength": "full", "notes": "saves the rest of the page and moves on with no country" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "country: an unanswered country leaves the origin task unfinished", "strength": "full", "notes": "confirms the Overview task row stays outstanding" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should refuse with the country message and commit nothing", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "refuses save and continue when no country is chosen", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/origin.spec.ts", "test": "refuses save and continue when no country is chosen", "strength": "full", "notes": "" }
           ]
         }
       ]
@@ -178,7 +179,7 @@
           "name": "An out-of-list country is rejected and the field is cleared",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "country validation: an out-of-list country links to and focuses the cleared field", "strength": "full", "notes": "this test now covers what REQ-ORIGIN-008's old 'when no country is chosen' test used to claim to cover — the empty-country case moved to REQ-ORIGIN-008 above (now accepted, not rejected); this one is specifically the off-list-value case" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "country validation: an out-of-list country links to and focuses the cleared field", "strength": "full", "notes": "off-list country value, not the empty mandatory case in REQ-ORIGIN-008" }
           ]
         }
       ]
@@ -444,23 +445,24 @@
     },
     {
       "id": "REQ-ORIGIN-017",
-      "name": "A region code typed with no country waits for the country before it is saved",
+      "name": "A region code typed before a country is kept until the country gives it its prefix",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-ORIGIN-017-A",
-          "name": "The typed code stays on the page when the save is refused for another answer",
+          "name": "The typed code stays in the box when save is refused for the missing country",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should keep the typed code on the page when the save is refused for another answer", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "a region code is saved once a country gives it its prefix", "strength": "partial", "notes": "refusal for missing country keeps the typed suffix on the page" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should keep the typed region code on the page when the save is refused for another answer", "strength": "partial", "notes": "preserved suffix when save is refused for another field; not the missing-country case" }
           ]
         },
         {
           "id": "SCN-ORIGIN-017-B",
-          "name": "No code is saved until a country is chosen",
+          "name": "Once a country is chosen the code is saved with that country's prefix",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should save no region code while no country gives it its prefix", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "a region code is saved once a country gives it its prefix", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should store the country prefix joined to the typed part in upper case", "strength": "partial", "notes": "" }
           ]
         }

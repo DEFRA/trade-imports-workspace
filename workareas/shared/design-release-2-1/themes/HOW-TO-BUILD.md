@@ -55,13 +55,14 @@ commodities-and-reason carries 10 such on purpose. Read them from
 ## Stale branches (ruled 20 October)
 
 Five themes were built on branches that will **not** be merged. Each is now a stale branch: a quarry to take code from,
-not something to finish.
+not something to finish. On 2 November Sam ruled arrival and transit's branch reused instead: it builds on, with `main`
+merged in through the loop (see its section below).
 
 | Theme | Stale branch | Rows left | Open PRs to close when the theme is played |
 |---|---|---|---|
 | Type question and templates (EUDPA-690) | `feat/NO_JIRA-design-release-2-1-type-question-and-templates` | 19 | animals frontend #398, animals backend #106, INS frontend #45, plants frontend #92, tests #20 |
 | Commodities and import reason (EUDPA-693) | `feat/EUDPA-693-design-release-2-1-commodities-and-reason` | 13, of which 11 todo | animals frontend #401, tests #23, performance tests #17 |
-| Arrival and transit (EUDPA-694) | `feat/EUDPA-694-design-release-2-1-arrival-and-transit` | 4 | animals frontend #402, plants frontend #95, tests #24 |
+| Arrival and transit (EUDPA-694) | `feat/EUDPA-694-design-release-2-1-arrival-and-transit` | 3 to build: reused, not stale (2 November); inc-240 landed 3 November | none: the theme builds on these PRs again |
 | Origin page (EUDPA-695) | `feat/EUDPA-695-design-release-2-1-origin-page` | 0: retired | animals frontend #403, plants frontend #96, tests #25 (close once design snagging lands) |
 | Overview and review (EUDPA-696) | `feat/EUDPA-696-design-release-2-1-overview-and-review` | 21 | animals frontend #404, animals backend #107, INS frontend #51, plants frontend #98, tests #26 |
 
@@ -254,15 +255,36 @@ To check nothing has drifted: "which theme tickets are stale". Tickets and their
   a GBN-AG live-animal commodity and fish is managed under the IUU regime.
 - **Old PRs to close when played:** animals frontend #401, tests #23, performance tests #17.
 
-## Arrival and transit: EUDPA-694 (stale branch)
+## Arrival and transit: EUDPA-694 (branch reused)
 
 - **Ticket:** [EUDPA-694](https://eaflood.atlassian.net/browse/EUDPA-694)
-- **Stale branch:** `feat/EUDPA-694-design-release-2-1-arrival-and-transit`. Salvage from it.
-- **When played:** a fresh branch from `main` after design snagging.
-- **Rows:** 4: 3 to rebuild with salvage notes (required means of transport, transit page title and redirect, transit
-  country list), 1 dropped. inc-026 went to design snagging inc-208; inc-027 is already on `main` through reference lists.
-  The transit page's Back link moved from inc-029 to design snagging inc-218.
-- **Old PRs to close when played:** animals frontend #402, plants frontend #95, tests #24.
+- **Branch reused (Sam, 2 November).** The 20 October stale ruling no longer applies to this theme. It builds on
+  `feat/EUDPA-694-design-release-2-1-arrival-and-transit` again, in the animals frontend, the plants frontend, the tests
+  repo and this workspace, rather than on a fresh branch. Main comes in through the loop, as merge row inc-240, never
+  by hand; the branch's old commits stay in its history as the source the rows take code from.
+- **The workspace branch** took `main` outside the loop (2 November, with Sam's go), because a branch run cannot build
+  the workspace repo and spec edits land on whatever branch it is on. Its 13 October spec commit 5a995a66 predates
+  design snagging and the 26 October ruling, so the merge kept `main`'s spec; the rows rewrite it. Launch with the
+  workspace on this branch so the spec lands on spec PR #154.
+- **Rows:** 4 to build, in order: inc-240 (merge `main` into the animals frontend, plants frontend and tests branches,
+  each tree ending identical to `main`), inc-241 (means of transport required on both save buttons, replacing inc-028
+  under the 26 October Save and return ruling), inc-029 (transit page title and redirect), inc-174 (transit country list
+  with territories). inc-025 dropped, inc-028 merged into inc-241. inc-026 went to design snagging inc-208; inc-027 is
+  on `main` through reference lists; the transit Back link came with design snagging inc-218. Full detail:
+  [`arrival-and-transit/reanalysis.md`](arrival-and-transit/reanalysis.md).
+- **Pull requests that merge with the theme:** animals frontend #402, plants frontend #95, tests #24, workspace spec
+  #154. Every plants journey change the branch carried is on `main`, so #95 changes no behaviour. It carries only the
+  joi 18.3.1 and @hapi/content 6.0.3 security fix (GHSA-4528-x5fx-h6hg, GHSA-8494-f6mr-cjpv), kept on the theme by
+  Sam's choice, and merges with the theme.
+- **Carry-only pull requests:** stub #20, reference data #27 and INS frontend #49 have no diff against `main`. INS
+  frontend's security fix reached `main` through its #73. No row builds there and they take no merge. They stay open
+  only so the branch name resolves to a branch image in the stack; close them when the theme merges. Their 13 October
+  images turned inc-240 red, so on 3 November, with Sam's go, `main` was merged into all three branches and their
+  images rebuilt (see [`arrival-and-transit/reanalysis.md`](arrival-and-transit/reanalysis.md)).
+- **Loop args:** [`arrival-and-transit/build-args.json`](arrival-and-transit/build-args.json): `rigour: full`,
+  `e2e: ci`.
+- **Say:** "run the increment build loop on shared/design-release-2-1/themes/arrival-and-transit, branch lifecycle on
+  feat/EUDPA-694-design-release-2-1-arrival-and-transit"
 
 ## Origin page: EUDPA-695 (retired)
 

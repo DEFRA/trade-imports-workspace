@@ -200,19 +200,22 @@
         },
         {
           "id": "SCN-FLOW-004-G",
-          "name": "Arrival details saved and returned without a means of transport keeps the other answers",
-          "coverage": "full",
+          "name": "Arrival details saved and returned without a means of transport is refused",
+          "coverage": "partial",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/soft-save.spec.ts", "test": "arrival details: when no means of transport is chosen, saves the port, shows the overview and keeps the task to do", "strength": "full", "notes": "proves the overview, the To do status and the port on re-opening; red when the page requires a means of transport" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js", "test": "Should save the port and go to the overview on Save and return to overview with no means of transport", "strength": "partial", "notes": "proves the save and the redirect, not the task status; red when the page requires a means of transport" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/soft-save.spec.ts", "test": "arrival details: when no means of transport is chosen, refuses the save, shows the port back and keeps the task to do", "strength": "partial", "notes": "proves the refusal, the To do status and the port empty on re-opening; not probed" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js", "test": "Should refuse %s with no means of transport, show the port back and commit nothing", "strength": "partial", "notes": "proves the refusal, the port shown back and nothing committed on Save and return to overview, but not that the Arrival details task reads 'To do'; red when the means rule is optional on submit" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "means validation: Save and return to overview with no means shows the required error, shows the answers back and saves nothing", "strength": "partial", "notes": "proves the same in a browser; not probed" }
           ]
         },
         {
           "id": "SCN-FLOW-004-H",
           "name": "Transit countries saved and returned keeps the countries listed",
-          "coverage": "none",
-          "tests": [],
-          "notes": "The tests that prove this are only on an open Design Release 2.1 theme branch, not on main yet."
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/soft-save.spec.ts", "test": "transit countries: saves the countries listed and goes to the overview", "strength": "full", "notes": "asserts the overview, then France and Belgium listed in order on re-opening the task; red with the controller committing an empty list" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.test.js", "test": "Should save the listed countries and go to the overview on Save and return to overview", "strength": "partial", "notes": "proves the redirect to the overview and the committed codes, not the page listing them on re-opening; red with the controller committing an empty list" }
+          ]
         }
       ]
     },

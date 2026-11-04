@@ -133,6 +133,14 @@ programme's `sources.json` pins. Design Release 2.1 has no address book view of 
 - **Built:** the tabs are an MoJ sub navigation, whose navigation landmark needs a name for screen-reader users. The code chose 'Address types' (`copy.en.js` `list.tabsLabel`, Welsh 'Mathau o gyfeiriad').
 - **To ask:** keep 'Address types', or use another name such as 'Address categories' or 'Address book'?
 
+### S-16. One caption or two across the add-an-address flow
+
+- **Ticket:** [EUDPA-711](https://eaflood.atlassian.net/browse/EUDPA-711), [ins-frontend #71](https://github.com/DEFRA/trade-imports-ins-frontend/pull/71). EUDPA-711 review, ins-frontend item 15.
+- **Page:** the INS address type page (step 1 of adding an address) and the add form that follows it (step 2).
+- **Prototype:** two captions. The type page says 'Add a new address' ([address-book-add.html#L37](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/views/address-book-add.html#L37)); the add form says 'Add new address' ([consignment-add-address.html#L39](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/views/design-release-2.1/consignment-add-address.html#L39)), as the ticket's acceptance criteria do.
+- **Built:** both, as the prototype has them: the type page's caption is 'Add a new address' ([address-type.njk#L8](https://github.com/DEFRA/trade-imports-ins-frontend/blob/b8c877f/src/server/app/features/address-book/address-type/address-type.njk#L8), [copy.en.js#L89](https://github.com/DEFRA/trade-imports-ins-frontend/blob/b8c877f/src/server/app/features/address-book/copy/copy.en.js#L89)) and the add form's is 'Add new address' ([add.njk#L9](https://github.com/DEFRA/trade-imports-ins-frontend/blob/b8c877f/src/server/app/features/address-book/add/add.njk#L9), [copy.en.js#L125](https://github.com/DEFRA/trade-imports-ins-frontend/blob/b8c877f/src/server/app/features/address-book/copy/copy.en.js#L125)). A trader sees the caption change between step 1 and step 2.
+- **To ask:** (a) both pages 'Add a new address', the words of the list's button; (b) both pages 'Add new address', as the ticket's criteria say; or (c) keep the two as built?
+
 ## Settled
 
 | Question | Answer | Where it landed |

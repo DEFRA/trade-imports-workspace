@@ -5,7 +5,7 @@
 This page records the runs the CDP Portal triggers after each deployment and on a
 [schedule](#scheduled-runs). Each run is one `PROFILE` of the
 `trade-imports-ins-tests` test suite: `default` (the e2e suite), `a11y`,
-`dynamics` or `security`, run for every domain, or `<domain>:<suite>` (for
+`dynamics`, `cross-browser` or `security`, run for every domain, or `<domain>:<suite>` (for
 example `animals:e2e`) for one. The profiles are described in the
 [`trade-imports-ins-tests` README](../../repos/trade-imports-ins-tests/README.md#running-tests-via-cdp-portal).
 For the runs that happen on every PR instead, see [E2E tests: GitHub Actions](e2e-tests-gh-actions.md).
@@ -118,6 +118,10 @@ specs through a passive ZAP scan. The `@active` specs under each domain's
 
 Times are in the zone the schedule is set in: Europe/London here, UTC in
 GitHub Actions. In summer, 01:00 UTC is 02:00 in London.
+
+## Cross-browser runs `TBC`
+
+The `cross-browser` profile, and `<domain>:cross-browser` for one domain, run the `@cross-browser` tests in Firefox, WebKit and an emulated iPhone. How they run is `TBC`. For now, start the profile from the portal by hand. See [Cross-browser testing](../../repos/trade-imports-ins-tests/docs/cross-browser.md).
 
 ## Family profiles `PROPOSED`
 

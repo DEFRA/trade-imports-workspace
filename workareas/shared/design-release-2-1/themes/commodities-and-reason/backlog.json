@@ -162,7 +162,7 @@
       "detail": "inc-013 committed to the theme branch and opened its pull requests, but the run stopped at pr-conflict: trade-imports-ins-tests #79 conflicts with its base, so GitHub runs no checks on it at all and the row cannot be proved. Main has moved under the branch since it was cut this afternoon - the animals frontend by 2 commits and the tests repo by 3 (f36cedd test(EUDPA-669) multi-commodity persistence E2E, 7ce3c4e fix(EUDPA-759) the origin page ending with Save and continue alone, 18407cf marking the contact address return test slow). The performance tests repo has not moved and is left out. Two files conflict, both in the tests repo, and both because EUDPA-669 touched exactly the files inc-013 rewrote.",
       "dependsOn": [],
       "theme": "commodities-and-reason",
-      "status": "todo",
+      "status": "done",
       "kind": "chore",
       "repos": [
         "frontend",
@@ -193,6 +193,19 @@
         "Placed before inc-013 so it builds first. inc-013 is status todo with its commit (frontend fc7aafec, tests 196a087) and both pull requests already recorded, and attempt cleared - recording a commit clears the attempt - so it has no stage to resume at. Watch whether it re-plans from the top rather than going straight to CI; if it does, that is a gap worth reporting, because a row holding a commit and a pr but still todo has lost its resume point.",
         "gatePhases is [] because the theme runs e2e: 'ci': the rows prove themselves on their pull requests, so this row owes no local gate phase either.",
         "Only the tests repo conflicts. The frontend is merely 2 commits behind and is included because HOW-TO-BUILD has one row cover every repo that needs the merge, which stops the next row discovering the same drift. The performance tests repo is behind by 0 and is left out."
+      ],
+      "commit": "081cbf5faa218ab8a326b3663de998ec43a8483f 4cd114949043f1f8f36160a550ad3385f6a3835c b548cdf9",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/456",
+          "repo": "trade-imports-animals-frontend",
+          "number": 456
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/79",
+          "repo": "trade-imports-ins-tests",
+          "number": 79
+        }
       ]
     },
     {
@@ -209,7 +222,7 @@
       ],
       "dependsOn": [],
       "theme": "commodities-and-reason",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -286,7 +299,7 @@
       ],
       "dependsOn": [],
       "theme": "commodities-and-reason",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -363,7 +376,25 @@
         "frontend": "origin/main",
         "tests": "origin/main",
         "perftests": "origin/main"
-      }
+      },
+      "commit": "85dd20d35b38e2e7afa2144496a1c7cda9ef5eb8",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/456",
+          "repo": "trade-imports-animals-frontend",
+          "number": 456
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/79",
+          "repo": "trade-imports-ins-tests",
+          "number": 79
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-performance-tests/pull/30",
+          "repo": "trade-imports-performance-tests",
+          "number": 30
+        }
+      ]
     },
     {
       "id": "inc-018",
@@ -375,7 +406,7 @@
       ],
       "dependsOn": [],
       "theme": "commodities-and-reason",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -403,7 +434,9 @@
         "req-1642",
         "req-1643"
       ],
-      "openQuestions": [],
+      "openQuestions": [
+        "For the designer: should the live-animals \"Number of packages (when required)\" field be a hard stop on \"Commodity details\", or stay optional? Raised by the inc-018 review, which found the row second acceptance criterion unbuilt because the design sources disagree for live animals. The criterion rests on one merged phrase at workareas/shared/design-release-2-1/prototype-specs/COVERAGE.md:161-162 (\"Hard stops: type, region code when Yes, commodity, number of animals/packages/weight/temperature, means of transport, contact address, declaration\"). Three sources say the opposite for live animals. V4, which sources.json ranks above the prototype on a Mandatory marking: workareas/shared/design-release-2-1/distil/extract/confluence-6497338582.part1.json:801-806 quotes the Mandatory cell verbatim as \"Optional\" - \"Number of packages is Optional: it can be left blank\". The prototype own source: workareas/shared/design-release-2-1/distil/extract/prototype-dr2-1-source.part3.json:226-234 - the live-animal packages field is not validated for live-animal species, quoting app/routes.js:1125-1130. The prototype own suite: workareas/shared/design-release-2-1/prototype-specs/e2e/description-of-the-goods.fit.spec.js:53-57 expects only \"Enter the number of animals\" on an empty live-animals save, while :90-103 (cattle semen 05111000) shows weight, packages and temperature are the germinal page three hard stops - which the merged COVERAGE.md phrase conflates. The code follows V4 and the prototype: repos/trade-imports-animals-frontend/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/fields.js:27-35 composes integerInRange (a blank passes) and obligations/sections/commodities/lines.js keeps status \"optional\". Options. A - keep it optional (what the code, V4 and the prototype set): retire inc-018 acceptance criterion 2 and req-1643, re-distil claim prototype-dr2-1-specs-p7-139 against confluence-6497338582-p1-099 and prototype-dr2-1-source-p3-028/-p3-035, and build the three germinal hard stops (weight, packages, temperature) in the germinal-products theme instead. B - make it a hard stop: the live-animals page then differs from the V4 Mandatory marking and from the prototype own behaviour, and a trader importing chickens can no longer continue past a blank \"Number of packages (when required)\" box."
+      ],
       "notes": [
         "Combines two hard-stop slices (req-1642 arrival, req-1643 packages): both change which answers are required to proceed, in the obligations rather than the page content, and are reviewed together. Which species ask for a number of packages is req-112 (another area); this row only makes the question required where it is asked. Existing tests that say arrival details is enforced as a whole page (transit-means-scope) change with it.",
         "Salvage: trade-imports-animals-frontend f94b0823, trade-imports-ins-tests 120e234 on stale branch feat/EUDPA-693-design-release-2-1-commodities-and-reason; rebuild on a fresh branch from main. Take the meansRule in port-of-entry/validate.js, requiredIntegerInRange for packages in consignment-details/fields.js, numberOfPackages 'mandatory' in obligations/sections/commodities/lines.js, and the two error strings in English and Welsh. Also take the branch's tests showing the other arrival answers stay optional and a no-packages line still saves: they guard the new rules from going too far. Plants arrival details is not touched. The germinal half of req-1642 is observed in germinal-products inc-182, which already depends on this row in themes.json.",
@@ -417,7 +450,20 @@
       "merge": {
         "frontend": "origin/main",
         "tests": "origin/main"
-      }
+      },
+      "commit": "f4772eb5 5655a1a",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/456",
+          "repo": "trade-imports-animals-frontend",
+          "number": 456
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/79",
+          "repo": "trade-imports-ins-tests",
+          "number": 79
+        }
+      ]
     },
     {
       "id": "inc-019",
@@ -430,7 +476,7 @@
       ],
       "dependsOn": [],
       "theme": "commodities-and-reason",
-      "status": "todo",
+      "status": "dropped",
       "kind": "test",
       "repos": [
         "tests"
@@ -465,7 +511,8 @@
         "One slice (req-1656).",
         "Tests only: the walk proves behaviour main already has, rather than needing a frontend change.",
         "Re-analysis 2 Nov: unblocked. MDM now serves chicken, so the walk can run. MDM gives it under two codes, 01051111 ('Weighing not more than 185 g:Fowls of the species Gallus domesticus, Grandparent and parent female chicks: Laying stocks') and 01059400 ('Fowls of the species Gallus domesticus'), each with species Gallus gallus, common name 'Chicken' (frontend origin/main:src/server/app/services/_capture/fixtures/commodities.json). Criterion 1 named 010511 and Gallus domesticus, neither of which MDM holds, so it now names 01051111 and Gallus gallus; the walk may pick 01059400 instead, as both are selectable and the fixture holds both.",
-        "Re-analysis 2 Nov: dependsOn inc-012 dropped. The row needed that row only to bring poultry into the catalogue, and MDM has done it. Criteria 2 and 3 rest on poultry carrying no identifier, which is already true on main: COMMODITY_IDENTIFIERS covers only 0102, 0101 and 01061900, so IDENTIFIED_CODES excludes poultry and the Identification details page and its task drop out (frontend origin/main:src/server/app/sets/live-animals/services/commodities/rules.js:6-34). Criterion 1's CPH number is consistent too, since CPH_EXEMPT_CODES is 0101 and 01061900 only (rules.js:80). No poultry test exists anywhere in the tests repo today, so the walk is wholly new."
+        "Re-analysis 2 Nov: dependsOn inc-012 dropped. The row needed that row only to bring poultry into the catalogue, and MDM has done it. Criteria 2 and 3 rest on poultry carrying no identifier, which is already true on main: COMMODITY_IDENTIFIERS covers only 0102, 0101 and 01061900, so IDENTIFIED_CODES excludes poultry and the Identification details page and its task drop out (frontend origin/main:src/server/app/sets/live-animals/services/commodities/rules.js:6-34). Criterion 1's CPH number is consistent too, since CPH_EXEMPT_CODES is 0101 and 01061900 only (rules.js:80). No poultry test exists anywhere in the tests repo today, so the walk is wholly new.",
+        "Dropped 4 November: the plan stage refused it. Its first criterion requires the poultry-by-rail walk to reach 'Import notification submitted' through the real stack, and that is unreachable today for a reason living in repos/trade-imports-stub, which is not in this theme's repos. Split into inc-248 (everything the branch can prove today, up to and including the review) and inc-249 (the submission, blocked on the stub serving a chicken species). The row's 2 November note that 'MDM now serves chicken' was wrong: it cited the frontend's stub-mode capture fixture, not what the stack serves."
       ],
       "gate": null,
       "externalDependsOn": [
@@ -477,6 +524,91 @@
       "merge": {
         "tests": "origin/main"
       }
+    },
+    {
+      "id": "inc-248",
+      "title": "End-to-end proof: poultry by rail in transit, as far as the review",
+      "detail": "Replaces inc-019, which the plan stage refused because its first criterion could not be built in the tests repo. This row keeps everything the branch can prove today: the poultry-by-rail walk itself, that no Identification details step or task appears for a chicken line, and that every overview task reads Complete with the review showing the journey's answers. Reaching 'Import notification submitted' is split out to inc-249, which is blocked on the stub serving a chicken species.",
+      "dependsOn": [],
+      "theme": "commodities-and-reason",
+      "status": "todo",
+      "kind": "test",
+      "repos": [
+        "tests"
+      ],
+      "merge": {
+        "tests": "origin/main"
+      },
+      "gatePhases": [],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "e2e/journeys.fit.spec.js:237-250 p2-011, p4-069"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p13-002, p13-182, p13-194, p13-195"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null,
+      "externalDependsOn": [],
+      "acceptanceCriteria": [
+        "The tests repo walks a poultry-by-rail notification from create to the review page: origin Germany, Chicken (01051111) Gallus gallus, 'Transit' with an exit port and the Republic of Ireland as destination country, arrival by rail with a transport identification, transit through Belgium and France, a transporter and a CPH number. The walk stops at the review and asserts nothing about submitting (prototype:dr2-1-specs e2e/journeys.fit.spec.js:237-250 p4-069; trace:prototype-dr2-1 p13-002, p13-182)",
+        "In that walk no 'Identification details' page is shown and the overview has no 'Identification details' task (prototype:dr2-1-specs e2e/journeys.fit.spec.js:237-250 p2-011)",
+        "In that walk every task on the overview reads 'Complete' before the review is opened, asserted as the whole task list against the real hub order of ELEVEN rows: 'Where is this consignment coming from?', 'What are you importing?', 'Main import reason', 'Commodity details', 'Additional details', 'Arrival details', 'Transit countries', 'Transport details', 'Upload documents', 'Roles and addresses', 'Contact address for this consignment' (frontend features/hub/controller.js:26-42, features/hub/copy/copy.en.js:25-63)",
+        "The review shows Germany, Transit, Belgium and the chosen transporter (trace:prototype-dr2-1 p13-194, p13-195)"
+      ],
+      "notes": [
+        "Replaces inc-019, refused at the plan stage on 4 November. The refusal is recorded in full on inc-019 and the run result; the short version is that criterion 1's 'Import notification submitted' is unreachable on the stack for a reason living in repos/trade-imports-stub, which is not in this theme's repos.",
+        "inc-019's own 2 November note was wrong and must not be reused: it said 'MDM now serves chicken, so the walk can run', citing frontend origin/main:src/server/app/services/_capture/fixtures/commodities.json. That file is the frontend's STUB-MODE capture, read by sets/live-animals/services/commodities/stub.js only when STUB_MODE is true, so it is what the FIT suite sees and not what the stack serves. The stack runs LIVE_ANIMALS_MODE=real with no STUB_MODE (docker/stack/frontend.compose.yml:39-88, frontend src/config/config.js:265-270), so commodity reads go to reference-data. Chicken works in stub mode; the stack path does not. This theme's inc-026 already records that the two captures have drifted.",
+        "Criterion 3's task list is ELEVEN rows, not the prototype's ten: the prototype's HUB_ROWS omits 'Transit countries'. Assert against the real hub order above, not against the prototype.",
+        "Why the three criteria hold on the branch today, from the plan stage's reading: IDENTIFIED_CODES is ['0102','0101','01061900'] (frontend services/commodities/rules.js:6-35), so for a chicken line the identification gate fails (flow/gates.js inScopeReachable over collectsOf('animalIdentification')), the opening run skips the step (flow/run.js:46-50) and the animalIdentification task row is conditional with applies: identifiesAnAnimal so rowStatus is NA and the hub drops it (flow/task-rows.js:55-61, features/hub/controller.js:56). CPH_EXEMPT_CODES is ['0101','01061900'] (rules.js:79), so a chicken consignment does owe a CPH number. transitedCountries is in scope for RAILWAY and optional (obligations/sections/transport.js:96-111), so with a country added the row reads Complete (bridge/status/index.js:56-63). numberOfPackages is optional for every code (obligations/sections/commodities/lines.js:54-62), so Commodity details reads Complete with the animal count alone.",
+        "Exemplar: walkOpeningRunHorseBySea (tests flows/animals/journey.ts:708-766) with tests/animals/e2e/journeys/horse-temporary-admission.spec.ts as the spec shape. Its whole-list taskNames/taskStatuses assertion proves criteria 2 and 3 together in one positive assertion rather than asserting an absence."
+      ]
+    },
+    {
+      "id": "inc-249",
+      "title": "End-to-end proof: the poultry-by-rail walk submits the notification",
+      "detail": "The second half of inc-019: the poultry-by-rail walk reaches 'Import notification submitted' rather than stopping at the review. Blocked. On the stack the animals frontend runs LIVE_ANIMALS_MODE=real with no STUB_MODE, so every commodity read goes to reference-data and through to the MDM stub. The stub serves no species page for the chicken code the walk picks, so the review's species check marks the line unlisted and the notification cannot be submitted. The fix is in repos/trade-imports-stub, which is not in this theme's repos, so this row cannot be built here as it stands.",
+      "dependsOn": [],
+      "theme": "commodities-and-reason",
+      "status": "blocked",
+      "kind": "test",
+      "repos": [
+        "tests"
+      ],
+      "merge": {
+        "tests": "origin/main"
+      },
+      "gatePhases": [],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "e2e/journeys.fit.spec.js:237-250 p4-069"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p13-002, p13-182"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [
+        "Who owns the stub chicken species, and does it belong in this theme at all? The change is two files in repos/trade-imports-stub, a repo this theme does not build. Either the stub repo joins the theme's repos and the envelope's, or this row moves to whichever theme or ticket owns the stub's MDM fixtures."
+      ],
+      "gate": null,
+      "externalDependsOn": [],
+      "acceptanceCriteria": [
+        "The poultry-by-rail walk of inc-248 continues past the review and reaches 'Import notification submitted' (prototype:dr2-1-specs e2e/journeys.fit.spec.js:237-250 p4-069; trace:prototype-dr2-1 p13-002, p13-182)",
+        "The review's species check does not mark the chicken line unlisted, because the MDM stub serves a species page for the commodity code the walk picks"
+      ],
+      "notes": [
+        "Blocked on repos/trade-imports-stub, named precisely by the plan stage that refused inc-019 on 4 November: src/main/resources/responses/mdmProductSpeciesResponses.json needs a species page for the chicken code the walk picks (01051111, and/or 01059400) listing Gallus gallus with common name Chicken — required, the criterion is unachievable without it. src/main/resources/responses/mdmProductSearchResponses.json should also gain a search-term key a trader would plausibly type for chicken, so the walk searches as a user does rather than for '010' — strongly wanted rather than required.",
+        "The stub repo has no branch of this run's name. It carries origin/feat/EUDPA-693-design-release-2-1-commodities-and-reason, which belongs to the reference-lists theme — its two commits are the countries and ports recapture — and adds no chicken species. So that branch is not a head start.",
+        "Do not reinstate inc-019's claim that MDM already serves chicken. That rested on the frontend's stub-mode capture fixture, not on what the stack serves. See inc-248's notes for the full reading.",
+        "Recorded in deferred.md as well, because the work is in a repo outside this theme."
+      ]
     },
     {
       "id": "inc-022",

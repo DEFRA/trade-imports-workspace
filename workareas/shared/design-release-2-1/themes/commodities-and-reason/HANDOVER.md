@@ -178,3 +178,41 @@ It must hold and notify on `plan-refused`, any stack stop, or any reason it does
 not recognise. Limits: at most 6 relaunches, stop if one reason repeats three
 times, never hand-merge `main`, never merge or close a pull request, never touch
 `main`.
+
+## Stopped deliberately, 4 November ~22:50, mid `inc-025`
+
+The session was stopped on purpose rather than risked overnight, with `inc-025`
+part-built. Nothing is lost and nothing needs rescuing before a relaunch.
+
+Where `inc-025` got to: plan and review done, the 43-commit merge from the
+arrival-and-transit theme applied with **zero unresolved conflicts**, implement
+finished, and it was in the review/consistency fan-out. It had **not** committed,
+so it is still `status: todo` with `attempt: none`.
+
+Left in the working trees, uncommitted:
+
+| Repo | State |
+|---|---|
+| animals frontend | `MERGE_HEAD` set, 49 files, 0 unresolved |
+| ins tests | `MERGE_HEAD` set, 24 files, 0 unresolved |
+| performance tests | clean |
+| this repo | the openspec specs and coverage `inc-025` was writing |
+
+All three saved as patches beside this file, in case the trees are ever reset:
+
+- `logs/inc-025-preserve-frontend.patch` (+ `.status`)
+- `logs/inc-025-preserve-tests.patch` (+ `.status`)
+- `logs/inc-025-preserve-openspec.patch`
+
+**The simplest relaunch is to leave the trees exactly as they are.** `inc-025`
+has no attempt record, so the loop rebuilds it from the top; its baseline guard
+will find the dirty trees and the in-progress merges and decide what to do with
+them. The merge is already resolved, so that work is not wasted.
+
+If a clean start is wanted instead: `git -C <repo> merge --abort` in the frontend
+and tests repos and `git checkout -- openspec/` here, then relaunch — the merge
+will simply be redone by `inc-025`'s own `merge` field, since both repos are
+behind `main` again.
+
+The stack lease was free and the stack down when the session ended, so there is
+nothing to release.

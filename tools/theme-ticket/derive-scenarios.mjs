@@ -22,7 +22,6 @@ import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 
-const WORKSPACE = path.resolve(process.env.HOME, 'git/defra/trade-imports-workspace')
 const GITHUB_BLOB = 'https://github.com/DEFRA/trade-imports-workspace/blob'
 
 /** openspec areas to the domain a business reader knows them by. */
@@ -77,9 +76,11 @@ for (let i = 0; i < process.argv.length - 1; i += 1) {
 const theme = args.theme
 const workarea = args.workarea
 if (!theme || !workarea) {
-  console.error('usage: derive-scenarios.sh --workarea <path under workareas/> --theme <id>')
+  console.error('usage: derive-scenarios.sh --workarea <path under workareas/> --theme <id> [--workspace <dir>]')
   process.exit(2)
 }
+
+const WORKSPACE = path.resolve(args.workspace || path.join(process.env.HOME, 'git/defra/trade-imports-workspace'))
 
 const git = (...a) => execFileSync('git', ['-C', WORKSPACE, ...a], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
 
@@ -227,13 +228,50 @@ const specCache = new Map()
 function scenariosOf(relPath) {
   if (specCache.has(relPath)) return specCache.get(relPath)
   const file = path.join(WORKSPACE, 'openspec', 'specs', relPath)
+  const byHeading = fs.existsSync(file) ? parseScenarios(fs.readFileSync(file, 'utf8')) : new Map()
+  specCache.set(relPath, byHeading)
+  return byHeading
+}
+
+/** Every scenario in a spec file as the given commit left it, keyed by its heading. */
+function scenariosAt(sha, relPath) {
+  const text = execFileSync('git', ['-C', WORKSPACE, 'show', sha + ':openspec/specs/' + relPath], {
+    encoding: 'utf8',
+    maxBuffer: 64 * 1024 * 1024
+  })
+  return parseScenarios(text)
+}
+
+function findById(byHeading, id) {
+  return [...byHeading.values()].find((scenario) => scenario.id === id)
+}
+
+function listSpecFiles(dir) {
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const full = path.join(dir, entry.name)
+    if (entry.isDirectory()) return listSpecFiles(full)
+    return entry.name === 'spec.md' ? [full] : []
+  })
+}
+
+let currentIds = null
+
+/** Every scenario id the current specs hold, in any file. */
+function scenarioIdsInCurrentSpecs() {
+  if (currentIds) return currentIds
+  const specsDir = path.join(WORKSPACE, 'openspec', 'specs')
+  currentIds = new Set(
+    listSpecFiles(specsDir).flatMap((file) =>
+      [...parseScenarios(fs.readFileSync(file, 'utf8')).values()].map((scenario) => scenario.id).filter(Boolean)
+    )
+  )
+  return currentIds
+}
+
+function parseScenarios(text) {
   const byHeading = new Map()
-  if (!fs.existsSync(file)) {
-    specCache.set(relPath, byHeading)
-    return byHeading
-  }
   let current = null
-  for (const line of fs.readFileSync(file, 'utf8').split('\n')) {
+  for (const line of text.split('\n')) {
     if (line.startsWith('#### Scenario: ')) {
       current = { heading: line.slice('#### Scenario: '.length).trim(), id: null, steps: [] }
       byHeading.set(current.heading, current)
@@ -252,8 +290,35 @@ function scenariosOf(relPath) {
     const step = line.match(/^- \*\*(GIVEN|WHEN|THEN|AND)\*\*\s*(.*)$/)
     if (step) current.steps.push({ keyword: step[1], text: step[2].trim() })
   }
-  specCache.set(relPath, byHeading)
   return byHeading
+}
+
+/**
+ * Where a scenario a commit added stands in the current spec.
+ *
+ * The id it carried at that commit tells a rename from a removal: a renamed
+ * scenario keeps its id, so it is still the theme's and reads as it does now;
+ * a removed one's id is in no current spec, so it is not counted.
+ */
+function locateAddedScenario(sha, relPath, heading) {
+  const where = relPath + ' by ' + sha.slice(0, 8)
+  const current = scenariosOf(relPath)
+  if (current.has(heading)) return { state: 'current', heading, found: current.get(heading) }
+
+  const id = scenariosAt(sha, relPath).get(heading)?.id
+  const renamed = id ? findById(current, id) : null
+  if (renamed) return { state: 'renamed', heading, found: renamed }
+
+  if (id && !scenarioIdsInCurrentSpecs().has(id)) {
+    warnings.push('scenario ' + id + ' "' + heading + '" was added to ' + where + ' then removed; not counted')
+    return { state: 'removed', heading, found: null }
+  }
+
+  warnings.push(
+    'scenario "' + heading + '" was added to ' + where +
+      ' but no longer reads that way and its id is elsewhere or unknown; counted, text not available'
+  )
+  return { state: 'unaccounted', heading, found: null }
 }
 
 /* ------------------------------------------------------------- assemble --- */
@@ -319,22 +384,21 @@ for (const commit of commits) {
       continue
     }
 
+    const located = headings
+      .map((heading) => locateAddedScenario(commit.sha, relPath, heading))
+      .filter((scenario) => scenario.state !== 'removed')
+    if (!located.length) continue
+
     if (!domains[domain]) {
       domains[domain] = { domain, title: DOMAIN_TITLE[domain] || domain, scenarios: [], files: [], rows: [] }
     }
     const bucket = domains[domain]
 
-    fileCounts.set(relPath, (fileCounts.get(relPath) || 0) + headings.length)
-    totalAdded += headings.length
+    fileCounts.set(relPath, (fileCounts.get(relPath) || 0) + located.length)
+    totalAdded += located.length
 
-    const inFile = scenariosOf(relPath)
-    for (const heading of headings) {
-      const found = inFile.get(heading)
+    for (const { heading, found } of located) {
       if (!found) {
-        warnings.push(
-          'scenario "' + heading + '" was added to ' + relPath + ' by ' + commit.sha.slice(0, 8) +
-            ' but no longer reads that way — renamed or removed since; counted, text not available'
-        )
         bucket.scenarios.push({ heading, id: null, steps: [], file: relPath, row: row ? row.id : null, missing: true })
         continue
       }

@@ -93,7 +93,7 @@ programme's `sources.json` pins. Design Release 2.1 has no address book view of 
 - **Built:** with the search deferred, these two types show the address and contact fields with no search box, and the code keeps the visible section break every address-book add has (`add.njk:29`, `<hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">`), as 'Origin or Consignor' has in the prototype. This is a choice the code made for a case the source does not show.
 - **To ask:** should Destination and Branch entered by hand keep the section break before the uses question, as built and as 'Origin or Consignor' has it, or drop it, as the source's manual entry under the search shows?
 
-### S-11. One label per address use, or two
+### S-11. One label per address use, or three
 
 - **Ticket:** [EUDPA-711](https://eaflood.atlassian.net/browse/EUDPA-711), [ins-frontend #71](https://github.com/DEFRA/trade-imports-ins-frontend/pull/71). inc-068 review, findings 9 and 16.
 - **Page:** the INS address book list (its Type column and its Type filter) and the INS add form's uses question, 'What can this address be used for?'.

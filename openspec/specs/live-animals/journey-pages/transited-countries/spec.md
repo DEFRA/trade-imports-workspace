@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Asks which countries the consignment travels through on its way. The user searches for each country or territory the reference data service serves and adds them one at a time to a list, rather than ticking them in a set of checkboxes. The page is titled "Which countries will the consignment travel through?", its browser title is "Transit countries - Import notification service - GOV.UK", and it is asked only when the means of transport to the port of entry is rail or road.
+Asks which countries the consignment travels through on its way. The user searches for each country or territory the reference data service serves and adds them one at a time to a list, rather than ticking them in a set of checkboxes. The page is titled "Which countries will the consignment travel through?", its browser title is "Transit countries - Import notification service - GOV.UK", and it is asked only when the means of transport to the port of entry is rail or road and the country of origin and a commodity are saved.
 
 ## Requirements
 
@@ -138,9 +138,9 @@ The system MUST point the page's Back link at the arrival details page when the 
 - **WHEN** they select Back
 - **THEN** Overview is shown
 
-### Requirement: The page shows Overview when the means of transport is not rail or road
+### Requirement: The page shows Overview when the means of transport is not rail or road, or an earlier required answer is missing
 **ID**: REQ-TRANSIT-COUNTRIES-008
-The system MUST show Overview when the transited countries page is opened and the saved means of transport is Air or Sea, or none is saved. The system MUST save no countries and show Overview when the page is submitted in that state.
+The system MUST show Overview when the transited countries page is opened and the saved means of transport is Air or Sea, or none is saved, or no country of origin or no commodity is saved. The system MUST save no countries and show Overview when the page is submitted in that state.
 
 #### Scenario: Opening the page with air, sea or no means saved shows Overview
 **ID**: SCN-TRANSIT-COUNTRIES-008-A
@@ -152,6 +152,14 @@ The system MUST show Overview when the transited countries page is opened and th
 **ID**: SCN-TRANSIT-COUNTRIES-008-B
 - **GIVEN** the transited countries page is open and the means of transport has since been saved as Air
 - **WHEN** the user submits the page with Add country, Remove, Save and continue or Save and return to overview
+- **THEN** Overview is shown
+- **AND** no transited countries are saved
+
+#### Scenario: Opening or submitting the page by rail or road without a country of origin or a commodity shows Overview and saves no countries
+**ID**: SCN-TRANSIT-COUNTRIES-008-C
+- **GIVEN** the saved means of transport is Rail or Road
+- **AND** no country of origin is saved, or no commodity is saved
+- **WHEN** the user opens the transited countries page, or submits it with Add country, Remove, Save and continue or Save and return to overview
 - **THEN** Overview is shown
 - **AND** no transited countries are saved
 

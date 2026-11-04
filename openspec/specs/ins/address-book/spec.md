@@ -685,7 +685,7 @@ The address book service MUST serve the page size a list request gives when it i
 
 ### Requirement: A search matches an address by its name, address, town, county, postcode, country or the labels of its uses
 **ID**: REQ-INS-ADDR-032
-The system MUST match the trimmed search text, ignoring case and anywhere inside a word, against an address's name, address line 1, address line 2, town or city, county, postcode and country name, and against the labels of its uses as the Type column shows them, and MUST treat a blank search as no search. While a search is active, the results line MUST count the matches, and pagination MUST show only when the matches run past one page of eight.
+The system MUST match the trimmed search text, ignoring case and anywhere inside a word, against an address's name, address line 1, address line 2, town or city, county, postcode and country name, and against the labels of its uses as the Type column and the Type filter show them, and MUST treat a blank search as no search. While a search is active, the results line MUST count the matches, and pagination MUST show only when the matches run past one page of eight.
 
 #### Scenario: A term inside an address line finds that address
 **ID**: SCN-INS-ADDR-032-A
@@ -728,6 +728,12 @@ The system MUST match the trimmed search text, ignoring case and anywhere inside
 - **GIVEN** the user has just added an address with the consignor use ticked, whose name and address do not contain the word 'consignor'
 - **WHEN** they search for 'Consignor'
 - **THEN** the list shows the added address
+
+#### Scenario: A use label the Type filter shows finds an address whose Type column reads otherwise
+**ID**: SCN-INS-ADDR-032-G
+- **GIVEN** the address book holds an address with the branch address use whose name and address do not contain the word 'branch'
+- **WHEN** the user searches the Branch tab for 'branch address'
+- **THEN** the list shows that address, with 'Branch' as its Type
 
 ### Requirement: The add page is headed 'Add address and contact details' under the caption 'Add new address', and shows the notification's status block when reached from a journey
 **ID**: REQ-INS-ADDR-033

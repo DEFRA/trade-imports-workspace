@@ -848,7 +848,7 @@
       "detail": "inc-024 is committed and pushed but its CI cannot run: trade-imports-ins-tests #79 conflicts with its base, and GitHub runs no checks on a conflicting pull request. The tests repo is 10 commits behind main and the performance tests repo is 2 behind; the animals frontend is level. inc-024 carries its own merge of origin/main, but that merge belongs to the branch stage, which the row passed hours ago - a retry picks the row up at the CI watch stage instead, so the row's own merge can no longer help it. Hence a merge row, as at inc-247.",
       "dependsOn": [],
       "theme": "commodities-and-reason",
-      "status": "todo",
+      "status": "done",
       "kind": "chore",
       "repos": [
         "tests",
@@ -876,6 +876,19 @@
         "The lesson this row records: a per-row merge only protects a row that has not yet reached its branch stage. inc-024 sat in CI retries for hours across two runs while main moved 10 commits, and a retry re-enters at the CI watch stage, so the row's merge field was behind it and could not fire. Rows that stall in CI need a merge row, not a merge field.",
         "Placed before inc-024 so it builds first. inc-024 keeps its commits 615c48bf and df3cef9 and its two pull requests; once this row lands and #79 stops conflicting, inc-024's CI can finally be watched.",
         "inc-024's own CI failure is still outstanding and is recorded on that row: the k6 smoke job, check 'submitted through the declaration page', NOT Playwright. Do not let this merge row's success be read as inc-024 being fixed."
+      ],
+      "commit": "0419715c0b81dfb162644cfbee34ab6d7ee7eed5 a783620a5f5f2390f9ca143e508f2742aec594fd",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/79",
+          "repo": "trade-imports-ins-tests",
+          "number": 79
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-performance-tests/pull/30",
+          "repo": "trade-imports-performance-tests",
+          "number": 30
+        }
       ]
     },
     {
@@ -889,7 +902,7 @@
       ],
       "dependsOn": [],
       "theme": "commodities-and-reason",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -986,7 +999,9 @@
         }
       ],
       "requirements": [],
-      "openQuestions": [],
+      "openQuestions": [
+        "Twin fix: trade-imports-plants-frontend src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fit/list.fit.spec.js:161 needs its removal test (\"removes the line the Remove button names\") to prove the removal with a positive assertion of what the table reads afterwards instead of `await expect(page.getByRole('table')).not.toContainText(MARIS_PIPER)`, as the same defect judged fix-now in trade-imports-animals-frontend .../commodities/fit/consignment-details.fit.spec.js:318 and :333 (house rule, Ids and history: \"Prove a removal with an exact positive assertion\"). Not changed in this increment because inc-025 builds only in the animals frontend and the tests repo."
+      ],
       "notes": [
         "Corrected 2 Nov after the re-distil: the label format is the other way round from what this row first said. V4 writes species selections as 'scientific name then common name in brackets' - Bison bison (Bison), Bos spp. (Cattle species), Bos taurus (Cattle), Bubalus bubalis (Water buffalo) (confluence:6497338582 confluence-6497338582-p1-091). This row first said 'common name (Latin name)', following Design Release 1 parity (frontend 949bb9d6, 'offer each species as its common name with the Latin name in brackets'). V4 outranks the prototype and the parity work on a field's format, so the Latin name leads. The fallback changes with it: where MDM holds no common name the label is the scientific name alone, not the commodity name in brackets.",
         "Raised by the 2 Nov re-analysis as a regression rather than by a source. speciesLabel returns the Latin name alone (frontend origin/main:src/server/app/sets/live-animals/journeys/linear/features/commodities/species-label.js:1), and it is the one seam every listing goes through, so this is one change in one place plus the tests that followed the regression. The frontend had delivered the common-name format under Design Release 1 parity (frontend 949bb9d6, 'offer each species as its common name with the Latin name in brackets'), and EUDPA-617 replaced it on 27 Oct (c3183a8e).",

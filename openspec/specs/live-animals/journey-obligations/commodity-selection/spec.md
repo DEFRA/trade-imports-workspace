@@ -59,13 +59,19 @@ The system MUST ask whether the consignment contains unweaned animals, as a mand
 
 ### Requirement: Only a commodity that is counted in packages is asked for a number of packages
 **ID**: REQ-OB-COMMODITY-003
-The system MUST ask a commodity line for a number of packages, as an optional answer, only where that line's commodity is one counted in packages.
+The system MUST optionally ask a line for a number of packages when its code is 0101 (equines), 0102 (cattle), 0103 (pigs), 010410 (sheep), 010420 (goats), 01051111/01051200/01051300/01051400/01051500/01059400/01059910/01059920/01059930/01059950 (poultry), 01061410 (domestic rabbits), 01061900 (other live mammals), 01062000 (reptiles), 01063100 (birds of prey), 01063200 (parrots), 01063980 (other birds), 01064100 (bees) or 01064900 (other insects), and MUST NOT ask any other served code.
 
 #### Scenario: A line whose commodity is counted in packages is asked for a package count
 **ID**: SCN-OB-COMMODITY-003-A
 - **GIVEN** the user has added a commodity line
 - **WHEN** its commodity is one counted in packages
 - **THEN** that line is asked for a number of packages, as an optional answer
+
+#### Scenario: A line whose commodity is not counted in packages is asked for a number of animals only
+**ID**: SCN-OB-COMMODITY-003-B
+- **GIVEN** the user has added a commodity line
+- **WHEN** its commodity is one the reference data serves but is not counted in packages
+- **THEN** that line is asked for a number of animals only, both on the commodity details page and on the review
 
 ### Requirement: A line's commodity decides which identifiers its animals are asked for, and a commodity can call for more than one
 **ID**: REQ-OB-COMMODITY-004

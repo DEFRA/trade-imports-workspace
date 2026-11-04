@@ -66,7 +66,7 @@ service's `metrics` package and change only the package:
 
 | Class | What it does |
 |---|---|
-| `EmfMeterRegistry` | A `StepMeterRegistry` that publishes every meter once a minute in the `aws.emf.namespace` namespace, one document per meter, tags as the only dimensions. Timers and distribution summaries publish every value recorded since the last publish (timers in ms), so CloudWatch computes `SampleCount`, `Sum`, `Average`, `p95` and `Maximum` itself; the EMF library splits more than 100 values across documents. Counters publish the last minute's count; gauges their value when finite. One meter failing to publish is logged at warn and the rest still go |
+| `EmfMeterRegistry` | A `StepMeterRegistry` that publishes its gauges, counters, timers and distribution summaries once a minute in the `aws.emf.namespace` namespace, tags as the only dimensions. Timers and distribution summaries publish every value recorded since the last publish (timers in ms), so CloudWatch computes `SampleCount`, `Sum`, `Average`, `p95` and `Maximum` itself; the EMF library splits more than 100 values across documents. Counters publish the last minute's count; gauges their value when finite. Long task timers, function counters, function timers and time gauges are not published. One meter failing to publish is logged at warn and the rest still go |
 | `ValueRecordingTimer`, `ValueRecordingDistributionSummary`, `RecordedValues` | Micrometer's step timer and summary, also keeping each recorded value until the registry takes it |
 | `MetricsConfig.emfMeterRegistry` (a bean method) | Creates and starts the registry only when `aws.emf.enabled` is true. When it is false, as in integration tests, Spring Boot's in-memory registry is used and nothing is published |
 
@@ -112,11 +112,13 @@ service's `metrics` package and change only the package:
   are running totals and can be asserted.
 - **Values are timestamped when published,** up to a minute after they
   were recorded.
-- **Caches** `[UNPROVEN]`, not yet done this way on a service: measured
-  with Micrometer's cache binder (Spring Boot
-  binds `CacheManager` caches as `cache.gets` and friends; add `cache`
-  to the allowlist). Caffeine caches need `.recordStats()`, or hits and
-  misses read as zero.
+- **Caches** `[UNPROVEN]`, not yet done this way on a service: the
+  counters `CacheHit` and `CacheMiss`, tagged `Cache` with the cache's
+  name, as in the agreed table and the dashboard's "Cache hits and
+  misses" panel. Increment one on each lookup, from the code that reads
+  the cache, and add both names to the allowlist. Not Micrometer's cache
+  binder: it publishes `cache.gets` under other names and tags, and as
+  function counters, which `EmfMeterRegistry` does not publish.
 
 ### A service built the old way
 
@@ -131,7 +133,7 @@ alerts carry on:
 | `ExternalCallMetrics.recordCall(…, boolean)` writing EMF | `ExternalCallMetrics` as above. `ExternalCallFeignCapability` stays as the place calls are measured |
 | `EmfMetricWriter` | Deleted; each metric becomes a meter |
 | `@Scheduled` `DependencyAvailabilityMetrics` | A `DependencyAvailable` gauge over the same reading |
-| `@Scheduled` `CacheMetrics` | Micrometer's cache binder |
+| `@Scheduled` `CacheMetrics` | `CacheHit` and `CacheMiss` counters tagged `Cache` (Rules → "Caches") |
 | `LookupMetrics` | A counter tagged `LookupType` |
 | `EmfMetricsPublisher` | Deleted |
 
@@ -165,35 +167,31 @@ package `uk.gov.defra.trade.imports.addressbook.metrics`), where MongoDB
 is the only dependency. `[UNPROVEN]` in dev CloudWatch until that release
 is checked there.
 
-- **Take availability from the driver's heartbeats, by default.** The
-  MongoDB driver already checks each server every 10 seconds on its own
-  monitoring connections. A `ServerMonitorListener` (`MongoAvailability`,
-  added with `MongoClientSettings.applyToServerSettings(b ->
-  b.addServerMonitorListener(...))`) keeps each server's latest heartbeat
-  result. The database is available while at least one server's latest
-  heartbeat succeeded. `DependencyAvailabilityMetrics` registers it as
-  the gauge `DependencyAvailable{Dependency=mongodb}` (NaN, so not
-  published, before the first heartbeat). No extra traffic, no scheduled
-  probe, never in `/health`.
+- **Take availability from the driver's cluster description, by
+  default.** The MongoDB driver already checks each server every 10
+  seconds on its own monitoring connections and keeps the result in its
+  cluster description. A `ClusterListener` (`MongoAvailability`, added
+  with `MongoClientSettings.applyToClusterSettings(b ->
+  b.addClusterListener(...))`) reads the servers the driver monitors now
+  on each change. The database is available while any of them is up, and
+  unavailable once every one has failed its check. A server the driver
+  has removed drops out, and one not yet checked leaves the answer
+  unknown rather than down. `DependencyAvailabilityMetrics` registers it
+  as the gauge `DependencyAvailable{Dependency=mongodb}` (NaN, so not
+  published, while unknown). No extra traffic, no scheduled probe, never
+  in `/health`. Not a `ServerMonitorListener`: it is not told which
+  servers the driver still monitors, so a removed server's last success
+  would hold the database up.
 - **Log only the change.** A heartbeat is not a call the service makes,
   so it gets no external-call log line and no `ExternalCallDuration`:
   that would be several lines a minute per task. Log once when the
   database becomes available (info) and once when it becomes
-  unavailable (warn, with the heartbeat's exception).
-- **Know what a heartbeat sees.** Read from the driver's
-  `DefaultServerMonitor` (5.5.1): heartbeat events fire only on a
-  monitor connection that is already open. Opening one fires no event.
-  So a database that goes down while the service runs is seen at once
-  (the open connection's heartbeat fails), but a database never reached
-  since start-up fires nothing, and nothing is published. That is fine
-  for a service that cannot start without its database (address-book's
-  `auto-index-creation: true` needs it at start-up), where CDP's default
-  running-tasks alert covers it. Monitoring connections may not sign in,
-  so a heartbeat proves the server is up, not that the service's
-  credentials work. Where either gap matters, use a `ClusterListener`
-  (it also sees failed connection opens) or a scheduled `ping` command
-  bounded by `MongoTemplate.getDb().withTimeout(...)`, and record the
-  choice here.
+  unavailable (warn, with a failed check's exception).
+- **Know what a check proves.** Monitoring connections may not sign in,
+  so a successful check proves the server is up, not that the service's
+  credentials work. Where that gap matters, add a scheduled `ping`
+  command bounded by `MongoTemplate.getDb().withTimeout(...)`, and record
+  the choice here.
 - **Measure the real commands too, if the team wants query latency.** A
   driver `CommandListener` (`MongoCommandMetrics`, added with
   `addCommandListener`) records every command as `mongodb/<command
@@ -204,9 +202,10 @@ is checked there.
 - **Alerts.** "Dependency unavailable" for the database queries
   `DependencyAvailable` (`ALERTS.md`); "calls failing" and "slow" query
   the command operations as for any dependency.
-- **Test it** with unit tests that feed the listener heartbeat events
-  (several servers, one failing, all failing, recovery, and one log line
-  per change), an integration test that the application's own client
+- **Test it** with unit tests that feed the listener cluster
+  descriptions (several servers, one failing, all failing, a removed
+  server, one not yet checked, recovery, and one log line per change, none
+  while another server is up), an integration test that the application's own client
   reports available (it goes red if the listener is not registered), and
   an integration test with a throwaway Testcontainers database that is
   started, seen available, stopped, and seen unavailable. Do not stop the

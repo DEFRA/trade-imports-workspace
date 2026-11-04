@@ -66,13 +66,19 @@ agree, not tested values.
 | Dependency calls failing | `ExternalCallFailure`, `Sum`, 3 or more over 15 minutes, per `Dependency` and `Operation` | Normal |
 | Dependency slow | `ExternalCallDuration`, `p95`, above two thirds of the call's read timeout, over 15 minutes, per `Dependency` and `Operation` | Normal |
 
-**Query every alert by `Dependency` and `Operation`.** Both external
-call metrics are published with that one dimension set (`METRICS.md` →
-"One dimension set per metric"), and CloudWatch does not add up across
-a dimension a metric was published with, so a query on `Dependency`
-alone finds no data. With "no data" set to Normal, that alert would
-never fire and nobody would know. Each alert has one series per
-dependency and operation, and the thresholds above apply to each series.
+**Query every call alert by `Dependency` and `Operation`.** Both
+external call metrics are published with that one dimension set
+(`METRICS.md` → "One dimension set per metric"), and CloudWatch does not
+add up across a dimension a metric was published with, so a query on
+`Dependency` alone finds no data. With "no data" set to Normal, that
+alert would never fire and nobody would know. Each call alert has one
+series per dependency and operation, and the thresholds above apply to
+each series.
+
+**The database alert is the one exception: query it by `Dependency`
+alone.** `DependencyAvailable` is published with `Dependency` as its only
+dimension, so adding `Operation` to its query finds no data in the same
+way.
 
 **Do not alert on `DependencyAvailable` for an HTTP dependency.** There
 it reports the outcome of the last call, however old. Behind a cache it
@@ -99,9 +105,10 @@ Normal, or Keep Last State.
 Only alert on a dependency the service really uses. A configured
 database counts (`METRICS.md` → "A database").
 
-**The alerts cannot see an outage nobody calls through.** If the
+**The call alerts cannot see an outage nobody calls through.** If the
 service and its callers are serving from caches, no call reaches the
-dependency, so no alert fires. On reference-data, a frontend instance
+dependency, so no call alert fires. The database alert is different: it
+reads the driver's own monitoring, which runs with no calls at all. On reference-data, a frontend instance
 that has loaded its countries and ports never asks again, so an MDM
 outage only shows once a frontend restarts or a request misses
 reference-data's 60-minute cache. Users are not affected until then
@@ -155,8 +162,9 @@ An alert that has never fired is not known to work. For each alert, in
 dev and then in test, watch it fire, reach the Slack channel, and
 resolve.
 
-**Make the calls yourself.** The alerts only see dependency calls that
-happened, and few happen on their own:
+**Make the calls yourself.** The call alerts only see dependency calls
+that happened, and few happen on their own (the database alert needs no
+calls: its gauge is published every minute while a task runs):
 
 - The service calls a dependency only on a cache miss: after a deploy,
   or once per cache lifetime (60 minutes for reference-data's MDM
@@ -194,10 +202,15 @@ service.name:"<service>"` in OpenSearch shows one line per failed call.
   the dependency and operation (not blanks), then put the threshold
   back and watch it return to Normal. With no failures the failure
   metrics read 0, so use `IS ABOVE -1` for "unavailable" and "calls
-  failing", and `IS ABOVE 0` for "slow". Once Slack routing is in
+  failing", and `IS ABOVE 0` for "slow". A healthy database reads 1, so
+  use `IS BELOW 2` for the database alert. Once Slack routing is in
   place, also check the alert arrives in
   `trade-imports-team-alerts-non-prod`.
-- **Dev, the failure rules: a real failure.** Set the dependency's URL
+- **Dev, the database alert: no real failure.** Pointing the service at
+  a database that does not exist stops it starting (address-book needs
+  its database to build indexes), so no task publishes the gauge and the
+  rule stays Normal on no data. The lowered threshold is enough.
+- **Dev, the call failure rules: a real failure.** Set the dependency's URL
   in the Portal (for reference-data's MDM, `MDM_SERVICE_URL`) to an
   address that does not exist, such as `https://mdm.invalid`, redeploy,
   and run the loop above. "Unavailable" and "calls failing" fire for

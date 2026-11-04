@@ -843,6 +843,42 @@
       ]
     },
     {
+      "id": "inc-250",
+      "title": "The theme branch takes main in again, so inc-024's pull request can run its checks",
+      "detail": "inc-024 is committed and pushed but its CI cannot run: trade-imports-ins-tests #79 conflicts with its base, and GitHub runs no checks on a conflicting pull request. The tests repo is 10 commits behind main and the performance tests repo is 2 behind; the animals frontend is level. inc-024 carries its own merge of origin/main, but that merge belongs to the branch stage, which the row passed hours ago - a retry picks the row up at the CI watch stage instead, so the row's own merge can no longer help it. Hence a merge row, as at inc-247.",
+      "dependsOn": [],
+      "theme": "commodities-and-reason",
+      "status": "todo",
+      "kind": "chore",
+      "repos": [
+        "tests",
+        "perftests"
+      ],
+      "merge": {
+        "tests": "origin/main",
+        "perftests": "origin/main"
+      },
+      "gatePhases": [],
+      "sources": [],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null,
+      "externalDependsOn": [],
+      "acceptanceCriteria": [
+        "origin/main is merged into feat/EUDPA-693-commodities-and-reason in the tests repo and in the performance tests repo, as one two-parent merge commit each, with no conflict markers left in any file.",
+        "The single conflicting file, tests/animals/e2e/journeys/horse-temporary-admission.spec.ts, takes main's test signature: the test is called as test('walks a horse-by-sea notification under temporary admission from create to submitted, with every task complete', { tag: '@cross-browser' }, async ({ animalsJourney, animalsPages, pages }) => { ... }), with the callback as the THIRD argument and the body indented to match. That tag is EUDPA-24's cross-browser work and must not be lost.",
+        "Inside that body the branch's own two assertions are kept verbatim: await expect(additionalAnimalDetails.getByRole('term')).toHaveText(['Certified for', 'Includes unweaned animals']); and await expect(additionalAnimalDetails.getByRole('definition')).toHaveText(['Registered equine animal', 'No']); — they are inc-023's proof that the unweaned question is asked for an equine, and dropping them would silently un-prove a landed row.",
+        "Nothing else EUDPA-24 landed is lost: the mobile-webkit project, the cross-browser PROFILE and scripts, docs/cross-browser.md, and the @cross-browser tags on the other animals, INS and animals-admin specs.",
+        "trade-imports-ins-tests #79 reports no conflict with its base, so GitHub runs its checks again, and trade-imports-animals-frontend #456 stays mergeable."
+      ],
+      "notes": [
+        "Why a merge row rather than the hand merge the loop's stop message asks for: HOW-TO-BUILD is explicit that a hand merge on a theme branch is unreviewed, unproved and invisible to the backlog. Same reasoning as inc-247.",
+        "The lesson this row records: a per-row merge only protects a row that has not yet reached its branch stage. inc-024 sat in CI retries for hours across two runs while main moved 10 commits, and a retry re-enters at the CI watch stage, so the row's merge field was behind it and could not fire. Rows that stall in CI need a merge row, not a merge field.",
+        "Placed before inc-024 so it builds first. inc-024 keeps its commits 615c48bf and df3cef9 and its two pull requests; once this row lands and #79 stops conflicting, inc-024's CI can finally be watched.",
+        "inc-024's own CI failure is still outstanding and is recorded on that row: the k6 smoke job, check 'submitted through the declaration page', NOT Playwright. Do not let this merge row's success be read as inc-024 being fixed."
+      ]
+    },
+    {
       "id": "inc-024",
       "title": "The number of packages question is pinned to the V4 Data Fields commodity list",
       "detail": "Which commodities ask for a number of packages is specified by the V4 Data Fields page, whose 'Number of packages commodities' list gives 23 chapter-01 codes. Main's PACKAGE_COUNT_CODES already holds exactly those 23, so this row proves the match rather than changing it: it pins the list against the page with a test that names it, so neither a later MDM code nor a later edit can drift. It carries req-112 and the package-question criterion that left inc-012 in the 2 November re-analysis. The prototype's nine-mammal list, which that criterion was written from, is wrong and is not followed.",

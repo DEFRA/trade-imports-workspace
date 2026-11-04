@@ -98,6 +98,13 @@ The system MUST ask whether the consignment contains unweaned animals only when 
 - **THEN** only the certification question is shown
 - **AND** the page can be saved and continued without answering an unweaned question
 
+#### Scenario: A consignment with an unweaned-eligible commodity is asked about unweaned animals
+**ID**: SCN-ADDL-DETAILS-005-B
+- **GIVEN** the user has reached the additional details page for a consignment at least one of whose commodity lines is among those the service treats as capable of being unweaned
+- **WHEN** the page loads
+- **THEN** it asks the unweaned question alongside the certification question, with the unweaned question's hint and both of its options
+- **AND** an answer given to the unweaned question is saved and still shown as chosen when the page is reopened
+
 ### Requirement: The certification question names the ITAHC as where its answer is found
 **ID**: REQ-ADDL-DETAILS-006
 The system MUST hint the certification question "You can find this information on the ITAHC."

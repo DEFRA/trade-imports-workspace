@@ -30,7 +30,7 @@ The system MUST ask the notification for a County Parish Holding number, as a ma
 
 ### Requirement: A commodity that requires unweaned-animal tracking brings that question into play for the whole notification
 **ID**: REQ-OB-COMMODITY-002
-The system MUST ask whether the consignment contains unweaned animals, as a mandatory answer, when any one of its commodity lines carries a cattle commodity, and MUST NOT ask it for any other commodity, including equine, pig, sheep and goat.
+The system MUST ask whether the consignment contains unweaned animals, as a mandatory answer, when any one of its commodity lines carries equines (0101), cattle (0102), pigs (0103), sheep (010410) or goats (010420), and MUST NOT ask it for any other commodity.
 
 #### Scenario: Adding a commodity requiring unweaned tracking brings the question into play
 **ID**: SCN-OB-COMMODITY-002-A
@@ -38,11 +38,17 @@ The system MUST ask whether the consignment contains unweaned animals, as a mand
 - **WHEN** the user adds a line carrying a cattle commodity
 - **THEN** the notification is asked whether it contains unweaned animals, as a mandatory answer
 
-#### Scenario: A horse-only consignment is not asked about unweaned animals
+#### Scenario: A cats-dogs-and-ferrets-only consignment is not asked about unweaned animals
 **ID**: SCN-OB-COMMODITY-002-B
-- **GIVEN** a notification whose only commodity line carries an equine commodity
+- **GIVEN** a notification whose only commodity line carries the cats, dogs, ferrets and other live mammals commodity (01061900)
 - **WHEN** the user works through the journey
 - **THEN** the notification is not asked whether it contains unweaned animals
+
+#### Scenario: Adding an equine, pig, sheep or goat commodity also brings the question into play
+**ID**: SCN-OB-COMMODITY-002-D
+- **GIVEN** a notification whose commodity lines carry no commodity requiring unweaned-animal tracking
+- **WHEN** the user adds a line carrying an equine, a pig, a sheep or a goat commodity
+- **THEN** the notification is asked whether it contains unweaned animals, as a mandatory answer
 
 #### Scenario: Changing the commodities to cats or dogs only clears a saved unweaned answer
 **ID**: SCN-OB-COMMODITY-002-C

@@ -53,17 +53,29 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/additional-details-scope.spec.ts", "test": "the unweaned-animals question shows only when a triggering commodity line exists", "strength": "full", "notes": "Felis catus hides the group; then Bos taurus makes it visible" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should gate packages/unweaned/CPH for 0102", "strength": "full", "notes": "cattle are asked about unweaned animals on the review; the 0103 row covers pigs" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should gate packages/unweaned/CPH for 0102", "strength": "full", "notes": "cattle are asked about unweaned animals on the review" }
           ]
         },
         {
           "id": "SCN-OB-COMMODITY-002-B",
-          "name": "A horse-only consignment is not asked about unweaned animals",
+          "name": "A cats-dogs-and-ferrets-only consignment is not asked about unweaned animals",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "does not ask a horses-only consignment about unweaned animals", "strength": "full", "notes": "new test proving the narrowed trigger list (cattle only)" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "saves a horses-only consignment without an unweaned answer", "strength": "full", "notes": "confirms the page saves through with the question absent, not just hidden" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/horse-temporary-admission.spec.ts", "test": "walks a horse-by-sea notification under temporary admission from create to submitted, with every task complete", "strength": "partial", "notes": "horse-only consignment completes Additional details with no unweaned answer; does not assert the question's absence directly" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/allowlists.test.js", "test": "Should not put containsUnweanedAnimals in scope for a cats-dogs-ferrets-only consignment", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "asks only the certification question", "strength": "full", "notes": "a Felis catus consignment; the unweaned group is absent" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/additional-details-scope.spec.ts", "test": "the unweaned-animals question shows only when a triggering commodity line exists", "strength": "full", "notes": "the domestic cat half: the certification question shows and the unweaned group is hidden" }
+          ]
+        },
+        {
+          "id": "SCN-OB-COMMODITY-002-D",
+          "name": "Adding an equine, pig, sheep or goat commodity also brings the question into play",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/allowlists.test.js", "test": "Should put containsUnweanedAnimals in scope when a line has code = '${code}'", "strength": "full", "notes": "the per-code loop over the five-code unweaned list" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/bridge/applicability.test.js", "test": "Should ask about unweaned animals for commodity code %s", "strength": "full", "notes": "the shared gate the page and the review both read, over the five codes" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should gate packages/unweaned/CPH for $commodityCode", "strength": "full", "notes": "the swine, sheep, goat and equine rows of the render matrix" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "asks the unweaned question alongside certification, with its hint and both options", "strength": "full", "notes": "an equine consignment" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/horse-temporary-admission.spec.ts", "test": "walks a horse-by-sea notification under temporary admission from create to submitted, with every task complete", "strength": "partial", "notes": "the walk answers the unweaned question for a horse-only consignment and the review shows both terms; not seen failing" }
           ]
         },
         {

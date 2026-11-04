@@ -143,3 +143,38 @@ Plants FIT, ins-frontend FIT and the E2E count still carry both flaws.
 - **The stale branch** `feat/EUDPA-693-design-release-2-1-commodities-and-reason`
   is still the salvage quarry; its PRs #401, #23 and #17 were closed on 3
   November. Do not delete the branch until salvage is finished.
+
+## Cold start, if the session died
+
+The build loop is a background task of the Claude Code session that launched it.
+If that session ends — closed terminal, or a failed context compaction — the run
+dies with it and nothing restarts it. Nothing is lost: every landed row is
+committed and pushed, and `backlog.json` holds the rest.
+
+To pick it up, in a session opened at the workspace root:
+
+1. `tim backlog check shared/design-release-2-1/themes/commodities-and-reason`
+   and `tim backlog next` on the same workarea — the next buildable row.
+2. `git -C repos/<repo> rev-list --count HEAD..origin/main` for frontend, tests
+   and perftests. Any count above zero and the next row's own `merge` field will
+   take it in; a row that has already pushed needs a merge row instead (see
+   above).
+3. `tim docker lease status` — release any lease left by the dead run
+   (`tim docker lease release --holder "<its id>"`) before relaunching.
+4. Relaunch with the resume prompt at the top of this file, by `scriptPath`.
+5. Re-arm the watcher: `/loop 1h` with a prompt that says to read this file and
+   do the five-signal check. Keep that prompt SHORT — a long one is re-injected
+   every tick and is what fills a context window overnight.
+
+## Overnight autonomy, as agreed 4 November
+
+The watcher may, without waking anyone: re-run a CI job whose failing check
+predates the branch head and relaunch; relaunch once after a genuine `ci-red`
+to give the fixer fresh attempts; and write a merge row on the `inc-247` /
+`inc-250` pattern after a `pr-conflict`, but only when it can state the
+resolution from the two diffs.
+
+It must hold and notify on `plan-refused`, any stack stop, or any reason it does
+not recognise. Limits: at most 6 relaunches, stop if one reason repeats three
+times, never hand-merge `main`, never merge or close a pull request, never touch
+`main`.

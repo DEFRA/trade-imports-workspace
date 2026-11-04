@@ -301,23 +301,24 @@ The system MUST give the question "Does the consignment have a region of origin 
 - **WHEN** the page loads
 - **THEN** the region of origin code question's hint reads "Check the health certificate for a region of origin code. You can add the code later if you do not have the certificate now."
 
-### Requirement: A region code typed with no country waits for the country before it is saved
+### Requirement: A region code typed before a country is kept until the country gives it its prefix
 **ID**: REQ-ORIGIN-017
-The system MUST keep a region code typed under Yes with no country chosen on the page while the page is shown back, MUST NOT save a region of origin code until a country gives it its prefix, and MUST save the code with that country's prefix once a country is chosen.
+The system MUST refuse to save the origin page when no country of origin is chosen while the user has typed a region code, MUST keep the typed code in the region code box on that refusal, and MUST save the code with the chosen country's prefix once a country is chosen and save succeeds.
 
-#### Scenario: The typed code stays on the page when the save is refused for another answer
+#### Scenario: The typed code stays in the box when save is refused for the missing country
 **ID**: SCN-ORIGIN-017-A
-- **GIVEN** the user has chosen no country, answered that a region code is required and typed a code
-- **WHEN** they save and continue with another answer the page refuses
-- **THEN** the page shows the error and the region code box still holds the code typed
-
-#### Scenario: No code is saved until a country is chosen
-**ID**: SCN-ORIGIN-017-B
-- **GIVEN** the user has chosen no country, answered that a region code is required and typed a code
+- **GIVEN** the user is on the origin of the import page with no country chosen, has answered that a region code is required and has typed a code
 - **WHEN** they save and continue
-- **THEN** the review page shows no region of origin code
-- **WHEN** they return, choose France, type the code again and save and continue
-- **THEN** the review page shows the code with France's prefix
+- **THEN** an error is shown for the missing country of origin
+- **AND** the region code box still holds the code typed
+- **AND** the user remains on the origin of the import page
+
+#### Scenario: Once a country is chosen the code is saved with that country's prefix
+**ID**: SCN-ORIGIN-017-B
+- **GIVEN** the user is on the origin of the import page with no country chosen, has answered that a region code is required and has typed a code, and save was refused for the missing country
+- **WHEN** they choose a country and save and continue
+- **THEN** the answer is saved
+- **AND** the review page shows the region code with that country's prefix
 
 ### Requirement: Each territory in the country list is named with its country, and keeps its code
 **ID**: REQ-ORIGIN-018

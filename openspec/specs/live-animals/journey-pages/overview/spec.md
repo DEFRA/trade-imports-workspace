@@ -79,6 +79,13 @@ The system MUST omit the Identification details task row from the "Description o
 - **WHEN** they view Overview
 - **THEN** the second section lists Commodity details, then Identification details, then Additional details, in that order
 
+#### Scenario: Choosing a commodity that needs no identifiers leaves the row out
+**ID**: SCN-OVERVIEW-005-C
+- **GIVEN** the user has chosen a commodity that carries no identifiers
+- **WHEN** they view Overview
+- **THEN** no Identification details row is shown
+- **AND** the second section lists Commodity details, then Additional details, in that order
+
 ### Requirement: Commodity details is its own task, completing only once its numbers are saved
 **ID**: REQ-OVERVIEW-006
 The system MUST show Commodity details as a task row of its own, separate from the commodity-choice row, linking to the consignment-details page, and MUST mark it Complete only once its numbers have been saved, leaving every other row's status unaffected.

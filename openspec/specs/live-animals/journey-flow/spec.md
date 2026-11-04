@@ -138,13 +138,13 @@ Outside an amendment (REQ-FLOW-013), the system MUST let the user leave a page t
 - **WHEN** the user opens a page the hub links to directly
 - **THEN** it ends as REQ-FLOW-013 describes, with "Save and return" and no "Cancel and return to overview"
 
-#### Scenario: Arrival details saved and returned without a means of transport keeps the other answers
+#### Scenario: Arrival details saved and returned without a means of transport is refused
 **ID**: SCN-FLOW-004-G
 - **GIVEN** the Arrival details page with a port of entry chosen and no means of transport
 - **WHEN** the user selects "Save and return to overview"
-- **THEN** they return to Overview with no error shown, as saving and continuing would also accept the page
-- **AND** the Arrival details task reads "To do"
-- **AND** re-opening the page shows the port of entry chosen
+- **THEN** they stay on the page, which shows "Select a means of transport to the port of entry"
+- **AND** the port of entry they chose is still shown
+- **AND** nothing is saved, so re-opening the task from Overview shows no port
 
 #### Scenario: Transit countries saved and returned keeps the countries listed
 **ID**: SCN-FLOW-004-H

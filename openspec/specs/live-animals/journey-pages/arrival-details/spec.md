@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Asks how and when the consignment arrives at its port of entry, and confines the arrival date to the window the service accepts. The page is titled "Arrival details".
+Asks how and when the consignment arrives at its port of entry, and confines the arrival date to the window the service accepts. The page is titled "Arrival details". The means of transport is the one answer the page needs before it goes on; the arrival date, port of entry, transport identification and document reference can all be left for later.
 
 ## Requirements
 
@@ -94,16 +94,23 @@ The system MUST accept the arrival details once every required answer is given, 
 - **WHEN** they answer every arrival question and save and continue
 - **THEN** the answers are saved and no error summary is shown
 
-### Requirement: Saving the page empty keeps a draft and moves on
+### Requirement: Saving the page requires a means of transport
 **ID**: REQ-ARRIVAL-006
-The system MUST NOT refuse to save the arrival details page when nothing has been answered: it MUST save the blank draft, show no error summary, and carry the user on to the next page. Whether the arrival details are complete is checked later, when the user continues from check your answers.
+The system MUST refuse to save the arrival details page while no means of transport is chosen, on "Save and continue" and on "Save and return to overview" alike, showing an error summary headed "There is a problem" and the error "Select a means of transport to the port of entry" against the means of transport question, and MUST keep what was entered and save nothing.
 
-#### Scenario: Saving with nothing answered keeps a draft and moves on
+#### Scenario: Saving with no means of transport chosen is refused
 **ID**: SCN-ARRIVAL-006-A
-- **GIVEN** the user is on the arrival details page with nothing answered
+- **GIVEN** the user is on the arrival details page with no means of transport chosen
 - **WHEN** they save and continue
-- **THEN** no error summary is shown
-- **AND** the user is taken on to the next page in the journey
+- **THEN** an error summary headed "There is a problem" is shown, carrying "Select a means of transport to the port of entry" linked to the means of transport question
+- **AND** they remain on the arrival details page, with nothing saved
+
+#### Scenario: Save and return to overview refuses the save the same way
+**ID**: SCN-ARRIVAL-006-B
+- **GIVEN** the user has chosen a port of entry and no means of transport
+- **WHEN** they select "Save and return to overview"
+- **THEN** they remain on the arrival details page with the same error, the port they chose still shown
+- **AND** reopening the task from Overview shows no saved port
 
 ### Requirement: The arrival date is confined to one week back and six months ahead
 **ID**: REQ-ARRIVAL-007

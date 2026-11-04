@@ -99,7 +99,7 @@ programme's `sources.json` pins. Design Release 2.1 has no address book view of 
 - **Page:** the INS address book list (its Type column and its Type filter) and the INS add form's uses question, 'What can this address be used for?'.
 - **Prototype:** three labels for the same use. The Type column ([address-book.js#L8-L15](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/data/address-book.js#L8-L15)) says 'Place of origin', 'Place of destination', 'Branch'. The Type filter ([address-book-address-types.js#L4-L37](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/data/address-book-address-types.js#L4-L37)) says 'Place of Origin', 'Place of Destination', 'Branch Address'. The uses question's options ([address-book-origin-uses.js](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/data/address-book-origin-uses.js)) say 'Place of origin' and 'Consignor', and the criteria for the Destination and Branch forms (inc-071) say 'Place of destination', 'Consignee', 'Importer' and 'Branch address'.
 - **Built:** all three, as the design source has them (`copy.en.js` `list.uses` for the column and the filter, and `uses.options` for the question, and the Welsh).
-- **To ask:** should the column, the filter and the uses question use one label per use, and which: the column's ('Place of origin', 'Branch'), the filter's ('Place of Origin', 'Branch Address') or the question's ('Place of origin', 'Branch address')? The answer also decides which words a search by type matches.
+- **To ask:** should the column, the filter and the uses question use one label per use, and which: the column's ('Place of origin', 'Branch'), the filter's ('Place of Origin', 'Branch Address') or the question's ('Place of origin', 'Branch address')? The answer also decides which words a search by type matches. The GOV.UK style guide asks for sentence case with no unnecessary capitals ([capitalisation](https://www.gov.uk/guidance/style-guide/a-to-z-of-gov-uk-style#capitalisation)), which disagrees with the filter's 'Place of Origin', 'Place of Destination' and 'Branch Address' (raised again by the theme's engineering review, findings 24 and 28).
 
 ### S-12. What Clear search clears when a Type is chosen
 
@@ -124,6 +124,14 @@ programme's `sources.json` pins. Design Release 2.1 has no address book view of 
 - **Prototype:** two orders. The uses question ([address-book-destination-uses.js#L1-L17](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/data/address-book-destination-uses.js#L1-L17)) lists 'Place of destination', 'Consignee', 'Importer'. The Type filter ([address-book-address-types.js#L4-L37](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/data/address-book-address-types.js#L4-L37)) lists 'Consignee', 'Importer', 'Place of Destination'.
 - **Built:** both, as the prototype has them: the filter in the address book's own order (`services/address-book/address-types.js` `USES_BY_ADDRESS_TYPE`), and the question with the place use first (`add.controller.js` `useItemsOf`).
 - **To ask:** should the question and the filter list the uses in one order, and which: place first ('Place of destination', 'Consignee', 'Importer') or 'Consignee', 'Importer', 'Place of destination'? One order would let the code hold it in one place.
+
+### S-15. The screen-reader name of the address book's tabs
+
+- **Ticket:** [EUDPA-711](https://eaflood.atlassian.net/browse/EUDPA-711), [ins-frontend #71](https://github.com/DEFRA/trade-imports-ins-frontend/pull/71). The theme's engineering review, finding 18.
+- **Page:** the INS address book list's three tabs.
+- **Prototype:** draws the tabs as GOV.UK tabs with no navigation label ([address-book.html#L147-L162](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/views/address-book.html#L147-L162)).
+- **Built:** the tabs are an MoJ sub navigation, whose navigation landmark needs a name for screen-reader users. The code chose 'Address types' (`copy.en.js` `list.tabsLabel`, Welsh 'Mathau o gyfeiriad').
+- **To ask:** keep 'Address types', or use another name such as 'Address categories' or 'Address book'?
 
 ## Settled
 

@@ -272,14 +272,15 @@ To check nothing has drifted: "which theme tickets are stale". Tickets and their
   with territories). inc-025 dropped, inc-028 merged into inc-241. inc-026 went to design snagging inc-208; inc-027 is
   on `main` through reference lists; the transit Back link came with design snagging inc-218. Full detail:
   [`arrival-and-transit/reanalysis.md`](arrival-and-transit/reanalysis.md).
-- **Pull requests kept open:** animals frontend #402, plants frontend #95, tests #24, workspace spec #154. The plants
-  frontend PR ends with no change of its own: every plants change the branch carried is on `main`.
-- **Carry-only pull requests:** stub #20, reference data #27 and INS frontend #49 carry only journey foundation and
-  reference lists work that `main` now holds, and no row builds there. They are not in the theme and take no merge.
-  They did have 13 October branch images, which the theme's end-to-end runs picked up and which turned inc-240 red;
-  on 3 November, with Sam's go, `main` was merged into all three branches and their images rebuilt (see
-  [`arrival-and-transit/reanalysis.md`](arrival-and-transit/reanalysis.md)). Close them when Sam says so: the theme
-  does not need them.
+- **Pull requests that merge with the theme:** animals frontend #402, plants frontend #95, tests #24, workspace spec
+  #154. Every plants journey change the branch carried is on `main`, so #95 changes no behaviour. It carries only the
+  joi 18.3.1 and @hapi/content 6.0.3 security fix (GHSA-4528-x5fx-h6hg, GHSA-8494-f6mr-cjpv), kept on the theme by
+  Sam's choice, and merges with the theme.
+- **Carry-only pull requests:** stub #20, reference data #27 and INS frontend #49 have no diff against `main`. INS
+  frontend's security fix reached `main` through its #73. No row builds there and they take no merge. They stay open
+  only so the branch name resolves to a branch image in the stack; close them when the theme merges. Their 13 October
+  images turned inc-240 red, so on 3 November, with Sam's go, `main` was merged into all three branches and their
+  images rebuilt (see [`arrival-and-transit/reanalysis.md`](arrival-and-transit/reanalysis.md)).
 - **Loop args:** [`arrival-and-transit/build-args.json`](arrival-and-transit/build-args.json): `rigour: full`,
   `e2e: ci`.
 - **Say:** "run the increment build loop on shared/design-release-2-1/themes/arrival-and-transit, branch lifecycle on

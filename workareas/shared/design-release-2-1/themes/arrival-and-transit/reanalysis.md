@@ -82,7 +82,8 @@ list, horse temporary admission and overview task return specs, plus plants `arr
 
 **Conflicts on merging `main`:** 6 files: the arrival-details copy (en, cy), its copy test, its template, its FIT
 spec and `shared/kit.js`. Nothing on this branch is still owed: transit is animals only, and plants asks no means of
-transport. After the merge the plants PR shows no change of its own.
+transport. After the merge the plants PR shows no plants journey change. It then took the joi 18.3.1 and
+@hapi/content 6.0.3 security fix on the theme, by Sam's choice, and merges with the theme for that alone.
 
 ### Workspace spec (#154): 1 ahead, 134 behind
 
@@ -99,8 +100,10 @@ from `5a995a66`'s wording.
 
 Each carries only the reference lists and journey foundation commits it was stacked on. A trial merge of `main` is
 clean and leaves each tree identical to `main`, so none of the three adds anything. No row builds there, so they are
-not in `build-args.json`'s `repos` and take no merge row. They are carry-only pull requests whose themes have merged:
-HOW-TO-BUILD says to close such a pull request, and Sam decides when.
+not in `build-args.json`'s `repos` and take no merge row. They are carry-only pull requests: they stay open only so
+the branch name resolves to a branch image in the stack, and close when this theme merges. INS frontend #49 briefly
+carried the joi and @hapi/content security fix too; `main` took the same fix through INS frontend #73, so #49 again
+has no diff.
 
 **Corrected 3 November.** This said none of the three had a branch image. All three did, from 13 October, and the
 stack took them for the theme's end-to-end runs: the old reference data had no commodity search, which turned inc-240's

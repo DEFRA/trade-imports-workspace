@@ -16,24 +16,31 @@ example:
 
 | Metric | Unit | Dimension | Answers |
 |---|---|---|---|
-| `ExternalCallDuration` | ms | `Dependency`, `Operation` | How many calls, and how slow? |
-| `ExternalCallFailure` | 0 or 1 | `Dependency`, `Operation` | How many calls failed? |
-| `DependencyAvailable` | 1 or 0 | `Dependency` | Is each dependency up? |
-| `CacheHit`, `CacheMiss` | count | `Cache` | Is the cache doing its job? |
-| `Lookup` | count | `LookupType` | Demand on the service, by type |
+| `external.call.duration` | ms | `dependency`, `operation` | How many calls, and how slow? |
+| `external.call.failure` | 0 or 1 | `dependency`, `operation` | How many calls failed? |
+| `external.dependency.available` | 1 or 0 | `dependency` | Is each dependency up? |
+| `cache.hit`, `cache.miss` | count | `cache` | Is the cache doing its job? |
+| `lookup` | count | `lookup.type` | Demand on the service, by type |
 
 Rules that held:
 
-- **Reuse the shared names.** `ExternalCallDuration`,
-  `ExternalCallFailure` and `DependencyAvailable`, with those dimension
+- **Name every metric and dimension in dot case:** lowercase words
+  separated by dots, most general first (`external.call.duration`,
+  `cache.hit`, `address.search`; `dependency`, `lookup.type`), the same
+  form as the `@Timed` names (`controller.<operation>.time`) and their
+  tags (`class`, `method`, `exception`). `EmfMeterRegistry` publishes
+  names and tag keys as written, so they are also the CloudWatch metric
+  and dimension names.
+- **Reuse the shared names.** `external.call.duration`,
+  `external.call.failure` and `external.dependency.available`, with those dimension
   names, are the contract across services. A dashboard or alert built
   for one service then works for the next. Only the business metrics
-  (`Lookup` here) are service-specific.
+  (`lookup` here) are service-specific.
 - **Do not add a count metric.** A call count is the `SampleCount` of
-  `ExternalCallDuration`. An error count is the `Sum` of
-  `ExternalCallFailure`. A token refresh is one call to the token
-  endpoint, so it is the same two metrics filtered by `Dependency` and
-  `Operation` (the token endpoint's one operation).
+  `external.call.duration`. An error count is the `Sum` of
+  `external.call.failure`. A token refresh is one call to the token
+  endpoint, so it is the same two metrics filtered by `dependency` and
+  `operation` (the token endpoint's one operation).
 - **Keep dimension values few and fixed.** Never a URL, a trace id, an
   organisation or a user as a dimension: each distinct value is a
   separate CloudWatch metric.
@@ -41,7 +48,7 @@ Rules that held:
   dimensions in the table, so the dashboard query does not have to guess
   which combination holds the data. Every query, panel and alert then
   uses that full set: CloudWatch does not add up across a published
-  dimension, so `ExternalCallFailure` queried by `Dependency` alone
+  dimension, so `external.call.failure` queried by `dependency` alone
   finds nothing.
 
 Record the agreed table on the ticket.
@@ -74,9 +81,9 @@ service's `metrics` package and change only the package:
 
 | Class | What it does |
 |---|---|
-| `ExternalCallMetrics` | Logs each call to a dependency (`LOGGING.md`) and records it as the timer `ExternalCallDuration` and the distribution summary `ExternalCallFailure` (0 or 1 per call), both tagged `Dependency` and `Operation`. `recordSuccess` and `recordFailure` (with the cause), not a boolean flag. Copy it as it is |
+| `ExternalCallMetrics` | Logs each call to a dependency (`LOGGING.md`) and records it as the timer `external.call.duration` and the distribution summary `external.call.failure` (0 or 1 per call), both tagged `dependency` and `operation`. `recordSuccess` and `recordFailure` (with the cause), not a boolean flag. Copy it as it is |
 | Where calls are measured | One place per kind of dependency, calling `ExternalCallMetrics`: a driver `CommandListener` for a database (`MongoCommandMetrics`), a Feign `Capability` or a `RestClient` interceptor for HTTP. Measure at the transport, not in the calling service class, so every call is caught |
-| `DependencyAvailabilityMetrics` | Registers the gauge `DependencyAvailable`, tagged `Dependency`, from wherever availability comes from ("Availability" below) |
+| `DependencyAvailabilityMetrics` | Registers the gauge `external.dependency.available`, tagged `dependency`, from wherever availability comes from ("Availability" below) |
 | A business-metrics class (`AddressMetrics`) | One counter per agreed business metric, tagged by its dimension |
 | `@Timed("controller.<operation>.time")`, `@Timed("service.<operation>.time")` | On every controller endpoint and every public method of the service classes, so each invocation's duration is published |
 
@@ -85,9 +92,12 @@ service's `metrics` package and change only the package:
 - **Add every metric name to the service's Micrometer allowlist.**
   address-book's `application.yml` has `management.metrics.enable.all:
   false` with the names allowed. A name not on it gets a no-op meter:
-  no error, no metric. Add each custom name with its case kept by
-  brackets (`"[ExternalCallDuration]": true`) and each `@Timed` prefix
-  (`controller: true`, `service: true`). That allowlist is the one
+  no error, no metric. Add each custom name in full
+  (`external.call.duration: true`, `cache.hit: true`) and each `@Timed`
+  prefix (`controller: true`, `service: true`). An entry enables every
+  meter whose name starts with it, so never shorten a custom name to its
+  first word: `cache: true` would also publish Spring Boot's own
+  `cache.*` meters. That allowlist is the one
   control of what is published. It also decides what Spring Boot's own
   meters publish: on address-book it had silenced its repository and
   Mongo timers.
@@ -113,7 +123,7 @@ service's `metrics` package and change only the package:
 - **Values are timestamped when published,** up to a minute after they
   were recorded.
 - **Caches** `[UNPROVEN]`, not yet done this way on a service: the
-  counters `CacheHit` and `CacheMiss`, tagged `Cache` with the cache's
+  counters `cache.hit` and `cache.miss`, tagged `cache` with the cache's
   name, as in the agreed table and the dashboard's "Cache hits and
   misses" panel. Increment one on each lookup, from the code that reads
   the cache, and add both names to the allowlist. Not Micrometer's cache
@@ -125,21 +135,28 @@ service's `metrics` package and change only the package:
 `trade-imports-reference-data` (EUDPA-632) writes EMF directly, through
 `EmfMetricWriter` and a scheduled `DependencyAvailabilityMetrics`. When
 this skill runs on a service like it, move the service to the one way
-above first. Keep the metric names and dimensions, so its dashboard and
-alerts carry on:
+above first, moving every metric and dimension name to dot case. The
+CloudWatch metrics then change name, so regenerate its dashboard
+(`DASHBOARD.md` → "Generate") and rebuild its alerts from a new build
+sheet (`ALERTS.md` → "Build") in the same run; the old ones go quiet.
 
 | Old | New |
 |---|---|
+| `ExternalCallDuration`, `ExternalCallFailure` | `external.call.duration`, `external.call.failure` |
+| `DependencyAvailable` | `external.dependency.available` |
+| `CacheHit`, `CacheMiss` | `cache.hit`, `cache.miss` |
+| `Lookup` | `lookup` |
+| Dimensions `Dependency`, `Operation`, `Cache`, `LookupType` | `dependency`, `operation`, `cache`, `lookup.type` |
 | `ExternalCallMetrics.recordCall(…, boolean)` writing EMF | `ExternalCallMetrics` as above. `ExternalCallFeignCapability` stays as the place calls are measured |
 | `EmfMetricWriter` | Deleted; each metric becomes a meter |
-| `@Scheduled` `DependencyAvailabilityMetrics` | A `DependencyAvailable` gauge over the same reading |
-| `@Scheduled` `CacheMetrics` | `CacheHit` and `CacheMiss` counters tagged `Cache` (Rules → "Caches") |
-| `LookupMetrics` | A counter tagged `LookupType` |
+| `@Scheduled` `DependencyAvailabilityMetrics` | An `external.dependency.available` gauge over the same reading |
+| `@Scheduled` `CacheMetrics` | `cache.hit` and `cache.miss` counters tagged `cache` (Rules → "Caches") |
+| `LookupMetrics` | The counter `lookup` tagged `lookup.type` |
 | `EmfMetricsPublisher` | Deleted |
 
 ### Availability: passive or active
 
-`DependencyAvailable` can come from a probe the service sends, or from
+`external.dependency.available` can come from a probe the service sends, or from
 the outcome of the calls it already makes.
 
 - **Passive (used on reference-data).** Report the outcome of the most
@@ -151,11 +168,11 @@ the outcome of the calls it already makes.
   where a probe is free and harmless. Do not probe a dependency whose
   calls are rate-limited or cost a real token request.
 
-For an HTTP dependency, alert on `ExternalCallFailure` over a time
-window, per `Dependency` and `Operation` (`ALERTS.md`), not on
-`DependencyAvailable`. A passive reading lags by up to the cache
+For an HTTP dependency, alert on `external.call.failure` over a time
+window, per `dependency` and `operation` (`ALERTS.md`), not on
+`external.dependency.available`. A passive reading lags by up to the cache
 lifetime and holds a single failure until the next success; an active
-probe is itself a call, so it records `ExternalCallFailure` too. A
+probe is itself a call, so it records `external.call.failure` too. A
 database is the exception: its availability comes from the driver's
 heartbeats, which are fresh, so alert on it (below).
 
@@ -177,13 +194,13 @@ is checked there.
   unavailable once every one has failed its check. A server the driver
   has removed drops out, and one not yet checked leaves the answer
   unknown rather than down. `DependencyAvailabilityMetrics` registers it
-  as the gauge `DependencyAvailable{Dependency=mongodb}` (NaN, so not
+  as the gauge `external.dependency.available{dependency=mongodb}` (NaN, so not
   published, while unknown). No extra traffic, no scheduled probe, never
   in `/health`. Not a `ServerMonitorListener`: it is not told which
   servers the driver still monitors, so a removed server's last success
   would hold the database up.
 - **Log only the change.** A heartbeat is not a call the service makes,
-  so it gets no external-call log line and no `ExternalCallDuration`:
+  so it gets no external-call log line and no `external.call.duration`:
   that would be several lines a minute per task. Log once when the
   database becomes available (info) and once when it becomes
   unavailable (warn, with a failed check's exception).
@@ -200,7 +217,7 @@ is checked there.
   reaches the server (no server to select) fires no listener event, so
   these metrics do not show an outage; the heartbeat does.
 - **Alerts.** "Dependency unavailable" for the database queries
-  `DependencyAvailable` (`ALERTS.md`); "calls failing" and "slow" query
+  `external.dependency.available` (`ALERTS.md`); "calls failing" and "slow" query
   the command operations as for any dependency.
 - **Test it** with unit tests that feed the listener cluster
   descriptions (several servers, one failing, all failing, a removed

@@ -61,37 +61,37 @@ agree, not tested values.
 
 | Alert | Fires when | If there is no data |
 |---|---|---|
-| Dependency unavailable | `ExternalCallFailure`, `Minimum`, equal to 1 over 5 minutes (every call in the window failed), per `Dependency` and `Operation` | Normal |
-| Database unavailable (in place of the row above for a database) | `DependencyAvailable`, `Maximum`, below 1 over 5 minutes (every reading from every task said down), `Dependency` = the database | Normal |
-| Dependency calls failing | `ExternalCallFailure`, `Sum`, 3 or more over 15 minutes, per `Dependency` and `Operation` | Normal |
-| Dependency slow | `ExternalCallDuration`, `p95`, above two thirds of the call's read timeout, over 15 minutes, per `Dependency` and `Operation` | Normal |
+| Dependency unavailable | `external.call.failure`, `Minimum`, equal to 1 over 5 minutes (every call in the window failed), per `dependency` and `operation` | Normal |
+| Database unavailable (in place of the row above for a database) | `external.dependency.available`, `Maximum`, below 1 over 5 minutes (every reading from every task said down), `dependency` = the database | Normal |
+| Dependency calls failing | `external.call.failure`, `Sum`, 3 or more over 15 minutes, per `dependency` and `operation` | Normal |
+| Dependency slow | `external.call.duration`, `p95`, above two thirds of the call's read timeout, over 15 minutes, per `dependency` and `operation` | Normal |
 
-**Query every call alert by `Dependency` and `Operation`.** Both
+**Query every call alert by `dependency` and `operation`.** Both
 external call metrics are published with that one dimension set
 (`METRICS.md` → "One dimension set per metric"), and CloudWatch does not
 add up across a dimension a metric was published with, so a query on
-`Dependency` alone finds no data. With "no data" set to Normal, that
+`dependency` alone finds no data. With "no data" set to Normal, that
 alert would never fire and nobody would know. Each call alert has one
 series per dependency and operation, and the thresholds above apply to
 each series.
 
-**The database alert is the one exception: query it by `Dependency`
-alone.** `DependencyAvailable` is published with `Dependency` as its only
-dimension, so adding `Operation` to its query finds no data in the same
+**The database alert is the one exception: query it by `dependency`
+alone.** `external.dependency.available` is published with `dependency` as its only
+dimension, so adding `operation` to its query finds no data in the same
 way.
 
-**Do not alert on `DependencyAvailable` for an HTTP dependency.** There
+**Do not alert on `external.dependency.available` for an HTTP dependency.** There
 it reports the outcome of the last call, however old. Behind a cache it
 can read 1 for up to the cache lifetime after the dependency goes down,
 and one failed call holds it at 0 until the next call succeeds. It is
 for the dashboard. The "Dependency unavailable" alert uses
-`ExternalCallFailure` instead, which only reports calls that happened in
+`external.call.failure` instead, which only reports calls that happened in
 the window.
 
-**Do alert on it for a database.** A database's `DependencyAvailable`
+**Do alert on it for a database.** A database's `external.dependency.available`
 comes from the driver's heartbeats every 10 seconds (`METRICS.md` → "A
 database"), so it is fresh. And a database's outage never shows in
-`ExternalCallFailure`: a command that cannot reach a server fails
+`external.call.failure`: a command that cannot reach a server fails
 before it is sent and is not recorded. Use `Maximum`, so the alert fires
 only when every task saw the database down for the whole window, not on
 one task's passing failure.

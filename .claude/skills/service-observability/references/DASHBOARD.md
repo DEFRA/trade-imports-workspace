@@ -59,20 +59,20 @@ listing the values.
 
 | Panel | Metric | Statistic | Split by |
 |---|---|---|---|
-| Dependency status, one value per dependency | `DependencyAvailable` | `Minimum` | `Dependency` |
-| Calls per dependency | `ExternalCallDuration` | `SampleCount` | `Dependency`, `Operation` |
-| Failed calls | `ExternalCallFailure` | `Sum` | `Dependency`, `Operation` |
-| Failure rate | `ExternalCallFailure` | `Average`, times 100 | `Dependency`, `Operation` |
-| Call time: average, 95th percentile, slowest | `ExternalCallDuration` | `Average`, `p95`, `Maximum` | `Dependency`, `Operation` |
-| Cache hits and misses | `CacheHit`, `CacheMiss` | `Sum` | `Cache` |
+| Dependency status, one value per dependency | `external.dependency.available` | `Minimum` | `dependency` |
+| Calls per dependency | `external.call.duration` | `SampleCount` | `dependency`, `operation` |
+| Failed calls | `external.call.failure` | `Sum` | `dependency`, `operation` |
+| Failure rate | `external.call.failure` | `Average`, times 100 | `dependency`, `operation` |
+| Call time: average, 95th percentile, slowest | `external.call.duration` | `Average`, `p95`, `Maximum` | `dependency`, `operation` |
+| Cache hits and misses | `cache.hit`, `cache.miss` | `Sum` | `cache` |
 | Business events | the service's own metric | `Sum` | its dimension |
 
-Use `Minimum` for `DependencyAvailable`. With more than one task, each
+Use `Minimum` for `external.dependency.available`. With more than one task, each
 publishes its own value, and `Minimum` shows a single unhealthy task.
 
 Split each panel by every dimension its metric is published with, as in
 the table. CloudWatch does not add up across a published dimension, so
-a panel on `ExternalCallFailure` split by `Dependency` alone is empty.
+a panel on `external.call.failure` split by `dependency` alone is empty.
 
 One more panel per `@Timed("<name>")` annotation in the service's
 `src/main` (`METRICS.md` → "Publish" puts one on every controller
@@ -105,11 +105,11 @@ nested object with a numeric `event.duration` (`LOGGING.md` → "How to
 write the fields"). CDP drops the flat MDC form.
 
 The dimension values for the service come from its code. For
-reference-data: `Dependency` is `mdm` or `trade-token`; `Cache` is
-`MDM_COUNTRIES_CACHE` or `MDM_POE_CACHE`; `LookupType` is `countries` or
-`ports-of-entry`. A service with a database has `Dependency` `mongodb`,
+reference-data: `dependency` is `mdm` or `trade-token`; `cache` is
+`MDM_COUNTRIES_CACHE` or `MDM_POE_CACHE`; `lookup.type` is `countries` or
+`ports-of-entry`. A service with a database has `dependency` `mongodb`,
 its status from the driver's heartbeats and, if its commands are
-measured, an `Operation` from a fixed set of command names, with every
+measured, an `operation` from a fixed set of command names, with every
 other command as `other` (`METRICS.md` → "A database").
 
 ## Generate

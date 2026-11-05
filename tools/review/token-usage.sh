@@ -31,7 +31,7 @@ JSON_OUTPUT=false
 ROOT="$HOME/.claude/projects"
 
 usage() {
-    sed -n '2,23p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '2,24p' "$0" | sed 's/^# \{0,1\}//'
     exit "${1:-1}"
 }
 

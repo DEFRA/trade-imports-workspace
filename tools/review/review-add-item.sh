@@ -3,10 +3,18 @@
 # Usage:
 #   review-add-item.sh EUDPA-XXXXX --repo REPO --file PATH --line N --severity S \
 #                      --category C --issue "..." --fix "..." [--best-practice PATH]
+#   review-add-item.sh EUDPA-XXXXX --from ITEMS.json
 #
 # C is one of the categories in finding-categories.sh.
 # Disposition, Status, and Notes start null.
 # Prints the new ID to stdout.
+#
+# --from adds many items in one call. ITEMS.json is a list of objects with
+# the same fields as the flags (best_practice for --best-practice):
+#   [{"repo": "r", "file": "f", "line": 3, "severity": "Major",
+#     "category": "naming", "issue": "...", "fix": "..."}]
+# Prints one new ID per line, in list order. All or nothing: if any item is
+# refused, none is added.
 
 set -e
 
@@ -22,11 +30,13 @@ CATEGORY=""
 ISSUE=""
 FIX=""
 BEST_PRACTICE=""
+FROM=""
 
 usage() {
     cat <<EOF
 Usage: $0 EUDPA-XXXXX --repo REPO --file PATH --line N --severity S \\
     --category C --issue "..." --fix "..." [--best-practice PATH]
+       $0 EUDPA-XXXXX --from ITEMS.json
 EOF
     exit 1
 }
@@ -41,6 +51,7 @@ while [[ $# -gt 0 ]]; do
         --issue) ISSUE="$2"; shift 2 ;;
         --fix) FIX="$2"; shift 2 ;;
         --best-practice) BEST_PRACTICE="$2"; shift 2 ;;
+        --from) FROM="$2"; shift 2 ;;
         -h|--help) usage ;;
         -*) echo "Unknown option: $1" >&2; usage ;;
         *) TICKET="$1"; shift ;;
@@ -48,6 +59,19 @@ while [[ $# -gt 0 ]]; do
 done
 
 [[ -z "$TICKET" ]] && usage
+
+if [[ -n "$FROM" ]]; then
+    source "$SCRIPT_DIR/batch-lib.sh"
+    batch_check_list "$FROM" || exit 1
+    targets=()
+    while IFS= read -r repo; do
+        targets+=("$HOME/git/defra/trade-imports-workspace/workareas/reviews/$TICKET/items.${repo}.json")
+    done < <(jq -r 'map(.repo // empty) | unique[]' "$FROM")
+    batch_snapshot "${targets[@]}"
+    batch_run "$0" "$TICKET" "$FROM"
+    exit $?
+fi
+
 for var in REPO FILE LINE SEVERITY CATEGORY ISSUE FIX; do
     if [[ -z "${!var}" ]]; then
         lc=$(printf '%s' "$var" | tr '[:upper:]' '[:lower:]')

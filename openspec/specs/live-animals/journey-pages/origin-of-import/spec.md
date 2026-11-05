@@ -236,11 +236,11 @@ With JavaScript, the system MUST show the chosen country's code as a fixed prefi
 
 ### Requirement: On a notification, the back link follows where the origin page was opened from
 **ID**: REQ-ORIGIN-013
-For a notification, the system MUST return the user from the origin page to the notification dashboard when the page was opened from the dashboard, including by going back along the opening sequence, and to Overview when the page was opened from Overview, whether or not the journey holds any answers. For a notification not opened in this session that holds no answers, the back link MUST open the notification dashboard.
+For a notification, the system MUST return the user from the origin page to the Import Notification Service's "What are you importing?" question when it was started there, and to the dashboard when it was started from the dashboard's create button, including by going back along the opening sequence. It MUST return to Overview when the page was opened from Overview, with or without answers. A notification not opened in this session that holds no answers MUST return to the dashboard.
 
 #### Scenario: The back link opens the dashboard when the page was opened from the dashboard
 **ID**: SCN-ORIGIN-013-A
-- **GIVEN** the user has just started a notification from the dashboard and reached the origin of the import page, without saving anything
+- **GIVEN** the user has just started a notification from the dashboard's create button and reached the origin of the import page, without saving anything
 - **WHEN** they follow the back link
 - **THEN** the notification dashboard is shown
 
@@ -258,9 +258,29 @@ For a notification, the system MUST return the user from the origin page to the 
 
 #### Scenario: The back link opens the dashboard when the page is reached by going back along the opening sequence
 **ID**: SCN-ORIGIN-013-D
-- **GIVEN** the user has started a notification, saved the origin of the import page and followed the back link from "What are you importing?"
+- **GIVEN** the user has started a notification from the live animals notifications list's own create button, saved the origin of the import page and followed the back link from "What are you importing?"
 - **WHEN** they follow the back link from the origin of the import page
 - **THEN** the notification dashboard is shown
+
+#### Scenario: The back link opens the Import Notification Service question when the notification was started from it
+**ID**: SCN-ORIGIN-013-E
+- **GIVEN** the user has started a notification from the Import Notification Service's "What are you importing?" question and reached the origin of the import page
+- **WHEN** they follow the back link
+- **THEN** the Import Notification Service's "What are you importing?" question is shown, not the commodities page of the same title
+- **AND** Live animals is selected
+
+#### Scenario: The back link opens Overview when a notification started from the Import Notification Service question is opened from Overview
+**ID**: SCN-ORIGIN-013-F
+- **GIVEN** the user has started a notification from the Import Notification Service's "What are you importing?" question and opened Overview
+- **WHEN** they open the origin of the import page from Overview and follow the back link
+- **THEN** Overview is shown
+
+#### Scenario: The back link opens the Import Notification Service question when the origin page is reached by going back along the opening sequence
+**ID**: SCN-ORIGIN-013-G
+- **GIVEN** a notification started from the Import Notification Service's "What are you importing?" question
+- **WHEN** the user goes back along the opening run to the origin of the import page and follows the back link
+- **THEN** the Import Notification Service's "What are you importing?" question is shown
+- **AND** Live animals is selected
 
 ### Requirement: A country not in the offered list is rejected
 **ID**: REQ-ORIGIN-014

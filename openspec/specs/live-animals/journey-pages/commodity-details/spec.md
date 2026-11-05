@@ -30,7 +30,7 @@ The system MUST accept the commodity details once every species' number of anima
 
 ### Requirement: A collection table lists the chosen commodities and species, each row removable on its own
 **ID**: REQ-COMMODITY-DETAILS-003
-The system MUST list the chosen commodities in a table with the columns "Commodity code" and "Species" — one row per commodity code, except under commodity code 01061900, where each chosen species has its own row — the Species cell listing the Latin name of each species chosen under that row, and MUST let the user remove a row on its own: removing a commodity row drops every species under that code, removing a species row drops that one species and leaves the rest of its code, and neither affects another row's saved counts. Removing the last species under a code removes that code's row too.
+The system MUST list the chosen commodities in a table with the columns "Commodity code" and "Species", one row per commodity code (one per species under code 01061900), the Species cell giving each species' Latin name. The user MUST be able to remove a row on its own: a commodity row drops all its species, a species row drops only that species, and no removal affects another row's saved counts. Removing a code's last species removes its row.
 
 #### Scenario: The table lists each commodity with its code
 **ID**: SCN-COMMODITY-DETAILS-003-A
@@ -136,7 +136,13 @@ The system MUST return the user to the commodity selection page once every chose
 
 ### Requirement: The back link returns to what are you importing in the opening sequence, and to Overview otherwise
 **ID**: REQ-COMMODITY-DETAILS-009
-The system MUST return the user to the commodity selection page ("What are you importing?") when they follow the back link from commodity details during the opening sequence, not to the main import reason that comes between them, and MUST return them to Overview when the page was opened from its Overview task.
+The system MUST return the user to the commodity selection page ("What are you importing?") when they follow the back link from commodity details during the opening sequence, not to the main import reason that comes between them, and MUST return them to Overview when the page was opened from its Overview task. On a draft opened from a Change link on the review, the back link MUST open the commodity selection page too, as `live-animals/journey-flow` describes.
+
+#### Scenario: On a draft opened from a Change link, the back link opens what are you importing
+**ID**: SCN-COMMODITY-DETAILS-009-C
+- **GIVEN** the review of a draft notification
+- **WHEN** the user follows a Change link to commodity details and then the back link
+- **THEN** "What are you importing?" is shown
 
 #### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-COMMODITY-DETAILS-009-A

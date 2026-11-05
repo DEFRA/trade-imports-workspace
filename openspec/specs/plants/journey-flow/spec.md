@@ -252,6 +252,12 @@ While a notification is being amended, the system MUST end each page the hub lin
 - **WHEN** they change the producer number and select "Save and return"
 - **THEN** the review is shown with the new producer number
 
+#### Scenario: A page opened from a Change link on the review while amending keeps its Back link to Overview
+**ID**: SCN-PLANTS-FLOW-014-E
+- **GIVEN** the review of a notification being amended
+- **WHEN** the user follows the Change link for the identification numbers
+- **THEN** the Back link opens Overview, not the review
+
 #### Scenario: Save and continue while amending goes to the next page of the task
 **ID**: SCN-PLANTS-FLOW-014-B
 - **GIVEN** a plants-for-planting notification being amended
@@ -302,3 +308,27 @@ The system MUST, when a user chooses Plants for planting, Potatoes (seed and war
 - **GIVEN** the user is on the Import Notification Service's "What are you importing?" question
 - **WHEN** they choose Plants for planting, Potatoes (seed and ware) or Wood products and continue
 - **THEN** a new high-risk plants draft is created and its "What are you importing?" entry page is shown
+
+### Requirement: On a draft, a page opened from a Change link on the review goes Back to the previous page of the opening sequence
+**ID**: REQ-PLANTS-FLOW-017
+The system MUST, on a draft notification, give a page opened from a Change link on the review the Back link its opening-sequence step has, carrying the change so that saving there returns to the review. The commodity type page, the first page, MUST keep the Back link it has without the Change link. While the notification is being amended, REQ-PLANTS-FLOW-014 governs the Back link instead.
+
+#### Scenario: The origin page opened from its Change link goes Back to the commodities list
+**ID**: SCN-PLANTS-FLOW-017-A
+- **GIVEN** the review of a draft notification
+- **WHEN** the user follows the Change link for the country of origin
+- **THEN** the Back link on the origin page opens the commodities list
+- **WHEN** they change the country and select "Save and continue"
+- **THEN** the review is shown with the new country
+
+#### Scenario: Identification numbers opened from a Change link goes Back to the consignor
+**ID**: SCN-PLANTS-FLOW-017-B
+- **GIVEN** the review of a draft plants-for-planting or wood notification
+- **WHEN** the user follows the Change link for the identification numbers
+- **THEN** the Back link opens the consignor page
+
+#### Scenario: The commodity type page keeps the Back link it has without a Change link
+**ID**: SCN-PLANTS-FLOW-017-C
+- **GIVEN** the review of a draft notification
+- **WHEN** the user opens the commodity type page from a Change link
+- **THEN** its Back link opens Overview

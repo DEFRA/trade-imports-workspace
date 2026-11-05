@@ -838,7 +838,7 @@
     {
       "id": "REQ-PLANTS-FLOW-014",
       "name": "While a notification is being amended, a page ends with Save and return, Save and continue and Save and return to overview",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-PLANTS-FLOW-014-A",
@@ -848,6 +848,15 @@
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "while amending, an overview-linked page ends with the three amend controls and Save and return goes back to the review showing the change", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/shared/save-actions.test.js", "test": "Should end an overview-linked page with Save and return, Save and continue and a secondary Save and return to overview button, in that order", "strength": "partial", "notes": "the macro's amend ending" },
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/amend-endings.test.js", "test": "Should end the %s page with Save and return to the review while amending", "strength": "partial", "notes": "renders every task-row page while amending; fails when a template stops passing amend" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-FLOW-014-E",
+          "name": "A page opened from a Change link on the review while amending keeps its Back link to Overview",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/controller.test.js", "test": "Should send Back to the overview when the page is opened from a Change link while amending", "strength": "partial", "notes": "href only; stays green by design, so not probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "while amending, a question page opened from a Change link on the review keeps its Back link to the overview and returns to the review showing the change", "strength": "partial", "notes": "real stack; not yet run" }
           ]
         },
         {
@@ -916,6 +925,38 @@
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.test.js", "test": "Should start a notification, begin its opening run and land on its first question", "strength": "full", "notes": "run for the create POST and the start entry; removing the opening-run call turns it red" },
             { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "the start entry opens a new notification at its first question", "strength": "partial", "notes": "proves the landing page and heading in a browser; not probed" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/notification-type/notification-type.spec.ts", "test": "choosing Plants for planting signs the user in to the plants service and opens a new plants draft at its first page", "strength": "partial", "notes": "walks the hand-over from the Import Notification Service through the plants service's sign-in to the new draft; not yet run against the rebuilt stack" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-FLOW-017",
+      "name": "On a draft, a page opened from a Change link on the review goes Back to the previous page of the opening sequence",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-FLOW-017-A",
+          "name": "The origin page opened from its Change link goes Back to the commodities list",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.test.js", "test": "Should send Back to the commodities list carrying the change on a draft opened from a Change link", "strength": "full", "notes": "href only; red when the shared Back link helper's draft change-context condition is inverted" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "the country of origin Change link opens a page whose Back link opens the commodities list with change context, and Save and continue returns to check your answers showing the new country", "strength": "partial", "notes": "real stack, including the return to the review; not yet run" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-FLOW-017-B",
+          "name": "Identification numbers opened from a Change link goes Back to the consignor",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/identification-numbers/controller.test.js", "test": "Should send Back to the consignor for plants or wood carrying the change on a draft opened from a Change link", "strength": "full", "notes": "href only; red when the shared Back link helper's draft change-context condition is inverted" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-FLOW-017-C",
+          "name": "The commodity type page keeps the Back link it has without a Change link",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/controller.test.js", "test": "Should send Back to the overview once answered on a draft opened from a Change link", "strength": "partial", "notes": "pins the Back link; stays green by design, so not probed" }
           ]
         }
       ]

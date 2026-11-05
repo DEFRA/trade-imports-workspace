@@ -574,6 +574,40 @@
           ]
         }
       ]
+    },
+    {
+      "id": "REQ-FLOW-016",
+      "name": "On a draft, a page opened from a Change link on the review goes Back to the previous page of the opening sequence",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-FLOW-016-A",
+          "name": "Main import reason opened from its Change link goes Back to What are you importing?",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should go Back to What are you importing? carrying the change on a draft opened from a Change link", "strength": "full", "notes": "red when the shared Back link helper's draft change-context condition is inverted, green restored" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/change-from-cya.spec.ts", "test": "the reason for import Change link opens a page whose Back link opens What are you importing? with change context, and Save and continue returns to check your answers", "strength": "partial", "notes": "walks the Back link and the return to the review on the real stack; not yet run" }
+          ]
+        },
+        {
+          "id": "SCN-FLOW-016-B",
+          "name": "What are you importing? opened by that Back link continues to Commodity details",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should return to the opener carrying the change context", "strength": "partial", "notes": "proves a save under change context returns to the opening page carrying the change; not the hop from What are you importing? to Commodity details, and not probed" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js", "test": "Should go Back to What are you importing? carrying the change on a draft opened from a Change link", "strength": "partial", "notes": "proves Commodity details' Back link opens What are you importing? carrying the change; not the save path" }
+          ],
+          "notes": "No test walks What are you importing? to Commodity details to the review in one path."
+        },
+        {
+          "id": "SCN-FLOW-016-C",
+          "name": "The origin of the import page keeps the Back link it has without a Change link",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should send Back to the overview for a committed answer on a draft opened from a Change link", "strength": "partial", "notes": "pins the Back link; stays green by design, so not probed" }
+          ]
+        }
+      ]
     }
   ]
 }

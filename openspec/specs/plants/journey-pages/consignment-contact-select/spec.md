@@ -105,9 +105,15 @@ The system MUST refuse to save a submitted value that is not one of the offered 
 - **THEN** the first address row is focused
 - **AND** the search term they entered is still in the search box
 
-### Requirement: Cancel discards a new choice; the back link returns to identification numbers in the opening sequence, and to Overview otherwise
+### Requirement: Cancel discards a new choice; the back link returns to identification numbers in the opening sequence and on a draft opened from a Change link, and to Overview otherwise
 **ID**: REQ-PLANTS-CONTACT-SELECT-005
-Outside an amendment, the system MUST reach Overview without saving a newly checked option when the user selects cancel-and-return-to-overview. While the notification is being amended, `plants/journey-flow` REQ-PLANTS-FLOW-014 governs how the page ends, and neither cancel-and-return-to-overview nor save-and-return-to-overview is offered. The system MUST send the back link to identification numbers during the opening sequence and to Overview otherwise.
+Outside an amendment, the system MUST reach Overview without saving a newly checked option on cancel-and-return-to-overview. While amending, `plants/journey-flow` REQ-PLANTS-FLOW-014 governs how the page ends, and neither cancel-and-return-to-overview nor save-and-return-to-overview is offered. The system MUST send the back link to identification numbers during the opening sequence and on a draft opened from a Change link on the review (REQ-PLANTS-FLOW-017), and to Overview otherwise.
+
+#### Scenario: On a draft opened from a Change link, the back link opens identification numbers
+**ID**: SCN-PLANTS-CONTACT-SELECT-005-D
+- **GIVEN** the review of a draft notification
+- **WHEN** the user follows the Change link for the contact and then the back link
+- **THEN** the identification numbers page is shown
 
 #### Scenario: Cancel keeps the previously saved choice
 **ID**: SCN-PLANTS-CONTACT-SELECT-005-A

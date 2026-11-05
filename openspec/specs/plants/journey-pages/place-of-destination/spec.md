@@ -128,7 +128,13 @@ The system MUST keep a place of destination whose address-book record has since 
 
 ### Requirement: The page offers a full set of save controls and is reachable from Overview
 **ID**: REQ-PLANTS-PLACE-OF-DESTINATION-007
-Outside an amendment, the system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page. While the notification is being amended, `plants/journey-flow` REQ-PLANTS-FLOW-014 governs how the page ends instead. The system MUST send the back link to the arrival details during the opening sequence and to Overview otherwise, and MUST reach the page from the Overview destination task row.
+Outside an amendment, the system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page. While amending, `plants/journey-flow` REQ-PLANTS-FLOW-014 governs how the page ends instead. The system MUST send the back link to the arrival details during the opening sequence and on a draft opened from a Change link on the review (REQ-PLANTS-FLOW-017), and to Overview otherwise, and MUST reach the page from the Overview destination task row.
+
+#### Scenario: On a draft opened from a Change link, the back link opens the arrival details
+**ID**: SCN-PLANTS-PLACE-OF-DESTINATION-007-F
+- **GIVEN** the review of a draft notification
+- **WHEN** the user follows the Change link for the place of destination and then the back link
+- **THEN** the arrival details page is shown
 
 #### Scenario: The page is reachable from the Overview destination row
 **ID**: SCN-PLANTS-PLACE-OF-DESTINATION-007-A

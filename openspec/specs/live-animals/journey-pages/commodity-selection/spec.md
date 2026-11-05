@@ -109,7 +109,13 @@ The system MUST keep every species the user has chosen, whichever search brought
 
 ### Requirement: The back link returns to the origin of the import in the opening sequence, to the page that opened it, and to Overview otherwise
 **ID**: REQ-COMMODITY-SELECT-007
-The system MUST return the user to the origin of the import page when they follow the back link from the commodity selection page during the opening sequence, to commodity details or identification details when that page opened it, and to Overview when the page was opened from its Overview task.
+The system MUST return the user to the origin of the import page when they follow the back link from the commodity selection page during the opening sequence, to commodity details or identification details when that page opened it, and to Overview when the page was opened from its Overview task. On a draft opened from a Change link on the review, the back link MUST open the origin of the import page, as `live-animals/journey-flow` describes.
+
+#### Scenario: On a draft opened from a Change link, the back link opens the origin of the import
+**ID**: SCN-COMMODITY-SELECT-007-D
+- **GIVEN** a draft notification with what are you importing opened by the back link from the main import reason page that a Change link opened
+- **WHEN** the user follows the back link
+- **THEN** the origin of the import page is shown
 
 #### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-COMMODITY-SELECT-007-A

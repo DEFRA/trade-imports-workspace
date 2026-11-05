@@ -123,7 +123,13 @@ The system MUST refuse to save when the submitted import reason is not one of th
 
 ### Requirement: The back link returns to what are you importing in the opening sequence, and to Overview otherwise
 **ID**: REQ-IMPORT-REASON-008
-The system MUST return the user to the commodity selection page ("What are you importing?") when they follow the back link from the main import reason page during the opening sequence, and to Overview when the page was opened from its Overview task.
+The system MUST return the user to the commodity selection page ("What are you importing?") when they follow the back link from the main import reason page during the opening sequence, and to Overview when the page was opened from its Overview task. On a draft opened from a Change link on the review, the back link MUST open the commodity selection page too, as `live-animals/journey-flow` describes.
+
+#### Scenario: On a draft opened from a Change link, the back link opens what are you importing
+**ID**: SCN-IMPORT-REASON-008-C
+- **GIVEN** the review of a draft notification
+- **WHEN** the user follows the Change link for the reason for import and then the back link
+- **THEN** "What are you importing?" is shown
 
 #### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-IMPORT-REASON-008-A

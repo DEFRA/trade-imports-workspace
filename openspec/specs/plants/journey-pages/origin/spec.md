@@ -157,7 +157,13 @@ The system MUST offer save-and-continue, save-and-return-to-overview and cancel-
 
 ### Requirement: The back link opens the commodities list in the opening sequence, and otherwise depends on whether the journey already has an answer
 **ID**: REQ-PLANTS-ORIGIN-010
-The system MUST send the user to the commodities list when they follow the back link from this page during the opening sequence. Outside it, the system MUST send the user to the dashboard before any answer is saved, and to Overview once the journey holds an answer.
+The system MUST send the user to the commodities list when they follow the back link from this page during the opening sequence. Outside it, the system MUST send the user to the dashboard before any answer is saved, and to Overview once the journey holds an answer. On a draft opened from a Change link on the review, the system MUST send the user to the commodities list, as `plants/journey-flow` describes.
+
+#### Scenario: On a draft opened from a Change link, the back link opens the commodities list
+**ID**: SCN-PLANTS-ORIGIN-010-D
+- **GIVEN** the review of a draft notification
+- **WHEN** the user follows the Change link for the country of origin and then the back link
+- **THEN** the commodities list is shown
 
 #### Scenario: The back link opens the dashboard before any answer is saved
 **ID**: SCN-PLANTS-ORIGIN-010-A

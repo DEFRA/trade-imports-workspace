@@ -89,7 +89,13 @@ The system MUST NOT refuse a save with nothing chosen: save-and-continue MUST co
 
 ### Requirement: The back link returns to the place of destination in the opening sequence, and to Overview otherwise
 **ID**: REQ-PLANTS-CONSIGNOR-005
-The system MUST return the user to the place of destination page when they follow the back link from the consignor page during the opening sequence, and to Overview when the page was opened from Overview.
+The system MUST return the user to the place of destination page when they follow the back link from the consignor page during the opening sequence, and to Overview when the page was opened from Overview. On a draft opened from a Change link on the review, the back link MUST open the place of destination page too, as `plants/journey-flow` describes.
+
+#### Scenario: On a draft opened from a Change link, the back link opens the place of destination
+**ID**: SCN-PLANTS-CONSIGNOR-005-C
+- **GIVEN** the review of a draft notification
+- **WHEN** the user follows the Change link for the consignor and then the back link
+- **THEN** the place of destination page is shown
 
 #### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-PLANTS-CONSIGNOR-005-A

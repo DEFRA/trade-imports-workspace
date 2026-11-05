@@ -394,3 +394,28 @@ The system MUST, when a user chooses Live animals on the Import Notification Ser
 - **WHEN** they choose Live animals and continue
 - **THEN** a new draft is created and the "Origin of the import" page is shown with the Draft tag and its new reference
 - **AND** saving that page continues the opening sequence
+
+### Requirement: On a draft, a page opened from a Change link on the review goes Back to the previous page of the opening sequence
+**ID**: REQ-FLOW-016
+The system MUST, on a draft notification, give a page opened from a Change link on the review the Back link its opening-sequence step has, carrying the change so that saving there follows the page's own return path. A page whose opening-sequence Back link is Overview MUST keep Overview, the origin of the import page MUST keep the Back link it has without the Change link, and only upload documents MUST go Back to the review. While the notification is being amended, REQ-FLOW-013 governs instead.
+
+#### Scenario: Main import reason opened from its Change link goes Back to What are you importing?
+**ID**: SCN-FLOW-016-A
+- **GIVEN** the review of a draft notification
+- **WHEN** the user follows the Change link for the reason for import
+- **THEN** the Back link on Main import reason opens What are you importing?
+- **WHEN** they select "Save and continue"
+- **THEN** the review is shown
+
+#### Scenario: What are you importing? opened by that Back link continues to Commodity details
+**ID**: SCN-FLOW-016-B
+- **GIVEN** What are you importing? opened by the Back link on Main import reason from a Change link
+- **WHEN** the user selects "Save and continue"
+- **THEN** Commodity details is shown
+- **AND** selecting "Save and continue" there shows the review
+
+#### Scenario: The origin of the import page keeps the Back link it has without a Change link
+**ID**: SCN-FLOW-016-C
+- **GIVEN** the review of a draft notification
+- **WHEN** the user follows the Change link for the import details
+- **THEN** the Back link on the origin of the import page opens Overview

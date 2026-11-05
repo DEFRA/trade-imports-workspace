@@ -151,6 +151,7 @@ programme's `sources.json` pins. Design Release 2.1 has no address book view of 
 
 ### S-18. Should a send-side address offer United Kingdom as its country?
 
+- **For:** product, not the designer. Paul asks before EUDPA-711 is delivered. The service handles imports from outside the UK into the UK, so a send-side address may be outside the UK by definition, unless a UK-based consignor (for example a dealer selling animals that start in France) counts as the consignor in import terms.
 - **Ticket:** [EUDPA-711](https://eaflood.atlassian.net/browse/EUDPA-711), [ins-frontend #71](https://github.com/DEFRA/trade-imports-ins-frontend/pull/71). Raised in the 5 November review of address types and roles.
 - **Page:** the INS add form for an 'Origin or Consignor' address (Place of origin, Consignor), and its edit page.
 - **Prototype:** the manual-entry country list adds United Kingdom to the reference countries on purpose: `buildAddressBookCountryItems` ([routes.js#L10412-L10423](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/routes.js#L10412-L10423)), used for the manual form at [routes.js#L10145-L10157](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/routes.js#L10145-L10157). Destination and Branch addresses offer United Kingdom only.

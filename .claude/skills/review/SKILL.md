@@ -179,6 +179,19 @@ First line of output is `MODE: FRESH` or `MODE: REFRESH`. Branch on it:
 - `MODE: REFRESH` → setup ran `refresh/scope.sh --write-snapshot`; go to
   Refresh Review, Step R3.5.
 
+**Review only this ticket's own changes.** A ticket review covers the
+PRs whose title or head branch carries the ticket key, and nothing else.
+GitHub's search also finds PRs for other tickets that only mention this
+one; setup leaves those out (`prs.sh --own`) and prints a `Left out
+{repo}#{n}` line for each. Do not add them back, and do not review
+another ticket's changes that reached this ticket's branch through a
+merge from `main` or a sibling branch: findings on them belong to that
+ticket's review and muddy this one's verdict and counts. The one
+exception is a file hand-resolved in such a merge, which is this
+ticket's code (see List C under Step R1-R3). If a PR in
+`.review-meta.json` still belongs to another ticket, stop and tell the
+user before any reviewer starts.
+
 **Pin the head you review.** For each PR in `.review-meta.json`, read
 its current head:
 

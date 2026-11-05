@@ -64,6 +64,8 @@ alternative and the one the build loop still calls directly.
 | **review** | | |
 | `tools/review/start-review.sh` | EUDPA-X | Step 0 — detect FRESH/REFRESH and exec the appropriate setup script |
 | `tools/review/prepare-review.sh` | EUDPA-X [--json] | Setup workspace |
+| `tools/review/plan-groups.sh` | EUDPA-X [--max N] | Sort the files still to review into review groups (one repo, one file type, at most N files, split evenly) from `routing.json`'s `fileRoutes` and `reviewTypes`; writes `groups.json`. Lockfiles are listed as skipped. `prepare-review.sh` runs it |
+| `tools/review/write-briefs.sh` | EUDPA-X [--max-file-bytes N] | Write `briefs/<group>.md` for each group: type instructions, house rules, ticket, guides, then each file's diff and content. `prepare-review.sh` runs it after `plan-groups.sh` |
 | `tools/review/detect-tech.sh` | REPO_PATH | Detects technologies + best-practice paths for a repo; reads `.claude/skills/review/assets/routing.json` |
 | `tools/review/verify-coverage.sh` | EUDPA-X [--json] | Check coverage |
 | `tools/review/verify-consistency.sh` | EUDPA-X [--json] | Check consistency |

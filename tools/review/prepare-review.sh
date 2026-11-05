@@ -229,8 +229,14 @@ if [[ "$NO_TICKET" == "true" ]]; then
         prs_json=$(gh search prs "head:$BRANCH" --owner DEFRA --json number,title,repository,url,state 2>/dev/null) || prs_json="[]"
     fi
 else
-    # Search by ticket ID
-    prs_json=$("$HOME/git/defra/trade-imports-workspace/tools/github/prs.sh" "$TICKET" json 2>/dev/null) || prs_json="[]"
+    # Search by ticket ID. --own keeps the ticket's own PRs only: a PR for
+    # another ticket that merely mentions this one is not this ticket's change.
+    left_out_log=$(mktemp)
+    prs_json=$("$HOME/git/defra/trade-imports-workspace/tools/github/prs.sh" "$TICKET" json --own 2>"$left_out_log") || prs_json="[]"
+    while IFS= read -r line; do
+        [[ "$line" == "Left out "* ]] && log "  $line"
+    done < "$left_out_log"
+    rm -f "$left_out_log"
 fi
 
 if [[ "$prs_json" == "[]" ]] || [[ -z "$prs_json" ]]; then
@@ -498,6 +504,14 @@ for ((i=0; i<pr_count; i++)); do
         log "  Created: $repo/_consistency-check.md"
     fi
 done
+
+# Sort the files still to review into review groups and write each group's
+# brief (plan-groups.sh and write-briefs.sh say how).
+log ""
+log "Planning review groups and writing briefs..."
+bash "$SCRIPT_DIR/plan-groups.sh" "$REVIEW_ID" > /dev/null
+bash "$SCRIPT_DIR/write-briefs.sh" "$REVIEW_ID" > /dev/null
+log "  Created: groups.json and briefs/"
 
 # Output summary
 if [[ "$JSON_OUTPUT" == "true" ]]; then

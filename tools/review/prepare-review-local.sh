@@ -209,6 +209,12 @@ review_stub="$REVIEW_DIR/review.${REPO}.md"
 stub="$REVIEW_DIR/file-reviews/$REPO/_consistency-check.md"
 [[ -f "$stub" ]] || touch "$stub"
 
+# ---- Step 7: review groups and their briefs -------------------------------
+
+bash "$SCRIPT_DIR/plan-groups.sh" "$REVIEW_ID" > /dev/null
+bash "$SCRIPT_DIR/write-briefs.sh" "$REVIEW_ID" > /dev/null
+log "  Created: groups.json and briefs/"
+
 # ---- Output ---------------------------------------------------------------
 
 if [[ "$JSON_OUTPUT" == "true" ]]; then

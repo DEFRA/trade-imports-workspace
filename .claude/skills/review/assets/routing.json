@@ -262,5 +262,116 @@
         "docs/best-practices/node/testing/frontend.md"
       ]
     }
+  ],
+  "reviewTypes": {
+    "java-source": {
+      "agent": "review-java-source",
+      "guides": [
+        "docs/best-practices/java/modern-java.md",
+        "docs/best-practices/java/spring-boot.md",
+        "docs/best-practices/doc-comments/javadoc.md"
+      ],
+      "guidesIf": [
+        { "contains": "@RestController|@RequestMapping|@(Get|Post|Put|Patch|Delete)Mapping", "guides": ["docs/best-practices/rest-api/rest-api.md"] },
+        { "contains": "org\\.springframework\\.data\\.mongodb|com\\.mongodb", "guides": ["docs/best-practices/java/spring-data-mongodb.md"] },
+        { "contains": "software\\.amazon\\.awssdk", "guides": ["docs/best-practices/java/aws-sdk-v2.md"] },
+        { "contains": "io\\.swagger|org\\.springdoc", "guides": ["docs/best-practices/java/openapi-springdoc.md"] }
+      ]
+    },
+    "java-tests": {
+      "agent": "review-java-tests",
+      "guides": [
+        "docs/best-practices/java/testing/unit.md",
+        "docs/best-practices/java/testing/integration.md",
+        "docs/best-practices/java/modern-java.md"
+      ],
+      "guidesIf": [
+        { "contains": "org\\.springframework\\.data\\.mongodb|com\\.mongodb", "guides": ["docs/best-practices/java/spring-data-mongodb.md"] }
+      ]
+    },
+    "node-source": {
+      "agent": "review-node-source",
+      "guides": [
+        "docs/best-practices/node/code-style.md",
+        "docs/best-practices/doc-comments/jsdoc.md"
+      ],
+      "guidesIf": [
+        { "contains": "@hapi/|server\\.route\\(|h\\.(redirect|view|response)\\(", "guides": ["docs/best-practices/node/hapi.md", "docs/best-practices/rest-api/rest-api.md"] },
+        { "contains": "logger\\.|request\\.log", "guides": ["docs/best-practices/node/pino-logging.md"] }
+      ]
+    },
+    "node-tests": {
+      "agent": "review-node-tests",
+      "guides": [
+        "docs/best-practices/node/testing/frontend.md",
+        "docs/best-practices/node/code-style.md"
+      ],
+      "guidesIf": []
+    },
+    "ui": {
+      "agent": "review-ui",
+      "guides": [
+        "docs/best-practices/node/nunjucks.md",
+        "docs/best-practices/node/govuk-frontend.md",
+        "docs/best-practices/gds/components.md",
+        "docs/best-practices/gds/patterns.md",
+        "docs/best-practices/gds/accessibility.md",
+        "docs/best-practices/gds/language.md",
+        "docs/best-practices/gds/styles.md"
+      ],
+      "guidesIf": []
+    },
+    "e2e": {
+      "agent": "review-e2e",
+      "guides": ["docs/best-practices/playwright/BEST_PRACTICES.md"],
+      "guidesIf": []
+    },
+    "perf": {
+      "agent": "review-perf",
+      "guides": ["docs/best-practices/k6/BEST_PRACTICES.md"],
+      "guidesIf": []
+    },
+    "spec": {
+      "agent": "review-spec",
+      "guides": ["openspec/config.yaml"],
+      "guidesIf": []
+    },
+    "skills-docs": {
+      "agent": "review-skills",
+      "guides": [
+        "docs/best-practices/skills/patterns.md",
+        "docs/best-practices/skills/anti-patterns.md"
+      ],
+      "guidesIf": []
+    },
+    "infra": {
+      "agent": "review-infra",
+      "guides": [],
+      "guidesIf": [
+        { "path": "*Dockerfile*", "guides": ["docs/best-practices/docker-compose.md"] },
+        { "path": "*compose*.yml", "guides": ["docs/best-practices/docker-compose.md"] },
+        { "path": ".github/*", "guides": ["docs/best-practices/github-actions.md"] },
+        { "path": "*.sh", "guides": ["docs/best-practices/shell.md"] }
+      ]
+    },
+    "lockfile": {
+      "agent": null,
+      "guides": [],
+      "guidesIf": []
+    }
+  },
+  "fileRoutes": [
+    { "type": "lockfile", "match": ["package-lock.json", "*/package-lock.json", "yarn.lock", "*/yarn.lock"] },
+    { "type": "spec", "match": ["openspec/*"] },
+    { "type": "skills-docs", "match": [".claude/*", "docs/*", "*.md"] },
+    { "type": "java-tests", "match": ["src/test/*.java", "*/src/test/*.java"] },
+    { "type": "java-source", "match": ["src/main/*.java", "*/src/main/*.java"] },
+    { "type": "e2e", "match": ["*.spec.ts", "*.spec.js", "*.fit.spec.js"] },
+    { "type": "e2e", "repos": ["trade-imports-ins-tests"], "match": ["page-objects/*", "utils/*", "domain/*", "fixtures/*", "flows/*"] },
+    { "type": "node-tests", "match": ["*.test.js", "*.test.mjs", "*.test.ts"] },
+    { "type": "perf", "match": ["*.k6.js", "src/k6/*.js"] },
+    { "type": "ui", "match": ["*.njk", "*.scss", "src/client/*"] },
+    { "type": "node-source", "match": ["*.js", "*.mjs", "*.cjs", "*.ts"] },
+    { "type": "infra", "match": ["*"] }
   ]
 }

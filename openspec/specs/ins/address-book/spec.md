@@ -35,7 +35,7 @@ The system MUST remove a deleted address from the list and from search for every
 
 ### Requirement: Editing an address replaces the whole record, clearing any optional field left blank
 **ID**: REQ-INS-ADDR-003
-The system MUST replace an address's entire record on edit, so an optional field left blank in the edit is cleared, not left holding its previous value, and MUST show the edited address under its new name in the list, in place of the old one. The edit page MUST offer no address type or uses, and an edit MUST keep the address's type and every use it was saved with.
+The system MUST replace an address's entire record on edit, so an optional field left blank in the edit is cleared, not left holding its previous value, and MUST show the edited address under its new name in the list, in place of the old one. The edit page MUST offer no address type or roles, and an edit MUST keep every role the address was saved with.
 
 #### Scenario: Leaving an optional field blank on edit clears it
 **ID**: SCN-INS-ADDR-003-A
@@ -49,13 +49,13 @@ The system MUST replace an address's entire record on edit, so an optional field
 - **WHEN** the user edits it to a new name
 - **THEN** the address book list shows the address under its new name
 
-#### Scenario: An edit keeps the address's type and every use
+#### Scenario: An edit keeps every role
 **ID**: SCN-INS-ADDR-003-C
-- **GIVEN** an address saved with the type 'Origin or Consignor' and the uses place of origin and consignor
+- **GIVEN** an address saved with the roles place of origin and consignor
 - **WHEN** the user opens its edit page
-- **THEN** the page asks only for the address and contact fields, with no address type and no uses
+- **THEN** the page asks only for the address and contact fields, with no address type and no roles
 - **WHEN** they change a field and save
-- **THEN** the stored address still has the type 'Origin or Consignor' and the uses place of origin and consignor
+- **THEN** the stored address still has the roles place of origin and consignor
 
 ### Requirement: A newly created address persists its full set of details
 **ID**: REQ-INS-ADDR-004
@@ -137,7 +137,7 @@ The system MUST return the user to the address book list on a successful save fr
 
 #### Scenario: Adding an address confirms it and lists it first
 **ID**: SCN-INS-ADDR-009-A
-- **GIVEN** the user has filled in a valid new address on the add form opened from the address book after choosing 'Origin or Consignor', and ticked a use
+- **GIVEN** the user has filled in a valid new address on the add form opened from the address book after choosing 'Origin or Consignor', and ticked a role
 - **WHEN** they save it
 - **THEN** they return to the address book on the 'Origin and Consignor' tab, and a 'Success' confirmation reads '<name> address added to your address book'
 - **AND** the new address is listed first, with a View link that opens its own details page
@@ -210,7 +210,7 @@ The system MUST ask the user to confirm before deleting an address, on a page he
 
 ### Requirement: The address book list shows each address's key details, with a way to view, and a way to add one
 **ID**: REQ-INS-ADDR-012
-The system MUST head the list 'Address book' with an intro, then a way to add an address, then the filter (REQ-INS-ADDR-028) and the address type tabs (REQ-INS-ADDR-038). It MUST list each address's name, uses, postal address lines and country, newest first, with a way to open it, and be reachable from the service's navigation. When the address book cannot be loaded, it MUST respond with a server error, keep the heading, intro, add action and filter, and show no results line and no table.
+The system MUST head the list 'Address book' with an intro, then a way to add an address, then the filter (REQ-INS-ADDR-028) and the address type tabs (REQ-INS-ADDR-038). It MUST list each address's name, roles, postal address lines and country, newest first, with a way to open it, and be reachable from the service's navigation. When the address book cannot be loaded, it MUST respond with a server error, keep the heading, intro, add action and filter, and show no results line and no table.
 
 #### Scenario: The list renders each address's details, with columns and an add action
 **ID**: SCN-INS-ADDR-012-A
@@ -218,7 +218,7 @@ The system MUST head the list 'Address book' with an intro, then a way to add an
 - **WHEN** they view the address book
 - **THEN** the intro reads 'Manage your addresses for use across all your import notifications'
 - **AND** an action to add a new address is offered directly under the intro
-- **AND** each address is listed with its name, type, address and country under the columns Name, Type, Address, Country and Action, the Type naming the address's uses
+- **AND** each address is listed with its name, type, address and country under the columns Name, Type, Address, Country and Action, the Type naming the address's roles
 
 #### Scenario: A name of more than one word shows on two lines
 **ID**: SCN-INS-ADDR-012-D
@@ -683,9 +683,9 @@ The address book service MUST serve the page size a list request gives when it i
 - **THEN** the first 25 addresses are returned, with a page size of 25
 
 
-### Requirement: A search matches an address by its name, address, town, county, postcode, country or the labels of its uses
+### Requirement: A search matches an address by its name, address, town, county, postcode, country or the labels of its roles
 **ID**: REQ-INS-ADDR-032
-The system MUST match the trimmed search text, ignoring case and anywhere inside a word, against an address's name, address line 1, address line 2, town or city, county, postcode and country name, and against the labels of its uses as the Type column and the Type filter show them, and MUST treat a blank search as no search. While a search is active, the results line MUST count the matches, and pagination MUST show only when the matches run past one page of eight.
+The system MUST match the trimmed search text, ignoring case and anywhere inside a word, against an address's name, address line 1, address line 2, town or city, county, postcode and country name, and against the labels of its roles as the Type column and the Type filter show them, and MUST treat a blank search as no search. While a search is active, the results line MUST count the matches, and pagination MUST show only when the matches run past one page of eight.
 
 #### Scenario: A term inside an address line finds that address
 **ID**: SCN-INS-ADDR-032-A
@@ -717,21 +717,21 @@ The system MUST match the trimmed search text, ignoring case and anywhere inside
 - **WHEN** they search for its name, for part of its address line 1, and for 'fran'
 - **THEN** each search lists the added address
 
-#### Scenario: A use label finds an address used that way
+#### Scenario: A role label finds an address holding that role
 **ID**: SCN-INS-ADDR-032-E
-- **GIVEN** the address book holds an address with the place of origin and consignor uses whose name and address do not contain the word 'consignor'
+- **GIVEN** the address book holds an address with the place of origin and consignor roles whose name and address do not contain the word 'consignor'
 - **WHEN** the user searches for 'consignor'
 - **THEN** the list shows that address, with 'Place of origin, Consignor' as its Type
 
-#### Scenario: An address just added with a use is found by that use's label
+#### Scenario: An address just added with a role is found by that role's label
 **ID**: SCN-INS-ADDR-032-F
-- **GIVEN** the user has just added an address with the consignor use ticked, whose name and address do not contain the word 'consignor'
+- **GIVEN** the user has just added an address with the consignor role ticked, whose name and address do not contain the word 'consignor'
 - **WHEN** they search for 'Consignor'
 - **THEN** the list shows the added address
 
-#### Scenario: A use label the Type filter shows finds an address whose Type column reads otherwise
+#### Scenario: A role label the Type filter shows finds an address whose Type column reads otherwise
 **ID**: SCN-INS-ADDR-032-G
-- **GIVEN** the address book holds an address with the branch address use whose name and address do not contain the word 'branch'
+- **GIVEN** the address book holds an address with the branch address role whose name and address do not contain the word 'branch'
 - **WHEN** the user searches the Branch tab for 'branch address'
 - **THEN** the list shows that address, with 'Branch' as its Type
 
@@ -884,54 +884,64 @@ The system MUST, on the add page reached from a notification's role picker, offe
 - **THEN** they stay on the add page and the error summary lists 'Enter address line 1', 'Enter a town or city', 'Enter a postcode or Zip code', 'Enter an email address' and 'Enter a phone number', in that order, each also shown on its field
 - **AND** the name entered and 'Importer' are still shown, and the address book holds nothing new
 
-### Requirement: The address book service records an address's type and uses and refuses a missing type or use and values outside the allowed lists
+### Requirement: The address book service records an address's roles and refuses missing roles, unknown roles, roles from more than one group and a receiving role outside the United Kingdom
 **ID**: REQ-INS-ADDR-037
-The address book service MUST record an address's type and uses and return them on read. A create or an update MUST give one of the three types and at least one of the six uses, and an update MUST replace the stored type and uses with those it gives. It MUST refuse a missing type or use, or a value outside the allowed lists, with a validation error naming the field, and save nothing. Its published contract MUST mark both required.
+The address book service MUST record an address's roles and return them on read, in the order given with any repeat dropped. A create or an update MUST give at least one of the six roles, and an update MUST replace the stored roles with those it gives. It MUST refuse, with a validation error naming the field and saving nothing: missing roles or a role outside the six; roles from more than one of the groups place of origin and consignor, consignee, importer and place of destination, and branch address; and an address holding consignee, importer or place of destination whose country is not the United Kingdom. It MUST NOT record an address type, ignoring one a create or update carries. Its published contract MUST mark the roles required.
 
-#### Scenario: An address created with a type and uses reads back with the same type and uses
+#### Scenario: An address created with roles reads back with the same roles
 **ID**: SCN-INS-ADDR-037-A
-- **GIVEN** an address is created with the type 'destination, consignee or importer' and the uses importer and place of destination
+- **GIVEN** an address in the United Kingdom is created with the roles importer and place of destination
 - **WHEN** the address is read by its id
-- **THEN** it has the type 'destination, consignee or importer' and the uses importer and place of destination, in that order
+- **THEN** it has the roles importer and place of destination, in that order
 
-#### Scenario: An update with a different set of uses replaces them
+#### Scenario: An update with a different set of roles replaces them
 **ID**: SCN-INS-ADDR-037-B
-- **GIVEN** an address saved with the uses place of origin and consignor
-- **WHEN** it is updated with the uses importer, consignee and branch address
-- **THEN** the update response and a later read both show exactly the uses importer, consignee and branch address
+- **GIVEN** an address saved with the role consignee
+- **WHEN** it is updated with the roles importer and consignee
+- **THEN** the update response and a later read both show exactly the roles importer and consignee
 
-#### Scenario: A create or update carrying a use outside the six is refused naming the uses
+#### Scenario: A create or update carrying a role outside the six is refused naming the roles
 **ID**: SCN-INS-ADDR-037-C
-- **WHEN** an address is created with a use that is not one of the six
-- **THEN** the service responds with a 400 validation error that names the uses, and no address is saved
-- **WHEN** a saved address is updated with a use that is not one of the six
-- **THEN** the service responds with a 400 validation error that names the uses, and the address keeps its original uses
+- **WHEN** an address is created with a role that is not one of the six
+- **THEN** the service responds with a 400 validation error that names the roles, and no address is saved
+- **WHEN** a saved address is updated with a role that is not one of the six
+- **THEN** the service responds with a 400 validation error that names the roles, and the address keeps its original roles
 
-#### Scenario: A create or update carrying a type outside the three is refused naming the address type
-**ID**: SCN-INS-ADDR-037-D
-- **WHEN** an address is created with a type that is not one of the three
-- **THEN** the service responds with a 400 validation error that names the address type, and no address is saved
-- **WHEN** a saved address is updated with a type that is not one of the three
-- **THEN** the service responds with a 400 validation error that names the address type, and the address keeps its original type
-
-#### Scenario: An update that omits the type and uses is refused and the address keeps both
+#### Scenario: An update that omits the roles is refused and the address keeps them
 **ID**: SCN-INS-ADDR-037-E
-- **GIVEN** an address saved with a type and uses
-- **WHEN** it is updated with neither
-- **THEN** the service responds with a 400 validation error that names the address type and the uses
-- **AND** a later read shows the address with its original type and uses
+- **GIVEN** an address saved with roles
+- **WHEN** it is updated with none
+- **THEN** the service responds with a 400 validation error that names the roles
+- **AND** a later read shows the address with its original roles
 
-#### Scenario: A create without a type, without uses or with an empty list of uses is refused naming the field
+#### Scenario: A create without roles or with an empty list of roles is refused naming the roles
 **ID**: SCN-INS-ADDR-037-F
-- **WHEN** an address is created with no type
-- **THEN** the service responds with a 400 validation error that names the address type, and no address is saved
-- **WHEN** an address is created with no uses, or with an empty list of uses
-- **THEN** the service responds with a 400 validation error that names the uses, and no address is saved
+- **WHEN** an address is created with no roles, or with an empty list of roles
+- **THEN** the service responds with a 400 validation error that names the roles, and no address is saved
 
-#### Scenario: The published contract marks the type and the uses required
+#### Scenario: The published contract marks the roles required
 **ID**: SCN-INS-ADDR-037-G
 - **WHEN** the service's published contract is read
-- **THEN** it lists both the address type and the uses among the properties a create or update requires
+- **THEN** it lists the roles among the properties a create or update requires, with at least one role
+
+#### Scenario: Roles from more than one group are refused naming the roles
+**ID**: SCN-INS-ADDR-037-H
+- **WHEN** an address is created with the roles place of origin and consignee
+- **THEN** the service responds with a 400 validation error that names the roles, and no address is saved
+- **WHEN** an address holding the role importer is updated with the roles importer and branch address
+- **THEN** the service responds with a 400 validation error that names the roles, and the address keeps the role importer
+
+#### Scenario: A receiving role outside the United Kingdom is refused naming the country
+**ID**: SCN-INS-ADDR-037-I
+- **WHEN** an address in France is created with the role consignee
+- **THEN** the service responds with a 400 validation error that names the country, and no address is saved
+- **WHEN** an address in France is created with the roles place of origin and consignor
+- **THEN** it is saved, and reads back in France with those roles
+
+#### Scenario: An address type a request carries is not recorded
+**ID**: SCN-INS-ADDR-037-J
+- **WHEN** an address is created with roles and an address type
+- **THEN** it is saved, and reads back with its roles and no address type
 
 ### Requirement: The address book list is split into three tabs, each a link that loads the list on that tab
 **ID**: REQ-INS-ADDR-038
@@ -978,66 +988,59 @@ The system MUST split the address book list into three tabs, 'Origin and Consign
 - **THEN** page 1 of that tab is shown with the search kept in the Search field and 'Select one' chosen as the Type
 - **AND** the list is that tab's matches for the search
 
-### Requirement: Each tab lists the addresses the address book service returns for its address type, with their uses in the Type column
+### Requirement: Each tab lists the addresses holding one of its roles, with their roles in the Type column
 **ID**: REQ-INS-ADDR-039
-The system MUST list on the selected tab the addresses the address book service returns for that tab's address type (REQ-INS-ADDR-040). The Type column MUST show an address's uses by their labels, joined by a comma and a space.
+The system MUST list on the selected tab the addresses the address book service returns for that tab's roles (REQ-INS-ADDR-040): place of origin and consignor on 'Origin and Consignor', consignee, importer and place of destination on 'Destination, Consignee and Importer', and branch address on 'Branch'. The Type column MUST show an address's roles by their labels, joined by a comma and a space.
 
-#### Scenario: Each tab lists the addresses the service returns for its address type
+#### Scenario: Each tab lists the addresses holding its roles
 **ID**: SCN-INS-ADDR-039-A
-- **GIVEN** the address book holds an address with the uses place of origin and consignee, and another with the use branch address
-- **WHEN** the user opens the 'Origin and Consignor' and 'Destination, Consignee and Importer' tabs
-- **THEN** the first address is listed on both
+- **GIVEN** the address book holds an address with the roles consignee and place of destination, and another with the role branch address
+- **WHEN** the user opens the 'Destination, Consignee and Importer' tab
+- **THEN** the first address is listed and the second is not
 - **WHEN** they open the 'Branch' tab
 - **THEN** the second address is listed and the first is not
+- **AND** the 'Origin and Consignor' tab lists neither
 
-#### Scenario: An address with no uses is shown with an empty Type
-**ID**: SCN-INS-ADDR-039-B
-- **GIVEN** the address book holds an address with no uses
-- **WHEN** the user opens each tab
-- **THEN** the address is listed on the tab for the address type the service returns it under (REQ-INS-ADDR-040), with an empty Type
-- **AND** it is not listed on the other two tabs
-
-#### Scenario: The Type column names the address's uses and the columns are the same on every tab
+#### Scenario: The Type column names the address's roles and the columns are the same on every tab
 **ID**: SCN-INS-ADDR-039-C
-- **GIVEN** the address book holds an address with the uses place of origin and consignor
+- **GIVEN** the address book holds an address with the roles place of origin and consignor
 - **WHEN** the user views the tab that lists it
 - **THEN** its Type reads 'Place of origin, Consignor'
 - **AND** the columns are Name, Type, Address, Country and Action, with the Action heading visually hidden
 
-#### Scenario: Each use has its own label
+#### Scenario: Each role has its own label
 **ID**: SCN-INS-ADDR-039-D
-- **GIVEN** the address book holds an address with each of the six uses alone
+- **GIVEN** the address book holds an address with each of the six roles alone
 - **WHEN** the user views the tabs that list them
 - **THEN** the Types read 'Place of origin', 'Consignor', 'Consignee', 'Importer', 'Place of destination' and 'Branch'
 
-### Requirement: The address book service lists the addresses holding one of an address type's uses
+### Requirement: The address book service lists the addresses holding any of the roles asked for
 **ID**: REQ-INS-ADDR-040
-The address book service MUST, asked for an address type, return only the caller's organisation's live addresses holding one of that type's uses, so an address holding uses of two types is returned under both, paged as for the whole list and combined with the search and country filters. 'Origin or consignor' MUST also return the live addresses holding no uses. With no address type it MUST list every live address, and it MUST refuse an address type outside the three with a 400 bad request.
+The address book service MUST, asked for one or more roles, return only the caller's organisation's live addresses holding any of them, paged as for the whole list and combined with the search and country filters. With no role it MUST list every live address, and it MUST refuse a role outside the six with a 400 bad request.
 
-#### Scenario: An address type returns exactly its addresses, an address held under two types under both
+#### Scenario: Several roles return exactly the addresses holding any of them
 **ID**: SCN-INS-ADDR-040-A
-- **GIVEN** 'origin or consignor' holds the uses place of origin and consignor, 'destination, consignee or importer' holds place of destination, consignee and importer, and 'branch' holds branch address
-- **AND** an organisation holds an address with the uses place of origin and consignee, one with consignor, one with importer, one with branch address and one with no uses
-- **WHEN** the list is asked for each address type in turn
-- **THEN** 'origin or consignor' returns the place of origin and consignee address, the consignor address and the address with no uses
-- **AND** 'destination, consignee or importer' returns the place of origin and consignee address and the importer address
-- **AND** 'branch' returns the branch address alone
+- **GIVEN** an organisation holds an address with the roles place of origin and consignor, one with consignor, one with importer and one with branch address
+- **WHEN** the list is asked for place of origin and consignor
+- **THEN** the first two addresses are returned
+- **AND** asked for consignee, importer and place of destination, the importer address alone is returned
+- **AND** asked for branch address, the branch address alone is returned
 
-#### Scenario: An address type narrows a search
+#### Scenario: Roles narrow a search
 **ID**: SCN-INS-ADDR-040-B
-- **GIVEN** an organisation holds addresses of several address types that match a search term
-- **WHEN** the list is asked for one address type with that term
-- **THEN** only the matching addresses holding one of that type's uses are returned
+- **GIVEN** an organisation holds addresses with several roles that match a search term
+- **WHEN** the list is asked for some of those roles with that term
+- **THEN** only the matching addresses holding any of them are returned
 
-#### Scenario: An unknown address type is refused
+#### Scenario: An unknown role is refused
 **ID**: SCN-INS-ADDR-040-C
-- **WHEN** the list is asked for an address type that is not one of the three
+- **WHEN** the list is asked for a role that is not one of the six
 - **THEN** the service responds with a 400 error
 
-#### Scenario: Every live address is listed when no address type is asked for
+#### Scenario: Every live address is listed when no role is asked for
 **ID**: SCN-INS-ADDR-040-D
-- **GIVEN** an organisation holds live addresses of several address types
-- **WHEN** the list is asked for no address type
+- **GIVEN** an organisation holds live addresses with several roles
+- **WHEN** the list is asked for no role
 - **THEN** every live address is returned
 
 ### Requirement: The address book list filters the selected tab by a Type chosen in the 'Filter addresses' disclosure
@@ -1054,15 +1057,15 @@ The system MUST hold in the 'Filter addresses' disclosure a select labelled 'Typ
 
 #### Scenario: A submitted Type lists only the tab's addresses holding it
 **ID**: SCN-INS-ADDR-041-B
-- **GIVEN** the 'Origin and Consignor' tab holds one address with the consignor use and one without it
+- **GIVEN** the 'Origin and Consignor' tab holds one address with the consignor role and one without it
 - **WHEN** the user chooses 'Consignor' and presses the Search button, or presses Enter in the Search field
-- **THEN** only the address with the consignor use is listed and the list reads 'Showing 1-1 of 1'
+- **THEN** only the address with the consignor role is listed and the list reads 'Showing 1-1 of 1'
 - **AND** no pagination is shown
 - **AND** the 'Origin and Consignor' tab is still selected and 'Consignor' is chosen as the Type
 
 #### Scenario: Matches past one page are counted and paged, and the pages keep the tab, the search and the Type
 **ID**: SCN-INS-ADDR-041-C
-- **GIVEN** nine addresses on the 'Origin and Consignor' tab match a search and hold the consignor use
+- **GIVEN** nine addresses on the 'Origin and Consignor' tab match a search and hold the consignor role
 - **WHEN** the user submits the search with 'Consignor' chosen
 - **THEN** the list reads 'Showing 1-8 of 9' and pagination is shown
 - **AND** the link to the next page keeps the tab, the search and the Type
@@ -1083,39 +1086,38 @@ The system MUST hold in the 'Filter addresses' disclosure a select labelled 'Typ
 
 #### Scenario: A Type finds the addresses holding it beyond the first page of the tab
 **ID**: SCN-INS-ADDR-041-F
-- **GIVEN** the 'Origin and Consignor' tab runs past one page, and two of its addresses with the consignor use lie beyond the first page
+- **GIVEN** the 'Origin and Consignor' tab runs past one page, and two of its addresses with the consignor role lie beyond the first page
 - **WHEN** the user submits a search that matches them with 'Consignor' chosen
 - **THEN** both addresses are listed and the list reads 'Showing 1-2 of 2'
 - **AND** no pagination is shown
 
-### Requirement: The address book service lists the addresses holding a use, and matches a search against uses
+### Requirement: The address book service lists the addresses holding a role, and matches a search against roles
 **ID**: REQ-INS-ADDR-042
-The address book service MUST, asked for a use, return only the caller's organisation's live addresses holding it, combined with the address type and the search and paged over its matches. Given search uses, it MUST return an address holding any of them as well as the addresses the search text and country codes match. It MUST refuse a use or search use outside the six uses with a 400 bad request.
+The address book service MUST, asked for one role, return only the caller's organisation's live addresses holding it, combined with the search and paged over its matches. Given search roles, it MUST return an address holding any of them as well as the addresses the search text and country codes match. It MUST refuse a role or search role outside the six with a 400 bad request.
 
-#### Scenario: A use returns exactly its holders
+#### Scenario: A role returns exactly its holders
 **ID**: SCN-INS-ADDR-042-A
-- **GIVEN** an organisation holds an address with the consignor use, one with the importer use and one with no uses
-- **WHEN** the list is asked for the consignor use
-- **THEN** only the address with the consignor use is returned
-- **AND** the address with no uses is not returned, even when the list is also asked for 'origin or consignor'
+- **GIVEN** an organisation holds an address with the consignor role and one with the importer role
+- **WHEN** the list is asked for the consignor role
+- **THEN** only the address with the consignor role is returned
 
-#### Scenario: A use narrows the address type and the search
+#### Scenario: A role narrows the search
 **ID**: SCN-INS-ADDR-042-B
-- **GIVEN** an organisation holds addresses of several uses that match a search term
-- **WHEN** the list is asked for a use with that term
-- **THEN** only the matching addresses holding that use are returned
+- **GIVEN** an organisation holds addresses with several roles that match a search term
+- **WHEN** the list is asked for a role with that term
+- **THEN** only the matching addresses holding that role are returned
 - **AND** the total and pages count only those addresses
 
-#### Scenario: A search use widens the search
+#### Scenario: A search role widens the search
 **ID**: SCN-INS-ADDR-042-C
-- **GIVEN** an organisation holds one address matching a search term by its name and another holding the consignor use
-- **WHEN** the list is asked for the term with the consignor search use
+- **GIVEN** an organisation holds one address matching a search term by its name and another holding the consignor role
+- **WHEN** the list is asked for the term with the consignor search role
 - **THEN** both addresses are returned
-- **AND** with an address type, only those within the type are returned
+- **AND** with roles to keep, only the addresses holding one of them are returned
 
-#### Scenario: An unknown use is refused
+#### Scenario: An unknown role or search role is refused
 **ID**: SCN-INS-ADDR-042-D
-- **WHEN** the list is asked for a use or a search use that is not one of the six
+- **WHEN** the list is asked for a role or a search role that is not one of the six
 - **THEN** the service responds with a 400 error
 
 ### Requirement: Adding an address from the address book starts by choosing its address type
@@ -1169,21 +1171,21 @@ The system MUST open 'Choose an address type' when the user chooses 'Add a new a
 
 #### Scenario: Saving the add form from the address book with no type chosen asks for the type first
 **ID**: SCN-INS-ADDR-043-G
-- **GIVEN** the user is signed in, has chosen no address type, and has filled in a valid address and ticked a use on the add form
+- **GIVEN** the user is signed in, has chosen no address type, and has filled in a valid address and ticked a role on the add form
 - **WHEN** they save it outside a notification journey
 - **THEN** 'Choose an address type' opens instead
 - **AND** no address is saved
 
 #### Scenario: Going back after a refused save and choosing the type again shows what was entered
 **ID**: SCN-INS-ADDR-043-H
-- **GIVEN** the user has chosen 'Origin or Consignor', 'Destination, Consignee or Importer' or 'Branch', filled in the address and contact details with a malformed email address, ticked a use and saved the add form, which refuses the save
+- **GIVEN** the user has chosen 'Origin or Consignor', 'Destination, Consignee or Importer' or 'Branch', filled in the address and contact details with a malformed email address, ticked a role and saved the add form, which refuses the save
 - **WHEN** they select 'Back', then choose the same type and select 'Continue'
 - **THEN** the add form shows the address and contact details entered
-- **AND** the use ticked is still ticked
+- **AND** the role ticked is still ticked
 
-### Requirement: Adding an address from the address book saves it with its type and the uses ticked
+### Requirement: Adding an address from the address book saves it with the roles ticked
 **ID**: REQ-INS-ADDR-044
-The system MUST, on the add form opened from the address book, follow the contact fields with a checkbox for each use of the chosen type, MUST require a use, checking it only once the address and contact fields are valid, and MUST fix the country to United Kingdom for 'Destination, Consignee or Importer' and 'Branch'. A successful save MUST store the chosen type and the ticked uses the type offers, and return the user to the address book list on that type's tab with the new address first.
+The system MUST, on the add form opened from the address book, follow the contact fields with a checkbox for each role of the chosen type, MUST require a role, checking it only once the address and contact fields are valid, and MUST fix the country to United Kingdom for 'Destination, Consignee or Importer' and 'Branch'. A successful save MUST store the ticked roles the type offers, and return the user to the address book list on that type's tab with the new address first.
 
 #### Scenario: Origin or Consignor offers Place of origin and Consignor after the contact fields
 **ID**: SCN-INS-ADDR-044-A
@@ -1192,34 +1194,34 @@ The system MUST, on the add form opened from the address book, follow the contac
 - **AND** after the contact fields come a section break and the question 'What can this address be used for?' with the hint 'Select where this address can be used'
 - **AND** the question offers the checkboxes 'Place of origin' and 'Consignor', in that order, none ticked and neither with a hint
 
-#### Scenario: Valid fields and no use ticked show the uses error linked to the first option
+#### Scenario: Valid fields and no role ticked show the roles error linked to the first option
 **ID**: SCN-INS-ADDR-044-B
-- **GIVEN** the user has chosen any address type and filled in valid address and contact fields and ticked no use
+- **GIVEN** the user has chosen any address type and filled in valid address and contact fields and ticked no role
 - **WHEN** they save the form
 - **THEN** 'Select what this address can be used for' shows against the question and in the 'There is a problem' summary
 - **AND** the summary link goes to the first option
 
-#### Scenario: An invalid field and no use ticked show only the field's error
+#### Scenario: An invalid field and no role ticked show only the field's error
 **ID**: SCN-INS-ADDR-044-C
-- **GIVEN** the user has chosen any address type and left a mandatory field blank and ticked no use
+- **GIVEN** the user has chosen any address type and left a mandatory field blank and ticked no role
 - **WHEN** they save the form
 - **THEN** only the blank field's error shows, against the field and in the summary
-- **AND** the uses error is not shown
+- **AND** the roles error is not shown
 
-#### Scenario: Saving stores the type and every ticked use, and a use the type does not offer is not stored
+#### Scenario: Saving stores every ticked role, and a role the type does not offer is not stored
 **ID**: SCN-INS-ADDR-044-D
 - **GIVEN** the user has chosen 'Origin or Consignor' and filled in a valid address
 - **WHEN** they tick 'Place of origin' and 'Consignor' and save
-- **THEN** the address is stored with the type 'Origin or Consignor' and the uses place of origin and consignor, in that order
-- **WHEN** a save also carries a use that 'Origin or Consignor' does not offer
-- **THEN** that use is not stored
+- **THEN** the address is stored with the roles place of origin and consignor, in that order
+- **WHEN** a save also carries a role that 'Origin or Consignor' does not offer
+- **THEN** that role is not stored
 
 #### Scenario: Saving an address lands on its type's tab with the address first
 **ID**: SCN-INS-ADDR-044-E
-- **GIVEN** the user has chosen 'Origin or Consignor', 'Destination, Consignee or Importer' or 'Branch' and filled in a valid address with a use ticked
+- **GIVEN** the user has chosen 'Origin or Consignor', 'Destination, Consignee or Importer' or 'Branch' and filled in a valid address with a role ticked
 - **WHEN** they save the form
 - **THEN** the address book list opens on the tab for that type, 'Origin and Consignor', 'Destination, Consignee and Importer' or 'Branch'
-- **AND** the new address is listed first, with the labels of its uses as its Type
+- **AND** the new address is listed first, with the labels of its roles as its Type
 
 #### Scenario: Destination, Consignee or Importer fixes the country to United Kingdom
 **ID**: SCN-INS-ADDR-044-F
@@ -1229,7 +1231,7 @@ The system MUST, on the add form opened from the address book, follow the contac
 - **AND** the question offers the checkboxes 'Place of destination', 'Consignee' and 'Importer', in that order, none ticked and none with a hint
 - **AND** the Country select holds only 'United Kingdom', selected
 
-#### Scenario: Branch offers the one use and fixes the country to United Kingdom
+#### Scenario: Branch offers the one role and fixes the country to United Kingdom
 **ID**: SCN-INS-ADDR-044-G
 - **GIVEN** the user has chosen 'Branch' and opened the add form
 - **THEN** the address and contact fields show straight away, with no address search
@@ -1239,7 +1241,7 @@ The system MUST, on the add form opened from the address book, follow the contac
 
 #### Scenario: A Destination or Branch address is saved as United Kingdom whatever country is posted
 **ID**: SCN-INS-ADDR-044-H
-- **GIVEN** the user has chosen 'Destination, Consignee or Importer' or 'Branch', filled in a valid address and ticked a use
+- **GIVEN** the user has chosen 'Destination, Consignee or Importer' or 'Branch', filled in a valid address and ticked a role
 - **WHEN** the form is saved with a country other than United Kingdom posted
 - **THEN** the address is stored with the country United Kingdom
 
@@ -1250,29 +1252,29 @@ The system MUST, on the add form opened from the address book, follow the contac
 - **THEN** the summary and each field show 'Enter a name or organisation', 'Enter a postcode or Zip code' and 'Enter a phone number'
 - **AND** the Country select still holds only 'United Kingdom', selected
 
-### Requirement: An address added from a notification journey is saved with the type and use of the party it is for
+### Requirement: An address added from a notification journey is saved with the role of the party it is for
 **ID**: REQ-INS-ADDR-045
-The system MUST save an address added from a role's picker with that role's address type, its use and every other use on the role's side that the trader ticked, and an address added from the consignment contact page as a branch address.
+The system MUST save an address added from a role's picker with that role and every other role on the role's side that the trader ticked, and an address added from the consignment contact page with the branch address role.
 
-#### Scenario: An address added from a role's picker or the consignment contact page is saved with that party's type and use
+#### Scenario: An address added from a role's picker or the consignment contact page is saved with that party's role
 **ID**: SCN-INS-ADDR-045-A
 - **GIVEN** a trader on the add page reached from the place of origin, consignor, consignee, importer or place of destination picker
 - **WHEN** they save a valid address with nothing ticked
-- **THEN** the address is saved with that role's address type and exactly that role's use
+- **THEN** the address is saved with exactly that role
 - **WHEN** a trader saves a valid address from the consignment contact page
-- **THEN** the address is saved with the type 'Branch' and the branch address use
+- **THEN** the address is saved with the branch address role
 
 #### Scenario: A role's save carries the other roles on its side that were ticked
 **ID**: SCN-INS-ADDR-045-B
 - **GIVEN** a trader on the add page reached from the consignee picker
 - **WHEN** they tick 'Importer' and save a valid address
-- **THEN** the address book's read of the saved address gives the type 'Destination, Consignee or Importer' and exactly the uses consignee and importer
+- **THEN** the address book's read of the saved address gives exactly the roles consignee and importer
 
-#### Scenario: A posted use the role's page does not offer is not saved
+#### Scenario: A posted role the role's page does not offer is not saved
 **ID**: SCN-INS-ADDR-045-C
 - **GIVEN** a trader on the add page reached from the consignee picker
-- **WHEN** a use from outside the consignee's side is posted with a valid address
-- **THEN** the address is saved with exactly the consignee use
+- **WHEN** a role from outside the consignee's side is posted with a valid address
+- **THEN** the address is saved with exactly the consignee role
 
 ### Requirement: The add page reached from a role picker asks what else the address should be used for, offering the other roles on its side
 **ID**: REQ-INS-ADDR-046
@@ -1310,4 +1312,4 @@ The system MUST, on the add page reached from a role's picker, ask 'What else sh
 **ID**: SCN-INS-ADDR-046-E
 - **GIVEN** a trader on the consignment contact page
 - **WHEN** they choose to add a new address
-- **THEN** the add page shows the address fields and no uses question
+- **THEN** the add page shows the address fields and no roles question

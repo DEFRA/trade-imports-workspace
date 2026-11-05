@@ -35,7 +35,7 @@ book API refuses, with the API's own messages.
 | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `listAddresses(orgId, { page, q, countryCode })` | `{ items, page, pageSize, totalItems, totalPages }`, 25 to a page, as the API pages. Starts with the stub address book and the release's extra parties. |
 | `getAddress(orgId, id)`                          | One address. Throws an error with `status: 404` when the organisation has none by that id.                                                              |
-| `createAddress(orgId, body)`                     | Saves and returns the address, with an `id` made from its name. Any extra field (an `addressType` and `uses`, say) is kept.                             |
+| `createAddress(orgId, body)`                     | Saves and returns the address, with an `id` made from its name. Any extra field (its `roles`, say) is kept.                             |
 | `updateAddress(orgId, id, body)`                 | Lays the changes over the address and returns it.                                                                                                       |
 | `deleteAddress(orgId, id)`                       | Deletes it (a starter address is hidden for that organisation until Reset).                                                                             |
 | `isValidationFailure(error)`                     | True for the 400 a refused save throws.                                                                                                                 |
@@ -157,16 +157,17 @@ address lookup service here, so build the manual form, and log a design gap:
 "Find an address by postcode: needs a real service (an address lookup such as
 OS Places); the prototype asks for the address by hand".
 
-**Address types and uses** ("what is this address used for": consignor,
+**Address types and roles** ("what is this address used for": consignor,
 consignee, importer). The real address book has them, so copy its pages
 rather than inventing a shape. 'Add a new address' first opens 'Choose an
 address type', offering 'Origin or Consignor', 'Destination, Consignee or
 Importer' and 'Branch' (`address-type/`). The add form then asks 'What can
-this address be used for?' with a `govukCheckboxes` named `uses`, offering
-only the chosen type's uses (`add/` and `fields.js`). The list has one tab
+this address be used for?' with a `govukCheckboxes` named `roles`, offering
+only the chosen type's roles (`add/` and `fields.js`). The list has one tab
 per address type (`address-book-tabs.js`) and a Type filter that narrows the
-open tab to one use (`list/`). Every address holds an `addressType` and at
-least one use, and `createAddress` sends both. All of these are under
+open tab to one role (`list/`). Every address holds at least one role, and
+`createAddress` sends the roles; the address type is only the pages'
+grouping of roles, worked out from them and never stored. All of these are under
 `~/git/defra/trade-imports-workspace/repos/trade-imports-ins-frontend/src/server/app/features/address-book/`,
 with their labels in its `copy/copy.en.js`.
 

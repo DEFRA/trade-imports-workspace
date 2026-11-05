@@ -98,9 +98,9 @@ The system MUST accept a chosen place of destination, saving it without error, M
 - **WHEN** the user chooses a different address and saves
 - **THEN** the saved destination is the new one, and the old one is no longer associated
 
-### Requirement: Saving with nothing chosen moves on without an error
+### Requirement: Saving with nothing chosen moves on without an error, and a value not in the book is refused
 **ID**: REQ-PLANTS-PLACE-OF-DESTINATION-005
-The system MUST NOT refuse save-and-continue when nothing is chosen: it MUST move on, with no error and no place of destination saved. Save-and-return-to-overview with nothing chosen MUST return to Overview, saving nothing. A place of destination already held MUST be kept when the page is saved with nothing chosen, and a submitted value that is not an address in the book MUST be refused, as governed by `plants/addresses`.
+Save-and-continue and save-and-return-to-overview MUST make the same checks. With nothing chosen, neither MUST show an error or save a place of destination: save-and-continue MUST move on and save-and-return-to-overview MUST return to Overview. A place of destination already held MUST be kept, and a value that is not an address in the book MUST be refused on either button, as governed by `plants/addresses`.
 
 #### Scenario: Saving with nothing chosen moves on and leaves the destination not yet started
 **ID**: SCN-PLANTS-PLACE-OF-DESTINATION-005-A
@@ -114,6 +114,13 @@ The system MUST NOT refuse save-and-continue when nothing is chosen: it MUST mov
 - **GIVEN** the user is on the place of destination page with nothing chosen and no destination held yet
 - **WHEN** they select save and return to overview
 - **THEN** Overview is shown, with no error and no destination saved
+
+#### Scenario: Save and return to overview with a value not in the book is refused
+**ID**: SCN-PLANTS-PLACE-OF-DESTINATION-005-D
+- **GIVEN** the user is on the place of destination page and a value that is not an address in the book is submitted
+- **WHEN** they select save and return to overview
+- **THEN** they stay on the page and "Select a place of destination from the list" is shown
+- **AND** the search term is kept and no place of destination is saved
 
 ### Requirement: Deleting the chosen address from the address book leaves the destination on the notification
 **ID**: REQ-PLANTS-PLACE-OF-DESTINATION-006

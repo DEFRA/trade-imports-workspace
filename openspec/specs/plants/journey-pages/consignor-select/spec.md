@@ -66,7 +66,7 @@ The system MUST accept a chosen address, continue to identification numbers on s
 
 ### Requirement: Saving with nothing chosen moves on without an error, and a value not in the book is refused
 **ID**: REQ-PLANTS-CONSIGNOR-004
-The system MUST NOT refuse a save with nothing chosen: save-and-continue MUST continue to identification numbers in the opening sequence, or return to Overview when the page was opened from it, with no error and no consignor saved. A consignor already held MUST be kept, as governed by `plants/addresses`. A submitted value that is not an address in the book MUST be refused as governed by `plants/addresses`, and choosing an address after that refusal MUST recover.
+Save-and-continue and save-and-return-to-overview MUST make the same checks. With nothing chosen, neither MUST show an error or save a consignor: save-and-continue MUST continue to identification numbers in the opening sequence, or Overview when opened from it, and save-and-return-to-overview MUST return to Overview. A held consignor MUST be kept. A value not in the book MUST be refused on either button, and choosing an address after that MUST recover, as governed by `plants/addresses`.
 
 #### Scenario: Saving with nothing chosen continues without an error
 **ID**: SCN-PLANTS-CONSIGNOR-004-A
@@ -86,6 +86,13 @@ The system MUST NOT refuse a save with nothing chosen: save-and-continue MUST co
 - **GIVEN** the user is on the consignor page with nothing chosen and no consignor held yet
 - **WHEN** they select save and return to overview
 - **THEN** Overview is shown, with no error and no consignor saved
+
+#### Scenario: Save and return to overview with a value not in the book is refused
+**ID**: SCN-PLANTS-CONSIGNOR-004-E
+- **GIVEN** the user is on the consignor page and a value that is not an address in the book is submitted
+- **WHEN** they select save and return to overview
+- **THEN** they stay on the page and "Select a consignor from the list" is shown
+- **AND** the search term is kept and no consignor is saved
 
 ### Requirement: The back link returns to the place of destination in the opening sequence, and to Overview otherwise
 **ID**: REQ-PLANTS-CONSIGNOR-005

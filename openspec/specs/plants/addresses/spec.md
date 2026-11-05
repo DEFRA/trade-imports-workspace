@@ -101,7 +101,7 @@ The system MUST replace the address a role already holds with a copy of a newly 
 
 ### Requirement: Saving with nothing chosen is not refused, and a value not on the list is refused and focuses the first row
 **ID**: REQ-PLANTS-ADDR-005
-The system MUST NOT refuse a picker's save when nothing has been chosen: it MUST move on without an error, committing nothing, so the role stays empty or keeps the address it held. It MUST refuse any picker's save of a value that is not an address-book id it offered, a since-deleted record included, preserving the search term. Following the error MUST focus the first row, or the search field when a search left the list empty.
+Every save control on a picker MUST make the same checks. The system MUST NOT refuse a picker's save when nothing has been chosen: it MUST move on without an error, committing nothing, so the role stays empty or keeps the address it held. It MUST refuse any picker's save of a value that is not an address-book id it offered, a since-deleted record included, preserving the search term. Following the error MUST focus the first row, or the search field when a search left the list empty.
 
 #### Scenario: A deleted or missing address-book id is rejected and the search preserved
 **ID**: SCN-PLANTS-ADDR-005-B

@@ -992,6 +992,39 @@
       "notes": [
         "Needed before any other admin row: the pre-commit hook refuses commits while the audit fails."
       ]
+    },
+    {
+      "id": "inc-262",
+      "title": "Animals admin keeps its Defra ID connections open between sign-in calls, as the other frontends now do",
+      "detail": "The animals, plants and INS frontends now route every plain-HTTP Wreck call, Bell's token exchange included, through one keep-alive agent (src/auth/wreck-agent.js, installed in startServer), with one logged retry for a connection that never opened. That fixed sign-ins that failed when Docker Desktop's port forwarder held a new connection to the Defra ID stub past one second. Animals admin makes the same Defra ID calls (discovery, signing keys, token exchange) and gets the same agent, following the animals frontend's (commit a9944ea6 on this branch). It is not installed behind an HTTP proxy, as in the twins.",
+      "acceptanceCriteria": [
+        "Animals admin routes its Defra ID calls through one keep-alive agent like the animals frontend's, with real-connection unit tests that fail if the agent is removed.",
+        "Signing in to and out of animals admin works on the local docker stack, the CI docker stack and in CDP (where an HTTP proxy is configured and the agent is not installed), and the admin auth e2e specs pass."
+      ],
+      "dependsOn": [
+        "inc-261"
+      ],
+      "theme": "type-question",
+      "status": "todo",
+      "kind": "fix",
+      "repos": [
+        "admin"
+      ],
+      "sources": [
+        {
+          "source": "review:type-question-theme",
+          "ref": "flake fix for notification-type.spec.ts:302 on 5 November: animals a9944ea6, plants 7e49ef5, INS 67eb032; logs/flakes/"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null,
+      "externalDependsOn": [],
+      "merge": null,
+      "notes": [
+        "A follow-up from fixing the theme's sign-in flake, built on the theme branch.",
+        "Links, sign-in and sign-out must keep working in CDP, in the local docker stack and in the CI docker stack. Never write to cdp-app-config: if a CDP change is needed, write it up for Sam."
+      ]
     }
   ]
 }

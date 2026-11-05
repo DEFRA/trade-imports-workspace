@@ -19,7 +19,7 @@ Five from HANDOVER.md, plus working-tree dirt.
 | 2 | Commits **ahead and behind** `origin/main`, per repo | `git -C repos/<r> fetch origin main --quiet` then `rev-list --count origin/main..HEAD` and `HEAD..origin/main`. Behind matters as much as ahead: drift is what a `merge` field absorbs |
 | 3 | Agents started vs result | `grep -c '"type":"started"'` and `grep -c '"type":"result"'` in the run's `journal.jsonl`. **Those are the keys** — `agent_start` / `agent_result` match nothing and read a silent 0/0, which looks exactly like a stalled run |
 | 4 | Newest transcript mtime | newest file under the run's transcript dir |
-| 5 | Newest mtime under `logs/` | newest file under this theme's `logs/` |
+| 5 | Newest mtime under `logs/` | newest file under this theme's `logs/`. **Format the mtime with the date** (`stat -f '%Sm' -t '%m-%d %H:%M:%S'`) and scope it with `-newermt '<this run started>'`. With `%H:%M:%S` alone, files from an earlier night sort above tonight's: `inc-018-review2-unit.log` at 23:51 on 3 November read as the newest activity at 23:10 on the 4th, and two of the four "newest" entries sat in the future |
 | 6 | Working-tree dirt | `git status --porcelain | wc -l` per repo, plus `MERGE_HEAD` present or gone |
 
 **Stalled means all five of 1–5 unchanged.** None alone is enough, and a flat
@@ -110,6 +110,37 @@ Two traps found that night, both worth checking before asking for a reset:
 
 **Hold and notify.** Do not relaunch in hope. `stack-held` or `stack-failed` on
 an `e2e: ci` run means a guard has regressed, which is a finding in itself.
+
+**Seen for real at 00:05 on 5 November, and it is a lint defect, not a bad
+plan.** inc-025 was refused after 62 minutes, 10 agents and 1.03M subagent
+tokens, on one sentence — `plans/inc-025.md:577`:
+
+> keep their contracts, and the doc comments at `:20`, `:28` and `:37` stay
+> true as written.
+
+The planner was saying the opposite of what the lint heard: that those doc
+comments need **no change**. That is exactly what a plan should record. But the
+first `CODE_TEXT_DIRECTIVES` pattern (`increment-build-loop.js:3316`) is
+
+```
+\b(add|...|keep|keeps|...)( [^ .;:]+){0,4} <NOT_IN_A_RELATIVE_CLAUSE><COMMENT_WORDS>\b
+```
+
+and `keep` + `their` `contracts,` `and` `the` (four tokens, commas allowed) +
+`doc comments` matches it. The pattern cannot tell "keep this comment wording"
+— a planner dictating text the implementor owns — from "these comments remain
+accurate", a statement of no work.
+
+Consequences worth knowing before reaching for a relaunch:
+
+- The detail said the plan **still** writes code text. `still` means this
+  survived one send-back, so the planner had already been asked once. A blind
+  relaunch is likely to spend another hour and another million tokens arriving
+  at the same sentence.
+- A one-sentence rewording in the plan clears it, but **editing a refused plan
+  is the author's call, not the watcher's** — hold and ask.
+- Worth fixing at source, alongside the three loop defects HANDOVER.md already
+  lists: the pattern needs to exempt a stays-true/needs-no-change clause.
 
 ## Limits, as agreed 4 November
 

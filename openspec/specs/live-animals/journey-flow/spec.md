@@ -96,7 +96,7 @@ The system MUST, outside the opening sequence and outside a change made from che
 
 ### Requirement: A page the hub links to directly, other than the origin of the import page, offers both a discard-and-exit and a save-and-exit route back to Overview
 **ID**: REQ-FLOW-004
-Outside an amendment (REQ-FLOW-013), the system MUST let the user leave a page the hub links to directly, other than the origin of the import page, by discarding unsaved input or committing it, returning to Overview either way. Saving and returning MUST make the same checks as saving and continuing: a missing required answer, or an answer that breaks its rule, keeps the user on the page with an error for each, what they entered kept and nothing saved. A blank optional answer is accepted by either save.
+Outside an amendment (REQ-FLOW-013), the system MUST let the user leave a hub-linked page other than the origin of the import page by discarding unsaved input or committing it, returning to Overview either way. Saving and returning MUST make the same checks as saving and continuing: a missing or invalid answer keeps the user on the page with an error for each, their entries kept and nothing saved. A blank optional answer is accepted by either save.
 
 #### Scenario: Cancel and return to overview discards unsaved input
 **ID**: SCN-FLOW-004-A
@@ -181,9 +181,9 @@ The system MUST show check your answers whatever the notification owes, naming w
 - **WHEN** the user goes to check their answers
 - **THEN** check your answers is shown, leading on to the declaration and then the confirmation
 
-### Requirement: A notification created from the dashboard runs an opening sequence covering the whole journey, ending on check your answers
+### Requirement: A notification created from the dashboard or the type question runs an opening sequence covering the whole journey, ending on check your answers
 **ID**: REQ-FLOW-007
-The system MUST walk a notification created from the dashboard through an opening sequence covering the whole journey, skipping steps not in scope. It MUST NOT offer the CPH number page, MUST go to Overview from roles and addresses when every task is complete, and MUST end on check your answers once the contact address is saved. Reaching either ends it; a back link does not. Its order MUST NOT be assumed to match REQ-FLOW-001's sections.
+The system MUST walk a notification created from the dashboard or the Import Notification Service's type question through an opening sequence covering the whole journey, skipping steps not in scope. It MUST NOT offer the CPH number page, MUST go to Overview from roles and addresses when every task is complete, and MUST end on check your answers once the contact address is saved. Reaching either ends it; a back link does not. Its order MUST NOT be assumed to match REQ-FLOW-001's sections.
 
 #### Scenario: A newly created notification is walked through the whole opening sequence to review
 **ID**: SCN-FLOW-007-A
@@ -330,7 +330,7 @@ The system MUST NOT offer a discard-and-exit or a save-and-exit route back to Ov
 
 ### Requirement: While a notification is being amended, a page ends with Save and return, Save and continue and Save and return to overview
 **ID**: REQ-FLOW-013
-While a notification is being amended, each page the hub links to directly MUST end with a primary "Save and return" to the review, a secondary "Save and continue" going on as usual, and "Save and return to overview", with no "Cancel and return to overview", except the origin of the import page, the CPH number page, the address pickers and the contact address page, which end with the first two. Every such page but upload documents MUST keep its usual Back link, not the review; upload documents MUST open the review instead.
+While a notification is being amended, each hub-linked page MUST end with a primary "Save and return" to the review, a secondary "Save and continue" and "Save and return to overview", with no "Cancel and return to overview"; the origin of the import, CPH number, address picker and contact address pages end with the first two only. Every such page but upload documents MUST keep its usual Back link; upload documents MUST open the review instead.
 
 #### Scenario: A page opened from Overview while amending ends with the three amend controls
 **ID**: SCN-FLOW-013-A
@@ -383,3 +383,14 @@ Outside an amendment, the system MUST end a page the hub links to directly, othe
 - **WHEN** the user opens Arrival details from Overview
 - **THEN** "Save and return" and "Save and continue" sit side by side
 - **AND** "Save and return to overview" sits on its own line below them
+
+### Requirement: A notification started from the Import Notification Service's type question opens at the entry page with its opening sequence begun
+**ID**: REQ-FLOW-015
+The system MUST, when a user chooses Live animals on the Import Notification Service's "What are you importing?" question, create a new draft notification and open it at the entry page with the opening sequence begun, exactly as starting from its own dashboard does.
+
+#### Scenario: Choosing Live animals opens a new draft at Origin of the import
+**ID**: SCN-FLOW-015-A
+- **GIVEN** the user is on the Import Notification Service's "What are you importing?" question
+- **WHEN** they choose Live animals and continue
+- **THEN** a new draft is created and the "Origin of the import" page is shown with the Draft tag and its new reference
+- **AND** saving that page continues the opening sequence

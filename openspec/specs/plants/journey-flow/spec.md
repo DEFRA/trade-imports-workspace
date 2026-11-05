@@ -292,3 +292,13 @@ Outside an amendment, the system MUST end a page the hub links to directly with 
 - **WHEN** the user opens a page the hub links to directly
 - **THEN** "Save and return" and "Save and continue" sit side by side
 - **AND** "Save and return to overview" sits on its own line below them
+
+### Requirement: A notification started from the Import Notification Service's type question opens at the entry page with its opening sequence begun
+**ID**: REQ-PLANTS-FLOW-016
+The system MUST, when a user chooses Plants for planting, Potatoes (seed and ware) or Wood products on the Import Notification Service's "What are you importing?" question, create a new draft notification and open it at the entry page with the opening sequence begun, exactly as starting from its own dashboard does.
+
+#### Scenario: Choosing a plants type opens a new draft at the entry question
+**ID**: SCN-PLANTS-FLOW-016-A
+- **GIVEN** the user is on the Import Notification Service's "What are you importing?" question
+- **WHEN** they choose Plants for planting, Potatoes (seed and ware) or Wood products and continue
+- **THEN** a new high-risk plants draft is created and its "What are you importing?" entry page is shown

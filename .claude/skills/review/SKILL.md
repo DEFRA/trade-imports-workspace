@@ -122,9 +122,8 @@ flow** described below — substitute the local id (`local/REPO/BRANCH`)
 for `EUDPA-XXXXX` everywhere, and read the file straight from
 `~/git/defra/trade-imports-workspace/repos/{repo}/{file}` (there is no
 PR-commit snapshot to clone in local mode — the repo checkout IS the
-source). The FILE_REVIEWER, CONSISTENCY_REVIEWER and REVIEW_ITEM_FIXER
-personas are **unchanged** — only the id and the snapshot-vs-live-repo
-read path differ, and both are supplied in the spawn prompt.
+source). The agents and personas are **unchanged**: `write-briefs.sh`
+puts the local id and the live-repo read path in each brief.
 
 ## Called by another skill
 
@@ -147,21 +146,22 @@ local-mode review without a human ever saying "review":
 
 ## Worker references
 
-The parent SKILL.md (and `references/BATCH_IMPLEMENTOR.md`) delegate to
-three worker personas defined as `references/*.md` prose. Each is spawned
-as a `general-purpose` Task subagent with a `Follow …` reference to the
-persona file. `general-purpose` carries `Tools: *` (it has Write/Edit/Bash)
-and is not subject to the no-write guardrail that restricted custom
-subagents receive — so workers can write their on-disk artifacts.
+A Fresh review spawns custom agents from `.claude/agents/review-*.md`:
+one per group in Step 2, and `review-consistency` in Step 4. Each has
+Bash, Read and Write, no skill list, and a prompt that is only its brief
+path. Refresh and the batch implementor still spawn `general-purpose`
+Task subagents with a `Follow …` reference to a `references/*.md`
+persona.
 
 | Persona | Used in | Artifact |
 |---|---|---|
-| `references/FILE_REVIEWER.md` | Fresh Step 2, Refresh Step R4 (one per file, parallel up to 100) | per-file `.review.json` (schema in `assets/file-review-schema.md`) |
-| `references/CONSISTENCY_REVIEWER.md` | Fresh Step 4 (one per repo) | per-repo `_consistency-check.md` |
+| `.claude/agents/review-<type>.md` (one per review type, named in `assets/routing.json` → `reviewTypes`) | Fresh Step 2 (one per group, parallel up to 2) | per-file `.review.json` via `file-review-write.sh`, plus `ac/<group>.json` from test reviewers |
+| `references/FILE_REVIEWER.md` | Refresh Step R4 only (one per file, parallel up to 2) | per-file `.review.json` (schema in `assets/file-review-schema.md`) |
+| `.claude/agents/review-consistency.md`, following `references/CONSISTENCY_REVIEWER.md` | Fresh Step 4 (once) | per-repo `_consistency-check.md` and `consistency/{repo}.items.json` |
 | `references/REVIEW_ITEM_FIXER.md` | `BATCH_IMPLEMENTOR.md` Step 4 (one per Fix-disposition item, sequential) | source edits + commit |
 
-Spawn idiom: Task tool with `subagent_type: general-purpose` and a prompt
-beginning `Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/review/references/<NAME>.md.`
+Spawn idiom outside Fresh Steps 2 and 4: Task tool with
+`subagent_type: general-purpose` and a prompt beginning `Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/review/references/<NAME>.md.`
 
 ## Step 0: Start the review
 
@@ -216,63 +216,90 @@ The notification arrives automatically.
   ticket.md, repos/, file-reviews/ placeholders, and
   `.review-meta.json` (detected tech + best-practices paths under
   `~/git/defra/trade-imports-workspace/docs/best-practices/`).
+- `groups.json` and one `briefs/<group id>.md` per group, plus empty
+  `findings/`, `ac/` and `consistency/` folders for the reviewers to
+  write into.
+
+**Trial run.** When the user says "trial run", "don't post" or "no
+post", run every step except Step 7 and say so in the Completion
+Output. Ask once at the start if it is unclear.
 
 Proceed to Step 2.
 
-## Step 2: Review Each File
+## Step 2: Review Each Group
 
-**MANDATORY:** create a review for EVERY changed file. No exceptions.
+Step 0 already sorted every file still to review into groups and wrote a
+brief for each: `groups.json` and `briefs/<group id>.md` in the review
+workarea (`plan-groups.sh`, `write-briefs.sh`). A group is one repo, one
+file type, at most 10 files. Its brief holds everything the reviewer needs.
 
-### Parallel Execution
+Read the group list once:
 
-Spawn up to **100 in parallel** via the Task tool with
-`subagent_type: general-purpose`.
-
-Emit ALL Task calls in a single assistant response — do NOT spawn one, await the result, then spawn the next. Parallelism only works when calls are batched in one turn.
-
-#### Spawn prompt template
-
-```markdown
-Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/review/references/FILE_REVIEWER.md.
-
-**Mode:** FRESH
-**Ticket:** EUDPA-XXXXX - [Ticket Summary]
-
-**Your assigned file:**
-- Repository: [repo-name]
-- Path: [file-path]
-- PR: [pr-number]
-- Commit: [sha]
+```bash
+jq -c '.groups[] | {id, agent, files: (.files | length)}' ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/groups.json
 ```
 
-The reviewer writes findings to the per-file JSON placeholder via the
-`file-review-add-item.sh` / `file-review-set-verdict.sh` helpers — no
-markdown, no placeholder path needed in the spawn prompt.
+Spawn one Task per group with `subagent_type` set to the group's `agent`.
+Up to **2 in parallel**: emit two Task calls in one response, wait for
+both, then the next two. The whole prompt is:
+
+```markdown
+Your brief: ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/briefs/<group id>.md
+```
+
+Each reviewer writes its findings to disk and replies with one line
+(`done: 6 files, 9 findings, NEEDS_ATTENTION`). Do not read its findings
+back here: Step 5 reads them from disk. On a `failed:` reply, spawn that
+group once more; if it fails again, report it.
 
 ## Step 3: Verify Coverage
+
+Lockfiles get no reviewer: `groups.json` lists them under `skipped`. Give
+them their verdict in one call. Write
+`~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/findings/skipped.json`
+with one entry per skipped file:
+
+```json
+[{"repo": "<repo>", "file": "package-lock.json", "verdict": "SAFE",
+  "reason": "Lockfile: no reviewer. Dependency changes are reviewed in the manifest.",
+  "findings": []}]
+```
+
+then run:
+
+```bash
+~/git/defra/trade-imports-workspace/tools/review/file-review-write.sh EUDPA-XXXXX --from ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/findings/skipped.json
+```
+
+Skip both when `skipped` is empty. Then:
 
 ```bash
 ~/git/defra/trade-imports-workspace/tools/review/verify-coverage.sh EUDPA-XXXXX
 ```
 
-**Do NOT proceed to Step 4 until 100% coverage.**
+**Do NOT proceed to Step 4 until 100% coverage.** A file still uncovered
+is in a group whose reviewer failed: spawn that group again.
 
 ## Step 4: Consistency Review
 
-Spawn one Task subagent with `subagent_type: general-purpose`. Spawn prompt:
+Spawn one Task with `subagent_type: review-consistency`. The whole prompt:
 
 ```markdown
-Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/review/references/CONSISTENCY_REVIEWER.md.
-
-**Ticket:** EUDPA-XXXXX - [Ticket Summary]
-**Review workspace:** ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/
-
-Read .review-meta.json for all repos and PR numbers.
-Write _consistency-check.md for every repo listed.
+Review id: EUDPA-XXXXX
+Workarea: ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/
+Write _consistency-check.md and consistency/{repo}.items.json for every repo in .review-meta.json.
 ```
 
-Wait for completion. Verify `_consistency-check.md` exists for every repo
-before proceeding.
+Wait for its one-line reply. Then check it wrote both files for every
+repo:
+
+```bash
+~/git/defra/trade-imports-workspace/tools/review/verify-consistency.sh EUDPA-XXXXX
+```
+
+and that `consistency/{repo}.items.json` exists for each repo (`[]` when
+it found nothing). Spawn it once more if either is missing. Its items
+go in at Step 5a, once `items.{repo}.json` exists.
 
 ## Step 5: Create Repository Summaries
 
@@ -305,16 +332,25 @@ own.
 
 ### Step 5a: Reconcile findings
 
-**1. Carry in the consistency findings.** For every row under "Naming
-and Reuse" and "Statements Made Untrue" in each repo's
-`_consistency-check.md`, add an item:
+Every write in this step is one batched call. Never add or mark items
+one at a time.
+
+**1. Carry in the consistency findings.** The consistency reviewer
+already wrote them as `consistency/{repo}.items.json` (Step 4). Put
+every repo's list into one file:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/review/review-add-item.sh EUDPA-XXXXX --repo {repo} --file {file} --line {line} --severity Major --category {naming|duplication|comments} --issue "{finding}" --fix "Must: {must}. One way: {one way}"
+jq -s add ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/consistency/*.items.json > ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/consistency/all.json
 ```
 
-A "Naming and Reuse" row is `naming`, or `duplication` when it names a
-second copy of something. A "Statements Made Untrue" row is `comments`.
+then add them all in one call (skip it when `all.json` is `[]`):
+
+```bash
+~/git/defra/trade-imports-workspace/tools/review/review-add-item.sh EUDPA-XXXXX --from ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/consistency/all.json
+```
+
+Do not read `_consistency-check.md` to add items by hand: the list is
+the same rows.
 
 **2. Merge findings that share one root.** Read
 `review-items.sh EUDPA-XXXXX --repo {repo} --json` across every repo.
@@ -330,23 +366,43 @@ Example: four items each asked for a guard against the same refusal.
 Applied one by one, they became three guards that failed three
 different ways.
 
-For each group of two or more, add one "decide the owner" item:
+For each group of two or more, write one "decide the owner" item into
+`~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/owners.json`,
+all groups in one list:
 
-```bash
-~/git/defra/trade-imports-workspace/tools/review/review-add-item.sh EUDPA-XXXXX --repo {repo of the likely owner} --file {likely owner file} --line {line} --severity {highest in the group} --category {duplication|structure} --issue "One rule, {N} findings: #{a}, #{b}, #{c} — {the rule in one line}" --fix "Must: one owner holds {the rule}; every other place calls it or is deleted. One way: {the owner you would pick, and why}"
+```json
+[{"repo": "{repo of the likely owner}", "file": "{likely owner file}",
+  "line": 12, "severity": "{highest in the group}",
+  "category": "duplication",
+  "issue": "One rule, {N} findings: #{a}, #{b}, #{c} — {the rule in one line}",
+  "fix": "Must: one owner holds {the rule}; every other place calls it or is deleted. One way: {the owner you would pick, and why}"}]
 ```
 
 The owner item is `duplication` when its members are copies of one
 rule, and `structure` otherwise. Its issue always starts `One rule,`.
-
-Then close each member with a pointer to it:
+Add them in one call:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/review/review-mark.sh EUDPA-XXXXX --repo {repo} --item {member id} --disposition "Merged" --note "merged into #{owner item id}"
+~/git/defra/trade-imports-workspace/tools/review/review-add-item.sh EUDPA-XXXXX --from ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/owners.json
 ```
 
-Run each call as its own Bash call. A finding with no partner stays as
-it is.
+It prints one new id per line, in list order. Then close every member
+with a pointer to its owner, all of them in
+`~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/merges.json`:
+
+```json
+[{"repo": "{repo}", "item": 4, "disposition": "Merged", "note": "merged into #{owner item id}"}]
+```
+
+and mark them in one call:
+
+```bash
+~/git/defra/trade-imports-workspace/tools/review/review-mark.sh EUDPA-XXXXX --from ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/merges.json
+```
+
+Both calls are all or nothing: when one is refused, fix the list and run
+it again. Skip both when no findings share a root. A finding with no
+partner stays as it is.
 
 After Step 5, the canonical state is `items.{repo}.json`. Walker /
 batch implementor / refresh tools mutate it via `review-*.sh`. The
@@ -391,6 +447,21 @@ involved. Never skip `--write-items`, Step 5a or `render-items.sh`.
 
 ## Step 6: Write Index
 
+Build the acceptance-criteria table first. The test reviewers each wrote
+`ac/<group id>.json`; this puts every group together, so a criterion
+counts as proved when a test in any group or repo proves it:
+
+```bash
+~/git/defra/trade-imports-workspace/tools/review/ac-table.sh EUDPA-XXXXX
+```
+
+Paste its table as it is. A `No` row means no test proves the
+criterion, not that the code misses it. For each `No` row, check the
+diff before you set the verdict: if the code meets the criterion, it is
+a `coverage-gap`; if it does not, it is missing functionality. When the
+script finds no `ac/` files (no tests changed), write "No tests changed:
+no criterion is proved by a test in this change." instead of the table.
+
 Create `~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/review-index.md` —
 a thin navigation index only, no item rows:
 
@@ -411,8 +482,7 @@ a thin navigation index only, no item rows:
 | {repo-name} | #{pr} | {sha} | {N} | SAFE/NEEDS ATTENTION/RISKY | [review.{repo}.md](review.{repo}.md) |
 
 ## Acceptance Criteria Check
-| # | Criterion | Met? | Notes |
-|---|-----------|------|-------|
+<!-- paste output of `ac-table.sh EUDPA-XXXXX` here -->
 
 ## Test Coverage Assessment
 - **Unit Tests:** Present/Missing/Partial
@@ -447,6 +517,9 @@ since the spec lives in `trade-imports-workspace` — check across the PR
 set, not within one diff.
 
 ## Step 7: Post the review (FRESH only)
+
+**Skip this step on a trial run** (see Step 1): post nothing, push no
+handoff branch, and go to the Completion Output.
 
 Post the review to every PR in `.review-meta.json` as a PR comment.
 This runs after Step 6 because the comment carries the verdict from
@@ -542,6 +615,8 @@ Commits reviewed:
 PR comments posted (Step 7):
   - {repo}#{pr} → {comment url}
   ...
+[On a trial run, in place of the list above:]
+PR comments posted (Step 7): none, trial run.
 
 [If a handoff branch was pushed in Step 7, append:]
 Handoff branch: chore/EUDPA-XXXXX (pushed to workspace remote)
@@ -613,12 +688,14 @@ Deleted files: mark their items as `Auto-Resolved` via `review-mark.sh`.
 
 ## Step R4: Re-review Files
 
-Spawn `general-purpose` Task subagents in parallel (up to 100), one per
+Spawn `general-purpose` Task subagents in parallel (up to 2), one per
 entry in List A (Mode=REFRESH), List C (Mode=MERGE_RESOLVED), and List D
-(Mode=FRESH; coverage gap). Each spawn prompt begins with
+(Mode=FRESH; coverage gap). When more than two files need review, batch two
+at a time. Each spawn prompt begins with
 `Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/review/references/FILE_REVIEWER.md.`
 
-Emit ALL Task calls in a single assistant response — do NOT spawn one, await the result, then spawn the next. Parallelism only works when calls are batched in one turn.
+Within each batch, emit both Task calls in one assistant response — do NOT
+spawn one, await the result, then spawn the next inside a batch.
 
 ### Spawn prompt — REFRESH (List A)
 
@@ -772,13 +849,16 @@ All under `~/git/defra/trade-imports-workspace/tools/review/`:
 | `prepare-review.sh` | Fresh Step 1 workspace setup; transitively seeds best-practices via `detect-tech.sh`, which reads `assets/routing.json` |
 | `prepare-review-local.sh` | Local mode setup — no Jira/GitHub; changed-file list from git, or the caller's `--files` |
 | `verify-coverage.sh` | Fresh Step 3 coverage gate |
-| `verify-consistency.sh` | Fresh Step 4 consistency gate |
+| `verify-consistency.sh` | Fresh Step 4 consistency gate — `_consistency-check.md`, and `consistency/{repo}.items.json` when the review has that folder |
+| `plan-groups.sh` / `write-briefs.sh` | Run by the setup scripts — sort files into `groups.json`, write one brief per group |
+| `file-review-write.sh` | Write many per-file verdicts and findings in one call (`--from`); group reviewers and Fresh Step 3's skipped lockfiles |
+| `ac-table.sh` | Fresh Step 6 — merge the test reviewers' `ac/*.json` into the acceptance-criteria table |
 | `verify-style-coverage.sh` | Cross-domain — style-review coverage check (also consumed by code-style) |
 | `diff-since-review.sh` | Refresh helper — per-file diff between snapshot SHA and HEAD |
 | `review-items.sh` | Walker / batch / refresh — list items with filters |
-| `review-mark.sh` | Set Disposition (auto-sets Status) |
+| `review-mark.sh` | Set Disposition (auto-sets Status); `--from` marks many in one call |
 | `review-set-status.sh` | Set Status only (after fix attempt) |
-| `review-add-item.sh` | Append a newly-found violation; returns the new ID |
+| `review-add-item.sh` | Append a newly-found violation; returns the new ID; `--from` adds many in one call |
 | `review-counts.sh` | Final reports (walker + batch implementor) — breakdown by Disposition+Status |
 | `aggregate-file-reviews.sh` | Fresh Step 5 — write `items.{repo}.json` from per-file `.review.json` files; emit File Analysis Summary / Items markdown |
 | `share-review.sh` | Fresh Step 7 — post the review as a PR comment; `--comment-only` for PRs you authored, otherwise also push handoff branch `chore/EUDPA-X` to the workspace remote |

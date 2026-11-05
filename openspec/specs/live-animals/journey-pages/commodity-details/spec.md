@@ -193,3 +193,20 @@ The system MUST keep, after a removal, the numbers already typed into the rows t
 - **GIVEN** the user has removed a row
 - **WHEN** the same removal is submitted again
 - **THEN** it is refused, and the rows the first removal left are unchanged
+
+### Requirement: A number of animals above the largest signed 64-bit integer is refused on its own field
+**ID**: REQ-COMMODITY-DETAILS-013
+The system MUST refuse a number of animals above 9,223,372,036,854,775,807, the largest signed 64-bit integer, with an error against that species' own number of animals field, "Number of animals must be 9,223,372,036,854,775,807 or fewer", keeping what the user typed, and MUST accept a number of animals at or below that figure.
+
+#### Scenario: A number of animals above the largest signed 64-bit integer is refused on its own field
+**ID**: SCN-COMMODITY-DETAILS-013-A
+- **GIVEN** the user is entering a number of animals for one species
+- **WHEN** they enter a number above 9,223,372,036,854,775,807 and save
+- **THEN** the save is blocked, with the error "Number of animals must be 9,223,372,036,854,775,807 or fewer" against that species' own field
+- **AND** the field still shows the digits they typed
+
+#### Scenario: A number of animals at the largest signed 64-bit integer is accepted
+**ID**: SCN-COMMODITY-DETAILS-013-B
+- **GIVEN** the user is entering a number of animals for one species
+- **WHEN** they enter 9,223,372,036,854,775,807 and save
+- **THEN** the save is not blocked and the journey moves on

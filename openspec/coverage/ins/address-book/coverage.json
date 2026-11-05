@@ -4205,7 +4205,7 @@
       "scenarios": [
         {
           "id": "SCN-INS-ADDR-040-A",
-          "name": "Several roles return exactly the addresses holding any of them",
+          "name": "Roles return exactly the addresses holding any of them",
           "coverage": "full",
           "tests": [
             {
@@ -4217,27 +4217,67 @@
               "notes": "red-probed: fails when Origin or Consignor lists no address without uses"
             },
             {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressListIT.java",
+              "test": "list_shouldReturnOnlyTheLiveAddressesHoldingTheRole_whenOneRoleIsGiven",
+              "strength": "full",
+              "notes": "red-probed: fails when the use clause is removed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressListIT.java",
+              "test": "list_shouldNotReturnAddressesWithNoRoles_whenARoleIsGiven",
+              "strength": "full",
+              "notes": "red-probed: fails when the use clause is removed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressRepositoryIT.java",
+              "test": "listLiveAddresses_withARoleOrASearchRole_isOrgScopedAndExcludesDeletedAndOtherRoles",
+              "strength": "partial",
+              "notes": "not red-probed after it was made to list a second use"
+            },
+            {
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts",
               "test": "listing by a tab's roles returns exactly the addresses holding any of them",
               "strength": "partial",
               "notes": "run by the gate; not run or red-probed here"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-type-filter.spec.ts",
+              "test": "listing by a role returns exactly the stamped addresses holding it, and none for a role nothing holds",
+              "strength": "partial",
+              "notes": "passed against the stack; not red-probed"
             }
           ]
         },
         {
           "id": "SCN-INS-ADDR-040-B",
           "name": "Roles narrow a search",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
               "repo": "trade-imports-address-book",
               "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressListIT.java",
               "test": "list_shouldNarrowTheSearchByTheRoles_whenRolesAndASearchTermAreGiven",
-              "strength": "partial",
-              "notes": "not red-probed"
+              "strength": "full",
+              "notes": "red-probed: fails when the use clause is removed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressListIT.java",
+              "test": "list_shouldPageAndCountOverTheAddressesHoldingTheRoles",
+              "strength": "full",
+              "notes": "red-probed: fails when the use clause is removed"
             },
             {
               "type": "unit",
@@ -4484,73 +4524,11 @@
     },
     {
       "id": "REQ-INS-ADDR-042",
-      "name": "The address book service lists the addresses holding a role, and matches a search against roles",
+      "name": "The address book service matches a search against search roles",
       "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-INS-ADDR-042-A",
-          "name": "A role returns exactly its holders",
-          "coverage": "full",
-          "tests": [
-            {
-              "type": "unit",
-              "repo": "trade-imports-address-book",
-              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressListIT.java",
-              "test": "list_shouldReturnOnlyTheLiveAddressesHoldingTheRole_whenOneRoleIsGiven",
-              "strength": "full",
-              "notes": "red-probed: fails when the use clause is removed"
-            },
-            {
-              "type": "unit",
-              "repo": "trade-imports-address-book",
-              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressListIT.java",
-              "test": "list_shouldNotReturnAddressesWithNoRoles_whenARoleIsGiven",
-              "strength": "full",
-              "notes": "red-probed: fails when the use clause is removed"
-            },
-            {
-              "type": "unit",
-              "repo": "trade-imports-address-book",
-              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressRepositoryIT.java",
-              "test": "listLiveAddresses_withARoleOrASearchRole_isOrgScopedAndExcludesDeletedAndOtherRoles",
-              "strength": "partial",
-              "notes": "not red-probed after it was made to list a second use"
-            },
-            {
-              "type": "e2e",
-              "repo": "trade-imports-ins-tests",
-              "file": "tests/ins/e2e/features/address-book/address-book-type-filter.spec.ts",
-              "test": "listing by a role returns exactly the stamped addresses holding it, and none for a role nothing holds",
-              "strength": "partial",
-              "notes": "passed against the stack; not red-probed"
-            }
-          ]
-        },
-        {
-          "id": "SCN-INS-ADDR-042-B",
-          "name": "A role narrows the search",
-          "coverage": "full",
-          "tests": [
-            {
-              "type": "unit",
-              "repo": "trade-imports-address-book",
-              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressListIT.java",
-              "test": "list_shouldNarrowTheSearchByTheRoles_whenRolesAndASearchTermAreGiven",
-              "strength": "full",
-              "notes": "red-probed: fails when the use clause is removed"
-            },
-            {
-              "type": "unit",
-              "repo": "trade-imports-address-book",
-              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressListIT.java",
-              "test": "list_shouldPageAndCountOverTheAddressesHoldingTheRoles",
-              "strength": "full",
-              "notes": "red-probed: fails when the use clause is removed"
-            }
-          ]
-        },
-        {
-          "id": "SCN-INS-ADDR-042-C",
           "name": "A search role widens the search",
           "coverage": "full",
           "tests": [
@@ -4589,18 +4567,10 @@
           ]
         },
         {
-          "id": "SCN-INS-ADDR-042-D",
-          "name": "An unknown role or search role is refused",
+          "id": "SCN-INS-ADDR-042-B",
+          "name": "An unknown search role is refused",
           "coverage": "partial",
           "tests": [
-            {
-              "type": "unit",
-              "repo": "trade-imports-address-book",
-              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressListIT.java",
-              "test": "list_shouldReturn400BadRequestProblemWithNoErrorsMap_whenARoleIsUnknown",
-              "strength": "partial",
-              "notes": "not red-probed"
-            },
             {
               "type": "unit",
               "repo": "trade-imports-address-book",

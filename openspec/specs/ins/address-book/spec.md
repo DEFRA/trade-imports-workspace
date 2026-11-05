@@ -1016,21 +1016,24 @@ The system MUST list on the selected tab the addresses the address book service 
 
 ### Requirement: The address book service lists the addresses holding any of the roles asked for
 **ID**: REQ-INS-ADDR-040
-The address book service MUST, asked for one or more roles, return only the caller's organisation's live addresses holding any of them, paged as for the whole list and combined with the search and country filters. With no role it MUST list every live address, and it MUST refuse a role outside the six with a 400 bad request.
+The address book service MUST, asked for one or more roles, return only the caller's organisation's live addresses holding any of them, combined with the search and country filters, and page and count over those addresses alone. An address with no roles MUST NOT be returned for any role. With no role it MUST list every live address, and it MUST refuse a role outside the six with a 400 bad request.
 
-#### Scenario: Several roles return exactly the addresses holding any of them
+#### Scenario: Roles return exactly the addresses holding any of them
 **ID**: SCN-INS-ADDR-040-A
-- **GIVEN** an organisation holds an address with the roles place of origin and consignor, one with consignor, one with importer and one with branch address
+- **GIVEN** an organisation holds an address with the roles place of origin and consignor, one with consignor, one with importer, one with branch address and one with no roles
 - **WHEN** the list is asked for place of origin and consignor
 - **THEN** the first two addresses are returned
+- **AND** asked for consignor alone, the same two addresses are returned
 - **AND** asked for consignee, importer and place of destination, the importer address alone is returned
 - **AND** asked for branch address, the branch address alone is returned
+- **AND** the address with no roles is not returned for any of them
 
 #### Scenario: Roles narrow a search
 **ID**: SCN-INS-ADDR-040-B
 - **GIVEN** an organisation holds addresses with several roles that match a search term
 - **WHEN** the list is asked for some of those roles with that term
 - **THEN** only the matching addresses holding any of them are returned
+- **AND** the total and pages count only those addresses
 
 #### Scenario: An unknown role is refused
 **ID**: SCN-INS-ADDR-040-C
@@ -1091,33 +1094,20 @@ The system MUST hold in the 'Filter addresses' disclosure a select labelled 'Typ
 - **THEN** both addresses are listed and the list reads 'Showing 1-2 of 2'
 - **AND** no pagination is shown
 
-### Requirement: The address book service lists the addresses holding a role, and matches a search against roles
+### Requirement: The address book service matches a search against search roles
 **ID**: REQ-INS-ADDR-042
-The address book service MUST, asked for one role, return only the caller's organisation's live addresses holding it, combined with the search and paged over its matches. Given search roles, it MUST return an address holding any of them as well as the addresses the search text and country codes match. It MUST refuse a role or search role outside the six with a 400 bad request.
-
-#### Scenario: A role returns exactly its holders
-**ID**: SCN-INS-ADDR-042-A
-- **GIVEN** an organisation holds an address with the consignor role and one with the importer role
-- **WHEN** the list is asked for the consignor role
-- **THEN** only the address with the consignor role is returned
-
-#### Scenario: A role narrows the search
-**ID**: SCN-INS-ADDR-042-B
-- **GIVEN** an organisation holds addresses with several roles that match a search term
-- **WHEN** the list is asked for a role with that term
-- **THEN** only the matching addresses holding that role are returned
-- **AND** the total and pages count only those addresses
+The address book service MUST, given search roles, return the caller's organisation's live addresses holding any of them as well as the addresses the search text and country codes match, kept within any roles asked for (REQ-INS-ADDR-040). It MUST refuse a search role outside the six with a 400 bad request.
 
 #### Scenario: A search role widens the search
-**ID**: SCN-INS-ADDR-042-C
+**ID**: SCN-INS-ADDR-042-A
 - **GIVEN** an organisation holds one address matching a search term by its name and another holding the consignor role
 - **WHEN** the list is asked for the term with the consignor search role
 - **THEN** both addresses are returned
 - **AND** with roles to keep, only the addresses holding one of them are returned
 
-#### Scenario: An unknown role or search role is refused
-**ID**: SCN-INS-ADDR-042-D
-- **WHEN** the list is asked for a role or a search role that is not one of the six
+#### Scenario: An unknown search role is refused
+**ID**: SCN-INS-ADDR-042-B
+- **WHEN** the list is asked for a search role that is not one of the six
 - **THEN** the service responds with a 400 error
 
 ### Requirement: Adding an address from the address book starts by choosing its address type

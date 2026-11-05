@@ -35,7 +35,7 @@
     "Shared wording in a frontend's shared copy is never reworded in place; a set-specific string goes in the feature's own copy (ruling:sam-2026-10-09-pm claim 41).",
     "Notification statuses are only ever added, never renamed or removed, and each new status is mapped in every frontend that reads it before the animals backend first sends it (ruling:sam-2026-10-09-pm claim 42).",
     "A page in its error state keeps the 'Error: ' prefix on its browser title (conflicts:c-006).",
-    "'Save and return to overview' saves without the page's required-answer checks, but still refuses an answer that fails its own format rule (conflicts:c-211; ruling:sam-2026-10-07).",
+    "Save and return to overview makes exactly the same checks as Save and continue on every page that has both buttons, in live animals, germinal products, templates and high-risk plants: the trader sees an error for each answer the page refuses and stays on the page with what they entered kept; with none, the answers are saved (ruling:sam-2026-10-26 claims 1 and 2; replaces conflicts c-211 and c-313).",
     "Notifications, templates and address book entries stay scoped to the signed-in user's organisation (or user, for templates); nothing lists another organisation's records.",
     "Each increment updates the tests repo's specs, page objects and journey helpers its change breaks, in the same change."
   ],
@@ -88,79 +88,18 @@
     "tests:tests/animals/e2e/features/auth.spec.ts",
     "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard"
   ],
-  "increments": [
+  "movedOut": [
     {
-      "id": "inc-148",
-      "title": "Ask 'What are you importing?' before a notification is created",
-      "detail": "Starting a new notification from the all-types dashboard in the INS front door (today's INS home) asks the Design Release 2.1 notification type question first, before any draft exists. Live animals carries on to the animals frontend's live-animals start, which creates the GBN-AG draft and lands on origin. Germinal products, offered second under the 9 October ruling, carries on to the start of the germinal products set, the live-animals set's sibling in the animals frontend; the ruling lets this link land before the set itself is built. Plants for planting, Potatoes (seed and ware) and Wood products carry on to the start of the high-risk plants journey in trade-imports-plants-frontend, which creates a plants draft and lands on plants' own first page. Abandoning the question leaves no empty draft behind.",
-      "acceptanceCriteria": [
-        "Starting a new notification from the INS home shows the question 'What are you importing?' instead of going straight to an origin page, and no draft notification is created at that point: the dashboard's notification list gains no new entry while the question is open or after the user leaves it with Back (prototype:dr2-1-source app/routes.js:11112-11114; trace:prototype-dr2-1 T1; trace:e2e T01 call@286; ruling:sam-2026-10-09-pm p3-063; conflicts:c-007)",
-        "The notification type page has the browser title 'What are you importing? - Import notification service - GOV.UK' and the heading 'What are you importing?' as the radios' fieldset legend (h1), with the caption 'About the consignment' inside the heading (prototype:dr2-1-source app/views/design-release-2.1/notification-type.html:7,39; trace:prototype-dr2-1 T1 action 16)",
-        "The question offers radios in this order, with no hint text on the group or any option and none pre-selected: Live animals; Germinal products (semen, ova, embryos); Plants for planting; Potatoes (seed and ware); Wood products (prototype:dr2-1-source app/routes.js:125-131; trace:prototype-dr2-1 T1 action 16; ruling:sam-2026-10-09 p1-048, p1-052; conflicts:c-007)",
-        "Choosing Live animals and pressing Continue creates a new live-animals draft and lands on its 'Origin of the import' page, which shows the Draft tag and a new GBN-AG reference (prototype:dr2-1-specs e2e/about-the-consignment.fit.spec.js:65; trace:prototype-dr2-1 T1 action 44; conflicts:c-007)",
-        "Choosing Germinal products (semen, ova, embryos) and pressing Continue sends the user from the INS front door to the germinal products set's start under /germinal-products in the animals frontend, and no live-animals notification is created: the dashboard's notification list gains no live-animals entry (ruling:sam-2026-10-09 p1-006, p1-048, p1-053; ruling:sam-2026-10-09-pm p3-091; conflicts:c-007)",
-        "Choosing Plants for planting, Potatoes (seed and ware) or Wood products and pressing Continue lands on the first page of the high-risk plants journey in the plants service, with a new plants draft, and no live-animals notification is created (ruling:sam-2026-10-09-templates p1-039; conflicts:c-007)",
-        "Pressing Continue with nothing chosen re-shows the page with an error summary titled 'There is a problem' listing 'Select what you are importing', linked to the first radio, the same message shown inline on the radio group, and the browser title prefixed 'Error: ' (prototype:dr2-1-source app/routes.js:151-160; trace:prototype-dr2-1 T1 action 30; prototype:dr2-1-specs e2e/about-the-consignment.fit.spec.js:53-57; ruling:sam-2026-10-09 p1-106; conflicts:c-006)",
-        "The page ends with a single 'Continue' button: there is no 'Save and return to overview' button and no cancel link (prototype:dr2-1-source app/views/design-release-2.1/notification-type.html:48-53; trace:prototype-dr2-1 T1 action 16)",
-        "The page's Back link goes to the INS home, and the service navigation highlights Dashboard (prototype:dr2-1-source app/routes.js:10606-10608; trace:prototype-dr2-1 T1 action 15; ruling:sam-2026-10-09-pm p3-085)",
-        "The page shows no Draft strip and no notification reference; the origin page reached after choosing Live animals shows both (prototype:dr2-1-source app/views/design-release-2.1/notification-type.html:23-57; trace:prototype-dr2-1 T1 action 16 against action 44; conflicts:c-007)",
-        "With Welsh chosen, every string on the notification type page (title, caption, heading, the five options, the error message and the Continue button) shows its Welsh counterpart (repo:frontend features/origin/copy/copy.cy.js:1-3)"
-      ],
-      "dependsOn": [],
-      "theme": "type-question-and-templates",
-      "status": "todo",
-      "kind": "feat",
-      "repos": [
-        "frontend",
-        "plantsfrontend",
-        "insfrontend",
-        "tests"
-      ],
-      "sources": [
-        {
-          "source": "prototype:dr2-1-source",
-          "ref": "app/routes.js:125-160, 10606-10625, 11112-11114; app/views/design-release-2.1/notification-type.html"
-        },
-        {
-          "source": "trace:prototype-dr2-1",
-          "ref": "T1 actions 15-44"
-        },
-        {
-          "source": "prototype:dr2-1-specs",
-          "ref": "e2e/about-the-consignment.fit.spec.js:36-74"
-        },
-        {
-          "source": "ruling:sam-2026-10-09",
-          "ref": "p1-006, p1-048, p1-052, p1-053, p1-106"
-        },
-        {
-          "source": "ruling:sam-2026-10-09-templates",
-          "ref": "p1-008, p1-009, p1-011, p1-013, p1-039"
-        },
-        {
-          "source": "ruling:sam-2026-10-09-pm",
-          "ref": "p3-063, p3-085, p3-091"
-        },
-        {
-          "source": "trace:e2e",
-          "ref": "T01 call@286-288"
-        },
-        {
-          "source": "trace:animals-fit",
-          "ref": "trace-animals-fit-p5-001, trace-animals-fit-p6-041"
-        },
-        {
-          "source": "repo:frontend",
-          "ref": "repo-frontend-p4-072"
-        },
-        {
-          "source": "prototype:dr2-1-source",
-          "ref": "prototype-dr2-1-source-p2-026"
-        },
-        {
-          "source": "trace:animals-fit",
-          "ref": "trace-animals-fit-p5-072"
-        }
+      "theme": "type-question",
+      "branch": "feat/EUDPA-690-type-question",
+      "workarea": "shared/design-release-2-1/themes/type-question",
+      "backlog": "../type-question/backlog.json",
+      "increments": [
+        "inc-148",
+        "inc-149",
+        "inc-150",
+        "inc-247",
+        "inc-171"
       ],
       "requirements": [
         "req-001",
@@ -170,163 +109,20 @@
         "req-005",
         "req-006",
         "req-007",
-        "req-1910"
-      ],
-      "openQuestions": [],
-      "notes": [
-        "Kept as inc-148, rewritten to the templates ruling and the 9 October afternoon ruling: only the INS dashboard's summary information is blocked, and 'a row that needs only the INS home's controls (Create new, Use template, the type question) goes ahead on today's INS home' (ruling-sam-2026-10-09-pm-p3-063). So this row no longer waits on the overall dashboard row (inc-128): it repoints today's INS home start control at the type question. The combiner should drop the old dependsOn inc-128.",
-        "The plants types now land on plants' own first page with a new plants draft (templates ruling p1-039), so the plants criterion observes the plants draft, not only the landing. The INS germinal list's 'Create new' leaves this programme (p3-091); the type question's Germinal option stays the way into a germinal notification.",
-        "Merge order frontend, plantsfrontend, insfrontend, tests: the animals and plants frontends each gain a start entry that accepts a start from the INS page, before the INS page sends users to them. Plants today creates a draft only from a CSRF-protected POST on its own dashboard (SameSite=Strict crumb), which a hand-over from INS cannot reach, so plantsfrontend gains the start entry too (found by the inc-148 planner, 2026-10-10; see plans/inc-148.md). The Welsh criterion carries req-057 duty for the strings this row adds; req-057 itself sits in the origin page row that finishes the page.",
-        "Theme: type-question-and-templates, as before. The INS home's start control (insfrontend dashboard) and the animals frontend's live-animals start entry are listed as shared: the ins-dashboard theme owns those folders.",
-        "Salvage: trade-imports-animals-frontend e6f5d7cf, trade-imports-plants-frontend 4d08998, trade-imports-ins-frontend 2d7619e, trade-imports-ins-tests 3205feb and f583ca8 (reads the Alpha banner apart from the page maturity banner) on stale branch feat/NO_JIRA-design-release-2-1-type-question-and-templates; rebuild on a fresh branch from main.",
-        "req-1910 (the phase banner) is met on main by both frontends' shared layout; the type question page gets it by using that layout.",
-        "Its dependency on inc-128 is dropped: that row is blocked, and this row builds now without it."
-      ],
-      "gate": "Look at the cross-service start before anything builds on it: the type page in the INS front door, how Live animals hands over to the animals frontend's start (today a form post with its own request forgery token), how Germinal products hands over to the germinal set's start under /germinal-products before that set exists, and how the plants types hand over to the plants service. The re-selection row, template creation's type question and the germinal set's own start copy this pattern."
-    },
-    {
-      "id": "inc-149",
-      "title": "Create new on today's INS home starts every notification at the type question",
-      "detail": "Today the INS home offers 'Start a new notification' only when the trader has no notifications and no search, and it goes straight to the animals frontend's live-animals start. Design Release 2.1 always shows a primary 'Create new' button under the heading, going to the start of the create journey: the 'What are you importing?' question with nothing preselected, Germinal products offered second (c-147, c-007). Sam's 9 October rulings keep the home's controls outside the summary-information block, so this is built now on today's home, above its search and table, not on the blocked overall home.",
-      "acceptanceCriteria": [
-        "The INS home always shows a primary 'Create new' button under its heading and above the reference search and the notifications table, as a standard button rather than a start button (prototype:dr2-1-source app/views/design-release-2.1/dashboard-home.html:34-42; trace:prototype-dr2-1 overall-dashboard action 24; prototype:dr2-1-specs e2e/dashboard.fit.spec.js:30; ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-009; conflicts:c-147)",
-        "'Create new' shows whether the organisation has no notifications, has notifications, or has just made a search, including a search that matches nothing (repo:insfrontend repo-insfrontend-p1-030; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-063; conflicts:c-147)",
-        "The home no longer shows 'Start a new notification' in any state (repo:insfrontend repo-insfrontend-p1-028; trace:e2e trace-e2e-p9-095; conflicts:c-147)",
-        "Pressing 'Create new' shows the 'What are you importing?' question with no option selected, before any notification is created and before any origin page, and its second option is Germinal products (prototype:dr2-1-source app/routes.js:8879-8880; prototype:dr2-1-specs e2e/support/journey.js:121-127; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-048; conflicts:c-007, c-147)",
-        "With Welsh selected, 'Create new' is shown in Welsh from the same copy key as the English, marked as a machine draft not to ship without Welsh Language Standards sign-off (repo:insfrontend repo-insfrontend-p1-086)"
-      ],
-      "dependsOn": [
-        "inc-148"
-      ],
-      "theme": "type-question-and-templates",
-      "status": "todo",
-      "kind": "feat",
-      "repos": [
-        "insfrontend",
-        "tests"
-      ],
-      "sources": [
-        {
-          "source": "prototype:dr2-1-source",
-          "ref": "app/views/design-release-2.1/dashboard-home.html:34-42; app/routes.js:8879-8880"
-        },
-        {
-          "source": "trace:prototype-dr2-1",
-          "ref": "dashboard--overall-dashboard-summarises-every-category-and-links-into-each-one action 24"
-        },
-        {
-          "source": "prototype:dr2-1-specs",
-          "ref": "e2e/dashboard.fit.spec.js:30; e2e/support/journey.js:121-127"
-        },
-        {
-          "source": "repo:insfrontend",
-          "ref": "repo-insfrontend-p1-028, p1-029, p1-030, p1-086"
-        },
-        {
-          "source": "trace:e2e",
-          "ref": "trace-e2e-p9-095"
-        },
-        {
-          "source": "ruling:sam-2026-10-09",
-          "ref": "ruling-sam-2026-10-09-p1-048"
-        },
-        {
-          "source": "ruling:sam-2026-10-09-templates",
-          "ref": "ruling-sam-2026-10-09-templates-p1-008, p1-009, p1-013"
-        },
-        {
-          "source": "ruling:sam-2026-10-09-pm",
-          "ref": "ruling-sam-2026-10-09-pm-p3-063"
-        }
-      ],
-      "requirements": [
+        "req-1910",
         "req-960",
         "req-962",
         "req-963",
-        "req-1024"
-      ],
-      "openQuestions": [],
-      "notes": [
-        "Re-distil: now depends on today's INS home, not on inc-128 (the overall home), which Sam's 9 October rulings block as summary information; ruling:sam-2026-10-09-pm p3-063 says a row needing only the home's controls goes ahead on today's home. req-962 now places the button above today's search and table.",
-        "Combines Create new's label, placement, destination and Welsh copy (req-960, req-962, req-963, req-1024): one button on one template. req-1024 covers the Welsh for both new buttons; its 'Use template' half is observed in the Use template row (inc-153), which lands after this one.",
-        "Depends on the start-and-origin area's type-question row (inc-148), which builds the 'What are you importing?' page in the INS front door and its option list and onward routing (plants types to the high-risk plants journey, c-007); this row only points the home at it.",
-        "The tests repo's animals and plants dashboard page objects carry the 'Start a new notification' label; any INS end-to-end spec that starts from the INS home's start link changes to 'Create new' and the type question.",
-        "Theme: this row changes the INS home's feature folder, which the ins-dashboard theme's touches also name. With the overall home blocked, the combiner should give that folder to whichever theme builds the home's controls, or keep these rows in ins-dashboard.",
-        "Salvage: trade-imports-ins-frontend fd9b1c3, trade-imports-ins-tests 7659d8d and workspace openspec 016663f5 (on the workspace's feat/NO_JIRA-design-release-2-1) on stale branch feat/NO_JIRA-design-release-2-1-type-question-and-templates; rebuild on a fresh branch from main."
-      ],
-      "gate": null
-    },
-    {
-      "id": "inc-150",
-      "title": "Origin's Back link follows where the notification started, and the type question picks the notification back up",
-      "detail": "The live-animals origin page's Back link follows where the user came from: the type question for a notification started from it, the set's own live animals notifications list for one started there, the overview when opened from the overview, and the template review while a live-animals template is being edited. Going back to the type question shows the notification's own type already chosen. Keeping that type returns to the same notification with no new draft. Choosing a different type starts a new notification of that type in its own set or service, and nothing is changed or cleared on the notification left behind (9 October ruling, c-219).",
-      "acceptanceCriteria": [
-        "On a live-animals notification started from the type question, the origin page's Back link goes to the 'What are you importing?' question, which shows Live animals already selected (prototype:dr2-1-source app/routes.js:10586-10600, 10609; trace:prototype-dr2-1 T3 action 10; conflicts:c-011, c-219)",
-        "On a live-animals notification started from the live animals notifications list's own create button, the origin page's Back link goes to that list (prototype:dr2-1-source app/routes.js:10586-10600; prototype:dr2-1-specs e2e/about-the-consignment.fit.spec.js:105; ruling:sam-2026-10-09-pm p3-051, p3-081; conflicts:c-011)",
-        "Opened from the notification overview, the origin page's Back link goes to the overview (prototype:dr2-1-source app/routes.js:488-498; trace:prototype-dr2-1 T6 action 20; conflicts:c-011)",
-        "Pressing Continue on the type question with Live animals still chosen returns to that same notification's origin page with the same reference, and the dashboard's notification list gains no new entry (prototype:dr2-1-source app/routes.js:11163-11168; conflicts:c-219)",
-        "Choosing Plants for planting instead and pressing Continue lands on the first page of the high-risk plants journey; the live-animals notification, reopened from the dashboard, still has the same reference, Draft status and every answer it had, commodities and species included (ruling:sam-2026-10-09 p1-054, p1-055, p1-056; conflicts:c-007, c-219)",
-        "Choosing Germinal products (semen, ova, embryos) instead and pressing Continue sends the user to the germinal products set's start under /germinal-products, and the live-animals notification left behind keeps every answer it had (ruling:sam-2026-10-09 p1-053, p1-054, p1-056; conflicts:c-219)",
-        "Starting afresh from the INS home still shows the type question with nothing pre-selected (prototype:dr2-1-source app/routes.js:10609; conflicts:c-007)"
-      ],
-      "dependsOn": [
-        "inc-148"
-      ],
-      "theme": "type-question-and-templates",
-      "status": "deferred",
-      "kind": "feat",
-      "repos": [
-        "frontend",
-        "insfrontend",
-        "tests"
-      ],
-      "sources": [
-        {
-          "source": "prototype:dr2-1-source",
-          "ref": "app/routes.js:457-461, 488-498, 10586-10609, 10636, 11163-11168"
-        },
-        {
-          "source": "trace:prototype-dr2-1",
-          "ref": "T3 action 10; T6 action 20"
-        },
-        {
-          "source": "prototype:dr2-1-specs",
-          "ref": "e2e/about-the-consignment.fit.spec.js:74, 105"
-        },
-        {
-          "source": "ruling:sam-2026-10-09",
-          "ref": "p1-029, p1-053, p1-054, p1-055, p1-056, p1-057"
-        },
-        {
-          "source": "ruling:sam-2026-10-09-templates",
-          "ref": "p1-041, p1-043"
-        },
-        {
-          "source": "ruling:sam-2026-10-09-pm",
-          "ref": "p3-051, p3-081"
-        },
-        {
-          "source": "repo:frontend",
-          "ref": "features/origin/controller.js:41-47 (repo-frontend-p4-107)"
-        },
-        {
-          "source": "trace:animals-fit",
-          "ref": "trace-animals-fit-p5-037, p5-038, p5-039, p5-079"
-        }
-      ],
-      "requirements": [
+        "req-1024",
         "req-008",
-        "req-013"
+        "req-013",
+        "req-2136",
+        "req-1616"
       ],
-      "openQuestions": [],
-      "notes": [
-        "Kept as inc-150; requirements unchanged. Combines req-013 (the live-animals origin Back link; the germinal half is req-1740) with req-008: returning to the type question can only be observed through the origin Back link, and both are reviewed on the same two pages.",
-        "Depends on inc-148 (the type question) only. The template-edit branch of req-013 (origin's Back link while changing a saved template) is carried by inc-159's Back-link criterion.",
-        "The type pre-selected is the notification's stored category, absent meaning live animals (ruling p1-029), so a live-animals notification needs no backend change. Merge order frontend, insfrontend, tests: the origin Back link must carry the notification to the INS page before the INS page relies on it. Theme: type-question-and-templates, as before; the origin controller is the origin-page theme's folder, so it is listed as shared.",
-        "Held 12 October: Sam paused building to review the combined branch. Set back to todo to resume."
-      ],
-      "gate": null
-    },
+      "at": "2026-11-04T23:27:17.549Z"
+    }
+  ],
+  "increments": [
     {
       "id": "inc-151",
       "title": "Manage templates page, empty, read from the user's stored templates",
@@ -507,7 +303,6 @@
         "With Welsh selected, 'Use template' is shown in Welsh from the same copy key as the English, marked as a machine draft not to ship without Welsh Language Standards sign-off (repo:insfrontend repo-insfrontend-p1-086)"
       ],
       "dependsOn": [
-        "inc-149",
         "inc-151"
       ],
       "theme": "type-question-and-templates",
@@ -553,7 +348,13 @@
         "Kept apart from inc-149 because the two wait on different rows (the type question and Manage templates); the combiner may merge them if both land together.",
         "Salvage: trade-imports-ins-frontend 28d32ac and 188f55b (Create new and Use template still show when notifications cannot load), trade-imports-ins-tests b9adef9 on stale branch feat/NO_JIRA-design-release-2-1-type-question-and-templates; rebuild on a fresh branch from main."
       ],
-      "gate": null
+      "gate": null,
+      "externalDependsOn": [
+        {
+          "workarea": "shared/design-release-2-1/themes/type-question",
+          "id": "inc-149"
+        }
+      ]
     },
     {
       "id": "inc-154",
@@ -577,11 +378,10 @@
         "Creating a template does not offer the upload documents or declaration steps (prototype:dr2-1-source prototype-dr2-1-source-p1-061; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-127)",
         "A journey page opened from a template's review saves the template, never a draft notification, returns to that template's review, and ends with a primary 'Save and return' and a 'Cancel' link back to the template, which take precedence over the amend ending (prototype:dr2-1-source prototype-dr2-1-source-p1-070, prototype-dr2-1-source-p1-075; prototype:dr2-1-specs prototype-dr2-1-specs-p6-060, prototype-dr2-1-specs-p7-163; ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-030; c-276)",
         "Template mode works on the journey pages as they stand when it is built, today's transporter list buttons included (ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-031, ruling-sam-2026-10-09-templates-p1-034)",
-        "In template mode a live-animals or germinal products journey page refuses a malformed answer and needs the page's required answers on 'Save and continue', while 'Save and return to overview' saves without the required checks, following the default of c-308; no arrival date is asked of a template, its name is optional and it can be saved with sections unanswered (c-308)"
+        "In template mode a live-animals or germinal products journey page refuses a malformed answer and each answer the page refuses for a notification, with an error naming each one, and the trader stays on the page with what they entered kept; no arrival date is asked of a template, its name is optional and it can be saved with sections unanswered (conflicts:c-308 default; ruling:sam-2026-10-26 claim 1, ruling-sam-2026-10-26-p1-002, ruling-sam-2026-10-26-p1-003, ruling-sam-2026-10-26-p1-010; ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-034)"
       ],
       "dependsOn": [
-        "inc-151",
-        "inc-148"
+        "inc-151"
       ],
       "theme": "type-question-and-templates",
       "status": "todo",
@@ -632,6 +432,10 @@
         {
           "source": "ruling:sam-2026-10-09-templates",
           "ref": "ruling-sam-2026-10-09-templates-p1-026 to p1-034"
+        },
+        {
+          "source": "ruling:sam-2026-10-26",
+          "ref": "claim 1 (both save buttons make the same checks), ruling-sam-2026-10-26-p1-002, p1-003, p1-010"
         }
       ],
       "requirements": [
@@ -651,7 +455,7 @@
         "req-2048"
       ],
       "openQuestions": [
-        "c-308 (question, with a default the builder follows and says so): in template mode, does a journey page keep the notification's required-answer checks? Default: yes for live animals and germinal products; malformed answers are refused, 'Save and continue' needs the page's required answers, 'Save and return to overview' saves without required checks, and what Design Release 2.1 already does differently for a template stands (no arrival date asked, optional template name, sections may be left unanswered). Plants has no template mode (req-2049)."
+        "c-308 (question, with a default the builder follows and says so): in template mode, does a journey page keep the notification's required-answer checks, or may a template leave a required answer blank? Default: live animals and germinal products template pages keep the notification's checks: a malformed answer is refused, and an answer the page refuses for a notification is refused with an error naming each one, on whichever save button the trader selects, with the trader kept on the page and what they entered kept. What Design Release 2.1 already does differently for a template stands: no arrival date is asked, the template name is optional, and a template can be saved with sections unanswered. Plants has no template mode (req-2049). The 26 October ruling settled that both buttons make the same checks; only the height of the bar in template mode is still open."
       ],
       "notes": [
         "Combines the drafts of the templates, start-and-origin areas for this row: they change the same page, record or set-up, so building them apart would repeat it.",
@@ -664,9 +468,17 @@
         "Repos in merge order: backend (the template store holds the type), frontend (the template name page), insfrontend (the type page's template mode), tests: the name page must exist before the INS page hands over to it. Theme: type-question-and-templates, as before.",
         "req-2048 (template mode is another way of walking each set's own pages, never a copy or a fork) is added here by the combiner: this is the first row that walks a page in template mode, so it sets the pattern every later templates row copies.",
         "Salvage: trade-imports-animals-frontend f806b99a, trade-imports-animals-backend 936a50f, trade-imports-ins-frontend 23f0b03, trade-imports-ins-tests b9532f9 on stale branch feat/NO_JIRA-design-release-2-1-type-question-and-templates; rebuild on a fresh branch from main. Take the template-mode pieces (shared/template-mode.js, the template name page, the Back link and controller hooks), not f806b99a's hunks in the origin template or kit.js.",
-        "Design snagging merged to main 23 Oct: the saveActions macro in shared/save-actions.njk now takes one params object (hubHref, copy, primary, showReturnControls, amend, hubExitWhileAmending), not positional arguments, so add template mode as a new key rather than cherry-picking f806b99a's save-actions hunk. kit.recoverableSave now takes the request first (request, thunk, fallback, ids) and logs the fallback; kit.base gains surface and showJourneyStrip options. Back links during the opening run now come from kit.runBackLink and RUN_STEPS backCandidates with previousRunTarget in flow/run.js, and the origin page's Back link is entryBackLink(journey, answers) in flow/entry-guard.js (the dashboard for an empty draft, Overview otherwise): the template-mode Back to the template name page must override entryBackLink, and f806b99a's run.js hunk must be re-applied on main's RUN_STEPS. The origin controller, template, copy and validate were reworked by the origin rows (region code prefix, type-ahead placeholders), so re-apply the template-mode hooks there by hand."
+        "Design snagging merged to main 23 Oct: the saveActions macro in shared/save-actions.njk now takes one params object (hubHref, copy, primary, showReturnControls, amend, hubExitWhileAmending), not positional arguments, so add template mode as a new key rather than cherry-picking f806b99a's save-actions hunk. kit.recoverableSave now takes the request first (request, thunk, fallback, ids) and logs the fallback; kit.base gains surface and showJourneyStrip options. Back links during the opening run now come from kit.runBackLink and RUN_STEPS backCandidates with previousRunTarget in flow/run.js, and the origin page's Back link is entryBackLink(journey, answers) in flow/entry-guard.js (the dashboard for an empty draft, Overview otherwise): the template-mode Back to the template name page must override entryBackLink, and f806b99a's run.js hunk must be re-applied on main's RUN_STEPS. The origin controller, template, copy and validate were reworked by the origin rows (region code prefix, type-ahead placeholders), so re-apply the template-mode hooks there by hand.",
+        "Re-analysis 4 November (templates' pick-ups): the template-mode checks criterion and the c-308 open question no longer say 'Save and return to overview' saves without the required checks. The 26 October ruling withdrew that soft save on every page with both buttons (c-211), and main has built it for notifications (trade-imports-animals-frontend 25c23ef8, #436). This row's own template pages end with 'Save and continue' alone (the name page, and the origin page since EUDPA-759 0f155c75), so the both-buttons rule (req-2202) is first seen, and owned, in inc-155. The checks are chosen by the mode in one place, so an answer to c-308 changes them without touching the pages.",
+        "Envelope invariant 'Save and return to overview saves without the page's required-answer checks' is stale against the 26 October ruling; the new theme backlog's envelope must replace it with 'Save and return to overview makes exactly the same checks as Save and continue on every page that has both buttons'. A builder following the old invariant would build the soft save back in template mode."
       ],
-      "gate": "Look at how template mode shows on a question page (the 'Template' caption and name, which buttons and links show, where Back goes), where a template in progress is held, and that template mode is a mode of the same journey pages rather than a copy of them, so later page changes carry over without rework: every later template-mode page, and the germinal set's template mode (req-1876), copies this."
+      "gate": "Look at how template mode shows on a question page (the 'Template' caption and name, which buttons and links show, where Back goes), where a template in progress is held, and that template mode is a mode of the same journey pages rather than a copy of them, so later page changes carry over without rework: every later template-mode page, and the germinal set's template mode (req-1876), copies this.",
+      "externalDependsOn": [
+        {
+          "workarea": "shared/design-release-2-1/themes/type-question",
+          "id": "inc-148"
+        }
+      ]
     },
     {
       "id": "inc-155",
@@ -684,7 +496,10 @@
         "Nothing on a template's task list or question pages links to Upload documents or the declaration (ruling:sam-2026-10-09 claims 104-105; c-264)",
         "For a notification, the Overview page still shows its status and reference, 'Notification tasklist', its Documents section, 'Review and submit' and 'Return to dashboard' (repo:frontend features/hub; trace:animals-fit hub buttons)",
         "The Overview shows no 'Save template' button (prototype:dr2-1-source app/routes.js:6564-6588)",
-        "While creating a template, Save and continue on the transporter step goes to Consignment addresses (roles and addresses), passing over Upload documents (prototype:dr2-1-source app/routes.js:1517-1525; ruling:sam-2026-10-09 claim 21)"
+        "While creating a template, Save and continue on the transporter step goes to Consignment addresses (roles and addresses), passing over Upload documents (prototype:dr2-1-source app/routes.js:1517-1525; ruling:sam-2026-10-09 claim 21)",
+        "On every live animals template page that offers both 'Save and continue' and 'Save and return to overview', 'What are you importing?' among them, the two buttons make exactly the same checks: whatever one button refuses, the other refuses too, with an error naming each refused answer, and the trader stays on the page with what they entered kept (ruling:sam-2026-10-26 claim 1, ruling-sam-2026-10-26-p1-002, ruling-sam-2026-10-26-p1-003, ruling-sam-2026-10-26-p1-007, ruling-sam-2026-10-26-p1-008, ruling-sam-2026-10-26-p1-010; conflicts:c-211, c-308 default, c-372 default)",
+        "On such a page, when nothing is refused, 'Save and return to overview' saves the answers to the template, never to a draft notification, and shows the template's task list (ruling:sam-2026-10-26 ruling-sam-2026-10-26-p1-011; trace:prototype-dr2-1 T9 action 43, trace-prototype-dr2-1-p15-080)",
+        "No template page is an exception: a template page keeps both buttons' checks the same wherever the notification's page with both buttons does, so a later change to a page's checks shows in template mode with no template work (ruling:sam-2026-10-26 claim 2, ruling-sam-2026-10-26-p1-013; ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-036)"
       ],
       "dependsOn": [
         "inc-154"
@@ -744,6 +559,18 @@
         {
           "source": "ruling:sam-2026-10-09-templates",
           "ref": "p1-033, p1-044 (template mode is animals only)"
+        },
+        {
+          "source": "ruling:sam-2026-10-26",
+          "ref": "claims 1 and 2; ruling-sam-2026-10-26-p1-002, p1-003, p1-006 to p1-011, p1-013, p1-024"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "ruling-sam-2026-10-09-p1-014 (each germinal page is a copy of its live-animals page)"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p15-080"
         }
       ],
       "requirements": [
@@ -762,9 +589,13 @@
         "req-817",
         "req-818",
         "req-543",
-        "req-091"
+        "req-091",
+        "req-2202"
       ],
-      "openQuestions": [],
+      "openQuestions": [
+        "c-372 (report question 30, with a default the builder follows and says so): how far do the checks on both save buttons reach? Default: the page's own hard stops together with any answer the data specification marks mandatory to proceed; an answer only mandatory to submit may be left blank on either button. On the roles and addresses page and the party pickers nothing new is refused: they save with sections empty or nothing chosen, as for a notification.",
+        "c-308 (with a default, held in inc-154): whether a template page keeps the notification's required-answer checks. Default: yes, on whichever button is pressed; this row follows inc-154's mode-level choice and adds no template-only rule."
+      ],
       "notes": [
         "Combines the drafts of the templates, notification-hub areas for this row: they change the same page, record or set-up, so building them apart would repeat it.",
         "Re-distil (templates ruling): the dependency on 'Hub regions for assistive technology and the Main import reason row' (inc-098) is dropped: it changes only the overview's look and a task title, which the templates ruling names as a dependency to drop (claims 6, 33). The task criterion now says the template task list shows the notification task list's own tasks and titles, so the third task reads 'Main reason for import' until inc-098 lands and 'Main import reason' after, with no rework. The five section names are observable today: the hub already numbers its sections and the template list leaves Documents out and renumbers the two after it.",
@@ -774,7 +605,9 @@
         "Template mode is animals only (ruling:sam-2026-10-09-templates p1-044), so plants is not touched. req-819 is out of scope and not drafted.",
         "Salvage: trade-imports-animals-frontend 11bd8779, trade-imports-ins-tests 92684fa on stale branch feat/NO_JIRA-design-release-2-1-type-question-and-templates; rebuild on a fresh branch from main. The run skip past Upload documents is TEMPLATE_MODE_RUN_SKIPPED_PAGE_IDS in flow/template-mode.js, from trade-imports-animals-frontend cab954f8.",
         "req-543 moves in from inc-169 (removed); req-091 (template-creation return from the commodity page) moves in from inc-166 (removed) and is observed by the 'returns to the template's task list' criterion.",
-        "Design snagging merged to main 23 Oct: the overview task is now 'Main import reason' (hub copy), so the template task list shows that title now, with no wait for inc-098. The Back link on 'What are you importing?' now comes from kit.runBackLink with the commodities step's backCandidates in flow/run.js (to origin during the opening run, Overview otherwise): build the template-mode Back to Origin of the import through that seam, not a second one. saveActions now takes one params object and kit.recoverableSave takes the request first. commodities/search/search.controller.js and search.njk were reworked, so re-apply 11bd8779's search controller and commit-selection hunks on main by hand, and add TEMPLATE_MODE_RUN_SKIPPED_PAGE_IDS alongside main's new RUN_STEPS shape."
+        "Design snagging merged to main 23 Oct: the overview task is now 'Main import reason' (hub copy), so the template task list shows that title now, with no wait for inc-098. The Back link on 'What are you importing?' now comes from kit.runBackLink with the commodities step's backCandidates in flow/run.js (to origin during the opening run, Overview otherwise): build the template-mode Back to Origin of the import through that seam, not a second one. saveActions now takes one params object and kit.recoverableSave takes the request first. commodities/search/search.controller.js and search.njk were reworked, so re-apply 11bd8779's search controller and commit-selection hunks on main by hand, and add TEMPLATE_MODE_RUN_SKIPPED_PAGE_IDS alongside main's new RUN_STEPS shape.",
+        "Re-analysis 4 November (templates' pick-ups): req-2202 (both save buttons on template pages make the same checks) is added here rather than as its own row. This is the first row whose template pages offer both buttons ('What are you importing?', then every task the template's task list opens), and the success path lands on this row's task list, so one row owns the rule. Main already makes both buttons check the same for a notification (trade-imports-animals-frontend 25c23ef8, #436), so in template mode the work is to keep that rule, not add a template exception, and to land Save and return on the template's task list.",
+        "Germinal products: req-2202 reaches the germinal set's template pages too (ruling-sam-2026-10-26-p1-024 left it open; c-211's outcome extends it because each germinal page copies its live-animals twin). The germinal set does not exist on main yet, so it is observed through req-1876's row and the parent's germinal both-buttons row (inc-244). Plants has no template mode (ruling-sam-2026-10-09-templates-p1-052)."
       ],
       "gate": null
     },
@@ -1203,6 +1036,125 @@
       "gate": null
     },
     {
+      "id": "inc-248",
+      "title": "A sort on Manage templates that really reorders the list, once design decides whether to keep it",
+      "detail": "The design draws a 'Sort by:' select on Manage templates (Select one, Newest first, Oldest first, Arrival date) that sits outside any form and reorders nothing. A control that does nothing is not shipped, and a template holds no arrival date, so Manage templates is built now with no sort and the question goes to design. If design keeps a sort, it is built as a form whose button really reorders the list, with only the options design names and none a template cannot hold; if design drops it, this row is dropped. It needs saved templates to reorder, so it lands after saving a template.",
+      "acceptanceCriteria": [
+        "Manage templates has a 'Sort by' control, a GOV.UK select in a form with its own button, offering only the options design names and none that a template cannot hold, such as an arrival date (ruling:sam-2026-10-09-pm claim 21, ruling-sam-2026-10-09-pm-p1-089, ruling-sam-2026-10-09-pm-p1-090; conflicts:c-185)",
+        "With two templates saved at different times, choosing each option and pressing the button reorders the list as that option names, and the chosen option stays selected on the reordered page (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-090; conflicts:c-185)",
+        "The sort works without JavaScript: the button submits the form and the page comes back reordered (ruling:sam-2026-10-09-pm claim 6, ruling-sam-2026-10-09-pm-p1-090 'a GET form whose button really sorts')",
+        "Choosing a sort leaves the results count and each card's content unchanged (prototype:dr2-1-source dashboard-templates.html:61; trace:prototype-dr2-1 trace-prototype-dr2-1-p15-016-m1; conflicts:c-185)",
+        "Sorting shows only the signed-in user's own templates, as the unsorted list does (prototype:dr2-1-source prototype-dr2-1-source-p14-098; conflicts:c-184)"
+      ],
+      "dependsOn": [
+        "inc-157"
+      ],
+      "theme": "type-question-and-templates",
+      "status": "blocked",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "claim 21 (design question 11, templates sort): ruling-sam-2026-10-09-pm-p1-089, p1-090; claim 8: p1-044, p1-045, p1-047; claim 6 (no JavaScript)"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p15-016-m1"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "app/views/design-release-2.1/dashboard-templates.html:61-74; prototype-dr2-1-source-p14-008, p14-009, p14-098"
+        }
+      ],
+      "requirements": [
+        "req-1299"
+      ],
+      "openQuestions": [
+        "Design question 11 (templates sort): does Manage templates keep a sort and, if so, which options does it offer? Built as design says, or this row is dropped if design drops the sort (req-1299 blockedBy; ruling-sam-2026-10-09-pm-p1-047, p1-090; c-185)."
+      ],
+      "notes": [
+        "Re-analysis 4 November (templates' pick-ups): req-1299 is a pick-up on this theme's splitOff pointer, so it needs a row here; no existing templates row fits. inc-151 builds Manage templates with no sort and says the sort is blocked in its own row, and the ruling makes it one blocked increment per design question (ruling-sam-2026-10-09-pm-p1-045). This is that row.",
+        "Duplicate in the parent: shared/design-release-2-1 backlog.json inc-162 (theme waiting-on-design, status blocked, requirements []) describes the same sort. The pointer holds req-1299, so the parent may not cover it; the parent's inc-162 should be set to dropped (or merged-into this row once it has an inc- id) so the sort is built once. The ruling put the sort in waiting-on-design, but its code sits in the templates folder this theme touches, which is why the parent left req-1299 to this theme (inc-162 note of 27 Oct).",
+        "Depends on inc-157: the reorder criterion needs two saved templates. Backend is not listed: newest first is the stored order, and the options design is likely to name sort on the date created. Add backend if design names an option the store must sort on.",
+        "Provenance numbering: ruling:sam-2026-10-09-pm's design question 11 is numbered claim 21 in the ruling file; inc-151 and the parent's inc-162 cite it as claims 93-94 from an earlier numbering."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-249",
+      "title": "Add a new address and Edit details work from a template's party pickers, and come back to the template",
+      "detail": "A trader building or changing a live animals template answers Roles and addresses on the same pages as a notification. Today 'Add a new address' crosses to the INS frontend's add page with a handshake that names a notification, and the return lands on that notification's picker, so a trader adding an address while building a template would lose their place. This row makes the round trip and each role's 'Edit details' page work in template mode exactly as they do for a notification: the handshake names the template, every way back from the INS add page returns to that template's own pages with the template's answer set as it would be for a notification, and an edit changes only the template's copy of the address, never the address book record. Nothing returns the trader to a notification. The INS frontend stays the address book's only writer. Every link and redirect between the two services takes its address from each service's own configured address for the other, as the address book link and today's handshake do, so the round trip works on CDP, on the local Docker stack and on the Docker stack the pull request end-to-end runs use. Template mode is animals only, so plants is unchanged.",
+      "acceptanceCriteria": [
+        "While a live animals template is being created, 'Add a new address' on a party picker opens the INS frontend's add-address page for that role, and nothing creates or changes a draft notification (ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-032, ruling-sam-2026-10-09-templates-p1-037, ruling-sam-2026-10-09-templates-p1-038; conflicts:c-106 outcome)",
+        "On the INS add page reached from a template, 'Save and select' saves the address to the organisation's address book and returns to that template's Consignment addresses page with the new address set as that role's answer on the template and the added-address banner shown, as a notification's return does (ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-033; conflicts:c-106 outcome)",
+        "On the INS add page reached from a template, 'Save and return to address page' saves the address to the address book and returns to that template's picker for the role, with nothing newly selected and the added-address banner shown (ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-033; conflicts:c-106 outcome)",
+        "On the INS add page reached from a template, 'Cancel and return to hub' saves nothing and returns to the template's task list, where a notification's cancel returns to its overview (ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-032; conflicts:c-106 outcome)",
+        "While a saved template's Roles and addresses section is being changed from the template's page, the same round trip returns to that template's Consignment addresses page or picker in change mode, whose 'Save and return' goes back to the template's page with the new answer, and 'Cancel' goes back to the template's page unchanged (ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-032, ruling-sam-2026-10-09-templates-p1-036; trace:prototype-dr2-1 T5 actions 10-14)",
+        "In template mode a role's 'Edit details' opens the same edit page a notification uses; saving it changes only the template's copy of that address, and the address book record and every notification that uses it are unchanged (ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-033, ruling-sam-2026-10-09-templates-p1-037; conflicts:c-106 outcome)",
+        "A return to the animals frontend whose handshake does not match the template being worked on, or whose template belongs to another user, changes no template and shows the picker's handshake error, as a notification's mismatched return does (conflicts:c-106 outcome; conflicts:c-184)",
+        "At no point in either round trip is the trader taken to a notification's overview, picker or review (ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-032)",
+        "The round trip and the Edit details page work on CDP, on the local Docker stack and on the Docker stack the pull request end-to-end runs use: each service sends the trader to the other at the address its own configuration names for that service, with no host or port written into either service, and the end-to-end suite walks the round trip from a template on the stack (conflicts:c-106 outcome 'Same on the compose stack and in CDP'; Sam, 4 November 2026, standing requirement for this theme)",
+        "In the animals frontend's stub mode, where no INS frontend runs, a template's pickers show no 'Add a new address' link, as a notification's do (conflicts:c-106 outcome)",
+        "A later change to the pickers, the add-address handshake or the Edit details page shows in template mode with no template work: no template-only copy of those pages exists (ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-036, ruling-sam-2026-10-09-templates-p1-037, ruling-sam-2026-10-09-templates-p1-038)",
+        "Plants pages are unchanged: they have no template mode (ruling:sam-2026-10-09-templates ruling-sam-2026-10-09-templates-p1-052)"
+      ],
+      "dependsOn": [
+        "inc-155",
+        "inc-159",
+        "inc-161"
+      ],
+      "theme": "type-question-and-templates",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "insfrontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "ruling:sam-2026-10-09-templates",
+          "ref": "claims 5 and 7: ruling-sam-2026-10-09-templates-p1-032, p1-033, p1-036, p1-037, p1-038, p1-052"
+        },
+        {
+          "source": "conflicts",
+          "ref": "c-106 outcome (today's handshake, the INS frontend the only writer, same on the compose stack and in CDP, no add link in stub mode); c-184 (a template is private to its owner)"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "T5 actions 10-14 (changing a template section: Save and return, Cancel)"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "src/server/app/sets/live-animals/journeys/linear/features/addresses (address-return, ins-handshake, party-picker, party-edit) at origin/main"
+        },
+        {
+          "source": "repo:insfrontend",
+          "ref": "src/server/app/features/address-book (journey-registry return path, handshake-context, add page strip) at origin/main"
+        }
+      ],
+      "requirements": [
+        "req-2107"
+      ],
+      "openQuestions": [
+        "What does the INS add page's status strip show when it is reached from a template? Default, which the builder follows and says so: the grey 'Template' tag and the template's name, as the template's own task list and question pages show (req-1328, req-814), in place of the Draft tag and notification reference it shows for a notification.",
+        "Which checks template mode relaxes on the pickers is the template-mode checks question (c-308, held in inc-154), not this row; on the pickers nothing new is refused either way (c-372 default)."
+      ],
+      "notes": [
+        "Re-analysis 4 November (templates' pick-ups): req-2107 is a pick-up on this theme's splitOff pointer and fits no existing templates row. inc-155 walks Roles and addresses while creating, inc-159 changes the section of a saved template, and inc-161 makes the template hold each party separately, but none of them crosses to the INS frontend. It is a new row because the round trip is cross-service work in the INS frontend that no templates row lists, and it can only be seen once all three of those land.",
+        "Why the INS frontend is in repos: on main the INS frontend's journey registry builds the return as /notifications/{notification-id}/address-return on the animals frontend's configured base URL, its handshake context requires a notification id, and its add page's status strip shows the Draft tag and notification id. A template return needs the INS side to carry and return a reference to the template (or a journey type for template mode) and to show the template's strip. Keep every URL built from config: the animals frontend reads the INS frontend's address from its tradeImportsInsFrontend.baseUrl config (TRADE_IMPORTS_INS_FRONTEND_URL) and the INS frontend reads the animals frontend's from tradeImportsAnimalsFrontend.baseUrl (TRADE_IMPORTS_ANIMALS_FRONTEND_URL), and the INS frontend checks the return origin against that config. Check the local stack, the CI stack and CDP app config all set both, and never write localhost or a port into code or tests.",
+        "Theme boundary: this row edits code other themes own. frontend addresses/address-return and addresses/ins-handshake.js and insfrontend address-book/handshake-context.js are in address-book's touches (split, EUDPA-707, its journey add page already on main via EUDPA-706); insfrontend address-book/journey-registry.js and frontend addresses/party-picker are in consignment-parties'; frontend addresses/party-edit is in test-hygiene's. The new theme's touches must take these paths, or this row lands after those themes and the plan rebases on them; say which in the plan.",
+        "Provenance: the 'works on CDP, the local Docker stack and the CI Docker stack' criterion rests on c-106's outcome and on Sam's standing requirement for this theme, relayed in the 4 November re-analysis request. No ruling file under sources/ records it yet; add one (for example sources/ruling-sam-2026-11-04.md) so the criterion cites a source file.",
+        "Germinal products: req-2107 covers germinal templates too; the germinal set is not on main, so its template pickers are observed through req-1876's row with its own INS return entry (ruling:sam-2026-10-09 claim 61, as c-106 records). Every criterion here is observed with a live animals template.",
+        "Salvage: none known on the stale branch feat/NO_JIRA-design-release-2-1-type-question-and-templates; req-2107 was adopted after it was built."
+      ],
+      "gate": "Walk the round trip from a template on the local Docker stack: add an address from a picker while creating a template and while changing a saved one, through each of the INS add page's three buttons, and an Edit details save, and check the trader always comes back to the template and the address book record is unchanged by the edit. Then confirm the PR end-to-end run on the CI stack walked it too, and that no URL in either service names a host or port."
+    },
+    {
       "id": "inc-163",
       "title": "Edit a whole saved template on its own task list",
       "detail": "A saved template can be reopened at its edit address on its own template task list. Saving it from the review overwrites the template, keeping its address, and moves it to the top of the list.",
@@ -1419,64 +1371,6 @@
         "The criteria name live animals only: the germinal set's arrival details does not exist until inc-182 builds it, and adding a dependency on inc-182 here would make the templates and germinal-products themes wait on each other. The germinal half of req-290 and req-291 is observed through inc-186 (germinal templates answered on the germinal set's pages), whose pages copy this behaviour; the combiner should add a germinal criterion to inc-186 if it does not already carry one.",
         "Criterion 2 states only the change: the rest of the completion rule is req-331 (exists). req-1345 (a template never holds an arrival date) belongs to the templates area.",
         "Held 12 October: Sam paused building to review the combined branch. Set back to todo to resume."
-      ],
-      "gate": null,
-      "externalDependsOn": [],
-      "merge": null
-    },
-    {
-      "id": "inc-171",
-      "title": "Back from a page opened by a review Change link goes to the previous journey page",
-      "detail": "Design Release 2.1 builds every journey page's Back link from how the page was reached. A page opened from the review page's Change link goes back to the previous page in the step order, not to the review page, while Save and continue there still returns to the review page. The context comes from the service's own journey state (?change=1), not from a from=review marker. The opening-run Back links, in animals and plants, moved to design-snagging inc-218 on 20 October.",
-      "acceptanceCriteria": [
-        "A page opened from a Change link on the review page has a 'Back' link to the previous page in the step order, not to the review page; 'Save and continue' there still returns to the review page. (prototype:dr2-1-source app/routes.js:488-498, p1-053; ruling:sam-2026-10-09 p1-089)"
-      ],
-      "dependsOn": [],
-      "theme": "type-question-and-templates",
-      "status": "deferred",
-      "kind": "feat",
-      "repos": [
-        "frontend",
-        "tests"
-      ],
-      "sources": [
-        {
-          "source": "prototype:dr2-1-source",
-          "ref": "app/routes.js:488-498 (back link rule); p1-052, p1-053"
-        },
-        {
-          "source": "ruling:sam-2026-10-09",
-          "ref": "p1-089, p1-198 (?change=1 stays; no from=hub marker)"
-        },
-        {
-          "source": "trace:animals-fit",
-          "ref": "p1-045, p1-047, p1-083 (today's Back links)"
-        },
-        {
-          "source": "repo:tests",
-          "ref": "tests/animals/e2e/features/cph-scope.spec.ts:66-73 (p2-042, p2-129)"
-        },
-        {
-          "source": "repo:plantsfrontend",
-          "ref": "repo-plantsfrontend-p2-018, p5-030"
-        },
-        {
-          "source": "ruling:sam-2026-10-09-templates",
-          "ref": "ruling-sam-2026-10-09-templates-p1-041 to p1-044"
-        }
-      ],
-      "requirements": [
-        "req-1616"
-      ],
-      "openQuestions": [],
-      "notes": [
-        "One slice (req-1616, c-206). It builds on main's opening-run order (journey-foundation inc-001, merged). Back to the template page while changing a saved template is inc-159's. Once design-snagging inc-207 lands, the reason page is headed 'Main import reason'; criterion 2's 'Main reason for import' means that page.",
-        "Main already sends Back to the overview from a page opened from its overview task, and from the party pickers and the CPH page to Roles and addresses; the existing controller tests and cph-scope.spec.ts assert both. The new opening-run and Change-link Back links sit beside those, not in place of them.",
-        "Nothing to salvage: this row was never built on the stale branch. Commodities-and-reason inc-015 (stale) also sets the Commodity details Back link; settle the two when either theme is played.",
-        "Re-distil: unchanged in substance from inc-171.",
-        "req-1917 (plants' Back links follow the context a page was opened in, animals only for the INS type question) is added here by the combiner, under ruling:sam-2026-10-09-templates claim 7. The Back links sit in each frontend's flow, which journey-foundation owns and which lands first.",
-        "Held 12 October: Sam paused building to review the combined branch. Set back to todo to resume.",
-        "Trimmed 20 October: the plants criterion and req-1917 moved to design-snagging inc-218 (Back during the opening run goes to the previous step and the run carries on), under Sam's ruling that already-planned work moves into design snagging. The first criterion was dropped, not moved: its 'Commodity details goes back to Main reason for import' contradicts req-108 and REQ-COMMODITY-DETAILS-009, and its reason-page half is inc-218's. This row keeps the Change-link Back link and req-1616; inc-218 delivers req-1616's opening-run half."
       ],
       "gate": null,
       "externalDependsOn": [],

@@ -1,7 +1,11 @@
 #!/bin/bash
 # Derive a theme's scenarios, spec files and rows, split by domain.
 #
-# Usage: ./derive-scenarios.sh --workarea <path under workareas/> --theme <id> [--branch <name>] [--out <file>]
+# Usage: ./derive-scenarios.sh --workarea <path under workareas/> --theme <id> [--branch <name>] [--out <file>] [--workspace <dir>]
+#
+# --workspace defaults to ~/git/defra/trade-imports-workspace. A scenario the theme
+# added and a later commit renamed keeps its id and counts, read as it is now. One
+# whose id no current spec holds was removed: it is named in warnings, not counted.
 #
 # Prints JSON on stdout, or writes it to --out. Exits non-zero, with the reason
 # on stderr, when no commits match the theme, when a spec area has no domain

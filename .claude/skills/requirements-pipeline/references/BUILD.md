@@ -151,7 +151,9 @@ recommendation and its evidence rather than asking cold.
 A `ci` run leaves the end-to-end proof to the pull requests, which run each
 repo's own domain plus the specs elsewhere carrying its service tag
 (`config/e2e-tests-pr-scope.json`), and CDP runs each service's whole family
-after deployment. The loop still stops at `ci-red`.
+after deployment. The loop still stops at `ci-red`. A `local` run's gate takes the
+same scope and runs it the same way: the suites whole in its `e2e` rung, then the
+tagged specs from every domain in an `e2e-tagged` rung.
 
 Record the answer in the theme's `build-args.json` so a relaunch after a stop
 defaults to it and needs a confirm rather than the question again. A relaunch is

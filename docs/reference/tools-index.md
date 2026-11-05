@@ -4,6 +4,12 @@ Shared shell scripts called by skills via
 `~/git/defra/trade-imports-workspace/tools/<domain>/<script>`. Environment:
 `JIRA_USER`, `JIRA_TOKEN`, `JIRA_BASE_URL`, `JIRA_PROJECT_KEY`.
 
+**`tools/` is bash only.** Each script here is bash, and its tests are bash
+scripts beside it named `<script>.<aspect>.test.sh`, each with a `check()`
+helper (for example `tools/review/render-items.write.test.sh`). New
+JavaScript goes in `tim` as a command, tested with tim's own tests, not in
+`tools/`.
+
 **The Jira write surface has a library-first `tim` equivalent.** `tim jira
 create|attach|link|assign` (see `tim/README.md`) is dry run by default.
 `create` prints the plan (fields, attachments, warnings for placeholder

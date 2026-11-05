@@ -73,6 +73,10 @@ The `service-tag` skill tags the specs in other domains that a service's pull re
 
 It reads which services call the service directly from the stack's compose wiring, searches those callers' domains (minus the ones the service already runs by path) for specs that use the service's fixtures, and tags only the ones that exercise it. It skips specs carrying `@a11y`, `@active` or `@dynamics`, which the PR run filters out. How a spec reaches each service, the links the wiring can't show, and the specs ruled out are in [`service-decisions.md`](../../.claude/skills/service-tag/references/service-decisions.md). At the start it asks whether to leave changes unstaged, commit, or branch first, and it never pushes.
 
+### Cross-browser tests
+
+A pull request runs the `@cross-browser` tests in Chromium, with the rest of the e2e specs. The Firefox, WebKit and iPhone runs are not part of a pull request: they run on [CDP](e2e-tests-cdp.md#cross-browser-runs-tbc) (`TBC`).
+
 ## Scheduled runs
 
 ### Security tests

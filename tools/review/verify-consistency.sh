@@ -3,7 +3,9 @@
 # Usage: ./verify-consistency.sh EUDPA-XXXXX [--json]
 #
 # Checks that every repo in the review has a non-empty _consistency-check.md
-# and updates _CONSISTENCY_VERIFICATION.md
+# and updates _CONSISTENCY_VERIFICATION.md. When the review has a
+# consistency/ folder (reviews set up by write-briefs.sh), each repo also
+# needs consistency/{repo}.items.json holding a JSON list, [] when empty.
 
 set -e
 
@@ -20,13 +22,15 @@ fi
 if [[ -z "$TICKET" ]]; then
     echo "Usage: ./verify-consistency.sh EUDPA-XXXXX [--json]"
     echo ""
-    echo "Verifies all repos have a completed _consistency-check.md."
+    echo "Verifies all repos have a completed _consistency-check.md, and a"
+    echo "consistency/{repo}.items.json list when the review has that folder."
     exit 1
 fi
 
 REVIEW_DIR="$HOME/git/defra/trade-imports-workspace/workareas/reviews/$TICKET"
 META_FILE="$REVIEW_DIR/.review-meta.json"
 FILE_REVIEWS_DIR="$REVIEW_DIR/file-reviews"
+ITEMS_DIR="$REVIEW_DIR/consistency"
 
 # Helper for output
 log() {
@@ -84,14 +88,20 @@ for ((i=0; i<pr_count; i++)); do
     done
     [[ "$already_seen" == "true" ]] && continue
 
-    ((total_repos++))
+    total_repos=$((total_repos + 1))
     all_repos+=("$repo")
 
     stub="$FILE_REVIEWS_DIR/$repo/_consistency-check.md"
 
-    if [[ -f "$stub" ]] && [[ -s "$stub" ]]; then
+    items="$ITEMS_DIR/$repo.items.json"
+
+    if [[ -s "$stub" && -d "$ITEMS_DIR" ]] \
+        && ! jq -e 'type == "array"' "$items" > /dev/null 2>&1; then
+        all_statuses+=("no-items")
+        pending_list+=("$repo")
+    elif [[ -f "$stub" ]] && [[ -s "$stub" ]]; then
         all_statuses+=("reviewed")
-        ((reviewed_count++))
+        reviewed_count=$((reviewed_count + 1))
     elif [[ -f "$stub" ]]; then
         all_statuses+=("pending")
         pending_list+=("$repo")
@@ -142,6 +152,7 @@ verification_file="$FILE_REVIEWS_DIR/_CONSISTENCY_VERIFICATION.md"
             reviewed) status_icon="✅ Complete" ;;
             pending)  status_icon="⏳ Pending" ;;
             missing)  status_icon="❌ Missing" ;;
+            no-items) status_icon="❌ No items list" ;;
         esac
         echo "| $((i+1)) | $repo | $status_icon |"
     done

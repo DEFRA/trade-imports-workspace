@@ -1,29 +1,30 @@
 {
   "programme": "design-release-2-1-type-question",
   "generatedFrom": [
-    "ruling:sam-2026-10-09-pm",
-    "ruling:sam-2026-10-09-templates",
-    "ruling:sam-2026-10-09",
-    "ruling:sam-2026-10-07",
     "confluence:6497338582",
-    "document:dr1-parity-notes",
     "document:dr1-parity-backlog",
+    "document:dr1-parity-notes",
     "prototype:dr2-1-source",
-    "trace:prototype-dr2-1",
     "prototype:dr2-1-specs",
-    "repo:backend",
-    "repo:insbackend",
     "repo:addressbook",
+    "repo:backend",
+    "repo:frontend",
+    "repo:insbackend",
+    "repo:insfrontend",
+    "repo:perftests",
+    "repo:plantsfrontend",
     "repo:referencedata",
     "repo:stub",
-    "repo:frontend",
-    "repo:insfrontend",
-    "repo:plantsfrontend",
     "repo:tests",
-    "repo:perftests",
+    "review:type-question-theme",
+    "ruling:sam-2026-10-07",
+    "ruling:sam-2026-10-09",
+    "ruling:sam-2026-10-09-pm",
+    "ruling:sam-2026-10-09-templates",
     "trace:animals-fit",
+    "trace:e2e",
     "trace:ins-fit",
-    "trace:e2e"
+    "trace:prototype-dr2-1"
   ],
   "invariants": [
     "Every new or changed English string gets a Welsh draft beside it in the same change, as the service's other copy does.",
@@ -55,6 +56,14 @@
     "plantsfrontend": {
       "path": "repos/trade-imports-plants-frontend",
       "github": "DEFRA/trade-imports-plants-frontend"
+    },
+    "admin": {
+      "path": "repos/trade-imports-animals-admin",
+      "github": "DEFRA/trade-imports-animals-admin"
+    },
+    "workspace": {
+      "path": ".",
+      "github": "DEFRA/trade-imports-workspace"
     }
   },
   "theme": "type-question",
@@ -602,6 +611,393 @@
           "repo": "trade-imports-ins-frontend",
           "number": 74
         }
+      ]
+    },
+    {
+      "id": "inc-250",
+      "title": "Animals admin uses the same name for the browser-facing Defra ID hostname rewrite as the other frontends",
+      "detail": "The INS, animals and plants frontends call the setting that rewrites browser-facing Defra ID URLs defraId.browserFacingHostnameRewrite, read from DEFRA_ID_BROWSER_FACING_HOSTNAME_REWRITE_ENABLED and _TO. Animals admin still calls it defraId.signOutHostnameRewrite with DEFRA_ID_SIGN_OUT_HOSTNAME_REWRITE_*. Rename it in admin with its get-sign-out-url module, tests and docs, and the admin service in the workspace stack compose and docker/stack/AGENTS.md, so all four frontends use one name. Sign-out from admin behaves as it does today.",
+      "acceptanceCriteria": [
+        "Animals admin reads defraId.browserFacingHostnameRewrite from DEFRA_ID_BROWSER_FACING_HOSTNAME_REWRITE_ENABLED and DEFRA_ID_BROWSER_FACING_HOSTNAME_REWRITE_TO, and no file in admin or in docker/stack names the old key or variables.",
+        "On the local docker stack, signing out of animals admin still sends the browser to a localhost Defra ID sign-out URL, as the admin auth e2e and security specs prove."
+      ],
+      "dependsOn": [
+        "inc-261"
+      ],
+      "theme": "type-question",
+      "status": "todo",
+      "kind": "refactor",
+      "repos": [
+        "admin",
+        "workspace"
+      ],
+      "sources": [
+        {
+          "source": "review:type-question-theme",
+          "ref": "engineering reviews of the type-question theme (build loop run wf_71db6ed2-771 and the row reviews before it): follow-up: rename the Defra ID hostname rewrite key across INS, animals, plants and animals admin"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null,
+      "externalDependsOn": [],
+      "merge": null,
+      "notes": [
+        "A follow-up from the engineering reviews of the type-question theme, built on the theme branch.",
+        "Links, sign-in and sign-out must keep working in CDP, in the local docker stack and in the CI docker stack. cdp-app-config sets no HOSTNAME_REWRITE variable for any trade-imports service today. Never write to cdp-app-config: if a CDP change is needed, write it up for Sam."
+      ]
+    },
+    {
+      "id": "inc-251",
+      "title": "The INS frontend rewrites browser-facing Defra ID URLs in one place",
+      "detail": "The INS frontend has two hostname rewrites for Defra ID: the configured browserFacingHostnameRewrite, and a second one in src/auth/get-oidc-config.js (LOCAL_HOSTNAMES, rewriteEndpointHostnames). Give the rewrite one owner, driven by the configured setting, so sign-in, sign-out and the CSP form-action origin all come from it. Behaviour is unchanged.",
+      "acceptanceCriteria": [
+        "One module in the INS frontend owns rewriting Defra ID hostnames, driven by defraId.browserFacingHostnameRewrite; get-oidc-config.js no longer holds its own list of local hostnames.",
+        "Signing in and out of the INS frontend works on the local docker stack and the CI docker stack, and with the rewrite turned off (as in CDP) the Defra ID URLs pass through unchanged, as the unit tests prove."
+      ],
+      "dependsOn": [],
+      "theme": "type-question",
+      "status": "todo",
+      "kind": "refactor",
+      "repos": [
+        "insfrontend"
+      ],
+      "sources": [
+        {
+          "source": "review:type-question-theme",
+          "ref": "engineering reviews of the type-question theme (build loop run wf_71db6ed2-771 and the row reviews before it): follow-up: merge the two INS hostname rewrite mechanisms into one owner"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null,
+      "externalDependsOn": [],
+      "merge": null,
+      "notes": [
+        "A follow-up from the engineering reviews of the type-question theme, built on the theme branch.",
+        "Links, sign-in and sign-out must keep working in CDP, in the local docker stack and in the CI docker stack. cdp-app-config sets no HOSTNAME_REWRITE variable for any trade-imports service today. Never write to cdp-app-config: if a CDP change is needed, write it up for Sam."
+      ]
+    },
+    {
+      "id": "inc-252",
+      "title": "Frontend tests set config and serve Defra ID discovery instead of mocking their own modules",
+      "detail": "The get-sign-out-url tests in animals, plants and admin mock their own config module and assert with toHaveBeenCalledWith. Move them onto config.set and assert on the URL returned. In the INS frontend, tests that start their server through the shared startRealModeServer helpers still vi.mock the repo's own get-oidc-config.js, although the helper already serves OIDC discovery at the network boundary. Remove every such mock and its unused imports, moving any remaining test onto startRealModeServer or serveOidcDiscovery, and make the INS add-a-page.md recipe say so.",
+      "acceptanceCriteria": [
+        "No get-sign-out-url test in animals, plants or admin mocks its own config module; each sets config with config.set and checks the returned sign-out URL.",
+        "No INS frontend test mocks the repo's own get-oidc-config.js, and add-a-page.md's unit-test step describes the startRealModeServer helpers rather than a vi.mock.",
+        "Every changed repo passes its unit and functional test suites."
+      ],
+      "dependsOn": [
+        "inc-250",
+        "inc-251"
+      ],
+      "theme": "type-question",
+      "status": "todo",
+      "kind": "test",
+      "repos": [
+        "frontend",
+        "plantsfrontend",
+        "admin",
+        "insfrontend"
+      ],
+      "sources": [
+        {
+          "source": "review:type-question-theme",
+          "ref": "engineering reviews of the type-question theme (build loop run wf_71db6ed2-771 and the row reviews before it): follow-ups: move get-sign-out-url tests onto config.set; stop INS tests mocking get-oidc-config beside serveOidcDiscovery"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null,
+      "externalDependsOn": [],
+      "merge": null,
+      "notes": [
+        "A follow-up from the engineering reviews of the type-question theme, built on the theme branch."
+      ]
+    },
+    {
+      "id": "inc-253",
+      "title": "The animals and plants session cookie states its SameSite setting, and the config says which cookie it sets",
+      "detail": "The animals and plants auth session cookie (getCookieOptions in src/plugins/auth.js) relies on @hapi/statehood's default SameSite=Strict. State SameSite explicitly on it, keeping today's behaviour. session.cookie.sameSite's env var is named for the session but applies only to the Bell state cookie: make its description (and its name, if renaming is safe in every environment) say what it configures.",
+      "acceptanceCriteria": [
+        "The auth session cookie in animals and plants sets SameSite explicitly, to the value it has today, and a unit test proves it.",
+        "The config entry for the Bell state cookie's SameSite says that is the cookie it sets, and signing in through Defra ID still works on the local and CI docker stacks."
+      ],
+      "dependsOn": [],
+      "theme": "type-question",
+      "status": "todo",
+      "kind": "fix",
+      "repos": [
+        "frontend",
+        "plantsfrontend"
+      ],
+      "sources": [
+        {
+          "source": "review:type-question-theme",
+          "ref": "engineering reviews of the type-question theme (build loop run wf_71db6ed2-771 and the row reviews before it): follow-up: state SameSite on the cookie auth session cookie explicitly"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null,
+      "externalDependsOn": [],
+      "merge": null,
+      "notes": [
+        "A follow-up from the engineering reviews of the type-question theme, built on the theme branch.",
+        "Links, sign-in and sign-out must keep working in CDP, in the local docker stack and in the CI docker stack. cdp-app-config sets no HOSTNAME_REWRITE variable for any trade-imports service today. Never write to cdp-app-config: if a CDP change is needed, write it up for Sam."
+      ]
+    },
+    {
+      "id": "inc-254",
+      "title": "The INS dashboard's functional tests reach its empty state and share their helpers",
+      "detail": "Tidy the INS dashboard's functional tests (FIT) and their supporting code. Give the INS backend stub (under services in the INS frontend) an organisation-scoped empty seed, following the -empty suffix convention the address-book stub uses, and add a FIT for the dashboard's empty state. Promote the inline axe helper in features/dashboard/dashboard.fit.spec.js to one shared module and update add-a-page.md's 'define it inline' instruction. Move the shared expectDashboard helper from features/address-book/fit/dashboard.js to the dashboard feature, updating its callers and testing.md. Build the expected View link hrefs in the dashboard FIT and controller tests from config.tradeImportsAnimalsFrontend.baseUrl instead of hard-coded localhost URLs. Remove the acceptance-criteria ids ((AC1) to (AC5)) from the dashboard FIT titles. testing.md says every test signs in with its own organisation id, but dashboard.fit.spec.js and notification-type.fit.spec.js call signIn(page) without one: make the specs follow the doc.",
+      "acceptanceCriteria": [
+        "A FIT signed in as an organisation with the empty seed sees the INS dashboard's empty state.",
+        "One shared axe helper serves every INS FIT, expectDashboard lives with the dashboard feature, and add-a-page.md and testing.md describe both.",
+        "No INS dashboard test hard-codes an animals frontend URL or carries an acceptance-criteria id in its title, and every FIT signs in with its own organisation id."
+      ],
+      "dependsOn": [
+        "inc-252"
+      ],
+      "theme": "type-question",
+      "status": "todo",
+      "kind": "test",
+      "repos": [
+        "insfrontend"
+      ],
+      "sources": [
+        {
+          "source": "review:type-question-theme",
+          "ref": "engineering reviews of the type-question theme (build loop run wf_71db6ed2-771 and the row reviews before it): follow-ups: INS backend stub empty seed; shared FIT axe helper; move expectDashboard; View link hrefs from config; strip AC ids; signIn organisation ids"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null,
+      "externalDependsOn": [],
+      "merge": null,
+      "notes": [
+        "A follow-up from the engineering reviews of the type-question theme, built on the theme branch."
+      ]
+    },
+    {
+      "id": "inc-255",
+      "title": "Every animals run step takes its Back link from the shared run Back link helper",
+      "detail": "Animal identification, arrival details, transporters and contact address build their Overview Back link by hand with hubPath. Move them onto kit.runBackLink, so one function owns every run step's Back link, including the opening-run and review Change link rules the theme added. Where the move changes a Back link, it must match REQ-FLOW-016 and the opening-run rules, and openspec records the change.",
+      "acceptanceCriteria": [
+        "No animals run step builds its Back link with hubPath by hand; every one calls kit.runBackLink.",
+        "Each moved page's Back link follows the journey-flow spec in the opening run, from a review Change link and from Overview, as its controller tests prove."
+      ],
+      "dependsOn": [],
+      "theme": "type-question",
+      "status": "todo",
+      "kind": "refactor",
+      "repos": [
+        "frontend"
+      ],
+      "sources": [
+        {
+          "source": "review:type-question-theme",
+          "ref": "engineering reviews of the type-question theme (build loop run wf_71db6ed2-771 and the row reviews before it): follow-up: move animals run steps that build their overview Back by hand onto kit.runBackLink"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null,
+      "externalDependsOn": [],
+      "merge": null,
+      "notes": [
+        "A follow-up from the engineering reviews of the type-question theme, built on the theme branch."
+      ]
+    },
+    {
+      "id": "inc-256",
+      "title": "Animals frontend tidy: one shape guard for the session adapters, comments that say what code does, and a current Lighthouse doc",
+      "detail": "services/persistence/session/real.js and stub.js each define the same isObject helper: give the by-journey shape guard one owner (for example under lib/) shared by both. In src/config/nunjucks/context/context.js, remove or replace the inline comments above sessionId, setId and homeUrl, which describe callers and a library. Trim the doc comment on rolesAndAddressesCard (check-answers/view-model/cards/addresses/roles-and-addresses.js) to its contract. Rewrite src/server/app/sets/live-animals/docs/lighthouse.md for the derived-targets run; it still describes 19 literal URLs.",
+      "acceptanceCriteria": [
+        "One module owns the by-journey shape guard and both session adapters import it.",
+        "context.js and roles-and-addresses.js carry no comment that narrates callers, other pages or a library, following .claude/rules/code-quality.md.",
+        "lighthouse.md describes how the derived-targets Lighthouse run picks its pages and how to run it."
+      ],
+      "dependsOn": [
+        "inc-255"
+      ],
+      "theme": "type-question",
+      "status": "todo",
+      "kind": "refactor",
+      "repos": [
+        "frontend"
+      ],
+      "sources": [
+        {
+          "source": "review:type-question-theme",
+          "ref": "engineering reviews of the type-question theme (build loop run wf_71db6ed2-771 and the row reviews before it): follow-ups: isObject duplicate; context.js comments; roles-and-addresses doc comment; lighthouse.md rewrite"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null,
+      "externalDependsOn": [],
+      "merge": null,
+      "notes": [
+        "A follow-up from the engineering reviews of the type-question theme, built on the theme branch."
+      ]
+    },
+    {
+      "id": "inc-257",
+      "title": "Animals controller tests seed state through named helpers instead of driveHandler's long options list",
+      "detail": "src/server/app/engine/test-support.js's driveHandler takes a growing list of options for seeding a journey (answers, opening run, amend, change context and so on). Give the common seeds named helpers so a test says what state it starts in, and move the callers over. No production code changes.",
+      "acceptanceCriteria": [
+        "Named seeding helpers in test-support.js cover the states controller tests start in, and driveHandler keeps only the options no helper covers.",
+        "The animals unit suite passes with the same number of tests."
+      ],
+      "dependsOn": [
+        "inc-256"
+      ],
+      "theme": "type-question",
+      "status": "todo",
+      "kind": "test",
+      "repos": [
+        "frontend"
+      ],
+      "sources": [
+        {
+          "source": "review:type-question-theme",
+          "ref": "engineering reviews of the type-question theme (build loop run wf_71db6ed2-771 and the row reviews before it): follow-up: split driveHandler's growing options list into named seeding helpers"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null,
+      "externalDependsOn": [],
+      "merge": null,
+      "notes": [
+        "A follow-up from the engineering reviews of the type-question theme, built on the theme branch."
+      ]
+    },
+    {
+      "id": "inc-258",
+      "title": "The plants e2e tests and page objects read without narration",
+      "detail": "Delete the rationale comments in tests/plants/e2e/features/start.spec.ts so each test reads without narration. Bring the doc comments in flows/plants/journey.ts and page-objects/plants/*.ts in line with the house doc-comment rule, keeping only contract statements on exported methods.",
+      "acceptanceCriteria": [
+        "start.spec.ts has no comment that explains a test step, and every doc comment in flows/plants/journey.ts and page-objects/plants/ states a contract on an exported method.",
+        "npm run lint passes in the tests repo and the plants e2e suite still passes on the local docker stack."
+      ],
+      "dependsOn": [],
+      "theme": "type-question",
+      "status": "todo",
+      "kind": "test",
+      "repos": [
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "review:type-question-theme",
+          "ref": "engineering reviews of the type-question theme (build loop run wf_71db6ed2-771 and the row reviews before it): follow-ups: plants start.spec.ts rationale comments; plants flow and page-object doc comments"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null,
+      "externalDependsOn": [],
+      "merge": null,
+      "notes": [
+        "A follow-up from the engineering reviews of the type-question theme, built on the theme branch."
+      ]
+    },
+    {
+      "id": "inc-259",
+      "title": "Save and return on the plants consignor and place of destination pages makes the same checks as Save and continue",
+      "detail": "The plants consignor select and place of destination specs still say 'Save and return to overview with nothing chosen reaches Overview without an error'. The ruling of 26 October says Save and return makes exactly the same checks as Save and continue on every page with both buttons. Check both pages' controllers, specs and tests against that ruling, and bring any that differ into line, as the commodity type row did.",
+      "acceptanceCriteria": [
+        "On the plants consignor and place of destination pages, choosing nothing and pressing 'Save and return to overview' shows the same error as 'Save and continue' and stays on the page.",
+        "The plants openspec for both pages says so, and unit and e2e tests prove it."
+      ],
+      "dependsOn": [
+        "inc-258"
+      ],
+      "theme": "type-question",
+      "status": "todo",
+      "kind": "fix",
+      "repos": [
+        "plantsfrontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "review:type-question-theme",
+          "ref": "engineering reviews of the type-question theme (build loop run wf_71db6ed2-771 and the row reviews before it): follow-up: plants consignor-select and place-of-destination Save and return against the 26 October ruling"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null,
+      "externalDependsOn": [],
+      "merge": null,
+      "notes": [
+        "A follow-up from the engineering reviews of the type-question theme, built on the theme branch."
+      ]
+    },
+    {
+      "id": "inc-260",
+      "title": "The workspace docs and INS spec describe the type question's links and the service navigation",
+      "detail": "docs/repos/trade-imports-animals-frontend.md must list the INS frontend as an outbound browser link (the type question and the address book). Check docs/repos/trade-imports-ins-frontend.md's animals frontend outbound row (around line 36). openspec ins/notification-dashboard's Purpose still says '(today: live-animals)': check it against the sources ins-backend now aggregates. Write the ins/service-navigation capability (its items, their order and the current-item rules) and move the type question's Dashboard-current scenario into it, with coverage links to the tests that prove it.",
+      "acceptanceCriteria": [
+        "docs/repos for the animals and INS frontends name every browser link between them.",
+        "openspec ins/notification-dashboard says which notification types it lists today, ins/service-navigation exists with its scenarios covered, and tim spec lint passes."
+      ],
+      "dependsOn": [
+        "inc-250"
+      ],
+      "theme": "type-question",
+      "status": "todo",
+      "kind": "docs",
+      "repos": [
+        "workspace"
+      ],
+      "sources": [
+        {
+          "source": "review:type-question-theme",
+          "ref": "engineering reviews of the type-question theme (build loop run wf_71db6ed2-771 and the row reviews before it): follow-ups: docs/repos outbound links; ins/notification-dashboard Purpose; write ins/service-navigation"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null,
+      "externalDependsOn": [],
+      "merge": null,
+      "notes": [
+        "A follow-up from the engineering reviews of the type-question theme, built on the theme branch."
+      ]
+    },
+    {
+      "id": "inc-261",
+      "title": "Animals admin passes its security audit",
+      "detail": "Animals admin main fails its own security audit (npm run security-audit, audit-ci): high-severity advisories GHSA-4528-x5fx-h6hg (joi through hapi-pulse) and GHSA-8494-f6mr-cjpv (@hapi/content). The pre-commit hook runs that audit, so no change can be committed in admin until it passes. Move the vulnerable packages onto patched versions (a direct upgrade, or an npm override where the parent has not released one), and add an audit-ci allowlist entry only for an advisory with no patched version, saying why.",
+      "acceptanceCriteria": [
+        "npm run security-audit passes in animals admin, with no allowlist entry for an advisory that has a patched version.",
+        "Animals admin unit tests pass, and its Security audit and E2E checks pass on the pull request."
+      ],
+      "dependsOn": [],
+      "theme": "type-question",
+      "status": "todo",
+      "kind": "fix",
+      "repos": [
+        "admin"
+      ],
+      "sources": [
+        {
+          "source": "review:type-question-theme",
+          "ref": "found opening the admin theme branch on 5 November: its pre-commit security audit fails on main 1c8bd2f"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null,
+      "externalDependsOn": [],
+      "merge": null,
+      "notes": [
+        "Needed before any other admin row: the pre-commit hook refuses commits while the audit fails."
       ]
     }
   ]

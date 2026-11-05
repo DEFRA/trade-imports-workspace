@@ -149,6 +149,14 @@ programme's `sources.json` pins. Design Release 2.1 has no address book view of 
 - **Built:** an address has one type, and its roles come from that type only. A Branch address can be a branch address and nothing else. The journey's consignment contact asks for a branch address. A trader whose own office is also the importer or consignee has to add that address twice: once as Branch, and once as Destination, Consignee or Importer. Both sides are fixed to the United Kingdom, so one address holding both raises no location conflict.
 - **To ask:** (a) keep Branch separate, as built, so such a trader holds two entries; or (b) let a Branch address also be a consignee, importer or place of destination, making 'Branch address' one more UK role? The answer also decides whether a send-side role and a receive-side role can ever share an address. As built they cannot, since one would be abroad and the other in Great Britain.
 
+### S-18. Should a send-side address offer United Kingdom as its country?
+
+- **Ticket:** [EUDPA-711](https://eaflood.atlassian.net/browse/EUDPA-711), [ins-frontend #71](https://github.com/DEFRA/trade-imports-ins-frontend/pull/71). Raised in the 5 November review of address types and roles.
+- **Page:** the INS add form for an 'Origin or Consignor' address (Place of origin, Consignor), and its edit page.
+- **Prototype:** the manual-entry country list adds United Kingdom to the reference countries on purpose: `buildAddressBookCountryItems` ([routes.js#L10412-L10423](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/routes.js#L10412-L10423)), used for the manual form at [routes.js#L10145-L10157](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/routes.js#L10145-L10157). Destination and Branch addresses offer United Kingdom only.
+- **Built:** as the prototype: an Origin or Consignor address offers every country, United Kingdom included (`address-countries.js`). Nothing stops a place of origin or consignor being saved in the UK. The address book API accepts any country for any type.
+- **To ask:** (a) keep United Kingdom in the list, as the prototype has it, for example for a consignor based in the UK; or (b) leave it out, since animals imported into Great Britain start their journey abroad? If (b), should the API refuse a UK send-side address as well, and what about Northern Ireland, the Channel Islands and the Isle of Man?
+
 ## Settled
 
 | Question | Answer | Where it landed |

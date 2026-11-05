@@ -141,6 +141,14 @@ programme's `sources.json` pins. Design Release 2.1 has no address book view of 
 - **Built:** both, as the prototype has them: the type page's caption is 'Add a new address' ([address-type.njk#L8](https://github.com/DEFRA/trade-imports-ins-frontend/blob/b8c877f/src/server/app/features/address-book/address-type/address-type.njk#L8), [copy.en.js#L89](https://github.com/DEFRA/trade-imports-ins-frontend/blob/b8c877f/src/server/app/features/address-book/copy/copy.en.js#L89)) and the add form's is 'Add new address' ([add.njk#L9](https://github.com/DEFRA/trade-imports-ins-frontend/blob/b8c877f/src/server/app/features/address-book/add/add.njk#L9), [copy.en.js#L125](https://github.com/DEFRA/trade-imports-ins-frontend/blob/b8c877f/src/server/app/features/address-book/copy/copy.en.js#L125)). A trader sees the caption change between step 1 and step 2.
 - **To ask:** (a) both pages 'Add a new address', the words of the list's button; (b) both pages 'Add new address', as the ticket's criteria say; or (c) keep the two as built?
 
+### S-17. Can a branch address also be a consignee, importer or place of destination?
+
+- **Ticket:** [EUDPA-711](https://eaflood.atlassian.net/browse/EUDPA-711), [ins-frontend #71](https://github.com/DEFRA/trade-imports-ins-frontend/pull/71), [address-book #20](https://github.com/DEFRA/trade-imports-address-book/pull/20). Raised in the 5 November review of address types and roles.
+- **Page:** the INS add form's 'Choose an address type' step and its roles question, and the party pickers that offer addresses by role.
+- **Prototype:** Branch is its own category holding only 'Branch address' ([address-book.js#L51-L55](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/data/address-book.js#L51-L55)). The prototype files the consignment 'contact' type under Destination, Consignee and Importer, not under Branch ([address-book.js#L33-L42](https://github.com/defra-design/GB-notification-service/blob/04a073baefcd0a9994f003bb811a30f68dfa8e40/app/data/address-book.js#L33-L42)).
+- **Built:** an address has one type, and its roles come from that type only. A Branch address can be a branch address and nothing else. The journey's consignment contact asks for a branch address. A trader whose own office is also the importer or consignee has to add that address twice: once as Branch, and once as Destination, Consignee or Importer. Both sides are fixed to the United Kingdom, so one address holding both raises no location conflict.
+- **To ask:** (a) keep Branch separate, as built, so such a trader holds two entries; or (b) let a Branch address also be a consignee, importer or place of destination, making 'Branch address' one more UK role? The answer also decides whether a send-side role and a receive-side role can ever share an address. As built they cannot, since one would be abroad and the other in Great Britain.
+
 ## Settled
 
 | Question | Answer | Where it landed |

@@ -106,33 +106,58 @@ Two traps found that night, both worth checking before asking for a reset:
   commits one of them, the run stops at `land-leaked` with nothing pushed. So
   the workspace repo must be **clean** before a launch.
 
-### A second tests-repo E2E flake closed by re-run, 5 November
+### The cross-repo image-publish race — not a flake, 5 November
 
-HANDOVER.md lists inc-018's flake under "Still outstanding": its E2E failed,
-then passed on a re-run with no code change, and rule 6 says flaky never closes
-a failure. **inc-027 did the same thing**, so this is a pattern rather than one
-bad night:
+**This section replaces an earlier, wrong entry** that called inc-027's E2E red
+a flake on the strength of its passing a re-run with no code change. It is not a
+flake. It is a deterministic ordering race between two repos' CI, and it hit
+twice in one day.
 
-- `b458ff2` was committed at 11:21:47, and HEAD never moved after it.
-- The E2E check started 11:24:54 and **failed**:
-  `consignment-details.spec.ts:83 › keeps the number typed for the surviving
-  species after removing another commodity`, `expect(locator).toHaveValue`,
-  failing on retry #1 too.
-- A second E2E run started 11:53:53 on **the same `b458ff2c` head** and
-  **passed**. `run_attempt` on the first run stayed 1, so this was a fresh run
-  of identical code.
-- inc-027 then went `done`.
+A tests-repo E2E job runs the Playwright suite against the **frontend's
+branch-tagged image**, which the frontend's own pull request publishes. The
+tests job pulls that image seconds after its own job starts. So when a row
+commits to both repos at nearly the same moment, the tests E2E pulls the
+**previous** frontend image and asserts behaviour the running frontend does not
+yet have.
 
-Three different E2E tests failed across three rows this run — the
-identification-card visual baseline and the bolded-match assertion on inc-025
-(both genuinely fixed in code), and this one (not fixed at all). HANDOVER.md's
-own guidance: **a different test failing on each run points at a race**, and the
-place to look is `test-results/*/error-context.md`. Two of the three are in
-`consignment-details`/commodity-line territory, which is where this theme's rows
-have been editing table rows and locators all night.
+**inc-028**, proved end to end:
 
-Worth chasing with inc-018's flake once the theme is built, as one piece of work
-rather than two.
+| Time | Event |
+|---|---|
+| 15:18:50 | tests fix `0026f7d` committed |
+| 15:21:53 | frontend fix `4bb3a982` committed |
+| 15:21:57 | tests E2E run 42054185244 starts |
+| **15:22:54** | **`trade-imports-animals-frontend Pulling`** — the old image |
+| **15:27:30** | **frontend `publish / Publish branch-tagged index` completes** |
+| 15:27:50 | `consignment-details.spec.ts:45` fails: `getByRole('link', { name: 'Number of animals must be 2,147,483,647 or fewer' })` — element not found, because that message is in the image published 5 minutes later |
+
+**inc-027**, the same shape:
+
+| Time | Event |
+|---|---|
+| 11:21:47 | tests `b458ff2` committed |
+| 11:24:54 | tests E2E starts, pulls the old frontend image, **fails** |
+| **11:30:01** | frontend `1f954ca3` branch image publishes |
+| 11:53:53 | re-run on the identical head **passes** — because the image now exists |
+
+So the assertion was right both times and the environment was stale. Rule 6 is
+not breached by re-running here: nothing about the code changed, but the thing
+under test did.
+
+**What to do about a tests-repo E2E red:** before touching any assertion, line
+up three timestamps — the tests job's `… Pulling` line for the frontend, the
+frontend PR's `publish / Publish branch-tagged index` completion, and the
+failing spec's own time. If the pull precedes the publish, **re-run the job**;
+do not let a fixer rewrite correct code to match a stale image.
+
+**Worth fixing at source**, because it will keep costing attempts: a tests-repo
+E2E that depends on a sibling frontend commit should wait for that commit's
+image to publish, or the loop should order the pushes so the frontend's image is
+ready before the tests job starts.
+
+**inc-018's flake, listed in HANDOVER.md as still outstanding, deserves
+re-examination against this** — it may be the same race rather than a flake, but
+that has not been checked and should not be assumed.
 
 ### `plan-refused`, any stack stop, anything unrecognised
 

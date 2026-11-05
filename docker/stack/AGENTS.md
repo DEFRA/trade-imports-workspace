@@ -448,17 +448,21 @@ returns has `authorization_endpoint`/`end_session_endpoint` on `localhost`
 rewritten to `host.docker.internal` (server-friendly). See
 `repos/trade-imports-defra-id-stub/src/open-id/host.js`.
 
-The frontend's `signOutHostnameRewrite` is `enabled: true` so the
-sign-out URL (built from `DEFRA_ID_OIDC_CONFIGURATION_URL`, which uses
-`host.docker.internal` for the server-side fetch) gets flipped back to
-`localhost` before being handed to the browser.
+The animals, plants and admin frontends' `signOutHostnameRewrite` is
+`enabled: true` so the sign-out URL (built from
+`DEFRA_ID_OIDC_CONFIGURATION_URL`, which uses `host.docker.internal` for the
+server-side fetch) gets flipped back to `localhost` before being handed to the
+browser. The INS frontend's key is `browserFacingHostnameRewrite`, and it
+flips the same URL for the sign-out link and the form-action origin its
+Content Security Policy allows.
 
 | Service | Env | Value |
 |---|---|---|
 | frontend / admin | `DEFRA_ID_OIDC_CONFIGURATION_URL` | `http://host.docker.internal:3007/…` (server-side) |
 | frontend / admin | `DEFRA_ID_REDIRECT_URL` | `http://localhost:{3000,3001}/auth/sign-in-oidc` (browser) |
 | frontend / admin | `DEFRA_ID_SIGN_OUT_REDIRECT_URL` | `…/auth/sign-out-oidc` (browser) |
-| frontend / admin | `DEFRA_ID_SIGN_OUT_HOSTNAME_REWRITE_ENABLED` | `true` (flips h.d.i. → localhost for browser-visible sign-out URL) |
+| animals / plants frontend / admin | `DEFRA_ID_SIGN_OUT_HOSTNAME_REWRITE_ENABLED` | `true` (flips h.d.i. → localhost for browser-visible sign-out URL) |
+| ins frontend | `DEFRA_ID_BROWSER_FACING_HOSTNAME_REWRITE_ENABLED` | `true` (flips h.d.i. → localhost for the browser-visible sign-out URL and the CSP form-action origin) |
 | defra-id-stub | `WELL_KNOWN_HOST_OVERRIDE` | `http://localhost:3007` (browser endpoints; token endpoint auto-rewrites to h.d.i.) |
 | animals / plants frontend | `TRADE_IMPORTS_INS_FRONTEND_URL` | `http://localhost:3002` (browser follows the Address book link) |
 | ins frontend | `TRADE_IMPORTS_{ANIMALS,PLANTS}_FRONTEND_URL` | `http://localhost:{3000,3003}` (browser follows the dashboard's journey links) |

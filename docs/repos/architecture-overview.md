@@ -43,6 +43,8 @@ flowchart LR
   PF --> RD
   IF --> RD
   AF -.->|address handshake| IF
+  IF -.->|browser redirect: start a notification| AF
+  IF -.->|browser redirect: start a notification| PF
   IF --> AD[address-book]
   PF --> AD
   AF --> AD

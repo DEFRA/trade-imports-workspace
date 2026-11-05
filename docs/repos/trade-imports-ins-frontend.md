@@ -14,7 +14,7 @@ Import Notification Service (INS) front door: a Node.js/Hapi server-rendered web
 
 - Sign-in and sign-out via Defra ID (OIDC) using `@hapi/bell` and `@hapi/cookie`. The organisation id is read from `request.auth.credentials.organisationId`; `requireOrganisationId` returns 403 when it is missing.
 - Server-side session (Catbox: Redis in production, memory otherwise), CSRF (crumb) and CSP.
-- Pages: dashboard `/` (notification list, sort, reference-number search, pagination) and address book at `/address-book`, `/address-book/add`, `/address-book/{id}`, `/edit` and `/delete`. Routes are only registered when `auth.enabled` is true.
+- Pages: dashboard `/` (notification list, sort, reference-number search, pagination, and a Create new button that opens the type question at `/notification-type`), the "What are you importing?" question at `/notification-type`, and address book at `/address-book`, `/address-book/add`, `/address-book/{id}`, `/edit` and `/delete`. Routes are only registered when `auth.enabled` is true.
 - Address form validation (`address-schema.js`) and mapping API problem responses to GOV.UK error summaries.
 - A journey handshake: an address-book visit can carry the query or form keys `journey-type`, `notification-id`, `fulfilment-id` and `handshake-token`. The only known journey type is `gbn-ag`. The return URL points at the animals frontend's live-animals set, `/live-animals/notifications/{notification-id}/address-return?fulfilment-id={fulfilment-id}`, and adds `handshake-token` when one was sent (`journey-registry.js`). On the add page, Save adds `addressId` and `landing=select` or `landing=return`; Cancel adds `landing=cancel`, except for the consignment contact, whose cancel adds no landing; the back link adds no landing (`add.controller.js`).
 
@@ -33,11 +33,13 @@ Import Notification Service (INS) front door: a Node.js/Hapi server-rendered web
 | Outbound | trade-imports-address-book (`TRADE_IMPORTS_ADDRESS_BOOK_URL`, default :8089) | REST `/organisation/{orgId}/addresses`, header `Trade-Imports-Organisation-Id` | List, create, view, update, delete addresses |
 | Outbound | trade-imports-ins-backend (`TRADE_IMPORTS_INS_BACKEND_URL`, default :8090) | REST `GET /notifications` (`page`, `sort`, `referenceNumber`) | Dashboard notification list |
 | Outbound | trade-imports-reference-data (`TRADE_IMPORTS_REFERENCE_DATA_URL`, default :8086) | REST `GET /countries` | Country names and address country options |
-| Outbound | Defra ID (trade-imports-defra-id-stub locally) | OIDC (`DEFRA_ID_OIDC_CONFIGURATION_URL`) | Sign-in, token refresh, sign-out |
-| Outbound (browser redirect) | trade-imports-animals-frontend (`TRADE_IMPORTS_ANIMALS_FRONTEND_URL`) | Links and CSP form-action to its URLs | Start, resume or view a notification; return from the address handshake |
+| Outbound | Defra ID (trade-imports-defra-id-stub locally) | OIDC (`DEFRA_ID_OIDC_CONFIGURATION_URL`) | Sign-in, token refresh, sign-out; the CSP form-action allows the browser-facing Defra ID origin |
+| Outbound (browser redirect) | trade-imports-animals-frontend (`TRADE_IMPORTS_ANIMALS_FRONTEND_URL`) | Links and CSP form-action to its URLs | Start a live animals or germinal products notification from the type question; return to a live animals notification's origin page from the type question; resume or view a notification; return from the address handshake |
+| Outbound (browser redirect) | trade-imports-plants-frontend (`TRADE_IMPORTS_PLANTS_FRONTEND_URL`) | Redirect to its start entry | Start a high-risk plants notification from the type question |
 | Outbound | Redis | Catbox Redis | Session cache |
 | Inbound | End users' browsers | HTTP | Dashboard and address-book pages |
 | Inbound | animals-frontend (via browser redirect) | HTTP query parameters (handshake) | Send the user to choose or add an address |
+| Inbound | animals-frontend (via browser redirect) | HTTP query parameters (`notification-id`, `current-notification-type`) on `/notification-type` | The origin page's Back link sends the user to the type question, which picks the notification back up with its type pre-selected |
 
 API calls forward the tracing header (`x-cdp-request-id` by default). `INS_MODE=stub` swaps the address-book, ins-backend and countries clients for in-memory canned data with no network calls (default `real`). `AUTH_STUB_MODE` bypasses the OIDC round trip outside production.
 

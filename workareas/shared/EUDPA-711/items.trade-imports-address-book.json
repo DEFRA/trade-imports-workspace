@@ -10,9 +10,9 @@
       "issue": "README.md:339 says RequestedListFilters holds the filters 'with the search term as typed and any value possibly null', but RequestedListFilters.java's compact constructor trims the search term, drops blank country codes and null or repeated roles, and its Javadoc says 'A filter the request did not supply is empty, never null'. The design note states a contract the record does not have, so a reader adds null checks that cannot fire or trusts an untrimmed term.",
       "fix": "Must: the design note describes RequestedListFilters as the code builds it (search term trimmed, empty rather than null for an absent filter, country codes trimmed without blanks, roles without repeats). One way: replace 'with the search term as typed and any value possibly null' with 'trimmed, with an absent filter empty rather than null', and keep the ListCriteria half of the sentence on what differs: search terms turned into SearchTerm values.",
       "file": "README.md",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "fb104b0"
     },
     {
       "id": 2,
@@ -133,9 +133,9 @@
       "issue": "The new class Javadoc narrates history: '{@code roles} ... an entry stored before roles existed holds none, so it can be null or empty' (Address.java:21-22). House rule 'Ids and history': code states how things are now, git holds how they were. The ticket also says no existing address needs to stay without a type, so the 'before roles existed' clause describes a past state, not a contract.",
       "fix": "Must: Address's Javadoc says nothing about how records looked before roles existed; if null or empty roles remain a readable state, it is stated as the current contract only. One way: replace the paragraph with '{@code roles} can be null or empty.', or drop it and let AddressResponse's @ArraySchema description ('null or empty when it has none') be the single statement of that contract.",
       "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "fb104b0"
     },
     {
       "id": 12,
@@ -146,9 +146,9 @@
       "fix": "Must: Address's Javadoc states only what this class itself guarantees, with nothing that describes the service, mapper, request validation or Spring auditing, and no claim about countryCode format that no code enforces. One way: reduce the Javadoc to 'An organisation-owned address-book entry.' (plus the roles null/empty contract if kept), relying on @LastModifiedDate and AddressRequest's Javadoc for the rest.",
       "best_practice": "java/modern-java.md",
       "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "fb104b0"
     },
     {
       "id": 13,
@@ -170,9 +170,9 @@
       "issue": "The rule 'an address holds any of these roles' is written twice as the same Mongo clause: Criteria.where(\"roles\").in(criteria.roles()) for the role filter (line 39) and Criteria.where(\"roles\").in(roles) for the HoldingAnyRole search term (line 58). A change to how roles are matched (field name, all-of vs any-of) has to be made in both places.",
       "fix": "Must: one function in AddressListQueryImpl owns the 'holds any of these roles' clause, and both the role filter and the HoldingAnyRole case call it. One way: extract private static Criteria holdingAnyOf(List<AddressRole> roles) { return Criteria.where(\"roles\").in(roles); } and use it at lines 39 and 58.",
       "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressListQueryImpl.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "fb104b0"
     },
     {
       "id": 15,
@@ -183,9 +183,9 @@
       "fix": "Must: the request's length rules use jakarta.validation.constraints only, carry no minimum, and a blank mandatory field still reports only its @NotBlank message. One way: replace each @Length(max = N, ...) with @Size(max = N, ...) and swap the import back; AddressRequestValidationTest's only-the-declared-message matrix proves the blank case.",
       "best_practice": "java/spring-boot.md",
       "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "fb104b0"
     },
     {
       "id": 16,
@@ -195,9 +195,9 @@
       "issue": "The class Javadoc (lines 20-29) restates the annotations and constructor below it and describes other code. 'type and role must be absent ... Both are hidden from the OpenAPI schema' repeats @Null and @Schema(hidden = true). The roles paragraph repeats @NotEmpty, @AddressRoleNames and the compact constructor, and lists which roles must be in the United Kingdom ('consignee, importer or place of destination'): RoleGroup.RECEIVING's inTheUnitedKingdom flag owns that rule, and ReceivingRolesInTheUnitedKingdom's own Javadoc and message already state it, so a change to RoleGroup leaves this list stale. 'stored exactly as given' (line 29) describes the mapper and entity, not this record, and 'otherwise' only makes sense after the roles paragraph.",
       "fix": "Must: the record's Javadoc states only wire contract that its annotations and constructor do not already say, and names no rule that RoleGroup or the constraint annotations own. One way: drop the type/role, roles and countryCode paragraphs, and keep the sentence that echoed server-assigned fields are accepted and dropped.",
       "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "fb104b0"
     },
     {
       "id": 17,
@@ -219,9 +219,9 @@
       "issue": "One concept, two names across twin repos: AddressRole.java:8-13 and :21 group each role into RoleGroup SENDING / RECEIVING / BRANCH via group(), while trade-imports-ins-frontend names the same grouping ADDRESS_TYPES ORIGIN_OR_CONSIGNOR / DESTINATION_CONSIGNEE_OR_IMPORTER / BRANCH with ROLES_BY_ADDRESS_TYPE and addressTypeOfRole (services/address-book/address-types.js:1-37), and the ticket calls it the address's type. The memberships are identical (PLACE_OF_ORIGIN+CONSIGNOR / CONSIGNEE+IMPORTER+PLACE_OF_DESTINATION / BRANCH_ADDRESS), so a reader cannot tell from either repo that SENDING and ORIGIN_OR_CONSIGNOR are the same rule.",
       "fix": "Must: the role grouping carries one name, in the backend enum, its constants, its accessor and the validators that use it, and in the frontend's address-types module. One way: rename RoleGroup to AddressType with constants ORIGIN_OR_CONSIGNOR, DESTINATION_CONSIGNEE_OR_IMPORTER and BRANCH, rename group() to addressType(), and update RolesHeldTogetherValidator.shareOneGroup and ReceivingRolesInTheUnitedKingdomValidator to match.",
       "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRole.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Won't Fix",
+      "status": "—",
+      "notes": "user decision: RoleGroup keeps SENDING/RECEIVING/BRANCH, the API's private validation grouping; the INS frontend's address types are the screens' grouping (5 November ruling: category kept out of the API)"
     },
     {
       "id": 19,
@@ -232,9 +232,9 @@
       "fix": "Must: the Javadoc and the @Schema description state a contract true of every constant. One way: 'A use a notification can choose this address for', in both places.",
       "best_practice": "java/openapi-springdoc.md",
       "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRole.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "fb104b0"
     },
     {
       "id": 20,
@@ -245,9 +245,9 @@
       "fix": "Must: every AddressRole constant carries a @Schema(description) in the published OpenAPI document. One way: annotate each constant, e.g. @Schema(description = \"The consignment's place of origin\") PLACE_OF_ORIGIN(RoleGroup.SENDING).",
       "best_practice": "java/openapi-springdoc.md",
       "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRole.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "fb104b0"
     },
     {
       "id": 21,
@@ -295,9 +295,9 @@
       "fix": "Must: ListCriteria's Javadoc states only what the record itself guarantees, and the searched-field list and case rule live in one place (AddressListQueryImpl). One way: TextMatching -> 'Matches an address whose searchable text matches the pattern'; InCountries -> '@param countryCodes the country codes; never empty'.",
       "best_practice": "java/modern-java.md",
       "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/ListCriteria.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "fb104b0"
     },
     {
       "id": 25,
@@ -358,9 +358,9 @@
       "issue": "inTheUnitedKingdomOrUnchosen (lines 11, 28) carries a suffix that names the nothing case: true for null or a blank country as well as GB. The house rule bars a name suffix for nothing or its fallback (not …OrNull, …OrNotFound); 'OrUnchosen' is that suffix for a null or blank countryCode, which @NotBlank on AddressRequest.countryCode already reports.",
       "fix": "Must: the helper's name says only what it decides (the country is the United Kingdom), and the null or blank country is handled as its own visible step in isValid, not folded into the name. One way: in isValid return true first when countryCode is null or blank (left to @NotBlank), then call a helper named isTheUnitedKingdom(countryCode) holding the 'GB' literal.",
       "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/ReceivingRolesInTheUnitedKingdomValidator.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "fb104b0"
     },
     {
       "id": 30,
@@ -370,9 +370,9 @@
       "issue": "No test sends a receiving role (CONSIGNEE, IMPORTER or PLACE_OF_DESTINATION) with a missing or blank countryCode. AddressRequestValidationTest 'blank countryCode' (line 79) builds on validRequest(), whose roles are PLACE_OF_ORIGIN, so it returns at the role check and never reaches the null/blank guard; AddressCrudIT and AddressUpdateIT only send FR and IE with receiving roles. Removing 'countryCode == null ||' at line 30 makes isValid throw a NullPointerException for a create with CONSIGNEE and no country (a 500 instead of the 'Select a country' 400), and removing '|| countryCode.isBlank()' adds a second countryCode error to a blank-country receiving request; no test turns red for either.",
       "fix": "Must: a test fails if the validator stops passing a missing or blank country for a receiving role, proving such a request gets exactly one countryCode error, 'Select a country'. One way: add 'receiving role with blank countryCode' and 'receiving role with null countryCode' cases (roles PLACE_OF_DESTINATION) to AddressRequestValidationTest asserting containsExactly(\"Select a country\") on countryCode.",
       "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/ReceivingRolesInTheUnitedKingdomValidator.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "fb104b0"
     },
     {
       "id": 31,
@@ -407,9 +407,9 @@
       "fix": "Must: no positional boolean on RoleGroup, and the 'receiving roles must be in the UK' rule has one owner whose name says it is a requirement, not a location. One way: drop the boolean field and constructor and have ReceivingRolesInTheUnitedKingdomValidator check group == RoleGroup.RECEIVING; or rename to requiresTheUnitedKingdom() if the flag must stay.",
       "best_practice": "java/modern-java.md",
       "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/RoleGroup.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "fb104b0"
     },
     {
       "id": 34,
@@ -431,9 +431,9 @@
       "issue": "camelCaseNamingStrategy() (line 21, made public in this PR so AddressMapperTest can call it) returns a customizer that also turns off failOnUnknownProperties and WRITE_DATES_AS_TIMESTAMPS (lines 25-26). The name predicts only the naming strategy and hides the other two behaviours, which the request-body handling relies on.",
       "fix": "Must: the bean method's name covers everything the customizer sets. One way: rename to apiJsonConventions() (or split into one customizer per concern), and update AddressMapperTest.java:30.",
       "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/configuration/JacksonConfig.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "fb104b0"
     },
     {
       "id": 36,
@@ -444,9 +444,9 @@
       "fix": "Must: the Javadoc states only this exception's own contract (a request parameter that fails a service-level check), naming no caller, handler or filter; the mapping and filter rationale live in GlobalExceptionHandler's own docs or the repo's docs/. One way: reduce it to one sentence such as 'A request parameter that is well formed but fails a service-level check.'",
       "best_practice": "java/modern-java.md",
       "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/exceptions/BadRequestException.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "fb104b0"
     },
     {
       "id": 37,
@@ -456,9 +456,9 @@
       "issue": "The comment at lines 114-115 (line 115 edited in this PR) describes other files and a test rather than the lines below it: 'application-local.yml re-enables both for local dev and application-integration-test.yml re-enables api-docs for AddressComplianceIT'. The test rename forced this edit, which is the drift the house rule guards against.",
       "fix": "Must: the comment describes only the springdoc keys directly below it, naming no other profile file or test, or is removed. One way: delete lines 114-115; the enabled: false values say it.",
       "file": "src/main/resources/application.yml",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "fb104b0"
     },
     {
       "id": 38,
@@ -469,9 +469,9 @@
       "fix": "Must: each rule is tested once, in the test class of the type that owns it, and no AddressMapperTest title claims behaviour the mapper does not perform. One way: delete both tests from AddressMapperTest, since AddressRequestValidationTest and AddressResponseTest already cover the rules.",
       "best_practice": "java/testing/unit.md",
       "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressMapperTest.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "fb104b0"
     },
     {
       "id": 39,
@@ -482,9 +482,9 @@
       "fix": "Must: every test in the file fails for a reason no other test in the file already catches. One way: delete response_serialisesInstantFieldsAsIso8601NotEpochMillis, because the camelCase test's exact ISO-8601 string assertions already prove it.",
       "best_practice": "java/testing/unit.md",
       "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressMapperTest.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "fb104b0"
     },
     {
       "id": 40,
@@ -495,9 +495,9 @@
       "fix": "Must: each list test that claims what is passed to the repository asserts the ListCriteria it received in its own assertions. One way: capture the criteria with an ArgumentCaptor<ListCriteria> (as list_asksForNewestFirstAndTranslatesToA0BasedPage does for Pageable) and assertThat(captor.getValue()).isEqualTo(expected), dropping the totalItems isZero lines.",
       "best_practice": "java/testing/unit.md",
       "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressServiceTest.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "a378a15"
     },
     {
       "id": 41,
@@ -508,9 +508,9 @@
       "fix": "Must: the stored address's id has one home, AddressTestSupport.STORED_ADDRESS_ID, and every stub argument and assertion in AddressServiceTest that means that address uses it. One way: static-import STORED_ADDRESS_ID and replace the literals.",
       "best_practice": "java/testing/unit.md",
       "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressServiceTest.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "a378a15"
     },
     {
       "id": 42,
@@ -521,9 +521,9 @@
       "fix": "Must: the title states what the assertions prove, the given organisation id and ACTIVE status on the created address, and no assertion checks a value the stub wrote. One way: rename it to create_setsTheGivenOrganisationIdAndActiveStatus and drop the getId assertion, or replace it with an assertion on a field the service sets.",
       "best_practice": "java/testing/unit.md",
       "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressServiceTest.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "a378a15"
     },
     {
       "id": 43,
@@ -534,9 +534,9 @@
       "fix": "Must: the order and assembly of search terms has one home, production code, and AddressServiceTest's expected criteria do not depend on a copy of it. One way: write the expected value in AddressServiceTest as an explicit new ListCriteria(roles, List.of(new ListCriteria.TextMatching(...), ...)), and keep ListCriteriaBuilder for building repository inputs in AddressRepositoryIT. Another: make ListCriteria compare searchTerms as a set.",
       "best_practice": "java/testing/unit.md",
       "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressTestSupport.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "a378a15"
     },
     {
       "id": 44,
@@ -547,9 +547,9 @@
       "fix": "Must: the title claims only what the assertions prove, and no absence check sits beside the exact positive assertion on line 72. One way: delete lines 70-71 and rename to handleValidationException_shouldReturn400WithAnErrorsMapKeyedByFieldAndTraceId; camelCase on the wire is already proven by AddressComplianceIT.validationProblemCarriesCamelCaseErrorsMapAndTraceId.",
       "best_practice": "java/testing/unit.md",
       "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/exceptions/GlobalExceptionHandlerTest.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "a378a15"
     },
     {
       "id": 45,
@@ -560,9 +560,9 @@
       "fix": "Must: no Given/When/Then comments in the file; set-up, action and assertions are separated by blank lines. One way: delete each comment line, keeping the blank line around it.",
       "best_practice": "java/testing/unit.md",
       "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/exceptions/GlobalExceptionHandlerTest.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "a378a15"
     },
     {
       "id": 46,
@@ -573,9 +573,9 @@
       "fix": "Must: one helper in the file builds the validationTarget MethodParameter, and every test calls it. One way: replace lines 178-179 with MethodParameter parameter = validationTargetParameter(); and drop the throws NoSuchMethodException clause.",
       "best_practice": "java/testing/unit.md",
       "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/exceptions/GlobalExceptionHandlerTest.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "a378a15"
     },
     {
       "id": 47,
@@ -586,9 +586,9 @@
       "fix": "Must: the title names only what is asserted, or the test asserts the read as well. One way: rename to createEmitsCamelCasePropertiesAndADerivedDeletedBoolean, or add a GET of the created id with the same jsonPath assertions in a second test.",
       "best_practice": "java/testing/unit.md",
       "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressComplianceIT.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "fb104b0"
     },
     {
       "id": 48,
@@ -612,9 +612,9 @@
       "fix": "Must: one helper turns a parameter or property schema into its allowed values, and both callers use it. One way: extract private static List<Object> enumOf(Map<String, Object> schema) holding the array unwrap and the enum read, and call it from listParameterAllowedValues and allowedValues (or move it to ApiDocs beside requiredProperties).",
       "best_practice": "java/testing/integration.md",
       "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressComplianceIT.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "fb104b0"
     },
     {
       "id": 50,
@@ -637,9 +637,9 @@
       "fix": "Must: the file carries no class Javadoc and no Given/When/Then comments, and blank lines separate set-up, action and assertions. One way: delete lines 12-15 and the five Given/When/Then comment lines.",
       "best_practice": "java/testing/integration.md",
       "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressGetIT.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "a378a15"
     },
     {
       "id": 52,
@@ -649,9 +649,9 @@
       "issue": "get_shouldReturn200WithAllMappedFields_whenAddressIsLive (line 19) claims every mapped field. It never asserts roles, which this PR adds to AddressResponse (AddressResponse.java:53), or addressLine2 and county. The seeded address (IntegrationBase.addressBuilder) has no roles, addressLine2 or county, so dropping roles from AddressMapper.toResponse would leave this test green.",
       "fix": "Must: the title claims only the fields the test asserts, or the test seeds and asserts every AddressResponse field, roles included. One way: seed the address with roles, addressLine2 and county, then assert $.roles, $.addressLine2 and $.county as well.",
       "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressGetIT.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "a378a15"
     },
     {
       "id": 53,
@@ -674,9 +674,9 @@
       "fix": "Must: the file has no Given/When/Then comments, and each test proves one behaviour: the declared index set and fields in one test, the explain plan choosing org_status_created in another. One way: split the method into index_shouldDeclareOnlyOrgStatusCreatedOnOrganisationStatusAndCreatedAt and listQuery_shouldUseOrgStatusCreatedIndex, and delete the four comments.",
       "best_practice": "java/testing/unit.md",
       "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressIndexIT.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "a378a15"
     },
     {
       "id": 55,
@@ -687,9 +687,9 @@
       "fix": "Must: one shared helper in IntegrationBase saves an address holding the given roles, and AddressListIT, AddressSearchIT, AddressRepositoryIT and AddressUpdateIT call it with no local copies left. One way: promote saveActiveAddressWithRoles to IntegrationBase as a builder step (e.g. addressHolding(org, status, roles...)) and replace the inline .roles(List.of(...)) chains.",
       "best_practice": "java/testing/integration.md",
       "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressListIT.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "a378a15"
     },
     {
       "id": 56,
@@ -700,9 +700,9 @@
       "fix": "Must: every test title in AddressRepositoryIT follows {subject}_{shouldDoWhat}_{whenContext}. One way: listLiveAddresses_shouldKeepAddressesHoldingAnyOfTheRoles_whenSeveralRolesAreGiven, findByIdAndOrganisationId_shouldReturnEmpty_whenOrganisationDiffers.",
       "best_practice": "java/testing/integration.md",
       "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressRepositoryIT.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "a378a15"
     },
     {
       "id": 57,
@@ -713,9 +713,9 @@
       "fix": "Must: the test fails if a POST without the org header stores any document. One way: assert the addresses collection holds no documents (e.g. mongoTemplate.count(new Query(), Address.class) == 0, which the per-test cleanDatabase makes exact), or drop 'AndPersistsNothing' from the title.",
       "best_practice": "java/testing/unit.md",
       "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressScopingIT.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "a378a15"
     },
     {
       "id": 58,
@@ -726,9 +726,9 @@
       "fix": "Must: the title states what the assertion proves. One way: compare crossOrg.getResponse().getContentAsString() with unknown's for a real byte-level check, or rename to a404ForAnotherOrgsLiveAddressHasTheSameProblemBodyAsA404ForAnUnknownId.",
       "best_practice": "java/testing/unit.md",
       "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressScopingIT.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "a378a15"
     },
     {
       "id": 59,
@@ -739,9 +739,9 @@
       "fix": "Must: the added tests follow {subject}_{shouldDoWhat}_{whenContext}, matching AddressListIT. One way: list_shouldReturnTheAddressesHoldingTheSearchRole_whenOnlyASearchRoleIsGiven, list_shouldReturn400BadRequestProblemWithNoErrorsMap_whenASearchRoleIsUnknown.",
       "best_practice": "java/testing/integration.md",
       "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "a378a15"
     },
     {
       "id": 60,
@@ -752,9 +752,9 @@
       "fix": "Must: each title states what its assertions prove. One way: rename to ...AndKeepStoredRoles..., or have the helper assert the whole stored address (roles, addressLine2, county, countryCode) is unchanged.",
       "best_practice": "java/testing/unit.md",
       "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressUpdateIT.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "a378a15"
     },
     {
       "id": 61,
@@ -765,9 +765,9 @@
       "fix": "Must: the title names what the assertion proves. One way: rename to save_shouldThrowOptimisticLockingFailure_whenTheAddressWasUpdatedSinceItWasRead, or move it to AddressRepositoryIT beside the other repository-level tests.",
       "best_practice": "java/testing/unit.md",
       "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressUpdateIT.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "a378a15"
     },
     {
       "id": 62,
@@ -791,9 +791,9 @@
       "fix": "Must: one naming scheme for every helper that takes a path organisation and a caller organisation, applied to post, put, get, list and delete alike. One way: rename the overloads to postAddressAs and putAddressAs (keeping the default-caller postAddress/putAddress), and update their callers.",
       "best_practice": "java/modern-java.md",
       "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/IntegrationBase.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "a378a15"
     },
     {
       "id": 64,
@@ -804,9 +804,9 @@
       "fix": "Must: the mapper's name says it is a mapper. One way: rename it OBJECT_MAPPER (or JSON_MAPPER).",
       "best_practice": "java/modern-java.md",
       "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/IntegrationBase.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "a378a15"
     },
     {
       "id": 65,
@@ -817,9 +817,9 @@
       "fix": "Must: the generator carries no assertion on a value it wrote itself. One way: drop the read-back and let the method be a plain generator (suppress Sonar java:S2699 on it, with the README section explaining the run), or move generation to a small main class run by exec-maven-plugin so it is not a test at all.",
       "best_practice": "java/testing/unit.md",
       "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/openapi/OpenApiArtifactGeneratorIT.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "a378a15"
     },
     {
       "id": 66,
@@ -842,9 +842,9 @@
       "issue": "LOCKED_CONTRACT (:17) is a literal path used by one function, lockedContract() (:46-48), yet sits at class scope; and loadYaml(Path) (:42) is public although its only caller is lockedContract() inside this class (no test calls it). The house rule puts a single-use literal inside its function and builds only what the change makes reachable.",
       "fix": "Must: the locked-contract path lives in lockedContract(), and loadYaml is private (or inlined) while nothing outside ApiDocs calls it. One way: inline Path.of(\"docs/openapi/api-contract.locked.yaml\") into lockedContract() and make loadYaml private.",
       "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/testsupport/ApiDocs.java",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "fb104b0"
     },
     {
       "id": 68,
@@ -890,9 +890,9 @@
       "category": "structure",
       "issue": "One rule, 9 findings: #3, #7, #13, #21, #25, #27, #66, #68, #69 — the Operator to Address rename stops part-way: the @Timed metric names (AddressController :110,233,284,350,397), the service timer controller.listOperators.query.time (AddressService:80) and the committed spec file docs/openapi/operators.yml (ApiDocs:16, README:257,259, workspace docs/repos page) still say Operator.",
       "fix": "Must: one owner holds the concept's name; every metric, file name and reference says Address, or one recorded reason keeps a named exception. One way: rename the timers to controller.listAddresses.time etc. (the service timer to a service-scoped address.list.query.time) after checking no CDP dashboard or alert reads them, and git mv operators.yml to addresses.yml, updating ApiDocs, README and the workspace page in the same change",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "fb104b0: docs/openapi/operators.yml renamed addresses.yml with every reference; the @Timed metric names and the service timer keep their names by user decision, as dashboards read them"
     },
     {
       "id": 72,
@@ -902,9 +902,9 @@
       "category": "structure",
       "issue": "One rule, 4 findings: #22, #23, #28, #32 — search term names two concepts: RequestedListFilters.searchTerm is the user's free text q, while ListCriteria.SearchTerm and AddressService.searchTermsOf hold any match clause (text, countries or roles).",
       "fix": "Must: one owner names each concept once from the request record through the service to the query; every other place uses that name. One way: rename the sealed type to ListCriteria.Match (field matches) and keep searchTerm only for the q text, updating AddressService, AddressListQueryImpl and the tests",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "fb104b0"
     },
     {
       "id": 73,
@@ -914,9 +914,9 @@
       "category": "structure",
       "issue": "One rule, 3 findings: #10, #17, #26 — roles has two wire encodings for no roles (null or empty list): the schema says null or empty, the compact constructor lets null through, and ins-frontend repeats roles ?? [] in view-model/list.js:46 and services/address-book/stub.js:73.",
       "fix": "Must: AddressResponse owns the one encoding: roles is never null on the wire, the schema marks it required, and consumers drop their null fallbacks. One way: roles = roles == null ? List.of() : List.copyOf(roles) in the compact constructor, mark REQUIRED, update the description, Javadoc and tests, regenerate docs/openapi, then drop the frontend ?? [] guards",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "fb104b0"
     },
     {
       "id": 74,
@@ -926,9 +926,9 @@
       "category": "duplication",
       "issue": "One rule, 2 findings: #31, #34 — the report-a-class-level-violation-on-one-property block (disableDefaultConstraintViolation, buildConstraintViolationWithTemplate, addPropertyNode, addConstraintViolation) is written in both RolesHeldTogetherValidator:15-19 and ReceivingRolesInTheUnitedKingdomValidator:18-22.",
       "fix": "Must: one helper reports a violation on a named property and both validators call it. One way: a package-private static reportOn(context, property) in the address package",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "fb104b0"
     },
     {
       "id": 75,
@@ -938,9 +938,9 @@
       "category": "duplication",
       "issue": "One rule, 2 findings: #6, #9 — the six-value role enum is written out inline four times in each contract (role and searchRole parameters, AddressRequest.roles, AddressResponse.roles), in both operators.yml and api-contract.locked.yaml.",
       "fix": "Must: AddressRole owns the enum once in the contract as a component every place references. One way: @Schema(enumAsRef = true) on AddressRole, regenerate operators.yml, make the locked contract $ref components/schemas/AddressRole, and teach AddressComplianceIT's enum helpers to resolve $ref",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "fb104b0"
     },
     {
       "id": 76,
@@ -950,9 +950,9 @@
       "category": "structure",
       "issue": "One rule, 2 findings: #5, #8 — the contracts do not state the two refusal rules this PR adds (roles held together in one group; receiving roles need countryCode GB), so a client built from the contract sends bodies that get a 400.",
       "fix": "Must: the rules are stated once, on the request schema the contracts are built from, and both contracts carry them. One way: a @Schema description on AddressRequest.roles naming the three groups and on countryCode naming the GB rule, regenerate operators.yml and copy the wording into the locked contract",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "fb104b0"
     },
     {
       "id": 77,
@@ -962,9 +962,9 @@
       "category": "duplication",
       "issue": "One rule, 2 findings: #4, #70 — the locked contract's list 400 description says an unknown address type, use or search use where the controller and operators.yml say an unknown role or search role.",
       "fix": "Must: the list 400 wording has one source the locked contract matches. One way: copy the controller's @ApiResponse description into api-contract.locked.yaml:275",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "fb104b0"
     },
     {
       "id": 78,
@@ -974,9 +974,9 @@
       "category": "duplication",
       "issue": "One rule, 2 findings: #53, #62 — the sample address values are written in IntegrationBase:65-71, in AddressBody's defaults (:262-270), in AddressTestSupport.validRequest() and as literals in AddressGetIT:27-33.",
       "fix": "Must: one test-support owner holds the sample address; every IT reads its constants. One way: keep them in AddressTestSupport and have IntegrationBase, AddressBody and AddressGetIT read from it",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "a378a15"
     },
     {
       "id": 79,
@@ -986,9 +986,9 @@
       "category": "structure",
       "issue": "One rule, 3 findings: #2, #48, #50 — the rule that an addressType in a body is ignored is narrated as history in three places: README:161 (a body that still sends addressType), AddressComplianceIT:188 (doesNotContain addressType) and the AddressCrudIT:96 title (TheBodyStillSends).",
       "fix": "Must: the rule is stated once, in present tense, by the test that owns it; the other places drop the history. One way: retitle AddressCrudIT:96 post_shouldIgnoreAnAddressTypeInTheBody, drop the doesNotContain line and reword README:161 to the current contract. Settle this after the spec item on whether an address type is stored (workspace spec.md:889)",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "fb104b0"
     }
   ]
 }

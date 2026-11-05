@@ -11,9 +11,9 @@
       "fix": "Must: the Lighthouse scripts read the address type and role constants from the module that owns them (address-types.js) and load none of the address-book backend client or app config. One way: import { ADDRESS_TYPES, ROLES } from '../../src/server/app/services/address-book/address-types.js'.",
       "best_practice": "node/code-style.md",
       "file": "scripts/lighthouse/seed-address.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "a335e2e"
     },
     {
       "id": 2,
@@ -24,9 +24,9 @@
       "fix": "Must: the seed's use comes from the address-types owner and is one that the chosen type offers, so a change there breaks the seed's unit tests. One way: roles: ROLES.PLACE_OF_ORIGIN, plus a #SEED_ADDRESS test that asserts ROLES_BY_ADDRESS_TYPE[ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR] contains it, or hold type and roles together in one exported seed constant.",
       "best_practice": "node/code-style.md",
       "file": "scripts/lighthouse/seed-address.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "a335e2e"
     },
     {
       "id": 3,
@@ -36,9 +36,9 @@
       "issue": "seed-address.js:58-61 and :79-83 report only posted.status. A 302 to the wrong place reads 'did not move on to the add form (302)' with no location. createSeedAddress now also refuses a 302 that lands on another tab, and still says the page 'rejected the seed address (302) — its fields have moved on'. That save may have succeeded, so the message sends the reader to the wrong cause.",
       "fix": "Must: each refusal names the status and the location it got, and the createSeedAddress message tells a refused save apart from a save that landed somewhere unexpected. One way: include posted.location in both messages and branch the createSeedAddress message on status === HTTP_FOUND.",
       "file": "scripts/lighthouse/seed-address.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "a335e2e"
     },
     {
       "id": 4,
@@ -49,9 +49,9 @@
       "fix": "Must: the #SEED_ADDRESS titles state only what their assertions prove, and a test fails if the seed sends a use the add form does not offer for the type it chose. One way: retitle to 'the address fields the add form asks' and add an assertion against ROLES_BY_ADDRESS_TYPE[ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR].",
       "best_practice": "node/testing/frontend.md",
       "file": "scripts/lighthouse/seed-address.test.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "a335e2e"
     },
     {
       "id": 5,
@@ -62,9 +62,9 @@
       "fix": "Must: the address-type page GET is set up in one helper that every #chooseAddressType and #seedAddress test uses. One way: split serveTypeStep into serveTypePage() and a POST reply that each test chooses, or give serveTypeStep a reply option for the POST.",
       "best_practice": "node/testing/frontend.md",
       "file": "scripts/lighthouse/seed-address.test.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "a335e2e"
     },
     {
       "id": 6,
@@ -75,9 +75,9 @@
       "fix": "Must: page-client's cookies() has its own test under a page-client describe, titled for what the client does, and the #chooseAddressType tests claim only what chooseAddressType does. One way: move the test to a new scripts/lighthouse/page-client.test.js that drives submit() against a nock reply with set-cookie.",
       "best_practice": "node/testing/frontend.md",
       "file": "scripts/lighthouse/seed-address.test.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "a335e2e"
     },
     {
       "id": 7,
@@ -87,9 +87,9 @@
       "issue": "seed-audit-targets.js:53-56 builds two page clients from one cookie set. This works only because yar keeps the session in the cookie (session-cache.js sets no maxCookieSize, so yar's 1024-byte default applies). On a fresh book, seedAddress saves an address, and the add controller then calls clearAddInProgress (add.controller.js:363), which drops the chosen type. If the session moved to server-side storage, which session-cache.js:8 documents as a switch, or grew past 1 KB, both clients would share that cleared session. /address-book/add would then 302 to the type page and the targets check would fail. Nothing in the file shows it depends on this.",
       "fix": "Must: the targets check of /address-book/add passes whether the session lives in the cookie or on the server. One way: seed first, then call chooseAddressType on the client that runs assertUrlsRenderTheirOwnPage, the same way auth-setup.cjs does before each Lighthouse URL.",
       "file": "scripts/lighthouse/seed-audit-targets.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "a335e2e"
     },
     {
       "id": 8,
@@ -111,9 +111,9 @@
       "issue": "The recipe still names features/address-book/add as 'the smallest complete page: one form, one service call, one template', and section 8 tells a new page to copy add.controller.test.js. After this PR the add page is a second step: in address-book mode its GET and POST redirect to /address-book/add/address-type (redirectIfNoAddressTypeChosen, add.controller.js:234) unless add-in-progress.js holds a chosen type, it keeps yar state across requests, has three add modes and a roles question (530 lines), and its tests need cookieAfterChoosingAddressType. The recipe neither describes that prior-step guard pattern nor points at a page that is still a single standalone form.",
       "fix": "Must: the recipe's exemplar is a page a reader can copy as one standalone page, and a page that depends on an earlier page's answer (the type page then add) is described where the recipe covers it, including the session-held state and the test cookie helper. One way: point 'Read these files first' at address-type/ (one form, one template, one controller test) and add a short step on a page that needs an earlier answer: store it through a yar-backed module like add-in-progress.js, guard the GET and POST with a logged redirect, and open it in tests with cookieAfterChoosingAddressType.",
       "file": "src/server/app/docs/add-a-page.md",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "017db75"
     },
     {
       "id": 10,
@@ -123,9 +123,9 @@
       "issue": "Lines 128-135 say 'The MoJ sub navigation stylesheet is copied to _sub-navigation.scss rather than imported from @ministryofjustice/frontend' because of a Sass 'already loaded' conflict. No _sub-navigation.scss exists under src/client/stylesheets/. The code does the opposite: application.scss:2 imports it from the package (@use \"@ministryofjustice/frontend/moj/components/sub-navigation/sub-navigation\"), and _govuk-frontend.scss:1 configures MoJ's vendored govuk-frontend with $moj-assets-path and $govuk-global-styles, then forwards pkg:govuk-frontend. A reader following the doc would look for, or recreate, a copied stylesheet that is not there.",
       "fix": "Must: the build paragraph describes how the stylesheets are wired at this commit: _govuk-frontend.scss configures GOV.UK Frontend through @ministryofjustice/frontend's vendored copy ($moj-assets-path, $govuk-global-styles) and forwards pkg:govuk-frontend, and application.scss uses the package's sub-navigation component directly. If the Sass conflict is the reason for routing through the MoJ vendor module, it says that, not a copy. One way: replace the copy sentence with 'application.scss uses the MoJ sub navigation component from the package. _govuk-frontend.scss configures GOV.UK Frontend through MoJ's vendored module, because configuring pkg:govuk-frontend directly and then loading the MoJ component fails with \"This module was already loaded...\"'.",
       "file": "src/server/app/docs/architecture.md",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "017db75"
     },
     {
       "id": 11,
@@ -135,9 +135,9 @@
       "issue": "'The sign-in script fills the Defra ID stub's form as a single-organisation user; in stub mode there is no form and it has nothing to do.' This PR makes tests/lighthouse/auth-setup.cjs also choose an address type (chooseAddressTypeInBrowser runs unconditionally), so in stub mode it still has work to do, as the doc's own lines 50-53 and 69-70 now say.",
       "fix": "Must: the sentence says only what is skipped in stub mode, and does not claim the script does nothing. One way: '...in stub mode there is no form to fill, and it only chooses the address type.'",
       "file": "src/server/app/docs/lighthouse.md",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "017db75"
     },
     {
       "id": 12,
@@ -159,9 +159,9 @@
       "issue": "The address-types.js parenthetical (lines 6-12) names ROLES, addressTypeOfRole, keepRolesOfferedBy, addressTypeRequiresUnitedKingdom and PLACE_ROLES, but describes ROLES_BY_ADDRESS_TYPE only as 'the roles each address type groups', then refers to 'ROLES_BY_ADDRESS_TYPE's order' as if it had been named. ADDRESS_TYPES is likewise only 'the address type values'. The single run-on sentence is hard to map to the exports.",
       "fix": "Must: each export of address-types.js the paragraph describes is named beside its description. One way: turn the parenthetical into a short list: ADDRESS_TYPES, ROLES, ROLES_BY_ADDRESS_TYPE (in the Type select's order), addressTypeOfRole, keepRolesOfferedBy, addressTypeRequiresUnitedKingdom, PLACE_ROLES.",
       "file": "src/server/app/docs/services.md",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "017db75"
     },
     {
       "id": 14,
@@ -195,9 +195,9 @@
       "issue": "Three small inaccuracies in the new helper lines: line 227 calls typeSelectStateOf 'the jsdom and Cheerio reader', but it takes a Cheerio $ only (list.test-support.js:82); line 228-229 'follows a address type tab's link'; line 211 names 'the Origin or Consignor tab' while line 140 and features.md call the tab 'Origin and Consignor' (the type is 'Origin or Consignor').",
       "fix": "Must: typeSelectStateOf is described as the Cheerio reader, the article reads 'an address type tab', and the tab is called 'Origin and Consignor' throughout. One way: edit the three phrases in place.",
       "file": "src/server/app/docs/testing.md",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "017db75"
     },
     {
       "id": 17,
@@ -208,9 +208,9 @@
       "fix": "Must: one submit shows every error the form has, the field errors and the roles error together, in page order, in the summary and inline; the test at add.controller.test.js:537 and SCN-INS-ADDR-044-C state that. One way: work out the roles errors before the early return and merge them with the field errors, so rerender gets both in one errors object.",
       "best_practice": "gds/components.md",
       "file": "src/server/app/features/address-book/add/add.controller.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "747d54b"
     },
     {
       "id": 18,
@@ -220,9 +220,9 @@
       "issue": "Names that mispredict their value: storedCountryCode (lines 395, 486) holds formValues.countryCode after addFormCountryOffer, the country the address will be saved with, and is read from no store; addIdsForLog (line 283) can return { addressType }, which is not an id; one roles list is called savedRoles in submitAddress (457) and keptRoles in logDiscardedRoles (321) and rerenderIfRolesInvalid (336); and storeAddressBookEntry (93) wraps storeEnteredAddress from add-in-progress.js, two names for the one in-progress address.",
       "fix": "Must: each name predicts the value it holds in every mode, and one concept carries one name across the file and add-in-progress.js. One way: savedCountryCode (or countryCodeToSave), handshake-or-type log fields named for what they are (for example addContextForLog), savedRoles throughout, and storeEnteredAddressInAddressBookMode or the mode guard moved to the call site so only storeEnteredAddress remains.",
       "file": "src/server/app/features/address-book/add/add.controller.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "747d54b"
     },
     {
       "id": 19,
@@ -257,9 +257,9 @@
       "issue": "The title 'GET opens the Country select on its blank first option, Select a country, with United Kingdom selected' contradicts itself: the assertions (lines 1607-1611) prove the blank option is listed first and United Kingdom is the selected option, so the select opens on United Kingdom, not on the blank option. The title was edited in this PR from '...with nothing selected'.",
       "fix": "Must: the title states what the assertions prove, that the Country select lists Select a country first and opens with United Kingdom selected. One way: 'GET lists Select a country first and opens the Country select on United Kingdom'.",
       "file": "src/server/app/features/address-book/add/add.controller.test.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "85559f1"
     },
     {
       "id": 22,
@@ -296,9 +296,9 @@
       "fix": "Must: the radios fieldset legend is the page's only h1, carrying the caption, with no separate h1 or visually hidden duplicate. One way: drop the span and h1, and set legend { html: caption span + title, isPageHeading: true, classes: 'govuk-fieldset__legend--l' }; update the controller test that asserts a visually hidden legend",
       "best_practice": "node/govuk-frontend.md",
       "file": "src/server/app/features/address-book/address-type/address-type.njk",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Won't Fix",
+      "status": "—",
+      "notes": "User decision: keep the h1 and legend as the prototype has them; snag S-20 raised by the parent."
     },
     {
       "id": 25,
@@ -309,9 +309,9 @@
       "fix": "Must: the name maxLength test sits under a describe whose title covers error messages or the copy bundle, not the journey roles question. One way: move it back into the top-level describe('#copy') beside 'Should ask for the missing name, postcode, country or phone in its required message' (:197).",
       "best_practice": "node/testing/frontend.md",
       "file": "src/server/app/features/address-book/copy/copy.test.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "85559f1"
     },
     {
       "id": 26,
@@ -334,9 +334,9 @@
       "issue": "The added absence check expect($('form input[type=\"checkbox\"], form input[type=\"radio\"]')).toHaveLength(0) (lines 98-100) cannot fail on its own: any type radio or roles checkbox brings a label, which the exact expect(textsOf($, 'form label')).toEqual(ADDRESS_FORM_LABELS) on line 97 already rejects; it is the absence pattern the house rules ask to replace with an exact positive assertion",
       "fix": "Must: the 'no address type and no roles' claim of SCN-INS-ADDR-003-C is proved by one exact positive assertion, and the test title says so. One way: assert the form's named controls equal exactly the nine field names (plus any hidden fields the form carries), drop the checkbox/radio count, and name the no-type/no-roles claim in the title",
       "file": "src/server/app/features/address-book/edit/edit.controller.test.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "788e228"
     },
     {
       "id": 28,
@@ -346,9 +346,9 @@
       "issue": "The expected update body { ...VALID_ADDRESS_FIELDS, name: UPDATED_NAME, roles: STORED_ADDRESS.roles } (lines 288-292) rebuilds VALID_ADDRESS_RECORD, which address-book-requests.js:85-88 already names as exactly { ...VALID_ADDRESS_FIELDS, roles: STORED_ADDRESS.roles }",
       "fix": "Must: the test uses the shared helper's name for the stored-roles record rather than rebuilding it. One way: expect(sent).toEqual({ ...VALID_ADDRESS_RECORD, name: UPDATED_NAME })",
       "file": "src/server/app/features/address-book/edit/edit.controller.test.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "788e228"
     },
     {
       "id": 29,
@@ -371,9 +371,9 @@
       "issue": "The Origin or Consignor tests in 'add address roles question' repeat the bodies of the per-type loop in 'add address of a type that must be in the United Kingdom': the render test (123-147 vs 234-265: section break, roles group, expectInDocumentOrder, hint, labels, none ticked), the no-role error test (149-165 vs 283-301) and the saved-lands-first test (167-181 vs 267-281). Three address types, two copies of each assertion block.",
       "fix": "Must: each per-type rule (roles question layout, no-role error, landing tab with the new address first) is asserted by one test body run for all three address types, with the per-type differences (offered roles, tab label, country options) held in the table that drives it. One way: add ORIGIN_OR_CONSIGNOR to the loop's table with offeredRoles ['PLACE_OF_ORIGIN','CONSIGNOR'] and its tab, move the country assertion into a per-type expectation, and delete the three Origin-only copies.",
       "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "b5343a7"
     },
     {
       "id": 31,
@@ -409,9 +409,9 @@
       "fix": "Must: these assertions use role or label locators and assert the whole rendered list, with no class selector or filter. One way: page.getByRole('separator') for the section break, and assert the form's field labels through getByRole('textbox'/'combobox') accessible names or a form-scoped label list asserted in full, including the role checkboxes.",
       "best_practice": "playwright/BEST_PRACTICES.md",
       "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "b5343a7"
     },
     {
       "id": 34,
@@ -433,9 +433,9 @@
       "issue": "addValidAddressToFreshOrganisation defaults roles to ['PLACE_OF_ORIGIN'] whatever addressType is passed (168-169). A caller that passes addressType: BRANCH or DESTINATION_CONSIGNEE_OR_IMPORTER without roles ticks a checkbox those forms do not offer, and the test stalls on a locator timeout rather than saving. Today every non-origin caller (add.fit.spec.js:270) happens to pass roles, so the default only works by accident.",
       "fix": "Must: the default roles follow the chosen address type, so any address type the helper accepts saves without the caller naming roles. One way: default roles to [ROLES_BY_ADDRESS_TYPE[addressType][0]] (from services/address-book), or require roles whenever addressType is passed.",
       "file": "src/server/app/features/address-book/fit/address-form.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "b5343a7"
     },
     {
       "id": 36,
@@ -445,9 +445,9 @@
       "issue": "expectRefusedEntryKeptOnReturn (202-212) reads as an assertion, but it signs in, opens the add form, fills it with a malformed email, saves, follows Back and chooses the type again before asserting. The name hides the sign-in and the whole drive, and the three tests that call it (216-228, 232-240) are one-line bodies with no visible arrange or act.",
       "fix": "Must: each test shows its arrange, act and assert, and every helper's name says what it does to the page. One way: inline signIn and refuseSaveThenReopenAddForm into the test bodies and keep only expectEnteredAddressKept as the assertion helper; or rename to say it drives the page, e.g. refuseSaveReopenAndExpectEntryKept.",
       "file": "src/server/app/features/address-book/fit/address-type.fit.spec.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "b5343a7"
     },
     {
       "id": 37,
@@ -458,9 +458,9 @@
       "fix": "Must: this spec reaches a page after sign-in through the shared signInAndOpen helper, with no local sign-in-then-goto copies. One way: signInAndOpen(page, 'stub-org-type-error', addressTypePath()) at 84, the same at 145, and signInAndOpen(page, 'stub-org-type-guard', addressAddPath()) at 162.",
       "best_practice": "node/testing/frontend.md",
       "file": "src/server/app/features/address-book/fit/address-type.fit.spec.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "b5343a7"
     },
     {
       "id": 38,
@@ -482,9 +482,9 @@
       "issue": "The test 'shows each address with the labels of its roles in the Type column' (259-288) asserts the Type cell of two addresses (originAndConsignor and consigneeAndDestination) out of the six typed seed addresses, and never opens the Branch tab, so the title claims more than the assertions prove. It also opens two pages and asserts twice in one test.",
       "fix": "Must: the title states only what the assertions prove, or the assertions cover every address the title names. One way: retitle to 'shows Place of origin, Consignor and Consignee, Place of destination in the Type column of the addresses holding them', or loop over TABS asserting every row's Type cell, one test per tab.",
       "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "85559f1"
     },
     {
       "id": 40,
@@ -519,9 +519,9 @@
       "fix": "Must: every branch that refuses or discards a handshake logs once at warn, with journeyType, notificationId and fulfilmentId. One way: call a logging helper before the Boom.badRequest and before storeHandshakeContext(request, null) in validatedSessionContext",
       "best_practice": "node/pino-logging.md",
       "file": "src/server/app/features/address-book/handshake-context.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "4f54008"
     },
     {
       "id": 43,
@@ -556,9 +556,9 @@
       "fix": "Must: the function's name says it returns the roles to save, built from the party's own role and the posted roles its side offers, and cannot be misread as roleOfParty. One way: rename it rolesToSaveForParty (or keepOwnAndOfferedRoles) across journey-registry.js, add.controller.js, journey-registry.test.js and src/server/app/docs/features.md",
       "best_practice": "node/code-style.md",
       "file": "src/server/app/features/address-book/journey-registry.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "4f54008"
     },
     {
       "id": 46,
@@ -580,9 +580,9 @@
       "issue": "UNRESOLVABLE_PARTY_CASES (lines 31-43) names the unresolvable contexts (unlisted fulfilment id, unregistered journey type, no context) for ownAndOtherRolesOfParty, but the requiresUnitedKingdomAddress tests (lines 91-108) write the same three cases out again inline, and the 'constructor' prototype-key case is applied to one function only",
       "fix": "Must: the unresolvable-party cases are written once and every function that resolves a party role is tested against all of them. One way: drive requiresUnitedKingdomAddress's false cases from UNRESOLVABLE_PARTY_CASES with test.each, and delete the inline copies",
       "file": "src/server/app/features/address-book/journey-registry.test.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "4f54008"
     },
     {
       "id": 48,
@@ -617,9 +617,9 @@
       "issue": "No design source shows 'Clear search' when a Type filter is set. The prototype has no Clear search link (prototype-dr2-1-source-p15-013-m1, inc-063 criterion at workareas/shared/design-release-2-1/themes/address-book/backlog.json:590). The 26 October snagging ruling put it back so a trader 'gets back to the full list' (workareas/shared/design-release-2-1/snagging.md:85), but that came before the Type filter existed. The code shows the link only when a search term is set (list.njk:86) and its href keeps the Type (list.controller.js:174 clearSearchHref: addressBookPageHref(1, { addressType, role })). So with a Type and a search, 'Clear search' does not return the full tab, and with a Type alone there is no link at all.",
       "fix": "Must: the designer decides how Clear search behaves while a Type filter is set, and the page follows that decision. Options for the designer: (a) keep it as built: the link appears only for a search term and keeps the Type; (b) the link clears the search and the Type, returning the whole tab; (c) the link also appears when only a Type is set, and clears it.",
       "file": "src/server/app/features/address-book/list/list.njk",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Won't Fix",
+      "status": "—",
+      "notes": "Already recorded as snag S-12."
     },
     {
       "id": 51,
@@ -630,9 +630,9 @@
       "fix": "Must: the title states only what the assertions prove, or the assertions prove the search stays on the tab. One way: retitle to 'holds the selected tab as a hidden addressType input in the filter form', or keep the title and add an assertion that the form's action plus its inputs submit addressType=BRANCH with q.",
       "best_practice": "node/testing/frontend.md",
       "file": "src/server/app/features/address-book/list/list.tabs.controller.test.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "85559f1"
     },
     {
       "id": 52,
@@ -643,9 +643,9 @@
       "fix": "Must: a reader of a stubAddressPage call can tell which keys go on the address book request and which choose the tab whose roles are expected, without opening the helper. One way: take the tab separately, e.g. stubAddressPage({ tab: ADDRESS_TYPES.BRANCH, query: { page: '1', q: 'green' } }, addressPage), or rename the parameter to listRequestOf/expectedListRequest and the key to rolesOfTab so the name says it expands to role values.",
       "best_practice": "node/testing/frontend.md",
       "file": "src/server/app/features/address-book/list/list.test-support.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "85559f1"
     },
     {
       "id": 53,
@@ -668,9 +668,9 @@
       "issue": "roleLabelsOf (line 45) and the row key roleLabels (line 67) have a plural value word, so a reader expects an array of labels. Both actually hold one comma-joined string ('Place of origin, Consignor') that the controller puts straight into a table cell as { text: address.roleLabels } (list.controller.js:52).",
       "fix": "Must: the function and the row key say they hold one piece of display text, the role labels joined. One way: rename them to roleLabelsText / roleLabelsText (or typeColumnText), and update list.controller.js:52 and the test titles and expectations in list.test.js to match.",
       "file": "src/server/app/features/address-book/view-model/list.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "788e228"
     },
     {
       "id": 55,
@@ -706,9 +706,9 @@
       "fix": "Must: the notifications-backend stub is written once and each test passes only its query and rows. One way: a local 'serveNotifications(rows, { query = DEFAULT_QUERY, status = 200 } = {})' returning the nock scope, used by every test.",
       "best_practice": "node/testing/frontend.md",
       "file": "src/server/app/features/dashboard/controller.test.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "1521888"
     },
     {
       "id": 58,
@@ -745,9 +745,9 @@
       "fix": "Must: the title states only what the assertion proves - the roles each address type lists, in that order - and the Type select's order is proven by a test on the list view model or page that builds the select. One way: retitle to 'Should list each address type's roles in this order' and rely on (or add) a list view-model test that asserts the Type select's option values.",
       "best_practice": "node/testing/frontend.md",
       "file": "src/server/app/services/address-book/address-types.test.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "85559f1"
     },
     {
       "id": 61,
@@ -770,9 +770,9 @@
       "fix": "Must: this suite has one outbound-HTTP mechanism, the nock refusal startRealModeServer installs, and no global fetch stub. One way: delete the beforeAll/afterAll stubGlobal pair and run the suite; if a call surfaces, answer it with the matching real-mode.js helper (insBackendApi(), addressBookApi()).",
       "best_practice": "node/testing/frontend.md",
       "file": "src/server/auth/controller.test.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "1521888"
     },
     {
       "id": 63,
@@ -808,9 +808,9 @@
       "fix": "Must: each title names the page title or status and the logging it asserts. One way: 'Should render the Page not found page with a 404', 'Should render the Forbidden error view with a 403 and log no stack', 'Should render Something went wrong for an unmapped status and keep that status'.",
       "best_practice": "node/testing/frontend.md",
       "file": "src/server/common/helpers/errors.test.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "1521888"
     },
     {
       "id": 66,
@@ -820,9 +820,9 @@
       "issue": "The comment at lines 9-12 narrates history ('Starting for real made this the only test in the suite that could not run while the local stack held the configured port') and describes other tests and Hapi behaviour rather than the lines below it.",
       "fix": "Must: no comment above the set-up; the code states how it is now. One way: delete lines 9-12 and use the shared startTestServer() helper, whose name already says it initialises without listening.",
       "file": "src/server/common/helpers/serve-static-files.test.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "1521888"
     },
     {
       "id": 67,
@@ -833,9 +833,9 @@
       "fix": "Must: the describe and test titles state what the set-up does and what the assertions prove. One way: drop the describe, and title the tests 'Should answer /favicon.ico with 204 No Content' and 'Should serve a public asset with 200'.",
       "best_practice": "node/testing/frontend.md",
       "file": "src/server/common/helpers/serve-static-files.test.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "1521888"
     },
     {
       "id": 68,
@@ -858,9 +858,9 @@
       "issue": "carriesRoles (address-book-requests.js:105-106) returns true only when the body has roles AND has no addressType key; the name predicts the first check and hides the second, which is the guard that the add controller strips the form-only addressType before calling the API, so serveAddressCreated()'s default matcher refuses a body a reader would expect it to accept.",
       "fix": "Must: the default create-body matcher's name states both conditions it checks (roles present, no addressType). One way: rename to carriesRolesWithoutAddressType, or split into two named predicates combined in serveAddressCreated's default.",
       "file": "src/server/common/test-helpers/address-book-requests.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "85559f1"
     },
     {
       "id": 70,
@@ -882,9 +882,9 @@
       "issue": "listedStubNames hard-codes pageSize: 8 (address-book-stub.js:8) while address-book.test.js:34 declares const PAGE_SIZE = 8 for the same stub listing, and its own tests assert 'four pages of 8' against it: two homes for one page size, and the helper's cap is invisible at its call sites (a stub list longer than 8 is silently cut to the first page).",
       "fix": "Must: the stub-listing page size used by stub-mode service tests has one owner that the helper and address-book.test.js both read. One way: export a STUB_LIST_PAGE_SIZE from address-book-stub.js, use it as listedStubNames' pageSize and import it in address-book.test.js in place of the local PAGE_SIZE.",
       "file": "src/server/common/test-helpers/address-book-stub.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "85559f1"
     },
     {
       "id": 72,
@@ -906,9 +906,9 @@
       "issue": "STUB_SEED_ADDRESS_NAME = 'Stub Farm 1' (address-book-stub.js:3) is a second home for the stub seed's name, already written as seedAddress.name = 'Stub Farm 1' in src/server/app/features/address-book/fit/seed-address.js:3; both describe the address stub.js builds as buildSeedAddress(1).",
       "fix": "Must: the stub seed address's name has one owner in test support that the unit-test helper and the FIT seed both read. One way: have seed-address.js take its name from STUB_SEED_ADDRESS_NAME (or the reverse).",
       "file": "src/server/common/test-helpers/address-book-stub.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "85559f1"
     },
     {
       "id": 74,
@@ -931,9 +931,9 @@
       "issue": "openEmptyAddressBookWithCookiesFrom builds its own GET inject (lines 21-26: method GET, url, auth: sessionAuth(sessionId), headers: { cookie }) beside getPage in address-book-requests.js:141-147, which this PR extended to take exactly that cookie; the file was touched to import cookieHeaderOf from the same module but still keeps a second copy of the request shape.",
       "fix": "Must: the signed-in GET-with-cookie request has one home in test support, and this helper calls it. One way: return getPage(server, addressBookPath(), sessionId, cookieHeaderOf(postHeaders)).",
       "file": "src/server/common/test-helpers/open-empty-address-book-with-cookies.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "85559f1"
     },
     {
       "id": 76,
@@ -944,9 +944,9 @@
       "fix": "Must: the title states the status and body the test asserts. One way: 'Should answer GET /health with 200 and a success message'.",
       "best_practice": "node/testing/frontend.md",
       "file": "src/server/health/controller.test.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "1521888"
     },
     {
       "id": 77,
@@ -956,9 +956,9 @@
       "issue": "auth-setup.cjs:32 hands every cookie the browser holds, including the identity provider's from the sign-in redirect, to createPageClient. Lines 34-40 then write every jar entry back onto the app's hostname. seed-audit-targets.js:22-25 already keeps only the cookies whose domain matches the origin before building its client. So one rule, 'the browser cookies the app sees', has two homes, and this one skips the filter. When the identity provider runs on another host and shares a cookie name with the app (for example crumb or session), the Map keeps the last value. The app is then sent the wrong value and the IdP's cookies are planted on the app host.",
       "fix": "Must: one function owns picking the browser cookies that belong to the app origin, and both auth-setup.cjs and seed-audit-targets.js call it, so only app cookies reach the page client and are written back. One way: export an appCookiesOf(browser, origin) helper from page-client.js and use it in both places.",
       "file": "tests/lighthouse/auth-setup.cjs",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "a335e2e"
     },
     {
       "id": 78,
@@ -969,9 +969,9 @@
       "fix": "Must: a unit test fails if the chosen-type session cookie is not written back into the browser for the app host, and if a non-timeout error from waitForSelector is swallowed. One way: export the two helpers and test them with a fake browser and page object (cookies/setCookie/waitForSelector) and nock for the type-page round trip, as seed-address.test.js does.",
       "best_practice": "node/testing/frontend.md",
       "file": "tests/lighthouse/auth-setup.cjs",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "a335e2e"
     },
     {
       "id": 79,
@@ -993,9 +993,9 @@
       "category": "duplication",
       "issue": "package.json:127-132 pins joi and @hapi/content with overrides; the twin frontends hold the same locked versions with no overrides. The same security pin is done two ways.",
       "fix": "Must: one mechanism across the frontends, or a recorded reason for this repo's pins. One way: drop the overrides if npm ci resolves the same versions without them, else add them to the twins",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "ba099ac"
     },
     {
       "id": 81,
@@ -1017,9 +1017,9 @@
       "category": "naming",
       "issue": "testing.md:213 calls them the uses the caller passes for addValidAddressToFreshOrganisation; the code, field and helper names are roles (tickRoles, roleCheckbox).",
       "fix": "Must: the doc uses the code's word. One way: with the roles the caller passes",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "017db75"
     },
     {
       "id": 83,
@@ -1029,9 +1029,9 @@
       "category": "comments",
       "issue": "features.md:345 says map-to-address-fields.js maps onto the address book's fields in address-book/address-schema.js; no address-schema.js exists, the fields are features/address-book/fields.js (the workspace repo page was corrected in this PR).",
       "fix": "Must: the doc states the current file. One way: point it at features/address-book/fields.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "017db75"
     },
     {
       "id": 84,
@@ -1041,9 +1041,9 @@
       "category": "duplication",
       "issue": "One rule, 4 findings: #8, #12, #14, #61 — the typed seed's size is stated as five in three docs (add-a-page.md:136, services.md:59, testing.md:246) while TYPED_SEED holds six.",
       "fix": "Must: TYPED_SEED owns the count; the docs either drop the number or match it. One way: drop the count from the three docs and say the seed holds addresses of all three types",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "017db75"
     },
     {
       "id": 85,
@@ -1053,9 +1053,9 @@
       "category": "structure",
       "issue": "One rule, 2 findings: #26, #29 — storedRolesOf returns an object { roles } that edit.controller.js:158 spreads into the update body, though its name and its sibling postedRolesOf read as a roles list.",
       "fix": "Must: one name says what the helper returns, or the helper goes. One way: delete storedRolesOf and write roles: address.roles in edit.controller.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "788e228"
     },
     {
       "id": 86,
@@ -1065,9 +1065,9 @@
       "category": "structure",
       "issue": "One rule, 3 findings: #41, #43, #44 — a valid handshake is decided two ways: query and payload handshakes must resolve a party role (roleOfParty), a session handshake only a known journey type. A session saved before the deploy with an unlisted fulfilment id gets through and the add POST throws a TypeError (500). The new refusal is in no spec scenario and the session path has no test.",
       "fix": "Must: one function decides handshake validity and all three paths call it; the refusal has a spec scenario and a test per path. One way: a isResolvableHandshake(context) built on roleOfParty, used for query, payload and session, plus a session-path test and a REQ-INS-ADDR-016 scenario",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "4f54008"
     },
     {
       "id": 87,
@@ -1077,9 +1077,9 @@
       "category": "structure",
       "issue": "One rule, 2 findings: #32, #46 — the rename from JOURNEY_HANDSHAKES_BY_ROLE to JOURNEY_HANDSHAKES_BY_PARTY stops part-way: add.fit.spec.js:408 still binds roleName with titles saying role handshake, and journey-registry.test.js:120 names a party key _role. In this PR role now means an address use.",
       "fix": "Must: a journey handshake's key is called party everywhere. One way: rename roleName and _role to party and the titles to party handshake",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "4f54008"
     },
     {
       "id": 88,
@@ -1089,9 +1089,9 @@
       "category": "duplication",
       "issue": "One rule, 2 findings: #23, #56 — beforeEach(() => config.set('csrf.enabled', false)) is copied into address-type.controller.test.js:47, add.controller.test.js:171 and address-lookup-spike/controller.test.js (twice), all of which already call startRealModeServer.",
       "fix": "Must: one shared helper turns CSRF off and no controller test sets it itself. One way: a startRealModeServer({ csrf: false }) option, or a disableCsrfForEachTest() helper in test-server.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "1521888"
     },
     {
       "id": 89,
@@ -1101,9 +1101,9 @@
       "category": "duplication",
       "issue": "One rule, 3 findings: #59, #64, #68 — page-levels.test.js:11, content-security-policy.test.js:8 and serve-static-files.test.js:13 start and stop their own server inline beside startTestServer/stopTestServer.",
       "fix": "Must: every test that needs a stub-mode server uses the shared helpers. One way: replace the three inline blocks with startTestServer/stopTestServer",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "1521888"
     },
     {
       "id": 90,
@@ -1113,9 +1113,9 @@
       "category": "structure",
       "issue": "One rule, 2 findings: #55, #58 — the accessor startRealModeServer() returns is called server in address-lookup-spike/controller.test.js and banner.test.js but getServer everywhere else.",
       "fix": "Must: one name for the accessor across the suite. One way: rename to getServer in both files",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "1521888"
     },
     {
       "id": 91,
@@ -1125,9 +1125,9 @@
       "category": "structure",
       "issue": "One rule, 3 findings: #15, #70, #72 — the testing.md helper catalogue leaves out helpers this PR adds: VALID_ADDRESS_RECORD, UNITED_KINGDOM_PARTIES, ANY_COUNTRY_PARTIES, address-book-stub.js (STUB_SEED_ADDRESS_NAME, listedStubNames), signInAndOpenAddForm, expectInDocumentOrder, and what serveAddressCreated matches by default.",
       "fix": "Must: the catalogue lists every shared test helper. One way: add the missing entries in one edit of testing.md",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "017db75"
     },
     {
       "id": 92,
@@ -1137,9 +1137,9 @@
       "category": "duplication",
       "issue": "One rule, 2 findings: #31, #38 — address-form.js now exports malformedEmail and backLink, but add.fit.spec.js and edit.fit.spec.js keep local copies ('not-an-email', inline Back link locators) and add.fit.spec.js:186 hand-writes addValidAddressToFreshOrganisation.",
       "fix": "Must: the fit specs use the exported helpers and keep no local copy. One way: import malformedEmail, backLink and addValidAddressToFreshOrganisation in both specs",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "b5343a7"
     },
     {
       "id": 93,
@@ -1149,9 +1149,9 @@
       "category": "duplication",
       "issue": "One rule, 2 findings: #34, #40 — NO_RESULTS_LINE, the column headings and the Type cell lookup are written in list.test-support.js, fit/address-book-list.js, list.fit.spec.js and add.fit.spec.js.",
       "fix": "Must: one home for the list's expected text and the Type cell lookup, which both the unit and fit tests import. One way: export them from fit/address-book-list.js (or a shared constants file) and delete the copies",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "85559f1"
     },
     {
       "id": 94,
@@ -1161,9 +1161,9 @@
       "category": "structure",
       "issue": "One rule, 2 findings: #22, #48 — address types are keyed two ways in the copy (by ADDRESS_TYPES value in addressType.options and roles.legendByAddressType, by a camelCase alias plus a copyKey in list.tabs), and the copy keys list.search.type and list.table.type hold role copy while the controller calls the tab's category type.",
       "fix": "Must: one key scheme: address-type copy is keyed by the ADDRESS_TYPES value, and type in copy and code means only the address type. One way: key list.tabs by ADDRESS_TYPES and drop copyKey; rename list.search.type and list.table.type to list.search.role and list.table.role",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "63cde3d"
     },
     {
       "id": 95,
@@ -1173,9 +1173,9 @@
       "category": "structure",
       "issue": "One rule, 2 findings: #49, #53 — the list controller's outcome-changing log lines this PR adds or extends (past-last-page fallback with roles, load failure with addressType and role, ignored role the tab does not offer) have no test.",
       "fix": "Must: every new or extended log line in the list controller is asserted by a test. One way: captureInfoLogs assertions in list.controller.test.js and list.type-filter.controller.test.js",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "42d46dc"
     },
     {
       "id": 96,
@@ -1185,9 +1185,9 @@
       "category": "structure",
       "issue": "One rule, 2 findings: #19, #20 — the add controller's log ids are built three ways (handBackAddress, redirectAfterCancel, addIdsForLog) and rerenderAfterCreateFailure logs only organisationId, so a refused or failed create cannot be traced to its journey, type or notification.",
       "fix": "Must: one function builds the add controller's log ids and every log line uses it. One way: a logIdsOf(request) returning organisationId, addressType and the handshake's notificationId and fulfilmentId, used by all four call sites",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Fix",
+      "status": "Done",
+      "notes": "747d54b"
     },
     {
       "id": 97,
@@ -1197,9 +1197,9 @@
       "category": "structure",
       "issue": "One rule, 3 findings: #63, #79 here and workspace #25 — the one-second connect timeout lives in connect-attempt.js called from src/index.js, while animals and plants set it inside startServer and the inc-067 plan says the same way.",
       "fix": "Must: one shape across the three frontends, and the plan describes the build. One way: call setDefaultAutoSelectFamilyAttemptTimeout(1000) inside this repo's startServer, drop connect-attempt.js, and leave inc-067.md as it is",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Won't Fix",
+      "status": "—",
+      "notes": "User decision: allowOneSecondPerAddressWhenConnecting() stays a named start-up step in index.js; it is a process-wide setting."
     },
     {
       "id": 98,
@@ -1209,9 +1209,9 @@
       "category": "duplication",
       "issue": "One rule, 4 findings: #74, #81 here and workspace #10, #24 — OIDC discovery is answered by nock in 9 tests but still vi.mocked in refresh-tokens.test.js, verify-token.test.js and plugins/auth.test.js; docs/best-practices/node/testing/frontend.md still says to vi.mock it, and deferred.md says ins-frontend is fixed.",
       "fix": "Must: one way to stand in for OIDC discovery across the suite and the guide. One way: move the three tests to answerOidcDiscovery, update frontend.md section 2 and 6, and correct the deferred.md row",
-      "disposition": null,
-      "status": null,
-      "notes": null
+      "disposition": "Won't Fix",
+      "status": "—",
+      "notes": "The three auth tests (src/auth/refresh-tokens.test.js, src/auth/verify-token.test.js, src/plugins/auth.test.js) module-mock Wreck, config and the logger wholesale and this PR does not touch them; the deferred.md OIDC row should name these files."
     }
   ]
 }

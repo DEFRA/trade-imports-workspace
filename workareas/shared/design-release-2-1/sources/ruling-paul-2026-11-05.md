@@ -19,6 +19,13 @@ On the addresses saved before the change:
 > We can delete the entire collection on the 2 shared environments (dev, test) using CDP tooling, so that is the
 > simplest thing to do there. None of ther addresses has any value.
 
+On paging the address book's list and the pickers, which the Design Release 2.1 prototype does not page:
+
+> I think we need pagination else the service will struggle. Its more that we need pagination, even though this is
+> missing in the prototyper.
+
+> The lack of pagination is causing an issue in test environments where organisations have 1000s of addresses
+
 1. An address holds the roles it can play on a notification: place of origin, consignor, consignee, importer, place
    of destination and branch address. "Use" is renamed "role" everywhere: the record, the API, the code, the copy
    keys, the tests and the spec. New.
@@ -35,3 +42,6 @@ On the addresses saved before the change:
 6. EUDPA-711's description and acceptance criteria say roles, not a stored type and uses. Done 5 November.
 7. Addresses saved before the change are not migrated. After release, the `addresses` collection is dropped in dev
    and test with CDP tooling and the address book restarted; locally, the stack is restarted. New.
+8. The address book's list and every address picker keep pagination, though the Design Release 2.1 prototype has
+   none: the list API pages (`page`, `pageSize` 1 to 100, default 25), and no requirement to list an organisation's
+   addresses unpaginated (req-611's 'unpaginated') is built. Confirms the decision taken earlier on this ticket.

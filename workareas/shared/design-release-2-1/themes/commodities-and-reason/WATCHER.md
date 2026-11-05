@@ -106,6 +106,34 @@ Two traps found that night, both worth checking before asking for a reset:
   commits one of them, the run stops at `land-leaked` with nothing pushed. So
   the workspace repo must be **clean** before a launch.
 
+### A second tests-repo E2E flake closed by re-run, 5 November
+
+HANDOVER.md lists inc-018's flake under "Still outstanding": its E2E failed,
+then passed on a re-run with no code change, and rule 6 says flaky never closes
+a failure. **inc-027 did the same thing**, so this is a pattern rather than one
+bad night:
+
+- `b458ff2` was committed at 11:21:47, and HEAD never moved after it.
+- The E2E check started 11:24:54 and **failed**:
+  `consignment-details.spec.ts:83 › keeps the number typed for the surviving
+  species after removing another commodity`, `expect(locator).toHaveValue`,
+  failing on retry #1 too.
+- A second E2E run started 11:53:53 on **the same `b458ff2c` head** and
+  **passed**. `run_attempt` on the first run stayed 1, so this was a fresh run
+  of identical code.
+- inc-027 then went `done`.
+
+Three different E2E tests failed across three rows this run — the
+identification-card visual baseline and the bolded-match assertion on inc-025
+(both genuinely fixed in code), and this one (not fixed at all). HANDOVER.md's
+own guidance: **a different test failing on each run points at a race**, and the
+place to look is `test-results/*/error-context.md`. Two of the three are in
+`consignment-details`/commodity-line territory, which is where this theme's rows
+have been editing table rows and locators all night.
+
+Worth chasing with inc-018's flake once the theme is built, as one piece of work
+rather than two.
+
 ### `plan-refused`, any stack stop, anything unrecognised
 
 **Hold and notify.** Do not relaunch in hope. `stack-held` or `stack-failed` on

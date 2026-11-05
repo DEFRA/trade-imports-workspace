@@ -20,13 +20,19 @@ The system MUST ask, for every species the user chose on the previous page, a nu
 
 ### Requirement: A complete set of commodity details is accepted
 **ID**: REQ-COMMODITY-DETAILS-002
-The system MUST accept the commodity details once every species' number of animals is given, along with a number of packages for any species whose commodity calls for one, saving them without error.
+The system MUST accept the commodity details once every species' number of animals is given, along with a number of packages for any species whose commodity calls for one, saving them without error. Pressing Enter in a quantity field MUST save the page's counts rather than removing a species or commodity.
 
 #### Scenario: Entering the counts for every species saves without error
 **ID**: SCN-COMMODITY-DETAILS-002-A
 - **GIVEN** the user is on the commodity details page with more than one species to answer for
 - **WHEN** they enter a number of animals, and a number of packages where asked for, for every species, then save and continue
 - **THEN** the answers are saved and no error summary is shown
+
+#### Scenario: Pressing Enter in a quantity field saves the counts
+**ID**: SCN-COMMODITY-DETAILS-002-B
+- **GIVEN** the user has entered valid counts for every species
+- **WHEN** they press Enter in a quantity field
+- **THEN** the counts are saved and the page the primary save leads to is shown
 
 ### Requirement: A collection table lists the chosen commodities and species, each row removable on its own
 **ID**: REQ-COMMODITY-DETAILS-003
@@ -170,3 +176,20 @@ Outside an amendment the system MUST end the commodity details page with "Save a
 - **GIVEN** the user is in the opening sequence on commodity details
 - **WHEN** the page is shown
 - **THEN** it offers "Save and continue", "Save and return to overview" and "Cancel and return to overview"
+
+### Requirement: A removal keeps what the user has typed, and names the row it removes
+**ID**: REQ-COMMODITY-DETAILS-012
+The system MUST keep, after a removal, the numbers already typed into the rows that stay, showing them back in their own fields, and MUST name the removed row rather than its position, so a repeated or stale removal is refused rather than removing a different row.
+
+#### Scenario: Numbers typed into other rows survive a removal
+**ID**: SCN-COMMODITY-DETAILS-012-A
+- **GIVEN** the user has typed numbers into more than one species' fields and has not yet saved
+- **WHEN** they remove one row
+- **THEN** that row is gone from the table and from the selection
+- **AND** every other species' field still holds the number typed into it
+
+#### Scenario: A removal submitted again is refused rather than removing another row
+**ID**: SCN-COMMODITY-DETAILS-012-B
+- **GIVEN** the user has removed a row
+- **WHEN** the same removal is submitted again
+- **THEN** it is refused, and the rows the first removal left are unchanged

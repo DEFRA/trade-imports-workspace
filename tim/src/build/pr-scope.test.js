@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest'
-import { prScopeArgs } from './pr-scope.js'
+import { prScopeRuns } from './pr-scope.js'
 
 const SCOPE = {
   default: { suites: ['all'] },
@@ -11,61 +11,70 @@ const SCOPE = {
   'trade-imports-address-book': {
     suites: ['tests/ins/'],
     tags: ['@address-book']
-  }
+  },
+  'trade-imports-dynamics-gateway': { suites: [], tags: ['@gateway'] }
 }
 
-describe('prScopeArgs', () => {
-  test('gives one repo its suites and its tag as a grep', () => {
-    expect(prScopeArgs(SCOPE, ['trade-imports-animals-frontend'])).toEqual([
-      'tests/animals/',
-      '--grep',
-      '@animals-frontend'
+describe('prScopeRuns', () => {
+  test('runs a repo’s suites whole, then its tagged specs in a second run', () => {
+    expect(prScopeRuns(SCOPE, ['trade-imports-animals-frontend'])).toEqual([
+      { suffix: '', args: ['tests/animals/'] },
+      { suffix: '-tagged', args: ['--grep', '@animals-frontend'] }
     ])
   })
 
-  test('leaves out the grep for a repo the scope gives no tags', () => {
-    expect(prScopeArgs(SCOPE, ['trade-imports-ins-backend'])).toEqual([
-      'tests/ins/'
+  test('gives one run for a repo the scope gives no tags', () => {
+    expect(prScopeRuns(SCOPE, ['trade-imports-ins-backend'])).toEqual([
+      { suffix: '', args: ['tests/ins/'] }
+    ])
+  })
+
+  test('gives one tagged run for a repo the scope gives only tags', () => {
+    expect(prScopeRuns(SCOPE, ['trade-imports-dynamics-gateway'])).toEqual([
+      { suffix: '', args: ['--grep', '@gateway'] }
     ])
   })
 
   test('unions the suites and alternates the tags across several repos', () => {
     expect(
-      prScopeArgs(SCOPE, [
+      prScopeRuns(SCOPE, [
         'trade-imports-animals-frontend',
         'trade-imports-address-book'
       ])
     ).toEqual([
-      'tests/animals/',
-      'tests/ins/',
-      '--grep',
-      '@animals-frontend|@address-book'
+      { suffix: '', args: ['tests/animals/', 'tests/ins/'] },
+      { suffix: '-tagged', args: ['--grep', '@animals-frontend|@address-book'] }
     ])
   })
 
   test('keeps one copy of a suite two repos share', () => {
     expect(
-      prScopeArgs(SCOPE, [
+      prScopeRuns(SCOPE, [
         'trade-imports-ins-backend',
         'trade-imports-address-book'
       ])
-    ).toEqual(['tests/ins/', '--grep', '@address-book'])
+    ).toEqual([
+      { suffix: '', args: ['tests/ins/'] },
+      { suffix: '-tagged', args: ['--grep', '@address-book'] }
+    ])
   })
 
   test('runs every spec for a repo the scope does not name', () => {
-    expect(prScopeArgs(SCOPE, ['trade-imports-plants-frontend'])).toEqual([])
+    expect(prScopeRuns(SCOPE, ['trade-imports-plants-frontend'])).toEqual([
+      { suffix: '', args: [] }
+    ])
   })
 
   test('runs every spec when any repo of a set runs every suite', () => {
     expect(
-      prScopeArgs(SCOPE, [
+      prScopeRuns(SCOPE, [
         'trade-imports-animals-frontend',
         'trade-imports-plants-frontend'
       ])
-    ).toEqual([])
+    ).toEqual([{ suffix: '', args: [] }])
   })
 
   test('runs every spec when there is nothing to scope from', () => {
-    expect(prScopeArgs(SCOPE, [])).toEqual([])
+    expect(prScopeRuns(SCOPE, [])).toEqual([{ suffix: '', args: [] }])
   })
 })

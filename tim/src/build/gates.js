@@ -2,7 +2,7 @@ import { isAbsolute, join, normalize, sep } from 'node:path'
 import { z } from 'zod'
 import { readJsonFile } from '../backlog/io.js'
 import { TimError } from '../errors.js'
-import { loadPrScope, prScopeArgs } from './pr-scope.js'
+import { loadPrScope, prScopeRuns } from './pr-scope.js'
 
 export const GATES_PATH = join(
   '.claude',
@@ -186,23 +186,24 @@ export const loadGates = (workspaceRoot) => {
 
 const selectedPhases = (phase) => (phase === 'all' ? PHASES : [phase])
 
-const scopeOf = (rung, repo, folders, workspaceRoot) => {
-  if (!rung.scopeFrom) return rung.scope ?? []
+const scopeRunsOf = (rung, repo, folders, workspaceRoot) => {
+  if (!rung.scopeFrom) return [{ suffix: '', args: rung.scope ?? [] }]
   const services = folders.filter((folder) => folder !== repo.folder)
-  return prScopeArgs(loadPrScope(workspaceRoot), services)
+  return prScopeRuns(loadPrScope(workspaceRoot), services)
 }
 
-const planned = (repo, rung, folders, workspaceRoot) => ({
-  repo: repo.folder,
-  path: rung.cwd ? join(repo.path, rung.cwd) : repo.path,
-  name: rung.name,
-  phase: rung.phase,
-  run: rung.run,
-  scope: scopeOf(rung, repo, folders, workspaceRoot),
-  ports: rung.ports ?? [],
-  exclusive: rung.exclusive ?? false,
-  refusal: null
-})
+const planned = (repo, rung, folders, workspaceRoot) =>
+  scopeRunsOf(rung, repo, folders, workspaceRoot).map(({ suffix, args }) => ({
+    repo: repo.folder,
+    path: rung.cwd ? join(repo.path, rung.cwd) : repo.path,
+    name: `${rung.name}${suffix}`,
+    phase: rung.phase,
+    run: rung.run,
+    scope: args,
+    ports: rung.ports ?? [],
+    exclusive: rung.exclusive ?? false,
+    refusal: null
+  }))
 
 const refused = (repo, name, phase, refusal) => ({
   repo,
@@ -234,7 +235,9 @@ const repoPlan = (gates, repo, phase, folders, workspaceRoot) => {
       )
     ]
   }
-  return covering.map((rung) => planned(repo, rung, folders, workspaceRoot))
+  return covering.flatMap((rung) =>
+    planned(repo, rung, folders, workspaceRoot)
+  )
 }
 
 const firstSelectedPhase = (phase) => selectedPhases(phase)[0]

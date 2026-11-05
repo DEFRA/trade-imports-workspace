@@ -459,7 +459,7 @@
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-              "test": "saving with Place of origin ticked lands on the Origin and Consignor list with the new address first",
+              "test": "${typeLabel} saved with every offered role ticked lands on its tab with the new address first",
               "strength": "partial",
               "notes": "not red-probed"
             }
@@ -977,7 +977,7 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/list/list.controller.test.js",
-              "test": "returns 500 when the address book cannot be reached, with the heading, intro, Add button and filter but no results line or table",
+              "test": "returns 500 with the heading, intro, Add button and filter but no results line or table, and logs the failure once",
               "strength": "full",
               "notes": "red-probed"
             }
@@ -1218,7 +1218,7 @@
     {
       "id": "REQ-INS-ADDR-016",
       "name": "Adding from a journey handshake refuses an unrecognised journey type",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-INS-ADDR-016-A",
@@ -1232,6 +1232,36 @@
               "test": "refuses an unrecognised journey type",
               "strength": "full",
               "notes": "GET /address-book/add with journey-type=not-a-journey shows Page not found"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-016-B",
+          "name": "A held handshake that no longer resolves is discarded",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/handshake-context.test.js",
+              "test": "clears and ignores a session handshake %s, and logs it once at warn",
+              "strength": "partial",
+              "notes": "not red-probed; asserts the discard and its one warn line with the journey type, notification and party"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-016-C",
+          "name": "An incomplete handshake is refused",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/handshake-context.test.js",
+              "test": "logs an incomplete payload handshake once at warn before refusing it",
+              "strength": "partial",
+              "notes": "not red-probed; asserts the 400 and its one warn line"
             }
           ]
         }
@@ -2468,7 +2498,7 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "GET opens the Country select on its blank first option, Select a country, with United Kingdom selected",
+              "test": "GET lists Select a country first and opens the Country select on United Kingdom",
               "strength": "full",
               "notes": "red-probed: fails when the address book's opening values leave the country blank"
             },
@@ -2476,7 +2506,7 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-add-roles.spec.ts",
-              "test": "an ${addressTypeLabels[addressTypes.originOrConsignor]} address opens on Select a country first with United Kingdom selected",
+              "test": "an ${addressTypeLabels[addressTypes.originOrConsignor]} address lists Select a country first and opens with United Kingdom selected",
               "strength": "partial",
               "notes": "run on the leased stack by the gate; not red-probed"
             },
@@ -2998,7 +3028,7 @@
               "file": "src/server/app/features/address-book/list/list.type-filter.controller.test.js",
               "test": "asks the address book to match the role whose label contains %j beside the search term",
               "strength": "full",
-              "notes": "red-probed: fails when the search uses are not sent"
+              "notes": "red-probed: fails when the search roles are not sent"
             },
             {
               "type": "unit",
@@ -3006,7 +3036,7 @@
               "file": "src/server/app/features/address-book/list/list.type-filter.controller.test.js",
               "test": "asks the address book to match every role whose label contains the search term",
               "strength": "full",
-              "notes": "red-probed: fails when the search uses are not sent"
+              "notes": "red-probed: fails when the search roles are not sent"
             },
             {
               "type": "unit",
@@ -3022,7 +3052,7 @@
               "file": "src/server/app/services/address-book/address-book.roles.test.js",
               "test": "Should match a search role as it matches a search term, within the roles",
               "strength": "full",
-              "notes": "red-probed: fails when the stub ignores search uses"
+              "notes": "red-probed: fails when the stub ignores search roles"
             },
             {
               "type": "fit",
@@ -3035,7 +3065,7 @@
             {
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
-              "file": "tests/ins/e2e/features/address-book/address-book-type-filter.spec.ts",
+              "file": "tests/ins/e2e/features/address-book/address-book-role-filter.spec.ts",
               "test": "a search for a role label with a role filter chosen lists the address holding that role, found on whichever result page it falls",
               "strength": "partial",
               "notes": "passed against the stack; not red-probed"
@@ -3058,7 +3088,7 @@
             {
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
-              "file": "tests/ins/e2e/features/address-book/address-book-add-roles.spec.ts",
+              "file": "tests/ins/e2e/features/address-book/address-book-role-filter.spec.ts",
               "test": "an address saved with Consignor ticked is found by searching Consignor, and one saved with only Place of origin ticked is not",
               "strength": "partial",
               "notes": "run on the leased stack by the gate; not red-probed"
@@ -3076,7 +3106,7 @@
               "file": "src/server/app/features/address-book/view-model/list.test.js",
               "test": "Should give the roles whose Type column label or Type option label contains %j, ignoring case",
               "strength": "partial",
-              "notes": "the 'branch address' case gives BRANCH_ADDRESS, the use the search sends; does not render the list; not red-probed"
+              "notes": "the 'branch address' case gives BRANCH_ADDRESS, the role the search sends; does not render the list; not red-probed"
             }
           ]
         }
@@ -3264,7 +3294,7 @@
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-              "test": "from the ${roleName} handshake opens the Country select on Select a country and offers every captured country, alphabetically, as a plain select",
+              "test": "from the ${partyName} handshake opens the Country select on Select a country and offers every captured country, alphabetically, as a plain select",
               "strength": "full",
               "notes": "for place of origin and consignor; red-probed: fails when the any-country branch of addFormCountryOffer returns the United Kingdom alone, passes restored"
             },
@@ -3418,7 +3448,7 @@
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-              "test": "from the ${roleName} handshake opens the Country select on Select a country and offers every captured country, alphabetically, as a plain select",
+              "test": "from the ${partyName} handshake opens the Country select on Select a country and offers every captured country, alphabetically, as a plain select",
               "strength": "full",
               "notes": "for place of origin and consignor; red-probed: fails when the govukSelect in address-fields.njk is replaced by a text input, passes restored"
             },
@@ -3589,7 +3619,7 @@
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
               "test": "POST from the consignee handshake with Save action %s and answers missing re-renders the errors in field order, keeps the name and the tick, and writes nothing",
               "strength": "full",
-              "notes": "red-probed: fails when the field rules list phone before email, and when the re-render stops ticking the posted uses"
+              "notes": "red-probed: fails when the field rules list phone before email, and when the re-render stops ticking the posted roles"
             },
             {
               "type": "fit",
@@ -3627,7 +3657,7 @@
               "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressCrudIT.java",
               "test": "post_shouldStoreAndReadBackTheRolesInOrderWithRepeatsCollapsed",
               "strength": "full",
-              "notes": "red-probed: fails when the mapper drops the uses"
+              "notes": "red-probed: fails when the mapper drops the roles"
             },
             {
               "type": "e2e",
@@ -3650,7 +3680,7 @@
               "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressUpdateIT.java",
               "test": "put_shouldReplaceAllFieldsAndClearOmittedOptionals_whenBodyIsValid",
               "strength": "full",
-              "notes": "red-probed: fails when the update mapping ignores the uses"
+              "notes": "red-probed: fails when the update mapping ignores the roles"
             },
             {
               "type": "unit",
@@ -3759,7 +3789,7 @@
               "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequestValidationTest.java",
               "test": "validate_producesOnlyTheDeclaredMessageOnAnInvalidField",
               "strength": "partial",
-              "notes": "the table rows for a missing and a blank type and for missing and empty uses; not red-probed"
+              "notes": "the table rows for a missing and a blank type and for missing and empty roles; not red-probed"
             },
             {
               "type": "e2e",
@@ -3889,7 +3919,7 @@
               "type": "unit",
               "repo": "trade-imports-address-book",
               "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressCrudIT.java",
-              "test": "post_shouldIgnoreAnAddressTypeTheBodyStillSends",
+              "test": "post_shouldIgnoreAnAddressType_whenTheBodyCarriesOne",
               "strength": "partial",
               "notes": "not red-probed"
             }
@@ -3958,7 +3988,7 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts",
-              "test": "each tab opens with its own panel heading, the columns Name, Type, Address, Country and Action, and exactly its stamped addresses with their roles",
+              "test": "each tab opens with its own panel heading, the columns Name, Type, Address, Country and Action, and exactly its runAddresses addresses with their roles",
               "strength": "partial",
               "notes": "run by the gate; not run or red-probed here"
             }
@@ -4012,7 +4042,7 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts",
-              "test": "following the Branch tab loads it, marks it current and lists the stamped branch address",
+              "test": "following the Branch tab loads it, marks it current and lists the branch address the test added",
               "strength": "partial",
               "notes": "run by the gate; not run or red-probed here"
             }
@@ -4035,7 +4065,7 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/list/list.tabs.controller.test.js",
-              "test": "holds the selected tab in the filter form so a search stays on it",
+              "test": "holds the selected tab as a hidden addressType input in the filter form",
               "strength": "partial",
               "notes": "not red-probed"
             },
@@ -4051,7 +4081,7 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts",
-              "test": "each tab opens with its own panel heading, the columns Name, Type, Address, Country and Action, and exactly its stamped addresses with their roles",
+              "test": "each tab opens with its own panel heading, the columns Name, Type, Address, Country and Action, and exactly its runAddresses addresses with their roles",
               "strength": "partial",
               "notes": "run by the gate; not run or red-probed here"
             }
@@ -4076,13 +4106,21 @@
               "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
               "test": "keeps the search and clears the Type when another tab is followed",
               "strength": "full",
-              "notes": "red-probed: fails when the form's Type select is renamed or the stub ignores the use"
+              "notes": "red-probed: fails when the form's Type select is renamed or the stub ignores the role"
             },
             {
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
-              "file": "tests/ins/e2e/features/address-book/address-book-type-filter.spec.ts",
-              "test": "the tab stays selected after a role filter is submitted, and following another tab keeps the search, resets the role filter and lists that tab",
+              "file": "tests/ins/e2e/features/address-book/address-book-role-filter.spec.ts",
+              "test": "the tab stays selected after a role filter is submitted, listing only the address holding the role",
+              "strength": "partial",
+              "notes": "passed against the stack; not red-probed; follows Destination, Consignee and Importer from Origin and Consignor with Consignor chosen"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-role-filter.spec.ts",
+              "test": "following another tab after a role filter keeps the search, resets the role filter and lists that tab",
               "strength": "partial",
               "notes": "passed against the stack; not red-probed; follows Destination, Consignee and Importer from Origin and Consignor with Consignor chosen"
             }
@@ -4120,7 +4158,7 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts",
-              "test": "each tab opens with its own panel heading, the columns Name, Type, Address, Country and Action, and exactly its stamped addresses with their roles",
+              "test": "each tab opens with its own panel heading, the columns Name, Type, Address, Country and Action, and exactly its runAddresses addresses with their roles",
               "strength": "partial",
               "notes": "run by the gate; not run or red-probed here"
             }
@@ -4159,7 +4197,7 @@
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
-              "test": "shows each address with the labels of its roles in the Type column",
+              "test": "shows Place of origin, Consignor and Consignee, Place of destination in the Type column of the addresses holding them",
               "strength": "partial",
               "notes": "not red-probed"
             },
@@ -4167,7 +4205,7 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts",
-              "test": "each tab opens with its own panel heading, the columns Name, Type, Address, Country and Action, and exactly its stamped addresses with their roles",
+              "test": "each tab opens with its own panel heading, the columns Name, Type, Address, Country and Action, and exactly its runAddresses addresses with their roles",
               "strength": "partial",
               "notes": "run by the gate; not run or red-probed here"
             }
@@ -4214,7 +4252,7 @@
               "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressListIT.java",
               "test": "list_shouldReturnTheAddressesHoldingAnyOfTheRoles_whenSeveralRolesAreGiven",
               "strength": "full",
-              "notes": "red-probed: fails when Origin or Consignor lists no address without uses"
+              "notes": "red-probed: fails when Origin or Consignor lists no address without roles"
             },
             {
               "type": "unit",
@@ -4222,7 +4260,7 @@
               "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressListIT.java",
               "test": "list_shouldReturnOnlyTheLiveAddressesHoldingTheRole_whenOneRoleIsGiven",
               "strength": "full",
-              "notes": "red-probed: fails when the use clause is removed"
+              "notes": "red-probed: fails when the role clause is removed"
             },
             {
               "type": "unit",
@@ -4230,15 +4268,15 @@
               "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressListIT.java",
               "test": "list_shouldNotReturnAddressesWithNoRoles_whenARoleIsGiven",
               "strength": "full",
-              "notes": "red-probed: fails when the use clause is removed"
+              "notes": "red-probed: fails when the role clause is removed"
             },
             {
               "type": "unit",
               "repo": "trade-imports-address-book",
               "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressRepositoryIT.java",
-              "test": "listLiveAddresses_withARoleOrASearchRole_isOrgScopedAndExcludesDeletedAndOtherRoles",
+              "test": "listLiveAddresses_shouldKeepOnlyTheOrganisationsLiveConsignor_whenARoleOrASearchRoleIsGiven",
               "strength": "partial",
-              "notes": "not red-probed after it was made to list a second use"
+              "notes": "not red-probed after it was made to list a second role"
             },
             {
               "type": "e2e",
@@ -4251,8 +4289,8 @@
             {
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
-              "file": "tests/ins/e2e/features/address-book/address-book-type-filter.spec.ts",
-              "test": "listing by a role returns exactly the stamped addresses holding it, and none for a role nothing holds",
+              "file": "tests/ins/e2e/features/address-book/address-book-role-filter.spec.ts",
+              "test": "listing by a role returns exactly the test addresses holding it, and none for a role nothing holds",
               "strength": "partial",
               "notes": "passed against the stack; not red-probed"
             }
@@ -4269,7 +4307,7 @@
               "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressListIT.java",
               "test": "list_shouldNarrowTheSearchByTheRoles_whenRolesAndASearchTermAreGiven",
               "strength": "full",
-              "notes": "red-probed: fails when the use clause is removed"
+              "notes": "red-probed: fails when the role clause is removed"
             },
             {
               "type": "unit",
@@ -4277,7 +4315,7 @@
               "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressListIT.java",
               "test": "list_shouldPageAndCountOverTheAddressesHoldingTheRoles",
               "strength": "full",
-              "notes": "red-probed: fails when the use clause is removed"
+              "notes": "red-probed: fails when the role clause is removed"
             },
             {
               "type": "unit",
@@ -4291,7 +4329,7 @@
               "type": "unit",
               "repo": "trade-imports-address-book",
               "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressServiceTest.java",
-              "test": "list_passesTheRolesToKeepWithTheSearchAndCountryCodes",
+              "test": "list_passesTheRolesToKeepWithoutNullsOrRepeats",
               "strength": "partial",
               "notes": "not red-probed"
             }
@@ -4382,7 +4420,7 @@
             {
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
-              "file": "tests/ins/e2e/features/address-book/address-book-type-filter.spec.ts",
+              "file": "tests/ins/e2e/features/address-book/address-book-role-filter.spec.ts",
               "test": "each tab, reached through its link, offers Select one with no value and then only its own roles",
               "strength": "partial",
               "notes": "passed against the stack; not red-probed"
@@ -4400,7 +4438,7 @@
               "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
               "test": "lists only the addresses of the tab holding the Type, and keeps the tab and the Type chosen, when submitted with ${how}",
               "strength": "full",
-              "notes": "for the Search button and Enter in the Search field; red-probed: fails when the form's Type select is renamed or the stub ignores the use"
+              "notes": "for the Search button and Enter in the Search field; red-probed: fails when the form's Type select is renamed or the stub ignores the role"
             },
             {
               "type": "fit",
@@ -4416,7 +4454,7 @@
               "file": "src/server/app/services/address-book/address-book.roles.test.js",
               "test": "Should list exactly the addresses holding the one role",
               "strength": "full",
-              "notes": "red-probed: fails when the stub ignores the use"
+              "notes": "red-probed: fails when the stub ignores the role"
             }
           ]
         },
@@ -4431,7 +4469,7 @@
               "file": "src/server/app/features/address-book/list/list.type-filter.controller.test.js",
               "test": "links every page with the selected tab, the search term, the role and the page number only",
               "strength": "partial",
-              "notes": "red-probed through the use resolution; the href builder is not probed alone"
+              "notes": "red-probed through the role resolution; the href builder is not probed alone"
             },
             {
               "type": "unit",
@@ -4444,7 +4482,7 @@
             {
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
-              "file": "tests/ins/e2e/features/address-book/address-book-type-filter.spec.ts",
+              "file": "tests/ins/e2e/features/address-book/address-book-role-filter.spec.ts",
               "test": "a role filter that runs past one page is counted and paged, and the next page keeps the tab, the search and the role filter",
               "strength": "partial",
               "notes": "passed against the stack; not red-probed"
@@ -4452,7 +4490,7 @@
             {
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
-              "file": "tests/ins/e2e/features/address-book/address-book-type-filter.spec.ts",
+              "file": "tests/ins/e2e/features/address-book/address-book-role-filter.spec.ts",
               "test": "a role filter matching one address counts one",
               "strength": "partial",
               "notes": "passed against the stack; not red-probed"
@@ -4485,12 +4523,12 @@
               "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
               "test": "lists only the addresses of the tab holding the Type when submitted with the Search button",
               "strength": "full",
-              "notes": "red-probed: fails when the form's Type select is renamed or the stub ignores the use"
+              "notes": "red-probed: fails when the form's Type select is renamed or the stub ignores the role"
             },
             {
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
-              "file": "tests/ins/e2e/features/address-book/address-book-type-filter.spec.ts",
+              "file": "tests/ins/e2e/features/address-book/address-book-role-filter.spec.ts",
               "test": "a role filter chosen and submitted with the Search button lists only the addresses holding it",
               "strength": "partial",
               "notes": "passed against the stack; not red-probed"
@@ -4508,12 +4546,12 @@
               "file": "src/server/app/services/address-book/address-book.roles.test.js",
               "test": "Should count and page over every address holding the role",
               "strength": "partial",
-              "notes": "the stub's paging, not the scenario's page; red-probed: fails when the stub ignores the use"
+              "notes": "the stub's paging, not the scenario's page; red-probed: fails when the stub ignores the role"
             },
             {
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
-              "file": "tests/ins/e2e/features/address-book/address-book-type-filter.spec.ts",
+              "file": "tests/ins/e2e/features/address-book/address-book-role-filter.spec.ts",
               "test": "a role filter finds the addresses holding it beyond the first page of the tab, counted and without pagination",
               "strength": "partial",
               "notes": "passed against the stack; not red-probed"
@@ -4536,33 +4574,33 @@
               "type": "unit",
               "repo": "trade-imports-address-book",
               "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java",
-              "test": "list_withASearchRoleWidensTheSearchTermToAnAddressHoldingTheRole",
+              "test": "list_shouldAlsoReturnAnAddressHoldingTheSearchRole_whenASearchTermIsGiven",
               "strength": "full",
-              "notes": "red-probed: fails when the search-uses clause is removed"
+              "notes": "red-probed: fails when the search-roles clause is removed"
             },
             {
               "type": "unit",
               "repo": "trade-imports-address-book",
               "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java",
-              "test": "list_withASearchRoleTermAndCountryCodeReturnsTheUnionOfTheirMatches",
+              "test": "list_shouldReturnTheUnionOfTheMatches_whenASearchRoleTermAndCountryCodeAreGiven",
               "strength": "full",
-              "notes": "red-probed: fails when the search-uses clause is removed"
+              "notes": "red-probed: fails when the search-roles clause is removed"
             },
             {
               "type": "unit",
               "repo": "trade-imports-address-book",
               "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java",
-              "test": "list_withASearchRoleStaysWithinTheRolesToKeep",
+              "test": "list_shouldKeepSearchRoleMatchesWithinTheRolesToKeep_whenBothAreGiven",
               "strength": "full",
-              "notes": "red-probed: fails when the search-uses clause is removed"
+              "notes": "red-probed: fails when the search-roles clause is removed"
             },
             {
               "type": "unit",
               "repo": "trade-imports-address-book",
               "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressRepositoryIT.java",
-              "test": "listLiveAddresses_withARoleOrASearchRole_isOrgScopedAndExcludesDeletedAndOtherRoles",
+              "test": "listLiveAddresses_shouldKeepOnlyTheOrganisationsLiveConsignor_whenARoleOrASearchRoleIsGiven",
               "strength": "partial",
-              "notes": "not red-probed after it was made to list a second use"
+              "notes": "not red-probed after it was made to list a second role"
             }
           ]
         },
@@ -4575,7 +4613,7 @@
               "type": "unit",
               "repo": "trade-imports-address-book",
               "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java",
-              "test": "list_withAnUnknownSearchRoleIsABadRequestWithNoErrorsMap",
+              "test": "list_shouldReturn400BadRequestProblemWithNoErrorsMap_whenASearchRoleIsUnknown",
               "strength": "partial",
               "notes": "not red-probed"
             },
@@ -4585,7 +4623,7 @@
               "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressComplianceIT.java",
               "test": "liveApiDocsHaveTheLockedAllowedValuesForRolesAndTheListFilterParameters",
               "strength": "partial",
-              "notes": "locks the allowed values of use and searchUse; not red-probed"
+              "notes": "locks the allowed values of role and searchRole; not red-probed"
             }
           ]
         }
@@ -4948,7 +4986,7 @@
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-              "test": "follows the contact fields with a section break, the legend, the hint and Place of origin then Consignor, unticked",
+              "test": "${typeLabel} opens with the address and contact fields, a section break, then the roles question offering its roles unticked, and ${countryOffered}",
               "strength": "partial",
               "notes": "not red-probed"
             },
@@ -4973,13 +5011,13 @@
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
               "test": "POST after %s is chosen with valid fields and no role ticked shows the roles error inline and as the summary link to the first option, and sends nothing",
               "strength": "full",
-              "notes": "red-probed: fails when the required-use check gives no error"
+              "notes": "red-probed: fails when the required-role check gives no error"
             },
             {
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-              "test": "saving valid fields with no role shows the roles error, whose summary link focuses Place of origin, and the error page has no serious or critical axe violations",
+              "test": "${typeLabel} saved with no role shows the roles error, whose summary link focuses the first option, with no serious or critical axe violations",
               "strength": "partial",
               "notes": "not red-probed"
             },
@@ -5003,14 +5041,14 @@
         },
         {
           "id": "SCN-INS-ADDR-044-C",
-          "name": "An invalid field and no role ticked show only the field's error",
+          "name": "An invalid field and no role ticked show both errors together",
           "coverage": "partial",
           "tests": [
             {
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "POST with an invalid field and no role ticked shows only the field error",
+              "test": "POST with an invalid field and no role ticked shows the field error and the roles error together, in page order",
               "strength": "partial",
               "notes": "not red-probed"
             },
@@ -5051,7 +5089,7 @@
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
               "test": "POST with Consignor ticked and a role the type does not offer saves only Consignor, logs the discarded role and lands on the Origin and Consignor list",
               "strength": "partial",
-              "notes": "red-probed: fails when a posted use the type does not offer is kept"
+              "notes": "red-probed: fails when a posted role the type does not offer is kept"
             },
             {
               "type": "unit",
@@ -5059,7 +5097,7 @@
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
               "test": "POST with only a role the type does not offer shows the roles error",
               "strength": "partial",
-              "notes": "red-probed: fails when a posted use the type does not offer is kept"
+              "notes": "red-probed: fails when a posted role the type does not offer is kept"
             },
             {
               "type": "unit",
@@ -5083,7 +5121,7 @@
               "file": "tests/ins/e2e/features/address-book/address-book-add-roles.spec.ts",
               "test": "ticking every offered role and saving lands on its tab, lists the address with its roles, and stores its roles and its country",
               "strength": "partial",
-              "notes": "runs once per address type; run on the leased stack by the gate; not red-probed; stored uses are compared sorted, so the order they are stored in is not proven by this test"
+              "notes": "runs once per address type; run on the leased stack by the gate; not red-probed; stored roles are compared sorted, so the order they are stored in is not proven by this test"
             }
           ]
         },
@@ -5104,7 +5142,7 @@
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-              "test": "saving with Place of origin ticked lands on the Origin and Consignor list with the new address first",
+              "test": "${typeLabel} saved with every offered role ticked lands on its tab with the new address first",
               "strength": "partial",
               "notes": "not red-probed"
             },
@@ -5115,14 +5153,6 @@
               "test": "saves with a role ticked and lands on the Origin and Consignor list with the address listed",
               "strength": "partial",
               "notes": "JavaScript disabled; not red-probed"
-            },
-            {
-              "type": "fit",
-              "repo": "trade-imports-ins-frontend",
-              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-              "test": "${typeLabel} saved with every offered role ticked lands on its tab with the new address first",
-              "strength": "partial",
-              "notes": "Not probed with an inverted production line."
             },
             {
               "type": "e2e",
@@ -5145,7 +5175,7 @@
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
               "test": "GET after %s is chosen asks %j with the hint and offers unticked, without hints, exactly the roles that type holds, the place roles first",
               "strength": "partial",
-              "notes": "Probed on the legend and the order of the uses; the section break and the absent address search are not proven by it."
+              "notes": "Probed on the legend and the order of the roles; the section break and the absent address search are not proven by it."
             },
             {
               "type": "unit",
@@ -5159,7 +5189,7 @@
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-              "test": "${typeLabel} opens with the address and contact fields, a section break, then the roles question, and United Kingdom alone selected",
+              "test": "${typeLabel} opens with the address and contact fields, a section break, then the roles question offering its roles unticked, and ${countryOffered}",
               "strength": "partial",
               "notes": "Not probed with an inverted production line."
             },
@@ -5201,7 +5231,7 @@
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
               "test": "GET after %s is chosen asks %j with the hint and offers unticked, without hints, exactly the roles that type holds, the place roles first",
               "strength": "partial",
-              "notes": "Probed on the legend and the order of the uses; the section break and the absent address search are not proven by it."
+              "notes": "Probed on the legend and the order of the roles; the section break and the absent address search are not proven by it."
             },
             {
               "type": "unit",
@@ -5215,7 +5245,7 @@
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-              "test": "${typeLabel} opens with the address and contact fields, a section break, then the roles question, and United Kingdom alone selected",
+              "test": "${typeLabel} opens with the address and contact fields, a section break, then the roles question offering its roles unticked, and ${countryOffered}",
               "strength": "partial",
               "notes": "Not probed with an inverted production line."
             },
@@ -5294,7 +5324,7 @@
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
               "test": "POST from the consignment contact handshake saves the address as a Branch address",
               "strength": "full",
-              "notes": "red-probed: fails when the registry maps the consignment contact to another use"
+              "notes": "red-probed: fails when the registry maps the consignment contact to another role"
             },
             {
               "type": "unit",
@@ -5302,7 +5332,7 @@
               "file": "src/server/app/features/address-book/journey-registry.test.js",
               "test": "gives the %s handshake its one role",
               "strength": "full",
-              "notes": "red-probed: fails when the registry maps the consignor to another use"
+              "notes": "red-probed: fails when the registry maps the consignor to another role"
             },
             {
               "type": "e2e",
@@ -5310,7 +5340,7 @@
               "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
               "test": "Save and select on the INS add page reached from the ${role} picker saves the address holding that role, selects it for the role and lands on Roles and addresses with the added banner",
               "strength": "partial",
-              "notes": "for Consignor; reads the stored address back for the role's type and use; run on the leased stack by the gate; not red-probed"
+              "notes": "for Consignor; reads the stored address back for the role's type and role; run on the leased stack by the gate; not red-probed"
             }
           ]
         },
@@ -5325,7 +5355,7 @@
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
               "test": "POST from the consignee handshake with Importer ticked saves the consignee and importer roles and hands back with the select landing",
               "strength": "full",
-              "notes": "red-probed: fails when the journey save stops keeping the posted uses"
+              "notes": "red-probed: fails when the journey save stops keeping the posted roles"
             },
             {
               "type": "unit",
@@ -5333,7 +5363,7 @@
               "file": "src/server/app/features/address-book/journey-registry.test.js",
               "test": "gives the %s handshake its own role and the posted %j its side offers, in the type order",
               "strength": "full",
-              "notes": "red-probed: fails when the journey save stops keeping the posted uses"
+              "notes": "red-probed: fails when the journey save stops keeping the posted roles"
             },
             {
               "type": "fit",
@@ -5347,7 +5377,7 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
-              "test": "Save and select on the INS add page reached from the Consignee picker with Importer ticked saves the address holding the consignee and importer roles",
+              "test": "The INS add page reached from the Consignee picker asks what else the address should be used for, offering Importer and Place of destination unticked, and with Importer ticked Save and select saves the address holding the consignee and importer roles",
               "strength": "partial",
               "notes": "reads the address back through the address book read-one API; run on the leased stack by the gate; not red-probed"
             }
@@ -5364,7 +5394,7 @@
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
               "test": "POST from the %s handshake saves the address with only its own role when the posted role is from outside its side",
               "strength": "full",
-              "notes": "red-probed: fails when the journey save keeps any posted use"
+              "notes": "red-probed: fails when the journey save keeps any posted role"
             },
             {
               "type": "unit",
@@ -5372,7 +5402,7 @@
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
               "test": "POST from the consignee handshake with a role from outside its side logs the discarded role against the notification and fulfilment",
               "strength": "full",
-              "notes": "red-probed: fails when the journey save keeps any posted use"
+              "notes": "red-probed: fails when the journey save keeps any posted role"
             }
           ]
         }
@@ -5431,7 +5461,7 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
-              "test": "Save and select on the INS add page reached from the Consignee picker with Importer ticked saves the address holding the consignee and importer roles",
+              "test": "The INS add page reached from the Consignee picker asks what else the address should be used for, offering Importer and Place of destination unticked, and with Importer ticked Save and select saves the address holding the consignee and importer roles",
               "strength": "partial",
               "notes": "reads the question, hint and options on the Consignee picker's add page; run on the leased stack by the gate; not red-probed"
             }
@@ -5448,7 +5478,7 @@
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
               "test": "POST from the %s handshake saves the address with only its own role when the posted role is from outside its side",
               "strength": "partial",
-              "notes": "saves a valid address with no offered use ticked; not red-probed"
+              "notes": "saves a valid address with no offered role ticked; not red-probed"
             },
             {
               "type": "e2e",
@@ -5471,7 +5501,7 @@
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
               "test": "POST from the consignee handshake with a field error re-renders with exactly the offered role ticked",
               "strength": "full",
-              "notes": "red-probed: fails when the checkbox items stop marking the ticked uses"
+              "notes": "red-probed: fails when the checkbox items stop marking the ticked roles"
             }
           ]
         },
@@ -5486,7 +5516,7 @@
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
               "test": "GET from the consignment contact handshake shows the address fields and no roles question",
               "strength": "full",
-              "notes": "red-probed: fails when the question is shown for a party with no other uses"
+              "notes": "red-probed: fails when the question is shown for a party with no other roles"
             }
           ]
         }

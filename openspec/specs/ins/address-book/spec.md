@@ -315,13 +315,27 @@ The system MUST show each field of an address against its label on its own page.
 
 ### Requirement: Adding from a journey handshake refuses an unrecognised journey type
 **ID**: REQ-INS-ADDR-016
-The system MUST refuse the add-address page when the request carries a journey handshake whose journey type is not one the service knows, and MUST show a page-not-found response rather than the form.
+The system MUST refuse the add-address page when the request carries a journey handshake whose journey type is not one the service knows, and MUST show a page-not-found response rather than the form. A handshake the add page holds from an earlier request that no longer resolves to a journey party MUST be discarded, so the page works as an address book add, and an incomplete handshake MUST be refused. Each is logged once at warn with its journey type, notification and party.
 
 #### Scenario: An unrecognised journey type is refused
 **ID**: SCN-INS-ADDR-016-A
 - **GIVEN** the user opens the add-address page with a handshake naming a journey type the service does not know
 - **WHEN** the page is shown
 - **THEN** they see a page-not-found response, not the add form
+
+#### Scenario: A held handshake that no longer resolves is discarded
+**ID**: SCN-INS-ADDR-016-B
+- **GIVEN** the add page holds a handshake from an earlier request whose journey type is no longer registered, or whose party is not one the journey lists
+- **WHEN** the add page is used again
+- **THEN** the handshake is discarded and the page works as an address book add
+- **AND** the discard is logged once at warn with the journey type, notification and party
+
+#### Scenario: An incomplete handshake is refused
+**ID**: SCN-INS-ADDR-016-C
+- **GIVEN** the add form is posted with a journey type but no notification or party
+- **WHEN** it is saved
+- **THEN** the request is refused as a bad request and nothing is saved
+- **AND** the refusal is logged once at warn with the journey type, notification and party it carried
 
 ### Requirement: A missing name, postcode, country or phone number is named in the words the form uses for it
 **ID**: REQ-INS-ADDR-018
@@ -554,7 +568,7 @@ The system MUST show the edit form's Country select with no blank option and the
 
 ### Requirement: The add form names its first field 'Name or organisation' and, wherever it offers every country, opens its Country select on 'Select a country' first, with United Kingdom selected from the address book after choosing 'Origin or Consignor' and no country chosen from the place of origin and consignor pickers and the consignment contact page
 **ID**: REQ-INS-ADDR-027
-The system MUST label the add form's name 'Name or organisation', keep 'County (optional)' on it, and, wherever the add form offers every country, open its Country select on a blank first option reading 'Select a country'. The address book's add form after choosing 'Destination, Consignee or Importer' or 'Branch' offers United Kingdom alone, as REQ-INS-ADDR-044 and REQ-INS-ADDR-035 state. After 'Origin or Consignor' it MUST select United Kingdom; from the place of origin and consignor pickers and the consignment contact page, none.
+The system MUST label the add form's name 'Name or organisation', keep 'County (optional)' on it, and, wherever the add form offers every country, open its Country select on a blank first option reading 'Select a country'. The address book's add form after choosing 'Destination, Consignee or Importer' or 'Branch' offers United Kingdom alone, as REQ-INS-ADDR-044 states. After 'Origin or Consignor' it MUST select United Kingdom; from the place of origin and consignor pickers and the consignment contact page, none.
 
 #### Scenario: The add form names the name field 'Name or organisation' and keeps County
 **ID**: SCN-INS-ADDR-027-A
@@ -1191,12 +1205,11 @@ The system MUST, on the add form opened from the address book, follow the contac
 - **THEN** 'Select what this address can be used for' shows against the question and in the 'There is a problem' summary
 - **AND** the summary link goes to the first option
 
-#### Scenario: An invalid field and no role ticked show only the field's error
+#### Scenario: An invalid field and no role ticked show both errors together
 **ID**: SCN-INS-ADDR-044-C
 - **GIVEN** the user has chosen any address type and left a mandatory field blank and ticked no role
 - **WHEN** they save the form
-- **THEN** only the blank field's error shows, against the field and in the summary
-- **AND** the roles error is not shown
+- **THEN** the blank field's error and the roles error both show, against their questions and in the summary, in the order the page asks them
 
 #### Scenario: Saving stores every ticked role, and a role the type does not offer is not stored
 **ID**: SCN-INS-ADDR-044-D

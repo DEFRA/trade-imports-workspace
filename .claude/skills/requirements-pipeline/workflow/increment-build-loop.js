@@ -3315,7 +3315,7 @@ const CODE_TEXT_DIRECTIVES = [
   {
     kind: 'a comment or doc comment to add, keep, copy or reword',
     pattern: new RegExp(
-      `\\b(add|adds|adding|write|writes|insert|inserts|put|keep|keeps|carry|carries|copy|copies|mirror|mirrors|rewrite|rewrites|reword|rewords)( [^ .;:]+){0,4} ${NOT_IN_A_RELATIVE_CLAUSE}${COMMENT_WORDS}\\b|\\bwith (a|an|one) ([^ .;:]+ )?${COMMENT_WORDS}\\b`,
+      `\\b(add|adds|adding|write|writes|insert|inserts|put|keep|keeps|carry|carries|copy|copies|mirror|mirrors|rewrite|rewrites|reword|rewords)( [^ .;:,]+){0,4} ${NOT_IN_A_RELATIVE_CLAUSE}${COMMENT_WORDS}\\b|\\bwith (a|an|one) ([^ .;:]+ )?${COMMENT_WORDS}\\b`,
       'i'
     )
   },

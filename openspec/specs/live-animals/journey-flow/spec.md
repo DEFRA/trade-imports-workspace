@@ -419,3 +419,9 @@ The system MUST, on a draft notification, give a page opened from a Change link 
 - **GIVEN** the review of a draft notification
 - **WHEN** the user follows the Change link for the import details
 - **THEN** the Back link on the origin of the import page opens Overview
+
+#### Scenario: The pages whose opening-sequence Back link is Overview keep Overview from a Change link
+**ID**: SCN-FLOW-016-D
+- **GIVEN** the review of a draft notification
+- **WHEN** the user follows a Change link that opens Identification details, Arrival details, Transporter details, Contact address for consignment or Consignment addresses
+- **THEN** the Back link on that page opens Overview

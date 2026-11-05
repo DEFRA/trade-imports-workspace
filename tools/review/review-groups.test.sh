@@ -115,6 +115,10 @@ check "brief writing exits cleanly" "$?" "0"
 brief="$REVIEW_DIR/briefs/$JAVA_REPO--java-source--1.md"
 check "one brief per group" \
     "$(find "$REVIEW_DIR/briefs" -name '*.md' | wc -l | tr -d ' ')" "$(jq '.groups | length' "$REVIEW_DIR/groups.json")"
+check "the brief starts with the core instructions" "$(sed -n '3p' "$brief")" "## How to review your group"
+check "the brief carries the source instructions for its type" "$(grep -c '^## Reviewing source files$' "$brief")" "1"
+check "brief writing makes the folders reviewers write to" \
+    "$([[ -d "$REVIEW_DIR/findings" && -d "$REVIEW_DIR/ac" && -d "$REVIEW_DIR/consistency" ]] && echo yes || echo no)" "yes"
 check "the brief lists a section for each of its files" "$(grep -c '^## File: ' "$brief")" "6"
 check "the brief carries each file's diff" "$(grep -c '^+changed line in src/main/java/app/Bravo.java$' "$brief")" "1"
 check "the brief carries the file at the reviewed commit" "$(grep -c '^class Bravo {}$' "$brief")" "1"

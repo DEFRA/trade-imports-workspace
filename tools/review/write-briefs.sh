@@ -11,12 +11,16 @@
 #
 # Writes briefs/<group id>.md in the review workarea for every group in
 # groups.json, in this order:
-#   1. the type's instructions (the review skill's references/types/<type>.md)
+#   1. the type's instructions: the files its reviewTypes entry in the
+#      review skill's assets/routing.json lists, from references/types/
 #   2. the house rules (.claude/rules/code-quality.md)
 #   3. the ticket (ticket.md, or branch.md in local mode)
 #   4. the group's guides
 #   5. the group: repo, PR, commit and file list
 #   6. each file's diff and its content at the reviewed commit
+#
+# Also makes the findings/, ac/ and consistency/ folders the reviewers
+# write to.
 #
 # Prints one line per brief: its path and size in bytes.
 
@@ -24,12 +28,13 @@ set -euo pipefail
 
 WORKSPACE="$HOME/git/defra/trade-imports-workspace"
 TYPES_DIR="$WORKSPACE/.claude/skills/review/references/types"
+ROUTING="$WORKSPACE/.claude/skills/review/assets/routing.json"
 
 ID=""
 MAX_FILE_BYTES=50000
 
 usage() {
-    sed -n '2,21p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '2,25p' "$0" | sed 's/^# \{0,1\}//'
     exit "${1:-1}"
 }
 
@@ -131,12 +136,14 @@ write_brief() {
     commit=$(jq -r '.commit // "unknown"' "$first")
 
     echo "# Review brief: $type"
-    echo
-    if [[ -f "$TYPES_DIR/$type.md" ]]; then
-        cat "$TYPES_DIR/$type.md"
-    else
-        echo "No type instructions yet: follow your agent instructions."
-    fi
+    while IFS= read -r instructions; do
+        echo
+        if [[ -f "$TYPES_DIR/$instructions" ]]; then
+            cat "$TYPES_DIR/$instructions"
+        else
+            echo "(Missing instructions: $TYPES_DIR/$instructions)"
+        fi
+    done < <(jq -r --arg type "$type" '.reviewTypes[$type].instructions // [] | .[]' "$ROUTING")
     echo
     echo "## House rules"
     echo
@@ -197,7 +204,7 @@ write_brief() {
     done < <(jq -r '.files[]' <<< "$group")
 }
 
-mkdir -p "$REVIEW_DIR/briefs"
+mkdir -p "$REVIEW_DIR/briefs" "$REVIEW_DIR/findings" "$REVIEW_DIR/ac" "$REVIEW_DIR/consistency"
 jq -c '.groups[]' "$GROUPS_FILE" | while IFS= read -r group; do
     out="$REVIEW_DIR/briefs/$(jq -r '.id' <<< "$group").md"
     write_brief "$group" > "$out"

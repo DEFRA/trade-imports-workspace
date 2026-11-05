@@ -93,6 +93,42 @@ The Must for a stale comment is that the comment is gone, or the name
 it decoded now says it. The Must for a stale recipe, doc or test title
 is that it states the new behaviour.
 
+### 3c. Check the changed files against each other
+
+The group reviewers each see one file type, and read nothing outside
+their brief. These checks need two files, so they are yours alone. Run
+them for every repo, from that repo's diff and its pinned review clone.
+
+| Check | Finding when | Category |
+|---|---|---|
+| **Untested branch** | A new or changed branch in source (a condition, an error path, a fallback) that no test in the change exercises. Read the source diff and the test diff side by side. | `coverage-gap` |
+| **Template data** | A field a template reads that its controller or view model no longer supplies, or supplies under another name. | `correctness` |
+| **Build registration** | New client-side JavaScript with no `webpack.config.js` entry, a new SCSS partial missing from `_index.scss`, or a test environment (`@vitest-environment jsdom`) with no matching devDependency. Unit tests pass and the page renders, but the script returns 404 in the browser. Critical. | `correctness` |
+| **Unused dependency** | A dependency added to `package.json` or `pom.xml` that no changed or existing file imports. | `structure` |
+| **One rule, two files** | The same rule, format or guard written in two changed files, which no single group reviewer could see together. | `duplication` |
+
+A group reviewer may already have raised the same problem inside one
+file. Raise yours only for what needs two files to see.
+
+### 3d. Write your findings as an items list
+
+As well as the `_consistency-check.md` below, write every row of its
+**Naming and Reuse**, **Statements Made Untrue** and **Between Files**
+tables to
+`~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/consistency/{repo}.items.json`,
+in the shape `review-add-item.sh --from` reads:
+
+```json
+[
+  {"repo": "{repo}", "file": "{path}", "line": 12, "severity": "Major",
+   "category": "naming", "issue": "{finding}",
+   "fix": "Must: {must}. One way: {one way}"}
+]
+```
+
+Write `[]` when a repo has none. The parent adds the whole list in one
+call.
+
 ### 4. Write consistency check per repo
 
 For **every** repo in `.review-meta.json`, write to the existing 0-byte
@@ -147,6 +183,13 @@ Cross-reference ticket scope to justify.]
 |-----------|------|----------|------|---------|
 
 *None identified (searched: `term1`, `term2`, …).* (if applicable — always list the terms you searched)
+
+## Between Files
+
+| File:Line | Check | Finding | Must | One way |
+|-----------|-------|---------|------|---------|
+
+*None identified.* (if applicable)
 
 ## Verdict
 

@@ -42,12 +42,12 @@
       "scenarios": [
         {
           "id": "SCN-COMMODITY-SELECT-003-A",
-          "name": "Searching by common name offers each matching species under each live-animal code that lists it, by Latin name alone",
+          "name": "Searching by common name offers each matching species under each live-animal code that lists it, by its Latin name with its common name in brackets",
           "coverage": "partial",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "finds cattle by their common name", "strength": "partial", "notes": "searches 'cattle' and finds Bos taurus and four other species under 0102, each shown by Latin name; does not check Bos taurus under 01061900" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "offers each species by its scientific name", "strength": "partial", "notes": "searches 'buffalo' and finds Bubalus, Bubalus bubalis and Syncerus by Latin name alone; does not check the code group" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "lists reference-data's groups by commodity heading and each group's species by label, in that order", "strength": "partial", "notes": "searches 0102, cattle, horse, domestic cat and ostrich, and checks the page shows reference-data's groups in heading order, each group's species in label order; not probed" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "finds cattle by their common name", "strength": "partial", "notes": "searches 'cattle' and finds Bos taurus and four other species under 0102, each shown by its Latin name with its common name in brackets; does not check Bos taurus under 01061900" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "offers each species by its label", "strength": "partial", "notes": "searches 'buffalo' and finds Bubalus, Bubalus bubalis and Syncerus by Latin name with common name in brackets; does not check the code group" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "lists reference-data's groups by commodity heading and each group's species by label, in that order", "strength": "partial", "notes": "searches 0102, cattle, horse, domestic cat and ostrich, and checks the page shows reference-data's groups in heading order, each group's species in label order, the label built from reference-data's own scientific-and-common-name pair; not probed" }
           ]
         },
         {
@@ -60,21 +60,30 @@
         },
         {
           "id": "SCN-COMMODITY-SELECT-003-C",
-          "name": "Searching by commodity code offers the species that search returns under that code, by Latin name alone",
+          "name": "Searching by commodity code offers the species that search returns under that code, by its Latin name with its common name in brackets",
           "coverage": "partial",
           "tests": [
             { "type": "unit", "repo": "trade-imports-reference-data", "file": "src/test/java/uk/gov/defra/trade/imports/integration/CommoditiesControllerIT.java", "test": "searchCommodities_listsAndCountsTheSpeciesOfACommodityFoundByCode", "strength": "partial", "notes": "reference-data integration test (recorded as unit, the nearest type); MDM answers one 0102 commodity row; reference-data lists its 15 species by Latin name and counts 15; never looks at the page" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "shows Bison bison among 15 species under a searched 0102 code", "strength": "partial", "notes": "counts the 15 species inside the 0102 group and finds Bison bison there; not probed" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "shows Bison bison among 15 species under a searched 0102 code", "strength": "partial", "notes": "counts the 15 species inside the 0102 group and finds Bison bison there by its label; not probed" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "lists reference-data's groups by commodity heading and each group's species by label, in that order", "strength": "partial", "notes": "searches 0102 and checks every group and species on the page against reference-data, now including the species-label order; not probed" }
           ]
         },
         {
           "id": "SCN-COMMODITY-SELECT-003-D",
-          "name": "Searching by a species' Latin name, or one word of it, offers that species under each live-animal code that lists it, by Latin name alone",
+          "name": "Searching by a species' Latin name, or one word of it, offers that species under each live-animal code that lists it, by its Latin name with its common name in brackets",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "renders a separate group per matching commodity code", "strength": "full", "notes": "searches 'taurus' and finds Bos taurus under the 0102 group and the 01061900 group" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "renders a separate group per matching commodity code", "strength": "full", "notes": "searches 'taurus' and finds Bos taurus, labelled with its common name in brackets, under the 0102 group and the 01061900 group" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "accepts and persists multiple commodity-species pairs found under different queries", "strength": "partial", "notes": "searches 'Bos taurus' and ticks it under 0102" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-003-E",
+          "name": "A species the reference data holds no common name for is offered by its Latin name alone",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/species-label.test.js", "test": "Should label a species with no common name as its scientific name alone, with no brackets", "strength": "full", "notes": "probed: speciesLabel's conditional bracket forced on unconditionally went red, restored went green" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "offers a species the reference data holds no common name for as its scientific name alone", "strength": "partial", "notes": "searches 'Capreolus', a species the frontend's own commodity fixture holds no common name for, and asserts the checkbox's accessible name is the scientific name alone; not separately probed — exercises the same speciesLabel path as the probed unit test above" }
           ]
         }
       ]
@@ -201,7 +210,7 @@
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "counts what has been chosen and clears it on request", "strength": "partial", "notes": "checks the panel counts the choice, shows the commodity as a bold line with its species beneath, and disappears when the selection is cleared; not probed" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "counts and lists what has been chosen, and clears it on request", "strength": "partial", "notes": "checks the panel's commodity line and per-species entries, and that Clear all empties it; not probed" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should summarise the stored selection, counted and grouped by code", "strength": "full", "notes": "probed: selectedSummary's shape inverted went red (search.controller.test.js:318, count/heading/groups mismatch), restored went green" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "shows a Remove control named for each chosen species", "strength": "partial", "notes": "checks the panel offers a button whose accessible name is Remove followed by the species' Latin name, for every chosen species; not probed" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "shows a Remove control named for each chosen species", "strength": "partial", "notes": "checks the panel offers a button whose accessible name is Remove followed by the species' label, for every chosen species; not probed" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "lists each chosen commodity with one entry per chosen species offering a Remove control", "strength": "partial", "notes": "checks one panel entry per chosen species under its commodity line, each with a Remove control named for that species; not probed" }
           ]
         },
@@ -437,7 +446,9 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "bolds the matched text in the commodity heading and in a species label", "strength": "partial", "notes": "searches 0102 to bold the matched commodity heading, then 'Bos taurus' to bold the matched species label; not probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "bolds the matched text inside the common name when a search matches it", "strength": "partial", "notes": "searches a term that matches only the common name and checks the bold run inside the brackets is that matched text; not probed" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "bolds the matched text in the commodity heading and in a species label", "strength": "partial", "notes": "checks a search bolds the matched part of the commodity heading and of a species label on the page; not probed" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "bolds the matched text inside the common name when a search matches it", "strength": "partial", "notes": "checks a search matching a common name bolds the matched run inside the brackets of the species label; not probed" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should bold the matched text in the commodity heading and in a species label", "strength": "full", "notes": "probed: labels.js's emphasis composition reverted to the plain label went red (3 tests across labels.test.js and search.controller.test.js), restored went green" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/labels.test.js", "test": "Should bold the part of a species label the query matched, ignoring case", "strength": "full", "notes": "covered by the same probe as the controller test above" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/labels.test.js", "test": "Should bold the part of a species label the query matched, ignoring accents", "strength": "partial", "notes": "accent-folding is an additional case over the probed composition; not separately inverted" }

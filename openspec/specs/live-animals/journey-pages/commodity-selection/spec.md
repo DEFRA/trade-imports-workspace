@@ -282,7 +282,7 @@ The system MUST list no more than a hundred species for one search.
 #### Scenario: A search matching more than a hundred species lists a hundred
 **ID**: SCN-COMMODITY-SELECT-014-A
 - **GIVEN** the user is on the commodity selection page
-- **WHEN** they search for a commodity code holding more than a hundred species
+- **WHEN** they search for a term matching more than a hundred species
 - **THEN** a hundred species are listed
 
 ### Requirement: Search results are listed in order: commodity heading, then species label

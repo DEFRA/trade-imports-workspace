@@ -93,11 +93,7 @@ describe('the workspace gates.json', () => {
       plan.map(({ repo: folder, name, scope }) => [folder, name, scope])
     ).toEqual([
       ['trade-imports-ins-tests', 'e2e', ['tests/animals/']],
-      [
-        'trade-imports-ins-tests',
-        'e2e-tagged',
-        ['--grep', '@animals-frontend']
-      ]
+      ['trade-imports-ins-tests', 'e2e-tagged', ['--grep', '@animals-frontend']]
     ])
   })
 

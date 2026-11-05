@@ -235,9 +235,7 @@ const repoPlan = (gates, repo, phase, folders, workspaceRoot) => {
       )
     ]
   }
-  return covering.flatMap((rung) =>
-    planned(repo, rung, folders, workspaceRoot)
-  )
+  return covering.flatMap((rung) => planned(repo, rung, folders, workspaceRoot))
 }
 
 const firstSelectedPhase = (phase) => selectedPhases(phase)[0]

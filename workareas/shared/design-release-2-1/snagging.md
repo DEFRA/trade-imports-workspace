@@ -159,6 +159,14 @@ programme's `sources.json` pins. Design Release 2.1 has no address book view of 
 - **Built:** as the prototype: an Origin or Consignor address offers every country, United Kingdom included (`address-countries.js`). Nothing stops a place of origin or consignor being saved in the UK. The address book API accepts any country for any type.
 - **To ask:** (a) keep United Kingdom in the list, as the prototype has it, for example for a consignor based in the UK; or (b) leave it out, since animals imported into Great Britain start their journey abroad? If (b), should the API refuse a UK send-side address as well, and what about Northern Ireland, the Channel Islands and the Isle of Man?
 
+### S-19. The plants prototype's fake address book has no roles
+
+- **For:** the designers, who maintain the prototype. Raised by the 5 November code review of EUDPA-711 (workspace items #2 and #26).
+- **Page:** the prototype's address book pages, and any prototype page that adds or picks an address.
+- **Prototype:** `trade-imports-plants-prototype`'s fake address book service (`src/server/app/services/ins-address-book/`, `contract.json`, `client.js` and `stub.js` at main `ce34385`) has no `roles`: its fields stop at `email` and `deleted`, its create example carries none, and its open questions still ask 'Does the address book need anything a design adds, such as categories or usages?'. The workspace's prototype skill reference (`.claude/skills/prototype/references/fake-a-service/address-book-pages.md`) now describes address types and roles, but its wire shape, required fields and `listAddresses` row still describe the service without them.
+- **Built:** the real address book stores `roles` and requires at least one; its list filters by `role` and `searchRole` (address-book #20, ins-frontend #71).
+- **To ask:** when the designers next build address book pages in the prototype, bring its fake address book up to the real service (roles on create and update, role and search-role filtering on list) and the skill reference with it?
+
 ## Settled
 
 | Question | Answer | Where it landed |

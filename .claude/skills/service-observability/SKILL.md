@@ -15,7 +15,8 @@ It was written from EUDPA-632, the spike on
 `trade-imports-reference-data`, and its code recipe from EUDPA-674 on
 `trade-imports-address-book`: every metric a Micrometer meter, published
 by `EmfMeterRegistry` (`references/METRICS.md` → "Publish"). That is
-the one way this skill builds metrics. Read "What is proven" below
+the one way this skill builds metrics, and every metric and dimension is named in dot
+case (`external.call.duration`). Read "What is proven" below
 before trusting any step.
 
 ## Path conventions
@@ -46,7 +47,7 @@ skill and point its plan at these steps.
 
 | Part | State |
 |---|---|
-| Metrics, Java service | Proven by tests on `trade-imports-address-book` (`EmfMeterRegistry`, the EMF documents it writes, the allowlist, `@Timed` through the Spring proxy). `[UNPROVEN]` in dev CloudWatch until that release is checked there. reference-data's older direct-EMF metrics reached dev CloudWatch; moving it to this way keeps every name and dimension, `CacheHit` and `CacheMiss` by `Cache` included (`references/METRICS.md` → "A service built the old way") |
+| Metrics, Java service | Proven by tests on `trade-imports-address-book` (`EmfMeterRegistry`, the EMF documents it writes, the allowlist, `@Timed` through the Spring proxy). `[UNPROVEN]` in dev CloudWatch until that release is checked there. reference-data's older direct-EMF metrics reached dev CloudWatch under the PascalCase names; moving it to this way renames every metric and dimension to dot case, so its dashboard and alerts are rebuilt (`references/METRICS.md` → "A service built the old way") |
 | Log line, Java service | Proven by tests on `trade-imports-reference-data`: the encoded JSON holds a nested `event` object with a numeric duration (`references/LOGGING.md` → "How to write the fields"). `[UNPROVEN]` in dev OpenSearch until a release with `EcsEventEncoder` is checked there; the earlier MDC version was dropped by CDP |
 | Metrics and log line, Node service | Not written. `trade-imports-animals-frontend`, `-ins-frontend` and `-plants-frontend` already have `src/server/common/helpers/external-call-metrics.js`; the first Node ticket adds a Node reference here |
 | Dashboard and alert templates | Written from the reference-data code and the CDP docs; not yet imported into Grafana |

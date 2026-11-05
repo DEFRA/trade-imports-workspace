@@ -1,0 +1,47 @@
+{
+  "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "77fa29081235e82086e84af9e9c1dad8d1e91d81",
+  "pr": 71,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:45:49Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new tests cover the ticket's add-form behaviour, but duplicate per-type test bodies, leave local copies of promoted helpers, stop the role-to-party rename part-way and use filtered CSS class locators.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 123,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The Origin or Consignor tests in 'add address roles question' repeat the bodies of the per-type loop in 'add address of a type that must be in the United Kingdom': the render test (123-147 vs 234-265: section break, roles group, expectInDocumentOrder, hint, labels, none ticked), the no-role error test (149-165 vs 283-301) and the saved-lands-first test (167-181 vs 267-281). Three address types, two copies of each assertion block.",
+      "fix": "Must: each per-type rule (roles question layout, no-role error, landing tab with the new address first) is asserted by one test body run for all three address types, with the per-type differences (offered roles, tab label, country options) held in the table that drives it. One way: add ORIGIN_OR_CONSIGNOR to the loop's table with offeredRoles ['PLACE_OF_ORIGIN','CONSIGNOR'] and its tab, move the country assertion into a per-type expectation, and delete the three Origin-only copies."
+    },
+    {
+      "id": 2,
+      "line": 186,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Shared helpers promoted in this PR still have local copies here: 'finds an address saved with Consignor ticked' (186-190) hand-writes the body of addValidAddressToFreshOrganisation (sign in, open form, fill, tickRoles, save, expect list URL) although the helper now takes roles; the Back link locator is inlined at 99, 461 and 490 although address-form.js exports backLink; 'not-an-email' is a literal at 638 and 644 although address-form.js exports malformedEmail; the Type cell lookup (row by name, cell nth(1)) at 582-587 is also written twice in list.fit.spec.js.",
+      "fix": "Must: each of these steps and values has one home in the fit helpers, and this spec calls it. One way: addValidAddressToFreshOrganisation(page, { organisationPrefix, roles: ['CONSIGNOR'] }) in the Consignor search test; backLink(page) at 99, 461, 490; malformedEmail at 638 and 644; a typeCellOf(page, name) helper in address-book-list.js used here and in list.fit.spec.js.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 3,
+      "line": 408,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The rename of JOURNEY_HANDSHAKES_BY_ROLE to JOURNEY_HANDSHAKES_BY_PARTY stopped part-way: the loop at 408 now binds 'party' but keeps 'roleName' for the party's display name, and the test titles still say 'from the ${roleName} handshake' (412) and 'from a role handshake' (455). In this PR 'role' now means an address use (PLACE_OF_ORIGIN, CONSIGNOR...), so 'role handshake' names a different concept from the one the handshake carries.",
+      "fix": "Must: the handshake's concept is called party everywhere in this spec, in variables and test titles, and 'role' is used only for an address use. One way: rename roleName to partyName and change the titles to 'from the ${partyName} handshake' and 'from a party handshake'."
+    },
+    {
+      "id": 4,
+      "line": 244,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "New tests locate by GOV.UK CSS classes: page.locator('hr.govuk-section-break--visible') at 128 and 246, and page.locator('label.govuk-label:not(.govuk-checkboxes__label)') at 244, which also filters rendered labels out of the list it asserts, so a stray extra label of another kind would pass unseen.",
+      "fix": "Must: these assertions use role or label locators and assert the whole rendered list, with no class selector or filter. One way: page.getByRole('separator') for the section break, and assert the form's field labels through getByRole('textbox'/'combobox') accessible names or a form-scoped label list asserted in full, including the role checkboxes.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:05Z"
+}

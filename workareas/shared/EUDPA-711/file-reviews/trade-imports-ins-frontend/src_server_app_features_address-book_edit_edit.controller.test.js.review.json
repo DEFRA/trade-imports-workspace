@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/features/address-book/edit/edit.controller.test.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "77fa29081235e82086e84af9e9c1dad8d1e91d81",
+  "pr": 71,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:45:01Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The POST test proves the edit keeps every stored role and ignores posted ones, but the added no-roles check is an absence assertion that cannot fail on its own and the expected body rebuilds a named helper.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 98,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The added absence check expect($('form input[type=\"checkbox\"], form input[type=\"radio\"]')).toHaveLength(0) (lines 98-100) cannot fail on its own: any type radio or roles checkbox brings a label, which the exact expect(textsOf($, 'form label')).toEqual(ADDRESS_FORM_LABELS) on line 97 already rejects; it is the absence pattern the house rules ask to replace with an exact positive assertion",
+      "fix": "Must: the 'no address type and no roles' claim of SCN-INS-ADDR-003-C is proved by one exact positive assertion, and the test title says so. One way: assert the form's named controls equal exactly the nine field names (plus any hidden fields the form carries), drop the checkbox/radio count, and name the no-type/no-roles claim in the title"
+    },
+    {
+      "id": 2,
+      "line": 288,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The expected update body { ...VALID_ADDRESS_FIELDS, name: UPDATED_NAME, roles: STORED_ADDRESS.roles } (lines 288-292) rebuilds VALID_ADDRESS_RECORD, which address-book-requests.js:85-88 already names as exactly { ...VALID_ADDRESS_FIELDS, roles: STORED_ADDRESS.roles }",
+      "fix": "Must: the test uses the shared helper's name for the stored-roles record rather than rebuilding it. One way: expect(sent).toEqual({ ...VALID_ADDRESS_RECORD, name: UPDATED_NAME })"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:05Z"
+}

@@ -1,0 +1,29 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressService.java",
+  "repo": "trade-imports-address-book",
+  "commit": "b18192a8d33c313bb42bc7468eb060de1b7e8c3c",
+  "pr": 20,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:40:22Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The list query logic is correct and tested, but the rename leaves the listOperators timer name behind and 'search term' names both the typed text and the match clause.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 80,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The Operator to Address rename stops part-way: the list query timer is still named 'controller.listOperators.query.time' (AddressService.java:80), and its sibling 'controller.listOperators.time' sits on AddressController.java:110. The timer is also prefixed 'controller.' though it is recorded in the service. No dashboard or doc outside the repo's old review notes reads either name (grep of the workspace docs and openspec), so renaming breaks nothing.",
+      "fix": "Must: the list timers use the address vocabulary the rest of the class now uses, and the service timer's name says it times the service's query, not a controller. One way: rename to 'address.list.query.time' here and 'controller.listAddresses.time' on AddressController.listAddresses, in the same change."
+    },
+    {
+      "id": 2,
+      "line": 99,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "One name, two concepts: searchTermsOf (lines 99-111) builds a List<ListCriteria.SearchTerm>, a match clause that can be text, countries or roles, from requested.searchTerm(), which is the user's typed text (RequestedListFilters.searchTerm). Line 101-102 reads 'if (!requested.searchTerm().isEmpty()) searchTerms.add(new TextMatching(...))', so a reader predicts searchTerms holds the typed text, but it also holds InCountries and HoldingAnyRole entries.",
+      "fix": "Must: the typed search text and the any-of match clause carry different names from request record through ListCriteria to this service. One way: rename ListCriteria.SearchTerm to a name for a match clause (for example ListCriteria.Match, with matches()/matchesOf here), or rename RequestedListFilters.searchTerm to searchText, and update the locals and helper names in this file to match."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:04Z"
+}

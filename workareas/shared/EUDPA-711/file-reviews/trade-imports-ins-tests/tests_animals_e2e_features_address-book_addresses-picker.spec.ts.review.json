@@ -1,0 +1,22 @@
+{
+  "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "29887c343798673f6d5ecf1e4016ae996357181f",
+  "pr": 77,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:46:53Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "CSS locators and the inline Next loop moved to role-based page-object methods, but both tests still hand-walk to the Consignor picker that animalsJourney.toPartyPicker owns.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 58,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Both tests walk to the Consignor picker step by step with the same sequence (lines 58-63 and 109-112: startNotification, answerCommodity, overview task 'Roles and addresses', addParty('Consignor')), which flows/animals/journey.ts already owns as animalsJourney.toPartyPicker(role) (journey.ts:567-573, which also waits for the picker heading). The PR rewrote this test's body but kept the hand-written route.",
+      "fix": "Must: this spec reaches the Consignor picker only through the journey flow's to* method, with no hand-written copy of that route. One way: replace lines 58-61/63 and 109-112 with 'await animalsJourney.toPartyPicker(\"Consignor\")', keeping the consignorAddressLines declaration.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:06Z"
+}

@@ -1,0 +1,29 @@
+{
+  "file": "src/server/common/test-helpers/address-book-requests.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "77fa29081235e82086e84af9e9c1dad8d1e91d81",
+  "pr": 71,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:46:15Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Fixtures and cookie-aware request helpers are sound and cookieHeaderOf is correctly promoted, but the default create matcher's name hides its addressType guard and the testing.md catalogue misses VALID_ADDRESS_RECORD and the default matcher.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 105,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "carriesRoles (address-book-requests.js:105-106) returns true only when the body has roles AND has no addressType key; the name predicts the first check and hides the second, which is the guard that the add controller strips the form-only addressType before calling the API, so serveAddressCreated()'s default matcher refuses a body a reader would expect it to accept.",
+      "fix": "Must: the default create-body matcher's name states both conditions it checks (roles present, no addressType). One way: rename to carriesRolesWithoutAddressType, or split into two named predicates combined in serveAddressCreated's default."
+    },
+    {
+      "id": 2,
+      "line": 85,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "The helper catalogue in src/server/app/docs/testing.md:55-81 lists VALID_ADDRESS_FIELDS and VALID_ADDRESS_PAYLOAD but not the new VALID_ADDRESS_RECORD (address-book-requests.js:85, used by address-book.test.js and address-book.roles.test.js), and describes serveAddressCreated(matchBody) (testing.md:75) without its new default matcher (line 108), so a test author reading the catalogue rebuilds the API-shaped record locally or passes a matcher that is now redundant.",
+      "fix": "Must: testing.md's address-book-requests entry names every exported fixture, including VALID_ADDRESS_RECORD (the fields with the stored roles array, as the API takes them), and says what serveAddressCreated matches when called with no matcher. One way: add both to the fixtures and stubs lists in the same paragraph."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:05Z"
+}

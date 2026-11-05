@@ -1,0 +1,37 @@
+{
+  "file": "src/config/traffic.js",
+  "repo": "trade-imports-performance-tests",
+  "commit": "ed4724a3274db7e6b7c02fc01dfbed97f19f62e5",
+  "pr": 27,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:49:03Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Deriving the session page count from the endpoint map and removing id-laden comments are right, but the code-free rename stops part-way and mixes PLANTS with HIGH_RISK_PLANTS.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 21,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The rename that took source codes out of the constant names stops part-way: GBN_AG_ANNUAL_NOTIFICATIONS and GBN_PP_ANNUAL_NOTIFICATIONS (:21, :22, used at :214, :215, :217) still carry the AG/PP codes the PR removed from AG1_/PP1_/PP2_ names, and the new names mix two words for one journey: PLANTS_PAGES_PER_NOTIFICATION, PLANTS_SESSION_MINUTES and PLANTS_PEAK_DAY_NOTIFICATIONS beside HIGH_RISK_PLANTS_NOTIFICATIONS_PER_HOUR (:14) and the model key highRiskPlants.",
+      "fix": "Must: every journey constant in traffic.js names its journey with one word set and no volumetrics code, matching the model keys (liveAnimals, highRiskPlants). One way: LIVE_ANIMALS_ANNUAL_NOTIFICATIONS and HIGH_RISK_PLANTS_ANNUAL_NOTIFICATIONS, and HIGH_RISK_PLANTS_PAGES_PER_NOTIFICATION, HIGH_RISK_PLANTS_SESSION_MINUTES, HIGH_RISK_PLANTS_PEAK_DAY_NOTIFICATIONS."
+    },
+    {
+      "id": 2,
+      "line": 74,
+      "severity": "Minor",
+      "category": "comments",
+      "issue": "The doc comment on SIGN_IN_AND_DASHBOARD_PAGES ('The page requests an INS session makes on opening: the sign-in plus the dashboard.') restates the constant's name.",
+      "fix": "Must: SIGN_IN_AND_DASHBOARD_PAGES carries no comment that repeats its name. One way: delete the line-74 doc comment."
+    },
+    {
+      "id": 3,
+      "line": 76,
+      "severity": "Minor",
+      "category": "correctness",
+      "issue": "ADDRESS_BOOK_SESSION_PAGES, now derived from Object.keys(ADDRESS_BOOK_SESSION_ENDPOINTS), counts worstCaseSearch on every session (13 pages), but front-door.js searchWorstCaseWhenChosen makes that request only on addressBook.worstCaseSearchShare of sessions (0.25 by default). scenarioPagesPerHour (:815) therefore reports 260 INS pages an hour for ins-address-book at the defaults when sessions make 245, and design-target.js:763 sizes the INS spike pace (x11.9) from that figure, so the INS front door spike lands below its stated 5 RPS. iterationSeconds (:838) wants the maximum and is right to use 13.",
+      "fix": "Must: the pages-an-hour figure for ins-address-book counts the worst-case search at its share, while the longest-iteration figure still counts it on every session. One way: keep ADDRESS_BOOK_SESSION_PAGES as the longest session for iterationSeconds and use (ADDRESS_BOOK_SESSION_PAGES - 1 + model.addressBook.worstCaseSearchShare) in scenarioPagesPerHour, re-baselining traffic.test.js and design-target.test.js."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:07Z"
+}

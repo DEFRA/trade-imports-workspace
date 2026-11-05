@@ -1,0 +1,22 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/exceptions/BadRequestException.java",
+  "repo": "trade-imports-address-book",
+  "commit": "b18192a8d33c313bb42bc7468eb060de1b7e8c3c",
+  "pr": 20,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:42:36Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The rename edit is accurate (AddressService#list does throw it), but the Javadoc it touches describes callers, handlers and filters instead of the class's contract.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 3,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The class Javadoc (lines 3-15, line 6 edited in this PR) describes callers and other modules rather than this class's contract: a caller (AddressService#list), the handler that maps it (GlobalExceptionHandler and its 400 shape), IdentityHeaderFilter, and MethodArgumentTypeMismatchException's handler, plus usage advice ('do not throw this exception from a servlet filter'). The rename edit shows the cost: a caller rename forced a Javadoc edit here.",
+      "fix": "Must: the Javadoc states only this exception's own contract (a request parameter that fails a service-level check), naming no caller, handler or filter; the mapping and filter rationale live in GlobalExceptionHandler's own docs or the repo's docs/. One way: reduce it to one sentence such as 'A request parameter that is well formed but fails a service-level check.'",
+      "best_practice": "java/modern-java.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:04Z"
+}

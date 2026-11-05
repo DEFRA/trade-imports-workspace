@@ -1,0 +1,29 @@
+{
+  "file": "workareas/shared/design-release-2-1/snagging.md",
+  "repo": "trade-imports-workspace",
+  "commit": "ed9e3c48f8d3463d0e438abea99a05d5b2e653c1",
+  "pr": 196,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:51:40Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new snags are well sourced, but S-18 misstates what the address book API enforces on country and three snags cite code names the roles rename removed.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 159,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "S-18's Built line tells product 'The address book API accepts any country for any type.' The API refuses it for the receiving side: AddressRequest is annotated @ReceivingRolesInTheUnitedKingdom, and its Javadoc (AddressRequest.java:25-27) says an address holding a consignee, importer or place of destination role must be in the United Kingdom; RoleGroup.RECEIVING is inTheUnitedKingdom. Option (b)'s 'should the API refuse a UK send-side address as well' is asked against a wrong picture of what the API does today.",
+      "fix": "Must: S-18 states what the API enforces now: any country for the sending and branch roles, the United Kingdom only for consignee, importer and place of destination. One way: replace the sentence with 'The address book API accepts any country for a sending role and refuses a non-UK consignee, importer or place of destination (ReceivingRolesInTheUnitedKingdom).'"
+    },
+    {
+      "id": 2,
+      "line": 85,
+      "severity": "Minor",
+      "category": "correctness",
+      "issue": "S-09, S-11 and S-14 point the designer at code names the same PR set renamed when uses became roles, so the cited code cannot be found: line 85 copy.en.js uses.legendByAddressType (now roles.legendByAddressType, copy.en.js:104-108); line 101 list.uses and uses.options (now list.roles, copy.en.js:38, and roles); line 125 USES_BY_ADDRESS_TYPE and useItemsOf (now ROLES_BY_ADDRESS_TYPE, address-book-tabs.js:10, and roleItemsOf, add.controller.js:128). S-17 and S-18, added the same week, already say roles.",
+      "fix": "Must: every Built line in S-09 to S-18 names code that exists at ins-frontend PR #71's head. One way: rename the cited keys and functions to their roles names, keeping the user-facing words ('uses question') where they describe the page."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:07Z"
+}

@@ -1,0 +1,31 @@
+{
+  "file": "tests/plants/e2e/features/review.spec.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "29887c343798673f6d5ecf1e4016ae996357181f",
+  "pr": 77,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:48:33Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The errorSummaryLink and shared update-record changes are sound, but the rename test hard-codes the helper's town and the invalid-country test names a consignor role without saying why.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 250,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Line 238 updates the record with renamedAndMovedNurseryAddress(renamed), which owns the new town 'Dundee' (flows/plants/journey.ts:58-62), but line 250 asserts not.toContainText('Dundee') as a bare literal and line 247 asserts 'Perth', the town nurseryAddress owns. The same pattern is in addresses-submit-freeze.spec.ts:29,37. The reader cannot see why 'Dundee' must be absent, and a change to the helper's town turns the absence check into one that cannot fail.",
+      "fix": "Must: the town assertions in this test read their values from the records they compare against. One way: const moved = renamedAndMovedNurseryAddress(renamed); updateAddress(address.id, moved); assert toContainText(address.townOrCity) and not.toContainText(moved.townOrCity).",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 2,
+      "line": 616,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Line 616 passes roles: [addressRoles.consignor] for a record the journey then picks as the place of destination. The role is chosen only to get the invalid country 'United Kingdom' past the address book's ReceivingRolesInTheUnitedKingdom check (trade-imports-address-book AddressRole.java:10, ReceivingRolesInTheUnitedKingdomValidator.java:28); that reason lives only in a JSDoc on NotificationOptions.roles (flows/plants/journey.ts:81). Read in the spec, a consignor-only record used as a destination looks like a mistake, and the record name explains the country but not the role.",
+      "fix": "Must: the spec says, by a name and not a comment, that it mints a record with an invalid country, and the flow owns which role lets the API accept it. One way: a completeNotification option such as invalidCountry: 'United Kingdom' that sets a sending role inside PlantsJourney, so the spec no longer names a role.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:06Z"
+}

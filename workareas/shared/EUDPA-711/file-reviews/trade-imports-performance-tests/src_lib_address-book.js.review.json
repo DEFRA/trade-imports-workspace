@@ -1,0 +1,37 @@
+{
+  "file": "src/lib/address-book.js",
+  "repo": "trade-imports-performance-tests",
+  "commit": "ed4724a3274db7e6b7c02fc01dfbed97f19f62e5",
+  "pr": 27,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:49:28Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Paths, the address-type start path and the per-tab list path match the ins-frontend; three Major code-quality findings: the added type and its role in two places, ADDRESS_BOOK not naming itself a path, and a doc comment that describes its caller.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 41,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "The address type the suite adds with (ADDED_ADDRESS_TYPE, line 11) and the role it ticks ('PLACE_OF_ORIGIN', a literal in addAddressAnswers line 41) are one choice kept in two places. Change ADDED_ADDRESS_TYPE to, say, BRANCH and the ins-frontend drops the role the type does not offer (keepRolesOfferedBy, add.controller.js:351) then refuses the empty list (rolesErrorsOf, :340), so every add answers 400.",
+      "fix": "Must: the role the suite ticks comes from the same definition as the type it adds with, so changing one cannot leave the other wrong. One way: define the added type and its role together (e.g. ADDED_ADDRESS = { addressType: ORIGIN_OR_CONSIGNOR, role: 'PLACE_OF_ORIGIN' }) and read both from it."
+    },
+    {
+      "id": 2,
+      "line": 1,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "ADDRESS_BOOK holds the path '/address-book', but its name does not say path, while its sibling ADDRESS_TYPE_START_PATH (line 9) does; front-door.js imports it next to TRAFFIC_CLASSES.ADDRESS_BOOK, which is the traffic class 'address-book', so one name reads as two different values in the same module.",
+      "fix": "Must: the constant's name says it is the address book's path. One way: rename to ADDRESS_BOOK_PATH and update front-door.js, readiness.js and addressIdFrom/addressBookListPath."
+    },
+    {
+      "id": 3,
+      "line": 16,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The ADDRESS_BOOK_SESSION_ENDPOINTS doc comment describes its caller, not the constant: 'A session makes all of them when its worst-case search is chosen' (line 16) narrates addressBookSession in k6/front-door.js. The house rule says a comment describes only the lines below it.",
+      "fix": "Must: the doc comment states only what the constant holds. One way: keep 'The endpoint name of each address-book request after the dashboard, one entry per request' and delete the sentence about what a session does."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:07Z"
+}

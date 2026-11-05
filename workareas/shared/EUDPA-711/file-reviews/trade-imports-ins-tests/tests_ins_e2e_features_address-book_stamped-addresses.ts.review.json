@@ -1,0 +1,29 @@
+{
+  "file": "tests/ins/e2e/features/address-book/stamped-addresses.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "29887c343798673f6d5ecf1e4016ae996357181f",
+  "pr": 77,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:47:34Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The shared set-up is correct (roles are sent, ids are cleaned up per fixture, tabs are derived from roles), but the Type column label rule sits in the wrong module and the 'stamped' vocabulary is a metaphor that does not say what it creates.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 16,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "rolesLabelOf (line 16) is the Type column's display rule: the role column labels joined with ', '. It lives in a test-data module for 'stamped' addresses, and address-book-add-roles.spec.ts:17 imports it from there although that spec uses no stamped addresses. The rule's inputs (roleColumnLabels) and its sibling joins (hintOf) live in domain/ins/constants/address-book-types.ts.",
+      "fix": "Must: the Type column label rule has one home beside roleColumnLabels in the address-book domain constants, and every spec imports it from there. One way: move rolesLabelOf into domain/ins/constants/address-book-types.ts and update the imports in stamped-addresses.ts, address-book-tabs.spec.ts, address-book-type-filter.spec.ts and address-book-add-roles.spec.ts."
+    },
+    {
+      "id": 2,
+      "line": 52,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "'Stamped' is a metaphor for 'named with one unique search term', and it runs through the module's vocabulary: StampedAddress (l9), newStampedSearchTerm (l14), stampedAddressesOf (l18), createStamped (l52), stampedAddressesOnTab (l61), createStampedAndFilterListByRole (l75), and the test title 'returns exactly the stamped addresses holding it' (address-book-type-filter.spec.ts:27). createStamped also names no object: from the name alone a reader cannot predict that it creates four addresses, one per role group (Consignee and Destination, Consignor, Importer, Branch), under a shared search term.",
+      "fix": "Must: the names say what the data is (one address per role group, sharing a unique search term), with no metaphor, across the module, its callers and the test titles that use the word. One way: rename to e.g. RoleGroupAddress, newSearchTerm, createRoleGroupAddresses, roleGroupAddressesOnTab, createRoleGroupAddressesAndFilterListByRole, and reword the titles to match."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:06Z"
+}

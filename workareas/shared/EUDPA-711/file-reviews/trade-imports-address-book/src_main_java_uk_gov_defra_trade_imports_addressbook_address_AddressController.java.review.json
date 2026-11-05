@@ -1,0 +1,21 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressController.java",
+  "repo": "trade-imports-address-book",
+  "commit": "b18192a8d33c313bb42bc7468eb060de1b7e8c3c",
+  "pr": 20,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:40:30Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The role and searchRole filters are wired correctly and tested, but the Operator-to-Address rename left every @Timed metric name on the old concept.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 110,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The Operator-to-Address rename stops part-way: every @Timed metric still names the old concept (controller.listOperators.time :110, controller.createOperator.time :233, controller.getOperator.time :284, controller.updateOperator.time :350, controller.deleteOperator.time :397), as does the sibling timer controller.listOperators.query.time in AddressService.java:80. The class, service, mapper, responses and path variable are all Address now, so the metrics are the only place an operator still appears and a reader of a dashboard cannot map them to this API.",
+      "fix": "Must: every metric this controller and AddressService emit names the address concept, so one concept has one name from path to metric. One way: rename to controller.listAddresses.time, controller.createAddress.time, controller.getAddress.time, controller.updateAddress.time, controller.deleteAddress.time and controller.listAddresses.query.time, and update any Grafana dashboard or alert that queries the old names in the same change (none found in the workspace)."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:04Z"
+}

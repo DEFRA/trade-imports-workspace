@@ -1,0 +1,40 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressServiceTest.java",
+  "repo": "trade-imports-address-book",
+  "commit": "b18192a8d33c313bb42bc7468eb060de1b7e8c3c",
+  "pr": 20,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:44:30Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The rename to Address and the move to ListCriteria are complete, but five list tests assert only stub-returned values, the fixture id is retyped 25 times beside its shared constant, and one create title claims a header the service never reads.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 409,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Five list tests assert only on values their own stub returned, so the visible assertion cannot fail: list_withOnlyBlankCountryCodesPassesNoCountryCodes (:408), list_passesTheSearchTermAsAPartialMatchPattern (:419), list_withABlankSearchTermPassesNoPattern (:442), list_passesTheSearchPatternAndTrimmedCountryCodesTogether (:452) and list_passesTheSearchRolesAsOneSearchTerm (:491). Each one assertThat(response.totalItems()).isZero() against emptyFirstPage(). What the title claims, the ListCriteria passed to the repository, is proven only because MockitoExtension's strict stubs throw PotentialStubbingProblem when eq(expected) does not match. A reader cannot see that, and it stops working under lenient().",
+      "fix": "Must: each list test that claims what is passed to the repository asserts the ListCriteria it received in its own assertions. One way: capture the criteria with an ArgumentCaptor<ListCriteria> (as list_asksForNewestFirstAndTranslatesToA0BasedPage does for Pageable) and assertThat(captor.getValue()).isEqualTo(expected), dropping the totalItems isZero lines.",
+      "best_practice": "java/testing/unit.md"
+    },
+    {
+      "id": 2,
+      "line": 146,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The test moved to the shared storedAddress fixture and imports STORED_CREATED_AT and STORED_MODIFIED_AT, but types the fixture's id \"665f1c2ab3e4d51a2c9d0e77\" by hand 25 times (:78, :90, :146, :149, :156, :159, :167, :170, :179, :184, :196, :204, :215, :220, :229, :234, :242, :247, :252, :257, :263, :268, :272, :278, :281). AddressTestSupport already names it STORED_ADDRESS_ID (:14), so the stubs' id only lines up with the fixture's id because two literals match.",
+      "fix": "Must: the stored address's id has one home, AddressTestSupport.STORED_ADDRESS_ID, and every stub argument and assertion in AddressServiceTest that means that address uses it. One way: static-import STORED_ADDRESS_ID and replace the literals.",
+      "best_practice": "java/testing/unit.md"
+    },
+    {
+      "id": 3,
+      "line": 73,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "create_stampsOrganisationIdAndActiveStatusFromTheHeader (:73) claims the organisation id comes from a header. AddressService.create takes organisationId as a parameter and never reads a header, and the test passes the ORG constant straight in. Its id assertion (:90) also checks the value the save stub itself set (:78), so that line cannot fail.",
+      "fix": "Must: the title states what the assertions prove, the given organisation id and ACTIVE status on the created address, and no assertion checks a value the stub wrote. One way: rename it to create_setsTheGivenOrganisationIdAndActiveStatus and drop the getId assertion, or replace it with an assertion on a field the service sets.",
+      "best_practice": "java/testing/unit.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:04Z"
+}

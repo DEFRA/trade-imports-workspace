@@ -1,0 +1,39 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRole.java",
+  "repo": "trade-imports-address-book",
+  "commit": "b18192a8d33c313bb42bc7468eb060de1b7e8c3c",
+  "pr": 20,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:40:46Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The enum is correct and well covered, but its role grouping is named RoleGroup SENDING/RECEIVING/BRANCH while the twin frontend names the same grouping ADDRESS_TYPES, and its published description and constants are under-documented.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 8,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "One concept, two names across twin repos: AddressRole.java:8-13 and :21 group each role into RoleGroup SENDING / RECEIVING / BRANCH via group(), while trade-imports-ins-frontend names the same grouping ADDRESS_TYPES ORIGIN_OR_CONSIGNOR / DESTINATION_CONSIGNEE_OR_IMPORTER / BRANCH with ROLES_BY_ADDRESS_TYPE and addressTypeOfRole (services/address-book/address-types.js:1-37), and the ticket calls it the address's type. The memberships are identical (PLACE_OF_ORIGIN+CONSIGNOR / CONSIGNEE+IMPORTER+PLACE_OF_DESTINATION / BRANCH_ADDRESS), so a reader cannot tell from either repo that SENDING and ORIGIN_OR_CONSIGNOR are the same rule.",
+      "fix": "Must: the role grouping carries one name, in the backend enum, its constants, its accessor and the validators that use it, and in the frontend's address-types module. One way: rename RoleGroup to AddressType with constants ORIGIN_OR_CONSIGNOR, DESTINATION_CONSIGNEE_OR_IMPORTER and BRANCH, rename group() to addressType(), and update RolesHeldTogetherValidator.shareOneGroup and ReceivingRolesInTheUnitedKingdomValidator to match."
+    },
+    {
+      "id": 2,
+      "line": 5,
+      "severity": "Minor",
+      "category": "comments",
+      "issue": "The Javadoc and @Schema description (AddressRole.java:5-6) say 'A party a notification can choose this address for', but PLACE_OF_ORIGIN, PLACE_OF_DESTINATION and BRANCH_ADDRESS are places, not parties, so the published API contract misdescribes half the constants. The ticket names the concept as what an address 'can be used for'.",
+      "fix": "Must: the Javadoc and the @Schema description state a contract true of every constant. One way: 'A use a notification can choose this address for', in both places.",
+      "best_practice": "java/openapi-springdoc.md"
+    },
+    {
+      "id": 3,
+      "line": 8,
+      "severity": "Minor",
+      "category": "comments",
+      "issue": "AddressRole is on the wire (AddressRequest.roles, AddressResponse.roles, the role and searchRole list query params) but none of its constants (AddressRole.java:8-13) carries a @Schema(description), which the springdoc project rules require of every enum constant on a public DTO. Codes such as BRANCH_ADDRESS and PLACE_OF_DESTINATION reach generated clients with no meaning attached.",
+      "fix": "Must: every AddressRole constant carries a @Schema(description) in the published OpenAPI document. One way: annotate each constant, e.g. @Schema(description = \"The consignment's place of origin\") PLACE_OF_ORIGIN(RoleGroup.SENDING).",
+      "best_practice": "java/openapi-springdoc.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:04Z"
+}

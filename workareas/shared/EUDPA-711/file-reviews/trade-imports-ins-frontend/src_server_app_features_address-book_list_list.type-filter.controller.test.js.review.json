@@ -1,0 +1,22 @@
+{
+  "file": "src/server/app/features/address-book/list/list.type-filter.controller.test.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "77fa29081235e82086e84af9e9c1dad8d1e91d81",
+  "pr": 71,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:44:10Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Type filter options, honoured and ignored roles, role-preserving page and Clear search links and role search are well covered, but the new ignored-role log line is untested.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 71,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The controller now logs 'Address book list ignored a role the tab does not offer' with organisationId, addressType and requestedRole (list.controller.js:144-149) whenever a role the tab does not offer is dropped, but no test asserts it. The role-ignored cases here (lines 71-88 ?role=IMPORTER / ?role=TRANSPORTER, and lines 90-104 ?addressType=BRANCH&role=CONSIGNOR) only check the request and the select; deleting the log call leaves every test green. The sibling address-type log is pinned in list.tabs.controller.test.js:67-117 with captureInfoLogs, so the pattern exists.",
+      "fix": "Must: a test fails if the ignored-role log line is removed or loses organisationId, addressType or requestedRole, and a test proves an empty role (?role=) and an offered role log nothing. One way: add a describe using captureInfoLogs() beside the role-ignored cases, asserting infoLogs('Address book list ignored a role the tab does not offer') equals one entry with { organisationId: ORGANISATION_ID, addressType: 'BRANCH', requestedRole: 'CONSIGNOR' }, and [] for ?role= and ?role=BRANCH_ADDRESS on the Branch tab, mirroring list.tabs.controller.test.js:67-117.",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:05Z"
+}

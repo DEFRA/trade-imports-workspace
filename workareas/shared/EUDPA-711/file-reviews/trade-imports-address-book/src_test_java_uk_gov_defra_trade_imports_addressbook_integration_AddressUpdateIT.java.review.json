@@ -1,0 +1,31 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressUpdateIT.java",
+  "repo": "trade-imports-address-book",
+  "commit": "b18192a8d33c313bb42bc7468eb060de1b7e8c3c",
+  "pr": 20,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:44:01Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Roles replacement and the roles-required, unknown-role and receiving-role-outside-UK refusals on PUT are covered and can fail, but three new titles over-claim 'stored values' and the stale-version test is titled as a PUT behaviour it does not exercise.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 87,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Three added tests claim 'KeepStoredValues' — put_shouldReturn400KeyedByRolesAndKeepStoredValues_whenBodyOmitsRoles (:87), ..._whenARoleIsUnknown (:100), put_shouldReturn400KeyedByCountryCodeAndKeepStoredValues_whenAReceivingRoleIsOutsideTheUk (:113) — but each asserts only assertStoredRolesAreStillTheSeededOnes (:38), the stored roles. The seeded addressLine2 'Unit 3' and county 'Highland', which a wrongly accepted PUT of addressBody() would clear, are never checked.",
+      "fix": "Must: each title states what its assertions prove. One way: rename to ...AndKeepStoredRoles..., or have the helper assert the whole stored address (roles, addressLine2, county, countryCode) is unchanged.",
+      "best_practice": "java/testing/unit.md"
+    },
+    {
+      "id": 2,
+      "line": 201,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "put_shouldRejectStaleVersion_whenRowWasUpdatedConcurrently (:201) titles the PUT as the thing that rejects, but the PUT in it succeeds (isOk) and the assertion is that a direct addressRepository.save(stale) throws OptimisticLockingFailureException: it proves the entity's @Version check, not anything the PUT endpoint rejects. The endpoint-level refusal is put_shouldReturn409ConflictProblem_whenOptimisticLockingFails (:187).",
+      "fix": "Must: the title names what the assertion proves. One way: rename to save_shouldThrowOptimisticLockingFailure_whenTheAddressWasUpdatedSinceItWasRead, or move it to AddressRepositoryIT beside the other repository-level tests.",
+      "best_practice": "java/testing/unit.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:04Z"
+}

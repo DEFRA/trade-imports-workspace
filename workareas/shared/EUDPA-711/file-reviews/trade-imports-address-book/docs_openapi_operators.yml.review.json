@@ -1,0 +1,48 @@
+{
+  "file": "docs/openapi/operators.yml",
+  "repo": "trade-imports-address-book",
+  "commit": "b18192a8d33c313bb42bc7468eb060de1b7e8c3c",
+  "pr": 20,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:41:17Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The generated contract matches the controller and DTOs, but the file keeps the old operators name, leaves out the two new role refusal rules, and writes the role enum out four times.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 1,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The PR renames every Operator name in this contract to Address (OperatorResponse -> AddressResponse at 406, OperatorPageResponse -> AddressPageResponse at 524, path param operator-id -> address-id at 12/29/71/134) but leaves the file itself as operators.yml, so the committed artifact downstream consumers open is still named for a concept the API no longer has. The rename stops part-way: ApiDocs.COMMITTED_ARTIFACT (src/test/.../testsupport/ApiDocs.java:16), README.md:257 and :259 and the workspace page docs/repos/trade-imports-address-book.md still point at operators.yml. No repo outside address-book reads the file, so the rename is cheap.",
+      "fix": "Must: the committed OpenAPI artifact's file name names addresses, and every reference to it (ApiDocs.COMMITTED_ARTIFACT, README.md, the workspace docs/repos page) uses the new name. One way: git mv docs/openapi/operators.yml docs/openapi/address-book.yml, update ApiDocs.COMMITTED_ARTIFACT and the README table and prose, and rerun OpenApiArtifactGeneratorIT to confirm AddressComplianceIT reads the renamed file."
+    },
+    {
+      "id": 2,
+      "line": 366,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The AddressRequest contract does not state the two refusal rules this PR adds, so a client written from the contract sends bodies the API refuses with 400. roles (383-396) says only 'The parties a notification can choose this address for. Duplicates collapse', but @RolesHeldTogether refuses roles from more than one group (PLACE_OF_ORIGIN/CONSIGNOR vs PLACE_OF_DESTINATION/CONSIGNEE/IMPORTER vs BRANCH_ADDRESS). countryCode (366-370) still says 'Country code (stored as-given)', but @ReceivingRolesInTheUnitedKingdom now refuses any countryCode other than GB when roles holds PLACE_OF_DESTINATION, CONSIGNEE or IMPORTER. The source descriptions in AddressRequest.java (roles @ArraySchema description, countryCode @Schema description) are where this text comes from; the record's own Javadoc already states both rules.",
+      "fix": "Must: the generated AddressRequest schema states that every role must come from one group (naming the three groups) and that a PLACE_OF_DESTINATION, CONSIGNEE or IMPORTER address must have countryCode GB. One way: extend the roles @ArraySchema description and the countryCode @Schema description in AddressRequest.java with those two rules, then regenerate operators.yml with OpenApiArtifactGeneratorIT.",
+      "best_practice": "java/openapi-springdoc.md"
+    },
+    {
+      "id": 3,
+      "line": 221,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The address-role enum is written out inline four times (lines 221-227 role, 237-243 searchRole, 389-395 AddressRequest.roles, 447-453 AddressResponse.roles) instead of once as a component, so a client generated from this contract gets four unrelated enum types for one concept and a seventh role means four edits to keep in step on the consumer side. springdoc inlines it because AddressRole has no enumAsRef.",
+      "fix": "Must: the contract defines the role enum once under components.schemas and every role list refers to it with $ref. One way: add enumAsRef = true to the @Schema on AddressRole.java and regenerate operators.yml with OpenApiArtifactGeneratorIT.",
+      "best_practice": "java/openapi-springdoc.md"
+    },
+    {
+      "id": 4,
+      "line": 441,
+      "severity": "Minor",
+      "category": "correctness",
+      "issue": "AddressResponse.roles (441-453) is documented as 'null or empty when it has none' and is left out of required, so every consumer has to handle null and an empty array as two cases for one state. The house REST guide says to return an empty array instead of null. AddressMapper.toResponse passes a null Address.roles straight through, which is what the description records. Each role constant also has no description (BRANCH_ADDRESS, PLACE_OF_ORIGIN and the rest appear as bare values), against the springdoc guide's rule that every enum constant carries a description.",
+      "fix": "Must: AddressResponse.roles is always an array (empty when the address has none), is listed under required, and the description no longer mentions null; each role value in the contract has a description. One way: map null roles to List.of() in AddressMapper (or the AddressResponse compact constructor), mark the field requiredMode REQUIRED, add @Schema(description=...) to each AddressRole constant, and regenerate operators.yml.",
+      "best_practice": "rest-api/rest-api.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:04Z"
+}

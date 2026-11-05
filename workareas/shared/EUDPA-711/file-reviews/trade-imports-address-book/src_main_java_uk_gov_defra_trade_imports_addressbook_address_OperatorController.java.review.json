@@ -1,0 +1,21 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorController.java",
+  "repo": "trade-imports-address-book",
+  "commit": "b18192a8d33c313bb42bc7468eb060de1b7e8c3c",
+  "pr": 20,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:42:10Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The deletion is a clean rename to AddressController with no dangling references, but the rename left five @Timed metric names and the list query timer on the old Operator vocabulary.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 111,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "Renaming OperatorController to AddressController stops part-way through the concept's vocabulary: the timers keep the old name. AddressController.java:110 controller.listOperators.time, :233 controller.createOperator.time, :284 controller.getOperator.time, :350 controller.updateOperator.time, :397 controller.deleteOperator.time, and AddressService.java:80 controller.listOperators.query.time. Every class, path variable ({address-id}) and log line now says address, so a metric search for 'address' finds none of these. No dashboard or alert in the repo reads the old names.",
+      "fix": "Must: every metric this service publishes for the address endpoints and the list query is named for addresses, matching the class, operation ids and path variables. One way: rename the five @Timed values to controller.listAddresses.time, controller.createAddress.time, controller.getAddress.time, controller.updateAddress.time, controller.deleteAddress.time and the service timer to controller.listAddresses.query.time, and update any Grafana panel that queries the old names in the same change."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:04Z"
+}

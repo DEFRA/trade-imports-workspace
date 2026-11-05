@@ -1,0 +1,30 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/testsupport/ApiDocs.java",
+  "repo": "trade-imports-address-book",
+  "commit": "b18192a8d33c313bb42bc7468eb060de1b7e8c3c",
+  "pr": 20,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:42:50Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "A correct single home for fetching, rendering and navigating the OpenAPI docs, but it keeps the operators.yml name the rest of the rename leaves behind and exposes a single-use path constant and a public loadYaml with no outside caller.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 16,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "This PR renames the Operator vocabulary to Address (OperatorRepository -> AddressRepository, OperatorListIT -> AddressListIT, OperatorService -> AddressService), but the new ApiDocs names the committed artifact COMMITTED_ARTIFACT = Path.of(\"docs/openapi/operators.yml\") (:16). The rename stops part-way: the OpenAPI spec for the address book API is still filed as 'operators', and README.md:257 and the workspace's docs/repos/trade-imports-address-book.md:16 repeat it.",
+      "fix": "Must: the committed OpenAPI artifact's file name uses the address vocabulary the rest of the PR adopts, and every reference to it (ApiDocs, README, workspace docs page) names the same file. One way: git mv docs/openapi/operators.yml docs/openapi/addresses.yml, update COMMITTED_ARTIFACT and the two docs; if a downstream consumer reads operators.yml by path, keep the old name and say so in the README instead.",
+      "best_practice": "java/modern-java.md"
+    },
+    {
+      "id": 2,
+      "line": 17,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "LOCKED_CONTRACT (:17) is a literal path used by one function, lockedContract() (:46-48), yet sits at class scope; and loadYaml(Path) (:42) is public although its only caller is lockedContract() inside this class (no test calls it). The house rule puts a single-use literal inside its function and builds only what the change makes reachable.",
+      "fix": "Must: the locked-contract path lives in lockedContract(), and loadYaml is private (or inlined) while nothing outside ApiDocs calls it. One way: inline Path.of(\"docs/openapi/api-contract.locked.yaml\") into lockedContract() and make loadYaml private."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:04Z"
+}

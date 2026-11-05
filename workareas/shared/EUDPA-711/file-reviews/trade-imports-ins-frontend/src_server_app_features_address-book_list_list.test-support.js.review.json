@@ -1,0 +1,22 @@
+{
+  "file": "src/server/app/features/address-book/list/list.test-support.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "77fa29081235e82086e84af9e9c1dad8d1e91d81",
+  "pr": 71,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:44:26Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new tab, sub-navigation and Type select readers are sound shared support, but the stub's 'query' parameter carries an addressType key that is translated to role values rather than sent, which the name hides.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 120,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "stubAddressPage(query, addressPage) (line 133), stubAddressBookUnavailable(query) (line 139) and interceptListRequest (line 120) take a 'query' that is not the request query: its addressType key is never sent, it is swapped for the role query values of ROLES_BY_ADDRESS_TYPE[addressType] (line 129), and an absent addressType silently means the default tab. A caller such as list.tabs.controller.test.js:55 stubAddressPage({ page: '1', addressType: askedAddressType }, ...) reads as 'the address book is asked for an addressType', which the API never receives; the name hides the translation.",
+      "fix": "Must: a reader of a stubAddressPage call can tell which keys go on the address book request and which choose the tab whose roles are expected, without opening the helper. One way: take the tab separately, e.g. stubAddressPage({ tab: ADDRESS_TYPES.BRANCH, query: { page: '1', q: 'green' } }, addressPage), or rename the parameter to listRequestOf/expectedListRequest and the key to rolesOfTab so the name says it expands to role values.",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:05Z"
+}

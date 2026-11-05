@@ -1,0 +1,22 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorResponse.java",
+  "repo": "trade-imports-address-book",
+  "commit": "b18192a8d33c313bb42bc7468eb060de1b7e8c3c",
+  "pr": 20,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:40:39Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The rename to AddressResponse is clean within this file, but the new roles field exposes both null and empty for 'no roles', against the rest-api guide, and pushes a null fallback into every consumer.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 46,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "AddressResponse.roles (AddressResponse.java:46-53) has two wire encodings for 'no roles': its schema says 'null or empty when it has none', the compact constructor leaves a null list through (AddressResponseTest.compactConstructor_allowsNullOptionalFields asserts roles() is null), and the mapper copies a null entity list as null. The rest-api guide forbids null for empty collections, and the rule 'no roles means an empty list' now lives in every consumer instead: ins-frontend view-model/list.js:46 and services/address-book/stub.js:73 each write 'roles ?? []'. The ticket also says the API requires a use on every create and update and that no existing address needs to stay without one, so the null case serves data the change has ruled out.",
+      "fix": "Must: the response has exactly one representation of an address with no roles, owned by AddressResponse, and its schema and Javadoc describe that one representation; consumers no longer need a null fallback. One way: in the compact constructor set 'roles = roles == null ? List.of() : List.copyOf(roles);', change the schema description to drop 'null or', mark roles REQUIRED, remove roles from the Javadoc's optional list, and change the test to assert an empty list.",
+      "best_practice": "rest-api/rest-api.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:04Z"
+}

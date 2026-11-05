@@ -1,0 +1,22 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/openapi/OpenApiArtifactGeneratorIT.java",
+  "repo": "trade-imports-address-book",
+  "commit": "b18192a8d33c313bb42bc7468eb060de1b7e8c3c",
+  "pr": 20,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:42:48Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The move to ApiDocs and @MockitoBean is sound and the run instructions now live in the README, but the only assertion reads back what the method just wrote and cannot fail.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 47,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The only assertion, assertThat(Files.readString(ApiDocs.COMMITTED_ARTIFACT)).isEqualTo(rendered) (:47), reads back the string the line above (:45) just wrote. No production line can turn it red: it checks the filesystem, not the application. The freshness of the artifact is already proved by AddressComplianceIT.committedArtifactIsNotStaleAgainstTheLiveApiDocs.",
+      "fix": "Must: the generator carries no assertion on a value it wrote itself. One way: drop the read-back and let the method be a plain generator (suppress Sonar java:S2699 on it, with the README section explaining the run), or move generation to a small main class run by exec-maven-plugin so it is not a test at all.",
+      "best_practice": "java/testing/unit.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:04Z"
+}

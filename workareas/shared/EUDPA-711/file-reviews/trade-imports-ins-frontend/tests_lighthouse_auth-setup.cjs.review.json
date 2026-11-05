@@ -1,0 +1,30 @@
+{
+  "file": "tests/lighthouse/auth-setup.cjs",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "77fa29081235e82086e84af9e9c1dad8d1e91d81",
+  "pr": 71,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:45:08Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Replacing the blanket .catch with a TimeoutError-only catch is right, but the new copy-back of cookies skips the app-origin filter seed-audit-targets.js applies, and neither new helper is tested.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 32,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "auth-setup.cjs:32 hands every cookie the browser holds, including the identity provider's from the sign-in redirect, to createPageClient. Lines 34-40 then write every jar entry back onto the app's hostname. seed-audit-targets.js:22-25 already keeps only the cookies whose domain matches the origin before building its client. So one rule, 'the browser cookies the app sees', has two homes, and this one skips the filter. When the identity provider runs on another host and shares a cookie name with the app (for example crumb or session), the Map keeps the last value. The app is then sent the wrong value and the IdP's cookies are planted on the app host.",
+      "fix": "Must: one function owns picking the browser cookies that belong to the app origin, and both auth-setup.cjs and seed-audit-targets.js call it, so only app cookies reach the page client and are written back. One way: export an appCookiesOf(browser, origin) helper from page-client.js and use it in both places."
+    },
+    {
+      "id": 2,
+      "line": 31,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "auth-setup.cjs:31-41 (chooseAddressTypeInBrowser) and :10-22 (waitForSignInForm's TimeoutError branch, and the rethrow of any other error) are new behaviour with no test. chooseAddressTypeInBrowser is what lets lhci audit /address-book/add without being sent to the type page, because lighthouserc.cjs runs this script before each URL. A break in how cookies are copied back into the browser only shows up as a wrong Lighthouse report.",
+      "fix": "Must: a unit test fails if the chosen-type session cookie is not written back into the browser for the app host, and if a non-timeout error from waitForSelector is swallowed. One way: export the two helpers and test them with a fake browser and page object (cookies/setCookie/waitForSelector) and nock for the type-page round trip, as seed-address.test.js does.",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:05Z"
+}

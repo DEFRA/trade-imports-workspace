@@ -1,0 +1,30 @@
+{
+  "file": "src/server/app/features/address-lookup-spike/controller.test.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "77fa29081235e82086e84af9e9c1dad8d1e91d81",
+  "pr": 71,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:43:41Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Correct move to startRealModeServer, but the accessor is named 'server' where the repo says 'getServer', and the two describe blocks copy the same set-up.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 79,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The accessor returned by startRealModeServer() is named 'server' (lines 79, 247; called as server() throughout), so the name predicts a server object while it holds a getter. The same accessor is 'getServer' in reference-data-outage.test.js, dashboard/controller.test.js and every address-book controller test: one concept, two names.",
+      "fix": "Must: the accessor from startRealModeServer() carries one name across the repo's tests, a name that says it returns the server. One way: rename 'server' to 'getServer' in both describe blocks and call getServer().inject(...).",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 2,
+      "line": 247,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Both describe blocks repeat the same set-up: 'const server = startRealModeServer()' plus 'beforeEach(() => { config.set(\"csrf.enabled\", false) })' (lines 79-83 and 247-251), starting a second server for no difference in set-up.",
+      "fix": "Must: the spike tests' server and CSRF set-up is written once. One way: put both groups under one outer describe that owns startRealModeServer() and the beforeEach, with the two groups as nested describes."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:05Z"
+}

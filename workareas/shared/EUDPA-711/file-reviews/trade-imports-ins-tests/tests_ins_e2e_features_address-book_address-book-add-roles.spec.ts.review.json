@@ -1,0 +1,39 @@
+{
+  "file": "tests/ins/e2e/features/address-book/address-book-add-roles.spec.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "29887c343798673f6d5ecf1e4016ae996357181f",
+  "pr": 77,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:48:20Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Covers the AC for uses, fixed UK country, the roles error and landing on the type's tab, but a search-by-use test is misplaced, two titles misread and a local 'label' is ambiguous beside tab.label.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 21,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "The test 'an address saved with Consignor ticked is found by searching Consignor, and one saved with only Place of origin ticked is not' (lines 21-45) checks search by use, not adding. It sits under the describe 'Adding an address with its roles' while every other search-by-role test lives in address-book-type-filter.spec.ts (for example 'a search for a role label with a role filter chosen lists the address holding that role...', line 211 there). A reader looking for search coverage will not find it here.",
+      "fix": "Must: the search-by-use scenario lives in address-book-type-filter.spec.ts beside the other search-by-role tests, and address-book-add-roles.spec.ts holds only add-form behaviour. One way: move the test into the 'Address book role filter' describe there, create both addresses with createAddressHolding (as its siblings do), and delete it from this file.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 2,
+      "line": 58,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Two test titles misread. Line 58: 'an Origin or Consignor address opens on Select a country first with United Kingdom selected' - 'opens on Select a country' reads as Select a country being the selected value, which contradicts 'United Kingdom selected'; the assertions prove the first option is Select a country and the selected option is United Kingdom. Line 75: the describe template 'Adding a ${label} address' renders 'Adding a Origin or Consignor address' for the first tab.",
+      "fix": "Must: each title states exactly what its assertions prove and reads as correct English for every generated value. One way: line 58 'an Origin or Consignor address lists Select a country first and opens with United Kingdom selected'; line 75 a describe title that does not put an article before the label, such as 'Adding an address of type ${typeLabel}'.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 3,
+      "line": 71,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "In the per-tab loop, 'const label = addressTypeLabels[addressType]' (line 71) holds the address type's label ('Origin or Consignor'), while 'tab.label' in the same scope (line 134, 'toHaveText(tab.label)') holds the tab's label ('Origin and Consignor'). One bare name 'label' sits beside a different label for the same tab, so a reader cannot tell from line 134 or the test names which text is meant.",
+      "fix": "Must: the local names the label it holds, distinct from the tab's label. One way: rename 'label' to 'typeLabel' at line 71 and its uses in the describe title and the 'No Role', 'Invalid Field' and 'All Roles' names."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:06Z"
+}

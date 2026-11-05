@@ -1,0 +1,22 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressTestSupport.java",
+  "repo": "trade-imports-address-book",
+  "commit": "b18192a8d33c313bb42bc7468eb060de1b7e8c3c",
+  "pr": 20,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:44:40Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The shared fixtures correctly replace the per-test request and entity copies, but ListCriteriaBuilder copies production's search-term assembly, so the service tests compare the service with a copy of itself.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 98,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "ListCriteriaBuilder.build() (:98-110) copies AddressService.searchTermsOf (AddressService.java:99-111): one term per supplied filter, in the order TextMatching, InCountries, HoldingAnyRole. ListCriteria compares searchTerms as an ordered List, so AddressServiceTest's eq(expected) stubs (:397, :421, :433, :455, :473, :494) pass because the helper repeats production's assembly, not because the test states the criteria it expects. Reorder the production terms, which changes nothing because they are OR'd, and every one of those tests goes red. Make the same mistake in both places and they all stay green.",
+      "fix": "Must: the order and assembly of search terms has one home, production code, and AddressServiceTest's expected criteria do not depend on a copy of it. One way: write the expected value in AddressServiceTest as an explicit new ListCriteria(roles, List.of(new ListCriteria.TextMatching(...), ...)), and keep ListCriteriaBuilder for building repository inputs in AddressRepositoryIT. Another: make ListCriteria compare searchTerms as a set.",
+      "best_practice": "java/testing/unit.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:04Z"
+}

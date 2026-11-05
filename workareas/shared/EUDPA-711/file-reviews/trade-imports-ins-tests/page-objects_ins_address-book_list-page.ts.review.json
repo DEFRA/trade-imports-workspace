@@ -1,0 +1,37 @@
+{
+  "file": "page-objects/ins/address-book/list-page.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "29887c343798673f6d5ecf1e4016ae996357181f",
+  "pr": 77,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:46:44Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The tab, Type-column and Type-filter locators match the frontend, but the new paging helper does not wait for the next page (so an absence check can pass falsely), copies two other paging loops, and some names need comments.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 174,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "followResultPagesUntilRowShows (list-page.ts:174-182) clicks Next and then reads row(name).count() and linkNextPage.count() at once. count() does not wait, so it can read the page being left: it can then click Next again and skip a page, or stop early. The false result is used as proof of absence (address-book-add-roles.spec.ts:44 expects false for the Place of origin address under a Consignor search), so a skipped page lets that test pass without the search excluding anything. followNextUntilListed in party-picker-page.ts:78-83 already waits for the new page's aria-current link after each click.",
+      "fix": "Must: after every Next click the helper reads rows only once the next page has loaded, so a false result means the name is on no page. One way: track the page number and wait for pageLink(pageNumber) to carry aria-current='page' after each click, as the party picker does."
+    },
+    {
+      "id": 2,
+      "line": 174,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Three page objects each write their own 'follow Next until X shows' loop, with different waits and outcomes: list-page.ts:174 followResultPagesUntilRowShows (returns a boolean, no wait), party-picker-page.ts:78 followNextUntilListed (waits on aria-current, returns nothing) and animals-admin/notifications-page.ts:84 openPageShowingNotification (waits on URL change, throws). The pagination nav is also located two ways: CSS '.govuk-pagination' here (:67) and role navigation 'Pagination' in party-picker-page.ts:66 and notifications-page.ts:44.",
+      "fix": "Must: one shared helper owns paging through GOV.UK pagination until a locator shows, with one wait rule, and each page object calls it. One way: add page-objects/shared/pagination.ts exporting a pagination locator by role and a followNextUntilShown(page, target) helper, and have the three page objects use it."
+    },
+    {
+      "id": 3,
+      "line": 17,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "listUrl (list-page.ts:18) and tabUrl (:23) return anchored RegExp patterns, not URLs, and listUrl needs its doc comment (:17 'The URL of the list opened with no query.') to say it matches only the bare list. :22's comment restates tabUrl. followResultPagesUntilRowShows (:174) returns whether the row was found, which its name does not say.",
+      "fix": "Must: each name says the value it returns (a pattern; whether a row was found) with no comment needed, and the two comments are gone. One way: listUrlWithNoQuery / tabUrlPattern for the patterns, and a name such as pageThroughToRow that the spec reads as a found/not-found answer."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:06Z"
+}

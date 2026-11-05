@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "77fa29081235e82086e84af9e9c1dad8d1e91d81",
+  "pr": 71,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:46:28Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Tabs, type filter, role search and filter-keeping links are well covered, but one title over-claims what it asserts and the Type cell lookup and column headings are copied rather than shared.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 259,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The test 'shows each address with the labels of its roles in the Type column' (259-288) asserts the Type cell of two addresses (originAndConsignor and consigneeAndDestination) out of the six typed seed addresses, and never opens the Branch tab, so the title claims more than the assertions prove. It also opens two pages and asserts twice in one test.",
+      "fix": "Must: the title states only what the assertions prove, or the assertions cover every address the title names. One way: retitle to 'shows Place of origin, Consignor and Consignee, Place of destination in the Type column of the addresses holding them', or loop over TABS asserting every row's Type cell, one test per tab."
+    },
+    {
+      "id": 2,
+      "line": 76,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Locators and expected values have more than one home: the Type cell lookup (getByRole('row', { name: new RegExp(name) }).getByRole('cell').nth(1)) is written at 266-272 and 280-286 and again at add.fit.spec.js:582-587; the column headings ['Name','Type','Address','Country','Action'] at 76-82 repeat expectEmptyAddressBookList in address-book-list.js:55-61.",
+      "fix": "Must: the Type cell of a named address and the table's column headings each have one home in address-book-list.js, and the specs call it. One way: export typeCellOf(page, name) and TABLE_HEADINGS from address-book-list.js and use them here, in expectEmptyAddressBookList and in add.fit.spec.js."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:05Z"
+}

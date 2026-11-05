@@ -1,0 +1,21 @@
+{
+  "file": "workareas/shared/design-release-2-1/backlog.json",
+  "repo": "trade-imports-workspace",
+  "commit": "ed9e3c48f8d3463d0e438abea99a05d5b2e653c1",
+  "pr": 196,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:50:53Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The pickUp hand-over to the address-book pointer is correct apart from req-611, which lands in requirements with no fingerprint, so drift on it would never be reported.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 1862,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "The address-book splitOff pointer moves req-611, req-2186 and req-2199 from pickUp into requirements, but records a fingerprint only for req-2186 and req-2199 (lines 2002-2003). tim/src/distil/coverage.js fingerprintChanged (473-481) returns false when the pointer keeps no fingerprint, so a later re-distil that changes req-611's text will never list it as changed for the address-book branch: its drift goes unreported. coverage.js:494-496 says the pointer takes fingerprintsNow for every picked-up requirement once the branch has its rows.",
+      "fix": "Must: every requirement the pointer took from pickUp (req-611, req-2186, req-2199) has its current fingerprint in the pointer's fingerprints, so a later change to any of them is reported. One way: add \"req-611\" with requirementFingerprintOf(req-611) from the re-distil report's fingerprintsNow (or recompute it from distil/requirements.json) beside req-2186 and req-2199."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:07Z"
+}

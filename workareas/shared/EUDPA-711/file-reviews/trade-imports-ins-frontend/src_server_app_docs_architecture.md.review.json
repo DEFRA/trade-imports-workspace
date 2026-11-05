@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/docs/architecture.md",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "77fa29081235e82086e84af9e9c1dad8d1e91d81",
+  "pr": 71,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:46:06Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The start-up, Nunjucks root, fixture-sharing and Joi updates match the code, but the stylesheet paragraph describes a copied _sub-navigation.scss that does not exist.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 128,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Lines 128-135 say 'The MoJ sub navigation stylesheet is copied to _sub-navigation.scss rather than imported from @ministryofjustice/frontend' because of a Sass 'already loaded' conflict. No _sub-navigation.scss exists under src/client/stylesheets/. The code does the opposite: application.scss:2 imports it from the package (@use \"@ministryofjustice/frontend/moj/components/sub-navigation/sub-navigation\"), and _govuk-frontend.scss:1 configures MoJ's vendored govuk-frontend with $moj-assets-path and $govuk-global-styles, then forwards pkg:govuk-frontend. A reader following the doc would look for, or recreate, a copied stylesheet that is not there.",
+      "fix": "Must: the build paragraph describes how the stylesheets are wired at this commit: _govuk-frontend.scss configures GOV.UK Frontend through @ministryofjustice/frontend's vendored copy ($moj-assets-path, $govuk-global-styles) and forwards pkg:govuk-frontend, and application.scss uses the package's sub-navigation component directly. If the Sass conflict is the reason for routing through the MoJ vendor module, it says that, not a copy. One way: replace the copy sentence with 'application.scss uses the MoJ sub navigation component from the package. _govuk-frontend.scss configures GOV.UK Frontend through MoJ's vendored module, because configuring pkg:govuk-frontend directly and then loading the MoJ component fails with \"This module was already loaded...\"'."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:05Z"
+}

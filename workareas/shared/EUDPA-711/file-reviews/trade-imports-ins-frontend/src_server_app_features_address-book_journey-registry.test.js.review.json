@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/features/address-book/journey-registry.test.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "77fa29081235e82086e84af9e9c1dad8d1e91d81",
+  "pr": 71,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:45:40Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new role tests pin exact own and other roles per party and would fail without the change, but a rename is left part-way and the unresolvable-party cases are written twice.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 118,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The rename from JOURNEY_HANDSHAKES_BY_ROLE to JOURNEY_HANDSHAKES_BY_PARTY stopped part-way: the isConsignmentContact test.each over Object.entries(JOURNEY_HANDSHAKES_BY_PARTY) (line 118) still names its key parameter _role, though the key is now a party name and 'role' means the ROLES values elsewhere in the file",
+      "fix": "Must: every name in the file that holds a party key says party. One way: rename _role to _party at line 120"
+    },
+    {
+      "id": 2,
+      "line": 91,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "UNRESOLVABLE_PARTY_CASES (lines 31-43) names the unresolvable contexts (unlisted fulfilment id, unregistered journey type, no context) for ownAndOtherRolesOfParty, but the requiresUnitedKingdomAddress tests (lines 91-108) write the same three cases out again inline, and the 'constructor' prototype-key case is applied to one function only",
+      "fix": "Must: the unresolvable-party cases are written once and every function that resolves a party role is tested against all of them. One way: drive requiresUnitedKingdomAddress's false cases from UNRESOLVABLE_PARTY_CASES with test.each, and delete the inline copies"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:05Z"
+}

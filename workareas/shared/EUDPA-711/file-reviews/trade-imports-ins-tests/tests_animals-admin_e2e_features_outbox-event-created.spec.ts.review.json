@@ -1,0 +1,22 @@
+{
+  "file": "tests/animals-admin/e2e/features/outbox-event-created.spec.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "29887c343798673f6d5ecf1e4016ae996357181f",
+  "pr": 77,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:46:53Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The import move is correct, but the consignor's address lines are still local copies of the shared address-book fixture.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 10,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Lines 10-12 restate the consignor's address-book record ('43 East Hague Extension', 'Bern', '30055') as local literals, copies of the record in E2E_ADDRESS_BOOK_FIXTURES (flows/shared/address-book-seed.ts:115-118). This PR moves CONSIGNOR_NAME to the shared fixture-name home (line 4) but leaves the rest of that record copied, so a fixture change turns this test red for the wrong reason.",
+      "fix": "Must: the spec reads the consignor's address line, town and postcode from the one fixture record that seeds them, with no local copies of those values. One way: const consignor = E2E_ADDRESS_BOOK_FIXTURES.find(({ name }) => name === CONSIGNOR_NAME) and assert postalAddress against consignor.addressLine1, consignor.townOrCity and consignor.postcode, deleting the three CONSIGNOR_* constants.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:06Z"
+}

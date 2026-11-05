@@ -1,0 +1,29 @@
+{
+  "file": "README.md",
+  "repo": "trade-imports-ins-tests",
+  "commit": "29887c343798673f6d5ecf1e4016ae996357181f",
+  "pr": 77,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:45:54Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new paragraphs misstate the address book's country check now that UK-side roles must be GB, and leave out the isolated-organisation fixture this PR adds for the same isolation problem.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 193,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "README.md:192-195 says 'the address book checks only that a country is present, so that is the one way ... to copy an address the notification refuses'. The same PR set adds ReceivingRolesInTheUnitedKingdomValidator to trade-imports-address-book (AddressRequest @ReceivingRolesInTheUnitedKingdom), which refuses any countryCode other than GB (or blank) when the record holds a UK-side role (importer, consignee, place of destination, branch). A spec author following the README to build a country-name record for a destination-side role gets a 400.",
+      "fix": "Must: the README states what the address book checks on country as it is now: present for every record, and GB for a record holding a receiving (UK) role, so a country-name record is possible only for origin-side roles. One way: reword the sentence to 'the address book checks only that a country is present for an origin-side address, so ...'."
+    },
+    {
+      "id": 2,
+      "line": 197,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "The 'Address-book records made by a test' section (README.md:176-202) lists how a spec keeps its records apart from other workers (unique names, own record, a search token only its run created) but not the mechanism this PR adds for that purpose: the isolatedOrganisationAddressBookApi fixture (fixtures/ui.ts:145-147), which gives a spec its own organisation with an empty book. address-book-tabs.spec.ts, address-book-type-filter.spec.ts and address-book-roles.spec.ts count or list rows through it, while README.md:197-198 still tells the reader a spec that counts rows must search for a token in the shared book.",
+      "fix": "Must: the README section on address-book records names the isolated-organisation fixture and says when a spec uses it (API-level counts and filters that must see only its own records) versus the shared E2E organisation (anything the signed-in UI must show). One way: add a paragraph after README.md:202 naming isolatedOrganisationAddressBookApi and the rule for choosing it."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:06Z"
+}

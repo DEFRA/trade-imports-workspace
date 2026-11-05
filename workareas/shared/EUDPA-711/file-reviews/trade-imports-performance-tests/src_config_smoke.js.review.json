@@ -1,0 +1,21 @@
+{
+  "file": "src/config/smoke.js",
+  "repo": "trade-imports-performance-tests",
+  "commit": "ed4724a3274db7e6b7c02fc01dfbed97f19f62e5",
+  "pr": 27,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:48:37Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Removing the local endpoint copy is right, but binding the address-book scenario to the whole INS page catalogue leaves its request list with two owners.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 68,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Two homes for the address-book session's request list: SCENARIOS['ins-address-book'].endpoints is now INS_PAGES (endpoints.js:11, the catalogue of every INS page), while src/lib/address-book.js:18 ADDRESS_BOOK_SESSION_ENDPOINTS separately names each request the session makes after sign-in and the dashboard. The scenario's per-endpoint thresholds and report keys (thresholds.js scenarioThresholds) follow INS_PAGES, so an INS page added to the catalogue that the address-book session never requests gains a threshold on this scenario, and a request added to ADDRESS_BOOK_SESSION_ENDPOINTS only gets one if INS_PAGES is edited too.",
+      "fix": "Must: the address-book scenario's endpoint list is derived from the one list that names the requests an address-book session makes, so adding an INS page elsewhere cannot change it. One way: endpoints: ['sign-in', 'ins-dashboard', ...new Set(Object.values(ADDRESS_BOOK_SESSION_ENDPOINTS))], keeping INS_PAGES for the catalogue alone."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:07Z"
+}

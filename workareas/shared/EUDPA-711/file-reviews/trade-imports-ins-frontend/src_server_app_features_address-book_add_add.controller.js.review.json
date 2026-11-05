@@ -1,0 +1,47 @@
+{
+  "file": "src/server/app/features/address-book/add/add.controller.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "77fa29081235e82086e84af9e9c1dad8d1e91d81",
+  "pr": 71,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:45:01Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Type guard, roles question, UK-only types and in-progress entry work as the AC asks, but the roles error is withheld while field errors show, contrary to GOV.UK, and there are naming, duplicated log-id and missing log-context findings.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 454,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "submitAddress checks the address fields first and returns at line 455 before the roles check runs (lines 457-477), so a trader who leaves a field blank and ticks no use sees only the field error, fixes it, submits again and only then learns a use is required. GOV.UK's error summary and validation pattern list every error on the page at once (https://design-system.service.gov.uk/components/error-summary/). The test 'POST with an invalid field and no role ticked shows only the field error' (add.controller.test.js:537) and spec scenario SCN-INS-ADDR-044-C lock the two-round behaviour in.",
+      "fix": "Must: one submit shows every error the form has, the field errors and the roles error together, in page order, in the summary and inline; the test at add.controller.test.js:537 and SCN-INS-ADDR-044-C state that. One way: work out the roles errors before the early return and merge them with the field errors, so rerender gets both in one errors object.",
+      "best_practice": "gds/components.md"
+    },
+    {
+      "id": 2,
+      "line": 395,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "Names that mispredict their value: storedCountryCode (lines 395, 486) holds formValues.countryCode after addFormCountryOffer, the country the address will be saved with, and is read from no store; addIdsForLog (line 283) can return { addressType }, which is not an id; one roles list is called savedRoles in submitAddress (457) and keptRoles in logDiscardedRoles (321) and rerenderIfRolesInvalid (336); and storeAddressBookEntry (93) wraps storeEnteredAddress from add-in-progress.js, two names for the one in-progress address.",
+      "fix": "Must: each name predicts the value it holds in every mode, and one concept carries one name across the file and add-in-progress.js. One way: savedCountryCode (or countryCodeToSave), handshake-or-type log fields named for what they are (for example addContextForLog), savedRoles throughout, and storeEnteredAddressInAddressBookMode or the mode guard moved to the call site so only storeEnteredAddress remains."
+    },
+    {
+      "id": 3,
+      "line": 283,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The handshake log ids { notificationId: handshakeContext.notificationId, fulfilmentId: handshakeContext.fulfilmentId } are written three times in this file: inline in handBackAddress (lines 210-211), inline in redirectAfterCancel (225-226) and in the new addIdsForLog (285-288). The PR added a helper beside two copies it left in place.",
+      "fix": "Must: one function in the file owns the handshake ids a log line carries, and every log line that needs them calls it. One way: extract handshakeIdsForLog(handshakeContext) and use it in handBackAddress, redirectAfterCancel and addIdsForLog."
+    },
+    {
+      "id": 4,
+      "line": 373,
+      "severity": "Major",
+      "category": "logging",
+      "issue": "rerenderAfterCreateFailure (new in this PR) logs 'Address book refused the new address' (line 373) and 'Failed to create address' (line 378) with only { err, organisationId }. The add now serves two journeys, so support cannot tell during an incident whether the refused or failed create came from the address book (and for which address type) or from a notification's picker (which notification and party), though every other log in the file carries those via addIdsForLog.",
+      "fix": "Must: both create-failure log lines carry the same context the other add logs carry: the notification and fulfilment ids from a handshake, else the address type. One way: pass handshakeContext and addressType into rerenderAfterCreateFailure and spread addIdsForLog(handshakeContext, addressType) into both log calls.",
+      "best_practice": "node/pino-logging.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:05Z"
+}

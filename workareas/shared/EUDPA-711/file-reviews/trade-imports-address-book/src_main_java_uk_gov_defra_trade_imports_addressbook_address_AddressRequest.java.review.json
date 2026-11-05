@@ -1,0 +1,30 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequest.java",
+  "repo": "trade-imports-address-book",
+  "commit": "b18192a8d33c313bb42bc7468eb060de1b7e8c3c",
+  "pr": 20,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:41:32Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Roles validation and normalisation are correct, match the spec and are tested; two Major code-quality findings: Hibernate @Length replaces Jakarta @Size for no behaviour gain, and the class Javadoc restates annotations and the RoleGroup UK rule.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 37,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "Every length rule moved from jakarta.validation.constraints.Size to Hibernate's proprietary org.hibernate.validator.constraints.Length (lines 37, 46, 54, 58, 66, 70, 85, 95; import line 12). Commit 5b72451 says the move was to drop the minimum so a blank value reports only @NotBlank, but @Size's min already defaults to 0, so @Size(max = N) does the same with no change of package. The project's convention is Jakarta constraints only, and this is now the one Hibernate constraint in src/.",
+      "fix": "Must: the request's length rules use jakarta.validation.constraints only, carry no minimum, and a blank mandatory field still reports only its @NotBlank message. One way: replace each @Length(max = N, ...) with @Size(max = N, ...) and swap the import back; AddressRequestValidationTest's only-the-declared-message matrix proves the blank case.",
+      "best_practice": "java/spring-boot.md"
+    },
+    {
+      "id": 2,
+      "line": 20,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The class Javadoc (lines 20-29) restates the annotations and constructor below it and describes other code. 'type and role must be absent ... Both are hidden from the OpenAPI schema' repeats @Null and @Schema(hidden = true). The roles paragraph repeats @NotEmpty, @AddressRoleNames and the compact constructor, and lists which roles must be in the United Kingdom ('consignee, importer or place of destination'): RoleGroup.RECEIVING's inTheUnitedKingdom flag owns that rule, and ReceivingRolesInTheUnitedKingdom's own Javadoc and message already state it, so a change to RoleGroup leaves this list stale. 'stored exactly as given' (line 29) describes the mapper and entity, not this record, and 'otherwise' only makes sense after the roles paragraph.",
+      "fix": "Must: the record's Javadoc states only wire contract that its annotations and constructor do not already say, and names no rule that RoleGroup or the constraint annotations own. One way: drop the type/role, roles and countryCode paragraphs, and keep the sentence that echoed server-assigned fields are accepted and dropped."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:04Z"
+}

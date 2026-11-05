@@ -1,0 +1,22 @@
+{
+  "file": "src/server/app/features/address-book/list/list.controller.test.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "77fa29081235e82086e84af9e9c1dad8d1e91d81",
+  "pr": 71,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:44:18Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Updated column indexes, tab-carrying page and Clear search links and the type-start Add link are correct and asked for by the ticket, but the log lines this PR enriched with tab and role ids are not asserted.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 96,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "This PR adds ids to two outcome-changing log lines in list.controller.js: the past-last-page fallback now logs roles (lines 102-110) and the load failure now logs addressType and role (lines 193-196). Neither line is asserted anywhere: the past-last-page test (line 96) checks only the two requests and the rendered page, and the 500 test (line 211) checks only the page. Dropping roles, addressType or role from either log, or the whole log call, leaves the file green, so support could lose the tab and filter of a failing list without a red test.",
+      "fix": "Must: a test fails if the past-last-page log loses organisationId, roles, requestedPage or servedPage, or the load-failure log loses organisationId, addressType, role or err. One way: wrap the line 96 test with captureInfoLogs() and assert the one 'Address book page is past the last page, serving the last page' entry with roles: ['PLACE_OF_ORIGIN','CONSIGNOR'], requestedPage: 99, servedPage: 2; add an equivalent error-level capture (or extend the capture helper with a level option) for 'Failed to load address book' in the line 211 test on ?addressType=BRANCH&role=BRANCH_ADDRESS.",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:05Z"
+}

@@ -1,0 +1,22 @@
+{
+  "file": "src/server/app/features/dashboard/controller.test.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "77fa29081235e82086e84af9e9c1dad8d1e91d81",
+  "pr": 71,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:43:41Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The OIDC mock removal is safe (startRealModeServerServingCountries answers discovery), but every test hand-copies the same notifications-backend stub.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 33,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Nine tests each hand-write the same backend stub chain insBackendApi().get(NOTIFICATIONS_PATH).query(...).reply(200|500, pageOf(...)) (lines 33-47, 68-89, 103-117, 130-144, 162-176, 190-193, 206-209, 225-232, 244-247, 259-262), differing only in query and rows.",
+      "fix": "Must: the notifications-backend stub is written once and each test passes only its query and rows. One way: a local 'serveNotifications(rows, { query = DEFAULT_QUERY, status = 200 } = {})' returning the nock scope, used by every test.",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:05Z"
+}

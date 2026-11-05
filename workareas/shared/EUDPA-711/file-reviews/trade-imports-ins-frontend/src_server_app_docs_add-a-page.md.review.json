@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/docs/add-a-page.md",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "77fa29081235e82086e84af9e9c1dad8d1e91d81",
+  "pr": 71,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:45:57Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The unit-test step correctly moves to startRealModeServerServingCountries, but the typed seed count is wrong and the recipe still holds up the now two-step add page as the smallest standalone exemplar.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 136,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The recipe says the '-typed' suffix selects 'five-typed-record seeds', but TYPED_SEED in services/address-book/typed-seed.js has six entries (originAndConsignor, placeOfOrigin, consigneeAndDestination, importer, branch, branchDepot), so stub.js seeds six addresses for a '-typed' organisation.",
+      "fix": "Must: the recipe states the number of addresses the '-typed' seed holds as typed-seed.js defines it, or describes the seed without a count. One way: 'the empty, 30-record and typed seeds (six addresses, at least one per address type)'."
+    },
+    {
+      "id": 2,
+      "line": 8,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "The recipe still names features/address-book/add as 'the smallest complete page: one form, one service call, one template', and section 8 tells a new page to copy add.controller.test.js. After this PR the add page is a second step: in address-book mode its GET and POST redirect to /address-book/add/address-type (redirectIfNoAddressTypeChosen, add.controller.js:234) unless add-in-progress.js holds a chosen type, it keeps yar state across requests, has three add modes and a roles question (530 lines), and its tests need cookieAfterChoosingAddressType. The recipe neither describes that prior-step guard pattern nor points at a page that is still a single standalone form.",
+      "fix": "Must: the recipe's exemplar is a page a reader can copy as one standalone page, and a page that depends on an earlier page's answer (the type page then add) is described where the recipe covers it, including the session-held state and the test cookie helper. One way: point 'Read these files first' at address-type/ (one form, one template, one controller test) and add a short step on a page that needs an earlier answer: store it through a yar-backed module like add-in-progress.js, guard the GET and POST with a logged redirect, and open it in tests with cookieAfterChoosingAddressType."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:05Z"
+}

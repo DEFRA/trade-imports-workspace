@@ -1,0 +1,22 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/RoleGroup.java",
+  "repo": "trade-imports-address-book",
+  "commit": "b18192a8d33c313bb42bc7468eb060de1b7e8c3c",
+  "pr": 20,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:42:12Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Correct grouping that matches the spec's three role groups, but the inTheUnitedKingdom positional boolean mispredicts (BRANCH false while branch addresses are UK-only in the UI) and duplicates the receiving-UK rule.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 4,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "RoleGroup.inTheUnitedKingdom() (lines 4-6, 8, 14) mispredicts: BRANCH(false) reads as 'branch addresses are not in the UK' although the frontend fixes a Branch address's country to United Kingdom, and SENDING(false) reads as 'origin/consignor are outside the UK' although the add form opens them on United Kingdom. The flag means 'the API requires the UK country', and it is passed as a positional boolean (SENDING(false), RECEIVING(true), BRANCH(false)). It also gives the UK rule a second home: ReceivingRolesInTheUnitedKingdom already names the receiving group in its name and message.",
+      "fix": "Must: no positional boolean on RoleGroup, and the 'receiving roles must be in the UK' rule has one owner whose name says it is a requirement, not a location. One way: drop the boolean field and constructor and have ReceivingRolesInTheUnitedKingdomValidator check group == RoleGroup.RECEIVING; or rename to requiresTheUnitedKingdom() if the flag must stay.",
+      "best_practice": "java/modern-java.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:04Z"
+}

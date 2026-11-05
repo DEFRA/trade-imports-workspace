@@ -1,0 +1,21 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressResponse.java",
+  "repo": "trade-imports-address-book",
+  "commit": "b18192a8d33c313bb42bc7468eb060de1b7e8c3c",
+  "pr": 20,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:40:37Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Rename and new roles component are correct, but roles has two wire representations for 'none' (null or empty), pushing null guards into every consumer.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 46,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "roles goes out on the wire as either null or an empty list for an address with no roles (schema description at :51-52 'null or empty when it has none'; compact constructor :73-85 leaves roles untouched; AddressMapperTest:79 and AddressResponseTest:64 pin null). Two representations of 'none' push the normalisation into every consumer: ins-frontend view-model/list.js:46 '(roles ?? [])' and services/address-book/stub.js:73 '(address.roles ?? [])' each repeat it. AddressRequest already owns the same rule for input (AddressRequest.java:122 'roles == null ? List.of() : ...'), so the response is the one side without an owner.",
+      "fix": "Must: an AddressResponse's roles is never null on the wire; an address with no roles reads as an empty list, normalised once in the API, and the schema description and class Javadoc say so. One way: in the compact constructor set 'roles = roles == null ? List.of() : List.copyOf(roles)', mark the @ArraySchema REQUIRED, change the description to 'empty when it has none', drop roles from the Javadoc's optional-field list, update AddressMapperTest:79 / AddressResponseTest:64 to assert isEmpty(), regenerate docs/openapi, and let the frontend drop its '?? []' guards."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:04Z"
+}

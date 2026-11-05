@@ -1,0 +1,22 @@
+{
+  "file": "tests/ins/a11y/address-book-error-state.spec.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "29887c343798673f6d5ecf1e4016ae996357181f",
+  "pr": 77,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:45:47Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "New address-type error scan is sound and titles match assertions, but the add-form test keeps a heading wait that toAddressForm() already performs.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 20,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Line 19 now reaches the form through insJourney.toAddressForm(), which already ends with chooseAddressType()'s 'await this.insPages.addressBookAdd.heading.waitFor()' (flows/ins/journey.ts:42), but line 20 still repeats 'await insPages.addressBookAdd.heading.waitFor();' left over from the old open() call. The wait for the form now has two homes, and the spec no longer reads as starting on a loaded page as the to* contract promises; initial-state.spec.ts:11 and filled-state.spec.ts:9 call the same method without it.",
+      "fix": "Must: the add-form error test relies on toAddressForm() to wait for the form heading and holds no wait of its own. One way: delete line 20.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:06Z"
+}

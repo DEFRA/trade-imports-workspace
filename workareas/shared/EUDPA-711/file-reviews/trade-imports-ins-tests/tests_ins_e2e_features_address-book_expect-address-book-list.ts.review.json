@@ -1,0 +1,22 @@
+{
+  "file": "tests/ins/e2e/features/address-book/expect-address-book-list.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "29887c343798673f6d5ecf1e4016ae996357181f",
+  "pr": 77,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:47:13Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The tab labels and Type column changes are right, and listUrl and expectSearchedListLinks predict what they assert, but the 'Page not found' absence check after the heading assertion cannot fail.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 15,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "expectAddressBookList line 15 asserts getByText('Page not found') has count 0 right after line 14 asserts the h1 'Address book' is visible. A not-found page renders its own heading, not 'Address book', so line 15 can never fail when line 14 passes. It checks nothing and reads as an extra guarantee.",
+      "fix": "Must: every assertion in expectAddressBookList can fail on its own, and the list page is proved by exact positive assertions only. One way: delete the 'Page not found' toHaveCount(0) line; the URL and h1 assertions already prove the list rendered.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:06Z"
+}

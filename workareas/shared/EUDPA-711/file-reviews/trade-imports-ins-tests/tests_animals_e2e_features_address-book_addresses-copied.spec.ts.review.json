@@ -1,0 +1,22 @@
+{
+  "file": "tests/animals/e2e/features/address-book/addresses-copied.spec.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "29887c343798673f6d5ecf1e4016ae996357181f",
+  "pr": 77,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:46:53Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Records now carry a use and two tests moved to the seeded helper, but two tests still hand-walk to the Consignor picker that animalsJourney.toPartyPicker owns.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 22,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Two tests walk to the Consignor picker step by step with the same sequence (lines 22-28: startNotification, answerCommodity, overview task 'Roles and addresses', addParty('Consignor'); and lines 80-84, the same), although flows/animals/journey.ts already owns it as animalsJourney.toPartyPicker(role) (journey.ts:567-573). The PR moved the other two tests in this file onto animalsSeededJourney.createDraftWithConsignorChosenInUi but left these two copies beside it.",
+      "fix": "Must: this spec reaches the Consignor picker only through the journey flow's to* method, with no hand-written copy of that route. One way: replace lines 22-25/28 and 80-84 with 'await animalsJourney.toPartyPicker(\"Consignor\")', keeping the consignorAddressLines/chosenAddressText declarations.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:06Z"
+}

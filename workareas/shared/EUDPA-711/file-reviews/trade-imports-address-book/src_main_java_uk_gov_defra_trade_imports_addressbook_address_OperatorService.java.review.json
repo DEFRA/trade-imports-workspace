@@ -1,0 +1,31 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/OperatorService.java",
+  "repo": "trade-imports-address-book",
+  "commit": "b18192a8d33c313bb42bc7468eb060de1b7e8c3c",
+  "pr": 20,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:40:27Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The rename to AddressService and the move to ListCriteria are correct and tested; two Major naming findings remain: the Operator-named timer left behind by the rename, and one name used for two concepts.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 80,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The PR renames OperatorService to AddressService and OperatorMapper to AddressMapper but leaves the list timer named \"controller.listOperators.query.time\" (AddressService.java:80). The rename stops part-way through the concept's vocabulary, and the \"controller.\" prefix is wrong for a timer started and stopped inside the service. The same leftover appears in AddressController's @Timed names (listOperators, createOperator, getOperator, updateOperator, deleteOperator at AddressController.java:110,233,284,350,397).",
+      "fix": "Must: every metric this service and its controller emit names addresses, not operators, and the service's query timer is not prefixed as a controller metric; any CDP Grafana dashboard or alert that reads the old names moves with them. One way: rename it to \"address.list.query.time\" (and the @Timed values to address.list/create/get/update/delete), after checking the service's dashboards and alerts for the old names.",
+      "best_practice": "java/spring-boot.md"
+    },
+    {
+      "id": 2,
+      "line": 99,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "\"Search term\" names two different things in searchTermsOf (AddressService.java:99-111): requested.searchTerm() is the user's free text (RequestedListFilters.searchTerm), while ListCriteria.SearchTerm and the local searchTerms list hold every way an address can match, including InCountries and HoldingAnyRole. Line 101-102 reads \"if the search term is not empty, add a search term\", and the list then also gets country codes and roles that are not search terms in the first sense.",
+      "fix": "Must: one concept, one name. The user's free text and the sealed type of match conditions have different names, used the same way in RequestedListFilters, ListCriteria, AddressListQueryImpl, AddressService and their tests. One way: rename RequestedListFilters.searchTerm to searchText (matching ListCriteria.TextMatching), keeping SearchTerm for the match conditions; or rename ListCriteria.SearchTerm/searchTerms to SearchMatch/searchMatches and searchTermsOf to searchMatchesOf.",
+      "best_practice": "java/modern-java.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:04Z"
+}

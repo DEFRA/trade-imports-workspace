@@ -1,0 +1,31 @@
+{
+  "file": "tests/animals/e2e/pages/notification-view-states.spec.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "29887c343798673f6d5ecf1e4016ae996357181f",
+  "pr": 77,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:46:56Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The errorSummaryLink switch is correct, but 'names what is left' asserts one link of several, and the spec still copies status-tag and button locators the page objects own.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 51,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The title (line 45) says Continue on an unfinished draft 'names what is left', but line 51 only checks the 'Complete arrival details' link is visible. The 'unlocked' draft (line 10) answers only origin and commodity (flows/animals/seed-form-steps.ts:24,156), so the summary should name several sections; dropping any of the others leaves this test green.",
+      "fix": "Must: the test asserts every link the error summary renders for an unlocked draft, in order. One way: await expect(animalsPages.notificationView.errorSummaryLinks).toHaveText([...]) with the full list copied from the check-answers copy in the frontend.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 2,
+      "line": 29,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The spec builds locators that already live on page objects: journeyStrip.locator('.govuk-tag') at lines 29 and 81 copies BasePage.statusTag (base-page.ts:83) with a CSS class selector, and getByRole('button', { name: 'Copy as new' }) / { name: 'Delete' } at lines 40-41 and 86-87 copy notificationView.btnCopyAsNew and btnDelete (notification-view-page.ts:19,23), which the same file uses at line 93. This PR moves the file onto errorSummaryLink for the same reason and leaves these copies beside it.",
+      "fix": "Must: the spec reaches the status tag and the Copy as new and Delete buttons only through the page-object accessors that own them, with no CSS class selector or inline role locator for them in the spec. One way: use animalsPages.notificationView.statusTag, .btnCopyAsNew and .btnDelete at lines 29, 40-41, 81 and 86-87.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:06Z"
+}

@@ -1,0 +1,31 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressScopingIT.java",
+  "repo": "trade-imports-address-book",
+  "commit": "b18192a8d33c313bb42bc7468eb060de1b7e8c3c",
+  "pr": 20,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:43:42Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The move to the IntegrationBase request helpers keeps every scoping assertion intact, but two test titles claim more than their assertions prove (persists nothing; byte-identical 404s).",
+  "todos": [
+    {
+      "id": 1,
+      "line": 68,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "missingOrgHeaderOnPostIsAPlatformAuthRejection400AndPersistsNothing (:68) proves 'persists nothing' only with activeAddressesFor(ORG_A).isEmpty(). A POST with no Trade-Imports-Organisation-Id header has no organisation to stamp, so any address it did persist would not be under ORG_A: the persistence half of the title cannot fail.",
+      "fix": "Must: the test fails if a POST without the org header stores any document. One way: assert the addresses collection holds no documents (e.g. mongoTemplate.count(new Query(), Address.class) == 0, which the per-test cleanDatabase makes exact), or drop 'AndPersistsNothing' from the title.",
+      "best_practice": "java/testing/unit.md"
+    },
+    {
+      "id": 2,
+      "line": 92,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "a404ForAnotherOrgsLiveAddressIsByteIdenticalToA404ForAnUnknownId (:92) claims byte-identical bodies, but problemBody (:104) parses each into a Map and the test compares the maps (:98), so differences in key order, whitespace or number formatting would pass. The title says more than the assertion proves.",
+      "fix": "Must: the title states what the assertion proves. One way: compare crossOrg.getResponse().getContentAsString() with unknown's for a real byte-level check, or rename to a404ForAnotherOrgsLiveAddressHasTheSameProblemBodyAsA404ForAnUnknownId.",
+      "best_practice": "java/testing/unit.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:04Z"
+}

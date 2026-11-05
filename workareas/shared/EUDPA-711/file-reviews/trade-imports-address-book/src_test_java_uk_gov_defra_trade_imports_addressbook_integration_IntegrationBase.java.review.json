@@ -1,0 +1,40 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/IntegrationBase.java",
+  "repo": "trade-imports-address-book",
+  "commit": "b18192a8d33c313bb42bc7468eb060de1b7e8c3c",
+  "pr": 20,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:42:29Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The promoted request helpers and AddressBody work correctly, but the sample address is duplicated from AddressTestSupport and the caller-variant helpers and the mapper constant are misnamed.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 65,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The sample address is written twice: IntegrationBase.java:65-71 (NAME, ADDRESS_LINE_1, TOWN_OR_CITY, POSTCODE, COUNTRY_CODE, PHONE, EMAIL) and the AddressBody defaults at :262-270 (including roles PLACE_OF_ORIGIN) repeat the same literals as AddressTestSupport.validRequest() (address/AddressTestSupport.java:21-29), which this file already imports NO_LIST_CRITERIA from. A change to the valid request body (e.g. a newly required field) must be made in both places.",
+      "fix": "Must: one test-support owner holds the valid sample address values and default roles; IntegrationBase's constants and AddressBody defaults read from it. One way: make the sample values public constants on AddressTestSupport (or have AddressBody start from AddressTestSupport.validRequest() serialised to a map) and delete the copies here.",
+      "best_practice": "java/testing/integration.md"
+    },
+    {
+      "id": 2,
+      "line": 147,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The request-as-another-caller helpers are named two ways: listAddressesAs (:186), getAddressAs (:208) and deleteAddressAs (:218) carry an 'As' suffix for the (orgId, callerOrganisationId, ...) form, while the same form for create and update is an unmarked overload, postAddress(orgId, callerOrganisationId, body) (:147) and putAddress(orgId, callerOrganisationId, addressId, body) (:163). A reader of postAddress(ORG_B, ORG_B, body) in AddressScopingIT cannot tell from the name that the caller header differs from the default, while getAddressAs says so.",
+      "fix": "Must: one naming scheme for every helper that takes a path organisation and a caller organisation, applied to post, put, get, list and delete alike. One way: rename the overloads to postAddressAs and putAddressAs (keeping the default-caller postAddress/putAddress), and update their callers.",
+      "best_practice": "java/modern-java.md"
+    },
+    {
+      "id": 3,
+      "line": 57,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The constant JSON (:57) holds an ObjectMapper, not a JSON value; its call sites JSON.readTree(body) (readIds) and JSON.writeValueAsString(fields) (AddressBody.json) read as though JSON were the document. Beside AddressBody.json(), which does return JSON text, the same word names both a mapper and a string.",
+      "fix": "Must: the mapper's name says it is a mapper. One way: rename it OBJECT_MAPPER (or JSON_MAPPER).",
+      "best_practice": "java/modern-java.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:04Z"
+}

@@ -1,0 +1,22 @@
+{
+  "file": "tests/ins/security/address-book/address-book-auth.spec.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "29887c343798673f6d5ecf1e4016ae996357181f",
+  "pr": 77,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:47:57Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The sign-in round trip correctly moves to the new address type page and its rationale comments moved to docs/security.md, but its URL assertion repeats an unescaped anchoring rule the list page now owns.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 15,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Line 15 anchors the address type URL inline with new RegExp(`${insPages.addressBookAddressType.expectedUrl}$`), unescaped, while this PR gives the list page one owner for the same rule (list-page.ts:18 listUrl, escaped with escapeRegex). The same inline form is repeated for the address type page in address-book-add-type.spec.ts:154, e2e address-book-auth.spec.ts:18 and address-book-add-form.spec.ts:48, so 'the page's URL with no query' now has two mechanisms.",
+      "fix": "Must: one helper owns 'this page's URL, anchored and escaped' for the address type page (and the add page), and every spec asserting that URL calls it. One way: lift listUrl into opensAtExpectedUrl as a shared getter (for example urlWithNoQuery) and use it here and in the three e2e specs.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:06Z"
+}

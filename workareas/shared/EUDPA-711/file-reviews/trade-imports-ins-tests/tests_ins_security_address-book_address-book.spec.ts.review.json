@@ -1,0 +1,21 @@
+{
+  "file": "tests/ins/security/address-book/address-book.spec.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "29887c343798673f6d5ecf1e4016ae996357181f",
+  "pr": 77,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:48:05Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The record lifecycle now goes through the address type page and roles via the shared InsJourney, but the new Type filter parameter is never driven, so the active scan cannot see it.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 14,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The ticket adds a Type filter to the address book list (the role query parameter, asserted in tests/ins e2e as searchParams.get('role')), but this @active spec never sends it: lines 7-29 open the list, add via insJourney.addAddressFromList, view, edit and delete, and no step chooses a Type filter or searches a tab. docs/security.md:5 says coverage is traffic-driven and 'a route no spec drives is invisible to the scan', so the new role parameter is never attacked by ZAP.",
+      "fix": "Must: the active security scan drives the list with the new Type filter (role) and a tab search, so ZAP records and attacks those parameters. One way: after the add, call insPages.addressBookList.filter({ term: name, role: <the ticked role>, submitWith: 'button' }) and assert the row is visible, and note the parameter in docs/security.md's list of what address-book.spec.ts drives."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:06Z"
+}

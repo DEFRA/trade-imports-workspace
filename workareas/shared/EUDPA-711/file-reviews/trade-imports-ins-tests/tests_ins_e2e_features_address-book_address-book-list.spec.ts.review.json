@@ -1,0 +1,22 @@
+{
+  "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "29887c343798673f6d5ecf1e4016ae996357181f",
+  "pr": 77,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:46:53Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The add-through-form tests now go through the shared insJourney.addAddressFromList and assert the landing tab, but the new Clear search test's URL check cannot fail and its real query assertion does not retry.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 76,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "In the new Clear search test (lines 76-77), the URL check at line 76, toHaveURL(new RegExp(`${expectedUrl}\\\\?`)), already matches the searched URL before the click (/address-book?addressType=...&role=...&q=...), so it cannot fail and does not wait for the Clear search navigation. The real claim, that the query becomes exactly { addressType, role }, sits on line 77 as a one-shot expect(Object.fromEntries(new URL(page.url()).searchParams)), which does not retry. If the click returns before the URL commits, line 77 reads the old URL with q and the test flakes. Line 76 also builds a regex from expectedUrl without the escapeRegex the page object's listUrl and tabUrl use.",
+      "fix": "Must: one retrying URL assertion proves the page left the searched URL and now carries exactly addressType and role with no q, and no assertion in the test is already true before the action. One way: replace lines 76-77 with await expect(pages.page).toHaveURL((url) => url.pathname === insPages.addressBookList.expectedUrl && isDeepStrictEqual(Object.fromEntries(url.searchParams), { addressType, role: addressRoles.importer })), or add a page-object URL builder beside tabUrl for a tab plus role filter.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:06Z"
+}

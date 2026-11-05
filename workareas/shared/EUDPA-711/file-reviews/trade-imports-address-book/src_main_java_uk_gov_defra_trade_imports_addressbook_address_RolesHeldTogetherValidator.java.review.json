@@ -1,0 +1,21 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/RolesHeldTogetherValidator.java",
+  "repo": "trade-imports-address-book",
+  "commit": "b18192a8d33c313bb42bc7468eb060de1b7e8c3c",
+  "pr": 20,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:42:21Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Logic is correct (unknown roles are left to AddressRoleNames, at most one group allowed, violation on roles) and tested, but its violation-reporting block is copied in ReceivingRolesInTheUnitedKingdomValidator.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 15,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The 'report a class-level violation on one named property' block is written twice in this PR: RolesHeldTogetherValidator.java:15-19 (addPropertyNode(\"roles\")) and ReceivingRolesInTheUnitedKingdomValidator.java:19-23 (addPropertyNode(\"countryCode\")), identical apart from the property name.",
+      "fix": "Must: one helper owns re-pointing a class-level constraint violation at a property, and both validators call it. One way: a package-private static reportOn(ConstraintValidatorContext context, String property) returning false, in a small shared class in the address package, used by both isValid methods."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:04Z"
+}

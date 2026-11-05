@@ -1,0 +1,22 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressListIT.java",
+  "repo": "trade-imports-address-book",
+  "commit": "b18192a8d33c313bb42bc7468eb060de1b7e8c3c",
+  "pr": 20,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:43:24Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The role filter, its narrowing of q and countryCode, paging over filtered results and the unknown-role 400 are each pinned by a test that fails without the change, but the role-holding address set-up is copied across four IT classes instead of living in IntegrationBase.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 59,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Saving an active address of the caller's organisation holding given roles is set-up used by four IT classes, each with its own copy: the private saveActiveAddressWithRoles(name, countryCode, roles...) here (AddressListIT.java:59), inline addressBuilder(...).roles(List.of(...)) in AddressRepositoryIT.java:101-142, londonDepot().name(...).roles(List.of(...)) nine times in AddressSearchIT.java:253-320, and saveActiveAddressWithRolesAndOptionals in AddressUpdateIT.java:26. integration.md: set-up used by two IT classes goes in IntegrationBase and the local copies are deleted.",
+      "fix": "Must: one shared helper in IntegrationBase saves an address holding the given roles, and AddressListIT, AddressSearchIT, AddressRepositoryIT and AddressUpdateIT call it with no local copies left. One way: promote saveActiveAddressWithRoles to IntegrationBase as a builder step (e.g. addressHolding(org, status, roles...)) and replace the inline .roles(List.of(...)) chains.",
+      "best_practice": "java/testing/integration.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:04Z"
+}

@@ -1,0 +1,38 @@
+{
+  "file": "src/server/app/features/address-book/handshake-context.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "77fa29081235e82086e84af9e9c1dad8d1e91d81",
+  "pr": 71,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:45:18Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Query and payload handshakes now need a listed fulfilment id but session handshakes do not, which can end in a TypeError on save; the sibling refusals stay unlogged and the spec does not describe the new refusal.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 85,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The handshake is valid under two rules: query and payload handshakes must resolve a party role (roleOfParty, line 41), but a session handshake is kept when only its journey type is known (isKnownJourneyType, line 85). A session handshake stored before this deploy with a gbn-ag journey type and a fulfilment id the map does not list passes line 85, and a POST to the add page then reaches rolesOfParty (add.controller.js:352), where keepRolesOfferedBy(undefined, ...) reads ROLES_BY_ADDRESS_TYPE[undefined].filter and throws a TypeError, a 500 instead of the refusal the query path gives",
+      "fix": "Must: one function decides whether a handshake context is valid, and the query, payload and session paths all call it, so a session handshake with an unlisted fulfilment id is cleared like one with an unknown journey type. One way: validatedSessionContext tests roleOfParty(fromSession) instead of isKnownJourneyType, and isKnownJourneyType is deleted if nothing else needs it"
+    },
+    {
+      "id": 2,
+      "line": 85,
+      "severity": "Major",
+      "category": "logging",
+      "issue": "The new logRefusedHandshake (lines 10-15, 42) logs one refusal, but the two refusals beside it stay silent: the incomplete handshake (lines 37-39, Boom.badRequest) and the session handshake cleared and ignored (lines 85-88). Support cannot tell why a trader returning from a notification got a 400 or was dropped into the address book's own add flow",
+      "fix": "Must: every branch that refuses or discards a handshake logs once at warn, with journeyType, notificationId and fulfilmentId. One way: call a logging helper before the Boom.badRequest and before storeHandshakeContext(request, null) in validatedSessionContext",
+      "best_practice": "node/pino-logging.md"
+    },
+    {
+      "id": 3,
+      "line": 41,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "Line 41 now refuses a handshake whose fulfilment id is not listed for its journey type with a page-not-found, a new refusal; the behaviour spec's REQ-INS-ADDR-016 (openspec/specs/ins/address-book/spec.md:316-324) still refuses only an unrecognised journey type, so the spec does not say what the code does",
+      "fix": "Must: the behaviour spec states that a handshake whose fulfilment id is not one the journey lists is refused with page not found, with a scenario linked to a test that proves it. One way: widen REQ-INS-ADDR-016 and add a scenario covered by the new handshake-context tests or an add-page route test"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:05Z"
+}

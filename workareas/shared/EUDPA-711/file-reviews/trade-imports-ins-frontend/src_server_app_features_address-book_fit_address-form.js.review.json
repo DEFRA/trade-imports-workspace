@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/features/address-book/fit/address-form.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "77fa29081235e82086e84af9e9c1dad8d1e91d81",
+  "pr": 71,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:46:03Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new type-page and roles helpers are clear and reused, but the add-address helper's default roles ignore the address type it is given.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 169,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "addValidAddressToFreshOrganisation defaults roles to ['PLACE_OF_ORIGIN'] whatever addressType is passed (168-169). A caller that passes addressType: BRANCH or DESTINATION_CONSIGNEE_OR_IMPORTER without roles ticks a checkbox those forms do not offer, and the test stalls on a locator timeout rather than saving. Today every non-origin caller (add.fit.spec.js:270) happens to pass roles, so the default only works by accident.",
+      "fix": "Must: the default roles follow the chosen address type, so any address type the helper accepts saves without the caller naming roles. One way: default roles to [ROLES_BY_ADDRESS_TYPE[addressType][0]] (from services/address-book), or require roles whenever addressType is passed."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:05Z"
+}

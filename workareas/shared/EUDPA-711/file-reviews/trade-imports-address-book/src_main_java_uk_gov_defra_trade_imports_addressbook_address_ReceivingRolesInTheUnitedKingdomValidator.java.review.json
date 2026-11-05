@@ -1,0 +1,37 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/ReceivingRolesInTheUnitedKingdomValidator.java",
+  "repo": "trade-imports-address-book",
+  "commit": "b18192a8d33c313bb42bc7468eb060de1b7e8c3c",
+  "pr": 20,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:42:34Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The UK rule is correct against the spec and tested for FR/IE, but the missing/blank-country guard has no test, its helper name carries a nothing-case suffix, and the violation-reporting block is copied from RolesHeldTogetherValidator.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 28,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "inTheUnitedKingdomOrUnchosen (lines 11, 28) carries a suffix that names the nothing case: true for null or a blank country as well as GB. The house rule bars a name suffix for nothing or its fallback (not …OrNull, …OrNotFound); 'OrUnchosen' is that suffix for a null or blank countryCode, which @NotBlank on AddressRequest.countryCode already reports.",
+      "fix": "Must: the helper's name says only what it decides (the country is the United Kingdom), and the null or blank country is handled as its own visible step in isValid, not folded into the name. One way: in isValid return true first when countryCode is null or blank (left to @NotBlank), then call a helper named isTheUnitedKingdom(countryCode) holding the 'GB' literal."
+    },
+    {
+      "id": 2,
+      "line": 30,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "No test sends a receiving role (CONSIGNEE, IMPORTER or PLACE_OF_DESTINATION) with a missing or blank countryCode. AddressRequestValidationTest 'blank countryCode' (line 79) builds on validRequest(), whose roles are PLACE_OF_ORIGIN, so it returns at the role check and never reaches the null/blank guard; AddressCrudIT and AddressUpdateIT only send FR and IE with receiving roles. Removing 'countryCode == null ||' at line 30 makes isValid throw a NullPointerException for a create with CONSIGNEE and no country (a 500 instead of the 'Select a country' 400), and removing '|| countryCode.isBlank()' adds a second countryCode error to a blank-country receiving request; no test turns red for either.",
+      "fix": "Must: a test fails if the validator stops passing a missing or blank country for a receiving role, proving such a request gets exactly one countryCode error, 'Select a country'. One way: add 'receiving role with blank countryCode' and 'receiving role with null countryCode' cases (roles PLACE_OF_DESTINATION) to AddressRequestValidationTest asserting containsExactly(\"Select a country\") on countryCode."
+    },
+    {
+      "id": 3,
+      "line": 18,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Lines 18-22 (disableDefaultConstraintViolation, buildConstraintViolationWithTemplate(getDefaultConstraintMessageTemplate()), addPropertyNode, addConstraintViolation) copy RolesHeldTogetherValidator.java:15-19 line for line, differing only in the property name ('countryCode' vs 'roles'). Both class-level AddressRequest validators are new in this PR, so the rule 'report a class-level violation on one field with the annotation's message' has two homes.",
+      "fix": "Must: one helper owns reporting a class-level AddressRequest violation against a named field; both validators call it. One way: a package-private static method such as reportOn(ConstraintValidatorContext context, String property) returning false, used by RolesHeldTogetherValidator and ReceivingRolesInTheUnitedKingdomValidator."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:04Z"
+}

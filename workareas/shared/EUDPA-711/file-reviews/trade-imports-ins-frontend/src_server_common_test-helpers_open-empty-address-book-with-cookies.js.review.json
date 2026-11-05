@@ -1,0 +1,21 @@
+{
+  "file": "src/server/common/test-helpers/open-empty-address-book-with-cookies.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "77fa29081235e82086e84af9e9c1dad8d1e91d81",
+  "pr": 71,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:46:51Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Correctly drops its local cookieHeaderOf for the shared one, but still hand-builds the GET-with-cookie request that getPage now provides.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 21,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "openEmptyAddressBookWithCookiesFrom builds its own GET inject (lines 21-26: method GET, url, auth: sessionAuth(sessionId), headers: { cookie }) beside getPage in address-book-requests.js:141-147, which this PR extended to take exactly that cookie; the file was touched to import cookieHeaderOf from the same module but still keeps a second copy of the request shape.",
+      "fix": "Must: the signed-in GET-with-cookie request has one home in test support, and this helper calls it. One way: return getPage(server, addressBookPath(), sessionId, cookieHeaderOf(postHeaders))."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:05Z"
+}

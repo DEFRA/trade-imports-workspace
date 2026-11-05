@@ -1,0 +1,39 @@
+{
+  "file": "scripts/lighthouse/seed-address.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "77fa29081235e82086e84af9e9c1dad8d1e91d81",
+  "pr": 71,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:44:30Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The type step and the new landing check are correct, but the module loads the backend client and config for one enum, and the seed's use is a bare literal outside the ROLES owner.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 1,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "seed-address.js:1 imports ADDRESS_TYPES from services/address-book/index.js, which also loads client.js (config.js with strict convict validation at load, @defra/hapi-tracing) and stub.js. That file only re-exports the constant from address-types.js. tests/lighthouse/auth-setup.cjs requires this module inside the lhci process, so every Lighthouse URL run now loads the app's backend client and config just to read one enum.",
+      "fix": "Must: the Lighthouse scripts read the address type and role constants from the module that owns them (address-types.js) and load none of the address-book backend client or app config. One way: import { ADDRESS_TYPES, ROLES } from '../../src/server/app/services/address-book/address-types.js'.",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 2,
+      "line": 73,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "seed-address.js:73 posts roles: 'PLACE_OF_ORIGIN' as a bare literal, while the type on line 55 comes from ADDRESS_TYPES. ROLES and ROLES_BY_ADDRESS_TYPE in address-types.js own both the role values and which roles each type offers. If PLACE_OF_ORIGIN is renamed or stops being offered for ORIGIN_OR_CONSIGNOR, no unit test fails. The seed only breaks at run time against a live stack.",
+      "fix": "Must: the seed's use comes from the address-types owner and is one that the chosen type offers, so a change there breaks the seed's unit tests. One way: roles: ROLES.PLACE_OF_ORIGIN, plus a #SEED_ADDRESS test that asserts ROLES_BY_ADDRESS_TYPE[ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR] contains it, or hold type and roles together in one exported seed constant.",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 3,
+      "line": 79,
+      "severity": "Minor",
+      "category": "error-handling",
+      "issue": "seed-address.js:58-61 and :79-83 report only posted.status. A 302 to the wrong place reads 'did not move on to the add form (302)' with no location. createSeedAddress now also refuses a 302 that lands on another tab, and still says the page 'rejected the seed address (302) — its fields have moved on'. That save may have succeeded, so the message sends the reader to the wrong cause.",
+      "fix": "Must: each refusal names the status and the location it got, and the createSeedAddress message tells a refused save apart from a save that landed somewhere unexpected. One way: include posted.location in both messages and branch the createSeedAddress message on status === HTTP_FOUND."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:05Z"
+}

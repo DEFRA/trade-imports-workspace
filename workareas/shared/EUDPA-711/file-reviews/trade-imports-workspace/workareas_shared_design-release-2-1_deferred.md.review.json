@@ -1,0 +1,29 @@
+{
+  "file": "workareas/shared/design-release-2-1/deferred.md",
+  "repo": "trade-imports-workspace",
+  "commit": "ed9e3c48f8d3463d0e438abea99a05d5b2e653c1",
+  "pr": 196,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:51:26Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Several new follow-up rows name pre-rename classes and fields and one deploy-row claim about old addresses is no longer true, so the follow-ups would send someone to code that is gone or already fixed.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 30,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "Rows this PR adds describe the address book as it was before the same PR set's roles rename, so the follow-ups point at code that no longer exists or is already fixed. Line 25: OperatorMapperTest (now AddressMapperTest). Line 28: address-book AddressType's @Schema (AddressType is gone; RoleGroup.java and AddressRole.java replace it). Line 30: fields.js storedTypeAndUsesOf (now storedRolesOf, fields.js:53) and edit.controller.js (now edit/edit.controller.js); its claim 'an old address lists only on the Origin and Consignor tab, with a blank Type column' is false now: AddressListQueryImpl.java:37-39 matches only roles, the no-uses fallback is gone and the stored field is roles (Address.java:21-22, 61), so an address saved before the rename lists on no tab. Line 31: 'accepts a create or update whose uses do not belong to its type' and OperatorService/Controller Javadoc (AddressRequest now carries @RolesHeldTogether; AddressService/AddressController). Line 33: give the stub seeds 'a type and uses' (stub.js:31 and typed-seed.js already give roles).",
+      "fix": "Must: every open row in deferred.md names files, classes and behaviour as they are at the PR set's merge commits, a row whose work the PR set already did is closed, and the deploy row states what a pre-rename address does now (on no tab). One way: re-check rows 25, 28, 30, 31 and 33 against the address-book and ins-frontend branches, rename Operator*/AddressType/storedTypeAndUsesOf/uses to their current names, mark the type-uses check and the stub-seed item Done if RolesHeldTogether and the roles seeds cover them, and reword line 30's 'Until cleared' sentence."
+    },
+    {
+      "id": 2,
+      "line": 34,
+      "severity": "Minor",
+      "category": "correctness",
+      "issue": "The OIDC twin-fix row says 'ins-frontend was fixed in the theme review', but ins-frontend still vi.mocks its own get-oidc-config.js in src/plugins/auth.test.js, src/auth/verify-token.test.js and src/auth/refresh-tokens.test.js, and the theme backlog's inc-067 open question (themes/address-book/backlog.json:1396) still lists ins-frontend test files as needing the same change. The row closes off ins-frontend work that is not done.",
+      "fix": "Must: the row's ins-frontend claim matches the code: either it names the ins-frontend test files still mocking get-oidc-config.js as part of the follow-up, or those files no longer mock it. One way: add the three ins-frontend files to the row's list and its Where column."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:07Z"
+}

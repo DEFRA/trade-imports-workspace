@@ -1,0 +1,40 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/exceptions/GlobalExceptionHandlerTest.java",
+  "repo": "trade-imports-address-book",
+  "commit": "b18192a8d33c313bb42bc7468eb060de1b7e8c3c",
+  "pr": 20,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:42:27Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The operator-to-address string rename is correct, but the touched file has a camelCase title its assertions cannot prove, banned Given/When/Then comments throughout, and an inline copy of its own MethodParameter helper.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 70,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "handleValidationException_shouldReturn400WithCamelCaseErrorsMapAndTraceId claims camelCase, but the FieldErrors it feeds in are already camelCase ('addressLine1') and GlobalExceptionHandler.java:46 keys the map by error.getField() unchanged, so doesNotContainKey(\"address_line_1\") and doesNotContainKey(\"address_line1\") (lines 70-71) cannot fail and the title's camelCase claim is unproven.",
+      "fix": "Must: the title claims only what the assertions prove, and no absence check sits beside the exact positive assertion on line 72. One way: delete lines 70-71 and rename to handleValidationException_shouldReturn400WithAnErrorsMapKeyedByFieldAndTraceId; camelCase on the wire is already proven by AddressComplianceIT.validationProblemCarriesCamelCaseErrorsMapAndTraceId.",
+      "best_practice": "java/testing/unit.md"
+    },
+    {
+      "id": 2,
+      "line": 45,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Every test in the file uses // Given, // When, // Then comments (lines 45, 48, 55, 78, 85, 92, 95, 100, 116, 119, 131, 139, 142, 146, 160, 164, 177, 183, 186, 196, 199, 204, 216, 220, 233, 237), which the Java testing guide bans; the last test (line 242) already uses blank lines.",
+      "fix": "Must: no Given/When/Then comments in the file; set-up, action and assertions are separated by blank lines. One way: delete each comment line, keeping the blank line around it.",
+      "best_practice": "java/testing/unit.md"
+    },
+    {
+      "id": 3,
+      "line": 178,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "handleTypeMismatch_shouldReturn400BadRequestProblemNamingTheParameter builds the MethodParameter inline (lines 178-179: getDeclaredMethod(\"validationTarget\", Object.class) then new MethodParameter(method, 0)), repeating the file's own validationTargetParameter() helper at lines 274-281.",
+      "fix": "Must: one helper in the file builds the validationTarget MethodParameter, and every test calls it. One way: replace lines 178-179 with MethodParameter parameter = validationTargetParameter(); and drop the throws NoSuchMethodException clause.",
+      "best_practice": "java/testing/unit.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:04Z"
+}

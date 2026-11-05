@@ -1,0 +1,22 @@
+{
+  "file": "src/server/app/features/address-book/fields.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "77fa29081235e82086e84af9e9c1dad8d1e91d81",
+  "pr": 71,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:45:38Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Roles helpers and the email-before-phone reorder (which aligns the error summary with the form's field order) are correct, but storedRolesOf's name predicts a roles list while it returns a { roles } body fragment.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 53,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "storedRolesOf(address) reads as the stored roles (a list, like its sibling postedRolesOf at :55, which returns one), but it returns an object { roles } for spreading into the update body (edit.controller.js:156-159). The value word 'roles' does not cover the wrapper the caller relies on.",
+      "fix": "Must: the helper's name says it returns the roles field of an address body, not the roles list, or the helper returns the list and the caller names the key. One way: drop the helper and write roles: address.roles in edit.controller.js's updateAddress call, or rename it to rolesFieldOf and its test describe to match.",
+      "best_practice": "node/code-style.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:05Z"
+}

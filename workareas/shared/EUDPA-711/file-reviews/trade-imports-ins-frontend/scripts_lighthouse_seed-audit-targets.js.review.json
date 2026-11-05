@@ -1,0 +1,21 @@
+{
+  "file": "scripts/lighthouse/seed-audit-targets.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "77fa29081235e82086e84af9e9c1dad8d1e91d81",
+  "pr": 71,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:44:55Z",
+  "verdict": "SAFE",
+  "verdict_reason": "The renamed sign-in helper and cookie function say what they do, and the targets check works today; one Minor item notes that it depends on the session being stored in the cookie.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 56,
+      "severity": "Minor",
+      "category": "correctness",
+      "issue": "seed-audit-targets.js:53-56 builds two page clients from one cookie set. This works only because yar keeps the session in the cookie (session-cache.js sets no maxCookieSize, so yar's 1024-byte default applies). On a fresh book, seedAddress saves an address, and the add controller then calls clearAddInProgress (add.controller.js:363), which drops the chosen type. If the session moved to server-side storage, which session-cache.js:8 documents as a switch, or grew past 1 KB, both clients would share that cleared session. /address-book/add would then 302 to the type page and the targets check would fail. Nothing in the file shows it depends on this.",
+      "fix": "Must: the targets check of /address-book/add passes whether the session lives in the cookie or on the server. One way: seed first, then call chooseAddressType on the client that runs assertUrlsRenderTheirOwnPage, the same way auth-setup.cjs does before each Lighthouse URL."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:05Z"
+}

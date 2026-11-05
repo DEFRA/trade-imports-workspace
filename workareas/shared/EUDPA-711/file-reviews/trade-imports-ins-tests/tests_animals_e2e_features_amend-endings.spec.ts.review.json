@@ -1,0 +1,31 @@
+{
+  "file": "tests/animals/e2e/features/amend-endings.spec.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "29887c343798673f6d5ecf1e4016ae996357181f",
+  "pr": 77,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:46:55Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The errorSummaryLink switch is correct (exact copy matches the frontend), but the refused-review test asserts one link where the whole list is known, and two titles over-claim.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 152,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The title (line 133) claims the refused review is 'naming what is missing', but line 152 only checks that one 'Complete arrival details' link is visible; the summary could also name sections that are not missing and the test stays green. Only the arrival date is blanked (line 140), so the whole list is known.",
+      "fix": "Must: the test asserts the error summary's complete list of links, which is exactly the arrival-details entry. One way: await expect(animalsPages.notificationView.errorSummaryLinks).toHaveText(['Complete arrival details']) in place of the errorSummaryLink(...).toBeVisible() line.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 2,
+      "line": 10,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Two titles claim more than, or the opposite of, what they assert. Line 10 says the page ends 'with no cancel link', yet line 25 asserts the Cancel amend link is visible (only 'Cancel and return to overview' is absent, line 24). Line 68 says Save and continue 'goes on as it does outside an amendment', but the test only asserts it lands on Overview (lines 80-81); nothing compares it with the non-amend path.",
+      "fix": "Must: each title states what its assertions prove: line 10 names the absent link as 'Cancel and return to overview' and does not deny the Cancel amend link; line 68 names Overview as where Save and continue goes. One way: '... with no Cancel and return to overview link ...' and 'Save and continue while amending goes on to Overview, not back to the review'.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:06Z"
+}

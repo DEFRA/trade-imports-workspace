@@ -1,0 +1,39 @@
+{
+  "file": "src/server/common/helpers/serve-static-files.test.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "77fa29081235e82086e84af9e9c1dad8d1e91d81",
+  "pr": 71,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:45:20Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Dropping the dead OIDC mock is correct, but the file keeps a history comment, a describe title its set-up does not honour, vague titles and a copy of the shared server set-up.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 9,
+      "severity": "Major",
+      "category": "history",
+      "issue": "The comment at lines 9-12 narrates history ('Starting for real made this the only test in the suite that could not run while the local stack held the configured port') and describes other tests and Hapi behaviour rather than the lines below it.",
+      "fix": "Must: no comment above the set-up; the code states how it is now. One way: delete lines 9-12 and use the shared startTestServer() helper, whose name already says it initialises without listening."
+    },
+    {
+      "id": 2,
+      "line": 7,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "describe 'When secure context is disabled' (line 7) claims a set-up the block never does: nothing touches the secure-context config. Test titles 'Should serve favicon as expected' (line 21) and 'Should serve assets as expected' (line 30) do not say what they assert (204 for /favicon.ico, 200 for govuk-crest.svg).",
+      "fix": "Must: the describe and test titles state what the set-up does and what the assertions prove. One way: drop the describe, and title the tests 'Should answer /favicon.ico with 204 No Content' and 'Should serve a public asset with 200'.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 3,
+      "line": 13,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Lines 13-18 hand-roll createServer() + initialize() and stop({ timeout: 0 }), a local copy of startTestServer/stopTestServer in src/server/common/test-helpers/test-server.js:7-15.",
+      "fix": "Must: the suite starts and stops its server through the shared test-server.js helper. One way: beforeEach(async () => { server = await startTestServer() }) and afterEach(() => stopTestServer(server)).",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:05Z"
+}

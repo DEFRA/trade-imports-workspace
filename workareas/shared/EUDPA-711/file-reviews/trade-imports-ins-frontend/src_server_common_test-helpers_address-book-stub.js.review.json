@@ -1,0 +1,37 @@
+{
+  "file": "src/server/common/test-helpers/address-book-stub.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "77fa29081235e82086e84af9e9c1dad8d1e91d81",
+  "pr": 71,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:46:30Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "A useful shared stub-listing helper, but its page size and seed name each duplicate a value held elsewhere and it is missing from the testing.md helper catalogue.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 8,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "listedStubNames hard-codes pageSize: 8 (address-book-stub.js:8) while address-book.test.js:34 declares const PAGE_SIZE = 8 for the same stub listing, and its own tests assert 'four pages of 8' against it: two homes for one page size, and the helper's cap is invisible at its call sites (a stub list longer than 8 is silently cut to the first page).",
+      "fix": "Must: the stub-listing page size used by stub-mode service tests has one owner that the helper and address-book.test.js both read. One way: export a STUB_LIST_PAGE_SIZE from address-book-stub.js, use it as listedStubNames' pageSize and import it in address-book.test.js in place of the local PAGE_SIZE."
+    },
+    {
+      "id": 2,
+      "line": 1,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "address-book-stub.js is a new shared helper (STUB_SEED_ADDRESS_NAME, listedStubNames) used by address-book.test.js and address-book.roles.test.js, but the test-helpers catalogue in src/server/app/docs/testing.md lists every other file in common/test-helpers and does not mention it, so the next stub-mode test re-derives the seed name and the listing call locally.",
+      "fix": "Must: testing.md's common/test-helpers catalogue lists address-book-stub.js and what each export gives. One way: add an entry beside capture-info-logs.js (testing.md:120)."
+    },
+    {
+      "id": 3,
+      "line": 3,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "STUB_SEED_ADDRESS_NAME = 'Stub Farm 1' (address-book-stub.js:3) is a second home for the stub seed's name, already written as seedAddress.name = 'Stub Farm 1' in src/server/app/features/address-book/fit/seed-address.js:3; both describe the address stub.js builds as buildSeedAddress(1).",
+      "fix": "Must: the stub seed address's name has one owner in test support that the unit-test helper and the FIT seed both read. One way: have seed-address.js take its name from STUB_SEED_ADDRESS_NAME (or the reverse)."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:05Z"
+}

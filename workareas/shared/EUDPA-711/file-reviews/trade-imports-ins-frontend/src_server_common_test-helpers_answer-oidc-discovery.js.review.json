@@ -1,0 +1,22 @@
+{
+  "file": "src/server/common/test-helpers/answer-oidc-discovery.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "77fa29081235e82086e84af9e9c1dad8d1e91d81",
+  "pr": 71,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:46:38Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Correctly fakes OIDC discovery at the network boundary instead of mocking an own module, but the workspace testing guide still prescribes the vi.mock route it replaces.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 7,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "answerOidcDiscovery replaces the vi.mock of get-oidc-config.js with a nock at the network boundary (and the PR deletes that vi.mock from health/controller.test.js), but the workspace testing guide still prescribes the old mechanism: docs/best-practices/node/testing/frontend.md section 2 table row 'Config and OIDC discovery when a server starts: vi.mock ... of get-oidc-config.js returning mockOidcConfig' and section 6 'OIDC discovery (mockOidcConfig) and auth config (mockAuthConfig) are the only module mocks a server test may use', with the vi.mock example. The pattern changed and its recipe was left behind, so the next server test follows the guide back to a module mock.",
+      "fix": "Must: the testing guide says how a real-mode ins-frontend server test answers OIDC discovery the way this repo now does it (a nock of the discovery URL returning mockOidcConfig, via answerOidcDiscovery / startRealModeServer), and no longer presents a vi.mock of get-oidc-config.js as the required route for it. One way: update the section 2 row and the section 6 server-test example in the same cross-repo change.",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:05Z"
+}

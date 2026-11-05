@@ -1,0 +1,30 @@
+{
+  "file": "page-objects/animals/party-picker-page.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "29887c343798673f6d5ecf1e4016ae996357181f",
+  "pr": 77,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:46:13Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new picker detail and pagination locators work, but their names differ from the repo's existing pagination names and the paging helper asserts inside the page object.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 70,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The new pagination locators name a concept the repo already names differently: party-picker-page.ts:74 'nextPageLink' and :70 'paginationPageLink', where list-page.ts:71 and both dashboard pages (ins/dashboard-page.ts:40, animals/dashboard-page.ts:131) say 'linkNextPage' and list-page.ts:115 says 'pageLink'. One concept, two names across sibling page objects.",
+      "fix": "Must: the Next page link and the numbered page link have one name each across every page object. One way: rename nextPageLink to linkNextPage and paginationPageLink to pageLink, and update addresses-picker.spec.ts."
+    },
+    {
+      "id": 2,
+      "line": 81,
+      "severity": "Minor",
+      "category": "structure",
+      "issue": "followNextUntilListed (party-picker-page.ts:81) calls expect(...).toHaveAttribute('aria-current', 'page') inside a page object to wait for the next page. The Playwright guide keeps assertions in specs ('Assertions in page objects or flows: Hides intent'), and a failure here reports as a spec assertion that the spec never wrote.",
+      "fix": "Must: the page object waits for the next page without an assertion. One way: await this.paginationPageLink(pageNumber).and(this.page.locator('[aria-current=\"page\"]')).waitFor(), and drop the expect import.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:06Z"
+}

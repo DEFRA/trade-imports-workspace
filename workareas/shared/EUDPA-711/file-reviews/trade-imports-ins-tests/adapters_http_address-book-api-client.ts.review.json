@@ -1,0 +1,21 @@
+{
+  "file": "adapters/http/address-book-api-client.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "29887c343798673f6d5ecf1e4016ae996357181f",
+  "pr": 77,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:46:08Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The role and searchRole query parameters match the address-book controller, but the new AddressBookEntry type and its 'record' parameters blur the stored record and the write body.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 27,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "One concept, two names that do not tell themselves apart: AddressBookRecord (line 11, the stored address with id, deleted, modifiedAt) and AddressBookEntry (line 27, the body a caller writes, with none of those). 'Entry' and 'Record' are synonyms, so neither name predicts which one carries an id. The parameters then cross them: createAddress(record: AddressBookEntry) (line 81) and updateAddress(addressId, record: AddressBookEntry) (line 95) name an Entry 'record'. The API itself calls this body AddressRequest (trade-imports-address-book AddressRequest.java:35).",
+      "fix": "Must: the writable body type has a name that says it is what a caller sends to create or replace an address, and the createAddress/updateAddress parameters are named for that type, not 'record'. One way: rename AddressBookEntry to AddressBookRequest (matching AddressRequest in the API) across the client, flows/shared/address-book-seed.ts and address-book-roles.spec.ts, and name the parameters 'request'."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:06Z"
+}

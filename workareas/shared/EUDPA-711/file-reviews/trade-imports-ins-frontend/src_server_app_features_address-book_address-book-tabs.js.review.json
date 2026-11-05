@@ -1,0 +1,22 @@
+{
+  "file": "src/server/app/features/address-book/address-book-tabs.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "77fa29081235e82086e84af9e9c1dad8d1e91d81",
+  "pr": 71,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:45:29Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Tab lookup is correct and fully tested, but the tab copy is keyed by a camelCase alias (copyKey) while every other address-type copy is keyed by the ADDRESS_TYPES value.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 6,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "One concept, two key schemes: the address type keys its copy by its ADDRESS_TYPES value in copy.addressType.options (copy.en.js:91-101) and copy.roles.legendByAddressType (copy.en.js:108-112), but by a camelCase alias in copy.list.tabs (copy.en.js:24-37: originOrConsignor, destinationConsigneeOrImporter, branch; same in copy.cy.js:26-39). The alias forces a second name on every tab, tabFor(addressType, copyKey) at address-book-tabs.js:6-20, which list.controller.js:67 and :173 read instead of the address type.",
+      "fix": "Must: each address type's copy is keyed by its ADDRESS_TYPES value everywhere in copy.en.js and copy.cy.js, and a tab finds its label and heading by its addressType, with no separate copyKey. One way: rename copy.list.tabs keys to ORIGIN_OR_CONSIGNOR, DESTINATION_CONSIGNEE_OR_IMPORTER and BRANCH in both bundles, drop copyKey from tabFor, read copy.list.tabs[tab.addressType] in list.controller.js, and update copy.test.js, list.tabs.controller.test.js and add.fit.spec.js.",
+      "best_practice": "node/code-style.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:05Z"
+}

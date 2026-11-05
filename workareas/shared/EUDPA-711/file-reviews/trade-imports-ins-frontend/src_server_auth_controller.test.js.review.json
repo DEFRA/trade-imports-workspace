@@ -1,0 +1,22 @@
+{
+  "file": "src/server/auth/controller.test.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "77fa29081235e82086e84af9e9c1dad8d1e91d81",
+  "pr": 71,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:44:56Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Move to startRealModeServer with nock-answered OIDC discovery is sound, but a dead global fetch stub now sits beside the nock refusal and would mask any new outbound call.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 54,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "Lines 54-63 keep a vi.stubGlobal('fetch') that answers every call with ok and [] beside startRealModeServer (line 65), whose runInRealMode/refuseOutboundHttp already refuses outbound HTTP via nock. Every dependency src/server/auth/controller.js reaches (verifyToken, getPermissions, getSignOutUrl) is module-mocked in this file and OIDC discovery now goes through Wreck to answerOidcDiscovery's nock, so no path here calls fetch: the stub is dead set-up, and if a fetch were ever added it would be silently answered with [] instead of refused.",
+      "fix": "Must: this suite has one outbound-HTTP mechanism, the nock refusal startRealModeServer installs, and no global fetch stub. One way: delete the beforeAll/afterAll stubGlobal pair and run the suite; if a call surfaces, answer it with the matching real-mode.js helper (insBackendApi(), addressBookApi()).",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:05Z"
+}

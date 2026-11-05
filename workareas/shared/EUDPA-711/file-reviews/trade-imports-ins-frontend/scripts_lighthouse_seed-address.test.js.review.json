@@ -1,0 +1,40 @@
+{
+  "file": "scripts/lighthouse/seed-address.test.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "77fa29081235e82086e84af9e9c1dad8d1e91d81",
+  "pr": 71,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:44:48Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new type-step tests cover the success and refusal paths, but a #SEED_ADDRESS title now claims more than it proves, the type-page set-up is copied four times, and the page-client cookies() test is filed under chooseAddressType.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 63,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "seed-address.test.js:63 'Should send exactly the fields the add form asks, in the order it asks them' compares Object.keys(SEED_ADDRESS) with FIELDS. The add form now also asks 'What can this address be used for?' (add.njk:32 name: \"roles\"), and createSeedAddress adds that outside SEED_ADDRESS (seed-address.js:73). The title claims more than the assertion proves, and no test checks the seed's use against the uses the add form offers for Origin or Consignor.",
+      "fix": "Must: the #SEED_ADDRESS titles state only what their assertions prove, and a test fails if the seed sends a use the add form does not offer for the type it chose. One way: retitle to 'the address fields the add form asks' and add an assertion against ROLES_BY_ADDRESS_TYPE[ADDRESS_TYPES.ORIGIN_OR_CONSIGNOR].",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 2,
+      "line": 181,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "seed-address.test.js:181-184, :204-206, :216-218 and :226-228 each rebuild app().get('/address-book/add/address-type').reply(HTTP_OK, page('<form></form>')) by hand, beside serveTypeStep (:47-55), which already holds that GET. Four tests copy the same set-up.",
+      "fix": "Must: the address-type page GET is set up in one helper that every #chooseAddressType and #seedAddress test uses. One way: split serveTypeStep into serveTypePage() and a POST reply that each test chooses, or give serveTypeStep a reply option for the POST.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 3,
+      "line": 179,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "seed-address.test.js:179 'Should hold the session cookie the chosen type was saved in, beside the cookies it started with' sits under #chooseAddressType but asserts client.cookies(), the page client's jar merging (page-client.js:11-17, :59). chooseAddressType holds no cookies. The only test of the new page-client cookies() export is filed under, and titled for, a function that does not own the behaviour.",
+      "fix": "Must: page-client's cookies() has its own test under a page-client describe, titled for what the client does, and the #chooseAddressType tests claim only what chooseAddressType does. One way: move the test to a new scripts/lighthouse/page-client.test.js that drives submit() against a nock reply with set-cookie.",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:05Z"
+}

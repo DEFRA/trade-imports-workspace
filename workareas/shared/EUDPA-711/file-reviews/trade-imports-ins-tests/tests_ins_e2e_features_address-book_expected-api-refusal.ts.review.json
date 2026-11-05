@@ -1,0 +1,21 @@
+{
+  "file": "tests/ins/e2e/features/address-book/expected-api-refusal.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "29887c343798673f6d5ecf1e4016ae996357181f",
+  "pr": 77,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:47:23Z",
+  "verdict": "SAFE",
+  "verdict_reason": "It correctly asserts that the API refuses with a 400 validation problem, the only finding is a Minor one (it parses the body before checking the status, so an unexpected 5xx fails as a JSON parse error).",
+  "todos": [
+    {
+      "id": 1,
+      "line": 16,
+      "severity": "Minor",
+      "category": "error-handling",
+      "issue": "expectedApiRefusalOf runs JSON.parse(error.responseBody) at line 16, before expectedValidationRefusalOf checks the status at line 21. When the API returns a 5xx or a gateway 404 with an HTML or empty body, the test fails with a JSON SyntaxError, and the status and the RestClientError message (method, url, status) never reach the report. The inner helper also has one caller and types every refusal as a ValidationProblem, which goes beyond what its name claims ('Api refusal').",
+      "fix": "Must: when the API answers with something other than a 400 validation problem, the failure shows the status and the response body, not a parse error. One way: fold the two functions into expectedValidationRefusalOf, assert status 400 before parsing, and parse only after that assertion passes."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:06Z"
+}

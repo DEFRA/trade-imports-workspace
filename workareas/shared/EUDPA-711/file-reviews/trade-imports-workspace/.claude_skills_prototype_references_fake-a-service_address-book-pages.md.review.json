@@ -1,0 +1,29 @@
+{
+  "file": ".claude/skills/prototype/references/fake-a-service/address-book-pages.md",
+  "repo": "trade-imports-workspace",
+  "commit": "ed9e3c48f8d3463d0e438abea99a05d5b2e653c1",
+  "pr": 196,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:48:35Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "New types-and-roles guidance contradicts the unchanged wire shape, required fields and listAddresses row, and the prototype service it describes has no roles.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 44,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "The new 'Address types and roles' paragraph (lines 160-172) says every address holds at least one role and the list filters a tab by role, but the rest of the reference the diff leaves standing now contradicts it: line 30 claims the prototype's ins-address-book has 'the same wire shape' as INS and its stub 'refuses what the real address book API refuses'; line 38 calls roles an optional 'extra field'; lines 44-49 list the wire shape and the API's required fields without roles, though AddressRequest.java:103 now refuses a save with none; line 36 documents listAddresses(orgId, { page, q, countryCode }) while the real INS client takes roles and searchRoles (trade-imports-ins-frontend client.js:45-52). The prototype's own service (trade-imports-plants-prototype main @85d1eb8, ins-address-book/client.js:95-98, stub.js) has no roles at all, so a designer following Step 2 builds a form with no roles, and cannot build the tab or Type filter with the listed operations; nothing tells them to bring ins-address-book up to the INS service first.",
+      "fix": "Must: the reference describes one consistent address shape: roles are in the wire shape and the required set, the operations table matches what ins-address-book actually offers, and the types-and-roles section says what must change in ins-address-book (roles on create and update, role and searchRole filtering on list) before the pages can be built. One way: add roles to lines 44-49, reword line 38, and either update ins-address-book in the prototype to mirror the INS service and the listAddresses row, or add a step to the types-and-roles section telling the designer's session to extend it first."
+    },
+    {
+      "id": 2,
+      "line": 164,
+      "severity": "Minor",
+      "category": "correctness",
+      "issue": "Line 164 says the add form asks 'What can this address be used for?', but in the source it points to that legend is only for Origin or Consignor; Destination, Consignee or Importer and Branch use 'Address type' (trade-imports-ins-frontend copy/copy.en.js:108-111, legendByAddressType). A designer copying from this line gets the wrong legend for two of the three types.",
+      "fix": "Must: the reference quotes the add form's roles legend as the INS frontend sets it for each address type, or points to legendByAddressType in copy.en.js instead of quoting one. One way: 'then asks what the address can be used for (legendByAddressType in copy.en.js) with a govukCheckboxes named roles'."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:07Z"
+}

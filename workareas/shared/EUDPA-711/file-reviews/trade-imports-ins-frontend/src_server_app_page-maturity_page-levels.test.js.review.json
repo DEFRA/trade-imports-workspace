@@ -1,0 +1,22 @@
+{
+  "file": "src/server/app/page-maturity/page-levels.test.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "77fa29081235e82086e84af9e9c1dad8d1e91d81",
+  "pr": 71,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:43:41Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Removing the OIDC mock is safe (the suite runs in stub mode, where the auth plugin never fetches discovery), but the inline server start/stop duplicates the shared startTestServer/stopTestServer helpers.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 11,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The test starts and stops its own server inline (lines 11-18: createServer(), server.initialize(), server.stop({ timeout: 0 })) beside the shared helpers that already own exactly that in common/test-helpers/test-server.js: 'export async function startTestServer() { const server = await createServer(); await server.initialize(); ... }' and 'stopTestServer(server)'.",
+      "fix": "Must: this test's server lifecycle goes through the shared test-server helpers, with no inline copy. One way: beforeAll(async () => { server = await startTestServer() }) and afterAll(() => stopTestServer(server)), dropping the createServer import.",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:05Z"
+}

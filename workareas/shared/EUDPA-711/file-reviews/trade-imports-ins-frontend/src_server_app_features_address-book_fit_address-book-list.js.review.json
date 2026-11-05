@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/features/address-book/fit/address-book-list.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "77fa29081235e82086e84af9e9c1dad8d1e91d81",
+  "pr": 71,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:45:57Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The tab, type-filter and query helpers are sound, but the new results-line, table-heading and unknown-type constants duplicate ones the unit test support already declares.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 8,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Test constants this PR adds here already have a home in list.test-support.js: NO_RESULTS_LINE = 'Showing 0 of 0' (8, and list.test-support.js:20) and the column headings ['Name','Type','Address','Country','Action'] written inline in expectEmptyAddressBookList (55-61, and TABLE_HEADINGS at list.test-support.js:21, plus a third copy at list.fit.spec.js:76-82). UNKNOWN_ADDRESS_TYPE = 'TRANSPORTER' (7) is the same value address-type.controller.test.js:36 names UNSUPPORTED_ADDRESS_TYPE, one concept under two names.",
+      "fix": "Must: the empty results line, the table headings and the address type no tab offers each have one declaration and one name, imported by the unit tests and the FIT helpers alike. One way: move them to a plain module with no vitest or cheerio imports (for example features/address-book/test-copy.js) and import it from list.test-support.js, address-type.controller.test.js and this file."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:05Z"
+}

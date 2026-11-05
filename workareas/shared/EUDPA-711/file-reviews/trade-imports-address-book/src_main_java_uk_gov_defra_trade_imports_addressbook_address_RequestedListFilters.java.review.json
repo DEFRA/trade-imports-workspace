@@ -1,0 +1,21 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/RequestedListFilters.java",
+  "repo": "trade-imports-address-book",
+  "commit": "b18192a8d33c313bb42bc7468eb060de1b7e8c3c",
+  "pr": 20,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:42:43Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The record correctly normalises absent, null and blank filters (covered by AddressServiceTest), but its searchTerm component reuses ListCriteria.SearchTerm's name for a narrower concept.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 16,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The component searchTerm (lines 11, 16, 22) is the free-text q only, but ListCriteria.SearchTerm (ListCriteria.java:22), new in the same PR, is any one way to match the search: text, countries or roles. AddressService.searchTermsOf (AddressService.java:99) reads requested.searchTerm() and also turns countryCodes and searchRoles into 'search terms', so one name means two different things one call apart.",
+      "fix": "Must: the free-text query and the union of search alternatives carry different names across RequestedListFilters, ListCriteria and AddressService. One way: rename the component to searchText (matching ListCriteria.TextMatching) and its Javadoc to 'the user's search text, trimmed; empty for no search'."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:04Z"
+}

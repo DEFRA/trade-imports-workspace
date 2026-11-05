@@ -1,0 +1,22 @@
+{
+  "file": "src/server/common/helpers/content-security-policy.test.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "77fa29081235e82086e84af9e9c1dad8d1e91d81",
+  "pr": 71,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:45:02Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Removing the dead OIDC mock is correct under STUB_MODE=true, but the suite still copies the shared startTestServer/stopTestServer set-up.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 8,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Lines 8-15 hand-roll createServer() + initialize() and stop({ timeout: 0 }), which is exactly startTestServer/stopTestServer in src/server/common/test-helpers/test-server.js:7-15 (used by health/controller.test.js). This PR edits the file's set-up imports but leaves the local copy of the shared helper.",
+      "fix": "Must: the CSP suite starts and stops its server through the shared test-server.js helper, with no local copy of that set-up. One way: replace the beforeAll/afterAll bodies with startTestServer() and stopTestServer(server).",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:05Z"
+}

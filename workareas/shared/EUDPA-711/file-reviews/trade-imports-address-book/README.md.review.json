@@ -1,0 +1,37 @@
+{
+  "file": "README.md",
+  "repo": "trade-imports-address-book",
+  "commit": "b18192a8d33c313bb42bc7468eb060de1b7e8c3c",
+  "pr": 20,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:40:58Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new role, list-filter and compliance sections match the code, but one design note misstates RequestedListFilters, one wire-convention line narrates branch history, and operators.yml is left behind by the operator-to-address rename.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 339,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "README.md:339 says RequestedListFilters holds the filters 'with the search term as typed and any value possibly null', but RequestedListFilters.java's compact constructor trims the search term, drops blank country codes and null or repeated roles, and its Javadoc says 'A filter the request did not supply is empty, never null'. The design note states a contract the record does not have, so a reader adds null checks that cannot fire or trusts an untrimmed term.",
+      "fix": "Must: the design note describes RequestedListFilters as the code builds it (search term trimmed, empty rather than null for an absent filter, country codes trimmed without blanks, roles without repeats). One way: replace 'with the search term as typed and any value possibly null' with 'trimmed, with an absent filter empty rather than null', and keep the ListCriteria half of the sentence on what differs: search terms turned into SearchTerm values."
+    },
+    {
+      "id": 2,
+      "line": 161,
+      "severity": "Major",
+      "category": "history",
+      "issue": "README.md:161 'A body that still sends `addressType` has it ignored.' narrates history: `addressType` is not a field on main's AddressRequest or anywhere in the current API, so 'still sends' refers to an earlier state of this branch. It also singles out one name when JacksonConfig (failOnUnknownProperties(false)) ignores every unknown property, while `type` and `role` are refused by @Null in AddressRequest, which the README does not say.",
+      "fix": "Must: the wire-conventions list states how unknown request properties are treated now, with no before/after wording and no field named only because it once existed. One way: replace line 161 with 'Unknown request properties are ignored, except `type` and `role`, which are refused with a 400 keyed by that field.'"
+    },
+    {
+      "id": 3,
+      "line": 257,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The PR renames the operator vocabulary to address (OperatorComplianceIT to AddressComplianceIT, OperatorRepository to AddressRepository, {operator-id} to {address-id} at README.md:127-129 and :281), but README.md:257 and :259 still name the committed artifact docs/openapi/operators.yml (also ApiDocs.COMMITTED_ARTIFACT), so the rename stops part-way through the concept. AddressService.list's timer 'controller.listOperators.query.time' is a second leftover outside this file.",
+      "fix": "Must: one name for the concept across the README, the committed OpenAPI artifact and the code that reads it; no 'operator' left for an address. One way: rename docs/openapi/operators.yml to docs/openapi/addresses.yml (or api-docs.yml), update ApiDocs.COMMITTED_ARTIFACT, OpenApiArtifactGeneratorIT and README.md:257/:259, and tell downstream consumers of the path; or, if consumers pin the path, say so in the README beside the table."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:04Z"
+}

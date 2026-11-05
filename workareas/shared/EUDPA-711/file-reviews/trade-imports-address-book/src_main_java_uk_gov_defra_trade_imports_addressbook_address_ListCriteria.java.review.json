@@ -1,0 +1,31 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/ListCriteria.java",
+  "repo": "trade-imports-address-book",
+  "commit": "b18192a8d33c313bb42bc7468eb060de1b7e8c3c",
+  "pr": 20,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:40:26Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Correct, well-tested immutable criteria record, but the SearchTerm type reuses 'search term' for a second concept and its Javadoc restates rules owned by AddressListQueryImpl and RequestedListFilters.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 22,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "One name, two concepts: the sealed type SearchTerm (ListCriteria.java:22, field searchTerms:14) is any search clause — text, country or role — while 'search term' elsewhere in the same flow means only the user's text: RequestedListFilters.searchTerm (the q param, RequestedListFilters.java:10), AddressService.toPartialMatchRegex(String searchTerm) and the test list_passesTheSearchTermAsAPartialMatchPattern. In AddressService.searchTermsOf (:99-110) requested.searchTerm() and List<SearchTerm> searchTerms sit side by side and mean different things, and new InCountries(...) is added to 'searchTerms' though it is not a search term in the request's vocabulary.",
+      "fix": "Must: 'search term' names one concept across the request record, the service, ListCriteria and the tests. One way: rename the sealed type and its list to SearchClause/searchClauses (or SearchMatch/searchMatches), updating ListCriteria, AddressListQueryImpl.clausesOf, AddressService.searchTermsOf, AddressTestSupport and ListCriteriaTest titles and the IllegalArgumentException message; keep searchTerm for the user's q text.",
+      "best_practice": "java/modern-java.md"
+    },
+    {
+      "id": 2,
+      "line": 25,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Javadoc describes other modules' rules, not this record's lines. TextMatching (:25-26) lists the matched fields 'name, address lines, town or city, county or postcode' and 'case-insensitively' — both are owned by AddressListQueryImpl.clausesOf (Stream.of(\"name\", \"addressLine1\", ... \"postcode\") ... regex(pattern, \"i\"), AddressListQueryImpl.java:55-56), so the field list now has two homes and the doc goes untrue the moment a field is added there. InCountries' '@param countryCodes trimmed, non-blank country codes' (:39) describes the normalisation RequestedListFilters does (RequestedListFilters.java:23-24); the record's constructor only checks non-empty, so the claim is not part of what this type guarantees.",
+      "fix": "Must: ListCriteria's Javadoc states only what the record itself guarantees, and the searched-field list and case rule live in one place (AddressListQueryImpl). One way: TextMatching -> 'Matches an address whose searchable text matches the pattern'; InCountries -> '@param countryCodes the country codes; never empty'.",
+      "best_practice": "java/modern-java.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:04Z"
+}

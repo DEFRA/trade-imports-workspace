@@ -1,0 +1,38 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressGetIT.java",
+  "repo": "trade-imports-address-book",
+  "commit": "b18192a8d33c313bb42bc7468eb060de1b7e8c3c",
+  "pr": 20,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:43:38Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "It switched to the getAddress helper but keeps an inaccurate class Javadoc and Given/When/Then comments, a title claiming all mapped fields while the new roles field is never asserted, and fixture literals duplicating IntegrationBase constants.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 12,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The class Javadoc (lines 12-15) says 'Cross-org and unknown ids yield 404 not-found problems', but this file has no cross-org test. It also names the route '/{id}' where the path template is '{address-id}', and it is a doc comment on a package-private test class, not a public API. The '// Given' and '// When / Then' comments (lines 20, 23, 42, 45, 54) break the no Given/When/Then rule. This PR removed the same comments from AddressDeleteIT and AddressExpiryIT but left them here.",
+      "fix": "Must: the file carries no class Javadoc and no Given/When/Then comments, and blank lines separate set-up, action and assertions. One way: delete lines 12-15 and the five Given/When/Then comment lines.",
+      "best_practice": "java/testing/integration.md"
+    },
+    {
+      "id": 2,
+      "line": 19,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "get_shouldReturn200WithAllMappedFields_whenAddressIsLive (line 19) claims every mapped field. It never asserts roles, which this PR adds to AddressResponse (AddressResponse.java:53), or addressLine2 and county. The seeded address (IntegrationBase.addressBuilder) has no roles, addressLine2 or county, so dropping roles from AddressMapper.toResponse would leave this test green.",
+      "fix": "Must: the title claims only the fields the test asserts, or the test seeds and asserts every AddressResponse field, roles included. One way: seed the address with roles, addressLine2 and county, then assert $.roles, $.addressLine2 and $.county as well."
+    },
+    {
+      "id": 3,
+      "line": 27,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Lines 27-33 assert the fixture values as literals ('Highland Livestock Ltd', '14 Drover''s Way', 'Inverness', 'IV2 3JH', 'GB', '+44 1463 234567', 'exports@highlandlivestock.example.com'). This PR made IntegrationBase the home of those values (NAME, ADDRESS_LINE_1, TOWN_OR_CITY, POSTCODE, COUNTRY_CODE, PHONE, EMAIL; IntegrationBase.java:65-71), and AddressCrudIT and AddressComplianceIT now assert through those constants. This file keeps a second copy, so the fixture lives in two homes.",
+      "fix": "Must: AddressGetIT asserts the seeded values through IntegrationBase's fixture constants, and no fixture literal remains in the file. One way: replace each literal on lines 27-33 with NAME, ADDRESS_LINE_1, TOWN_OR_CITY, POSTCODE, COUNTRY_CODE, PHONE and EMAIL."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:04Z"
+}

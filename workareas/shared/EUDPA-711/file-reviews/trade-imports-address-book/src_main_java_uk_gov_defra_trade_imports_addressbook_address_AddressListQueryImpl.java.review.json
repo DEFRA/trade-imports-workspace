@@ -1,0 +1,21 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/AddressListQueryImpl.java",
+  "repo": "trade-imports-address-book",
+  "commit": "b18192a8d33c313bb42bc7468eb060de1b7e8c3c",
+  "pr": 20,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:40:25Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The query is correct and well covered by AddressRepositoryIT and AddressSearchIT, but the roles clause is written twice, once for the filter and once for the search term.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 39,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The rule 'an address holds any of these roles' is written twice as the same Mongo clause: Criteria.where(\"roles\").in(criteria.roles()) for the role filter (line 39) and Criteria.where(\"roles\").in(roles) for the HoldingAnyRole search term (line 58). A change to how roles are matched (field name, all-of vs any-of) has to be made in both places.",
+      "fix": "Must: one function in AddressListQueryImpl owns the 'holds any of these roles' clause, and both the role filter and the HoldingAnyRole case call it. One way: extract private static Criteria holdingAnyOf(List<AddressRole> roles) { return Criteria.where(\"roles\").in(roles); } and use it at lines 39 and 58."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:04Z"
+}

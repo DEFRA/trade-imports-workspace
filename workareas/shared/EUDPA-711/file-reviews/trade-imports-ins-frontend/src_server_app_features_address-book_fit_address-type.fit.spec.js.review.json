@@ -1,0 +1,30 @@
+{
+  "file": "src/server/app/features/address-book/fit/address-type.fit.spec.js",
+  "repo": "trade-imports-ins-frontend",
+  "commit": "77fa29081235e82086e84af9e9c1dad8d1e91d81",
+  "pr": 71,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:46:12Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new spec covers choosing a type, its errors, Back and kept entries, but one helper's name hides the actions it performs and sign-in set-up is copied instead of using signInAndOpen.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 202,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "expectRefusedEntryKeptOnReturn (202-212) reads as an assertion, but it signs in, opens the add form, fills it with a malformed email, saves, follows Back and chooses the type again before asserting. The name hides the sign-in and the whole drive, and the three tests that call it (216-228, 232-240) are one-line bodies with no visible arrange or act.",
+      "fix": "Must: each test shows its arrange, act and assert, and every helper's name says what it does to the page. One way: inline signIn and refuseSaveThenReopenAddForm into the test bodies and keep only expectEnteredAddressKept as the assertion helper; or rename to say it drives the page, e.g. refuseSaveReopenAndExpectEntryKept."
+    },
+    {
+      "id": 2,
+      "line": 84,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "signIn followed by page.goto is written out at 84-85, 145-146 and 162-164 although the shared helper signInAndOpen(page, organisationId, path) in sign-in-and-open.js does exactly that, and address-form.js already uses it for the same type page.",
+      "fix": "Must: this spec reaches a page after sign-in through the shared signInAndOpen helper, with no local sign-in-then-goto copies. One way: signInAndOpen(page, 'stub-org-type-error', addressTypePath()) at 84, the same at 145, and signInAndOpen(page, 'stub-org-type-guard', addressAddPath()) at 162.",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:05Z"
+}

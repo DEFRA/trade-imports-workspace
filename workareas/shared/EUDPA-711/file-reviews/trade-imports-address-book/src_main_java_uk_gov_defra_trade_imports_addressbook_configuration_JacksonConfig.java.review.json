@@ -1,0 +1,21 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/configuration/JacksonConfig.java",
+  "repo": "trade-imports-address-book",
+  "commit": "b18192a8d33c313bb42bc7468eb060de1b7e8c3c",
+  "pr": 20,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:42:27Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The visibility change is harmless and lets AddressMapperTest use the production Jackson settings, but the touched method's name hides two of the three settings it applies.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 21,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "camelCaseNamingStrategy() (line 21, made public in this PR so AddressMapperTest can call it) returns a customizer that also turns off failOnUnknownProperties and WRITE_DATES_AS_TIMESTAMPS (lines 25-26). The name predicts only the naming strategy and hides the other two behaviours, which the request-body handling relies on.",
+      "fix": "Must: the bean method's name covers everything the customizer sets. One way: rename to apiJsonConventions() (or split into one customizer per concern), and update AddressMapperTest.java:30."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:04Z"
+}

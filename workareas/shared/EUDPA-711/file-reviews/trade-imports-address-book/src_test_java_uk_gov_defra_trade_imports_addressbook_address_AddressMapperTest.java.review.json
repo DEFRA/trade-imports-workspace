@@ -1,0 +1,31 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressMapperTest.java",
+  "repo": "trade-imports-address-book",
+  "commit": "b18192a8d33c313bb42bc7468eb060de1b7e8c3c",
+  "pr": 20,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:44:08Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Mapping and role tests are sound, but two titles give the mapper credit for rules the request and response constructors own, and one ISO-8601 test repeats another test's assertions.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 189,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Two titles credit AddressMapper with rules it does not own. toEntity_keepsTheFirstOfEachRepeatedRole (:189) passes only because AddressRequest's compact constructor runs roles.stream().distinct() before toEntity is called, and that rule is already tested at AddressRequestValidationTest.roles_collapseRepeatsToTheFirstOfEach (:261). toResponse_failsLoudWhenARequiredFieldIsNull (:84) proves AddressResponse's Objects.requireNonNull guard, already tested per field by AddressResponseTest.compactConstructor_rejectsNullOnGuardedFields (:51). A reader trusts the titles and believes the mapper dedupes and null-checks.",
+      "fix": "Must: each rule is tested once, in the test class of the type that owns it, and no AddressMapperTest title claims behaviour the mapper does not perform. One way: delete both tests from AddressMapperTest, since AddressRequestValidationTest and AddressResponseTest already cover the rules.",
+      "best_practice": "java/testing/unit.md"
+    },
+    {
+      "id": 2,
+      "line": 129,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "response_serialisesInstantFieldsAsIso8601NotEpochMillis (:129) cannot fail on its own. Its only assertions are isTextual() on createdAt and modifiedAt, and the test above it (:95) already asserts json.get(\"createdAt\").asText() equals \"2026-07-01T09:00:00Z\" and the same for modifiedAt. Epoch millis would turn both red, so this test adds no proof. Its predecessor also asserted WRITE_DATES_AS_TIMESTAMPS was disabled; that line is gone and nothing replaced it.",
+      "fix": "Must: every test in the file fails for a reason no other test in the file already catches. One way: delete response_serialisesInstantFieldsAsIso8601NotEpochMillis, because the camelCase test's exact ISO-8601 string assertions already prove it.",
+      "best_practice": "java/testing/unit.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:04Z"
+}

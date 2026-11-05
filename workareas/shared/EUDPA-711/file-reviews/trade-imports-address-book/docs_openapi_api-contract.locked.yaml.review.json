@@ -1,0 +1,37 @@
+{
+  "file": "docs/openapi/api-contract.locked.yaml",
+  "repo": "trade-imports-address-book",
+  "commit": "b18192a8d33c313bb42bc7468eb060de1b7e8c3c",
+  "pr": 20,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:40:54Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The contract's shape matches the controller and generated spec (address-id rename, AddressResponse/AddressPageResponse, roles enum and minItems), but one 400 description uses a stale type/use vocabulary, the roles-held-together rule is stated without saying what it is, and the role enum is copied four times.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 275,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The list-addresses 400 description calls the role and searchRole parameters 'an unknown address type, use or search use'. The API has no type or use: everything else in this file (lines 28-40, 239-266) and the controller's own @ApiResponse (AddressController.java:90, generated operators.yml:252 'an unknown role or search role') call them roles. One concept, two vocabularies, and the locked contract (the human-authored source of truth) now disagrees with the generated spec; AddressComplianceIT does not compare descriptions, so nothing catches it.",
+      "fix": "Must: the locked contract names the role and searchRole parameters as roles everywhere, matching AddressController and operators.yml. One way: change line 275 to 'An out-of-range or non-numeric page or page size, an unknown role or search role, or a missing org header'."
+    },
+    {
+      "id": 2,
+      "line": 32,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The Roles paragraph (lines 32-34) says 'An address's roles must be ones one address can hold together (a 400 keyed by roles otherwise)' but never says which roles those are. The rule lives only in code (AddressRole.java:8-13 groups PLACE_OF_ORIGIN+CONSIGNOR as SENDING, PLACE_OF_DESTINATION+CONSIGNEE+IMPORTER as RECEIVING, BRANCH_ADDRESS alone; RolesHeldTogetherValidator.java:24 allows one group). A consumer reading the source-of-truth contract cannot tell that CONSIGNOR+CONSIGNEE is refused or that BRANCH_ADDRESS cannot be combined; the sentence needs the code to be understood.",
+      "fix": "Must: the locked contract states which roles one address can hold together, so a client can build a valid request from the contract alone. One way: replace the sentence with 'An address's roles must all come from one group: PLACE_OF_ORIGIN and CONSIGNOR; PLACE_OF_DESTINATION, CONSIGNEE and IMPORTER; or BRANCH_ADDRESS (a 400 keyed by roles otherwise)', and give the AddressRequest/AddressRole @Schema description the same wording so operators.yml carries it too."
+    },
+    {
+      "id": 3,
+      "line": 246,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The six-value role enum (PLACE_OF_ORIGIN ... BRANCH_ADDRESS) is written out four times in this hand-authored contract: list 'role' parameter (lines 246-252), 'searchRole' parameter (260-266), AddressRequest.roles (398-404) and AddressResponse.roles (481-487), plus once more in the info prose (lines 29-30). Adding or renaming a role means editing five places; AddressComplianceIT catches a miss in the four enums only after a build, and not in the prose.",
+      "fix": "Must: the locked contract declares the role values in one place and every role-typed schema refers to it. One way: add components/schemas/AddressRole (type string, enum of the six values), replace the four inline item schemas with $ref: '#/components/schemas/AddressRole', and teach the AddressComplianceIT enum helpers (lines 222, 236) to resolve a $ref in both the live and locked documents (or have the AddressRole enum carry @Schema(enumAsRef = true) so springdoc emits the same shape)."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:04Z"
+}

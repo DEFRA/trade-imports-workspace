@@ -1,0 +1,45 @@
+{
+  "file": "openspec/specs/ins/address-book/spec.md",
+  "repo": "trade-imports-workspace",
+  "commit": "ed9e3c48f8d3463d0e438abea99a05d5b2e653c1",
+  "pr": 196,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:51:28Z",
+  "verdict": "RISKY",
+  "verdict_reason": "REQ-INS-ADDR-037 and SCN-037-J/003-C state that the address type is not stored, contradicting the ticket's 'stores an address's type and uses, and requires both' with no recorded ruling; the remaining scenarios match the AC, with REQ-040/042 duplicating one rule and an open design question recorded as settled.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 889,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "REQ-INS-ADDR-037 (spec.md:889) says the address book service 'MUST NOT record an address type, ignoring one a create or update carries', and SCN-INS-ADDR-037-J (spec.md:942) asserts a posted type reads back with none; SCN-INS-ADDR-003-C (spec.md:53) has an edit keep only the roles. The ticket says the opposite: 'The address book API stores an address's type and uses, and requires both: a create or update without them is refused' and 'Editing an address keeps its type and every use' (AC inc-059, inc-070). The code follows the spec (address-book PR 20 has no addressType on Address/AddressRequest), so the switch to a roles-only record came from the '5 November review of address types and roles' that snagging.md S-17/S-18 mention, but no ruling file under workareas/shared/design-release-2-1/sources/ records it and the ticket was not updated. The spec quietly restates a different rule from the AC.",
+      "fix": "Must: the ticket's acceptance criteria and REQ-INS-ADDR-037 / SCN-INS-ADDR-003-C state the same rule about whether an address's type is stored and required, and the decision behind a roles-only record is recorded where the programme keeps rulings. One way: record the 5 November decision as a ruling under workareas/shared/design-release-2-1/sources/, then update EUDPA-711's description (type is chosen on the add page and not stored; roles are stored and required) - or, if the ticket stands, store and require the type in the address book and change REQ-037 and SCN-037-J to match."
+    },
+    {
+      "id": 2,
+      "line": 1095,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Two requirements own one service rule. REQ-INS-ADDR-040 (spec.md:1018, 'asked for one or more roles, return only the caller's organisation's live addresses holding any of them ... combined with the search ... refuse a role outside the six with a 400') and REQ-INS-ADDR-042 (spec.md:1095, 'asked for one role, return only the caller's organisation's live addresses holding it, combined with the search ... refuse a role ... outside the six with a 400'). 042 is 040 with one role. Their scenarios repeat each other: 040-A/042-A (roles return exactly their holders), 040-B 'Roles narrow a search'/042-B 'A role narrows the search', 040-C/042-D (unknown role refused). Only 042's search-role half (042-C) and 040-D are distinct. A later change to the role filter has two homes to update, and the coverage file carries two link sets for one behaviour.",
+      "fix": "Must: the address book service's role filter is stated once, in one requirement, with each behaviour (holders returned, narrowing a search, unknown role refused, no role lists all) in one scenario; the search-role widening has its own requirement or scenario. One way: fold REQ-042's one-role wording into REQ-040, delete SCN-042-A, 042-B and the role half of 042-D (merging their coverage links into 040-A, 040-B, 040-C), and keep REQ-042 only for search roles (042-C and the search-role half of 042-D)."
+    },
+    {
+      "id": 3,
+      "line": 1227,
+      "severity": "Major",
+      "category": "design",
+      "issue": "The ticket and the prototype set two different legends for the uses question. EUDPA-711's description says 'The add form then asks What can this address be used for? and saves the address's type and every use ticked', for every type. The prototype (defra-design/GB-notification-service@04a073b app/views/design-release-2.1/consignment-add-address.html#L65: '{% if showAddressLookup %}Address type{% else %}What can this address be used for?{% endif %}') uses 'Address type' for Destination and Branch. The spec follows the prototype: SCN-INS-ADDR-044-F (spec.md:1227) and 044-G (spec.md:1235) say 'the question Address type', and ins-frontend copy.en.js:3/108-109 builds it. Snag S-09 already asks this; the spec records one side of an open question as settled.",
+      "fix": "Must: the designer answers snagging.md S-09, and SCN-INS-ADDR-044-F/044-G and the ticket state the same legend. For the designer: keep 'Address type' as the legend for Destination, Consignee or Importer and Branch (as the prototype and the build have it), or use 'What can this address be used for?' for every type, as the ticket says and since the type was chosen on the page before?"
+    },
+    {
+      "id": 4,
+      "line": 557,
+      "severity": "Minor",
+      "category": "correctness",
+      "issue": "REQ-INS-ADDR-027 (spec.md:557) says 'The address book's add form after choosing Destination, Consignee or Importer or Branch offers United Kingdom alone, as REQ-INS-ADDR-044 and REQ-INS-ADDR-035 state.' REQ-INS-ADDR-035 (spec.md:788) is about the add page reached from a notification's role picker, not the address book's add form, so the cross-reference sends the reader to the wrong rule.",
+      "fix": "Must: REQ-INS-ADDR-027 cites only the requirement that owns the address book add form's fixed United Kingdom country. One way: drop 'and REQ-INS-ADDR-035' from the sentence."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:07Z"
+}

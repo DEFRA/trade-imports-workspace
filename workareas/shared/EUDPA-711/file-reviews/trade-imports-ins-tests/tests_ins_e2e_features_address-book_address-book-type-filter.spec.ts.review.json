@@ -1,0 +1,30 @@
+{
+  "file": "tests/ins/e2e/features/address-book/address-book-type-filter.spec.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "29887c343798673f6d5ecf1e4016ae996357181f",
+  "pr": 77,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:47:25Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Role-filter coverage is sound and matches the AC, but the file name calls the role filter a type filter and one test bundles two behaviours with acts between its assertions.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 1,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The file name says 'type filter' while every describe (lines 24, 64, 232), test title, helper (roleFilterTermOf) and page-object accessor (selectRoleFilter, chooseRoleFilter) it calls says 'role filter'. In this repo 'type' names the address type that picks the tab (addressTypes, AddressBookTab.addressType, ?addressType=), so a reader looking for the tab/type tests opens this file and a reader looking for role-filter tests does not find it beside address-book-roles.spec.ts.",
+      "fix": "Must: the file name uses the same word for the filter as its describe blocks and the page object, so 'type' keeps meaning the address type alone. One way: rename to address-book-role-filter.spec.ts and update any openspec coverage links that name the old path."
+    },
+    {
+      "id": 2,
+      "line": 183,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "'the tab stays selected after a role filter is submitted, and following another tab keeps the search, resets the role filter and lists that tab' proves two behaviours in one test and interleaves acts with asserts: it asserts the first tab (lines 191-193), acts (followTab, line 195), asserts, then acts again mid-assertions with filterSummary.click() (line 200) before asserting the search box and filter. The spec also opens the filter disclosure itself, duplicating the page object's private openFilter() step.",
+      "fix": "Must: each test proves one behaviour its title names, in arrange-act-assert order, with no act between assertions, and opening the filter lives in the page object. One way: split into 'the tab stays selected after a role filter is submitted' and 'following another tab keeps the search, resets the role filter and lists that tab', and expose a page-object step (e.g. a public openFilter or a filterControls accessor that opens it) instead of clicking filterSummary in the spec.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:06Z"
+}

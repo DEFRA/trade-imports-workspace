@@ -1,0 +1,30 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/address/Address.java",
+  "repo": "trade-imports-address-book",
+  "commit": "b18192a8d33c313bb42bc7468eb060de1b7e8c3c",
+  "pr": 20,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:40:48Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new roles field is correct, follows the entity Lombok policy and is covered by tests, but the rewritten class Javadoc narrates history and describes code it does not own.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 21,
+      "severity": "Major",
+      "category": "history",
+      "issue": "The new class Javadoc narrates history: '{@code roles} ... an entry stored before roles existed holds none, so it can be null or empty' (Address.java:21-22). House rule 'Ids and history': code states how things are now, git holds how they were. The ticket also says no existing address needs to stay without a type, so the 'before roles existed' clause describes a past state, not a contract.",
+      "fix": "Must: Address's Javadoc says nothing about how records looked before roles existed; if null or empty roles remain a readable state, it is stated as the current contract only. One way: replace the paragraph with '{@code roles} can be null or empty.', or drop it and let AddressResponse's @ArraySchema description ('null or empty when it has none') be the single statement of that contract."
+    },
+    {
+      "id": 2,
+      "line": 24,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The class Javadoc this diff rewrites describes code it does not own and claims what no code enforces: 'roles is set on every create and update' (line 21) describes AddressService/AddressMapper; 'countryCode is stored as an ISO 3166-1 alpha-2 code, exactly as supplied' (line 24) is untrue as a guarantee, since AddressRequest only checks countryCode with @NotBlank, and its 'exactly as supplied' half is already stated in AddressRequest.java:29 ('stored exactly as given'), a second home; 'modifiedAt is bumped by auditing on every write and is for audit only' (line 26) describes Spring Data auditing (already said by @LastModifiedDate), uses a metaphor ('bumped') and is rationale. House rules: a comment describes only the lines below it, rationale goes in docs/, doc comments only state an exported API's contract.",
+      "fix": "Must: Address's Javadoc states only what this class itself guarantees, with nothing that describes the service, mapper, request validation or Spring auditing, and no claim about countryCode format that no code enforces. One way: reduce the Javadoc to 'An organisation-owned address-book entry.' (plus the roles null/empty contract if kept), relying on @LastModifiedDate and AddressRequest's Javadoc for the rest.",
+      "best_practice": "java/modern-java.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:04Z"
+}

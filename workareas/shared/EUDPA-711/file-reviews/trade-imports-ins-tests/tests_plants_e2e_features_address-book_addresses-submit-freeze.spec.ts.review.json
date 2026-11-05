@@ -1,0 +1,22 @@
+{
+  "file": "tests/plants/e2e/features/address-book/addresses-submit-freeze.spec.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "29887c343798673f6d5ecf1e4016ae996357181f",
+  "pr": 77,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:48:21Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Moving the update record into a shared helper is right, but the town assertions still hard-code the values the helper now owns.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 29,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Line 22 now updates the record with renamedAndMovedNurseryAddress(renamed), which owns the new town 'Dundee' (flows/plants/journey.ts:58-62), but lines 29 and 37 assert not.toContainText('Dundee') as a bare literal, and lines 27, 35 and 43 assert 'Perth', the original town from nurseryAddress. The values the assertions compare against have moved out of the spec, so the reader cannot see why 'Dundee' must be absent, and a change to the helper's town turns these absence checks into checks that cannot fail.",
+      "fix": "Must: each town assertion reads its value from the record it compares against, so the absence check fails if the helper's town changes. One way: const moved = renamedAndMovedNurseryAddress(renamed); updateAddress(address.id, moved); assert toContainText(address.townOrCity) and not.toContainText(moved.townOrCity).",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:06Z"
+}

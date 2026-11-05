@@ -1,0 +1,21 @@
+{
+  "file": "tests/ins/e2e/features/address-book/address-book-persistence.spec.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "29887c343798673f6d5ecf1e4016ae996357181f",
+  "pr": 77,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:47:10Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The round trip now goes through the type page and roles question, and checks the whole stored record including roles, but the ticked roles are written twice and the expected document restates a country the fixture already sets.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 18,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The ticked roles are written twice, once as the input (line 18, roles: [addressRoles.placeOfOrigin, addressRoles.consignor]) and again as the expected stored value (line 32), so the two can drift apart without the reader seeing that they are one value. Line 31 also restates countryCode: 'GB', which addressWithLineTwoAndCounty already carries through traderAddress (trader-address.ts:12), so it reads as if the stored country differed from the fixture. address-book-edit.spec.ts:58 holds the same kind of value in one const, heldRoles.",
+      "fix": "Must: the roles the test ticks and the roles it expects in Mongo come from one named value, and the expected document restates no field the fixture already sets. One way: const tickedRoles = [addressRoles.placeOfOrigin, addressRoles.consignor]; pass it to addAddressFromList and spread { ...addressWithLineTwoAndCounty(createdName), roles: tickedRoles } into toMatchObject, dropping countryCode: 'GB'."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:06Z"
+}

@@ -1,0 +1,21 @@
+{
+  "file": "tests/ins/e2e/features/address-book/address-book-roles.spec.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "29887c343798673f6d5ecf1e4016ae996357181f",
+  "pr": 77,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:47:44Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new API spec proves roles are stored, read back in order, replaced on update and required, with mixed-type and non-UK refusals, but it makes up 'sending' and 'receiving' for the domain's address types and copies a role set the domain constants already hold.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 21,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The spec makes up its own words, 'sending' and 'receiving' roles, for the two address types the domain already names. The titles at lines 35, 120, 132 and 148 use them, and line 21 declares receivingRoles = [consignee, importer, placeOfDestination], a module-scope copy of a role set the domain already holds as rolesQuestionOptions[addressTypes.destinationConsigneeOrImporter] and destinationConsigneeOrImporterTab.roleFilterOptions (address-book-types.ts:47, :81). A reader has to work out that 'receiving' means Destination, Consignee or Importer, and the one test that uses the constant (line 35) owns a literal that sits at module scope.",
+      "fix": "Must: the spec names the address types the way the domain and the UI do (Origin or Consignor; Destination, Consignee or Importer), and the destination-side role set comes from the domain constant, not a local copy. One way: drop receivingRoles and take rolesQuestionOptions[addressTypes.destinationConsigneeOrImporter].toReversed() inside the test at line 35, and retitle lines 35, 120, 132 and 148 with the type names, e.g. 'a create holding an Origin or Consignor role and a Destination, Consignee or Importer role is refused naming the roles and saves nothing'."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:06Z"
+}

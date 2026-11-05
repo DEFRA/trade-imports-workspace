@@ -1,0 +1,22 @@
+{
+  "file": "flows/animals/seeded-journey.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "29887c343798673f6d5ecf1e4016ae996357181f",
+  "pr": 77,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:45:59Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new UI helpers copy party-choice and submit steps AnimalsJourney already owns, putting browser walking in the seeding flow.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 135,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "UI walking added to the seeding flow copies steps AnimalsJourney already owns: choosePartyInUi (seeded-journey.ts:135-145) repeats the click/select/saveAndContinue/heading-wait body of AnimalsJourney.addParties (journey.ts:280-288), and createSubmittedWithPlaceOfOriginChosenInUi lines 125-131 repeat AnimalsJourney.continueFromReviewToDeclaration + confirmDeclaration (journey.ts:784-792, exposed as submitFromReview). It also takes role and picker as two parameters that must agree, where AnimalsJourney.partyPicker(role) (journey.ts:563) already derives the picker, and needs a new alias PartyRole as AddressesPartyRole (line 3) for the type journey.ts imports as PartyRole.",
+      "fix": "Must: one home for choosing a party on Roles and addresses and for submitting from the review page; AnimalsSeededJourney seeds only and does not drive the UI with its own copies of those steps. One way: add a changeParty(role, name) beside addParties on AnimalsJourney (sharing a private pick-in-picker helper resolved by partyPicker(role)), have the specs seed with animalsSeededJourney.createDraftNotification() then call animalsJourney methods (resume, changeParty, submitFromReview), and delete choosePartyInUi and the AddressesPartyRole alias.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:06Z"
+}

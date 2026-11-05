@@ -1,0 +1,29 @@
+{
+  "file": "domain/shared/constants/address-types.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "29887c343798673f6d5ecf1e4016ae996357181f",
+  "pr": 77,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-05T15:45:20Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Type and role values match the address-book API enum, but rolesOf mispredicts its return value and AddressRoles collides with addressRoles.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 24,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "rolesOf(address) reads as 'the roles of an address' (an AddressRole[]) but returns an object { roles } picked from the address, so callers write expect(rolesOf(saved)).toEqual(heldAsConsignor) (addresses-add-handshake.spec.ts:93, address-book-edit.spec.ts:67) comparing against an AddressRoles shape. The name mispredicts the value it returns.",
+      "fix": "Must: the helper's name says it returns the address's roles field as an AddressRoles object (or it returns the array and callers compare arrays). One way: rename to pickRoles / rolesPartOf, or return roles and compare against heldAsConsignor.roles; consider moving the helper out of a constants module into test support beside its callers."
+    },
+    {
+      "id": 2,
+      "line": 20,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "Two concepts share one name differing only by case: addressRoles (line 9) is the map of every role value, while AddressRoles (line 20) is the { roles } shape one address holds. Specs import both side by side (addresses-add-handshake.spec.ts:10-18 imports addressRoles and type AddressRoles), so a reader cannot tell from the name which one they have; the pattern elsewhere in the file (addressTypes/AddressType, addressRoles/AddressRole) leads a reader to expect AddressRoles to be the type of addressRoles.",
+      "fix": "Must: the { roles } shape has a name distinct from the role-value map. One way: rename the interface to HeldRoles (matching the heldAs* constants typed with it) and update AddressDocument and the specs that import it."
+    }
+  ],
+  "reconciled_at": "2026-11-05T15:53:06Z"
+}

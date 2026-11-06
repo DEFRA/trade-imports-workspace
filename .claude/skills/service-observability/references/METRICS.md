@@ -76,7 +76,18 @@ service's `metrics` package and change only the package:
 | `EmfMeterRegistry` | A `StepMeterRegistry` that publishes its gauges, counters, timers and distribution summaries once a minute in the `aws.emf.namespace` namespace, tags as the only dimensions. Timers and distribution summaries publish every value recorded since the last publish (timers in ms), so CloudWatch computes `SampleCount`, `Sum`, `Average`, `p95` and `Maximum` itself; the EMF library splits more than 100 values across documents. Counters publish the last minute's count; gauges their value when finite. Long task timers, function counters, function timers and time gauges are not published. One meter failing to publish is logged at warn and the rest still go |
 | `ValueRecordingTimer`, `ValueRecordingDistributionSummary`, `RecordedValues` | Micrometer's step timer and summary, also keeping each recorded value until the registry takes it |
 | `ExternalCallMetrics` | Logs each call to a dependency (`LOGGING.md`) and records it as the timer `external.call.duration` and the distribution summary `external.call.failure` (0 or 1 per call), both tagged `dependency` and `operation`. `recordSuccess` and `recordFailure` (with the cause), not a boolean flag. It records a call it is given; it does not time one or keep its outcome |
-| `MetricsConfig.emfMeterRegistry` (a bean method) | Creates and starts the registry only when `aws.emf.enabled` is true. When it is false, as in integration tests, Spring Boot's in-memory registry is used and nothing is published |
+
+Copy the bean method `MetricsConfig.emfMeterRegistry` too, but not its
+class. It creates and starts the registry only when `aws.emf.enabled`
+is true. When it is false, as in integration tests, Spring Boot's
+in-memory registry is used and nothing is published. Add the method to
+the service's existing `MetricsConfig` in its `configuration` package,
+not to a new class in `metrics`. Keep that class's `TimedAspect` bean:
+`@Timed` records nothing without it. `@Counted` needs its
+`CountedAspect` bean, which dynamics-gateway's does not have yet. A
+service with no `MetricsConfig` gets one in its `configuration`
+package, with the `TimedAspect` and `CountedAspect` beans as in
+address-book.
 
 ### Write for the service
 

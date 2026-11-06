@@ -13,11 +13,13 @@ CDP dev Grafana, because nothing else can write to it.
 
 It was written from EUDPA-632, the spike on
 `trade-imports-reference-data`, and its code recipe from EUDPA-674 on
-`trade-imports-address-book`: every metric a Micrometer meter, published
-by `EmfMeterRegistry` (`references/METRICS.md` → "Publish"). That is
-the one way this skill builds metrics, and every metric and dimension is named in dot
-case (`external.call.duration`). Read "What is proven" below
-before trusting any step.
+`trade-imports-address-book`. For a Java service, every metric is a
+Micrometer meter published by `EmfMeterRegistry` (`references/METRICS.md`
+→ "Publish"). That is the one way this skill builds metrics for Java.
+A Node service has no recipe yet: "What is proven" below says what the
+first Node run does. Every metric and dimension is named in dot case
+(`external.call.duration`). Read "What is proven" before trusting any
+step.
 
 ## Path conventions
 
@@ -125,11 +127,18 @@ is a #cdp-support request, made in Step 5.
 
 ## Step 3: Publish the metrics and log each dependency call
 
-Follow `references/METRICS.md` → "Publish" and `references/LOGGING.md`.
-Copy the registry classes from `trade-imports-address-book`. If the
-service already writes EMF directly or has an `EmfMetricsPublisher`,
-move it to the registry first (`references/METRICS.md` → "A service
-built the old way"). Raise the PR from a `feat/EUDPA-X-<slug>` branch and deploy to dev.
+Java service: follow `references/METRICS.md` → "Publish" and
+`references/LOGGING.md`. Copy the registry classes from
+`trade-imports-address-book`. If the service already writes EMF
+directly or has an `EmfMetricsPublisher`, move it to the registry first
+(`references/METRICS.md` → "A service built the old way").
+
+Node service: there is no recipe yet, and the Java classes do not
+apply. Read the Node row of "What is proven": the first Node ticket
+writes the Node reference and adds it to this skill as part of its
+work.
+
+Raise the PR from a `feat/EUDPA-X-<slug>` branch and deploy to dev.
 Steps 4 to 6 need the metrics to be arriving in dev.
 
 `/health` must not change. CDP uses it to decide whether a task is

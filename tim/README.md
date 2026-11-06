@@ -537,6 +537,15 @@ unit rungs read. A red or flaky E2E rung leaves each stack container's log
 beside its own, as `gate-stack-after-<repo>-<rung>-<container>.log`, written
 before the stack goes.
 
+On a Mac the gate stops the machine sleeping until it ends, with
+`caffeinate -s -i` waiting on the gate's own process. A Mac nobody is using
+falls asleep and then keeps waking for a few seconds of maintenance and
+sleeping again. Each sleep freezes the Docker VM, the stack and Playwright
+together, so pages that answer in a quarter of a second take several, and
+the long cross-service E2E tests run out of time. Holding a sleep assertion
+is the fix, not a longer timeout. If `caffeinate` cannot start, the gate says
+so on stderr and carries on.
+
 If the stack was down, the gate starts it, leases it and always releases it
 afterwards. If this holder already leases it, the gate does not start it
 again: it rebuilds only the services whose image inputs changed, restarts

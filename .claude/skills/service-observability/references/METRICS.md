@@ -77,7 +77,7 @@ service's `metrics` package and change only the package:
 |---|---|
 | `EmfMeterRegistry` | A `StepMeterRegistry` that publishes its gauges, counters, timers and distribution summaries once a minute in the `aws.emf.namespace` namespace, tags as the only dimensions. Timers and distribution summaries publish every value recorded since the last publish (timers in ms), so CloudWatch computes `SampleCount`, `Sum`, `Average`, `p95` and `Maximum` itself; the EMF library splits more than 100 values across documents. Counters publish the last minute's count; gauges their value when finite. Long task timers, function counters, function timers and time gauges are not published. One meter failing to publish is logged at warn and the rest still go |
 | `ValueRecordingTimer`, `ValueRecordingDistributionSummary`, `RecordedValues` | Micrometer's step timer and summary, also keeping each recorded value until the registry takes it |
-| `ExternalCallMetrics` | Logs each call to a dependency (`LOGGING.md`) and records it as the timer `external.call.duration` and the distribution summary `external.call.failure` (0 or 1 per call), both tagged `dependency` and `operation`. `recordSuccess` and `recordFailure` (with the cause), not a boolean flag. It records a call it is given; it does not time one or keep its outcome. A service with its own `ExternalCallMetrics` replaces it ("A service built the old way") |
+| `ExternalCallRecorder` | Logs each call to a dependency (`LOGGING.md`) and records it as the timer `external.call.duration` and the distribution summary `external.call.failure` (0 or 1 per call), both tagged `dependency` and `operation`. `recordSuccess` and `recordFailure` (with the cause), not a boolean flag. It records a call it is given; it does not time one or keep its outcome. A service with its own `ExternalCallMetrics` replaces it ("A service built the old way") |
 
 Copy the bean method `MetricsConfig.emfMeterRegistry` too, but not its
 class. It creates and starts the registry only when `aws.emf.enabled`
@@ -95,7 +95,7 @@ address-book.
 
 | Class | What it does |
 |---|---|
-| Where calls are measured | One place per kind of dependency, timing each call and passing it to `ExternalCallMetrics`: a driver `CommandListener` for a database (`MongoCommandMetrics`), a Feign `Capability` or a `RestClient` interceptor for HTTP. Measure at the transport, not in the calling service class, so every call is caught |
+| Where calls are measured | One place per kind of dependency, timing each call and passing it to `ExternalCallRecorder`: a driver `CommandListener` for a database (`MongoCommandMetrics`), a Feign `Capability` or a `RestClient` interceptor for HTTP. Measure at the transport, not in the calling service class, so every call is caught |
 | `DependencyAvailabilityMetrics` | Registers the gauge `external.dependency.available`, tagged `dependency`, from wherever availability comes from ("Availability" below) |
 | A business-metrics class (`AddressMetrics`) | One counter per agreed business metric, tagged by its dimension |
 | `@Timed("controller.<operation>.time")`, `@Timed("service.<operation>.time")` | On every controller endpoint and every public method of the service classes, so each invocation's duration is published |
@@ -177,11 +177,11 @@ service has apply to that service.
 
 | Old | New |
 |---|---|
-| The service's own `ExternalCallMetrics` writing EMF (`recordCall(…, boolean)`) | Replaced by address-book's `ExternalCallMetrics` ("Copy as it is"). `ExternalCall` stays as the list of calls; pass its `dependency()` and `operation()` |
+| The service's own `ExternalCallMetrics` writing EMF (`recordCall(…, boolean)`) | Replaced by address-book's `ExternalCallRecorder` ("Copy as it is"). `ExternalCall` stays as the list of calls; pass its `dependency()` and `operation()` |
 | `ExternalCallMetrics.measure(…)` around the Service Bus send (dynamics-gateway) | `QueueMessageSender` times the send itself, then calls `recordSuccess`, or `recordFailure` with the exception thrown |
 | `ExternalCallMetrics.measure(…)` around each Feign call (reference-data) | Moves into `ExternalCallFeignCapability`, which stays as the place calls are measured. It times `client.execute` itself, then calls `recordSuccess`, or `recordFailure` with the exception thrown, or with no cause for a response of 400 or over |
-| `ExternalCallMetrics.lastCallSucceededByDependency()` | A small `LastCallOutcomes` component holding the last outcome per dependency. `ExternalCallFeignCapability` updates it on each success and failure, beside its `recordSuccess` or `recordFailure` call, so `ExternalCallMetrics` stays a copy |
-| The `Interface` property (the volumetrics `SYN-19` id) on each EMF document | No meter carries it: as a tag it would be a new dimension. Agree with the team before the move, and record the choice on the ticket: keep it as an `interface.id` key-value on the call's log line, in this service's copy of `ExternalCallMetrics`, or drop it |
+| `ExternalCallMetrics.lastCallSucceededByDependency()` | A small `LastCallOutcomes` component holding the last outcome per dependency. `ExternalCallFeignCapability` updates it on each success and failure, beside its `recordSuccess` or `recordFailure` call, so `ExternalCallRecorder` stays a copy |
+| The `Interface` property (the volumetrics `SYN-19` id) on each EMF document | No meter carries it: as a tag it would be a new dimension. Agree with the team before the move, and record the choice on the ticket: keep it as an `interface.id` key-value on the call's log line, in this service's copy of `ExternalCallRecorder`, or drop it |
 | `EmfMetricWriter` | Deleted; each metric becomes a meter |
 | `@Scheduled` `DependencyAvailabilityMetrics` | One `external.dependency.available` gauge per dependency in `ExternalCall`, tagged `dependency`, reading `LastCallOutcomes`: 1 after a success, 0 after a failure, NaN (not published) before the first call |
 | `@Scheduled` `CacheMetrics` | `cache.hit` and `cache.miss` counters tagged `cache` (Rules → "Caches") |
@@ -247,7 +247,7 @@ is checked there.
 - **Measure the real commands too, if the team wants query latency.** A
   driver `CommandListener` (`MongoCommandMetrics`, added with
   `addCommandListener`) records every command as `mongodb/<command
-  name>` through `ExternalCallMetrics`. Keep the operation to a fixed set
+  name>` through `ExternalCallRecorder`. Keep the operation to a fixed set
   of command names, with anything else as `other`. A command that never
   reaches the server (no server to select) fires no listener event, so
   these metrics do not show an outage; the heartbeat does.

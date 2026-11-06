@@ -306,6 +306,12 @@ for ((i=0; i<pr_count; i++)); do
         pr_details=$("$HOME/git/defra/trade-imports-workspace/tools/github/pr-details.sh" "$repo_name" "$pr_number" json 2>/dev/null) || exit 0
         files_changed=$(echo "$pr_details" | jq -r '.files[].path' | wc -l | tr -d ' ')
         pr_merged_at=$(echo "$pr_details" | jq -r '.mergedAt // empty')
+        # The ticket the PR itself belongs to, from its title or else its
+        # head branch. A replay can hold PRs of other tickets; the briefs
+        # name them so a reviewer does not judge them against this ticket.
+        pr_ticket=$(echo "$pr_details" | jq -r '
+            [(.title // ""), (.headRefName // "")]
+            | map(scan("(?i)EUDPA-[0-9]+|NO_JIRA") | ascii_upcase) | first // ""')
 
         pinned_commit=$(echo "$prs_json" | jq -r ".[$i].commit // empty")
         if [[ -n "$pinned_commit" ]]; then
@@ -376,7 +382,7 @@ for ((i=0; i<pr_count; i++)); do
         tech_json=$("$SCRIPT_DIR/detect-tech.sh" "$repo_dir" 2>/dev/null) || tech_json='{"technologies":[],"best_practices":[]}'
         tech_list=$(echo "$tech_json" | jq -r '.technologies | join(", ")')
 
-        printf '%s' "{\"repo\": \"$repo_name\", \"pr\": $pr_number, \"commit\": \"$target_commit\", \"state\": \"$pr_state\", \"files\": $files_changed, \"tech\": $tech_json}" > "$prep_tmpdir/$i.meta"
+        printf '%s' "{\"repo\": \"$repo_name\", \"pr\": $pr_number, \"ticket\": \"$pr_ticket\", \"commit\": \"$target_commit\", \"state\": \"$pr_state\", \"files\": $files_changed, \"tech\": $tech_json}" > "$prep_tmpdir/$i.meta"
         echo "$repo_name" > "$prep_tmpdir/$i.cloned"
 
         if [[ -n "$tech_list" ]] && [[ "$tech_list" != "" ]]; then

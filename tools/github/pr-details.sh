@@ -16,7 +16,7 @@ if [[ -z "$REPO" ]] || [[ -z "$PR_NUMBER" ]]; then
 fi
 
 response=$(gh pr view "$PR_NUMBER" --repo "DEFRA/$REPO" \
-    --json title,body,state,mergedAt,commits,files,additions,deletions,author,url)
+    --json title,headRefName,body,state,mergedAt,commits,files,additions,deletions,author,url)
 
 # Every path the PR touches, including the pre-image path of a rename.
 # `gh pr view --json files` reports only the post-image, so the deleted

@@ -33,7 +33,11 @@ check() {
 trap 'rm -rf "$REVIEW_DIR"' EXIT
 mkdir -p "$REVIEW_DIR/.diffs"
 
-echo '{"id": "EUDPA-99997", "prs": []}' > "$REVIEW_DIR/.review-meta.json"
+cat > "$REVIEW_DIR/.review-meta.json" << 'EOF'
+{"id": "EUDPA-99997", "ticket": "EUDPA-99997",
+ "prs": [{"repo": "trade-imports-address-book", "pr": 21, "ticket": "EUDPA-99997"},
+         {"repo": "trade-imports-ins-tests", "pr": 21, "ticket": "EUDPA-12345"}]}
+EOF
 printf '# EUDPA-99997\n\n## Acceptance criteria\n\n- AC1: the thing works\n' > "$REVIEW_DIR/ticket.md"
 
 add_file() {
@@ -114,12 +118,17 @@ check "--max 0 is refused" "$?" "1"
 
 echo "write-briefs.sh"
 bash "$SCRIPT_DIR/plan-groups.sh" "$ID" > /dev/null
-bash "$SCRIPT_DIR/write-briefs.sh" "$ID" --max-file-bytes 30 > /dev/null
+# The guides are the real ones, thousands of lines, so the single-file
+# checks lift the part limits.
+one_file=(--max-part-lines 1000000 --max-part-bytes 100000000)
+bash "$SCRIPT_DIR/write-briefs.sh" "$ID" --max-file-bytes 30 "${one_file[@]}" > /dev/null
 check "brief writing exits cleanly" "$?" "0"
 
 brief="$REVIEW_DIR/briefs/$JAVA_REPO--java-source--1.md"
 check "one brief per group" \
-    "$(find "$REVIEW_DIR/briefs" -name '*.md' | wc -l | tr -d ' ')" "$(jq '.groups | length' "$REVIEW_DIR/groups.json")"
+    "$(find "$REVIEW_DIR/briefs" -name '*.md' ! -name '*.part-*' | wc -l | tr -d ' ')" "$(jq '.groups | length' "$REVIEW_DIR/groups.json")"
+check "a brief within the limits is one file, with no parts" \
+    "$(find "$REVIEW_DIR/briefs" -name '*.part-*' | wc -l | tr -d ' ')" "0"
 check "the brief starts with the core instructions" "$(sed -n '3p' "$brief")" "## How to review your group"
 check "the brief carries the source instructions for its type" "$(grep -c '^## Reviewing source files$' "$brief")" "1"
 check "brief writing makes the folders reviewers write to" \
@@ -130,9 +139,15 @@ check "the brief carries the file at the reviewed commit, numbered" "$(grep -c '
 check "a file over the size cap is pointed at, not copied" "$(grep -c 'Too large to copy here' "$brief")" "1"
 check "the brief carries the ticket" "$(grep -c 'AC1: the thing works' "$brief")" "1"
 check "the brief carries the group's content guide" "$(grep -c "### Source: \`$mongo_guide\`" "$brief")" "1"
-check "shared parts come before the group's own" \
-    "$(grep -n -E '^## (House rules|Ticket|Guides|Your group)$' "$brief" | cut -d: -f2 | tr '\n' '|')" \
-    "## House rules|## Ticket|## Guides|## Your group|"
+check "the group, ticket and house rules come first and the guides last" \
+    "$(grep -E '^## (House rules|Ticket|Guides|Your group|File: .*)$' "$brief" | sed 's/^## File: .*/## File/' | uniq | tr '\n' '|')" \
+    "## Your group|## Ticket|## House rules|## File|## Guides|"
+check "a PR of the reviewed ticket gets no other-ticket note" "$(grep -c 'This PR belongs to' "$brief")" "0"
+e2e_brief="$REVIEW_DIR/briefs/$TESTS_REPO--e2e--1.md"
+check "a PR of another ticket is named as such" \
+    "$(grep -c '^- \*\*This PR belongs to EUDPA-12345, not EUDPA-99997.\*\*' "$e2e_brief")" "1"
+check "and its scope against this ticket is not a finding" \
+    "$(grep -c "outside$" "$e2e_brief")" "1"
 
 check "a source brief has no source-under-test section" "$(grep -c '^## Source under test$' "$brief")" "0"
 
@@ -153,6 +168,50 @@ check "foo.test.js covers foo.js beside it" \
     "$(grep -c '^## Source: `src/server/unchanged.js`$' "$node_tests_brief")" "1"
 check "a source the review did not change is marked so" \
     "$(grep -c '^Not changed by this review.$' "$node_tests_brief")" "1"
+
+echo "write-briefs.sh, split into parts"
+whole=$(sed 1d "$tests_brief")
+bash "$SCRIPT_DIR/write-briefs.sh" "$ID" --max-file-bytes 30 > /dev/null
+check "at the default limits a brief with the real guides is split" \
+    "$([[ -f "$REVIEW_DIR/briefs/$JAVA_REPO--java-tests--1.part-2.md" ]] && echo yes || echo no)" "yes"
+over=0
+for part in "$REVIEW_DIR"/briefs/*.md; do
+    [[ $(wc -l < "$part") -le 1500 && $(wc -c < "$part") -le 100000 ]] || over=$((over + 1))
+done
+check "and every part of every brief fits one Read call" "$over" "0"
+
+bash "$SCRIPT_DIR/write-briefs.sh" "$ID" --max-file-bytes 30 --max-part-lines 300 --max-part-bytes 20000 > /dev/null
+check "a split run exits cleanly" "$?" "0"
+count=$(sed -n '1s/.* of \([0-9]*\)$/\1/p' "$tests_brief")
+parts=("$tests_brief")
+for ((k = 2; k <= count; k++)); do parts+=("$REVIEW_DIR/briefs/$JAVA_REPO--java-tests--1.part-$k.md"); done
+check "a brief over the limits is split" "$([[ ${count:-0} -gt 1 ]] && echo yes || echo no)" "yes"
+check "into exactly the parts it lists" \
+    "$(find "$REVIEW_DIR/briefs" -name "$JAVA_REPO--java-tests--1.part-*.md" | wc -l | tr -d ' ')" "$((count - 1))"
+check "part 1 says how many parts there are" "$(sed -n 1p "$tests_brief")" "# Review brief: java-tests, part 1 of $count"
+check "part 1 lists every part" "$(grep -c -E '^[0-9]+\. `.*java-tests--1(\.part-[0-9]+)?\.md`' "$tests_brief")" "$count"
+over=0
+for part in "${parts[@]}"; do
+    [[ $(wc -l < "$part") -le 300 && $(wc -c < "$part") -le 20000 ]] || over=$((over + 1))
+done
+check "every part is within both limits" "$over" "0"
+# Part 1's header is its title, a blank line, three lines of text, a blank
+# line and the list of parts; a later part's is its title, a blank line and
+# a line naming part 1.
+rebuilt=$(
+    sed "1,$((6 + count))d" "${parts[0]}"
+    for ((k = 1; k < count; k++)); do sed '1,3d' "${parts[$k]}"; done
+)
+check "the parts hold every line of the brief, in order" "$rebuilt" "$whole"
+check "a later part names part 1" "$(sed -n 3p "${parts[1]}")" "Continued from part 1. Part 1 is \`$tests_brief\`."
+check "a part ends at a heading where it can" "$(sed -n 4p "${parts[1]}" | grep -c '^#')" "1"
+
+bash "$SCRIPT_DIR/write-briefs.sh" "$ID" --max-file-bytes 30 "${one_file[@]}" > /dev/null
+check "writing again within the limits removes the old parts" \
+    "$(find "$REVIEW_DIR/briefs" -name '*.part-*' | wc -l | tr -d ' ')" "0"
+
+bash "$SCRIPT_DIR/write-briefs.sh" "$ID" --max-part-lines 5 > /dev/null 2>&1
+check "a part limit under 100 is refused" "$?" "1"
 
 rm "$REVIEW_DIR/groups.json"
 bash "$SCRIPT_DIR/write-briefs.sh" "$ID" > /dev/null 2>&1

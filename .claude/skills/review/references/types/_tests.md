@@ -2,8 +2,8 @@
 
 Review tests the way a tester would: against the ticket, its acceptance
 criteria and any behaviour-spec scenarios in this brief. Then use the
-source each test covers, under "Source under test" at the end of this
-brief, to find what no test proves. Read nothing outside this brief and do
+source each test covers, under "Source under test" after your files and
+before the guides, to find what no test proves. Read nothing outside this brief and do
 not search the repo.
 
 Judge the acceptance criteria and every test title from the ticket and

@@ -246,6 +246,9 @@ Step 0 already sorted every file still to review into groups and wrote a
 brief for each: `groups.json` and `briefs/<group id>.md` in the review
 workarea (`plan-groups.sh`, `write-briefs.sh`). A group is one repo, one
 file type, at most 10 files. Its brief holds everything the reviewer needs.
+A long brief is split into parts that each fit one Read call
+(`briefs/<group id>.part-<n>.md`); part 1 lists them, so the prompt
+below still names only `briefs/<group id>.md`.
 
 Read the group list once:
 
@@ -262,9 +265,11 @@ Your brief: ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/br
 ```
 
 Each reviewer writes its findings to disk and replies with one line
-(`done: 6 files, 9 findings, NEEDS_ATTENTION`). Do not read its findings
-back here: Step 5 reads them from disk. On a `failed:` reply, spawn that
-group once more; if it fails again, report it.
+(`done: 6 files, 9 findings, NEEDS_ATTENTION, read 4 of 4 parts`). Do not
+read its findings back here: Step 5 reads them from disk. On a `failed:`
+reply, spawn that group once more; if it fails again, report it. A reply
+that read fewer parts than the brief has is a failed review: spawn that
+group once more, and report it if it happens again.
 
 ## Step 3: Verify Coverage
 

@@ -16,9 +16,12 @@ time as the others. DISTIL writes them when `sources.json` has a `themes` rule. 
 backlog per theme.
 
 - **A theme's boundary is drawn by the code it touches.** Its `touches` names the code areas it owns, as
-  `<repoKey>:<path prefix>`. Its `why` gives the evidence: which requirements change that code. Two themes never
-  touch the same path, or one inside the other, in the same repo: overlapping code means conflicting pull requests.
-  Name the narrowest folder the rows change, never a whole repo another theme also builds in.
+  `<repoKey>:<path prefix>`. Its `why` gives the evidence: which requirements change that code. Two themes that can
+  build at the same time never touch the same path, or one inside the other, in the same repo: overlapping code means
+  conflicting pull requests. Only a theme that lands after another, through its `dependsOn` directly or through
+  another theme, may touch that theme's code, and its rows that change it name the other theme's rows in
+  `dependsOn` or `externalDependsOn`. Name the narrowest folder the rows change, never a whole repo another theme
+  also builds in.
 - **Boundaries are drawn at feature-folder granularity.** Where a repo's feature folders are independent by design
   (each page or feature its own folder), they are separate code areas: several themes can build in one app at once,
   each owning a few folders. Group rows by the folders they actually change, never by the app they live in.

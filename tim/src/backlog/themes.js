@@ -189,19 +189,27 @@ const touchRepoProblems = (themes, repoKeys) =>
       )
     : []
 
-const overlapProblems = (themes, splitOff) =>
-  themes.flatMap((theme, at) =>
-    [...themes.slice(at + 1), ...splitOff].flatMap((other) =>
-      touchesOf(theme).flatMap((mine) =>
-        touchesOf(other)
-          .filter((theirs) => touchesOverlap(mine.parsed, theirs.parsed))
-          .map(
-            (theirs) =>
-              `Themes "${theme.id}" and "${other.id}" overlap: ${mine.touch} (${theme.id}) and ${theirs.touch} (${other.id}). Two themes that touch the same code raise conflicting pull requests.`
-          )
+const landsInOrder = (edges, first, second) =>
+  reachableFrom(edges, first).has(second) ||
+  reachableFrom(edges, second).has(first)
+
+const overlapProblems = (themes, splitOff) => {
+  const edges = themeEdges(themes)
+  return themes.flatMap((theme, at) =>
+    [...themes.slice(at + 1), ...splitOff]
+      .filter((other) => !landsInOrder(edges, theme.id, other.id))
+      .flatMap((other) =>
+        touchesOf(theme).flatMap((mine) =>
+          touchesOf(other)
+            .filter((theirs) => touchesOverlap(mine.parsed, theirs.parsed))
+            .map(
+              (theirs) =>
+                `Themes "${theme.id}" and "${other.id}" overlap: ${mine.touch} (${theme.id}) and ${theirs.touch} (${other.id}). Two themes that touch the same code raise conflicting pull requests.`
+            )
+        )
       )
-    )
   )
+}
 
 const rowThemeProblems = (rows, themeIds, splitOffIds) =>
   rows.flatMap((row) => {

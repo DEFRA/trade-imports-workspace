@@ -225,10 +225,13 @@ is checked there.
   cluster description. A `ClusterListener` (`MongoAvailability`, added
   with `MongoClientSettings.applyToClusterSettings(b ->
   b.addClusterListener(...))`) reads the servers the driver monitors now
-  on each change. The database is available while any of them is up, and
-  unavailable once every one has failed its check. A server the driver
-  has removed drops out, and one not yet checked leaves the answer
-  unknown rather than down. `DependencyAvailabilityMetrics` registers it
+  on each change. The database is available while a connected server
+  accepts writes (`ServerDescription.isPrimary()`: a primary, standalone,
+  mongos or load balancer). It is unavailable once every server has been
+  checked and none accepts writes: every check failed, or the only
+  connected servers are secondaries. It is unknown while the driver
+  monitors no servers, or one has not been checked yet. A server the
+  driver has removed drops out. `DependencyAvailabilityMetrics` registers it
   as the gauge `external.dependency.available{dependency=mongodb}` (NaN, so not
   published, while unknown). No extra traffic, no scheduled probe, never
   in `/health`. Not a `ServerMonitorListener`: it is not told which
@@ -236,9 +239,15 @@ is checked there.
   would hold the database up.
 - **Log only the change.** A heartbeat is not a call the service makes,
   so it gets no external-call log line and no `external.call.duration`:
-  that would be several lines a minute per task. Log once when the
-  database becomes available (info) and once when it becomes
-  unavailable (warn, with a failed check's exception).
+  that would be several lines a minute per task. Log once on every
+  change of state, naming the servers:
+
+  | Change to | Level | Message |
+  |---|---|---|
+  | Available | INFO | `MongoDB is available, servers {}` |
+  | Unavailable, a server connected but none accepts writes | WARN | `MongoDB is unavailable: servers {} are connected but none accepts writes` |
+  | Unavailable, every check failed | WARN, with the first failed check's exception | `MongoDB is unavailable, servers {}` |
+  | Unknown | WARN | `MongoDB availability is unknown until every server is checked, servers {}` |
 - **Know what a check proves.** Monitoring connections may not sign in,
   so a successful check proves the server is up, not that the service's
   credentials work. Where that gap matters, add a scheduled `ping`
@@ -248,15 +257,25 @@ is checked there.
   driver `CommandListener` (`MongoCommandMetrics`, added with
   `addCommandListener`) records every command as `mongodb/<command
   name>` through `ExternalCallRecorder`. Keep the operation to a fixed set
-  of command names, with anything else as `other`. A command that never
+  of command names, with anything else as `other`. A command counts as
+  a failure when the driver reports it failed (`CommandFailedEvent`: a
+  network error or an `ok: 0` reply), or when an `ok: 1` reply carries
+  `writeErrors` (a duplicate key, say) or a `writeConcernError` (a
+  majority write-concern timeout, say). For those two it records a
+  `MongoReplyWriteException` whose message holds only the error codes
+  and code names, never the server's `errmsg`: a duplicate key's
+  `errmsg` holds the key's value. A command that never
   reaches the server (no server to select) fires no listener event, so
   these metrics do not show an outage; the heartbeat does.
 - **Alerts.** Which rules a service with a database gets:
   `assets/alerts.template.md` → "Check".
 - **Test it** with unit tests that feed the listener cluster
-  descriptions (several servers, one failing, all failing, a removed
-  server, one not yet checked, recovery, and one log line per change, none
-  while another server is up), an integration test that the application's own client
+  descriptions (several servers, one failing, all failing, connected
+  secondaries only, the primary removed, one not yet checked, no
+  servers, recovery, and one log line per change at the level and with
+  the message above, none while another server still accepts writes),
+  unit tests that feed the command listener a reply with `writeErrors`
+  and one with a `writeConcernError`, an integration test that the application's own client
   reports available (it goes red if the listener is not registered), and
   an integration test with a throwaway Testcontainers database that is
   started, seen available, stopped, and seen unavailable. Do not stop the
@@ -273,7 +292,7 @@ address-book's tests are the ones to copy.
 | An integration test with `aws.emf.enabled=true` (`EmfMeterRegistryIT`), with `EnvironmentConfigurationProvider.getConfig().setEnvironmentOverride(Environments.Local)` so EMF writes to the console | The registry is the one in use, and every custom metric name is let through the allowlist: each is recorded, then `meterRegistry.find(name)` is not null. A denied meter is never registered, so a missing or misspelled allowlist entry turns it red |
 | An integration test with `aws.emf.enabled=true` that records a call and waits up to 2 minutes for an EMF document on the console (`EmfMeterRegistryIT`) | The registry publishes on its own thread once started. Turns red if `MetricsConfig` does not call `start` |
 | An integration test per annotated class (`AddressTimingIT`) | Each `@Timed` method, called through the Spring proxy, adds one call to its own timer. Turns red if the allowlist lacks the prefix |
-| An integration test with the dependency failing | The failure is recorded against the right dependency and operation |
+| An integration test with the dependency failing (`ExternalCallRecorderIT`: a command the server rejects, and a duplicate-key insert) | The failure is recorded against the right dependency and operation |
 | The existing health check test | `/health` is still `UP` with no components |
 
 Run the repo's full build before pushing:

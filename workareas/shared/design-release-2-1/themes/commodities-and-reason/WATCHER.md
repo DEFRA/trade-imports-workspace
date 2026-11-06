@@ -16,7 +16,33 @@ Five from HANDOVER.md, plus working-tree dirt.
 | # | Signal | How |
 |---|---|---|
 | 1 | Row statuses | `tim backlog check shared/design-release-2-1/themes/commodities-and-reason` — one line of counts. `tim backlog next` for the row in flight |
-| 2 | Commits **ahead and behind** `origin/main`, per repo | `git -C repos/<r> fetch origin main --quiet` then `rev-list --count origin/main..HEAD` and `HEAD..origin/main`. Behind matters as much as ahead: drift is what a `merge` field absorbs |
+| 2 | Commits **ahead and behind** `origin/main`, per repo | **`git -C repos/<r> fetch origin main` FIRST**, then `rev-list --count origin/main..HEAD` and `HEAD..origin/main`. Behind matters as much as ahead: drift is what a `merge` field absorbs |
+
+**Never quote a behind-count without fetching in the same command.** `origin/main` is a
+local remote-tracking ref: it is exactly as old as the last fetch, and a stale one reads
+as "level with main" no matter how far main has moved. This cost real time on 6 November
+— `trade-imports-performance-tests` was reported 0 behind at 11:0x against a ref fetched
+hours earlier, when the fix it needed (#27, `4ef2345`) had been on main since 07:21. The
+conclusion drawn from it, that no upstream fix existed and one had to be written, was
+wrong in the most expensive direction: it proposed writing code that already existed.
+
+Two more range traps from the same day, both of which produced a confident wrong answer:
+
+- **`A...B` (three dots) compares against the merge base, not against B.** Asking whether
+  a file matches current main with `git diff origin/main...HEAD` answers a different
+  question — whether it matches main *as it was when the branch diverged*. Four seeding
+  files were reported "byte-identical to origin/main" on that basis while differing from
+  real main by 130 and 68 lines. Use `HEAD..origin/main` to ask what main has that you
+  do not.
+- **`git diff HEAD..origin/main` is not "what the merge will bring".** It is the two-way
+  difference, so it counts your own additions as deletions. It made a 4-file merge look
+  like 99 files and −3255 lines, which reads as main reverting the branch. For the real
+  scope, read the diffstat of the commits themselves.
+
+And on CI attribution: a `workflow_run`-triggered check surfaced on a pull request can
+belong to a run whose `head_branch` is `main`. Before reading a red check as the branch's,
+confirm with `gh api repos/<owner>/<repo>/actions/runs/<id> --jq '{head_branch,head_sha}'`.
+A main-branch smoke failure was read as this branch's and sent the diagnosis the wrong way.
 | 3 | Agents started vs result | `grep -c '"type":"started"'` and `grep -c '"type":"result"'` in the run's `journal.jsonl`. **Those are the keys** — `agent_start` / `agent_result` match nothing and read a silent 0/0, which looks exactly like a stalled run |
 | 4 | Newest transcript mtime | newest file under the run's transcript dir |
 | 5 | Newest mtime under `logs/` | newest file under this theme's `logs/`. **Format the mtime with the date** (`stat -f '%Sm' -t '%m-%d %H:%M:%S'`) and scope it with `-newermt '<this run started>'`. With `%H:%M:%S` alone, files from an earlier night sort above tonight's: `inc-018-review2-unit.log` at 23:51 on 3 November read as the newest activity at 23:10 on the 4th, and two of the four "newest" entries sat in the future |

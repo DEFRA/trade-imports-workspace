@@ -26,7 +26,7 @@ Rules that held:
 
 - **Name every metric and dimension in dot case:** lowercase words
   separated by dots, most general first (`external.call.duration`,
-  `cache.hit`, `address.search`; `dependency`, `lookup.type`), the same
+  `cache.hit`, `address.change`; `dependency`, `lookup.type`), the same
   form as the `@Timed` names (`controller.<operation>.time`) and their
   tags (`class`, `method`, `exception`). `EmfMeterRegistry` publishes
   names and tag keys as written, so they are also the CloudWatch metric
@@ -237,7 +237,8 @@ address-book's tests are the ones to copy.
 | `EmfMeterRegistryTest` (copied as it is), with `CapturingEmfEnvironment` and a `MockClock` | The EMF documents: namespace, tags as the only dimensions, every recorded value, units, counters per minute, gauges skipped while NaN, more than 100 values split, one bad meter not stopping the rest |
 | A unit test per metrics class, with a `SimpleMeterRegistry` | Each meter's name, tags and recorded values |
 | An integration test with `aws.emf.enabled=true` (`EmfMeterRegistryIT`), with `EnvironmentConfigurationProvider.getConfig().setEnvironmentOverride(Environments.Local)` so EMF writes to the console | The registry is the one in use, and every custom metric name is let through the allowlist: each is recorded, then `meterRegistry.find(name)` is not null. A denied meter is never registered, so a missing or misspelled allowlist entry turns it red |
-| An integration test per annotated class (`OperatorServiceTimingIT`) | Each `@Timed` method, called through the Spring proxy, adds one call to its own timer. Turns red if the allowlist lacks the prefix |
+| An integration test with `aws.emf.enabled=true` that records a call and waits up to 2 minutes for an EMF document on the console (`EmfMeterRegistryIT`) | The registry publishes on its own thread once started. Turns red if `MetricsConfig` does not call `start` |
+| An integration test per annotated class (`AddressTimingIT`) | Each `@Timed` method, called through the Spring proxy, adds one call to its own timer. Turns red if the allowlist lacks the prefix |
 | An integration test with the dependency failing | The failure is recorded against the right dependency and operation |
 | The existing health check test | `/health` is still `UP` with no components |
 

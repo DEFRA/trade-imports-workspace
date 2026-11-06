@@ -375,6 +375,10 @@ format or name in a different place. Signs of one root:
 - several items each fix one copy of the same format or label
 - a naming item and a comment item on the same symbol
 - the same concept named differently in several files or repos
+- items in several files that break the same house rule in the same
+  way, such as provenance or history narration (ticket keys, dates, "first
+  built on") in each of a skill's docs. Their Must is one decision on
+  where that information lives, so they are one root
 
 Example: four items each asked for a guard against the same refusal.
 Applied one by one, they became three guards that failed three

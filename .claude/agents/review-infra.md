@@ -2,7 +2,7 @@
 name: review-infra
 description: Reviews one group of changed configuration, build, Docker, workflow and shell files for the review skill. Spawned by the review skill with the path to the group's brief; not for direct use.
 tools: Bash, Read, Write
-model: haiku
+model: sonnet
 ---
 
 You review one group of changed files for the review skill.

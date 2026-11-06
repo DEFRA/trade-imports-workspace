@@ -24,8 +24,8 @@ earlier review is in `workareas/reviews/EUDPA-674-original/`.
   no source. They take over `ac-check`.
 - The consistency reviewer owns the checks that need two files. There is no
   cross-repo check: E2E owns that.
-- Models: Sonnet for source, tests, UI, E2E and spec. Haiku for infra, perf
-  and skills. Opus for consistency. Sonnet for the parent, if the skill can
+- Models: Sonnet for source, tests, UI, E2E, spec and (since run 3) infra.
+  Haiku for perf and skills. Opus for consistency. Sonnet for the parent, if the skill can
   set it.
 - Reviewers report back in one line. All writes are batched.
 
@@ -98,6 +98,39 @@ Why it lost findings:
 - `c5518b94`: the review skill sets `model: sonnet`. That applies to every
   mode, the walker and the batch implementor included.
 
+### Run 3 (done)
+
+Workarea `workareas/reviews/EUDPA-674-run3/`, session
+`a93197fe-e00e-42b5-b9b4-97b6c3931cb6` (the review ran as a forked skill
+inside it). **12.5M tokens** against run 2's 18.9M, and the verdict was
+again CONCERNS. It found 51 open findings. The full comparison is in
+[`run3-comparison.md`](run3-comparison.md).
+
+- Better: stale statements (all of `spring-boot.md` and `unit.md`, plus a
+  stale doc page in another repo), 4 `coverage-gap` findings, file line
+  numbers, and no false scope Criticals on #300. Run 2's comparison had
+  already judged those Criticals not valid.
+- The skill ran on Sonnet (4.5M, 52 calls). The consistency reviewer took
+  19 calls (2.8M), down from 54.
+- Still missed: the source-correctness bugs (address-book #19 and #11,
+  animals-frontend #3), `CLAUDE.md:50`, and address-book's logging
+  findings. Lost from run 2: the `recordCall` int flag and the removed
+  `package.json` overrides (the Haiku infra reviewer marked it SAFE). Six
+  workspace provenance findings were not merged into one.
+
+### Run 4 changes (done, in the commit after run 3)
+
+- `references/types/_source.md`: a correctness step that names an input
+  and walks it through each changed branch, a list of bug shapes (any or
+  all, silent fallback, units dropped, flag in disguise, library
+  meaning), and behaviour before comments. Logging adds "failure at the
+  success level".
+- `references/types/infra.md`: a removed-entries check for overrides,
+  resolutions, allowlists and security settings. `review-infra` moves
+  from Haiku to Sonnet.
+- `SKILL.md` merge step: items in several files that break the same house
+  rule the same way (provenance narration) are one root.
+
 ## Next
 
 A new script needs its executable bit before an agent can run it. Policy
@@ -105,24 +138,23 @@ blocks `chmod` in a session and denies `bash <script>`, and a hook runs a
 changed script only once it is committed. So stage a new script with
 `git add --chmod=+x` and have the user run `! chmod +x` on it.
 
-1. **Run 3.** Start a new window. Say "trial run". Set up with
-   `start-review.sh EUDPA-674 --id EUDPA-674-run3 --same-as EUDPA-674`,
-   then use `EUDPA-674-run3` as the review id for every later step. Use
-   the same four PRs as runs 1 and 2, #300 and #43 included, so the runs
-   compare like for like. Expect the two scope Criticals on #300 again.
-   Do not post to any PR.
-2. **Compare run 3 with runs 1 and 2,** in the same shape as
-   `run2-comparison.md`.
-   - Tokens: `tools/review/token-usage.sh <session> --by-agent`. Check that
-     the skill's own context now runs on Sonnet, and how many calls the
-     consistency reviewer took.
-   - Findings: were run 1's checked findings found this time? Address-book
-     #19, #11 and #41, animals-frontend #3, workspace #16 and #17 (in
-     `run2-comparison.md`). Were run 2's four checked findings kept? How
-     many `coverage-gap` findings are there, and are line numbers file
-     lines?
-   - If quality is back but tokens are well above run 2, the next lever is
-     the consistency reviewer's model (Opus).
+1. **Run 4.** Trial run, don't post. Set up with
+   `start-review.sh EUDPA-674 --id EUDPA-674-run4 --same-as EUDPA-674`,
+   then use `EUDPA-674-run4` as the review id for every later step. Use
+   the same four PRs, #300 and #43 included.
+2. **Compare run 4 with runs 1 to 3** as `run4-comparison.md`, in the same
+   shape as `run3-comparison.md`.
+   - Were address-book #19 (`MongoAvailability.java:56`, any server
+     `isOk()`), #11 (`EmfMeterRegistry.java:106,122`, `Unit.COUNT`), run
+     2's `recordCall` int flag, and animals-frontend #3
+     (`to-wire-address.js:9`, `countryCode: undefined`) found?
+   - Was the ins-frontend `package.json` overrides removal found?
+   - Were the workspace provenance findings merged into one item?
+   - Tokens: the source groups and infra will cost more. Check that the
+     total stays well under run 2's 18.9M.
+   - `CLAUDE.md:50` is a provenance statement, not a deleted name, so
+     `stale-search.sh` will not find it. Leave it unless run 4 shows a
+     cheap way.
 
 ## Side issues (not this branch)
 

@@ -23,11 +23,42 @@ do not need. Name each file you read in the `reason` of the file it
 helped you judge. A finding that rests on a file you read quotes that
 file at file:line.
 
-For every file, check correctness against the ticket's acceptance
-criteria, then bugs, null safety, error paths, security and performance,
-then the three code-quality checks below. Work through each check for
-every file. A file with no finding in a check is fine; a check you skipped
-is not.
+For every file, check correctness first (below), then null safety, error
+paths, security and performance, then the code-quality checks. Work
+through each check for every file. A file with no finding in a check is
+fine; a check you skipped is not. Behaviour findings (`correctness`,
+`error-handling`, `logging`) matter more than comment and naming findings:
+do not let the second crowd out the first.
+
+### Correctness: find the input that makes it wrong
+
+For every branch, condition, return value and default the diff adds or
+changes:
+
+1. Say what the ticket needs the line to do.
+2. Name an input or state that is easy to meet in production and walk it
+   through the line. Try a list where only some items pass, an empty list,
+   a missing or unrecognised value, a failure part-way through, and a
+   value with a unit or type.
+3. A result that breaks the ticket, or that the caller cannot tell from
+   success, is a `correctness` finding. The failure scenario is that
+   input and the result it gives.
+
+The bugs to look for:
+
+- **Any or all:** `anyMatch` where the rule needs every item, or the one
+  item that matters (the primary, the latest), and the reverse.
+- **Silent fallback:** a lookup that misses and goes on as `undefined`,
+  `null`, `0` or an empty value, with no log and no error, so bad data
+  travels on.
+- **Units and types dropped:** one fixed unit, type or format written for
+  values that each carry their own (bytes written as a count, seconds as
+  milliseconds).
+- **Flag in disguise:** an `int`, string or magic value used as a
+  true-or-false flag.
+- **Library meaning:** a library call whose result means less than the
+  name suggests (a server is up, but not the one writes go to). Use your
+  5 reads on that library's types only when the brief does not show them.
 
 Check the change against the patterns the code already sets: the guides in
 this brief, and what the other files in your group do. This is not a
@@ -72,6 +103,9 @@ several names within your group.
   notification reference, user, port code, dataset or status.
 - **Lost cause:** the message logged in place of the throwable or `{ err }`.
 - **Body at INFO:** a request or response body logged at INFO.
+- **Failure at the success level:** a failed call or caught error logged
+  at the same level as a success, so an alert or a search on level misses
+  it.
 
 "Support cannot tell X during an incident" is an accepted failure
 scenario for a logging finding.

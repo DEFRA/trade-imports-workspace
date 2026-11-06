@@ -132,10 +132,19 @@ Plants FIT, ins-frontend FIT and the E2E count still carry both flaws.
 - **A tests-repo E2E flake closed by re-run, not by a fix.** `inc-018`'s E2E
   failed, then passed on a re-run with no code change. Rule 6 says flaky never
   closes a failure. Worth chasing once the theme is built.
-- **Three loop defects** worth fixing at source: the wrong sentence above; the
-  CI stage trusting a rollup older than the branch head; and a retry not
-  re-entering at the branch stage (or not re-evaluating `merge` at CI watch).
-  `inc-250`'s own follow-ups record all three.
+- **Two loop defects** left worth fixing at source: the wrong sentence above;
+  and a retry not re-entering at the branch stage (or not re-evaluating `merge`
+  at CI watch). `inc-250`'s own follow-ups record both, and the third.
+- **Fixed at source, 6 November: the CI stage trusting a rollup older than the
+  branch head.** `tools/github-actions/wait-for-pr-checks.sh` now compares
+  every failing check's start time with the PR head commit's own and exits 5
+  when all of them predate it; both CI watchers re-run those jobs and wait
+  again rather than reporting red, and both CI fixers confirm the same before
+  changing a line. This is the defect that cost `inc-024` five fix attempts.
+  Still open in the same family, and a different comparison: the merge stage's
+  pre-merge re-check, where staleness comes from the base having just moved
+  rather than from the head, so a check can be stale while still newer than
+  the head commit. Nothing detects that yet.
 - **The theme's business tickets.** Once the backlog drains, run the
   `theme-ticket` skill's WRITE flow — "write the business tickets for
   commodities-and-reason" — which replaces EUDPA-693's `stub` entry in

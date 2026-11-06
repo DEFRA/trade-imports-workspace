@@ -243,7 +243,7 @@ missing key. The first log line is the resolved configuration.
 | `stopAfter` | How many increments may **land** before the run stops: a positive integer, or `'all'`. It counts landings, not attempts |
 | `e2e` | Where a row's end-to-end proof comes from. `'local'` runs the gate's e2e phase against the workspace stack, scoped to the suites and tags the built services' pull requests run. `'ci'` runs no local e2e, takes no stack lease and builds no images: the baseline reads each repo's open pull request with `gh pr checks` instead, and the run still stops at `ci-red`. Settle it at the launch from what the machine can do — see [The workspace stack lease](#the-workspace-stack-lease) |
 | `resumeFrom` | The earliest stage the **first** row of this run may enter at: `null` to take it from the row's own attempt record, or `build`, `implement`, `review` or `ladder`. A ceiling, not a command — a row whose preserved work is missing or red still drops back. Later rows take their own stage from the backlog — see [Resuming a row part-way through](#resuming-a-row-part-way-through) |
-| `rigour` | How much of the pipeline every row of this run gets. `'full'`: a `think`-tier plan, reviewed, and revised and re-reviewed whenever that review sends it back; a style reviewer for every (repo, language) group but a documentation one, and a code reviewer for every group; a consistency reviewer; a verifier per group of findings. `'standard'`: the same, with one plan review — the revised plan re-read only when a finding is structural, or when the review sends it back naming nothing — and no style reviewer on the row: on a theme branch, one style reviewer per repo reads the theme's whole change once its last row lands, and off one the row keeps its style reviewers. `'fast'`: a `code`-tier plan with no review, one `think`-tier code reviewer across the whole change, no consistency reviewer, and no verifier — the judge does the verifier's work on each finding before it rules. A row's own `rigour` wins for that row. The plan lint, the gate, the ladder, the style re-review of the fixer's hunks, the style review of a CI fixer's commits and a theme's engineering review, where the lifecycle runs one, all run at every preset — see [The rigour dial](#the-rigour-dial) |
+| `rigour` | How much of the pipeline every row of this run gets. `'full'`: a `think`-tier plan, reviewed in full once, and revised whenever that review sends it back, with a second pass that re-checks only its findings; a style reviewer for every (repo, language) group but a documentation one, and a code reviewer for every group; a consistency reviewer; a verifier per group of findings. `'standard'`: the same, with that second pass run only when a finding is structural, or when the review sends the plan back naming nothing — and no style reviewer on the row: on a theme branch, one style reviewer per repo reads the theme's whole change once its last row lands, and off one the row keeps its style reviewers. `'fast'`: a `code`-tier plan with no review, one `think`-tier code reviewer across the whole change, no consistency reviewer, and no verifier — the judge does the verifier's work on each finding before it rules. A row's own `rigour` wins for that row. The plan lint, the gate, the ladder, the style re-review of the fixer's hunks, the style review of a CI fixer's commits and a theme's engineering review, where the lifecycle runs one, all run at every preset — see [The rigour dial](#the-rigour-dial) |
 
 A preflight `jq` against the resolved `backlog.json` runs before anything else: a workarea
 with no readable backlog throws, naming the path it tried, rather than proceeding against
@@ -699,11 +699,16 @@ reports every finding it finds and gives each a kind:
 | structural | A piece in the wrong layer or with the wrong owner; a second mechanism beside one that exists; a decision that contradicts a written rule with no departure stated; scope that falls short of the row's acceptance criteria or goes beyond them; a test strategy that cannot prove the criteria | Stops the increment at `plan-refused`, before the implementor starts |
 | detail | A line-level gap the implementor can close without changing any decision, home or owner: a comment to delete, a local helper copy at a file:line, a doc or reference to update | Required work. A light agent writes it into the plan under "Plan review: must address", the implementor is given it to address, and the consistency reviewer reports any the change leaves open in a code-quality category, so it is fixed by default |
 
-It sends the plan back once with every finding, each saying what must become true; the revised plan is linted and
-reviewed again. A finding with no kind counts as structural. A reviewer that returns nothing also stops the
-increment at `plan-refused`. A house-rule breach outside the row's footprint is not a finding against the plan: the
-reviewer lists it in `followUps`. Its approval narrows nothing later: every reviewer after it judges the code in
-full.
+It sends the plan back once with every finding, each saying what must become true. **The plan is reviewed in full
+once.** The revised plan is linted, then a second pass — the plan re-checker — takes only those findings and says
+which are now closed and which are still open, keeping each one's kind. It looks for no new findings, and anything
+it happens to notice goes to `followUps` instead; `approved` on that pass is exactly "findings is empty". The second
+pass used to review the whole plan again, at the cost of the first: on EUDPA-693 the two together ran longer than
+the implementor, and the second pass still returned unapproved while reporting every finding closed.
+
+A finding with no kind counts as structural. A reviewer that returns nothing also stops the increment at
+`plan-refused`. A house-rule breach outside the row's footprint is not a finding against the plan: the reviewer
+lists it in `followUps`. Its approval narrows nothing later: every reviewer after it judges the code in full.
 
 **The implementor follows decisions, not wording.** It follows the plan's decisions, homes and rule owners, owns
 names and code shape, copies an exemplar's structure but never its comments or names, and may extend a shared test
@@ -869,7 +874,7 @@ their own verifier or by the judge. `RIGOUR_RULES` is the whole of it:
 | | `full` | `standard` | `fast` |
 |---|---|---|---|
 | `planTier` | `think` | `think` | `code` |
-| `planReview` | a plan sent back is revised and re-reviewed | revised, and re-read only when a finding is structural or the review names none | none |
+| `planReview` | a plan sent back is revised, then its findings re-checked | revised, and its findings re-checked only when one is structural or the review names none | none |
 | `styleReviewers` | one per (repo, language) group but a documentation one | none on the row; one per repo across the theme's whole change | none on the row; one per repo across the theme's whole change |
 | `reviewScope` | a `code`-tier reviewer per group | a `code`-tier reviewer per group | one `think`-tier reviewer across the whole change |
 | `consistencyReview` | yes | yes | no |
@@ -1082,7 +1087,7 @@ like this:
 | Implement to ladder | Every stage is told the merge is in progress on purpose. Reviewers read `git diff --staged` as the merge result against the pre-merge HEAD, and judge the resolutions rather than what the merged ref brought. The branch guard never aborts a merge |
 | Land | Commits each repo, concluding a merge as a real two-parent merge commit (never a squash), records the commit, then pushes with `git push origin refs/heads/<branch>:refs/heads/<branch>`, never `--force`. The tests repo goes first, and the others wait for its branch image to publish |
 | Pull request | Finds the one open PR for `branch` in each repo the row names, and records it. Never creates, edits, retitles, un-drafts or merges one. A repo with none stops the run as `no-open-pr` |
-| CI | Reads `mergeable` and `mergeStateStatus` first, retrying while UNKNOWN: GitHub runs no checks on a PR that conflicts with its base, so a conflicting PR stops the row at once as `pr-conflict`, not an API failure and not a fix attempt. Then waits with `tools/github-actions/wait-for-pr-checks.sh`. A CI fixer commits onto `branch` and pushes the same way. A row with `awaitCi: false` skips this stage |
+| CI | Reads `mergeable` and `mergeStateStatus` first, retrying while UNKNOWN: GitHub runs no checks on a PR that conflicts with its base, so a conflicting PR stops the row at once as `pr-conflict`, not an API failure and not a fix attempt. Then waits with `tools/github-actions/wait-for-pr-checks.sh`. **A failing check that started before the PR's head commit is a stale rollup, not a red** — GitHub does not re-run a PR's checks when its base moves, so the script compares each failing check's start time with the head commit's own and exits 5 when every one of them predates it. The watcher re-runs those jobs and waits again, up to twice, spending a watch window rather than a fix attempt; the CI fixer confirms the same before it changes a line and refuses rather than fix a check that never saw the code. A CI fixer commits onto `branch` and pushes the same way. A row with `awaitCi: false` skips this stage |
 | Merge | Does not run |
 | Done | `tim backlog set <workarea> <id> --status done --commit <sha>`. No ticket to move |
 

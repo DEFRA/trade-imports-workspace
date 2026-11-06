@@ -383,8 +383,8 @@ const rulesOf = (rigour) => (IS_BRANCH ? RIGOUR_RULES[rigour] : { ...RIGOUR_RULE
 
 const rigourSummary = (rigour) => {
   const planReviewPhrases = {
-    twice: 'reviewed, revised and re-reviewed',
-    structural: 'reviewed once, and re-reviewed when a finding is structural or the review names none',
+    twice: 'reviewed and revised, then its findings re-checked',
+    structural: 'reviewed once, and its findings re-checked when one is structural or the review names none',
     none: 'no plan review'
   }
   const rules = rulesOf(rigour)
@@ -2807,6 +2807,27 @@ For each pr: \`gh pr view <url> --json mergeable,mergeStateStatus\`
   failures[]. No code fix in this row clears it: the base must be merged into the branch.
 - anything else → that pr can be watched.`
 
+const STALE_RERUNS = 2
+
+const STALE_ROLLUP_STEP = `A STALE ROLLUP IS NOT A FAILURE, and it never reaches a fixer. GitHub does not re-run a pull request's checks when
+its base moves, so a PR can go on showing a failure from before its last merge. The wait script works this out for
+you: it compares every failing check's start time with the PR head commit's own commit time, marks each stale line
+\`(stale: started ..., head committed ...)\`, and exits 5 only when EVERY failing check started before that commit.
+A check that ran before the commit under test is no evidence about that commit, so exit 5 means unknown, never red:
+1. Re-run the runs the stale lines name: \`gh run rerun <run-id> --failed --repo <ghRepo>\`, one Bash call each.
+2. Wait on that pr's checks again from the top of this step. A re-run spends a watch window, NEVER a fix attempt,
+   and you may do it at most ${STALE_RERUNS} times per pr.
+3. Exit 5 still, after ${STALE_RERUNS} re-runs → state "unresolved" for that pr, which counts as RED.
+Exit 1 with some lines marked stale is a real red: at least one failing check did run on this head. Put only the
+checks NOT marked stale in failures[] — a fixer sent after a stale check rewrites correct code to match an old image.`
+
+const CI_FIXER_STALE_RULE = `CHECK THE FAILURE IS ABOUT THIS HEAD BEFORE YOU CHANGE A LINE. The watcher should have caught a stale rollup, but
+   confirm it yourself, because changing correct code to match an old image is the most expensive thing you can do
+   here. For the failing check: \`gh api repos/<owner>/<name>/check-runs/<check-run-id> --jq '.started_at'\`, and the
+   head it should have run on: \`git -C ${TILDE}/<repoPath> log -1 --format=%cI\`. Started BEFORE that commit → the
+   check never saw this code: report ok:false saying so and naming both times, and re-run nothing and fix nothing.
+   Spending an attempt on a stale check is how EUDPA-693's inc-024 burned five of them on correct code.`
+
 const conflictStopDetail = (id, ci, branch) =>
   `${id}: ${ci.blocked}. GitHub runs no checks on it. Merge ${IS_BRANCH ? 'its base branch' : `origin/${BASE_BRANCH}`} into ${branch} in that repo, push, then run again`
 
@@ -3480,16 +3501,6 @@ const HOUSE_RULES_TO_REVIEW_PLAN = houseRulesFor(
   'the plan you review: every decision, home, owner and test it records, and the code it leads to'
 )
 
-const earlierPlanReviewNote = (earlierFindings) =>
-  earlierFindings.length
-    ? `
-YOU SENT THIS PLAN BACK ONCE, with these findings:
-${planReviewFindingLines(earlierFindings)}
-Check that each one is now true, then review the whole plan again. There is no third plan. A structural finding still
-open, or a new one, stops the increment. A detail finding still open, or a new one, goes to the implementor as
-required work and to the consistency reviewer to check.`
-    : ''
-
 const PLAN_FINDING_KIND_RULE = `GIVE EACH FINDING A KIND. Report every finding you find, whatever its kind: the kind decides what happens to
    it, not whether it counts.
    - structural: the plan is built wrong. A piece in the wrong layer or with the wrong owner; a second mechanism
@@ -3503,7 +3514,7 @@ const PLAN_FINDING_KIND_RULE = `GIVE EACH FINDING A KIND. Report every finding y
    dropped: it is written into the plan under "Plan review: must address", goes to the implementor as required work,
    and the consistency reviewer reports any the change does not address.`
 
-const reviewPlan = (id, { label, earlierFindings = [] }) =>
+const reviewPlan = (id, { label }) =>
   agent(
     `You are the PLAN REVIEWER for increment ${id}. No code exists yet: you review the plan before the implementor
 starts. You change no file and you commit nothing.
@@ -3511,7 +3522,7 @@ ${guardrails()}
 ${HOUSE_RULES_TO_REVIEW_PLAN}
 ${readIncrement(id)}
 ${REPO_RULE}
-${readPlan(id)}${earlierPlanReviewNote(earlierFindings)}
+${readPlan(id)}
 WHAT A PLAN IS: decisions, homes and owners. It records where each piece of the change lives, which existing
 mechanism it goes through, which one function owns each rule, and what each test must prove. It never writes code
 text: names, comment or doc comment text, test titles or bodies, log wording or code bodies. The implementor writes
@@ -3562,6 +3573,45 @@ Return the structured output only.`,
     think({ label, phase: 'Plan', schema: PLAN_REVIEW_SCHEMA })
   )
 
+// The second pass re-checks the first pass's findings and nothing else. It used to review the whole plan again,
+// which cost as much as the first pass — on EUDPA-693 the two passes together ran longer than the implementor, and
+// their verdict was decided by this cap rather than by approval either way. The plan is reviewed in full once; the
+// code it leads to is reviewed in full by every reviewer after it.
+const recheckPlan = (id, { label, earlierFindings }) =>
+  agent(
+    `You are the PLAN RE-CHECKER for increment ${id}. The plan was reviewed, sent back once, and revised. Your whole
+job is to say which of the review's findings are now closed and which are still open. You review nothing else, you
+change no file and you commit nothing.
+${guardrails()}
+${readIncrement(id)}
+${readPlan(id)}
+THE FINDINGS THE REVIEW RAISED, and what each said must become true:
+${planReviewFindingLines(earlierFindings)}
+
+1. Read ${PLANS}/${id}.md in full with the Read tool. Read the increment's acceptance criteria.
+2. TAKE EACH FINDING IN TURN, in the order above. For each, read only what that finding needs: the plan sections it
+   names, and where it quotes a path and line, that file at that line. Decide one of two things:
+   - CLOSED: what the finding said must become true is now true in the plan, in the plan's own words. Quote the words
+     that close it.
+   - STILL OPEN: it is not, or the plan answers a different point. Say what is still missing.
+   A finding is closed only by the plan saying the thing. A plan that argues the finding was wrong has not closed it.
+3. DO NOT REVIEW THE REST OF THE PLAN. You are not looking for new findings: the plan had its full review, and every
+   reviewer after the implementor judges the code in full. If something else catches your eye, put one line in
+   followUps[] and carry on — never in findings[].
+
+REPORT:
+- findings[]: the still-open findings from the list above, ONE ENTRY EACH, each keeping the KIND IT WAS GIVEN there
+  (structural stays structural, detail stays detail — you do not re-grade them), with its section, what is still
+  wrong, its rule, and what must become true. A closed finding does not appear.
+- approved: true when findings[] is empty, false when it is not. Nothing else decides it. Do not report approved
+  false while saying every finding is closed: if they are all closed, that is approved true.
+- summary: one line per finding, closed or open, in the order above, so the record says what happened to each.
+A structural finding still open stops the increment. A detail finding still open goes to the implementor as required
+work and to the consistency reviewer to check. There is no third plan.
+Return the structured output only.`,
+    think({ label, phase: 'Plan', schema: PLAN_REVIEW_SCHEMA })
+  )
+
 const sendsPlanBack = (review) => !review.approved || (review.findings ?? []).length > 0
 
 const isStructural = (finding) => planFindingKindOf(finding) === 'structural'
@@ -3585,8 +3635,8 @@ const refusedAfterSecondReview = (plan, second) => {
     ...plan,
     ok: false,
     summary: structural.length
-      ? `the plan review sent the plan back twice with structural findings still open: ${structural.map(planFindingSummary).join(' | ')}`
-      : `the plan review sent the plan back twice. Still open: ${second.summary}`
+      ? `the revised plan still leaves structural plan-review findings open: ${structural.map(planFindingSummary).join(' | ')}`
+      : `the revised plan still leaves plan-review findings open. Still open: ${second.summary}`
   }
 }
 
@@ -3650,7 +3700,7 @@ const reviewedPlan = async (id, branchedRepos, rigour) => {
     )
     return withMustAddress(id, withFollowUps(revised, [review]), findings, `the plan, which was revised but ${notReRead}`)
   }
-  const second = await reviewPlan(id, { label: `${id} plan review 2`, earlierFindings: findings })
+  const second = await recheckPlan(id, { label: `${id} plan review 2`, earlierFindings: findings })
   if (!second) return noPlanReview(revised)
   const reviewed = withFollowUps(revised, [review, second])
   if (!sendsPlanBack(second)) return reviewed
@@ -4333,8 +4383,9 @@ Then, for EACH pr, in the order listed:
    Read that log ONCE. Exit 0 → green. Exit 1 → RED: one line per failing check in failures[], naming the check and
    what it said. Exit 2 → not resolved yet: run it again, at most ${CI_WATCH_WINDOWS} times per PR in all, then state
    "unresolved", which counts as RED. Exit 4 → no checks at all: state "unresolved", blocked "no checks on <repo>",
-   stopReason "no-checks". An absence of evidence is not green.
-2. For a RED check, name the failing job precisely enough for a fixer to act. Get the detail with
+   stopReason "no-checks". An absence of evidence is not green. Exit 5 → by step 2 below.
+2. ${STALE_ROLLUP_STEP}
+3. For a RED check, name the failing job precisely enough for a fixer to act. Get the detail with
    \`gh run view <run-id> --repo <ghRepo> --log-failed\`, redirected to a log you read once. Where the failing
    job is Playwright, say so: its real evidence is \`test-results/*/error-context.md\`, not the run output.
 
@@ -4363,18 +4414,19 @@ TASK:
    **For a Playwright failure the evidence is \`test-results/*/error-context.md\` in the repo, NOT the tail of the
    run log.** Go and read those files.
 ${SONAR_GATE_RULE}
-2. KNOW WHAT A RE-RUN CAN AND CANNOT DO. Re-running a workflow does not refresh a check that another job posted: only a
+2. ${CI_FIXER_STALE_RULE}
+3. KNOW WHAT A RE-RUN CAN AND CANNOT DO. Re-running a workflow does not refresh a check that another job posted: only a
    push that republishes it does. A \`workflow_run\` job runs the copy of its workflow on the default branch (main),
    never the branch's, so a fix to that workflow file on \`${BASE_BRANCH}\` changes nothing until it reaches main.
-3. Fix the code. Never weaken, skip or delete a test to get green. Never disable a check. If the failure is a
+4. Fix the code. Never weaken, skip or delete a test to get green. Never disable a check. If the failure is a
    known-flaky journey spec with a transient 500 in beforeEach, say so explicitly and re-run rather than editing.
-4. Prove it locally with the narrowest suite that covers the failure, to a log under ${WORKAREA_TILDE}/logs/,
+5. Prove it locally with the narrowest suite that covers the failure, to a log under ${WORKAREA_TILDE}/logs/,
    read once.
-5. Commit on \`${BASE_BRANCH}\` with a conventional message naming increment ${id}, then push by HOW TO PUSH above.
+6. Commit on \`${BASE_BRANCH}\` with a conventional message naming increment ${id}, then push by HOW TO PUSH above.
    ${HEAD_BRANCH_CHECK} must print \`${BASE_BRANCH}\` first. Never check out another branch, never create one.
-6. A fix that belongs in a repo with no PR in the list above is outside what this run may do: report ok:false naming
+7. A fix that belongs in a repo with no PR in the list above is outside what this run may do: report ok:false naming
    the repo. Never open a pull request.
-7. If you cannot work out what is failing, or the fix would need work outside this increment's scope, report
+8. If you cannot work out what is failing, or the fix would need work outside this increment's scope, report
    ok:false saying exactly that. An honest refusal is worth more than a speculative push.
 Return the structured output only.`
 
@@ -6484,18 +6536,19 @@ ${prList(prs)}
 ${PR_CONFLICT_STEP} A PR whose \`mergeable\` stays UNKNOWN after 10 reads: go on and watch its checks.
 
 Then, for EACH pr, in the order listed:
-1. BLOCK on it. One Bash call, with the tool's \`timeout\` parameter set to 600000:
-   \`gh pr checks <url> --watch --fail-fast --interval 30 > ${WORKAREA_TILDE}/logs/${id}-ci-<repo>.log 2>&1\`
+1. BLOCK on its checks. One Bash call, with the tool's \`timeout\` parameter set to 600000:
+   \`${TILDE}/tools/github-actions/wait-for-pr-checks.sh <owner/name> <number> 570 > ${WORKAREA_TILDE}/logs/${id}-ci-<repo>.log 2>&1\`
 2. Read that log ONCE.
-   - The command exited zero and the log shows every check passing → that PR is green.
-   - It exited non-zero → that PR is RED. Put one line per failing check in failures\[\], naming the check and
-     what it actually said.
-   - The Bash call hit its timeout → the run has NOT resolved. Repeat step 1. You may do this at most
-     ${CI_WATCH_WINDOWS} times per PR in total. Still unresolved after that → state "unresolved", and it counts
-     as RED, never as green.
-   - \`gh\` reports that the PR has NO checks configured → state "unresolved", green:false, and put
-     "no checks configured on <repo>" in blocked. Merging on an absence of evidence is not merging on green.
-3. For a RED check, name the failing job precisely enough for a fixer to act. Get the detail with
+   - Exit 0 → that PR is green.
+   - Exit 1 → that PR is RED. Put one line per failing check in failures\[\], naming the check and what it
+     actually said.
+   - Exit 2 → the checks have NOT resolved. Repeat step 1. You may do this at most ${CI_WATCH_WINDOWS} times per
+     PR in total. Still unresolved after that → state "unresolved", and it counts as RED, never as green.
+   - Exit 4 → the PR has NO checks: state "unresolved", green:false, and put "no checks configured on <repo>" in
+     blocked. Merging on an absence of evidence is not merging on green.
+   - Exit 5 → by step 3 below.
+3. ${STALE_ROLLUP_STEP}
+4. For a RED check, name the failing job precisely enough for a fixer to act. Get the detail with
    \`gh run view <run-id> --repo <ghRepo> --log-failed\`, redirected to a log you read once. Where the failing
    job is Playwright, say so — its real evidence is \`test-results/*/error-context.md\`, not the run output.
 
@@ -6533,11 +6586,12 @@ TASK:
    **For a Playwright failure the evidence is \`test-results/*/error-context.md\` in the repo, NOT the tail of the
    run log.** Go and read those files.
 ${SONAR_GATE_RULE}
-2. Fix the code. Never weaken, skip or delete a test to get green. Never disable a check. If the failure is a
+2. ${CI_FIXER_STALE_RULE}
+3. Fix the code. Never weaken, skip or delete a test to get green. Never disable a check. If the failure is a
    known-flaky journey spec with a transient 500 in beforeEach, say so explicitly and re-run rather than editing.
-3. Prove it locally with the narrowest suite that covers the failure, to a log under ${WORKAREA_TILDE}/logs/,
+4. Prove it locally with the narrowest suite that covers the failure, to a log under ${WORKAREA_TILDE}/logs/,
    read once.
-4. PUT THE REPO ON THE BRANCH BEFORE YOU COMMIT — and read this even if you are sure it already is.
+5. PUT THE REPO ON THE BRANCH BEFORE YOU COMMIT — and read this even if you are sure it already is.
    The repo you are fixing may be one the BRANCH STAGE never touched: it only branched the repos the increment
    declared, and a fix that lands somewhere else arrives here with that repo still sitting on \`${BASE_BRANCH}\`.
    Committing there and pushing is how this loop once put an unreviewed commit on the tests repo's main.
@@ -6550,19 +6604,19 @@ ${SONAR_GATE_RULE}
      - It does not → \`git -C ${TILDE}/<repoPath> checkout -b ${workBranch} --no-track origin/${BASE_BRANCH}\`
        \`--no-track\` is mandatory — see HOW TO PUSH above for what it prevents.
      Then re-run \`rev-parse --abbrev-ref HEAD\` and confirm it now prints \`${workBranch}\` before going on.
-5. Commit on \`${workBranch}\` with a conventional message naming ${ticket.key}, then
+6. Commit on \`${workBranch}\` with a conventional message naming ${ticket.key}, then
    \`git -C ${TILDE}/<repoPath> push -u origin refs/heads/${workBranch}:refs/heads/${workBranch}\` — never
    \`--force\`, and never the short \`push origin ${workBranch}\` form.
-6. **IF YOUR FIX TOUCHED A REPO THAT IS NOT IN THE PULL REQUESTS ABOVE, IT NEEDS A PR OF ITS OWN, AND YOU MUST
+7. **IF YOUR FIX TOUCHED A REPO THAT IS NOT IN THE PULL REQUESTS ABOVE, IT NEEDS A PR OF ITS OWN, AND YOU MUST
    REGISTER IT.** A frontend change whose fix lands in the tests repo is the ordinary case, not an exception.
    An unregistered PR is invisible to the watcher and to the merge stage, so the increment merges one repo,
    calls itself done, and silently leaves the other open — which has happened. Worse has happened: the same repo,
    left on \`${BASE_BRANCH}\` because it was never branched, took the commit directly onto the base branch and
-   there was no PR to leave open. Step 4 is what stops that; do not skip it for a repo you are adding here.
+   there was no PR to leave open. Step 5 is what stops that; do not skip it for a repo you are adding here.
    Use the SAME branch name \`${workBranch}\` (CLAUDE.md rule 2, cross-repo branch parity). Repo paths:
    ${repoTable}. GitHub repos: ${ghTable}. For each such repo:
    a. Confirm it is on \`${workBranch}\` — \`git -C ${TILDE}/<repoPath> rev-parse --abbrev-ref HEAD\` — and if it
-      is not, put it there by step 4's method before anything else. Then
+      is not, put it there by step 5's method before anything else. Then
       \`git -C ${TILDE}/<repoPath> push -u origin refs/heads/${workBranch}:refs/heads/${workBranch}\` — never
       \`--force\`, never the short form.
    b. Look for an existing PR first:
@@ -6576,7 +6630,7 @@ ${SONAR_GATE_RULE}
       Do this per repo, not once at the end.
    e. Report it in \`newPrs\[\]\`. Both matter: the backlog is what a resume reads, \`newPrs\` is what the rest of
       THIS run reads. Skipping either one is how a PR gets left behind.
-7. If you cannot work out what is failing, or the fix would need work outside this increment's scope, report
+8. If you cannot work out what is failing, or the fix would need work outside this increment's scope, report
    ok:false saying exactly that. An honest refusal is worth more than a speculative push.
 Return the structured output only.`,
         code({ label: `${id} ci fix ${ciAttempt}`, phase: 'CI', schema: CI_FIX_SCHEMA })

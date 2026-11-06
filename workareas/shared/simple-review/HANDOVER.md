@@ -211,18 +211,28 @@ changed script only once it is committed. So stage a new script with
 
 Done after run 5 (the next run is the first to use them):
 
-- `78ea037c`: **briefs in readable parts.** `write-briefs.sh`
-  orders a brief as instructions, group, ticket, house rules, files, source
-  under test, then guides last. It splits a brief into parts of at most
-  1,500 lines and 100 KB (`--max-part-lines`, `--max-part-bytes`), each
-  ending at a heading where it can: `briefs/<id>.md` is part 1 and lists
-  `briefs/<id>.part-<n>.md`. It refuses to write a part over the limits.
-  On the run 5 groups, address-book java-tests 1 becomes 6 parts, with
-  the code in parts 1-4. Every reviewer agent and `_core.md` say to read
-  every part whole. The reply is now `done: … , read <n> of <n> parts`, and
+- `78ea037c` then `63cc9103`: **briefs read in order, code first.**
+  `write-briefs.sh` orders a brief as instructions, group, ticket, house
+  rules, files, source under test, then guides last. Its header gives its
+  length in lines and says to read from line 1 to that line, in order.
+  Every reviewer agent, `_core.md` and the SKILL.md spawn prompt say the
+  same. The reply is now `done: … , read <last line> of <lines> lines`, and
   SKILL.md Step 2 reruns a group that read fewer. `review-groups.test.sh`:
-  56 checks, passed.
-- Same commit: **a PR's own ticket.** `prepare-review.sh` records `ticket`
+  45 checks, passed.
+  - `78ea037c` split briefs into parts, then into one large part with
+    `allow_large: true`. A test run showed `allow_large` lifts Read's
+    256 KB refusal, but one call still returns only 40-55 KB (the first
+    call gave lines 1-745 of 7,431). So `63cc9103` dropped the parts.
+  - **One-group test** (`workareas/reviews/EUDPA-674-briefcheck/`, the
+    address-book java-tests 1 group alone, Sonnet): the reviewer read
+    lines 1-5949 in six ordered calls, which covers every file and the
+    source under test (they end at line 5076), and skipped only the
+    tail of the guides. 8 findings against run 5's 2, and 4 coverage
+    gaps against 0 (among them run 1 #37 and the `ExternalCallMetrics`
+    failure path). The `EmfMeterRegistryIT` over-claim came back. 0.71M
+    tokens over 8 calls, against 0.48M over 12. Expect the test and
+    source groups to cost more in run 6.
+- `78ea037c`: **a PR's own ticket.** `prepare-review.sh` records `ticket`
   for each PR (from its title, else its head branch; `pr-details.sh` now
   returns `headRefName`). A brief for a PR of another ticket says so, and
   says that scope against the reviewed ticket is not a finding. A replay of
@@ -232,9 +242,9 @@ Done after run 5 (the next run is the first to use them):
   file's findings on a rerun, and a refused rerun puts them back.
   `batch-writes.test.sh`: 29 checks, passed.
 
-Not yet done from the list: cutting the guides down to the sections a
-file type needs. With the guides last, a reviewer that stops early loses
-guides, not code, and the reply shows it.
+Not yet done: cutting the guides down to the sections a file type needs.
+With the guides last, a reviewer that stops early loses guides, not code,
+and the reply shows it.
 
 1. **Run 6** with the same setup (`--id EUDPA-674-run6 --same-as
    EUDPA-674`, trial run, all four PRs). Then compare it as
@@ -255,8 +265,9 @@ guides, not code, and the reply shows it.
 - `workareas/reviews/EUDPA-674-briefcheck/` is a throwaway copy of run 5
   used to try the new brief writer. Delete it (`rm -rf` was denied in
   the session).
-- Briefs now cost more calls to read (13 groups: 34 parts in place of 13
-  files). Check run 6's group tokens against run 5's 4.8M.
+- Reviewers that read the whole brief cost more (the one-group test: 0.71M
+  against 0.48M). Check run 6's group tokens against run 5's 4.8M. Cutting
+  the guides down would bring this back down.
 - `ac-check` and `prepare-ac-check.sh` are untracked or gitignored. Delete
   them once the test reviewer has replaced them.
 - `ac-table.sh` lists one criterion up to three times (28 rows for about

@@ -10,10 +10,10 @@ Org-scoped address book API for EUDP Live Animals (EUDPA-58). Each organisation 
 
 **Owns**
 
-- The `addresses` collection in the `trade-imports-address-book` MongoDB database (name, address lines, town/city, county, postcode, `countryCode`, phone, email, status, audit timestamps).
-- CRUD, search (`q` over name, address lines, town or city, county and postcode; `countryCode`, repeatable) and 1-based pagination (`pageSize` request parameter from 1 to 100, default 25) for addresses, all scoped by organisation id.
+- The `addresses` collection in the `trade-imports-address-book` MongoDB database (name, address lines, town/city, county, postcode, `countryCode`, `roles`, phone, email, status, audit timestamps). `roles` is required on create and update and holds at least one of the six roles. The service refuses roles from more than one group (place of origin and consignor; consignee, importer and place of destination; branch address) and a consignee, importer or place of destination outside the United Kingdom. It stores no address type: that grouping is the INS frontend's.
+- CRUD, list filtering and 1-based pagination, all scoped by organisation id. The list takes `q`, `countryCode`, `searchRole`, `role`, `page` and `pageSize`. The search group matches with OR: `q` over name, address lines, town or city, county and postcode, `countryCode` (repeatable) and `searchRole` (repeatable). `role` (repeatable) narrows that group (AND) to the addresses holding any of the given roles. `page` starts at 1, and `pageSize` runs from 1 to 100, default 25.
 - Soft delete: a delete flips internal `status` to `DELETED`; tombstones stay fetchable by id with `deleted: true` and are excluded from lists.
-- The locked OpenAPI contract (`docs/openapi/api-contract.locked.yaml`, `operators.yml`), checked on every `mvn verify`.
+- The locked OpenAPI contract (`docs/openapi/api-contract.locked.yaml`, `addresses.yml`), checked on every `mvn verify`.
 
 **Does not own**
 

@@ -82,8 +82,18 @@
           "name": "The add page reached from the address book is titled Add address and contact details",
           "coverage": "partial",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/add/add.controller.test.js", "test": "GET renders the add address and contact details page with its caption, no status tag, and Back and cancel linking to the address book", "strength": "partial", "notes": "asserts the h1 only; no test reads the document title on this entry" },
-            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/fit/list.fit.spec.js", "test": "clicking Add a new address navigates to the add form", "strength": "partial", "notes": "asserts the heading after following Add a new address, not the document title" }
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/add/add.controller.test.js", "test": "GET renders the add address and contact details page with its caption, no status tag, Back linking to the address type page and Cancel linking to the address book", "strength": "partial", "notes": "asserts the h1 only; no test reads the document title on this entry" },
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/fit/address-type.fit.spec.js", "test": "Origin or Consignor opens the address form with United Kingdom selected, Back shows it chosen and a new add starts with none chosen", "strength": "partial", "notes": "asserts the form heading after choosing a type, not the document title" }
+          ]
+        },
+        {
+          "id": "SCN-INS-PAGE-TITLE-001-I",
+          "name": "The address type page is titled Choose an address type",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/address-type/address-type.controller.test.js", "test": "GET shows the caption, the heading, a visually hidden legend, the three address types with their hints in order and none chosen, Continue and Back to the address book", "strength": "full", "notes": "red-probed: fails when the page title is built from the caption" },
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/page-title.fit.spec.js", "test": "titles the address type page Choose an address type", "strength": "partial", "notes": "run by the gate; not red-probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/page-titles.spec.ts", "test": "the address type page is titled Choose an address type - Import notification service - GOV.UK", "strength": "partial", "notes": "run on the leased stack by the gate; not red-probed" }
           ]
         }
       ]
@@ -100,8 +110,18 @@
           "tests": [
             { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/page-title.fit.spec.js", "test": "puts the error prefix in front of the whole title when the page shows errors", "strength": "full", "notes": "drives a real validation failure on the add address page" },
             { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should keep the error prefix in front of the whole title", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/page-titles.spec.ts", "test": "a page showing errors opens its title with Error:", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/page-titles.spec.ts", "test": "the add address form showing errors opens its title with Error:", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/add/add.controller.test.js", "test": "POST with invalid data re-renders form with errors", "strength": "partial", "notes": "asserts the prefixed title on the add address validation failure" }
+          ]
+        },
+        {
+          "id": "SCN-INS-PAGE-TITLE-002-B",
+          "name": "The address type page showing its error is titled with the error prefix",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/address-type/address-type.controller.test.js", "test": "POST with no address type answers 400 with the message inline and as the summary link to the first option", "strength": "full", "notes": "red-probed: fails when the page title is built from the caption" },
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/page-title.fit.spec.js", "test": "puts the error prefix in front of the address type page title when no type is chosen", "strength": "partial", "notes": "run by the gate; not red-probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/page-titles.spec.ts", "test": "the address type page showing its error opens its title with Error:", "strength": "partial", "notes": "run on the leased stack by the gate; not red-probed" }
           ]
         }
       ]

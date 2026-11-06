@@ -47,7 +47,7 @@ src/main/java/uk/gov/defra/tradeimportsanimals/
 ```java
 @SpringBootApplication
 @EnableScheduling
-@EnableConfigurationProperties({ AppConfig.class, MetricsConfigurationProperties.class })
+@EnableConfigurationProperties(AppConfig.class)
 public class TradeImportsAnimalsApplication {
     public static void main(String[] args) {
         SpringApplication.run(TradeImportsAnimalsApplication.class, args);
@@ -465,9 +465,18 @@ Match constraint annotation packages to your overall stack — this project uses
 ```java
 @Bean
 @ConditionalOnProperty(name = "aws.emf.enabled", havingValue = "true")
-EmfMeterRegistry emfMeterRegistry(@Value("${aws.emf.namespace}") String namespace) {
-    EmfMeterRegistry registry = new EmfMeterRegistry(namespace, Clock.SYSTEM, MetricsLogger::new);
+EmfMeterRegistry emfMeterRegistry(
+        @Value("${aws.emf.namespace}") String namespace,
+        @Value("${aws.emf.step}") Duration step,
+        @Value("${aws.emf.environment:}") String environment) {
+    if (!environment.isBlank()) {
+        EnvironmentConfigurationProvider.getConfig()
+            .setEnvironmentOverride(Environments.valueOf(environment));
+        log.info("Writing metrics to the {} EMF environment", environment);
+    }
+    EmfMeterRegistry registry = new EmfMeterRegistry(namespace, step, Clock.SYSTEM, MetricsLogger::new);
     registry.start(new NamedThreadFactory("emf-meter-registry"));
+    log.info("Publishing metrics to CloudWatch namespace {} every {}", namespace, step);
     return registry;
 }
 ```
@@ -987,7 +996,10 @@ public class MetricsConfig {
 
     @Bean
     @ConditionalOnProperty(name = "aws.emf.enabled", havingValue = "true")
-    EmfMeterRegistry emfMeterRegistry(@Value("${aws.emf.namespace}") String namespace) { ... }
+    EmfMeterRegistry emfMeterRegistry(
+            @Value("${aws.emf.namespace}") String namespace,
+            @Value("${aws.emf.step}") Duration step,
+            @Value("${aws.emf.environment:}") String environment) { ... }
 
     @Bean
     TimedAspect timedAspect(MeterRegistry meterRegistry) {

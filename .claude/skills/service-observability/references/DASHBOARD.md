@@ -89,7 +89,9 @@ Every query sets all three dimensions, `class`, `method` and
 `exception`, each to `*`, as the template does: a query missing one finds
 no data. Each series is labelled by `exception`, so failed calls show
 apart from `none`. A timer registered in code (`meterRegistry.timer("…")`)
-publishes the same way; give it a panel only if the team asks.
+publishes with its own tags as dimensions, not `class`, `method` and
+`exception`. Give it a panel only if the team asks: copy `<timed-name>`
+and set the dimensions to that timer's tags, each to `*`.
 
 One panel reads logs, not metrics:
 

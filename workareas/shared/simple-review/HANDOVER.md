@@ -209,18 +209,34 @@ blocks `chmod` in a session and denies `bash <script>`, and a hook runs a
 changed script only once it is committed. So stage a new script with
 `git add --chmod=+x` and have the user run `! chmod +x` on it.
 
-1. **Make every brief readable in full.** In `write-briefs.sh`, put the
-   group's files and the source under test first and the guides last. Cut
-   the guides to the sections the file type needs, or move them out of the
-   brief. Keep every brief under 256 KB and 2,000 lines, split the group
-   when it would go over, and test that in `review-groups.test.sh`. Ask
-   the reviewer to say in its reply whether it read the whole brief.
-2. **`file-review-write.sh` replaces, not adds.** A second run over the same
-   list replaces each listed file's findings. Add a run-twice test.
-3. **Replay briefs name each PR's own ticket.** When a PR in the set belongs
-   to another ticket, say so in the brief and tell the reviewer that scope
-   against this ticket is not a finding for that PR.
-4. **Run 6** with the same setup (`--id EUDPA-674-run6 --same-as
+Done after run 5 (the next run is the first to use them):
+
+- `78ea037c`: **briefs in readable parts.** `write-briefs.sh`
+  orders a brief as instructions, group, ticket, house rules, files, source
+  under test, then guides last. It splits a brief into parts of at most
+  1,500 lines and 100 KB (`--max-part-lines`, `--max-part-bytes`), each
+  ending at a heading where it can: `briefs/<id>.md` is part 1 and lists
+  `briefs/<id>.part-<n>.md`. It refuses to write a part over the limits.
+  On the run 5 groups, address-book java-tests 1 becomes 6 parts, with
+  the code in parts 1-4. Every reviewer agent and `_core.md` say to read
+  every part whole. The reply is now `done: … , read <n> of <n> parts`, and
+  SKILL.md Step 2 reruns a group that read fewer. `review-groups.test.sh`:
+  56 checks, passed.
+- Same commit: **a PR's own ticket.** `prepare-review.sh` records `ticket`
+  for each PR (from its title, else its head branch; `pr-details.sh` now
+  returns `headRefName`). A brief for a PR of another ticket says so, and
+  says that scope against the reviewed ticket is not a finding. A replay of
+  an older review gets this only when `prepare-review.sh` runs again, which
+  `start-review.sh --same-as` does.
+- `ebefe503`: **`file-review-write.sh` replaces** each listed
+  file's findings on a rerun, and a refused rerun puts them back.
+  `batch-writes.test.sh`: 29 checks, passed.
+
+Not yet done from the list: cutting the guides down to the sections a
+file type needs. With the guides last, a reviewer that stops early loses
+guides, not code, and the reply shows it.
+
+1. **Run 6** with the same setup (`--id EUDPA-674-run6 --same-as
    EUDPA-674`, trial run, all four PRs). Then compare it as
    `run6-comparison.md`. Check the coverage gaps (run 4: address-book #9,
    #15 and #16, animals-frontend #2), the `int` flag, and the two
@@ -235,6 +251,12 @@ changed script only once it is committed. So stage a new script with
 - Reading a file under `tim/` loads `tim/CLAUDE.md` and its six included
   guides, about 70 KB.
 - `review-counts.sh --help` exits 1.
+- `share-review.summary.test.sh` has no executable bit, so it cannot run.
+- `workareas/reviews/EUDPA-674-briefcheck/` is a throwaway copy of run 5
+  used to try the new brief writer. Delete it (`rm -rf` was denied in
+  the session).
+- Briefs now cost more calls to read (13 groups: 34 parts in place of 13
+  files). Check run 6's group tokens against run 5's 4.8M.
 - `ac-check` and `prepare-ac-check.sh` are untracked or gitignored. Delete
   them once the test reviewer has replaced them.
 - `ac-table.sh` lists one criterion up to three times (28 rows for about

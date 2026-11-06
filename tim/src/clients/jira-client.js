@@ -442,6 +442,27 @@ export const createJiraClient = ({
     },
 
     /**
+     * Change fields on an issue that already exists. `fields` is sent
+     * verbatim as Jira's `{fields: ...}` body, so the caller owns the
+     * shape — the same thin transport as `createIssue`. `description` must
+     * already be Jira wiki markup, not markdown.
+     *
+     * @param {string} key
+     * @param {object} fields
+     * @returns {Promise<{key: string, url: string}>}
+     * @throws {TimError} USAGE carrying Jira's reason when it refuses a field
+     */
+    updateIssue: async (key, fields) => {
+      await sendJson(
+        'PUT',
+        `/rest/api/2/issue/${encodeURIComponent(key)}`,
+        { fields },
+        `updateIssue(${key})`
+      )
+      return { key, url: `${normalisedBase}/browse/${key}` }
+    },
+
+    /**
      * Attach each file to an issue as its own multipart POST, so one
      * file failing (too large, a transient 5xx) never stops the rest —
      * the caller gets a per-file result to build a partial-success receipt

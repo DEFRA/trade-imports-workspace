@@ -62,7 +62,7 @@ listing the values.
 | Dependency status, one value per dependency | `external.dependency.available` | `Minimum` | `dependency` |
 | Calls per dependency | `external.call.duration` | `SampleCount` | `dependency`, `operation` |
 | Failed calls | `external.call.failure` | `Sum` | `dependency`, `operation` |
-| Failure rate | `external.call.failure` | `Average`, times 100 | `dependency`, `operation` |
+| Failure rate | `external.call.failure` | `Average`, with the percent (0-1) unit | `dependency`, `operation` |
 | Call time: average, 95th percentile, slowest | `external.call.duration` | `Average`, `p95`, `Maximum` | `dependency`, `operation` |
 | Cache hits and misses | `cache.hit`, `cache.miss` | `Sum` | `cache` |
 | Business events | the service's own metric | `Sum` | its dimension |

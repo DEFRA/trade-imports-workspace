@@ -1334,11 +1334,15 @@ The system MUST show, under a list running past one page, a link to page 1, the 
 - **THEN** the pagination shows pages 1 and 2, an ellipsis, page 5 and 'Next', with no 'Previous', and page 1 marked as the current page
 - **WHEN** they follow page 5
 - **THEN** the pagination shows 'Previous', page 1, an ellipsis and pages 4 and 5, with no 'Next', and page 5 marked as the current page
-- **WHEN** they follow page 4
-- **THEN** the pagination shows page 1, an ellipsis and pages 3, 4 and 5, with page 4 marked as the current page, and the list reads 'Showing 25-32' against the number of matches
 
 #### Scenario: A list of three pages shows every page number
 **ID**: SCN-INS-ADDR-047-C
 - **GIVEN** the address book runs to three pages
 - **WHEN** the user views any of them
 - **THEN** the pagination shows pages 1, 2 and 3 with no ellipsis
+
+#### Scenario: A page next to the last shows its neighbours and the last page with no ellipsis between them
+**ID**: SCN-INS-ADDR-047-D
+- **GIVEN** a search matches five pages of addresses
+- **WHEN** the user views page 4 of the matches
+- **THEN** the pagination shows page 1, an ellipsis and pages 3, 4 and 5, with page 4 marked as the current page, and the list reads 'Showing 25-32' against the number of matches

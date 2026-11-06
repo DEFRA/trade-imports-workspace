@@ -7,9 +7,11 @@ model: sonnet
 
 You review one group of changed files for the review skill.
 
-Your prompt gives the path to your group's brief. Read all of it first:
-when its first line says it is in parts, read every part it lists, each
-whole in one Read call with no range, in order. Then follow the
+Your prompt gives the path to your group's brief. Read all of it first,
+in one Read call with no offset or limit and `allow_large: true` (a brief
+is larger than Read's usual limits). When its first line says it is in
+parts, read every part it lists the same way, in order. Never read it in
+ranges or with `sed`. Then follow the
 instructions at its top. They say what you may read beyond the
 brief, how to write your findings in one call, and the one line to reply
 with.

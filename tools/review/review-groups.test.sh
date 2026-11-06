@@ -118,16 +118,13 @@ check "--max 0 is refused" "$?" "1"
 
 echo "write-briefs.sh"
 bash "$SCRIPT_DIR/plan-groups.sh" "$ID" > /dev/null
-# The guides are the real ones, thousands of lines, so the single-file
-# checks lift the part limits.
-one_file=(--max-part-lines 1000000 --max-part-bytes 100000000)
-bash "$SCRIPT_DIR/write-briefs.sh" "$ID" --max-file-bytes 30 "${one_file[@]}" > /dev/null
+bash "$SCRIPT_DIR/write-briefs.sh" "$ID" --max-file-bytes 30 > /dev/null
 check "brief writing exits cleanly" "$?" "0"
 
 brief="$REVIEW_DIR/briefs/$JAVA_REPO--java-source--1.md"
 check "one brief per group" \
     "$(find "$REVIEW_DIR/briefs" -name '*.md' ! -name '*.part-*' | wc -l | tr -d ' ')" "$(jq '.groups | length' "$REVIEW_DIR/groups.json")"
-check "a brief within the limits is one file, with no parts" \
+check "at the default limits a brief with the real guides is one file, with no parts" \
     "$(find "$REVIEW_DIR/briefs" -name '*.part-*' | wc -l | tr -d ' ')" "0"
 check "the brief starts with the core instructions" "$(sed -n '3p' "$brief")" "## How to review your group"
 check "the brief carries the source instructions for its type" "$(grep -c '^## Reviewing source files$' "$brief")" "1"
@@ -171,15 +168,6 @@ check "a source the review did not change is marked so" \
 
 echo "write-briefs.sh, split into parts"
 whole=$(sed 1d "$tests_brief")
-bash "$SCRIPT_DIR/write-briefs.sh" "$ID" --max-file-bytes 30 > /dev/null
-check "at the default limits a brief with the real guides is split" \
-    "$([[ -f "$REVIEW_DIR/briefs/$JAVA_REPO--java-tests--1.part-2.md" ]] && echo yes || echo no)" "yes"
-over=0
-for part in "$REVIEW_DIR"/briefs/*.md; do
-    [[ $(wc -l < "$part") -le 1500 && $(wc -c < "$part") -le 100000 ]] || over=$((over + 1))
-done
-check "and every part of every brief fits one Read call" "$over" "0"
-
 bash "$SCRIPT_DIR/write-briefs.sh" "$ID" --max-file-bytes 30 --max-part-lines 300 --max-part-bytes 20000 > /dev/null
 check "a split run exits cleanly" "$?" "0"
 count=$(sed -n '1s/.* of \([0-9]*\)$/\1/p' "$tests_brief")
@@ -195,18 +183,18 @@ for part in "${parts[@]}"; do
     [[ $(wc -l < "$part") -le 300 && $(wc -c < "$part") -le 20000 ]] || over=$((over + 1))
 done
 check "every part is within both limits" "$over" "0"
-# Part 1's header is its title, a blank line, three lines of text, a blank
+# Part 1's header is its title, a blank line, four lines of text, a blank
 # line and the list of parts; a later part's is its title, a blank line and
 # a line naming part 1.
 rebuilt=$(
-    sed "1,$((6 + count))d" "${parts[0]}"
+    sed "1,$((7 + count))d" "${parts[0]}"
     for ((k = 1; k < count; k++)); do sed '1,3d' "${parts[$k]}"; done
 )
 check "the parts hold every line of the brief, in order" "$rebuilt" "$whole"
 check "a later part names part 1" "$(sed -n 3p "${parts[1]}")" "Continued from part 1. Part 1 is \`$tests_brief\`."
 check "a part ends at a heading where it can" "$(sed -n 4p "${parts[1]}" | grep -c '^#')" "1"
 
-bash "$SCRIPT_DIR/write-briefs.sh" "$ID" --max-file-bytes 30 "${one_file[@]}" > /dev/null
+bash "$SCRIPT_DIR/write-briefs.sh" "$ID" --max-file-bytes 30 > /dev/null
 check "writing again within the limits removes the old parts" \
     "$(find "$REVIEW_DIR/briefs" -name '*.part-*' | wc -l | tr -d ' ')" "0"
 

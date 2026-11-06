@@ -9,9 +9,10 @@
 # --max-file-bytes is the largest file copied into a brief whole
 # (default 50000). A larger file gets its diff and the path to read it at.
 # --max-part-lines and --max-part-bytes are the most one part of a brief
-# holds (defaults 1500 and 100000). Read refuses a file over 256 KB and,
-# given no range, returns only its first 2,000 lines, so a reviewer can
-# read each part whole in one call.
+# holds (defaults 20000 and 500000, about 125k tokens). A reviewer reads
+# each part whole in one Read call with allow_large: true, which lifts
+# Read's usual 256 KB and 2,000-line limits up to what fits in its
+# context, so a brief is normally one part.
 #
 # Writes a brief for every group in groups.json, in this order:
 #   1. the type's instructions: the files its reviewTypes entry in the
@@ -47,11 +48,11 @@ ROUTING="$WORKSPACE/.claude/skills/review/assets/routing.json"
 
 ID=""
 MAX_FILE_BYTES=50000
-MAX_PART_LINES=1500
-MAX_PART_BYTES=100000
+MAX_PART_LINES=20000
+MAX_PART_BYTES=500000
 
 usage() {
-    sed -n '2,41p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '2,42p' "$0" | sed 's/^# \{0,1\}//'
     exit "${1:-1}"
 }
 
@@ -388,8 +389,9 @@ write_parts() {
                 echo "# Review brief: $type, part 1 of $count"
                 echo
                 echo "This brief is in $count parts. Read every part, whole and in order,"
-                echo "before you write a finding: each part fits in one Read call with no"
-                echo "range. Your files and the source they cover come before the guides."
+                echo "before you write a finding: read each part in one Read call with no"
+                echo "range and allow_large: true. Your files and the source they cover come"
+                echo "before the guides."
                 echo
                 for ((j = 1; j <= count; j++)); do
                     if [[ $j -eq 1 ]]; then

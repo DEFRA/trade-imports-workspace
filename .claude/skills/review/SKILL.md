@@ -246,9 +246,10 @@ Step 0 already sorted every file still to review into groups and wrote a
 brief for each: `groups.json` and `briefs/<group id>.md` in the review
 workarea (`plan-groups.sh`, `write-briefs.sh`). A group is one repo, one
 file type, at most 10 files. Its brief holds everything the reviewer needs.
-A long brief is split into parts that each fit one Read call
-(`briefs/<group id>.part-<n>.md`); part 1 lists them, so the prompt
-below still names only `briefs/<group id>.md`.
+A brief is larger than Read's usual limits, so the reviewer reads it in
+one call with `allow_large: true`. Only a very large brief (over 500 KB)
+is split into parts (`briefs/<group id>.part-<n>.md`); part 1 lists them,
+so the prompt below still names only `briefs/<group id>.md`.
 
 Read the group list once:
 
@@ -262,6 +263,7 @@ both, then the next two. The whole prompt is:
 
 ```markdown
 Your brief: ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/briefs/<group id>.md
+Read it whole in one Read call with allow_large: true.
 ```
 
 Each reviewer writes its findings to disk and replies with one line

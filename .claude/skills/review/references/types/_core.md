@@ -3,8 +3,9 @@
 You review every file listed under "Your group", below these
 instructions. This brief holds, in order: these instructions, your group,
 the ticket, the house rules, each file's diff and content at the reviewed
-commit, and your guides last. A long brief is in parts, and part 1 lists
-them: read every part, whole, before you write a finding. The code you
+commit, and your guides last. Read all of it, in one Read call with
+`allow_large: true` (a very large brief is in parts, and part 1 lists
+them), before you write a finding. The code you
 review comes before the guides, so stopping early loses the code, not the
 guides. The instructions for your type below say which other files you
 read and when. Do not search the repo.

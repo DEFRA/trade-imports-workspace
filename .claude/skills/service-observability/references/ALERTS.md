@@ -2,10 +2,10 @@ Build the service's custom alerts, route them to Slack, promote them and
 prove they fire. Parent-loaded: path and Bash rules come from
 `SKILL.md`.
 
-The alerts were first built and fired in dev for reference-data
-(EUDPA-632, 2026-10-22). None has been routed to Slack or promoted yet.
-Each fact that comes only from the CDP monitoring docs is marked
-`[UNPROVEN]`.
+`SKILL.md` → "What is proven" says which parts have been done on a real
+service. `[UNPROVEN]` These dot-case rules, rule 1a among them, have not
+been built or fired anywhere. Each fact that comes only from the CDP
+monitoring docs is marked `[UNPROVEN]`.
 
 The developer builds the alerts by hand in Grafana, from a build sheet
 Claude writes. Nothing can push them for us: writing to the dev Grafana
@@ -61,24 +61,39 @@ agree, not tested values.
 
 | Alert | Fires when | If there is no data |
 |---|---|---|
-| Dependency unavailable | `ExternalCallFailure`, `Minimum`, equal to 1 over 5 minutes (every call in the window failed), per `Dependency` and `Operation` | Normal |
-| Dependency calls failing | `ExternalCallFailure`, `Sum`, 3 or more over 15 minutes, per `Dependency` and `Operation` | Normal |
-| Dependency slow | `ExternalCallDuration`, `p95`, above two thirds of the call's read timeout, over 15 minutes, per `Dependency` and `Operation` | Normal |
+| Dependency unavailable | `external.call.failure`, `Minimum`, equal to 1 over 5 minutes (every call in the window failed), per `dependency` and `operation` | Normal |
+| Database unavailable (which rules a service with a database gets: `assets/alerts.template.md` → "Check") | `external.dependency.available`, `Maximum`, below 1 over 5 minutes (every reading from every task said down), `dependency` = the database | Normal |
+| Dependency calls failing | `external.call.failure`, `Sum`, 3 or more over 15 minutes, per `dependency` and `operation` | Normal |
+| Dependency slow | `external.call.duration`, `p95`, above two thirds of the call's read timeout, over 15 minutes, per `dependency` and `operation` | Normal |
 
-**Query every alert by `Dependency` and `Operation`.** Both external
-call metrics are published with that one dimension set (`METRICS.md` →
-"One dimension set per metric"), and CloudWatch does not add up across
-a dimension a metric was published with, so a query on `Dependency`
-alone finds no data. With "no data" set to Normal, that alert would
-never fire and nobody would know. Each alert has one series per
-dependency and operation, and the thresholds above apply to each series.
+**Query every call alert by `dependency` and `operation`.** Both
+external call metrics are published with that one dimension set
+(`METRICS.md` → "One dimension set per metric"), and CloudWatch does not
+add up across a dimension a metric was published with, so a query on
+`dependency` alone finds no data. With "no data" set to Normal, that
+alert would never fire and nobody would know. Each call alert has one
+series per dependency and operation, and the thresholds above apply to
+each series.
 
-**Do not alert on `DependencyAvailable`.** It reports the outcome of
-the last call, however old. Behind a cache it can read 1 for up to the
-cache lifetime after the dependency goes down, and one failed call holds
-it at 0 until the next call succeeds. It is for the dashboard. The
-"Dependency unavailable" alert uses `ExternalCallFailure` instead, which
-only reports calls that happened in the window.
+**The database alert is the one exception: query it by `dependency`
+alone.** `external.dependency.available` is published with `dependency` as its only
+dimension, so adding `operation` to its query finds no data in the same
+way.
+
+**Do not alert on `external.dependency.available` for an HTTP dependency.** It is
+for the dashboard. The "Dependency unavailable" alert uses
+`external.call.failure` instead, which only reports calls that happened in
+the window. `METRICS.md` → "Availability: passive or active" says why,
+for a passive reading and an active probe both.
+
+**Do alert on it for a database.** A database's `external.dependency.available`
+comes from the driver's heartbeats every 10 seconds (`METRICS.md` → "A
+database"), so it is fresh. And a database's outage barely shows in
+`external.call.failure`: only a command already sent when the
+connection drops is recorded as a failure. A command that cannot reach
+a server fails before it is sent and is not recorded. Use `Maximum`, so
+the alert fires only when every task saw the database down for the
+whole window, not on one task's passing failure.
 
 **Never set "no data" to Alerting on these.** Calls only happen when a
 request needs the dependency, so nothing is published until the first
@@ -89,9 +104,10 @@ Normal, or Keep Last State.
 Only alert on a dependency the service really uses. A configured
 database counts (`METRICS.md` → "A database").
 
-**The alerts cannot see an outage nobody calls through.** If the
+**The call alerts cannot see an outage nobody calls through.** If the
 service and its callers are serving from caches, no call reaches the
-dependency, so no alert fires. On reference-data, a frontend instance
+dependency, so no call alert fires. The database alert is different: it
+reads the driver's own monitoring, which runs with no calls at all. On reference-data, a frontend instance
 that has loaded its countries and ports never asks again, so an MDM
 outage only shows once a frontend restarts or a request misses
 reference-data's 60-minute cache. Users are not affected until then
@@ -145,8 +161,10 @@ An alert that has never fired is not known to work. For each alert, in
 dev and then in test, watch it fire, reach the Slack channel, and
 resolve.
 
-**Make the calls yourself.** The alerts only see dependency calls that
-happened, and few happen on their own:
+**Make the calls yourself.** The call alerts only see dependency calls
+that happened, and few happen on their own (the database alert needs no
+calls: its gauge is published every minute once the driver has checked
+the database):
 
 - The service calls a dependency only on a cache miss: after a deploy,
   or once per cache lifetime (60 minutes for reference-data's MDM
@@ -182,25 +200,42 @@ service.name:"<service>"` in OpenSearch shows one line per failed call.
 - **Dev, every rule: lower the threshold.** Change the condition so
   ordinary traffic breaks it, wait for Firing, check the summary shows
   the dependency and operation (not blanks), then put the threshold
-  back and watch it return to Normal. With no failures the failure
-  metrics read 0, so use `IS ABOVE -1` for "unavailable" and "calls
-  failing", and `IS ABOVE 0` for "slow". Once Slack routing is in
+  back and watch it return to Normal. The database alert's summary has
+  no labels: it shows the database name as written in the rule. With
+  no failures the failure metrics read 0, so use `IS ABOVE -1` for "unavailable" and "calls
+  failing", and `IS ABOVE 0` for "slow". A healthy database reads 1, so
+  use `IS BELOW 2` for the database alert. Once Slack routing is in
   place, also check the alert arrives in
   `trade-imports-team-alerts-non-prod`.
-- **Dev, the failure rules: a real failure.** Set the dependency's URL
+- **Dev, the database alert: no real failure.** Pointing the service at
+  a database that does not exist stops it starting (address-book needs
+  its database to build indexes), so no task publishes the gauge and the
+  rule stays Normal on no data. The lowered threshold is enough.
+- **Dev, the call failure rules: a real failure.** Set the dependency's URL
   in the Portal (for reference-data's MDM, `MDM_SERVICE_URL`) to an
   address that does not exist, such as `https://mdm.invalid`, redeploy,
   and run the loop above. "Unavailable" and "calls failing" fire for
   that dependency only. Done on reference-data on 2026-10-22: both
   fired for `mdm` after a dead-end `MDM_SERVICE_URL` and the loop run
-  from the Portal terminal. Restore the URL and redeploy. This breaks the service in dev
-  for everyone while it runs, so agree a time with the team. "Slow"
-  has no practical real test; the lowered threshold is enough.
-- **Test.** `[UNPROVEN]` The alert is read-only there, so the failure
-  has to be real. One way: deploy briefly with a wrong URL or key for
+  from the Portal terminal. Restore the URL and redeploy. This breaks
+  the service in dev for everyone while it runs, so agree a time with
+  the team. "Slow" has no practical real test; the lowered threshold is
+  enough.
+- **Test, the call failure rules.** `[UNPROVEN]` The alert is
+  read-only there, so the failure has to be real. One way: deploy briefly with a wrong URL or key for
   the dependency, then call the service. This breaks the service for
   everyone using test while it runs. Agree the method and a time with
   the team and the testers first.
+- **Test, the database alert.** `[UNPROVEN]` A wrong database address
+  does not work here either: the service does not start, so no task
+  publishes the gauge and the rule stays Normal. The database has to go
+  away from a task that is already running, and this skill knows no way
+  to do that on CDP. Ask #cdp-support: "Can a running task in test lose
+  its database for 10 minutes, for example by revoking its access, so
+  we can watch an alert fire?" Until they answer, the evidence is the
+  dev Firing from the lowered threshold, plus the same rule shown in
+  test after promotion. Record it on the ticket as not fired in test,
+  and why.
 - **Prod.** Proven by the first prod deploy that follows, not by
   breaking prod.
 

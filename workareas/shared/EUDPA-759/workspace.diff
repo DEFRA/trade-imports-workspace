@@ -1,0 +1,243 @@
+diff --git a/openspec/coverage/live-animals/journey-flow/coverage.json b/openspec/coverage/live-animals/journey-flow/coverage.json
+index 4572b991..1e452514 100644
+--- a/openspec/coverage/live-animals/journey-flow/coverage.json
++++ b/openspec/coverage/live-animals/journey-flow/coverage.json
+@@ -141,7 +141,7 @@
+     },
+     {
+       "id": "REQ-FLOW-004",
+-      "name": "A page the hub links to directly offers both a discard-and-exit and a save-and-exit route back to Overview",
++      "name": "A page the hub links to directly, other than the origin of the import page, offers both a discard-and-exit and a save-and-exit route back to Overview",
+       "coverage": "partial",
+       "scenarios": [
+         {
+@@ -149,7 +149,7 @@
+           "name": "Cancel and return to overview discards unsaved input",
+           "coverage": "full",
+           "tests": [
+-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/task-page-exits.spec.ts", "test": "Cancel and return to overview discards typed input; Save and return to overview commits and lands on the hub", "strength": "full", "notes": "internal reference discarded on Cancel; empty on re-open" }
++            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/task-page-exits.spec.ts", "test": "Cancel and return to overview discards typed input; Save and return to overview commits and lands on the hub", "strength": "full", "notes": "Arrival details: transport document reference discarded on Cancel; empty on re-open" }
+           ],
+           "notes": "No FIT or unit for Cancel discard; E2E only."
+         },
+@@ -508,10 +508,10 @@
+         },
+         {
+           "id": "SCN-FLOW-013-D",
+-          "name": "The CPH number page, the address pickers and the contact address page offer two controls while amending",
++          "name": "The origin page, the CPH number page, the address pickers and the contact address page offer two controls while amending",
+           "coverage": "full",
+           "tests": [
+-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "the CPH number page, a party picker and the contact address page end with Save and return and Save and continue only, and Save and return goes to the amend review", "strength": "full", "notes": "" },
++            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "while amending, the origin page ends with exactly Save and return and Save and continue and no link, the CPH number page, a party picker and the contact address page offer both without Save and return to overview, and Save and return goes to the amend review", "strength": "full", "notes": "" },
+             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.test.js", "test": "Should go to the review on Save and return, ahead of the addresses hub, when amending with both return and change", "strength": "partial", "notes": "CPH Save and return only" },
+             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js", "test": "Should return a chosen party to the review from a Change link", "strength": "partial", "notes": "picker Save and return only" },
+             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/save-actions.test.js", "test": "Should drop the overview exit on a picker while amending", "strength": "partial", "notes": "the two-control macro ending" }
+@@ -519,10 +519,12 @@
+         },
+         {
+           "id": "SCN-FLOW-013-E",
+-          "name": "Outside an amendment the CPH number page keeps its primary action alone",
++          "name": "Outside an amendment the CPH number page and the origin page keep their primary action alone",
+           "coverage": "full",
+           "tests": [
+-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "outside an amendment the CPH number page keeps its single primary button", "strength": "full", "notes": "" },
++            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "outside an amendment the CPH number page offers Save and continue without Save and return or Save and return to overview", "strength": "partial", "notes": "the CPH number page only" },
++            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/origin.spec.ts", "test": "renders the page controls, with Save and continue as the form's only button and no link in the form", "strength": "partial", "notes": "the origin page only" },
++            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "ends with Save and continue alone", "strength": "full", "notes": "the origin page only" },
+             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/save-actions.test.js", "test": "Should end a page reached from another page with the primary alone", "strength": "partial", "notes": "the non-amend macro ending" }
+           ]
+         }
+@@ -530,7 +532,7 @@
+     },
+     {
+       "id": "REQ-FLOW-014",
+-      "name": "A page the hub links to directly keeps its two buttons side by side and its overview exit below them",
++      "name": "A page the hub links to directly, other than the origin of the import page, keeps its two buttons side by side and its overview exit below them",
+       "coverage": "full",
+       "scenarios": [
+         {
+diff --git a/openspec/coverage/live-animals/journey-pages/origin-of-import/coverage.json b/openspec/coverage/live-animals/journey-pages/origin-of-import/coverage.json
+index ecbcad0a..74c6e1a6 100644
+--- a/openspec/coverage/live-animals/journey-pages/origin-of-import/coverage.json
++++ b/openspec/coverage/live-animals/journey-pages/origin-of-import/coverage.json
+@@ -13,7 +13,8 @@
+           "name": "The page presents its question and controls",
+           "coverage": "full",
+           "tests": [
+-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/origin.spec.ts", "test": "renders the page controls", "strength": "full", "notes": "" }
++            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/origin.spec.ts", "test": "renders the page controls, with Save and continue as the form's only button and no link in the form", "strength": "full", "notes": "exact form buttons and no form link; red with the return controls rendered" },
++            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "ends with Save and continue alone", "strength": "full", "notes": "red with the return controls rendered: Cancel and return to overview was the last control" }
+           ]
+         }
+       ]
+@@ -229,14 +230,6 @@
+             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should reject a typed part over 5 characters even when the answer is No", "strength": "full", "notes": "extra evidence: the limit applies regardless of whether a code is required" }
+           ]
+         },
+-        {
+-          "id": "SCN-ORIGIN-010-B",
+-          "name": "An over-length region code is refused on save and return to overview",
+-          "coverage": "full",
+-          "tests": [
+-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/soft-save.spec.ts", "test": "origin of the import: when the region code is longer than five characters, refuses the save and keeps nothing", "strength": "full", "notes": "cap removed before submitting" }
+-          ]
+-        },
+         {
+           "id": "SCN-ORIGIN-010-C",
+           "name": "Typing stops at five characters",
+@@ -250,7 +243,7 @@
+     },
+     {
+       "id": "REQ-ORIGIN-011",
+-      "name": "Answering that a region code is required but leaving it empty is rejected on either save control",
++      "name": "Answering that a region code is required but leaving it empty is rejected",
+       "coverage": "full",
+       "scenarios": [
+         {
+@@ -261,16 +254,8 @@
+             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "region code validation: when Yes is chosen and the box is empty, holds the user on the page", "strength": "full", "notes": "" },
+             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should hold the user on the page when the typed part is blank", "strength": "full", "notes": "" },
+             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should hold the user on the page when the typed part is only the prefix", "strength": "full", "notes": "edge case: user typed only the country prefix, e.g. \"fr-\"" },
+-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should hold the user on the page when the box was never submitted", "strength": "full", "notes": "" }
+-          ]
+-        },
+-        {
+-          "id": "SCN-ORIGIN-011-B",
+-          "name": "Save and return to overview refuses \"Yes\" with the code left blank",
+-          "coverage": "full",
+-          "tests": [
+-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/soft-save.spec.ts", "test": "origin of the import: when the region code is left blank, refuses the save, names the region code, keeps \"Yes\" and saves nothing", "strength": "partial", "notes": "" },
+-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should refuse \"Yes\" with the region code left blank, keep \"Yes\" chosen and save nothing", "strength": "full", "notes": "" }
++            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should hold the user on the page when the box was never submitted", "strength": "full", "notes": "" },
++            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should hold the user on the page, with \"Yes\" still chosen, when the box is submitted empty", "strength": "partial", "notes": "not red-probed" }
+           ]
+         }
+       ]
+diff --git a/openspec/specs/live-animals/journey-flow/spec.md b/openspec/specs/live-animals/journey-flow/spec.md
+index e7b49058..327c7275 100644
+--- a/openspec/specs/live-animals/journey-flow/spec.md
++++ b/openspec/specs/live-animals/journey-flow/spec.md
+@@ -94,9 +94,9 @@ The system MUST, outside the opening sequence and outside a change made from che
+ - **WHEN** they save and continue
+ - **THEN** Overview is shown, not commodity details or arrival details
+ 
+-### Requirement: A page the hub links to directly offers both a discard-and-exit and a save-and-exit route back to Overview
++### Requirement: A page the hub links to directly, other than the origin of the import page, offers both a discard-and-exit and a save-and-exit route back to Overview
+ **ID**: REQ-FLOW-004
+-Outside an amendment (REQ-FLOW-013), the system MUST let the user leave a page the hub links to directly by discarding unsaved input or committing it, returning to Overview either way. Saving and returning MUST make the same checks as saving and continuing: a missing required answer, or an answer that breaks its rule, keeps the user on the page with an error for each, what they entered kept and nothing saved. A blank optional answer is accepted by either save.
++Outside an amendment (REQ-FLOW-013), the system MUST let the user leave a page the hub links to directly, other than the origin of the import page, by discarding unsaved input or committing it, returning to Overview either way. Saving and returning MUST make the same checks as saving and continuing: a missing required answer, or an answer that breaks its rule, keeps the user on the page with an error for each, what they entered kept and nothing saved. A blank optional answer is accepted by either save.
+ 
+ #### Scenario: Cancel and return to overview discards unsaved input
+ **ID**: SCN-FLOW-004-A
+@@ -329,7 +329,7 @@ The system MUST NOT offer a discard-and-exit or a save-and-exit route back to Ov
+ 
+ ### Requirement: While a notification is being amended, a page ends with Save and return, Save and continue and Save and return to overview
+ **ID**: REQ-FLOW-013
+-While a notification is being amended, each page the hub links to directly MUST end with a primary "Save and return" to the review, a secondary "Save and continue" going on as usual, and "Save and return to overview", with no "Cancel and return to overview", except the CPH number page, the address pickers and the contact address page, which end with the first two. Every such page but upload documents MUST keep its usual Back link, not the review; upload documents MUST open the review instead.
++While a notification is being amended, each page the hub links to directly MUST end with a primary "Save and return" to the review, a secondary "Save and continue" going on as usual, and "Save and return to overview", with no "Cancel and return to overview", except the origin of the import page, the CPH number page, the address pickers and the contact address page, which end with the first two. Every such page but upload documents MUST keep its usual Back link, not the review; upload documents MUST open the review instead.
+ 
+ #### Scenario: A page opened from Overview while amending ends with the three amend controls
+ **ID**: SCN-FLOW-013-A
+@@ -352,22 +352,22 @@ While a notification is being amended, each page the hub links to directly MUST
+ - **WHEN** the user selects "Save and continue"
+ - **THEN** Overview is shown, not the review
+ 
+-#### Scenario: The CPH number page, the address pickers and the contact address page offer two controls while amending
++#### Scenario: The origin page, the CPH number page, the address pickers and the contact address page offer two controls while amending
+ **ID**: SCN-FLOW-013-D
+ - **GIVEN** a notification being amended
+-- **WHEN** the user opens the CPH number page, an address picker or the contact address page
++- **WHEN** the user opens the origin of the import page, the CPH number page, an address picker or the contact address page
+ - **THEN** each ends with "Save and return" and "Save and continue" and no "Save and return to overview"
+-- **AND** "Save and return" on the CPH number page and on an address picker returns to the review
++- **AND** "Save and return" on the origin page, on the CPH number page and on an address picker returns to the review
+ 
+-#### Scenario: Outside an amendment the CPH number page keeps its primary action alone
++#### Scenario: Outside an amendment the CPH number page and the origin page keep their primary action alone
+ **ID**: SCN-FLOW-013-E
+ - **GIVEN** a draft notification
+-- **WHEN** the user opens the CPH number page
++- **WHEN** the user opens the CPH number page or the origin of the import page
+ - **THEN** only "Save and continue" is offered
+ 
+-### Requirement: A page the hub links to directly keeps its two buttons side by side and its overview exit below them
++### Requirement: A page the hub links to directly, other than the origin of the import page, keeps its two buttons side by side and its overview exit below them
+ **ID**: REQ-FLOW-014
+-Outside an amendment, the system MUST end a page the hub links to directly with its primary action and "Save and return to overview" side by side, and "Cancel and return to overview" on its own line below them. While a notification is being amended, it MUST instead put "Save and return" and "Save and continue" side by side, and "Save and return to overview" on its own line below them.
++Outside an amendment, the system MUST end a page the hub links to directly, other than the origin of the import page, with its primary action and "Save and return to overview" side by side, and "Cancel and return to overview" on its own line below them. While a notification is being amended, it MUST instead put "Save and return" and "Save and continue" side by side, and "Save and return to overview" on its own line below them.
+ 
+ #### Scenario: Cancel and return to overview sits on its own line below the two buttons
+ **ID**: SCN-FLOW-014-A
+diff --git a/openspec/specs/live-animals/journey-pages/origin-of-import/spec.md b/openspec/specs/live-animals/journey-pages/origin-of-import/spec.md
+index cb0e3b3f..a02a9388 100644
+--- a/openspec/specs/live-animals/journey-pages/origin-of-import/spec.md
++++ b/openspec/specs/live-animals/journey-pages/origin-of-import/spec.md
+@@ -8,13 +8,15 @@ The journey's entry page, asking where the consignment is coming from. The page
+ 
+ ### Requirement: The page asks which country the consignment comes from and whether an origin code is needed
+ **ID**: REQ-ORIGIN-001
+-The system MUST ask the user which country the consignment is coming from, offering a country selector and a choice of whether an origin code is required, along with a save-and-continue action.
++The system MUST ask the user which country the consignment is coming from, offering a country selector and a choice of whether an origin code is required, and MUST end the page with "Save and continue" alone, offering neither "Save and return to overview" nor "Cancel and return to overview". While the notification is being amended, REQ-FLOW-013 governs how the page ends instead.
+ 
+ #### Scenario: The page presents its question and controls
+ **ID**: SCN-ORIGIN-001-A
+ - **GIVEN** the user has started a notification and reached the origin of the import page
+ - **WHEN** the page loads
+-- **THEN** it asks where the consignment is coming from, offering a country selector, a choice of whether an origin code is required, and a save-and-continue action
++- **THEN** it asks where the consignment is coming from, offering a country selector and a choice of whether an origin code is required
++- **AND** "Save and continue" is shown
++- **AND** no "Save and return to overview" or "Cancel and return to overview" is offered
+ 
+ ### Requirement: The country field is a searchable list that filters as the user types
+ **ID**: REQ-ORIGIN-002
+@@ -139,7 +141,7 @@ The system MUST let the user give an optional internal reference for the notific
+ 
+ ### Requirement: The region of origin code has a maximum length of five characters
+ **ID**: REQ-ORIGIN-010
+-The system MUST stop the region of origin code box accepting more than five characters as the user types, with autocomplete and spellcheck turned off, and MUST still reject a longer region of origin code submitted without that cap, on either save control, with an error naming the limit, preserving the value submitted.
++The system MUST stop the region of origin code box accepting more than five characters as the user types, with autocomplete and spellcheck turned off, and MUST still reject a longer region of origin code submitted without that cap, with an error naming the limit, preserving the value submitted.
+ 
+ #### Scenario: An over-length region code is rejected with the value preserved
+ **ID**: SCN-ORIGIN-010-A
+@@ -149,13 +151,6 @@ The system MUST stop the region of origin code box accepting more than five char
+ - **AND** the field is focused, still holding the value typed
+ - **AND** the chosen country and the answer to whether a region code is required are still held
+ 
+-#### Scenario: An over-length region code is refused on save and return to overview
+-**ID**: SCN-ORIGIN-010-B
+-- **GIVEN** the user has answered that a region code is required
+-- **WHEN** they submit a region code longer than five characters without the box's own cap and save and return to overview
+-- **THEN** they remain on the origin of the import page with an error naming the region code's limit
+-- **AND** the over-length code is not saved
+-
+ #### Scenario: Typing stops at five characters
+ **ID**: SCN-ORIGIN-010-C
+ - **GIVEN** the user has answered that a region code is required
+@@ -163,9 +158,9 @@ The system MUST stop the region of origin code box accepting more than five char
+ - **THEN** the box holds only the first five
+ - **AND** the box offers no autocomplete and no spellcheck
+ 
+-### Requirement: Answering that a region code is required but leaving it empty is rejected on either save control
++### Requirement: Answering that a region code is required but leaving it empty is rejected
+ **ID**: REQ-ORIGIN-011
+-The system MUST refuse to save from the origin page, on save and continue and on save and return to overview alike, when the user has answered that a region code is required but left the code itself empty, showing an error that focuses the region code field.
++The system MUST refuse to save from the origin page when the user has answered that a region code is required but left the code itself empty, showing an error that focuses the region code field.
+ 
+ #### Scenario: An empty region code is rejected when one is required
+ **ID**: SCN-ORIGIN-011-A
+@@ -174,14 +169,6 @@ The system MUST refuse to save from the origin page, on save and continue and on
+ - **THEN** they remain on the origin of the import page
+ - **AND** an error focuses the region code field, with the chosen country and the required answer still held
+ 
+-#### Scenario: Save and return to overview refuses "Yes" with the code left blank
+-**ID**: SCN-ORIGIN-011-B
+-- **GIVEN** the user has chosen a country and answered that a region code is required
+-- **WHEN** they leave the region code empty and save and return to overview
+-- **THEN** they remain on the origin of the import page
+-- **AND** an error says "Enter the region of origin code", with "Yes" still chosen
+-- **AND** nothing is saved
+-
+ ### Requirement: With JavaScript, the chosen country's code is shown as a fixed prefix beside the region code field
+ **ID**: REQ-ORIGIN-012
+ With JavaScript, the system MUST show the chosen country's code as a fixed prefix beside the region code field. The prefix MUST be empty before a country is chosen, when it is cleared and when the country has no code, fill in as a country is picked without saving, and show the saved or submitted code when the page is shown again or with an error. The prefix MUST be hidden from screen readers, and the field MUST be named by its label and described by the hint "Enter up to 5 characters.".

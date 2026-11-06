@@ -98,7 +98,20 @@ In every mode:
 2. **House rules.** Read
    `~/git/defra/trade-imports-workspace/.claude/rules/code-quality.md`
    in full. Its rules apply to every file, whatever the language.
-3. **Ticket.** Read `ticket.md` for AC and intent.
+3. **Team calibration.** Read the **routing table** at the top of
+   `~/git/defra/trade-imports-workspace/.claude/skills/review/references/TEAM_CALIBRATION.md`,
+   then read **only the sections that apply** to this file (Part A §1–§8
+   *or* Part B §9–§16 — never both on an origin-only or commodity-only file).
+   For every theme in scope, raise findings with the same Must / One way
+   discipline as step 5.
+
+   **EUDPA-760 / origin files:** Part B only — do not raise §1–§8 commodity
+   findings on `origin/`, `validate.js`, origin tests, or `page-design.md`
+   origin bullets.
+
+   **EUDPA-669 / commodity files:** Part A only unless the diff also changes
+   journey validators listed in the routing table.
+4. **Ticket.** Read `ticket.md` for AC and intent.
 
 In REFRESH / MERGE_RESOLVED only, additionally:
 
@@ -254,7 +267,8 @@ a value the repo already names (`HEADER_USER_ID` declared twice).
 
 - **Two homes for one rule.** The same rule, format or guard written
   in more than one place. Example: three port-label formats in
-  `services/ports/index.js`. Must: one owner; the other places call it.
+  `services/ports/index.js`; **`oneOfKnown` beside `requiredOneOf`**
+  (`TEAM_CALIBRATION.md` §9). Must: one owner; the other places call it.
 - **Wrong layer.** Logic sitting where the reader would not look for
   it. Example: retry, proxy and FormData re-encoding inside
   `call-counts/backend-fetch.js`, a folder for counting calls. Set
@@ -279,6 +293,25 @@ Feature folders: production controllers under
 duplication finding, and the fix is never a shared controller. That
 ruling covers production controllers only. It never covers test
 support, and importing a sibling feature's helper is fine.
+
+#### Hamid / journey-validation gap checks (apply when file matches)
+
+If the path is under `lib/validate/`, `*/features/*/validate.js`,
+`*.test.js`, `*.fit.spec.js`, `page-design.md`, or ins-tests
+`tests/*/e2e/pages/*.spec.ts`, explicitly walk **`TEAM_CALIBRATION.md`
+§9–§15** before setting verdict:
+
+| § | Check |
+|---|--------|
+| 9 | Second validator or manual blank branch; empty allow-list; `{ stored }` not positional boolean |
+| 10 | Test/describe titles vs assertions; one refusal cause; duplicate cases; positive accept destination |
+| 11 | Field-level `#…-error` asserted, not summary-only; FIT + e2e parity |
+| 12 | GET with no seed has `{}` errors when stored relaxes; `pageValidation` JSDoc honest |
+| 13 | `page-design.md` and import-reason/plants pattern match |
+| 14 | FIT first-save URL after mandatory field change |
+| 15 | Header comments only describe adjacent lines |
+
+Raise **one finding per distinct Must** — do not fold all validator issues into a single vague item (see §16).
 
 #### Logging: every decision leaves a trace
 

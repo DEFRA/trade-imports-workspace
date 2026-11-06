@@ -28,6 +28,18 @@ cat ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/.review-me
 cat ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/ticket.md
 ```
 
+Read
+`~/git/defra/trade-imports-workspace/.claude/skills/review/references/TEAM_CALIBRATION.md`
+**routing table first**, then:
+
+- **§1–§8 (Part A)** only when diffs touch commodities, species display,
+  notification save/list shapes, or GBN-AG/outbox mapping.
+- **§9–§16 (Part B)** when diffs touch journey validation, origin/import-reason
+  pages, FIT/e2e refusal tests, or `pageValidation` — including EUDPA-760-style
+  PRs with **no commodity changes**.
+
+Do not run Part A commodity checks on an origin-only PR set.
+
 ### 2. Read all diffs (from the workspace cache)
 
 `prepare-review.sh` already cached the full PR diff for every repo
@@ -55,6 +67,11 @@ Look for these categories of change across the diffs:
 | **Documentation** | README, changelog, or Confluence updates in some repos but not others |
 | **Feature flag / toggle** | Flags introduced in some repos but missing in services that also need them |
 | **Naming and reuse** | One concept with two names across repos, layers or twin frontends (`userId` in one place, `ownerId` in another; `destinationCountryNames` beside `originPageCountryNames`). A rename that stops at one repo or one layer (`telephone*` left beside `phone`). A new constant, helper or client beside one that already exists (`HEADER_USER_ID` declared twice). A rule changed in one twin and not the other. |
+| **Cross-layer persisted values** | User-visible commodity/species labels match across reference data, review UI, Mongo, outbox and INS/dashboard reads — see `references/TEAM_CALIBRATION.md` §4 |
+| **Save model vs projections** | New or changed save fields appear on list GET, view DTOs, dashboard marshalling and downstream upserts in the same PR set — see `TEAM_CALIBRATION.md` §5 |
+| **Validation pattern parity** | Same mandatory-field rule uses the same `stored ? oneOf : requiredOneOf({ required, only })` shape across origin, import-reason, plants twin — §9, §13 |
+| **AC proof across repos** | openspec Then clauses for inline field messages have matching FIT **and** ins-tests e2e assertions — §11 |
+| **pageValidation contract** | JSDoc and tests match stored-vs-submit relax — §12 |
 
 For each pattern found, determine whether its absence in a given repo
 is:

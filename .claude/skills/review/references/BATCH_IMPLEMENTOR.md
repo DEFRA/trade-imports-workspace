@@ -197,9 +197,21 @@ Run `~/git/defra/trade-imports-workspace/tools/review/review-counts.sh EUDPA-XXX
 
 ---
 
-## Step 6: Handoff branch cleanup (handoff context only)
+## Step 6: Post PR review responses (when fixes were pushed)
 
-If Step 4.5 flagged this session as handoff context, offer cleanup now.
+If Fix items were implemented and the user wants reviewers updated (default
+after `"implement review"` once commits are on the remote), follow
+**`references/REVIEW_PR_RESPONSE.md`**: one tabular comment per PR, rows aligned
+with `items.{repo}.json` / `review.{repo}.md`, not a prose-only summary.
+
+Skip only when the user says not to post, or nothing was pushed.
+
+---
+
+## Step 7: Handoff branch cleanup (handoff context only)
+
+If Step 4.5 flagged this session as handoff context, offer cleanup now (after
+Step 6 if PR comments were posted).
 Skip this step entirely otherwise.
 
 Prompt the user:

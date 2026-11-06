@@ -1,0 +1,243 @@
+diff --git a/page-objects/animals/transited-countries-page.ts b/page-objects/animals/transited-countries-page.ts
+index 4585f5ce..97d25e5b 100644
+--- a/page-objects/animals/transited-countries-page.ts
++++ b/page-objects/animals/transited-countries-page.ts
+@@ -47,10 +47,6 @@ export class AnimalsTransitedCountriesPage extends NotificationPage {
+     return this.page.getByRole('main').getByRole('paragraph');
+   }
+ 
+-  get formButtons(): Locator {
+-    return this.page.locator('form').getByRole('button');
+-  }
+-
+   get statusRegion(): Locator {
+     return this.page.locator('#transit-countries-status');
+   }
+diff --git a/page-objects/shared/base-page.ts b/page-objects/shared/base-page.ts
+index 228c898f..d4472607 100644
+--- a/page-objects/shared/base-page.ts
++++ b/page-objects/shared/base-page.ts
+@@ -206,6 +206,14 @@ export class NotificationPage extends BasePage {
+     return this.page.locator('.govuk-button-group');
+   }
+ 
++  get formButtons(): Locator {
++    return this.page.locator('form').getByRole('button');
++  }
++
++  get formLinks(): Locator {
++    return this.page.locator('form').getByRole('link');
++  }
++
+   get saveAndReturn(): Locator {
+     return this.page.getByRole('button', { name: 'Save and return', exact: true });
+   }
+diff --git a/tests/animals/e2e/features/amend-endings.spec.ts b/tests/animals/e2e/features/amend-endings.spec.ts
+index 9e94d0cb..14e86358 100644
+--- a/tests/animals/e2e/features/amend-endings.spec.ts
++++ b/tests/animals/e2e/features/amend-endings.spec.ts
+@@ -81,12 +81,19 @@ test.describe('Amendment page endings', () => {
+     await expect(pages.page).not.toHaveURL(/\/notification-view/);
+   });
+ 
+-  test('the CPH number page, a party picker and the contact address page end with Save and return and Save and continue only, and Save and return goes to the amend review', async ({
++  test('while amending, the origin page ends with exactly Save and return and Save and continue and no link, the CPH number page, a party picker and the contact address page offer both without Save and return to overview, and Save and return goes to the amend review', async ({
+     animalsPages,
+     animalsSeededJourney,
+   }) => {
+     const reference = await animalsSeededJourney.createAmendNotification();
+ 
++    await animalsPages.originOfImport.open(reference);
++    await expect(animalsPages.originOfImport.heading).toBeVisible();
++    await expect(animalsPages.originOfImport.formButtons).toHaveText(['Save and return', 'Save and continue']);
++    await expect(animalsPages.originOfImport.formLinks).toHaveCount(0);
++    await animalsPages.originOfImport.saveAndReturn.click();
++    await expect(animalsPages.notificationView.heading).toBeVisible();
++
+     await animalsPages.cphNumber.open(reference);
+     await expect(animalsPages.cphNumber.heading).toBeVisible();
+     await expect(animalsPages.cphNumber.saveAndReturn).toBeVisible();
+@@ -111,17 +118,16 @@ test.describe('Amendment page endings', () => {
+     await expect(animalsPages.notificationView.heading).toBeVisible();
+   });
+ 
+-  test('outside an amendment the CPH number page keeps its single primary button', async ({ animalsPages, animalsSeededJourney }) => {
++  test('outside an amendment the CPH number page offers Save and continue without Save and return or Save and return to overview', async ({
++    animalsPages,
++    animalsSeededJourney,
++  }) => {
+     const reference = await animalsSeededJourney.createDraftNotification();
+ 
+     await animalsPages.cphNumber.open(reference);
+     await expect(animalsPages.cphNumber.saveAndContinue).toBeVisible();
+     await expect(animalsPages.cphNumber.saveAndReturn).toHaveCount(0);
+     await expect(animalsPages.cphNumber.saveAndReturnToOverview).toHaveCount(0);
+-
+-    await animalsPages.originOfImport.open(reference);
+-    await expect(animalsPages.originOfImport.saveAndReturn).toHaveCount(0);
+-    await expect(animalsPages.originOfImport.cancelAndReturnToOverview).toBeVisible();
+   });
+ 
+   test('Continue on an amend review with an answer missing stays on the review and shows There is a problem, naming what is missing', async ({
+diff --git a/tests/animals/e2e/features/soft-save.spec.ts b/tests/animals/e2e/features/soft-save.spec.ts
+index 0492998f..29514d08 100644
+--- a/tests/animals/e2e/features/soft-save.spec.ts
++++ b/tests/animals/e2e/features/soft-save.spec.ts
+@@ -1,11 +1,9 @@
+ import { test, expect } from '@fixtures';
+ import { IMPORT_REASON_TASK } from '@domain/animals/constants/import-reason-page';
+ import { SELECT_COMMODITY_ERROR } from '@domain/animals/constants/commodity-selection-page';
+-import { countryCodes } from '@domain/animals/constants/country-codes';
+ import { MANDATORY_ANSWERS } from '@domain/animals/constants/journey-options';
+ 
+ const TO_DO = 'To do';
+-const ORIGIN_TASK = 'Where is this consignment coming from?';
+ const COMMODITY_SELECTION_TASK = 'What are you importing?';
+ const ARRIVAL_DETAILS_TASK = 'Arrival details';
+ const IMPOSSIBLE_ARRIVAL_DATE = '31/2/2026';
+@@ -13,8 +11,6 @@ const ARRIVAL_DATE_ERROR = 'Enter a real arrival date';
+ const COMMODITY_DETAILS_TASK = 'Commodity details';
+ const PORT_OF_EXIT_ERROR = 'Select a port of exit';
+ const DESTINATION_COUNTRY_ERROR = 'Select a destination country';
+-const REGION_CODE_REQUIRED_ERROR = 'Enter the region of origin code';
+-const INTERNAL_REFERENCE = 'Imports456GB';
+ 
+ test.describe('Save and return to overview', () => {
+   test('main import reason: when a required answer is missing, refuses the save, names each missing answer and keeps the answer given', async ({
+@@ -33,44 +29,6 @@ test.describe('Save and return to overview', () => {
+     await expect(await animalsPages.overview.taskStatusAfterReopening(referenceNumber, IMPORT_REASON_TASK)).toHaveText(TO_DO);
+   });
+ 
+-  test('origin of the import: when the region code is left blank, refuses the save, names the region code, keeps "Yes" and saves nothing', async ({
+-    animalsJourney,
+-    animalsPages,
+-  }) => {
+-    await animalsJourney.startNotification();
+-    await animalsPages.overview.task(ORIGIN_TASK).click();
+-    await animalsPages.originOfImport.radioRequiresOriginCode('Yes').check();
+-    await animalsPages.originOfImport.regionCode.fill('');
+-    const referenceNumber = animalsPages.originOfImport.referenceNumberFromUrl();
+-
+-    await animalsPages.originOfImport.saveAndReturnToOverview.click();
+-
+-    await expect(animalsPages.originOfImport.heading).toBeVisible();
+-    await expect(animalsPages.originOfImport.errorSummaryLinks).toHaveText([REGION_CODE_REQUIRED_ERROR]);
+-    await expect(animalsPages.originOfImport.radioRequiresOriginCode('Yes')).toBeChecked();
+-    await animalsPages.overview.openTaskAfterReopening(referenceNumber, ORIGIN_TASK);
+-    await expect(animalsPages.originOfImport.radioRequiresOriginCode('No')).toBeChecked();
+-  });
+-
+-  test('origin of the import: when every answer is valid, saves, shows the overview and keeps the answers on reopening', async ({
+-    animalsJourney,
+-    animalsPages,
+-  }) => {
+-    await animalsJourney.startNotification();
+-    await animalsPages.overview.task(ORIGIN_TASK).click();
+-    await animalsPages.originOfImport.country.choose(countryCodes.eu.france.display);
+-    await animalsPages.originOfImport.radioRequiresOriginCode('No').check();
+-    await animalsPages.originOfImport.internalReference.fill(INTERNAL_REFERENCE);
+-
+-    await animalsPages.originOfImport.saveAndReturnToOverview.click();
+-
+-    await expect(animalsPages.overview.heading).toBeVisible();
+-    await animalsPages.overview.task(ORIGIN_TASK).click();
+-    await expect(animalsPages.originOfImport.country.select).toHaveValue(countryCodes.eu.france.value);
+-    await expect(animalsPages.originOfImport.radioRequiresOriginCode('No')).toBeChecked();
+-    await expect(animalsPages.originOfImport.internalReference).toHaveValue(INTERNAL_REFERENCE);
+-  });
+-
+   test('arrival details: when the arrival date names no day, refuses the save and keeps nothing', async ({
+     animalsJourney,
+     animalsPages,
+@@ -118,25 +76,6 @@ test.describe('Save and return to overview', () => {
+     await expect(await animalsPages.overview.taskStatusAfterReopening(referenceNumber, COMMODITY_DETAILS_TASK)).toHaveText(TO_DO);
+   });
+ 
+-  test('origin of the import: when the region code is longer than five characters, refuses the save and keeps nothing', async ({
+-    animalsJourney,
+-    animalsPages,
+-  }) => {
+-    await animalsJourney.startNotification();
+-    await animalsPages.overview.task(ORIGIN_TASK).click();
+-    await animalsPages.originOfImport.radioRequiresOriginCode('Yes').check();
+-    await animalsPages.originOfImport.removeRegionCodeMaxlength();
+-    await animalsPages.originOfImport.regionCode.fill('ABCDEF');
+-
+-    await animalsPages.originOfImport.saveAndReturnToOverview.click();
+-
+-    await expect(animalsPages.originOfImport.heading).toBeVisible();
+-    await expect(animalsPages.originOfImport.errorSummary).toBeVisible();
+-    await expect(animalsPages.originOfImport.regionCodeMaxLengthErrorLink).toBeVisible();
+-    await animalsPages.overview.openTaskAfterReopening(animalsPages.originOfImport.referenceNumberFromUrl(), ORIGIN_TASK);
+-    await expect(animalsPages.originOfImport.regionCode).toHaveValue('');
+-  });
+-
+   test('what are you importing: when nothing is chosen, refuses the save with "Select a commodity" and leaves the task not complete', async ({
+     animalsJourney,
+     animalsPages,
+diff --git a/tests/animals/e2e/features/task-page-exits.spec.ts b/tests/animals/e2e/features/task-page-exits.spec.ts
+index d0648dbf..b62250da 100644
+--- a/tests/animals/e2e/features/task-page-exits.spec.ts
++++ b/tests/animals/e2e/features/task-page-exits.spec.ts
+@@ -5,21 +5,20 @@ test.describe('Task-page exits', { tag: '@duplicated-in-frontend' }, () => {
+     animalsJourney,
+     animalsPages,
+   }) => {
+-    await animalsJourney.startNotification();
++    await animalsJourney.toArrivalDetails();
+ 
+-    await animalsPages.overview.task('Where is this consignment coming from?').click();
+-    await animalsPages.originOfImport.internalReference.fill('DiscardedRef');
+-    await animalsPages.originOfImport.cancelAndReturnToOverview.click();
++    await animalsPages.arrivalDetails.transportDocumentReference.fill('DiscardedRef');
++    await animalsPages.arrivalDetails.cancelAndReturnToOverview.click();
+     await expect(animalsPages.overview.heading).toBeVisible();
+ 
+-    await animalsPages.overview.task('Where is this consignment coming from?').click();
+-    await expect(animalsPages.originOfImport.internalReference).toHaveValue('');
++    await animalsPages.overview.task('Arrival details').click();
++    await expect(animalsPages.arrivalDetails.transportDocumentReference).toHaveValue('');
+ 
+-    await animalsJourney.fillOriginOfImport({ internalReference: 'CommittedRef' });
+-    await animalsPages.originOfImport.saveAndReturnToOverview.click();
++    await animalsPages.arrivalDetails.transportDocumentReference.fill('CommittedRef');
++    await animalsPages.arrivalDetails.saveAndReturnToOverview.click();
+     await expect(animalsPages.overview.heading).toBeVisible();
+ 
+-    await animalsPages.overview.task('Where is this consignment coming from?').click();
+-    await expect(animalsPages.originOfImport.internalReference).toHaveValue('CommittedRef');
++    await animalsPages.overview.task('Arrival details').click();
++    await expect(animalsPages.arrivalDetails.transportDocumentReference).toHaveValue('CommittedRef');
+   });
+ });
+diff --git a/tests/animals/e2e/pages/origin.spec.ts b/tests/animals/e2e/pages/origin.spec.ts
+index c5fea0a8..dbf5ffb0 100644
+--- a/tests/animals/e2e/pages/origin.spec.ts
++++ b/tests/animals/e2e/pages/origin.spec.ts
+@@ -15,11 +15,13 @@ test.describe('Origin of the import page', { tag: '@duplicated-in-frontend' }, (
+     await animalsJourney.toOriginOfImport();
+   });
+ 
+-  test('renders the page controls', async ({ animalsPages }) => {
++  test("renders the page controls, with Save and continue as the form's only button and no link in the form", async ({ animalsPages }) => {
+     await expect(animalsPages.originOfImport.heading).toBeVisible();
+     await expect(animalsPages.originOfImport.country.field).toBeVisible();
+     await expect(animalsPages.originOfImport.radioRequiresOriginCode('No')).toBeVisible();
+     await expect(animalsPages.originOfImport.saveAndContinue).toBeVisible();
++    await expect(animalsPages.originOfImport.formButtons).toHaveText(['Save and continue']);
++    await expect(animalsPages.originOfImport.formLinks).toHaveCount(0);
+   });
+ 
+   test('shows the country selector on load', async ({ animalsPages }) => {
+diff --git a/tests/animals/e2e/visual/origin-of-import.visual.spec.ts-snapshots/origin-of-import-chromium-darwin.png b/tests/animals/e2e/visual/origin-of-import.visual.spec.ts-snapshots/origin-of-import-chromium-darwin.png
+index fe9445fe..9ebb6d16 100644
+Binary files a/tests/animals/e2e/visual/origin-of-import.visual.spec.ts-snapshots/origin-of-import-chromium-darwin.png and b/tests/animals/e2e/visual/origin-of-import.visual.spec.ts-snapshots/origin-of-import-chromium-darwin.png differ
+diff --git a/tests/animals/e2e/visual/origin-of-import.visual.spec.ts-snapshots/origin-of-import-chromium-linux.png b/tests/animals/e2e/visual/origin-of-import.visual.spec.ts-snapshots/origin-of-import-chromium-linux.png
+index 50a11548..4c70af18 100644
+Binary files a/tests/animals/e2e/visual/origin-of-import.visual.spec.ts-snapshots/origin-of-import-chromium-linux.png and b/tests/animals/e2e/visual/origin-of-import.visual.spec.ts-snapshots/origin-of-import-chromium-linux.png differ
+diff --git a/tests/animals/e2e/visual/origin-of-import.visual.spec.ts-snapshots/origin-of-import-region-code-revealed-chromium-darwin.png b/tests/animals/e2e/visual/origin-of-import.visual.spec.ts-snapshots/origin-of-import-region-code-revealed-chromium-darwin.png
+index aa739464..c7112036 100644
+Binary files a/tests/animals/e2e/visual/origin-of-import.visual.spec.ts-snapshots/origin-of-import-region-code-revealed-chromium-darwin.png and b/tests/animals/e2e/visual/origin-of-import.visual.spec.ts-snapshots/origin-of-import-region-code-revealed-chromium-darwin.png differ
+diff --git a/tests/animals/e2e/visual/origin-of-import.visual.spec.ts-snapshots/origin-of-import-region-code-revealed-chromium-linux.png b/tests/animals/e2e/visual/origin-of-import.visual.spec.ts-snapshots/origin-of-import-region-code-revealed-chromium-linux.png
+index 0879064b..c340193a 100644
+Binary files a/tests/animals/e2e/visual/origin-of-import.visual.spec.ts-snapshots/origin-of-import-region-code-revealed-chromium-linux.png and b/tests/animals/e2e/visual/origin-of-import.visual.spec.ts-snapshots/origin-of-import-region-code-revealed-chromium-linux.png differ

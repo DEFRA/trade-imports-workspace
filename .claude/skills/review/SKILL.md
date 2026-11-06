@@ -47,7 +47,8 @@ schema and allowed Disposition/Status values.
 | "review EUDPA-X" / "re-review EUDPA-X" / "refresh review" / "check fixes" | this SKILL.md — Fresh + Refresh sections |
 | "review this branch" / `REPO:BRANCH` | this SKILL.md — Local mode (below); start-review.sh dispatches on `--local` |
 | "walk review EUDPA-X" / "triage review" | `Follow references/WALKER.md` |
-| "implement review EUDPA-X" / "apply review fixes" | `Follow references/BATCH_IMPLEMENTOR.md` |
+| "implement review EUDPA-X" / "apply review fixes" | `Follow references/BATCH_IMPLEMENTOR.md` then `references/REVIEW_PR_RESPONSE.md` on each PR |
+| "fix review comments" / PR review URL / named reviewer thread | `references/TEAM_CALIBRATION.md` → implement via `references/REVIEW_ITEM_FIXER.md` (fetch `gh` threads, map themes, fix + reply) |
 
 NOT for JavaScript lint/format/style findings — use the `code-style`
 skill.
@@ -158,7 +159,32 @@ subagents receive — so workers can write their on-disk artifacts.
 |---|---|---|
 | `references/FILE_REVIEWER.md` | Fresh Step 2, Refresh Step R4 (one per file, parallel up to 100) | per-file `.review.json` (schema in `assets/file-review-schema.md`) |
 | `references/CONSISTENCY_REVIEWER.md` | Fresh Step 4 (one per repo) | per-repo `_consistency-check.md` |
-| `references/REVIEW_ITEM_FIXER.md` | `BATCH_IMPLEMENTOR.md` Step 4 (one per Fix-disposition item, sequential) | source edits + commit |
+| `references/REVIEW_ITEM_FIXER.md` | `BATCH_IMPLEMENTOR.md` Step 4; GitHub review threads | source edits + commit |
+
+Calibration catalogue: `references/TEAM_CALIBRATION.md` (Paul/Martyn EUDPA-669; Hamid EUDPA-760 validation, tests, AC field messages).
+
+### Team calibration (orchestrator)
+
+Before Fresh Step 2 or when fixing PR review threads, skim the **routing table**
+in `references/TEAM_CALIBRATION.md`. Workers load matching sections only; the parent
+should spawn FILE_REVIEWER and CONSISTENCY_REVIEWER with the calibration
+line in the prompt (see spawn templates below).
+
+**EUDPA-760 (country of origin):** Part B §9–§16 only — do not apply Part A
+commodity sections to PR #457 / #80.
+
+| Theme | Typical fix | Catch in review |
+|---|---|---|
+| Legacy `commodity` shape (Paul) | Part A §1–§8 only | Expanders, dual fields, GBN-AG fallbacks |
+| Journey-valid tests (Paul) | Builder + IT POST bodies match assert helper | Test-only constructors; asserts without fixture fields |
+| `null` vs `[]` on lists (Paul) | Normalise at save boundary | Save overwrites with null; missing `@Builder.Default` |
+| User-shown labels (Martyn) | Prefer `speciesCommonName`; align ins-tests | Review page ≠ Mongo/outbox; wrong oracle literals |
+| Save vs list | `NotificationView`, INS upsert in same PR set | Detail save OK, list/dashboard stale |
+| One validator primitive (Hamid §9) | `requiredOneOf` `{ required, only }` | `oneOfKnown`, blank branch, empty list |
+| Tests / AC proof (Hamid §10–§11) | Retitle; FIT + e2e field assert | Title mismatch; summary-only; no `#field-error` |
+| stored vs submit (Hamid §12) | Fix contract + test | JSDoc; missing GET `{}` errors |
+| Docs / FIT (Hamid §13–§14) | Align twins; fix FIT URL | page-design; wrong first-save URL |
+| Human row count (Hamid §16) | One finding per Must; full PR table | 22 review rows → 7 walker items |
 
 Spawn idiom: Task tool with `subagent_type: general-purpose` and a prompt
 beginning `Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/review/references/<NAME>.md.`
@@ -234,6 +260,8 @@ Emit ALL Task calls in a single assistant response — do NOT spawn one, await t
 
 ```markdown
 Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/review/references/FILE_REVIEWER.md.
+
+Read and apply themes from ~/git/defra/trade-imports-workspace/.claude/skills/review/references/TEAM_CALIBRATION.md using the **routing table** — Part B §9–§16 only for origin/validate files; Part A §1–§8 only for commodity/persistence files.
 
 **Mode:** FRESH
 **Ticket:** EUDPA-XXXXX - [Ticket Summary]
@@ -347,6 +375,13 @@ Then close each member with a pointer to it:
 
 Run each call as its own Bash call. A finding with no partner stays as
 it is.
+
+**3. Human PR review row parity** (`TEAM_CALIBRATION.md` §16). When the
+PR already has a numbered review comment (e.g. Hamid’s 22-row table on
+#457), compare that count to `review-items.sh --repo {repo} --json` after
+steps 1–2. If human rows ≫ consolidated items, add missing items or
+`Merged` pointers before `render-items.sh` — fresh review must not repeat
+EUDPA-760’s gap (automated PASS while human listed 22 concerns).
 
 After Step 5, the canonical state is `items.{repo}.json`. Walker /
 batch implementor / refresh tools mutate it via `review-*.sh`. The
@@ -625,6 +660,8 @@ Emit ALL Task calls in a single assistant response — do NOT spawn one, await t
 ```markdown
 Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/review/references/FILE_REVIEWER.md.
 
+Read and apply themes from ~/git/defra/trade-imports-workspace/.claude/skills/review/references/TEAM_CALIBRATION.md using the **routing table** — Part B §9–§16 only for origin/validate files; Part A §1–§8 only for commodity/persistence files.
+
 **Mode:** REFRESH
 **Ticket:** EUDPA-XXXXX - [Ticket Summary]
 
@@ -640,6 +677,8 @@ Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/re
 
 ```markdown
 Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/review/references/FILE_REVIEWER.md.
+
+Read and apply themes from ~/git/defra/trade-imports-workspace/.claude/skills/review/references/TEAM_CALIBRATION.md using the **routing table** — Part B §9–§16 only for origin/validate files; Part A §1–§8 only for commodity/persistence files.
 
 **Mode:** MERGE_RESOLVED
 **Ticket:** EUDPA-XXXXX - [Ticket Summary]

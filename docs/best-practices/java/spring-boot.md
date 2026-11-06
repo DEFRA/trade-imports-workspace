@@ -36,7 +36,8 @@ src/main/java/uk/gov/defra/tradeimportsanimals/
 │       ├── RequestTracingFilter.java
 │       └── AdminSecretFilter.java
 └── metrics/
-    └── EmfMetricsPublisher.java
+    ├── EmfMeterRegistry.java
+    └── NotificationMetrics.java
 ```
 
 ---
@@ -462,23 +463,16 @@ Match constraint annotation packages to your overall stack — this project uses
 ## 9. Conditional beans
 
 ```java
-@Service
-@ConditionalOnProperty(name = "metrics.emf.enabled", havingValue = "true")
-@RequiredArgsConstructor
-@Slf4j
-public class EmfMetricsPublisher {
-
-    private final MeterRegistry meterRegistry;
-
-    @Scheduled(fixedRateString = "${metrics.publish-interval-ms:60000}")
-    public void publishMetrics() {
-        log.info("Publishing EMF metrics");
-        // ...
-    }
+@Bean
+@ConditionalOnProperty(name = "aws.emf.enabled", havingValue = "true")
+EmfMeterRegistry emfMeterRegistry(@Value("${aws.emf.namespace}") String namespace) {
+    EmfMeterRegistry registry = new EmfMeterRegistry(namespace, Clock.SYSTEM, MetricsLogger::new);
+    registry.start(new NamedThreadFactory("emf-meter-registry"));
+    return registry;
 }
 ```
 
-`@ConditionalOnProperty` disables the bean entirely — no stub, no `if` check needed. In `application-test.yml`, set `metrics.emf.enabled=false`.
+`@ConditionalOnProperty` leaves the bean out entirely — no stub, no `if` check needed. Integration tests leave `aws.emf.enabled` false, so Spring Boot's in-memory registry is used and nothing is published.
 
 ---
 
@@ -541,21 +535,23 @@ public class SchedulingConfig {}
 ```java
 @Service
 @ConditionalOnProperty(name = "scheduling.enabled", havingValue = "true", matchIfMissing = true)
-public class MetricsPublisher {
+public class DraftCleanup {
 
     // Fixed rate in milliseconds
     @Scheduled(fixedRate = 60_000)
-    public void publishEveryMinute() { ... }
+    public void removeExpiredDraftsEveryMinute() { ... }
 
     // Cron expression
     @Scheduled(cron = "0 0 * * * *")  // top of every hour
-    public void publishHourly() { ... }
+    public void removeExpiredDraftsHourly() { ... }
 
     // From property — allows env-specific intervals
-    @Scheduled(fixedRateString = "${metrics.publish-interval-ms:60000}")
-    public void publishConfigurable() { ... }
+    @Scheduled(fixedRateString = "${drafts.cleanup-interval-ms:60000}")
+    public void removeExpiredDraftsAtTheConfiguredRate() { ... }
 }
 ```
+
+Metrics are not published by a scheduled job: the meter registry publishes on its own thread (section 19).
 
 Disable in tests via `application-integration-test.yml`:
 ```yaml
@@ -981,17 +977,25 @@ public class NotificationController {
 
 ## 19. Micrometer metrics
 
+Every metric is a Micrometer meter, and `EmfMeterRegistry` publishes them all to CloudWatch with each meter's tags as its dimensions. The rule, the classes to copy, the allowlist and the tests are in `~/git/defra/trade-imports-workspace/.claude/skills/service-observability/references/METRICS.md` → "Publish (Java, Spring Boot)". Follow it; this section only shows the shape.
+
+`MetricsConfig` creates the registry when `aws.emf.enabled` is true (section 9), and holds the aspects `@Timed` and `@Counted` need:
+
 ```java
 @Configuration
 public class MetricsConfig {
 
     @Bean
-    public TimedAspect timedAspect(MeterRegistry registry) {
-        return new TimedAspect(registry);
+    @ConditionalOnProperty(name = "aws.emf.enabled", havingValue = "true")
+    EmfMeterRegistry emfMeterRegistry(@Value("${aws.emf.namespace}") String namespace) { ... }
+
+    @Bean
+    TimedAspect timedAspect(MeterRegistry meterRegistry) {
+        return new TimedAspect(meterRegistry);
     }
 
     @Bean
-    public CountedAspect countedAspect(MeterRegistry registry) {
+    CountedAspect countedAspect(MeterRegistry registry) {
         return new CountedAspect(registry);
     }
 }
@@ -999,29 +1003,21 @@ public class MetricsConfig {
 
 `@Timed` on controller/service methods:
 ```java
-@Timed(value = "notification.save", percentiles = { 0.5, 0.95, 0.99 })
+@Timed("controller.notification.save.time")
 public NotificationDto save(NotificationRequest request, HttpHeaders headers) { ... }
 ```
 
-Programmatic metrics:
+A business metric is a meter, tagged by its dimension:
 ```java
-@Service
-@RequiredArgsConstructor
-public class EmfMetricsPublisher {
-
-    private final MeterRegistry meterRegistry;
-
-    @Scheduled(fixedRateString = "${metrics.publish-interval-ms:60000}")
-    public void publishMetrics() {
-        var notificationCount = meterRegistry.find("notification.save").timer();
-        if (notificationCount != null) {
-            // Emit CloudWatch EMF JSON
-            log.info("{\"_aws\":{\"Timestamp\":{},\"CloudWatchMetrics\":[...]},\"Count\":{}}",
-                    System.currentTimeMillis(), notificationCount.count());
-        }
-    }
+public void countChange(Change change) {
+    Counter.builder("address.change")
+        .tag("change", change.name().toLowerCase(Locale.ROOT))
+        .register(meterRegistry)
+        .increment();
 }
 ```
+
+Each metric name goes on the allowlist (`management.metrics.enable` in `application.yml`), or its meter publishes nothing.
 
 ---
 

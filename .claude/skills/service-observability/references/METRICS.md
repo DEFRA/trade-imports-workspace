@@ -251,9 +251,8 @@ is checked there.
   of command names, with anything else as `other`. A command that never
   reaches the server (no server to select) fires no listener event, so
   these metrics do not show an outage; the heartbeat does.
-- **Alerts.** "Dependency unavailable" for the database queries
-  `external.dependency.available` (`ALERTS.md`); "calls failing" and "slow" query
-  the command operations as for any dependency.
+- **Alerts.** Which rules a service with a database gets:
+  `assets/alerts.template.md` → "Check".
 - **Test it** with unit tests that feed the listener cluster
   descriptions (several servers, one failing, all failing, a removed
   server, one not yet checked, recovery, and one log line per change, none

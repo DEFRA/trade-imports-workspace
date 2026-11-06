@@ -49,9 +49,9 @@ If it shows none, check Match exact is off and both dimensions are set.
 ## 1a. <service> <database> unavailable
 
 For a database, its availability comes from the driver's heartbeats
-(`references/METRICS.md` → "A database"). Build this rule in place of
-rule 1 when the database is the only dependency, beside it otherwise,
-and keep this section only if the service has a database.
+(`references/METRICS.md` → "A database"). Keep this section only if the
+service has a database. The table under "Check" says which of rules 1, 2
+and 3 are built beside it.
 
 | Field | Value |
 |---|---|
@@ -76,6 +76,11 @@ Duplicate rule 1 (or rule 1a, where rule 1 is not built), then set:
 | Period | `900` (15 minutes) |
 | Alert condition | `Last` `IS ABOVE` `2` (3 or more failed calls) |
 | Summary | `{{ $labels.dependency }} {{ $labels.operation }}: 3 or more failed calls in 15 minutes` |
+
+Where a database is the only dependency, Preview must show a
+`<database>` row before saving. If it shows none, the database's
+command metrics are not published: build neither this rule nor rule 3
+(see "Check"), as they would find no data and never fire.
 
 ## 3. <service> dependency slow
 
@@ -107,7 +112,12 @@ here, each Normal, none in Error:
 |---|---|
 | No database | 1, 2 and 3 (three rules) |
 | A database and other dependencies | 1, 1a, 2 and 3 (four rules) |
-| A database as its only dependency | 1a, 2 and 3 (three rules) |
+| A database as its only dependency, publishing its command metrics | 1a, 2 and 3 (three rules) |
+| A database as its only dependency, without its command metrics | 1a (one rule) |
+
+A database's command metrics are the `external.call.*` meters
+`MongoCommandMetrics` records (`references/METRICS.md` → "A database").
+A heartbeat records none.
 
 Rule 3 counts once more for each extra per-dependency slow rule. Then prove each one fires
 (`references/ALERTS.md` → "Prove they fire"), and export one rule

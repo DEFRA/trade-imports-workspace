@@ -49,20 +49,83 @@ earlier review is in `workareas/reviews/EUDPA-674-original/`.
   parallel change. Trial run ("trial run" / "don't post") skips Step 7.
   Refresh stays on `FILE_REVIEWER.md`.
 
-The `prs.sh --own` paragraph in `SKILL.md` Step 0 is still uncommitted, on
-purpose: it goes with the uncommitted `prs.sh` and `prs.own.test.sh`.
+- `afd8cb6e`, `22ecc749`: `prs.sh --own` (review only the ticket's own
+  PRs) and `start-review.sh --id … --same-as …` (replay an earlier
+  review's PRs at its commits).
+
+### Run 2 (done)
+
+Workarea `workareas/reviews/EUDPA-674-simple/`, session
+`7698737b-d017-46e5-be20-a617ec124858`. **18.9M tokens** against run 1's
+91.8M, the same verdict (CONCERNS), but **26 of run 1's 80 open findings**
+(31 with partial matches) and **no coverage gaps at all**. The full
+comparison, with the findings checked against the code, is in
+[`run2-comparison.md`](run2-comparison.md). Where the tokens went:
+consistency reviewer 7.3M (Opus, 54 calls), the skill's own context 6.6M
+(Opus, not Sonnet), 13 group reviewers 4.9M.
+
+Why it lost findings:
+
+- Test reviewers read no source, so they could not see an untested branch.
+- Source reviewers read only their brief, so they missed every finding that
+  needs a second file (Mongo replica-set availability, gauge units against
+  `application.yml`, the characterisation oracle that skips the purge).
+- The consistency reviewer searched only `.claude/skills/service-observability`
+  for the deleted `EmfMetricsPublisher`, reported `docs/` as searched, and
+  missed five stale lines in `docs/best-practices/java/`.
+
+### Run 3 changes (done)
+
+- `fcfaf782`: test briefs carry the **source under test** (`FooTest`,
+  `FooTests` and `FooIT` cover `Foo.java`; `foo.test.js` covers `foo.js`),
+  set by `sourceUnderTest` in `routing.json`. Test reviewers judge the
+  criteria and titles first, then report `coverage-gap` findings on the
+  branches of that source. Source reviewers may **read up to 5 files** a
+  changed line depends on, with Read, and no searching. Every file in a
+  brief is printed **with line numbers**, and `line` must be that number
+  (run 2 gave diff positions such as 2933). `review-groups.test.sh`: 39
+  checks, passed.
+- `4a0de6b0`: `stale-search.sh ID TERM…` searches every pinned clone, plus
+  the workspace guides, `openspec/specs` and `CLAUDE.md` when the workspace
+  repo is not in the review, for every term in one call, and lists the
+  places it searched. `CONSISTENCY_REVIEWER.md` step 3b now uses it and
+  copies that list. The reviewer also gets a call budget of about 25, the
+  allowed categories (run 2 wrote `docs`, so the whole batch was refused)
+  and integer line numbers. `stale-search.test.sh` is written but **not run
+  yet** (see Next 1).
+- `c5518b94`: the review skill sets `model: sonnet`. That applies to every
+  mode, the walker and the batch implementor included.
 
 ## Next
 
-1. **Run 2.** Start a new window. Say "trial run".
-   - Use the same PRs and commits as run 1. Read them from run 1's
-     `.review-meta.json`.
-   - Put the workarea in `workareas/reviews/EUDPA-674-simple/`.
-   - Do not post to any PR.
-2. **Compare.**
-   - Tokens: `tools/review/token-usage.sh <session> --by-agent`.
-   - Findings: match run 1 against run 2 by file, line and category. Check
-     each unmatched finding against the code.
+1. **Make the scripts executable, then run the new test.** Policy blocks
+   `chmod` in a session and denies `bash <script>`, and a hook runs a
+   changed script only once it is committed. `stale-search.sh` and its test
+   are committed as executable, but the files on disk are not. Run this
+   yourself:
+   `! chmod +x tools/review/stale-search.sh tools/review/stale-search.test.sh tools/review/replay-prs.sh tools/review/prepare-review-local.sh tools/review/batch-lib.sh tools/review/finding-categories.sh`.
+   Then run `tools/review/stale-search.test.sh`. Commit the mode change for
+   the last four. Once `replay-prs.sh` is executable, revert the
+   uncommitted `bash "$SCRIPT_DIR/replay-prs.sh"` workaround on line 259
+   of `prepare-review.sh`.
+2. **Run 3.** Start a new window. Say "trial run". Set up with
+   `start-review.sh EUDPA-674 --id EUDPA-674-run3 --same-as EUDPA-674`,
+   then use `EUDPA-674-run3` as the review id for every later step. Use
+   the same four PRs as runs 1 and 2, #300 and #43 included, so the runs
+   compare like for like. Expect the two scope Criticals on #300 again.
+   Do not post to any PR.
+3. **Compare run 3 with runs 1 and 2,** in the same shape as
+   `run2-comparison.md`.
+   - Tokens: `tools/review/token-usage.sh <session> --by-agent`. Check that
+     the skill's own context now runs on Sonnet, and how many calls the
+     consistency reviewer took.
+   - Findings: were run 1's checked findings found this time? Address-book
+     #19, #11 and #41, animals-frontend #3, workspace #16 and #17 (in
+     `run2-comparison.md`). Were run 2's four checked findings kept? How
+     many `coverage-gap` findings are there, and are line numbers file
+     lines?
+   - If quality is back but tokens are well above run 2, the next lever is
+     the consistency reviewer's model (Opus).
 
 ## Side issues (not this branch)
 
@@ -75,5 +138,11 @@ purpose: it goes with the uncommitted `prs.sh` and `prs.own.test.sh`.
 - `review-counts.sh --help` exits 1.
 - `ac-check` and `prepare-ac-check.sh` are untracked or gitignored. Delete
   them once the test reviewer has replaced them.
-- The user's uncommitted `SKILL.md` change (2 parallel reviewers instead of
-  100) is still in the working tree.
+- `ac-table.sh` lists one criterion up to three times (28 rows for about
+  9 criteria), because each test reviewer words the criteria its own way.
+  Some rows say Yes and No for the same criterion. It needs a shared AC id
+  to match rows on.
+- In run 2 the ins-frontend infra reviewer replied "4 findings" but wrote
+  3. Nothing checks the one-line reply against the file.
+- A hook blocks a literal `/Users/` path in a reviewer's save. The
+  reviewer's retry with `~/` worked, but it cost a call.

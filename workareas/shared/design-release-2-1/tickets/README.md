@@ -9,7 +9,7 @@ Each folder holds `description.txt` — the Jira description field, verbatim —
 
 ## The tickets
 
-Five themes have their filled-in tickets. Design snagging's are `Deskcheck` (merged to main on 23 October); the rest are `In Dev`. All hang
+Six themes have their filled-in tickets. Design snagging's are `Deskcheck` (merged to main on 23 October), as are the type question's (merged 6 November); the rest are `In Dev`. All hang
 off epic **EUDPA-328**.
 
 ### Journey foundation — 74 scenarios, 19 files
@@ -77,6 +77,20 @@ main import reason. The other five — inc-019, inc-248, inc-249, inc-250 and
 inc-251 — changed only test suites or took `main` into the branch, so they carry
 no behaviour a reader can check. inc-029 is in the table with its blocked state
 shown, because it is work being held rather than work refused.
+
+### Type question — 55 scenarios, 21 files
+
+| Folder | Jira | Domain | Rows | Scenarios | Spec files |
+|---|---|---|---|---|---|
+| `type-question-ins/` | [EUDPA-690](https://eaflood.atlassian.net/browse/EUDPA-690) | Front door | 8 | 25 | 3 |
+| `type-question-animals/` | [EUDPA-779](https://eaflood.atlassian.net/browse/EUDPA-779) | Live animals journey | 8 | 14 | 8 |
+| `type-question-plants/` | [EUDPA-780](https://eaflood.atlassian.net/browse/EUDPA-780) | High-risk plants journey | 6 | 16 | 10 |
+
+25 + 14 + 16 = 55, the theme's total, across 3 + 8 + 10 = 21 files. All three are `Deskcheck`: the theme merged to `main` on 6 November and the MERGE flow wrote all three that day, with spec links to `main`. EUDPA-690 was the stub for the old `type-question-and-templates` theme; templates is parked, so the stub became the front door's ticket and `tickets.json` records it under `type-question`, not `stub`.
+
+The workspace pull request was squash-merged, so `main` holds no theme-scoped commits to derive from. The derivation ran against the local `feat/EUDPA-690-type-question` branch, whose `openspec/` is identical to `main`'s; its output is `derived-type-question.json`. One scenario, the plants commodity type Save and return check (inc-247), was written under the ticket key and is counted through `footprint-overrides.json`.
+
+The front door's question offers four types: Live animals; Plants for planting; Potatoes (seed and ware); Wood products. Germinal products is held back until the germinal products set has a start page (inc-263); three scenarios that described it were added and later removed, so they are not counted. Of the 19 rows, inc-250, inc-261 and inc-262 changed only animals admin and inc-258 only the test suites, so they appear in no table. inc-260 changed only docs and the spec and is listed on the front door's ticket, whose navigation scenarios it wrote.
 
 `derived.json` reports 39 scenarios where this table says 36. The deriver tracks
 a scenario by its heading, so each of the three the 5 November spec catch-up

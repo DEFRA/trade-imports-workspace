@@ -1316,3 +1316,29 @@ The system MUST, on the add page reached from a role's picker, ask 'What else sh
 - **GIVEN** a trader on the consignment contact page
 - **WHEN** they choose to add a new address
 - **THEN** the add page shows the address fields and no roles question
+
+### Requirement: The address book's pagination links the first, current, neighbouring and last pages, with an ellipsis for each gap
+**ID**: REQ-INS-ADDR-047
+The system MUST show, under a list running past one page, a link to page 1, the current page and the page either side of it, and the last page, with an ellipsis wherever page numbers are skipped, and no other page links. It MUST offer 'Previous' except on the first page and 'Next' except on the last page. A list of three pages or fewer MUST show every page number with no ellipsis.
+
+#### Scenario: A middle page shows its neighbours between the first and last pages
+**ID**: SCN-INS-ADDR-047-A
+- **GIVEN** the address book runs to 20 pages
+- **WHEN** the user views page 10
+- **THEN** the pagination shows 'Previous', page 1, an ellipsis, pages 9, 10 and 11, an ellipsis, page 20 and 'Next', with page 10 marked as the current page
+
+#### Scenario: The first and last pages show their one neighbour and the far end
+**ID**: SCN-INS-ADDR-047-B
+- **GIVEN** a search matches five pages of addresses
+- **WHEN** the user submits it
+- **THEN** the pagination shows pages 1 and 2, an ellipsis and page 5, with page 1 marked as the current page
+- **WHEN** they follow page 5
+- **THEN** the pagination shows page 1, an ellipsis and pages 4 and 5, with page 5 marked as the current page
+- **WHEN** they follow page 4
+- **THEN** the pagination shows page 1, an ellipsis and pages 3, 4 and 5, with page 4 marked as the current page, and the list reads 'Showing 25-32' against the number of matches
+
+#### Scenario: A list of three pages shows every page number
+**ID**: SCN-INS-ADDR-047-C
+- **GIVEN** the address book runs to three pages
+- **WHEN** the user views any of them
+- **THEN** the pagination shows pages 1, 2 and 3 with no ellipsis

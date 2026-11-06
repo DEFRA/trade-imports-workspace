@@ -2654,7 +2654,9 @@
         "Opening or posting the private transporter form without Private chosen, or the commercial transporter form without Commercial chosen, takes the trader to the transporter type question. (prototype:dr2-1-source prototype-dr2-1-source-p7-061; repo:tests repo-tests-p1-141)",
         "The transporter list and the commercial transporter form show the notification status strip; the transporter type question and the private transporter form show their page without it. (prototype:dr2-1-source prototype-dr2-1-source-p7-049-m1, -p7-064; trace:prototype-dr2-1 trace-prototype-dr2-1-p9-005-m1)"
       ],
-      "dependsOn": [],
+      "dependsOn": [
+        "inc-074"
+      ],
       "theme": "transporters",
       "status": "todo",
       "kind": "feat",
@@ -2705,7 +2707,8 @@
       "notes": [
         "Blocked by ruling:sam-2026-10-09-pm-p2-039 (c-285, precedence). Combines the type page's copy (req-416, req-417, req-422), its validation (req-420, req-421), the add forms' guard that sends a trader back to it (req-425) and the status strip left off this page and the private form (req-427, c-053 precedence): one page and its entry guard, reviewed together.",
         "Unchanged by this re-distil apart from wording: no later ruling touches these requirements.",
-        "Unblocked 6 November by ruling:ian-2026-11-06, which supersedes ruling:sam-2026-10-09-pm point 5 and lifts c-285: the address book manages transporters as per-organisation records, like every other address, and adding one mid journey uses the address book hand-off already built for addresses (inc-077, inc-078, inc-080, EUDPA-706). Approved transporters are parked. This row's criteria still describe the animals frontend's own transporter pages and its in-memory register (services/transporters/register.js), so the transporter area needs re-distilling against the address-book-owned design before the row is built."
+        "Unblocked 6 November by ruling:ian-2026-11-06, which supersedes ruling:sam-2026-10-09-pm point 5 and lifts c-285: the address book manages transporters as per-organisation records, like every other address, and adding one mid journey uses the address book hand-off already built for addresses (inc-077, inc-078, inc-080, EUDPA-706). Approved transporters are parked. This row's criteria still describe the animals frontend's own transporter pages and its in-memory register (services/transporters/register.js), so the transporter area needs re-distilling against the address-book-owned design before the row is built.",
+        "Waits for inc-074 since 6 November: ruling:ian-2026-11-06 decisions 4 and 5 put the transporter record and the add-a-transporter pages on the address book side, and inc-074 stands up the page whose copy and blank-choice refusal this row settles. inc-039, inc-040 and inc-041 inherit the wait through this row."
       ],
       "gate": null
     },
@@ -3866,10 +3869,7 @@
         "A transporter added from the address book is on the transporter list of the organisation's next notification, ready to pick. (repo:frontend repo-frontend-p12-146; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-093)",
         "Adding an address offers the address type 'Transporter', after 'Place of Destination' and before the divider, with the hint 'This is the person or company responsible for transporting the consignment.' (prototype:dr2-1-source prototype-dr2-1-source-p15-110; repo:tests repo-tests-p5-095; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-044)"
       ],
-      "dependsOn": [
-        "inc-038",
-        "inc-039"
-      ],
+      "dependsOn": [],
       "theme": "transporters",
       "status": "todo",
       "kind": "feat",
@@ -3957,7 +3957,8 @@
         "Unchanged by this re-distil apart from wording: no later ruling touches these three requirements.",
         "This area's only share of the existing blocked row inc-074 (choosing Transporter when adding to the address book hands over to adding a transporter), which already holds req-2042. Combiner: merge this into inc-074 with the address-book-add-and-edit and transporters areas' drafts, keeping inc-074's id, its transporters theme and its repos, rather than keeping a second row. The existing row's note of 27 October asks that its first criterion ('listed third, before Branch') and its last ('after Place of Destination and before the divider') be checked against the split address-book branch's type page, which has three options, and that one be kept: this draft keeps only the 'after Place of Destination and before the divider' placing, which is the one req-2042 states. Still blocked: the 26 October ruling says nothing about transporters. Waits on the address book split branch's type-choice row (externalDependsOn on shared/design-release-2-1/themes/address-book inc-061).",
         "Unblocked 6 November by ruling:ian-2026-11-06, and promoted: decision 1 makes the address book the system of record for transporters and decision 2 makes the address book hand-off the way a journey adds one, so this row is no longer an extra route beside the journey's own add pages — it is the route. Its second open question is answered: the add-a-transporter pages live in the INS front door beside the other address add pages, and trade-imports-address-book holds the records. The two placements of the Transporter option that were still in play (req-1198 third before 'Branch'; req-2042 after 'Place of Destination' and before the divider) must still be settled against the three-option type page inc-061 built. The re-distil should also decide what becomes of the animals frontend's features/transport/transporter-add, private-transporter-details and commercial-transporter-details folders, which decision 2 supersedes.",
-        "Data model settled 6 November by ruling:ian-2026-11-06 decisions 4 and 5, so this row's two open questions are closed. A transporter is its own record in its own transporters collection inside the address book service, not the Address model: AddressRequest requires at least one role (@NotEmpty) and refuses a type outright (@Null, \"type is not a supported field\"), and a transporter carries an approval number, a private-or-commercial type and an approval status that no address has. It reuses the service's organisation scoping, soft-delete and the Standard Address Block field validation where the fields match. Transporters have no roles — no seventh AddressRole and no fourth RoleGroup — and store the private-or-commercial type instead, which decides the form, the field list and the country rule and so cannot be derived. The address book's own API is unchanged by this row."
+        "Data model settled 6 November by ruling:ian-2026-11-06 decisions 4 and 5, so this row's two open questions are closed. A transporter is its own record in its own transporters collection inside the address book service, not the Address model: AddressRequest requires at least one role (@NotEmpty) and refuses a type outright (@Null, \"type is not a supported field\"), and a transporter carries an approval number, a private-or-commercial type and an approval status that no address has. It reuses the service's organisation scoping, soft-delete and the Standard Address Block field validation where the fields match. Transporters have no roles — no seventh AddressRole and no fourth RoleGroup — and store the private-or-commercial type instead, which decides the form, the field list and the country rule and so cannot be derived. The address book's own API is unchanged by this row.",
+        "Dependency inverted 6 November, after ruling:ian-2026-11-06 decisions 4 and 5. This row used to wait for inc-038 and inc-039, which was right while the journey owned the transporter add pages. It no longer is: this row builds the transporter record, its collection and the hand-off route, and criteria 3 to 5 already describe the 'Choose a transporter type' page itself, while criteria 7 and 8 describe its cancel and save. inc-038 (that page's copy and blank-choice refusal) and inc-039 (save, cancel and the success banner) refine what this row stands up, so they now wait for it. This row waits only on its external dependencies in the split-off address book theme, inc-061 and inc-067, both done."
       ],
       "gate": null,
       "externalDependsOn": [

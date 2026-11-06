@@ -134,6 +134,19 @@ check "A's second finding keeps its guide" "$(jq -r '.todos[1].best_practice' "$
 check "B is SAFE with no findings" "$(jq -r '.verdict + "/" + (.todos | length | tostring)' "$(review_json src/B.java)")" "SAFE/0"
 check "reviewed_at is stamped" "$(jq -r '.reviewed_at != null' "$(review_json src/B.java)")" "true"
 
+bash "$SCRIPT_DIR/file-review-write.sh" "$TICKET" --from "$scratch/group.json" > /dev/null
+check "running the same list again does not add the findings twice" \
+    "$(jq '.todos | length' "$(review_json src/A.java)")" "2"
+check "and numbers them from 1 again" "$(jq -c '[.todos[].id]' "$(review_json src/A.java)")" "[1,2]"
+
+jq '(.[0].findings[1].fix) = "Must: reworded." | .[1].findings = [{"line": 3, "severity": "Major", "category": "naming", "issue": "vague", "fix": "Must: clear."}] | .[1].verdict = "NEEDS_ATTENTION"' \
+    "$scratch/group.json" > "$scratch/corrected.json"
+bash "$SCRIPT_DIR/file-review-write.sh" "$TICKET" --from "$scratch/corrected.json" > /dev/null
+check "a corrected list replaces each file's findings" \
+    "$(jq -r '[.todos[].fix] | join("|")' "$(review_json src/A.java)")" "Must: one.|Must: reworded."
+check "a file that now has a finding gets it, once" \
+    "$(jq -r '.verdict + "/" + (.todos | length | tostring)' "$(review_json src/B.java)")" "NEEDS_ATTENTION/1"
+
 before_other=$(cat "$(review_json src/Other.java)")
 placeholder "src/C.java"
 placeholder "src/D.java"
@@ -149,6 +162,12 @@ check "a bad finding fails the group" "$?" "1"
 check "the earlier file's verdict is rolled back" "$(jq -r '.verdict' "$(review_json src/C.java)")" "null"
 check "the bad file has no findings" "$(jq '.todos | length' "$(review_json src/D.java)")" "0"
 check "a file outside the group is untouched" "$(cat "$(review_json src/Other.java)")" "$before_other"
+
+before_a=$(cat "$(review_json src/A.java)")
+jq '.[1].findings[0].category = "nonsense"' "$scratch/corrected.json" > "$scratch/bad-rerun.json"
+bash "$SCRIPT_DIR/file-review-write.sh" "$TICKET" --from "$scratch/bad-rerun.json" > /dev/null 2>&1
+check "a refused rerun fails" "$?" "1"
+check "and puts back the findings it cleared" "$(cat "$(review_json src/A.java)")" "$before_a"
 
 cat > "$scratch/missing.json" <<EOF
 [{"repo": "$REPO", "file": "src/NoPlaceholder.java", "verdict": "SAFE", "reason": "x", "findings": []}]

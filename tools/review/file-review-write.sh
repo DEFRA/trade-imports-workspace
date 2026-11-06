@@ -23,7 +23,10 @@
 #      "reason": "one sentence", "findings": []}
 #   ]
 #
-# Each finding goes through file-review-add-item.sh and each verdict through
+# Each entry is that file's whole review: its earlier findings are cleared
+# first, so running this again on a corrected list replaces what the last
+# run wrote instead of adding to it. Each finding then goes through
+# file-review-add-item.sh and each verdict through
 # file-review-set-verdict.sh, so the same checks apply. Every file's
 # placeholder must already exist. All or nothing: if any finding or verdict
 # is refused, every file in the group is put back as it was.
@@ -77,6 +80,11 @@ for ((i = 0; i < count; i++)); do
     repo=$(jq -r ".[$i].repo // empty" "$FROM")
     file=$(jq -r ".[$i].file // empty" "$FROM")
     [[ -n "$repo" && -n "$file" ]] || fail "Entry $((i + 1)): needs repo and file"
+
+    target="$review_dir/file-reviews/$repo/${file//\//_}.review.json"
+    [[ -f "$target" ]] || fail "$file: no placeholder at $target"
+    cleared=$(jq '.todos = []' "$target") || fail "$file: cannot read $target"
+    printf '%s\n' "$cleared" > "$target"
 
     findings=$(jq ".[$i].findings // [] | length" "$FROM")
     for ((j = 0; j < findings; j++)); do

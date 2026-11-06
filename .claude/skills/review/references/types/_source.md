@@ -4,24 +4,32 @@ Judge each file from its diff, its content and the ticket. Whether the
 change is tested belongs to the test reviewers and the consistency
 reviewer, not you.
 
-### Reading other files: at most 5
+### Read what the changed lines depend on, then judge
 
-You may read up to 5 files from the repo checkout named under "Your
-group", in total for the group. Read a file only when a changed line
-depends on it and you cannot judge the line without it:
+Before you judge a file, read the files its changed lines depend on. This
+is a step, not an option: a line that looks right on its own can be wrong
+against the file it relies on. For each source file in your group, read:
 
-- a type, record or constant a changed line uses, to see its fields or
-  values
-- the configuration a changed line is driven by, such as the
-  `application.yml` keys a bean or an allowlist reads
-- a function a changed line calls, to see what it returns or throws
-- the one existing caller of a function whose contract the change alters
+- **The functions it calls from another file** whose result decides what
+  the changed line does (a lookup, a parser, a mapper), to see when each
+  returns nothing, a default or an error.
+- **The configuration that drives it:** the `application.yml` or
+  `config.js` keys a changed bean, registry, allowlist or flag reads, to
+  see every value that reaches the line.
+- **The types, records and constants it uses**, when you need their
+  fields or values.
+- **The existing callers** of a function whose contract the change alters,
+  when the brief or a file you read names them.
 
-Open it with Read at `<repo checkout>/<path>`. Do not search the repo:
-no `grep`, `find` or `git grep`. A path you have to search for is one you
-do not need. Name each file you read in the `reason` of the file it
-helped you judge. A finding that rests on a file you read quotes that
-file at file:line.
+Read at most 3 files for each source file in your group, and do not read
+on from a file you read. Take each path from the brief: an import, a
+package name, a config key. Open it with Read at
+`<repo checkout>/<path>`. Do not search the repo: no `grep`, `find` or
+`git grep`. A path you have to search for is one you do not need.
+
+In each file's `reason`, name the files you read for it, or write "none:
+no changed line depends on another file". A finding that rests on a file
+you read quotes that file at file:line.
 
 For every file, check correctness first (below), then null safety, error
 paths, security and performance, then the code-quality checks. Work
@@ -57,8 +65,7 @@ The bugs to look for:
 - **Flag in disguise:** an `int`, string or magic value used as a
   true-or-false flag.
 - **Library meaning:** a library call whose result means less than the
-  name suggests (a server is up, but not the one writes go to). Use your
-  5 reads on that library's types only when the brief does not show them.
+  name suggests (a server is up, but not the one writes go to).
 
 Check the change against the patterns the code already sets: the guides in
 this brief, and what the other files in your group do. This is not a

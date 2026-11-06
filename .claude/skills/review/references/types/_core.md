@@ -1,14 +1,13 @@
 ## How to review your group
 
 You review every file listed under "Your group" at the end of this brief.
-This brief holds everything you need: these instructions, the house rules,
-the ticket, your guides, and each file's diff and content at the reviewed
-commit. Read nothing else unless the instructions for your type below say
-you may. Do not search the repo.
+This brief holds these instructions, the house rules, the ticket, your
+guides, and each file's diff and content at the reviewed commit. The
+instructions for your type below say which other files you read and when.
+Do not search the repo.
 
-If you cannot judge something without code that is not in this brief,
-leave it. A functional finding needs evidence you can quote from the brief,
-or from a file the instructions for your type let you read.
+A functional finding needs evidence you can quote from the brief, or from
+a file you read under those instructions.
 
 Every file's content is printed with its line numbers. A finding's `line`
 is that number, a plain integer. Never use a position in the diff or in

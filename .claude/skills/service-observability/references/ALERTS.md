@@ -80,13 +80,11 @@ alone.** `external.dependency.available` is published with `dependency` as its o
 dimension, so adding `operation` to its query finds no data in the same
 way.
 
-**Do not alert on `external.dependency.available` for an HTTP dependency.** There
-it reports the outcome of the last call, however old. Behind a cache it
-can read 1 for up to the cache lifetime after the dependency goes down,
-and one failed call holds it at 0 until the next call succeeds. It is
+**Do not alert on `external.dependency.available` for an HTTP dependency.** It is
 for the dashboard. The "Dependency unavailable" alert uses
 `external.call.failure` instead, which only reports calls that happened in
-the window.
+the window. `METRICS.md` → "Availability: passive or active" says why,
+for a passive reading and an active probe both.
 
 **Do alert on it for a database.** A database's `external.dependency.available`
 comes from the driver's heartbeats every 10 seconds (`METRICS.md` → "A

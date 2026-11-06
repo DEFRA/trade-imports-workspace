@@ -125,6 +125,8 @@ Rule 3 counts once more for each extra per-dependency slow rule. Then prove each
 
 ## Not alerted on
 
-- `external.dependency.available` for an HTTP dependency: it reports the last
-  call's outcome however old, so it lags. It is for the dashboard only.
-  A database's is fresh, and rule 1a alerts on it.
+- `external.dependency.available` for an HTTP dependency. It is for the
+  dashboard only; rule 1 alerts on `external.call.failure` instead
+  (`references/METRICS.md` → "Availability: passive or active" says
+  why). A database's comes from the driver's heartbeats, and rule 1a
+  alerts on it.

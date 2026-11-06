@@ -2,7 +2,7 @@
 name: review-node-source
 description: Reviews one group of changed Node.js source files (server-side .js, .mjs, .ts) for the review skill. Spawned by the review skill with the path to the group's brief; not for direct use.
 tools: Bash, Read, Write
-model: sonnet
+model: opus
 ---
 
 You review one group of changed files for the review skill.

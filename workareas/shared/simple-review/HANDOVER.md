@@ -24,9 +24,13 @@ earlier review is in `workareas/reviews/EUDPA-674-original/`.
   no source. They take over `ac-check`.
 - The consistency reviewer owns the checks that need two files. There is no
   cross-repo check: E2E owns that.
-- Models: Sonnet for source, tests, UI, E2E, spec and (since run 3) infra.
-  Haiku for perf and skills. Opus for consistency. Sonnet for the parent, if the skill can
-  set it.
+- Models: Opus for source (since run 5) and consistency. Sonnet for
+  tests, UI, E2E, spec, infra (since run 4) and the parent. Haiku for perf
+  and skills. Source moved to Opus because, given the same briefs and the
+  same reads, Sonnet missed both source bugs and Opus found them (see
+  "Source reviewer test" below). Writing the inference into the
+  instructions instead would teach the reviewer these two bug shapes, not
+  the next one.
 - Reviewers report back in one line. All writes are batched.
 
 ## Done (commits)
@@ -131,6 +135,41 @@ again CONCERNS. It found 51 open findings. The full comparison is in
 - `SKILL.md` merge step: items in several files that break the same house
   rule the same way (provenance narration) are one root.
 
+### Run 4 (done)
+
+Workarea `workareas/reviews/EUDPA-674-run4/`, session
+`35c792b7-40d8-40bf-81d6-fa4fce5f0af2`. **10.3M tokens**, CONCERNS, 50
+open findings. Full comparison in [`run4-comparison.md`](run4-comparison.md).
+Found the replica-set bug, the `recordCall` int flag and the removed
+overrides, and merged the provenance findings into one. Missed
+`Unit.COUNT` and `countryCode: undefined`.
+
+Why: run 1 found both by reading another file (`application.yml:94-98`,
+`countries/index.js`). Run 4's source reviewers read nothing beyond the
+brief: `_core.md` told every reviewer the brief held "everything you
+need" and to "leave it" otherwise, and `_source.md` allowed 5 reads per
+group only "when you cannot judge the line without it".
+
+### Source reviewer test (done)
+
+`7e12fada`: `_source.md` makes reading what the changed lines depend on a
+step (the callee, the config that drives it, the types, the callers; up to
+3 files per source file, no search), and every file's `reason` names what
+was read. `_core.md` no longer says "leave it".
+
+Then only the two groups that held the bugs were run, in workarea
+`workareas/reviews/EUDPA-674-src-test/` (results kept in
+`sonnet-findings/` and `opus-findings/`):
+
+| | Sonnet | Opus |
+|---|---|---|
+| `Unit.COUNT` | Missed: read the sibling timer classes, not `application.yml` | Found, citing `application.yml:94-98` |
+| `countryCode: undefined` | Missed, though it read `countries/index.js` | Found, citing `countries/index.js:37` |
+| Also | — | Run 1 #10 (long task timers dropped), #3 (Operator against address names), the replica-set bug again |
+| Tokens | 0.50M + 0.27M | 0.70M + 0.28M |
+
+So `review-java-source` and `review-node-source` now run on Opus.
+
 ## Next
 
 A new script needs its executable bit before an agent can run it. Policy
@@ -138,23 +177,22 @@ blocks `chmod` in a session and denies `bash <script>`, and a hook runs a
 changed script only once it is committed. So stage a new script with
 `git add --chmod=+x` and have the user run `! chmod +x` on it.
 
-1. **Run 4.** Trial run, don't post. Set up with
-   `start-review.sh EUDPA-674 --id EUDPA-674-run4 --same-as EUDPA-674`,
-   then use `EUDPA-674-run4` as the review id for every later step. Use
+1. **Run 5.** Trial run, don't post. Set up with
+   `start-review.sh EUDPA-674 --id EUDPA-674-run5 --same-as EUDPA-674`,
+   then use `EUDPA-674-run5` as the review id for every later step. Use
    the same four PRs, #300 and #43 included.
-2. **Compare run 4 with runs 1 to 3** as `run4-comparison.md`, in the same
-   shape as `run3-comparison.md`.
-   - Were address-book #19 (`MongoAvailability.java:56`, any server
-     `isOk()`), #11 (`EmfMeterRegistry.java:106,122`, `Unit.COUNT`), run
-     2's `recordCall` int flag, and animals-frontend #3
-     (`to-wire-address.js:9`, `countryCode: undefined`) found?
-   - Was the ins-frontend `package.json` overrides removal found?
-   - Were the workspace provenance findings merged into one item?
-   - Tokens: the source groups and infra will cost more. Check that the
-     total stays well under run 2's 18.9M.
-   - `CLAUDE.md:50` is a provenance statement, not a deleted name, so
-     `stale-search.sh` will not find it. Leave it unless run 4 shows a
-     cheap way.
+2. **Compare run 5 with runs 1 to 4** as `run5-comparison.md`, in the same
+   shape as `run4-comparison.md`.
+   - Were `Unit.COUNT` (`EmfMeterRegistry.java:106,122`) and
+     `countryCode: undefined` (`to-wire-address.js:9`) found, and are run
+     4's finds (replica set, `int` flag, overrides, provenance merge) kept?
+   - Check the two new source findings from the test against the code:
+     `OperatorService.java:80` (search counted before a failed query) and
+     `AddressSearchType.java:8` (`QUERY_AND_COUNTRY` names an OR query).
+   - Tokens: source on Opus should add about 0.5-1M. Check the total and
+     the four source groups against run 4.
+   - Test reviewers stay on Sonnet. If run 5 still shows thin coverage
+     gaps, test them the same way: run the two test groups on each model.
 
 ## Side issues (not this branch)
 

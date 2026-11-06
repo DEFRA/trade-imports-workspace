@@ -52,10 +52,11 @@ as a flat key with a string value, so CDP drops them all.
 Two pieces, both in address-book:
 
 1. **Set the fields as SLF4J key-value pairs**, with the duration as a
-   `long`:
+   `long`. A successful call logs at INFO. A failed call logs at WARN,
+   with the cause attached:
 
    ```java
-   log.atInfo()
+   log.atLevel(level)
        .addKeyValue("event.category", "external-call")
        .addKeyValue("event.action", action)
        .addKeyValue("event.outcome", outcome)
@@ -110,7 +111,8 @@ reaches OpenSearch flat.
 | Test | Proves |
 |---|---|
 | Encoder unit test: log through a real logger, then `encoder.encode(event)` and parse the JSON | A nested `event` object; `duration` is an integral number; no flat `event.category`, `event.action`, `event.outcome` or `event.duration` keys (the ECS encoder's own flat `event.dataset` stays); `trace.id` and `error.*` kept; a null value written as JSON `null` and a non-finite number as a string; a line with no `event.*` pairs is byte-for-byte the ECS encoder's |
-| Unit test with a capturing log appender | One line per call, with the four `event.*` key-value pairs, and the duration a `Long` |
+| Unit test with a capturing log appender, a successful call (address-book's `ExternalCallMetricsTest`) | One line per call, at the level piece 1 gives a successful call, with the four `event.*` key-value pairs, and the duration a `Long` |
+| Unit test with a capturing log appender, a failed call (address-book's `ExternalCallMetricsTest`) | One line per call, with the level and cause piece 1 gives a failed call, and `event.outcome` `failure` |
 | Integration test sending `x-cdp-request-id`, encoding the line with the root logger's `CONSOLE` encoder | `logback-spring.xml` names the new encoder, and the line carries `trace.id` and the nested `event` object |
 
 The integration test is the one that fails if `logback-spring.xml` is

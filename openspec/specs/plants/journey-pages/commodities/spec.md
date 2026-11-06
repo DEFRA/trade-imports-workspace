@@ -82,7 +82,13 @@ The system MUST offer only a save-and-continue action on this page, with no save
 
 ### Requirement: The back link returns to commodity type in the opening sequence, and to Overview otherwise
 **ID**: REQ-PLANTS-COMMODITIES-007
-The system MUST return the user to the commodity type page when they follow the back link from the commodities list during the opening sequence, and to Overview when the list was opened from Overview.
+The system MUST return the user to the commodity type page when they follow the back link from the commodities list during the opening sequence, and to Overview when the list was opened from Overview. On a draft opened from a Change link on the review, the back link MUST open the commodity type page too, as `plants/journey-flow` describes.
+
+#### Scenario: On a draft opened from a Change link, the back link opens commodity type
+**ID**: SCN-PLANTS-COMMODITIES-007-C
+- **GIVEN** the review of a draft notification
+- **WHEN** the user follows a Change link to the commodities list and then the back link
+- **THEN** the commodity type page is shown
 
 #### Scenario: The back link opens Overview when the list was opened from Overview
 **ID**: SCN-PLANTS-COMMODITIES-007-A

@@ -67,7 +67,14 @@ The system MUST refuse to save an invalid answer to either question, on save and
 
 ### Requirement: The back link returns to the page before it in the opening sequence, and to Overview otherwise
 **ID**: REQ-ADDL-DETAILS-004
-The system MUST return the user, when they follow the back link from the additional details page during the opening sequence, to identification details when any chosen commodity needs identifiers and to commodity details otherwise, and MUST return them to Overview when the page was opened from its Overview task.
+The system MUST return the user, when they follow the back link from the additional details page during the opening sequence, to identification details when any chosen commodity needs identifiers and to commodity details otherwise, and MUST return them to Overview when the page was opened from its Overview task. On a draft opened from a Change link on the review, the back link MUST open the same page it opens in the opening sequence, as `live-animals/journey-flow` describes.
+
+#### Scenario: On a draft opened from a Change link, the back link opens the page before it
+**ID**: SCN-ADDL-DETAILS-004-D
+- **GIVEN** the review of a draft notification
+- **WHEN** the user follows the Change link for the additional animal details and then the back link
+- **THEN** identification details is shown when any chosen commodity needs identifiers
+- **AND** commodity details is shown otherwise
 
 #### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-ADDL-DETAILS-004-A

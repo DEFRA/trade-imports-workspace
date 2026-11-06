@@ -1,29 +1,30 @@
 {
   "programme": "design-release-2-1-type-question",
   "generatedFrom": [
-    "ruling:sam-2026-10-09-pm",
-    "ruling:sam-2026-10-09-templates",
-    "ruling:sam-2026-10-09",
-    "ruling:sam-2026-10-07",
     "confluence:6497338582",
-    "document:dr1-parity-notes",
     "document:dr1-parity-backlog",
+    "document:dr1-parity-notes",
     "prototype:dr2-1-source",
-    "trace:prototype-dr2-1",
     "prototype:dr2-1-specs",
-    "repo:backend",
-    "repo:insbackend",
     "repo:addressbook",
+    "repo:backend",
+    "repo:frontend",
+    "repo:insbackend",
+    "repo:insfrontend",
+    "repo:perftests",
+    "repo:plantsfrontend",
     "repo:referencedata",
     "repo:stub",
-    "repo:frontend",
-    "repo:insfrontend",
-    "repo:plantsfrontend",
     "repo:tests",
-    "repo:perftests",
+    "review:type-question-theme",
+    "ruling:sam-2026-10-07",
+    "ruling:sam-2026-10-09",
+    "ruling:sam-2026-10-09-pm",
+    "ruling:sam-2026-10-09-templates",
     "trace:animals-fit",
+    "trace:e2e",
     "trace:ins-fit",
-    "trace:e2e"
+    "trace:prototype-dr2-1"
   ],
   "invariants": [
     "Every new or changed English string gets a Welsh draft beside it in the same change, as the service's other copy does.",
@@ -55,6 +56,10 @@
     "plantsfrontend": {
       "path": "repos/trade-imports-plants-frontend",
       "github": "DEFRA/trade-imports-plants-frontend"
+    },
+    "admin": {
+      "path": "repos/trade-imports-animals-admin",
+      "github": "DEFRA/trade-imports-animals-admin"
     }
   },
   "theme": "type-question",
@@ -106,7 +111,7 @@
       ],
       "dependsOn": [],
       "theme": "type-question",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -174,7 +179,9 @@
         "req-007",
         "req-1910"
       ],
-      "openQuestions": [],
+      "openQuestions": [
+        "Follow-up cleanup: 21 other test files in trade-imports-ins-frontend (auth/*.test.js, plugins/*.test.js, page-maturity, address-book controllers, dashboard controller, common/helpers tests and others) mock the repo's own src/auth/get-oidc-config.js with vi.mock, against the house rule never to mock your own modules. The inc-148 judge fixed only the notification-type controller test (and any file this change touches) by serving the discovery document with nock through a shared helper; the rest need the same change in their own increment."
+      ],
       "notes": [
         "Kept as inc-148, rewritten to the templates ruling and the 9 October afternoon ruling. Only the INS dashboard's summary information is blocked, and 'a row that needs only the INS home's controls (Create new, Use template, the type question) goes ahead on today's INS home' (ruling-sam-2026-10-09-pm-p3-063). So this row does not wait on the overall dashboard row (inc-128). It repoints today's INS home start control at the type question; inc-149 then makes that control Create new.",
         "The plants types land on plants' own first page with a new plants draft (templates ruling p1-039), so the plants criterion checks the plants draft, not just the landing. The INS germinal list's 'Create new' leaves this programme (p3-091). The type question's Germinal option stays the way into a germinal notification.",
@@ -186,10 +193,33 @@
         "Cross-service config per environment, all on main except the Defra ID form-action origin. INS reads tradeImportsAnimalsFrontend.baseUrl (TRADE_IMPORTS_ANIMALS_FRONTEND_URL) and tradeImportsPlantsFrontend.baseUrl (TRADE_IMPORTS_PLANTS_FRONTEND_URL). Local stack and CI stack (the same docker/stack/frontend.compose.yml): http://localhost:3000 and http://localhost:3003. CDP dev, test and perf-test (cdp-app-config): https://trade-imports-animals-frontend.<env>.cdp-int.defra.cloud and https://trade-imports-plants-frontend.<env>.cdp-int.defra.cloud. The hand-over is a POST on INS redirecting to the start entry, and for a trader with no session there on to the Defra ID stub, so INS's CSP form-action must also allow the browser-facing stub origin: http://localhost:3007 in both stacks, https://trade-imports-defra-id-stub.<env>.cdp-int.defra.cloud in CDP. The stale branch's DEFRA_ID_FORM_ACTION_ORIGINS defaults to localhost:3007 and is set in neither compose nor cdp-app-config, so as written it passes locally and in CI and fails in CDP. Either set it explicitly in compose and have Sam add it to cdp-app-config for ins-frontend dev, test and perf-test (agents may not write CDP repos), or derive it from DEFRA_ID_OIDC_CONFIGURATION_URL through the existing defraId.signOutHostnameRewrite. That URL is already browser-facing in CDP, where the rewrite is off; in the stacks the rewrite maps host.docker.internal to localhost. Deriving it needs no new environment config. The plan picks one. No plants-to-INS link is added here, so plants' missing TRADE_IMPORTS_INS_FRONTEND_URL in CDP (for inc-150) does not affect this row.",
         "Tests: the hand-over specs live in tests/ins/ and assert destinations by new URL(requireBaseUrl('TRADE_IMPORTS_*_FRONTEND_BASE_URL')).origin, with no literal hosts. They are not tagged @compose, so the CDP run covers them. Tag them @animals-frontend, and add a @plants-frontend tag to the trade-imports-plants-frontend entry in the workspace's config/e2e-tests-pr-scope.json, so animals and plants PRs run them. At least one hand-over test starts with no session on the receiving service. Locally, animals and plants share the yar cookie name 'session' on localhost, so a spec moving between those two in one browser context can clobber the session; INS is unaffected (ins-session).",
         "Seen while checking, not a criterion: a plants type hands over to plants' commodity-type page, which also asks 'What are you importing?', with labels 'Potatoes (seed or ware)' and 'Wood and cut trees' against the question's 'Potatoes (seed and ware)' and 'Wood products'. The trader answers twice. No ruling covers carrying the choice across; raise it with Sam rather than build it.",
-        "Salvage, verified with git cherry against main on 4 November; each commit below has a single parent, so none carries another branch's merge. Take, from origin/feat/NO_JIRA-design-release-2-1-type-question-and-templates (stale, ruled 20 October), cherry-picked in merge order onto feat/EUDPA-690-type-question: (1) trade-imports-animals-frontend e6f5d7cf, the GET /live-animals/start entry; expect text conflicts in the dashboard controller, its tests and fit spec, add-a-set.md, journey-flow-and-gates.md and scripts/lighthouse/audit-targets.js. (2) trade-imports-plants-frontend 4d08998, GET /high-risk-plants/start; light conflicts in the dashboard controller and tests (EUDPA-718, EUDPA-737), docs and audit targets. (3) trade-imports-ins-frontend 2d7619e: the notification-type feature (9 new files), destinations.js, the GERMINAL_PRODUCTS and HIGH_RISK_PLANTS set bases, the paths and inDashboardSection change, and the shared copy. Keep or replace its CSP defraId.formActionOrigins as the cross-service note says. Its dashboard 'always Start a new notification' edit is superseded by inc-149's fd9b1c3 on the same branch. (4) trade-imports-ins-tests 3205feb, the notification-type page object, spec and germinalProducts set base: swap the @integration tag for @animals-frontend and @plants-frontend, and merge page-objects/ins/dashboard-page.ts by hand (EUDPA-710, 743). (5) trade-imports-ins-tests f583ca8, only the notification-type-page.ts locator line and the one spec line; drop both origin-of-import PNG rebaselines, which main has redone since (EUDPA-720, EUDPA-759). (6) trade-imports-workspace 7479b4ea, inc-148's slice by hand: openspec/specs/ins/notification-type/spec.md requirements 1 to 3 (lines 1-79), and its coverage.json minus the template entries, re-pointed at the tests as built. Also live-animals journey-flow REQ-FLOW-015 and plants journey-flow REQ-PLANTS-FLOW-016, without their opening-sequence clauses, and a new ins/service-navigation scenario for Dashboard current on the type question, without Templates. Leave: everything else in 7479b4ea (notification-templates, the notification-dashboard edits that belong to inc-149, the origin-of-import edits that belong to inc-150, the Templates parts of service-navigation, live-animals and plants service-navigation); workspace 10823b38 on feat/NO_JIRA-design-release-2-1 (superseded by 7479b4ea, provenance only); every -combined branch; the templates commits; animals-backend; and defra-id-stub 8a0f3220.",
+        "Salvage, verified with git cherry against main on 4 November; each commit below has a single parent, so none carries another branch's merge. Take, from origin/feat/NO_JIRA-design-release-2-1-type-question-and-templates (stale, ruled 20 October), cherry-picked in merge order onto feat/EUDPA-690-type-question: (1) trade-imports-animals-frontend e6f5d7cf, the GET /live-animals/start entry; expect text conflicts in the dashboard controller, its tests and fit spec, add-a-set.md, journey-flow-and-gates.md and scripts/lighthouse/audit-targets.js. (2) trade-imports-plants-frontend 4d08998, GET /high-risk-plants/start; light conflicts in the dashboard controller and tests (EUDPA-718, EUDPA-737), docs and audit targets. (3) trade-imports-ins-frontend 2d7619e: the notification-type feature (9 new files), destinations.js, the GERMINAL_PRODUCTS and HIGH_RISK_PLANTS set bases, the paths and inDashboardSection change, and the shared copy. Keep or replace its CSP defraId.formActionOrigins as the cross-service note says. Its dashboard 'always Start a new notification' edit is superseded by inc-149's fd9b1c3 on the same branch. (4) trade-imports-ins-tests 3205feb, the notification-type page object, spec and germinalProducts set base: swap the @integration tag for @animals-frontend and @plants-frontend, and merge page-objects/ins/dashboard-page.ts by hand (EUDPA-710, 743). (5) trade-imports-ins-tests f583ca8, only the notification-type-page.ts locator line and the one spec line; drop both origin-of-import PNG rebaselines, which main has redone since (EUDPA-720, EUDPA-759). (6) trade-imports-workspace 7479b4ea, inc-148's slice by hand: openspec/specs/ins/notification-type/spec.md requirements 1 to 3 (lines 1-79), and its coverage.json minus the template entries, re-pointed at the tests as built. Also live-animals journey-flow REQ-FLOW-017 and plants journey-flow REQ-PLANTS-FLOW-016, without their opening-sequence clauses, and a new ins/service-navigation scenario for Dashboard current on the type question, without Templates. Leave: everything else in 7479b4ea (notification-templates, the notification-dashboard edits that belong to inc-149, the origin-of-import edits that belong to inc-150, the Templates parts of service-navigation, live-animals and plants service-navigation); workspace 10823b38 on feat/NO_JIRA-design-release-2-1 (superseded by 7479b4ea, provenance only); every -combined branch; the templates commits; animals-backend; and defra-id-stub 8a0f3220.",
         "Trimmed 6 November: its navigation (where Save and continue and Back go, the opening run, amend returns) was taken out; EUDPA-774 owns it."
       ],
-      "gate": "Look at the cross-service start before anything builds on it: the type page in the INS front door, how Live animals hands over to the animals frontend's start (today only a form post with its own request forgery token), how Germinal products hands over to the germinal set's start under /germinal-products before that set exists, and how the plants types hand over to the plants service. Then check that each hand-over takes its address from config and passes on the local stack, the CI stack and a CDP environment, including when the trader is not yet signed in to the receiving service. The re-selection row, template creation's type question and the germinal set's own start copy this pattern."
+      "gate": "Look at the cross-service start before anything builds on it: the type page in the INS front door, how Live animals hands over to the animals frontend's start (today only a form post with its own request forgery token), how Germinal products hands over to the germinal set's start under /germinal-products before that set exists, and how the plants types hand over to the plants service. Then check that each hand-over takes its address from config and passes on the local stack, the CI stack and a CDP environment, including when the trader is not yet signed in to the receiving service. The re-selection row, template creation's type question and the germinal set's own start copy this pattern.",
+      "commit": "aae6429c89b70a015aae26aceaa6967a38e3b5a0 e15848e5811f1c43895c0dec40b20780f232a1c1 f988c644466432b58973ea8c8095b711a0ef1ee6 d206b2666b1cca317030b6f235d66678a52c5b19",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/463",
+          "repo": "trade-imports-animals-frontend",
+          "number": 463
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/135",
+          "repo": "trade-imports-plants-frontend",
+          "number": 135
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/74",
+          "repo": "trade-imports-ins-frontend",
+          "number": 74
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/86",
+          "repo": "trade-imports-ins-tests",
+          "number": 86
+        }
+      ]
     },
     {
       "id": "inc-149",
@@ -207,7 +237,7 @@
         "inc-148"
       ],
       "theme": "type-question",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "insfrontend",
@@ -289,7 +319,20 @@
         "Salvage, openspec: 016663f5 (on feat/NO_JIRA-design-release-2-1) is the earlier copy. Read it for provenance only.",
         "Salvage, leave behind: 28d32ac (Use template), def47e5 (Templates navigation) and 23f0b03 (Start a template), all parked templates work."
       ],
-      "gate": null
+      "gate": null,
+      "commit": "1522280f8b568d5ee1a52ef749487dd7e3a814da a0f8cc9b9f85cd6960808b14539e4277a0e93a32",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/74",
+          "repo": "trade-imports-ins-frontend",
+          "number": 74
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/86",
+          "repo": "trade-imports-ins-tests",
+          "number": 86
+        }
+      ]
     },
     {
       "id": "inc-150",
@@ -307,7 +350,7 @@
         "inc-148"
       ],
       "theme": "type-question",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -356,7 +399,9 @@
         "req-008",
         "req-013"
       ],
-      "openQuestions": [],
+      "openQuestions": [
+        "Twin fix: trade-imports-plants-frontend src/config/nunjucks/context/context.js:48 needs the INS base URL join (config.get('tradeImportsInsFrontend.baseUrl').replace(/\\/$/, '')) moved onto a buildInsFrontendUrl helper in src/server/common/helpers/ins-frontend-url.js, as the animals frontend now has, so one function owns the trailing-slash rule (from the inc-150 review findings on the duplicated INS URL join)."
+      ],
       "notes": [
         "Kept as inc-150; requirements unchanged. Combines req-013 (the live-animals origin Back link; the germinal half is req-1740) with req-008: returning to the type question can only be observed through the origin Back link, and both are reviewed on the same two pages.",
         "Depends on inc-148 (the type question and the /live-animals/start entry). Both are on the one branch feat/EUDPA-690-type-question, so inc-148 is built first on that branch, not merged to main first. req-013's template-edit case (origin Back while a saved template is changed) belonged to inc-159, which is parked with the templates rows from 4 November. This row does not build it. req-008's 'a different type' also covers Potatoes (seed and ware) and Wood products. They take inc-148's shared plants destination, so the Plants for planting criterion stands for all three plants types.",
@@ -368,7 +413,25 @@
         "Salvage: no code to take for this row. No branch in any repo holds it: the stale theme branch and the combined branch stop at inc-148 and inc-149. Reuse from main: INS buildSetBaseUrl and SET_BASES with list.js buildNotificationLink for the return URL. Take nothing from trade-imports-workspace 7479b4ea's origin-of-import edit (templates-only REQ-ORIGIN-019). Leave the stale INS 2d7619e notification-type controller's Back link and its no-preselect GET to inc-148. This row only extends them.",
         "Trimmed 6 November: its navigation (where Save and continue and Back go, the opening run, amend returns) was taken out; EUDPA-774 owns it."
       ],
-      "gate": null
+      "gate": null,
+      "commit": "ef231b662b1b0a41c704203c5247c702c1e2e0ca 20e7a64209f3ebf8dfa3f4ec9d753e1a9d6237a7 d5226f5adbf200159acc8561bd2721138992a0ee",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/463",
+          "repo": "trade-imports-animals-frontend",
+          "number": 463
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/74",
+          "repo": "trade-imports-ins-frontend",
+          "number": 74
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/86",
+          "repo": "trade-imports-ins-tests",
+          "number": 86
+        }
+      ]
     },
     {
       "id": "inc-247",
@@ -381,7 +444,7 @@
       ],
       "dependsOn": [],
       "theme": "type-question",
-      "status": "todo",
+      "status": "done",
       "kind": "test",
       "repos": [
         "plantsfrontend",
@@ -404,18 +467,36 @@
       "requirements": [
         "req-2136"
       ],
-      "openQuestions": [],
+      "openQuestions": [
+        "Twin fix: trade-imports-animals-frontend src/server/app/sets/live-animals/journeys/linear/features/{contact,additional-details,import-reason,origin}/*.fit.spec.js each inline a radio/input value tamper (`.first().evaluate((input) => { input.value = ...; input.checked = true })`); they need one shared tamper helper in the animals fit journey helper with the local copies deleted, as the plants finding that moved the commodity-type and arrival-status tamper into fit/high-risk-plants-journey.js."
+      ],
       "notes": [
         "Resolves c-323 by ruling:sam-2026-10-26 claim 1. The Design Release 2.1 soft save (c-211, c-313) no longer applies on this page.",
         "Re-analysis 4 November: the behaviour is already on main. plants-frontend origin/main ed29ede commodity-type/controller.js:104-111 validates with no hub-exit allowance before either button acts. It landed with c832979 (#120, 26 Oct, EUDPA-732), built as design-snagging-followups inc-232, which is done. Server-side proof exists: controller.test.js:160 (nothing chosen), :175 (unoffered type) and :209 (valid choice to the overview). The workspace spec already says 'on save and continue and on save and return to overview alike' (origin/main 4fcec603 openspec/specs/plants/journey-pages/commodity-type/spec.md:48-65, SCN-PLANTS-COMMODITY-TYPE-004-B). Its coverage rests on that unit test alone (openspec/coverage/plants/journey-pages/commodity-type/coverage.json:83).",
         "Re-analysis 4 November, what is missing: no browser test shows the error summary, the inline error and the trader staying on the page for Save and return. commodity-type.fit.spec.js:172 and :191 exercise Save and continue only. tests origin/main ed3b378 has no commodity-type Save and return e2e; the plants precedent for one is arrival.spec.ts:186-203. The spec has no scenario for an unoffered type on Save and return (SCN-003-A names save and continue only). So this is a test-and-spec row with no production code. If the new tests go red, the fix is in the commodity-type controller, and the row becomes a fix.",
         "Re-analysis 4 November, the theme envelope: invariant 10 of the type-question-and-templates backlog still says Save and return 'saves without the page's required-answer checks' (c-211, ruling:sam-2026-10-07). ruling:sam-2026-10-26 claim 1 replaced c-211 and c-313. When the split writes the type-question backlog, the invariant should state the same-checks rule instead. Otherwise a build agent reading the envelope will undo this row.",
         "Re-analysis 4 November, cross-service links: none. The row adds and changes no link or redirect between INS, animals and plants. Save and return goes to the plants overview within the plants frontend, so CDP, the local Docker stack and the CI Docker stack are unaffected, and no compose, cdp-app-config or PR-scope change is needed. The plants PR scope (config/e2e-tests-pr-scope.json, tests/plants/) already runs an e2e placed in tests/plants/. It must not be tagged @compose and should assert on the page's own URL, so it also runs against CDP.",
-        "Salvage: no code to take. The behaviour is plants-frontend main c832979 (#120), patch-equal to d375ab8 on origin/fix/EUDPA-732-save-and-return-to-overview-makes-the-sa, so do not cherry-pick either. The stale branch feat/NO_JIRA-design-release-2-1-type-question-and-templates has nothing for this row, in plants (4d08998 is inc-148's start entry, 07422549 is parked templates work) or in tests. The openspec commodity-type spec and coverage are updated in the workspace repo on the same branch name, feat/EUDPA-690-type-question."
+        "Salvage: no code to take. The behaviour is plants-frontend main c832979 (#120), patch-equal to d375ab8 on origin/fix/EUDPA-732-save-and-return-to-overview-makes-the-sa, so do not cherry-pick either. The stale branch feat/NO_JIRA-design-release-2-1-type-question-and-templates has nothing for this row, in plants (4d08998 is inc-148's start entry, 07422549 is parked templates work) or in tests. The openspec commodity-type spec and coverage are updated in the workspace repo on the same branch name, feat/EUDPA-690-type-question.",
+        "ATTEMPT FAILED: red verification ladder. The gate trade-imports-ins-tests e2e rung did not run tests/plants/e2e/features/commodities.spec.ts, the plan integration proof for the new Save and return E2E tests (it ran 42 animals and ins tests only). That spec passed 10 of 10 when run directly. No merge was in progress in any repo, so none was aborted. Local commits: none in any repo (0 ahead of origin in all four), so none moved. Patches: workareas/shared/design-release-2-1/themes/type-question/logs/inc-247-preserve-tests.staged.patch, inc-247-preserve-tests.unstaged.patch, inc-247-preserve-plantsfrontend.staged.patch, inc-247-preserve-plantsfrontend.unstaged.patch. Unresolved paths and status files alongside them. Stashes: trade-imports-ins-tests stash@{0} (failed-inc-247), trade-imports-plants-frontend stash@{0} (failed-inc-247), workspace openspec stash@{0} (failed-inc-247). Animals frontend and ins frontend were clean, so nothing stashed there.",
+        "ATTEMPT FAILED: red verification ladder, gate e2e rung (address-book-navigation spec timed out at 90000ms on the INS dashboard link, passed on retry, no error-context on disk); no merge in progress in any repo so none aborted; local commits none in any configured repo; patches and unresolved paths at workareas/shared/design-release-2-1/themes/type-question/logs/inc-247-preserve-tests.* and inc-247-preserve-plantsfrontend.*; stash ins-tests stash@{0}, plants-frontend stash@{0}, workspace openspec stash@{0} (all labelled failed-inc-247)",
+        "ATTEMPT FAILED: red verification ladder; no merge was in progress, so none aborted; local commits none (0 ahead of origin in all four repos); patches and unresolved paths at logs/inc-247-preserve-tests.staged.patch, logs/inc-247-preserve-tests.unstaged.patch, logs/inc-247-preserve-tests.unresolved.txt (empty), logs/inc-247-preserve-tests.status.txt, logs/inc-247-preserve-plantsfrontend.staged.patch, logs/inc-247-preserve-plantsfrontend.unstaged.patch, logs/inc-247-preserve-plantsfrontend.unresolved.txt (empty), logs/inc-247-preserve-plantsfrontend.status.txt, logs/inc-247-preserve-repo-state.json; stash tests stash@{0} and plants frontend stash@{0} both named failed-inc-247; openspec clean, no stash"
       ],
       "gate": null,
       "externalDependsOn": [],
-      "merge": null
+      "merge": null,
+      "commit": "d5184baa1bf70cfcc4b68fd47ce747caf3e68403 1796156aa82e267c83949dd7b81f22d154831b58",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/135",
+          "repo": "trade-imports-plants-frontend",
+          "number": 135
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/86",
+          "repo": "trade-imports-ins-tests",
+          "number": 86
+        }
+      ]
     },
     {
       "id": "inc-171",
@@ -429,7 +510,7 @@
       ],
       "dependsOn": [],
       "theme": "type-question",
-      "status": "dropped",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -485,7 +566,9 @@
       "requirements": [
         "req-1616"
       ],
-      "openQuestions": [],
+      "openQuestions": [
+        "Twin fix: trade-imports-animals-admin src/config/config.js (and its get-sign-out-url.js, tests, docs, and the admin service in docker/stack/frontend.compose.yml) needs defraId.signOutHostnameRewrite / DEFRA_ID_SIGN_OUT_HOSTNAME_REWRITE_* renamed to defraId.browserFacingHostnameRewrite / DEFRA_ID_BROWSER_FACING_HOSTNAME_REWRITE_*, as the review finding that the Defra ID hostname rewrite has two names across the twin frontends (INS renamed it; animals and plants follow in this theme). cdp-app-config sets no HOSTNAME_REWRITE variable for any service, so no CDP change is needed."
+      ],
       "notes": [
         "One slice (req-1616, c-206). It builds on main's opening-run step order and on the Back-link seam that design snagging inc-218 put on main (kit.runBackLink, RUN_STEPS backCandidates, previousRunTarget) in animals and plants. Extend that seam rather than writing a second Back-target rule in a feature.",
         "Main already sends Back to the overview from a page opened from its overview task, and from the party pickers and the CPH page to Roles and addresses. The existing controller tests and cph-scope.spec.ts check both. The Change-link Back links sit beside those, not in place of them.",
@@ -499,11 +582,673 @@
         "Calls made on 4 November: (1) The 'previous page in the step order' is the opening run's own Back target. A step whose opening-run Back link is Overview by spec (Animal identification, Arrival details, the transporter, Roles and addresses, the contact address) keeps Overview from a Change link. (2) No source says whether the Back href keeps ?change=1, which decides whether Save and continue on the previous page also returns to the review. Follow main's precedent, where opener Back links carry change context (search.controller.test.js:651, party pickers), and record it in the openspec scenario. (3) Plants is included under the templates ruling p1-044, p1-049 and p1-050. (4) Only a draft's review is in scope; amend keeps its usual Back links.",
         "openspec: live-animals/journey-flow and plants/journey-flow each take a scenario: on a draft, Back from a Change-link page opens the previous step, and Save and continue still returns to the review. The live-animals Roles and addresses spec takes one saying its Back link from a Change link no longer opens the review. Each scenario gets coverage links. Commit them on feat/EUDPA-690-type-question in the workspace.",
         "Salvage: nothing to take. No branch in any repo holds code for this row. Checked origin/main..origin/feat/NO_JIRA-design-release-2-1-type-question-and-templates in trade-imports-animals-frontend, trade-imports-plants-frontend and trade-imports-ins-tests. The only Back-related commits there belong to templates rows inc-154 and inc-159 (animals f806b99a and 11b00c19, plants b9532f9), which are parked, so leave them. Build fresh on main, on feat/EUDPA-690-type-question in the animals frontend, plants frontend and tests, plus the workspace's openspec on the same branch name.",
-        "Dropped 6 November: its only work was journey navigation (where Save and continue and Back go, the opening run, amend returns), which EUDPA-774 now owns."
+        "Dropped 6 November: its only work was journey navigation (where Save and continue and Back go, the opening run, amend returns), which EUDPA-774 now owns. It had already been built and merged (animals frontend #463, plants frontend #135, tests #86, INS frontend #74), so it stays done here and EUDPA-774 takes it over as built."
       ],
       "gate": null,
       "externalDependsOn": [],
-      "merge": null
+      "merge": null,
+      "commit": "09fcc24fe5df53a0c8389e565af8410438fb5c60 aff8305b3ad7c880365ba9096ab4ab5083bcc674 29f470edc41516d70c0d5774d828f2a53474e9ca",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/463",
+          "repo": "trade-imports-animals-frontend",
+          "number": 463
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/135",
+          "repo": "trade-imports-plants-frontend",
+          "number": 135
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/86",
+          "repo": "trade-imports-ins-tests",
+          "number": 86
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/74",
+          "repo": "trade-imports-ins-frontend",
+          "number": 74
+        }
+      ]
+    },
+    {
+      "id": "inc-250",
+      "title": "Animals admin uses the same name for the browser-facing Defra ID hostname rewrite as the other frontends",
+      "detail": "The INS, animals and plants frontends call the setting that rewrites browser-facing Defra ID URLs defraId.browserFacingHostnameRewrite, read from DEFRA_ID_BROWSER_FACING_HOSTNAME_REWRITE_ENABLED and _TO. Animals admin still calls it defraId.signOutHostnameRewrite with DEFRA_ID_SIGN_OUT_HOSTNAME_REWRITE_*. Rename it in admin with its get-sign-out-url module, tests and docs, and the admin service in the workspace stack compose and docker/stack/AGENTS.md, so all four frontends use one name. Sign-out from admin behaves as it does today.",
+      "acceptanceCriteria": [
+        "Animals admin reads defraId.browserFacingHostnameRewrite from DEFRA_ID_BROWSER_FACING_HOSTNAME_REWRITE_ENABLED and DEFRA_ID_BROWSER_FACING_HOSTNAME_REWRITE_TO, and no file in admin or in docker/stack names the old key or variables.",
+        "On the local docker stack, signing out of animals admin still sends the browser to a localhost Defra ID sign-out URL, as the admin auth e2e and security specs prove."
+      ],
+      "dependsOn": [
+        "inc-261"
+      ],
+      "theme": "type-question",
+      "status": "done",
+      "kind": "refactor",
+      "repos": [
+        "admin"
+      ],
+      "sources": [
+        {
+          "source": "review:type-question-theme",
+          "ref": "engineering reviews of the type-question theme (build loop run wf_71db6ed2-771 and the row reviews before it): follow-up: rename the Defra ID hostname rewrite key across INS, animals, plants and animals admin"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [
+        "Twin fix: trade-imports-animals-frontend src/config/config.js:234, :240 and :245 needs the three `defraId.browserFacingHostnameRewrite` doc strings to match the INS frontend's (src/config/config.js:239, :245, :250: 'Rewrite internal OIDC hostnames in Defra ID URLs, for local environments', 'Internal OIDC hostnames covered by the rewrite', 'Hostname the rewrite produces'), as the finding that the renamed browser-facing key still has docs saying sign-out URL rewrite (a rename covers the concept's whole vocabulary).",
+        "Twin fix: trade-imports-plants-frontend src/config/config.js:234, :240 and :245 needs the three `defraId.browserFacingHostnameRewrite` doc strings to match the INS frontend's (src/config/config.js:239, :245, :250: 'Rewrite internal OIDC hostnames in Defra ID URLs, for local environments', 'Internal OIDC hostnames covered by the rewrite', 'Hostname the rewrite produces'), as the finding that the renamed browser-facing key still has docs saying sign-out URL rewrite (a rename covers the concept's whole vocabulary)."
+      ],
+      "gate": null,
+      "externalDependsOn": [],
+      "merge": null,
+      "notes": [
+        "A follow-up from the engineering reviews of the type-question theme, built on the theme branch.",
+        "Links, sign-in and sign-out must keep working in CDP, in the local docker stack and in the CI docker stack. cdp-app-config sets no HOSTNAME_REWRITE variable for any trade-imports service today. Never write to cdp-app-config: if a CDP change is needed, write it up for Sam."
+      ],
+      "commit": "66ffe1a",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-admin/pull/89",
+          "repo": "trade-imports-animals-admin",
+          "number": 89
+        }
+      ]
+    },
+    {
+      "id": "inc-251",
+      "title": "The INS frontend rewrites browser-facing Defra ID URLs in one place",
+      "detail": "The INS frontend has two hostname rewrites for Defra ID: the configured browserFacingHostnameRewrite, and a second one in src/auth/get-oidc-config.js (LOCAL_HOSTNAMES, rewriteEndpointHostnames). Give the rewrite one owner, driven by the configured setting, so sign-in, sign-out and the CSP form-action origin all come from it. Behaviour is unchanged.",
+      "acceptanceCriteria": [
+        "One module in the INS frontend owns rewriting Defra ID hostnames, driven by defraId.browserFacingHostnameRewrite; get-oidc-config.js no longer holds its own list of local hostnames.",
+        "Signing in and out of the INS frontend works on the local docker stack and the CI docker stack, and with the rewrite turned off (as in CDP) the Defra ID URLs pass through unchanged, as the unit tests prove."
+      ],
+      "dependsOn": [],
+      "theme": "type-question",
+      "status": "done",
+      "kind": "refactor",
+      "repos": [
+        "insfrontend"
+      ],
+      "sources": [
+        {
+          "source": "review:type-question-theme",
+          "ref": "engineering reviews of the type-question theme (build loop run wf_71db6ed2-771 and the row reviews before it): follow-up: merge the two INS hostname rewrite mechanisms into one owner"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [
+        "Twin fix: trade-imports-animals-frontend, trade-imports-plants-frontend and trade-imports-animals-admin src/auth/get-sign-out-url.js each need the local `oidcBaseUrl` renamed to `discoveryUrl` (and `basePath` to `issuerPath`), because it holds the full OIDC discovery URL ending in /.well-known/openid-configuration, not a base URL. Raised by the INS frontend naming finding on get-sign-out-url.js."
+      ],
+      "gate": null,
+      "externalDependsOn": [],
+      "merge": null,
+      "notes": [
+        "A follow-up from the engineering reviews of the type-question theme, built on the theme branch.",
+        "Links, sign-in and sign-out must keep working in CDP, in the local docker stack and in the CI docker stack. cdp-app-config sets no HOSTNAME_REWRITE variable for any trade-imports service today. Never write to cdp-app-config: if a CDP change is needed, write it up for Sam."
+      ],
+      "commit": "764d6d93eb53212f89af2446e7edd1c2e76f8b5c",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/74",
+          "repo": "trade-imports-ins-frontend",
+          "number": 74
+        }
+      ]
+    },
+    {
+      "id": "inc-252",
+      "title": "Frontend tests set config and serve Defra ID discovery instead of mocking their own modules",
+      "detail": "The get-sign-out-url tests in animals, plants and admin mock their own config module and assert with toHaveBeenCalledWith. Move them onto config.set and assert on the URL returned. In the INS frontend, tests that start their server through the shared startRealModeServer helpers still vi.mock the repo's own get-oidc-config.js, although the helper already serves OIDC discovery at the network boundary. Remove every such mock and its unused imports, moving any remaining test onto startRealModeServer or serveOidcDiscovery, and make the INS add-a-page.md recipe say so.",
+      "acceptanceCriteria": [
+        "No get-sign-out-url test in animals, plants or admin mocks its own config module; each sets config with config.set and checks the returned sign-out URL.",
+        "No INS frontend test mocks the repo's own get-oidc-config.js, and add-a-page.md's unit-test step describes the startRealModeServer helpers rather than a vi.mock.",
+        "Every changed repo passes its unit and functional test suites."
+      ],
+      "dependsOn": [
+        "inc-250",
+        "inc-251"
+      ],
+      "theme": "type-question",
+      "status": "done",
+      "kind": "test",
+      "repos": [
+        "frontend",
+        "plantsfrontend",
+        "admin",
+        "insfrontend"
+      ],
+      "sources": [
+        {
+          "source": "review:type-question-theme",
+          "ref": "engineering reviews of the type-question theme (build loop run wf_71db6ed2-771 and the row reviews before it): follow-ups: move get-sign-out-url tests onto config.set; stop INS tests mocking get-oidc-config beside serveOidcDiscovery"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null,
+      "externalDependsOn": [],
+      "merge": null,
+      "notes": [
+        "A follow-up from the engineering reviews of the type-question theme, built on the theme branch."
+      ],
+      "commit": "d1f8df7264238ca68cc7f939e6858a7d08ba8ae9 91f6cae7e14b06e6401cf01f92eda2dc7201e731 9002b3f6c53d6dd9f121de10bdb19fed1dabf333",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/463",
+          "repo": "trade-imports-animals-frontend",
+          "number": 463
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/135",
+          "repo": "trade-imports-plants-frontend",
+          "number": 135
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-admin/pull/89",
+          "repo": "trade-imports-animals-admin",
+          "number": 89
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/74",
+          "repo": "trade-imports-ins-frontend",
+          "number": 74
+        }
+      ]
+    },
+    {
+      "id": "inc-253",
+      "title": "The animals and plants session cookie states its SameSite setting, and the config says which cookie it sets",
+      "detail": "The animals and plants auth session cookie (getCookieOptions in src/plugins/auth.js) relies on @hapi/statehood's default SameSite=Strict. State SameSite explicitly on it, keeping today's behaviour. session.cookie.sameSite's env var is named for the session but applies only to the Bell state cookie: make its description (and its name, if renaming is safe in every environment) say what it configures.",
+      "acceptanceCriteria": [
+        "The auth session cookie in animals and plants sets SameSite explicitly, to the value it has today, and a unit test proves it.",
+        "The config entry for the Bell state cookie's SameSite says that is the cookie it sets, and signing in through Defra ID still works on the local and CI docker stacks."
+      ],
+      "dependsOn": [],
+      "theme": "type-question",
+      "status": "done",
+      "kind": "fix",
+      "repos": [
+        "frontend",
+        "plantsfrontend"
+      ],
+      "sources": [
+        {
+          "source": "review:type-question-theme",
+          "ref": "engineering reviews of the type-question theme (build loop run wf_71db6ed2-771 and the row reviews before it): follow-up: state SameSite on the cookie auth session cookie explicitly"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [
+        "Twin fix: repos/trade-imports-ins-frontend src/config/config.js, src/plugins/auth.js and src/plugins/auth.test.js need the Bell state cookie SameSite entry renamed from session.cookie.sameSite (env AUTH_COOKIE_SAME_SITE) to defraId.stateCookieSameSite (env DEFRA_ID_STATE_COOKIE_SAME_SITE), with doc 'SameSite attribute of the Bell state cookie set during Defra ID sign-in', as the review finding that the four twin frontends name one cookie setting two ways (one concept, one name across twin repos).",
+        "Twin fix: repos/trade-imports-animals-admin src/config/config.js, src/plugins/auth.js and src/plugins/auth.test.js need the Bell state cookie SameSite entry renamed from session.cookie.sameSite (env AUTH_COOKIE_SAME_SITE) to defraId.stateCookieSameSite (env DEFRA_ID_STATE_COOKIE_SAME_SITE), with doc 'SameSite attribute of the Bell state cookie set during Defra ID sign-in', as the review finding that the four twin frontends name one cookie setting two ways (one concept, one name across twin repos).",
+        "Twin fix: repos/trade-imports-ins-frontend src/config/config.js needs `const isPlatform = !isLocal` (line 18) dropped and `!isLocal` written at its use (the csrf.cookie.secure default), as the review finding that the name predicts CDP only while it is also true for production images in the local and CI docker stacks (NODE_ENV=production in the Dockerfile)."
+      ],
+      "gate": null,
+      "externalDependsOn": [],
+      "merge": null,
+      "notes": [
+        "A follow-up from the engineering reviews of the type-question theme, built on the theme branch.",
+        "Links, sign-in and sign-out must keep working in CDP, in the local docker stack and in the CI docker stack. cdp-app-config sets no HOSTNAME_REWRITE variable for any trade-imports service today. Never write to cdp-app-config: if a CDP change is needed, write it up for Sam."
+      ],
+      "commit": "9b703e74b62fa2ca2826b9682171c8bc400a23ce 1eeb6b80392e55778e1de0df2f58636394c104d5",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/463",
+          "repo": "trade-imports-animals-frontend",
+          "number": 463
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/135",
+          "repo": "trade-imports-plants-frontend",
+          "number": 135
+        }
+      ]
+    },
+    {
+      "id": "inc-254",
+      "title": "The INS dashboard's functional tests reach its empty state and share their helpers",
+      "detail": "Tidy the INS dashboard's functional tests (FIT) and their supporting code. Give the INS backend stub (under services in the INS frontend) an organisation-scoped empty seed, following the -empty suffix convention the address-book stub uses, and add a FIT for the dashboard's empty state. Promote the inline axe helper in features/dashboard/dashboard.fit.spec.js to one shared module and update add-a-page.md's 'define it inline' instruction. Move the shared expectDashboard helper from features/address-book/fit/dashboard.js to the dashboard feature, updating its callers and testing.md. Build the expected View link hrefs in the dashboard FIT and controller tests from config.tradeImportsAnimalsFrontend.baseUrl instead of hard-coded localhost URLs. Remove the acceptance-criteria ids ((AC1) to (AC5)) from the dashboard FIT titles. testing.md says every test signs in with its own organisation id, but dashboard.fit.spec.js and notification-type.fit.spec.js call signIn(page) without one: make the specs follow the doc.",
+      "acceptanceCriteria": [
+        "A FIT signed in as an organisation with the empty seed sees the INS dashboard's empty state.",
+        "One shared axe helper serves every INS FIT, expectDashboard lives with the dashboard feature, and add-a-page.md and testing.md describe both.",
+        "No INS dashboard test hard-codes an animals frontend URL or carries an acceptance-criteria id in its title, and every FIT signs in with its own organisation id."
+      ],
+      "dependsOn": [
+        "inc-252"
+      ],
+      "theme": "type-question",
+      "status": "done",
+      "kind": "test",
+      "repos": [
+        "insfrontend"
+      ],
+      "sources": [
+        {
+          "source": "review:type-question-theme",
+          "ref": "engineering reviews of the type-question theme (build loop run wf_71db6ed2-771 and the row reviews before it): follow-ups: INS backend stub empty seed; shared FIT axe helper; move expectDashboard; View link hrefs from config; strip AC ids; signIn organisation ids"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null,
+      "externalDependsOn": [],
+      "merge": null,
+      "notes": [
+        "A follow-up from the engineering reviews of the type-question theme, built on the theme branch."
+      ],
+      "commit": "31b7bf88c9f7223873c3b684a6d1112100899285 97e91dea",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/74",
+          "repo": "trade-imports-ins-frontend",
+          "number": 74
+        }
+      ]
+    },
+    {
+      "id": "inc-255",
+      "title": "Every animals run step takes its Back link from the shared run Back link helper",
+      "detail": "Animal identification, arrival details, transporters and contact address build their Overview Back link by hand with hubPath. Move them onto kit.runBackLink, so one function owns every run step's Back link, including the opening-run and review Change link rules the theme added. Where the move changes a Back link, it must match REQ-FLOW-018 and the opening-run rules, and openspec records the change.",
+      "acceptanceCriteria": [
+        "No animals run step builds its Back link with hubPath by hand; every one calls kit.runBackLink.",
+        "Each moved page's Back link follows the journey-flow spec in the opening run, from a review Change link and from Overview, as its controller tests prove."
+      ],
+      "dependsOn": [],
+      "theme": "type-question",
+      "status": "done",
+      "kind": "refactor",
+      "repos": [
+        "frontend"
+      ],
+      "sources": [
+        {
+          "source": "review:type-question-theme",
+          "ref": "engineering reviews of the type-question theme (build loop run wf_71db6ed2-771 and the row reviews before it): follow-up: move animals run steps that build their overview Back by hand onto kit.runBackLink"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null,
+      "externalDependsOn": [],
+      "merge": null,
+      "notes": [
+        "A follow-up from the engineering reviews of the type-question theme, built on the theme branch."
+      ],
+      "commit": "c687fa5be09c126b4a0de8f04c05b1e23000b0db 000f7622",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/463",
+          "repo": "trade-imports-animals-frontend",
+          "number": 463
+        }
+      ]
+    },
+    {
+      "id": "inc-256",
+      "title": "Animals frontend tidy: one shape guard for the session adapters, comments that say what code does, and a current Lighthouse doc",
+      "detail": "services/persistence/session/real.js and stub.js each define the same isObject helper: give the by-journey shape guard one owner (for example under lib/) shared by both. In src/config/nunjucks/context/context.js, remove or replace the inline comments above sessionId, setId and homeUrl, which describe callers and a library. Trim the doc comment on rolesAndAddressesCard (check-answers/view-model/cards/addresses/roles-and-addresses.js) to its contract. Rewrite src/server/app/sets/live-animals/docs/lighthouse.md for the derived-targets run; it still describes 19 literal URLs.",
+      "acceptanceCriteria": [
+        "One module owns the by-journey shape guard and both session adapters import it.",
+        "context.js and roles-and-addresses.js carry no comment that narrates callers, other pages or a library, following .claude/rules/code-quality.md.",
+        "lighthouse.md describes how the derived-targets Lighthouse run picks its pages and how to run it."
+      ],
+      "dependsOn": [
+        "inc-255"
+      ],
+      "theme": "type-question",
+      "status": "done",
+      "kind": "refactor",
+      "repos": [
+        "frontend"
+      ],
+      "sources": [
+        {
+          "source": "review:type-question-theme",
+          "ref": "engineering reviews of the type-question theme (build loop run wf_71db6ed2-771 and the row reviews before it): follow-ups: isObject duplicate; context.js comments; roles-and-addresses doc comment; lighthouse.md rewrite"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [
+        "Twin fix: trade-imports-plants-frontend src/server/app/model/obligations/helper-internals.js (isNonArrayObject), services/persistence/records/fulfilment-codec/shape/object.js, services/persistence/session/real.js and services/persistence/session/stub.js each hold their own copy of the plain-object rule (value !== null && typeof value === 'object' && !Array.isArray(value)); they need one owner under one name (isObject), imported by every consumer, as the animals frontend finding that isNonArrayObject duplicates lib/object.js isObject.",
+        "Twin fix: trade-imports-plants-frontend src/server/app/sets/high-risk-plants/docs/lighthouse.md:53 says the render check re-fetches every URL, but its sharding section (:139-143) writes and checks only the shard's URLs; it needs \"every URL in this run's shard (every URL when unsharded)\", as the animals frontend lighthouse.md:22 finding."
+      ],
+      "gate": null,
+      "externalDependsOn": [],
+      "merge": null,
+      "notes": [
+        "A follow-up from the engineering reviews of the type-question theme, built on the theme branch."
+      ],
+      "commit": "c6d2e3c510f304e8882c936208c54b92ee3b3f04",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/463",
+          "repo": "trade-imports-animals-frontend",
+          "number": 463
+        }
+      ]
+    },
+    {
+      "id": "inc-257",
+      "title": "Animals controller tests seed state through named helpers instead of driveHandler's long options list",
+      "detail": "src/server/app/engine/test-support.js's driveHandler takes a growing list of options for seeding a journey (answers, opening run, amend, change context and so on). Give the common seeds named helpers so a test says what state it starts in, and move the callers over. No production code changes.",
+      "acceptanceCriteria": [
+        "Named seeding helpers in test-support.js cover the states controller tests start in, and driveHandler keeps only the options no helper covers.",
+        "The animals unit suite passes with the same number of tests."
+      ],
+      "dependsOn": [
+        "inc-256"
+      ],
+      "theme": "type-question",
+      "status": "done",
+      "kind": "test",
+      "repos": [
+        "frontend"
+      ],
+      "sources": [
+        {
+          "source": "review:type-question-theme",
+          "ref": "engineering reviews of the type-question theme (build loop run wf_71db6ed2-771 and the row reviews before it): follow-up: split driveHandler's growing options list into named seeding helpers"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null,
+      "externalDependsOn": [],
+      "merge": null,
+      "notes": [
+        "A follow-up from the engineering reviews of the type-question theme, built on the theme branch."
+      ],
+      "commit": "26026f59",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/463",
+          "repo": "trade-imports-animals-frontend",
+          "number": 463
+        }
+      ]
+    },
+    {
+      "id": "inc-258",
+      "title": "The plants e2e tests and page objects read without narration",
+      "detail": "Delete the rationale comments in tests/plants/e2e/features/start.spec.ts so each test reads without narration. Bring the doc comments in flows/plants/journey.ts and page-objects/plants/*.ts in line with the house doc-comment rule, keeping only contract statements on exported methods.",
+      "acceptanceCriteria": [
+        "start.spec.ts has no comment that explains a test step, and every doc comment in flows/plants/journey.ts and page-objects/plants/ states a contract on an exported method.",
+        "npm run lint passes in the tests repo and the plants e2e suite still passes on the local docker stack."
+      ],
+      "dependsOn": [],
+      "theme": "type-question",
+      "status": "done",
+      "kind": "test",
+      "repos": [
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "review:type-question-theme",
+          "ref": "engineering reviews of the type-question theme (build loop run wf_71db6ed2-771 and the row reviews before it): follow-ups: plants start.spec.ts rationale comments; plants flow and page-object doc comments"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null,
+      "externalDependsOn": [],
+      "merge": null,
+      "notes": [
+        "A follow-up from the engineering reviews of the type-question theme, built on the theme branch."
+      ],
+      "commit": "d7c2eba908a57edadbca6d176e7fa90f9ed5fc5c",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/86",
+          "repo": "trade-imports-ins-tests",
+          "number": 86
+        }
+      ]
+    },
+    {
+      "id": "inc-259",
+      "title": "Save and return on the plants consignor and place of destination pages makes the same checks as Save and continue",
+      "detail": "The plants consignor select and place of destination specs still say 'Save and return to overview with nothing chosen reaches Overview without an error'. The ruling of 26 October says Save and return makes exactly the same checks as Save and continue on every page with both buttons. Check both pages' controllers, specs and tests against that ruling, and bring any that differ into line, as the commodity type row did.",
+      "acceptanceCriteria": [
+        "On the plants consignor and place of destination pages, 'Save and return to overview' makes the same checks as 'Save and continue': a value that is not an address in the book shows the same error, stays on the page and keeps the search; with nothing chosen, both move on without an error.",
+        "The plants openspec for both pages says so, and unit and e2e tests prove it."
+      ],
+      "dependsOn": [
+        "inc-258"
+      ],
+      "theme": "type-question",
+      "status": "done",
+      "kind": "fix",
+      "repos": [
+        "plantsfrontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "review:type-question-theme",
+          "ref": "engineering reviews of the type-question theme (build loop run wf_71db6ed2-771 and the row reviews before it): follow-up: plants consignor-select and place-of-destination Save and return against the 26 October ruling"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null,
+      "externalDependsOn": [],
+      "merge": null,
+      "notes": [
+        "A follow-up from the engineering reviews of the type-question theme, built on the theme branch.",
+        "Criterion 1 reworded to match the 26 October ruling (same checks on both buttons) and the spec: nothing chosen moves on on both, a value not in the book is refused on both."
+      ],
+      "commit": "56aa2ed455341b3dda759214577f75bd9ee56c6f df21916276e4f93ad1b7a0dcd3d9c2dcfa6ea244",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/135",
+          "repo": "trade-imports-plants-frontend",
+          "number": 135
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/86",
+          "repo": "trade-imports-ins-tests",
+          "number": 86
+        }
+      ]
+    },
+    {
+      "id": "inc-260",
+      "title": "The workspace docs and INS spec describe the type question's links and the service navigation",
+      "detail": "docs/repos/trade-imports-animals-frontend.md must list the INS frontend as an outbound browser link (the type question and the address book). Check docs/repos/trade-imports-ins-frontend.md's animals frontend outbound row (around line 36). openspec ins/notification-dashboard's Purpose still says '(today: live-animals)': check it against the sources ins-backend now aggregates. Write the ins/service-navigation capability (its items, their order and the current-item rules) and move the type question's Dashboard-current scenario into it, with coverage links to the tests that prove it.",
+      "acceptanceCriteria": [
+        "docs/repos for the animals and INS frontends name every browser link between them.",
+        "openspec ins/notification-dashboard says which notification types it lists today, ins/service-navigation exists with its scenarios covered, and tim spec lint passes."
+      ],
+      "dependsOn": [
+        "inc-250"
+      ],
+      "theme": "type-question",
+      "status": "done",
+      "kind": "docs",
+      "repos": [],
+      "sources": [
+        {
+          "source": "review:type-question-theme",
+          "ref": "engineering reviews of the type-question theme (build loop run wf_71db6ed2-771 and the row reviews before it): follow-ups: docs/repos outbound links; ins/notification-dashboard Purpose; write ins/service-navigation"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null,
+      "externalDependsOn": [],
+      "merge": null,
+      "notes": [
+        "A follow-up from the engineering reviews of the type-question theme, built on the theme branch."
+      ],
+      "commit": "1eb02f1d"
+    },
+    {
+      "id": "inc-261",
+      "title": "Animals admin passes its security audit",
+      "detail": "Animals admin main fails its own security audit (npm run security-audit, audit-ci): high-severity advisories GHSA-4528-x5fx-h6hg (joi through hapi-pulse) and GHSA-8494-f6mr-cjpv (@hapi/content). The pre-commit hook runs that audit, so no change can be committed in admin until it passes. Move the vulnerable packages onto patched versions (a direct upgrade, or an npm override where the parent has not released one), and add an audit-ci allowlist entry only for an advisory with no patched version, saying why.",
+      "acceptanceCriteria": [
+        "npm run security-audit passes in animals admin, with no allowlist entry for an advisory that has a patched version.",
+        "Animals admin unit tests pass, and its Security audit and E2E checks pass on the pull request."
+      ],
+      "dependsOn": [],
+      "theme": "type-question",
+      "status": "done",
+      "kind": "fix",
+      "repos": [
+        "admin"
+      ],
+      "sources": [
+        {
+          "source": "review:type-question-theme",
+          "ref": "found opening the admin theme branch on 5 November: its pre-commit security audit fails on main 1c8bd2f"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null,
+      "externalDependsOn": [],
+      "merge": null,
+      "notes": [
+        "Needed before any other admin row: the pre-commit hook refuses commits while the audit fails."
+      ],
+      "commit": "cf2c85d",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-admin/pull/89",
+          "repo": "trade-imports-animals-admin",
+          "number": 89
+        }
+      ]
+    },
+    {
+      "id": "inc-262",
+      "title": "Animals admin keeps its Defra ID connections open between sign-in calls, as the other frontends now do",
+      "detail": "The animals, plants and INS frontends now route every plain-HTTP Wreck call, Bell's token exchange included, through one keep-alive agent (src/auth/wreck-agent.js, installed in startServer), with one logged retry for a connection that never opened. That fixed sign-ins that failed when Docker Desktop's port forwarder held a new connection to the Defra ID stub past one second. Animals admin makes the same Defra ID calls (discovery, signing keys, token exchange) and gets the same agent, following the animals frontend's (commit a9944ea6 on this branch). It is not installed behind an HTTP proxy, as in the twins.",
+      "acceptanceCriteria": [
+        "Animals admin routes its Defra ID calls through one keep-alive agent like the animals frontend's, with real-connection unit tests that fail if the agent is removed.",
+        "Signing in to and out of animals admin works on the local docker stack, the CI docker stack and in CDP (where an HTTP proxy is configured and the agent is not installed), and the admin auth e2e specs pass."
+      ],
+      "dependsOn": [
+        "inc-261"
+      ],
+      "theme": "type-question",
+      "status": "done",
+      "kind": "fix",
+      "repos": [
+        "admin"
+      ],
+      "sources": [
+        {
+          "source": "review:type-question-theme",
+          "ref": "flake fix for notification-type.spec.ts:302 on 5 November: animals a9944ea6, plants 7e49ef5, INS 67eb032; logs/flakes/"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [
+        "Twin fix: trade-imports-animals-frontend, trade-imports-plants-frontend and trade-imports-ins-frontend src/auth/wreck-agent.js:55 need \", Bell's included,\" deleted from the useRetryingKeepAliveAgentForWreck JSDoc so it reads \"Sends every plain-HTTP Wreck call in the process through a retrying keep-alive agent.\", as the inc-262 review finding that the JSDoc describes another library.",
+        "Twin fix: trade-imports-animals-frontend, trade-imports-plants-frontend and trade-imports-ins-frontend src/auth/wreck-agent.real.test.js need the connection-counting server set-up (answeringWithUrl, a connections counter on the connection event, listen) that is written twice, in the keep-alive test and the useRetryingKeepAliveAgentForWreck test, extracted into one local helper returning { server, port, connectionCount } and the two inline copies deleted, as the inc-262 review finding on duplicated test set-up.",
+        "For the designer: after a trader picks Plants for planting, Potatoes or Wood products on the INS type question, what should plants show? The prototype has no plants journey: its question ends at the five options (GB-notification-service@04a073b app/routes.js:125-131), and the ruling says only that plants gets the same entry and that plants' first page is its own type question (sources/ruling-sam-2026-10-09-templates.md:70-74). Today INS hands all three plants types to the same /start with no type (trade-imports-ins-frontend notification-type/destinations.js:27-44, :53-58), and plants dashboard/controller.js:134 (startGet) opens commodity-type with nothing selected, so the trader answers What are you importing? twice. Options: (a) ask again with nothing selected, as now; (b) open the plants type page with the chosen type already selected; (c) skip the plants type page and go straight to commodities. And which wording should both services share: INS Potatoes (seed and ware) / Wood products (ins-frontend notification-type/copy/copy.en.js:8-9), or plants Potatoes (seed or ware) / Wood and cut trees (plants commodity-type/copy/copy.en.js:21-23)? Raised by the theme review design finding on plants dashboard/controller.js:134."
+      ],
+      "gate": null,
+      "externalDependsOn": [],
+      "merge": null,
+      "notes": [
+        "A follow-up from fixing the theme's sign-in flake, built on the theme branch.",
+        "Links, sign-in and sign-out must keep working in CDP, in the local docker stack and in the CI docker stack. Never write to cdp-app-config: if a CDP change is needed, write it up for Sam."
+      ],
+      "commit": "dc49aa84797fde234f0dc7359adea2c1a131fb68",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-admin/pull/89",
+          "repo": "trade-imports-animals-admin",
+          "number": 89
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/463",
+          "repo": "trade-imports-animals-frontend",
+          "number": 463
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/74",
+          "repo": "trade-imports-ins-frontend",
+          "number": 74
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/86",
+          "repo": "trade-imports-ins-tests",
+          "number": 86
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/135",
+          "repo": "trade-imports-plants-frontend",
+          "number": 135
+        }
+      ]
+    },
+    {
+      "id": "inc-263",
+      "title": "The INS type question offers no Germinal products choice while the animals service has no germinal products start page",
+      "detail": "The INS 'What are you importing?' question (src/server/app/features/notification-type) offers Germinal products (semen, ova, embryos) and sends it to /germinal-products/start on the animals frontend, which serves no germinal products set yet, so the choice is a dead link. Ruling of 6 November: no dead link. Remove the Germinal products option from the question, its English and Welsh copy and its hand-over, so the options are Live animals; Plants for planting; Potatoes (seed and ware); Wood products. Keep Back, pre-selection and the other hand-overs as they are. Update the ins/notification-type spec (drop the germinal scenarios and say the option is not offered) and its coverage, the tests repo's notification-type spec and domain constants, and the workspace docs that list the /germinal-products/start link (docs/repos/trade-imports-animals-frontend.md and trade-imports-ins-frontend.md). The germinal products theme brings the choice back once its set has a start page.",
+      "acceptanceCriteria": [
+        "The INS type question lists Live animals; Plants for planting; Potatoes (seed and ware); Wood products, in that order, with no Germinal products option, in English and Welsh.",
+        "No page in the INS frontend links or redirects to /germinal-products/start, and the ins/notification-type spec and the workspace docs no longer describe that link.",
+        "Every other choice still hands the user to the same journey as before, and the type question unit, FIT and e2e tests pass."
+      ],
+      "dependsOn": [],
+      "theme": "type-question",
+      "status": "done",
+      "kind": "fix",
+      "repos": [
+        "insfrontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "review:type-question-theme",
+          "ref": "Sam's ruling of 6 November 2026: germinal products must not have a dead link; remove it here and add it on the germinal products theme"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [
+        "For the designer: when a trader chooses Plants for planting, Potatoes (seed and ware) or Wood products on the INS 'What are you importing?' question and lands on the plants commodity type page ('What are you importing?'), where should that page's Back link go? (a) the plants notifications dashboard, as today (plantsfrontend src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/controller.js:83, backLink: entryBackLink(current.journey, current.answers)), or (b) the INS type question with the plants type already chosen, matching live animals (animals src/server/app/sets/live-animals/.../entry-guard.js:62-63, activeOpeningRunBeganAtStartEntry). The design source covers the INS-question Back link for live animals only: inc-150 AC1 (prototype:dr2-1-source app/routes.js:10586-10600). inc-148's plants criterion says only that the trader lands on the first page of the high-risk plants journey and says nothing about its Back link. Raised by the engineering review of the type-question theme (design finding on commodity-type/controller.js:83)."
+      ],
+      "gate": null,
+      "externalDependsOn": [],
+      "merge": null,
+      "notes": [
+        "The germinal products theme's row inc-264 adds the choice back.",
+        "Links must keep working in CDP, in the local docker stack and in the CI docker stack. Never write to cdp-app-config."
+      ],
+      "commit": "f559aa2ab7f417bad1339af0b66063f0066085d8 fa14591e01b0fa656b8cd8a005331a937f5c6bc1",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/74",
+          "repo": "trade-imports-ins-frontend",
+          "number": 74
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/86",
+          "repo": "trade-imports-ins-tests",
+          "number": 86
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/463",
+          "repo": "trade-imports-animals-frontend",
+          "number": 463
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/135",
+          "repo": "trade-imports-plants-frontend",
+          "number": 135
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-admin/pull/89",
+          "repo": "trade-imports-animals-admin",
+          "number": 89
+        }
+      ]
     }
   ]
 }

@@ -36,7 +36,7 @@ The system MUST accept a chosen commodity type, saving it without error, and MUS
 
 ### Requirement: A value the service does not offer is rejected
 **ID**: REQ-PLANTS-COMMODITY-TYPE-003
-The system MUST refuse to save a commodity type that is not one of the three offered, showing an error and leaving no type checked.
+The system MUST refuse to save a commodity type that is not one of the three offered, on save and continue and on save and return to overview alike, keeping the user on the page with the error "Select what you are importing", leaving no type checked and leaving any commodity lines held.
 
 #### Scenario: An out-of-list value is rejected and nothing is left checked
 **ID**: SCN-PLANTS-COMMODITY-TYPE-003-A
@@ -44,6 +44,14 @@ The system MUST refuse to save a commodity type that is not one of the three off
 - **WHEN** they save and continue
 - **THEN** an error is shown
 - **AND** no type is left checked
+
+#### Scenario: An out-of-list value on save and return to overview is rejected and the lines are kept
+**ID**: SCN-PLANTS-COMMODITY-TYPE-003-B
+- **GIVEN** the notification holds commodity lines and the user submits a commodity type value the page does not offer
+- **WHEN** they save and return to overview
+- **THEN** they stay on the page with the error shown
+- **AND** no type is left checked
+- **AND** the commodity lines are still held
 
 ### Requirement: Saving with no type chosen is refused on either save control, focusing the first option
 **ID**: REQ-PLANTS-COMMODITY-TYPE-004
@@ -61,7 +69,7 @@ The system MUST refuse to save from the page when no type has been chosen, on sa
 **ID**: SCN-PLANTS-COMMODITY-TYPE-004-B
 - **GIVEN** the user is on the commodity-type page with nothing chosen and the notification holds commodity lines
 - **WHEN** they save and return to overview
-- **THEN** an error summary is shown, naming the missing commodity type, and nothing is saved
+- **THEN** they stay on the page and the error "Select what you are importing" is shown in the summary and beside the options, and nothing is saved
 - **AND** the commodity lines are still held
 
 ### Requirement: The page offers a full set of save controls, being reached directly from Overview

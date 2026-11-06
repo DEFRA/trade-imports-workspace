@@ -31,6 +31,23 @@ User-facing web application that guides users through a multi-step form wizard f
 | AWS (S3, SQS) | File/message handling via backend; floci in dev |
 | Defra ID (OIDC) | Authentication |
 
+## Browser links with the INS frontend
+
+The animals frontend builds every INS frontend URL from one setting, `tradeImportsInsFrontend.baseUrl` (`TRADE_IMPORTS_INS_FRONTEND_URL`). The INS frontend builds every animals frontend URL from `TRADE_IMPORTS_ANIMALS_FRONTEND_URL`. Every link is a browser redirect or an anchor, never a service-to-service call.
+
+| Direction | Path | Carries | Purpose |
+|-----------|------|---------|---------|
+| Animals to INS | `/address-book` | Nothing | The service navigation's Address book item |
+| Animals to INS | `/address-book/add` | `journey-type`, `notification-id`, `fulfilment-id`, `handshake-token` | The address handshake: the user picks or adds an address |
+| Animals to INS | `/notification-type` | `notification-id`, `current-notification-type` | The live animals origin page's Back link, when the run began at the start entry |
+| INS to animals | `/live-animals/start` | Nothing | The type question's Live animals choice |
+| INS to animals | `/live-animals/notifications/{reference}/origin` | Nothing | The type question with Live animals kept for that notification |
+| INS to animals | `/live-animals/notifications/{reference}`, or `.../notification-view` when SUBMITTED | Nothing | A dashboard row |
+| INS to animals | `/live-animals/notifications/{notification-id}/address-return` | `fulfilment-id`, `handshake-token` (when one was sent), `addressId` and `landing` (when set) | The return from the address handshake |
+| INS to animals | A page on the configured animals origin | Whatever the URL holds | The `return` query an address-book page honours |
+
+The Dashboard item and the service name in the animals service navigation stay inside the animals frontend.
+
 ## How to run
 
 ```bash

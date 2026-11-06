@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The Import Notification Service's landing page: a single list of notifications aggregated from every underlying journey (today: live-animals), searchable by reference number, showing each one's status.
+The Import Notification Service's landing page: a single list of notifications, searchable by reference number, showing each one's status, and where a new notification starts. It lists live animals notifications only today, because it aggregates the events the animals backend publishes; high-risk plants and germinal products notifications are not listed.
 
 ## Requirements
 
@@ -59,3 +59,34 @@ The system MUST paginate the dashboard by the same rule as the address book (REQ
 - **WHEN** the user views page 10
 - **THEN** the pagination shows 'Previous', page 1, an ellipsis, pages 9, 10 and 11, an ellipsis, page 20 and 'Next', with page 10 marked as the current page
 - **AND** every pagination link, 'Previous' and 'Next' included, keeps the sort
+
+### Requirement: The dashboard always offers Create new, opening the notification type question
+**ID**: REQ-INS-DASH-005
+The system MUST offer a "Create new" button under the dashboard heading and above the reference search and the notifications list, in every state of the dashboard, as the dashboard's one control for beginning a notification. Choosing it MUST open the "What are you importing?" question (`ins/notification-type`) with no option selected, before any notification exists.
+
+#### Scenario: Starting from a dashboard that lists notifications asks what is being imported
+**ID**: SCN-INS-DASH-005-A
+- **GIVEN** notifications are listed on the dashboard
+- **WHEN** the user chooses "Create new"
+- **THEN** the question "What are you importing?" is shown
+- **AND** no option is selected and the second option is Plants for planting
+
+#### Scenario: Starting from an empty dashboard asks the same question
+**ID**: SCN-INS-DASH-005-B
+- **GIVEN** the organisation has no notifications
+- **WHEN** the dashboard is shown
+- **THEN** "Create new" is still offered
+- **AND** choosing it shows the question "What are you importing?"
+
+#### Scenario: Create new is still offered after a search that matches nothing
+**ID**: SCN-INS-DASH-005-C
+- **GIVEN** the user searches for a reference number that matches no notification
+- **WHEN** the "No notifications found" message is shown
+- **THEN** "Create new" is still offered
+- **AND** choosing it shows the question "What are you importing?"
+
+#### Scenario: Create new is still offered when the notifications cannot be loaded
+**ID**: SCN-INS-DASH-005-D
+- **GIVEN** the notifications list cannot be loaded
+- **WHEN** the dashboard is shown with "Sorry, there is a problem with the service. Try again in a few minutes."
+- **THEN** "Create new" is still offered under the dashboard heading

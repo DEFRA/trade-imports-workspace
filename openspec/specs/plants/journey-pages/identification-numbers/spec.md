@@ -79,7 +79,15 @@ The system MUST refuse on either save control a mandatory field on offer that is
 
 ### Requirement: Save-and-return saves; cancel discards later edits; back returns to the previous step in the opening sequence and to Overview otherwise
 **ID**: REQ-PLANTS-IDENT-NUMBERS-004
-The system MUST save the current values and reach Overview on save-and-return-to-overview, MUST reach Overview without saving later edits on cancel-and-return-to-overview, and MUST send the back link to the consignor (the place of destination for potatoes) during the opening sequence and to Overview otherwise. While the notification is being amended, no cancel control is offered (`plants/journey-flow` REQ-PLANTS-FLOW-014).
+The system MUST save the current values and reach Overview on save-and-return-to-overview, MUST reach Overview without saving later edits on cancel-and-return-to-overview, and MUST send the back link to the consignor (the place of destination for potatoes) during the opening sequence and on a draft opened from a Change link on the review (REQ-PLANTS-FLOW-017), and to Overview otherwise. While amending, no cancel control is offered (`plants/journey-flow` REQ-PLANTS-FLOW-014).
+
+#### Scenario: On a draft opened from a Change link, the back link opens the consignor, or the place of destination for potatoes
+**ID**: SCN-PLANTS-IDENT-NUMBERS-004-D
+- **GIVEN** the review of a draft notification
+- **WHEN** the user follows the Change link for the identification numbers and then the back link
+- **THEN** the consignor page is shown
+- **WHEN** instead they are on a potatoes notification
+- **THEN** the place of destination page is shown
 
 #### Scenario: Save and return to overview keeps the values; cancel discards later edits
 **ID**: SCN-PLANTS-IDENT-NUMBERS-004-A

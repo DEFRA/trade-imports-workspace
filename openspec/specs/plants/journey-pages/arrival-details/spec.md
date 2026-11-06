@@ -171,7 +171,7 @@ The system MUST refuse an expected time of arrival that is not on the 24-hour cl
 
 ### Requirement: The page offers a full set of save controls and is reachable from Overview
 **ID**: REQ-PLANTS-ARRIVAL-DETAILS-010
-The system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page, MUST send the back link to arrival status during the opening sequence (origin for potatoes) and to Overview otherwise, and MUST reach the page from the Overview arrival task row when that row opens on the details. Saving the page once the opening sequence has finished MUST return the user to Overview. While amending, REQ-PLANTS-FLOW-014 governs how the page ends instead.
+The system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview, MUST send the back link to arrival status (origin for potatoes) in the opening sequence and from a review Change link on a draft (REQ-PLANTS-FLOW-017), and to Overview otherwise, MUST reach the page from the Overview arrival row when it opens on the details, and MUST return to Overview on save once the opening sequence has finished. While amending, REQ-PLANTS-FLOW-014 governs how it ends.
 
 #### Scenario: The page is reachable from the Overview arrival row for potatoes
 **ID**: SCN-PLANTS-ARRIVAL-DETAILS-010-A
@@ -204,6 +204,14 @@ The system MUST offer save-and-continue, save-and-return-to-overview and cancel-
 - **WHEN** they follow the back link
 - **THEN** the arrival-status page is shown
 - **WHEN** instead they are on a potatoes notification, which is not asked arrival status, and reached the arrival details from origin
+- **THEN** the origin page is shown
+
+#### Scenario: On a draft opened from a Change link, the back link opens arrival status, or origin for potatoes
+**ID**: SCN-PLANTS-ARRIVAL-DETAILS-010-F
+- **GIVEN** the review of a draft notification
+- **WHEN** the user follows the Change link for the arrival details and then the back link
+- **THEN** the arrival-status page is shown
+- **WHEN** instead they are on a potatoes notification
 - **THEN** the origin page is shown
 
 ### Requirement: Completing the arrival details completes the arrival task row

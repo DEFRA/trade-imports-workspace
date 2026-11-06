@@ -142,7 +142,13 @@ The system MUST return the user to the commodity selection page once every chose
 
 ### Requirement: The back link returns to what are you importing in the opening sequence, and to Overview otherwise
 **ID**: REQ-COMMODITY-DETAILS-009
-The system MUST return the user to the commodity selection page ("What are you importing?") when they follow the back link from commodity details during the opening sequence, not to the main import reason that comes between them, and MUST return them to Overview when the page was opened from its Overview task.
+The system MUST return the user to the commodity selection page ("What are you importing?") when they follow the back link from commodity details during the opening sequence, not to the main import reason that comes between them, and MUST return them to Overview when the page was opened from its Overview task. On a draft opened from a Change link on the review, the back link MUST open the commodity selection page too, as `live-animals/journey-flow` describes.
+
+#### Scenario: On a draft opened from a Change link, the back link opens what are you importing
+**ID**: SCN-COMMODITY-DETAILS-009-C
+- **GIVEN** the review of a draft notification
+- **WHEN** the user follows a Change link to commodity details and then the back link
+- **THEN** "What are you importing?" is shown
 
 #### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-COMMODITY-DETAILS-009-A

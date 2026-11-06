@@ -302,7 +302,10 @@
         "tests:page-objects/germinal-products",
         "tests:tests/animals/e2e/germinal-products",
         "tests:tests/animals/a11y/germinal-products",
-        "tests:tests/animals/security/germinal-products"
+        "tests:tests/animals/security/germinal-products",
+        "insfrontend:src/server/app/features/notification-type",
+        "tests:tests/ins/e2e/features/notification-type",
+        "tests:domain/ins/constants/notification-types.ts"
       ],
       "dependsOn": [
         "animals-dashboard",
@@ -9435,6 +9438,54 @@
         "What this row changes is the model's vocabulary and how it is judged, not which marking any one answer carries. Each page's own row states what that page refuses; a page whose code a split-off theme owns takes its marking on that branch."
       ],
       "gate": "Look at how the model records the four markings and the all-or-nothing group, and at the words each refusal uses, before the feature rows mark their own answers by it: every later page's hard stops and every later overview reading are written against this vocabulary."
+    },
+    {
+      "id": "inc-264",
+      "title": "The INS type question offers Germinal products and hands it to the germinal products set's start",
+      "detail": "Once a germinal products notification starts in its own set (inc-176), give the INS 'What are you importing?' question (src/server/app/features/notification-type) its Germinal products (semen, ova, embryos) option back, second in the list as the prototype sets it, and hand that choice to the germinal products start on the animals frontend at the configured animals frontend URL. The type-question theme took the option off (row inc-263 in themes/type-question) because the start page did not exist yet. Restore the English and Welsh copy, the hand-over, and the ins/notification-type spec scenarios (Germinal products opens the germinal products start; choosing Germinal products leaves a live animals notification unchanged), with coverage, the tests repo's notification-type spec and domain constants, and the workspace docs' browser-links tables.",
+      "acceptanceCriteria": [
+        "The INS type question lists Live animals; Germinal products (semen, ova, embryos); Plants for planting; Potatoes (seed and ware); Wood products, in that order, in English and Welsh.",
+        "Choosing Germinal products and continuing lands on the germinal products set's start page in the animals frontend, which renders, in the local docker stack, the CI docker stack and CDP.",
+        "Choosing Germinal products from a live animals notification's Back link leaves that notification unchanged."
+      ],
+      "dependsOn": [
+        "inc-176"
+      ],
+      "theme": "germinal-products",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "insfrontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "review:type-question-theme",
+          "ref": "Sam's ruling of 6 November 2026: germinal products must not have a dead link; the type question offers it once the germinal products start page exists"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null,
+      "externalDependsOn": [
+        {
+          "workarea": "shared/design-release-2-1/themes/type-question",
+          "id": "inc-263"
+        },
+        {
+          "workarea": "shared/design-release-2-1/themes/type-question-and-templates",
+          "id": "inc-154"
+        },
+        {
+          "workarea": "shared/design-release-2-1/themes/type-question-and-templates",
+          "id": "inc-155"
+        }
+      ],
+      "merge": null,
+      "notes": [
+        "Links must keep working in CDP, in the local docker stack and in the CI docker stack. Never write to cdp-app-config.",
+        "The parked templates theme also changes the type question (inc-154, inc-155). This row waits for both and builds on what they leave."
+      ]
     }
   ]
 }

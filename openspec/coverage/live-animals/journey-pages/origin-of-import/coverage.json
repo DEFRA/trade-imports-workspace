@@ -358,7 +358,7 @@
     {
       "id": "REQ-ORIGIN-013",
       "name": "On a notification, the back link follows where the origin page was opened from",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-ORIGIN-013-A",
@@ -399,6 +399,31 @@
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "back link returns to the dashboard when origin is reached by going back along the opening run", "strength": "full", "notes": "red when the active-run branch of the back link rule is inverted" }
           ]
+        },
+        {
+          "id": "SCN-ORIGIN-013-E",
+          "name": "The back link opens the Import Notification Service question when the notification was started from it",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should send Back to the INS type question for this notification while the opening run is active and began at the start entry with $name", "strength": "partial", "notes": "red when the start-entry branch of the back link rule is inverted; proves the address, not that Live animals is selected there" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "back link goes to the INS type question for this notification when the page was opened through the start entry", "strength": "partial", "notes": "not probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/notification-type/notification-type.spec.ts", "test": "Back from origin opens the INS question with Live animals chosen alone", "strength": "partial", "notes": "ran green against the stack on this branch; not probed" }
+          ]
+        },
+        {
+          "id": "SCN-ORIGIN-013-F",
+          "name": "The back link opens Overview when a notification started from the Import Notification Service question is opened from Overview",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should send Back to the overview once the opening run is complete, even though it began at the start entry", "strength": "partial", "notes": "not probed" }
+          ]
+        },
+        {
+          "id": "SCN-ORIGIN-013-G",
+          "name": "The back link opens the Import Notification Service question when the origin page is reached by going back along the opening sequence",
+          "coverage": "none",
+          "tests": [],
+          "notes": "No test goes back along the opening run to the origin page of a notification started from the question."
         }
       ]
     },

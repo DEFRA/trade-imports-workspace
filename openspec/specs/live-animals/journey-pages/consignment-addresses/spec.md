@@ -46,6 +46,12 @@ The system MUST return the user to Overview when they follow the back link from 
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
 
+#### Scenario: The back link opens Overview when the page was opened from the review's Change link on a draft
+**ID**: SCN-CONSIGN-ADDR-003-B
+- **GIVEN** the review of a draft notification
+- **WHEN** the user follows the Change link for the roles and addresses and then the back link
+- **THEN** Overview is shown, not the review
+
 ### Requirement: Overview's task for this page shows Completed once every role has an address
 **ID**: REQ-CONSIGN-ADDR-004
 The system MUST show Overview's "Roles and addresses" task as Completed once every party role on the consignment addresses page has been given an address.

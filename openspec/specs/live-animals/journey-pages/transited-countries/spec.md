@@ -123,7 +123,13 @@ The system MUST title the browser tab "Transit countries - Import notification s
 
 ### Requirement: Back returns to where the user came from
 **ID**: REQ-TRANSIT-COUNTRIES-007
-The system MUST point the page's Back link at the arrival details page when the user reached the page by saving and continuing from arrival details in the opening sequence, and at Overview when they opened it from its task on Overview.
+The system MUST point the page's Back link at the arrival details page when the user reached the page by saving and continuing from arrival details in the opening sequence, and at Overview when they opened it from its task on Overview. On a draft opened from a Change link on the review, the Back link MUST point at the arrival details page, as `live-animals/journey-flow` describes.
+
+#### Scenario: On a draft opened from a Change link, Back goes to arrival details
+**ID**: SCN-TRANSIT-COUNTRIES-007-C
+- **GIVEN** the review of a draft notification
+- **WHEN** the user follows the Change link for the transit countries and selects Back
+- **THEN** the arrival details page is shown
 
 #### Scenario: Back goes to arrival details after Save and continue there
 **ID**: SCN-TRANSIT-COUNTRIES-007-A

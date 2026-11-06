@@ -383,3 +383,30 @@ Outside an amendment, the system MUST end a page the hub links to directly, othe
 - **WHEN** the user opens Arrival details from Overview
 - **THEN** "Save and return" and "Save and continue" sit side by side
 - **AND** "Save and return to overview" sits on its own line below them
+
+### Requirement: While a notification is being amended, each save button makes the page's own checks before it goes anywhere
+**ID**: REQ-FLOW-015
+While a notification is being amended, the system MUST make each of a page's save buttons pass the page's own checks before it saves or leaves the page, so a missing or invalid answer keeps the user on the page with an error for each and nothing saved.
+
+#### Scenario: Save and return refuses a partly answered reveal while amending
+**ID**: SCN-FLOW-015-A
+- **GIVEN** the main import reason page of a notification being amended, with "Transit" chosen and its port of exit and destination country left blank
+- **WHEN** the user selects "Save and return"
+- **THEN** they stay on the page, which shows an error for each missing answer
+- **AND** nothing is saved
+
+### Requirement: Save and return to overview inside the opening sequence goes to Overview, not the sequence's next step
+**ID**: REQ-FLOW-016
+The system MUST send the user to Overview, not the opening sequence's next step, when they choose Save and return to overview from a step of the sequence.
+
+#### Scenario: Save and return to overview inside the sequence goes to Overview rather than the next step
+**ID**: SCN-FLOW-016-A
+- **GIVEN** the user is in the opening sequence on main import reason, with the reason and the question it opens answered
+- **WHEN** they select "Save and return to overview"
+- **THEN** Overview is shown, not commodity details
+
+#### Scenario: Save and return to overview from additional details inside the sequence goes to Overview rather than the next step
+**ID**: SCN-FLOW-016-B
+- **GIVEN** the user is in the opening sequence on additional details, with the certification question answered
+- **WHEN** they select "Save and return to overview"
+- **THEN** Overview is shown, not the port of entry

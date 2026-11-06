@@ -4057,7 +4057,7 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/list/list.controller.test.js",
-              "test": "links every page with the selected tab, the search term and the page number only",
+              "test": "links each page shown with the selected tab, the search term and the page number only",
               "strength": "partial",
               "notes": "red-probed: fails when the page links drop the tab; the Then clauses that only that tab's matches are listed and the tab input is hidden are still unprobed"
             },
@@ -4467,7 +4467,7 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/list/list.type-filter.controller.test.js",
-              "test": "links every page with the selected tab, the search term, the role and the page number only",
+              "test": "links each page shown with the selected tab, the search term, the role and the page number only",
               "strength": "partial",
               "notes": "red-probed through the role resolution; the href builder is not probed alone"
             },
@@ -5517,6 +5517,113 @@
               "test": "GET from the consignment contact handshake shows the address fields and no roles question",
               "strength": "full",
               "notes": "red-probed: fails when the question is shown for a party with no other roles"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-ADDR-047",
+      "name": "The address book's pagination links the first, current, neighbouring and last pages, with an ellipsis for each gap",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-ADDR-047-A",
+          "name": "A middle page shows its neighbours between the first and last pages",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/shared/list-page.test.js",
+              "test": "Should show the first page, the pages either side of a middle page and the last page, with an ellipsis for each gap",
+              "strength": "full",
+              "notes": "red-probed: fails when every page is listed; asserts exact items, Previous and Next for page 10 of 20"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-047-B",
+          "name": "The first and last pages show their one neighbour and the far end",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "a search over five pages links the first, current, neighbouring and last pages, with an ellipsis for each gap",
+              "strength": "partial",
+              "notes": "33 stamped addresses searched; exact pagination items, current page and results line on pages 1 and 5; does not assert Previous or Next"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/shared/list-page.test.js",
+              "test": "Should put an ellipsis only where page numbers are skipped on $position of many",
+              "strength": "full",
+              "notes": "red-probed: fails when every page is listed; first, third and last of 20 pages"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/shared/list-page.test.js",
+              "test": "Should omit previous on the first page",
+              "strength": "full",
+              "notes": "no Previous on the first page"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/shared/list-page.test.js",
+              "test": "Should link next to the second page on the first page",
+              "strength": "full",
+              "notes": "Next on the first page"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/shared/list-page.test.js",
+              "test": "Should link previous to the first page on the last page",
+              "strength": "full",
+              "notes": "Previous on the last page"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/shared/list-page.test.js",
+              "test": "Should omit next on the last page",
+              "strength": "full",
+              "notes": "no Next on the last page"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-047-C",
+          "name": "A list of three pages shows every page number",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/shared/list-page.test.js",
+              "test": "Should show every page and no ellipsis on page %i of three",
+              "strength": "full",
+              "notes": "red-probed: fails when an ellipsis goes between every pair of page numbers"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-047-D",
+          "name": "A page next to the last shows its neighbours and the last page with no ellipsis between them",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-list.spec.ts",
+              "test": "a search over five pages links the first, current, neighbouring and last pages, with an ellipsis for each gap",
+              "strength": "full",
+              "notes": "33 stamped addresses searched; follows page 4 after page 5 and asserts exact pagination items 1, ellipsis, 3, 4, 5, current page 4 and 'Showing 25-32 of 33'"
             }
           ]
         }

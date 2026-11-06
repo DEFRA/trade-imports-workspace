@@ -58,7 +58,7 @@ The system MUST offer a "Create new" button under the dashboard heading and abov
 - **GIVEN** notifications are listed on the dashboard
 - **WHEN** the user chooses "Create new"
 - **THEN** the question "What are you importing?" is shown
-- **AND** no option is selected and the second option is Germinal products (semen, ova, embryos)
+- **AND** no option is selected and the second option is Plants for planting
 
 #### Scenario: Starting from an empty dashboard asks the same question
 **ID**: SCN-INS-DASH-004-B

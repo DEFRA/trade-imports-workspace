@@ -1,5 +1,5 @@
 #!/bin/bash
-# Behaviour test for ac-table.sh and verify-consistency.sh.
+# Behaviour test for ac-table.sh, verify-consistency.sh and replay-prs.sh.
 #
 # Usage: bash tools/review/review-gates.test.sh
 #
@@ -97,6 +97,26 @@ check "every repo with a list is complete" "$(gate .complete)" "true"
 
 : > "$REVIEW_DIR/file-reviews/$REPO_A/_consistency-check.md"
 check "an items list without the markdown is still pending" "$(gate .pending_repos)" "[\"$REPO_A\"]"
+
+echo "replay-prs.sh"
+
+replay=$(bash "$SCRIPT_DIR/replay-prs.sh" "$ID")
+check "every PR in the meta is replayed" "$(jq length <<< "$replay")" "2"
+check "a replayed PR has the search shape" \
+    "$(jq -c '.[0] | {number, repository, state}' <<< "$replay")" \
+    "{\"number\":1,\"repository\":{\"name\":\"$REPO_A\"},\"state\":null}"
+
+jq -n --arg a "$REPO_A" \
+    '{id: "x", prs: [{repo: $a, pr: 21, commit: "abc123", state: "open"}]}' > "$REVIEW_DIR/.review-meta.json"
+check "a replayed PR keeps its commit and state" \
+    "$(bash "$SCRIPT_DIR/replay-prs.sh" "$ID" | jq -r '.[0] | "\(.commit) \(.state)"')" "abc123 open"
+
+echo '{"id": "x", "prs": []}' > "$REVIEW_DIR/.review-meta.json"
+bash "$SCRIPT_DIR/replay-prs.sh" "$ID" > /dev/null 2>&1
+check "a review with no PRs exits 1" "$?" "1"
+
+bash "$SCRIPT_DIR/replay-prs.sh" EUDPA-99995-missing > /dev/null 2>&1
+check "a missing review exits 1" "$?" "1"
 
 if [[ "$failures" -gt 0 ]]; then
     echo "$failures check(s) failed"

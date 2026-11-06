@@ -19,6 +19,8 @@ DESC=""
 REPOS=""
 JSON_OUTPUT=false
 NO_TICKET=false
+ID_OVERRIDE=""
+SAME_AS=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -37,6 +39,14 @@ while [[ $# -gt 0 ]]; do
             ;;
         --repos)
             REPOS="$2"
+            shift 2
+            ;;
+        --id)
+            ID_OVERRIDE="$2"
+            shift 2
+            ;;
+        --same-as)
+            SAME_AS="$2"
             shift 2
             ;;
         -*)
@@ -60,6 +70,9 @@ if [[ -z "$TICKET" ]] && [[ -z "$BRANCH" ]]; then
     echo "  --branch   Branch name to search for PRs (no-ticket mode)"
     echo "  --desc     Description for the review (required with --branch)"
     echo "  --repos    Comma-separated list of repos to search (optional)"
+    echo "  --id       Workarea name, when it is not the ticket (e.g. EUDPA-674-simple)"
+    echo "  --same-as  Review the PRs another review did, at the commits it recorded,"
+    echo "             from its saved diffs (e.g. --same-as EUDPA-674)"
     echo "  --json     Output JSON format"
     exit 1
 fi
@@ -74,6 +87,8 @@ if [[ "$NO_TICKET" == "true" ]]; then
 else
     REVIEW_ID="$TICKET"
 fi
+[[ -n "$ID_OVERRIDE" ]] && REVIEW_ID="$ID_OVERRIDE"
+SAME_AS_DIR="$HOME/git/defra/trade-imports-workspace/workareas/reviews/$SAME_AS"
 
 REVIEW_DIR="$HOME/git/defra/trade-imports-workspace/workareas/reviews/$REVIEW_ID"
 
@@ -239,6 +254,12 @@ else
     rm -f "$left_out_log"
 fi
 
+if [[ -n "$SAME_AS" ]]; then
+    # Replay another review's PRs, pinned to its commits, in place of any search.
+    prs_json=$("$SCRIPT_DIR/replay-prs.sh" "$SAME_AS") || error "Cannot replay the PRs of review $SAME_AS"
+    log "  Replaying the PRs of review $SAME_AS at its commits"
+fi
+
 if [[ "$prs_json" == "[]" ]] || [[ -z "$prs_json" ]]; then
     log "No PRs found"
     prs_json="[]"
@@ -286,7 +307,12 @@ for ((i=0; i<pr_count; i++)); do
         files_changed=$(echo "$pr_details" | jq -r '.files[].path' | wc -l | tr -d ' ')
         pr_merged_at=$(echo "$pr_details" | jq -r '.mergedAt // empty')
 
-        if [[ -n "$pr_merged_at" ]] && [[ "$pr_merged_at" != "null" ]]; then
+        pinned_commit=$(echo "$prs_json" | jq -r ".[$i].commit // empty")
+        if [[ -n "$pinned_commit" ]]; then
+            target_commit="$pinned_commit"
+            commit_type="pinned by $SAME_AS"
+            files_changed=$(grep -c '^diff --git ' "$SAME_AS_DIR/.diffs/$repo_name.diff" 2>/dev/null) || files_changed=0
+        elif [[ -n "$pr_merged_at" ]] && [[ "$pr_merged_at" != "null" ]]; then
             target_commit=$(gh pr view "$pr_number" --repo "DEFRA/$repo_name" --json mergeCommit --jq '.mergeCommit.oid' 2>/dev/null)
             commit_type="merge"
         else
@@ -340,7 +366,12 @@ for ((i=0; i<pr_count; i++)); do
         # (file-diff.sh, consistency review, orchestrator) read from
         # disk instead of each calling `gh pr diff` again.
         mkdir -p "$REVIEW_DIR/.diffs"
-        gh pr diff "$pr_number" --repo "DEFRA/$repo_name" > "$REVIEW_DIR/.diffs/$repo_name.diff" 2>/dev/null || true
+        if [[ -n "$pinned_commit" ]]; then
+            # The PR may have moved since; its diff then would not match the pinned commit.
+            cp "$SAME_AS_DIR/.diffs/$repo_name.diff" "$REVIEW_DIR/.diffs/$repo_name.diff" 2>/dev/null || true
+        else
+            gh pr diff "$pr_number" --repo "DEFRA/$repo_name" > "$REVIEW_DIR/.diffs/$repo_name.diff" 2>/dev/null || true
+        fi
 
         tech_json=$("$SCRIPT_DIR/detect-tech.sh" "$repo_dir" 2>/dev/null) || tech_json='{"technologies":[],"best_practices":[]}'
         tech_list=$(echo "$tech_json" | jq -r '.technologies | join(", ")')
@@ -448,7 +479,12 @@ while IFS= read -r pr_meta; do
     pr_number=$(echo "$pr_meta" | jq -r '.pr')
     commit=$(echo "$pr_meta" | jq -r '.commit')
 
-    files=$("$HOME/git/defra/trade-imports-workspace/tools/github/pr-details.sh" "$repo" "$pr_number" files 2>/dev/null) || continue
+    if [[ -n "$SAME_AS" ]]; then
+        # The files at the pinned commit are the ones in the replayed diff.
+        files=$(sed -n 's|^diff --git a/.* b/||p' "$REVIEW_DIR/.diffs/$repo.diff" 2>/dev/null) || continue
+    else
+        files=$("$HOME/git/defra/trade-imports-workspace/tools/github/pr-details.sh" "$repo" "$pr_number" files 2>/dev/null) || continue
+    fi
 
     repo_review_dir="$REVIEW_DIR/file-reviews/$repo"
     mkdir -p "$repo_review_dir"

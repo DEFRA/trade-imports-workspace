@@ -38,7 +38,14 @@ if [[ -z "$TICKET" ]] || [[ "$TICKET" == "-h" ]] || [[ "$TICKET" == "--help" ]];
     exit 1
 fi
 
-REVIEW_DIR="$ROOT/workareas/reviews/$TICKET"
+# --id NAME puts the review in another workarea (see prepare-review.sh), so
+# REFRESH is decided by that workarea, not the ticket's.
+REVIEW_ID="$TICKET"
+args=("$@")
+for ((i = 0; i < ${#args[@]}; i++)); do
+    [[ "${args[$i]}" == "--id" ]] && REVIEW_ID="${args[$((i + 1))]:-$TICKET}"
+done
+REVIEW_DIR="$ROOT/workareas/reviews/$REVIEW_ID"
 
 if [[ -f "$REVIEW_DIR/review-index.md" ]]; then
     echo "MODE: REFRESH"

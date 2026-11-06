@@ -170,6 +170,38 @@ Then only the two groups that held the bugs were run, in workarea
 
 So `review-java-source` and `review-node-source` now run on Opus.
 
+### Run 5 (done)
+
+Workarea `workareas/reviews/EUDPA-674-run5/`, session
+`dc4299e7-f973-4c8e-b431-42f4cccf7046` (a forked skill, trial run).
+**14.1M tokens**, CONCERNS, 61 open findings. Full comparison in
+[`run5-comparison.md`](run5-comparison.md).
+
+- Best match with run 1 so far: 30 matched and 7 partly matched (run 4:
+  23 and 9). Found `Unit.COUNT`, `countryCode: undefined` and the
+  long-task-timer drop. Kept the replica-set bug, the overrides and the
+  provenance merge.
+- Lost the `int` flag. Missed both of the source test's extra finds
+  (`OperatorService.java:81` counts the search before the query;
+  `QUERY_AND_COUNTRY` calls an OR query). Both are still in the code.
+- Opus source groups: +0.6M (1.78M against 1.18M). The skill's own context
+  rose by 2.3M (6.1M, 64 calls), mostly cleaning up duplicate findings.
+- **Duplicates:** `file-review-write.sh` adds each finding again on a
+  second run over the same list. The animals-frontend source reviewer
+  reworded a fix and re-ran it, so 11 findings were written twice.
+- **False Critical:** animals-frontend #18 says #300 changes things outside
+  EUDPA-674. #300 is EUDPA-368: the replay keeps run 1's PR set and the
+  brief does not say so.
+- **Why the test findings (and coverage gaps) are thin:** the briefs are
+  too big to read. Test briefs are 110-294 KB and 2,600-7,400 lines.
+  `Read` refuses anything over 256 KB, and with no range it returns only
+  2,000 lines. The first 2,850 lines are instructions and guides, and the
+  files and the source under test come after them. The address-book
+  java-tests 1 reviewer read about 1,500 of its 4,570 lines of code. Run
+  4's briefs were the same size, so earlier differences in coverage gaps
+  came from how much each reviewer chose to read. Source briefs have the
+  same problem (4,200-4,800 lines).
+
 ## Next
 
 A new script needs its executable bit before an agent can run it. Policy
@@ -177,22 +209,22 @@ blocks `chmod` in a session and denies `bash <script>`, and a hook runs a
 changed script only once it is committed. So stage a new script with
 `git add --chmod=+x` and have the user run `! chmod +x` on it.
 
-1. **Run 5.** Trial run, don't post. Set up with
-   `start-review.sh EUDPA-674 --id EUDPA-674-run5 --same-as EUDPA-674`,
-   then use `EUDPA-674-run5` as the review id for every later step. Use
-   the same four PRs, #300 and #43 included.
-2. **Compare run 5 with runs 1 to 4** as `run5-comparison.md`, in the same
-   shape as `run4-comparison.md`.
-   - Were `Unit.COUNT` (`EmfMeterRegistry.java:106,122`) and
-     `countryCode: undefined` (`to-wire-address.js:9`) found, and are run
-     4's finds (replica set, `int` flag, overrides, provenance merge) kept?
-   - Check the two new source findings from the test against the code:
-     `OperatorService.java:80` (search counted before a failed query) and
-     `AddressSearchType.java:8` (`QUERY_AND_COUNTRY` names an OR query).
-   - Tokens: source on Opus should add about 0.5-1M. Check the total and
-     the four source groups against run 4.
-   - Test reviewers stay on Sonnet. If run 5 still shows thin coverage
-     gaps, test them the same way: run the two test groups on each model.
+1. **Make every brief readable in full.** In `write-briefs.sh`, put the
+   group's files and the source under test first and the guides last. Cut
+   the guides to the sections the file type needs, or move them out of the
+   brief. Keep every brief under 256 KB and 2,000 lines, split the group
+   when it would go over, and test that in `review-groups.test.sh`. Ask
+   the reviewer to say in its reply whether it read the whole brief.
+2. **`file-review-write.sh` replaces, not adds.** A second run over the same
+   list replaces each listed file's findings. Add a run-twice test.
+3. **Replay briefs name each PR's own ticket.** When a PR in the set belongs
+   to another ticket, say so in the brief and tell the reviewer that scope
+   against this ticket is not a finding for that PR.
+4. **Run 6** with the same setup (`--id EUDPA-674-run6 --same-as
+   EUDPA-674`, trial run, all four PRs). Then compare it as
+   `run6-comparison.md`. Check the coverage gaps (run 4: address-book #9,
+   #15 and #16, animals-frontend #2), the `int` flag, and the two
+   source-test finds. Only then test the test reviewers on each model.
 
 ## Side issues (not this branch)
 
@@ -206,7 +238,7 @@ changed script only once it is committed. So stage a new script with
 - `ac-check` and `prepare-ac-check.sh` are untracked or gitignored. Delete
   them once the test reviewer has replaced them.
 - `ac-table.sh` lists one criterion up to three times (28 rows for about
-  9 criteria), because each test reviewer words the criteria its own way.
+  9 criteria in run 4, 35 in run 5), because each test reviewer words the criteria its own way.
   Some rows say Yes and No for the same criterion. It needs a shared AC id
   to match rows on.
 - In run 2 the ins-frontend infra reviewer replied "4 findings" but wrote

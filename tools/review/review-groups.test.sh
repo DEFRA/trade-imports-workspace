@@ -123,10 +123,8 @@ check "brief writing exits cleanly" "$?" "0"
 
 brief="$REVIEW_DIR/briefs/$JAVA_REPO--java-source--1.md"
 check "one brief per group" \
-    "$(find "$REVIEW_DIR/briefs" -name '*.md' ! -name '*.part-*' | wc -l | tr -d ' ')" "$(jq '.groups | length' "$REVIEW_DIR/groups.json")"
-check "at the default limits a brief with the real guides is one file, with no parts" \
-    "$(find "$REVIEW_DIR/briefs" -name '*.part-*' | wc -l | tr -d ' ')" "0"
-check "the brief starts with the core instructions" "$(sed -n '3p' "$brief")" "## How to review your group"
+    "$(find "$REVIEW_DIR/briefs" -name '*.md' | wc -l | tr -d ' ')" "$(jq '.groups | length' "$REVIEW_DIR/groups.json")"
+check "the core instructions follow the header" "$(sed -n '8p' "$brief")" "## How to review your group"
 check "the brief carries the source instructions for its type" "$(grep -c '^## Reviewing source files$' "$brief")" "1"
 check "brief writing makes the folders reviewers write to" \
     "$([[ -d "$REVIEW_DIR/findings" && -d "$REVIEW_DIR/ac" && -d "$REVIEW_DIR/consistency" ]] && echo yes || echo no)" "yes"
@@ -166,40 +164,17 @@ check "foo.test.js covers foo.js beside it" \
 check "a source the review did not change is marked so" \
     "$(grep -c '^Not changed by this review.$' "$node_tests_brief")" "1"
 
-echo "write-briefs.sh, split into parts"
-whole=$(sed 1d "$tests_brief")
-bash "$SCRIPT_DIR/write-briefs.sh" "$ID" --max-file-bytes 30 --max-part-lines 300 --max-part-bytes 20000 > /dev/null
-check "a split run exits cleanly" "$?" "0"
-count=$(sed -n '1s/.* of \([0-9]*\)$/\1/p' "$tests_brief")
-parts=("$tests_brief")
-for ((k = 2; k <= count; k++)); do parts+=("$REVIEW_DIR/briefs/$JAVA_REPO--java-tests--1.part-$k.md"); done
-check "a brief over the limits is split" "$([[ ${count:-0} -gt 1 ]] && echo yes || echo no)" "yes"
-check "into exactly the parts it lists" \
-    "$(find "$REVIEW_DIR/briefs" -name "$JAVA_REPO--java-tests--1.part-*.md" | wc -l | tr -d ' ')" "$((count - 1))"
-check "part 1 says how many parts there are" "$(sed -n 1p "$tests_brief")" "# Review brief: java-tests, part 1 of $count"
-check "part 1 lists every part" "$(grep -c -E '^[0-9]+\. `.*java-tests--1(\.part-[0-9]+)?\.md`' "$tests_brief")" "$count"
-over=0
-for part in "${parts[@]}"; do
-    [[ $(wc -l < "$part") -le 300 && $(wc -c < "$part") -le 20000 ]] || over=$((over + 1))
+echo "write-briefs.sh, the header"
+lines_ok=0
+for b in "$REVIEW_DIR"/briefs/*.md; do
+    stated=$(sed -n '3s/^This brief is \([0-9]*\) lines\..*/\1/p' "$b")
+    [[ -n "$stated" && "$stated" -eq $(wc -l < "$b") ]] || lines_ok=$((lines_ok + 1))
 done
-check "every part is within both limits" "$over" "0"
-# Part 1's header is its title, a blank line, four lines of text, a blank
-# line and the list of parts; a later part's is its title, a blank line and
-# a line naming part 1.
-rebuilt=$(
-    sed "1,$((7 + count))d" "${parts[0]}"
-    for ((k = 1; k < count; k++)); do sed '1,3d' "${parts[$k]}"; done
-)
-check "the parts hold every line of the brief, in order" "$rebuilt" "$whole"
-check "a later part names part 1" "$(sed -n 3p "${parts[1]}")" "Continued from part 1. Part 1 is \`$tests_brief\`."
-check "a part ends at a heading where it can" "$(sed -n 4p "${parts[1]}" | grep -c '^#')" "1"
-
-bash "$SCRIPT_DIR/write-briefs.sh" "$ID" --max-file-bytes 30 > /dev/null
-check "writing again within the limits removes the old parts" \
-    "$(find "$REVIEW_DIR/briefs" -name '*.part-*' | wc -l | tr -d ' ')" "0"
-
-bash "$SCRIPT_DIR/write-briefs.sh" "$ID" --max-part-lines 5 > /dev/null 2>&1
-check "a part limit under 100 is refused" "$?" "1"
+check "every brief states its own length in lines" "$lines_ok" "0"
+check "and says to read to the last line, in order" \
+    "$(sed -n 3p "$tests_brief" | grep -c "Read it with Read from line 1 to line $(wc -l < "$tests_brief" | tr -d ' '), in$")" "1"
+check "the writer prints each brief's length in lines" \
+    "$(bash "$SCRIPT_DIR/write-briefs.sh" "$ID" --max-file-bytes 30 | grep -c "$JAVA_REPO--java-tests--1.md [0-9]* bytes $(wc -l < "$tests_brief" | tr -d ' ') lines$")" "1"
 
 rm "$REVIEW_DIR/groups.json"
 bash "$SCRIPT_DIR/write-briefs.sh" "$ID" > /dev/null 2>&1

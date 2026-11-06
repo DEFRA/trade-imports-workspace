@@ -3,18 +3,17 @@
 # Run plan-groups.sh first.
 #
 # Usage:
-#   write-briefs.sh ID [--max-file-bytes N] [--max-part-lines N] [--max-part-bytes N]
+#   write-briefs.sh ID [--max-file-bytes N]
 #
 # ID is the ticket (EUDPA-X) or the local id (local/<repo>/<branch>).
 # --max-file-bytes is the largest file copied into a brief whole
 # (default 50000). A larger file gets its diff and the path to read it at.
-# --max-part-lines and --max-part-bytes are the most one part of a brief
-# holds (defaults 20000 and 500000, about 125k tokens). A reviewer reads
-# each part whole in one Read call with allow_large: true, which lifts
-# Read's usual 256 KB and 2,000-line limits up to what fits in its
-# context, so a brief is normally one part.
 #
-# Writes a brief for every group in groups.json, in this order:
+# Writes briefs/<group id>.md for every group in groups.json. A brief is
+# far larger than one Read call returns (about 40-55 KB, even with
+# allow_large), so the reviewer reads it from line 1 to the end in order.
+# Its header gives its length in lines, and the reviewer's reply says the
+# last line it read. After the header, in this order:
 #   1. the type's instructions: the files its reviewTypes entry in the
 #      review skill's assets/routing.json lists, from references/types/
 #   2. the group: repo, PR, the ticket the PR belongs to when that is not
@@ -28,17 +27,13 @@
 #      content. A Java test FooTest, FooTests or FooIT covers Foo.java (in
 #      the same package, else the one Foo.java under src/main/java); a Node
 #      test foo.test.js covers foo.js (or .mjs, .ts) beside it.
-#   7. the group's guides, last, so the code under review comes first
-#
-# A brief within both part limits is one file, briefs/<group id>.md. A
-# larger one is split into parts: briefs/<group id>.md is part 1 and lists
-# every part, and briefs/<group id>.part-<n>.md holds the rest. A part ends
-# at a heading when one falls in its second half.
+#   7. the group's guides, last, so a reviewer that stops early loses
+#      guides, not the code under review
 #
 # Also makes the findings/, ac/ and consistency/ folders the reviewers
 # write to.
 #
-# Prints one line per brief: its path, its size in bytes and its parts.
+# Prints one line per brief: its path, its size in bytes and its lines.
 
 set -euo pipefail
 
@@ -48,19 +43,15 @@ ROUTING="$WORKSPACE/.claude/skills/review/assets/routing.json"
 
 ID=""
 MAX_FILE_BYTES=50000
-MAX_PART_LINES=20000
-MAX_PART_BYTES=500000
 
 usage() {
-    sed -n '2,42p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '2,37p' "$0" | sed 's/^# \{0,1\}//'
     exit "${1:-1}"
 }
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --max-file-bytes) MAX_FILE_BYTES="$2"; shift 2 ;;
-        --max-part-lines) MAX_PART_LINES="$2"; shift 2 ;;
-        --max-part-bytes) MAX_PART_BYTES="$2"; shift 2 ;;
         -h|--help) usage 0 ;;
         -*) echo "Unknown option: $1" >&2; usage ;;
         *) ID="$1"; shift ;;
@@ -68,9 +59,6 @@ while [[ $# -gt 0 ]]; do
 done
 
 [[ -n "$ID" ]] || { echo "Missing ID" >&2; usage; }
-for limit in "$MAX_PART_LINES" "$MAX_PART_BYTES"; do
-    [[ "$limit" =~ ^[0-9]+$ && "$limit" -ge 100 ]] || { echo "A part limit must be a whole number of at least 100" >&2; exit 1; }
-done
 
 REVIEW_DIR="$WORKSPACE/workareas/reviews/$ID"
 GROUPS_FILE="$REVIEW_DIR/groups.json"
@@ -347,74 +335,26 @@ print_sources_under_test() {
     done
 }
 
-# Prints the last line of each part of BODY, one per line: a part ends at
-# the line limit or the byte limit (each less a margin for the part's own
-# header), or at the last heading in its second half when one is there.
-part_ends() {
-    LC_ALL=C awk -v max_lines="$((MAX_PART_LINES - 20))" -v max_bytes="$((MAX_PART_BYTES - 3000))" '
-        { line[NR] = $0; size[NR] = length($0) + 1 }
-        END {
-            start = 1
-            while (start <= NR) {
-                bytes = 0; end = start - 1; heading = 0
-                for (i = start; i <= NR; i++) {
-                    if (i - start + 1 > max_lines || (i > start && bytes + size[i] > max_bytes)) break
-                    bytes += size[i]; end = i
-                    if (i > start && line[i] ~ /^##+ /) heading = i
-                }
-                if (end < NR && heading > start + (end - start) / 2) end = heading - 1
-                print end
-                start = end + 1
-            }
-        }' "$1"
-}
+# The lines above the body: the title, a blank line and four lines on how
+# to read the brief. Keep HEADER_LINES equal to what write_whole prints
+# before the body.
+HEADER_LINES=6
 
-# Writes BODY as the brief for group ID, in one file or in parts, and
-# prints its path, size and number of parts.
-write_parts() {
-    local body="$1" group_id="$2" type="$3" first="$REVIEW_DIR/briefs/$2.md"
-    local -a ends=()
-    while IFS= read -r end; do ends+=("$end"); done < <(part_ends "$body")
-    local count=${#ends[@]} k start=1 out bytes=0
-    [[ $count -gt 0 ]] || { ends=(0); count=1; }
-
-    rm -f "$REVIEW_DIR/briefs/$group_id".part-*.md
-    for ((k = 1; k <= count; k++)); do
-        out="$first"
-        [[ $k -gt 1 ]] && out="$REVIEW_DIR/briefs/$group_id.part-$k.md"
-        {
-            if [[ $count -eq 1 ]]; then
-                echo "# Review brief: $type"
-            elif [[ $k -eq 1 ]]; then
-                echo "# Review brief: $type, part 1 of $count"
-                echo
-                echo "This brief is in $count parts. Read every part, whole and in order,"
-                echo "before you write a finding: read each part in one Read call with no"
-                echo "range and allow_large: true. Your files and the source they cover come"
-                echo "before the guides."
-                echo
-                for ((j = 1; j <= count; j++)); do
-                    if [[ $j -eq 1 ]]; then
-                        echo "$j. \`$first\` (this file)"
-                    else
-                        echo "$j. \`$REVIEW_DIR/briefs/$group_id.part-$j.md\`"
-                    fi
-                done
-            else
-                echo "# Review brief: $type, part $k of $count"
-                echo
-                echo "Continued from part $((k - 1)). Part 1 is \`$first\`."
-            fi
-            [[ ${ends[$((k - 1))]} -ge $start ]] && sed -n "${start},${ends[$((k - 1))]}p" "$body"
-        } > "$out"
-        if [[ $(wc -l < "$out") -gt $MAX_PART_LINES || $(wc -c < "$out") -gt $MAX_PART_BYTES ]]; then
-            echo "$out is over the part limits ($MAX_PART_LINES lines, $MAX_PART_BYTES bytes); raise them" >&2
-            return 1
-        fi
-        bytes=$((bytes + $(wc -c < "$out" | tr -d ' ')))
-        start=$((${ends[$((k - 1))]} + 1))
-    done
-    echo "$first $bytes $count part(s)"
+# Writes BODY under its header as briefs/<group id>.md and prints the
+# brief's path, size in bytes and length in lines.
+write_whole() {
+    local body="$1" group_id="$2" type="$3" out="$REVIEW_DIR/briefs/$2.md" total
+    total=$((HEADER_LINES + $(wc -l < "$body")))
+    {
+        echo "# Review brief: $type"
+        echo
+        echo "This brief is $total lines. Read it with Read from line 1 to line $total, in"
+        echo "order: one call returns only part of it, so carry on from the line after the"
+        echo "last one each call returned. Your files and the source they cover come before"
+        echo "the guides. Your reply says the last line you read."
+        cat "$body"
+    } > "$out"
+    echo "$out $(wc -c < "$out" | tr -d ' ') bytes $total lines"
 }
 
 reviewed_ticket=$(jq -r '.ticket // empty' "$REVIEW_DIR/.review-meta.json")
@@ -424,5 +364,5 @@ body_file=$(mktemp)
 trap 'rm -f "$body_file"' EXIT
 jq -c '.groups[]' "$GROUPS_FILE" | while IFS= read -r group; do
     write_brief "$group" > "$body_file"
-    write_parts "$body_file" "$(jq -r '.id' <<< "$group")" "$(jq -r '.type' <<< "$group")"
+    write_whole "$body_file" "$(jq -r '.id' <<< "$group")" "$(jq -r '.type' <<< "$group")"
 done

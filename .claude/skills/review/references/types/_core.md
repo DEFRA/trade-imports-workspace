@@ -3,9 +3,8 @@
 You review every file listed under "Your group", below these
 instructions. This brief holds, in order: these instructions, your group,
 the ticket, the house rules, each file's diff and content at the reviewed
-commit, and your guides last. Read all of it, in one Read call with
-`allow_large: true` (a very large brief is in parts, and part 1 lists
-them), before you write a finding. The code you
+commit, and your guides last. Read all of it, from line 1 to the last
+line the header gives, in order, before you write a finding. The code you
 review comes before the guides, so stopping early loses the code, not the
 guides. The instructions for your type below say which other files you
 read and when. Do not search the repo.
@@ -128,10 +127,11 @@ one command. Send both tool calls in the same response, the Write first.
 
 When the write succeeds, reply with one line and nothing else:
 
-`done: <files> files, <findings> findings, <worst verdict>, read <n> of <n> parts`
+`done: <files> files, <findings> findings, <worst verdict>, read <last line> of <lines> lines`
 
-The last part says how many parts of the brief you read whole. When it is
-fewer than the brief has, read the rest and review again before you reply.
+`<last line>` is the last line of the brief you read, and `<lines>` is the
+length the header gives. When the first is smaller, read the rest and
+review again before you reply.
 
 Your findings are on disk; the parent reads them there. If you could not
 write them, reply `failed: <the error>`.

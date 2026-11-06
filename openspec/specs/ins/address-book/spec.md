@@ -1331,9 +1331,9 @@ The system MUST show, under a list running past one page, a link to page 1, the 
 **ID**: SCN-INS-ADDR-047-B
 - **GIVEN** a search matches five pages of addresses
 - **WHEN** the user submits it
-- **THEN** the pagination shows pages 1 and 2, an ellipsis and page 5, with page 1 marked as the current page
+- **THEN** the pagination shows pages 1 and 2, an ellipsis, page 5 and 'Next', with no 'Previous', and page 1 marked as the current page
 - **WHEN** they follow page 5
-- **THEN** the pagination shows page 1, an ellipsis and pages 4 and 5, with page 5 marked as the current page
+- **THEN** the pagination shows 'Previous', page 1, an ellipsis and pages 4 and 5, with no 'Next', and page 5 marked as the current page
 - **WHEN** they follow page 4
 - **THEN** the pagination shows page 1, an ellipsis and pages 3, 4 and 5, with page 4 marked as the current page, and the list reads 'Showing 25-32' against the number of matches
 

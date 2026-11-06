@@ -55,8 +55,7 @@ the wrappers and is the surface to use.
   which undici relabels as `ConnectTimeoutError` with its own timeout in the
   message. The 250ms is Node's process-wide default, so it hits every client
   in a service, not only `fetch`: in the frontends the JWKS fetch at sign-in
-  (Wreck) failed the same way. Fix it once for the whole process, as the
-  frontends' `startServer` does: it calls
+  (Wreck) failed the same way. Fix it once for the whole process: call
   `net.setDefaultAutoSelectFamilyAttemptTimeout(1000)` before the server is
   created, which covers Wreck, Bell and `fetch`. Where a call can safely be
   tried again, add a connect-only retry in its client, as the frontends'

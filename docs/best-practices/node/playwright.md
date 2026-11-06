@@ -49,8 +49,8 @@ The tests repo's README and `config/service-tags.ts` hold the full lists.
 | Service tags (`@ins-backend`, …) | A spec another service's pull request should also run. See [Test and spec vocabulary](../../testing/test-and-spec-vocabulary.md); add them with the `service-tag` skill, not by hand |
 
 Fixtures are named per domain, as in `fixtures/ui.ts`: `animalsPages`,
-`plantsPages` and so on for page objects, `animalsJourney` and
-`plantsJourney` for journey flows, and `animalsSeededJourney` for seeding.
+`plantsPages` and so on for page objects, `animalsJourney`, `plantsJourney`
+and `insJourney` for journey flows, and `animalsSeededJourney` for seeding.
 `pages` holds the shared page objects. Specs import `test` and `expect` from
 `@fixtures`.
 

@@ -244,27 +244,40 @@ mockMvc.perform(delete("/notifications")...)
 
 When a bean must exist only under a condition (`@ConditionalOnProperty` and the like), test what the condition does, not that the annotation is there. `ApplicationContextRunner` starts just the configuration under test, with the properties you give it, in milliseconds. Run it with the property on and off and assert on the beans. Reading the annotation by reflection proves only that it is spelled as written.
 
+The worked example is `configuration/MetricsConfigTest` in `trade-imports-address-book`:
+
 ```java
 private final ApplicationContextRunner contextRunner =
     new ApplicationContextRunner()
         .withUserConfiguration(MetricsConfig.class)
-        .withBean(SimpleMeterRegistry.class, SimpleMeterRegistry::new, bean -> bean.setPrimary(true))
-        .withPropertyValues("aws.emf.namespace=test-namespace");
+        .withBean(
+            ConfigurableApplicationContext.CONVERSION_SERVICE_BEAN_NAME,
+            ConversionService.class,
+            ApplicationConversionService::getSharedInstance)
+        .withBean(
+            SimpleMeterRegistry.class, SimpleMeterRegistry::new, bean -> bean.setPrimary(true))
+        .withPropertyValues("aws.emf.namespace=test-namespace", "aws.emf.step=1m");
 
 @Test
-void emfMeterRegistry_shouldBeCreated_whenEmfIsEnabled() {
+void emfMeterRegistry_isCreatedWhenEmfIsEnabled() {
     contextRunner
         .withPropertyValues("aws.emf.enabled=true")
         .run(context -> assertThat(context).hasSingleBean(EmfMeterRegistry.class));
 }
 
 @Test
-void emfMeterRegistry_shouldBeLeftOut_whenEmfIsDisabled() {
+void emfMeterRegistry_isLeftOutWhenEmfIsDisabled() {
     contextRunner
         .withPropertyValues("aws.emf.enabled=false")
-        .run(context -> assertThat(context).doesNotHaveBean(EmfMeterRegistry.class));
+        .run(
+            context -> {
+              assertThat(context).hasNotFailed();
+              assertThat(context).doesNotHaveBean(EmfMeterRegistry.class);
+            });
 }
 ```
+
+The runner supplies every property the bean reads, so the enabled test can start it. It registers Spring Boot's `ApplicationConversionService` as the context's conversion service, because a bare `ApplicationContextRunner` does not bind `"1m"` to a `Duration`. The disabled test asserts `hasNotFailed()` before `doesNotHaveBean(...)`: a context that failed to start has no beans, so without it the test passes whatever the condition does.
 
 ---
 

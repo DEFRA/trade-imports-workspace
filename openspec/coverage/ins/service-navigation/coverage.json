@@ -1,0 +1,78 @@
+{
+  "capability": "ins/service-navigation",
+  "areaCode": "INS-NAV",
+  "specFile": "openspec/specs/ins/service-navigation/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-INS-NAV-001",
+      "name": "The navigation offers four items in a fixed order",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-NAV-001-A",
+          "name": "A signed-in user sees the four items in order",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should offer dashboard, address book, manage account and sign out links on a signed-in page", "strength": "partial", "notes": "proves the four items, their order and their links; not probed" },
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/fit/list.fit.spec.js", "test": "Dashboard and Address book links are visible and navigate correctly", "strength": "partial", "notes": "shows Dashboard and Address book only; not probed" }
+          ]
+        },
+        {
+          "id": "SCN-INS-NAV-001-B",
+          "name": "Following Dashboard from the address book opens the dashboard",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/address-book/fit/list.fit.spec.js", "test": "Dashboard and Address book links are visible and navigate correctly", "strength": "partial", "notes": "not probed" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-NAV-002",
+      "name": "The navigation marks the item for the section the user is in",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-NAV-002-A",
+          "name": "Dashboard is the current item on the dashboard",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should mark the dashboard item active on the dashboard", "strength": "partial", "notes": "unit only; not probed" },
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/config/nunjucks/context/context.test.js", "test": "Should mark the dashboard on the dashboard", "strength": "partial", "notes": "unit only; not probed" },
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/shared/paths.test.js", "test": "Should place the dashboard and the notification type question in the dashboard section", "strength": "partial", "notes": "unit only; not probed" }
+          ]
+        },
+        {
+          "id": "SCN-INS-NAV-002-B",
+          "name": "Dashboard is the current item on the notification type question",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/notification-type/notification-type.fit.spec.js", "test": "goes back to the dashboard, with Dashboard highlighted in the service navigation", "strength": "partial", "notes": "not probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/notification-type/notification-type.spec.ts", "test": "Back from the question returns to the INS home and neither journey frontend is visited", "strength": "partial", "notes": "not yet run against the rebuilt stack" },
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/shared/paths.test.js", "test": "Should place the dashboard and the notification type question in the dashboard section", "strength": "partial", "notes": "unit only; not probed" }
+          ]
+        },
+        {
+          "id": "SCN-INS-NAV-002-C",
+          "name": "Address book is the current item on the address book and an address's own pages",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should mark the address book item active inside the address book section", "strength": "partial", "notes": "unit only; not probed" },
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/config/nunjucks/context/context.test.js", "test": "Should mark the address book on the address book", "strength": "partial", "notes": "unit only; not probed" },
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/config/nunjucks/context/context.test.js", "test": "Should keep the address book marked inside an address", "strength": "partial", "notes": "unit only; not probed" },
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/shared/paths.test.js", "test": "Should place every address-book page in the address book section, and nothing that merely starts with its name", "strength": "partial", "notes": "unit only; not probed" }
+          ]
+        },
+        {
+          "id": "SCN-INS-NAV-002-D",
+          "name": "No item is current on a page outside both sections",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should mark nothing active outside any navigation section", "strength": "partial", "notes": "unit only; not probed" },
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/config/nunjucks/context/context.test.js", "test": "Should mark nothing on a page outside the navigation", "strength": "partial", "notes": "unit only; not probed" }
+          ]
+        }
+      ]
+    }
+  ]
+}

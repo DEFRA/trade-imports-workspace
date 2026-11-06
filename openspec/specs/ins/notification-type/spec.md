@@ -40,12 +40,6 @@ The page MUST ask "What are you importing?" with five options and a single "Cont
 - **THEN** the "Alpha" phase banner shows "This is a new service. Help us improve it and give your feedback by email."
 - **AND** the feedback link opens an email to the service desk
 
-#### Scenario: Dashboard is the current service navigation item while the question is shown
-**ID**: SCN-INS-NTYPE-001-E
-- **GIVEN** the question is shown
-- **WHEN** the user reads the service navigation
-- **THEN** Dashboard is the current item
-
 #### Scenario: Create new after a round trip from a notification shows nothing selected
 **ID**: SCN-INS-NTYPE-001-F
 - **GIVEN** the user has been taken from a live-animals notification back to the question

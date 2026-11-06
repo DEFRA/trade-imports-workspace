@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The Import Notification Service's landing page: a single list of notifications aggregated from every underlying journey (today: live-animals), searchable by reference number, showing each one's status, and where a new notification starts.
+The Import Notification Service's landing page: a single list of notifications, searchable by reference number, showing each one's status, and where a new notification starts. It lists live animals notifications only today, because it aggregates the events the animals backend publishes; high-risk plants and germinal products notifications are not listed.
 
 ## Requirements
 

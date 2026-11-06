@@ -402,16 +402,27 @@
     },
     {
       "id": "REQ-ADDR-009",
-      "name": "An address's full details can be read without leaving the list",
+      "name": "A listed address opens in the INS address book, whose Back returns to the same list",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-ADDR-009-A",
-          "name": "Expanding an address shows its details in place",
+          "name": "View opens the address in the INS address book and Back returns to the list with its search",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches and pages the address book, and the row selected on a later page is the one that saves", "strength": "full", "notes": "expands details in place and asserts London without leaving the list" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker expands an address to show its full details", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/address-book-navigation.spec.ts", "test": "a picker row shows the address with its town, county and postcode on one line, and its View link opens it in the INS address book, whose Back returns to the same picker with the search kept", "strength": "full", "notes": "red-probed: fails when the View link carries no return (Back lands on the INS address book list); @compose, so it runs on the compose stack only" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches and pages the address book, and the row selected on a later page is the one that saves", "strength": "partial", "notes": "asserts the searched row's only link is 'View <name>'; does not follow it" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker spans the full content column and shows each address on its own lines, with a View link to it in the INS address book returning to this picker", "strength": "partial", "notes": "asserts the View link's exact href and accessible name in stub mode; INS is not running, so Back is not followed" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/view-model/table-rows.test.js", "test": "Should end each row with a 'View' link to the address, named for screen readers by the address's name", "strength": "partial", "notes": "red-probed: fails when the link sits inside a details element; proves the cell holds only the link" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-009-B",
+          "name": "The return keeps the page, the chosen address and the change context",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js", "test": "Should link each row to its INS address page, returning to this picker with its search and selection", "strength": "partial", "notes": "red-probed: fails without the return; covers the search and the chosen address on page 1" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js", "test": "Should return to the page being shown and keep changing when the picker was opened to change an answer", "strength": "full", "notes": "red-probed: fails without the return; with the selection test, covers page, chosen address and change context" }
           ]
         }
       ]
@@ -479,6 +490,42 @@
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a domestic cat's unit form asks for passport, tattoo and a permanent address, and refuses a partial address", "strength": "full", "notes": "passport + owner name only → Enter address line 1; completing address fields then adds the unit" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "permanent address validation: empty address line 1 links to and focuses the preserved field", "strength": "partial", "notes": "clears one field from a complete fill; same mandate, different entry path" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ADDR-015",
+      "name": "The list spans the content column and shows each address on its own lines",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ADDR-015-A",
+          "name": "An address shows its street lines, then its town, county and postcode on one line",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/address-book-navigation.spec.ts", "test": "a picker row shows the address with its town, county and postcode on one line, and its View link opens it in the INS address book, whose Back returns to the same picker with the search kept", "strength": "full", "notes": "two street lines, then 'Carlisle, Cumbria, CA1 3CC', read with innerText" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/view-model/address-lines.test.js", "test": "Should give each street line its own line, then town or city, county and postcode on one line, without the country", "strength": "full", "notes": "red-probed: fails when the address is joined into one comma-separated line" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/view-model/table-rows.test.js", "test": "Should give each address a checked radio, its name, its address lines with a break between each, and its country", "strength": "partial", "notes": "proves the cell renders one line per entry with a break between; the line rule itself is in address-lines.test.js" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-015-B",
+          "name": "Blank parts are left out",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/view-model/address-lines.test.js", "test": "Should leave out a blank street line and a blank county", "strength": "full", "notes": "red-probed: fails when the address is joined into one comma-separated line" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js", "test": "Should give each row its street lines and then its town and postcode on one line", "strength": "full", "notes": "red-probed: the stub record with no county or second line gives '10 Market Street' then 'Leeds, LS1 6HB'" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "the picker searches and pages the address book, and the row selected on a later page is the one that saves", "strength": "partial", "notes": "the journey's destination fixture, with no county, shows its street line then town and postcode" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-015-C",
+          "name": "The list spans the full content column",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js", "test": "Should render the picker across the full width of the content column", "strength": "full", "notes": "red-probed: fails on the form surface" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker spans the full content column and shows each address on its own lines, with a View link to it in the INS address book returning to this picker", "strength": "full", "notes": "the journey form sits in a govuk-grid-column-full column in the rendered page; not red-probed (the controller test was)" }
           ]
         }
       ]

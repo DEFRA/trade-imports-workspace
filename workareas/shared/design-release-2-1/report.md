@@ -2,11 +2,12 @@
 
 ## Summary
 
-- The backlog has 100 increments: 65 ready to go, 34 blocked and 1 dropped. The blocked ones wait on a transporter decision (11), design (10), the INS dashboard's requirements (9), MDM commodities (2), and PIMS Dynamics outcomes and the plants backend (1 each). 12 rows are review points.
+- The backlog has 101 increments: 75 ready to go, 24 blocked, 1 done and 1 dropped. The blocked ones wait on design (10), the INS dashboard's requirements (9), MDM commodities (2), and the address lookup, PIMS Dynamics outcomes and the plants backend (1 each). 12 rows are review points.
+- **Changed 6 November (`ruling:ian-2026-11-06`):** the transporter decision is made and c-285 is lifted. The address book manages transporters as per-organisation records, like every other address, and adding one mid journey uses the address book hand-off already built for addresses (inc-077, inc-078, inc-080). 10 of the 11 blocked transporter rows are released, inc-044 was found already done on main (EUDPA-739), and only inc-042 stays blocked, on the address lookup alone. The rows were written when the journey owned transporters, so the area needs re-distilling against the address-book-owned design before it builds. Approved transporters are parked.
 - It brings live animals, germinal products, their notification lists, the party and address pages, the notification lifecycle and the INS drill-downs up to Design Release 2.1 in look and feel. Plants changes in the same increments. It spans 9 repos in 10 themes here, beside 10 themes split off early.
 - 30 questions are open. All 30 were challenged against precedence and every ruling; precedence settled none and none waits on a blocker. Each question lists the default built if nobody answers.
 - Step 0: correct the goal in `sources.json`. The 26 October ruling and the 2 November widening of the V4 data fields page have moved past it.
-- 186 requirements wait on someone outside the loop: the INS dashboard's requirements (59), a transporter decision (48), MDM commodities (24), design answers (30), the address lookup (12), PIMS Dynamics outcomes (7), the plants backend (3), and CDP, the plants customs owner and the GBN-AG codelist owners (1 each).
+- 141 requirements wait on someone outside the loop: the INS dashboard's requirements (59), design answers (30), MDM commodities (24), the address lookup (15), PIMS Dynamics outcomes (7), the plants backend (3), and CDP, the plants customs owner and the GBN-AG codelist owners (1 each). The 48 that waited on a transporter decision are released by `ruling:ian-2026-11-06`, bar inc-042's 3, which move to the address lookup.
 - Every one of the 10 split branches has work to pick up: 22 requirements adopted since the split and 142 changed, with 3 no longer to build. The branches are `feat/NO_JIRA-design-release-2-1-type-question-and-templates`, `feat/EUDPA-691-…-journey-foundation`, `feat/EUDPA-692-…-reference-lists`, `feat/EUDPA-693-…-commodities-and-reason`, `feat/EUDPA-694-…-arrival-and-transit`, `feat/EUDPA-695-…-origin-page`, `feat/EUDPA-696-…-overview-and-review`, `feat/EUDPA-720-…-design-snagging`, `feat/EUDPA-724-…-documents` and `feat/EUDPA-707-…-address-book`.
 
 ## Before you build: step 0
@@ -32,7 +33,7 @@
 - Adopted but blocked, each re-distilled once unblocked:
   - **Address search** waits until the INS address lookup is a real feature. Until then every add-address page offers manual entry only.
   - **The commodity catalogue and commodity search, live and germinal,** wait until commodities come from MDM. The pages' wording, journey place and questions go ahead on today's data, and so does moving today's germinal lines into the germinal set.
-  - **Transporter management** waits until it is decided whether and where transporters are managed: adding, listing and searching, the type question, the add pages, the private transporter's country list, removing the unused register page and the address book's transporter tab. **Changed:** the transporter step's place in the journey, its germinal copy **and the transporter step's own mandatory-to-proceed check** go ahead on today's transporter list (c-346, req-402, inc-240), because that check changes nothing about adding, listing or searching.
+  - **Transporter management is decided and no longer blocked (`ruling:ian-2026-11-06`, 6 November, superseding the 9 October afternoon ruling and lifting c-285).** The address book manages transporters: a transporter is a record in `trade-imports-address-book` held per organisation, exactly as every other address is. Adding one mid journey uses the address book hand-off already built for addresses — the journey opens the INS front door's add pages in journey mode and lands back in the journey on save or cancel (inc-077, inc-078, inc-080, EUDPA-706) — not a second pattern of its own. The animals frontend's in-memory transporter register (`services/transporters/register.js`) is not the system of record. Adding, listing and searching, the type question, the add pages, the private transporter's country list and the address book's transporter tab all go ahead, and the unused register page was already removed (EUDPA-739, inc-044 done). **The data model is settled too.** A transporter is its own record in its own `transporters` collection inside the address book service, not the `Address` model: `AddressRequest` requires at least one role (`@NotEmpty`) and refuses a `type` outright (`@Null`), and a transporter carries an approval number, a private-or-commercial type and an approval status no address has. It reuses the service's organisation scoping, soft-delete, locking and the Standard Address Block field validation where the fields match. Transporters have **no roles** — no seventh `AddressRole`, no fourth `RoleGroup` — and store the private-or-commercial type instead, which decides the form, the field list and the country rule and so cannot be derived the way an address's type could. The INS front door's Transporter tab is a fourth tab backed by the transporters route, not a fourth role group over `addresses`. A **commercial** transporter's country is forced to the code `XI`, displayed as "Northern Ireland", held as constants with no reference-data lookup: MDM's country list is the origin and export list with no United Kingdom entry at all, and `XI` is already this estate's code for Northern Ireland (`trade-imports-schemas`' DOCOM samples). A **private** transporter keeps its real choice of country from the United Kingdom plus reference-data's export countries. **Parked:** approved transporters — an MDM-managed list offered to every organisation on top of its own (req-2172, now its own blocked row inc-265) — are out of scope for now.
   - **The INS dashboard's summary information** waits until its requirements firm up: counts, glance cards, status-change cards and drill-downs. The INS home's controls and templates go ahead.
 - The report groups work as ready or blocked, and names what each blocked row waits on.
 - Architecture (sets, journeys, services, URL paths, field names, data shapes, code structure) stays the real services'. It changes only where a DR1 judgement, a real constraint, a kept look-and-feel requirement or the V4 data page needs it.
@@ -547,7 +548,7 @@ All 30 questions were challenged against precedence and every ruling. Precedence
 | Feedback link stays the APHA service desk email, plants included | DR1 backlog | c-215 |
 | No page shows the signed-in identity | Animals frontend | c-216 |
 | Address search is built in no environment until the lookup is real; manual entry is built now | 9 October ruling | c-217 |
-| Northern Ireland transporter search uses the INS lookup filtered to BT postcodes; blocked on the lookup and on transporter requirements | 9 October rulings | c-218 |
+| Northern Ireland transporter search uses the INS lookup filtered to BT postcodes; blocked on the lookup alone since `ruling:ian-2026-11-06` lifted the transporter-requirements half | 9 October rulings, as narrowed by `ruling:ian-2026-11-06` | c-218 |
 | Choosing a different type starts a new notification; the old one is untouched | 9 October ruling | c-219 |
 | Template creation's type question offers only Live animals and Germinal products | 9 October ruling | c-220 |
 | Country of origin labels subdivisions "<territory> (<parent>)", sorted by label, in both sets | DR2.1 source, 9 October ruling | c-221 |
@@ -611,7 +612,7 @@ All 30 questions were challenged against precedence and every ruling. Precedence
 | Germinal set goes ahead on today's 12 lines; V4's 18 items wait on MDM | 9 October afternoon ruling | c-282 |
 | Germinal dates are single text inputs now; the calendar waits on design question 12 | 9 October afternoon ruling | c-283 |
 | Port search matches are not bolded, in animals or plants | 9 October afternoon ruling | c-284 |
-| Every transporter add, list or search change waits on transporter requirements, inc-008, inc-044 and the commercial address search included; the step's journey place and its own mandatory-to-proceed check go ahead | 9 October afternoon ruling | c-285 |
+| ~~Every transporter add, list or search change waits on transporter requirements, inc-008, inc-044 and the commercial address search included; the step's journey place and its own mandatory-to-proceed check go ahead~~ **Overruled 6 November:** the address book manages transporters, so every add, list and search change goes ahead; only the commercial address search still waits, on the address lookup (c-218) | 9 October afternoon ruling, overruled by `ruling:ian-2026-11-06` | c-285 |
 | The template-review controls go on today's transporter list now | 9 October afternoon ruling | c-286 |
 | Address search builds its no-JavaScript version when the lookup lands; its JavaScript waits on design | 9 October afternoon ruling | c-287 |
 | CPH page gets no new JavaScript; digit filtering and paste wait on design question 7 | 9 October afternoon ruling | c-288 |
@@ -630,7 +631,7 @@ All 30 questions were challenged against precedence and every ruling. Precedence
 | Plants' tabs, 8 a page, search, sort and filters wait on the plants backend (inc-200, deferred.md); the rest of plants' frame changes now | 9 October afternoon ruling | c-302 |
 | Address book category tabs are MoJ sub navigation | 9 October afternoon ruling | c-304 |
 | Address search is built in its no-JavaScript version, with the fields visible | 9 October afternoon ruling | c-305 |
-| "Choose an address type" is built now with 3 options; "Transporter" waits | 9 October afternoon ruling | c-306 |
+| ~~"Choose an address type" is built now with 3 options; "Transporter" waits~~ **Overruled 6 November:** "Transporter" is a fourth option, since the address book manages transporters and the option now leads somewhere (inc-074). Which of the two placements still in play it takes — req-1198's third, before "Branch", or req-2042's after "Place of Destination" — is for the re-distil, against the three-option page inc-061 built | 9 October afternoon ruling, overruled by `ruling:ian-2026-11-06` | c-306 |
 | Plants' navigation gains a Templates item to the animals frontend; plants has no templates | Templates ruling | c-307 |
 | "Use template" is a form post | 9 October afternoon ruling | c-309 |
 | Card Amend goes through the amend confirmation page, in every set | 9 October afternoon ruling | c-310 |
@@ -841,23 +842,19 @@ A **review point** is a check the owner makes once the theme is built. The build
 
 ### Blocked
 
-#### Waiting on a transporter decision
+#### ~~Waiting on a transporter decision~~ — decided 6 November
 
-Somebody must decide whether the service manages transporters at all and, if so, whether the address book or something else does it. Sam's ruling of 9 October, afternoon, names nobody. The transporter area is re-distilled once it is decided.
+`ruling:ian-2026-11-06` settles it, superseding Sam's ruling of 9 October (afternoon) and lifting c-285: **the address book manages transporters**, as per-organisation records like every other address, and adding one mid journey uses the address book hand-off already built for addresses (inc-077, inc-078, inc-080). Approved transporters are parked.
+
+Ten rows are released to `todo` — inc-008, inc-037, inc-038, inc-039, inc-040, inc-041, inc-074, inc-075 and inc-076, with inc-240 already buildable — and **inc-044 is `done`**: EUDPA-739 removed the register page from the animals frontend (`e781e87a`, PR #462) and the tests repo (`b3a7a46`, PR #85) on 5 November, while the row was still marked blocked.
+
+**These rows are released, not ready.** They were written when the journey owned transporters, so their criteria still describe the animals frontend's own add pages and its in-memory register. The transporter area needs re-distilling against the address-book-owned design before it is built — which is what the 9 October ruling asked for on a decision, and what this decision triggers. inc-039 changes most (its persistence becomes real), inc-074 to inc-076 become the primary route rather than an extra one, and inc-037's approved-record criteria should be cut out to the parked pile rather than holding the row.
+
+Only one transporter row is still blocked, and not on this:
 
 | Id | What it delivers | Repos | Theme |
 |---|---|---|---|
-| inc-037 | The transporter list's layout, search, approval-number column and shipped transporters. **Review point** | frontend, tests | transporters |
-| inc-038 | The transporter type question's copy, and refusing a blank choice | frontend, tests | transporters |
-| inc-039 | Saving an added transporter returns to the list with it chosen and a success banner; cancelling goes to the dashboard. **Review point** | frontend, tests | transporters |
-| inc-040 | The private transporter form's heading, country select and required fields | frontend, tests | transporters |
-| inc-041 | The commercial transporter form's heading, guidance banner, postcode copy and required fields | frontend, tests | transporters |
-| inc-008 | The private transporter's country list is the United Kingdom plus reference data's export countries, as the master data serves them | frontend, tests | transporters |
-| inc-042 | Find a commercial transporter's Northern Ireland address with an address search. Also waits on the INS address lookup becoming a real feature | insbackend, stub, frontend, tests | transporters |
-| inc-044 | Remove the unlinked approved commercial transporter register page | frontend, tests | transporters |
-| inc-074 | Choosing Transporter when adding to the address book hands over to adding a transporter | addressbook, insfrontend, frontend, tests | transporters |
-| inc-075 | Transporter tab: transporters listed with approval number and type, and filtered by type | addressbook, insfrontend, tests | transporters |
-| inc-076 | Each transporter on the list links to its details page | insfrontend, frontend, tests | transporters |
+| inc-042 | Find a commercial transporter's Northern Ireland address with an address search. Waits on the INS address lookup becoming a real feature — its transporter-management half is lifted, so it now waits with the address book's own inc-072 and inc-081 on the same lookup, and should be re-distilled with them | insbackend, stub, frontend, tests | transporters |
 
 #### Waiting on design
 
@@ -929,7 +926,7 @@ trade-imports-plants-backend, outside the programme, must let plants' list query
 - inc-016 moves today's 12 germinal lines out of the live-animals catalogue now, ahead of MDM, and waits on inc-176, the germinal set's start.
 - inc-024, the germinal opening run, waits on inc-141, the germinal list; inc-017 waits on inc-024. Germinal Commodity details therefore waits on the whole list reframe.
 - inc-182 waits on 16 rows across 5 themes and 2 branches. inc-176 waits on 7 rows across 4 themes. inc-186 waits on 13. Each is a candidate to split if it proves too big to review.
-- inc-240 is the only transporter row ready to go: c-346 takes the transporter step's own mandatory-to-proceed check ahead of the transporter decision. inc-008 and inc-044 still wait with transporter management (c-285).
+- The transporter rows are all ready to go since `ruling:ian-2026-11-06` lifted c-285, bar inc-042 (address lookup) and inc-044 (done on main). inc-240 was already ahead of the decision on c-346. Order them so the address book side lands first: under the ruling the address book is the system of record and the hand-off is the add route, so inc-074's record and route decide what inc-038 to inc-041 are even building. The re-distil should set that order rather than keeping the old journey-first dependsOn.
 - inc-128, the INS overall home, is blocked, so inc-132 to inc-134 and inc-143 to inc-146 are blocked behind it.
 - inc-139 and inc-142 are blocked on the glance-card counts and PIMS Dynamics outcomes. The rest of the reframed list builds without them.
 - inc-200 holds plants' tabs, paging, search, sort and filters. inc-129, inc-130, inc-131, inc-138 and inc-140 change plants' frame now.

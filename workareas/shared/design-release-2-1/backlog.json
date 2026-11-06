@@ -85,8 +85,8 @@
   "themes": [
     {
       "id": "transporters",
-      "title": "The transporter step, with transporter management waiting on requirements",
-      "why": "The transporter list, type, add and details folders, the transporters and address lookup services, the INS backend's address lookup, the stub's federated lookup, and the address book's transporter type, tab and hand-over (inc-043 builds now; inc-008, inc-037 to inc-042, inc-044 and inc-074 to inc-076 wait on whether the service manages transporters, ruling:sam-2026-10-09-pm claims 34 to 36). The address book's transporter code is new code beside the address book's own folders, so it touches none of them. It holds 12 rows, 1 of them ready to build.",
+      "title": "The transporter step, with the address book managing transporters",
+      "why": "The transporter list, type, add and details folders, the transporters and address lookup services, the INS backend address lookup, the stub federated lookup, and the address book transporter type, tab and hand-over. ruling:ian-2026-11-06 lifted the transporter-management block (c-285) on 6 November: the address book manages transporters as per-organisation records like every other address, and adding one mid journey uses the address book hand-off already built for addresses (inc-077, inc-078, inc-080). It holds 12 rows: 10 to build, inc-044 done on main (EUDPA-739), and inc-042 still blocked on the INS address lookup becoming a real feature. The rows were written when the journey owned transporters, so they need re-distilling against the address-book-owned design before they build. Approved transporters are parked. The address book transporter code is new code beside the address book own folders, so it touches none of them.",
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transporters",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select",
@@ -2024,7 +2024,7 @@
         "inc-040"
       ],
       "theme": "transporters",
-      "status": "blocked",
+      "status": "todo",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -2059,12 +2059,12 @@
       "requirements": [
         "req-432"
       ],
-      "openQuestions": [
-        "Blocked on transporter requirements: whether the service manages transporters at all, and whether the address book or some other functionality does it (ruling:sam-2026-10-09-pm-p2-031 to -p2-037, -p2-040, c-285). The ruling names nobody to decide it; whoever owns transporter requirements decides, and the transporter area is then worked again."
-      ],
+      "openQuestions": [],
       "notes": [
         "Blocked again by ruling:sam-2026-10-09-pm-p2-040 (c-285, precedence). Its content stays the master data's: the outermost regions, territories and Crown Dependencies the design shows are not added in code (req-1818, out of scope). Kept apart from the private form row because it depends on the stub tidy-up row, which changes the names and count its tests assert, and on the private form row, which changes the same select's order and default. referencedata is not in repos: nothing in reference-data changes.",
-        "Re-analysis 27 Oct (main checked at animals-frontend ba85c222 after EUDPA-617 c3183a8e): the block still applies; the 26 October ruling is about the save buttons only. On main the private Country select already draws the United Kingdom plus reference data's export country labels (services/countries/index.js addressCountries; private-transporter-details.controller.js), and the stub tidy-up is done, so criteria 1 and 2 may already hold. Check the stub-mode countries (services/countries/stub.js) against the tidied fixture, then cut the row to what is left."
+        "Re-analysis 27 Oct (main checked at animals-frontend ba85c222 after EUDPA-617 c3183a8e): the block still applies; the 26 October ruling is about the save buttons only. On main the private Country select already draws the United Kingdom plus reference data's export country labels (services/countries/index.js addressCountries; private-transporter-details.controller.js), and the stub tidy-up is done, so criteria 1 and 2 may already hold. Check the stub-mode countries (services/countries/stub.js) against the tidied fixture, then cut the row to what is left.",
+        "Unblocked 6 November by ruling:ian-2026-11-06, which supersedes ruling:sam-2026-10-09-pm point 5 and lifts c-285: the address book manages transporters as per-organisation records, like every other address, and adding one mid journey uses the address book hand-off already built for addresses (inc-077, inc-078, inc-080, EUDPA-706). Approved transporters are parked. This row's criteria still describe the animals frontend's own transporter pages and its in-memory register (services/transporters/register.js), so the transporter area needs re-distilling against the address-book-owned design before the row is built.",
+        "Unaffected by ruling:ian-2026-11-06 decision 6, which forces only the commercial transporter's country. A private transporter keeps its real choice of country from the United Kingdom plus reference-data's export countries, so this row's country select and its reference-data lookup stand as written."
       ],
       "gate": null,
       "externalDependsOn": [
@@ -2521,12 +2521,11 @@
         "A transporter with no approval number shows 'Not applicable' in the Approval number column. (prototype:dr2-1-source prototype-dr2-1-source-p7-084; trace:prototype-dr2-1 trace-prototype-dr2-1-p9-044)",
         "The list's commercial transporters are exactly these four, each Commercial and Approved: Yusen Logistics (Romania) SRL (Bulevardul General Paul Teodorescu 4, Sector 6, 061344 Bucharest, Romania; RO/BUCHAREST/T1/00092010), Roadtrain Ltd (The Roadtrain Complex, Bluebell Industrial Estate, Dublin 12, D12 P046, Republic of Ireland; IE/DUBLIN/T1/00092011), Danish Meat Export ApS (Vesterbrogade 12, 1620 Copenhagen, Denmark; DK/COPENHAGEN/T1/00081002) and Portuguese Livestock Lda (Rua Augusta 250, 1100-053 Lisbon, Portugal; PT/LISBON/T1/00071003). (prototype:dr2-1-source prototype-dr2-1-source-p7-028, -p7-029, -p7-031, -p7-032; prototype:dr2-1-specs prototype-dr2-1-specs-p4-031; document:dr1-parity-backlog document-dr1-parity-backlog-p8-008 to -p8-015)",
         "The list's private transporters are exactly these four: Aberdeen Livestock Ltd (15 Union Street, Aberdeen, AB11 5BN, United Kingdom; UK/ABERDEEN/T1/00092001; Approved), Romanian Agri Exports SRL (Bulevardul Unirii 22, 03083 Bucharest, Romania; RO/BUCHAREST/T1/00061004; New), Slovak Farm Export (Obchodná 2, 811 06 Bratislava, Slovakia; SK/BRATISLAVA/T1/00051005; Approved) and Finnish Livestock Oy (Mannerheimintie 10, 00100 Helsinki, Finland; FI/HELSINKI/T1/00041006; New), each saved with its address parts and its country when chosen. (prototype:dr2-1-source prototype-dr2-1-source-p7-030, -p7-033, -p7-034, -p7-035; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-084, -p8-085)",
-        "Picking any one of those eight transporters and saving keeps it chosen when the trader returns to the list, and the end-to-end journeys that pick a transporter pick one of them. (trace:prototype-dr2-1 trace-prototype-dr2-1-p9-003; repo:tests repo-tests-p1-131, -p1-132)",
-        "The commercial transporters the transporter list offers are the approved transporters the service's approved-transporter list holds, so a commercial transporter that list does not hold is not offered. (confluence:6497338582 confluence-6497338582-p2-077; repo:frontend repo-frontend-p12-036; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-031, -p2-050)"
+        "Picking any one of those eight transporters and saving keeps it chosen when the trader returns to the list, and the end-to-end journeys that pick a transporter pick one of them. (trace:prototype-dr2-1 trace-prototype-dr2-1-p9-003; repo:tests repo-tests-p1-131, -p1-132)"
       ],
       "dependsOn": [],
       "theme": "transporters",
-      "status": "blocked",
+      "status": "todo",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -2574,19 +2573,17 @@
         "req-397",
         "req-398",
         "req-399",
-        "req-470",
-        "req-2172"
+        "req-470"
       ],
-      "openQuestions": [
-        "Blocked on transporter requirements: whether the service manages transporters at all, and whether the address book or some other functionality does it (ruling:sam-2026-10-09-pm-p2-031 to -p2-038, c-285). The ruling names nobody to decide it; whoever owns transporter requirements decides, and the transporter area is then worked again.",
-        "Which approved-transporter list the commercial transporters offered on the list come from. The notification data specification leaves it as its one open point and names nobody to settle it; whoever owns transporter requirements decides, and this area is re-distilled then."
-      ],
+      "openQuestions": [],
       "notes": [
         "Blocked by ruling:sam-2026-10-09-pm-p2-038 (c-285, precedence). Combines the list page's layout and copy (req-386, req-387, req-392, req-399), its search (req-390), its accessibility gap (req-470) and the shipped records (req-397, req-398): all observed on the one list page. c-057 (precedence): the design's four commercial records replace the two placeholders, so the tests repo must stop picking 'García Livestock Transport SL' by name. The list keeps its real path and form field names (req-1821, already met).",
         "Re-analysis 27 Oct (main checked at animals-frontend ba85c222 after EUDPA-617 c3183a8e): the block still applies. Design snagging inc-210 merged to main on 23 October, so criterion 5 (search also matching type and status) is already met there (transport/transporters/rows.js searchTextOf), and criterion 3 may be too: transporters.njk now has the search and 'Add a transporter' in a grid row above the fieldset, whose 'Select a transporter' legend is visible and medium. Check both against main when the block lifts and cut what is done. Criteria 1 and 2 then come down to adding the visible sub-heading and making that legend visually hidden. The no-match and filtered accessibility checks are in the fit spec; the error-state one is still missing. Not done: 'Not applicable' and the eight records.",
         "req-405 (where Save and continue goes from the list in the journey run) left this row in this re-distil: it is a change to the journey's page order, which the journey-foundation branch owns, and it is not blocked, so leaving it here would hold it behind c-285. It is handed to that branch in splitOff.",
         "Re-distil 2 November: req-2172 (commercial transporters come from the service's approved-transporter list) is added here, where the list's records are built, and it waits on the same transporter requirements this row waits on. It was given to no area, so the combiner drafted its criterion.",
-        "Re-distil 2 November: req-405 (where the transporter list's 'Save and continue' goes in the journey run) leaves this row. The journey's step order is the split-off journey-foundation theme's code, so it is handed to that branch to pick up."
+        "Re-distil 2 November: req-405 (where the transporter list's 'Save and continue' goes in the journey run) leaves this row. The journey's step order is the split-off journey-foundation theme's code, so it is handed to that branch to pick up.",
+        "Unblocked 6 November by ruling:ian-2026-11-06 (supersedes ruling:sam-2026-10-09-pm point 5, lifts c-285): the address book manages transporters as per-organisation records. Two parts of this row are now separate: the list's layout, search, approval-number column and accessibility build against the organisation's own transporters held in the address book, while the shipped/approved records and req-2172 are parked with approved transporters (decision 3). The re-distil should cut the approved-record criteria out of this row rather than hold the whole row for them.",
+        "Criterion 10 and req-2172 (commercial transporters come from the service approved-transporter list) left this row on 6 November for inc-265, which is parked with approved transporters by ruling:ian-2026-11-06 decision 3. Criteria 1 to 9 build on the organisation own transporters, which the address book holds."
       ],
       "gate": "Check the eight shipped transporters on the list and that every E2E journey that picks a transporter now picks one of DR2.1's records: later rows and other areas' journeys rely on these records.",
       "externalDependsOn": [
@@ -2595,6 +2592,54 @@
           "id": "inc-210"
         }
       ]
+    },
+    {
+      "id": "inc-265",
+      "title": "The transporter list offers only the approved transporters the approved-transporter list holds",
+      "detail": "The commercial transporters a trader can pick are the approved transporters the service's approved-transporter list holds, so a commercial transporter that list does not hold is not offered. Parked: ruling:ian-2026-11-06 decision 3 puts approved transporters out of scope for now. The concept is a list managed in MDM for all organisations, added to each organisation's own transporter options, and it is recorded as the likely subject of the 9 October afternoon block. Nothing is built for it until it is unparked. Split out of inc-037 on 6 November so the rest of the transporter list — its layout, search, approval-number column and accessibility — builds on the organisation's own transporters without waiting for this.",
+      "acceptanceCriteria": [
+        "The commercial transporters the transporter list offers are the approved transporters the service's approved-transporter list holds, so a commercial transporter that list does not hold is not offered. (confluence:6497338582 confluence-6497338582-p2-077; repo:frontend repo-frontend-p12-036; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-031, -p2-050)"
+      ],
+      "dependsOn": [
+        "inc-037"
+      ],
+      "externalDependsOn": [],
+      "gate": null,
+      "kind": "feat",
+      "notes": [
+        "Split out of inc-037 on 6 November, when ruling:ian-2026-11-06 unblocked the transporter area but parked approved transporters. inc-037 kept its criteria 1 to 9 and lost criterion 10, which is this row's only criterion, along with req-2172.",
+        "Which approved-transporter list the records come from is the notification data specification's one open point, and it names nobody to settle it. It is taken up when approved transporters are unparked, with a re-distil of this row."
+      ],
+      "openQuestions": [
+        "Parked by ruling:ian-2026-11-06 decision 3: approved transporters — an MDM-managed list of approved transporters offered to every organisation on top of its own — are out of scope for now, so nothing is built for this row. It also still needs the one thing the data specification leaves open: which approved-transporter list the commercial records come from. Whoever unparks approved transporters decides both, and this row is re-distilled then."
+      ],
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "requirements": [
+        "req-2172"
+      ],
+      "sources": [
+        {
+          "source": "confluence:6497338582",
+          "ref": "confluence-6497338582-p2-077"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "repo-frontend-p12-036"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm-p2-031, -p2-050"
+        },
+        {
+          "source": "ruling:ian-2026-11-06",
+          "ref": "decision 3: approved transporters are parked"
+        }
+      ],
+      "status": "blocked",
+      "theme": "transporters"
     },
     {
       "id": "inc-038",
@@ -2611,7 +2656,7 @@
       ],
       "dependsOn": [],
       "theme": "transporters",
-      "status": "blocked",
+      "status": "todo",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -2656,12 +2701,11 @@
         "req-425",
         "req-427"
       ],
-      "openQuestions": [
-        "Blocked on transporter requirements: whether the service manages transporters at all, and whether the address book or some other functionality does it (ruling:sam-2026-10-09-pm-p2-031 to -p2-037, -p2-039, c-285). The ruling names nobody to decide it; whoever owns transporter requirements decides, and the transporter area is then worked again."
-      ],
+      "openQuestions": [],
       "notes": [
         "Blocked by ruling:sam-2026-10-09-pm-p2-039 (c-285, precedence). Combines the type page's copy (req-416, req-417, req-422), its validation (req-420, req-421), the add forms' guard that sends a trader back to it (req-425) and the status strip left off this page and the private form (req-427, c-053 precedence): one page and its entry guard, reviewed together.",
-        "Unchanged by this re-distil apart from wording: no later ruling touches these requirements."
+        "Unchanged by this re-distil apart from wording: no later ruling touches these requirements.",
+        "Unblocked 6 November by ruling:ian-2026-11-06, which supersedes ruling:sam-2026-10-09-pm point 5 and lifts c-285: the address book manages transporters as per-organisation records, like every other address, and adding one mid journey uses the address book hand-off already built for addresses (inc-077, inc-078, inc-080, EUDPA-706). Approved transporters are parked. This row's criteria still describe the animals frontend's own transporter pages and its in-memory register (services/transporters/register.js), so the transporter area needs re-distilling against the address-book-owned design before the row is built."
       ],
       "gate": null
     },
@@ -2682,7 +2726,7 @@
         "inc-038"
       ],
       "theme": "transporters",
-      "status": "blocked",
+      "status": "todo",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -2725,12 +2769,11 @@
         "req-441",
         "req-442"
       ],
-      "openQuestions": [
-        "Blocked on transporter requirements: whether the service manages transporters at all, and whether the address book or some other functionality does it (ruling:sam-2026-10-09-pm-p2-031 to -p2-037, -p2-039, c-285). The ruling names nobody to decide it; whoever owns transporter requirements decides, and the transporter area is then worked again."
-      ],
+      "openQuestions": [],
       "notes": [
         "Blocked by ruling:sam-2026-10-09-pm-p2-039 (c-285, precedence). Combines what happens when an add form is saved (req-413, req-414), its buttons (req-440), cancelling (req-441) and keeping unsaved values (req-442): the shared save-and-cancel behaviour of the two add forms. c-056 (precedence): the overview return controls stay off the add forms and the design's 'Cancel and return to dashboard' is adopted. The end-to-end journeys that today expect an add to carry the journey on must expect the transporter list. Depends on the list row and the type question row.",
-        "Unchanged by this re-distil apart from wording the fourth criterion as the two controls the forms show rather than the controls they do not."
+        "Unchanged by this re-distil apart from wording the fourth criterion as the two controls the forms show rather than the controls they do not.",
+        "Unblocked 6 November by ruling:ian-2026-11-06 (supersedes ruling:sam-2026-10-09-pm point 5, lifts c-285). This row changes most under the decision: its detail says added transporters \"belong to the organisation, so they stay on its list for later notifications\", which today only services/transporters/register.js fakes in an in-memory Map per process. Under decision 1 that is a real address book record, and under decision 2 the save and cancel are the address book hand-off's, landing back in the journey as inc-080 already does for addresses. The re-distil must rewrite the save and cancel criteria to that pattern rather than to the journey-local add forms, and say whether 'Cancel and return to dashboard' survives beside the hand-off's own cancel."
       ],
       "gate": "Look at where a saved add lands, the success banner and the cancel button: the address-book add row and the germinal transporter copy reuse this save-and-cancel behaviour."
     },
@@ -2748,7 +2791,7 @@
         "inc-038"
       ],
       "theme": "transporters",
-      "status": "blocked",
+      "status": "todo",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -2786,13 +2829,13 @@
         "req-431",
         "req-434"
       ],
-      "openQuestions": [
-        "Blocked on transporter requirements: whether the service manages transporters at all, and whether the address book or some other functionality does it (ruling:sam-2026-10-09-pm-p2-031 to -p2-037, -p2-039, c-285). The ruling names nobody to decide it; whoever owns transporter requirements decides, and the transporter area is then worked again."
-      ],
+      "openQuestions": [],
       "notes": [
         "Blocked by ruling:sam-2026-10-09-pm-p2-039 (c-285, precedence). Combines the private form's copy (req-428, req-429), its country select's order and default (req-431) and its blank-form validation (req-434): one form. c-054 (precedence): how the list is presented is not its content, so the UK default and the alphabetical order with no placeholder option are built here, while the list's content is the country-list row's (req-432). The select stays a plain select, not an autocomplete. Depends on the type question row.",
         "Design snagging merged to main 23 Oct: the empty country option's copy key is now transporterDetails countrySelectText, not countryPlaceholder (transport/copy/copy.en.js and copy.cy.js), and its value is the shared SELECT_A_COUNTRY constant that errors.countryRequired also uses. When the third criterion leaves the select with country names only, remove countrySelectText and keep the countryRequired error. The plants party edit page has a twin key with the same name.",
-        "Unchanged by this re-distil apart from wording the second and third criteria as what the page shows rather than what it no longer shows."
+        "Unchanged by this re-distil apart from wording the second and third criteria as what the page shows rather than what it no longer shows.",
+        "Unblocked 6 November by ruling:ian-2026-11-06, which supersedes ruling:sam-2026-10-09-pm point 5 and lifts c-285: the address book manages transporters as per-organisation records, like every other address, and adding one mid journey uses the address book hand-off already built for addresses (inc-077, inc-078, inc-080, EUDPA-706). Approved transporters are parked. This row's criteria still describe the animals frontend's own transporter pages and its in-memory register (services/transporters/register.js), so the transporter area needs re-distilling against the address-book-owned design before the row is built.",
+        "Unaffected by ruling:ian-2026-11-06 decision 6, which forces only the commercial transporter's country. A private transporter keeps its real choice of country from the United Kingdom plus reference-data's export countries, so this row's country select and its reference-data lookup stand as written."
       ],
       "gate": null
     },
@@ -2813,7 +2856,7 @@
         "inc-038"
       ],
       "theme": "transporters",
-      "status": "blocked",
+      "status": "todo",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -2858,12 +2901,12 @@
         "req-450",
         "req-451"
       ],
-      "openQuestions": [
-        "Blocked on transporter requirements: whether the service manages transporters at all, and whether the address book or some other functionality does it (ruling:sam-2026-10-09-pm-p2-031 to -p2-037, -p2-039, c-285). The ruling names nobody to decide it; whoever owns transporter requirements decides, and the transporter area is then worked again."
-      ],
+      "openQuestions": [],
       "notes": [
         "Blocked by ruling:sam-2026-10-09-pm-p2-039 (c-285, precedence). Combines the commercial form's copy (req-443, req-444, req-447), its changed messages (req-448, req-449, req-450) and its blank-form validation (req-451): one form. A country other than Northern Ireland posted to this form is still refused with today's message (req-455, c-055, already met). The Northern Ireland address search waits in its own row. Depends on the type question row.",
-        "Unchanged by this re-distil apart from wording: no later ruling touches these requirements."
+        "Unchanged by this re-distil apart from wording: no later ruling touches these requirements.",
+        "Unblocked 6 November by ruling:ian-2026-11-06, which supersedes ruling:sam-2026-10-09-pm point 5 and lifts c-285: the address book manages transporters as per-organisation records, like every other address, and adding one mid journey uses the address book hand-off already built for addresses (inc-077, inc-078, inc-080, EUDPA-706). Approved transporters are parked. This row's criteria still describe the animals frontend's own transporter pages and its in-memory register (services/transporters/register.js), so the transporter area needs re-distilling against the address-book-owned design before the row is built.",
+        "Country settled 6 November by ruling:ian-2026-11-06 decision 6: a commercial transporter's country is forced, with no reference-data lookup, and persisted as the code XI displayed as \"Northern Ireland\", both constants in the service. The form already fixes the country, posts it in a hidden field and refuses a tampered value rather than correcting it (c-055), so nothing changes on the page; what changes is that the stored value becomes a code rather than today's display string 'Northern Ireland'. XI is this estate's existing code for Northern Ireland — trade-imports-schemas' DOCOM samples carry \"countryId\": \"XI\" with \"countryName\": \"United Kingdom (Northern Ireland)\" against Belfast BT postcodes — and being distinct from GB it keeps the must-be-Northern-Ireland rule enforceable from the stored value alone, with no postcode parsing. MDM could not serve it in any case: its country list is the origin and export list, with no United Kingdom entry."
       ],
       "gate": null
     },
@@ -2921,14 +2964,14 @@
         "req-1819"
       ],
       "openQuestions": [
-        "Blocked: the address lookup must become a real feature first. Today only the EUDPA-390 address lookup spike exists, gated to dev and local on a standalone page and not wired in. Whoever builds address search must land it (ruling:sam-2026-10-09, c-217, c-218).",
-        "Blocked on transporter requirements too: whether the service manages transporters at all, and whether the address book or some other functionality does it (ruling:sam-2026-10-09-pm-p2-031 to -p2-037, -p2-041, c-285). The ruling names nobody to decide it; the transporter area is worked again once both land."
+        "Blocked: the address lookup must become a real feature first. Today only the EUDPA-390 address lookup spike exists, gated to dev and local on a standalone page and not wired in. Whoever builds address search must land it (ruling:sam-2026-10-09, c-217, c-218)."
       ],
       "notes": [
         "Combines the search (req-456), the fill from a chosen address (req-457) and the lookup stub's Northern Ireland addresses (req-1819): one widget and the stub data that makes it observable. c-218 (precedence): the search calls the same address lookup as the other searches and keeps only BT postcodes. Per c-305 the search is a form with a submit button that works without JavaScript and every field stays visible (req-2105, already met, must stay met). The JavaScript version that hides the fields behind the search is in the waiting-on-design row. Depends on the commercial form row.",
         "Coherence (19 Oct): build the 'Search for an address' box with design-snagging inc-210's server search control (the same icon button and blue), so the service has one search look.",
         "Re-analysis 27 Oct (main checked at animals-frontend ba85c222 after EUDPA-617 c3183a8e): both blocks still apply. ins-frontend main adds the address-lookup spike routes only in dev or local, and the address-book theme's real-lookup rows are themselves blocked.",
-        "Criteria are written per environment because the address lookup is set up only on the local stack and in CDP dev (c-217); nothing here claims the search works in CDP test."
+        "Criteria are written per environment because the address lookup is set up only on the local stack and in CDP dev (c-217); nothing here claims the search works in CDP test.",
+        "Still blocked after ruling:ian-2026-11-06, on its own independent blocker only. The transporter-management half of its block is lifted (decision 1), but the INS address lookup is still just the EUDPA-390 spike, gated to dev and local on a standalone page and not wired in, so the search has nothing real to call. It now waits alongside the address book's own inc-072 and inc-081, which wait on the same lookup — and under decision 1 it is the same address search on the same record, so the three should be re-distilled together rather than kept as a transporter-specific search."
       ],
       "gate": null,
       "externalDependsOn": [
@@ -2948,7 +2991,7 @@
       ],
       "dependsOn": [],
       "theme": "transporters",
-      "status": "blocked",
+      "status": "done",
       "kind": "chore",
       "repos": [
         "frontend",
@@ -2983,16 +3026,16 @@
       "requirements": [
         "req-472"
       ],
-      "openQuestions": [
-        "Blocked on transporter requirements: whether the service manages transporters at all, and whether the address book or some other functionality does it (ruling:sam-2026-10-09-pm-p2-031 to -p2-037, -p2-042, c-285). The ruling names nobody to decide it; whoever owns transporter requirements decides, and the transporter area is then worked again."
-      ],
+      "openQuestions": [],
       "notes": [
         "Blocked by ruling:sam-2026-10-09-pm-p2-042 (c-285): the row stays, blocked. Kept apart: it removes a whole page with its end-to-end spec, page object and journey helper.",
         "Re-analysis 27 Oct (main checked at animals-frontend ba85c222 after EUDPA-617 c3183a8e): ticket EUDPA-739 recorded, and its scope matches the first criterion and names the parts to remove: the controller, template, copy, route, section caption entry and tests (transport/transporters-select/, transport/page.js, transport/copy/copy.en.js, features/index.js, flow section-captions test, contract test; tests repo page-objects/animals/transporter-selection-page.ts and tests/animals/e2e/pages/transporter-selection.spec.ts). The block still applies: no later ruling settles transporter requirements, so the ticket is new evidence, not an unblock.",
-        "The removal also touches the journey flow's section captions and the transport copy folder, which the journey-foundation and design-snagging branches own: the plan must take whatever those branches have landed by then."
+        "The removal also touches the journey flow's section captions and the transport copy folder, which the journey-foundation and design-snagging branches own: the plan must take whatever those branches have landed by then.",
+        "Done on main, not merely unblocked. Verified 6 November against origin/main: the animals frontend removal merged as e781e87a (EUDPA-739, PR #462, 5 November) — transporters-select's controller, template, copy, route, page entry and section-caption entry are gone, as are party() and commercialParties() from the transporters service — and the tests repo's removal merged as b3a7a46 (PR #85), so page-objects/animals/transporter-selection-page.ts and tests/animals/e2e/pages/transporter-selection.spec.ts no longer exist. The row was left marked blocked under c-285 after EUDPA-739 had already shipped; ruling:ian-2026-11-06 lifts that block, and the work is complete in both repos."
       ],
       "gate": null,
-      "ticket": "EUDPA-739"
+      "ticket": "EUDPA-739",
+      "commit": "e781e87a"
     },
     {
       "id": "inc-045",
@@ -3828,7 +3871,7 @@
         "inc-039"
       ],
       "theme": "transporters",
-      "status": "blocked",
+      "status": "todo",
       "kind": "feat",
       "repos": [
         "addressbook",
@@ -3901,12 +3944,7 @@
         "req-463",
         "req-2042"
       ],
-      "openQuestions": [
-        "Blocked on transporter management (ruling:sam-2026-10-09-pm p2-031 to p2-037, p2-041, p2-044; c-306): it must be decided whether the service manages transporters at all and, if so, whether the address book or something else does. The ruling names nobody to decide it or when, so whoever owns transporter requirements decides, and the transporter area and this row are re-distilled once they have. No safe default: offering the option with nowhere to add a transporter leads nowhere.",
-        "Where the add-a-transporter pages live, and which service holds transporter records, follow the real services once transporter management is decided (ruling:sam-2026-10-09 p1-093), so no criterion names a route, a field or a path.",
-        "Blocked on transporter requirements: whether the service manages transporters at all, and whether the address book or some other functionality does it (ruling:sam-2026-10-09-pm-p2-031 to -p2-037, -p2-043, c-285, c-306). The ruling names nobody to decide it. No safe default: offering Transporter in the address book with nowhere to add one leads nowhere.",
-        "The product owner decides whether the service manages transporters and, if so, whether in the address book (ruling:sam-2026-10-09-pm, transporter management, ruling-sam-2026-10-09-pm-p2-031 to p2-035, p2-044); the transporter area is then re-distilled. No safe default: offering Transporter with nowhere to add one leads nowhere."
-      ],
+      "openQuestions": [],
       "notes": [
         "Combines the drafts of the address-book-add-and-edit, transporters, address-book-list areas for this row: they change the same pages, record and journey, so building them apart would repeat the same set-up, review and ladder.",
         "Combines this area's five transporter slices into the one route a trader walks: the Transporter option on the type page (req-1198), the hand-over off the address form (req-1203) and the add-a-transporter type page's caption, warning and radios (req-1204 to req-1206). Building them apart would repeat the same set-up, review and ladder on one journey that is blocked as a whole.",
@@ -3917,7 +3955,9 @@
         "repos is in merge order: the add-a-transporter pages live in the animals frontend today, the INS front door links to them, and the end-to-end suite exercises both.",
         "Blocked by ruling:sam-2026-10-09-pm-p2-043 (c-285). Combines the address-book entry route's Back link (req-461), cancel (req-462) and save (req-463): one alternative route through the same add pages. Combiner: merge into the existing blocked row inc-074 with the address-book-add-and-edit area's draft, as the backlog already does, keeping its id and its transporters theme: one route from the address book's type page through the add-a-transporter pages and back. Which service owns transporter records and where their pages live follow the real services, so no criterion names a field or a path. repos lists addressbook and insfrontend before frontend because the record and the address book pages are the providers. Depends on the type question row and the save-and-cancel row.",
         "Unchanged by this re-distil apart from wording: no later ruling touches these three requirements.",
-        "This area's only share of the existing blocked row inc-074 (choosing Transporter when adding to the address book hands over to adding a transporter), which already holds req-2042. Combiner: merge this into inc-074 with the address-book-add-and-edit and transporters areas' drafts, keeping inc-074's id, its transporters theme and its repos, rather than keeping a second row. The existing row's note of 27 October asks that its first criterion ('listed third, before Branch') and its last ('after Place of Destination and before the divider') be checked against the split address-book branch's type page, which has three options, and that one be kept: this draft keeps only the 'after Place of Destination and before the divider' placing, which is the one req-2042 states. Still blocked: the 26 October ruling says nothing about transporters. Waits on the address book split branch's type-choice row (externalDependsOn on shared/design-release-2-1/themes/address-book inc-061)."
+        "This area's only share of the existing blocked row inc-074 (choosing Transporter when adding to the address book hands over to adding a transporter), which already holds req-2042. Combiner: merge this into inc-074 with the address-book-add-and-edit and transporters areas' drafts, keeping inc-074's id, its transporters theme and its repos, rather than keeping a second row. The existing row's note of 27 October asks that its first criterion ('listed third, before Branch') and its last ('after Place of Destination and before the divider') be checked against the split address-book branch's type page, which has three options, and that one be kept: this draft keeps only the 'after Place of Destination and before the divider' placing, which is the one req-2042 states. Still blocked: the 26 October ruling says nothing about transporters. Waits on the address book split branch's type-choice row (externalDependsOn on shared/design-release-2-1/themes/address-book inc-061).",
+        "Unblocked 6 November by ruling:ian-2026-11-06, and promoted: decision 1 makes the address book the system of record for transporters and decision 2 makes the address book hand-off the way a journey adds one, so this row is no longer an extra route beside the journey's own add pages — it is the route. Its second open question is answered: the add-a-transporter pages live in the INS front door beside the other address add pages, and trade-imports-address-book holds the records. The two placements of the Transporter option that were still in play (req-1198 third before 'Branch'; req-2042 after 'Place of Destination' and before the divider) must still be settled against the three-option type page inc-061 built. The re-distil should also decide what becomes of the animals frontend's features/transport/transporter-add, private-transporter-details and commercial-transporter-details folders, which decision 2 supersedes.",
+        "Data model settled 6 November by ruling:ian-2026-11-06 decisions 4 and 5, so this row's two open questions are closed. A transporter is its own record in its own transporters collection inside the address book service, not the Address model: AddressRequest requires at least one role (@NotEmpty) and refuses a type outright (@Null, \"type is not a supported field\"), and a transporter carries an approval number, a private-or-commercial type and an approval status that no address has. It reuses the service's organisation scoping, soft-delete and the Standard Address Block field validation where the fields match. Transporters have no roles — no seventh AddressRole and no fourth RoleGroup — and store the private-or-commercial type instead, which decides the form, the field list and the country rule and so cannot be derived. The address book's own API is unchanged by this row."
       ],
       "gate": null,
       "externalDependsOn": [
@@ -3947,7 +3987,7 @@
         "inc-074"
       ],
       "theme": "transporters",
-      "status": "blocked",
+      "status": "todo",
       "kind": "feat",
       "repos": [
         "addressbook",
@@ -3982,12 +4022,12 @@
         "req-2041",
         "req-2198"
       ],
-      "openQuestions": [
-        "The product owner decides whether the service manages transporters and, if so, whether in the address book (ruling:sam-2026-10-09-pm, transporter management, ruling-sam-2026-10-09-pm-p2-031 to p2-035, p2-041, p2-043); the transporter area is then re-distilled and this row rewritten to that decision. No safe default: a Transporter tab with no transporter entries behind it would show an empty, unreachable category."
-      ],
+      "openQuestions": [],
       "notes": [
         "Combines the Transporter tab (req-2040), its columns (req-1135) and its Type filter (req-2041): one tab, one blocker, one set-up. Rewrite of the existing blocked row inc-075, keeping its id. Still blocked: the 26 October ruling says nothing about transporters, so ruling:sam-2026-10-09-pm's block stands, and this re-distil only restates the requirements and renumbers the afternoon ruling's claims. Two changes from the existing row's text: its 'Search on the Transporter tab finds a transporter by part of its approval number' criterion is dropped, because no requirement here states it and the search requirement it leaned on (req-1119, held by the address-book split) matches on name, type labels, address lines and country name, not on an approval number; and 'with no Country column' is replaced by naming the four columns and the action column exactly, which proves the same thing positively. Whether a transporter's approval number becomes searchable is for the re-distil after the transporter decision. The category and type query parameter names are the INS service's to choose, so no criterion names one. Waits on the address book split branch's tabs and search rows (externalDependsOn on shared/design-release-2-1/themes/address-book inc-067 and inc-069) and on the add-a-transporter row.",
-        "Re-distil 2 November: req-2198 (the search also matches a transporter's approval number) is added here, where the transporter tab's list and search are built, and it waits on the same decision about transporter management. It was given to no area, so the combiner drafted its criterion."
+        "Re-distil 2 November: req-2198 (the search also matches a transporter's approval number) is added here, where the transporter tab's list and search are built, and it waits on the same decision about transporter management. It was given to no area, so the combiner drafted its criterion.",
+        "Unblocked 6 November by ruling:ian-2026-11-06: decision 1 makes the address book the system of record, so a Transporter tab has transporter records behind it. Approved transporters are parked (decision 3), so the tab lists the organisation's own transporters only. Open against inc-067, which built three category tabs with a Type column: whether Transporter is a fourth category tab, and how that is worked out from roles now ruling:paul-2026-11-05 has the address book store roles rather than a type. Filtering by private or commercial needs the type on the record, which inc-074's second open question covers.",
+        "Settled 6 November by ruling:ian-2026-11-06 decision 5: the Transporter tab is a fourth tab backed by the transporters route, not a fourth role group over the addresses collection. inc-067's three category tabs are role-group views of addresses; this tab is a view of the transporters collection. Filtering by private or commercial reads the type stored on the transporter record (decision 4), so it needs nothing from AddressRole. Note for the plan: a transporter's approval status (Approved or New, shown on the list) is not the address book's AddressStatus, which is an ACTIVE or DELETED soft-delete tombstone — the transporter document needs its own name for its own concept."
       ],
       "gate": null,
       "externalDependsOn": [
@@ -4011,7 +4051,7 @@
         "inc-037"
       ],
       "theme": "transporters",
-      "status": "blocked",
+      "status": "todo",
       "kind": "feat",
       "repos": [
         "insfrontend",
@@ -4047,12 +4087,11 @@
       "requirements": [
         "req-394"
       ],
-      "openQuestions": [
-        "Blocked on transporter requirements: whether the service manages transporters at all, and whether the address book or some other functionality does it (ruling:sam-2026-10-09-pm-p2-031 to -p2-037, -p2-043, c-285). Until it is decided there is no transporter details page for the link to open."
-      ],
+      "openQuestions": [],
       "notes": [
         "Blocked by ruling:sam-2026-10-09-pm-p2-043 (c-285). Kept apart: it needs transporter records with a details page (the address-book rows it depends on) and the reshaped list. The requirement itself says the link is built only once such a details page exists and that until then the list carries no action column, so the row cannot be split into a link now and a page later. c-052 (precedence): the link is adopted, against the parity backlog's claim that it waited.",
-        "Unchanged by this re-distil apart from wording."
+        "Unchanged by this re-distil apart from wording.",
+        "Unblocked 6 November by ruling:ian-2026-11-06: decision 1 gives a transporter a record in the address book, so there is a details page for the link to open — the address book's own view page (inc-064), reached as inc-066 already returns a viewer to where they opened the address from. The re-distil should check whether this row still needs anything beyond what inc-064 and inc-066 built for addresses, once a transporter is one of them."
       ],
       "gate": null,
       "externalDependsOn": [

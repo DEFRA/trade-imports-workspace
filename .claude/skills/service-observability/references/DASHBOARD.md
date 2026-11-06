@@ -124,7 +124,8 @@ Claude writes the service's dashboard to
 3. Make one copy of the `<business-metric> by <business-dimension>`
    panel per business metric on the agreed list (Step 2), filling in the
    metric and its dimension everywhere they appear in the panel (the
-   title, `metricName`, `dimensions` and the legend `label`), and laying
+   title, description, `metricName`, `dimensions` and the legend
+   `label`), and laying
    each copy out on the grid. Delete the panel if there are none.
 4. Delete "Cache hits and misses" if the service has no cache.
 5. List the service's `@Timed` names, in one command:

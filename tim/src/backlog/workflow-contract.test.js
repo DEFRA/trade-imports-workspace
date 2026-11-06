@@ -781,7 +781,7 @@ describe('increment-build-loop', () => {
     })
 
     expect(run.logs).toContain(
-      'increment-build-loop: rigour standard — a think-tier plan, reviewed once, and re-reviewed when a finding is structural or the review names none, style reviewers, a code reviewer per (repo, language) group, a consistency review, and findings verified before the judge'
+      'increment-build-loop: rigour standard — a think-tier plan, reviewed once, and its findings re-checked when one is structural or the review names none, style reviewers, a code reviewer per (repo, language) group, a consistency review, and findings verified before the judge'
     )
   })
 
@@ -803,7 +803,7 @@ describe('increment-build-loop', () => {
     })
 
     expect(run.logs).toContain(
-      'increment-build-loop: rigour full — a think-tier plan, reviewed, revised and re-reviewed, style reviewers, a code reviewer per (repo, language) group, a consistency review, and findings verified before the judge'
+      'increment-build-loop: rigour full — a think-tier plan, reviewed and revised, then its findings re-checked, style reviewers, a code reviewer per (repo, language) group, a consistency review, and findings verified before the judge'
     )
   })
 
@@ -3956,7 +3956,7 @@ describe('increment-build-loop', () => {
           )
         })
 
-        test('tells the second plan review which findings it sent back', async () => {
+        test('tells the second pass which findings it sent back', async () => {
           const run = await runPlannedWith(
             { 'inc-900 plan review': SENT_BACK },
             BASELINE_ANSWER,
@@ -3966,8 +3966,50 @@ describe('increment-build-loop', () => {
           )
 
           expect(flat(promptOf(run, 'inc-900 plan review 2'))).toContain(
-            'YOU SENT THIS PLAN BACK ONCE, with these findings: 1. [structural] 9. Homes: The new anchor argument names no mechanism it goes through.'
+            'THE FINDINGS THE REVIEW RAISED, and what each said must become true: 1. [structural] 9. Homes: The new anchor argument names no mechanism it goes through.'
           )
+        })
+
+        test('makes the second pass re-check those findings and review nothing else', async () => {
+          const run = await runPlannedWith(
+            { 'inc-900 plan review': SENT_BACK },
+            BASELINE_ANSWER,
+            PLANNED,
+            PLANNED,
+            implementAnswer(['frontend:src/a.js'])
+          )
+          const recheck = flat(promptOf(run, 'inc-900 plan review 2'))
+          const review = flat(promptOf(run, 'inc-900 plan review'))
+
+          expect({
+            isRecheck: recheck.includes(
+              'You are the PLAN RE-CHECKER for increment inc-900'
+            ),
+            saysDoNotReview: recheck.includes(
+              'DO NOT REVIEW THE REST OF THE PLAN'
+            ),
+            keepsTheKinds: recheck.includes(
+              'each keeping the KIND IT WAS GIVEN there'
+            ),
+            tiesApprovedToFindings: recheck.includes(
+              'approved: true when findings[] is empty, false when it is not. Nothing else decides it.'
+            ),
+            dropsTheFullChecklist: !recheck.includes(
+              'CHECK THE PLAN against them'
+            ),
+            andTheFullChecklistWasInPassOne: review.includes(
+              'CHECK THE PLAN against them'
+            ),
+            shorterThanTheReview: recheck.length < review.length
+          }).toEqual({
+            isRecheck: true,
+            saysDoNotReview: true,
+            keepsTheKinds: true,
+            tiesApprovedToFindings: true,
+            dropsTheFullChecklist: true,
+            andTheFullChecklistWasInPassOne: true,
+            shorterThanTheReview: true
+          })
         })
 
         test('tells the plan reviewer that only a structural finding stops the increment', async () => {
@@ -4013,7 +4055,7 @@ describe('increment-build-loop', () => {
           expect(run.result.stopped).toEqual({
             reason: 'plan-refused',
             detail:
-              'inc-900: the plan review sent the plan back twice with structural findings still open: 9. Homes: The new anchor argument names no mechanism it goes through.'
+              'inc-900: the revised plan still leaves structural plan-review findings open: 9. Homes: The new anchor argument names no mechanism it goes through.'
           })
           expect(stageLabels(run)).not.toContain('inc-900 plan review record')
           expect(stageLabels(run)).not.toContain('inc-900 implement')
@@ -6284,7 +6326,7 @@ describe('increment-build-loop', () => {
         const run = await runBranch({ rigour: 'standard' }, ROW)
 
         expect(run.logs).toContain(
-          "inc-900: rigour standard — a think-tier plan, reviewed once, and re-reviewed when a finding is structural or the review names none, no style reviewers on the row but one across the theme's whole change, a code reviewer per (repo, language) group, a consistency review, and findings verified before the judge"
+          "inc-900: rigour standard — a think-tier plan, reviewed once, and its findings re-checked when one is structural or the review names none, no style reviewers on the row but one across the theme's whole change, a code reviewer per (repo, language) group, a consistency review, and findings verified before the judge"
         )
       })
 
@@ -6895,6 +6937,37 @@ describe('increment-build-loop', () => {
         )
       })
 
+      test('tells the watcher a rollup older than the head commit is unknown, not red', async () => {
+        const prompt = promptOf(
+          await runMergeRow(FOUND, null),
+          'inc-900 ci watch'
+        ).replace(/\s+/g, ' ')
+
+        expect({
+          named: prompt.includes('A STALE ROLLUP IS NOT A FAILURE'),
+          reRuns: prompt.includes(
+            'gh run rerun <run-id> --failed --repo <ghRepo>'
+          ),
+          spendsNoFixAttempt: prompt.includes(
+            'A re-run spends a watch window, NEVER a fix attempt'
+          ),
+          capped: prompt.includes('at most 2 times per pr'),
+          mixedIsStillRed: prompt.includes(
+            'Exit 1 with some lines marked stale is a real red'
+          ),
+          keepsStaleOutOfFailures: prompt.includes(
+            'Put only the checks NOT marked stale in failures[]'
+          )
+        }).toEqual({
+          named: true,
+          reRuns: true,
+          spendsNoFixAttempt: true,
+          capped: true,
+          mixedIsStillRed: true,
+          keepsStaleOutOfFailures: true
+        })
+      })
+
       test('stops at a PR that conflicts with its base without spending a fix attempt', async () => {
         const run = await runMergeRow(FOUND, {
           green: false,
@@ -6945,6 +7018,36 @@ describe('increment-build-loop', () => {
         expect(promptOf(run, 'inc-900 ci fix 1')).toContain(
           'tim sonar gate <the repo name> --pull-request <n>'
         )
+      })
+
+      test('has the branch CI fixer refuse a check that started before the head commit, before it changes a line', async () => {
+        const run = await runMergeRow(
+          FOUND,
+          { green: false, failures: ['lint'], summary: 'red' },
+          null
+        )
+        const prompt = promptOf(run, 'inc-900 ci fix 1').replace(/\s+/g, ' ')
+
+        expect({
+          checksFirst:
+            prompt.indexOf(
+              'CHECK THE FAILURE IS ABOUT THIS HEAD BEFORE YOU CHANGE A LINE'
+            ) < prompt.indexOf('Fix the code. Never weaken'),
+          readsTheCheckStart: prompt.includes(
+            "gh api repos/<owner>/<name>/check-runs/<check-run-id> --jq '.started_at'"
+          ),
+          readsTheHeadCommit: prompt.includes(
+            'git -C ~/ws/<repoPath> log -1 --format=%cI'
+          ),
+          refusesRatherThanFixes: prompt.includes(
+            'report ok:false saying so and naming both times, and re-run nothing and fix nothing'
+          )
+        }).toEqual({
+          checksFirst: true,
+          readsTheCheckStart: true,
+          readsTheHeadCommit: true,
+          refusesRatherThanFixes: true
+        })
       })
 
       test('binds the house rules into the branch CI fixer', async () => {
@@ -8719,7 +8822,7 @@ describe('increment-build-loop', () => {
           mergeabilityBeforeChecks:
             prompt.indexOf(
               'gh pr view <url> --json mergeable,mergeStateStatus'
-            ) < prompt.indexOf('gh pr checks <url> --watch'),
+            ) < prompt.indexOf('tools/github-actions/wait-for-pr-checks.sh'),
           stopReason: prompt.includes('stopReason "pr-conflict"')
         }).toEqual({
           everyFirst: true,

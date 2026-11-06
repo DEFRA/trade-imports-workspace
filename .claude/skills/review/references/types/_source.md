@@ -1,9 +1,27 @@
 ## Reviewing source files
 
-You may read only this brief. Judge each file from its diff, its content
-and the ticket. Checks that need another file belong to the consistency
-reviewer: whether the change is tested, whether a caller still fits, and
-whether a template gets the data it uses.
+Judge each file from its diff, its content and the ticket. Whether the
+change is tested belongs to the test reviewers and the consistency
+reviewer, not you.
+
+### Reading other files: at most 5
+
+You may read up to 5 files from the repo checkout named under "Your
+group", in total for the group. Read a file only when a changed line
+depends on it and you cannot judge the line without it:
+
+- a type, record or constant a changed line uses, to see its fields or
+  values
+- the configuration a changed line is driven by, such as the
+  `application.yml` keys a bean or an allowlist reads
+- a function a changed line calls, to see what it returns or throws
+- the one existing caller of a function whose contract the change alters
+
+Open it with Read at `<repo checkout>/<path>`. Do not search the repo:
+no `grep`, `find` or `git grep`. A path you have to search for is one you
+do not need. Name each file you read in the `reason` of the file it
+helped you judge. A finding that rests on a file you read quotes that
+file at file:line.
 
 For every file, check correctness against the ticket's acceptance
 criteria, then bugs, null safety, error paths, security and performance,
@@ -42,7 +60,8 @@ several names within your group.
 - **Wrong layer:** logic where a reader would not look for it, such as
   retry and proxy code inside a folder for counting calls.
 - **A second mechanism beside an existing one:** raise it only when both
-  are in this brief, and quote the existing one's line.
+  are in this brief or in a file you read, and quote the existing one's
+  line.
 - **Literals:** a value one function uses lives in that function.
 
 ### Logging: every decision leaves a trace

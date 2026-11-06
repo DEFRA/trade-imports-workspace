@@ -51,6 +51,11 @@ for name in Kilo Alpha Juliet Bravo India Charlie Hotel Delta Golf Echo Foxtrot;
     add_file "$JAVA_REPO" "src/main/java/app/$name.java" "$body"
 done
 add_file "$JAVA_REPO" "src/test/java/app/AlphaTest.java" "class AlphaTest {}"
+add_file "$JAVA_REPO" "src/test/java/app/integration/KiloIT.java" "class KiloIT {}"
+add_file "$JAVA_REPO" "src/test/java/app/OrphanTest.java" "class OrphanTest {}"
+mkdir -p "$REVIEW_DIR/repos/$JAVA_REPO/src/server"
+printf 'export const unchanged = 1\n' > "$REVIEW_DIR/repos/$JAVA_REPO/src/server/unchanged.js"
+add_file "$JAVA_REPO" "src/server/unchanged.test.js" "test('unchanged')"
 add_file "$JAVA_REPO" "src/test/java/app/NOTES.md" "notes"
 add_file "$JAVA_REPO" "package-lock.json" "{}"
 add_file "$JAVA_REPO" ".github/workflows/ci.yml" "on: push"
@@ -121,13 +126,33 @@ check "brief writing makes the folders reviewers write to" \
     "$([[ -d "$REVIEW_DIR/findings" && -d "$REVIEW_DIR/ac" && -d "$REVIEW_DIR/consistency" ]] && echo yes || echo no)" "yes"
 check "the brief lists a section for each of its files" "$(grep -c '^## File: ' "$brief")" "6"
 check "the brief carries each file's diff" "$(grep -c '^+changed line in src/main/java/app/Bravo.java$' "$brief")" "1"
-check "the brief carries the file at the reviewed commit" "$(grep -c '^class Bravo {}$' "$brief")" "1"
+check "the brief carries the file at the reviewed commit, numbered" "$(grep -c '^    1  class Bravo {}$' "$brief")" "1"
 check "a file over the size cap is pointed at, not copied" "$(grep -c 'Too large to copy here' "$brief")" "1"
 check "the brief carries the ticket" "$(grep -c 'AC1: the thing works' "$brief")" "1"
 check "the brief carries the group's content guide" "$(grep -c "### Source: \`$mongo_guide\`" "$brief")" "1"
 check "shared parts come before the group's own" \
     "$(grep -n -E '^## (House rules|Ticket|Guides|Your group)$' "$brief" | cut -d: -f2 | tr '\n' '|')" \
     "## House rules|## Ticket|## Guides|## Your group|"
+
+check "a source brief has no source-under-test section" "$(grep -c '^## Source under test$' "$brief")" "0"
+
+tests_brief="$REVIEW_DIR/briefs/$JAVA_REPO--java-tests--1.md"
+check "a Java test brief has a source-under-test section" "$(grep -c '^## Source under test$' "$tests_brief")" "1"
+check "FooTest covers Foo in the same package" \
+    "$(grep -c '^## Source: `src/main/java/app/Alpha.java`$' "$tests_brief")" "1"
+check "and the source comes with its content, numbered" \
+    "$(grep -c '^    1  class Kilo {}$' "$tests_brief")" "1"
+check "a changed source comes with its diff" \
+    "$(grep -c '^+changed line in src/main/java/app/Alpha.java$' "$tests_brief")" "1"
+check "FooIT in another package covers the one Foo under src/main/java" \
+    "$(grep -c '^## Source: `src/main/java/app/Kilo.java`$' "$tests_brief")" "1"
+check "a test with no source adds no source section" "$(grep -c '^## Source: .*Orphan' "$tests_brief")" "0"
+
+node_tests_brief="$REVIEW_DIR/briefs/$JAVA_REPO--node-tests--1.md"
+check "foo.test.js covers foo.js beside it" \
+    "$(grep -c '^## Source: `src/server/unchanged.js`$' "$node_tests_brief")" "1"
+check "a source the review did not change is marked so" \
+    "$(grep -c '^Not changed by this review.$' "$node_tests_brief")" "1"
 
 rm "$REVIEW_DIR/groups.json"
 bash "$SCRIPT_DIR/write-briefs.sh" "$ID" > /dev/null 2>&1

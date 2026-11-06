@@ -1,9 +1,36 @@
 ## Reviewing tests
 
 Review tests the way a tester would: against the ticket, its acceptance
-criteria and any behaviour-spec scenarios in this brief. **Do not read or
-search the source under test.** Whether every new code branch is tested is
-the consistency reviewer's check, not yours.
+criteria and any behaviour-spec scenarios in this brief. Then use the
+source each test covers, under "Source under test" at the end of this
+brief, to find what no test proves. Read nothing outside this brief and do
+not search the repo.
+
+Judge the acceptance criteria and every test title from the ticket and
+the assertions first, before you read the source, so the code does not
+set what you expect it to do.
+
+### Coverage gaps in the source under test
+
+For each source file under "Source under test", list every branch the
+change adds or alters: a condition, an early return, an error path, a
+fallback, each value in a set or switch that the code treats differently,
+and each rule its doc comment states. For each one, find the test in your
+group whose assertion fails if that branch is deleted or inverted.
+
+- No such test is a `coverage-gap` finding, at least Major, on the test
+  file that should hold it (or on the source file when no test file in
+  your group fits). Name the branch at its source file:line and the
+  change that would leave every test green.
+- A branch the change did not touch is not a gap. A source marked "Not
+  changed by this review" has gaps only in what the tests in your group
+  newly claim to cover.
+- Do not review the source itself: its naming, comments and structure
+  belong to the source reviewer.
+
+Source changed by the review with no test file in your group is the
+consistency reviewer's check. A brief with no "Source under test"
+section, such as an E2E brief, skips this step.
 
 ### Acceptance criteria
 

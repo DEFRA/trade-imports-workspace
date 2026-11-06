@@ -17,7 +17,13 @@
 #   3. the ticket (ticket.md, or branch.md in local mode)
 #   4. the group's guides
 #   5. the group: repo, PR, commit and file list
-#   6. each file's diff and its content at the reviewed commit
+#   6. each file's diff and its content at the reviewed commit, every line
+#      numbered as it is in the file
+#   7. for a type whose reviewTypes entry sets sourceUnderTest, the source
+#      file each test covers: its diff when the review changed it, and its
+#      content. A Java test FooTest, FooTests or FooIT covers Foo.java (in
+#      the same package, else the one Foo.java under src/main/java); a Node
+#      test foo.test.js covers foo.js (or .mjs, .ts) beside it.
 #
 # Also makes the findings/, ac/ and consistency/ folders the reviewers
 # write to.
@@ -110,6 +116,86 @@ content_of() {
     fi
 }
 
+exists_at_commit() {
+    local root="$1" file="$2"
+    if [[ "$is_local" == "true" ]] && ! branch_is_checked_out "$root"; then
+        git -C "$root" cat-file -e "$local_branch:$file" 2> /dev/null
+    else
+        [[ -f "$root/$file" ]]
+    fi
+}
+
+java_main_files_named() {
+    local root="$1" name="$2"
+    if [[ "$is_local" == "true" ]] && ! branch_is_checked_out "$root"; then
+        git -C "$root" ls-tree -r --name-only "$local_branch" -- src/main/java | grep "/$name\.java$" || true
+    elif [[ -d "$root/src/main/java" ]]; then
+        (cd "$root" && find src/main/java -name "$name.java")
+    fi
+}
+
+# Prints the source file a test covers, or nothing when none is found.
+source_under_test() {
+    local root="$1" file="$2" name candidate matches stem ext
+    case "$file" in
+        src/test/java/*.java)
+            name=$(basename "$file" .java)
+            for suffix in Tests Test IT; do
+                if [[ "$name" == *"$suffix" && "$name" != "$suffix" ]]; then
+                    name="${name%"$suffix"}"
+                    break
+                fi
+            done
+            candidate="$(dirname "src/main/java/${file#src/test/java/}")/$name.java"
+            if exists_at_commit "$root" "$candidate"; then
+                echo "$candidate"
+                return
+            fi
+            matches=$(java_main_files_named "$root" "$name")
+            [[ -n "$matches" && $(wc -l <<< "$matches" | tr -d ' ') -eq 1 ]] && echo "$matches"
+            ;;
+        *.test.js | *.test.mjs | *.test.ts)
+            stem="${file%.test.*}"
+            for ext in "${file##*.test.}" js mjs ts; do
+                if exists_at_commit "$root" "$stem.$ext"; then
+                    echo "$stem.$ext"
+                    return
+                fi
+            done
+            ;;
+    esac
+    return 0
+}
+
+# Prints a file's content with its line numbers, or a pointer when it is
+# over the size cap, or a note when the change deleted it.
+print_content() {
+    local root="$1" file="$2" content size
+    if ! content=$(content_of "$root" "$file"); then
+        echo "Deleted by this change."
+        return
+    fi
+    size=$(printf '%s' "$content" | wc -c | tr -d ' ')
+    if [[ "$size" -gt "$MAX_FILE_BYTES" ]]; then
+        echo "Too large to copy here ($size bytes). Read it at \`$root/$file\`."
+    else
+        echo "### File at the reviewed commit, with line numbers"
+        echo
+        echo "\`\`\`$(fence_language "$file")"
+        printf '%s\n' "$content" | awk '{ printf "%5d  %s\n", NR, $0 }'
+        echo '```'
+    fi
+}
+
+print_diff() {
+    local repo="$1" file="$2" pr="$3"
+    echo "### Diff"
+    echo
+    echo '```diff'
+    diff_of "$repo" "$file" "$pr" || echo "(No diff found for this file.)"
+    echo '```'
+}
+
 fence_language() {
     case "$1" in
         *.java) echo java ;;
@@ -180,28 +266,54 @@ write_brief() {
         echo
         echo "## File: \`$file\`"
         echo
-        echo "### Diff"
+        print_diff "$repo" "$file" "$pr"
         echo
-        echo '```diff'
-        diff_of "$repo" "$file" "$pr" || echo "(No diff found for this file.)"
-        echo '```'
-        echo
-        local content size
-        if ! content=$(content_of "$root" "$file"); then
-            echo "Deleted by this change."
-            continue
-        fi
-        size=$(printf '%s' "$content" | wc -c | tr -d ' ')
-        if [[ "$size" -gt "$MAX_FILE_BYTES" ]]; then
-            echo "Too large to copy here ($size bytes). Read it at \`$root/$file\`."
-        else
-            echo "### File at the reviewed commit"
-            echo
-            echo "\`\`\`$(fence_language "$file")"
-            printf '%s\n' "$content"
-            echo '```'
-        fi
+        print_content "$root" "$file"
     done < <(jq -r '.files[]' <<< "$group")
+
+    [[ "$(jq -r --arg type "$type" '.reviewTypes[$type].sourceUnderTest // false' "$ROUTING")" == "true" ]] || return 0
+
+    local file source
+    local -a sources=() tests=()
+    while IFS= read -r file; do
+        source=$(source_under_test "$root" "$file")
+        [[ -n "$source" ]] || continue
+        sources+=("$source")
+        tests+=("$file")
+    done < <(jq -r '.files[]' <<< "$group")
+
+    echo
+    echo "## Source under test"
+    if [[ ${#sources[@]} -eq 0 ]]; then
+        echo
+        echo "No source file was found for the tests in this group."
+        return 0
+    fi
+    local i j seen
+    for i in "${!sources[@]}"; do
+        seen=false
+        for ((j = 0; j < i; j++)); do
+            [[ "${sources[$j]}" == "${sources[$i]}" ]] && seen=true
+        done
+        [[ "$seen" == "true" ]] && continue
+        echo
+        echo "## Source: \`${sources[$i]}\`"
+        echo
+        echo "Tested by:"
+        for j in "${!sources[@]}"; do
+            [[ "${sources[$j]}" == "${sources[$i]}" ]] && echo "- \`${tests[$j]}\`"
+        done
+        echo
+        local placeholder
+        placeholder=$(placeholder_of "$repo" "${sources[$i]}")
+        if [[ -f "$placeholder" ]]; then
+            print_diff "$repo" "${sources[$i]}" "$(jq -r '.pr // "none"' "$placeholder")"
+        else
+            echo "Not changed by this review."
+        fi
+        echo
+        print_content "$root" "${sources[$i]}"
+    done
 }
 
 mkdir -p "$REVIEW_DIR/briefs" "$REVIEW_DIR/findings" "$REVIEW_DIR/ac" "$REVIEW_DIR/consistency"

@@ -7,7 +7,12 @@ commit. Read nothing else unless the instructions for your type below say
 you may. Do not search the repo.
 
 If you cannot judge something without code that is not in this brief,
-leave it. A functional finding needs evidence you can quote from the brief.
+leave it. A functional finding needs evidence you can quote from the brief,
+or from a file the instructions for your type let you read.
+
+Every file's content is printed with its line numbers. A finding's `line`
+is that number, a plain integer. Never use a position in the diff or in
+this brief.
 
 ### Scope
 

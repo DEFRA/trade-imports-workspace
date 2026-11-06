@@ -9,6 +9,14 @@ helper in `docs/agent-skills.md`.
 
 **Bash call hygiene** — one command per Bash call. Full rule table: `~/git/defra/trade-imports-workspace/docs/agent-skills.md` → "Bash call hygiene".
 
+**Call budget: about 25 calls.** Every call re-sends everything you have
+read so far, so each extra call costs more than the last. Read the meta,
+the ticket and every repo's diff first, sending the reads for several
+files in one response. Read a diff whole when it fits; do not page
+through it. Run `stale-search.sh` once, with every term. Then read only
+the files a check needs, several per response. Write all your files in
+as few responses as you can: one response can carry every Write.
+
 ## Workspace
 
 ```
@@ -70,20 +78,29 @@ two things differ. Quote the code that shows it.
 Run this for every repo, including a single-repo review.
 
 1. From the diffs and `ticket.md`, list each rule, behaviour, name or
-   default the change alters. Write each as a search term: the old
-   name, the old literal, the old route, the old wording.
-2. In the pinned review clone
-   `~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/repos/{repo}/`,
-   search for each term outside the changed lines, in:
-   - the repo's recipes and docs: `**/docs/add-a-*.md`,
-     `src/server/app/docs/*.md`, `**/docs/*.md`, `AGENTS.md`,
-     `CLAUDE.md`, `README.md`
-   - JSDoc and Javadoc blocks, and line comments
-   - test titles (`test(`, `it(`, `describe(`, `@DisplayName`)
-   - `~/git/defra/trade-imports-workspace/docs/best-practices/` and
-     `openspec/specs/` when the rule is one they state
-3. Every hit that still states the old way is a finding. Record the
-   file, the line, the old statement, and what is now true.
+   default the change alters, in every repo. Write each as a search
+   term: the old name, the old literal, the old route, the old wording.
+   A deleted class, a renamed metric and a removed config key are each a
+   term.
+2. Search for every term, across every repo, in one call:
+
+   ```bash
+   ~/git/defra/trade-imports-workspace/tools/review/stale-search.sh EUDPA-XXXXX 'term one' 'term two' …
+   ```
+
+   It searches every tracked file in each pinned review clone, plus the
+   workspace's `docs/best-practices/`, `openspec/specs/` and `CLAUDE.md`
+   when the review does not include the workspace repo, and lists every
+   hit with its file and line. `[changed]` marks a file this review
+   changed: its hit may be the changed line itself. Do not search by
+   hand for this step.
+3. Every hit that still states the old way, outside the changed lines,
+   is a finding: in a doc, recipe, guide, comment, doc block, test title
+   or code that still uses the old name. Record the file, the line, the
+   old statement, and what is now true. Ignore records of past work
+   (a saved review, a changelog entry).
+4. Under **Statements Made Untrue**, list the terms you searched and copy
+   the tool's **Searched** list. Name no place the tool did not search.
 
 Example: a change to how page anchors are worked out left
 `change-link.js` describing the old way. The file was not
@@ -95,13 +112,16 @@ is that it states the new behaviour.
 
 ### 3c. Check the changed files against each other
 
-The group reviewers each see one file type, and read nothing outside
-their brief. These checks need two files, so they are yours alone. Run
-them for every repo, from that repo's diff and its pinned review clone.
+The group reviewers each see one file type. Source reviewers may read up
+to 5 other files; test reviewers see the source each changed test
+covers (`FooTest` covers `Foo`, `foo.test.js` covers `foo.js`) and report
+its gaps. These checks need two files no group reviewer saw together, so
+they are yours alone. Run them for every repo, from that repo's diff and
+its pinned review clone.
 
 | Check | Finding when | Category |
 |---|---|---|
-| **Untested branch** | A new or changed branch in source (a condition, an error path, a fallback) that no test in the change exercises. Read the source diff and the test diff side by side. | `coverage-gap` |
+| **Untested branch** | A new or changed branch in a changed source file whose own test file is not in the change, so no test reviewer saw that source: a condition, an error path, a fallback that no test in the change exercises. Read the source diff and the test diff side by side. | `coverage-gap` |
 | **Template data** | A field a template reads that its controller or view model no longer supplies, or supplies under another name. | `correctness` |
 | **Build registration** | New client-side JavaScript with no `webpack.config.js` entry, a new SCSS partial missing from `_index.scss`, or a test environment (`@vitest-environment jsdom`) with no matching devDependency. Unit tests pass and the page renders, but the script returns 404 in the browser. Critical. | `correctness` |
 | **Unused dependency** | A dependency added to `package.json` or `pom.xml` that no changed or existing file imports. | `structure` |
@@ -127,7 +147,14 @@ in the shape `review-add-item.sh --from` reads:
 ```
 
 Write `[]` when a repo has none. The parent adds the whole list in one
-call.
+call, and it refuses the whole list over one bad entry, so:
+
+- `category` is one of `correctness`, `security`, `error-handling`,
+  `coverage-gap`, `naming`, `comments`, `structure`, `duplication`,
+  `logging`, `test-readability`, `history`, `design`. A stale doc or
+  comment is `comments`. No other word.
+- `line` is the line number in the file, a plain integer (`60`, not
+  `"60"`), never a position in the diff.
 
 ### 4. Write consistency check per repo
 

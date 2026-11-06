@@ -652,7 +652,7 @@
       ],
       "dependsOn": [],
       "theme": "type-question",
-      "status": "todo",
+      "status": "done",
       "kind": "refactor",
       "repos": [
         "insfrontend"
@@ -664,13 +664,23 @@
         }
       ],
       "requirements": [],
-      "openQuestions": [],
+      "openQuestions": [
+        "Twin fix: trade-imports-animals-frontend, trade-imports-plants-frontend and trade-imports-animals-admin src/auth/get-sign-out-url.js each need the local `oidcBaseUrl` renamed to `discoveryUrl` (and `basePath` to `issuerPath`), because it holds the full OIDC discovery URL ending in /.well-known/openid-configuration, not a base URL. Raised by the INS frontend naming finding on get-sign-out-url.js."
+      ],
       "gate": null,
       "externalDependsOn": [],
       "merge": null,
       "notes": [
         "A follow-up from the engineering reviews of the type-question theme, built on the theme branch.",
         "Links, sign-in and sign-out must keep working in CDP, in the local docker stack and in the CI docker stack. cdp-app-config sets no HOSTNAME_REWRITE variable for any trade-imports service today. Never write to cdp-app-config: if a CDP change is needed, write it up for Sam."
+      ],
+      "commit": "764d6d93eb53212f89af2446e7edd1c2e76f8b5c",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/74",
+          "repo": "trade-imports-ins-frontend",
+          "number": 74
+        }
       ]
     },
     {
@@ -720,7 +730,7 @@
       ],
       "dependsOn": [],
       "theme": "type-question",
-      "status": "todo",
+      "status": "done",
       "kind": "fix",
       "repos": [
         "frontend",
@@ -733,13 +743,30 @@
         }
       ],
       "requirements": [],
-      "openQuestions": [],
+      "openQuestions": [
+        "Twin fix: repos/trade-imports-ins-frontend src/config/config.js, src/plugins/auth.js and src/plugins/auth.test.js need the Bell state cookie SameSite entry renamed from session.cookie.sameSite (env AUTH_COOKIE_SAME_SITE) to defraId.stateCookieSameSite (env DEFRA_ID_STATE_COOKIE_SAME_SITE), with doc 'SameSite attribute of the Bell state cookie set during Defra ID sign-in', as the review finding that the four twin frontends name one cookie setting two ways (one concept, one name across twin repos).",
+        "Twin fix: repos/trade-imports-animals-admin src/config/config.js, src/plugins/auth.js and src/plugins/auth.test.js need the Bell state cookie SameSite entry renamed from session.cookie.sameSite (env AUTH_COOKIE_SAME_SITE) to defraId.stateCookieSameSite (env DEFRA_ID_STATE_COOKIE_SAME_SITE), with doc 'SameSite attribute of the Bell state cookie set during Defra ID sign-in', as the review finding that the four twin frontends name one cookie setting two ways (one concept, one name across twin repos).",
+        "Twin fix: repos/trade-imports-ins-frontend src/config/config.js needs `const isPlatform = !isLocal` (line 18) dropped and `!isLocal` written at its use (the csrf.cookie.secure default), as the review finding that the name predicts CDP only while it is also true for production images in the local and CI docker stacks (NODE_ENV=production in the Dockerfile)."
+      ],
       "gate": null,
       "externalDependsOn": [],
       "merge": null,
       "notes": [
         "A follow-up from the engineering reviews of the type-question theme, built on the theme branch.",
         "Links, sign-in and sign-out must keep working in CDP, in the local docker stack and in the CI docker stack. cdp-app-config sets no HOSTNAME_REWRITE variable for any trade-imports service today. Never write to cdp-app-config: if a CDP change is needed, write it up for Sam."
+      ],
+      "commit": "9b703e74b62fa2ca2826b9682171c8bc400a23ce 1eeb6b80392e55778e1de0df2f58636394c104d5",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/463",
+          "repo": "trade-imports-animals-frontend",
+          "number": 463
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/135",
+          "repo": "trade-imports-plants-frontend",
+          "number": 135
+        }
       ]
     },
     {
@@ -785,7 +812,7 @@
       ],
       "dependsOn": [],
       "theme": "type-question",
-      "status": "todo",
+      "status": "done",
       "kind": "refactor",
       "repos": [
         "frontend"
@@ -803,6 +830,14 @@
       "merge": null,
       "notes": [
         "A follow-up from the engineering reviews of the type-question theme, built on the theme branch."
+      ],
+      "commit": "c687fa5be09c126b4a0de8f04c05b1e23000b0db 000f7622",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/463",
+          "repo": "trade-imports-animals-frontend",
+          "number": 463
+        }
       ]
     },
     {
@@ -818,7 +853,7 @@
         "inc-255"
       ],
       "theme": "type-question",
-      "status": "todo",
+      "status": "done",
       "kind": "refactor",
       "repos": [
         "frontend"
@@ -830,12 +865,23 @@
         }
       ],
       "requirements": [],
-      "openQuestions": [],
+      "openQuestions": [
+        "Twin fix: trade-imports-plants-frontend src/server/app/model/obligations/helper-internals.js (isNonArrayObject), services/persistence/records/fulfilment-codec/shape/object.js, services/persistence/session/real.js and services/persistence/session/stub.js each hold their own copy of the plain-object rule (value !== null && typeof value === 'object' && !Array.isArray(value)); they need one owner under one name (isObject), imported by every consumer, as the animals frontend finding that isNonArrayObject duplicates lib/object.js isObject.",
+        "Twin fix: trade-imports-plants-frontend src/server/app/sets/high-risk-plants/docs/lighthouse.md:53 says the render check re-fetches every URL, but its sharding section (:139-143) writes and checks only the shard's URLs; it needs \"every URL in this run's shard (every URL when unsharded)\", as the animals frontend lighthouse.md:22 finding."
+      ],
       "gate": null,
       "externalDependsOn": [],
       "merge": null,
       "notes": [
         "A follow-up from the engineering reviews of the type-question theme, built on the theme branch."
+      ],
+      "commit": "c6d2e3c510f304e8882c936208c54b92ee3b3f04",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/463",
+          "repo": "trade-imports-animals-frontend",
+          "number": 463
+        }
       ]
     },
     {
@@ -850,7 +896,7 @@
         "inc-256"
       ],
       "theme": "type-question",
-      "status": "todo",
+      "status": "done",
       "kind": "test",
       "repos": [
         "frontend"
@@ -868,6 +914,14 @@
       "merge": null,
       "notes": [
         "A follow-up from the engineering reviews of the type-question theme, built on the theme branch."
+      ],
+      "commit": "26026f59",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/463",
+          "repo": "trade-imports-animals-frontend",
+          "number": 463
+        }
       ]
     },
     {
@@ -880,7 +934,7 @@
       ],
       "dependsOn": [],
       "theme": "type-question",
-      "status": "todo",
+      "status": "done",
       "kind": "test",
       "repos": [
         "tests"
@@ -898,6 +952,14 @@
       "merge": null,
       "notes": [
         "A follow-up from the engineering reviews of the type-question theme, built on the theme branch."
+      ],
+      "commit": "d7c2eba908a57edadbca6d176e7fa90f9ed5fc5c",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/86",
+          "repo": "trade-imports-ins-tests",
+          "number": 86
+        }
       ]
     },
     {
@@ -905,7 +967,7 @@
       "title": "Save and return on the plants consignor and place of destination pages makes the same checks as Save and continue",
       "detail": "The plants consignor select and place of destination specs still say 'Save and return to overview with nothing chosen reaches Overview without an error'. The ruling of 26 October says Save and return makes exactly the same checks as Save and continue on every page with both buttons. Check both pages' controllers, specs and tests against that ruling, and bring any that differ into line, as the commodity type row did.",
       "acceptanceCriteria": [
-        "On the plants consignor and place of destination pages, choosing nothing and pressing 'Save and return to overview' shows the same error as 'Save and continue' and stays on the page.",
+        "On the plants consignor and place of destination pages, 'Save and return to overview' makes the same checks as 'Save and continue': a value that is not an address in the book shows the same error, stays on the page and keeps the search; with nothing chosen, both move on without an error.",
         "The plants openspec for both pages says so, and unit and e2e tests prove it."
       ],
       "dependsOn": [
@@ -930,7 +992,8 @@
       "externalDependsOn": [],
       "merge": null,
       "notes": [
-        "A follow-up from the engineering reviews of the type-question theme, built on the theme branch."
+        "A follow-up from the engineering reviews of the type-question theme, built on the theme branch.",
+        "Criterion 1 reworded to match the 26 October ruling (same checks on both buttons) and the spec: nothing chosen moves on on both, a value not in the book is refused on both."
       ]
     },
     {

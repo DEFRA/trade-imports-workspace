@@ -815,7 +815,7 @@ Good:
 }
 ```
 
-**A failure line says why it failed.** `ExternalCallMetrics.measure` catches the exception, records the call as failed and rethrows. The log line it writes reads `External call <dependency>/<operation> failure in 5 ms`, with no cause and no status. Support sees a failure and cannot tell a timeout from a refusal. Carry the HTTP status, or the exception type when there is no status, into the failure line. If the exception is rethrown and logged in full where it is handled, do not log its stack trace here as well.
+**A failure line says why it failed.** `ExternalCallMetrics.measure` catches the exception, records the call as failed and rethrows. The log line it writes reads `External call <dependency>/<operation> failure in 5 ms`, with no cause and no status. Support sees a failure and cannot tell a timeout from a refusal. Carry the HTTP status, or the exception type when there is no status, into the failure line. If the exception is rethrown and logged in full where it is handled, do not log its stack trace here as well. `ExternalCallRecorder` in `trade-imports-address-book` does this: its failure line carries the cause's class name and message as the key-value pairs `error.type` and `error.message`, with no throwable attached (service-observability's `references/LOGGING.md`).
 
 **No request or response bodies at INFO.** Bodies hold personal data (names, addresses) and can be large. Log the status and what the code did with the answer, such as a result count. If a body is the only way to tell two failures apart, log a bounded excerpt at WARN on the failure path only.
 

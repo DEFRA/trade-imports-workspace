@@ -48,3 +48,14 @@ The system MUST let the user search the dashboard by complete notification refer
 - **GIVEN** the user searches for a reference number that matches no notification
 - **WHEN** the search runs
 - **THEN** a "No notifications found" message is shown
+
+### Requirement: The dashboard paginates by the address book's rule, every link keeping the sort
+**ID**: REQ-INS-DASH-004
+The system MUST paginate the dashboard by the same rule as the address book (REQ-INS-ADDR-047). Every pagination link, 'Previous' and 'Next' included, MUST keep the chosen sort.
+
+#### Scenario: A middle page of many keeps the sort in every pagination link
+**ID**: SCN-INS-DASH-004-A
+- **GIVEN** the dashboard, sorted by last updated oldest first, runs to 20 pages
+- **WHEN** the user views page 10
+- **THEN** the pagination shows 'Previous', page 1, an ellipsis, pages 9, 10 and 11, an ellipsis, page 20 and 'Next', with page 10 marked as the current page
+- **AND** every pagination link, 'Previous' and 'Next' included, keeps the sort

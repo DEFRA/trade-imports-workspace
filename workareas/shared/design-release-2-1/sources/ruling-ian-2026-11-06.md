@@ -37,6 +37,19 @@ On whether a transporter takes the address book's own data model, its roles, and
 3. **Approved transporters are parked.** A list of approved transporters managed in MDM for every organisation,
    added on top of an organisation's own transporters, is not in scope now and nothing is built for it. It is
    recorded as the likely subject of the 9 October block. New.
+
+   **Clarified later the same day**, when the re-analysis asked whether the transporters the service ships are
+   that concept:
+
+   > yes the shipped transporters are the approved transporters in an initial hardcoded fashion, move them out
+   > into the other blocked increment
+
+   So the eight records `services/transporters/records.js` ships to every organisation **are** the approved
+   transporters, in an initial hardcoded form, and they are parked with the rest. They stay exactly as they are:
+   main's two commercial placeholders are not replaced with Design Release 2.1's four, and the private records'
+   addresses and approval numbers are not changed. Design Release 2.1's records (req-397, req-398) and picking
+   one of those eight moved off inc-037 to inc-265 with the list question (req-2172). What inc-037 still builds
+   is the list over whatever the organisation itself has added, which the address book holds under decision 1.
 4. **A transporter is its own record in its own collection, inside the address book service.** It does not take
    the `Address` data model. It is persisted in a `transporters` collection beside `addresses`, with its own
    document, controller, repository and route, reusing the service's organisation scoping

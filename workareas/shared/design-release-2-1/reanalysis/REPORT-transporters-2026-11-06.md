@@ -17,12 +17,14 @@ The theme still holds 13 rows: 10 to build, inc-044 done, inc-042 and inc-265 bl
 - **Three shared mechanisms explain most of the "refuse a blank" work**, and all three are one-line fixes rather
   than the page rewrites the criteria imply. See "Three root causes" below. This is the single biggest finding:
   four rows are much smaller than they read.
-- **inc-037 is roughly half met on main.** Design snagging's inc-210 landed its search and its 'Add a
-  transporter' button, and the four private records already match the design by name and status.
+- **inc-037 is roughly half met on main, and then shrinks again.** Design snagging's inc-210 landed its search
+  and its 'Add a transporter' button. Its eight shipped records then left the row altogether — see below — so
+  what remains is six criteria against six requirements, one each.
 - **Most of the remaining add-form work is copy, not behaviour** — a missing "a", a lowercase "zip", one
   paragraph in the wrong place, one banner title to move into the body.
-- **One question for Ian, and it is not small:** the service's shipped transporters are cross-organisation, which
-  is the concept decision 3 parked. See "The question this pass raises".
+- **The question this pass raised was answered the same day.** The transporters the service ships are the
+  approved transporters in an initial hardcoded form, so they are parked: Design Release 2.1's records and
+  picking one of them moved from inc-037 to inc-265, and the hardcoded records stay as they are.
 - **One concrete blocker for decision 5:** the INS front door works an address type out from its roles, so a
   Transporter type added the obvious way would demand roles. It needs its own branch.
 - **The theme can split, but must not be played beside overview-and-review**, which edits the same copy and fit
@@ -148,9 +150,25 @@ BT-postcode filter is a search convenience, not the source of truth for the coun
 
 Parked by decision 3. Nothing to verify.
 
-## The question this pass raises
+## The question this pass raised — answered the same day
 
-**Are the service's shipped transporters the approved-transporter concept you parked?**
+**Were the service's shipped transporters the approved-transporter concept decision 3 parked? Yes.**
+
+Ian's answer: *"yes the shipped transporters are the approved transporters in an initial hardcoded fashion, move
+them out into the other blocked increment."*
+
+So criteria 7, 8 and 9 and requirements req-397 and req-398 moved from inc-037 to inc-265, which is retitled
+"Approved transporters: the records offered, and the list they come from". **inc-037 shrinks to six criteria
+against six requirements, one each** — the sub-heading and hidden legend, the Add button, the search, 'Not
+applicable', and the accessibility states — all of them over whatever the organisation has itself added, which
+the address book holds under decision 1. The hardcoded records stay exactly as they are: main's two commercial
+placeholders are not replaced.
+
+**This cancels the tests-repo blast radius below.** The shipped records do not change, so none of the five places
+that name García Livestock Transport SL needs touching now, and `domain/animals/constants/transporters.ts`
+stands. The section is kept for when approved transporters are unparked.
+
+The reasoning that led to the question, for the record:
 
 Today every organisation sees the same eight shipped records on top of its own:
 
@@ -167,14 +185,12 @@ organisation, sitting on top of each organisation's own, is close to word-for-wo
 transporters: "a list managed in MDM for all organisations that will be added to the organisations individual
 transporter options".
 
-If that reading is right, inc-037's criteria 7, 8 and 9 — the eight shipped records and picking one of them —
-belong with inc-265 in the parked pile, and inc-037 shrinks to the list's layout, search, approval-number column
-and accessibility over whatever the organisation has added. If it is wrong, the shipped records are just design
-fixture data that survives the move and criteria 7 to 9 stay.
+That reading was right, and the move above follows from it.
 
-This pass does not decide it. It changes what two rows contain, so it is recorded as an open question on inc-037.
+One thing the move does not lose: the generic half of the old criterion 9 — that choosing a transporter and
+saving keeps it chosen — is still covered, by inc-240's third criterion, over whatever records exist.
 
-## Tests repo blast radius
+## Tests repo blast radius (deferred with inc-265, not needed now)
 
 If the shipped commercial records do change, the tests repo picks García Livestock Transport SL **by name** in
 five places, and the fix is centralised in one of them:

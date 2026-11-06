@@ -2,6 +2,7 @@
 name: review
 description: 'Code review for correctness, security, error handling, performance, best-practices and test coverage across all languages and repos (Java, Node.js, frontend, tests) for EUDP trade-imports tickets. Handles fresh first-pass review, refresh (re-review after further work, merge conflicts or coverage gaps), interactive walker that triages findings one item at a time, and batched implementor that applies queued fixes. Fans out per-file reviews, per-repo consistency analysis and per-item fixes to `general-purpose` Task subagents that follow worker personas under `references/`. Use when the user says "review EUDPA-XXX", "code review", "re-review EUDPA-XXX", "refresh review", "check fixes", "review this branch", "walk review EUDPA-XXX", "triage review", "implement review EUDPA-XXX", or "apply review fixes". Also runs in Local mode against a `REPO:BRANCH` pair with no ticket and no PR, including when invoked programmatically by another skill. NOT for JS lint/format/style findings — use the code-style skill for those.'
 context: fork
+model: sonnet
 allowed-tools: [Bash, Read, Glob, Grep, Task]
 argument-hint: 'EUDPA-XXXXX'
 ---

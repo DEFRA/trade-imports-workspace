@@ -8,13 +8,15 @@ The journey's entry page, asking where the consignment is coming from. The page 
 
 ### Requirement: The page asks which country the consignment comes from and whether an origin code is needed
 **ID**: REQ-ORIGIN-001
-The system MUST ask the user which country the consignment is coming from, offering a country selector and a choice of whether an origin code is required, along with a save-and-continue action.
+The system MUST ask the user which country the consignment is coming from, offering a country selector and a choice of whether an origin code is required, and MUST end the page with "Save and continue" alone, offering neither "Save and return to overview" nor "Cancel and return to overview". While the notification is being amended, REQ-FLOW-013 governs how the page ends instead.
 
 #### Scenario: The page presents its question and controls
 **ID**: SCN-ORIGIN-001-A
 - **GIVEN** the user has started a notification and reached the origin of the import page
 - **WHEN** the page loads
-- **THEN** it asks where the consignment is coming from, offering a country selector, a choice of whether an origin code is required, and a save-and-continue action
+- **THEN** it asks where the consignment is coming from, offering a country selector and a choice of whether an origin code is required
+- **AND** "Save and continue" is shown
+- **AND** no "Save and return to overview" or "Cancel and return to overview" is offered
 
 ### Requirement: The country field is a searchable list that filters as the user types
 **ID**: REQ-ORIGIN-002
@@ -101,16 +103,17 @@ The system MUST accept an origin answer that names a country and answers whether
 - **WHEN** they choose a country and answer that no origin code is required, then save and continue
 - **THEN** the answer is saved and no error summary is shown
 
-### Requirement: Saving without a country is accepted, but leaves the origin task outstanding
+### Requirement: Save and continue requires a country of origin
 **ID**: REQ-ORIGIN-008
-The system MUST accept the origin page being saved with no country chosen, without showing an error, and MUST leave the origin task row on Overview outstanding while no country is chosen. When the task reads Complete is specified by `live-animals/journey-pages/overview`.
+The system MUST refuse save and continue when the user has not chosen a country of origin, showing an error summary and a message on the country field, and MUST keep the user on the origin of the import page.
 
-#### Scenario: Saving with no country chosen succeeds and moves on
+#### Scenario: Save and continue without a country is refused
 **ID**: SCN-ORIGIN-008-A
 - **GIVEN** the user is on the origin of the import page with no country chosen
 - **WHEN** they save and continue
-- **THEN** the page saves without an error summary, and the user moves to the next step
-- **AND** the origin task row on Overview shows as outstanding
+- **THEN** an error summary is shown
+- **AND** a message is shown on the country of origin field
+- **AND** the user remains on the origin of the import page
 
 ### Requirement: The page also asks for an optional internal reference, capped at 58 characters
 **ID**: REQ-ORIGIN-009
@@ -139,7 +142,7 @@ The system MUST let the user give an optional internal reference for the notific
 
 ### Requirement: The region of origin code has a maximum length of five characters
 **ID**: REQ-ORIGIN-010
-The system MUST stop the region of origin code box accepting more than five characters as the user types, with autocomplete and spellcheck turned off, and MUST still reject a longer region of origin code submitted without that cap, on either save control, with an error naming the limit, preserving the value submitted.
+The system MUST stop the region of origin code box accepting more than five characters as the user types, with autocomplete and spellcheck turned off, and MUST still reject a longer region of origin code submitted without that cap, with an error naming the limit, preserving the value submitted.
 
 #### Scenario: An over-length region code is rejected with the value preserved
 **ID**: SCN-ORIGIN-010-A
@@ -149,13 +152,6 @@ The system MUST stop the region of origin code box accepting more than five char
 - **AND** the field is focused, still holding the value typed
 - **AND** the chosen country and the answer to whether a region code is required are still held
 
-#### Scenario: An over-length region code is refused on save and return to overview
-**ID**: SCN-ORIGIN-010-B
-- **GIVEN** the user has answered that a region code is required
-- **WHEN** they submit a region code longer than five characters without the box's own cap and save and return to overview
-- **THEN** they remain on the origin of the import page with an error naming the region code's limit
-- **AND** the over-length code is not saved
-
 #### Scenario: Typing stops at five characters
 **ID**: SCN-ORIGIN-010-C
 - **GIVEN** the user has answered that a region code is required
@@ -163,9 +159,9 @@ The system MUST stop the region of origin code box accepting more than five char
 - **THEN** the box holds only the first five
 - **AND** the box offers no autocomplete and no spellcheck
 
-### Requirement: Answering that a region code is required but leaving it empty is rejected on either save control
+### Requirement: Answering that a region code is required but leaving it empty is rejected
 **ID**: REQ-ORIGIN-011
-The system MUST refuse to save from the origin page, on save and continue and on save and return to overview alike, when the user has answered that a region code is required but left the code itself empty, showing an error that focuses the region code field.
+The system MUST refuse to save from the origin page when the user has answered that a region code is required but left the code itself empty, showing an error that focuses the region code field.
 
 #### Scenario: An empty region code is rejected when one is required
 **ID**: SCN-ORIGIN-011-A
@@ -173,14 +169,6 @@ The system MUST refuse to save from the origin page, on save and continue and on
 - **WHEN** they leave the region code empty and save and continue
 - **THEN** they remain on the origin of the import page
 - **AND** an error focuses the region code field, with the chosen country and the required answer still held
-
-#### Scenario: Save and return to overview refuses "Yes" with the code left blank
-**ID**: SCN-ORIGIN-011-B
-- **GIVEN** the user has chosen a country and answered that a region code is required
-- **WHEN** they leave the region code empty and save and return to overview
-- **THEN** they remain on the origin of the import page
-- **AND** an error says "Enter the region of origin code", with "Yes" still chosen
-- **AND** nothing is saved
 
 ### Requirement: With JavaScript, the chosen country's code is shown as a fixed prefix beside the region code field
 **ID**: REQ-ORIGIN-012
@@ -246,21 +234,33 @@ With JavaScript, the system MUST show the chosen country's code as a fixed prefi
 - **THEN** the prefix is not announced
 - **AND** the field is named by its label and described by the hint "Enter up to 5 characters."
 
-### Requirement: On a notification, the back link's target depends on whether the journey already has answers
+### Requirement: On a notification, the back link follows where the origin page was opened from
 **ID**: REQ-ORIGIN-013
-For a notification, the system MUST return the user to the notification dashboard when they follow the back link from the origin page of a journey that holds no answers, and to Overview once the journey holds at least one.
+For a notification, the system MUST return the user from the origin page to the notification dashboard when the page was opened from the dashboard, including by going back along the opening sequence, and to Overview when the page was opened from Overview, whether or not the journey holds any answers. For a notification not opened in this session that holds no answers, the back link MUST open the notification dashboard.
 
-#### Scenario: The back link opens the dashboard before any answer is saved
+#### Scenario: The back link opens the dashboard when the page was opened from the dashboard
 **ID**: SCN-ORIGIN-013-A
-- **GIVEN** the user has just started a notification and reached the origin of the import page for a notification, without saving anything
+- **GIVEN** the user has just started a notification from the dashboard and reached the origin of the import page, without saving anything
 - **WHEN** they follow the back link
 - **THEN** the notification dashboard is shown
 
-#### Scenario: The back link opens Overview once the journey has an answer
+#### Scenario: The back link opens Overview when the page was opened from Overview with an answer saved
 **ID**: SCN-ORIGIN-013-B
-- **GIVEN** the user has saved at least one answer on a notification
-- **WHEN** they return to the origin of the import page and follow the back link
+- **GIVEN** the user has saved at least one answer on a notification and has opened Overview
+- **WHEN** they open the origin of the import page from Overview and follow the back link
 - **THEN** Overview is shown
+
+#### Scenario: The back link opens Overview when the page was opened from Overview before any answer is saved
+**ID**: SCN-ORIGIN-013-C
+- **GIVEN** the user has started a notification, saved nothing and opened Overview
+- **WHEN** they open the origin of the import page from Overview and follow the back link
+- **THEN** Overview is shown
+
+#### Scenario: The back link opens the dashboard when the page is reached by going back along the opening sequence
+**ID**: SCN-ORIGIN-013-D
+- **GIVEN** the user has started a notification, saved the origin of the import page and followed the back link from "What are you importing?"
+- **WHEN** they follow the back link from the origin of the import page
+- **THEN** the notification dashboard is shown
 
 ### Requirement: A country not in the offered list is rejected
 **ID**: REQ-ORIGIN-014
@@ -301,23 +301,24 @@ The system MUST give the question "Does the consignment have a region of origin 
 - **WHEN** the page loads
 - **THEN** the region of origin code question's hint reads "Check the health certificate for a region of origin code. You can add the code later if you do not have the certificate now."
 
-### Requirement: A region code typed with no country waits for the country before it is saved
+### Requirement: A region code typed before a country is kept until the country gives it its prefix
 **ID**: REQ-ORIGIN-017
-The system MUST keep a region code typed under Yes with no country chosen on the page while the page is shown back, MUST NOT save a region of origin code until a country gives it its prefix, and MUST save the code with that country's prefix once a country is chosen.
+The system MUST refuse to save the origin page when no country of origin is chosen while the user has typed a region code, MUST keep the typed code in the region code box on that refusal, and MUST save the code with the chosen country's prefix once a country is chosen and save succeeds.
 
-#### Scenario: The typed code stays on the page when the save is refused for another answer
+#### Scenario: The typed code stays in the box when save is refused for the missing country
 **ID**: SCN-ORIGIN-017-A
-- **GIVEN** the user has chosen no country, answered that a region code is required and typed a code
-- **WHEN** they save and continue with another answer the page refuses
-- **THEN** the page shows the error and the region code box still holds the code typed
-
-#### Scenario: No code is saved until a country is chosen
-**ID**: SCN-ORIGIN-017-B
-- **GIVEN** the user has chosen no country, answered that a region code is required and typed a code
+- **GIVEN** the user is on the origin of the import page with no country chosen, has answered that a region code is required and has typed a code
 - **WHEN** they save and continue
-- **THEN** the review page shows no region of origin code
-- **WHEN** they return, choose France, type the code again and save and continue
-- **THEN** the review page shows the code with France's prefix
+- **THEN** an error is shown for the missing country of origin
+- **AND** the region code box still holds the code typed
+- **AND** the user remains on the origin of the import page
+
+#### Scenario: Once a country is chosen the code is saved with that country's prefix
+**ID**: SCN-ORIGIN-017-B
+- **GIVEN** the user is on the origin of the import page with no country chosen, has answered that a region code is required and has typed a code, and save was refused for the missing country
+- **WHEN** they choose a country and save and continue
+- **THEN** the answer is saved
+- **AND** the review page shows the region code with that country's prefix
 
 ### Requirement: Each territory in the country list is named with its country, and keeps its code
 **ID**: REQ-ORIGIN-018
@@ -375,3 +376,43 @@ Without JavaScript the system MUST show no region code prefix, on first view, af
 - **GIVEN** the user has no JavaScript
 - **WHEN** the region code field is shown on first view, after a save, or after an error
 - **THEN** the field has no prefix, empty or filled
+
+### Requirement: With JavaScript, the country search has a joined search button
+**ID**: REQ-ORIGIN-022
+With JavaScript the system MUST show a square GOV.UK blue search button, with a white magnifying glass, joined to the country search box. The button MUST be hidden from assistive technology and not focusable, MUST NOT submit the page, and MUST put the caret in the box when clicked.
+
+#### Scenario: The search button is GOV.UK blue with a white magnifying glass
+**ID**: SCN-ORIGIN-022-A
+- **GIVEN** the user has JavaScript and has reached the origin of the import page
+- **WHEN** the page loads
+- **THEN** the search button beside the country search box is GOV.UK blue
+- **AND** its magnifying glass is white
+
+#### Scenario: The search button is hidden from assistive technology, not focusable, and never submits
+**ID**: SCN-ORIGIN-022-B
+- **GIVEN** the user has JavaScript and has reached the origin of the import page
+- **WHEN** they tab on from the country search box, then click the search button
+- **THEN** the search button is not announced and does not take focus
+- **AND** the caret moves into the country search box and the page is not submitted
+
+### Requirement: With JavaScript, the country search announces its results
+**ID**: REQ-ORIGIN-023
+With JavaScript the system MUST describe the country search box with the accessible autocomplete's assistive hint, and MUST announce through a polite live region the number of results and, once a suggestion is highlighted, which country is highlighted.
+
+#### Scenario: The search box is described by the assistive hint
+**ID**: SCN-ORIGIN-023-A
+- **GIVEN** the user has JavaScript and has reached the origin of the import page
+- **WHEN** the country search box is read by a screen reader
+- **THEN** it is described by "When autocomplete results are available use up and down arrows to review and enter to select. Touch device users, explore by touch or with swipe gestures."
+
+#### Scenario: The number of results is announced after typing
+**ID**: SCN-ORIGIN-023-B
+- **GIVEN** the user has JavaScript and has reached the origin of the import page
+- **WHEN** they type text that matches one country
+- **THEN** a polite live region announces "1 result is available."
+
+#### Scenario: The highlighted country is announced
+**ID**: SCN-ORIGIN-023-C
+- **GIVEN** the user has typed text that matches one country
+- **WHEN** they move onto the suggestion with the down arrow
+- **THEN** a polite live region announces "1 result is available." followed by the country's name, "1 of 1 is highlighted"

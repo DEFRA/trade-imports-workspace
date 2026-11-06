@@ -866,7 +866,17 @@ const COMPLETION_LINES_TO_JUDGE_HERE = `No reviewer judges what the lines claim 
    function the change touched, the comments within ten lines of every hunk, and convention test names. A stale
    comment's fix is to delete it.`
 
-const ladderCompletionStep = (implementorNotes, fixerNotes, rigour) => `2b. PROBES AND DOCS. Every row reports a \`Probes:\` and a \`Docs updated:\` line. The implementor's:
+const RESTORED_NOTES_OPENING = 'This attempt was restored rather than built here'
+
+const isRestoredWork = (implementorNotes) => String(implementorNotes ?? '').startsWith(RESTORED_NOTES_OPENING)
+
+const RESTORED_LINES_RULE = `This work was restored from an earlier attempt, so no implementor reported these lines
+   here, and a missing line is not a failure. Judge the work itself instead.`
+
+const ladderCompletionStep = (implementorNotes, fixerNotes, rigour) =>
+  isRestoredWork(implementorNotes)
+    ? `2b. PROBES AND DOCS. ${RESTORED_LINES_RULE} ${COMPLETION_LINES_TO_JUDGE_HERE}`
+    : `2b. PROBES AND DOCS. Every row reports a \`Probes:\` and a \`Docs updated:\` line. The implementor's:
    ${COMPLETION_LABELS.map((label) => reportedCompletionLine(label, implementorNotes)).join('\n   ')}
    The fixer's: ${
      fixerNotes === null
@@ -906,7 +916,18 @@ const SPEC_SYNC_TO_JUDGE_HERE = `The write is yours to judge too.
    does not hold against the plan's behaviour changes, wording, content and layout included where the spec records
    them.`
 
-const ladderSpecStep = (id, implementorNotes, fixerNotes, rigour) => `2a. THE SPEC SYNC. Every row reports a \`Spec sync:\` line. The implementor's:
+const restoredSpecStep = (id) => `2a. THE SPEC SYNC. ${RESTORED_LINES_RULE} Find the capabilities the plan's section 8 writes,
+   and any \`git -C ${TILDE} status --short -- openspec/\` shows changed. Run
+   \`${SPEC_VALIDATE} --root ${TILDE} <capability path> [...] > ${WORKAREA_TILDE}/logs/${id}-ladder-spec-validate.log 2>&1\`
+   once for them, then \`tim spec lint --capability <prefix> --workspace ${TILDE} --json > ${WORKAREA_TILDE}/logs/${id}-ladder-spec-lint-<prefix>.log 2>&1\`
+   once per prefix, reading each log ONCE. Either exiting non-zero is a failure you repair. A capability section 8
+   writes that holds none of the plan's behaviour is a failure you repair too. ${SPEC_SYNC_TO_JUDGE_HERE}
+   ${SPEC_WHOLE_CAPABILITY}`
+
+const ladderSpecStep = (id, implementorNotes, fixerNotes, rigour) =>
+  isRestoredWork(implementorNotes)
+    ? restoredSpecStep(id)
+    : `2a. THE SPEC SYNC. Every row reports a \`Spec sync:\` line. The implementor's:
    ${reportedSpecSync(implementorNotes)}
    The fixer's: ${fixerNotes === null ? '(no fix stage ran)' : reportedSpecSync(fixerNotes)}
    When NEITHER the implementor NOR the fixer reported a \`Spec sync:\` line, that is a failure: put "no spec sync
@@ -1694,7 +1715,7 @@ const enteredAfterRestore = (id, stage, restored) => {
 const restoredImpl = (attempt, restored, files) => ({
   ok: true,
   summary: `This work comes from an earlier attempt that reached the ${attempt.stage} stage and stopped at ${attempt.reason}. The restore stage put it back and proved it: ${restored.summary}`,
-  notes: `This attempt was restored rather than built here, so the implementor's own notes are not available — read the diff, and the row's notes in the backlog for what the preserve stage recorded. What ended the earlier attempt: ${attempt.reason}.`,
+  notes: `${RESTORED_NOTES_OPENING}, so the implementor's own notes are not available — read the diff, and the row's notes in the backlog for what the preserve stage recorded. What ended the earlier attempt: ${attempt.reason}.`,
   changedFiles: files
 })
 

@@ -13,7 +13,8 @@
           "name": "The page presents its question and controls",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/origin.spec.ts", "test": "renders the page controls", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/origin.spec.ts", "test": "renders the page controls, with Save and continue as the form's only button and no link in the form", "strength": "full", "notes": "exact form buttons and no form link; red with the return controls rendered" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "ends with Save and continue alone", "strength": "full", "notes": "red with the return controls rendered: Cancel and return to overview was the last control" }
           ]
         }
       ]
@@ -153,16 +154,17 @@
     },
     {
       "id": "REQ-ORIGIN-008",
-      "name": "Saving without a country is accepted, but leaves the origin task outstanding",
+      "name": "Save and continue requires a country of origin",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-ORIGIN-008-A",
-          "name": "Saving with no country chosen succeeds and moves on",
+          "name": "Save and continue without a country is refused",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "country: an unanswered country saves the rest of the page and moves on", "strength": "full", "notes": "saves the rest of the page and moves on with no country" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "country: an unanswered country leaves the origin task unfinished", "strength": "full", "notes": "confirms the Overview task row stays outstanding" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should refuse with the country message and commit nothing", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "refuses save and continue when no country is chosen", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/origin.spec.ts", "test": "refuses save and continue when no country is chosen", "strength": "full", "notes": "" }
           ]
         }
       ]
@@ -177,7 +179,7 @@
           "name": "An out-of-list country is rejected and the field is cleared",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "country validation: an out-of-list country links to and focuses the cleared field", "strength": "full", "notes": "this test now covers what REQ-ORIGIN-008's old 'when no country is chosen' test used to claim to cover — the empty-country case moved to REQ-ORIGIN-008 above (now accepted, not rejected); this one is specifically the off-list-value case" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "country validation: an out-of-list country links to and focuses the cleared field", "strength": "full", "notes": "off-list country value, not the empty mandatory case in REQ-ORIGIN-008" }
           ]
         }
       ]
@@ -230,14 +232,6 @@
           ]
         },
         {
-          "id": "SCN-ORIGIN-010-B",
-          "name": "An over-length region code is refused on save and return to overview",
-          "coverage": "full",
-          "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/save-and-return-checks.spec.ts", "test": "origin of the import: when the region code is longer than five characters, refuses the save and keeps nothing", "strength": "full", "notes": "cap removed before submitting" }
-          ]
-        },
-        {
           "id": "SCN-ORIGIN-010-C",
           "name": "Typing stops at five characters",
           "coverage": "full",
@@ -250,7 +244,7 @@
     },
     {
       "id": "REQ-ORIGIN-011",
-      "name": "Answering that a region code is required but leaving it empty is rejected on either save control",
+      "name": "Answering that a region code is required but leaving it empty is rejected",
       "coverage": "full",
       "scenarios": [
         {
@@ -261,16 +255,8 @@
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "region code validation: when Yes is chosen and the box is empty, holds the user on the page", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should hold the user on the page when the typed part is blank", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should hold the user on the page when the typed part is only the prefix", "strength": "full", "notes": "edge case: user typed only the country prefix, e.g. \"fr-\"" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should hold the user on the page when the box was never submitted", "strength": "full", "notes": "" }
-          ]
-        },
-        {
-          "id": "SCN-ORIGIN-011-B",
-          "name": "Save and return to overview refuses \"Yes\" with the code left blank",
-          "coverage": "full",
-          "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/save-and-return-checks.spec.ts", "test": "origin of the import: when the region code is left blank, refuses the save, names the region code, keeps \"Yes\" and saves nothing", "strength": "partial", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should refuse \"Yes\" with the region code left blank, keep \"Yes\" chosen and save nothing", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should hold the user on the page when the box was never submitted", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should hold the user on the page, with \"Yes\" still chosen, when the box is submitted empty", "strength": "partial", "notes": "not red-probed" }
           ]
         }
       ]
@@ -371,23 +357,47 @@
     },
     {
       "id": "REQ-ORIGIN-013",
-      "name": "On a notification, the back link's target depends on whether the journey already has answers",
+      "name": "On a notification, the back link follows where the origin page was opened from",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-ORIGIN-013-A",
-          "name": "The back link opens the dashboard before any answer is saved",
+          "name": "The back link opens the dashboard when the page was opened from the dashboard",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "back link returns to the dashboard while the journey is unanswered", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "back link returns to the dashboard when the page was opened from the dashboard", "strength": "full", "notes": "red when the active-run branch of the back link rule is inverted" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should send Back to the dashboard while the opening run is active with $name", "strength": "full", "notes": "red when the active-run branch is inverted" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should send Back to the dashboard for a notification with no answer and no opening run", "strength": "full", "notes": "red when the entry guard always admits the request on its answers half" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/origin.spec.ts", "test": "Back returns to the dashboard when the page was opened from the dashboard", "strength": "partial", "notes": "not probed: the stack serves the frontend as built" }
           ]
         },
         {
           "id": "SCN-ORIGIN-013-B",
-          "name": "The back link opens Overview once the journey has an answer",
+          "name": "The back link opens Overview when the page was opened from Overview with an answer saved",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "back link returns to the notification hub once the journey has answers", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "back link returns to the overview when the page was opened from the overview after an answer is saved", "strength": "full", "notes": "red when the active-run branch of the back link rule is inverted" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should send Back to the overview once the opening run is complete with $name", "strength": "full", "notes": "red when the active-run branch is inverted" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should send Back to the overview for a notification with a committed answer and no opening run", "strength": "full", "notes": "red when the active-run branch is inverted" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/origin.spec.ts", "test": "Back returns to the overview when the page is opened from the overview after origin answers are saved", "strength": "partial", "notes": "not probed: the stack serves the frontend as built" }
+          ]
+        },
+        {
+          "id": "SCN-ORIGIN-013-C",
+          "name": "The back link opens Overview when the page was opened from Overview before any answer is saved",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "back link returns to the overview when the page was opened from the overview before any answer is saved", "strength": "full", "notes": "red when the active-run branch of the back link rule is inverted" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should send Back to the overview once the opening run is complete with $name", "strength": "full", "notes": "the no answer case; red when the active-run branch is inverted" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/origin.spec.ts", "test": "Back returns to the overview before any answer is saved", "strength": "partial", "notes": "not probed: the stack serves the frontend as built" }
+          ]
+        },
+        {
+          "id": "SCN-ORIGIN-013-D",
+          "name": "The back link opens the dashboard when the page is reached by going back along the opening sequence",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "back link returns to the dashboard when origin is reached by going back along the opening run", "strength": "full", "notes": "red when the active-run branch of the back link rule is inverted" }
           ]
         }
       ]
@@ -403,7 +413,7 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "shows no hint under the country question and invites a search in the empty box", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/country-of-origin-type-ahead.spec.ts", "test": "shows the search box placeholder and no hint", "strength": "partial", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/country-of-origin-type-ahead.spec.ts", "test": "describes the search box with the assistive hint and shows its placeholder and no hint", "strength": "partial", "notes": "" }
           ]
         },
         {
@@ -435,23 +445,24 @@
     },
     {
       "id": "REQ-ORIGIN-017",
-      "name": "A region code typed with no country waits for the country before it is saved",
+      "name": "A region code typed before a country is kept until the country gives it its prefix",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-ORIGIN-017-A",
-          "name": "The typed code stays on the page when the save is refused for another answer",
+          "name": "The typed code stays in the box when save is refused for the missing country",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should keep the typed code on the page when the save is refused for another answer", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "a region code is saved once a country gives it its prefix", "strength": "full", "notes": "asserts every Then before a country is chosen: the URL stays on the origin page, the missing-country error link shows and the region code box still holds 75; inverting the kept-value assert turns it red" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should keep the typed region code on the page when the save is refused for another answer", "strength": "partial", "notes": "preserved suffix when save is refused for another field; not the missing-country case" }
           ]
         },
         {
           "id": "SCN-ORIGIN-017-B",
-          "name": "No code is saved until a country is chosen",
+          "name": "Once a country is chosen the code is saved with that country's prefix",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should save no region code while no country gives it its prefix", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "a region code is saved once a country gives it its prefix", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should store the country prefix joined to the typed part in upper case", "strength": "partial", "notes": "" }
           ]
         }
@@ -551,6 +562,61 @@
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/origin.spec.ts", "test": "hides the region code prefix on first view", "strength": "partial", "notes": "" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/origin.spec.ts", "test": "hides the region code prefix when the page is shown again after a save", "strength": "partial", "notes": "" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/origin.spec.ts", "test": "hides the region code prefix on a refused page", "strength": "partial", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ORIGIN-022",
+      "name": "With JavaScript, the country search has a joined search button",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-ORIGIN-022-A",
+          "name": "The search button is GOV.UK blue with a white magnifying glass",
+          "coverage": "partial",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/country-of-origin-type-ahead.spec.ts", "test": "shows a GOV.UK blue search button with a white magnifying glass icon", "strength": "partial", "notes": "not probed: the stack serves the frontend as built" }
+          ]
+        },
+        {
+          "id": "SCN-ORIGIN-022-B",
+          "name": "The search button is hidden from assistive technology, not focusable, and never submits",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/type-ahead.fit.spec.js", "test": "keeps the button out of assistive technology and the tab order, and focuses the box when it is clicked", "strength": "full", "notes": "Country of origin type-ahead describe; red when aria-hidden is set false" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/country-of-origin-type-ahead.spec.ts", "test": "keeps the search button out of assistive technology and the tab order, and focuses the box when it is clicked", "strength": "partial", "notes": "not probed: the stack serves the frontend as built" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ORIGIN-023",
+      "name": "With JavaScript, the country search announces its results",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-ORIGIN-023-A",
+          "name": "The search box is described by the assistive hint",
+          "coverage": "partial",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/country-of-origin-type-ahead.spec.ts", "test": "describes the search box with the assistive hint and shows its placeholder and no hint", "strength": "partial", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-ORIGIN-023-B",
+          "name": "The number of results is announced after typing",
+          "coverage": "partial",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/country-of-origin-type-ahead.spec.ts", "test": "announces the number of results after typing", "strength": "partial", "notes": "not probed: the stack serves the frontend as built" }
+          ]
+        },
+        {
+          "id": "SCN-ORIGIN-023-C",
+          "name": "The highlighted country is announced",
+          "coverage": "partial",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/country-of-origin-type-ahead.spec.ts", "test": "announces the highlighted country after moving onto its suggestion", "strength": "partial", "notes": "not probed: the stack serves the frontend as built" }
           ]
         }
       ]

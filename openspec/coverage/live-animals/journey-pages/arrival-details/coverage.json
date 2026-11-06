@@ -131,21 +131,21 @@
     },
     {
       "id": "REQ-ARRIVAL-006",
-      "name": "Saving the page requires a means of transport",
+      "name": "A means of transport is required to save the page",
       "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-ARRIVAL-006-A",
-          "name": "Saving with no means of transport chosen is refused",
-          "coverage": "full",
+          "name": "Save and continue with no means of transport is refused",
+          "coverage": "partial",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/arrival-details.spec.ts", "test": "refuses Save and continue with no means of transport and names the missing answer", "strength": "partial", "notes": "not probed against a reverted line" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "means validation: Save and continue with no means stays on the page and shows the required error", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js", "test": "Should refuse Save and continue with no means of transport, show the port back and commit nothing", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js", "test": "Should refuse %s with no means of transport, show the port back and commit nothing", "strength": "partial", "notes": "proves the 400, the exact required message, the summary link to the means of transport and nothing committed; does not prove the 'Error: ' title or the inline error on the select; red when the means rule is optional on submit" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "means validation: Save and continue with no means stays on the page and shows the required error", "strength": "partial", "notes": "proves the summary, inline error, error style, title and focus in a browser; not probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/arrival-details.spec.ts", "test": "refuses Save and continue with no means of transport and names the missing answer", "strength": "partial", "notes": "proves the same through the real stack; not probed" }
           ]
         },
         {
-          "id": "SCN-ARRIVAL-006-B",
+          "id": "SCN-ARRIVAL-006-C",
           "name": "Save and return to overview refuses the save the same way",
           "coverage": "partial",
           "tests": [
@@ -153,6 +153,15 @@
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "means validation: Save and return to overview with no means shows the required error, shows the answers back and saves nothing", "strength": "partial", "notes": "proves the port still shown, not the Overview re-open" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js", "test": "Should refuse Save and return to overview with no means of transport, show the port back and commit nothing", "strength": "partial", "notes": "proves the refusal and that nothing is committed, not the port shown back or the Overview re-open" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js", "test": "Should refuse Save and return to overview with no means of transport, show the port back and commit nothing", "strength": "partial", "notes": "proves the refusal and the port shown back, not the Overview re-open" }
+          ]
+        },
+        {
+          "id": "SCN-ARRIVAL-006-B",
+          "name": "A refused save shows the other answers back and saves nothing",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js", "test": "Should refuse %s with no means of transport, show the port back and commit nothing", "strength": "partial", "notes": "proves the port shown back and the journey unchanged; does not prove the arrival date shown back or the empty page on reopening from the overview; red when the means rule is optional on submit" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/arrival-details.spec.ts", "test": "shows the port and date back and saves nothing when Save and continue is refused for no means of transport", "strength": "partial", "notes": "proves the answers shown back and empty on reopening; not probed" }
           ]
         }
       ]

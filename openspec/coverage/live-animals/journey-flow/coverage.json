@@ -42,7 +42,7 @@
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should aggregate the transporter row over the three answers the list declares, following the type into scope", "strength": "full", "notes": "type + commercial/private fulfilment roll into one transporter row" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should keep the add spokes off the journey — they belong to no section", "strength": "full", "notes": "the other half of the scenario: the three pages the row spans are spokes, so the flow never offers them as steps" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts", "test": "the hub groups its tasks under the six numbered group headings, with nothing after them", "strength": "partial", "notes": "lists a single Transport details task; does not open it across type/select/private pages" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts", "test": "the hub groups its tasks under the six numbered group headings, with nothing after them", "strength": "partial", "notes": "lists a single Transport details task; does not open it across type/commercial/private pages" }
           ]
         }
       ]
@@ -66,9 +66,9 @@
           "name": "Finishing the last page of a section returns to Overview",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "picking a commercial transporter saves it with its type and persists", "strength": "full", "notes": "select save lands on Overview URL" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "picking a commercial transporter saves it with its type and persists", "strength": "full", "notes": "list save lands on Overview" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should send the consignment details page to the identification surface mid-run, and to the hub outside the run", "strength": "full", "notes": "outside the opening run, section last page rests on the hub" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/commercial-transporter-scope.spec.ts", "test": "commercial transporter is owed only for the commercial type and is wiped when the type changes", "strength": "full", "notes": "commercial select save → Overview" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/commercial-transporter-scope.spec.ts", "test": "commercial transporter is owed only for the commercial type and is wiped when the type changes", "strength": "full", "notes": "commercial add-form save → Overview" }
           ]
         },
         {
@@ -141,7 +141,7 @@
     },
     {
       "id": "REQ-FLOW-004",
-      "name": "A page the hub links to directly offers both a discard-and-exit and a save-and-exit route back to Overview",
+      "name": "A page the hub links to directly, other than the origin of the import page, offers both a discard-and-exit and a save-and-exit route back to Overview",
       "coverage": "partial",
       "scenarios": [
         {
@@ -149,7 +149,7 @@
           "name": "Cancel and return to overview discards unsaved input",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/task-page-exits.spec.ts", "test": "Cancel and return to overview discards typed input; Save and return to overview commits and lands on the hub", "strength": "full", "notes": "internal reference discarded on Cancel; empty on re-open" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/task-page-exits.spec.ts", "test": "Cancel and return to overview discards typed input; Save and return to overview commits and lands on the hub", "strength": "full", "notes": "Arrival details: transport document reference discarded on Cancel; empty on re-open" }
           ],
           "notes": "No FIT or unit for Cancel discard; E2E only."
         },
@@ -204,15 +204,18 @@
           "coverage": "partial",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/save-and-return-to-overview.spec.ts", "test": "arrival details: when no means of transport is chosen, refuses the save, shows the port back and keeps the task to do", "strength": "partial", "notes": "proves the refusal, the port shown back, the task reading To do and the port unsaved on re-opening; not probed against a reverted line" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js", "test": "Should refuse Save and return to overview with no means of transport, show the port back and commit nothing", "strength": "partial", "notes": "proves the refusal and that nothing is committed, not the Overview re-open" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js", "test": "Should refuse %s with no means of transport, show the port back and commit nothing", "strength": "partial", "notes": "proves the refusal, the port shown back and nothing committed on Save and return to overview, but not that the Arrival details task reads 'To do'; red when the means rule is optional on submit" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "means validation: Save and return to overview with no means shows the required error, shows the answers back and saves nothing", "strength": "partial", "notes": "proves the same in a browser; not probed" }
           ]
         },
         {
           "id": "SCN-FLOW-004-H",
           "name": "Transit countries saved and returned keeps the countries listed",
-          "coverage": "none",
-          "tests": [],
-          "notes": "The tests that prove this are only on an open Design Release 2.1 theme branch, not on main yet."
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/soft-save.spec.ts", "test": "transit countries: saves the countries listed and goes to the overview", "strength": "full", "notes": "asserts the overview, then France and Belgium listed in order on re-opening the task; red with the controller committing an empty list" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.test.js", "test": "Should save the listed countries and go to the overview on Save and return to overview", "strength": "partial", "notes": "proves the redirect to the overview and the committed codes, not the page listing them on re-opening; red with the controller committing an empty list" }
+          ]
         }
       ]
     },
@@ -511,7 +514,7 @@
         },
         {
           "id": "SCN-FLOW-013-D",
-          "name": "The CPH number page, the address pickers and the contact address page offer two controls while amending",
+          "name": "The origin page, the CPH number page, the address pickers and the contact address page offer two controls while amending",
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "while amending, the origin page ends with exactly Save and return and Save and continue and no link, the CPH number page, a party picker and the contact address page offer both without Save and return to overview, and Save and return goes to the amend review", "strength": "full", "notes": "" },
@@ -522,10 +525,12 @@
         },
         {
           "id": "SCN-FLOW-013-E",
-          "name": "Outside an amendment the CPH number page keeps its primary action alone",
+          "name": "Outside an amendment the CPH number page and the origin page keep their primary action alone",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "outside an amendment the CPH number page offers Save and continue without Save and return or Save and return to overview", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "outside an amendment the CPH number page offers Save and continue without Save and return or Save and return to overview", "strength": "partial", "notes": "the CPH number page only" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/origin.spec.ts", "test": "renders the page controls, with Save and continue as the form's only button and no link in the form", "strength": "partial", "notes": "the origin page only" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "ends with Save and continue alone", "strength": "full", "notes": "the origin page only" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/save-actions.test.js", "test": "Should end a page reached from another page with the primary alone", "strength": "partial", "notes": "the non-amend macro ending" }
           ]
         }
@@ -533,7 +538,7 @@
     },
     {
       "id": "REQ-FLOW-014",
-      "name": "A page the hub links to directly keeps its two buttons side by side and its overview exit below them",
+      "name": "A page the hub links to directly, other than the origin of the import page, keeps its two buttons side by side and its overview exit below them",
       "coverage": "full",
       "scenarios": [
         {

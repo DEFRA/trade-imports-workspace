@@ -65,7 +65,7 @@ The system MUST show, from the first time a notification's Overview is viewed, a
 
 ### Requirement: The Identification details task appears only once a chosen commodity requires it, and sits between Commodity details and Additional details
 **ID**: REQ-OVERVIEW-005
-The system MUST omit the Identification details task row from the "Description of the goods" section until a chosen commodity requires identifiers, MUST show it, linked, once one does, and MUST list it after Commodity details and before Additional details.
+The system MUST omit the Identification details task row from the "Description of the goods" section until a chosen commodity requires identifiers and a country of origin is saved, MUST show it, linked, once one does, and MUST list it after Commodity details and before Additional details.
 
 #### Scenario: No commodity chosen means no identification row
 **ID**: SCN-OVERVIEW-005-A
@@ -79,8 +79,16 @@ The system MUST omit the Identification details task row from the "Description o
 - **WHEN** they view Overview
 - **THEN** the second section lists Commodity details, then Identification details, then Additional details, in that order
 
-#### Scenario: Choosing a commodity that needs no identifiers leaves the row out
+#### Scenario: A commodity that needs identifiers with no country of origin has no identification row
 **ID**: SCN-OVERVIEW-005-C
+- **GIVEN** the user has chosen a commodity that carries identifiers
+- **AND** no country of origin is saved
+- **WHEN** they view Overview
+- **THEN** no Identification details row is shown
+- **AND** "What are you importing?" is still shown
+
+#### Scenario: Choosing a commodity that needs no identifiers leaves the row out
+**ID**: SCN-OVERVIEW-005-D
 - **GIVEN** the user has chosen a commodity that carries no identifiers
 - **WHEN** they view Overview
 - **THEN** no Identification details row is shown
@@ -163,7 +171,7 @@ The system MUST title the third task of "1. About the consignment" "Main import 
 
 ### Requirement: The Transit countries task appears only when transit countries are owed, between Arrival details and Transport details
 **ID**: REQ-OVERVIEW-012
-The system MUST show the "Transit countries" task in "3. Transport and arrival" only once the saved means of transport is Rail or Road, MUST list it after "Arrival details" and before "Transport details", and MUST show it To do until at least one transit country is saved, then Complete.
+The system MUST show the "Transit countries" task in "3. Transport and arrival" only once the saved means of transport is Rail or Road and a country of origin and a commodity are saved, MUST list it after "Arrival details" and before "Transport details", and MUST show it To do until at least one transit country is saved, then Complete.
 
 #### Scenario: A chosen commodity travelling by rail or road shows the task in its place
 **ID**: SCN-OVERVIEW-012-B
@@ -183,6 +191,14 @@ The system MUST show the "Transit countries" task in "3. Transport and arrival" 
 - **GIVEN** a cat is chosen
 - **WHEN** the user views Overview before arrival details are saved, and again after Air is saved
 - **THEN** no "Transit countries" task is shown
+
+#### Scenario: Rail or road without a country of origin or a commodity has no Transit countries task
+**ID**: SCN-OVERVIEW-012-E
+- **GIVEN** Rail or Road is saved as the means of transport
+- **AND** no country of origin is saved, or no commodity is saved
+- **WHEN** the user views Overview
+- **THEN** no "Transit countries" task is shown
+- **AND** "Arrival details" is still shown
 
 ### Requirement: Arrival details stops reading Complete once its saved arrival date is more than 7 days in the past
 **ID**: REQ-OVERVIEW-013

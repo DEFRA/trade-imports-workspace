@@ -94,19 +94,27 @@ The system MUST accept the arrival details once every required answer is given, 
 - **WHEN** they answer every arrival question and save and continue
 - **THEN** the answers are saved and no error summary is shown
 
-### Requirement: Saving the page requires a means of transport
+### Requirement: A means of transport is required to save the page
 **ID**: REQ-ARRIVAL-006
-The system MUST refuse to save the arrival details page while no means of transport is chosen, on "Save and continue" and on "Save and return to overview" alike, showing an error summary headed "There is a problem" and the error "Select a means of transport to the port of entry" against the means of transport question, and MUST keep what was entered and save nothing.
+The system MUST refuse to save the arrival details page, on both "Save and continue" and "Save and return to overview", while no means of transport is chosen. It MUST keep the user on the page, link the error "Select a means of transport to the port of entry" from the error summary to the means of transport, show the same message above the means of transport in its error style, start the browser page title with "Error: ", save nothing and show the other answers entered back.
 
-#### Scenario: Saving with no means of transport chosen is refused
+#### Scenario: Save and continue with no means of transport is refused
 **ID**: SCN-ARRIVAL-006-A
 - **GIVEN** the user is on the arrival details page with no means of transport chosen
 - **WHEN** they save and continue
-- **THEN** an error summary headed "There is a problem" is shown, carrying "Select a means of transport to the port of entry" linked to the means of transport question
-- **AND** they remain on the arrival details page, with nothing saved
+- **THEN** they stay on the arrival details page
+- **AND** the error summary and the means of transport both show "Select a means of transport to the port of entry"
+- **AND** the browser page title starts "Error: "
+
+#### Scenario: A refused save shows the other answers back and saves nothing
+**ID**: SCN-ARRIVAL-006-B
+- **GIVEN** the user has chosen a port of entry and entered an arrival date but no means of transport
+- **WHEN** they save and continue
+- **THEN** the port of entry and arrival date are shown back
+- **AND** re-opening the page from the overview shows them empty
 
 #### Scenario: Save and return to overview refuses the save the same way
-**ID**: SCN-ARRIVAL-006-B
+**ID**: SCN-ARRIVAL-006-C
 - **GIVEN** the user has chosen a port of entry and no means of transport
 - **WHEN** they select "Save and return to overview"
 - **THEN** they remain on the arrival details page with the same error, the port they chose still shown

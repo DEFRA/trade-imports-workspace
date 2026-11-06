@@ -92,11 +92,8 @@ describe('the workspace gates.json', () => {
     expect(
       plan.map(({ repo: folder, name, scope }) => [folder, name, scope])
     ).toEqual([
-      [
-        'trade-imports-ins-tests',
-        'e2e',
-        ['tests/animals/', '--grep', '@animals-frontend']
-      ]
+      ['trade-imports-ins-tests', 'e2e', ['tests/animals/']],
+      ['trade-imports-ins-tests', 'e2e-tagged', ['--grep', '@animals-frontend']]
     ])
   })
 
@@ -565,9 +562,9 @@ describe('planRungs', () => {
       })
     )
 
-  const scopeOf = (plan) => plan.find(({ name }) => name === 'e2e').scope
+  const namesAndScopes = (plan) => plan.map(({ name, scope }) => [name, scope])
 
-  test('scopes a scopeFrom rung to the suites and tags the built services run', () => {
+  test('splits a scopeFrom rung into a run of the built services’ suites and a run of their tags', () => {
     const plan = planRungs({
       gates: scopeFromGates(['trade-imports-animals-frontend']),
       repos: [
@@ -578,10 +575,9 @@ describe('planRungs', () => {
       workspaceRoot
     })
 
-    expect(scopeOf(plan)).toEqual([
-      'tests/animals/',
-      '--grep',
-      '@animals-frontend'
+    expect(namesAndScopes(plan)).toEqual([
+      ['e2e', ['tests/animals/']],
+      ['e2e-tagged', ['--grep', '@animals-frontend']]
     ])
   })
 
@@ -593,7 +589,7 @@ describe('planRungs', () => {
       workspaceRoot
     })
 
-    expect(scopeOf(plan)).toEqual([])
+    expect(namesAndScopes(plan)).toEqual([['e2e', []]])
   })
 })
 

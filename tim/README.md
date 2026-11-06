@@ -713,18 +713,20 @@ JSON also carries `agentMs`, the sum. The increment and stage come from the
 agent's label (`inc-004 review:frontend` → `inc-004`, `review`); agents with no
 increment id sit under `(run)`.
 
-### `tim jira create|attach|link|assign|epics` — the Jira write surface
+### `tim jira create|update|attach|link|assign|epics` — the Jira write surface
 
-`tim jira ticket`/`comments` and `epics` are read-only. `create`, `attach`,
-`link` and `assign` write to Jira, so they follow one rule: **dry run by
-default, a real write needs an explicit `--confirm`** (or, for `create`, a
-matching `--confirm <planId>`). Nothing in the `.claude/settings.json`
+`tim jira ticket`/`comments` and `epics` are read-only. `create`, `update`,
+`attach`, `link` and `assign` write to Jira, so they follow one rule: **dry
+run by default, a real write needs an explicit `--confirm`** (or, for
+`create`, a matching `--confirm <planId>`). Nothing in the `.claude/settings.json`
 allowlist stops `tim jira *`, so this contract — not the allowlist — is what
 keeps a skill from creating something nobody agreed to.
 
 ```bash
 tim jira create --from ticket.json --json          # dry run: prints the plan (fields, attachments with sizes, warnings) and a planId
 tim jira create --from ticket.json --confirm <planId> --json   # creates the issue, attaches every file, links every `relates`, writes ticket.created.json
+tim jira update EUDPA-200 --summary "A clearer title"   # dry run: the fields that would change, and their new values
+tim jira update EUDPA-200 --description-file description.txt --confirm  # writes only the fields that differ, then reads the ticket back to check
 tim jira attach EUDPA-200 diagram.svg notes.md     # dry run: what would be attached
 tim jira attach EUDPA-200 diagram.svg --confirm    # attaches for real; --replace re-attaches over an existing filename instead of adding a duplicate
 tim jira link EUDPA-200 relates EUDPA-100          # dry run
@@ -770,6 +772,16 @@ other way round it fails with `UNKNOWN` and names the stored direction.
 reports `unchanged`, even with `--confirm`. `--json` puts
 `{mode, key, accountId, previousAssignee, assignee}` in `result` (`mode` is `dry-run`,
 `assigned` or `unchanged`).
+
+`tim jira update` rewrites a ticket that already exists: `--summary` for the
+title, and `--description` or `--description-file` (not both) for the
+description, as Jira wiki markup. It reads the ticket first and sends only
+the fields whose value differs, so a field already holding that value is
+left out of the write and a re-run reports `unchanged` rather than stamping
+the ticket's history with a no-op. After the write it reads the ticket back
+and fails with `UNKNOWN`, naming the field, if Jira still shows the old
+value. `--json` puts `{mode, key, fields, before, url, after}` in `result`
+(`mode` is `dry-run`, `updated` or `unchanged`).
 
 `tim jira comment` takes the text from `--body` or `--file`, not both, and
 sends it as Jira wiki markup. A ticket that already has a comment with the

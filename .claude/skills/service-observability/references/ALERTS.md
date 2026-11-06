@@ -90,11 +90,12 @@ the window.
 
 **Do alert on it for a database.** A database's `external.dependency.available`
 comes from the driver's heartbeats every 10 seconds (`METRICS.md` → "A
-database"), so it is fresh. And a database's outage never shows in
-`external.call.failure`: a command that cannot reach a server fails
-before it is sent and is not recorded. Use `Maximum`, so the alert fires
-only when every task saw the database down for the whole window, not on
-one task's passing failure.
+database"), so it is fresh. And a database's outage barely shows in
+`external.call.failure`: only a command already sent when the
+connection drops is recorded as a failure. A command that cannot reach
+a server fails before it is sent and is not recorded. Use `Maximum`, so
+the alert fires only when every task saw the database down for the
+whole window, not on one task's passing failure.
 
 **Never set "no data" to Alerting on these.** Calls only happen when a
 request needs the dependency, so nothing is published until the first
@@ -164,7 +165,8 @@ resolve.
 
 **Make the calls yourself.** The call alerts only see dependency calls
 that happened, and few happen on their own (the database alert needs no
-calls: its gauge is published every minute while a task runs):
+calls: its gauge is published every minute once the driver has checked
+the database):
 
 - The service calls a dependency only on a cache miss: after a deploy,
   or once per cache lifetime (60 minutes for reference-data's MDM
@@ -217,9 +219,10 @@ service.name:"<service>"` in OpenSearch shows one line per failed call.
   and run the loop above. "Unavailable" and "calls failing" fire for
   that dependency only. Done on reference-data on 2026-10-22: both
   fired for `mdm` after a dead-end `MDM_SERVICE_URL` and the loop run
-  from the Portal terminal. Restore the URL and redeploy. This breaks the service in dev
-  for everyone while it runs, so agree a time with the team. "Slow"
-  has no practical real test; the lowered threshold is enough.
+  from the Portal terminal. Restore the URL and redeploy. This breaks
+  the service in dev for everyone while it runs, so agree a time with
+  the team. "Slow" has no practical real test; the lowered threshold is
+  enough.
 - **Test, the call failure rules.** `[UNPROVEN]` The alert is
   read-only there, so the failure has to be real. One way: deploy briefly with a wrong URL or key for
   the dependency, then call the service. This breaks the service for

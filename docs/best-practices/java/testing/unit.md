@@ -33,7 +33,7 @@ There are three distinct flavours of unit test in this codebase:
 |----------|-------------|
 | Pure unit — direct instantiation | Services, exception handlers, interceptors, config classes with no Spring dependencies |
 | `@WebMvcTest` slice | Controllers — exercises the full Spring MVC dispatch chain without a real server |
-| Annotation-contract tests | Verifying that production classes carry required annotations (`@ConditionalOnProperty`, `@Scheduled`, etc.) |
+| Conditional-bean tests (`ApplicationContextRunner`) | Proving a bean is created or left out by its condition (`@ConditionalOnProperty` and the like) |
 
 ---
 
@@ -240,17 +240,29 @@ mockMvc.perform(delete("/notifications")...)
 
 ---
 
-## Annotation-contract tests
+## Conditional-bean tests
 
-When a production class must carry specific annotations for the application to work correctly (e.g. `@Scheduled`, `@ConditionalOnProperty`), verify this with reflection. Prefer this over integration tests for annotation presence — it runs faster and fails with a clear message.
+When a bean must exist only under a condition (`@ConditionalOnProperty` and the like), test what the condition does, not that the annotation is there. `ApplicationContextRunner` starts just the configuration under test, with the properties you give it, in milliseconds. Run it with the property on and off and assert on the beans. Reading the annotation by reflection proves only that it is spelled as written.
 
 ```java
+private final ApplicationContextRunner contextRunner =
+    new ApplicationContextRunner()
+        .withUserConfiguration(MetricsConfig.class)
+        .withBean(SimpleMeterRegistry.class, SimpleMeterRegistry::new, bean -> bean.setPrimary(true))
+        .withPropertyValues("aws.emf.namespace=test-namespace");
+
 @Test
-void metricsPublisher_shouldHaveScheduledAnnotation() {
-    Method publishMethod = EmfMetricsPublisher.class.getMethod("publishMetrics");
-    Scheduled scheduled = publishMethod.getAnnotation(Scheduled.class);
-    assertThat(scheduled).isNotNull();
-    assertThat(scheduled.fixedRate()).isEqualTo(60000L);
+void emfMeterRegistry_shouldBeCreated_whenEmfIsEnabled() {
+    contextRunner
+        .withPropertyValues("aws.emf.enabled=true")
+        .run(context -> assertThat(context).hasSingleBean(EmfMeterRegistry.class));
+}
+
+@Test
+void emfMeterRegistry_shouldBeLeftOut_whenEmfIsDisabled() {
+    contextRunner
+        .withPropertyValues("aws.emf.enabled=false")
+        .run(context -> assertThat(context).doesNotHaveBean(EmfMeterRegistry.class));
 }
 ```
 

@@ -179,7 +179,7 @@ Outside an amendment the system MUST end the commodity details page with "Save a
 
 ### Requirement: A removal keeps what the user has typed, and names the row it removes
 **ID**: REQ-COMMODITY-DETAILS-012
-The system MUST keep, after a removal, the numbers already typed into the rows that stay, showing them back in their own fields, and MUST name the removed row rather than its position, so a repeated or stale removal is refused rather than removing a different row.
+The system MUST keep, after a removal, the numbers already typed into the rows that stay, showing them back in their own fields, and MUST name the removed row rather than its position, so a removal naming a row the selection no longer holds shows the page as it stands rather than removing a different row.
 
 #### Scenario: Numbers typed into other rows survive a removal
 **ID**: SCN-COMMODITY-DETAILS-012-A
@@ -188,25 +188,39 @@ The system MUST keep, after a removal, the numbers already typed into the rows t
 - **THEN** that row is gone from the table and from the selection
 - **AND** every other species' field still holds the number typed into it
 
-#### Scenario: A removal submitted again is refused rather than removing another row
+#### Scenario: A removal submitted again shows the page as it stands rather than removing another row
 **ID**: SCN-COMMODITY-DETAILS-012-B
 - **GIVEN** the user has removed a row
 - **WHEN** the same removal is submitted again
-- **THEN** it is refused, and the rows the first removal left are unchanged
+- **THEN** the commodity details page is shown holding the rows the first removal left, with nothing further removed
 
-### Requirement: A number of animals above the largest signed 64-bit integer is refused on its own field
+### Requirement: A number of animals or a number of packages above the largest the service stores is refused on its own field
 **ID**: REQ-COMMODITY-DETAILS-013
-The system MUST refuse a number of animals above 9,223,372,036,854,775,807, the largest signed 64-bit integer, with an error against that species' own number of animals field, "Number of animals must be 9,223,372,036,854,775,807 or fewer", keeping what the user typed, and MUST accept a number of animals at or below that figure.
+The system MUST refuse a number of animals, and a number of packages, above 2,147,483,647, the largest figure the service stores for either, with an error against that species' own field — "Number of animals must be 2,147,483,647 or fewer" or "Number of packages must be 2,147,483,647 or fewer" — keeping what the user typed, and MUST accept either number at or below that figure.
 
-#### Scenario: A number of animals above the largest signed 64-bit integer is refused on its own field
+#### Scenario: A number of animals above the largest the service stores is refused on its own field
 **ID**: SCN-COMMODITY-DETAILS-013-A
 - **GIVEN** the user is entering a number of animals for one species
-- **WHEN** they enter a number above 9,223,372,036,854,775,807 and save
-- **THEN** the save is blocked, with the error "Number of animals must be 9,223,372,036,854,775,807 or fewer" against that species' own field
+- **WHEN** they enter a number above 2,147,483,647 and save
+- **THEN** the save is blocked, with the error "Number of animals must be 2,147,483,647 or fewer" against that species' own field
 - **AND** the field still shows the digits they typed
 
-#### Scenario: A number of animals at the largest signed 64-bit integer is accepted
+#### Scenario: A number of animals at the largest the service stores is accepted
 **ID**: SCN-COMMODITY-DETAILS-013-B
 - **GIVEN** the user is entering a number of animals for one species
-- **WHEN** they enter 9,223,372,036,854,775,807 and save
+- **WHEN** they enter 2,147,483,647 and save
+- **THEN** the save is not blocked and the journey moves on
+- **AND** reopening the page shows the figure that was saved
+
+#### Scenario: A number of packages above the largest the service stores is refused on its own field
+**ID**: SCN-COMMODITY-DETAILS-013-C
+- **GIVEN** the user is entering a number of packages for one species
+- **WHEN** they enter a number above 2,147,483,647 and save
+- **THEN** the save is blocked, with the error "Number of packages must be 2,147,483,647 or fewer" against that species' own field
+- **AND** the field still shows the digits they typed
+
+#### Scenario: A number of packages at the largest the service stores is accepted
+**ID**: SCN-COMMODITY-DETAILS-013-D
+- **GIVEN** the user is entering a number of packages for one species
+- **WHEN** they enter 2,147,483,647 and save
 - **THEN** the save is not blocked and the journey moves on

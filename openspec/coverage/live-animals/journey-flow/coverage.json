@@ -66,7 +66,7 @@
           "name": "Finishing the last page of a section returns to Overview",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "commercial transporter selection saves and persists", "strength": "full", "notes": "select save lands on Overview URL" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "picking a commercial transporter saves it with its type and persists", "strength": "full", "notes": "select save lands on Overview URL" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should send the consignment details page to the identification surface mid-run, and to the hub outside the run", "strength": "full", "notes": "outside the opening run, section last page rests on the hub" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/commercial-transporter-scope.spec.ts", "test": "commercial transporter is owed only for the commercial type and is wiped when the type changes", "strength": "full", "notes": "commercial select save → Overview" }
           ]
@@ -167,7 +167,7 @@
           "name": "Save and return to overview refuses a page with a required answer missing",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/save-and-return-checks.spec.ts", "test": "main import reason: when a required answer is missing, refuses the save, names each missing answer and keeps the answer given", "strength": "partial", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/save-and-return-to-overview.spec.ts", "test": "main import reason: when a required answer is missing, refuses the save, names each missing answer and keeps the answer given", "strength": "partial", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should refuse a transit reason with its port and country left blank, naming both, and save nothing", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/save-actions.test.js", "test": "Should refuse Save and return to overview with a required answer blank, with the same errors as Save and continue", "strength": "full", "notes": "" }
           ]
@@ -177,7 +177,7 @@
           "name": "An answer that breaks its own rule is refused on save and return",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/save-and-return-checks.spec.ts", "test": "arrival details: when the arrival date names no day, refuses the save and keeps nothing", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/save-and-return-to-overview.spec.ts", "test": "arrival details: when the arrival date names no day, refuses the save and keeps nothing", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js", "test": "Should keep the real-date message on Save and return to overview, saving nothing", "strength": "full", "notes": "" }
           ]
         },
@@ -186,7 +186,7 @@
           "name": "Commodity details with the number of animals blank is refused on save and return",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/save-and-return-checks.spec.ts", "test": "commodity details: when the number of animals is blank, keeps its checks and stays on the page", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/save-and-return-to-overview.spec.ts", "test": "commodity details: when the number of animals is blank, keeps its checks and stays on the page", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js", "test": "Should hold the page on a blank count when Save and return to overview is pressed, saving nothing", "strength": "full", "notes": "" }
           ]
         },
@@ -203,8 +203,8 @@
           "name": "Arrival details saved and returned without a means of transport is refused",
           "coverage": "partial",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/save-and-return-checks.spec.ts", "test": "arrival details: when no means of transport is chosen, refuses the save, keeps the port chosen and saves nothing", "strength": "partial", "notes": "proves the refusal, the port still shown and the port unsaved on re-opening; not probed against a reverted line" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js", "test": "Should refuse the same submit on Save and return to overview too, with no redirect", "strength": "partial", "notes": "proves the refusal and that nothing is committed, not the Overview re-open" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/save-and-return-to-overview.spec.ts", "test": "arrival details: when no means of transport is chosen, refuses the save, shows the port back and keeps the task to do", "strength": "partial", "notes": "proves the refusal, the port shown back, the task reading To do and the port unsaved on re-opening; not probed against a reverted line" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js", "test": "Should refuse Save and return to overview with no means of transport, show the port back and commit nothing", "strength": "partial", "notes": "proves the refusal and that nothing is committed, not the Overview re-open" }
           ]
         },
         {
@@ -514,7 +514,7 @@
           "name": "The CPH number page, the address pickers and the contact address page offer two controls while amending",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "the CPH number page, a party picker and the contact address page end with Save and return and Save and continue only, and Save and return goes to the amend review", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "while amending, the origin page ends with exactly Save and return and Save and continue and no link, the CPH number page, a party picker and the contact address page offer both without Save and return to overview, and Save and return goes to the amend review", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.test.js", "test": "Should go to the review on Save and return, ahead of the addresses hub, when amending with both return and change", "strength": "partial", "notes": "CPH Save and return only" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js", "test": "Should return a chosen party to the review from a Change link", "strength": "partial", "notes": "picker Save and return only" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/save-actions.test.js", "test": "Should drop the overview exit on a picker while amending", "strength": "partial", "notes": "the two-control macro ending" }
@@ -525,7 +525,7 @@
           "name": "Outside an amendment the CPH number page keeps its primary action alone",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "outside an amendment the CPH number page keeps its single primary button", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "outside an amendment the CPH number page offers Save and continue without Save and return or Save and return to overview", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/save-actions.test.js", "test": "Should end a page reached from another page with the primary alone", "strength": "partial", "notes": "the non-amend macro ending" }
           ]
         }
@@ -583,7 +583,7 @@
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should honour Save and return to overview on the main import reason mid-run, not the commodity details the run would send it to", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "Save and return to overview inside the opening run saves the answer and shows the overview rather than commodity details", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/save-and-return-checks.spec.ts", "test": "main import reason: inside the opening run, saves the answer and shows the overview rather than commodity details", "strength": "partial", "notes": "not red-probed in this change; the implementor does not run the E2E phase" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/save-and-return-to-overview.spec.ts", "test": "main import reason: inside the opening run, saves the answer and shows the overview rather than commodity details", "strength": "partial", "notes": "not red-probed in this change; the implementor does not run the E2E phase" }
           ]
         },
         {

@@ -269,36 +269,53 @@
         },
         {
           "id": "SCN-COMMODITY-DETAILS-012-B",
-          "name": "A removal submitted again is refused rather than removing another row",
+          "name": "A removal submitted again shows the page as it stands rather than removing another row",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js", "test": "Should refuse a repeated commodity-level removal and leave the surviving commodities exactly as the first removal left them", "strength": "full", "notes": "red with the commodity-code membership check in postRemove() disabled" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js", "test": "Should show Commodity details as it stands when a removal names a commodity already removed", "strength": "full", "notes": "red with the commodity-code membership check in postRemove() disabled" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js", "test": "Should show Commodity details as it stands when a species-level removal names a line already removed", "strength": "partial", "notes": "the species-level half of the same settled-removal path; not separately probed" }
           ]
         }
       ]
     },
     {
       "id": "REQ-COMMODITY-DETAILS-013",
-      "name": "A number of animals above the largest signed 64-bit integer is refused on its own field",
-      "coverage": "full",
+      "name": "A number of animals or a number of packages above the largest the service stores is refused on its own field",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-COMMODITY-DETAILS-013-A",
-          "name": "A number of animals above the largest signed 64-bit integer is refused on its own field",
+          "name": "A number of animals above the largest the service stores is refused on its own field",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js", "test": "Should re-render a number of animals above the largest signed 64-bit integer against its own line, keeping what was typed, saving nothing and logging nothing", "strength": "full", "notes": "red with the upper-bound comparison in lib/validate/validators.js disabled" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "validation: a number of animals above the largest signed 64-bit integer holds the page with one error against that species, keeping both fields exactly as typed", "strength": "full", "notes": "red with the upper-bound comparison in lib/validate/validators.js disabled" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/consignment-details.spec.ts", "test": "holds the page on a number of animals above the largest signed 64-bit integer, keeping the digits typed", "strength": "partial", "notes": "not probed — the workspace stack this e2e suite needs was deliberately left down; the repo's own pull request CI proves it against a stack of its own" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js", "test": "Should re-render a number of animals above the largest the service stores against its own line, keeping what was typed, saving nothing and logging nothing", "strength": "full", "notes": "red with the upper-bound comparison in lib/validate/validators.js disabled" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/consignment-details.fit.spec.js", "test": "validation: a number of animals above the largest the service stores holds the page with one error against that species, keeping both fields exactly as typed", "strength": "full", "notes": "red with the upper-bound comparison in lib/validate/validators.js disabled" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/consignment-details.spec.ts", "test": "holds the page on a number of animals above the largest the service stores, keeping the digits typed", "strength": "partial", "notes": "not probed; run green in this pass against the workspace stack" }
           ]
         },
         {
           "id": "SCN-COMMODITY-DETAILS-013-B",
-          "name": "A number of animals at the largest signed 64-bit integer is accepted",
+          "name": "A number of animals at the largest the service stores is accepted",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js", "test": "Should accept a number of animals exactly at the largest signed 64-bit integer", "strength": "full", "notes": "red when the upper-bound comparison is made exclusive (>= instead of >)" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/consignment-details.spec.ts", "test": "accepts a number of animals exactly at the largest signed 64-bit integer", "strength": "partial", "notes": "not probed — the workspace stack this e2e suite needs was deliberately left down; the repo's own pull request CI proves it against a stack of its own" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js", "test": "Should accept and exactly save a number of animals at the largest the service stores", "strength": "full", "notes": "red when the upper-bound comparison is made exclusive (>= instead of >)" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/consignment-details.spec.ts", "test": "saves a number of animals exactly at the largest the service stores and shows it back on the page", "strength": "partial", "notes": "not probed; also asserts the saved figure shown back on reopening" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-DETAILS-013-C",
+          "name": "A number of packages above the largest the service stores is refused on its own field",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js", "test": "Should re-render a number of packages above the largest the service stores against its own line, keeping what was typed, saving nothing and logging nothing", "strength": "partial", "notes": "no fit or e2e witness for the packages half of the cap" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-DETAILS-013-D",
+          "name": "A number of packages at the largest the service stores is accepted",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js", "test": "Should accept and exactly save a number of packages at the largest the service stores", "strength": "partial", "notes": "no fit or e2e witness for the packages half of the cap" }
           ]
         }
       ]

@@ -1,9 +1,10 @@
 Build the service's custom Grafana dashboard in the CDP dev playground.
 Parent-loaded: path and Bash rules come from `SKILL.md`.
 
-The template was first imported for reference-data (EUDPA-632). Each
-fact that comes only from the CDP monitoring docs is marked
-`[UNPROVEN]`.
+`SKILL.md` → "What is proven" says which parts have been done on a real
+service. `[UNPROVEN]` This dot-case template has not been imported
+anywhere. Each fact that comes only from the CDP monitoring docs is
+marked `[UNPROVEN]`.
 
 Claude generates the dashboard JSON from
 `assets/dashboard.template.json`; the developer imports it in Grafana.

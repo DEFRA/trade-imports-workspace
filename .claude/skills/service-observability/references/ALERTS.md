@@ -2,10 +2,10 @@ Build the service's custom alerts, route them to Slack, promote them and
 prove they fire. Parent-loaded: path and Bash rules come from
 `SKILL.md`.
 
-The alerts were first built and fired in dev for reference-data
-(EUDPA-632, 2026-10-22). None has been routed to Slack or promoted yet.
-Each fact that comes only from the CDP monitoring docs is marked
-`[UNPROVEN]`.
+`SKILL.md` → "What is proven" says which parts have been done on a real
+service. `[UNPROVEN]` These dot-case rules, rule 1a among them, have not
+been built or fired anywhere. Each fact that comes only from the CDP
+monitoring docs is marked `[UNPROVEN]`.
 
 The developer builds the alerts by hand in Grafana, from a build sheet
 Claude writes. Nothing can push them for us: writing to the dev Grafana

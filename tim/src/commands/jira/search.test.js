@@ -163,8 +163,13 @@ describe('renderSearch', () => {
 })
 
 describe('tim jira search (spawn)', () => {
+  // TIM_NO_AUTO_PULL because the usage test below asserts stderr exactly, and a
+  // tim run on `main` fast-forwards the workspace first. Several spawn tests
+  // pulling at once race, and git's "Cannot fast-forward to multiple branches"
+  // lands on the same stream as the usage message.
   const credentialFreeEnv = {
     ...process.env,
+    TIM_NO_AUTO_PULL: '1',
     JIRA_USER: '',
     JIRA_TOKEN: '',
     JIRA_BASE_URL: '',

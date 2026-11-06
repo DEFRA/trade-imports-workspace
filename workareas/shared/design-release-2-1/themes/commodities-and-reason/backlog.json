@@ -589,16 +589,18 @@
     {
       "id": "inc-249",
       "title": "End-to-end proof: the poultry-by-rail walk submits the notification",
-      "detail": "The second half of inc-019: the poultry-by-rail walk reaches 'Import notification submitted' rather than stopping at the review. Blocked. On the stack the animals frontend runs LIVE_ANIMALS_MODE=real with no STUB_MODE, so every commodity read goes to reference-data and through to the MDM stub. The stub serves no species page for the chicken code the walk picks, so the review's species check marks the line unlisted and the notification cannot be submitted. The fix is in repos/trade-imports-stub, which is not in this theme's repos, so this row cannot be built here as it stands.",
+      "detail": "The second half of inc-019: the poultry-by-rail walk reaches Import notification submitted rather than stopping at the review. On the stack the animals frontend runs LIVE_ANIMALS_MODE=real with no STUB_MODE, so every commodity read goes to reference-data and through to the MDM stub. The stub served no species page for the chicken code the walk picks, so the review's species check marked the line unlisted and the notification could not be submitted. Built on 6 November by adding that species page to repos/trade-imports-stub, which joined this row's repos.",
       "dependsOn": [],
       "theme": "commodities-and-reason",
-      "status": "blocked",
+      "status": "done",
       "kind": "test",
       "repos": [
-        "tests"
+        "tests",
+        "stub"
       ],
       "merge": {
-        "tests": "origin/main"
+        "tests": "origin/main",
+        "stub": "origin/main"
       },
       "gatePhases": [],
       "sources": [
@@ -612,9 +614,7 @@
         }
       ],
       "requirements": [],
-      "openQuestions": [
-        "Who owns the stub chicken species, and does it belong in this theme at all? The change is two files in repos/trade-imports-stub, a repo this theme does not build. Either the stub repo joins the theme's repos and the envelope's, or this row moves to whichever theme or ticket owns the stub's MDM fixtures."
-      ],
+      "openQuestions": [],
       "gate": null,
       "externalDependsOn": [],
       "acceptanceCriteria": [
@@ -622,10 +622,19 @@
         "The review's species check does not mark the chicken line unlisted, because the MDM stub serves a species page for the commodity code the walk picks"
       ],
       "notes": [
-        "Blocked on repos/trade-imports-stub, named precisely by the plan stage that refused inc-019 on 4 November: src/main/resources/responses/mdmProductSpeciesResponses.json needs a species page for the chicken code the walk picks (01051111, and/or 01059400) listing Gallus gallus with common name Chicken — required, the criterion is unachievable without it. src/main/resources/responses/mdmProductSearchResponses.json should also gain a search-term key a trader would plausibly type for chicken, so the walk searches as a user does rather than for '010' — strongly wanted rather than required.",
-        "The stub repo has no branch of this run's name. It carries origin/feat/EUDPA-693-design-release-2-1-commodities-and-reason, which belongs to the reference-lists theme — its two commits are the countries and ports recapture — and adds no chicken species. So that branch is not a head start.",
-        "Do not reinstate inc-019's claim that MDM already serves chicken. That rested on the frontend's stub-mode capture fixture, not on what the stack serves. See inc-248's notes for the full reading.",
-        "Recorded in deferred.md as well, because the work is in a repo outside this theme."
+        "Built 6 November 2026 in trade-imports-stub (PR 32). src/main/resources/responses/mdmProductSpeciesResponses.json gains a 01051111 species page carrying Gallus gallus, common name Chicken. The record is the one mdmProductSearchResponses.json already carried for that code from the TST recapture in 1cadd94, so the search and species fixtures now agree.",
+        "Proof: mvn verify green, 156 unit and 35 integration. The new ProductControllerTest case getCommoditySpecies_shouldAnswerChicken_forTheCodeTheSearchOffers fails alone when the fixture entry is deleted, on totalElements 1 against 0.",
+        "The open question - who owns the stub chicken species, and does the row belong in this theme - was settled by adding stub to this row's repos rather than moving the row.",
+        "Left out, as the earlier notes marked it strongly wanted rather than required: a search-term key in mdmProductSearchResponses.json a trader would plausibly type for chicken. The walk searches 010 today, which already returns 01051111.",
+        "Do not reinstate inc-019's claim that MDM already serves chicken. That rested on the frontend's stub-mode capture fixture, not on what the stack serves. See inc-248's notes for the full reading."
+      ],
+      "commit": "87f43de70bf5d270831f3a75edc380ef7f2e4fa0",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-stub/pull/32",
+          "repo": "trade-imports-stub",
+          "number": 32
+        }
       ]
     },
     {
@@ -1264,7 +1273,7 @@
     {
       "id": "inc-029",
       "title": "The commodity page offers each commodity's types from MDM and narrows the species to them",
-      "detail": "The V4 data fields page gives a commodity line a Type selection beside its commodity and species, and says its values come from MDM. Where a type applies to the chosen commodity, the commodity page offers that commodity's types from MDM's type list and narrows the species on offer to the ones that type covers. Blocked: reference-data serves no type list today, so there is nothing for the page to offer.",
+      "detail": "The V4 data fields page gives a commodity line a Type selection beside its commodity and species, and says its values come from MDM. Where a type applies to the chosen commodity, the commodity page offers that commodity's types from MDM's type list and narrows the species on offer to the ones that type covers. Dropped from this theme on 6 November and raised as EUDPA-777: reference-data serves no type list, and serving one is the MDM integration's work, which nothing in this theme can do. The work is unchanged - only its home is. Tracking it here would hold the theme open indefinitely, the same reading that dropped inc-012.",
       "acceptanceCriteria": [
         "Where MDM holds types for the chosen commodity, the commodity page offers that commodity's types from MDM's list through trade-imports-reference-data. (confluence:6497338582 confluence-6497338582-p1-081)",
         "Choosing a type narrows the species on offer to the species that type covers, and a commodity with no types in MDM asks no type question. (confluence:6497338582)",
@@ -1272,7 +1281,7 @@
       ],
       "dependsOn": [],
       "theme": "commodities-and-reason",
-      "status": "blocked",
+      "status": "dropped",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -1292,14 +1301,14 @@
         "req-2130",
         "req-2131"
       ],
-      "openQuestions": [
-        "Blocked on reference-data serving MDM's type list. The commodity and species halves of req-2130 are already met: the frontend reads both from reference-data (frontend origin/main:src/server/app/sets/live-animals/services/commodities/client.js:7-16, and reference-data's CommoditySearchService). The type half is not: reference-data's CommodityGroup carries only a code and a list of species (referencedata origin/main:.../CommodityGroup.java:13-16), its CommoditySpecies only a Latin and a common name, and MDM's own commodity rows carry no populated type field. Who acts: whoever owns the MDM integration must serve the type list through reference-data, which the split-off reference-lists theme owns; then this row builds in the frontend."
-      ],
+      "openQuestions": [],
       "notes": [
         "Pick-up from the 2 November re-distil: req-2130 and req-2131, both new since the split, combined here because they are one page behaviour over one list. Their pick-up entries read 'Blocked on MDM commodities'; the block is narrowed to the type list alone, because the commodity and species lists arrived with EUDPA-617 on 27 October and that judgement was made against a 26 October repo extract.",
         "Main has a types seam already, but hard-coded rather than from MDM: typeFor and typesFor in services/commodities/rules.js read a TYPES_BY_CODE table holding Domestic and Game for 0102 only, with every other code a single blank type, and the GAME_SPECIES set naming Bos spp. (frontend origin/main:rules.js:82-110). The EUDPA-669 branch widens that set but keeps the table. So this row replaces a local table with MDM's list, the same shape of change inc-012's naming question would need.",
         "Note the Domestic/Game split on 0102 came from the IPAFFS commodity-categories extract rather than from MDM, per the EUDPA-669 branch's own doc, so whoever builds this should check whether MDM's type list reproduces it before deleting the table.",
-        "Pre-flight 3 Nov: the block was re-checked against current main rather than the 26 Oct extract, because a lifted block silently withholds work. It still holds. reference-data's commodity package on origin/main is CommoditiesController, CommodityGroup, CommodityLine, CommoditySearchResponse, CommoditySearchService, CommoditySpecies, SpeciesCheckRequest/Response/Service, and CommodityGroup is a record of code plus List<CommoditySpecies> only - no type field, no type list, and nothing matching commodityType, animalSubcategory or breedCategory anywhere in src/main/java. So there is still nothing for the commodity page to offer, and the row stays blocked."
+        "Pre-flight 3 Nov: the block was re-checked against current main rather than the 26 Oct extract, because a lifted block silently withholds work. It still holds. reference-data's commodity package on origin/main is CommoditiesController, CommodityGroup, CommodityLine, CommoditySearchResponse, CommoditySearchService, CommoditySpecies, SpeciesCheckRequest/Response/Service, and CommodityGroup is a record of code plus List<CommoditySpecies> only - no type field, no type list, and nothing matching commodityType, animalSubcategory or breedCategory anywhere in src/main/java. So there is still nothing for the commodity page to offer, and the row stays blocked.",
+        "6 November 2026: raised as EUDPA-777, a Story under EUDPA-328, covering both halves - reference-data serving MDM's type list, and the commodity page offering the type question and narrowing species. req-2130 and req-2131 move with it. https://eaflood.atlassian.net/browse/EUDPA-777",
+        "The block was re-checked against main on 6 November before the ticket was raised, and still holds: reference-data's CommodityGroup is a record of code plus a list of CommoditySpecies, with no type field, and nothing matching commodityType, animalSubcategory or breedCategory anywhere in src/main/java."
       ],
       "gate": null,
       "merge": {

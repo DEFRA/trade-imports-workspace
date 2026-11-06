@@ -22,6 +22,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { readScope, inputFile, writeScopedPage } from '../../scope.mjs'
+import { backlogFiles, declaredDependencies } from '../../deps.mjs'
 
 const canonicalBuild = path.dirname(fileURLToPath(import.meta.url))
 const canonicalPage = path.resolve(canonicalBuild, '..')
@@ -78,20 +79,8 @@ function readJson(file) {
   }
 }
 
-/** Every backlog in the workarea: the main one, then one per split-off theme. */
-function backlogFiles() {
-  const files = [path.join(workarea, 'backlog.json')]
-  const themesDir = path.join(workarea, 'themes')
-  for (const entry of fs.readdirSync(themesDir, { withFileTypes: true })) {
-    if (!entry.isDirectory()) continue
-    const file = path.join(themesDir, entry.name, 'backlog.json')
-    if (fs.existsSync(file)) files.push(file)
-  }
-  return files
-}
-
 const meta = readJson(META_FILE).themes
-const files = backlogFiles()
+const files = backlogFiles(workarea)
 
 const everyRow = []
 for (const file of files) {
@@ -107,9 +96,9 @@ if (!rows.length) throw new Error('the scope in ' + path.join(here, 'scope.json'
  * A row id is unique within one backlog, but two backlogs can carry the same
  * one: the split-off themes numbered their own new rows from the same sequence
  * the parent backlog was already using. Those clashes are recorded and shown on
- * the page rather than thrown, because a dependency read in its own backlog
- * first always lands on the row that was meant. A clash that forces a lookup
- * across backlogs still throws, in themeOfDependency below.
+ * the page rather than thrown, because a dependency read in the backlog it
+ * names, or failing that in its own, lands on the row that was meant. A clash
+ * neither settles still throws, in themeOfDependency below.
  */
 const backlogsOfId = new Map()
 for (const row of rows) {
@@ -131,16 +120,20 @@ for (const row of rows) {
   themesOfId.get(row.id).add(row.theme)
 }
 
-/** The theme a dependency names, read in the depending row's own backlog first. */
-function themeOfDependency(backlog, dependencyId) {
-  const sameBacklog = themeOfRowInBacklog.get(backlog + '#' + dependencyId)
-  if (sameBacklog) return sameBacklog
-  const themesNamed = themesOfId.get(dependencyId)
+/** The theme a dependency names: the backlog it names, else the depending row's own. */
+function themeOfDependency(dep, ownBacklog) {
+  for (const backlog of [dep.backlog, ownBacklog]) {
+    if (!backlog) continue
+    const named = themeOfRowInBacklog.get(backlog + '#' + dep.id)
+    if (named) return named
+  }
+  const themesNamed = themesOfId.get(dep.id)
   if (!themesNamed) return null
   if (themesNamed.size > 1) {
     throw new Error(
-      'the dependency on ' + dependencyId + ' in ' + backlog + ' names no row in that backlog, and ' +
-        dependencyId + ' is used by rows in themes ' + [...themesNamed].sort().join(', ') +
+      'the dependency on ' + dep.id + ' in ' + ownBacklog + ' names no row in that backlog or in ' +
+        (dep.backlog || 'any backlog of its own') + ', and ' + dep.id +
+        ' is used by rows in themes ' + [...themesNamed].sort().join(', ') +
         '. Renumber one of them before the page can say which theme waits on which.'
     )
   }
@@ -238,9 +231,8 @@ const NOT_WORK = new Set(['dropped', 'rejected', 'merged-into'])
 const edges = new Set()
 for (const row of rows) {
   if (NOT_WORK.has(row.status)) continue
-  const deps = [...(row.dependsOn || []), ...(row.externalDependsOn || []).map((dep) => dep.id)]
-  for (const dep of deps) {
-    const parent = themeOfDependency(row.from, dep)
+  for (const dep of declaredDependencies(workarea, row)) {
+    const parent = themeOfDependency(dep, row.from)
     if (!parent || parent === row.theme) continue
     edges.add(parent + '>' + row.theme)
   }

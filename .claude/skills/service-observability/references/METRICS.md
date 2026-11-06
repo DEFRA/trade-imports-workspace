@@ -12,7 +12,8 @@ Ask of each candidate metric: what would someone do differently on
 seeing it change? Drop it if the answer is nothing.
 
 The list agreed for `trade-imports-reference-data` is the worked
-example:
+example, with the names it takes once moved to the one way. It
+publishes the old names until then ("A service built the old way"):
 
 | Metric | Unit | Dimension | Answers |
 |---|---|---|---|
@@ -35,7 +36,8 @@ Rules that held:
   `external.call.failure` and `external.dependency.available`, with those dimension
   names, are the contract across services. A dashboard or alert built
   for one service then works for the next. Only the business metrics
-  (`lookup` here) are service-specific.
+  (`lookup` here) are service-specific. Several services still publish
+  older names; "A service built the old way" lists them.
 - **Do not add a count metric.** A call count is the `SampleCount` of
   `external.call.duration`. An error count is the `Sum` of
   `external.call.failure`. A token refresh is one call to the token
@@ -75,7 +77,7 @@ service's `metrics` package and change only the package:
 |---|---|
 | `EmfMeterRegistry` | A `StepMeterRegistry` that publishes its gauges, counters, timers and distribution summaries once a minute in the `aws.emf.namespace` namespace, tags as the only dimensions. Timers and distribution summaries publish every value recorded since the last publish (timers in ms), so CloudWatch computes `SampleCount`, `Sum`, `Average`, `p95` and `Maximum` itself; the EMF library splits more than 100 values across documents. Counters publish the last minute's count; gauges their value when finite. Long task timers, function counters, function timers and time gauges are not published. One meter failing to publish is logged at warn and the rest still go |
 | `ValueRecordingTimer`, `ValueRecordingDistributionSummary`, `RecordedValues` | Micrometer's step timer and summary, also keeping each recorded value until the registry takes it |
-| `ExternalCallMetrics` | Logs each call to a dependency (`LOGGING.md`) and records it as the timer `external.call.duration` and the distribution summary `external.call.failure` (0 or 1 per call), both tagged `dependency` and `operation`. `recordSuccess` and `recordFailure` (with the cause), not a boolean flag. It records a call it is given; it does not time one or keep its outcome |
+| `ExternalCallMetrics` | Logs each call to a dependency (`LOGGING.md`) and records it as the timer `external.call.duration` and the distribution summary `external.call.failure` (0 or 1 per call), both tagged `dependency` and `operation`. `recordSuccess` and `recordFailure` (with the cause), not a boolean flag. It records a call it is given; it does not time one or keep its outcome. A service with its own `ExternalCallMetrics` replaces it ("A service built the old way") |
 
 Copy the bean method `MetricsConfig.emfMeterRegistry` too, but not its
 class. It creates and starts the registry only when `aws.emf.enabled`
@@ -143,13 +145,24 @@ address-book.
 
 ### A service built the old way
 
-`trade-imports-reference-data` (EUDPA-632) writes EMF directly, through
-`EmfMetricWriter` and a scheduled `DependencyAvailabilityMetrics`. When
-this skill runs on a service like it, move the service to the one way
-above first, moving every metric and dimension name to dot case. The
-CloudWatch metrics then change name, so regenerate its dashboard
-(`DASHBOARD.md` → "Generate") and rebuild its alerts from a new build
-sheet (`ALERTS.md` → "Build") in the same run; the old ones go quiet.
+These services write EMF directly and publish the older PascalCase
+names, not the dot-case names above (their `main`, checked 2026-11-06):
+
+| Service | Where | Publishes |
+|---|---|---|
+| `trade-imports-reference-data` (EUDPA-632) | `metrics` package: `EmfMetricWriter`, `ExternalCallMetrics`, scheduled `DependencyAvailabilityMetrics` and `CacheMetrics`, `LookupMetrics` | Every old name in the table below |
+| `trade-imports-dynamics-gateway` | `metrics/ExternalCallMetrics.java` and `metrics/ExternalCall.java`, measuring the Service Bus send in `QueueMessageSender` | `ExternalCallDuration`, `ExternalCallFailure`, dimensions `Dependency`, `Operation` |
+| `trade-imports-animals-frontend`, `-ins-frontend`, `-plants-frontend` | `src/server/common/helpers/external-call-metrics.js` | `ExternalCallDuration`, `ExternalCallFailure`, dimensions `Dependency`, `Operation` |
+
+`trade-imports-animals-admin` publishes none of these metrics.
+
+When this skill runs on one of them, move it to the new names first. A
+Java service moves to the one way above as well; a Node service renames
+the names in its helper (there is no Node recipe yet: `SKILL.md` →
+"What is proven"). The CloudWatch metrics then change name, so
+regenerate its dashboard (`DASHBOARD.md` → "Generate") and rebuild its
+alerts from a new build sheet (`ALERTS.md` → "Build") in the same run;
+the old ones go quiet.
 
 | Old | New |
 |---|---|
@@ -158,8 +171,15 @@ sheet (`ALERTS.md` → "Build") in the same run; the old ones go quiet.
 | `CacheHit`, `CacheMiss` | `cache.hit`, `cache.miss` |
 | `Lookup` | `lookup` |
 | Dimensions `Dependency`, `Operation`, `Cache`, `LookupType` | `dependency`, `operation`, `cache`, `lookup.type` |
-| `ExternalCallMetrics.recordCall(…, boolean)` writing EMF | address-book's `ExternalCallMetrics` ("Copy as it is"). `ExternalCall` stays as the list of calls; pass its `dependency()` and `operation()` |
-| `ExternalCallMetrics.measure(…)` around each Feign call | Moves into `ExternalCallFeignCapability`, which stays as the place calls are measured. It times `client.execute` itself, then calls `recordSuccess`, or `recordFailure` with the exception thrown, or with no cause for a response of 400 or over |
+
+The Java classes move as follows. Rows that name a class only one
+service has apply to that service.
+
+| Old | New |
+|---|---|
+| The service's own `ExternalCallMetrics` writing EMF (`recordCall(…, boolean)`) | Replaced by address-book's `ExternalCallMetrics` ("Copy as it is"). `ExternalCall` stays as the list of calls; pass its `dependency()` and `operation()` |
+| `ExternalCallMetrics.measure(…)` around the Service Bus send (dynamics-gateway) | `QueueMessageSender` times the send itself, then calls `recordSuccess`, or `recordFailure` with the exception thrown |
+| `ExternalCallMetrics.measure(…)` around each Feign call (reference-data) | Moves into `ExternalCallFeignCapability`, which stays as the place calls are measured. It times `client.execute` itself, then calls `recordSuccess`, or `recordFailure` with the exception thrown, or with no cause for a response of 400 or over |
 | `ExternalCallMetrics.lastCallSucceededByDependency()` | A small `LastCallOutcomes` component holding the last outcome per dependency. `ExternalCallFeignCapability` updates it on each success and failure, beside its `recordSuccess` or `recordFailure` call, so `ExternalCallMetrics` stays a copy |
 | The `Interface` property (the volumetrics `SYN-19` id) on each EMF document | No meter carries it: as a tag it would be a new dimension. Agree with the team before the move, and record the choice on the ticket: keep it as an `interface.id` key-value on the call's log line, in this service's copy of `ExternalCallMetrics`, or drop it |
 | `EmfMetricWriter` | Deleted; each metric becomes a meter |

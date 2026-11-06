@@ -41,13 +41,12 @@ The animals frontend builds every INS frontend URL from one setting, `tradeImpor
 | Animals to INS | `/address-book/add` | `journey-type`, `notification-id`, `fulfilment-id`, `handshake-token` | The address handshake: the user picks or adds an address |
 | Animals to INS | `/notification-type` | `notification-id`, `current-notification-type` | The live animals origin page's Back link, when the run began at the start entry |
 | INS to animals | `/live-animals/start` | Nothing | The type question's Live animals choice |
-| INS to animals | `/germinal-products/start` | Nothing | The type question's Germinal products choice |
 | INS to animals | `/live-animals/notifications/{reference}/origin` | Nothing | The type question with Live animals kept for that notification |
 | INS to animals | `/live-animals/notifications/{reference}`, or `.../notification-view` when SUBMITTED | Nothing | A dashboard row |
 | INS to animals | `/live-animals/notifications/{notification-id}/address-return` | `fulfilment-id`, `handshake-token` (when one was sent), `addressId` and `landing` (when set) | The return from the address handshake |
 | INS to animals | A page on the configured animals origin | Whatever the URL holds | The `return` query an address-book page honours |
 
-The animals frontend serves no germinal products set, so `/germinal-products/start` has no page behind it. The Dashboard item and the service name in the animals service navigation stay inside the animals frontend.
+The Dashboard item and the service name in the animals service navigation stay inside the animals frontend.
 
 ## How to run
 

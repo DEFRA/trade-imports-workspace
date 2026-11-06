@@ -8,7 +8,7 @@ Before any notification exists, the Import Notification Service asks what is bei
 
 ### Requirement: The notification type question asks what is being imported before any notification exists
 **ID**: REQ-INS-NTYPE-001
-The page MUST ask "What are you importing?" with five options and a single "Continue" button, none selected when it is opened to start a new notification, and MUST NOT create a notification, show a Draft tag or show a notification reference.
+The page MUST ask "What are you importing?" with four options and a single "Continue" button, none selected when it is opened to start a new notification, and MUST NOT create a notification, show a Draft tag or show a notification reference. The page MUST NOT offer a germinal products choice.
 
 #### Scenario: The question shows its title, options and single Continue button
 **ID**: SCN-INS-NTYPE-001-A
@@ -16,7 +16,7 @@ The page MUST ask "What are you importing?" with five options and a single "Cont
 - **WHEN** the question is shown
 - **THEN** the browser title is "What are you importing? - Import notification service - GOV.UK"
 - **AND** the heading is "What are you importing?" with the caption "About the consignment"
-- **AND** the options are, in order, Live animals; Germinal products (semen, ova, embryos); Plants for planting; Potatoes (seed and ware); Wood products
+- **AND** the options are, in order, Live animals; Plants for planting; Potatoes (seed and ware); Wood products
 - **AND** no hint is shown and no option is selected
 - **AND** the page ends with a single "Continue" button, with no "Save and return to overview" and no cancel link
 
@@ -48,7 +48,7 @@ The page MUST ask "What are you importing?" with five options and a single "Cont
 
 ### Requirement: Choosing what is being imported hands the user to the journey that notifies it
 **ID**: REQ-INS-NTYPE-002
-The system MUST, when the user chooses a type and continues, hand them to the journey that notifies it, opening the receiving service at the address configured for that environment: Live animals to a new live-animals draft, Germinal products to the germinal products start in the animals service, and a plants type to a new high-risk plants draft. It MUST NOT create a live-animals notification for any other choice.
+The system MUST, when the user chooses a type and continues, hand them to the journey that notifies it, opening the receiving service at the address configured for that environment: Live animals to a new live-animals draft and a plants type to a new high-risk plants draft. It MUST NOT create a live-animals notification for any other choice.
 
 #### Scenario: Live animals opens a new live-animals draft
 **ID**: SCN-INS-NTYPE-002-A
@@ -56,13 +56,6 @@ The system MUST, when the user chooses a type and continues, hand them to the jo
 - **WHEN** the user chooses Live animals and continues
 - **THEN** a new live-animals draft is created and its "Origin of the import" page is shown
 - **AND** the page shows the Draft tag and a new GBN-AG reference
-
-#### Scenario: Germinal products opens the germinal products start
-**ID**: SCN-INS-NTYPE-002-B
-- **GIVEN** the question is shown
-- **WHEN** the user chooses Germinal products (semen, ova, embryos) and continues
-- **THEN** the user is sent to the germinal products start in the animals service
-- **AND** no live-animals notification is created
 
 #### Scenario: A plants type opens a new high-risk plants draft
 **ID**: SCN-INS-NTYPE-002-C
@@ -93,13 +86,6 @@ The system MUST, when the question is reached from a live-animals notification's
 - **GIVEN** the question is shown for a live-animals notification that holds answers
 - **WHEN** the user chooses Plants for planting and continues
 - **THEN** the high-risk plants journey's first page is shown
-- **AND** the live-animals notification still has its reference, its Draft status and every answer it had
-
-#### Scenario: Choosing Germinal products leaves the notification unchanged
-**ID**: SCN-INS-NTYPE-005-D
-- **GIVEN** the question is shown for a live-animals notification that holds answers
-- **WHEN** the user chooses Germinal products (semen, ova, embryos) and continues
-- **THEN** the user is sent to the germinal products start in the animals service
 - **AND** the live-animals notification still has its reference, its Draft status and every answer it had
 
 ### Requirement: Continuing with nothing chosen is refused

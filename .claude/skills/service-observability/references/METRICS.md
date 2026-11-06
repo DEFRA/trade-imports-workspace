@@ -75,14 +75,25 @@ service's `metrics` package and change only the package:
 
 | Class | What it does |
 |---|---|
-| `EmfMeterRegistry` | A `StepMeterRegistry` that publishes its gauges, counters, timers and distribution summaries once a minute in the `aws.emf.namespace` namespace, tags as the only dimensions. Timers and distribution summaries publish every value recorded since the last publish (timers in ms), so CloudWatch computes `SampleCount`, `Sum`, `Average`, `p95` and `Maximum` itself; the EMF library splits more than 100 values across documents. Counters publish the last minute's count; gauges their value when finite. Long task timers, function counters, function timers and time gauges are not published. One meter failing to publish is logged at warn and the rest still go |
-| `ValueRecordingTimer`, `ValueRecordingDistributionSummary`, `RecordedValues` | Micrometer's step timer and summary, also keeping each recorded value until the registry takes it |
-| `ExternalCallRecorder` | Logs each call to a dependency (`LOGGING.md`) and records it as the timer `external.call.duration` and the distribution summary `external.call.failure` (0 or 1 per call), both tagged `dependency` and `operation`. `recordSuccess` and `recordFailure` (with the cause), not a boolean flag. It records a call it is given; it does not time one or keep its outcome. A service with its own `ExternalCallMetrics` replaces it ("A service built the old way") |
+| `EmfMeterRegistry` | A `StepMeterRegistry` that publishes its gauges, counters, timers and distribution summaries once a step (`aws.emf.step`, one minute by default) in the `aws.emf.namespace` namespace, tags as the only dimensions. Timers and distribution summaries publish every value recorded since the last publish (timers in ms), so CloudWatch computes `SampleCount`, `Sum`, `Average`, `p95` and `Maximum` itself; the EMF library splits more than 100 values across documents. Counters publish the last step's count; gauges their value when finite. Long task timers, function counters, function timers and time gauges are not published. One meter failing to publish is logged at warn and the rest still go |
+| `ValueRecordingTimer`, `ValueRecordingDistributionSummary`, `RecordedValues` | Package-private: Micrometer's step timer and summary, also keeping each recorded value until the registry takes it |
+| `ExternalCallRecorder` | Logs each call to a dependency (`LOGGING.md`) and records it as the timer `external.call.duration` and the distribution summary `external.call.failure` (0 or 1 per call), both tagged `dependency` and `operation`. `recordSuccess` and `recordFailure` (with the cause), not a boolean flag. It records a call it is given; it does not time one or keep its outcome. Each metric name is written once, at its one registration call, and the `dependency` tag key is `ExternalCallRecorder.DEPENDENCY_TAG`, which `DependencyAvailabilityMetrics` uses too. A service with its own `ExternalCallMetrics` replaces it ("A service built the old way") |
 
 Copy the bean method `MetricsConfig.emfMeterRegistry` too, but not its
 class. It creates and starts the registry only when `aws.emf.enabled`
 is true. When it is false, as in integration tests, Spring Boot's
-in-memory registry is used and nothing is published. Add the method to
+in-memory registry is used and nothing is published. It reads two more
+properties, both in address-book's `application.yml` under `aws.emf`:
+
+- `aws.emf.environment` (`${AWS_EMF_ENVIRONMENT:}`). Blank, the default,
+  leaves the EMF library to detect the environment; on CDP that is ECS,
+  sending to the platform's `AWS_EMF_AGENT_ENDPOINT`. Set it to `Local`
+  to write the EMF documents to stdout.
+- `aws.emf.step` (`${AWS_EMF_STEP:1m}`), bound to a `Duration` and passed
+  to `new EmfMeterRegistry(namespace, step, Clock.SYSTEM,
+  MetricsLogger::new)`: how often the registry publishes.
+
+Add the method to
 the service's existing `MetricsConfig` in its `configuration` package,
 not to a new class in `metrics`. Keep that class's `TimedAspect` bean:
 `@Timed` records nothing without it. `@Counted` needs its
@@ -113,7 +124,9 @@ address-book.
   `cache.*` meters. That allowlist is the one
   control of what is published. It also decides what Spring Boot's own
   meters publish: on address-book it had silenced its repository and
-  Mongo timers.
+  Mongo timers. Allowing a meter type `EmfMeterRegistry` does not
+  publish still publishes nothing: `http.server.requests.active` is a
+  long task timer, so address-book leaves it off.
 - **`@Timed` works only through a Spring proxy.** The method must be
   public and called from another bean. A private method, or one called
   from inside its own class, is never timed, with no error. An
@@ -129,11 +142,11 @@ address-book.
   own thread. Remove the annotation if nothing else uses it.
 - **A metric never breaks a request.** Recording a Micrometer meter does
   not throw, and publishing happens on the registry's thread.
-- **A step meter's `count()` is the last completed minute's,** not the
+- **A step meter's `count()` is the last completed step's,** not the
   running one. In a test with the registry switched on, assert on
   registration; with it off (Spring Boot's in-memory registry), counts
   are running totals and can be asserted.
-- **Values are timestamped when published,** up to a minute after they
+- **Values are timestamped when published,** up to a step after they
   were recorded.
 - **Caches** `[UNPROVEN]`, not yet done this way on a service: the
   counters `cache.hit` and `cache.miss`, tagged `cache` with the cache's
@@ -287,10 +300,10 @@ address-book's tests are the ones to copy.
 
 | Test | Proves |
 |---|---|
-| `EmfMeterRegistryTest` (copied as it is), with `CapturingEmfEnvironment` and a `MockClock` | The EMF documents: namespace, tags as the only dimensions, every recorded value, units, counters per minute, gauges skipped while NaN, more than 100 values split, one bad meter not stopping the rest |
+| `EmfMeterRegistryTest` (copied as it is), with `CapturingEmfEnvironment` and a `MockClock` | The EMF documents: namespace, tags as the only dimensions, every recorded value, units, counters per step, gauges skipped while NaN, more than 100 values split, one bad meter not stopping the rest |
 | A unit test per metrics class, with a `SimpleMeterRegistry` | Each meter's name, tags and recorded values |
-| An integration test with `aws.emf.enabled=true` (`EmfMeterRegistryIT`), with `EnvironmentConfigurationProvider.getConfig().setEnvironmentOverride(Environments.Local)` so EMF writes to the console | The registry is the one in use, and every custom metric name is let through the allowlist: each is recorded, then `meterRegistry.find(name)` is not null. A denied meter is never registered, so a missing or misspelled allowlist entry turns it red |
-| An integration test with `aws.emf.enabled=true` that records a call and waits up to 2 minutes for an EMF document on the console (`EmfMeterRegistryIT`) | The registry publishes on its own thread once started. Turns red if `MetricsConfig` does not call `start` |
+| An integration test with `aws.emf.enabled=true`, `aws.emf.environment=Local` and `aws.emf.step=1s` in its `@TestPropertySource` (`EmfMeterRegistryIT`), so EMF writes to the console every second | The registry is the one in use, and every custom metric name is let through the allowlist: each is recorded, then `meterRegistry.find(name)` is not null. A denied meter is never registered, so a missing or misspelled allowlist entry turns it red |
+| The same integration test records a call and waits up to 10 seconds for an EMF document on the console, captured with `testsupport/CapturedConsole` | The registry publishes on its own thread once started. Turns red if `MetricsConfig` does not call `start` |
 | An integration test per annotated class (`AddressTimingIT`) | Each `@Timed` method, called through the Spring proxy, adds one call to its own timer. Turns red if the allowlist lacks the prefix |
 | An integration test with the dependency failing (`ExternalCallRecorderIT`: a command the server rejects, and a duplicate-key insert) | The failure is recorded against the right dependency and operation |
 | The existing health check test | `/health` is still `UP` with no components |

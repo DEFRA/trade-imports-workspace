@@ -49,8 +49,11 @@ them, so playing one of those stops at the pre-flight. Six do today:
 
 `reference-lists`, `arrival-and-transit` and `design-snagging` pass: they have nothing new, only requirements whose
 text changed. **Those the check deliberately does not refuse**, because a change may have been judged and declined —
-commodities-and-reason carries 10 such on purpose. Read them from
-`tim distil coverage shared/design-release-2-1 --json` (`result.backlog.splitOff[].changed`) and judge each.
+commodities-and-reason carried 10 such, all of them judged at its 3 November pre-flight: eight were ruled out of
+scope as MDM list content and two (req-166, req-180) were applied, so it now carries none. Read a theme's own from
+`tim distil coverage shared/design-release-2-1 --json` (`result.backlog.splitOff[].changed`) and judge each. Judging
+one is not optional bookkeeping: all three of commodities-and-reason's inc-022 criteria turned out to cite claims
+conflict c-332 lists as overruled, so the row would have built behaviour the 26 October ruling had withdrawn.
 
 ## Stale branches (ruled 20 October)
 
@@ -61,7 +64,7 @@ merged in through the loop (see its section below).
 | Theme | Stale branch | Rows left | Open PRs to close when the theme is played |
 |---|---|---|---|
 | Type question and templates (EUDPA-690) | `feat/NO_JIRA-design-release-2-1-type-question-and-templates` | 19 | animals frontend #398, animals backend #106, INS frontend #45, plants frontend #92, tests #20 |
-| Commodities and import reason (EUDPA-693) | `feat/EUDPA-693-design-release-2-1-commodities-and-reason` | 13, of which 11 todo | animals frontend #401, tests #23, performance tests #17 |
+| ~~Commodities and import reason (EUDPA-693)~~ **played 3 Nov, drained 5 Nov** | `feat/EUDPA-693-design-release-2-1-commodities-and-reason` — still the quarry, do not delete | 0 to build on `feat/EUDPA-693-commodities-and-reason`: 14 done, 2 blocked on MDM (inc-029, inc-249), 3 dropped | ~~animals frontend #401, tests #23, performance tests #17~~ — all closed 3 Nov, superseded by #456, #79, #30 and workspace #216 |
 | Arrival and transit (EUDPA-694) | `feat/EUDPA-694-design-release-2-1-arrival-and-transit` | 3 to build: reused, not stale (2 November); inc-240 landed 3 November | none: the theme builds on these PRs again |
 | Origin page (EUDPA-695) | `feat/EUDPA-695-design-release-2-1-origin-page` | 0: retired | animals frontend #403, plants frontend #96, tests #25 (close once design snagging lands) |
 | Overview and review (EUDPA-696) | `feat/EUDPA-696-design-release-2-1-overview-and-review` | 21 | animals frontend #404, animals backend #107, INS frontend #51, plants frontend #98, tests #26 |
@@ -78,8 +81,9 @@ merged in through the loop (see its section below).
 - `themes.json` marks each of these themes with `staleBranch`. What changed row by row is in
   [`../snagging/trim.md`](../snagging/trim.md).
 
-Before the performance tests PR #17 is closed, check whether bbc6e24 (EUDPA-676, #21) reached `main` under another
-sha: the stale branch carries it.
+~~Before the performance tests PR #17 is closed, check whether bbc6e24 (EUDPA-676, #21) reached `main` under another
+sha: the stale branch carries it.~~ **Checked and closed 3 November:** `bbc6e24` is reachable from `origin/main`
+under its own sha via #21, so nothing was lost.
 
 On the build machine, pull the workspace branch `feat/NO_JIRA-design-release-2-1` first. Then run
 `tim workspace branch <theme branch>`, open Claude Code at the workspace root and say the phrase for the theme.
@@ -239,15 +243,30 @@ To check nothing has drifted: "which theme tickets are stale". Tickets and their
 - **Old PRs to close when played:** animals frontend #398, animals backend #106, INS frontend #45, plants frontend #92,
   tests #20. The type question theme's PRs replace the type question half of them.
 
-## Commodities and import reason: EUDPA-693 (stale branch)
+## Commodities and import reason: EUDPA-693 (played 3 November)
 
-- **Ticket:** [EUDPA-693](https://eaflood.atlassian.net/browse/EUDPA-693)
-- **Stale branch:** `feat/EUDPA-693-design-release-2-1-commodities-and-reason`. Salvage from it. EUDPA-617 rewrote the
-  whole commodity search feature on 27 October, so the search-related salvage commits will not apply: rebuild from
-  `main`, do not rebase.
-- **When played:** a fresh branch from `main`. Both `landsAfter` conditions are now met — journey foundation merged
+- **Ticket:** [EUDPA-693](https://eaflood.atlassian.net/browse/EUDPA-693) — **In Dev** since the loop started.
+- **Branch:** `feat/EUDPA-693-commodities-and-reason`, cut fresh from `main` on 3 November in this repo, the animals
+  frontend, the tests repo and the performance tests.
+- **Pull requests** (draft, opened empty before the launch — under `e2e: "ci"` the loop's preflight refuses a repo
+  with no open pull request, because CI publishes no branch image for one and the end-to-end run would test that
+  repo's `:latest` instead of the branch):
+  - [animals frontend #456](https://github.com/DEFRA/trade-imports-animals-frontend/pull/456)
+  - [tests #79](https://github.com/DEFRA/trade-imports-ins-tests/pull/79)
+  - [performance tests #30](https://github.com/DEFRA/trade-imports-performance-tests/pull/30)
+- **Say:** "run the increment build loop on shared/design-release-2-1/themes/commodities-and-reason, branch lifecycle
+  on feat/EUDPA-693-commodities-and-reason"
+- **Pre-flight walked 3 November**, 13 items. req-094 to req-101 ruled out of scope as MDM list content under claim
+  25 (recorded in `deferred.md`); the three repo extracts verified by date rather than reset, the only unverified
+  change being tests `57f2716`, today's ostrich latin name; inc-029's blocker re-checked against current `main` and
+  still real; and inc-022 dropped for **inc-246**, because all three of its criteria cited claims conflict c-332
+  lists as overruled. See commit `74788b4e`.
+- **Stale branch:** `feat/EUDPA-693-design-release-2-1-commodities-and-reason`, kept as the salvage quarry — do not
+  delete. EUDPA-617 rewrote the whole commodity search feature on 27 October, so the search-related salvage commits
+  will not apply: rebuild from `main`, do not rebase. Its pull requests #401, #23 and #17 were closed on 3 November.
+- **Both `landsAfter` conditions were met before it was played** — journey foundation merged
   13 October, design snagging part A 23 October — so the theme is playable.
-- **Rows:** 13, of which 11 todo, 1 dropped (inc-012) and 1 blocked (inc-029), after the 2 November re-analysis and the re-distil pick-up
+- **Rows:** 14, of which 11 todo, 2 dropped (inc-012 and inc-022) and 1 blocked (inc-029), after the 2 November re-analysis, the re-distil pick-up and the 3 November pre-flight walk
   ([`../reanalysis/REPORT-commodities-and-reason-2026-11-02.md`](../reanalysis/REPORT-commodities-and-reason-2026-11-02.md)).
   inc-011 and inc-020 were removed earlier: design snagging inc-205 and inc-207 port them to `main`. inc-021 was
   removed and inc-015's Back links moved out: design snagging inc-218 builds them.
@@ -276,7 +295,9 @@ To check nothing has drifted: "which theme tickets are stale". Tickets and their
   one design question — the commodity heading in the journey is the bare CN code, because MDM holds no trader-facing
   name in any field. Fish needs nothing: it is absent from MDM and correct to be, since live aquatic animals are not
   a GBN-AG live-animal commodity and fish is managed under the IUU regime.
-- **Old PRs to close when played:** animals frontend #401, tests #23, performance tests #17.
+- **Old PRs:** animals frontend #401, tests #23 and performance tests #17 were **closed on 3 November** once the
+  fresh branch had its own. Before #17 was closed, `bbc6e24` (EUDPA-676, #21) was confirmed reachable from
+  `origin/main` under its own SHA, so nothing on the stale branch was lost.
 
 ## Arrival and transit: EUDPA-694 (branch reused)
 

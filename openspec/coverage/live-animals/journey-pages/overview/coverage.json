@@ -84,7 +84,7 @@
     {
       "id": "REQ-OVERVIEW-005",
       "name": "The Identification details task appears only once a chosen commodity requires it, and sits between Commodity details and Additional details",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-OVERVIEW-005-A",
@@ -109,6 +109,14 @@
           "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js", "test": "Should hide the identification row while no country of origin is saved", "strength": "full", "notes": "red with the hub hiding conditional rows only when not applicable" }
+          ]
+        },
+        {
+          "id": "SCN-OVERVIEW-005-D",
+          "name": "Choosing a commodity that needs no identifiers leaves the row out",
+          "coverage": "partial",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/poultry-rail-transit.spec.ts", "test": "walks a poultry-by-rail notification in transit from create to the review, with no identification task and every overview task complete", "strength": "partial", "notes": "no red probe run against this link; the walk's wait for the additional-details heading straight after commodity details, and the whole-list task assertion, both exercise the no-identification case" }
           ]
         }
       ]
@@ -240,7 +248,8 @@
           "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should appear as Optional for each overland means and complete once countries are added", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/transit-means-scope.spec.ts", "test": "the transit-countries page is routed only for rail or road; changing the means wipes saved countries", "strength": "partial", "notes": "not probed against a reverted line" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/transit-means-scope.spec.ts", "test": "the transit-countries page is routed only for rail or road; changing the means wipes saved countries", "strength": "partial", "notes": "not probed against a reverted line" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/poultry-rail-transit.spec.ts", "test": "walks a poultry-by-rail notification in transit from create to the review, with no identification task and every overview task complete", "strength": "partial", "notes": "no red probe run against this link; the walk saves two transit countries by rail and the whole-list task assertion then reads the row as Complete" }
           ]
         },
         {
@@ -272,14 +281,29 @@
           "name": "A saved arrival date more than 7 days in the past reads To do",
           "coverage": "none",
           "tests": [],
-          "notes": "The tests that prove this are only on an open Design Release 2.1 theme branch, not on main yet."
+          "notes": "No test in any suite witnesses this yet."
         },
         {
           "id": "SCN-OVERVIEW-013-B",
           "name": "A saved arrival date exactly 7 days in the past still reads Complete",
           "coverage": "none",
           "tests": [],
-          "notes": "The tests that prove this are only on an open Design Release 2.1 theme branch, not on main yet."
+          "notes": "No test in any suite witnesses this yet."
+        }
+      ]
+    },
+    {
+      "id": "REQ-OVERVIEW-014",
+      "name": "Additional details completes on its own two answers, whether or not Main import reason is saved",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-OVERVIEW-014-A",
+          "name": "The Additional details task walks To do, In progress and Complete on its own answers alone",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should walk the additional-details row through Not yet started, In progress and Completed on its own two answers, with no import reason saved", "strength": "full", "notes": "" }
+          ]
         }
       ]
     }

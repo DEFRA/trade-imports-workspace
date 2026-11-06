@@ -8,7 +8,7 @@ The identifier records entered for the animals of each species on a consignment:
 
 ### Requirement: The page opens with a summary of every commodity the notification holds, above one section per commodity
 **ID**: REQ-IDENT-001
-The system MUST show, above the identification sections, a summary table with one row per chosen commodity — one row per chosen species under commodity code 01061900 — listing its code, the Latin names of its species and its number of animals (the total of that commodity's species), and MUST offer a Change link from each summary row back to commodity selection, showing what is already chosen, where saving returns the user to identification details.
+The system MUST show, above the identification sections, a summary table with one row per chosen commodity — one row per chosen species under commodity code 01061900 — listing its code, the labels of its species and its number of animals (the total of that commodity's species), and MUST offer a Change link from each summary row back to commodity selection, showing what is already chosen, where saving returns the user to identification details.
 
 #### Scenario: The summary lists every commodity with its species and a change link, ahead of the sections
 **ID**: SCN-IDENT-001-A
@@ -17,18 +17,18 @@ The system MUST show, above the identification sections, a summary table with on
 - **THEN** a summary table headed Commodity code, Species and Number of animals lists every commodity, ahead of the identification sections
 - **AND** each row offers a Change link that opens commodity selection
 
-#### Scenario: Two species of one commodity share a row listing both Latin names and their total
+#### Scenario: Two species of one commodity share a row listing both labels and their total
 **ID**: SCN-IDENT-001-B
 - **GIVEN** the user has chosen two species under one commodity (for example, two cattle species with 2 and 3 animals)
 - **WHEN** they open the identification details page
-- **THEN** the summary shows one row for that commodity code, listing both Latin names
+- **THEN** the summary shows one row for that commodity code, listing both labels
 - **AND** its number of animals is the total of the two species
 
 #### Scenario: Each species under commodity code 01061900 has its own row
 **ID**: SCN-IDENT-001-C
 - **GIVEN** the user has chosen a species under commodity code 01061900 (for example, a cat) and a species under another commodity
 - **WHEN** they open the identification details page
-- **THEN** the summary shows that species on its own row, with its Latin name and its own number of animals
+- **THEN** the summary shows that species on its own row, with its label and its own number of animals
 
 #### Scenario: Adding a commodity from a summary row's Change returns to identification details listing it
 **ID**: SCN-IDENT-001-D
@@ -133,7 +133,7 @@ The system MUST let the user add identifier records up to the declared number of
 **ID**: SCN-IDENT-007-B
 - **GIVEN** a species has two identifier records already entered
 - **WHEN** the user lowers that species' declared animal count to one and tries to save
-- **THEN** the save is blocked with an error naming the species and explaining that identifier records must be removed, or the higher count kept
+- **THEN** the save is blocked with an error naming the species by its label and explaining that identifier records must be removed, or the higher count kept
 - **AND** following the error opens that species' card within its commodity section
 - **WHEN** the user removes enough records to be at or under the new count
 - **THEN** the lower count then saves successfully
@@ -262,7 +262,7 @@ The system MUST show a heading reporting how many of a species' declared animal 
 **ID**: SCN-IDENT-017-A
 - **GIVEN** a species has a declared count of three and no records entered
 - **WHEN** the user views its card
-- **THEN** the heading reads "Enter details for Bos taurus 1 of 3" (for a cattle species)
+- **THEN** the heading reads "Enter details for Bos taurus (Domestic Cattle) 1 of 3" (for a cattle species)
 - **AND** that count changes as records are added to or removed from the species
 
 ### Requirement: The back link returns to Overview
@@ -287,13 +287,13 @@ The system MUST pass the user on, without showing the identification details pag
 
 ### Requirement: Identification is shown as one section per commodity holding one card per species
 **ID**: REQ-IDENT-020
-The system MUST show identification as one section per commodity code, headed with the code, holding one card per selected species that has identifier fields and a number of animals, in the order their species are listed for selection, each headed by the species name with a Change number of animals link, and MUST show no card for a species with no number of animals.
+The system MUST show identification as one section per commodity code, headed with the code, holding one card per selected species that has identifier fields and a number of animals, in the order their species are listed for selection, each headed by the species label with a Change number of animals link, and MUST show no card for a species with no number of animals.
 
 #### Scenario: A commodity with two species shows one section holding two cards
 **ID**: SCN-IDENT-020-A
 - **GIVEN** the user has chosen two cattle species, each with a number of animals, and a horse
 - **WHEN** they open the identification details page
-- **THEN** a section headed "0102" holds one card for each cattle species, each headed by its Latin name
+- **THEN** a section headed "0102" holds one card for each cattle species, each headed by its label
 - **AND** a separate section holds the horse's card
 
 #### Scenario: A species with no number of animals has no card

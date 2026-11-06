@@ -29,13 +29,13 @@ The system MUST list no species for a search of fewer than three characters, so 
 
 ### Requirement: A search can match a commodity's code or a species' common or Latin name
 **ID**: REQ-COMMODITY-SELECT-003
-The system MUST search the commodity reference data against a commodity's code and against a species' common name as well as its Latin name, MUST leave out every species under a commodity code the reference data flags as germinal, with no other filter on the code, and MUST offer each species by its Latin name alone, as the reference data spells it.
+The system MUST search the commodity reference data against a commodity's code and against a species' common name as well as its Latin name, MUST leave out every species under a commodity code the reference data flags as germinal, with no other filter on the code, and MUST offer each species by its label: its Latin name with its common name in round brackets, as the reference data spells both, or its Latin name alone where the reference data holds no common name for it.
 
-#### Scenario: Searching by common name offers each matching species under each live-animal code that lists it, by Latin name alone
+#### Scenario: Searching by common name offers each matching species under each live-animal code that lists it, by its Latin name with its common name in brackets
 **ID**: SCN-COMMODITY-SELECT-003-A
 - **GIVEN** the user is on the commodity selection page
 - **WHEN** they search by a species' common name
-- **THEN** each matching species is offered under each live-animal commodity code that lists it, by its Latin name alone
+- **THEN** each matching species is offered under each live-animal commodity code that lists it, by its Latin name with its common name in round brackets
 
 #### Scenario: A search offers no commodity code the reference data flags as germinal
 **ID**: SCN-COMMODITY-SELECT-003-B
@@ -43,17 +43,23 @@ The system MUST search the commodity reference data against a commodity's code a
 - **WHEN** the user searches by that species' common name
 - **THEN** the species is offered under the live-animal code only
 
-#### Scenario: Searching by commodity code offers the species that search returns under that code, by Latin name alone
+#### Scenario: Searching by commodity code offers the species that search returns under that code, by its Latin name with its common name in brackets
 **ID**: SCN-COMMODITY-SELECT-003-C
 - **GIVEN** the user is on the commodity selection page
 - **WHEN** they search for a live-animal commodity code whose search lists no more than a hundred species
-- **THEN** those species are offered under that code, each by its Latin name alone
+- **THEN** those species are offered under that code, each by its Latin name with its common name in round brackets
 
-#### Scenario: Searching by a species' Latin name, or one word of it, offers that species under each live-animal code that lists it, by Latin name alone
+#### Scenario: Searching by a species' Latin name, or one word of it, offers that species under each live-animal code that lists it, by its Latin name with its common name in brackets
 **ID**: SCN-COMMODITY-SELECT-003-D
 - **GIVEN** the user is on the commodity selection page
 - **WHEN** they search by a species' Latin name, or one word of it
-- **THEN** that species is offered under each live-animal code that lists it, by its Latin name alone
+- **THEN** that species is offered under each live-animal code that lists it, by its Latin name with its common name in round brackets
+
+#### Scenario: A species the reference data holds no common name for is offered by its Latin name alone
+**ID**: SCN-COMMODITY-SELECT-003-E
+- **GIVEN** the reference data holds no common name for a species a search matches
+- **WHEN** the results are shown
+- **THEN** that species is offered by its Latin name alone, with no brackets
 
 ### Requirement: Matching species are grouped under the commodity they belong to, one group per matching commodity
 **ID**: REQ-COMMODITY-SELECT-004
@@ -135,17 +141,42 @@ The system MUST return the user to the origin of the import page when they follo
 - **WHEN** they follow the back link
 - **THEN** commodity details is shown
 
-### Requirement: The tally counts what has been chosen and can be cleared
+### Requirement: The tally lists what has been chosen, offers a remove for each species, and can be cleared
 **ID**: REQ-COMMODITY-SELECT-008
-The system MUST report how many species have been chosen and name them, and MUST let the user clear the whole selection at once.
+The system MUST report how many species have been chosen, showing each chosen commodity as a bold heading followed by one entry per chosen species' label, MUST offer each entry a control whose accessible name is "Remove" followed by that species' label, which removes it and leaves the rest chosen, MUST let the user clear the whole selection at once, and MUST refuse a removal naming a species the page never offered.
 
-#### Scenario: The tally reports the choice and clearing empties it
+#### Scenario: The tally reports the choice as a bold commodity line and its species, and clearing empties it
 **ID**: SCN-COMMODITY-SELECT-008-A
 - **GIVEN** the user has chosen one species on the commodity selection page
 - **WHEN** the page next renders
-- **THEN** the tally reports one chosen and names it
+- **THEN** the tally reports one chosen, showing the commodity as a bold line with the species beneath it
+- **AND** each entry offers a control whose accessible name is "Remove" followed by that species' label
 - **WHEN** the user clears the selection
 - **THEN** the tally is no longer shown
+
+#### Scenario: Removing one chosen species leaves the other chosen
+**ID**: SCN-COMMODITY-SELECT-008-B
+- **GIVEN** the user has chosen two species under different commodities
+- **WHEN** they use the remove control named for one of them
+- **THEN** that species is gone from the tally, the other is still chosen, and the results on screen are still listed
+
+#### Scenario: With JavaScript off, searching, removing a species and clearing all still work
+**ID**: SCN-COMMODITY-SELECT-008-C
+- **GIVEN** the user has JavaScript turned off
+- **WHEN** they search, remove one chosen species, and clear the selection
+- **THEN** each of the three works
+
+#### Scenario: Unticking a shown species and then removing it leaves it unchosen without an error
+**ID**: SCN-COMMODITY-SELECT-008-D
+- **GIVEN** a species whose tick box is on screen and ticked
+- **WHEN** the user clears that tick box and then uses that species' remove control
+- **THEN** the page is shown with that species not chosen and the other choices still chosen, not an error page
+
+#### Scenario: A removal naming a species the page never offered is refused and changes nothing
+**ID**: SCN-COMMODITY-SELECT-008-E
+- **GIVEN** a removal naming a species the page's results and the saved commodity lines have never held, however it was submitted
+- **WHEN** the page responds
+- **THEN** the request is refused, no page is rendered back, and the selection is unchanged
 
 ### Requirement: Saving without choosing a commodity is rejected on either save control
 **ID**: REQ-COMMODITY-SELECT-009
@@ -257,5 +288,31 @@ The system MUST list no more than a hundred species for one search.
 #### Scenario: A search matching more than a hundred species lists a hundred
 **ID**: SCN-COMMODITY-SELECT-014-A
 - **GIVEN** the user is on the commodity selection page
-- **WHEN** they search for a commodity code holding more than a hundred species
+- **WHEN** they search for a term matching more than a hundred species
 - **THEN** a hundred species are listed
+
+### Requirement: Search results are listed in order: commodity heading, then species label
+**ID**: REQ-COMMODITY-SELECT-015
+The system MUST list a search's matching commodity groups in order of their heading, and MUST list each group's species in order of the label they are offered under.
+
+#### Scenario: A search lists its groups and species alphabetically
+**ID**: SCN-COMMODITY-SELECT-015-A
+- **GIVEN** a search whose commodity lists its species in another order
+- **WHEN** the results are shown
+- **THEN** the species are listed in label order under their commodity heading, and the commodity groups are in heading order
+
+### Requirement: The part of a heading or label the search matched is shown in bold
+**ID**: REQ-COMMODITY-SELECT-016
+The system MUST show, in bold, the part of a commodity heading or a species label that the search query matched, matching without regard to case or accents, and MUST leave the rest of the heading's or label's own reading unchanged.
+
+#### Scenario: A search bolds the part of a species label it matched
+**ID**: SCN-COMMODITY-SELECT-016-A
+- **GIVEN** a search for part of a species' label
+- **WHEN** the results are shown
+- **THEN** that part of the label is in bold and the rest is not
+
+#### Scenario: A search bolds the part of a commodity heading it matched
+**ID**: SCN-COMMODITY-SELECT-016-B
+- **GIVEN** a search for part of a commodity heading
+- **WHEN** the results are shown
+- **THEN** that part of the heading is in bold and the rest is not

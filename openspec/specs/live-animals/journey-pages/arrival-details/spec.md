@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Asks how and when the consignment arrives at its port of entry, and confines the arrival date to the window the service accepts. The page is titled "Arrival details".
+Asks how and when the consignment arrives at its port of entry, and confines the arrival date to the window the service accepts. The page is titled "Arrival details". The means of transport is the one answer the page needs before it goes on; the arrival date, port of entry, transport identification and document reference can all be left for later.
 
 ## Requirements
 
@@ -100,7 +100,7 @@ The system MUST refuse to save the arrival details page, on both "Save and conti
 
 #### Scenario: Save and continue with no means of transport is refused
 **ID**: SCN-ARRIVAL-006-A
-- **GIVEN** the user is on the arrival details page with nothing answered
+- **GIVEN** the user is on the arrival details page with no means of transport chosen
 - **WHEN** they save and continue
 - **THEN** they stay on the arrival details page
 - **AND** the error summary and the means of transport both show "Select a means of transport to the port of entry"
@@ -112,6 +112,13 @@ The system MUST refuse to save the arrival details page, on both "Save and conti
 - **WHEN** they save and continue
 - **THEN** the port of entry and arrival date are shown back
 - **AND** re-opening the page from the overview shows them empty
+
+#### Scenario: Save and return to overview refuses the save the same way
+**ID**: SCN-ARRIVAL-006-C
+- **GIVEN** the user has chosen a port of entry and no means of transport
+- **WHEN** they select "Save and return to overview"
+- **THEN** they remain on the arrival details page with the same error, the port they chose still shown
+- **AND** reopening the task from Overview shows no saved port
 
 ### Requirement: The arrival date is confined to one week back and six months ahead
 **ID**: REQ-ARRIVAL-007

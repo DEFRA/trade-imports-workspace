@@ -8,7 +8,7 @@ Asks how much of each chosen species the consignment carries — one number of a
 
 ### Requirement: The page asks a number of animals, and where owed a number of packages, per species chosen — starting empty
 **ID**: REQ-COMMODITY-DETAILS-001
-The system MUST ask, for every species the user chose on the previous page, a number of animals and, where that species' commodity calls for one, a number of packages, grouping each species' questions under its own heading, its Latin name, nested under a heading of its commodity code, offering a save-and-continue action, and MUST leave every field empty when the page is first opened.
+The system MUST ask, for every species the user chose on the previous page, a number of animals and, where that species' commodity calls for one, a number of packages, grouping each species' questions under its own heading, its label, nested under a heading of its commodity code, offering a save-and-continue action, and MUST leave every field empty when the page is first opened.
 
 #### Scenario: The page presents one set of questions per chosen species, all empty
 **ID**: SCN-COMMODITY-DETAILS-001-A
@@ -20,7 +20,7 @@ The system MUST ask, for every species the user chose on the previous page, a nu
 
 ### Requirement: A complete set of commodity details is accepted
 **ID**: REQ-COMMODITY-DETAILS-002
-The system MUST accept the commodity details once every species' number of animals is given, along with a number of packages for any species whose commodity calls for one, saving them without error.
+The system MUST accept the commodity details once every species' number of animals is given, along with a number of packages for any species whose commodity calls for one, saving them without error. Pressing Enter in a quantity field MUST save the page's counts rather than removing a species or commodity.
 
 #### Scenario: Entering the counts for every species saves without error
 **ID**: SCN-COMMODITY-DETAILS-002-A
@@ -28,15 +28,21 @@ The system MUST accept the commodity details once every species' number of anima
 - **WHEN** they enter a number of animals, and a number of packages where asked for, for every species, then save and continue
 - **THEN** the answers are saved and no error summary is shown
 
+#### Scenario: Pressing Enter in a quantity field saves the counts
+**ID**: SCN-COMMODITY-DETAILS-002-B
+- **GIVEN** the user has entered valid counts for every species
+- **WHEN** they press Enter in a quantity field
+- **THEN** the counts are saved and the page the primary save leads to is shown
+
 ### Requirement: A collection table lists the chosen commodities and species, each row removable on its own
 **ID**: REQ-COMMODITY-DETAILS-003
-The system MUST list the chosen commodities in a table with the columns "Commodity code" and "Species", one row per commodity code (one per species under code 01061900), the Species cell giving each species' Latin name. The user MUST be able to remove a row on its own: a commodity row drops all its species, a species row drops only that species, and no removal affects another row's saved counts. Removing a code's last species removes its row.
+The system MUST list the chosen commodities in a table with the columns "Commodity code" and "Species" — one row per commodity code, except under commodity code 01061900, where each chosen species has its own row — the Species cell listing the label of each species chosen under that row, and MUST let the user remove any row on its own, with no effect on another row's saved counts.
 
 #### Scenario: The table lists each commodity with its code
 **ID**: SCN-COMMODITY-DETAILS-003-A
 - **GIVEN** the user has chosen more than one species
 - **WHEN** they view the commodity details page
-- **THEN** the table lists each commodity by its code and the Latin name of each species chosen under it; one row per code except under code 01061900 (see SCN-COMMODITY-DETAILS-003-C)
+- **THEN** the table lists each commodity by its code and the label of each species chosen under it; one row per code except under code 01061900 (see SCN-COMMODITY-DETAILS-003-C)
 
 #### Scenario: Removing one species leaves another's saved counts untouched
 **ID**: SCN-COMMODITY-DETAILS-003-B
@@ -48,16 +54,16 @@ The system MUST list the chosen commodities in a table with the columns "Commodi
 **ID**: SCN-COMMODITY-DETAILS-003-C
 - **GIVEN** the user has chosen a species under commodity code 01061900 (for example, cats) alongside one under another code
 - **WHEN** they view the commodity details page
-- **THEN** the 01061900 species has its own row, with the commodity's code and the species' Latin name
+- **THEN** the 01061900 species has its own row, with the commodity's code and the species' label
 - **AND** removing that row drops only that species, while a row under any other code removes its whole commodity
 - **AND** removing the last species under a commodity removes that commodity's row too
 
-#### Scenario: Each row's Species cell lists the Latin names chosen under it
+#### Scenario: Each row's Species cell lists the labels chosen under it
 **ID**: SCN-COMMODITY-DETAILS-003-D
 - **GIVEN** the user has chosen two species under commodity code 0102
 - **WHEN** they view the commodity details page
 - **THEN** the table has the columns "Commodity code" and "Species"
-- **AND** the 0102 row reads 0102 and the Latin name of each of the two species
+- **AND** the 0102 row reads 0102 and the label of each of the two species
 
 ### Requirement: A number of animals or a number of packages must be a positive whole number
 **ID**: REQ-COMMODITY-DETAILS-004
@@ -176,3 +182,51 @@ Outside an amendment the system MUST end the commodity details page with "Save a
 - **GIVEN** the user is in the opening sequence on commodity details
 - **WHEN** the page is shown
 - **THEN** it offers "Save and continue", "Save and return to overview" and "Cancel and return to overview"
+
+### Requirement: A removal keeps what the user has typed, and names the row it removes
+**ID**: REQ-COMMODITY-DETAILS-012
+The system MUST keep, after a removal, the numbers already typed into the rows that stay, showing them back in their own fields, and MUST name the removed row rather than its position, so a removal naming a row the selection no longer holds shows the page as it stands rather than removing a different row.
+
+#### Scenario: Numbers typed into other rows survive a removal
+**ID**: SCN-COMMODITY-DETAILS-012-A
+- **GIVEN** the user has typed numbers into more than one species' fields and has not yet saved
+- **WHEN** they remove one row
+- **THEN** that row is gone from the table and from the selection
+- **AND** every other species' field still holds the number typed into it
+
+#### Scenario: A removal submitted again shows the page as it stands rather than removing another row
+**ID**: SCN-COMMODITY-DETAILS-012-B
+- **GIVEN** the user has removed a row
+- **WHEN** the same removal is submitted again
+- **THEN** the commodity details page is shown holding the rows the first removal left, with nothing further removed
+
+### Requirement: A number of animals or a number of packages above the largest the service stores is refused on its own field
+**ID**: REQ-COMMODITY-DETAILS-013
+The system MUST refuse a number of animals, and a number of packages, above 2,147,483,647, the largest figure the service stores for either, with an error against that species' own field — "Number of animals must be 2,147,483,647 or fewer" or "Number of packages must be 2,147,483,647 or fewer" — keeping what the user typed, and MUST accept either number at or below that figure.
+
+#### Scenario: A number of animals above the largest the service stores is refused on its own field
+**ID**: SCN-COMMODITY-DETAILS-013-A
+- **GIVEN** the user is entering a number of animals for one species
+- **WHEN** they enter a number above 2,147,483,647 and save
+- **THEN** the save is blocked, with the error "Number of animals must be 2,147,483,647 or fewer" against that species' own field
+- **AND** the field still shows the digits they typed
+
+#### Scenario: A number of animals at the largest the service stores is accepted
+**ID**: SCN-COMMODITY-DETAILS-013-B
+- **GIVEN** the user is entering a number of animals for one species
+- **WHEN** they enter 2,147,483,647 and save
+- **THEN** the save is not blocked and the journey moves on
+- **AND** reopening the page shows the figure that was saved
+
+#### Scenario: A number of packages above the largest the service stores is refused on its own field
+**ID**: SCN-COMMODITY-DETAILS-013-C
+- **GIVEN** the user is entering a number of packages for one species
+- **WHEN** they enter a number above 2,147,483,647 and save
+- **THEN** the save is blocked, with the error "Number of packages must be 2,147,483,647 or fewer" against that species' own field
+- **AND** the field still shows the digits they typed
+
+#### Scenario: A number of packages at the largest the service stores is accepted
+**ID**: SCN-COMMODITY-DETAILS-013-D
+- **GIVEN** the user is entering a number of packages for one species
+- **WHEN** they enter 2,147,483,647 and save
+- **THEN** the save is not blocked and the journey moves on

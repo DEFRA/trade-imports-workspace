@@ -384,23 +384,50 @@ Outside an amendment, the system MUST end a page the hub links to directly, othe
 - **THEN** "Save and return" and "Save and continue" sit side by side
 - **AND** "Save and return to overview" sits on its own line below them
 
-### Requirement: A notification started from the Import Notification Service's type question opens at the entry page with its opening sequence begun
+### Requirement: While a notification is being amended, each save button makes the page's own checks before it goes anywhere
 **ID**: REQ-FLOW-015
+While a notification is being amended, the system MUST make each of a page's save buttons pass the page's own checks before it saves or leaves the page, so a missing or invalid answer keeps the user on the page with an error for each and nothing saved.
+
+#### Scenario: Save and return refuses a partly answered reveal while amending
+**ID**: SCN-FLOW-015-A
+- **GIVEN** the main import reason page of a notification being amended, with "Transit" chosen and its port of exit and destination country left blank
+- **WHEN** the user selects "Save and return"
+- **THEN** they stay on the page, which shows an error for each missing answer
+- **AND** nothing is saved
+
+### Requirement: Save and return to overview inside the opening sequence goes to Overview, not the sequence's next step
+**ID**: REQ-FLOW-016
+The system MUST send the user to Overview, not the opening sequence's next step, when they choose Save and return to overview from a step of the sequence.
+
+#### Scenario: Save and return to overview inside the sequence goes to Overview rather than the next step
+**ID**: SCN-FLOW-016-A
+- **GIVEN** the user is in the opening sequence on main import reason, with the reason and the question it opens answered
+- **WHEN** they select "Save and return to overview"
+- **THEN** Overview is shown, not commodity details
+
+#### Scenario: Save and return to overview from additional details inside the sequence goes to Overview rather than the next step
+**ID**: SCN-FLOW-016-B
+- **GIVEN** the user is in the opening sequence on additional details, with the certification question answered
+- **WHEN** they select "Save and return to overview"
+- **THEN** Overview is shown, not the port of entry
+
+### Requirement: A notification started from the Import Notification Service's type question opens at the entry page with its opening sequence begun
+**ID**: REQ-FLOW-017
 The system MUST, when a user chooses Live animals on the Import Notification Service's "What are you importing?" question, create a new draft notification and open it at the entry page with the opening sequence begun, exactly as starting from its own dashboard does.
 
 #### Scenario: Choosing Live animals opens a new draft at Origin of the import
-**ID**: SCN-FLOW-015-A
+**ID**: SCN-FLOW-017-A
 - **GIVEN** the user is on the Import Notification Service's "What are you importing?" question
 - **WHEN** they choose Live animals and continue
 - **THEN** a new draft is created and the "Origin of the import" page is shown with the Draft tag and its new reference
 - **AND** saving that page continues the opening sequence
 
 ### Requirement: On a draft, a page opened from a Change link on the review goes Back to the previous page of the opening sequence
-**ID**: REQ-FLOW-016
+**ID**: REQ-FLOW-018
 The system MUST, on a draft notification, give a page opened from a Change link on the review the Back link its opening-sequence step has, carrying the change so that saving there follows the page's own return path. A page whose opening-sequence Back link is Overview MUST keep Overview, the origin of the import page MUST keep the Back link it has without the Change link, and only upload documents MUST go Back to the review. While the notification is being amended, REQ-FLOW-013 governs instead.
 
 #### Scenario: Main import reason opened from its Change link goes Back to What are you importing?
-**ID**: SCN-FLOW-016-A
+**ID**: SCN-FLOW-018-A
 - **GIVEN** the review of a draft notification
 - **WHEN** the user follows the Change link for the reason for import
 - **THEN** the Back link on Main import reason opens What are you importing?
@@ -408,20 +435,20 @@ The system MUST, on a draft notification, give a page opened from a Change link 
 - **THEN** the review is shown
 
 #### Scenario: What are you importing? opened by that Back link continues to Commodity details
-**ID**: SCN-FLOW-016-B
+**ID**: SCN-FLOW-018-B
 - **GIVEN** What are you importing? opened by the Back link on Main import reason from a Change link
 - **WHEN** the user selects "Save and continue"
 - **THEN** Commodity details is shown
 - **AND** selecting "Save and continue" there shows the review
 
 #### Scenario: The origin of the import page keeps the Back link it has without a Change link
-**ID**: SCN-FLOW-016-C
+**ID**: SCN-FLOW-018-C
 - **GIVEN** the review of a draft notification
 - **WHEN** the user follows the Change link for the import details
 - **THEN** the Back link on the origin of the import page opens Overview
 
 #### Scenario: The pages whose opening-sequence Back link is Overview keep Overview from a Change link
-**ID**: SCN-FLOW-016-D
+**ID**: SCN-FLOW-018-D
 - **GIVEN** the review of a draft notification
 - **WHEN** the user follows a Change link that opens Identification details, Arrival details, Transporter details, Contact address for consignment or Consignment addresses
 - **THEN** the Back link on that page opens Overview

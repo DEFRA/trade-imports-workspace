@@ -58,6 +58,31 @@ not in the theme at the split: it is the row that took `main` into the branch
 after the pull request stopped running checks.
 
 
+### Commodities and reason — 36 scenarios, 8 files
+
+| Folder | Jira | Domain | Rows | Scenarios | Spec files |
+|---|---|---|---|---|---|
+| `commodities-and-reason-animals/` | [EUDPA-693](https://eaflood.atlassian.net/browse/EUDPA-693) | Live animals journey | 12 | 36 | 8 |
+
+One domain only: the theme changes nothing in plants or the front door, so the
+theme's totals and the domain's are the same 36 scenarios across the same 8
+files. The folder is new; the ticket is not — EUDPA-693 was the stub raised at
+split time to name the branch, filled in by the WRITE flow on 6 November, and
+`tickets.json` now records it under `animals` rather than `stub`.
+
+Twelve of the theme's nineteen rows appear in the table. Two are dropped and
+named in the description rather than left silent: inc-012, a commodity catalogue
+matching Design Release 2.1, and inc-022, keeping earlier answers on a blank
+main import reason. The other five — inc-019, inc-248, inc-249, inc-250 and
+inc-251 — changed only test suites or took `main` into the branch, so they carry
+no behaviour a reader can check. inc-029 is in the table with its blocked state
+shown, because it is work being held rather than work refused.
+
+`derived.json` reports 39 scenarios where this table says 36. The deriver tracks
+a scenario by its heading, so each of the three the 5 November spec catch-up
+renamed is counted twice — once textless under its old name, once under its new.
+36 is the number of distinct scenario ids, and the number the ticket carries.
+
 ### Origin page — 16 scenarios, 4 files
 
 | Folder | Jira | Domain | Rows | Scenarios | Spec files |
@@ -98,11 +123,17 @@ skill existed, so their descriptions are updated in place rather than created.
 
 ### Not yet ticketed
 
-Three themes are not fully drained, so their tickets would describe unfinished
-work: commodities and import reason (4 rows blocked on MDM commodities), overview
-and review (2 todo, 2 blocked) and type question and templates (9 rows held).
-Each still has only the stub raised at split time. Documents (EUDPA-724) is no longer among them: its theme drained on 27 October and its ticket is filled in. The ten unsplit themes in the
+Two themes are not fully drained, so their tickets would describe unfinished
+work: overview and review (2 todo, 2 blocked) and type question and templates
+(9 rows held). Each still has only the stub raised at split time. Two themes have
+left this list: documents (EUDPA-724) drained on 27 October, and commodities and
+reason (EUDPA-693) on 5 November — both filled in. The ten unsplit themes in the
 main backlog have no tickets at all.
+
+Commodities and reason drained with two rows still blocked, inc-029 and inc-249,
+both waiting on MDM. A theme is ticketed once no row is buildable, not once every
+row is done, so a blocked row is shown with its state rather than holding the
+whole ticket back.
 
 All three hang off epic **EUDPA-328**, "Catch up frontend with prototype".
 

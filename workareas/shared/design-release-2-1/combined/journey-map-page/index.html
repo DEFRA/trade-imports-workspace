@@ -1,0 +1,786 @@
+<title>Journey Page Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  :root {
+    --ground: #f6f3f2;
+    --surface: #ffffff;
+    --surface-sunk: #efeae9;
+    --ink: #1c1618;
+    --ink-soft: #5e565a;
+    --ink-faint: #8b8286;
+    --rule: #ddd4d4;
+    --rule-soft: #e9e2e2;
+    --accent: #7a2e3b;
+    --accent-soft: #f2e4e6;
+    --accent-edge: #d8bdc2;
+    --landed: #1e6b4e;
+    --landed-soft: #e2efe9;
+    --landed-edge: #b9d8cb;
+    --ahead: #8a5512;
+    --ahead-soft: #f6ebdc;
+    --ahead-edge: #e0c69f;
+    --waiting: #4f5a68;
+    --waiting-soft: #e8ebef;
+    --waiting-edge: #c4cdd7;
+    --shadow: 0 1px 2px rgba(28, 22, 24, .06), 0 8px 24px -16px rgba(28, 22, 24, .22);
+
+    --step: clamp(1rem, .6rem + 1.2vw, 1.4rem);
+    --measure: 66ch;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #171316;
+      --surface: #211a1d;
+      --surface-sunk: #1b1518;
+      --ink: #f3ebec;
+      --ink-soft: #b7abae;
+      --ink-faint: #8b7f83;
+      --rule: #3a3034;
+      --rule-soft: #2c2429;
+      --accent: #e3a2ad;
+      --accent-soft: #35232a;
+      --accent-edge: #5a3a43;
+      --landed: #76c7a4;
+      --landed-soft: #1b2b26;
+      --landed-edge: #2f4f43;
+      --ahead: #dfab6a;
+      --ahead-soft: #2c231a;
+      --ahead-edge: #4f3f2a;
+      --waiting: #a6b3c2;
+      --waiting-soft: #1e232a;
+      --waiting-edge: #3a434f;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .5), 0 10px 28px -18px rgba(0, 0, 0, .8);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #171316;
+    --surface: #211a1d;
+    --surface-sunk: #1b1518;
+    --ink: #f3ebec;
+    --ink-soft: #b7abae;
+    --ink-faint: #8b7f83;
+    --rule: #3a3034;
+    --rule-soft: #2c2429;
+    --accent: #e3a2ad;
+    --accent-soft: #35232a;
+    --accent-edge: #5a3a43;
+    --landed: #76c7a4;
+    --landed-soft: #1b2b26;
+    --landed-edge: #2f4f43;
+    --ahead: #dfab6a;
+    --ahead-soft: #2c231a;
+    --ahead-edge: #4f3f2a;
+    --waiting: #a6b3c2;
+    --waiting-soft: #1e232a;
+    --waiting-edge: #3a434f;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .5), 0 10px 28px -18px rgba(0, 0, 0, .8);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Source Sans 3", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 1.0625rem;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 62rem;
+    margin: 0 auto;
+    padding: clamp(2rem, 1rem + 4vw, 4.5rem) clamp(1.1rem, .6rem + 2vw, 2.5rem) 6rem;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(2.5rem, 1.5rem + 3vw, 4rem);
+  }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    font-size: .72rem;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0;
+  }
+
+  h1 {
+    font-family: Fraunces, "Iowan Old Style", Georgia, serif;
+    font-optical-sizing: auto;
+    font-weight: 600;
+    font-size: clamp(2.1rem, 1.3rem + 3.4vw, 3.4rem);
+    line-height: 1.04;
+    letter-spacing: -.015em;
+    text-wrap: balance;
+    margin: .5rem 0 0;
+  }
+
+  .standfirst {
+    max-width: var(--measure);
+    margin: 1.1rem 0 0;
+    font-size: 1.1875rem;
+    color: var(--ink-soft);
+  }
+
+  .standfirst strong { color: var(--ink); font-weight: 600; }
+
+  header .meta {
+    margin: 1.6rem 0 0;
+    padding-top: 1.1rem;
+    border-top: 1px solid var(--rule);
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem 1.4rem;
+    font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    font-size: .76rem;
+    color: var(--ink-faint);
+  }
+
+  /* ---- summary tiles ---- */
+
+  .tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .tile {
+    background: var(--surface);
+    padding: 1.1rem 1.25rem 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: .2rem;
+  }
+
+  .tile b {
+    font-family: Fraunces, Georgia, serif;
+    font-weight: 600;
+    font-size: 2.1rem;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.02em;
+  }
+
+  .tile span {
+    font-size: .8125rem;
+    color: var(--ink-soft);
+    text-wrap: balance;
+  }
+
+  .tile.is-landed b { color: var(--landed); }
+  .tile.is-ahead b { color: var(--ahead); }
+  .tile.is-waiting b { color: var(--waiting); }
+
+  /* ---- section furniture ---- */
+
+  section > h2 {
+    font-family: Fraunces, Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(1.4rem, 1.1rem + .9vw, 1.8rem);
+    line-height: 1.15;
+    letter-spacing: -.01em;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  section > .lede {
+    max-width: var(--measure);
+    margin: .6rem 0 0;
+    color: var(--ink-soft);
+  }
+
+  .section-head { margin-bottom: 1.6rem; }
+
+  /* ---- legend / filter ---- */
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+    margin-top: 1.4rem;
+  }
+
+  .legend .label {
+    font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    font-size: .72rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-right: .3rem;
+  }
+
+  .filter {
+    font: inherit;
+    font-size: .8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--rule);
+    background: var(--surface);
+    color: var(--ink-soft);
+    border-radius: 999px;
+    padding: .3rem .8rem;
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+  }
+
+  .filter:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .filter .dot {
+    width: .55rem;
+    height: .55rem;
+    border-radius: 50%;
+    background: currentColor;
+    flex: none;
+  }
+
+  .filter[data-state="landed"] { color: var(--landed); }
+  .filter[data-state="ahead"] { color: var(--ahead); }
+  .filter[data-state="waiting"] { color: var(--waiting); }
+
+  .filter[aria-pressed="true"] { border-color: currentColor; background: var(--surface-sunk); }
+  .filter[aria-pressed="false"] { opacity: .5; }
+
+  /* ---- the spine ---- */
+
+  .spine { display: flex; flex-direction: column; }
+
+  .band {
+    font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    font-size: .72rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    padding: 1.8rem 0 .7rem 3.4rem;
+  }
+
+  .band:first-child { padding-top: 0; }
+
+  .station {
+    position: relative;
+    display: grid;
+    grid-template-columns: 3.4rem 1fr;
+    align-items: start;
+  }
+
+  .station .rail {
+    position: relative;
+    align-self: stretch;
+    display: flex;
+    justify-content: center;
+    padding-top: 1.35rem;
+  }
+
+  .station .rail::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: -1px;
+    left: 50%;
+    width: 1px;
+    background: var(--rule);
+    transform: translateX(-.5px);
+  }
+
+  .station:last-child .rail::before { bottom: auto; height: 1.35rem; }
+
+  .station .pin {
+    position: relative;
+    z-index: 1;
+    width: 1.55rem;
+    height: 1.55rem;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 1px solid var(--accent-edge);
+    color: var(--accent);
+    font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    font-size: .7rem;
+    font-variant-numeric: tabular-nums;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .station .pin.off {
+    border-style: dashed;
+    border-color: var(--rule);
+    color: var(--ink-faint);
+    font-size: .8rem;
+  }
+
+  .station .body {
+    border-top: 1px solid var(--rule-soft);
+    padding: 1.05rem 0 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: .55rem;
+  }
+
+  .station:first-of-type .body, .band + .station .body { border-top: 0; padding-top: 1.05rem; }
+
+  .station .name {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: .25rem .7rem;
+  }
+
+  .station .name h3 {
+    font-family: Fraunces, Georgia, serif;
+    font-weight: 600;
+    font-size: 1.1875rem;
+    line-height: 1.25;
+    margin: 0;
+    letter-spacing: -.005em;
+  }
+
+  .station .slug {
+    font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    font-size: .74rem;
+    color: var(--ink-faint);
+  }
+
+  .chips { display: flex; flex-wrap: wrap; gap: .4rem; }
+
+  .chip {
+    font-size: .8125rem;
+    line-height: 1.3;
+    font-weight: 600;
+    border-radius: 2px;
+    padding: .22rem .55rem;
+    border: 1px solid;
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    transition: opacity .12s ease;
+  }
+
+  .chip .n {
+    font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    font-size: .72rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    opacity: .72;
+  }
+
+  .chip.landed { color: var(--landed); background: var(--landed-soft); border-color: var(--landed-edge); }
+  .chip.ahead { color: var(--ahead); background: var(--ahead-soft); border-color: var(--ahead-edge); }
+  .chip.waiting { color: var(--waiting); background: var(--waiting-soft); border-color: var(--waiting-edge); }
+  .chip.part {
+    color: var(--ahead);
+    background: var(--ahead-soft);
+    border-color: var(--ahead-edge);
+    border-left: 3px solid var(--landed-edge);
+  }
+
+  .chip.dim { opacity: .22; }
+
+  .station.dim .name h3, .station.dim .slug { opacity: .4; }
+
+  .note {
+    font-size: .875rem;
+    color: var(--ink-soft);
+    max-width: var(--measure);
+  }
+
+  /* ---- cards ---- */
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 1rem;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    box-shadow: var(--shadow);
+    padding: 1.15rem 1.25rem 1.3rem;
+    display: flex;
+    flex-direction: column;
+    gap: .6rem;
+  }
+
+  .card h3 {
+    font-family: Fraunces, Georgia, serif;
+    font-weight: 600;
+    font-size: 1.0625rem;
+    line-height: 1.25;
+    margin: 0;
+  }
+
+  .card p { margin: 0; font-size: .9375rem; color: var(--ink-soft); }
+
+  .card.flag {
+    background: var(--accent-soft);
+    border-color: var(--accent-edge);
+    box-shadow: none;
+  }
+
+  .card.flag h3 { color: var(--accent); }
+  .card.flag p { color: var(--ink); }
+
+  /* ---- theme table ---- */
+
+  .scroller { overflow-x: auto; border: 1px solid var(--rule); border-radius: 2px; background: var(--surface); }
+
+  table { border-collapse: collapse; width: 100%; min-width: 44rem; }
+
+  caption { text-align: left; padding: 0 0 .7rem; font-size: .875rem; color: var(--ink-soft); }
+
+  th, td {
+    text-align: left;
+    padding: .62rem .9rem;
+    border-bottom: 1px solid var(--rule-soft);
+    vertical-align: top;
+    font-size: .9375rem;
+  }
+
+  thead th {
+    font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    font-size: .7rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 500;
+    border-bottom: 1px solid var(--rule);
+    white-space: nowrap;
+  }
+
+  tbody tr:last-child th, tbody tr:last-child td { border-bottom: 0; }
+
+  tbody th {
+    font-weight: 600;
+    font-size: .9375rem;
+    white-space: nowrap;
+  }
+
+  td.num, th.num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+
+  td.wave {
+    font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    font-size: .8125rem;
+    color: var(--ink-faint);
+    white-space: nowrap;
+  }
+
+  td .where { color: var(--ink-soft); font-size: .875rem; }
+
+  .pill {
+    display: inline-block;
+    font-size: .75rem;
+    font-weight: 600;
+    border-radius: 999px;
+    padding: .1rem .5rem;
+    border: 1px solid;
+    white-space: nowrap;
+  }
+
+  .pill.landed { color: var(--landed); background: var(--landed-soft); border-color: var(--landed-edge); }
+  .pill.ahead { color: var(--ahead); background: var(--ahead-soft); border-color: var(--ahead-edge); }
+  .pill.waiting { color: var(--waiting); background: var(--waiting-soft); border-color: var(--waiting-edge); }
+  .pill.part { color: var(--ahead); background: var(--ahead-soft); border-color: var(--ahead-edge); border-left-width: 3px; border-left-color: var(--landed-edge); }
+  .pill.none { color: var(--ink-faint); background: var(--surface-sunk); border-color: var(--rule); }
+
+  footer {
+    border-top: 1px solid var(--rule);
+    padding-top: 1.4rem;
+    font-size: .875rem;
+    color: var(--ink-soft);
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    max-width: var(--measure);
+  }
+
+  footer code {
+    font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+    font-size: .8125rem;
+    color: var(--ink);
+    background: var(--surface-sunk);
+    border: 1px solid var(--rule-soft);
+    border-radius: 2px;
+    padding: .05rem .3rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+
+  @media (max-width: 34rem) {
+    .station { grid-template-columns: 2.4rem 1fr; }
+    .band { padding-left: 2.4rem; }
+  }
+</style>
+
+<script src="data.js"></script>
+
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow" id="eyebrow"></p>
+    <h1 id="heading"></h1>
+    <p class="standfirst" id="standfirst"></p>
+    <p class="meta" id="meta"></p>
+  </header>
+
+  <section aria-label="Summary">
+    <div class="tiles" id="tiles"></div>
+  </section>
+
+  <section id="spine">
+    <div class="section-head">
+      <h2>The journey, page by page</h2>
+      <p class="lede">Each page lists the themes that change it. A theme's colour says where that whole
+        theme stands, and the number is how many pieces of work it carries.</p>
+      <div class="legend">
+        <span class="label">Show</span>
+        <button class="filter" type="button" data-state="landed" aria-pressed="true"><span class="dot"></span>Landed</button>
+        <button class="filter" type="button" data-state="ahead" aria-pressed="true"><span class="dot"></span>Ahead of us</button>
+        <button class="filter" type="button" data-state="waiting" aria-pressed="true"><span class="dot"></span>Held</button>
+      </div>
+    </div>
+    <div class="spine" id="spine-list"></div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>Pages Design Release 2.1 adds</h2>
+      <p class="lede">These do not exist in the service yet. They arrive with the theme named on each.</p>
+    </div>
+    <div class="cards" id="arriving"></div>
+  </section>
+
+  <section id="cross-cutting-section">
+    <div class="section-head">
+      <h2>Themes that touch every page</h2>
+      <p class="lede" id="cross-cutting-lede"></p>
+    </div>
+    <div class="cards" id="cross-cutting"></div>
+  </section>
+
+  <section id="elsewhere-section">
+    <div class="section-head">
+      <h2 id="elsewhere-heading"></h2>
+      <p class="lede">Worth saying plainly, because they appear in the same backlog and the same waves.</p>
+    </div>
+    <div class="cards" id="elsewhere"></div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>The same thing the other way round</h2>
+      <p class="lede">Every theme, the wave it lands in, and the pages it changes.</p>
+    </div>
+    <div class="scroller">
+      <table>
+        <caption>Waves are the agreed landing order. A theme with no wave is a follow-on to the one above it.</caption>
+        <thead>
+          <tr>
+            <th scope="col">Theme</th>
+            <th scope="col" class="num">Wave</th>
+            <th scope="col" class="num">Work</th>
+            <th scope="col">Where it stands</th>
+            <th scope="col">Pages it changes</th>
+          </tr>
+        </thead>
+        <tbody id="theme-rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer id="footer"></footer>
+
+</div>
+
+<script>
+  const DATA = window.DATA
+  const THEMES = DATA.themes
+
+  const el = (tag, cls, text) => {
+    const node = document.createElement(tag)
+    if (cls) node.className = cls
+    if (text !== undefined) node.textContent = text
+    return node
+  }
+
+  const plural = (n, one, many) => n + ' ' + (n === 1 ? one : many)
+
+  /* ---- header ---- */
+
+  document.getElementById('eyebrow').textContent = DATA.standing.eyebrow
+  document.title = DATA.scope.title
+  document.getElementById('heading').textContent = DATA.scope.title
+
+  const standfirst = document.getElementById('standfirst')
+  standfirst.append(document.createTextNode(DATA.standing.standfirst + ' '))
+  const headline = el('strong', null,
+    plural(DATA.summary.themes, 'theme', 'themes') + ', ' +
+    plural(DATA.summary.rows, 'piece of work', 'pieces of work') + '.')
+  standfirst.append(headline)
+
+  const meta = document.getElementById('meta')
+  ;[
+    plural(DATA.summary.pages, 'page in the journey', 'pages in the journey'),
+    plural(DATA.summary.arriving, 'page still to arrive', 'pages still to arrive'),
+    'Themes: ' + DATA.summary.themes,
+    'Work items: ' + DATA.summary.rows,
+    'Read on ' + DATA.builtAt
+  ].forEach((line) => meta.append(el('span', null, line)))
+
+  /* ---- tiles ---- */
+
+  const TILES = [
+    { cls: 'is-landed', n: DATA.summary.landed, label: 'Landed — already in the service' },
+    { cls: 'is-ahead', n: DATA.summary.ahead, label: 'Ahead of us — to build' },
+    { cls: 'is-waiting', n: DATA.summary.held, label: 'Held — needs a design answer, a backend or MDM' },
+    { cls: '', n: DATA.summary.aside, label: 'Deferred, dropped or folded into other work' }
+  ]
+
+  const tiles = document.getElementById('tiles')
+  TILES.forEach((tile) => {
+    const node = el('div', 'tile' + (tile.cls ? ' ' + tile.cls : ''))
+    node.append(el('b', null, String(tile.n)))
+    node.append(el('span', null, tile.label))
+    tiles.append(node)
+  })
+
+  /* ---- chips ---- */
+
+  const chipFor = (id) => {
+    const theme = THEMES[id]
+    const chip = el('span', 'chip ' + theme.state)
+    chip.dataset.state = theme.state === 'part' ? 'ahead' : theme.state
+    chip.title = theme.name + ' — ' + theme.stands
+    chip.append(document.createTextNode(theme.name))
+    chip.append(el('span', 'n', String(theme.rows)))
+    return chip
+  }
+
+  const chipRow = (ids) => {
+    const row = el('div', 'chips')
+    ids.forEach((id) => row.append(chipFor(id)))
+    return row
+  }
+
+  /* ---- the spine ---- */
+
+  const spine = document.getElementById('spine-list')
+  DATA.bands.forEach((band) => {
+    spine.append(el('p', 'band', band.band))
+    band.pages.forEach((page) => {
+      const row = el('div', 'station')
+      const rail = el('div', 'rail')
+      rail.append(el('span', 'pin' + (page.pin === '·' ? ' off' : ''), page.pin))
+      const body = el('div', 'body')
+      const name = el('div', 'name')
+      name.append(el('h3', null, page.name))
+      name.append(el('span', 'slug', page.slug))
+      body.append(name)
+      body.append(chipRow(page.themes))
+      if (page.note) body.append(el('p', 'note', page.note))
+      row.append(rail, body)
+      spine.append(row)
+    })
+  })
+
+  /* ---- cards ---- */
+
+  const fillCards = (id, items, title, body) => {
+    const host = document.getElementById(id)
+    items.forEach((item) => {
+      const card = el('div', 'card')
+      card.append(el('h3', null, title(item)))
+      card.append(chipRow(item.themes || [item.theme]))
+      card.append(el('p', null, body(item)))
+      host.append(card)
+    })
+  }
+
+  fillCards('arriving', DATA.arriving, (item) => item.name, (item) => item.body)
+  fillCards('cross-cutting', DATA.cards.crossCutting, (item) => THEMES[item.theme].name, (item) => item.body)
+  fillCards('elsewhere', DATA.cards.elsewhere, (item) => THEMES[item.theme].name, (item) => item.body)
+
+  document.getElementById('cross-cutting-lede').textContent =
+    plural(DATA.cards.crossCutting.length, 'theme changes', 'themes change') +
+    ' something that appears on all of them, or behind all of them, so none belongs to any one page in the list above.'
+
+  document.getElementById('elsewhere-heading').textContent =
+    'Themes that change no ' + DATA.scope.of + ' page'
+
+  // A section with nothing to say is hidden rather than left as a bare heading:
+  // this page's scope can leave either one with no themes at all.
+  ;[
+    ['cross-cutting-section', DATA.cards.crossCutting],
+    ['elsewhere-section', DATA.cards.elsewhere]
+  ].forEach(([id, items]) => {
+    document.getElementById(id).hidden = items.length === 0
+  })
+
+  /* ---- the register ---- */
+
+  const tbody = document.getElementById('theme-rows')
+  DATA.register.forEach((theme) => {
+    const tr = el('tr')
+    const th = el('th', null, theme.name)
+    th.scope = 'row'
+    tr.append(th)
+    tr.append(el('td', 'wave num', theme.wave))
+    tr.append(el('td', 'num', String(theme.rows)))
+    const stands = el('td')
+    stands.append(el('span', 'pill ' + (theme.state === 'none' ? 'none' : theme.state), theme.stands))
+    tr.append(stands)
+    const where = el('td')
+    where.append(el('span', 'where', theme.pages.length ? theme.pages.join(', ') : theme.instead))
+    tr.append(where)
+    tbody.append(tr)
+  })
+
+  /* ---- footer ---- */
+
+  const footer = document.getElementById('footer')
+  const scopeLine = el('p')
+  scopeLine.append(document.createTextNode(DATA.scope.rule))
+  footer.append(scopeLine)
+  footer.append(el('p', null, DATA.standing.attribution))
+  footer.append(el('p', null, DATA.standing.sources))
+  if (DATA.runInCode) {
+    footer.append(el('p', null,
+      'The opening run shown above is the ' + DATA.runInCode.length +
+      ' steps the frontend runs, in its order: ' + DATA.runInCode.join(' → ') + '.'))
+  }
+
+  /* ---- filter ---- */
+
+  document.querySelectorAll('.filter').forEach((button) => {
+    button.addEventListener('click', () => {
+      const on = button.getAttribute('aria-pressed') !== 'true'
+      button.setAttribute('aria-pressed', String(on))
+      const shown = new Set(
+        [...document.querySelectorAll('.filter')]
+          .filter((other) => other.getAttribute('aria-pressed') === 'true')
+          .map((other) => other.dataset.state)
+      )
+      document.querySelectorAll('.chip').forEach((chip) => {
+        chip.classList.toggle('dim', !shown.has(chip.dataset.state))
+      })
+      document.querySelectorAll('.station').forEach((station) => {
+        const any = [...station.querySelectorAll('.chip')].some((chip) => shown.has(chip.dataset.state))
+        station.classList.toggle('dim', !any)
+      })
+    })
+  })
+</script>

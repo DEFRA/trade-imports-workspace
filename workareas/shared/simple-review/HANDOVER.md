@@ -91,30 +91,27 @@ Why it lost findings:
   places it searched. `CONSISTENCY_REVIEWER.md` step 3b now uses it and
   copies that list. The reviewer also gets a call budget of about 25, the
   allowed categories (run 2 wrote `docs`, so the whole batch was refused)
-  and integer line numbers. `stale-search.test.sh` is written but **not run
-  yet** (see Next 1).
+  and integer line numbers. `stale-search.test.sh`: 15 checks, passed.
+- The mode commit after it: `replay-prs.sh`, `prepare-review-local.sh`,
+  `batch-lib.sh` and `finding-categories.sh` are executable. The
+  `bash replay-prs.sh` workaround in `prepare-review.sh` is reverted.
 - `c5518b94`: the review skill sets `model: sonnet`. That applies to every
   mode, the walker and the batch implementor included.
 
 ## Next
 
-1. **Make the scripts executable, then run the new test.** Policy blocks
-   `chmod` in a session and denies `bash <script>`, and a hook runs a
-   changed script only once it is committed. `stale-search.sh` and its test
-   are committed as executable, but the files on disk are not. Run this
-   yourself:
-   `! chmod +x tools/review/stale-search.sh tools/review/stale-search.test.sh tools/review/replay-prs.sh tools/review/prepare-review-local.sh tools/review/batch-lib.sh tools/review/finding-categories.sh`.
-   Then run `tools/review/stale-search.test.sh`. Commit the mode change for
-   the last four. Once `replay-prs.sh` is executable, revert the
-   uncommitted `bash "$SCRIPT_DIR/replay-prs.sh"` workaround on line 259
-   of `prepare-review.sh`.
-2. **Run 3.** Start a new window. Say "trial run". Set up with
+A new script needs its executable bit before an agent can run it. Policy
+blocks `chmod` in a session and denies `bash <script>`, and a hook runs a
+changed script only once it is committed. So stage a new script with
+`git add --chmod=+x` and have the user run `! chmod +x` on it.
+
+1. **Run 3.** Start a new window. Say "trial run". Set up with
    `start-review.sh EUDPA-674 --id EUDPA-674-run3 --same-as EUDPA-674`,
    then use `EUDPA-674-run3` as the review id for every later step. Use
    the same four PRs as runs 1 and 2, #300 and #43 included, so the runs
    compare like for like. Expect the two scope Criticals on #300 again.
    Do not post to any PR.
-3. **Compare run 3 with runs 1 and 2,** in the same shape as
+2. **Compare run 3 with runs 1 and 2,** in the same shape as
    `run2-comparison.md`.
    - Tokens: `tools/review/token-usage.sh <session> --by-agent`. Check that
      the skill's own context now runs on Sonnet, and how many calls the

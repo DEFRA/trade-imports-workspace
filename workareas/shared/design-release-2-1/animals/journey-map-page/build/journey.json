@@ -1,0 +1,289 @@
+{
+  "comment": "The live animals journey as a trader walks it, and the code each page is made of. This is the journey map page's only hand-kept input: page names, the bands they group into, their URL paths, and the folders that make up each one. Everything about themes — which touch a page, where each stands, how many rows it carries, its wave — is derived from the backlogs. Add a page here when the journey gains one; name its folders and the themes attach themselves.",
+
+  "set": {
+    "checkout": "repos/trade-imports-animals-frontend",
+    "run": "src/server/app/sets/live-animals/journeys/linear/flow/run.js",
+    "features": "src/server/app/sets/live-animals/journeys/linear/features"
+  },
+
+  "pathPrefixes": {
+    "page": "frontend:src/server/app/sets/live-animals/journeys/linear/features",
+    "flow": "frontend:src/server/app/sets/live-animals/journeys/linear/flow",
+    "obligation": "frontend:src/server/app/sets/live-animals/obligations/sections",
+    "setService": "frontend:src/server/app/sets/live-animals/services",
+    "service": "frontend:src/server/app/services",
+    "insPage": "insfrontend:src/server/app/features",
+    "germinal": "frontend:src/server/app/sets/germinal-products"
+  },
+
+  "bands": [
+    {
+      "band": "Getting in and picking up",
+      "pages": [
+        {
+          "name": "Live animals notification list",
+          "slug": "/",
+          "paths": [
+            "page/dashboard",
+            "service/persistence/records/real/lifecycle/read.js",
+            "service/persistence/records/stub/lifecycle",
+            "service/persistence/records/stub/list-query.js"
+          ],
+          "note": "The biggest single change on any page: tabs, cards, real search and sort, filters, paging and glance cards."
+        },
+        {
+          "name": "Overview",
+          "slug": "hub",
+          "paths": ["page/hub"]
+        }
+      ]
+    },
+    {
+      "band": "The opening run, in the order a trader meets it",
+      "numbered": true,
+      "runOrder": true,
+      "pages": [
+        {
+          "name": "Origin of the import",
+          "slug": "origin",
+          "paths": ["page/origin", "obligation/origin.js", "service/countries"]
+        },
+        {
+          "name": "What are you importing?",
+          "slug": "commodities",
+          "paths": [
+            "page/commodities/search",
+            "page/commodities/copy",
+            "obligation/commodities",
+            "setService/commodities"
+          ],
+          "note": "Design Release 2.1 also asks a new type question before a notification exists. That is a separate page — see below."
+        },
+        {
+          "name": "Main import reason",
+          "slug": "import-reason",
+          "paths": [
+            "page/import-reason",
+            "obligation/import-reason.js",
+            "service/import-reason-purpose",
+            "service/certification-purposes"
+          ]
+        },
+        {
+          "name": "Commodity details",
+          "slug": "consignment-details",
+          "paths": ["page/commodities/consignment-details", "page/commodities/copy"]
+        },
+        {
+          "name": "Identification details",
+          "slug": "commodities/identification",
+          "paths": ["page/commodities/animal-identification", "page/commodities/copy"]
+        },
+        {
+          "name": "Additional details",
+          "slug": "additional-details",
+          "paths": ["page/additional-details", "obligation/misc.js"]
+        },
+        {
+          "name": "Arrival details",
+          "slug": "port-of-entry",
+          "paths": [
+            "page/transport/port-of-entry",
+            "page/transport/copy",
+            "obligation/arrival.js",
+            "service/ports",
+            "service/transport-reference"
+          ]
+        },
+        {
+          "name": "Transit countries",
+          "slug": "transit-countries",
+          "paths": ["page/transport/transit-countries", "page/transport/copy"]
+        },
+        {
+          "name": "Transporter details",
+          "slug": "transporters",
+          "paths": [
+            "page/transport/transporters",
+            "page/transport/transporters-select",
+            "page/transport/transporter-details-save.js",
+            "page/transport/address-book-entry",
+            "page/transport/copy",
+            "obligation/transport.js",
+            "service/transporters"
+          ]
+        },
+        {
+          "name": "Upload documents",
+          "slug": "accompanying-documents",
+          "paths": [
+            "page/documents",
+            "obligation/documents.js",
+            "service/document-types",
+            "service/document-uploads",
+            "service/cdp-uploader"
+          ]
+        },
+        {
+          "name": "Consignment addresses",
+          "slug": "addresses",
+          "paths": [
+            "page/addresses/controller.js",
+            "page/addresses/template.njk",
+            "page/addresses/parties.js",
+            "page/addresses/party-inline.js",
+            "page/addresses/frozen-parties.js",
+            "page/addresses/evaluation.js",
+            "page/addresses/copy",
+            "page/addresses/fit",
+            "obligation/parties.js",
+            "service/address-book"
+          ]
+        },
+        {
+          "name": "Contact address for consignment",
+          "slug": "consignment/contact/select",
+          "paths": ["page/contact"]
+        },
+        {
+          "name": "Review your notification",
+          "slug": "notification-view",
+          "paths": ["page/check-answers"],
+          "note": "The most-touched page in the service. It is also what a trader sees when they open a notification they have already submitted."
+        }
+      ]
+    },
+    {
+      "band": "Submitting",
+      "numbered": true,
+      "pages": [
+        {
+          "name": "Declaration",
+          "slug": "declaration",
+          "paths": ["page/declaration"]
+        },
+        {
+          "name": "Import notification submitted",
+          "slug": "confirmation",
+          "paths": ["page/confirmation"]
+        }
+      ]
+    },
+    {
+      "band": "Opened from a page, not a step in the run",
+      "pages": [
+        {
+          "name": "Add the CPH number",
+          "slug": "cph-number",
+          "paths": ["page/cph-number"],
+          "note": "Journey foundation has already taken this out of the opening run. It now opens only from its row on Consignment addresses."
+        },
+        {
+          "name": "Party pickers — consignor, consignee, importer, place of origin, place of destination",
+          "slug": "addresses/{party}",
+          "paths": [
+            "page/addresses/party-picker",
+            "page/addresses/party-edit",
+            "page/addresses/address-return",
+            "page/addresses/ins-handshake.js",
+            "page/addresses/copy"
+          ]
+        },
+        {
+          "name": "Add a transporter — choose a type, private, commercial",
+          "slug": "transporters/add…",
+          "paths": [
+            "page/transport/transporter-add",
+            "page/transport/private-transporter-details",
+            "page/transport/commercial-transporter-details",
+            "page/transport/copy"
+          ]
+        }
+      ]
+    },
+    {
+      "band": "Managing a notification already submitted",
+      "pages": [
+        {
+          "name": "Amend",
+          "slug": "amend",
+          "paths": ["page/amend", "page/notification-actions"]
+        },
+        {
+          "name": "Cancel this amendment?",
+          "slug": "cancel-amend",
+          "paths": ["page/cancel-amend"]
+        },
+        {
+          "name": "Copy as new",
+          "slug": "copy",
+          "paths": ["page/notification-actions"]
+        },
+        {
+          "name": "Delete this notification?",
+          "slug": "delete",
+          "paths": ["page/delete-notification"]
+        }
+      ]
+    }
+  ],
+
+  "arriving": [
+    {
+      "name": "What are you importing?, asked before a notification exists",
+      "paths": ["insPage/notification-type"],
+      "body": "A trader chooses live animals or germinal products before anything is created, so the service knows which journey to open. It is a page in the INS front door, not in the animals journey."
+    },
+    {
+      "name": "Manage templates, name a template, Review your template, view a saved template",
+      "paths": ["page/templates", "page/check-answers/view-model/template-review"],
+      "body": "A whole template feature: create, save, view, change and use a template to start a notification."
+    },
+    {
+      "name": "Permanent address",
+      "paths": ["page/permanent-address"],
+      "body": "Where cats, dogs and ferrets will live, one card per animal, with a same-as-destination shortcut. It is summarised on Consignment addresses and listed per animal on the review."
+    },
+    {
+      "name": "A whole germinal products journey",
+      "paths": ["germinal"],
+      "body": "Its own list, origin, commodity pages, identification, overview, review, addresses, arrival, transporter, documents, contact, declaration and submission — with no CPH number, no permanent address and no Additional details. It adds pages beside the animals journey rather than changing it."
+    }
+  ],
+
+  "claims": [
+    {
+      "theme": "journey-foundation",
+      "section": "crossCutting",
+      "body": "The step order, where each save goes, Save and return to overview, and the Amend status bar — on every question page, the overview and the review."
+    },
+    {
+      "theme": "design-snagging-followups",
+      "section": "crossCutting",
+      "body": "Save and return to overview makes the same checks as Save and continue on every page, and no page logs a trader's own typing mistakes."
+    },
+    {
+      "theme": "obligation-model",
+      "section": "crossCutting",
+      "body": "The one folder that decides, for every page, whether an answer is required to go on and whether a section is complete. Changing it changes how every page judges its own answers, without changing what any page asks."
+    },
+    {
+      "theme": "waiting-on-design",
+      "section": "crossCutting",
+      "body": "The JavaScript enhancements held until a design question is answered: the commodity search, the CPH input, the confirmation dialog and live filtering. Each one only enhances a page that already works without it."
+    },
+    {
+      "theme": "ins-dashboard",
+      "section": "elsewhere",
+      "body": "The INS front door: the overall dashboard, its glance cards and the Action needed, Status updated and Inspection required drill-downs. No animals journey page changes."
+    }
+  ],
+
+  "standing": {
+    "eyebrow": "Design Release 2.1 · live animals",
+    "standfirst": "Every page a trader sees in the live animals notification journey, and the Design Release 2.1 themes that change it.",
+    "attribution": "A theme is on a page when the theme's own declared folders and the page's own folders overlap — the page's feature folder, its obligation section and the services behind it. A theme whose folders reach no single page is claimed by one of the sections above rather than dropped.",
+    "sources": "Themes, their rows and where each stands are read from the Design Release 2.1 backlogs: the root backlog.json plus one per split theme. The opening run's order is read from the live animals frontend on main, so a reordering there shows up here."
+  }
+}

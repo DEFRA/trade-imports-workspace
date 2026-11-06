@@ -63,6 +63,7 @@ After resolution the merge adds no content over 696; it records reference lists 
 | Engineering review: risk-ranked findings, with each engineer's verdict | https://claude.ai/artifact/7bH3vbECyuEax7i6xiwfDA | `engineering-review/` |
 | Progress report: Design Release 2.1 work by theme | https://claude.ai/code/artifact/466c571f-880f-478e-971e-dbf10c53b7d5 | `progress-page/` |
 | Build order: the themes as a dependency schematic, with what could start today | https://claude.ai/code/artifact/f7f85b51-6974-4096-acd1-66bec1171457 | `build-order-page/` |
+| Journey map: every page a trader walks, and the themes that change it | one per journey — see [`../animals/`](../animals/README.md) | `journey-map-page/` (generator, renderer and markup only) |
 | OpenSpec audit | — | `openspec-audit.md` |
 
 The progress and build-order links above replace two earlier ones,
@@ -79,6 +80,15 @@ animals, in [`../animals/`](../animals/README.md). A journey copy runs this gene
 smaller set of rows, declared in its own `build/scope.json`, so a count or a layout is fixed in one place; `scope.mjs`
 beside this file holds the rule. Edit a page's `index.html` only here — a journey copy's is written by its build from
 this one, and an edit there is lost on the next run.
+
+The journey map under `journey-map-page/` works the same way but exists only per journey, because a journey map is a
+journey's own pages. Its generator, renderer and markup are here; its `journey.json` and `scope.json` live in the
+journey's folder, and running its build from here fails and says so. That page's hand-kept half is documented in
+[`../animals/README.md`](../animals/README.md).
+
+`deps.mjs` beside `scope.mjs` is shared by all three generators. It reads every backlog in the workarea, and turns a
+row's `dependsOn` and `externalDependsOn` into the backlog each dependency names — an `externalDependsOn` entry
+records the workarea its row lives in, so a shared id resolves without guessing.
 
 The progress and build-order pages are the exception to this section's heading: both read the backlogs, not this
 branch, so they are true of the whole programme rather than of the combined review. Everything countable on them is

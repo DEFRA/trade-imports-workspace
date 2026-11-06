@@ -373,10 +373,23 @@ base's. A merge that conflicts stops the row, naming the files. A failure names 
 
 ## Before the first increment
 
-1. **Raise the workflow size limit** — `/config` → *Dynamic workflow size*. One
+1. **Check the workflow size limit, and only ask if it is not already raised.** One
    increment is up to 60 agents on Claude and 68 on Codex with `ciFixAttempts: 3`, and 4 more for each attempt
-   beyond three, against a default guideline of 15. You cannot set
-   this for the user and the run is throttled without it. The tool's own hard
+   beyond three, against a default guideline of 15. The run is throttled without it.
+
+   **Read it before you ask for it.** You cannot set it, but you can see it:
+
+   ```bash
+   grep -n 'workflowSizeGuideline' ~/.claude.json
+   ```
+
+   `"unrestricted"` means this step is already done — say so in a clause and move on.
+   Anything else, or no such key, is when you ask the user for `/config` →
+   *Dynamic workflow size*. Asking without reading it first spends the user's
+   attention on a setting they had already dealt with, which is how a pre-flight
+   loses their trust.
+
+   The tool's own hard
    cap of 1000 agents per run is what `agent-budget` below stops at, around 16
    increments on Claude and 14 on Codex. Under the branch lifecycle the run also
    keeps room for one theme's engineering review: twice the number of repos, plus 9.

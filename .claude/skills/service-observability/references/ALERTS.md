@@ -200,8 +200,9 @@ service.name:"<service>"` in OpenSearch shows one line per failed call.
 - **Dev, every rule: lower the threshold.** Change the condition so
   ordinary traffic breaks it, wait for Firing, check the summary shows
   the dependency and operation (not blanks), then put the threshold
-  back and watch it return to Normal. With no failures the failure
-  metrics read 0, so use `IS ABOVE -1` for "unavailable" and "calls
+  back and watch it return to Normal. The database alert's summary has
+  no labels: it shows the database name as written in the rule. With
+  no failures the failure metrics read 0, so use `IS ABOVE -1` for "unavailable" and "calls
   failing", and `IS ABOVE 0` for "slow". A healthy database reads 1, so
   use `IS BELOW 2` for the database alert. Once Slack routing is in
   place, also check the alert arrives in
@@ -219,11 +220,21 @@ service.name:"<service>"` in OpenSearch shows one line per failed call.
   from the Portal terminal. Restore the URL and redeploy. This breaks the service in dev
   for everyone while it runs, so agree a time with the team. "Slow"
   has no practical real test; the lowered threshold is enough.
-- **Test.** `[UNPROVEN]` The alert is read-only there, so the failure
-  has to be real. One way: deploy briefly with a wrong URL or key for
+- **Test, the call failure rules.** `[UNPROVEN]` The alert is
+  read-only there, so the failure has to be real. One way: deploy briefly with a wrong URL or key for
   the dependency, then call the service. This breaks the service for
   everyone using test while it runs. Agree the method and a time with
   the team and the testers first.
+- **Test, the database alert.** `[UNPROVEN]` A wrong database address
+  does not work here either: the service does not start, so no task
+  publishes the gauge and the rule stays Normal. The database has to go
+  away from a task that is already running, and this skill knows no way
+  to do that on CDP. Ask #cdp-support: "Can a running task in test lose
+  its database for 10 minutes, for example by revoking its access, so
+  we can watch an alert fire?" Until they answer, the evidence is the
+  dev Firing from the lowered threshold, plus the same rule shown in
+  test after promotion. Record it on the ticket as not fired in test,
+  and why.
 - **Prod.** Proven by the first prod deploy that follows, not by
   breaking prod.
 

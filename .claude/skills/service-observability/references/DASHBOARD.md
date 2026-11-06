@@ -136,8 +136,8 @@ Claude writes the service's dashboard to
    `<timed-name>` everywhere in the copy (title, description and each
    `metricName`), and lay the copies out two to a row from the template
    panel's position down. Where a controller and a service time the same
-   operation (`controller.listOperators.time`,
-   `service.listOperators.time`), put the pair on one row, controller on
+   operation (`controller.list.time`,
+   `service.list.time`), put the pair on one row, controller on
    the left, so the time spent outside the service reads across. Check
    each name is let through the
    service's `management.metrics.enable` allowlist (`METRICS.md` →

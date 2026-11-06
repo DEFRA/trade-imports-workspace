@@ -148,7 +148,8 @@ Animals only.
 
 | Helper | What it does |
 |---|---|
-| `mockAuthConfig(importOriginal)` | Wraps the real config with test auth settings |
+| `mockAuthConfig(importOriginal, { authEnabled })` | Wraps the real config with test auth settings; `authEnabled: false` turns auth off |
+| `restoreWreckAgentAfterEach()` (`restore-wreck-agent.js`, admin only) | After each test, destroys the installed Wreck plain-HTTP agent and puts Wreck's original back |
 | `mockOidcConfig` | A static OIDC discovery document |
 | `sessionAuth(sessionId, overrides)` | The `auth` option for `server.inject` |
 | `readEmfDocuments(logSpy)` | Parses the EMF metric documents written to stdout |

@@ -21,7 +21,7 @@ Import Notification Service (INS) front door: a Node.js/Hapi server-rendered web
 **Does not own**
 
 - Address data (address-book), notification data (aggregated read model in ins-backend) or country reference data (reference-data). It has no database.
-- Notification creation or editing. Dashboard links deep-link to trade-imports-animals-frontend (`/notifications/{reference}`, or `.../notification-view` when SUBMITTED). Only one journey is supported; how other journeys will be told apart is Unclear from code.
+- Notification creation or editing. Dashboard links deep-link to trade-imports-animals-frontend (`/live-animals/notifications/{reference}`, or `.../notification-view` when SUBMITTED). The dashboard rows link to live animals notifications only, because the ins-backend read model aggregates only the animals backend's events.
 - The address-book tenant check. This service must send the verified `Trade-Imports-Organisation-Id`; address-book trusts it.
 - Organisation scoping of the dashboard: `ins-backend-client` sends no organisation header and lists all aggregated notifications (deliberate, per a code comment).
 - Role and permission lookup: `src/auth/get-permissions.js` uses simulated RPS and Siti Agri calls, and no caller was found.
@@ -34,10 +34,11 @@ Import Notification Service (INS) front door: a Node.js/Hapi server-rendered web
 | Outbound | trade-imports-ins-backend (`TRADE_IMPORTS_INS_BACKEND_URL`, default :8090) | REST `GET /notifications` (`page`, `sort`, `referenceNumber`) | Dashboard notification list |
 | Outbound | trade-imports-reference-data (`TRADE_IMPORTS_REFERENCE_DATA_URL`, default :8086) | REST `GET /countries` | Country names and address country options |
 | Outbound | Defra ID (trade-imports-defra-id-stub locally) | OIDC (`DEFRA_ID_OIDC_CONFIGURATION_URL`) | Sign-in, token refresh, sign-out; the CSP form-action allows the browser-facing Defra ID origin |
-| Outbound (browser redirect) | trade-imports-animals-frontend (`TRADE_IMPORTS_ANIMALS_FRONTEND_URL`) | Links and CSP form-action to its URLs | Start a live animals or germinal products notification from the type question; return to a live animals notification's origin page from the type question; resume or view a notification; return from the address handshake |
+| Outbound (browser redirect) | trade-imports-animals-frontend (`TRADE_IMPORTS_ANIMALS_FRONTEND_URL`) | Links and CSP form-action to its URLs | Start a live animals or germinal products notification from the type question; return to a live animals notification's origin page from the type question; resume or view a notification; return from the address handshake; follow an address-book page's honoured `return` query to an animals frontend page |
 | Outbound (browser redirect) | trade-imports-plants-frontend (`TRADE_IMPORTS_PLANTS_FRONTEND_URL`) | Redirect to its start entry | Start a high-risk plants notification from the type question |
 | Outbound | Redis | Catbox Redis | Session cache |
 | Inbound | End users' browsers | HTTP | Dashboard and address-book pages |
+| Inbound | animals-frontend (via browser link) | HTTP GET `/address-book` | The animals service navigation's Address book item |
 | Inbound | animals-frontend (via browser redirect) | HTTP query parameters (handshake) | Send the user to choose or add an address |
 | Inbound | animals-frontend (via browser redirect) | HTTP query parameters (`notification-id`, `current-notification-type`) on `/notification-type` | The origin page's Back link sends the user to the type question, which picks the notification back up with its type pre-selected |
 

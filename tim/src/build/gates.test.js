@@ -138,7 +138,7 @@ describe('the workspace gates.json', () => {
     expect(new Set(e2eRuns)).toEqual(new Set(['test:docker-compose']))
   })
 
-  test('gates the workspace repo itself with tim’s format check, lint, test duplication check and unit tests, run in tim/', () => {
+  test('gates the workspace repo itself with tim’s format check, lint, test duplication check, unit tests and their coverage, run in tim/', () => {
     const gates = loadGates(workspaceRoot)
 
     const rungs = gates.repos['trade-imports-workspace'].rungs.map(
@@ -154,7 +154,58 @@ describe('the workspace gates.json', () => {
         run: 'tim build duplication',
         cwd: 'tim'
       },
-      { name: 'unit', phase: 'unit', run: 'test', cwd: 'tim' }
+      { name: 'unit', phase: 'unit', run: 'test', cwd: 'tim' },
+      {
+        name: 'coverage',
+        phase: 'unit',
+        run: 'tim build coverage',
+        cwd: 'tim'
+      }
+    ])
+  })
+
+  test('measures new-code coverage in every repo whose suite writes a report, right after the rung that writes it', () => {
+    const gates = loadGates(workspaceRoot)
+
+    const after = Object.entries(gates.repos)
+      .map(([folder, { rungs }]) => [
+        folder,
+        rungs.findIndex(({ run }) => run === 'tim build coverage'),
+        rungs.findIndex(({ name }) => name === 'unit' || name === 'verify')
+      ])
+      .filter(([, coverage]) => coverage !== -1)
+      .map(([folder, coverage, writes]) => [folder, coverage === writes + 1])
+
+    expect(Object.fromEntries(after)).toEqual({
+      'trade-imports-workspace': true,
+      'trade-imports-animals-frontend': true,
+      'trade-imports-animals-backend': true,
+      'trade-imports-animals-admin': true,
+      'trade-imports-ins-frontend': true,
+      'trade-imports-ins-backend': true,
+      'trade-imports-address-book': true,
+      'trade-imports-reference-data': true,
+      'trade-imports-dynamics-gateway': true
+    })
+  })
+
+  test('leaves new-code coverage off the repos with no coverage report to read', () => {
+    const gates = loadGates(workspaceRoot)
+
+    const without = Object.entries(gates.repos)
+      .filter(
+        ([, { rungs }]) =>
+          !rungs.some(({ run }) => run === 'tim build coverage')
+      )
+      .map(([folder]) => folder)
+
+    expect(without).toEqual([
+      'trade-imports-plants-frontend',
+      'trade-imports-plants-backend',
+      'trade-imports-stub',
+      'trade-imports-defra-id-stub',
+      'trade-imports-performance-tests',
+      'trade-imports-ins-tests'
     ])
   })
 

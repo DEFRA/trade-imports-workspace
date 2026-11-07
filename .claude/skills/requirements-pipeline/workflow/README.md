@@ -482,9 +482,17 @@ refuses to commit a spec change rather than put it on the base branch with no re
 
 **The gate owns the repos' own rungs.** `tim build gate` runs the
 rungs `references/gates.json` lists for each backlog repo — format check, lint, typecheck,
-unit, `mvn verify`, the duplication check on changed test files (`tim build duplication`), FIT after a free-port check,
+unit, `mvn verify`, the duplication check on changed test files (`tim build duplication`), the new-code coverage check
+(`tim build coverage`), FIT after a free-port check,
 and the tests repo's local-stack E2E. A red duplication rung is repaired by moving the copied set-up into the shared
-test helper and deleting the copies. Every
+test helper and deleting the copies. The coverage rung runs straight after the rung that writes the report it reads —
+`npm test` or `mvn verify` — and measures what a SonarCloud `new_coverage` condition measures: every line and condition
+the branch added that the repo's own report knows about, under the project's own `sonar.sources`, `sonar.exclusions` and
+`sonar.coverage.exclusions`, against a floor of 90%. It is the quality gate's coverage half, read locally before the
+push instead of after it, so a row that leaves its own new code untested goes red in the ladder rather than at the
+gate. A red one is repaired by testing the behaviour those lines carry, never by a test written to raise the number,
+and never by an exclusion. It runs in every repo whose suite writes a report; a repo with no report does not carry the
+rung, named in `gates.test.js` so none is missing silently. Every
 gate command passes the run's holder with `--holder`, so its E2E phase reuses the stack the
 run already holds, rebuilding only what changed, and refuses a stack anybody else holds. No
 agent picks those scripts. The ladder

@@ -747,7 +747,7 @@
       ],
       "dependsOn": [],
       "theme": "transporters",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "addressbook",
@@ -820,7 +820,9 @@
         "req-463",
         "req-2042"
       ],
-      "openQuestions": [],
+      "openQuestions": [
+        "When the address book refuses a journey transporter save with a 400 validation problem on a field the journey form does not itself check, the journey commits the notification answer first and then shows the generic recoverable-error banner at HTTP 500, so re-submitting the same values repeats the same failure for ever. Should the journey transporter save path map an address-book 400 validation problem back to field-level errors on the form (as the INS front door's transporter forms do through mapApiErrorsToFormErrors), and should the notification answer be committed only after the address-book write succeeds? Raised by the finding on frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.js:72 (email format is the one case fixed in this increment by adding the format rule to both journey forms; the generic mapping and the commit ordering are wider than this row)."
+      ],
       "notes": [
         "Combines the drafts of the address-book-add-and-edit, transporters, address-book-list areas for this row: they change the same pages, record and journey, so building them apart would repeat the same set-up, review and ladder.",
         "Combines this area's five transporter slices into the one route a trader walks: the Transporter option on the type page (req-1198), the hand-over off the address form (req-1203) and the add-a-transporter type page's caption, warning and radios (req-1204 to req-1206). Building them apart would repeat the same set-up, review and ladder on one journey that is blocked as a whole.",
@@ -837,7 +839,9 @@
         "Dependency inverted 6 November, after ruling:ian-2026-11-06 decisions 4 and 5. This row used to wait for inc-038 and inc-039, which was right while the journey owned the transporter add pages. It no longer is: this row builds the transporter record, its collection and the hand-off route, and criteria 3 to 5 already describe the 'Choose a transporter type' page itself, while criteria 7 and 8 describe its cancel and save. inc-038 (that page's copy and blank-choice refusal) and inc-039 (save, cancel and the success banner) refine what this row stands up, so they now wait for it. This row waits only on its external dependencies in the split-off address book theme, inc-061 and inc-067, both done.",
         "Re-analysis 6 November (INS frontend 0f8c051). A concrete blocker for decision 5 the plan must name. The INS front door works an address type out from its roles, as ruling:paul-2026-11-05 requires: services/address-book/address-types.js defines ROLES_BY_ADDRESS_TYPE mapping each of the three ADDRESS_TYPES to its role set, and features/address-book/address-book-tabs.js builds ADDRESS_BOOK_TABS straight off that map, with resolveRole reading from it. So adding TRANSPORTER to ADDRESS_TYPES the obvious way would demand a ROLES_BY_ADDRESS_TYPE[TRANSPORTER] entry, which decision 5 says must not exist. The Transporter type needs its own branch reading the transporters route instead. Say so in the plan, or the first implementor will add a role to make the types line up. One thing comes free: the add flow already uses requiredOneOf('addressType', ...) with a message, so the Transporter radio inherits correct blank-choice validation.",
         "Theme-level, from the 6 November re-analysis (REPORT-transporters-2026-11-06.md): the theme is ready to split on dependencies — every theme it waits on has drained since 27 October, and all four named external dependencies (address-book inc-061, inc-066, inc-067, inc-069) are done, with reference-lists inc-173 and design-snagging inc-210. One scheduling condition: the unmerged overview-and-review branch edits five files this theme must also edit — transport/copy/copy.en.js, copy.cy.js, copy.test.js, fit/transporters.fit.spec.js and fit/commercial-transporter-details.fit.spec.js, checked from its merge base so these are its own edits — so the two themes must not be played concurrently. The parked type-question-and-templates branch also edits transporters/transporters.njk but is parked by ruling:sam-2026-11-04, so it is not a live clash.",
-        "Rigour set to full at the 6 November kick-off, matching tim build rigour's derivation (addressbook, insfrontend and frontend: a contract between repos). The loop resolves row.rigour ?? run rigour and does not consult that command, so the run's standard would otherwise have applied."
+        "Rigour set to full at the 6 November kick-off, matching tim build rigour's derivation (addressbook, insfrontend and frontend: a contract between repos). The loop resolves row.rigour ?? run rigour and does not consult that command, so the run's standard would otherwise have applied.",
+        "ATTEMPT FAILED: land stage could not commit; no merges aborted; local commits 44641a1 (insfrontend), 8fee01d (addressbook) moved back; patches and status at logs/inc-074-preserve-*.patch and logs/inc-074-preserve-*.txt; no stash",
+        "Landed 7 November. The loop stopped at land-failed: its land agent died on \"Prompt is too long\" after committing and pushing the frontend and tests, so the preserve step reset the insfrontend and addressbook commits off the branch. The ladder had been green (18 unit rungs, 2 fit rungs, nothing red), so the work was finished by hand: both commits reproduced byte-for-byte from the objects the preserve step left behind (staged tree identical to each, HEAD its parent). Two gates then refused the pushes. address-book: 2 critical and 2 major, fixed in eb8f323 — the duplicated not-found literal became a named constant in both controllers, and two TransporterServiceTest lambdas stopped building the request inside isThrownBy. ins-frontend: new_coverage 83.8 against 90, because services/transporters shipped with no tests at all; covered in a6bf5e1, all three files now fully hit. All three gated repos pass on 9 conditions; ins-tests is not Sonar-integrated."
       ],
       "gate": null,
       "externalDependsOn": [
@@ -850,7 +854,30 @@
           "id": "inc-067"
         }
       ],
-      "rigour": "full"
+      "rigour": "full",
+      "commit": "840b120c a6bf5e1 eb8f323 c3172f5",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/467",
+          "repo": "frontend",
+          "number": 467
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/76",
+          "repo": "insfrontend",
+          "number": 76
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-address-book/pull/23",
+          "repo": "addressbook",
+          "number": 23
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/92",
+          "repo": "tests",
+          "number": 92
+        }
+      ]
     },
     {
       "id": "inc-075",

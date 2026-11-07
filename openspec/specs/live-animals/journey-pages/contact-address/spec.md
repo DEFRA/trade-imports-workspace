@@ -34,13 +34,13 @@ The system MUST accept a chosen contact address, copying it onto the notificatio
 
 ### Requirement: The contact address is optional, and saving without one is never refused
 **ID**: REQ-CONTACT-003
-The system MUST allow the contact address page to be saved with no address chosen, without an error. Outside the opening sequence, saving MUST return the user to Overview; inside it, saving ends the sequence on check your answers (`live-animals/journey-flow` REQ-FLOW-007).
+The system MUST allow the contact address page to be saved with no address chosen, without an error, and saving MUST go to check your answers (`live-animals/journey-flow` REQ-FLOW-003).
 
-#### Scenario: Saving with no address chosen is allowed and exits to Overview
+#### Scenario: Saving with no address chosen is allowed and goes to check your answers
 **ID**: SCN-CONTACT-003-A
-- **GIVEN** the user opened the contact address page from Overview, with no address chosen
+- **GIVEN** the user opened the contact address page, with no address chosen
 - **WHEN** they save and continue
-- **THEN** they return to Overview, and no error summary is shown
+- **THEN** check your answers is shown, and no error summary is shown
 
 ### Requirement: An invalid submitted option is refused without preserving it
 **ID**: REQ-CONTACT-004

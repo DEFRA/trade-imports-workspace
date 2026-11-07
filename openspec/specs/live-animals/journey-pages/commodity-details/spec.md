@@ -122,9 +122,9 @@ The system MUST let the user add a further commodity from the commodity details 
 - **THEN** the earlier species was still shown as selected on the selection page
 - **AND** commodity details is shown again, the earlier species' saved number of animals and number of packages are unchanged, and the new species starts with an empty count
 
-#### Scenario: In the opening sequence, adding another commodity returns to commodity details
+#### Scenario: After Save and continue, adding another commodity returns to commodity details
 **ID**: SCN-COMMODITY-DETAILS-007-B
-- **GIVEN** the user is in the opening sequence on commodity details
+- **GIVEN** the user is on commodity details
 - **WHEN** they choose to add another commodity, select a further species and save
 - **THEN** commodity details is shown, not the reason for import
 
@@ -140,9 +140,9 @@ The system MUST return the user to the commodity selection page once every chose
 - **WHEN** they reopen the commodity details page directly afterwards
 - **THEN** the commodity selection page is shown, since there is nothing left to ask about
 
-### Requirement: The back link returns to what are you importing in the opening sequence, and to Overview otherwise
+### Requirement: The back link returns to what are you importing after Save and continue, and to Overview otherwise
 **ID**: REQ-COMMODITY-DETAILS-009
-The system MUST return the user to the commodity selection page ("What are you importing?") when they follow the back link from commodity details during the opening sequence, not to the main import reason that comes between them, and MUST return them to Overview when the page was opened from its Overview task. On a draft opened from a Change link on the review, the back link MUST open the commodity selection page too, as `live-animals/journey-flow` describes.
+The system MUST return the user to the commodity selection page ("What are you importing?") when they follow the back link from commodity details after reaching the page by Save and continue, not to the main import reason that comes between them, and MUST return them to Overview when the page was opened from its Overview task. On a draft opened from a Change link on the review, the back link MUST open the commodity selection page too, as `live-animals/journey-flow` describes.
 
 #### Scenario: On a draft opened from a Change link, the back link opens what are you importing
 **ID**: SCN-COMMODITY-DETAILS-009-C
@@ -152,13 +152,13 @@ The system MUST return the user to the commodity selection page ("What are you i
 
 #### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-COMMODITY-DETAILS-009-A
-- **GIVEN** the opening sequence has ended and the user opened commodity details from its task on Overview
+- **GIVEN** the user opened commodity details from its task on Overview
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
 
-#### Scenario: In the opening sequence, the back link opens what are you importing, with the choice kept
+#### Scenario: After Save and continue, the back link opens what are you importing, with the choice kept
 **ID**: SCN-COMMODITY-DETAILS-009-B
-- **GIVEN** the user is in the opening sequence and reached commodity details from main import reason
+- **GIVEN** the user reached commodity details from main import reason by saving and continuing
 - **WHEN** they follow the back link
 - **THEN** "What are you importing?" is shown, with the species they chose still chosen
 
@@ -175,11 +175,11 @@ The system MUST list every number of animals error in the error summary before a
 
 ### Requirement: The page ends with Save and continue, Save and return to overview and Cancel and return to overview
 **ID**: REQ-COMMODITY-DETAILS-011
-Outside an amendment the system MUST end the commodity details page with "Save and continue", "Save and return to overview" and "Cancel and return to overview", in the opening sequence as when opened from Overview.
+Outside an amendment the system MUST end the commodity details page with "Save and continue", "Save and return to overview" and "Cancel and return to overview", on a draft as when opened from Overview.
 
-#### Scenario: The opening sequence offers all three controls
+#### Scenario: A page reached by Save and continue offers all three controls
 **ID**: SCN-COMMODITY-DETAILS-011-A
-- **GIVEN** the user is in the opening sequence on commodity details
+- **GIVEN** the user is on commodity details
 - **WHEN** the page is shown
 - **THEN** it offers "Save and continue", "Save and return to overview" and "Cancel and return to overview"
 

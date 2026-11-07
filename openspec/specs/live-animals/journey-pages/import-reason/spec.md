@@ -121,9 +121,9 @@ The system MUST refuse to save when the submitted import reason is not one of th
 - **WHEN** they submit a reason that is not one of the available options and save
 - **THEN** the save is refused, an error links to and focuses the reason question, with no reason shown as chosen
 
-### Requirement: The back link returns to what are you importing in the opening sequence, and to Overview otherwise
+### Requirement: The back link returns to what are you importing after Save and continue, and to Overview otherwise
 **ID**: REQ-IMPORT-REASON-008
-The system MUST return the user to the commodity selection page ("What are you importing?") when they follow the back link from the main import reason page during the opening sequence, and to Overview when the page was opened from its Overview task. On a draft opened from a Change link on the review, the back link MUST open the commodity selection page too, as `live-animals/journey-flow` describes.
+The system MUST return the user to the commodity selection page ("What are you importing?") when they follow the back link from the main import reason page after reaching the page by Save and continue, and to Overview when the page was opened from its Overview task. On a draft opened from a Change link on the review, the back link MUST open the commodity selection page too, as `live-animals/journey-flow` describes.
 
 #### Scenario: On a draft opened from a Change link, the back link opens what are you importing
 **ID**: SCN-IMPORT-REASON-008-C
@@ -133,13 +133,13 @@ The system MUST return the user to the commodity selection page ("What are you i
 
 #### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-IMPORT-REASON-008-A
-- **GIVEN** the opening sequence has ended and the user opened main import reason from its task on Overview
+- **GIVEN** the user opened main import reason from its task on Overview
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
 
-#### Scenario: In the opening sequence, the back link opens what are you importing
+#### Scenario: After Save and continue, the back link opens what are you importing
 **ID**: SCN-IMPORT-REASON-008-B
-- **GIVEN** the user is in the opening sequence and reached main import reason from what are you importing
+- **GIVEN** the user reached main import reason from what are you importing by saving and continuing
 - **WHEN** they follow the back link
 - **THEN** "What are you importing?" is shown
 

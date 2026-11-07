@@ -16,6 +16,7 @@ The `<AREA>` in every `REQ-<AREA>-NNN` / `SCN-<AREA>-NNN-<LETTER>` ID. Assigned 
 | ins/notification-type | INS-NTYPE |
 | ins/page-titles | INS-PAGE-TITLE |
 | ins/service-navigation | INS-NAV |
+| ins/transporters | INS-TRANSPORTER |
 | live-animals/addresses | ADDR |
 | live-animals/authentication | AUTH |
 | live-animals/journey-flow | FLOW |

@@ -2,13 +2,13 @@
 
 ## Purpose
 
-Lists every commercial and private transporter the service knows about, letting the user choose one for the consignment or add a new one. The page is titled "Transporter details". Which transporter is required, and what adding one asks, is governed by `live-animals/journey-obligations/transporter`.
+Lists the organisation's own transporters, held in the address book, followed by the ones the service ships, letting the user choose one for the consignment or add a new one. The page is titled "Transporter details". Which transporter is required, and what adding one asks, is governed by `live-animals/journey-obligations/transporter`.
 
 ## Requirements
 
-### Requirement: The list shows every known transporter in headed columns, with a status tag
+### Requirement: The list shows the organisation's own transporters ahead of the ones the service ships, in headed columns, with a status tag
 **ID**: REQ-TRANSPORTER-001
-The system MUST list every transporter the service knows about, each row showing its name, address, approval number ("Not applicable" for a transporter with none), type, and a status tag — green for "Approved", magenta for "New" — under columns headed to match, alongside a radio to choose it.
+The system MUST list the organisation's own transporters, held in the address book, followed by the ones the service ships, each row showing its name, address, approval number ("Not applicable" for a transporter with none), type, and a status tag — green for "Approved", magenta for "New" — under columns headed to match, alongside a radio to choose it.
 
 #### Scenario: The list shows every transporter's key facts under the right column
 **ID**: SCN-TRANSPORTER-001-A
@@ -24,6 +24,13 @@ The system MUST list every transporter the service knows about, each row showing
 - **THEN** it carries a green "Approved" tag
 - **WHEN** a row is for a transporter added but not yet approved
 - **THEN** it carries a magenta "New" tag
+
+#### Scenario: A transporter the organisation added through the address book is on the list and can be picked
+**ID**: SCN-TRANSPORTER-001-C
+- **GIVEN** the organisation has added a transporter through the address book
+- **WHEN** the user opens the transporter list on their next notification
+- **THEN** that transporter is shown as a row, tagged "New"
+- **AND** the user can choose it and save
 
 ### Requirement: The list can be searched by name, address, approval number, type or status, narrowing as the user types
 **ID**: REQ-TRANSPORTER-002

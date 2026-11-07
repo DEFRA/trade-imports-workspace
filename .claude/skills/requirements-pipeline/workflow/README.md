@@ -331,7 +331,7 @@ for whoever reviews a finished theme, `refutedFindings` every finding verificati
 - at **`theme-review-red`** (branch lifecycle only), when a theme's engineering review could
   not finish its fixes: the fixer died or its ladder went red. The fixes are saved as patches
   and the branch is left as the theme's last row left it (see
-  [The CI fixer and a whole theme are reviewed too](#the-ci-fixer-and-a-whole-theme-are-reviewed-too)).
+  [The CI fixer, the quality gate fixer and a whole theme are reviewed too](#the-ci-fixer-the-quality-gate-fixer-and-a-whole-theme-are-reviewed-too)).
 
 **A failure stops the whole run.** The loop never moves on to another increment after one
 goes wrong: `tim backlog next` selects on status, `dependsOn` and `externalDependsOn` alone
@@ -474,11 +474,11 @@ refuses to commit a spec change rather than put it on the base branch with no re
 | Judge | 1 | Replaces the skills' interactive `WALKER`. Rules each surviving finding fix-now / defer / reject **without asking a human**. Every code-quality finding is fix-now, in each twin |
 | Fix | 1–3 (Claude) | Applies only what the judge ruled fix-now, after recording each repo's staged tree. Checks itself with the gate's unit and FIT phases, like the implementor. A style re-reviewer then reads only the fixer's hunks for code quality, and sends any new finding back to a second fix once |
 | Ladder | 1 | Runs `tim build gate --phase all` once into `logs/<id>-ladder/` (a row that owes only some phases: each of those, every one even after a red), then the plan's sections 5 and 6 checks, then validates the spec write again. Given the implementor's and fixer's notes and every baseline rung with its log |
-| Land | 2–4 | A branch guard first: every repo must be on the run's branch, and one on another branch at the same commit is moved back. Then commits on green and records the commit; when the increment builds the workspace repo, a light agent reads back what its commit holds, and a second looks up any path the start stage could not name. The increment is not done until its PRs are merged, so the merge stage is what marks it. A red ladder, a failed land, a repo that cannot be moved back, or any other stop after implement goes through the same preserve step — a pushed wip commit — so the tree is left clean and the attempt recoverable |
-| CI fix review | 0–2 per CI fix | A style reviewer reads each commit the CI fixer pushed, for code quality, and sends any finding to one style fix before the watcher looks again. See [The CI fixer and a whole theme are reviewed too](#the-ci-fixer-and-a-whole-theme-are-reviewed-too) |
+| Land | 2–4, plus up to 4 a quality gate fix attempt | A branch guard first: every repo must be on the run's branch, and one on another branch at the same commit is moved back. Then commits on green and records the commit; when the increment builds the workspace repo, a light agent reads back what its commit holds, and a second looks up any path the start stage could not name. Under the branch lifecycle it pushes too, and says why a push did not go: a refusal from the workspace's pre-push quality gate goes to a quality gate fixer, a non-fast-forward rejection does not — see [The CI fixer, the quality gate fixer and a whole theme are reviewed too](#the-ci-fixer-the-quality-gate-fixer-and-a-whole-theme-are-reviewed-too). The increment is not done until its PRs are merged, so the merge stage is what marks it. A red ladder, a failed land, a repo that cannot be moved back, or any other stop after implement goes through the same preserve step — a pushed wip commit — so the tree is left clean and the attempt recoverable |
+| CI fix review | 0–2 per CI fix | A style reviewer reads each commit the CI fixer pushed, for code quality, and sends any finding to one style fix before the watcher looks again. See [The CI fixer, the quality gate fixer and a whole theme are reviewed too](#the-ci-fixer-the-quality-gate-fixer-and-a-whole-theme-are-reviewed-too) |
 | Spec diff comment | 1–3, after the ticket closes | Full lifecycle only. A writer runs `tim spec diff` on the row's workspace merge commit and writes a Jira comment to `tickets/<id>-spec-diff.txt`: the scenarios added, changed and removed on `main`, one line on their coverage, and a link to every merged PR, in plain words with no backlog ids. A checker compares it with the diff and fixes it; a light agent posts it with `tim jira comment`, dry run then `--confirm`. The result carries `specDiffComment`. A failure at any step is recorded there and never stops the run |
 | Theme spec check | 1–3 light, after the gate check | Reads the landed row's theme. Once no row of it is `todo`, checks the spec under every prefix the theme touched, failing only on scenarios the theme's own commits added or re-proved. See [The Behaviour Spec](#the-behaviour-spec) |
-| Theme engineering review | up to twice the repos, plus 9 | Branch lifecycle only, once a theme's last row lands. One reviewer per repo reads `git diff origin/main...HEAD` for patterns and tests; its findings go through the same verify, judge, fix, re-review and ladder, then land on the branch and CI is watched. See [The CI fixer and a whole theme are reviewed too](#the-ci-fixer-and-a-whole-theme-are-reviewed-too) |
+| Theme engineering review | up to twice the repos, plus 9 | Branch lifecycle only, once a theme's last row lands. One reviewer per repo reads `git diff origin/main...HEAD` for patterns and tests; its findings go through the same verify, judge, fix, re-review and ladder, then land on the branch and CI is watched. See [The CI fixer, the quality gate fixer and a whole theme are reviewed too](#the-ci-fixer-the-quality-gate-fixer-and-a-whole-theme-are-reviewed-too) |
 
 **The gate owns the repos' own rungs.** `tim build gate` runs the
 rungs `references/gates.json` lists for each backlog repo — format check, lint, typecheck,
@@ -564,7 +564,7 @@ update or delete that text. It also gets the implementor's notes and judges each
 departure from the plan with no sound reason, or something left alone that the change makes untrue, is a finding. The Codex group and consistency runs get the same lenses, and
 [`codex/review.md`](codex/review.md) carries them too.
 
-### The CI fixer and a whole theme are reviewed too
+### The CI fixer, the quality gate fixer and a whole theme are reviewed too
 
 **The CI fixer.** It works after every reviewer, so nobody else reads its lines. It gets the house rules and is
 told to read the standards `tim backlog standards` lists for each file it edits, and the plan's own list. It reports
@@ -572,6 +572,20 @@ each commit it pushes. A style reviewer (code tier) reads those commits for code
 silences a check, such as an empty catch or a sleep in a test, as a finding. Any finding goes to one style fix, which
 commits and pushes, before the watcher looks again. A CI fix that pushed no commit is not reviewed. This runs under
 both lifecycles and both executors.
+
+**The quality gate fixer.** This workspace runs a SonarCloud quality gate before every `git push`, so a gate failure
+refuses the push before git runs rather than arriving as a check on the pull request, and the CI fixer above never
+gets to see it. Under the branch lifecycle the land stage therefore says which kind of refusal it hit, and a
+`quality-gate` one goes to a fixer of its own (code tier), up to `ciFixAttempts` times. The fixer reads the verdict
+the way the CI fixer is told to — the blocked push ran the real scanner, so the analysis is on SonarCloud and
+`tim sonar gate` names every failed condition — covers what `new_coverage` named from the repo's own coverage output,
+fixes every other condition where the code is, and commits **without pushing**. Its commit gets the same style review
+as a CI fix, whose style fix also commits without pushing. Then the push runs again, and the gate runs with it: that
+is the fix's proof. The fixer is told never to buy the gate off — no exclusion, no lowered floor, no disabled rule, no
+weakened test — and to refuse instead, which stops the row. A push git rejected as non-fast-forward is left alone: it
+means somebody else pushed, and a person reconciles it. When every attempt is spent the row stops at `push-failed`
+with its attempt recorded at the `ladder` stage, so a relaunch runs the ladder and pushes rather than resuming at the
+pull request stage on a commit that never reached the branch.
 
 **A theme's engineering review.** Under the branch lifecycle, once a theme's last row lands and its spec check has run,
 the loop reviews the whole theme. One think-tier reviewer per repo reads `git diff origin/main...HEAD` for patterns

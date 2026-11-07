@@ -800,7 +800,7 @@ fix, re-review and ladder, and the fixes land on the branch as one commit per re
 net behind each row's own review, never a replacement. Report each of its `reviewChecks` entries (the commit it
 landed, its refuted findings, any repo it could not review) with the theme's other review checks. The full lifecycle
 has no theme branch, so it runs no theme review. See
-[`../workflow/README.md`](../workflow/README.md#the-ci-fixer-and-a-whole-theme-are-reviewed-too).
+[`../workflow/README.md`](../workflow/README.md#the-ci-fixer-the-quality-gate-fixer-and-a-whole-theme-are-reviewed-too).
 
 - Archive the run first (step 3c), then read its first `log()` line —
   `increment-build-loop: resolved configuration {…}`:
@@ -1058,7 +1058,7 @@ handover prompt.
 | `done-failed` | The merge is real but the ticket would not move to the finished status. Under the branch lifecycle: the push is real but `tim backlog set --status done` failed |
 | `row-invalid` | Branch lifecycle only. The row's `repos`, `merge` or `gatePhases` do not fit the run: a repo it does not configure, a merge into a repo the row does not build, a gate phase that does not exist |
 | `merge-failed` | Branch lifecycle only. A merge the row asks for would not start. The attempt is preserved as patches and the merge aborted |
-| `push-failed` | Branch lifecycle only. The land stage committed and recorded the commit, but the push was rejected: somebody else pushed to the branch. Nothing is lost; a human reconciles the branch. A theme's engineering review whose commit would not push stops here too |
+| `push-failed` | Branch lifecycle only. The land stage committed and recorded the commit, but the push did not go. Nothing is lost. The land stage says which kind it was: a push the workspace's pre-push quality gate refused goes to a quality gate fixer first — it reads the gate's verdict with `tim sonar gate`, covers what `new_coverage` named or fixes the violations where they are, commits without pushing, has its commit style reviewed, and the push runs again, up to `ciFixAttempts` times — so this stop means every attempt was spent, or the fixer refused rather than weaken a test or buy the gate off. A push git rejected as non-fast-forward means somebody else pushed to the branch, and a human reconciles it: no fixer runs. Either way the attempt is recorded at the `ladder` stage, after the commit, so a relaunch runs the ladder and pushes rather than resuming at the pull request stage on a commit that is not on the branch. A theme's engineering review whose commit would not push stops here too |
 | `no-open-pr` | Branch lifecycle only. A repo the row builds has no open PR for the branch, and this lifecycle never raises one. Before any increment, the run also refuses to start when any repo checked out on the branch, built by the rows or not, has no open PR: CI publishes a branch image only from a PR, so without one a stacked branch's E2E runs that repo's `:latest` |
 
 **A stop that preserved its attempt resumes at the stage it reached.** The row records

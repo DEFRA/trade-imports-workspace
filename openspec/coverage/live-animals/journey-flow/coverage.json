@@ -663,6 +663,35 @@
           ]
         }
       ]
+    },
+    {
+      "id": "REQ-FLOW-019",
+      "name": "Each transporter add form opens only for the type it belongs to",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-FLOW-019-A",
+          "name": "Opening the private transporter form without the private type chosen lands on the type question",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.test.js", "test": "Should redirect the GET to the type question, logging once", "strength": "full", "notes": "parameterised over the commercial type stored and no type stored" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.test.js", "test": "Should redirect the POST to the type question, saving nothing and logging once", "strength": "full", "notes": "parameterised over the commercial type stored and no type stored" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "opening the private form before a type is chosen lands on the type question", "strength": "full", "notes": "probed by making redirectUnlessOwnTransporterType in own-transporter-type.js always return undefined" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/transporter-add.spec.ts", "test": "redirects the private form to the type question when no type has been chosen", "strength": "partial", "notes": "not probed" }
+          ]
+        },
+        {
+          "id": "SCN-FLOW-019-B",
+          "name": "Opening the commercial transporter form without the commercial type chosen lands on the type question",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details/commercial-transporter-details.controller.test.js", "test": "Should redirect the GET to the type question, logging once", "strength": "full", "notes": "parameterised over the private type stored and no type stored" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details/commercial-transporter-details.controller.test.js", "test": "Should redirect the POST to the type question, saving nothing and logging once", "strength": "full", "notes": "parameterised over the private type stored and no type stored" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "opening the commercial form with the private type chosen lands on the type question", "strength": "full", "notes": "probed by making redirectUnlessOwnTransporterType in own-transporter-type.js always return undefined" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/transporter-add.spec.ts", "test": "redirects the commercial form to the type question when the private type was chosen", "strength": "partial", "notes": "not probed" }
+          ]
+        }
+      ]
     }
   ]
 }

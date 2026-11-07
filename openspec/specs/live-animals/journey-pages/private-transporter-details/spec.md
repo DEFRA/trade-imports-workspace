@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Asks for the name and address of a private transporter, keyed in by hand rather than chosen from the address book. Reached only via "Add a transporter" from the transporter list, after choosing "Private" on the type question — not as a mandatory branch of the transport section itself. The address itself is governed by `live-animals/addresses`. The page is titled "Add private transporter".
+Asks for the name and address of a private transporter, keyed in by hand rather than chosen from the address book. Reached only via "Add a transporter" from the transporter list, after choosing "Private" on the type question — not as a mandatory branch of the transport section itself. The address itself is governed by `live-animals/addresses`. The page is titled "Add private transporter" and carries no notification status strip.
 
 ## Requirements
 

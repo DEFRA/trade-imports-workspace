@@ -2,101 +2,117 @@
 
 ## Purpose
 
-How the journey moves from one page to the next: the order pages come in, when one is skipped, the opening sequence a newly created notification runs, and where a journey opened out of context is sent. Overview, the dashboard and the address-selection spoke are not steps in this order.
+How the journey moves from one page to the next: the one order pages come in, when one is skipped, where a journey opened out of context is sent, and how a page ends while a notification is being amended. Overview, the dashboard and the address-selection spoke are not steps in this order.
 
 ## Requirements
 
-### Requirement: The journey is ordered as ten sections, each a sequence of pages
+### Requirement: The journey has one page order, the order Overview lists its tasks in
 **ID**: REQ-FLOW-001
-The system MUST order the journey as ten sections, and MUST offer each section's pages in a fixed sequence.
+The system MUST give the journey one page order, the order Overview lists its tasks in, and MUST offer pages in that order whatever way the user reached them. Overview, the dashboard, the address pickers, the CPH number page and the transporter add pages are not steps in it.
 
-#### Scenario: The journey's sections run in a fixed order
+#### Scenario: The journey's pages run in a fixed order
 **ID**: SCN-FLOW-001-A
-- **GIVEN** a notification is being worked on
-- **WHEN** its sections are followed from the start
-- **THEN** they run in this order: the dashboard; origin of the import; what are you importing and commodity details; identification details; import reason and additional details; upload documents; the County Parish Holding number and consignment addresses, the first saving back to the second; the transport pages; contact address; and finally check your answers, declaration and confirmation
+- **GIVEN** a notification being worked on
+- **WHEN** its pages are followed from the start
+- **THEN** they run in this order: Where is this consignment coming from?, What are you importing?, Main import reason, Commodity details, Identification details, Additional details, Arrival details, Transit countries, Transport details, Upload documents, Roles and addresses, Contact address for this consignment, and finally check your answers, the declaration and the confirmation
+- **AND** Overview lists its tasks in the same order
 
-#### Scenario: The transport section sequences its pages in order
+#### Scenario: The transport pages are offered in order
 **ID**: SCN-FLOW-001-B
-- **GIVEN** a user is working through the transport section in the opening sequence
-- **WHEN** they continue from each page in turn
+- **GIVEN** a user working through the transport pages
+- **WHEN** they save each page in turn
 - **THEN** they are offered arrival details, transited countries and the combined transporter list, in that order, skipping any that is not in scope
-- **AND** the transporter type question and the two type-specific forms are not offered as steps of this section — they are reached only via "Add a transporter" from the combined list
+- **AND** the transporter type question and the two type-specific forms are not offered as steps — they are reached only via "Add a transporter" from the combined list
 
-### Requirement: These flow sections are not the same grouping as the Overview task rows
-**ID**: REQ-FLOW-002
-The system MUST treat the journey's flow sections and the Overview page's task rows as separate groupings: there are ten flow sections against twelve task rows, and a task row MUST NOT be assumed to correspond to the section a page is reached through. Overview groups its twelve task rows under six numbered headings, which is a third grouping again.
-
-#### Scenario: A single task row spans pages the flow never offers as steps of its own
-**ID**: SCN-FLOW-002-A
-- **GIVEN** the transporter task row on Overview
-- **WHEN** the user opens it
-- **THEN** it covers the transporter type, the approved transporter search and the private transporter details together, though the flow offers none of the three as a step of its own — they are spokes off the transporter list, belonging to no section
-
-### Requirement: Continuing from a page moves on only within its own Overview task, and otherwise returns to Overview
+### Requirement: Saving and continuing goes to the next page that applies, whatever way the page was reached
 **ID**: REQ-FLOW-003
-The system MUST, outside the opening sequence and outside a change made from check your answers, take the user, on continuing from a page, to the next page of that section that belongs to the same Overview task and whose conditions are met, skipping any that are not, and MUST otherwise return them to Overview — never on into a page another Overview task opens. The system MUST add no marker to a page's address, link or form to tell such a save.
+The system MUST, on a valid Save and continue from a journey page, go to the next page in the journey's order that applies, skipping any that does not, and the last page that applies MUST go to check your answers whatever is owed. It MUST do so however the page was reached, and a Save and continue that leaves optional answers blank MUST still go on.
 
-#### Scenario: Continuing moves on only to a later page of the same task
+#### Scenario: The CPH number page goes on to Roles and addresses
 **ID**: SCN-FLOW-003-A
-- **GIVEN** the user is on a page whose Overview task holds a later page of the same section — the CPH number page, opened other than from the CPH section's 'Add a CPH number' link on the addresses page
+- **GIVEN** the user is on the CPH number page
 - **WHEN** they save and continue
-- **THEN** they are taken to the consignment addresses page, the next page of that task
+- **THEN** they are taken to the consignment addresses page
 
-#### Scenario: Finishing the last page of a section returns to Overview
+#### Scenario: Contact address goes to check your answers whatever is owed
 **ID**: SCN-FLOW-003-B
-- **GIVEN** the user is on the last page of a section that is still in scope
-- **WHEN** they save and continue
-- **THEN** they return to Overview rather than continuing into another section
+- **GIVEN** a notification with tasks outstanding and the contact address page open
+- **WHEN** the user saves and continues, with or without a contact address chosen
+- **THEN** check your answers is shown, naming what is outstanding
 
-#### Scenario: A page opened from its Overview task returns to Overview rather than running on into the next task
+#### Scenario: What are you importing goes on to Main import reason
 **ID**: SCN-FLOW-003-C
-- **GIVEN** the opening sequence has ended and the user opens what are you importing, main import reason, arrival details or transit countries from its task on Overview
-- **WHEN** they save and continue
-- **THEN** Overview is shown, not commodity details, additional details, transit countries or the transporter list
+- **GIVEN** the user is on What are you importing?, reached from a new notification, from its task on Overview or from a reopened draft
+- **WHEN** they save a selection and continue
+- **THEN** Main import reason is shown, not Overview
 
-#### Scenario: Roles and addresses opened from Overview returns to Overview, even for a consignment that needs a CPH number
+#### Scenario: Roles and addresses goes on to Contact address, never the CPH number page, even when complete
 **ID**: SCN-FLOW-003-D
-- **GIVEN** a consignment that needs a CPH number and roles and addresses opened from its task on Overview
+- **GIVEN** a consignment that needs a CPH number, every other task complete, and roles and addresses open
 - **WHEN** the user saves and continues
-- **THEN** Overview is shown, not the CPH number page
+- **THEN** Contact address for this consignment is shown, not the CPH number page and not Overview
 
-#### Scenario: A page opened from Overview has the same address as in the opening sequence
+#### Scenario: A page opened from Overview has the same address as from any other start
 **ID**: SCN-FLOW-003-E
 - **GIVEN** Overview
 - **WHEN** the user opens any task
-- **THEN** the page's address is the one the opening sequence uses, with nothing added to it or to the link to mark that it came from Overview
-- **AND** saving and continuing returns to Overview
+- **THEN** the page's address is the one every start uses, with nothing added to it or to the link to mark that it came from Overview
+- **AND** saving and continuing goes to the next page that applies
 
-#### Scenario: Upload documents keeps its add-another round trip before returning to Overview
+#### Scenario: Upload documents keeps its add-another round trip before going on
 **ID**: SCN-FLOW-003-F
-- **GIVEN** upload documents opened from Overview
+- **GIVEN** upload documents
 - **WHEN** the user adds a document with "Save and add another"
 - **THEN** they stay on upload documents with the document listed
 - **WHEN** they save and continue
-- **THEN** Overview is shown
+- **THEN** Roles and addresses is shown
 
-#### Scenario: A task saved from Overview reads Complete on return
-**ID**: SCN-FLOW-003-G
-- **GIVEN** a task opened from Overview
-- **WHEN** the user answers it so its answers pass the page's rules and saves and continues
-- **THEN** Overview shows that task as Complete
-
-#### Scenario: Commodity details opened from Overview returns to Overview rather than going on to identification details
+#### Scenario: Commodity details goes on to identification details, or to additional details when nothing needs identifying
 **ID**: SCN-FLOW-003-H
-- **GIVEN** the opening sequence has ended and the user opens commodity details from its task on Overview
-- **WHEN** they save and continue
-- **THEN** Overview is shown, not identification details
+- **GIVEN** the user is on commodity details
+- **WHEN** they save valid counts for a species that needs identifiers
+- **THEN** identification details is shown
+- **WHEN** instead no chosen species needs identifiers
+- **THEN** additional details is shown
 
-#### Scenario: Main import reason and additional details opened from Overview return to Overview
+#### Scenario: Main import reason goes on to Commodity details and additional details goes on to arrival details
 **ID**: SCN-FLOW-003-I
-- **GIVEN** the opening sequence has ended and the user opens main import reason or additional details from its task on Overview
-- **WHEN** they save and continue
-- **THEN** Overview is shown, not commodity details or arrival details
+- **GIVEN** the user is on main import reason with a commodity chosen
+- **WHEN** they save the reason
+- **THEN** commodity details is shown
+- **WHEN** they save additional details
+- **THEN** arrival details is shown
+
+#### Scenario: A newly created notification is walked through the whole journey to review
+**ID**: SCN-FLOW-003-J
+- **GIVEN** the user has just created a notification from the dashboard
+- **WHEN** they save each page in turn, answering every step
+- **THEN** they are taken through origin of the import, what are you importing, main import reason, commodity details, identification details, additional details, arrival details, transit countries when the means of transport is Rail or Road, the transporter, upload documents, roles and addresses and the contact address, in that order
+- **AND** they arrive at check your answers once the contact address is saved, without returning to Overview partway through
+
+#### Scenario: Arrival details goes on to transit countries only for rail or road
+**ID**: SCN-FLOW-003-K
+- **GIVEN** the user is on arrival details, reached from any start, with the other answers left blank
+- **WHEN** they save it with Rail or Road chosen
+- **THEN** transit countries is shown
+- **WHEN** instead they save it with Air or Sea chosen
+- **THEN** the transporter list is shown
+
+#### Scenario: Following a back link and saving again carries on
+**ID**: SCN-FLOW-003-L
+- **GIVEN** the user is on main import reason
+- **WHEN** they follow the back link to what are you importing and save it
+- **THEN** main import reason is shown, not Overview
+
+#### Scenario: With only the country of origin saved, main import reason goes on to commodity details
+**ID**: SCN-FLOW-003-M
+- **GIVEN** a notification holding only its country of origin and main import reason opened from its task on Overview
+- **WHEN** the user saves and continues
+- **THEN** commodity details is shown, not check your answers
 
 ### Requirement: A page the hub links to directly, other than the origin of the import page, offers both a discard-and-exit and a save-and-exit route back to Overview
 **ID**: REQ-FLOW-004
-Outside an amendment (REQ-FLOW-013), the system MUST let the user leave a hub-linked page other than the origin of the import page by discarding unsaved input or committing it, returning to Overview either way. Saving and returning MUST make the same checks as saving and continuing: a missing or invalid answer keeps the user on the page with an error for each, their entries kept and nothing saved. A blank optional answer is accepted by either save.
+The system MUST let the user leave a hub-linked page other than the origin of the import page by discarding unsaved input or committing it, returning to Overview either way. Saving and returning MUST make the same checks as saving and continuing: a missing or invalid answer keeps the user on the page with an error for each, their entries kept and nothing saved. A blank optional answer is accepted by either save.
 
 #### Scenario: Cancel and return to overview discards unsaved input
 **ID**: SCN-FLOW-004-A
@@ -132,11 +148,11 @@ Outside an amendment (REQ-FLOW-013), the system MUST let the user leave a hub-li
 - **THEN** they stay on the page, which shows "Enter the number of animals"
 - **AND** nothing is saved
 
-#### Scenario: While amending, the page ends as the amend ending describes
+#### Scenario: While amending, the page ends as it does on a draft
 **ID**: SCN-FLOW-004-F
 - **GIVEN** a notification being amended
 - **WHEN** the user opens a page the hub links to directly
-- **THEN** it ends as REQ-FLOW-013 describes, with "Save and return" and no "Cancel and return to overview"
+- **THEN** it ends as REQ-FLOW-013 describes, with the draft page's controls
 
 #### Scenario: Arrival details saved and returned without a means of transport is refused
 **ID**: SCN-FLOW-004-G
@@ -181,102 +197,33 @@ The system MUST show check your answers whatever the notification owes, naming w
 - **WHEN** the user goes to check their answers
 - **THEN** check your answers is shown, leading on to the declaration and then the confirmation
 
-### Requirement: A notification created from the dashboard or the type question runs an opening sequence covering the whole journey, ending on check your answers
-**ID**: REQ-FLOW-007
-The system MUST walk a notification created from the dashboard or the Import Notification Service's type question through an opening sequence covering the whole journey, skipping steps not in scope. It MUST NOT offer the CPH number page, MUST go to Overview from roles and addresses when every task is complete, and MUST end on check your answers once the contact address is saved. Reaching either ends it; a back link does not. Its order MUST NOT be assumed to match REQ-FLOW-001's sections.
-
-#### Scenario: A newly created notification is walked through the whole opening sequence to review
-**ID**: SCN-FLOW-007-A
-- **GIVEN** the user has just created a notification from the dashboard
-- **WHEN** they save each page in turn, answering every step
-- **THEN** they are taken through origin of the import, what are you importing, main import reason, commodity details, identification details, additional details, arrival details, the transporter, upload documents, roles and addresses and the contact address, in that order
-- **AND** they arrive at check your answers once the contact address is saved, without returning to Overview partway through
-
-#### Scenario: An opening-sequence step not yet in scope is skipped
-**ID**: SCN-FLOW-007-B
-- **GIVEN** the user is in the opening sequence and the next step is not yet in scope
-- **WHEN** they save the page they are on
-- **THEN** they are taken to the next step that is in scope
-
-#### Scenario: Revisiting an opening-sequence page after the run has finished does not resume it
-**ID**: SCN-FLOW-007-C
-- **GIVEN** the user has already completed the opening sequence for a notification and reached Overview or review
-- **WHEN** they open one of the opening sequence's own pages again and save it
-- **THEN** they return to Overview, not to whatever would be the next step of the sequence
-
-#### Scenario: The reason for import is asked before the commodity details
-**ID**: SCN-FLOW-007-D
-- **GIVEN** the user is in the opening sequence on what are you importing
-- **WHEN** they save a selection
-- **THEN** main import reason is shown
-- **WHEN** they save the reason
-- **THEN** commodity details is shown
-
-#### Scenario: The CPH number page is never a step of the opening sequence
-**ID**: SCN-FLOW-007-E
-- **GIVEN** the user is in the opening sequence for a consignment that needs a CPH number
-- **WHEN** they save roles and addresses
-- **THEN** contact address for this consignment is shown, not the CPH number page
-
-#### Scenario: Roles and addresses goes to Overview when nothing is outstanding
-**ID**: SCN-FLOW-007-F
-- **GIVEN** the user is in the opening sequence with every task already complete
-- **WHEN** they save roles and addresses
-- **THEN** Overview is shown
-
-#### Scenario: The opening sequence ends on check your answers even when tasks are outstanding
-**ID**: SCN-FLOW-007-G
-- **GIVEN** the user is in the opening sequence with tasks outstanding
-- **WHEN** they save the contact address
-- **THEN** check your answers is shown, naming every unfinished card
-
-#### Scenario: Commodity details goes on to identification details, or to additional details when nothing needs identifying
-**ID**: SCN-FLOW-007-H
-- **GIVEN** the user is in the opening sequence on commodity details, reached from main import reason
-- **WHEN** they save valid counts for a species that needs identifiers
-- **THEN** identification details is shown
-- **WHEN** instead no chosen species needs identifiers
-- **THEN** additional details is shown
-
-#### Scenario: Additional details follows identification details or commodity details, never the main import reason, and goes on to arrival details
-**ID**: SCN-FLOW-007-I
-- **GIVEN** the user is in the opening sequence
-- **WHEN** they save commodity details for a consignment with a species that needs identifiers and then save identification details
-- **THEN** additional details is shown
-- **WHEN** instead no chosen species needs identifiers and they save commodity details
-- **THEN** additional details is shown, without identification details
-- **WHEN** they save additional details
-- **THEN** arrival details is shown
-
-#### Scenario: Arrival details goes on to transit countries only for rail or road
-**ID**: SCN-FLOW-007-J
-- **GIVEN** the user is in the opening sequence on arrival details
-- **WHEN** they save it with Rail or Road chosen
-- **THEN** transit countries is shown
-- **WHEN** instead they save it with Air or Sea chosen
-- **THEN** the transporter list is shown
-
-#### Scenario: Following a back link and saving again carries the opening sequence on
-**ID**: SCN-FLOW-007-K
-- **GIVEN** the user is in the opening sequence on main import reason
-- **WHEN** they follow the back link to what are you importing and save it
-- **THEN** main import reason is shown, not Overview
-
-### Requirement: A journey opened out of context is sent to its entry page
+### Requirement: A notification with no answer the user entered opens at its first page
 **ID**: REQ-FLOW-008
-The system MUST send a user to the origin of the import page when they open a page of a journey that neither began its opening sequence in this session nor holds any answer the user has entered. The origin page and the pages beneath it MUST be exempt, so the redirect cannot loop, as MUST the actions taken against a notification from the dashboard — amending, cancelling an amendment, copying and deleting.
+The system MUST send a user to the origin of the import page when they open Overview, check your answers, the declaration or the confirmation page of a notification that holds no answer the user has entered, and MUST open every page once the user has saved an answer. The origin page and the pages beneath it MUST be exempt, so the redirect cannot loop, as MUST the actions taken against a notification from the dashboard — amending, cancelling an amendment, copying and deleting.
 
-#### Scenario: A deep link to an unknown journey lands on the entry page
+#### Scenario: Overview, check your answers, the declaration and the confirmation page show the first page
 **ID**: SCN-FLOW-008-A
-- **GIVEN** a link to a page deep inside a journey that this session did not create and that holds no answers the user entered
-- **WHEN** the user opens it
-- **THEN** they land on the origin of the import page for that journey
+- **GIVEN** a notification that holds no answer the user entered
+- **WHEN** the user opens Overview, check your answers, the declaration or the confirmation page
+- **THEN** the origin of the import page is shown
 
-#### Scenario: A journey carrying answers the user entered opens where it was asked for
+#### Scenario: A notification carrying an answer the user entered opens where it was asked for
 **ID**: SCN-FLOW-008-B
-- **GIVEN** a link to a page inside a journey that already holds an answer the user entered
+- **GIVEN** a link to a page inside a notification that already holds an answer the user entered
 - **WHEN** the user opens it
 - **THEN** that page is shown, rather than the entry page
+
+#### Scenario: The first page, its pages and the dashboard actions open where they are asked for
+**ID**: SCN-FLOW-008-C
+- **GIVEN** a notification that holds no answer the user entered
+- **WHEN** the user opens the origin of the import page, a page beneath it, or amends, cancels an amendment of, copies or deletes the notification
+- **THEN** it opens where it was asked for
+
+#### Scenario: A draft with nothing saved, resumed from the dashboard, opens at the first page
+**ID**: SCN-FLOW-008-D
+- **GIVEN** a draft with nothing saved, listed on the dashboard
+- **WHEN** the user selects Resume
+- **THEN** the origin of the import page is shown
 
 ### Requirement: Only answers the user entered count as starting a journey
 **ID**: REQ-FLOW-009
@@ -285,42 +232,42 @@ The system MUST count only an answer the user gave when deciding whether a journ
 #### Scenario: A journey holding only system-populated values is treated as unstarted
 **ID**: SCN-FLOW-009-A
 - **GIVEN** a journey this session did not create, holding no answers beyond values the system populated itself
-- **WHEN** the user opens a page deep inside it
+- **WHEN** the user opens Overview, check your answers, the declaration or the confirmation page
 - **THEN** they are sent to the origin of the import page
 
-### Requirement: A collection page reached by changing an answer stays in that context until its own finishing action
+### Requirement: A collection page stays on the page across its adds and removes, and its finishing action goes on
 **ID**: REQ-FLOW-010
-The system MUST keep the user on a collection page — one that holds several records, such as identification details or accompanying documents — reached in change mode, such as by changing an answer from check your answers, across any add or remove they make there, rather than returning to check your answers after each one. Only the page's own finishing action MUST return them to check your answers, at which point it MUST show the change they made.
+The system MUST keep the user on a collection page — one that holds several records, such as identification details or accompanying documents — across any add or remove they make there, however the page was reached. Only the page's own finishing action MUST go on, to the next page that applies.
 
-#### Scenario: Removing and replacing an identification record while changing stays on that page until finishing
+#### Scenario: Removing and replacing an identification record stays on that page until finishing
 **ID**: SCN-FLOW-010-A
-- **GIVEN** the user has opened a commodity's identification details page in change mode, as when sent back to it from the consignment details count error
+- **GIVEN** the user has opened a commodity's identification details page
 - **WHEN** they remove a record and enter a replacement
 - **THEN** they remain on the identification details page throughout
 - **WHEN** they choose the page's finishing action
-- **THEN** they return to check your answers, now showing the replacement record
+- **THEN** additional details is shown
 
-#### Scenario: Adding a further document while changing stays on that page until finishing
+#### Scenario: Adding a further document stays on that page until finishing
 **ID**: SCN-FLOW-010-B
-- **GIVEN** the user has followed a Change link from check your answers to the accompanying documents
+- **GIVEN** the user has opened the accompanying documents page
 - **WHEN** they add a further document
 - **THEN** they remain on the accompanying documents page, and the added document is shown there
 - **WHEN** they choose the page's finishing action
-- **THEN** they return to check your answers, now showing the added document
+- **THEN** roles and addresses is shown
 
-### Requirement: A journey reached out of context works from Overview rather than resuming the opening sequence
+### Requirement: A journey sent to its first page goes on from there to the next page that applies
 **ID**: REQ-FLOW-011
-The system MUST NOT resume the opening sequence for a journey the user was redirected to the entry page for, and MUST return them to Overview when they save that page, so they continue by choosing tasks rather than being walked through the sequence.
+The system MUST, on a valid Save and continue on the first page after the user was sent there from another page, take them to the next page that applies, not to Overview.
 
-#### Scenario: Saving the entry page after a redirect leads to Overview
+#### Scenario: Saving the entry page after a redirect shows What are you importing?
 **ID**: SCN-FLOW-011-A
-- **GIVEN** the user was sent to the origin of the import page because the journey had no opening sequence in this session
+- **GIVEN** the user was sent to the origin of the import page because the notification held no answer they entered
 - **WHEN** they save that page
-- **THEN** they arrive at Overview, not the next step of the opening sequence
+- **THEN** What are you importing? is shown
 
 ### Requirement: A page reached from another page, not from the hub directly, ends with only its primary action
 **ID**: REQ-FLOW-012
-The system MUST NOT offer a discard-and-exit or a save-and-exit route back to Overview on a page reached from another page rather than linked from the hub directly, and MUST instead let the user leave only the way they came in, once they complete that page's own primary action. While the notification is being amended, REQ-FLOW-013 governs how the page ends instead.
+The system MUST NOT offer a discard-and-exit or a save-and-exit route back to Overview on a page reached from another page rather than linked from the hub directly, and MUST instead let the user leave only the way they came in, once they complete that page's own primary action.
 
 #### Scenario: A page reached via a detour offers only its primary action
 **ID**: SCN-FLOW-012-A
@@ -328,37 +275,35 @@ The system MUST NOT offer a discard-and-exit or a save-and-exit route back to Ov
 - **WHEN** the page is shown
 - **THEN** only its primary save-and-continue action is offered, with no separate "Save and return to overview" or "Cancel and return to overview" control
 
-### Requirement: While a notification is being amended, a page ends with Save and return, Save and continue and Save and return to overview
+### Requirement: While a notification is being amended, a page ends with exactly the controls it shows on a draft
 **ID**: REQ-FLOW-013
-While a notification is being amended, each hub-linked page MUST end with a primary "Save and return" to the review, a secondary "Save and continue" and "Save and return to overview", with no "Cancel and return to overview"; the origin of the import, CPH number, address picker and contact address pages end with the first two only. Every such page but upload documents MUST keep its usual Back link; upload documents MUST open the review instead.
+While a notification is being amended, each journey page MUST end with exactly the controls the same page shows on a draft, in the same layout, and the status strip MUST still show the Amend status and its Cancel amend link. The origin of the import and CPH number pages end with Save and continue alone.
 
-#### Scenario: A page opened from Overview while amending ends with the three amend controls
+#### Scenario: A page opened from Overview while amending ends with the draft controls
 **ID**: SCN-FLOW-013-A
 - **GIVEN** a notification being amended
 - **WHEN** the user opens Arrival details from Overview
-- **THEN** it ends with "Save and return", "Save and continue" and "Save and return to overview" buttons
-- **AND** no "Cancel and return to overview" is offered
-- **AND** its Back link goes to Overview
+- **THEN** it ends with "Save and continue" and "Save and return to overview" buttons side by side
+- **AND** "Cancel and return to overview" is offered on its own line below them
 
-#### Scenario: Save and return from a Change link goes back to the review showing the changed answer
+#### Scenario: A Change link opens the page that collects the answer
 **ID**: SCN-FLOW-013-B
 - **GIVEN** the review of a notification being amended
-- **WHEN** the user follows "Change import details", changes the internal reference and selects "Save and return"
-- **THEN** the review is shown with the new internal reference
-- **AND** the origin page's Back link went to Overview, not the review
+- **WHEN** the user follows "Change import details", changes the internal reference and selects "Save and continue"
+- **THEN** What are you importing? is shown, the journey having gone on from the origin page
 
-#### Scenario: Save and continue while amending goes on, not back to the review
+#### Scenario: Save and continue while amending goes on through the rest of the journey to check your answers
 **ID**: SCN-FLOW-013-C
-- **GIVEN** the origin page opened from the review's Change link while amending
-- **WHEN** the user selects "Save and continue"
-- **THEN** Overview is shown, not the review
+- **GIVEN** a page opened from the review's Change link while amending
+- **WHEN** the user saves and continues on each page in turn
+- **THEN** each goes on to the next page that applies
+- **AND** the last page that applies goes to check your answers
 
-#### Scenario: The origin page, the CPH number page, the address pickers and the contact address page offer two controls while amending
+#### Scenario: The origin page and the CPH number page offer Save and continue alone while amending
 **ID**: SCN-FLOW-013-D
 - **GIVEN** a notification being amended
-- **WHEN** the user opens the origin of the import page, the CPH number page, an address picker or the contact address page
-- **THEN** each ends with "Save and return" and "Save and continue" and no "Save and return to overview"
-- **AND** "Save and return" on the origin page, on the CPH number page and on an address picker returns to the review
+- **WHEN** the user opens the origin of the import page or the CPH number page
+- **THEN** each ends with "Save and continue" alone
 
 #### Scenario: Outside an amendment the CPH number page and the origin page keep their primary action alone
 **ID**: SCN-FLOW-013-E
@@ -366,9 +311,16 @@ While a notification is being amended, each hub-linked page MUST end with a prim
 - **WHEN** the user opens the CPH number page or the origin of the import page
 - **THEN** only "Save and continue" is offered
 
+#### Scenario: Cancel and return to overview while amending opens Overview without saving
+**ID**: SCN-FLOW-013-F
+- **GIVEN** a notification being amended and a value typed on a page
+- **WHEN** the user selects "Cancel and return to overview"
+- **THEN** Overview is shown with the Amend status and the Cancel amend link
+- **AND** the typed value is not saved
+
 ### Requirement: A page the hub links to directly, other than the origin of the import page, keeps its two buttons side by side and its overview exit below them
 **ID**: REQ-FLOW-014
-Outside an amendment, the system MUST end a page the hub links to directly, other than the origin of the import page, with its primary action and "Save and return to overview" side by side, and "Cancel and return to overview" on its own line below them. While a notification is being amended, it MUST instead put "Save and return" and "Save and continue" side by side, and "Save and return to overview" on its own line below them.
+The system MUST end a page the hub links to directly, other than the origin of the import page, with its primary action and "Save and return to overview" side by side, and "Cancel and return to overview" on its own line below them, on a draft and while the notification is being amended.
 
 #### Scenario: Cancel and return to overview sits on its own line below the two buttons
 **ID**: SCN-FLOW-014-A
@@ -377,54 +329,38 @@ Outside an amendment, the system MUST end a page the hub links to directly, othe
 - **THEN** "Save and continue" and "Save and return to overview" sit side by side
 - **AND** "Cancel and return to overview" sits on its own line below them
 
-#### Scenario: While amending, Save and return to overview sits on its own line below the two save buttons
+#### Scenario: While amending, the layout is the same as on a draft
 **ID**: SCN-FLOW-014-B
 - **GIVEN** a notification being amended
 - **WHEN** the user opens Arrival details from Overview
-- **THEN** "Save and return" and "Save and continue" sit side by side
-- **AND** "Save and return to overview" sits on its own line below them
+- **THEN** "Save and continue" and "Save and return to overview" sit side by side
+- **AND** "Cancel and return to overview" sits on its own line below them
 
 ### Requirement: While a notification is being amended, each save button makes the page's own checks before it goes anywhere
 **ID**: REQ-FLOW-015
 While a notification is being amended, the system MUST make each of a page's save buttons pass the page's own checks before it saves or leaves the page, so a missing or invalid answer keeps the user on the page with an error for each and nothing saved.
 
-#### Scenario: Save and return refuses a partly answered reveal while amending
+#### Scenario: Save and continue and Save and return to overview each refuse a partly answered reveal while amending
 **ID**: SCN-FLOW-015-A
 - **GIVEN** the main import reason page of a notification being amended, with "Transit" chosen and its port of exit and destination country left blank
-- **WHEN** the user selects "Save and return"
+- **WHEN** the user selects "Save and continue" or "Save and return to overview"
 - **THEN** they stay on the page, which shows an error for each missing answer
 - **AND** nothing is saved
 
-### Requirement: Save and return to overview inside the opening sequence goes to Overview, not the sequence's next step
-**ID**: REQ-FLOW-016
-The system MUST send the user to Overview, not the opening sequence's next step, when they choose Save and return to overview from a step of the sequence.
-
-#### Scenario: Save and return to overview inside the sequence goes to Overview rather than the next step
-**ID**: SCN-FLOW-016-A
-- **GIVEN** the user is in the opening sequence on main import reason, with the reason and the question it opens answered
-- **WHEN** they select "Save and return to overview"
-- **THEN** Overview is shown, not commodity details
-
-#### Scenario: Save and return to overview from additional details inside the sequence goes to Overview rather than the next step
-**ID**: SCN-FLOW-016-B
-- **GIVEN** the user is in the opening sequence on additional details, with the certification question answered
-- **WHEN** they select "Save and return to overview"
-- **THEN** Overview is shown, not the port of entry
-
-### Requirement: A notification started from the Import Notification Service's type question opens at the entry page with its opening sequence begun
+### Requirement: A notification started from the Import Notification Service's type question opens at the entry page
 **ID**: REQ-FLOW-017
-The system MUST, when a user chooses Live animals on the Import Notification Service's "What are you importing?" question, create a new draft notification and open it at the entry page with the opening sequence begun, exactly as starting from its own dashboard does.
+The system MUST, when a user chooses Live animals on the Import Notification Service's "What are you importing?" question, create a new draft notification and open it at the entry page, exactly as starting from its own dashboard does.
 
 #### Scenario: Choosing Live animals opens a new draft at Origin of the import
 **ID**: SCN-FLOW-017-A
 - **GIVEN** the user is on the Import Notification Service's "What are you importing?" question
 - **WHEN** they choose Live animals and continue
 - **THEN** a new draft is created and the "Origin of the import" page is shown with the Draft tag and its new reference
-- **AND** saving that page continues the opening sequence
+- **AND** saving that page continues to the next page
 
-### Requirement: On a draft, a page opened from a Change link on the review goes Back to the previous page of the opening sequence
+### Requirement: On a draft, a page opened from a Change link on the review goes Back to the previous page in the journey's order
 **ID**: REQ-FLOW-018
-The system MUST, on a draft notification, give a page opened from a Change link on the review the Back link its opening-sequence step has, carrying the change so that saving there follows the page's own return path. A page whose opening-sequence Back link is Overview MUST keep Overview, the origin of the import page MUST keep the Back link it has without the Change link, and only upload documents MUST go Back to the review. While the notification is being amended, REQ-FLOW-013 governs instead.
+The system MUST, on a draft notification, give a page opened from a Change link on the review the Back link to the previous page in the journey's order, carrying the change so that Back follows the page's own return path. The origin of the import page MUST keep the Back link it has without the Change link, and only upload documents MUST go Back to the review. While amending, REQ-FLOW-013 governs instead.
 
 #### Scenario: Main import reason opened from its Change link goes Back to What are you importing?
 **ID**: SCN-FLOW-018-A
@@ -432,14 +368,13 @@ The system MUST, on a draft notification, give a page opened from a Change link 
 - **WHEN** the user follows the Change link for the reason for import
 - **THEN** the Back link on Main import reason opens What are you importing?
 - **WHEN** they select "Save and continue"
-- **THEN** the review is shown
+- **THEN** Commodity details is shown
 
-#### Scenario: What are you importing? opened by that Back link continues to Commodity details
+#### Scenario: What are you importing? opened by that Back link continues to Main import reason
 **ID**: SCN-FLOW-018-B
 - **GIVEN** What are you importing? opened by the Back link on Main import reason from a Change link
 - **WHEN** the user selects "Save and continue"
-- **THEN** Commodity details is shown
-- **AND** selecting "Save and continue" there shows the review
+- **THEN** Main import reason is shown
 
 #### Scenario: The origin of the import page keeps the Back link it has without a Change link
 **ID**: SCN-FLOW-018-C
@@ -447,7 +382,7 @@ The system MUST, on a draft notification, give a page opened from a Change link 
 - **WHEN** the user follows the Change link for the import details
 - **THEN** the Back link on the origin of the import page opens Overview
 
-#### Scenario: The pages whose opening-sequence Back link is Overview keep Overview from a Change link
+#### Scenario: The pages whose previous page in the journey's order is Overview keep Overview from a Change link
 **ID**: SCN-FLOW-018-D
 - **GIVEN** the review of a draft notification
 - **WHEN** the user follows a Change link that opens Identification details, Arrival details, Transporter details, Contact address for consignment or Consignment addresses

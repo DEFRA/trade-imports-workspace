@@ -56,15 +56,25 @@
     {
       "id": "REQ-TRANSIT-COUNTRIES-003",
       "name": "Saving with no countries added is accepted",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-TRANSIT-COUNTRIES-003-A",
           "name": "Continuing with nothing added succeeds",
-          "coverage": "full",
+          "coverage": "partial",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "transit countries are optional: continuing with none saves and returns to the overview", "strength": "full", "notes": "on return asserts the exact empty-page paragraphs, buttons and listed names" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/transited-countries.spec.ts", "test": "transit countries are optional: continuing with none saves and returns to the overview", "strength": "full", "notes": "on return asserts the exact empty-page paragraphs, buttons and listed names" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "transit countries are optional: Save and return to overview with none added saves and opens Overview", "strength": "partial", "notes": "on return asserts the exact empty-page paragraphs, buttons and listed names; uses Save and return to overview" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/transited-countries.spec.ts", "test": "transit countries are optional: Save and return to overview with none added saves and opens Overview", "strength": "partial", "notes": "on return asserts the exact empty-page paragraphs, buttons and listed names; uses Save and return to overview" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/save-and-continue.spec.ts", "test": "transit countries saved with no country added goes to the transporter list", "strength": "partial", "notes": "asserts Save and continue with none added shows the transporter list; does not reopen the page" }
+          ]
+        },
+        {
+          "id": "SCN-TRANSIT-COUNTRIES-003-B",
+          "name": "Save and continue saves the countries in the order added and shows the transporter list",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "saves and persists the countries that were added", "strength": "partial", "notes": "asserts France and Belgium are listed in the order added on reopening; saves with Save and return to overview" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/save-and-continue.spec.ts", "test": "transit countries saved with no country added goes to the transporter list", "strength": "partial", "notes": "asserts the transporter list is shown after Save and continue; adds no country" }
           ]
         }
       ]
@@ -182,7 +192,7 @@
           "name": "On a draft opened from a Change link, Back goes to arrival details",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.test.js", "test": "Should go Back to the arrival details carrying the change on a draft opened from a Change link", "strength": "full", "notes": "href only; red when the shared Back link helper's draft change-context condition is inverted" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.test.js", "test": "Should send Back to the arrival details carrying the change on a draft opened from a Change link", "strength": "full", "notes": "href only; red when the shared Back link helper's draft change-context condition is inverted" }
           ]
         },
         {
@@ -202,15 +212,15 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "transit back link returns to the overview when the page was opened from its task", "strength": "full", "notes": "red with the controller's Back link pointing at the page itself" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.test.js", "test": "Should go Back to the overview when the page is opened from the overview", "strength": "partial", "notes": "href only" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.test.js", "test": "Should send Back to the Overview when opened from the Overview", "strength": "partial", "notes": "href only" }
           ]
         }
       ]
     },
     {
       "id": "REQ-TRANSIT-COUNTRIES-008",
-      "name": "The page shows Overview when the means of transport is not rail or road, or an earlier required answer is missing",
-      "coverage": "full",
+      "name": "The page shows Overview only when the means of transport is air or sea, or none is saved",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-TRANSIT-COUNTRIES-008-A",
@@ -234,11 +244,11 @@
         },
         {
           "id": "SCN-TRANSIT-COUNTRIES-008-C",
-          "name": "Opening or submitting the page by rail or road without a country of origin or a commodity shows Overview and saves no countries",
-          "coverage": "full",
+          "name": "Opening or submitting the page by rail or road with only the means saved shows the page",
+          "coverage": "partial",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.test.js", "test": "Should go to the overview, rendering nothing and saving nothing, when the page is opened with $name", "strength": "full", "notes": "rail and road each with no country of origin and with no commodity: the overview redirect and unchanged answers; red for all four with the guard reduced to the means-of-transport scope check" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.test.js", "test": "Should go to the overview and save nothing when $button is submitted with $name", "strength": "full", "notes": "Add country, Remove, Save and continue and Save and return to overview, each for rail and road with no country of origin and with no commodity: the overview redirect and unchanged answers; red for all sixteen with the guard reduced to the means-of-transport scope check" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transit-countries/transit-countries.controller.test.js", "test": "Should show the transit countries page when the means is %s and no commodity or country of origin is saved", "strength": "partial", "notes": "GET; the POST case is the next test in the file" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/save-and-continue.spec.ts", "test": "arrival details opened from Overview goes to the transit countries by road and to the transporter list by air", "strength": "partial", "notes": "the stack" }
           ]
         }
       ]

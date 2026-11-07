@@ -29,11 +29,11 @@ The system MUST open this page when the user follows Overview's consignor task r
 
 ### Requirement: A chosen consignor is accepted, continues the journey, and persists
 **ID**: REQ-PLANTS-CONSIGNOR-003
-The system MUST accept a chosen address, continue to identification numbers on save-and-continue during the opening sequence, and return to Overview when the page was opened from its Overview task, and MUST show that address still chosen when the user returns. Choosing a different address MUST replace the previous one. Outside an amendment (REQ-PLANTS-CONSIGNOR-001), save-and-return-to-overview MUST save without continuing, and cancel-and-return-to-overview MUST reach Overview without saving.
+The system MUST accept a chosen address, continue to identification numbers on save-and-continue from every start, Overview included, and MUST show that address still chosen when the user returns. Choosing a different address MUST replace the previous one. Outside an amendment (REQ-PLANTS-CONSIGNOR-001), save-and-return-to-overview MUST save without continuing, and cancel-and-return-to-overview MUST reach Overview without saving.
 
-#### Scenario: Choosing a consignor in the opening sequence saves, continues to identification numbers, and persists on return
+#### Scenario: Choosing a consignor saves, continues to identification numbers, and persists on return
 **ID**: SCN-PLANTS-CONSIGNOR-003-A
-- **GIVEN** the user is on the consignor page in the opening sequence
+- **GIVEN** the user is on the consignor page
 - **WHEN** they choose an address and save and continue
 - **THEN** they reach identification numbers
 - **AND** returning to the consignor page shows that address still chosen
@@ -58,26 +58,26 @@ The system MUST accept a chosen address, continue to identification numbers on s
 - **THEN** they reach Overview
 - **AND** returning to the page shows no address chosen
 
-#### Scenario: Opened from Overview, saving returns to Overview
+#### Scenario: Opened from Overview, Save and continue goes on to identification numbers
 **ID**: SCN-PLANTS-CONSIGNOR-003-E
 - **GIVEN** the consignor page opened from its Overview task
 - **WHEN** the user chooses an address and saves and continues
-- **THEN** Overview is shown, with the consignor task Completed
+- **THEN** identification numbers is shown
 
 ### Requirement: Saving with nothing chosen moves on without an error, and a value not in the book is refused
 **ID**: REQ-PLANTS-CONSIGNOR-004
-Save-and-continue and save-and-return-to-overview MUST make the same checks. With nothing chosen, neither MUST show an error or save a consignor: save-and-continue MUST continue to identification numbers in the opening sequence, or Overview when opened from it, and save-and-return-to-overview MUST return to Overview. A held consignor MUST be kept. A value not in the book MUST be refused on either button, and choosing an address after that MUST recover, as governed by `plants/addresses`.
+Save-and-continue and save-and-return-to-overview MUST make the same checks. With nothing chosen, neither MUST show an error or save a consignor: save-and-continue MUST continue to identification numbers from every start, and save-and-return-to-overview MUST return to Overview. A held consignor MUST be kept. A value not in the book MUST be refused on either button, and choosing an address after that MUST recover, as governed by `plants/addresses`.
 
 #### Scenario: Saving with nothing chosen continues without an error
 **ID**: SCN-PLANTS-CONSIGNOR-004-A
-- **GIVEN** the user is on the consignor page in the opening sequence with nothing chosen and no consignor held yet
+- **GIVEN** the user is on the consignor page with nothing chosen and no consignor held yet
 - **WHEN** they save and continue
 - **THEN** they reach identification numbers, with no error
 - **AND** Overview shows the consignor task not yet started
 
 #### Scenario: Choosing an address after a refused value recovers
 **ID**: SCN-PLANTS-CONSIGNOR-004-C
-- **GIVEN** the consignor page, reached in the opening sequence, is showing the refusal of a value that is not an address in the book
+- **GIVEN** the consignor page, reached after Save and continue, is showing the refusal of a value that is not an address in the book
 - **WHEN** the user chooses an address and saves
 - **THEN** they continue to identification numbers
 
@@ -94,9 +94,9 @@ Save-and-continue and save-and-return-to-overview MUST make the same checks. Wit
 - **THEN** they stay on the page and "Select a consignor from the list" is shown
 - **AND** the search term is kept and no consignor is saved
 
-### Requirement: The back link returns to the place of destination in the opening sequence, and to Overview otherwise
+### Requirement: The back link returns to the place of destination after Save and continue, and to Overview otherwise
 **ID**: REQ-PLANTS-CONSIGNOR-005
-The system MUST return the user to the place of destination page when they follow the back link from the consignor page during the opening sequence, and to Overview when the page was opened from Overview. On a draft opened from a Change link on the review, the back link MUST open the place of destination page too, as `plants/journey-flow` describes.
+The system MUST return the user to the place of destination page when they follow the back link from the consignor page after reaching the page by Save and continue, and to Overview when the page was opened from Overview. On a draft opened from a Change link on the review, the back link MUST open the place of destination page too, as `plants/journey-flow` describes.
 
 #### Scenario: On a draft opened from a Change link, the back link opens the place of destination
 **ID**: SCN-PLANTS-CONSIGNOR-005-C
@@ -106,13 +106,13 @@ The system MUST return the user to the place of destination page when they follo
 
 #### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-PLANTS-CONSIGNOR-005-A
-- **GIVEN** the opening sequence has ended and the user is on the consignor page
+- **GIVEN** the user opened the consignor page from Overview
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
 
-#### Scenario: In the opening sequence, the back link opens the place of destination
+#### Scenario: After Save and continue, the back link opens the place of destination
 **ID**: SCN-PLANTS-CONSIGNOR-005-B
-- **GIVEN** the user is in the opening sequence and reached the consignor page from the place of destination
+- **GIVEN** the user reached the consignor page from the place of destination by saving and continuing
 - **WHEN** they follow the back link
 - **THEN** the place of destination page is shown
 

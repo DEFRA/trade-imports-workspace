@@ -49,8 +49,15 @@ The system MUST accept the transited countries page being saved with none added,
 **ID**: SCN-TRANSIT-COUNTRIES-003-A
 - **GIVEN** the user is on the transited countries page with no countries added
 - **WHEN** they save and continue
-- **THEN** the page saves without an error summary, and the user moves to the next step
+- **THEN** the page saves without an error summary, and the transporter list is shown
 - **AND** no countries are listed if they return to the page
+
+#### Scenario: Save and continue saves the countries in the order added and shows the transporter list
+**ID**: SCN-TRANSIT-COUNTRIES-003-B
+- **GIVEN** the user is on the transited countries page with countries added
+- **WHEN** they save and continue
+- **THEN** the countries are saved in the order they were added
+- **AND** the transporter list is shown
 
 ### Requirement: Adding a country is refused when the entry is blank, not offered, already added, or the cap is reached
 **ID**: REQ-TRANSIT-COUNTRIES-004
@@ -123,7 +130,7 @@ The system MUST title the browser tab "Transit countries - Import notification s
 
 ### Requirement: Back returns to where the user came from
 **ID**: REQ-TRANSIT-COUNTRIES-007
-The system MUST point the page's Back link at the arrival details page when the user reached the page by saving and continuing from arrival details in the opening sequence, and at Overview when they opened it from its task on Overview. On a draft opened from a Change link on the review, the Back link MUST point at the arrival details page, as `live-animals/journey-flow` describes.
+The system MUST point the page's Back link at the arrival details page when the user reached the page by saving and continuing from arrival details, and at Overview when they opened it from its task on Overview. On a draft opened from a Change link on the review, the Back link MUST point at the arrival details page, as `live-animals/journey-flow` describes.
 
 #### Scenario: On a draft opened from a Change link, Back goes to arrival details
 **ID**: SCN-TRANSIT-COUNTRIES-007-C
@@ -133,8 +140,7 @@ The system MUST point the page's Back link at the arrival details page when the 
 
 #### Scenario: Back goes to arrival details after Save and continue there
 **ID**: SCN-TRANSIT-COUNTRIES-007-A
-- **GIVEN** a newly created notification in its opening sequence
-- **AND** the user has saved arrival details with Road chosen and been shown the transited countries page
+- **GIVEN** the user reached the transited countries page by saving and continuing from arrival details with Road chosen
 - **WHEN** they select Back
 - **THEN** the arrival details page is shown
 
@@ -144,9 +150,9 @@ The system MUST point the page's Back link at the arrival details page when the 
 - **WHEN** they select Back
 - **THEN** Overview is shown
 
-### Requirement: The page shows Overview when the means of transport is not rail or road, or an earlier required answer is missing
+### Requirement: The page shows Overview only when the means of transport is air or sea, or none is saved
 **ID**: REQ-TRANSIT-COUNTRIES-008
-The system MUST show Overview when the transited countries page is opened and the saved means of transport is Air or Sea, or none is saved, or no country of origin or no commodity is saved. The system MUST save no countries and show Overview when the page is submitted in that state.
+The system MUST show Overview when the transited countries page is opened and the saved means of transport is Air or Sea, or none is saved. The system MUST show the page when the saved means of transport is Rail or Road, whatever else is saved. The system MUST save no countries and show Overview when the page is submitted with Air, Sea or no means saved.
 
 #### Scenario: Opening the page with air, sea or no means saved shows Overview
 **ID**: SCN-TRANSIT-COUNTRIES-008-A
@@ -161,13 +167,14 @@ The system MUST show Overview when the transited countries page is opened and th
 - **THEN** Overview is shown
 - **AND** no transited countries are saved
 
-#### Scenario: Opening or submitting the page by rail or road without a country of origin or a commodity shows Overview and saves no countries
+#### Scenario: Opening or submitting the page by rail or road with only the means saved shows the page
 **ID**: SCN-TRANSIT-COUNTRIES-008-C
 - **GIVEN** the saved means of transport is Rail or Road
-- **AND** no country of origin is saved, or no commodity is saved
-- **WHEN** the user opens the transited countries page, or submits it with Add country, Remove, Save and continue or Save and return to overview
-- **THEN** Overview is shown
-- **AND** no transited countries are saved
+- **AND** no country of origin or commodity is saved
+- **WHEN** the user opens the transited countries page
+- **THEN** the page is shown
+- **WHEN** the user saves and continues
+- **THEN** the transporter list is shown
 
 ### Requirement: The search offers the origin countries and their territories, each territory named with its country
 **ID**: REQ-TRANSIT-COUNTRIES-009

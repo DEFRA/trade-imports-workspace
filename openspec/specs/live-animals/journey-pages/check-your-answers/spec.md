@@ -101,27 +101,27 @@ The system MUST return the user to Overview when they follow the back link from 
 - **WHEN** they follow the back link
 - **THEN** the live-animals notification list is shown
 
-### Requirement: A Change link returns to check-your-answers
+### Requirement: A Change link opens the page that collects the answer, and Save and continue goes on through the journey to check your answers
 **ID**: REQ-CYA-004
-The system MUST return the user to check-your-answers after saving an answer edited via its Change link, even where answering that question during the normal flow would continue to a different page. For a notification being amended, that save is the page's "Save and return".
+The system MUST open the page that collects an answer when the user follows its Change link, and Save and continue on it MUST go on through the journey to the next page that applies and, past the last, to check-your-answers, showing the new value. This holds on a draft and while the notification is being amended.
 
-#### Scenario: Editing an answer via Change returns to check-your-answers with the new value
+#### Scenario: Editing an answer via Change and saving and continuing through the journey shows the new value on check-your-answers
 **ID**: SCN-CYA-004-A
 - **GIVEN** the user is on check-your-answers
-- **WHEN** they follow a Change link, edit the answer, and save it
-- **THEN** they return to check-your-answers, showing the new value
+- **WHEN** they follow a Change link, edit the answer, and save and continue on each page that follows
+- **THEN** they arrive at check-your-answers, showing the new value
 
-#### Scenario: Changing the contact address from its card returns to the review
+#### Scenario: Changing the contact address from its card opens the contact address page, and Save and continue opens the review
 **ID**: SCN-CYA-004-B
 - **GIVEN** the user is on the review of a draft
-- **WHEN** they follow the Contact address card's Change link, choose a contact address and save
-- **THEN** the contact address page opens, and after saving they return to the review showing that address
+- **WHEN** they follow the Contact address card's Change link, choose a contact address and save and continue
+- **THEN** the contact address page opens, and after saving the review is shown with that address
 
-#### Scenario: Changing documents from a document card returns to the review
+#### Scenario: Changing documents from a document card opens upload documents, and Save and continue goes on through the journey to the review
 **ID**: SCN-CYA-004-C
 - **GIVEN** a notification with a document uploaded
 - **WHEN** the user follows a document card's Change link and continues from the upload documents page
-- **THEN** they are back on the review
+- **THEN** they go on through the journey to the review
 
 ### Requirement: A draft notification offers submission and none of the post-submission actions
 **ID**: REQ-CYA-005

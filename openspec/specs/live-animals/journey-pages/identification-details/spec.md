@@ -283,7 +283,7 @@ The system MUST pass the user on, without showing the identification details pag
 **ID**: SCN-IDENT-019-A
 - **GIVEN** the notification holds only a commodity with no identifier of its own (for example, ostriches)
 - **WHEN** the identification details page is requested directly
-- **THEN** Overview is shown instead, and the page itself is never rendered
+- **THEN** Additional details is shown instead, and the page itself is never rendered
 
 ### Requirement: Identification is shown as one section per commodity holding one card per species
 **ID**: REQ-IDENT-020

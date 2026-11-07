@@ -53,13 +53,13 @@ The system MUST keep a row the user has ticked as they move between pages of res
 
 ### Requirement: A chosen contact is accepted, completes the Overview task, and persists
 **ID**: REQ-PLANTS-CONTACT-SELECT-002
-The system MUST accept a chosen contact address and show it still chosen on return, and a different choice MUST replace it. After the opening sequence, save-and-continue MUST reach Overview with the contact task Completed; within it, save-and-continue MUST reach check your answers, whatever is still owed (`plants/journey-flow` REQ-PLANTS-FLOW-007). Save-and-return-to-overview MUST save the address without continuing the journey.
+The system MUST accept a chosen contact address and show it still chosen on return, and a different choice MUST replace it. Save-and-continue MUST reach check your answers, whatever is still owed (`plants/journey-flow` REQ-PLANTS-FLOW-003). Save-and-return-to-overview MUST save the address without continuing the journey.
 
-#### Scenario: Choosing a contact saves, completes the task, and persists on return
+#### Scenario: Choosing a contact saves, opens check your answers, and persists on return
 **ID**: SCN-PLANTS-CONTACT-SELECT-002-A
-- **GIVEN** the user is on the contact page after the opening sequence has ended
+- **GIVEN** the user is on the contact page
 - **WHEN** they choose an address and save and continue
-- **THEN** they reach Overview with the contact task Completed
+- **THEN** they reach check your answers with the contact task Completed
 - **AND** returning to the page shows that address still chosen
 
 #### Scenario: Save and return to overview saves the address without continuing
@@ -75,22 +75,30 @@ The system MUST accept a chosen contact address and show it still chosen on retu
 - **WHEN** the user chooses a different address and saves
 - **THEN** only the new address is shown as chosen
 
-#### Scenario: In the opening sequence, Continue goes to check your answers
+#### Scenario: Save and continue with arrival details outstanding opens check your answers naming them
 **ID**: SCN-PLANTS-CONTACT-SELECT-002-D
-- **GIVEN** a wood notification in its opening sequence, on the contact page, with arrival details still outstanding
+- **GIVEN** a wood notification on the contact page, with arrival details still outstanding
 - **WHEN** the user chooses an address and saves and continues
 - **THEN** check your answers is shown
 - **AND** its error summary names the outstanding arrival answer
 
 ### Requirement: Saving with nothing chosen is allowed, keeping any contact already held
 **ID**: REQ-PLANTS-CONTACT-SELECT-003
-The system MUST allow the page to be saved with no address chosen, by either save action, without an error, leaving the contact task not yet started unless a contact address is already held, which MUST be kept (`plants/addresses`). Save-and-return-to-overview, and save-and-continue once the opening sequence has ended, MUST return to Overview; within the opening sequence, save-and-continue MUST go on to check your answers (`plants/journey-flow` REQ-PLANTS-FLOW-007).
+The system MUST allow the page to be saved with no address chosen, by either save action, without an error, leaving the contact task not yet started unless a contact address is already held, which MUST be kept (`plants/addresses`). Save-and-return-to-overview MUST return to Overview, and save-and-continue MUST go on to check your answers (`plants/journey-flow` REQ-PLANTS-FLOW-003).
 
-#### Scenario: A blank save returns to Overview with the task not yet started
+#### Scenario: A blank save opens check your answers
 **ID**: SCN-PLANTS-CONTACT-SELECT-003-A
-- **GIVEN** the user is on the contact page of a notification that is not being amended, after the opening sequence has ended, with no address chosen and no contact address held yet
-- **WHEN** they save and continue or save and return to overview
-- **THEN** they reach Overview with no error summary
+- **GIVEN** the user is on the contact page of a notification that is not being amended, with no address chosen and no contact address held yet
+- **WHEN** they save and continue
+- **THEN** check your answers is shown with no contact error summary
+- **AND** the contact task shows not yet started
+- **AND** returning to the page still shows no address chosen
+
+#### Scenario: A blank save and return to overview opens Overview with the task not yet started
+**ID**: SCN-PLANTS-CONTACT-SELECT-003-B
+- **GIVEN** the user is on the contact page of a notification that is not being amended, with no address chosen and no contact address held yet
+- **WHEN** they select save and return to overview
+- **THEN** Overview is shown with no error summary
 - **AND** the contact task shows not yet started
 - **AND** returning to the page still shows no address chosen
 
@@ -105,9 +113,9 @@ The system MUST refuse to save a submitted value that is not one of the offered 
 - **THEN** the first address row is focused
 - **AND** the search term they entered is still in the search box
 
-### Requirement: Cancel discards a new choice; the back link returns to identification numbers in the opening sequence and on a draft opened from a Change link, and to Overview otherwise
+### Requirement: Cancel discards a new choice; the back link returns to identification numbers after Save and continue and on a draft opened from a Change link, and to Overview otherwise
 **ID**: REQ-PLANTS-CONTACT-SELECT-005
-Outside an amendment, the system MUST reach Overview without saving a newly checked option on cancel-and-return-to-overview. While amending, `plants/journey-flow` REQ-PLANTS-FLOW-014 governs how the page ends, and neither cancel-and-return-to-overview nor save-and-return-to-overview is offered. The system MUST send the back link to identification numbers during the opening sequence and on a draft opened from a Change link on the review (REQ-PLANTS-FLOW-017), and to Overview otherwise.
+Outside an amendment, the system MUST reach Overview without saving a newly checked option on cancel-and-return-to-overview. While amending, `plants/journey-flow` REQ-PLANTS-FLOW-014 governs how the page ends. The system MUST send the back link to identification numbers after Save and continue and on a draft opened from a Change link on the review (REQ-PLANTS-FLOW-017), and to Overview otherwise.
 
 #### Scenario: On a draft opened from a Change link, the back link opens identification numbers
 **ID**: SCN-PLANTS-CONTACT-SELECT-005-D
@@ -124,13 +132,13 @@ Outside an amendment, the system MUST reach Overview without saving a newly chec
 
 #### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-PLANTS-CONTACT-SELECT-005-B
-- **GIVEN** the opening sequence has ended and the user is on the contact page
+- **GIVEN** the user opened the contact page from Overview
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
 
-#### Scenario: In the opening sequence, the back link opens identification numbers
+#### Scenario: After Save and continue, the back link opens identification numbers
 **ID**: SCN-PLANTS-CONTACT-SELECT-005-C
-- **GIVEN** the user is in the opening sequence and reached the contact page from identification numbers
+- **GIVEN** the user reached the contact page from identification numbers by saving and continuing
 - **WHEN** they follow the back link
 - **THEN** the identification numbers page is shown
 

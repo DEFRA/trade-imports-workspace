@@ -58,17 +58,17 @@ The system MUST show "Not provided" against any field or party role that has not
 - **WHEN** the user views check-your-answers
 - **THEN** the destination card's rows each read "Not provided", no address error is shown against it, and the error summary names "Complete place of destination", linking to that card
 
-### Requirement: A Change link returns to check-your-answers
+### Requirement: A Change link opens the page that collects the answer, and Save and continue goes on through the journey to check your answers
 **ID**: REQ-PLANTS-CYA-005
-The system MUST return the user to check-your-answers after saving an answer edited via its Change link, even where answering that question during the normal flow would continue to a different page. For a notification being amended, that save is the page's "Save and return".
+The system MUST open the page that collects an answer when the user follows its Change link, and Save and continue on it MUST go on through the journey to the next page that applies and, past the last, to check-your-answers, showing the new value. This holds on a draft and while the notification is being amended.
 
-#### Scenario: Editing an answer via Change returns to check-your-answers with the new value
+#### Scenario: Editing an answer via Change and saving and continuing through the journey shows the new value on check-your-answers
 **ID**: SCN-PLANTS-CYA-005-A
 - **GIVEN** the user is on check-your-answers
-- **WHEN** they follow a Change link for country of origin, choose a different country and save
-- **THEN** they return to check-your-answers, showing the new country
-- **WHEN** they follow a Change link for a commodity line, change its quantity and save through the commodities list
-- **THEN** they return to check-your-answers, showing the new quantity
+- **WHEN** they follow a Change link for country of origin, choose a different country and save and continue through the journey
+- **THEN** they arrive at check-your-answers, showing the new country
+- **WHEN** they follow a Change link for a commodity line, change its quantity and save and continue through the commodities list
+- **THEN** they arrive at check-your-answers, showing the new quantity
 
 ### Requirement: A draft notification invites submission and withholds post-submission actions
 **ID**: REQ-PLANTS-CYA-006

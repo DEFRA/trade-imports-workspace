@@ -1487,7 +1487,27 @@ d. BLOCK on that run, with the Bash tool's \`timeout\` set to 600000, at most ${
    \`gh run watch <run-id> --repo ${ghRepo} --exit-status > ${WORKAREA_TILDE}/logs/${id}-tests-image.log 2>&1\`
 e. Only then push the other repos. A publish that failed, never started or never finished does not stop you: push the
    others and name it in your summary. The tests pull request's own checks show it, and the CI stage deals with it.
-None of this applies when you push ${TESTS_KEY} alone, or do not push it.`
+${testsE2eAfterOthersStep('f', branch)}
+Steps a to e do not apply when you push ${TESTS_KEY} alone, or do not push it. Step f applies whenever you push any
+other repo while ${TESTS_KEY} has an open pull request on \`${branch}\`, whether or not you pushed ${TESTS_KEY}.`
+}
+
+const testsE2eAfterOthersStep = (step, branch) => {
+  if (!TESTS_KEY) return ''
+  const ghRepo = REPOS[TESTS_KEY].github
+  return `${step}. THEN MAKE ${TESTS_KEY}'S OWN E2E RUN AGAINST THE OTHER REPOS' NEW CODE. Its "E2E Tests" check starts as
+   soon as its own image is published, and runs every other repo's branch image as it is at that moment, so it tests the
+   images from before the push you just made. For each other repo you pushed:
+   - its pushed commit: \`git -C ${TILDE}/<repoPath> rev-parse HEAD\`
+   - \`gh run list --repo <ghRepo> --workflow "Publish Branch Image" --commit <sha> --json databaseId,status,conclusion,updatedAt --limit 5\`
+     (empty means not started yet: list again, at most 5 times in all)
+   - block on it as in step d: \`gh run watch <run-id> --repo <ghRepo> --exit-status > ${WORKAREA_TILDE}/logs/<id>-<repoKey>-image.log 2>&1\`
+   Then read ${TESTS_KEY}'s check: \`gh pr checks <its pull request on ${branch}> --repo ${ghRepo} --json name,state,startedAt,link\`,
+   the entry named "E2E Tests". When it started before the last of those publish runs finished, re-run it. Its run id is
+   in its check run's summary: \`gh api repos/${ghRepo}/check-runs/<id from its link> --jq .output.summary\` names
+   ".../actions/runs/<run-id>". A run still in progress is cancelled first, \`gh run cancel <run-id> --repo ${ghRepo}\`,
+   and watched until it reports cancelled. Then \`gh run rerun <run-id> --repo ${ghRepo}\`. This re-run does refresh the
+   check, because the run belongs to ${TESTS_KEY} itself. Name it in your summary.`
 }
 
 const attemptRecordStep = (id, { stage, outcome, planReviewed }, step, work) => {
@@ -2835,7 +2855,12 @@ const CI_FIXER_STALE_RULE = `CHECK THE FAILURE IS ABOUT THIS HEAD BEFORE YOU CHA
    here. For the failing check: \`gh api repos/<owner>/<name>/check-runs/<check-run-id> --jq '.started_at'\`, and the
    head it should have run on: \`git -C ${TILDE}/<repoPath> log -1 --format=%cI\`. Started BEFORE that commit → the
    check never saw this code: report ok:false saying so and naming both times, and re-run nothing and fix nothing.
-   Spending an attempt on a stale check is how EUDPA-693's inc-024 burned five of them on correct code.`
+   Spending an attempt on a stale check is how EUDPA-693's inc-024 burned five of them on correct code.
+   The tests repo's own "E2E Tests" check is stale in one more way: it runs the other repos' branch images as they were
+   when it started. Compare its start with the \`updatedAt\` of each other repo's latest "Publish Branch Image" run on the
+   branch (\`gh run list --repo <ghRepo> --workflow "Publish Branch Image" --branch <branch> --limit 1 --json updatedAt,conclusion\`).
+   Started before any of them finished → it tested old code: re-run it (its run id is in the check run's
+   \`.output.summary\`, \`gh run rerun <run-id> --repo <tests ghRepo>\`), fix nothing, and report ok:false naming the times.`
 
 const conflictStopDetail = (id, ci, branch) =>
   `${id}: ${ci.blocked}. GitHub runs no checks on it. Merge ${IS_BRANCH ? 'its base branch' : `origin/${BASE_BRANCH}`} into ${branch} in that repo, push, then run again`

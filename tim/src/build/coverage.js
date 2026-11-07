@@ -107,10 +107,20 @@ export const addedLines = async (root, base) => {
   return withUntracked(root, addedLinesOfDiff(stdout))
 }
 
-const measurement = (covered, conditions, coveredConditions) => ({
+// A report counts a line as one to cover only where it records a hit count for
+// it. v8 writes branch records for a line it records no hit count for — a
+// ternary's own line, say, where the hits sit on the statement above — and the
+// gate counts that line's conditions without counting the line.
+const measurement = (
   covered,
   conditions,
-  coveredConditions
+  coveredConditions,
+  countsAsALine = true
+) => ({
+  covered,
+  conditions,
+  coveredConditions,
+  countsAsALine
 })
 
 const lcovMeasurements = (text) => {
@@ -138,14 +148,15 @@ const lcovMeasurements = (text) => {
     }
     if (line.startsWith('BRDA:')) {
       const [number, , , taken] = line.slice(5).split(',')
-      const held = lines.get(Number(number)) ?? measurement(false, 0, 0)
+      const held = lines.get(Number(number)) ?? measurement(false, 0, 0, false)
       const hit = taken !== '-' && Number(taken) > 0
       lines.set(
         Number(number),
         measurement(
           held.covered,
           held.conditions + 1,
-          held.coveredConditions + (hit ? 1 : 0)
+          held.coveredConditions + (hit ? 1 : 0),
+          held.countsAsALine
         )
       )
     }
@@ -346,13 +357,16 @@ const countsOf = (added, measured) => {
   for (const number of [...added].sort((first, second) => first - second)) {
     const measurement = measured.get(number)
     if (!measurement) continue
-    lines += 1
     conditions += measurement.conditions
     coveredConditions += measurement.coveredConditions
-    if (measurement.covered) covered += 1
-    const everyCondition =
-      measurement.conditions === measurement.coveredConditions
-    if (!measurement.covered || !everyCondition) uncovered.push(number)
+    if (measurement.countsAsALine) {
+      lines += 1
+      if (measurement.covered) covered += 1
+    }
+    const lineMissed = measurement.countsAsALine && !measurement.covered
+    const conditionMissed =
+      measurement.conditions !== measurement.coveredConditions
+    if (lineMissed || conditionMissed) uncovered.push(number)
   }
   return { lines, covered, conditions, coveredConditions, uncovered }
 }
@@ -361,7 +375,9 @@ const fileCoverage = (file, added, measurements) => {
   const measured = measuredLinesOf(file, measurements)
   if (!measured) return null
   const counts = countsOf(added, measured)
-  return counts.lines === 0 ? null : { file, ...counts }
+  return counts.lines === 0 && counts.conditions === 0
+    ? null
+    : { file, ...counts }
 }
 
 const percentOf = (files) => {

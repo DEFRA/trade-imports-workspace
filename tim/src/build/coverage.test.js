@@ -139,6 +139,36 @@ describe('newCodeCoverage', () => {
     }).toEqual({ toCover: 7, met: 6, floorMet: false, uncovered: [3] })
   })
 
+  test('counts a line the report gives branches but no hit count as conditions, not as an uncovered line', async () => {
+    await branchedRepoWith({ 'README.md': 'x' })
+    writeFiles(root, {
+      'src/added.js': FIVE_LINES,
+      'coverage/lcov.info': lcovWithBranches(
+        'src/added.js',
+        [
+          { line: 1, hits: 1 },
+          { line: 2, hits: 1 },
+          { line: 4, hits: 1 },
+          { line: 5, hits: 1 }
+        ],
+        [
+          { line: 3, branch: 0, taken: 6 },
+          { line: 3, branch: 1, taken: 22 }
+        ]
+      )
+    })
+    await commitAll(root, 'add a ternary whose hits sit on the line above')
+
+    const outcome = await newCodeCoverage({ repoPath: root })
+
+    expect({
+      lines: outcome.files[0].lines,
+      conditions: outcome.files[0].conditions,
+      uncovered: outcome.files[0].uncovered,
+      percent: outcome.percent
+    }).toEqual({ lines: 4, conditions: 2, uncovered: [], percent: 100 })
+  })
+
   test('counts every line of an untracked file the branch has not committed yet', async () => {
     await branchedRepoWith({ 'README.md': 'x' })
     writeFiles(root, {

@@ -8,14 +8,14 @@ Lists every commercial and private transporter the service knows about, letting 
 
 ### Requirement: The list shows every known transporter in headed columns, with a status tag
 **ID**: REQ-TRANSPORTER-001
-The system MUST list every transporter the service knows about, each row showing its name, address, approval number (blank for a private transporter), type, and a status tag — green for "Approved", magenta for "New" — under columns headed to match, alongside a radio to choose it.
+The system MUST list every transporter the service knows about, each row showing its name, address, approval number ("Not applicable" for a transporter with none), type, and a status tag — green for "Approved", magenta for "New" — under columns headed to match, alongside a radio to choose it.
 
 #### Scenario: The list shows every transporter's key facts under the right column
 **ID**: SCN-TRANSPORTER-001-A
 - **GIVEN** the user has reached the transporter list
 - **WHEN** the page loads
 - **THEN** every known transporter is shown as a row under columns headed Name, Address, Approval number, Type and Status
-- **AND** a private transporter's approval number cell is blank
+- **AND** a transporter with no approval number reads "Not applicable" in that column
 
 #### Scenario: An approved transporter is tagged green, a newly added one magenta
 **ID**: SCN-TRANSPORTER-001-B
@@ -27,7 +27,7 @@ The system MUST list every transporter the service knows about, each row showing
 
 ### Requirement: The list can be searched by name, address, approval number, type or status, narrowing as the user types
 **ID**: REQ-TRANSPORTER-002
-The system MUST offer a labelled search over the transporter list, hinted with what it matches and run from a button named "Search". It MUST narrow the list to transporters matching the term by name, address, approval number, type or status, ignoring case and accents, as the user types when JavaScript is on, and MUST show a message rather than an empty table when nothing matches.
+The system MUST offer a labelled search over the transporter list, hinted with what it matches and run from a button named "Search". It MUST narrow the list to transporters matching the term by name, address, approval number, type or status, ignoring case and accents, as the user types when JavaScript is on, and MUST show a message rather than an empty table when nothing matches. A transporter with no approval number MUST be matched by the words its Approval number column shows.
 
 #### Scenario: Searching narrows the list by name, address, approval number, type or status
 **ID**: SCN-TRANSPORTER-002-A
@@ -64,6 +64,14 @@ The system MUST offer a labelled search over the transporter list, hinted with w
 - **THEN** the list comes back narrowed to the matching transporters
 - **AND** the search box still holds the term
 
+#### Scenario: Searching for the words shown where a transporter has no approval number leaves exactly those transporters
+**ID**: SCN-TRANSPORTER-002-F
+- **GIVEN** the user is on the transporter list
+- **WHEN** they search for the words the Approval number column shows for a transporter without one
+- **THEN** only the transporters with no approval number are shown
+- **WHEN** they search for a real approval number instead
+- **THEN** only the transporter it belongs to is shown
+
 ### Requirement: The page explains that only a DAERA-authorised transporter is valid, not an EU-authorised one
 **ID**: REQ-TRANSPORTER-003
 The system MUST tell the user that a transporter authorisation issued by DAERA or APHA is required for transporting live vertebrate animals in, to, from or through Great Britain on journeys over 65 km as part of an economic activity, MUST tell them that documents issued by DAERA are valid for use in GB and that documents issued by any EU member state are not, and MUST offer a link to further guidance.
@@ -87,3 +95,26 @@ The system MUST offer "Add a transporter" on the same row as the search, above t
 - **AND** pressing Tab from the search box reaches the "Search" button, then "Add a transporter", then the transporter choices
 - **WHEN** they choose "Add a transporter"
 - **THEN** the "Choose a transporter type" page opens
+
+### Requirement: The page names the choice once, above the search and the list
+**ID**: REQ-TRANSPORTER-005
+The system MUST show a heading "Select a transporter" above the search box and the transporter choices, and MUST offer the choices as one group with that same name for screen readers.
+
+#### Scenario: The heading and the group share the one name
+**ID**: SCN-TRANSPORTER-005-A
+- **GIVEN** the user is on the transporter list
+- **WHEN** the page loads
+- **THEN** "Select a transporter" is shown once as a heading above the search box and the table
+- **AND** the transporter choices are offered as one group named "Select a transporter"
+
+### Requirement: The page has no serious or critical accessibility violations, in its plain state and with a refused pick
+**ID**: REQ-TRANSPORTER-006
+The system MUST show the transporter list with no serious or critical accessibility violations against the WCAG 2.0, 2.1 and 2.2 A and AA rules, both with nothing chosen and with a submitted pick that is not on the list refused.
+
+#### Scenario: The list has no serious or critical accessibility violations, plain or with a refused pick
+**ID**: SCN-TRANSPORTER-006-A
+- **GIVEN** the user is on the transporter list with nothing chosen
+- **WHEN** the page loads
+- **THEN** the page has no serious or critical accessibility violations
+- **WHEN** the user submits a transporter that is not on the list
+- **THEN** the page, now showing the error summary and the in-fieldset error message, has no serious or critical accessibility violations

@@ -13,7 +13,8 @@
           "name": "The list shows every transporter's key facts under the right column",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "lists every transporter the service knows about in headed columns, each row showing its address, approval number and type", "strength": "full", "notes": "asserts column order by position (select, Name, Address, Approval number, Type, Status) and a private transporter's blank approval-number cell" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "lists every transporter the service knows about in headed columns, each row showing its address, approval number and type", "strength": "full", "notes": "asserts column order by position (select, Name, Address, Approval number, Type, Status) and the Not applicable label in a private transporter's approval-number cell" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/transporter.spec.ts", "test": "shows Not applicable in the Approval number column for a transporter with no approval number", "strength": "partial", "notes": "not run when written; the ladder's end-to-end rung runs it against the stack" }
           ]
         },
         {
@@ -21,7 +22,7 @@
           "name": "An approved transporter is tagged green, a newly added one magenta",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "tags an approved transporter green and a newly added one pink", "strength": "full", "notes": "test title says 'pink', asserted class is govuk-tag--magenta — same tag, spec uses the CSS/GDS colour name" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "tags an approved transporter green and a newly added one magenta", "strength": "full", "notes": "" }
           ]
         }
       ]
@@ -87,6 +88,15 @@
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "keeps the term in the box and stays on the list, saving nothing", "strength": "full", "notes": "presses the Search button" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/transporter.spec.ts", "test": "narrows the list on the server when the Search button is pressed", "strength": "partial", "notes": "not run when written; the ladder's end-to-end rung runs it against the stack" }
           ]
+        },
+        {
+          "id": "SCN-TRANSPORTER-002-F",
+          "name": "Searching for the words shown where a transporter has no approval number leaves exactly those transporters",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/rows.test.js", "test": "Should match transporters with no approval number by the label shown in that column, and leave a real approval number matching only its own record", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/rows.test.js", "test": "Should carry the Not applicable label in the search text of a record without an approval number", "strength": "partial", "notes": "proves the row's search text carries the label, which is what the narrowing reads" }
+          ]
         }
       ]
     },
@@ -119,6 +129,38 @@
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "is reached by Tab after the search box and its button, before the first transporter", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "reaches the type question from the list, not before it", "strength": "full", "notes": "" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/transporter.spec.ts", "test": "Add a transporter opens the transporter type question", "strength": "partial", "notes": "not run when written; the ladder's end-to-end rung runs it against the stack" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TRANSPORTER-005",
+      "name": "The page names the choice once, above the search and the list",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TRANSPORTER-005-A",
+          "name": "The heading and the group share the one name",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "names the choice once: a heading above the search and the table, with the fieldset carrying the same words for screen readers only", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/transporter.spec.ts", "test": "shows the Select a transporter heading and offers the choices as one group of that name", "strength": "partial", "notes": "not run when written; the ladder's end-to-end rung runs it against the stack" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TRANSPORTER-006",
+      "name": "The page has no serious or critical accessibility violations, in its plain state and with a refused pick",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TRANSPORTER-006-A",
+          "name": "The list has no serious or critical accessibility violations, plain or with a refused pick",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "transporter list page has no serious or critical axe violations", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "transporter list page has no serious or critical axe violations with a refused pick", "strength": "full", "notes": "" }
           ]
         }
       ]

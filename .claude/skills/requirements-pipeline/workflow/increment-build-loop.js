@@ -1570,6 +1570,8 @@ TASK:
    Do NOT record a commit — the increment is not built.${attemptRecordStep(id, record, 7, '{"kind":"patches","files":[<every .staged.patch and .unstaged.patch you wrote in step 2, each as "logs/<its name>", comma separated>]}')}
    Name only the \`.staged.patch\` and \`.unstaged.patch\` files: step 0's \`.commits.patch\` is a mailbox that \`git apply\`
    cannot take, and step 0's \`reset --soft\` already left its changes staged, so the staged patch holds them.
+   Leave out any patch file that is empty (0 bytes, \`test -s <file>\` fails): there was no work of that kind, and
+   \`git apply\` refuses an empty patch, so naming one would make the restore fail over nothing.
 Do NOT commit, do NOT push, do NOT open or edit a pull request.
 Report the patch files, the stash refs and which merges you aborted.
 Return the structured output only.`
@@ -1658,10 +1660,17 @@ ${files.map((file) => `   - ${file}`).join('\n')}
       which repo it belongs to. For each repo, apply its staged patch first, then its unstaged one:
       \`git -C ${TILDE}/<repoPath> apply --index ${WORKAREA_TILDE}/<the .staged.patch>\`
       \`git -C ${TILDE}/<repoPath> apply ${WORKAREA_TILDE}/<the .unstaged.patch>\`
+      First check each named patch with \`test -s ${WORKAREA_TILDE}/<the patch>\`. One that is on disk but empty
+      (0 bytes) holds no work: skip it, and it still counts as put back. Never pass \`--allow-empty\`.
    c. A patch that is not on disk, or that git refuses, is restored:false naming it and quoting git. Never add
       \`--3way\`, \`--reject\` or \`--exclude\`, and never edit a patch to make it apply: a half-applied tree is a tree
       nobody wrote, and the gate would measure it as though somebody had.
-   Never \`checkout\`, \`reset\`, \`stash\` or commit anything.`
+   d. When restored is false and step 1 already applied a patch to a repo, leave that repo clean, because the loop
+      then builds the row from the top and its baseline refuses a dirty tree. For each such repo run
+      \`git -C ${TILDE}/<repoPath> stash push -u -m "restore-failed-${id}"\`, then confirm
+      \`git -C ${TILDE}/<repoPath> status --short\` prints nothing. Name each stash ref in your summary. The patches
+      stay on disk, so nothing is lost.
+   Apart from step d, never \`checkout\`, \`reset\`, \`stash\` or commit anything.`
 }
 
 const restoreWorkStep = (id, branch, work) => {

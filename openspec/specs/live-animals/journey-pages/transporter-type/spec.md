@@ -47,3 +47,13 @@ The system MUST show this page under a caption identifying it as part of adding 
 - **WHEN** the type question is shown
 - **THEN** it is captioned to show it is part of adding a new transporter
 - **AND** it warns the trader to search the list before adding a new record
+
+### Requirement: The back link returns to the transporter list, keeping where the user came from
+**ID**: REQ-TRANSPORTER-TYPE-005
+The system MUST return the user to the transporter list when they follow the back link from the transporter type question, carrying where the user came to the list from so that the list's own back link is unchanged.
+
+#### Scenario: The back link opens the transporter list
+**ID**: SCN-TRANSPORTER-TYPE-005-A
+- **GIVEN** the user opened the transporter list from a Change link on the review and chose "Add a transporter"
+- **WHEN** they follow the back link
+- **THEN** the transporter list is shown

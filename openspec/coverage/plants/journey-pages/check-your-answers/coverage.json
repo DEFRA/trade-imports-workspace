@@ -190,15 +190,16 @@
     },
     {
       "id": "REQ-PLANTS-CYA-010",
-      "name": "A back link and a save-and-return action open Overview from the review; the submitted view's back link opens the notification list",
-      "coverage": "full",
+      "name": "A review's back link goes to the place the user came from; the submitted view's back link opens the notification list",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-PLANTS-CYA-010-A",
-          "name": "Back and save-and-return open Overview",
-          "coverage": "full",
+          "name": "Back goes to the last page Save and continue was pressed on",
+          "coverage": "partial",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "offers Back, Save and return, and Cancel to Overview", "strength": "full", "notes": "back and cancel hrefs to hub; Save and return click lands on hub" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should go Back to the last journey page when the trader pressed Save and continue on it", "strength": "partial", "notes": "not seen failing" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/back.spec.ts", "test": "after Save and continue from the contact address it opens the contact address, and Back steps back through the pages Save and continue was pressed on", "strength": "partial", "notes": "not seen failing; needs the stack" }
           ]
         },
         {
@@ -212,11 +213,10 @@
         },
         {
           "id": "SCN-PLANTS-CYA-010-C",
-          "name": "An amendment's review back link opens Overview",
-          "coverage": "full",
+          "name": "An amendment's review opened by its address has a back link to Overview",
+          "coverage": "partial",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should send Back from the review of an amendment to the overview", "strength": "partial", "notes": "href only" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "Back from an amendment review opens the overview", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should go Back to Overview when nothing says where the trader came from", "strength": "partial", "notes": "not seen failing" }
           ]
         },
         {
@@ -226,6 +226,33 @@
           "tests": [
             { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "Back from the restored submitted view opens the notification list", "strength": "full", "notes": "red with a submitted view's Back link pointing at the overview" },
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should send Back from the submitted view shown after an amendment is cancelled to the notification list", "strength": "partial", "notes": "href only" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-010-E",
+          "name": "A review opened from Overview has a back link to Overview, and save and return opens Overview",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should go Back to Overview when the review was opened from Overview", "strength": "partial", "notes": "not seen failing" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-010-F",
+          "name": "A review opened from a dashboard card has a back link to the dashboard, before and after a Change link round trip",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should go Back to the dashboard when the review was opened from a dashboard card", "strength": "partial", "notes": "not seen failing" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should push the review onto its own trail on every Change link", "strength": "partial", "notes": "not seen failing" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/back.spec.ts", "test": "opened by Amend on a submitted notification dashboard card it opens the dashboard, before and after a Change link round trip", "strength": "partial", "notes": "not seen failing; needs the stack" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-CYA-010-G",
+          "name": "A refused Continue keeps the review's back link",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should keep the Back link the review had", "strength": "partial", "notes": "not seen failing" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/back.spec.ts", "test": "after Continue is refused it still opens the contact address", "strength": "partial", "notes": "not seen failing; needs the stack" }
           ]
         }
       ]

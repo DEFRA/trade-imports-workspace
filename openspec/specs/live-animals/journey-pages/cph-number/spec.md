@@ -147,13 +147,13 @@ The system MUST show a collapsed expander above the CPH boxes offering to explai
 - **WHEN** the user opens the expander
 - **THEN** the explanation, including where to find the number, becomes visible
 
-### Requirement: The back link returns to the consignment addresses page from the CPH section's add link, and to Overview otherwise
+### Requirement: The back link returns to the consignment addresses page from the CPH section's add link, and to where the user came from otherwise
 **ID**: REQ-CPH-006
-The system MUST return the user to the consignment addresses page when they follow the back link from the CPH number page after arriving from the CPH section's 'Add a CPH number' link there, and to Overview when they arrived any other way.
+The system MUST return the user to the consignment addresses page when they follow the back link from the CPH number page after arriving from the CPH section's 'Add a CPH number' link there, to the review when they arrived from a Change link on the review, and to Overview when they arrived any other way, as `live-animals/journey-flow` describes.
 
 #### Scenario: The back link opens Overview when the page was not opened from the CPH section's add link
 **ID**: SCN-CPH-006-A
-- **GIVEN** the user reached the CPH number page other than from the CPH section's 'Add a CPH number' link on the consignment addresses page (for example a Change link from check your answers)
+- **GIVEN** the user reached the CPH number page other than from the CPH section's 'Add a CPH number' link or a Change link on the review
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
 
@@ -162,6 +162,12 @@ The system MUST return the user to the consignment addresses page when they foll
 - **GIVEN** the user reached the CPH number page from the CPH section's 'Add a CPH number' link on the consignment addresses page (`?return=addresses`)
 - **WHEN** they follow the back link
 - **THEN** the consignment addresses page is shown
+
+#### Scenario: The back link opens the review when the page was opened from a Change link
+**ID**: SCN-CPH-006-C
+- **GIVEN** the review of a draft notification
+- **WHEN** the user follows the Change link that opens the CPH number page and then the back link
+- **THEN** the review is shown
 
 ### Requirement: Saving the CPH number returns to the consignment addresses page
 **ID**: REQ-CPH-007

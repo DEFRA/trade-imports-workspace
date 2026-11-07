@@ -31,11 +31,11 @@ The system MUST tell the user, before they add anything, which file types are ac
 
 ### Requirement: The page's back link follows where the user came from
 **ID**: REQ-DOCS-002
-The system MUST open the review page from the upload documents page's back link when the page was opened by changing an answer from the review, or whenever the notification is being amended however the page was opened, and MUST open Overview otherwise.
+The system MUST return the user, when they follow the back link from the upload documents page, to the page they saved and continued from (the transporter list), to Overview when they opened the page from its Overview task, and to the review when they opened it from a Change link on the review, as `live-animals/journey-flow` describes. The back link MUST stay the same after the page refuses a part-filled document, after Save and add another, after a removal and after a document is uploaded.
 
 #### Scenario: The back link opens Overview for a draft opened from Overview
 **ID**: SCN-DOCS-002-A
-- **GIVEN** the user opens the upload documents page from Overview, on a draft that is not being amended
+- **GIVEN** the user opens the upload documents page from Overview
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
 
@@ -45,11 +45,11 @@ The system MUST open the review page from the upload documents page's back link 
 - **WHEN** they follow the back link
 - **THEN** the review is shown
 
-#### Scenario: The back link opens the review while the notification is being amended, however the page was opened
+#### Scenario: The back link opens the transporter list after Save and continue there
 **ID**: SCN-DOCS-002-C
-- **GIVEN** the notification is being amended
-- **WHEN** the user opens the upload documents page from Overview and follows the back link
-- **THEN** the review is shown
+- **GIVEN** the user reached the upload documents page by saving and continuing from the transporter list
+- **WHEN** they follow the back link
+- **THEN** the transporter list is shown
 
 #### Scenario: The back link still opens the review after the page refuses a part-filled document
 **ID**: SCN-DOCS-002-D

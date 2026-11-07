@@ -66,7 +66,7 @@ The system MUST report, on this page, how many lines a commodity-type change rem
 
 ### Requirement: The page ends with its primary action alone, and continuing with a line saved opens origin
 **ID**: REQ-PLANTS-COMMODITIES-006
-The system MUST offer only a save-and-continue action on this page, with no save-and-return or cancel-and-return control, and MUST take the user to the origin page once they continue with at least one line saved, however the list was reached (`plants/journey-flow` REQ-PLANTS-FLOW-003).
+The system MUST offer only a save-and-continue action on this page, with no save-and-return or cancel-and-return control, and MUST take the user to the origin page once they continue with at least one line saved, however the list was reached (`plants/journey-flow` REQ-PLANTS-FLOW-003). A list left empty by a commodity type change MUST refuse Save and continue with "Add at least one commodity".
 
 #### Scenario: The page offers only its primary action
 **ID**: SCN-PLANTS-COMMODITIES-006-A
@@ -80,15 +80,21 @@ The system MUST offer only a save-and-continue action on this page, with no save
 - **WHEN** the user saves and continues from the list
 - **THEN** the origin page is shown
 
-### Requirement: The back link returns to commodity type after Save and continue, and to Overview otherwise
-**ID**: REQ-PLANTS-COMMODITIES-007
-The system MUST return the user to the commodity type page when they follow the back link from the commodities list after reaching the page by Save and continue, and to Overview when the list was opened from Overview. On a draft opened from a Change link on the review, the back link MUST open the commodity type page too, as `plants/journey-flow` describes.
+#### Scenario: A list left empty by a commodity type change refuses Save and continue
+**ID**: SCN-PLANTS-COMMODITIES-006-C
+- **GIVEN** the user changed the commodity type so that every commodity line was removed
+- **WHEN** the list is shown and they select "Save and continue"
+- **THEN** the list is shown again with the error "Add at least one commodity"
 
-#### Scenario: On a draft opened from a Change link, the back link opens commodity type
+### Requirement: The back link returns to commodity type after Save and continue, to the review from a Change link, and to Overview otherwise
+**ID**: REQ-PLANTS-COMMODITIES-007
+The system MUST return the user from the commodities list to the commodity type page after Save and continue there (also after a visit to commodity details), to the review from a Change link, and to Overview when the list was opened from Overview.
+
+#### Scenario: On a draft opened from a Change link, the back link opens the review
 **ID**: SCN-PLANTS-COMMODITIES-007-C
 - **GIVEN** the review of a draft notification
 - **WHEN** the user follows a Change link to the commodities list and then the back link
-- **THEN** the commodity type page is shown
+- **THEN** the review is shown
 
 #### Scenario: The back link opens Overview when the list was opened from Overview
 **ID**: SCN-PLANTS-COMMODITIES-007-A
@@ -100,4 +106,10 @@ The system MUST return the user to the commodity type page when they follow the 
 **ID**: SCN-PLANTS-COMMODITIES-007-B
 - **GIVEN** the user reached the commodities list from commodity type by saving and continuing
 - **WHEN** they follow the back link
+- **THEN** the commodity type page is shown
+
+#### Scenario: After a visit to commodity details, the back link still opens commodity type
+**ID**: SCN-PLANTS-COMMODITIES-007-D
+- **GIVEN** the user reached the commodities list from commodity type and opened commodity details from it
+- **WHEN** they return to the list and follow the back link
 - **THEN** the commodity type page is shown

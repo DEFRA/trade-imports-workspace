@@ -140,27 +140,27 @@ The system MUST return the user to the commodity selection page once every chose
 - **WHEN** they reopen the commodity details page directly afterwards
 - **THEN** the commodity selection page is shown, since there is nothing left to ask about
 
-### Requirement: The back link returns to what are you importing after Save and continue, and to Overview otherwise
+### Requirement: The back link returns to where the user came from
 **ID**: REQ-COMMODITY-DETAILS-009
-The system MUST return the user to the commodity selection page ("What are you importing?") when they follow the back link from commodity details after reaching the page by Save and continue, not to the main import reason that comes between them, and MUST return them to Overview when the page was opened from its Overview task. On a draft opened from a Change link on the review, the back link MUST open the commodity selection page too, as `live-animals/journey-flow` describes.
+The system MUST return the user, when they follow the back link from the commodity details page, to the page they saved and continued from, to Overview when they opened it from its Overview task, and to the review when they opened it from a Change link on the review, as `live-animals/journey-flow` describes. That page is Main import reason.
 
-#### Scenario: On a draft opened from a Change link, the back link opens what are you importing
-**ID**: SCN-COMMODITY-DETAILS-009-C
-- **GIVEN** the review of a draft notification
-- **WHEN** the user follows a Change link to commodity details and then the back link
-- **THEN** "What are you importing?" is shown
+#### Scenario: After Save and continue, the back link opens the page before
+**ID**: SCN-COMMODITY-DETAILS-009-A
+- **GIVEN** the user reached the commodity details page by saving and continuing from Main import reason
+- **WHEN** they follow the back link
+- **THEN** that page is shown
 
 #### Scenario: The back link opens Overview when the page was opened from Overview
-**ID**: SCN-COMMODITY-DETAILS-009-A
-- **GIVEN** the user opened commodity details from its task on Overview
+**ID**: SCN-COMMODITY-DETAILS-009-B
+- **GIVEN** the user opened the commodity details page from its task on Overview
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
 
-#### Scenario: After Save and continue, the back link opens what are you importing, with the choice kept
-**ID**: SCN-COMMODITY-DETAILS-009-B
-- **GIVEN** the user reached commodity details from main import reason by saving and continuing
-- **WHEN** they follow the back link
-- **THEN** "What are you importing?" is shown, with the species they chose still chosen
+#### Scenario: The back link opens the review when the page was opened from a Change link
+**ID**: SCN-COMMODITY-DETAILS-009-C
+- **GIVEN** the review of a draft notification
+- **WHEN** the user follows the Change link that opens the commodity details page and then the back link
+- **THEN** the review is shown
 
 ### Requirement: The error summary lists errors by question
 **ID**: REQ-COMMODITY-DETAILS-010

@@ -265,15 +265,27 @@ The system MUST show a heading reporting how many of a species' declared animal 
 - **THEN** the heading reads "Enter details for Bos taurus (Domestic Cattle) 1 of 3" (for a cattle species)
 - **AND** that count changes as records are added to or removed from the species
 
-### Requirement: The back link returns to Overview
+### Requirement: The back link returns to where the user came from
 **ID**: REQ-IDENT-018
-The system MUST return the user to Overview when they follow the back link from the identification details page.
+The system MUST return the user, when they follow the back link from the identification details page, to the page they saved and continued from, to Overview when they opened it from its Overview task, and to the review when they opened it from a Change link on the review, as `live-animals/journey-flow` describes. That page is Commodity details.
 
-#### Scenario: The back link opens Overview
+#### Scenario: After Save and continue, the back link opens the page before
 **ID**: SCN-IDENT-018-A
-- **GIVEN** the user is on the identification details page
+- **GIVEN** the user reached the identification details page by saving and continuing from Commodity details
+- **WHEN** they follow the back link
+- **THEN** that page is shown
+
+#### Scenario: The back link opens Overview when the page was opened from Overview
+**ID**: SCN-IDENT-018-B
+- **GIVEN** the user opened the identification details page from its task on Overview
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+#### Scenario: The back link opens the review when the page was opened from a Change link
+**ID**: SCN-IDENT-018-C
+- **GIVEN** the review of a draft notification
+- **WHEN** the user follows the Change link that opens the identification details page and then the back link
+- **THEN** the review is shown
 
 ### Requirement: A consignment with nothing to identify never shows the page
 **ID**: REQ-IDENT-019

@@ -236,7 +236,7 @@ With JavaScript, the system MUST show the chosen country's code as a fixed prefi
 
 ### Requirement: On a notification, the back link follows where the origin page was opened from
 **ID**: REQ-ORIGIN-013
-For a notification, the system MUST return the user from the origin page to the Import Notification Service's "What are you importing?" question when it was started there, and to the dashboard when it was started from the dashboard's create button, including when the user goes back from What are you importing?. It MUST return to Overview when the page was opened from Overview, with or without answers. A notification not opened in this session that holds no answers MUST return to the dashboard.
+For a notification, the origin page's Back link MUST open the Import Notification Service's "What are you importing?" question when it was started there, the dashboard when it was started from the create button (both also after going back from What are you importing?, with or without answers), Overview when opened from Overview, and the review when opened from a Change link. A notification not opened in this session that holds no answers MUST open the dashboard.
 
 #### Scenario: The back link opens the dashboard when the page was opened from the dashboard
 **ID**: SCN-ORIGIN-013-A
@@ -281,6 +281,12 @@ For a notification, the system MUST return the user from the origin page to the 
 - **WHEN** the user goes back from What are you importing? to the origin of the import page and follows the back link
 - **THEN** the Import Notification Service's "What are you importing?" question is shown
 - **AND** Live animals is selected
+
+#### Scenario: The back link opens the review when the page was opened from a Change link
+**ID**: SCN-ORIGIN-013-H
+- **GIVEN** the review of a draft notification
+- **WHEN** the user follows the Change link for the import details and then the back link
+- **THEN** the review is shown
 
 ### Requirement: A country not in the offered list is rejected
 **ID**: REQ-ORIGIN-014

@@ -96,9 +96,9 @@ The system MUST offer save-and-continue, save-and-return-to-overview and cancel-
 - **THEN** they reach Overview
 - **AND** returning to the page shows no type chosen
 
-### Requirement: The back link depends on whether the journey already has an answer
+### Requirement: The back link goes to where the notification was started, or to where the user came from
 **ID**: REQ-PLANTS-COMMODITY-TYPE-006
-The system MUST send the user to the dashboard when they follow the back link from this page before any answer is saved, and to Overview once the journey holds an answer.
+The system MUST send the user from this page to where the notification was started (the dashboard, or the Import Notification Service question), to Overview when opened from Overview, and to the review when opened from a Change link; opened by its address, to the dashboard before any answer is saved and to Overview after. A commodity type change that removes lines MUST remove them whichever save button was pressed.
 
 #### Scenario: The back link opens the dashboard before any answer is saved
 **ID**: SCN-PLANTS-COMMODITY-TYPE-006-A
@@ -109,5 +109,31 @@ The system MUST send the user to the dashboard when they follow the back link fr
 #### Scenario: The back link opens Overview once an answer is saved
 **ID**: SCN-PLANTS-COMMODITY-TYPE-006-B
 - **GIVEN** the user has saved a commodity type
-- **WHEN** they return to the commodity-type page and follow the back link
+- **WHEN** they open the commodity-type page from Overview and follow the back link
 - **THEN** Overview is shown
+
+#### Scenario: The back link opens the Import Notification Service question when the notification was started there
+**ID**: SCN-PLANTS-COMMODITY-TYPE-006-C
+- **GIVEN** a notification started from the Import Notification Service's "What are you importing?" question
+- **WHEN** the user follows the back link on the commodity-type page
+- **THEN** the Import Notification Service's "What are you importing?" question is shown
+
+#### Scenario: The back link opens the review when the page was opened from a Change link
+**ID**: SCN-PLANTS-COMMODITY-TYPE-006-D
+- **GIVEN** the review of a draft notification
+- **WHEN** the user follows the Change link that opens the commodity-type page and then the back link
+- **THEN** the review is shown
+
+#### Scenario: Save and return to overview removes the lines the new type does not hold and opens Overview
+**ID**: SCN-PLANTS-COMMODITY-TYPE-006-E
+- **GIVEN** a notification holding potato commodity lines
+- **WHEN** the user changes the commodity type to wood and cut trees and selects "Save and return to overview"
+- **THEN** Overview is shown
+- **AND** the potato lines are gone
+
+#### Scenario: Save and continue after removing lines opens the commodities list, whose back link opens the commodity type page
+**ID**: SCN-PLANTS-COMMODITY-TYPE-006-F
+- **GIVEN** a notification holding potato commodity lines
+- **WHEN** the user changes the commodity type to wood and cut trees and selects "Save and continue"
+- **THEN** the commodities list is shown reporting the lines removed
+- **AND** its back link opens the commodity type page

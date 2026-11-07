@@ -63,8 +63,7 @@
           "name": "Roles and addresses goes on to Contact address, never the CPH number page, even when complete",
           "coverage": "partial",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should go from Roles and addresses to Contact address even when every other task is complete", "strength": "partial", "notes": "asserts the next-page path for the scenario's input; not seen failing against the previous rule" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should go on to the contact address when continuing %s", "strength": "partial", "notes": "from a Change link and from Overview" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should go from Roles and addresses to Contact address even when every other task is complete", "strength": "partial", "notes": "asserts the next-page path for the scenario's input; not seen failing against the previous rule" }
           ]
         },
         {
@@ -104,7 +103,7 @@
           "name": "A newly created notification is walked through the whole journey to review",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "the opening run carries a new notification through to the review page in one pass", "strength": "full", "notes": "new dedicated test replacing the old six-step version — walks the full run (origin through consignment contact) and lands on check your answers" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "Save and continue carries a new notification through to the review page in one pass", "strength": "full", "notes": "new dedicated test replacing the old six-step version — walks the full run (origin through consignment contact) and lands on check your answers" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/horse-temporary-admission.spec.ts", "test": "walks a horse-by-sea notification under temporary admission from create to submitted, with every task complete", "strength": "full", "notes": "horse by sea: origin → what you are importing → reason (temporary admission) → commodity details → identification → additional details → arrival → transporter → documents → roles and addresses → contact → review, each heading awaited in turn" }
           ]
         },
@@ -122,7 +121,7 @@
           "name": "Following a back link and saving again carries on",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "following Back through the opening run and choosing Save and continue carries on to the next step, not the overview", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "following Back and choosing Save and continue carries on to the next step, not the overview", "strength": "full", "notes": "" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/opening-run.spec.ts", "test": "following Back from the main import reason and choosing Save and continue carries the run on to the main import reason, not the overview", "strength": "full", "notes": "" }
           ]
         },
@@ -155,9 +154,9 @@
           "name": "Save and return to overview commits the input and returns to Overview",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "Save and return to overview inside the opening run saves the answer and shows the overview rather than commodity details", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "Save and return to overview on a new notification saves the answer and shows the overview rather than commodity details", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/save-actions.test.js", "test": "Should commit the page and redirect to the hub on Save and return to overview", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/save-and-return-to-overview.spec.ts", "test": "main import reason: inside the opening run, saves the answer and shows the overview rather than commodity details", "strength": "partial", "notes": "not red-probed in this change; the implementor does not run the E2E phase" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/save-and-return-to-overview.spec.ts", "test": "main import reason: on a new notification, saves the answer and shows the overview rather than commodity details", "strength": "partial", "notes": "not red-probed in this change; the implementor does not run the E2E phase" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/task-page-exits.spec.ts", "test": "Cancel and return to overview discards typed input; Save and return to overview commits and lands on the hub", "strength": "full", "notes": "" }
           ]
         },
@@ -245,7 +244,7 @@
           "name": "Continuing from check your answers is refused while a task row is outstanding",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/opening-run.spec.ts", "test": "ends the opening run on the review page, naming what is outstanding, when the notification is incomplete", "strength": "full", "notes": "Continue on the unfinished review stays on it, with the outstanding tasks named and the summary focused" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/opening-run.spec.ts", "test": "ends on the review page after Save and continue, naming what is outstanding, when the notification is incomplete", "strength": "full", "notes": "Continue on the unfinished review stays on it, with the outstanding tasks named and the summary focused" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/gates.test.js", "test": "Should lock the review section on a blank journey", "strength": "partial", "notes": "the review section's gate on a blank journey; does not drive the refused Continue" }
           ]
         },
@@ -321,22 +320,22 @@
     {
       "id": "REQ-FLOW-010",
       "name": "A collection page stays on the page across its adds and removes, and its finishing action goes on",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-FLOW-010-A",
           "name": "Removing and replacing an identification record stays on that page until finishing",
-          "coverage": "full",
+          "coverage": "partial",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "collection changes from check answers retain change context until their explicit exits", "strength": "full", "notes": "remove + add keep ?change=1; Save and finish returns to notification-view with new ear tag" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "collection changes from check answers keep the trail until their explicit exits", "strength": "partial", "notes": "not seen failing" }
           ]
         },
         {
           "id": "SCN-FLOW-010-B",
           "name": "Adding a further document stays on that page until finishing",
-          "coverage": "full",
+          "coverage": "partial",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "collection changes from check answers retain change context until their explicit exits", "strength": "full", "notes": "Change documents → add → still ?change=1 → Continue → CYA shows new reference" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "collection changes from check answers keep the trail until their explicit exits", "strength": "partial", "notes": "not seen failing" }
           ]
         }
       ]
@@ -489,7 +488,6 @@
           "name": "Choosing Live animals opens a new draft at Origin of the import",
           "coverage": "partial",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.test.js", "test": "Should begin the opening run for the new notification before any page is answered", "strength": "partial", "notes": "proves the redirect to origin and the opening run begun, not the next page" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "the start entry opens a new notification at the origin page with a Draft strip", "strength": "partial", "notes": "proves the page and the Draft strip with the reference in a browser; not probed, and does not walk the next page" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/notification-type/notification-type.spec.ts", "test": "choosing Live animals signs the user in to the animals service and opens a new draft at Origin of the import", "strength": "partial", "notes": "walks the hand-over from the Import Notification Service through the animals service's sign-in to the new draft" }
           ]
@@ -498,47 +496,82 @@
     },
     {
       "id": "REQ-FLOW-018",
-      "name": "On a draft, a page opened from a Change link on the review goes Back to the previous page in the journey's order",
+      "name": "Back on every journey page goes to the place the trader came from",
       "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-FLOW-018-A",
-          "name": "Main import reason opened from its Change link goes Back to What are you importing?",
-          "coverage": "full",
+          "name": "Back goes to the page \"Save and continue\" was pressed on",
+          "coverage": "partial",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should send Back to What are you importing? carrying the change on a draft opened from a Change link", "strength": "full", "notes": "red when the shared Back link helper's draft change-context condition is inverted, green restored" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/change-from-cya.spec.ts", "test": "Back from the reason for import opened by a Change link opens What are you importing? with change context", "strength": "partial", "notes": "walks the Back link and the return to the review on the real stack" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/trail.test.js", "test": "Should go to the page on top of the trail, carrying the places beneath it", "strength": "partial", "notes": "proves the Back link follows the trail's newest page; not seen failing against the previous rule" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/back.spec.ts", "test": "a page opened from Overview goes Back to Overview, and the page Save and continue opened goes Back to it", "strength": "partial", "notes": "walks Arrival details to Transit countries and back on the real stack; not seen failing" }
           ]
         },
         {
           "id": "SCN-FLOW-018-B",
-          "name": "What are you importing? opened by that Back link continues to Main import reason",
+          "name": "Back goes to Overview when the page was opened from Overview",
           "coverage": "partial",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should return to the opener carrying the change context", "strength": "partial", "notes": "proves a save under change context returns to the opening page carrying the change; not the hop from What are you importing? to Commodity details, and not probed" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js", "test": "Should send Back to What are you importing? carrying the change on a draft opened from a Change link", "strength": "partial", "notes": "proves Commodity details' Back link opens What are you importing? carrying the change; not the save path" }
-          ],
-          "notes": "No test walks What are you importing? to Commodity details to the review in one path."
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/trail.test.js", "test": "Should go to Overview for a trail of Overview", "strength": "partial", "notes": "not seen failing" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/copy/copy.test.js", "test": "Should enter each movement row at its first page", "strength": "partial", "notes": "Overview's task links carry Overview on the trail" }
+          ]
         },
         {
           "id": "SCN-FLOW-018-C",
-          "name": "The origin of the import page keeps the Back link it has without a Change link",
+          "name": "Back goes to the review when the page was opened from a Change link",
           "coverage": "partial",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should send Back to the overview for a committed answer on a draft opened from a Change link", "strength": "partial", "notes": "pins the Back link; stays green by design, so not probed" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should push the review onto its own trail on every Change link of a %s review", "strength": "partial", "notes": "every Change link carries the review on the trail; not seen failing" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/change-from-cya.spec.ts", "test": "Back from the reason for import opened by a Change link opens the review", "strength": "partial", "notes": "walks the Back link on the real stack; not seen failing" }
           ]
         },
         {
           "id": "SCN-FLOW-018-D",
-          "name": "The pages whose previous page in the journey's order is Overview keep Overview from a Change link",
-          "coverage": "full",
+          "name": "Back steps through the visited pages in reverse",
+          "coverage": "partial",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should send Back to the Overview on a draft opened from a Change link", "strength": "full", "notes": "red when the shared Back link helper's Overview fallback is broken, green restored" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/port-of-entry/port-of-entry.controller.test.js", "test": "Should send Back to the Overview on a draft opened from a Change link", "strength": "full", "notes": "red when the shared Back link helper's Overview fallback is broken, green restored" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.test.js", "test": "Should send Back to the Overview on a draft opened from a Change link", "strength": "full", "notes": "red when the shared Back link helper's Overview fallback is broken, green restored" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.test.js", "test": "Should send Back to the Overview on a draft opened from a Change link", "strength": "full", "notes": "red when the shared Back link helper's Overview fallback is broken, green restored" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should send Back to the Overview on a draft opened from a Change link", "strength": "full", "notes": "red when the shared Back link helper's Overview fallback is broken, green restored" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/change-from-cya.spec.ts", "test": "the roles and addresses Change link opens a page whose Back link opens the overview, not check your answers", "strength": "partial", "notes": "asserts the Back link for the Consignment addresses page only" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/trail.test.js", "test": "Should go on from the search save to Main import reason with the search page on the trail", "strength": "partial", "notes": "not seen failing" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/trail.test.js", "test": "Should add the place after the request’s trail and join an href’s own query", "strength": "partial", "notes": "not seen failing" }
+          ]
+        },
+        {
+          "id": "SCN-FLOW-018-E",
+          "name": "Back keeps the place after a sub-page round trip, a refresh and a refused save",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/trail.test.js", "test": "Should carry the trail through a documents upload-return cycle with the entry committed", "strength": "partial", "notes": "the documents round trip returns carrying the same trail" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js", "test": "Should keep Back on the page saved when the page is shown again after a refusal", "strength": "partial", "notes": "a refused save shows the page again with the same Back link" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/back.spec.ts", "test": "after a page opened by a Change link is refreshed, its Back still opens the review", "strength": "partial", "notes": "not seen failing" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/back-entry-points.spec.ts", "test": "opened in a fresh browser context on a trail address, the review keeps its Back link", "strength": "partial", "notes": "not seen failing" }
+          ]
+        },
+        {
+          "id": "SCN-FLOW-018-F",
+          "name": "Consignment addresses goes Back to Overview after an Import Notification Service address book return",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/address-return/controller.test.js", "test": "Should land on the Consignment addresses page carrying no trail, even when the request carries one", "strength": "partial", "notes": "the return page carries no trail, so Back falls to Overview" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts", "test": "whose Back opens the Overview", "strength": "partial", "notes": "needs the INS address book on the stack; not run in this increment" }
+          ]
+        },
+        {
+          "id": "SCN-FLOW-018-G",
+          "name": "The origin of the import page goes Back to where the notification was started",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should send Back to the dashboard for a notification started from the dashboard with $name", "strength": "partial", "notes": "not seen failing" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should send Back to the INS type question for this notification started there with $name", "strength": "partial", "notes": "not seen failing" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.test.js", "test": "Should open the first page of the new notification carrying where it was started", "strength": "partial", "notes": "both start places are put on the trail" }
+          ]
+        },
+        {
+          "id": "SCN-FLOW-018-H",
+          "name": "A page opened by its address goes Back to Overview",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/trail.test.js", "test": "Should go to Overview when there is no trail and no fallback", "strength": "partial", "notes": "not seen failing" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/trail.test.js", "test": "Should go to the fallback and log once for %s", "strength": "partial", "notes": "a trail naming an unknown place falls back and logs once" }
           ]
         }
       ]

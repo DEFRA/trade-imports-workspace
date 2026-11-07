@@ -155,33 +155,33 @@ The system MUST offer save-and-continue, save-and-return-to-overview and cancel-
 - **THEN** they reach Overview
 - **AND** returning to the page shows no country chosen
 
-### Requirement: The back link opens the commodities list after Save and continue, and otherwise depends on whether the journey already has an answer
+### Requirement: The back link opens the commodities list after Save and continue, and otherwise goes to where the user came from
 **ID**: REQ-PLANTS-ORIGIN-010
-The system MUST send the user to the commodities list when they follow the back link from this page after reaching the page by Save and continue. Otherwise, the system MUST send the user to the dashboard before any answer is saved, and to Overview once the journey holds an answer. On a draft opened from a Change link on the review, the system MUST send the user to the commodities list, as `plants/journey-flow` describes.
+The system MUST send the user to the commodities list when they follow the back link from this page after reaching the page by Save and continue, to the review when the page was opened from a Change link on the review, including from the error summary's link on the review, and to Overview when the page was opened from Overview, as `plants/journey-flow` describes.
 
-#### Scenario: On a draft opened from a Change link, the back link opens the commodities list
+#### Scenario: On a draft opened from a Change link, the back link opens the review
 **ID**: SCN-PLANTS-ORIGIN-010-D
 - **GIVEN** the review of a draft notification
 - **WHEN** the user follows the Change link for the country of origin and then the back link
-- **THEN** the commodities list is shown
+- **THEN** the review is shown
 
-#### Scenario: The back link opens the dashboard before any answer is saved
-**ID**: SCN-PLANTS-ORIGIN-010-A
-- **GIVEN** the user has just started a notification and reached the origin of the import page without saving anything
-- **WHEN** they follow the back link
-- **THEN** the dashboard is shown
-
-#### Scenario: The back link opens Overview once an answer is saved
+#### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-PLANTS-ORIGIN-010-B
-- **GIVEN** the user has saved at least one answer on the notification
-- **WHEN** they return to the origin of the import page and follow the back link
+- **GIVEN** the user opened the origin of the import page from Overview
+- **WHEN** they follow the back link
 - **THEN** Overview is shown
 
 #### Scenario: After Save and continue, the back link opens the commodities list
 **ID**: SCN-PLANTS-ORIGIN-010-C
-- **GIVEN** the user reached the origin of the import page from the commodities list by saving and continuing
+- **GIVEN** the user reached the origin page from the commodities list by saving and continuing
 - **WHEN** they follow the back link
 - **THEN** the commodities list is shown
+
+#### Scenario: The error summary's link to the origin page has a back link to the review
+**ID**: SCN-PLANTS-ORIGIN-010-E
+- **GIVEN** a review whose error summary names a saved country of origin that falls outside the commodity lines' scope
+- **WHEN** the user follows the error summary's link and then the back link
+- **THEN** the review is shown
 
 ### Requirement: Completing the origin page completes the origin task row
 **ID**: REQ-PLANTS-ORIGIN-011

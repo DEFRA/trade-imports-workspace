@@ -73,13 +73,13 @@ The system MUST refuse to save from the page when no status has been chosen, on 
 
 ### Requirement: The page offers a full set of save controls and is reachable from Overview
 **ID**: REQ-PLANTS-ARRIVAL-STATUS-006
-The system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page, MUST return the user to origin by the back link after reaching the page by Save and continue and on a draft opened from a Change link on the review (REQ-PLANTS-FLOW-017), and to Overview otherwise, and MUST reach the page from the Overview arrival task row when the notification is asked the question. While amending, REQ-PLANTS-FLOW-014 governs how the page ends instead.
+The system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page, MUST return the user by the back link to the place they came from (REQ-PLANTS-FLOW-017): origin after Save and continue there, the review from a Change link on the review, and Overview otherwise, and MUST reach the page from the Overview arrival task row when the notification is asked the question. While amending, REQ-PLANTS-FLOW-014 governs how the page ends instead.
 
-#### Scenario: On a draft opened from a Change link, the back link opens origin
+#### Scenario: On a draft opened from a Change link, the back link opens the review
 **ID**: SCN-PLANTS-ARRIVAL-STATUS-006-F
 - **GIVEN** the review of a draft notification asked whether it has arrived
 - **WHEN** the user follows the Change link for the arrival status and then the back link
-- **THEN** the origin page is shown
+- **THEN** the review is shown
 
 #### Scenario: The page is reachable from the Overview arrival row
 **ID**: SCN-PLANTS-ARRIVAL-STATUS-006-A

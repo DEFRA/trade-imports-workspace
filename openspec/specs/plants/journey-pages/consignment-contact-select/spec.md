@@ -115,13 +115,13 @@ The system MUST refuse to save a submitted value that is not one of the offered 
 
 ### Requirement: Cancel discards a new choice; the back link returns to identification numbers after Save and continue and on a draft opened from a Change link, and to Overview otherwise
 **ID**: REQ-PLANTS-CONTACT-SELECT-005
-Outside an amendment, the system MUST reach Overview without saving a newly checked option on cancel-and-return-to-overview. While amending, `plants/journey-flow` REQ-PLANTS-FLOW-014 governs how the page ends. The system MUST send the back link to identification numbers after Save and continue and on a draft opened from a Change link on the review (REQ-PLANTS-FLOW-017), and to Overview otherwise.
+Outside an amendment, the system MUST reach Overview without saving a newly checked option on cancel-and-return-to-overview. While amending, `plants/journey-flow` REQ-PLANTS-FLOW-014 governs how the page ends. The system MUST send the back link to the place the user came from (REQ-PLANTS-FLOW-017): identification numbers after Save and continue there, the review from a Change link on the review, and Overview otherwise.
 
-#### Scenario: On a draft opened from a Change link, the back link opens identification numbers
+#### Scenario: On a draft opened from a Change link, the back link opens the review
 **ID**: SCN-PLANTS-CONTACT-SELECT-005-D
 - **GIVEN** the review of a draft notification
 - **WHEN** the user follows the Change link for the contact and then the back link
-- **THEN** the identification numbers page is shown
+- **THEN** the review is shown
 
 #### Scenario: Cancel keeps the previously saved choice
 **ID**: SCN-PLANTS-CONTACT-SELECT-005-A

@@ -289,26 +289,48 @@ The system MUST, when a user chooses Plants for planting, Potatoes (seed and war
 - **WHEN** they choose Plants for planting, Potatoes (seed and ware) or Wood products and continue
 - **THEN** a new high-risk plants draft is created and its "What are you importing?" entry page is shown
 
-### Requirement: On a draft, a page opened from a Change link on the review goes Back to the previous page in the journey's order
+### Requirement: Back on every journey page goes to the place the trader came from
 **ID**: REQ-PLANTS-FLOW-017
-The system MUST, on a draft notification, give a page opened from a Change link on the review the Back link to the previous page in the journey's order, carrying the change so that Back follows the page's own return path. The commodity type page, the first page, MUST keep the Back link it has without the Change link. While the notification is being amended, REQ-PLANTS-FLOW-014 governs instead.
+The system MUST send Back on every journey page to the place the trader came from: the page they saved and continued from, Overview, the review (from a Change link) or the dashboard (from a dashboard card), surviving a refresh, a refused save, a sub-page round trip and a new session. With nothing to go back to it MUST go to Overview, except the commodity type page, which goes to where the notification was started.
 
-#### Scenario: The origin page opened from its Change link goes Back to the commodities list
+#### Scenario: Back goes to the page "Save and continue" was pressed on
 **ID**: SCN-PLANTS-FLOW-017-A
-- **GIVEN** the review of a draft notification
-- **WHEN** the user follows the Change link for the country of origin
-- **THEN** the Back link on the origin page opens the commodities list
-- **WHEN** they change the country and select "Save and continue"
-- **THEN** the next page that applies is shown
+- **GIVEN** the user opened the origin page from its Overview task and chose a country
+- **WHEN** they select "Save and continue" and then the Back link on the next page
+- **THEN** the origin page is shown
 
-#### Scenario: Identification numbers opened from a Change link goes Back to the consignor
+#### Scenario: Back goes to Overview when the page was opened from Overview
 **ID**: SCN-PLANTS-FLOW-017-B
-- **GIVEN** the review of a draft plants-for-planting or wood notification
-- **WHEN** the user follows the Change link for the identification numbers
-- **THEN** the Back link opens the consignor page
+- **GIVEN** the Overview of a draft notification
+- **WHEN** the user opens the identification numbers page from its task and follows the Back link
+- **THEN** Overview is shown
 
-#### Scenario: The commodity type page keeps the Back link it has without a Change link
+#### Scenario: Back goes to the review when the page was opened from a Change link
 **ID**: SCN-PLANTS-FLOW-017-C
 - **GIVEN** the review of a draft notification
-- **WHEN** the user opens the commodity type page from a Change link
-- **THEN** its Back link opens Overview
+- **WHEN** the user follows the Change link for the country of origin and then the Back link
+- **THEN** the review is shown
+
+#### Scenario: Back steps through the visited pages in reverse
+**ID**: SCN-PLANTS-FLOW-017-D
+- **GIVEN** the user selected "Save and continue" on the contact address page after the destination and identification numbers pages
+- **WHEN** they follow the Back link on the review and then on each page in turn
+- **THEN** the contact address page, the identification numbers page and the place of destination page are shown in that order
+
+#### Scenario: Back keeps the place after a sub-page round trip, a refresh and a refused Continue
+**ID**: SCN-PLANTS-FLOW-017-E
+- **GIVEN** a page opened from a Change link on the review
+- **WHEN** the user refreshes the page, or edits an address's details and returns, or has a save refused, or has "Continue" refused on the review, and then follows the Back link
+- **THEN** the place the page was opened from is shown
+
+#### Scenario: The commodity type page goes Back to where the notification was started
+**ID**: SCN-PLANTS-FLOW-017-F
+- **GIVEN** a notification started with the dashboard's create button
+- **WHEN** the user follows the Back link on the commodity type page
+- **THEN** the dashboard is shown
+
+#### Scenario: A page opened by its address goes Back to Overview
+**ID**: SCN-PLANTS-FLOW-017-G
+- **GIVEN** a page of a draft notification opened by its address, or by a link that names a place the journey does not have
+- **WHEN** the user follows the Back link
+- **THEN** Overview is shown

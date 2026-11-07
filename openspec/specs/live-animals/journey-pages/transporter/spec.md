@@ -87,3 +87,31 @@ The system MUST offer "Add a transporter" on the same row as the search, above t
 - **AND** pressing Tab from the search box reaches the "Search" button, then "Add a transporter", then the transporter choices
 - **WHEN** they choose "Add a transporter"
 - **THEN** the "Choose a transporter type" page opens
+
+### Requirement: The back link returns to where the user came from, and an Add a transporter round trip keeps it
+**ID**: REQ-TRANSPORTER-005
+The system MUST return the user, when they follow the back link from the transporter list, to the page they saved and continued from, to Overview when they opened the list from its Overview task, and to the review when they opened it from a Change link on the review, as `live-animals/journey-flow` describes. Choosing "Add a transporter" and coming back to the list MUST leave that back link as it was.
+
+#### Scenario: The back link opens the page before after Save and continue there
+**ID**: SCN-TRANSPORTER-005-A
+- **GIVEN** the user reached the transporter list by saving and continuing from the page before it
+- **WHEN** they follow the back link
+- **THEN** that page is shown
+
+#### Scenario: The back link opens Overview when the list was opened from Overview
+**ID**: SCN-TRANSPORTER-005-B
+- **GIVEN** the user opened the transporter list from its task on Overview
+- **WHEN** they follow the back link
+- **THEN** Overview is shown
+
+#### Scenario: The back link opens the review when the list was opened from a Change link
+**ID**: SCN-TRANSPORTER-005-C
+- **GIVEN** the review of a draft notification
+- **WHEN** the user follows the Change link that opens the transporter list and then the back link
+- **THEN** the review is shown
+
+#### Scenario: Adding a transporter keeps the list's back link
+**ID**: SCN-TRANSPORTER-005-D
+- **GIVEN** the user opened the transporter list from a Change link on the review and chose "Add a transporter"
+- **WHEN** they follow the back link on the type question and then the back link on the list
+- **THEN** the review is shown

@@ -113,15 +113,15 @@ The system MUST keep every species the user has chosen, whichever search brought
 - **WHEN** they save, and open commodity details from Overview
 - **THEN** the species appear there in their canonical order, not the order chosen
 
-### Requirement: The back link returns to the origin of the import after Save and continue, to the page that opened it, and to Overview otherwise
+### Requirement: The back link returns to the origin of the import after Save and continue, to the page that opened it, to the review from a Change link, and to Overview otherwise
 **ID**: REQ-COMMODITY-SELECT-007
-The system MUST return the user to the origin of the import page when they follow the back link from the commodity selection page after reaching the page by Save and continue, to commodity details or identification details when that page opened it, and to Overview when the page was opened from its Overview task. On a draft opened from a Change link on the review, the back link MUST open the origin of the import page, as `live-animals/journey-flow` describes.
+The system MUST return the user to the origin of the import page when they follow the back link from the commodity selection page after reaching the page by Save and continue, to commodity details or identification details when that page opened it, to the review when the page was opened from a Change link on the review, and to Overview when the page was opened from its Overview task, as `live-animals/journey-flow` describes.
 
-#### Scenario: On a draft opened from a Change link, the back link opens the origin of the import
+#### Scenario: The back link opens the review when the page was opened from a Change link
 **ID**: SCN-COMMODITY-SELECT-007-D
-- **GIVEN** a draft notification with what are you importing opened by the back link from the main import reason page that a Change link opened
-- **WHEN** the user follows the back link
-- **THEN** the origin of the import page is shown
+- **GIVEN** the review of a draft notification
+- **WHEN** the user follows the Change link that opens what are you importing and then the back link
+- **THEN** the review is shown
 
 #### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-COMMODITY-SELECT-007-A
@@ -243,7 +243,7 @@ The system MUST end the commodity selection page with "Save and continue", "Save
 
 ### Requirement: Saving returns the user to the page that opened the question, else goes on
 **ID**: REQ-COMMODITY-SELECT-013
-The system MUST return the user to commodity details or identification details after a save on what are you importing when that page opened it, keeping any change context. Otherwise a save MUST go on to the next page that applies, which from a Change link on the review is Main import reason, and save and return to overview MUST go to Overview.
+The system MUST return the user to commodity details or identification details after a save on what are you importing when that page opened it, so that its back link still opens the review when the trader came from a Change link on the review. Otherwise a save MUST go on to the next page that applies, which from a Change link on the review is Main import reason, and save and return to overview MUST go to Overview.
 
 #### Scenario: Opened from commodity details, saving returns there
 **ID**: SCN-COMMODITY-SELECT-013-A
@@ -269,11 +269,11 @@ The system MUST return the user to commodity details or identification details a
 - **WHEN** they save and continue
 - **THEN** Main import reason is shown
 
-#### Scenario: Opened from commodity details under a review Change, saving returns there keeping the change context
+#### Scenario: Opened from commodity details under a review Change, saving returns there and its back link still opens the review
 **ID**: SCN-COMMODITY-SELECT-013-E
 - **GIVEN** the user opened what are you importing from commodity details, reached from a Change link on the review
 - **WHEN** they save and continue
-- **THEN** commodity details is shown, still carrying the change context
+- **THEN** commodity details is shown, and its back link opens the review
 
 #### Scenario: A return value naming a page that does not open the question is ignored
 **ID**: SCN-COMMODITY-SELECT-013-F

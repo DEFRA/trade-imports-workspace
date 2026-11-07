@@ -128,27 +128,27 @@ The system MUST title the browser tab "Transit countries - Import notification s
 - **WHEN** they press "Add country" with nothing chosen
 - **THEN** the browser title is "Error: Transit countries - Import notification service - GOV.UK"
 
-### Requirement: Back returns to where the user came from
+### Requirement: The back link returns to where the user came from
 **ID**: REQ-TRANSIT-COUNTRIES-007
-The system MUST point the page's Back link at the arrival details page when the user reached the page by saving and continuing from arrival details, and at Overview when they opened it from its task on Overview. On a draft opened from a Change link on the review, the Back link MUST point at the arrival details page, as `live-animals/journey-flow` describes.
+The system MUST return the user, when they follow the back link from the transited countries page, to the page they saved and continued from, to Overview when they opened it from its Overview task, and to the review when they opened it from a Change link on the review, as `live-animals/journey-flow` describes. That page is Arrival details.
 
-#### Scenario: On a draft opened from a Change link, Back goes to arrival details
-**ID**: SCN-TRANSIT-COUNTRIES-007-C
-- **GIVEN** the review of a draft notification
-- **WHEN** the user follows the Change link for the transit countries and selects Back
-- **THEN** the arrival details page is shown
-
-#### Scenario: Back goes to arrival details after Save and continue there
+#### Scenario: After Save and continue, the back link opens the page before
 **ID**: SCN-TRANSIT-COUNTRIES-007-A
-- **GIVEN** the user reached the transited countries page by saving and continuing from arrival details with Road chosen
-- **WHEN** they select Back
-- **THEN** the arrival details page is shown
+- **GIVEN** the user reached the transited countries page by saving and continuing from Arrival details
+- **WHEN** they follow the back link
+- **THEN** that page is shown
 
-#### Scenario: Back goes to Overview when opened from its task
+#### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-TRANSIT-COUNTRIES-007-B
 - **GIVEN** the user opened the transited countries page from its task on Overview
-- **WHEN** they select Back
+- **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+#### Scenario: The back link opens the review when the page was opened from a Change link
+**ID**: SCN-TRANSIT-COUNTRIES-007-C
+- **GIVEN** the review of a draft notification
+- **WHEN** the user follows the Change link that opens the transited countries page and then the back link
+- **THEN** the review is shown
 
 ### Requirement: The page shows Overview only when the means of transport is air or sea, or none is saved
 **ID**: REQ-TRANSIT-COUNTRIES-008

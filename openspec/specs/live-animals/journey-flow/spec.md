@@ -358,32 +358,57 @@ The system MUST, when a user chooses Live animals on the Import Notification Ser
 - **THEN** a new draft is created and the "Origin of the import" page is shown with the Draft tag and its new reference
 - **AND** saving that page continues to the next page
 
-### Requirement: On a draft, a page opened from a Change link on the review goes Back to the previous page in the journey's order
+### Requirement: Back on every journey page goes to the place the trader came from
 **ID**: REQ-FLOW-018
-The system MUST, on a draft notification, give a page opened from a Change link on the review the Back link to the previous page in the journey's order, carrying the change so that Back follows the page's own return path. The origin of the import page MUST keep the Back link it has without the Change link, and only upload documents MUST go Back to the review. While amending, REQ-FLOW-013 governs instead.
+The system MUST send Back on every journey page to the place the trader came from: the page they saved and continued from, Overview, the review (from a Change link) or the dashboard (from a dashboard card), surviving a refresh, a refused save, a sub-page round trip and a new session. With nothing to go back to it MUST go to Overview, but the origin page goes to where the notification was started, and Consignment addresses and Contact address go to Overview after an address book return.
 
-#### Scenario: Main import reason opened from its Change link goes Back to What are you importing?
+#### Scenario: Back goes to the page "Save and continue" was pressed on
 **ID**: SCN-FLOW-018-A
-- **GIVEN** the review of a draft notification
-- **WHEN** the user follows the Change link for the reason for import
-- **THEN** the Back link on Main import reason opens What are you importing?
-- **WHEN** they select "Save and continue"
-- **THEN** Commodity details is shown
+- **GIVEN** the user opened Arrival details from its Overview task and chose road as the means of transport
+- **WHEN** they select "Save and continue" and then the Back link on Transit countries
+- **THEN** Arrival details is shown
 
-#### Scenario: What are you importing? opened by that Back link continues to Main import reason
+#### Scenario: Back goes to Overview when the page was opened from Overview
 **ID**: SCN-FLOW-018-B
-- **GIVEN** What are you importing? opened by the Back link on Main import reason from a Change link
-- **WHEN** the user selects "Save and continue"
-- **THEN** Main import reason is shown
+- **GIVEN** the Overview of a draft notification
+- **WHEN** the user opens Arrival details from its task and follows the Back link
+- **THEN** Overview is shown
 
-#### Scenario: The origin of the import page keeps the Back link it has without a Change link
+#### Scenario: Back goes to the review when the page was opened from a Change link
 **ID**: SCN-FLOW-018-C
 - **GIVEN** the review of a draft notification
-- **WHEN** the user follows the Change link for the import details
-- **THEN** the Back link on the origin of the import page opens Overview
+- **WHEN** the user follows the Change link for the reason for import and then the Back link
+- **THEN** the review is shown
 
-#### Scenario: The pages whose previous page in the journey's order is Overview keep Overview from a Change link
+#### Scenario: Back steps through the visited pages in reverse
 **ID**: SCN-FLOW-018-D
-- **GIVEN** the review of a draft notification
-- **WHEN** the user follows a Change link that opens Identification details, Arrival details, Transporter details, Contact address for consignment or Consignment addresses
-- **THEN** the Back link on that page opens Overview
+- **GIVEN** the user opened Arrival details from Overview and selected "Save and continue" on each page in turn until the review
+- **WHEN** they follow the Back link on each page in turn
+- **THEN** each earlier page is shown in reverse order
+- **AND** Overview is shown from Arrival details
+
+#### Scenario: Back keeps the place after a sub-page round trip, a refresh and a refused save
+**ID**: SCN-FLOW-018-E
+- **GIVEN** a page opened from a Change link on the review
+- **WHEN** the user refreshes the page, or adds a transporter, or uploads a document, or has a save refused, and then follows the Back link
+- **THEN** the review is shown
+
+#### Scenario: Consignment addresses goes Back to Overview after an Import Notification Service address book return
+**ID**: SCN-FLOW-018-F
+- **GIVEN** the user added an address through the Import Notification Service address book and returned to Consignment addresses
+- **WHEN** they follow the Back link
+- **THEN** Overview is shown
+- **AND** "Save and continue" on Consignment addresses still goes on to Contact address for consignment
+
+#### Scenario: The origin of the import page goes Back to where the notification was started
+**ID**: SCN-FLOW-018-G
+- **GIVEN** a notification started with the dashboard's create button, and another started from the Import Notification Service question with Live animals chosen
+- **WHEN** the user follows the Back link on the origin of the import page of each
+- **THEN** the first opens the dashboard
+- **AND** the second opens the Import Notification Service's "What are you importing?" question for that notification
+
+#### Scenario: A page opened by its address goes Back to Overview
+**ID**: SCN-FLOW-018-H
+- **GIVEN** a page of a draft notification opened by its address, or by a link that names a place the journey does not have
+- **WHEN** the user follows the Back link
+- **THEN** Overview is shown

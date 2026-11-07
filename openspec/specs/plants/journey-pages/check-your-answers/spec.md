@@ -129,15 +129,15 @@ The system MUST offer "Cancel amend" in the status bar of check-your-answers whi
 - **AND** a success banner explains the amendment was cancelled
 - **AND** the discarded edit is not shown
 
-### Requirement: A back link and a save-and-return action open Overview from the review; the submitted view's back link opens the notification list
+### Requirement: A review's back link goes to the place the user came from; the submitted view's back link opens the notification list
 **ID**: REQ-PLANTS-CYA-010
-The system MUST return the user to Overview when they follow the back link or choose save and return from check-your-answers for a draft or an amendment, and MUST take them to the plants notification list when they follow the back link from a submitted notification's read-only view.
+The system MUST return the user from the back link of a draft or amendment review to the page they saved and continued from, to Overview when they opened it from Overview or by its address, and to the dashboard when they opened it from a dashboard card. A Change link, an error-summary link or a refused Continue MUST leave that back link as it was. A submitted notification's view MUST go back to the plants notification list, and save and return MUST open Overview.
 
-#### Scenario: Back and save-and-return open Overview
+#### Scenario: Back goes to the last page Save and continue was pressed on
 **ID**: SCN-PLANTS-CYA-010-A
-- **GIVEN** the user is on check-your-answers for a draft
-- **WHEN** they follow the back link, or choose save and return
-- **THEN** Overview is shown
+- **GIVEN** the user selected "Save and continue" on the contact address page and reached the review of a draft
+- **WHEN** they follow the back link
+- **THEN** the contact address page is shown
 
 #### Scenario: The submitted view's back link opens the notification list
 **ID**: SCN-PLANTS-CYA-010-B
@@ -145,9 +145,9 @@ The system MUST return the user to Overview when they follow the back link or ch
 - **WHEN** the user follows the back link
 - **THEN** the plants notification list is shown
 
-#### Scenario: An amendment's review back link opens Overview
+#### Scenario: An amendment's review opened by its address has a back link to Overview
 **ID**: SCN-PLANTS-CYA-010-C
-- **GIVEN** a notification being amended
+- **GIVEN** a notification being amended, with the review opened by its address
 - **WHEN** the user follows the back link from its review
 - **THEN** Overview is shown
 
@@ -156,6 +156,24 @@ The system MUST return the user to Overview when they follow the back link or ch
 - **GIVEN** the submitted view shown after an amendment is cancelled
 - **WHEN** the user follows the back link
 - **THEN** the plants notification list is shown
+
+#### Scenario: A review opened from Overview has a back link to Overview, and save and return opens Overview
+**ID**: SCN-PLANTS-CYA-010-E
+- **GIVEN** the user opened the review from Overview
+- **WHEN** they follow the back link, or choose save and return
+- **THEN** Overview is shown
+
+#### Scenario: A review opened from a dashboard card has a back link to the dashboard, before and after a Change link round trip
+**ID**: SCN-PLANTS-CYA-010-F
+- **GIVEN** the review opened by Amend on a dashboard card
+- **WHEN** the user follows a Change link, follows the back link on the page it opens, and then follows the back link on the review
+- **THEN** the plants notification list is shown
+
+#### Scenario: A refused Continue keeps the review's back link
+**ID**: SCN-PLANTS-CYA-010-G
+- **GIVEN** a review whose Continue is refused because a contact address is missing
+- **WHEN** the user follows the back link
+- **THEN** the contact address page is shown
 
 ### Requirement: A draft that would be late shows a warning; a submitted late notification shows a banner
 **ID**: REQ-PLANTS-CYA-011

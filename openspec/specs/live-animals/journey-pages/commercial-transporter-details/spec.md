@@ -80,3 +80,31 @@ The system MUST add a commercial transporter saved from this page to the transpo
 - **THEN** a row for that transporter is shown with its radio checked
 - **WHEN** they save the list without changing the choice
 - **THEN** they return to Overview, and the commercial transporter form still shows the saved authorisation number
+
+### Requirement: The back link returns to the transporter type question
+**ID**: REQ-COMMERCIAL-TRANS-007
+The system MUST return the user to the transporter type question when they follow the back link from the commercial transporter details page.
+
+#### Scenario: The back link opens the transporter type question
+**ID**: SCN-COMMERCIAL-TRANS-007-A
+- **GIVEN** the user is on the commercial transporter details page
+- **WHEN** they follow the back link
+- **THEN** the transporter type question is shown
+
+### Requirement: A valid save of a commercial transporter shows Upload documents
+**ID**: REQ-COMMERCIAL-TRANS-008
+The system MUST show Upload documents after a valid save of the commercial transporter details page, the back link there opening the transporter list.
+
+#### Scenario: A valid save from the form shows Upload documents, whose back link opens the transporter list
+**ID**: SCN-COMMERCIAL-TRANS-008-A
+- **GIVEN** the user opened the commercial transporter details form from the transporter type question and filled it in
+- **WHEN** they select "Save and continue"
+- **THEN** Upload documents is shown
+- **AND** its back link opens the transporter list
+
+#### Scenario: A valid save from a Change link on the transporter list shows Upload documents, whose back link opens the transporter list
+**ID**: SCN-COMMERCIAL-TRANS-008-B
+- **GIVEN** the user reached the commercial transporter details form from the review's Change link and filled it in
+- **WHEN** they select "Save and continue"
+- **THEN** Upload documents is shown
+- **AND** its back link opens the transporter list

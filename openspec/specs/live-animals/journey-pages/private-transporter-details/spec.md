@@ -71,3 +71,20 @@ The system MUST accept the page being saved with every field left blank, without
 - **GIVEN** the user is on the private transporter details page with every field blank
 - **WHEN** they save and continue
 - **THEN** the save succeeds without an error summary
+
+### Requirement: The back link returns to the transporter type question, and a saved record goes on to Upload documents
+**ID**: REQ-PRIVATE-TRANS-005
+The system MUST return the user to the transporter type question when they follow the back link from the private transporter details page, and MUST show Upload documents after a valid save, the back link there opening the transporter list.
+
+#### Scenario: The back link opens the transporter type question
+**ID**: SCN-PRIVATE-TRANS-005-A
+- **GIVEN** the user is on the private transporter details page
+- **WHEN** they follow the back link
+- **THEN** the transporter type question is shown
+
+#### Scenario: A valid save shows Upload documents, whose back link opens the transporter list
+**ID**: SCN-PRIVATE-TRANS-005-B
+- **GIVEN** the user filled in the private transporter details page
+- **WHEN** they select "Save and continue"
+- **THEN** Upload documents is shown
+- **AND** its back link opens the transporter list

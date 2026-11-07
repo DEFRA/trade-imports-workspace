@@ -3317,7 +3317,7 @@ Return the structured output only.`,
 const deniedChecksOf = (plan) =>
   (plan?.checks ?? []).map((check) => check.command).filter(isDeniedCommand)
 
-const PLAN_LINT_PREFILTER = 'comment|jsdoc|javadoc|docblock|arrange|title|test name|should |log|warn|describe\\(|it\\(|test\\('
+const PLAN_LINT_PREFILTER = '^## |comment|jsdoc|javadoc|docblock|arrange|title|test name|should |log|warn|describe\\(|it\\(|test\\('
 
 const COMMENT_WORDS = '(comments?|jsdoc|javadoc|doc comments?|docblocks?)'
 
@@ -3363,12 +3363,17 @@ const CODE_TEXT_DIRECTIVES = [
   },
   {
     kind: 'dictated comment or doc comment text',
+    dictation: true,
     pattern: new RegExp(
       `\\b(update|updates|change|changes|edit|edits|correct|corrects|amend|amends|fix|fixes|extend|extends|expand|expands)\\b[^;]{0,60}?\\b${NOT_IN_A_RELATIVE_CLAUSE}${COMMENT_WORDS}\\b[^;]{0,80}?\\b(to say|saying|to read|to explain|explaining|to state|stating|to note|noting|to mention|mentioning|to describe|describing)\\b`,
       'i'
     )
   },
-  { kind: 'Arrange/Act/Assert comments or a dictated test body', pattern: /\barrange[ ,/&-]+act[ ,/&-]+assert\b/i },
+  {
+    kind: 'Arrange/Act/Assert comments or a dictated test body',
+    dictation: true,
+    pattern: /\barrange[ ,/&-]+act[ ,/&-]+assert\b/i
+  },
   {
     kind: 'a prescribed test title',
     pattern: new RegExp(
@@ -3379,6 +3384,7 @@ const CODE_TEXT_DIRECTIVES = [
   },
   {
     kind: 'a quoted log message',
+    dictation: true,
     pattern: new RegExp(
       `(\\blogger\\.\\w+\\([^"“\`')]{0,60}?|\\b(log|logs|logged|warn|warns)\\b[^"“\`'.;:()]{0,30}?\\s*(:|saying|reading|that (reads|says)|with (the )?(message|text|wording)|as)?\\s*)${QUOTED_TEXT}`,
       'i'
@@ -3411,22 +3417,42 @@ const writesCodeText = ({ pattern, excusedIn }, prose) =>
     ? prose.split(SENTENCE_BREAK).some((sentence) => pattern.test(sentence) && !excusedIn(sentence))
     : pattern.test(prose)
 
-const codeTextDirectiveOf = (grepLine, checkCommands) => {
+// Two sections report code text that is already there rather than writing any: what the row leaves alone, and the doc
+// comments and test titles its change makes untrue. A comment a template already carries, or the words an existing
+// test is titled with, is those sections doing their job, so only a dictated form counts in them. The lint sees one
+// grep line at a time, so a bullet the plan hard-wrapped loses the file reference that would excuse its quote anyway.
+const REPORTS_EXISTING_TEXT_SECTION = /^##\s+\d*\.?\s*(out of scope|docs this makes untrue)\b/i
+
+const PLAN_SECTION_HEADING = /^\d+:\s*(##\s+[^#].*)$/
+
+const DICTATION_DIRECTIVES = CODE_TEXT_DIRECTIVES.filter((directive) => directive.dictation)
+
+const directivesFor = (prose, reportsExistingText) =>
+  reportsExistingText && !DICTATED_TITLE.test(prose) ? DICTATION_DIRECTIVES : CODE_TEXT_DIRECTIVES
+
+const codeTextDirectiveOf = (grepLine, checkCommands, reportsExistingText = false) => {
   const [, lineNumber, text] = grepLine.match(/^(\d+):(.*)$/) ?? [null, '?', grepLine]
   if (CHECK_COMMAND_LINE.test(text.trim())) return null
   const prose = proseOf(text, checkCommands)
   if (isInstructionNotToWrite(prose)) return null
-  const directive = CODE_TEXT_DIRECTIVES.find((candidate) => writesCodeText(candidate, prose))
+  const directive = directivesFor(prose, reportsExistingText).find((candidate) => writesCodeText(candidate, prose))
   return directive ? { lineNumber, kind: directive.kind, text: text.trim() } : null
 }
 
-const codeTextDirectivesIn = (stdout, checkCommands = []) =>
-  String(stdout ?? '')
+const codeTextDirectivesIn = (stdout, checkCommands = []) => {
+  let reportsExistingText = false
+  return String(stdout ?? '')
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean)
-    .map((line) => codeTextDirectiveOf(line, checkCommands))
+    .map((line) => {
+      const heading = line.match(PLAN_SECTION_HEADING)
+      if (!heading) return codeTextDirectiveOf(line, checkCommands, reportsExistingText)
+      reportsExistingText = REPORTS_EXISTING_TEXT_SECTION.test(heading[1])
+      return null
+    })
     .filter(Boolean)
+}
 
 const planLintCommand = (id) => `grep -n -i -E ${shellQuoted(PLAN_LINT_PREFILTER)} ${WORKAREA_TILDE}/plans/${id}.md`
 

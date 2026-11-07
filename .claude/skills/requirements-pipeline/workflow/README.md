@@ -685,7 +685,10 @@ no more. Wider clean-up goes in section 7 as a follow-up for the backlog.
 **The plan is linted for code text.** After each plan a light agent runs one `grep` over the plan file and copies
 what it printed. The loop flags a line that adds, keeps, copies or rewords a comment or doc comment, dictates its
 text, prescribes Arrange/Act/Assert comments or a test title, or quotes a log message. A line that deletes or
-forbids is never flagged. A flagged plan goes back to the planner once, through the same replan as a denied check,
+forbids is never flagged, and nor is a line of section 7 or section 12 that reports code text already in the tree:
+those two sections exist to name what the row leaves alone and the doc comments and test titles its change makes
+untrue, so only a dictated form counts in them — text a line tells the implementor to write, a title it renames one
+to, or a log message it quotes. A flagged plan goes back to the planner once, through the same replan as a denied check,
 with each line named; a replan that still writes code text, or a plan the reader cannot read, stops at
 `plan-refused`.
 

@@ -3576,6 +3576,17 @@ describe('increment-build-loop', () => {
           '159:- **Test at 587-607:** expect the first option to be the select text, and retitle it to "the no-JavaScript list opens with the select text".'
         const RENAMED_TEST_TITLE_DICTATED =
           '160:- The test at a.test.js:40 is currently titled "Should show the cap", and the renamed test is titled "Should refuse a sixteenth document".'
+        const OUT_OF_SCOPE_HEADING = '528:## 7. Out of scope'
+        const DOCS_UNTRUE_HEADING = '724:## 12. Docs this makes untrue'
+        const OPERABILITY_HEADING = '778:## 13. Operability'
+        const REPO_SUBHEADING =
+          '178:### frontend — `repos/trade-imports-animals-frontend`'
+        const TEMPLATE_ALREADY_CARRIES_A_COMMENT =
+          '572:- `private-transporter-details.njk:98` carries a comment explaining where the page is'
+        const EXISTING_TITLE_QUOTED_PAST_A_WRAP =
+          '753:  — the test title "heads the type question with the choice it asks for, under the'
+        const RETITLED_IN_AN_UNTRUE_DOC =
+          '757:- The retitled test is titled "Should refuse a sixteenth document".'
 
         const FINDING_ON_HOMES = {
           kind: 'structural',
@@ -3691,7 +3702,7 @@ describe('increment-build-loop', () => {
           )
 
           expect(prompt).toContain(
-            "`grep -n -i -E 'comment|jsdoc|javadoc|docblock|arrange|title|test name|should |log|warn|describe\\(|it\\(|test\\(' ~/ws/workareas/shared/args-fixture/plans/inc-900.md`"
+            "`grep -n -i -E '^## |comment|jsdoc|javadoc|docblock|arrange|title|test name|should |log|warn|describe\\(|it\\(|test\\(' ~/ws/workareas/shared/args-fixture/plans/inc-900.md`"
           )
         })
 
@@ -3843,6 +3854,74 @@ describe('increment-build-loop', () => {
             EXISTING_TEST_RETITLED,
             RENAMED_TEST_TITLE_DICTATED
           ])
+        })
+
+        test('passes a plan whose out-of-scope and untrue-docs sections report code text that is already there', async () => {
+          const run = await runPlannedWith(
+            {
+              'inc-900 plan lint': lintFound(
+                OUT_OF_SCOPE_HEADING,
+                TEMPLATE_ALREADY_CARRIES_A_COMMENT,
+                DOCS_UNTRUE_HEADING,
+                EXISTING_TITLE_QUOTED_PAST_A_WRAP
+              )
+            },
+            BASELINE_ANSWER,
+            PLANNED,
+            implementAnswer(['frontend:src/a.js'])
+          )
+
+          expect(stageLabels(run)).not.toContain('inc-900 replan')
+          expect(stageLabels(run)).toContain('inc-900 implement')
+        })
+
+        test('still sends back dictated text inside those sections, and a comment line in the section after them', async () => {
+          const run = await runPlannedWith(
+            {
+              'inc-900 plan lint': lintFound(
+                OUT_OF_SCOPE_HEADING,
+                TEMPLATE_ALREADY_CARRIES_A_COMMENT,
+                QUOTED_LOG,
+                DOCS_UNTRUE_HEADING,
+                RETITLED_IN_AN_UNTRUE_DOC,
+                OPERABILITY_HEADING,
+                KEPT_COMMENT
+              )
+            },
+            BASELINE_ANSWER,
+            PLANNED,
+            PLANNED,
+            implementAnswer(['frontend:src/a.js'])
+          )
+          const replan = promptOf(run, 'inc-900 replan')
+
+          expect(
+            [
+              TEMPLATE_ALREADY_CARRIES_A_COMMENT,
+              QUOTED_LOG,
+              RETITLED_IN_AN_UNTRUE_DOC,
+              KEPT_COMMENT
+            ].filter((line) =>
+              replan.includes(line.replace(/^\d+:/, '').trim())
+            )
+          ).toEqual([QUOTED_LOG, RETITLED_IN_AN_UNTRUE_DOC, KEPT_COMMENT])
+        })
+
+        test('reads a repo subheading as part of the section it sits in, not as a section of its own', async () => {
+          const run = await runPlannedWith(
+            {
+              'inc-900 plan lint': lintFound(
+                OUT_OF_SCOPE_HEADING,
+                REPO_SUBHEADING,
+                TEMPLATE_ALREADY_CARRIES_A_COMMENT
+              )
+            },
+            BASELINE_ANSWER,
+            PLANNED,
+            implementAnswer(['frontend:src/a.js'])
+          )
+
+          expect(stageLabels(run)).not.toContain('inc-900 replan')
         })
 
         test('stops with plan-refused, naming the line, when the replan still writes code text', async () => {

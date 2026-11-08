@@ -7384,6 +7384,38 @@ describe('increment-build-loop', () => {
         })
       })
 
+      test('has the branch CI fixer weigh a sibling repo’s image publish before it changes a line for a red E2E', async () => {
+        const run = await runMergeRow(
+          FOUND,
+          { green: false, failures: ['E2E Tests'], summary: 'red' },
+          null
+        )
+        const prompt = promptOf(run, 'inc-900 ci fix 1').replace(/\s+/g, ' ')
+
+        expect({
+          namesTheSecondStaleness: prompt.includes(
+            'its run started before a sibling repo’s branch image had finished publishing'.replace(
+              '’',
+              "'"
+            )
+          ),
+          readsThePublishTime: prompt.includes(
+            'select(.name == "publish / Publish branch-tagged index") | .completed_at'
+          ),
+          rerunsRatherThanFixes: prompt.includes(
+            'change NO code, re-run the failed jobs once with `gh run rerun <run id> --failed`'
+          ),
+          readsTheSnapshot: prompt.includes(
+            'an app rendering copy, a heading or a field that this branch has already changed is an old image'
+          )
+        }).toEqual({
+          namesTheSecondStaleness: true,
+          readsThePublishTime: true,
+          rerunsRatherThanFixes: true,
+          readsTheSnapshot: true
+        })
+      })
+
       test('binds the house rules into the branch CI fixer', async () => {
         const run = await runMergeRow(
           FOUND,

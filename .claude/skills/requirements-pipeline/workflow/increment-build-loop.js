@@ -2846,7 +2846,16 @@ const CI_FIXER_STALE_RULE = `CHECK THE FAILURE IS ABOUT THIS HEAD BEFORE YOU CHA
    here. For the failing check: \`gh api repos/<owner>/<name>/check-runs/<check-run-id> --jq '.started_at'\`, and the
    head it should have run on: \`git -C ${TILDE}/<repoPath> log -1 --format=%cI\`. Started BEFORE that commit → the
    check never saw this code: report ok:false saying so and naming both times, and re-run nothing and fix nothing.
-   Spending an attempt on a stale check is how EUDPA-693's inc-024 burned five of them on correct code.`
+   Spending an attempt on a stale check is how EUDPA-693's inc-024 burned five of them on correct code.
+   AN E2E CHECK RUNS AGAINST A BRANCH IMAGE OF EVERY OTHER REPO, so it goes stale a second way the test above cannot
+   see: its run started before a sibling repo's branch image had finished publishing, so the stack it drove was that
+   repo's previous image, however fresh the commit under the check. For EVERY repo this increment pushed, compare the
+   check's \`started_at\` with when that repo's image went up:
+   \`gh api repos/<owner>/<name>/commits/<sha>/check-runs --jq '.check_runs[] | select(.name == "publish / Publish branch-tagged index") | .completed_at'\`.
+   Started before any one of them → the stack ran an old image: change NO code, re-run the failed jobs once with
+   \`gh run rerun <run id> --failed\`, and watch that run to its end. The page snapshot in
+   \`test-results/*/error-context.md\` settles it either way: an app rendering copy, a heading or a field that this
+   branch has already changed is an old image, never a defect in the code you are about to edit.`
 
 const conflictStopDetail = (id, ci, branch) =>
   `${id}: ${ci.blocked}. GitHub runs no checks on it. Merge ${IS_BRANCH ? 'its base branch' : `origin/${BASE_BRANCH}`} into ${branch} in that repo, push, then run again`

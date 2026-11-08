@@ -428,7 +428,7 @@
         "inc-038"
       ],
       "theme": "transporters",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -548,16 +548,34 @@
         "req-431",
         "req-434"
       ],
-      "openQuestions": [],
+      "openQuestions": [
+        "For the designer: the private transporter form Country select now opens on the United Kingdom (criterion 3), so when the saved country is one reference data no longer offers, the page shows the error \"The saved country is no longer available. Select a country from the list.\" above a select already showing United Kingdom (repos/trade-imports-animals-frontend/src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.js:88-92 with the GET at :161-169, proved by private-transporter-details.controller.test.js:282-302), and pressing Save and continue without touching the select stores United Kingdom in place of the withdrawn country because requiredOneOf accepts it (controller.js:71-74). Before this row the select opened on the empty placeholder, so the same untouched save was refused with the country-required error. Options: (a) keep the substitution and reword countryNoLongerAvailable in transport/copy/copy.en.js and copy.cy.js to say the country has been set to United Kingdom and to change it if that is wrong; (b) refuse a save that leaves a stale country at its United Kingdom default, keeping the country-required error. Either way openspec/specs/live-animals/journey-pages/private-transporter-details/spec.md owes a stale-country scenario under REQ-PRIVATE-TRANS-003 (it has none today) and the controller owes a GET-then-POST-with-no-edit test. Raised by the inc-040 review finding that the stale-country path observable behaviour changed with no scenario and no test."
+      ],
       "notes": [
         "Blocked by ruling:sam-2026-10-09-pm-p2-039 (c-285, precedence). Combines the private form's copy (req-428, req-429), its country select's order and default (req-431) and its blank-form validation (req-434): one form. c-054 (precedence): how the list is presented is not its content, so the UK default and the alphabetical order with no placeholder option are built here, while the list's content is the country-list row's (req-432). The select stays a plain select, not an autocomplete. Depends on the type question row.",
         "Design snagging merged to main 23 Oct: the empty country option's copy key is now transporterDetails countrySelectText, not countryPlaceholder (transport/copy/copy.en.js and copy.cy.js), and its value is the shared SELECT_A_COUNTRY constant that errors.countryRequired also uses. When the third criterion leaves the select with country names only, remove countrySelectText and keep the countryRequired error. The plants party edit page has a twin key with the same name.",
         "Unchanged by this re-distil apart from wording the second and third criteria as what the page shows rather than what it no longer shows.",
         "Unblocked 6 November by ruling:ian-2026-11-06, which supersedes ruling:sam-2026-10-09-pm point 5 and lifts c-285: the address book manages transporters as per-organisation records, like every other address, and adding one mid journey uses the address book hand-off already built for addresses (inc-077, inc-078, inc-080, EUDPA-706). Approved transporters are parked. This row's criteria still describe the animals frontend's own transporter pages and its in-memory register (services/transporters/register.js), so the transporter area needs re-distilling against the address-book-owned design before the row is built.",
         "Unaffected by ruling:ian-2026-11-06 decision 6, which forces only the commercial transporter's country. A private transporter keeps its real choice of country from the United Kingdom plus reference-data's export countries, so this row's country select and its reference-data lookup stand as written.",
-        "Re-analysis 6 November (animals frontend c31daf4d). Criterion 1 not met by one word: main's title is 'Add private transporter', missing the article. Criterion 2 not met because an intro paragraph sits between the heading and the name field ('Enter the name and address of the private transporter moving the animals.') — it has to go for the name field to come first. Criterion 3 not met: the select carries a 'Select a country' placeholder (copy.countrySelectText) rather than opening on the United Kingdom. Criterion 4 is root cause 2 of the re-analysis: the controller guards its mandatory checks behind recordProvided(values), which is false when every entered field is blank, so missingMandatoryErrors returns {} and a completely blank form — the one case the criterion is about — is accepted silently. Drop or invert that guard."
+        "Re-analysis 6 November (animals frontend c31daf4d). Criterion 1 not met by one word: main's title is 'Add private transporter', missing the article. Criterion 2 not met because an intro paragraph sits between the heading and the name field ('Enter the name and address of the private transporter moving the animals.') — it has to go for the name field to come first. Criterion 3 not met: the select carries a 'Select a country' placeholder (copy.countrySelectText) rather than opening on the United Kingdom. Criterion 4 is root cause 2 of the re-analysis: the controller guards its mandatory checks behind recordProvided(values), which is false when every entered field is blank, so missingMandatoryErrors returns {} and a completely blank form — the one case the criterion is about — is accepted silently. Drop or invert that guard.",
+        "ATTEMPT FAILED: red verification ladder; no merges aborted; no local commits moved back; patches at logs/inc-040-preserve-frontend.staged.patch, logs/inc-040-preserve-frontend.unstaged.patch, logs/inc-040-preserve-tests.staged.patch, logs/inc-040-preserve-tests.unstaged.patch; workspace openspec stashed b3850c13; frontend stashed f2c6aed5; tests stashed 12f0e0f"
       ],
-      "gate": null
+      "gate": null,
+      "attempt": {
+        "stage": "ladder",
+        "reason": "ladder-red",
+        "at": "2026-11-08T10:08:48Z",
+        "planReviewed": true,
+        "work": {
+          "kind": "patches",
+          "files": [
+            "logs/inc-040-preserve-frontend.staged.patch",
+            "logs/inc-040-preserve-frontend.unstaged.patch",
+            "logs/inc-040-preserve-tests.staged.patch",
+            "logs/inc-040-preserve-tests.unstaged.patch"
+          ]
+        }
+      }
     },
     {
       "id": "inc-041",

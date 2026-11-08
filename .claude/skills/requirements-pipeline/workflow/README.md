@@ -1040,8 +1040,13 @@ yourself:
 tim docker lease release --holder "<run id>"
 ```
 
-Plans may name a check that needs the stack, marked "needs the workspace stack"; the stage
-that runs it uses the run's stack. The integration proof is still the gate's E2E rung.
+Plans may name a check that needs the stack, marked "needs the workspace stack"; under
+`e2e: 'local'` the stage that runs it uses the run's stack, and the integration proof is
+still the gate's E2E rung. Under `e2e: 'ci'` there is no stack at all: the ladder, the
+consistency reviewer and a Codex implementor are each told to skip such a check, to name
+which they skipped, and to carry on — a skipped check is never a failure and never ends
+the ladder, and a stack that is down is neither `stack-held` nor `stack-down`. The
+integration proof is then each repo's own pull request, whose E2E the CI stage watches.
 
 The reviewers follow the personas the skills already ship —
 `review/references/{FILE_REVIEWER,CONSISTENCY_REVIEWER,REVIEW_ITEM_FIXER}.md` and

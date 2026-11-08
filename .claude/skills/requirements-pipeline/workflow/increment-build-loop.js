@@ -1331,6 +1331,15 @@ stack the run already holds, as THE WORKSPACE STACK below says.`
 or calls a service over \`localhost\`. This run proves its end-to-end behaviour on each repo's pull request instead,
 so the stack is deliberately down. Say which checks you skipped and why; their absence is not a finding.`
 
+const LADDER_STACK_LINE = E2E_IS_LOCAL
+  ? `A check that needs the workspace stack up runs against the stack the run holds, as THE WORKSPACE STACK below
+   says, after the gate.`
+  : `SKIP a check that needs the workspace stack up — one that drives a browser against it, or calls a service over
+   \`localhost\`. This run takes no stack and proves end-to-end behaviour on each repo's own pull request instead, so a
+   stack that is down is neither \`stackHeld\` nor \`stackDown\`, and a check you skipped for it is NOT a failure:
+   never put one in failures[]. Name each one you skipped in your summary, and CARRY ON through every rung below —
+   a skipped check never ends the ladder.`
+
 const CODEX_SECTION_5_STACK_LINE = E2E_IS_LOCAL
   ? `A section 5 check that needs the workspace stack up runs against
 the stack as it is: it is already up, leased to this run as \`${RUN_HOLDER}\`. Never acquire or release that lease, and
@@ -6359,8 +6368,8 @@ ran green: their runs are evidence, not proof.
 ${ladderGateStep(rowGatePhases, gateLogs(id, 'ladder'))}
 2. THE INCREMENT'S OWN CHECKS. The plan's section 5, "Invariants to prove", then its section 6, "Increment-specific
    checks beyond the gate", as the plan writes them, each to its own log under ${WORKAREA_TILDE}/logs/ named
-   \`${id}-ladder-<step>.log\`, reading each log ONCE. These are the only commands you choose to run. One that needs
-   the workspace stack up runs against the stack the run holds, as THE WORKSPACE STACK below says, after the gate.
+   \`${id}-ladder-<step>.log\`, reading each log ONCE. These are the only commands you choose to run.
+   ${LADDER_STACK_LINE}
    A check in a form GUARD RAILS lists as DENIED is a plan defect: never rewrite it into another form to get round
    the deny list. Put "denied form: <command>" in failures[] and go on to the next check.
    The plan states decisions, not a script. A plan check that only fails because the implementor or fixer departed

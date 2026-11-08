@@ -6665,6 +6665,16 @@ describe('increment-build-loop', () => {
           ...after
         )
 
+      const runMergeRowWith = (overrides) =>
+        runBranch(
+          overrides,
+          MERGE_ROW,
+          BASELINE,
+          PLAN,
+          MERGE_STARTED,
+          ...reviewedAndLanded
+        )
+
       test('raises no ticket, checks the branch, and merges nothing', async () => {
         const run = await runMergeRow(FOUND, CI_GREEN, MARKED_DONE, NO_GATE)
 
@@ -7104,6 +7114,38 @@ describe('increment-build-loop', () => {
         expect(promptOf(run, 'inc-900 baseline')).not.toContain(
           'THE E2E EVIDENCE IS'
         )
+      })
+
+      test('tells the ladder to skip a plan check needing the stack, and to carry on, when e2e is proved in CI', async () => {
+        const prompt = promptOf(
+          await runMergeRowWith({ e2e: 'ci' }),
+          'inc-900 ladder'
+        ).replace(/\s+/g, ' ')
+
+        expect(prompt).toContain(
+          'SKIP a check that needs the workspace stack up'
+        )
+        expect(prompt).toContain(
+          'is NOT a failure: never put one in failures[]'
+        )
+        expect(prompt).toContain(
+          'CARRY ON through every rung below — a skipped check never ends the ladder'
+        )
+        expect(prompt).not.toContain(
+          'runs against the stack the run holds, as THE WORKSPACE STACK below says'
+        )
+      })
+
+      test('tells the ladder to run a plan check needing the stack against the run’s own stack when e2e is local', async () => {
+        const prompt = promptOf(
+          await runMergeRowWith({ e2e: 'local' }),
+          'inc-900 ladder'
+        ).replace(/\s+/g, ' ')
+
+        expect(prompt).toContain(
+          'runs against the stack the run holds, as THE WORKSPACE STACK below says'
+        )
+        expect(prompt).not.toContain('SKIP a check that needs')
       })
 
       test('runs every phase the row owes in the ladder, even after a red one', async () => {

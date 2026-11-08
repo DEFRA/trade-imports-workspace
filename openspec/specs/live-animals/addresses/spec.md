@@ -8,7 +8,7 @@ The rules holding for every address a notification uses: how a consignment role'
 
 ### Requirement: The journey reads the address book and never writes to it
 **ID**: REQ-ADDR-001
-The system MUST NOT let a user create, edit or remove an address book record from within the notification journey, by control or by URL, and MUST NOT serve its own create-address page; the book is maintained only in the address book's own service. Outside stub mode, the journey MAY hand the user off to that service's add-address page, guarded by a single-use handshake token, and MUST return them through the journey: from a consignment role, to the consignment addresses page after "Save and select", to that role's picker after "Save and return to address page" or "Back", and to the notification's overview after "Cancel and return to hub"; from the consignment contact, to the consignment contact page after any of its actions.
+The system MUST NOT let a user create, edit or remove an address book record from within the notification journey, by control or by URL, and MUST NOT serve its own create-address page; the book is maintained only in the address book's own service. Outside stub mode, the journey MAY hand the user off to that service's add-address page, guarded by a single-use handshake token, and MUST return them through the journey afterwards, to the page each hand-off action's own scenario names.
 
 #### Scenario: Choosing an address for a consignment role offers no way to add one in stub mode
 **ID**: SCN-ADDR-001-A
@@ -313,17 +313,9 @@ The system MUST name the address-book record a role's address was chosen from wh
 - **WHEN** they reopen the list to change it
 - **THEN** the list opens with no address named as selected
 
-### Requirement: An address keyed in by hand must be completed once any part of it is filled
+### Requirement: A hand-keyed address that is required only once begun must be completed once any part of it is filled
 **ID**: REQ-ADDR-012
-The system MUST require every mandatory field of an address entered by hand once any one field in that group has been filled in, and MUST block the save with an error naming what is missing until the address is complete.
-
-#### Scenario: A partially filled private-transporter address blocks the save
-**ID**: SCN-ADDR-012-A
-- **GIVEN** the user is entering private transporter details and has filled in only the name
-- **WHEN** they try to save
-- **THEN** the save is blocked with an error naming the missing address field
-- **WHEN** they complete every mandatory field in the group
-- **THEN** the save succeeds and the group is stored together
+For an address entered by hand whose fields become mandatory only once one of them has been filled in, the system MUST require every mandatory field in that group once any one is filled in, and MUST block the save with an error naming what is missing until the address is complete.
 
 #### Scenario: A partially filled permanent address for an animal identifier blocks the save
 **ID**: SCN-ADDR-012-B

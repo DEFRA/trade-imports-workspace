@@ -979,7 +979,7 @@ The system MUST split the address book list into four tabs, 'Origin and Consigno
 **ID**: SCN-INS-ADDR-038-B
 - **GIVEN** the user is viewing the address book
 - **WHEN** they open each tab in turn
-- **THEN** the panel is headed 'Origin and Consignor addresses', 'Destination, Consignee and Importer addresses', 'Transporters' and 'Branch addresses' respectively
+- **THEN** the panel is headed 'Origin and Consignor addresses', 'Destination, Consignee and Importer addresses', 'Transporter addresses' and 'Branch addresses' respectively
 
 #### Scenario: No tab or an unknown tab shows Origin and Consignor
 **ID**: SCN-INS-ADDR-038-C
@@ -1041,6 +1041,7 @@ The system MUST list on the selected tab the addresses the address book service 
 - **THEN** the columns are Name, Address, Approval number and Type, with the Action heading visually hidden
 - **AND** the commercial transporter's Approval number cell shows its stored number
 - **AND** the private transporter's Approval number cell reads 'Not applicable'
+- **AND** each transporter's Address cell ends with its country
 
 ### Requirement: The address book service lists the addresses holding any of the roles asked for
 **ID**: REQ-INS-ADDR-040
@@ -1074,18 +1075,18 @@ The address book service MUST, asked for one or more roles, return only the call
 - **WHEN** the list is asked for no role
 - **THEN** every live address is returned
 
-### Requirement: The address book list filters the selected role-backed tab by a Type chosen in the 'Filter addresses' disclosure; the Transporter tab offers no Type
+### Requirement: The address book list filters the selected tab by a Type chosen in the 'Filter addresses' disclosure, each tab offering its own Type options
 **ID**: REQ-INS-ADDR-041
-The system MUST hold in the 'Filter addresses' disclosure a 'Type' select offering 'Select one' and then only the selected tab's options, for a role-backed tab; the Transporter tab offers none. Submitting a Type MUST list only that tab's addresses holding it, across all pages, with or without JavaScript, and MUST NOT change the list until submitted. The results line and pagination MUST count and page the matches, keeping the tab, the search and the Type.
+The system MUST hold in the 'Filter addresses' disclosure a 'Type' select offering 'Select one' and then the selected tab's own options: a role-backed tab's roles, or, on the Transporter tab, 'Commercial' and 'Private'. Submitting a Type MUST list only that tab's addresses or transporters holding it, across all pages, with or without JavaScript, and MUST NOT change the list until submitted. The results line and pagination MUST count and page the matches, keeping the tab, the search and the Type.
 
-#### Scenario: Each role-backed tab offers Select one and then its own Types, and the Transporter tab offers none
+#### Scenario: Each role-backed tab offers Select one and then its own Types, and the Transporter tab offers Commercial and Private
 **ID**: SCN-INS-ADDR-041-A
 - **GIVEN** the user is viewing the address book
 - **WHEN** they look at the Type select on each tab in turn
 - **THEN** 'Origin and Consignor' offers 'Select one', 'Place of Origin' and 'Consignor'
 - **AND** 'Destination, Consignee and Importer' offers 'Select one', 'Consignee', 'Importer' and 'Place of Destination'
 - **AND** 'Branch' offers 'Select one' and 'Branch Address'
-- **AND** the 'Transporter' tab offers no Type select
+- **AND** the 'Transporter' tab offers 'Select one', 'Commercial' and 'Private', in that order
 
 #### Scenario: A submitted Type lists only the tab's addresses holding it
 **ID**: SCN-INS-ADDR-041-B
@@ -1121,6 +1122,13 @@ The system MUST hold in the 'Filter addresses' disclosure a 'Type' select offeri
 - **GIVEN** the 'Origin and Consignor' tab runs past one page, and two of its addresses with the consignor role lie beyond the first page
 - **WHEN** the user submits a search that matches them with 'Consignor' chosen
 - **THEN** both addresses are listed and the list reads 'Showing 1-2 of 2'
+- **AND** no pagination is shown
+
+#### Scenario: A Type on the Transporter tab lists only that type's transporters, counted across the whole category
+**ID**: SCN-INS-ADDR-041-G
+- **GIVEN** the 'Transporter' tab runs past one page, and two commercial transporters matching a search lie beyond the first page among private ones that also match
+- **WHEN** the user submits the search with 'Commercial' chosen
+- **THEN** only the two commercial transporters are listed and the list reads 'Showing 1-2 of 2'
 - **AND** no pagination is shown
 
 ### Requirement: The address book service matches a search against search roles

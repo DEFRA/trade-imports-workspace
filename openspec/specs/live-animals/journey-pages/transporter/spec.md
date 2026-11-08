@@ -32,6 +32,23 @@ The system MUST list the organisation's own transporters, held in the address bo
 - **THEN** that transporter is shown as a row, tagged "New"
 - **AND** the user can choose it and save
 
+### Requirement: After adding a transporter, the list shows it as the first row, already chosen, under a one-time success banner
+**ID**: REQ-TRANSPORTER-007
+The system MUST, after the user saves a complete transporter from either add form, return them to the transporter list with the added transporter as its first row and its radio already checked, under a notification banner titled "Success" reading the transporter's name — with only its first letter capitalised — followed by " transporter added". The system MUST show that banner on that one view of the list only: reloading the list, or returning to it later, MUST show the list without it.
+
+#### Scenario: The list returns with the added transporter first, checked, and names it in the banner
+**ID**: SCN-TRANSPORTER-007-A
+- **GIVEN** the user has saved a complete private or commercial transporter from its add form
+- **WHEN** the save lands back on the transporter list
+- **THEN** the added transporter is the first row shown, with its radio checked
+- **AND** a success notification banner titled "Success" reads the transporter's name, with only its first letter capitalised, followed by " transporter added"
+
+#### Scenario: Reloading the list, or returning to it later, shows it with no banner
+**ID**: SCN-TRANSPORTER-007-B
+- **GIVEN** the transporter list has just shown the added-transporter banner
+- **WHEN** the user reloads the list, or leaves and comes back to it later
+- **THEN** the list is shown with no banner
+
 ### Requirement: The list can be searched by name, address, approval number, type or status, narrowing as the user types
 **ID**: REQ-TRANSPORTER-002
 The system MUST offer a labelled search over the transporter list, hinted with what it matches and run from a button named "Search". It MUST narrow the list to transporters matching the term by name, address, approval number, type or status, ignoring case and accents, as the user types when JavaScript is on, and MUST show a message rather than an empty table when nothing matches. A transporter with no approval number MUST be matched by the words its Approval number column shows.

@@ -26,19 +26,58 @@ The system MUST ask the user for the private transporter's name or organisation 
 
 ### Requirement: A complete set of private transporter details is saved as one record and reloads into the form
 **ID**: REQ-PRIVATE-TRANS-002
-The system MUST save the transporter's name and address together as a single record once every mandatory field is given, MUST return the user to Overview, and MUST show the saved values again in the form when they return to the page.
+The system MUST save the transporter's name and address together as a single record once every mandatory field is given, MUST return the user to the transporter list with the saved transporter chosen, and MUST show the saved values again in the form when they return to the page.
 
-#### Scenario: Completing the details saves them and returns to Overview
+#### Scenario: Completing the details saves them and returns to the transporter list, chosen
 **ID**: SCN-PRIVATE-TRANS-002-A
 - **GIVEN** the user is on the private transporter details page with the name entered
 - **WHEN** they complete every mandatory address field and save and continue
-- **THEN** they return to Overview
+- **THEN** they return to the transporter list, with the saved transporter already chosen
 
 #### Scenario: Returning to the page shows the saved details in the form
 **ID**: SCN-PRIVATE-TRANS-002-B
 - **GIVEN** the user has saved a complete set of private transporter details
 - **WHEN** they return to the private transporter details page
 - **THEN** the name and country they saved are shown in the form
+
+### Requirement: A saved private transporter returns the user to the transporter list already chosen, and survives the list's own save
+**ID**: REQ-PRIVATE-TRANS-007
+The system MUST land the user who saves a private transporter on the transporter list with it already chosen for the notification, and MUST leave its saved details unchanged when the list is saved again.
+
+#### Scenario: The save puts the trader straight on the list with the new transporter checked, surviving the list's own save
+**ID**: SCN-PRIVATE-TRANS-007-A
+- **GIVEN** the user has just saved a complete set of private transporter details
+- **WHEN** the save lands
+- **THEN** the transporter list is shown with that transporter's row checked
+- **WHEN** they save the list without changing the choice
+- **THEN** they return to Overview, and the private transporter form still shows the saved name, country and email address
+
+### Requirement: The page ends with exactly a primary save and a secondary cancel, which abandons the add and leaves an unchanged type's chosen transporter alone
+**ID**: REQ-PRIVATE-TRANS-005
+The system MUST end the page with exactly two controls: a primary "Save and continue" and a secondary "Cancel and return to dashboard". The secondary MUST discard whatever the form holds and take the user to the dashboard, wherever the notifications list lives.
+
+#### Scenario: The page offers exactly the primary and the cancel control
+**ID**: SCN-PRIVATE-TRANS-005-A
+- **GIVEN** the user is on the private transporter details page
+- **WHEN** the page loads
+- **THEN** it ends with exactly "Save and continue" and a secondary "Cancel and return to dashboard", and offers no link back to the overview
+
+#### Scenario: Cancelling with the stored type unchanged leaves the chosen transporter alone and shows no error
+**ID**: SCN-PRIVATE-TRANS-005-B
+- **GIVEN** the user already has a transporter of the private type chosen, and reaches the private transporter details page with some or all fields filled in
+- **WHEN** they choose "Cancel and return to dashboard"
+- **THEN** no error is shown, no transporter is added, and they are taken to the dashboard
+- **AND** the transporter they had chosen before the add began is still chosen on the transporter list
+
+### Requirement: Values a refused save left behind are shown again until the form is saved or cancelled
+**ID**: REQ-PRIVATE-TRANS-006
+The system MUST remember the values a refused save entered, and MUST show them again in the form the next time the user opens it, until that form is saved or cancelled.
+
+#### Scenario: Leaving a refused form and returning to it shows what was entered
+**ID**: SCN-PRIVATE-TRANS-006-A
+- **GIVEN** the user's save of the private transporter details was refused for a missing or invalid field
+- **WHEN** they leave the page and later open it again
+- **THEN** the values they had entered are shown in the fields, not the previously saved answer
 
 ### Requirement: A blank mandatory field, an over-length one, and an invalid country are each rejected in their own way
 **ID**: REQ-PRIVATE-TRANS-003

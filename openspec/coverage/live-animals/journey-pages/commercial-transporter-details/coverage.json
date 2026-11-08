@@ -27,11 +27,12 @@
       "scenarios": [
         {
           "id": "SCN-COMMERCIAL-TRANS-002-A",
-          "name": "Completing the details saves them and returns to Overview",
+          "name": "Completing the details saves them and returns to the transporter list, chosen",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "saves a hand-entered commercial transporter and persists every value", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/commercial-transporter-scope.spec.ts", "test": "commercial transporter is owed only for the commercial type and is wiped when the type changes", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details/commercial-transporter-details.controller.test.js", "test": "Should save a hand-entered transporter in Northern Ireland and redirect to the transporter list", "strength": "partial", "notes": "witnesses the redirect destination only; the chosen row is decided by the transporter list's own handler" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "saves a hand-entered commercial transporter, lands on the transporter list first and checked under the named banner, and persists every value", "strength": "full", "notes": "red probe: inverting the newest-first ordering/selected-row choice turns this spec red" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/commercial-transporter-scope.spec.ts", "test": "commercial transporter is owed only for the commercial type and is wiped when the type changes", "strength": "partial", "notes": "no red probe run against this assertion" }
           ]
         },
         {
@@ -114,15 +115,57 @@
     },
     {
       "id": "REQ-COMMERCIAL-TRANS-006",
-      "name": "A saved commercial transporter joins the transporter list, already chosen",
-      "coverage": "full",
+      "name": "A saved commercial transporter returns the user to the transporter list already chosen, and survives the list's own save",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-COMMERCIAL-TRANS-006-A",
-          "name": "The transporter just added is the checked row on the list and survives saving the list",
+          "name": "The save puts the trader straight on the list with the new transporter checked, surviving the list's own save",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "a transporter the trader added is on the list, checked, and saving the list again leaves it alone", "strength": "partial", "notes": "the save lands on the list directly; no red probe run at the FIT level" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMERCIAL-TRANS-007",
+      "name": "The page ends with exactly a primary save and a secondary cancel, which abandons the add and leaves an unchanged type's chosen transporter alone",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMERCIAL-TRANS-007-A",
+          "name": "The page offers exactly the primary and the cancel control",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "a transporter the trader added is on the list, checked, and saving the list again leaves it alone", "strength": "full", "notes": "radio checked on the list, Save returns to Overview, approval number still in the form" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/save-actions.test.js", "test": "Should end the page with exactly the primary and the secondary, in that order, and no overview return control", "strength": "full", "notes": "proves the shared macro both add forms call for their end controls" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "ends with exactly the primary and the cancel, offering no overview return control", "strength": "partial", "notes": "no red probe run at the FIT level — the macro it exercises is unit-tested in save-actions.test.js" }
+          ]
+        },
+        {
+          "id": "SCN-COMMERCIAL-TRANS-007-B",
+          "name": "Cancelling with the stored type unchanged leaves the chosen transporter alone and shows no error",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details/commercial-transporter-details.controller.test.js", "test": "Should add no transporter, commit nothing, show no error and redirect to the dashboard, logging once", "strength": "full", "notes": "driven by the shared itCancelsTheAddForEveryStoredType registrar, for the form's own type stored, the other type stored and no type stored" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "cancelling leaves the commercial transporter already chosen still checked, adds no row and returns to the dashboard with no error", "strength": "partial", "notes": "no red probe run at the FIT level — the cancel branch it exercises is probed at unit level above" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMERCIAL-TRANS-008",
+      "name": "Values a refused save left behind are shown again until the form is saved or cancelled",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMERCIAL-TRANS-008-A",
+          "name": "Leaving a refused form and returning to it shows what was entered",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details/commercial-transporter-details.controller.test.js", "test": "Should remember the entered values under the form’s own type", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details/commercial-transporter-details.controller.test.js", "test": "Should show the entered transporter instead of the saved answer", "strength": "partial", "notes": "no red probe run against this specific assertion" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details/commercial-transporter-details.controller.test.js", "test": "Should clear the entered transporter once a complete record is saved", "strength": "partial", "notes": "no red probe run against this specific assertion" }
           ]
         }
       ]

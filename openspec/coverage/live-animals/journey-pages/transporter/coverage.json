@@ -57,7 +57,92 @@
               "file": "tests/animals/e2e/features/address-book/transporter-added-via-address-book.spec.ts",
               "test": "is on the transporter list of the organisation's next notification, with its approval number, and can be picked and saved",
               "strength": "partial",
-              "notes": "written and typechecked; not run — no workspace stack in this run"
+              "notes": "no red probe run against this assertion"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TRANSPORTER-007",
+      "name": "After adding a transporter, the list shows it as the first row, already chosen, under a one-time success banner",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TRANSPORTER-007-A",
+          "name": "The list returns with the added transporter first, checked, and names it in the banner",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-animals-frontend",
+              "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.test.js",
+              "test": "Should show the banner naming the sentence-cased transporter and clear it from the session",
+              "strength": "partial",
+              "notes": "witnesses the banner naming and its clearing only, not the row order or which row is checked"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-animals-frontend",
+              "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js",
+              "test": "lands on the transporter list with the new transporter first and checked, under the named success banner",
+              "strength": "full",
+              "notes": "red probe: inverting the newest-first ordering/selected-row choice turns this spec red"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-animals-frontend",
+              "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js",
+              "test": "saves a hand-entered commercial transporter, lands on the transporter list first and checked under the named banner, and persists every value",
+              "strength": "full",
+              "notes": "red probe: inverting the newest-first ordering/selected-row choice turns this spec red"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/pages/transporter-add-save-cancel.spec.ts",
+              "test": "a complete save returns to the list with the new transporter first and checked, under a one-time success banner, and persists it for the organisation",
+              "strength": "partial",
+              "notes": "asserts the new row sits above every name the list showed before the add, rather than at index zero, so a concurrent worker's add cannot disturb the assertion"
+            }
+          ]
+        },
+        {
+          "id": "SCN-TRANSPORTER-007-B",
+          "name": "Reloading the list, or returning to it later, shows it with no banner",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-animals-frontend",
+              "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.test.js",
+              "test": "Should show no banner on a second GET, after the first one cleared it",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-animals-frontend",
+              "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.test.js",
+              "test": "Should show no banner on an ordinary visit",
+              "strength": "partial",
+              "notes": "no red probe run against this specific assertion"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-animals-frontend",
+              "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js",
+              "test": "reloading the list afterwards shows the same rows with no banner",
+              "strength": "partial",
+              "notes": "no red probe run at the FIT level"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/pages/transporter-add-save-cancel.spec.ts",
+              "test": "a complete save returns to the list with the new transporter first and checked, under a one-time success banner, and persists it for the organisation",
+              "strength": "partial",
+              "notes": "the same test reopens the list by reference number and asserts the banner is gone"
             }
           ]
         }

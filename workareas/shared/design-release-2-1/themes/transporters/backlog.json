@@ -340,7 +340,7 @@
         "inc-074"
       ],
       "theme": "transporters",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -397,7 +397,19 @@
         "ATTEMPT FAILED: gate red on frontend coverage (88.3% against 90% floor); patches at logs/inc-038-preserve-{frontend,insfrontend,tests}.{staged,unstaged}.patch; stash refs: frontend=stash@{0}, insfrontend=stash@{0}, tests=stash@{0}, openspec=stash@{0}"
       ],
       "gate": null,
-      "commit": "46855235 41ab744"
+      "commit": "46855235 41ab744",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/467",
+          "repo": "trade-imports-animals-frontend",
+          "number": 467
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/92",
+          "repo": "trade-imports-ins-tests",
+          "number": 92
+        }
+      ]
     },
     {
       "id": "inc-039",
@@ -459,7 +471,9 @@
         "req-441",
         "req-442"
       ],
-      "openQuestions": [],
+      "openQuestions": [
+        "For the designer: the transporter success banner lower-cases everything after the first letter of the transporter name, so \"Lough Neagh Livestock Ltd\" reads \"Lough neagh livestock ltd\" and \"ACME Haulage\" reads \"Acme haulage\". The design source sets exactly this — prototype:dr2-1-source (defra-design/GB-notification-service at commit 04a073b) app/routes.js:3665-3673 returns the name with its first letter upper-cased and the rest lower-cased followed by \" transporter added\", extract prototype-dr2-1-source-p7-046, whose worked example is \"ACME Haulage\" shows as \"Acme haulage transporter added\"; the distil extract itself flagged the lower-casing as looking unintentional. The code copies it at repos/trade-imports-animals-frontend/src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add-session.js:56-57 (sentenceCasedTransporterName), with the banner text at .../transport/copy/copy.en.js:144 and the Welsh draft at copy.cy.js:144. The guide this workspace keeps disagrees: docs/best-practices/gds/language.md:81 — \"Proper nouns keep their capitals in a hint as anywhere else (Great Britain, Northern Ireland)\". Options: (a) keep the prototype rule as built; (b) show the name exactly as entered, \"Lough Neagh Livestock Ltd transporter added\", which matches the GDS proper-noun rule and the INS front door banner at repos/trade-imports-ins-frontend/src/server/app/features/address-book/copy/copy.en.js:90 that uses the name unchanged; (c) sentence-case only an all-caps name and leave mixed-case names alone. Raised by review finding 18 [design] on inc-039; the code keeps what the design source sets until the designer answers."
+      ],
       "notes": [
         "Blocked by ruling:sam-2026-10-09-pm-p2-039 (c-285, precedence). Combines what happens when an add form is saved (req-413, req-414), its buttons (req-440), cancelling (req-441) and keeping unsaved values (req-442): the shared save-and-cancel behaviour of the two add forms. c-056 (precedence): the overview return controls stay off the add forms and the design's 'Cancel and return to dashboard' is adopted. The end-to-end journeys that today expect an add to carry the journey on must expect the transporter list. Depends on the list row and the type question row.",
         "Unchanged by this re-distil apart from wording the fourth criterion as the two controls the forms show rather than the controls they do not.",
@@ -467,7 +481,20 @@
         "Rigour set to full on 6 November, overriding tim build rigour's 'standard'. Its heuristic reads repo boundaries only and this row touches one repo, but the row changes persistence semantics: ruling:ian-2026-11-06 decisions 1 and 2 replace services/transporters/register.js's in-memory Map with a real address book record, and its criteria are being rewritten to the hand-off rather than checked. It gets the full pipeline."
       ],
       "gate": "Look at where a saved add lands, the success banner and the cancel button: the address-book add row and the germinal transporter copy reuse this save-and-cancel behaviour.",
-      "rigour": "full"
+      "rigour": "full",
+      "commit": "8863b5571c2b1fd1fb0054124c053339e109b8b4 e9fa77ef225e8b948b37fa12eb5939f491f88977",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/467",
+          "repo": "trade-imports-animals-frontend",
+          "number": 467
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/92",
+          "repo": "trade-imports-ins-tests",
+          "number": 92
+        }
+      ]
     },
     {
       "id": "inc-040",

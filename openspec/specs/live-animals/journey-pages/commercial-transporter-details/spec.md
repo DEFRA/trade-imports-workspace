@@ -2,19 +2,19 @@
 
 ## Purpose
 
-Asks for the name, address and authorisation number of a commercial transporter that is not on the transporter list, keyed in by hand. A commercial transporter added this way can only be based in Northern Ireland, so the country is shown rather than asked. Reached only via "Add a transporter" from the transporter list, after choosing "Commercial" on the type question — not as a mandatory branch of the transport section itself. The page is titled "Add commercial transporter".
+Asks for the name, address and authorisation number of a commercial transporter that is not on the transporter list, keyed in by hand. A commercial transporter added this way can only be based in Northern Ireland, so the country is shown rather than asked. Reached only via "Add a transporter" from the transporter list, after choosing "Commercial" on the type question — not as a mandatory branch of the transport section itself. The page is titled "Add a commercial transporter".
 
 ## Requirements
 
 ### Requirement: The page asks for the transporter's name, authorisation number and address, showing the country fixed to Northern Ireland
 **ID**: REQ-COMMERCIAL-TRANS-001
-The system MUST ask the user for the commercial transporter's name or organisation name, its transporter authorisation number, and a full address — address line 1, an optional address line 2, town or city, an optional county, postal or zip code, telephone number and email address — and MUST show the country as Northern Ireland rather than asking for it.
+The system MUST ask the user for the commercial transporter's transporter authorisation number, then its name or organisation name, then a full address — address line 1, an optional address line 2, town or city, an optional county, a "Postcode or Zip code" field — then an email address followed by a telephone number, and MUST show the country as Northern Ireland rather than asking for it.
 
 #### Scenario: The page presents its questions with the country fixed
 **ID**: SCN-COMMERCIAL-TRANS-001-A
 - **GIVEN** the user has chosen "Commercial" on the transporter type question reached from "Add a transporter"
 - **WHEN** the page loads
-- **THEN** it asks for a name or organisation name, a transporter authorisation number, address line 1, address line 2, a town or city, a county, a postcode or zip code, a telephone number and an email address
+- **THEN** it asks for a transporter authorisation number, a name or organisation name, address line 1, address line 2, a town or city, a county, a "Postcode or Zip code" field, an email address and a telephone number
 - **AND** the country field shows Northern Ireland, not a question to answer
 
 ### Requirement: A complete set of commercial transporter details is saved as one record and reloads into the form
@@ -35,13 +35,14 @@ The system MUST save the transporter's details together as a single record once 
 
 ### Requirement: The page repeats the transporter list's authorisation guidance
 **ID**: REQ-COMMERCIAL-TRANS-003
-The system MUST show the same transporter-authorisation guidance on this page as `live-animals/journey-pages/transporter` states on the list (when it applies, that DAERA/APHA authorisation is required, that DAERA documents are valid and EU documents are not, and a link to further guidance), so a trader who reached this form without reading the list still sees it.
+The system MUST show the same transporter-authorisation guidance on this page as `live-animals/journey-pages/transporter` states on the list (when it applies, that DAERA/APHA authorisation is required, that DAERA documents are valid and EU documents are not, and a link to further guidance), in a notification banner titled "Important" whose content opens with the heading "Help with transporter authorisation", so a trader who reached this form without reading the list still sees it.
 
-#### Scenario: The page carries the same authorisation guidance as the list
+#### Scenario: The page carries the same authorisation guidance as the list, in a banner titled "Important"
 **ID**: SCN-COMMERCIAL-TRANS-003-A
 - **GIVEN** the user has reached the commercial transporter details page
 - **WHEN** the page loads
-- **THEN** it states the same transporter-authorisation guidance the transporter list carries, including the link to further guidance
+- **THEN** it shows a notification banner titled "Important" whose content opens with the heading "Help with transporter authorisation"
+- **AND** the banner goes on to state the same transporter-authorisation guidance the transporter list carries, including the link to further guidance
 
 ### Requirement: A blank mandatory field or an over-length one is rejected, preserving every other field entered
 **ID**: REQ-COMMERCIAL-TRANS-004
@@ -59,15 +60,21 @@ The system MUST reject a save that leaves a mandatory field blank or gives a fie
 - **WHEN** they try to save
 - **THEN** the save is blocked, an error links to and focuses that field, and the over-length value is still shown
 
-### Requirement: A completely blank commercial transporter record is accepted
-**ID**: REQ-COMMERCIAL-TRANS-005
-The system MUST accept the page being saved with every field left blank, without error, since adding a commercial transporter this way is itself optional until the trader starts filling it in.
+#### Scenario: An over-length Postcode or Zip code is refused with the message that names the field as the form labels it
+**ID**: SCN-COMMERCIAL-TRANS-004-C
+- **GIVEN** the user has entered a Postcode or Zip code longer than 12 characters
+- **WHEN** they try to save
+- **THEN** the save is blocked and the error reads "Postcode or Zip code must be 12 characters or less"
 
-#### Scenario: Saving the page with nothing entered succeeds
+### Requirement: The commercial transporter form's mandatory fields are required outright, not only once another has been filled in
+**ID**: REQ-COMMERCIAL-TRANS-005
+The system MUST require the commercial transporter's mandatory fields — authorisation number, name or organisation name, address line 1, town or city, Postcode or Zip code, email address and phone number — from the moment the page opens, not only once the user has started filling the form in, and MUST refuse a save that leaves any blank — a wholly blank form included — keeping the user on the page with the error summary naming every missing field in the page's own field order.
+
+#### Scenario: Saving a wholly blank form is refused, naming every required field in order
 **ID**: SCN-COMMERCIAL-TRANS-005-A
 - **GIVEN** the user is on the commercial transporter details page with every field blank
 - **WHEN** they save and continue
-- **THEN** the save succeeds without an error summary
+- **THEN** the save is refused, the trader stays on the form, and the error summary lists, in order: "Enter a transporter authorisation number", "Enter a name or organisation name", "Enter address line 1", "Enter a town or city", "Enter a postcode or Zip code", "Enter an email address", "Enter a phone number"
 
 ### Requirement: A saved commercial transporter returns the user to the transporter list already chosen, and survives the list's own save
 **ID**: REQ-COMMERCIAL-TRANS-006

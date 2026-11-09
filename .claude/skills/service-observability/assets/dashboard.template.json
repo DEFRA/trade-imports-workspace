@@ -1,9 +1,15 @@
 {
   "title": "<service> (custom)",
-  "tags": ["<service>", "observability"],
+  "tags": [
+    "<service>",
+    "observability"
+  ],
   "timezone": "browser",
   "schemaVersion": 41,
-  "time": { "from": "now-24h", "to": "now" },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
   "refresh": "1m",
   "templating": {
     "list": [
@@ -27,33 +33,77 @@
     {
       "type": "stat",
       "title": "Dependency status",
-      "description": "DependencyAvailable, Minimum: 1 available, 0 not. Shows the last call's outcome, however old, so it lags. Alerts use ExternalCallFailure instead.",
-      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 4 },
-      "datasource": { "type": "cloudwatch", "uid": "${cloudwatch}" },
+      "description": "external.dependency.available, Minimum: 1 available, 0 not. Fresh for a database (driver heartbeats) or an active probe; for a passive HTTP reading it is the last call's outcome, however old.",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 4
+      },
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${cloudwatch}"
+      },
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "cloudwatch", "uid": "${cloudwatch}" },
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${cloudwatch}"
+          },
           "queryMode": "Metrics",
           "metricQueryType": 0,
           "metricEditorMode": 0,
           "region": "default",
           "namespace": "<service>",
-          "metricName": "DependencyAvailable",
+          "metricName": "external.dependency.available",
           "statistic": "Minimum",
-          "dimensions": { "Dependency": "*" },
+          "dimensions": {
+            "dependency": "*"
+          },
           "matchExact": false,
           "period": "",
-          "label": "${PROP('Dim.Dependency')}"
+          "label": "${PROP('Dim.dependency')}"
         }
       ],
-      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "background"
+      },
       "fieldConfig": {
         "defaults": {
           "mappings": [
-            { "type": "value", "options": { "0": { "text": "Unavailable", "color": "red" }, "1": { "text": "Available", "color": "green" } } }
+            {
+              "type": "value",
+              "options": {
+                "0": {
+                  "text": "Unavailable",
+                  "color": "red"
+                },
+                "1": {
+                  "text": "Available",
+                  "color": "green"
+                }
+              }
+            }
           ],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] }
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          }
         },
         "overrides": []
       }
@@ -61,183 +111,307 @@
     {
       "type": "timeseries",
       "title": "Calls per dependency",
-      "description": "ExternalCallDuration, SampleCount, per Dependency and Operation.",
-      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
-      "datasource": { "type": "cloudwatch", "uid": "${cloudwatch}" },
+      "description": "external.call.duration, SampleCount, per dependency and operation.",
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${cloudwatch}"
+      },
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "cloudwatch", "uid": "${cloudwatch}" },
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${cloudwatch}"
+          },
           "queryMode": "Metrics",
           "metricQueryType": 0,
           "metricEditorMode": 0,
           "region": "default",
           "namespace": "<service>",
-          "metricName": "ExternalCallDuration",
+          "metricName": "external.call.duration",
           "statistic": "SampleCount",
-          "dimensions": { "Dependency": "*", "Operation": "*" },
+          "dimensions": {
+            "dependency": "*",
+            "operation": "*"
+          },
           "matchExact": false,
           "period": "",
-          "label": "${PROP('Dim.Dependency')} ${PROP('Dim.Operation')}"
+          "label": "${PROP('Dim.dependency')} ${PROP('Dim.operation')}"
         }
       ],
-      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] }
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
     },
     {
       "type": "timeseries",
       "title": "Failed calls",
-      "description": "ExternalCallFailure, Sum, per Dependency and Operation.",
-      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
-      "datasource": { "type": "cloudwatch", "uid": "${cloudwatch}" },
+      "description": "external.call.failure, Sum, per dependency and operation.",
+      "gridPos": {
+        "x": 12,
+        "y": 4,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${cloudwatch}"
+      },
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "cloudwatch", "uid": "${cloudwatch}" },
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${cloudwatch}"
+          },
           "queryMode": "Metrics",
           "metricQueryType": 0,
           "metricEditorMode": 0,
           "region": "default",
           "namespace": "<service>",
-          "metricName": "ExternalCallFailure",
+          "metricName": "external.call.failure",
           "statistic": "Sum",
-          "dimensions": { "Dependency": "*", "Operation": "*" },
+          "dimensions": {
+            "dependency": "*",
+            "operation": "*"
+          },
           "matchExact": false,
           "period": "",
-          "label": "${PROP('Dim.Dependency')} ${PROP('Dim.Operation')}"
+          "label": "${PROP('Dim.dependency')} ${PROP('Dim.operation')}"
         }
       ],
-      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] }
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
     },
     {
       "type": "timeseries",
       "title": "Failure rate",
-      "description": "ExternalCallFailure, Average (each call publishes 0 or 1), shown as a percentage, per Dependency and Operation.",
-      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
-      "datasource": { "type": "cloudwatch", "uid": "${cloudwatch}" },
+      "description": "external.call.failure, Average (each call publishes 0 or 1), shown as a percentage, per dependency and operation.",
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${cloudwatch}"
+      },
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "cloudwatch", "uid": "${cloudwatch}" },
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${cloudwatch}"
+          },
           "queryMode": "Metrics",
           "metricQueryType": 0,
           "metricEditorMode": 0,
           "region": "default",
           "namespace": "<service>",
-          "metricName": "ExternalCallFailure",
+          "metricName": "external.call.failure",
           "statistic": "Average",
-          "dimensions": { "Dependency": "*", "Operation": "*" },
+          "dimensions": {
+            "dependency": "*",
+            "operation": "*"
+          },
           "matchExact": false,
           "period": "",
-          "label": "${PROP('Dim.Dependency')} ${PROP('Dim.Operation')}"
+          "label": "${PROP('Dim.dependency')} ${PROP('Dim.operation')}"
         }
       ],
-      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 }, "overrides": [] }
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1
+        },
+        "overrides": []
+      }
     },
     {
       "type": "timeseries",
       "title": "Call time",
-      "description": "ExternalCallDuration: Average, p95 and Maximum, per Dependency and Operation.",
-      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
-      "datasource": { "type": "cloudwatch", "uid": "${cloudwatch}" },
+      "description": "external.call.duration: Average, p95 and Maximum, per dependency and operation.",
+      "gridPos": {
+        "x": 12,
+        "y": 12,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${cloudwatch}"
+      },
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "cloudwatch", "uid": "${cloudwatch}" },
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${cloudwatch}"
+          },
           "queryMode": "Metrics",
           "metricQueryType": 0,
           "metricEditorMode": 0,
           "region": "default",
           "namespace": "<service>",
-          "metricName": "ExternalCallDuration",
+          "metricName": "external.call.duration",
           "statistic": "Average",
-          "dimensions": { "Dependency": "*", "Operation": "*" },
+          "dimensions": {
+            "dependency": "*",
+            "operation": "*"
+          },
           "matchExact": false,
           "period": "",
-          "label": "${PROP('Dim.Dependency')} ${PROP('Dim.Operation')} average"
+          "label": "${PROP('Dim.dependency')} ${PROP('Dim.operation')} average"
         },
         {
           "refId": "B",
-          "datasource": { "type": "cloudwatch", "uid": "${cloudwatch}" },
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${cloudwatch}"
+          },
           "queryMode": "Metrics",
           "metricQueryType": 0,
           "metricEditorMode": 0,
           "region": "default",
           "namespace": "<service>",
-          "metricName": "ExternalCallDuration",
+          "metricName": "external.call.duration",
           "statistic": "p95",
-          "dimensions": { "Dependency": "*", "Operation": "*" },
+          "dimensions": {
+            "dependency": "*",
+            "operation": "*"
+          },
           "matchExact": false,
           "period": "",
-          "label": "${PROP('Dim.Dependency')} ${PROP('Dim.Operation')} p95"
+          "label": "${PROP('Dim.dependency')} ${PROP('Dim.operation')} p95"
         },
         {
           "refId": "C",
-          "datasource": { "type": "cloudwatch", "uid": "${cloudwatch}" },
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${cloudwatch}"
+          },
           "queryMode": "Metrics",
           "metricQueryType": 0,
           "metricEditorMode": 0,
           "region": "default",
           "namespace": "<service>",
-          "metricName": "ExternalCallDuration",
+          "metricName": "external.call.duration",
           "statistic": "Maximum",
-          "dimensions": { "Dependency": "*", "Operation": "*" },
+          "dimensions": {
+            "dependency": "*",
+            "operation": "*"
+          },
           "matchExact": false,
           "period": "",
-          "label": "${PROP('Dim.Dependency')} ${PROP('Dim.Operation')} slowest"
+          "label": "${PROP('Dim.dependency')} ${PROP('Dim.operation')} slowest"
         }
       ],
-      "fieldConfig": { "defaults": { "unit": "ms" }, "overrides": [] }
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms"
+        },
+        "overrides": []
+      }
     },
     {
       "type": "timeseries",
       "title": "Cache hits and misses",
-      "description": "CacheHit and CacheMiss, Sum, per Cache. Delete this panel if the service has no cache.",
-      "gridPos": { "x": 0, "y": 20, "w": 12, "h": 8 },
-      "datasource": { "type": "cloudwatch", "uid": "${cloudwatch}" },
+      "description": "cache.hit and cache.miss, Sum, per cache.",
+      "gridPos": {
+        "x": 0,
+        "y": 20,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${cloudwatch}"
+      },
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "cloudwatch", "uid": "${cloudwatch}" },
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${cloudwatch}"
+          },
           "queryMode": "Metrics",
           "metricQueryType": 0,
           "metricEditorMode": 0,
           "region": "default",
           "namespace": "<service>",
-          "metricName": "CacheHit",
+          "metricName": "cache.hit",
           "statistic": "Sum",
-          "dimensions": { "Cache": "*" },
+          "dimensions": {
+            "cache": "*"
+          },
           "matchExact": false,
           "period": "",
-          "label": "${PROP('Dim.Cache')} hits"
+          "label": "${PROP('Dim.cache')} hits"
         },
         {
           "refId": "B",
-          "datasource": { "type": "cloudwatch", "uid": "${cloudwatch}" },
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${cloudwatch}"
+          },
           "queryMode": "Metrics",
           "metricQueryType": 0,
           "metricEditorMode": 0,
           "region": "default",
           "namespace": "<service>",
-          "metricName": "CacheMiss",
+          "metricName": "cache.miss",
           "statistic": "Sum",
-          "dimensions": { "Cache": "*" },
+          "dimensions": {
+            "cache": "*"
+          },
           "matchExact": false,
           "period": "",
-          "label": "${PROP('Dim.Cache')} misses"
+          "label": "${PROP('Dim.cache')} misses"
         }
       ],
-      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] }
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
     },
     {
       "type": "timeseries",
       "title": "<business-metric> by <business-dimension>",
-      "description": "One copy of this panel per business metric on the agreed list. Delete it if there are none.",
-      "gridPos": { "x": 12, "y": 20, "w": 12, "h": 8 },
-      "datasource": { "type": "cloudwatch", "uid": "${cloudwatch}" },
+      "description": "<business-metric>, Sum, per <business-dimension>.",
+      "gridPos": {
+        "x": 12,
+        "y": 20,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${cloudwatch}"
+      },
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "cloudwatch", "uid": "${cloudwatch}" },
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${cloudwatch}"
+          },
           "queryMode": "Metrics",
           "metricQueryType": 0,
           "metricEditorMode": 0,
@@ -245,27 +419,53 @@
           "namespace": "<service>",
           "metricName": "<business-metric>",
           "statistic": "Sum",
-          "dimensions": { "<business-dimension>": "*" },
+          "dimensions": {
+            "<business-dimension>": "*"
+          },
           "matchExact": false,
           "period": "",
           "label": "${PROP('Dim.<business-dimension>')}"
         }
       ],
-      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] }
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short"
+        },
+        "overrides": []
+      }
     },
     {
       "type": "table",
       "title": "Slowest dependency calls",
       "description": "From the logs, not metrics: one row per external call, slowest first. event.action is <dependency>/<operation>; event.duration is a number in nanoseconds. Lucene query, not DQL.",
-      "gridPos": { "x": 0, "y": 28, "w": 24, "h": 10 },
-      "datasource": { "type": "grafana-opensearch-datasource", "uid": "${opensearch}" },
+      "gridPos": {
+        "x": 0,
+        "y": 28,
+        "w": 24,
+        "h": 10
+      },
+      "datasource": {
+        "type": "grafana-opensearch-datasource",
+        "uid": "${opensearch}"
+      },
       "targets": [
         {
           "refId": "A",
-          "datasource": { "type": "grafana-opensearch-datasource", "uid": "${opensearch}" },
+          "datasource": {
+            "type": "grafana-opensearch-datasource",
+            "uid": "${opensearch}"
+          },
           "queryType": "lucene",
           "query": "event.category:\"external-call\" AND service.name:\"<service>\"",
-          "metrics": [{ "id": "1", "type": "raw_data", "settings": { "size": "500" } }],
+          "metrics": [
+            {
+              "id": "1",
+              "type": "raw_data",
+              "settings": {
+                "size": "500"
+              }
+            }
+          ],
           "bucketAggs": [],
           "timeField": "@timestamp"
         }
@@ -283,11 +483,163 @@
             }
           }
         },
-        { "id": "sortBy", "options": { "sort": [{ "field": "event.duration", "desc": true }] } }
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "event.duration",
+                "desc": true
+              }
+            ]
+          }
+        }
       ],
       "fieldConfig": {
         "defaults": {},
-        "overrides": [{ "matcher": { "id": "byName", "options": "event.duration" }, "properties": [{ "id": "unit", "value": "ns" }] }]
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "event.duration"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "ns"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "<timed-name>",
+      "description": "@Timed(\"<timed-name>\"), published by EmfMeterRegistry: one value per call, in milliseconds, with the timer's tags (class, method, exception) as dimensions. Calls is SampleCount; Average, p95 and Slowest are over the calls in each period.",
+      "gridPos": {
+        "x": 0,
+        "y": 38,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "${cloudwatch}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${cloudwatch}"
+          },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "default",
+          "namespace": "<service>",
+          "metricName": "<timed-name>",
+          "statistic": "Average",
+          "dimensions": {
+            "class": "*",
+            "method": "*",
+            "exception": "*"
+          },
+          "matchExact": false,
+          "period": "",
+          "label": "Average ${PROP('Dim.exception')}"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${cloudwatch}"
+          },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "default",
+          "namespace": "<service>",
+          "metricName": "<timed-name>",
+          "statistic": "p95",
+          "dimensions": {
+            "class": "*",
+            "method": "*",
+            "exception": "*"
+          },
+          "matchExact": false,
+          "period": "",
+          "label": "p95 ${PROP('Dim.exception')}"
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${cloudwatch}"
+          },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "default",
+          "namespace": "<service>",
+          "metricName": "<timed-name>",
+          "statistic": "Maximum",
+          "dimensions": {
+            "class": "*",
+            "method": "*",
+            "exception": "*"
+          },
+          "matchExact": false,
+          "period": "",
+          "label": "Slowest ${PROP('Dim.exception')}"
+        },
+        {
+          "refId": "D",
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "${cloudwatch}"
+          },
+          "queryMode": "Metrics",
+          "metricQueryType": 0,
+          "metricEditorMode": 0,
+          "region": "default",
+          "namespace": "<service>",
+          "metricName": "<timed-name>",
+          "statistic": "SampleCount",
+          "dimensions": {
+            "class": "*",
+            "method": "*",
+            "exception": "*"
+          },
+          "matchExact": false,
+          "period": "",
+          "label": "Calls ${PROP('Dim.exception')}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "min": 0
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "D"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              }
+            ]
+          }
+        ]
       }
     }
   ]

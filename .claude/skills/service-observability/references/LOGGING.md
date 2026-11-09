@@ -10,8 +10,8 @@ request can be traced to the dependency call that made it slow.
 
 ## The line
 
-Write it where the call is already timed, and before any "metrics
-disabled" check, so logging does not depend on `aws.emf.enabled`.
+Write it where the call is recorded, in `ExternalCallRecorder`, so every
+measured call has one. It does not depend on `aws.emf.enabled`.
 
 ```
 External call mdm/get-countries success in 2 ms
@@ -23,6 +23,8 @@ External call mdm/get-countries success in 2 ms
 | `event.action` | `<dependency>/<operation>` | `mdm/get-countries` |
 | `event.outcome` | `success` or `failure` | `success` |
 | `event.duration` | Nanoseconds | `2882625` |
+| `error.type` | A failure only: the cause's class name | `com.mongodb.MongoCommandException` |
+| `error.message` | A failure only: the cause's message | — |
 | `trace.id` | Set by the request filter, not by this code | — |
 
 Only use fields on CDP's allowed ECS list (the CDP logging how-to). A
@@ -31,8 +33,9 @@ field that is not on the list is dropped.
 Never put a token, a subscription key, a request body or a full URL
 with query parameters in the line.
 
-The reference implementation is `ExternalCallMetrics.logCall` in
-`trade-imports-reference-data`.
+The reference implementation is `ExternalCallRecorder.logCall` in
+`trade-imports-address-book` (the line and fields are the ones first
+proven on reference-data, below).
 
 ### How to write the fields (Java)
 
@@ -48,29 +51,41 @@ It drops the flat form without any error. Do not set these fields
 through the MDC. `logback-ecs-encoder` (1.6.0) writes every MDC entry
 as a flat key with a string value, so CDP drops them all.
 
-Two pieces, both copied from reference-data:
+Two pieces, both in address-book:
 
 1. **Set the fields as SLF4J key-value pairs**, with the duration as a
-   `long`:
+   `long`. A successful call logs at INFO. A failed call logs at WARN,
+   with the cause's class name and message as `error.type` and
+   `error.message`, and no stack trace. The cause is not attached: the
+   exception is rethrown, and the handler that receives it logs its
+   stack trace once.
 
    ```java
-   log.atInfo()
-       .addKeyValue("event.category", "external-call")
-       .addKeyValue("event.action", action)
-       .addKeyValue("event.outcome", outcome)
-       .addKeyValue("event.duration", elapsed.toNanos())
-       .setCause(cause)
-       .log("External call {} {} in {} ms", action, outcome, elapsed.toMillis());
+   LoggingEventBuilder line =
+       log.atLevel(level)
+           .addKeyValue("event.category", "external-call")
+           .addKeyValue("event.action", action)
+           .addKeyValue("event.outcome", outcome)
+           .addKeyValue("event.duration", elapsed.toNanos());
+   if (cause != null) {
+     line.addKeyValue("error.type", cause.getClass().getName())
+         .addKeyValue("error.message", cause.getMessage());
+   }
+   line.log("External call {} {} in {} ms", action, outcome, elapsed.toMillis());
    ```
 
-2. **Copy `EcsEventEncoder`** (package `...imports.logging`) and name it
+2. **Copy `EcsEventEncoder`** into the service's `logging` package and name it
    as the CONSOLE appender's encoder in `logback-spring.xml`, in place of
    `co.elastic.logging.logback.EcsEncoder`. It extends the ECS encoder
    and overrides its `addCustomFields` hook to write the line's `event.*`
    key-value pairs as one nested `event` object, with a `Number` written
-   as a JSON number. The ECS encoder ignores key-value pairs, so they
-   are not also written flat. A line with no `event.*` key-value pairs
-   comes out exactly as the ECS encoder writes it.
+   as a JSON number and a non-finite one as a string. It writes the
+   line's `error.*` key-value pairs as flat top-level fields, with no
+   stack trace. When the line carries a throwable, the throwable's own
+   ECS `error.*` fields are written instead of those key-value pairs.
+   The ECS encoder ignores key-value pairs, so none is written twice. A
+   line with no `event.*` or `error.*` key-value pairs comes out exactly
+   as the ECS encoder writes it.
 
 `trace.id` stays in the MDC, where the request filter puts it. It
 reaches OpenSearch flat.
@@ -95,29 +110,34 @@ reaches OpenSearch flat.
 - **The first tests passed while the fields were being dropped.** They
   read the MDC on the captured log event, not the JSON the encoder
   writes. Test the encoded JSON (see Tests).
-- **`error.*` may be dropped as well.** The ECS encoder writes
-  `error.type`, `error.message` and `error.stack_trace` flat, and CDP
-  keeps `error.*` only nested. `[UNPROVEN]` Check an error line in dev
-  OpenSearch before relying on those fields.
-- **The exception is logged, but not the HTTP status.** When a call
-  throws, the line carries the exception. A call that returns a failure
-  status has only `event.outcome:failure`. Add `event.reason` if the
+- **`error.*` may be dropped as well.** The failure line's reason
+  travels only in its flat `error.type` and `error.message` fields, as
+  does the ECS encoder's own `error.*` on any line with a throwable. If
+  CDP keeps `error.*` only nested, as it does `event.*`, the failure
+  line reaches OpenSearch with `event.outcome:failure` and no reason.
+  `[UNPROVEN]` Check a failure line in dev OpenSearch before relying on
+  the reason.
+- **The exception's type and message are logged, but not the HTTP
+  status.** When a call throws, the line carries `error.type` and
+  `error.message`. A call that returns a failure status with no
+  exception has only `event.outcome:failure`. Add `event.reason` if the
   team wants more.
 
 ### Tests
 
 | Test | Proves |
 |---|---|
-| Encoder unit test: log through a real logger, then `encoder.encode(event)` and parse the JSON | A nested `event` object; `duration` is an integral number; no flat `event.category`, `event.action`, `event.outcome` or `event.duration` keys (the ECS encoder's own flat `event.dataset` stays); `trace.id` and `error.*` kept; a null value written as JSON `null` and a non-finite number as a string; a line with no `event.*` pairs is byte-for-byte the ECS encoder's |
-| Unit test with a capturing log appender | One line per call, with the four `event.*` key-value pairs, and the duration a `Long` |
-| Same, with metrics disabled | The line is still written |
-| Integration test sending `x-cdp-request-id`, encoding the line with the root logger's `CONSOLE` encoder | `logback-spring.xml` names the new encoder, and the line carries `trace.id` and the nested `event` object |
+| Encoder unit test (address-book's `EcsEventEncoderTest`): log through a real logger, then `encoder.encode(event)` and parse the JSON | The `event.*` key-value pairs nested in an `event` object with the prefix stripped, and an integral duration a JSON integer; a throwable's ECS `error.type`, `error.message` and `error.stack_trace` still written after the `event` object; `error.*` key-value pairs written as top-level fields with no stack trace, and `event.*` pairs not flattened beside them; with a throwable, its `error.*` fields written instead of the `error.*` key-value pairs; a line with no `event.*` or `error.*` key-value pairs byte-for-byte the ECS encoder's; strings escaped; a null value as JSON `null`; a non-finite `Double` or `Float` as a string |
+| Unit test with a capturing log appender, a successful call (address-book's `ExternalCallRecorderTest`) | One INFO line per call, with the four `event.*` key-value pairs, the duration a `Long`, and no throwable |
+| Unit test with a capturing log appender, a failed call (address-book's `ExternalCallRecorderTest`) | One WARN line per call, with `event.outcome` `failure`, `error.type` and `error.message` from the cause, and no throwable |
+| Integration test (address-book's `ExternalCallRecorderIT`) capturing stdout with `testsupport/CapturedConsole` around a real request or command, then parsing the console line with the given `event.action` | A successful insert, sent with `x-cdp-request-id`, writes a line with `trace.id` and the nested `event` object with an integral duration. A failed find writes a line with `event.outcome` `failure`, `error.type` and `error.message`, and no `error.stack_trace` |
 
 The integration test is the one that fails if `logback-spring.xml` is
 left on the plain ECS encoder. The unit tests alone would still pass.
 
-`CapturingLogAppender` in the reference-data tests is the helper to
-copy. It must call `event.prepareForDeferredProcessing()` or the MDC
+`CapturedLogs` in address-book's `testsupport` is the helper to copy,
+or extend the service's own log-capturing helper the same way. Its
+appender must call `event.prepareForDeferredProcessing()` or the MDC
 values are gone by the time the test reads them. Its `keyValues(event)`
 reads an event's key-value pairs.
 

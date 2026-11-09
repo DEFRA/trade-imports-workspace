@@ -573,6 +573,202 @@
           ]
         }
       ]
+    },
+    {
+      "id": "REQ-INS-TRANSPORTER-012",
+      "name": "A transporter has its own details page, at its own URL, offering to edit or delete it",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-TRANSPORTER-012-A",
+          "name": "The View link on a transporter row opens that transporter's own page",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.controller.test.js",
+              "test": "renders a transporter's View link at its own transporter URL, carrying the Transporter tab as its return",
+              "strength": "full"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/transporter-view.fit.spec.js",
+              "test": "opens from the list at its own transporter URL, headed with its name, with no serious or critical accessibility violations",
+              "strength": "full"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-TRANSPORTER-012-B",
+          "name": "A commercial transporter's page shows its approval number and a private transporter's does not",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/view.controller.test.js",
+              "test": "Should show the fixed Northern Ireland country, the approval number and the type for a commercial transporter",
+              "strength": "full"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/view.controller.test.js",
+              "test": "Should show no approval number row for a private transporter, which cannot hold one",
+              "strength": "full"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/transporter-view.fit.spec.js",
+              "test": "shows a commercial transporter’s approval number and its fixed Northern Ireland country",
+              "strength": "full"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-TRANSPORTER-012-C",
+          "name": "The page offers to edit or delete the transporter being viewed",
+          "coverage": "none",
+          "tests": [],
+          "notes": "No edit or delete page exists for a transporter yet, so the page deliberately offers neither action rather than linking routes that are not served. view.controller.test.js asserts the absence ('Should offer neither Edit nor Delete'), which is the opposite of what this scenario requires. Covered once REQ-INS-TRANSPORTER-013 and REQ-INS-TRANSPORTER-014 are built."
+        },
+        {
+          "id": "SCN-INS-TRANSPORTER-012-D",
+          "name": "Back from a transporter's page returns to the address book on the Transporter tab",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/view.controller.test.js",
+              "test": "Should go back to the address book on the Transporter tab when opened without a return",
+              "strength": "full"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/transporter-view.fit.spec.js",
+              "test": "Back returns to the address book filtered to transporters",
+              "strength": "full"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-TRANSPORTER-012-E",
+          "name": "A transporter that is not live returns the user to the address book",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/view.controller.test.js",
+              "test": "Should redirect to the Transporter tab when no transporter is live at that id",
+              "strength": "full"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/view.controller.test.js",
+              "test": "Should redirect to the Transporter tab for a soft-deleted transporter tombstone",
+              "strength": "full"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/view.controller.test.js",
+              "test": "Should redirect to the Transporter tab for another organisation's transporter",
+              "strength": "full"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-TRANSPORTER-013",
+      "name": "Editing a transporter replaces the whole record, keeping its type, and refuses an edit of one that is not live",
+      "coverage": "none",
+      "scenarios": [
+        {
+          "id": "SCN-INS-TRANSPORTER-013-A",
+          "name": "The edit form opens holding the stored values and does not ask the type again",
+          "coverage": "none",
+          "tests": [],
+          "notes": "Not built. The address book service already serves PUT /organisation/{orgId}/transporters/{transporter-id}; the INS frontend has no edit route, form or updateTransporter client function."
+        },
+        {
+          "id": "SCN-INS-TRANSPORTER-013-B",
+          "name": "Saving an edit replaces the record and confirms it by name",
+          "coverage": "none",
+          "tests": [],
+          "notes": "Not built."
+        },
+        {
+          "id": "SCN-INS-TRANSPORTER-013-C",
+          "name": "An optional field left blank on an edit is cleared",
+          "coverage": "none",
+          "tests": [],
+          "notes": "Not built."
+        },
+        {
+          "id": "SCN-INS-TRANSPORTER-013-D",
+          "name": "A commercial transporter's fixed country and required approval number hold on edit",
+          "coverage": "none",
+          "tests": [],
+          "notes": "Not built."
+        },
+        {
+          "id": "SCN-INS-TRANSPORTER-013-E",
+          "name": "Cancelling an edit leaves the stored transporter as it was",
+          "coverage": "none",
+          "tests": [],
+          "notes": "Not built."
+        },
+        {
+          "id": "SCN-INS-TRANSPORTER-013-F",
+          "name": "Editing a transporter that is not live returns the user to the address book",
+          "coverage": "none",
+          "tests": [],
+          "notes": "Not built."
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-TRANSPORTER-014",
+      "name": "Deleting a transporter asks for confirmation, summarising it, and tombstones it",
+      "coverage": "none",
+      "scenarios": [
+        {
+          "id": "SCN-INS-TRANSPORTER-014-A",
+          "name": "The delete page summarises the transporter before it is deleted",
+          "coverage": "none",
+          "tests": [],
+          "notes": "Not built. The address book service already serves DELETE /organisation/{orgId}/transporters/{transporter-id} and tombstones rather than removing (proved by SCN-INS-TRANSPORTER-011-C); the INS frontend has no delete route, confirmation page or deleteTransporter client function."
+        },
+        {
+          "id": "SCN-INS-TRANSPORTER-014-B",
+          "name": "Confirming the deletion removes it from the list and confirms it by name",
+          "coverage": "none",
+          "tests": [],
+          "notes": "Not built."
+        },
+        {
+          "id": "SCN-INS-TRANSPORTER-014-C",
+          "name": "Cancelling the deletion leaves the transporter in the address book",
+          "coverage": "none",
+          "tests": [],
+          "notes": "Not built."
+        },
+        {
+          "id": "SCN-INS-TRANSPORTER-014-D",
+          "name": "Deleting a transporter that is not live returns the user to the address book",
+          "coverage": "none",
+          "tests": [],
+          "notes": "Not built."
+        }
+      ]
     }
   ]
 }

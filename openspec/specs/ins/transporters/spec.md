@@ -177,3 +177,115 @@ The service MUST list the organisation's live transporters newest first, searcha
 - **WHEN** it is deleted
 - **THEN** it no longer appears in the organisation's list
 - **AND** it can still be fetched by its own id, marked deleted, with its details intact
+
+### Requirement: A transporter has its own details page, at its own URL, offering to edit or delete it
+**ID**: REQ-INS-TRANSPORTER-012
+The system MUST show a transporter's own record on its own page, at a URL that names the transporter rather than an address, listing each field the transporter holds against its label: the Standard Address Block, the contact fields, the transporter's type, its country, and its approval number for a commercial transporter. It MUST leave out an optional field the transporter holds no value for, never as a blank row, and MUST NOT show an approval number row for a private transporter, which cannot hold one. It MUST offer to edit and to delete that transporter, and a way back to the address book filtered to the Transporter tab, or to the page it was opened from. A transporter that is not live in the organisation's address book MUST return the user to the address book rather than show a page.
+
+#### Scenario: The View link on a transporter row opens that transporter's own page
+**ID**: SCN-INS-TRANSPORTER-012-A
+- **GIVEN** the organisation's address book holds a transporter
+- **WHEN** the user follows the View link on its row in the Transporter tab
+- **THEN** a page headed with that transporter's name shows its record
+- **AND** the URL names the transporter, not an address
+
+#### Scenario: A commercial transporter's page shows its approval number and a private transporter's does not
+**ID**: SCN-INS-TRANSPORTER-012-B
+- **GIVEN** the user opens a commercial transporter
+- **WHEN** the page is shown
+- **THEN** its approval number is listed against its label, and its type reads 'Commercial'
+- **GIVEN** the user opens a private transporter
+- **WHEN** the page is shown
+- **THEN** no approval number row is shown, and its type reads 'Private'
+
+#### Scenario: The page offers to edit or delete the transporter being viewed
+**ID**: SCN-INS-TRANSPORTER-012-C
+- **GIVEN** the user is viewing a transporter
+- **WHEN** the page is shown
+- **THEN** an action to edit and an action to delete that same transporter are both offered
+
+#### Scenario: Back from a transporter's page returns to the address book on the Transporter tab
+**ID**: SCN-INS-TRANSPORTER-012-D
+- **GIVEN** the user is viewing a transporter opened without a return
+- **WHEN** they select Back
+- **THEN** they return to the address book filtered to the Transporter tab
+
+#### Scenario: A transporter that is not live returns the user to the address book
+**ID**: SCN-INS-TRANSPORTER-012-E
+- **GIVEN** an id that holds no live transporter in the organisation's address book, whether deleted, never created, or belonging to another organisation
+- **WHEN** the user opens the transporter page for it
+- **THEN** they are returned to the address book, and the attempt is logged once
+
+### Requirement: Editing a transporter replaces the whole record, keeping its type, and refuses an edit of one that is not live
+**ID**: REQ-INS-TRANSPORTER-013
+The system MUST let the user edit a transporter from its own page, on a form asking for the same fields its add form asked for, holding the stored values, and MUST keep the transporter's type: the type question is not asked again, a private transporter stays private and a commercial one stays commercial, with a commercial transporter's country still fixed to Northern Ireland and its approval number still required. Saving MUST replace the whole record, clearing any optional field left blank, show a 'Success' banner reading '<Name> updated in your address book', and land on the address book filtered to the Transporter tab. Cancelling MUST discard the changes, leaving the stored transporter as it was. An edit of a transporter that is not live in the organisation's address book MUST return the user to the address book and change nothing.
+
+#### Scenario: The edit form opens holding the stored values and does not ask the type again
+**ID**: SCN-INS-TRANSPORTER-013-A
+- **GIVEN** the organisation's address book holds a private transporter
+- **WHEN** the user opens its edit form
+- **THEN** every field holds the stored value
+- **AND** no transporter type question is asked
+
+#### Scenario: Saving an edit replaces the record and confirms it by name
+**ID**: SCN-INS-TRANSPORTER-013-B
+- **GIVEN** the user is editing a transporter and changes its name
+- **WHEN** they save it
+- **THEN** a 'Success' banner reads '<new name> updated in your address book'
+- **AND** the address book opens on the Transporter tab showing the transporter under its new name
+
+#### Scenario: An optional field left blank on an edit is cleared
+**ID**: SCN-INS-TRANSPORTER-013-C
+- **GIVEN** a transporter holding an address line 2 and a county
+- **WHEN** the user clears both on the edit form and saves
+- **THEN** the stored transporter holds neither, and its page shows no row for either
+
+#### Scenario: A commercial transporter's fixed country and required approval number hold on edit
+**ID**: SCN-INS-TRANSPORTER-013-D
+- **GIVEN** the user is editing a commercial transporter
+- **WHEN** the form is shown
+- **THEN** its country is fixed to Northern Ireland and cannot be changed
+- **WHEN** they clear the approval number and save
+- **THEN** the save is refused, naming the approval number
+
+#### Scenario: Cancelling an edit leaves the stored transporter as it was
+**ID**: SCN-INS-TRANSPORTER-013-E
+- **GIVEN** the user has changed a field on a transporter's edit form without saving
+- **WHEN** they cancel
+- **THEN** the stored transporter is unchanged, and they return to the address book on the Transporter tab
+
+#### Scenario: Editing a transporter that is not live returns the user to the address book
+**ID**: SCN-INS-TRANSPORTER-013-F
+- **GIVEN** an id that holds no live transporter in the organisation's address book
+- **WHEN** the user opens or submits its edit form
+- **THEN** they are returned to the address book, nothing is changed, and the attempt is logged once
+
+### Requirement: Deleting a transporter asks for confirmation, summarising it, and tombstones it
+**ID**: REQ-INS-TRANSPORTER-014
+The system MUST ask the user to confirm before deleting a transporter, on a page summarising the transporter it is about to delete so they can see they have the right one. Confirming MUST tombstone the transporter rather than remove it, show a 'Success' banner reading '<Name> deleted from your address book', and land on the address book filtered to the Transporter tab with the transporter gone from the list. Cancelling MUST leave the transporter in the address book. A delete of a transporter that is not live in the organisation's address book MUST return the user to the address book and change nothing.
+
+#### Scenario: The delete page summarises the transporter before it is deleted
+**ID**: SCN-INS-TRANSPORTER-014-A
+- **GIVEN** the user has chosen to delete a transporter
+- **WHEN** the confirmation page is shown
+- **THEN** it names the transporter and summarises its details
+- **AND** it offers an action to confirm the deletion and a way to cancel
+
+#### Scenario: Confirming the deletion removes it from the list and confirms it by name
+**ID**: SCN-INS-TRANSPORTER-014-B
+- **GIVEN** the user is on a transporter's delete confirmation page
+- **WHEN** they confirm the deletion
+- **THEN** a 'Success' banner reads '<name> deleted from your address book'
+- **AND** the address book opens on the Transporter tab without that transporter
+
+#### Scenario: Cancelling the deletion leaves the transporter in the address book
+**ID**: SCN-INS-TRANSPORTER-014-C
+- **GIVEN** the user is on a transporter's delete confirmation page
+- **WHEN** they cancel
+- **THEN** the transporter is still in the address book on the Transporter tab
+
+#### Scenario: Deleting a transporter that is not live returns the user to the address book
+**ID**: SCN-INS-TRANSPORTER-014-D
+- **GIVEN** an id that holds no live transporter in the organisation's address book
+- **WHEN** the user opens or submits its delete confirmation
+- **THEN** they are returned to the address book, nothing is changed, and the attempt is logged once

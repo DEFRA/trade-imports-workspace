@@ -2068,12 +2068,25 @@
       "dependsOn": [
         "inc-019"
       ],
-      "status": "todo",
+      "status": "done",
       "gate": "Open live animals main import reason from the Overview with only where it is coming from saved and press Save and continue: it lands on What are you importing?. Open Arrival details, choose Road with no commodity saved: Save and continue lands on What are you importing?, and the transit countries row is not on the Overview. Read the plants ledger diff against main: the five decisions are unchanged and the new ones supersede them.",
       "notes": [
         "Raised from the theme engineering review, workareas/shared/eudpa-774/engineering-review.md, sections 5.1, 5.2, 5.3, 5.4, 5.10, 5.11 and 5.13 (first and fourth bullets), and section 4's sub-page and skip rows. Read it before planning.",
         "Owner ruling 2026-11-09, given in session after reading the review: Save and continue must not skip prerequisites. The inc-001 plan's decision 4 dropped them only to stop a jump to the review page when a later row is opened with only origin saved; sending the trader to the page that asks for the missing answer fixes that case without dropping them.",
         "Canary first: live animals half before high-risk plants."
+      ],
+      "commit": "56c4302c4673ef0df34e38fa8e12c470411db860 341e7fbf2c3c18403f5b2b9e20459d65288b4746",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/468",
+          "repo": "trade-imports-animals-frontend",
+          "number": 468
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/138",
+          "repo": "trade-imports-plants-frontend",
+          "number": 138
+        }
       ]
     },
     {
@@ -2110,11 +2123,31 @@
       "dependsOn": [
         "inc-023"
       ],
-      "status": "todo",
+      "status": "done",
       "gate": "Compare the count of full coverage rows under live-animals and plants with main and with this branch before the row; read any scenario left partial and its reason.",
       "notes": [
         "Raised from the theme engineering review, workareas/shared/eudpa-774/engineering-review.md, sections 5.5, 5.6, 5.7, 5.8, 5.12 and the coverage risk in section 6. Read it before planning.",
-        "Depends on inc-023 because that row changes where Save and continue lands when an earlier answer is missing; tests written here prove the final behaviour."
+        "Depends on inc-023 because that row changes where Save and continue lands when an earlier answer is missing; tests written here prove the final behaviour.",
+        "inc-024 result: coverage upgrades limited to links probed red then green (plants navigation unit tests; live animals dispatch unit tests). Full scenarios 870 -> 887, full links 1492 -> 1514 (origin/main 981 / 1685). The remaining partial journey-flow and journey-pages scenarios were not probed in this row: their links are unit and FIT tests of controller redirects, trail Back links and entry guards, each needing its own invert-and-restore probe. The new-session Back e2e links (both back-entry-points specs) are not probed because inverting trailBackLink needs the leased stack rebuilt.",
+        "inc-024 criterion 9 probes: with the unit suites run to workareas/shared/eudpa-774/logs/inc-024-fix-probe-*.log, inverting trailPlus (drop the pushed place), pushTrail (same, via trailPlus) and trailBackLink (return the fallback whenever a trail exists) in each frontend turned the linked trail unit tests red, and restoring turned them green. Plants flow.js swaps (consignor and identification numbers; arrival status and arrival details; place of destination and arrival details) turned navigation.test.js red, then green. Upgraded to full: plants SCN-PLANTS-FLOW-003-E, 017-A, 017-C, 017-F, 017-G; live animals SCN-FLOW-018-A, 018-G, 018-H. Set to partial: SCN-PLANTS-FLOW-003-H (no probed link reaches check your answers). Full scenarios 870 -> 887, full links 1492 -> 1514.\nStill partial after the probes, journey-flow, with the reason each cannot be probed in this row. Plants: 017-B (its trail.test link stays green when trailBackLink returns the fallback, because the fallback is Overview, and the hub link is not built by the three functions); 017-D (only link is the new-session Back e2e walk of three Back links; inverting trailBackLink for it needs the leased stack rebuilt, which only the gate may do); 017-E (links are e2e refresh and refused-Continue walks needing the stack; the unit link covers only the refused Continue); 017-H (the cap test is red under trailPlus but asserts no Back ending at Overview); 003-B (its link asserts the fallback to nothing, not the landing on check your answers); 003-D, 003-I, 003-K, 005-A, 008-A, 008-C, 008-D, 010-A (their links assert entry-guard, collection or controller landings that none of the three trail inversions reaches, and each needs its own invert-and-restore of the guard or controller); 003-F (a negative assertion that no marker is added, which the three inversions do not reach); 003-J (only link is the new-session e2e, stack needed); 014-A, 014-B, 014-C, 014-D, 014-E, 014-F (amend control and Change-link scenarios proved by e2e or fit on the stack; the unit links assert controls, not these Thens); 015-A, 015-B (unit render of the shared macro only, no rendered-page assertion exists to probe).\nLive animals journey-flow: 001-B (no single test walks arrival, transit and transporter list as one sequence); 003-B (link asserts the nothing-next fallback only); 003-C (link asserts species lines saved, not the landing on Main import reason); 003-E and 003-N (only e2e links, stack needed); 003-F (link asserts the untouched form leaves, not the add-another round trip); 003-M and 003-O (links assert one landing each with only the origin saved, an entry-guard rule owned by the dispatch tests that this row did not invert); 004-F, 004-G, 010-A, 010-B, 013-A, 013-D, 013-F, 014-B (control, layout and collection scenarios whose links are e2e or fit on the stack and which none of the three trail inversions reaches); 005-A and 008-A, 008-C, 008-D, 017-A (entry-guard and start-place scenarios whose links are dispatch unit tests or e2e, not inverted in this row); 013-C (the added e2e link walks Save and continue on each later page after a Change link, and probing it needs the leased stack rebuilt; the unit link asserts one page landing); 018-B (trail.test link stays green under the trailBackLink inversion because the fallback is Overview, and the hub link is not built by the three functions); 018-C (the check-answers unit link is red under trailPlus, but the reason-for-import Back half is only in the change-from-cya e2e, stack needed); 018-D (reverse walk of every page, only the e2e walk asserts it end to end); 018-E (refresh, transporter and upload round trips are e2e or controller-specific and the new-session link needs the stack); 018-F (the address-return controller is not built by the three functions and its e2e needs the INS address book on the stack); 018-I (the cap test is red under trailPlus but asserts no Back ending at Overview).\nPlants journey-pages still partial: every per-page Back scenario (ARRIVAL-DETAILS-010-F, ARRIVAL-STATUS-006-F, CYA-010-A, CYA-010-C, CYA-010-E, CYA-010-F, CYA-010-G, COMMODITIES-007-A, 007-B, 007-C, 007-D, COMMODITY-DETAILS-009-A, 009-B, COMMODITY-TYPE-006-A, 006-B, 006-C, 006-D, 006-F, CONTACT-SELECT-005-D, CONSIGNOR-005-C, IDENT-NUMBERS-004-D, ORIGIN-010-B, 010-C, 010-D, 010-E, PLACE-OF-DESTINATION-009-A, 009-B, 009-C) has the per-page controller unit Back test, which is red under the trailBackLink inversion in logs/inc-024-fix-probe-plants-trailBackLink.log, but the link on file is the fit or e2e test, which asserts the page and cannot be probed without rebuilding the leased stack; relinking and upgrading each page is a separate per-page change this row did not make. The rest (ARRIVAL-DETAILS-010-D, CYA-006-A, COMMODITIES-006-C, COMMODITY-TYPE-006-E, DECLARATION-006-B, ORIGIN-013-A, ORIGIN-014-A, 014-B, 014-C) are save-control, status, removal-report and search-announcement scenarios that none of the three trail inversions reaches.\nLive animals journey-pages still partial: the Back scenarios (ADDL-DETAILS-004-A, 004-B, 004-C, ARRIVAL-010-A, 010-B, 010-C, COMMERCIAL-TRANS-007-A, COMMODITY-DETAILS-009-A, 009-B, 009-C, COMMODITY-SELECT-007-A, 007-B, 007-C, 007-D, CONSIGN-ADDR-003-A, 003-B, 003-C, CONTACT-005-A, 005-B, 005-C, CPH-006-A, 006-C, CYA-003-A to 003-G, DOCS-002-B, 002-C, 002-D, IDENT-018-A, 018-B, 018-C, IMPORT-REASON-008-A, 008-B, 008-C, ORIGIN-013-A to 013-F and 013-H, PRIVATE-TRANS-005-A, 005-B, TRANSIT-COUNTRIES-007-A, 007-B, 007-C, TRANSPORTER-005-A to 005-D, TRANSPORTER-TYPE-005-A) have per-page controller unit Back tests that go red under the trailBackLink inversion in logs/inc-024-fix-probe-animals-trailBackLink.log for origin and consignment details, but the links on file are e2e or fit tests that need the leased stack rebuilt to probe, and relinking each page is a separate per-page change this row did not make. CYA-004-B and CYA-004-C are partial because their e2e links open the reason for import, not the contact address card or the documents card. COMMODITY-SELECT-013-A to 013-F, DOCS-016-G, 016-I, DOCS-020-B, DOCS-021-C, IDENT-001-D, 001-E, IDENT-003-B, IDENT-004-A, IDENT-008-A, IDENT-011-A, IDENT-021-C, ARRIVAL-001-A, ARRIVAL-006-A to 006-C, ARRIVAL-013-B, COMMERCIAL-TRANS-008-A, 008-B, COMMODITY-DETAILS-001-A, 007-A, 007-B, 013-C, 013-D, COMMODITY-SELECT-003-A, 003-C, CONFIRM-005-A, CONTACT-003-A, CPH-007-B, 008-A, 009-A, 009-B, CYA-001-G, CYA-014-C, DECLARATION-006-D, 006-F, DOCS-003-A, IMPORT-REASON-002-A, 004-A, 013-B, ORIGIN-022-A, 023-A, 023-B, 023-C, OVERVIEW-005-D, 012-B, TRANSIT-COUNTRIES-003-A, 003-B, 008-C are validation, save-return, layout, announcement and visibility scenarios that none of the three trail inversions reaches; their partial reasons are the ones in their own coverage entries, unchanged in this row."
+      ],
+      "commit": "14381bf99df572792443c814b1c09101fc6371c1 143ccaaf25728910c25b78039b41f4b5534e0f5f 1b9d1ffaecf6fd37278289488af036d3d4e28320",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/468",
+          "repo": "trade-imports-animals-frontend",
+          "number": 468
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/138",
+          "repo": "trade-imports-plants-frontend",
+          "number": 138
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/93",
+          "repo": "trade-imports-ins-tests",
+          "number": 93
+        }
       ]
     }
   ]

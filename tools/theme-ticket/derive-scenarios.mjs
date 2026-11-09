@@ -9,7 +9,7 @@
  * from the diff alone comes out truncated.
  *
  * Emits JSON on stdout:
- *   { theme, workarea, branch, totals, domains: { <domain>: { scenarios, files,
+ *   { theme, workarea, branch, linkBranch, totals, domains: { <domain>: { scenarios, files,
  *     rows } }, rows, warnings, checks }
  *
  * Fails rather than guessing when:
@@ -76,7 +76,9 @@ for (let i = 0; i < process.argv.length - 1; i += 1) {
 const theme = args.theme
 const workarea = args.workarea
 if (!theme || !workarea) {
-  console.error('usage: derive-scenarios.sh --workarea <path under workareas/> --theme <id> [--workspace <dir>]')
+  console.error(
+    'usage: derive-scenarios.sh --workarea <path under workareas/> --theme <id> [--branch <ref>] [--link-branch <ref>] [--workspace <dir>]'
+  )
   process.exit(2)
 }
 
@@ -85,6 +87,14 @@ const WORKSPACE = path.resolve(args.workspace || path.join(process.env.HOME, 'gi
 const git = (...a) => execFileSync('git', ['-C', WORKSPACE, ...a], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
 
 const branch = args.branch || git('rev-parse', '--abbrev-ref', 'HEAD').trim()
+
+/** The ref the spec links point at, which is not always the ref the commits are
+ * read from. A merged theme's pull request is squashed, so `main` holds one
+ * commit scoped by the Jira key and none scoped by the theme slug — there is no
+ * footprint there to judge a review commit against. The scenarios are the same
+ * either way, because a merge moves commits without rewriting specs, so the
+ * MERGE flow reads the theme branch and links to `main`. */
+const linkBranch = args['link-branch'] || branch
 const workareaDir = path.join(WORKSPACE, 'workareas', workarea)
 
 const fail = (message) => {
@@ -430,7 +440,7 @@ for (const bucket of Object.values(domains)) {
     .map(([relPath, added]) => ({
       path: relPath,
       added,
-      url: GITHUB_BLOB + '/' + branch + '/openspec/specs/' + relPath
+      url: GITHUB_BLOB + '/' + linkBranch + '/openspec/specs/' + relPath
     }))
     .sort((a, b) => b.added - a.added || a.path.localeCompare(b.path))
   bucket.scenarioCount = bucket.scenarios.length
@@ -480,6 +490,7 @@ const output = {
   theme,
   workarea,
   branch,
+  linkBranch,
   commits: commits.map((c) => ({ sha: c.sha.slice(0, 8), subject: c.subject })),
   totals: {
     scenarios: totalAdded,

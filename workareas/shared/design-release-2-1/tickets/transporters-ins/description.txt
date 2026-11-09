@@ -1,0 +1,359 @@
+h3. Background
+
+Design Release 2.1 makes the Import notification service address book the place a trader keeps their transporters. Until now the address book held addresses only, and a transporter could not be kept at all: a trader re-entered the same haulier on every notification.
+
+A transporter is now its own address-book record, scoped to the organisation exactly as an address is, so anyone in the organisation can use one that a colleague added. The address book gains a Transporter tab beside its three role-backed tabs, and Add a new address offers Transporter as a fourth type, which opens the transporter pages instead of the address form.
+
+A transporter is private or commercial, and that is intrinsic to the record rather than something a trader can change later. A commercial transporter is a Northern Ireland haulier and must carry an approval number; a private transporter has no approval number and may be in any country. Each has its own form, reached from a type question.
+
+Every transporter record can be opened, changed and removed on its own pages, at its own URL — not the address pages. Editing does not ask the type again, so a commercial transporter keeps its fixed country and its approval number. Deleting asks for confirmation first and tombstones the record rather than erasing it, as an address deletion does.
+
+*The Northern Ireland address search is not part of this.* The design shows a commercial transporter's address being found by searching, and that waits on the service's address lookup becoming a real feature. Until then the address is typed in. The row is listed below as blocked.
+
+This ticket covers the *Import notification service front door and the address book service only*. How a transporter is chosen inside a live animals notification has its own ticket under the same epic. The work was merged to main on 9 November 2026.
+
+h3. What changes for the user
+
+h4. Keeping transporters in the address book
+
+The address book list gains a Transporter tab. Its columns are Name, Address, Approval number and Type, so a commercial transporter shows its approval number and a private one reads "Not applicable". The Type filter offers Commercial and Private, and the single search field matches a transporter by name, address, type, country or approval number.
+
+h4. Adding one
+
+Add a new address offers four types. Choosing Transporter opens a question asking whether the transporter is Private or Commercial, warning the trader to check the list first so they do not add a duplicate. Each choice opens its own form: the private form asks for the address block, contact details and a country; the commercial form asks for an approval number and shows Northern Ireland as a country that cannot be changed. Saving either returns to the address book on the Transporter tab, with the new transporter listed first and a success banner naming it.
+
+h4. Opening, changing and removing one
+
+The View link on a transporter's row opens that transporter's own page, listing every field the record holds. A commercial transporter shows its approval number; a private one shows no such row, because it cannot hold one. The page offers Edit and Delete. Editing opens the form the transporter was added through, holding its stored values, and never asks the type again. Deleting shows the transporter's details and asks the trader to confirm before anything is removed.
+
+h4. What the service refuses
+
+A transporter whose type is neither private nor commercial is refused, as is a commercial transporter with no approval number, a private transporter carrying one, and a commercial transporter in any country but Northern Ireland. A transporter belongs to the organisation that added it and is invisible to any other.
+
+h3. Acceptance criteria
+
+Copied from the service's behaviour specification. All 42 distinct scenarios for the Import notification service are listed in full.
+
+h4. Adding a transporter to the address book
+
+h5. The transporter type question shows its caption, heading, warning, options and Continue
+
+* *GIVEN* the user has chosen 'Transporter' on 'Choose an address type'
+* *WHEN* the transporter type question opens
+* *THEN* it is captioned 'Add a new transporter' and headed 'Choose a transporter type'
+* *AND* it warns 'Check the transporter list before adding new transporters to avoid duplicates.'
+* *AND* it offers 'Private transporter' and 'Commercial', the second hinted 'This can only be a commercial transporter from Northern Ireland.', and a 'Continue' button
+
+h5. Back returns to the address type question
+
+* *GIVEN* the user is on the transporter type question, reached from the address book
+* *WHEN* they select 'Back'
+* *THEN* 'Choose an address type' opens
+
+h5. Continuing with nothing chosen shows the refusal and stores no type
+
+* *GIVEN* the user is on the transporter type question with neither option chosen
+* *WHEN* they select 'Continue'
+* *THEN* 'Select what kind of transporter it is' shows against the options and in the summary
+* *AND* the summary link focuses 'Private transporter'
+* *AND* no transporter type is stored
+
+h5. Private opens the private form and Commercial the commercial form
+
+* *GIVEN* the user is on the transporter type question
+* *WHEN* they choose 'Private transporter' and select 'Continue'
+* *THEN* the private transporter form opens
+* *GIVEN* the user is on the transporter type question
+* *WHEN* they choose 'Commercial' and select 'Continue'
+* *THEN* the commercial transporter form opens
+
+h5. Opening a form without its type chosen returns to the type question
+
+* *GIVEN* the user has chosen no transporter type, or has chosen the other one
+* *WHEN* they open the private transporter form or the commercial transporter form directly
+* *THEN* the transporter type question opens instead
+
+h5. The private transporter form shows its fields
+
+* *GIVEN* the user is on the private transporter form
+* *WHEN* the page is shown
+* *THEN* it asks for 'Name or organisation', 'Address line 1', 'Address line 2 (optional)', 'Town or city', 'County (optional)', 'Postcode or Zip code', 'Country', 'Email address' and 'Phone number'
+* *AND* the address fields sit under 'Address' and the email and phone fields under 'Contact details'
+
+h5. The commercial transporter form shows its fields and the fixed country
+
+* *GIVEN* the user is on the commercial transporter form
+* *WHEN* the page is shown
+* *THEN* it asks for 'Name or organisation', 'Approval number', 'Address line 1', 'Address line 2 (optional)', 'Town or city', 'County (optional)', 'Postcode or Zip code', 'Email address' and 'Phone number'
+* *AND* the country shows as 'Northern Ireland', fixed rather than offered as a choice
+
+h5. A tampered country is refused
+
+* *GIVEN* the commercial transporter form's fixed country field has been tampered with to post a different country
+* *WHEN* the form is saved
+* *THEN* the save is refused, naming that a commercial transporter must be in Northern Ireland
+* *AND* nothing is created
+
+h5. Cancel with partial values entered saves nothing
+
+* *GIVEN* the user has entered some fields on the private transporter form, or on the commercial transporter form
+* *WHEN* they follow 'Cancel and return to address book'
+* *THEN* they land on the address book filtered to the Transporter tab
+* *AND* no transporter holding what they entered exists in their organisation's address book
+
+h5. Saving a private transporter shows the success banner and lists it first
+
+* *GIVEN* the user has filled in a valid private transporter form
+* *WHEN* they save it
+* *THEN* a 'Success' banner reads '<name> added to your address book'
+* *AND* the address book opens on the Transporter tab with the new transporter listed first, its type reading 'Private' and its Approval number cell reading 'Not applicable'
+
+h5. Saving a commercial transporter shows the success banner and lists it first with its approval number
+
+* *GIVEN* the user has filled in a valid commercial transporter form
+* *WHEN* they save it
+* *THEN* a 'Success' banner reads '<name> added to your address book'
+* *AND* the address book opens on the Transporter tab with the new transporter listed first, its type reading 'Commercial' and its Approval number cell reading its stored approval number
+
+h4. A transporter's own details page
+
+h5. The View link on a transporter row opens that transporter's own page
+
+* *GIVEN* the organisation's address book holds a transporter
+* *WHEN* the user follows the View link on its row in the Transporter tab
+* *THEN* a page headed with that transporter's name shows its record
+* *AND* the URL names the transporter, not an address
+
+h5. A commercial transporter's page shows its approval number and a private transporter's does not
+
+* *GIVEN* the user opens a commercial transporter
+* *WHEN* the page is shown
+* *THEN* its approval number is listed against its label, and its type reads 'Commercial'
+* *GIVEN* the user opens a private transporter
+* *WHEN* the page is shown
+* *THEN* no approval number row is shown, and its type reads 'Private'
+
+h5. The page offers to edit or delete the transporter being viewed
+
+* *GIVEN* the user is viewing a transporter
+* *WHEN* the page is shown
+* *THEN* an action to edit and an action to delete that same transporter are both offered
+
+h5. Back from a transporter's page returns to the address book on the Transporter tab
+
+* *GIVEN* the user is viewing a transporter opened without a return
+* *WHEN* they select Back
+* *THEN* they return to the address book filtered to the Transporter tab
+
+h5. A transporter that is not live returns the user to the address book
+
+* *GIVEN* an id that holds no live transporter in the organisation's address book, whether deleted, never created, or belonging to another organisation
+* *WHEN* the user opens the transporter page for it
+* *THEN* they are returned to the address book, and the attempt is logged once
+
+h4. Editing a transporter
+
+h5. The edit form opens holding the stored values and does not ask the type again
+
+* *GIVEN* the organisation's address book holds a private transporter
+* *WHEN* the user opens its edit form
+* *THEN* every field holds the stored value
+* *AND* no transporter type question is asked
+
+h5. Saving an edit replaces the record and confirms it by name
+
+* *GIVEN* the user is editing a transporter and changes its name
+* *WHEN* they save it
+* *THEN* a 'Success' banner reads '<new name> updated in your address book'
+* *AND* the address book opens on the Transporter tab showing the transporter under its new name
+
+h5. An optional field left blank on an edit is cleared
+
+* *GIVEN* a transporter holding an address line 2 and a county
+* *WHEN* the user clears both on the edit form and saves
+* *THEN* the stored transporter holds neither, and its page shows no row for either
+
+h5. A commercial transporter's fixed country and required approval number hold on edit
+
+* *GIVEN* the user is editing a commercial transporter
+* *WHEN* the form is shown
+* *THEN* its country is fixed to Northern Ireland and cannot be changed
+* *WHEN* they clear the approval number and save
+* *THEN* the save is refused, naming the approval number
+
+h5. Cancelling an edit leaves the stored transporter as it was
+
+* *GIVEN* the user has changed a field on a transporter's edit form without saving
+* *WHEN* they cancel
+* *THEN* the stored transporter is unchanged, and they return to the address book on the Transporter tab
+
+h5. Editing a transporter that is not live returns the user to the address book
+
+* *GIVEN* an id that holds no live transporter in the organisation's address book
+* *WHEN* the user opens or submits its edit form
+* *THEN* they are returned to the address book, nothing is changed, and the attempt is logged once
+
+h4. Deleting a transporter
+
+h5. The delete page summarises the transporter before it is deleted
+
+* *GIVEN* the user has chosen to delete a transporter
+* *WHEN* the confirmation page is shown
+* *THEN* it names the transporter and summarises its details
+* *AND* it offers an action to confirm the deletion and a way to cancel
+
+h5. Confirming the deletion removes it from the list and confirms it by name
+
+* *GIVEN* the user is on a transporter's delete confirmation page
+* *WHEN* they confirm the deletion
+* *THEN* a 'Success' banner reads '<name> deleted from your address book'
+* *AND* the address book opens on the Transporter tab without that transporter
+
+h5. Cancelling the deletion leaves the transporter in the address book
+
+* *GIVEN* the user is on a transporter's delete confirmation page
+* *WHEN* they cancel
+* *THEN* the transporter is still in the address book on the Transporter tab
+
+h5. Deleting a transporter that is not live returns the user to the address book
+
+* *GIVEN* an id that holds no live transporter in the organisation's address book
+* *WHEN* the user opens or submits its delete confirmation
+* *THEN* they are returned to the address book, nothing is changed, and the attempt is logged once
+
+h4. The Transporter tab on the address book
+
+h5. The four tabs are shown in order with the selected one marked
+
+* *GIVEN* the user is signed in
+* *WHEN* they view the address book
+* *THEN* the tabs 'Origin and Consignor', 'Destination, Consignee and Importer', 'Transporter' and 'Branch' are shown in that order
+* *AND* the selected tab is marked
+
+h5. The Type column names the address's roles and the columns are the same on every role-backed tab
+
+* *GIVEN* the address book holds an address with the roles place of origin and consignor
+* *WHEN* the user views the tab that lists it
+* *THEN* its Type reads 'Place of origin, Consignor'
+* *AND* the columns are Name, Type, Address, Country and Action, with the Action heading visually hidden
+
+h5. The Transporter tab's columns show a commercial transporter's approval number and the not-applicable word on a private one
+
+* *GIVEN* the organisation has added a commercial transporter with an approval number and a private transporter
+* *WHEN* the user views the 'Transporter' tab
+* *THEN* the columns are Name, Address, Approval number and Type, with the Action heading visually hidden
+* *AND* the commercial transporter's Approval number cell shows its stored number
+* *AND* the private transporter's Approval number cell reads 'Not applicable'
+* *AND* each transporter's Address cell ends with its country
+
+h5. Each role-backed tab offers Select one and then its own Types, and the Transporter tab offers Commercial and Private
+
+* *GIVEN* the user is viewing the address book
+* *WHEN* they look at the Type select on each tab in turn
+* *THEN* 'Origin and Consignor' offers 'Select one', 'Place of Origin' and 'Consignor'
+* *AND* 'Destination, Consignee and Importer' offers 'Select one', 'Consignee', 'Importer' and 'Place of Destination'
+* *AND* 'Branch' offers 'Select one' and 'Branch Address'
+* *AND* the 'Transporter' tab offers 'Select one', 'Commercial' and 'Private', in that order
+
+h5. A Type on the Transporter tab lists only that type's transporters, counted across the whole category
+
+* *GIVEN* the 'Transporter' tab runs past one page, and two commercial transporters matching a search lie beyond the first page among private ones that also match
+* *WHEN* the user submits the search with 'Commercial' chosen
+* *THEN* only the two commercial transporters are listed and the list reads 'Showing 1-2 of 2'
+* *AND* no pagination is shown
+
+h5. The same search field matches a transporter by its name, address, type, country or approval number
+
+* *GIVEN* the user is on the Transporter tab
+* *WHEN* they search by a transporter's name, its address, its type, its country, or its approval number where it has one
+* *THEN* only the matching transporters are shown
+* *AND* the not-applicable word shown for a transporter with no approval number is never itself matched
+
+h5. The address type page offers the four types with their hints
+
+* *GIVEN* the user is on the address book
+* *WHEN* they choose 'Add a new address'
+* *THEN* 'Choose an address type' opens under the caption 'Add a new address', with a 'Continue' button and a 'Back' link to the address book
+* *AND* the options are 'Origin or Consignor' with the hint 'Place of origin, Consignor', 'Destination, Consignee or Importer' with the hint 'Place of destination, Consignee, Importer', 'Transporter' with the hint 'Private, Commercial' and 'Branch' with the hint 'Branch address', in that order and with none chosen
+* *AND* the options sit in a group whose legend repeats the heading for screen readers
+
+h5. Choosing Transporter opens the add-a-transporter pages instead of the add form
+
+* *GIVEN* the user is on 'Choose an address type'
+* *WHEN* they choose 'Transporter' and select 'Continue'
+* *THEN* the add-a-transporter pages open, not the address add form
+
+h5. Opening or saving the add form with Transporter chosen opens the address type question and saves nothing
+
+* *GIVEN* 'Transporter' is the address type stored from an earlier visit to 'Choose an address type'
+* *WHEN* the user opens the address add form directly, or posts a save to it
+* *THEN* 'Choose an address type' opens instead
+* *AND* nothing is saved
+
+h4. What the address book holds, and what it refuses
+
+h5. A created transporter is scoped to its organisation
+
+* *GIVEN* a transporter is created for one organisation
+* *WHEN* another organisation lists its transporters, or looks the transporter up by id
+* *THEN* it is absent from the list, and the lookup by id is refused as not found
+
+h5. A transporter type outside private and commercial is refused
+
+* *WHEN* a transporter is created with a type that is neither private nor commercial
+* *THEN* the service refuses it naming the type
+
+h5. An approval number is required for commercial and refused for private
+
+* *WHEN* a commercial transporter is created with no approval number
+* *THEN* the service refuses it naming the approval number
+* *WHEN* a private transporter is created carrying an approval number
+* *THEN* the service refuses it naming the approval number
+
+h5. A commercial transporter's country must be Northern Ireland
+
+* *WHEN* a commercial transporter is created with a country other than Northern Ireland
+* *THEN* the service refuses it naming the country
+* *WHEN* a private transporter is created with any country
+* *THEN* it is accepted
+
+h5. The organisation's live transporters are listed newest first
+
+* *GIVEN* an organisation has added two transporters, one after the other
+* *WHEN* its transporters are listed
+* *THEN* the more recently added transporter is returned first
+
+h5. The list is searchable and narrowable
+
+* *GIVEN* an organisation's transporters include one matching a search term in its name, address lines, town, county, postcode or approval number
+* *WHEN* the list is searched for that term
+* *THEN* only the matching transporter is returned
+* *GIVEN* transporters of both types
+* *WHEN* the list is narrowed to one type or one country code
+* *THEN* only the transporters of that type, or in that country, are returned
+
+h5. A deleted transporter is tombstoned, not removed
+
+* *GIVEN* a transporter exists
+* *WHEN* it is deleted
+* *THEN* it no longer appears in the organisation's list
+* *AND* it can still be fetched by its own id, marked deleted, with its details intact
+h3. The work behind this change
+
+||Row||What it changed||State||
+|inc-074|Choosing Transporter when adding to the address book hands over to adding a transporter|Done|
+|inc-075|Transporter tab: transporters listed with approval number and type, and filtered by type|Done|
+|inc-076|Each transporter on the list links to its details page|Done|
+|inc-042|Find a commercial transporter's Northern Ireland address with an address search|Blocked|
+
+Rows inc-074, inc-076 and inc-042 also changed the live animals journey, so they appear on that ticket too; that is the programme's design rather than duplication. inc-042 is blocked on the service's address lookup becoming a real feature and shipped nothing. The theme has 13 rows in total: the other nine changed only the live animals journey, and one more, approved transporters, is parked.
+
+h3. Where this is specified
+
+The full behaviour lives in the service's behaviour specification, in the workspace repository. The front door and the address book service gained 43 scenario entries across 2 files, 42 of them distinct — one scenario is reached through two rows and is listed once here. Each link opens the file as it stands on main.
+
+||Specification||New scenarios||
+|[Transporters in the address book|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/ins/transporters/spec.md]|33|
+|[Address book|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/ins/address-book/spec.md]|10|
+
+Across the theme's two tickets that is 78 scenarios in 10 files: 43 here and 35 for the live animals journey. This description is generated from that specification. If it changes, this ticket is regenerated to match.

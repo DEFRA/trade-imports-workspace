@@ -90,6 +90,31 @@ shown, because it is work being held rather than work refused.
 
 The workspace pull request was squash-merged, so `main` holds no theme-scoped commits to derive from. The derivation ran against the local `feat/EUDPA-690-type-question` branch, whose `openspec/` is identical to `main`'s; its output is `derived-type-question.json`. One scenario, the plants commodity type Save and return check (inc-247), was written under the ticket key and is counted through `footprint-overrides.json`.
 
+### Transporters — 78 scenarios, 10 files
+
+| Folder | Jira | Domain | Rows | Scenarios | Spec files |
+|---|---|---|---|---|---|
+| `transporters-ins/` | [EUDPA-785](https://eaflood.atlassian.net/browse/EUDPA-785) | Front door | 4 | 43 | 2 |
+| `transporters-animals/` | [EUDPA-781](https://eaflood.atlassian.net/browse/EUDPA-781) | Live animals journey | 12 | 35 | 8 |
+
+43 + 35 = 78, the theme's total, across 2 + 8 = 10 files. The front door's 43 hold one
+scenario reached through two rows, so 42 distinct ones are listed in its ticket. Three
+rows changed both services and so appear on both tickets: inc-074, inc-076 and the
+blocked inc-042. Both tickets are `Deskcheck`: the theme merged to `main` on 9 November.
+
+**The WRITE flow was missed when the loop drained** and was run on 9 November after the
+merge, so EUDPA-781 carried its stub placeholder for three days while the theme was
+built. The stub became the live animals ticket and the front door's was created then.
+Nothing was lost — the description derives from `openspec/`, which was complete — but a
+reader looking at EUDPA-781 during the build saw a placeholder promising a fill-in that
+had not happened. The theme also has no section in `../themes/HOW-TO-BUILD.md`, which is
+where that omission would have been visible.
+
+The workspace pull request was squash-merged, so `main` holds no theme-scoped commits to
+derive from — the same problem the type question hit. `derive-scenarios.sh` now takes
+`--link-branch`, so the derivation reads the theme branch and links to `main` in one run
+rather than being corrected by hand.
+
 The front door's question offers four types: Live animals; Plants for planting; Potatoes (seed and ware); Wood products. Germinal products is held back until the germinal products set has a start page (inc-263); three scenarios that described it were added and later removed, so they are not counted. Of the 19 rows, inc-250, inc-261 and inc-262 changed only animals admin and inc-258 only the test suites, so they appear in no table. inc-260 changed only docs and the spec and is listed on the front door's ticket, whose navigation scenarios it wrote.
 
 `derived.json` reports 39 scenarios where this table says 36. The deriver tracks

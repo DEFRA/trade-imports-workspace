@@ -1,0 +1,314 @@
+h3. Background
+
+Design Release 2.1 gives the live animals journey a transporter step: the trader says who is moving the consignment, choosing from a list rather than typing the same haulier into every notification.
+
+The list holds the transporters the service ships, which are already approved, together with any the organisation has added for itself through the Import notification service address book. A transporter added by a colleague is on the list too, because the address book is shared across the organisation. A transporter the trader adds mid journey is added to the address book, so the next notification offers it.
+
+A transporter is private or commercial. A commercial transporter is a Northern Ireland haulier carrying an approval number; a private transporter has no approval number and may be in any country. Adding one asks the type first, then opens that type's own form, and the trader returns to the list with the new transporter already chosen.
+
+*Approved transporters are parked.* The design shows the list offering the approved transporter register, and which records that register should offer is still being settled. The row is listed below as blocked. *Finding a commercial transporter's Northern Ireland address by searching* is also not here: it waits on the Import notification service address lookup becoming a real feature, so the address is typed in.
+
+This ticket covers the *live animals journey only*. The Import notification service address book — its Transporter tab, and a transporter's own details, edit and delete pages — has its own ticket under the same epic. The work was merged to main on 9 November 2026.
+
+h3. What changes for the user
+
+h4. Choosing a transporter
+
+The Transport and arrival section asks for a transporter on a page headed "Transporter details", with the guidance that a transporter must hold a valid authorisation issued by DAERA or APHA. The transporters are offered as one group named "Select a transporter", with a search box above them and a table showing each one's name, address, approval number, type and whether it is approved or newly added. Each row ends with a View details link opening that transporter's record in the address book, and Back from there returns to this list. Continuing, or returning to the overview, with nothing chosen is refused.
+
+h4. Adding one the list does not hold
+
+Add a transporter asks whether the transporter is private or commercial, captioned to show it is part of adding a new transporter and warning the trader to check the list first to avoid duplicates. Continuing without choosing is refused.
+
+h4. The private transporter form
+
+It asks for the name, the address block, a country and contact details. The country select opens on the United Kingdom, with the rest of the countries in alphabetical order. Saving returns the trader to the transporter list with the new transporter already chosen and a banner naming it; cancelling returns to the dashboard and saves nothing.
+
+h4. The commercial transporter form
+
+It asks for the same details plus an approval number, and carries the same authorisation guidance as the list in a banner titled "Important". Saving and cancelling behave as the private form does.
+
+h4. Getting things wrong
+
+A wholly blank form is refused with every required field named in order. Leaving a refused form and coming back shows what was entered, so nothing is retyped. Opening either form without its type chosen returns the trader to the type question.
+
+h3. Acceptance criteria
+
+Copied from the service's behaviour specification. All 35 scenarios for the live animals journey are listed in full.
+
+h4. The transporter list
+
+h5. The heading and the group share the one name
+
+* *GIVEN* the user is on the transporter list
+* *WHEN* the page loads
+* *THEN* "Select a transporter" is shown once as a heading above the search box and the table
+* *AND* the transporter choices are offered as one group named "Select a transporter"
+
+h5. A transporter the organisation added through the address book is on the list and can be picked
+
+* *GIVEN* the organisation has added a transporter through the address book
+* *WHEN* the user opens the transporter list on their next notification
+* *THEN* that transporter is shown as a row, tagged "New"
+* *AND* the user can choose it and save
+
+h5. Searching for the words shown where a transporter has no approval number leaves exactly those transporters
+
+* *GIVEN* the user is on the transporter list
+* *WHEN* they search for the words the Approval number column shows for a transporter without one
+* *THEN* only the transporters with no approval number are shown
+* *WHEN* they search for a real approval number instead
+* *THEN* only the transporter it belongs to is shown
+
+h5. Every row carries a named "View details" link
+
+* *GIVEN* the user is on the transporter list
+* *WHEN* the page loads
+* *THEN* every row ends with a "View details" link whose visually hidden text names that row's own transporter
+
+h5. Following it shows the record; Back returns to this list
+
+* *GIVEN* the user has added a transporter through the address book
+* *WHEN* they follow its "View details" link
+* *THEN* a page headed with that transporter's name shows its record
+* *AND* following its Back link returns to this same transporter list
+
+h5. Continuing with nothing chosen is refused
+
+* *GIVEN* the user is on the transporter list
+* *WHEN* they press "Save and continue" with nothing chosen
+* *THEN* they stay on the list with "Select a transporter from the list" in a "There is a problem" summary linking to the first transporter option and shown inline above the table
+
+h5. Returning to overview with nothing chosen is refused the same way
+
+* *GIVEN* the user is on the transporter list
+* *WHEN* they press "Save and return to overview" with nothing chosen
+* *THEN* they stay on the list with the same summary and the same inline error
+* *AND* the notification's transporter is left as it was
+
+h5. The list returns with the added transporter first, checked, and names it in the banner
+
+* *GIVEN* the user has saved a complete private or commercial transporter from its add form
+* *WHEN* the save lands back on the transporter list
+* *THEN* the added transporter is the first row shown, with its radio checked
+* *AND* a success notification banner titled "Success" reads the transporter's name, with only its first letter capitalised, followed by " transporter added"
+
+h5. Reloading the list, or returning to it later, shows it with no banner
+
+* *GIVEN* the transporter list has just shown the added-transporter banner
+* *WHEN* the user reloads the list, or leaves and comes back to it later
+* *THEN* the list is shown with no banner
+
+h5. The list has no serious or critical accessibility violations, plain or with a refused pick
+
+* *GIVEN* the user is on the transporter list with nothing chosen
+* *WHEN* the page loads
+* *THEN* the page has no serious or critical accessibility violations
+* *WHEN* the user submits a transporter that is not on the list
+* *THEN* the page, now showing the error summary and the in-fieldset error message, has no serious or critical accessibility violations
+
+h4. The transporter type question
+
+h5. The page carries the new-transporter caption and duplicate-check warning
+
+* *GIVEN* the user has selected "Add a transporter" from the transporter list
+* *WHEN* the type question is shown
+* *THEN* it is captioned to show it is part of adding a new transporter
+* *AND* it warns the trader to check the transporter list before adding a new transporter, to avoid duplicates
+
+h5. Continuing with nothing chosen is refused
+
+* *GIVEN* the user is on the transporter type page
+* *WHEN* they continue without choosing a type
+* *THEN* they stay on the page with "Select a transporter type" in a "There is a problem" summary linking to the first option and shown inline above the radios
+* *AND* the transporter type already saved on the notification, if any, is unchanged
+
+h5. A submitted type the page does not offer is refused
+
+* *GIVEN* the user is on the transporter type page
+* *WHEN* the submitted transporter type is neither Private nor Commercial
+* *THEN* they stay on the page with "Select a transporter type" in a "There is a problem" summary linking to the first option and shown inline above the radios
+* *AND* the transporter type already saved on the notification, if any, is unchanged
+
+h4. The private transporter form
+
+h5. The Country select opens on the United Kingdom among country names in alphabetical order
+
+* *GIVEN* the user reaches the private transporter details page
+* *WHEN* the page loads
+* *THEN* the Country select shows the United Kingdom chosen
+* *AND* every option is a country name, listed in alphabetical order with the United Kingdom in its alphabetical place
+
+h5. Completing the details saves them and returns to the transporter list, chosen
+
+* *GIVEN* the user is on the private transporter details page with the name entered
+* *WHEN* they complete every mandatory address field and save and continue
+* *THEN* they return to the transporter list, with the saved transporter already chosen
+
+h5. The save puts the trader straight on the list with the new transporter checked, surviving the list's own save
+
+* *GIVEN* the user has just saved a complete set of private transporter details
+* *WHEN* the save lands
+* *THEN* the transporter list is shown with that transporter's row checked
+* *WHEN* they save the list without changing the choice
+* *THEN* they return to Overview, and the private transporter form still shows the saved name, country and email address
+
+h5. Saving a wholly blank form is refused, naming every required field in order
+
+* *GIVEN* the user is on the private transporter details page with every field blank
+* *WHEN* they save and continue
+* *THEN* the save is refused, the trader stays on the form, and the error summary lists the six required messages in the page's own field order
+
+h5. An invalid country blocks the save and reopens the select on the United Kingdom, rather than preserving
+
+* *GIVEN* the user has entered a country not in the offered list for the private transporter's address, alongside valid values in every other field
+* *WHEN* they try to save
+* *THEN* the save is blocked, the error names the country, the Country select shows the United Kingdom, and every other field still shows what was entered
+
+h5. Leaving a refused form and returning to it shows what was entered
+
+* *GIVEN* the user's save of the private transporter details was refused for a missing or invalid field
+* *WHEN* they leave the page and later open it again
+* *THEN* the values they had entered are shown in the fields, not the previously saved answer
+
+h5. The page offers exactly the primary and the cancel control
+
+* *GIVEN* the user is on the private transporter details page
+* *WHEN* the page loads
+* *THEN* it ends with exactly "Save and continue" and a secondary "Cancel and return to dashboard", and offers no link back to the overview
+
+h5. Cancelling with the stored type unchanged leaves the chosen transporter alone and shows no error
+
+* *GIVEN* the user already has a transporter of the private type chosen, and reaches the private transporter details page with some or all fields filled in
+* *WHEN* they choose "Cancel and return to dashboard"
+* *THEN* no error is shown, no transporter is added, and they are taken to the dashboard
+* *AND* the transporter they had chosen before the add began is still chosen on the transporter list
+
+h4. The commercial transporter form
+
+h5. The page carries the same authorisation guidance as the list, in a banner titled "Important"
+
+* *GIVEN* the user has reached the commercial transporter details page
+* *WHEN* the page loads
+* *THEN* it shows a notification banner titled "Important" whose content opens with the heading "Help with transporter authorisation"
+* *AND* the banner goes on to state the same transporter-authorisation guidance the transporter list carries, including the link to further guidance
+
+h5. Completing the details saves them and returns to the transporter list, chosen
+
+* *GIVEN* the user is on the commercial transporter details page with every mandatory field entered
+* *WHEN* they save and continue
+* *THEN* they return to the transporter list, with the saved transporter already chosen
+
+h5. The save puts the trader straight on the list with the new transporter checked, surviving the list's own save
+
+* *GIVEN* the user has just saved a complete set of commercial transporter details
+* *WHEN* the save lands
+* *THEN* the transporter list is shown with that transporter's row checked, with no need to open the list separately to find it so
+* *WHEN* they save the list without changing the choice
+* *THEN* they return to Overview, and the commercial transporter form still shows the saved authorisation number
+
+h5. Saving a wholly blank form is refused, naming every required field in order
+
+* *GIVEN* the user is on the commercial transporter details page with every field blank
+* *WHEN* they save and continue
+* *THEN* the save is refused, the trader stays on the form, and the error summary lists, in order: "Enter a transporter authorisation number", "Enter a name or organisation name", "Enter address line 1", "Enter a town or city", "Enter a postcode or Zip code", "Enter an email address", "Enter a phone number"
+
+h5. An over-length Postcode or Zip code is refused with the message that names the field as the form labels it
+
+* *GIVEN* the user has entered a Postcode or Zip code longer than 12 characters
+* *WHEN* they try to save
+* *THEN* the save is blocked and the error reads "Postcode or Zip code must be 12 characters or less"
+
+h5. Leaving a refused form and returning to it shows what was entered
+
+* *GIVEN* the user's save of the commercial transporter details was refused for a missing or invalid field
+* *WHEN* they leave the page and later open it again
+* *THEN* the values they had entered are shown in the fields, not the previously saved answer
+
+h5. The page offers exactly the primary and the cancel control
+
+* *GIVEN* the user is on the commercial transporter details page
+* *WHEN* the page loads
+* *THEN* it ends with exactly "Save and continue" and a secondary "Cancel and return to dashboard", and offers no link back to the overview
+
+h5. Cancelling with the stored type unchanged leaves the chosen transporter alone and shows no error
+
+* *GIVEN* the user already has a commercial transporter chosen, and reaches the commercial transporter details page with some or all fields filled in
+* *WHEN* they choose "Cancel and return to dashboard"
+* *THEN* no error is shown, no transporter is added, and they are taken to the dashboard
+* *AND* the transporter they had chosen before the add began is still chosen on the transporter list
+
+h4. Moving through the journey
+
+h5. Opening the private transporter form without the private type chosen lands on the type question
+
+* *GIVEN* the notification's saved transporter type is not Private, or no type is saved
+* *WHEN* the user opens or posts to the private transporter form
+* *THEN* the transporter type question is shown instead
+* *AND* nothing is saved
+
+h5. Opening the commercial transporter form without the commercial type chosen lands on the type question
+
+* *GIVEN* the notification's saved transporter type is not Commercial, or no type is saved
+* *WHEN* the user opens or posts to the commercial transporter form
+* *THEN* the transporter type question is shown instead
+* *AND* nothing is saved
+
+h5. Returning to Private after adding as Commercial shows the private form blank, Country select back on the United Kingdom
+
+* *GIVEN* the user has added a private transporter through the add route
+* *WHEN* they add a transporter again, choose "Commercial" and save, then add again and choose "Private"
+* *THEN* the private transporter details form is shown with every field blank and the Country select back on the United Kingdom, not the previously entered details
+
+h5. Cancelling an add of the other type keeps the record the earlier type held
+
+* *GIVEN* the user has added a private transporter through the add route
+* *WHEN* they add a transporter again, choose "Commercial", and cancel that form without saving it
+* *THEN* adding again and choosing "Private" shows the private transporter details form holding the details they entered, because no change of type was saved
+
+h5. A private transporter's saved country shows on the review
+
+* *GIVEN* a private transporter has been saved with a country from the offered list
+* *WHEN* the user views the review
+* *THEN* the Transport details card's Country row shows that country
+
+h5. The transporter list and the commercial transporter form show the state and reference; the type question and the private transporter form show neither
+
+* *GIVEN* a notification being worked on
+* *WHEN* the user opens the transporter list or the commercial transporter form
+* *THEN* the notification's state and reference are shown
+* *WHEN* the user opens the transporter type question or the private transporter form
+* *THEN* neither is shown
+h3. The work behind this change
+
+||Row||What it changed||State||
+|inc-037|The transporter list's layout, search, approval-number column and shipped transporters|Done|
+|inc-038|The transporter type question's copy, and refusing a blank choice|Done|
+|inc-008|The private transporter's country list is the United Kingdom plus reference data's export countries, as the master data serves them|Done|
+|inc-040|The private transporter form's heading, country select and required fields|Done|
+|inc-041|The commercial transporter form's heading, guidance banner, postcode copy and required fields|Done|
+|inc-039|Saving an added transporter returns to the list with it chosen and a success banner; cancelling goes to the dashboard|Done|
+|inc-044|Remove the unlinked approved commercial transporter register page|Done|
+|inc-240|The transporter list refuses a save with no transporter chosen|Done|
+|inc-074|Choosing Transporter when adding to the address book hands over to adding a transporter|Done|
+|inc-076|Each transporter on the list links to its details page|Done|
+|inc-265|Approved transporters: the records offered, and the list they come from|Blocked|
+|inc-042|Find a commercial transporter's Northern Ireland address with an address search|Blocked|
+
+Rows inc-074, inc-076 and inc-042 also changed the Import notification service front door, so they appear on that ticket too; that is the programme's design rather than duplication. The two blocked rows shipped nothing: approved transporters is parked until the records it should offer are settled, and the address search waits on the service's address lookup becoming a real feature.
+
+h3. Where this is specified
+
+The full behaviour lives in the service's behaviour specification, in the workspace repository. The live animals journey gained 35 scenarios across 8 files. Each link opens the file as it stands on main.
+
+||Specification||New scenarios||
+|[Transporter list|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/transporter/spec.md]|10|
+|[Commercial transporter details|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/commercial-transporter-details/spec.md]|8|
+|[Private transporter details|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/private-transporter-details/spec.md]|8|
+|[Transporter type question|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/transporter-type/spec.md]|3|
+|[Journey flow|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-flow/spec.md]|2|
+|[Transporter obligations|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-obligations/transporter/spec.md]|2|
+|[Check your answers|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/check-your-answers/spec.md]|1|
+|[Notification status and reference|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/notification-status-and-reference/spec.md]|1|
+
+Across the theme's two tickets that is 78 scenarios in 10 files: 35 here and 43 for the Import notification service. This description is generated from that specification. If it changes, this ticket is regenerated to match.

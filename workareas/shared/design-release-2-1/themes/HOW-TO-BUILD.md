@@ -464,6 +464,29 @@ and performance tests, each with a carry-only draft pull request. CI publishes a
 and the loop refuses a repo on its branch with none. Close a carry-only pull request once the themes it carries have
 merged, if its theme never changed that repo.
 
+## Transporters: EUDPA-781 (merged 9 November)
+
+- **Tickets:** [EUDPA-781](https://eaflood.atlassian.net/browse/EUDPA-781) live animals journey, and
+  [EUDPA-785](https://eaflood.atlassian.net/browse/EUDPA-785) the front door. Both `Deskcheck`.
+- **Branch:** `feat/EUDPA-781-design-release-2-1-transporters`, across the animals frontend, the INS frontend, the
+  address book, the tests repo and this workspace repo.
+- **Rows:** 13, of which 11 landed. Two stay blocked: inc-265, approved transporters, is parked until the records the
+  register should offer are settled; inc-042, finding a commercial transporter's Northern Ireland address by
+  searching, waits on the INS address lookup becoming a real feature.
+- **Unblocked on 6 November** by the ruling that the address book manages transporters as per-organisation records,
+  like every other address, and that adding one mid journey uses the address-book hand-off already built for
+  addresses.
+- **The WRITE flow was missed when the loop drained.** EUDPA-781 kept its stub placeholder through the whole build
+  and was filled in on 9 November, after the merge, alongside creating EUDPA-785. The ticket step is not the loop's —
+  `lifecycle: branch` makes no Jira call — so it is this file's three rows under "The business tickets, around every
+  theme" that have to be run by the orchestrating session. A theme with no section here is a theme whose ticket state
+  nobody can see, which is how the omission went unnoticed; every theme gets a section from now on, even one split
+  off mid-programme.
+- **After the merge** the theme gained a transporter's own details, edit and delete pages in the address book
+  (REQ-INS-TRANSPORTER-012 to -014). The behaviour was specified and built on 9 November, after the loop drained,
+  because the review found the details page had arrived by inheriting an address row's View link with no requirement
+  behind it. Both tickets were written after that work, so they describe it.
+
 ## What lands first
 
 - **Order:** journey foundation and reference lists are on `main`. Design snagging lands next. Every other theme

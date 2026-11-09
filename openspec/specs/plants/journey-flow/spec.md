@@ -39,6 +39,12 @@ The system MUST, on a valid Save and continue from a journey page, go to the nex
 - **WHEN** the user saves and continues, with or without a contact address chosen
 - **THEN** check your answers is shown, naming what is outstanding
 
+#### Scenario: Origin with no commodity type saved goes to the commodity type page
+**ID**: SCN-PLANTS-FLOW-003-K
+- **GIVEN** a notification with only its country of origin saved
+- **WHEN** the user saves and continues from origin
+- **THEN** the commodity type page is shown
+
 #### Scenario: Arrival details goes on to the place of destination
 **ID**: SCN-PLANTS-FLOW-003-C
 - **GIVEN** arrival status or arrival details opened from Overview
@@ -122,13 +128,14 @@ The system MUST let the user leave a page the hub links to directly by discardin
 
 ### Requirement: A page is offered only once its prerequisites are answered and what it asks for is in scope
 **ID**: REQ-PLANTS-FLOW-005
-The system MUST offer a page only when every strictly-earlier answer it depends on has been given and at least one of the things it asks for is in scope for this notification, and MUST otherwise pass over it.
+The system MUST offer a page only when every strictly-earlier answer it depends on has been given and at least one of the things it asks for is in scope for this notification. A Save and continue that would reach a page whose earlier answers are missing MUST open the page that asks for the first missing answer, and Overview MUST offer exactly the pages that rule opens.
 
-#### Scenario: A page whose prerequisites are unanswered is passed over
+#### Scenario: A page whose prerequisites are unanswered is not opened
 **ID**: SCN-PLANTS-FLOW-005-A
 - **GIVEN** a notification whose earlier answers a later page depends on have not been given
-- **WHEN** the journey reaches the point that page would be offered
-- **THEN** the page is not offered, and the journey continues past it
+- **WHEN** Save and continue would reach that page
+- **THEN** the page that asks for the first missing answer is shown
+- **AND** Overview does not offer the later page
 
 #### Scenario: Arrival status is passed over for a potato notification
 **ID**: SCN-PLANTS-FLOW-005-B
@@ -297,7 +304,7 @@ The system MUST, when a user chooses Plants for planting, Potatoes (seed and war
 
 ### Requirement: Back on every journey page goes to the place the trader came from
 **ID**: REQ-PLANTS-FLOW-017
-The system MUST send Back on every journey page to the place the trader came from: the page they saved and continued from, Overview, the review (from a Change link) or the dashboard (from a dashboard card), surviving a refresh, a refused save, a sub-page round trip and a new session. With nothing to go back to it MUST go to Overview, except the commodity type page, which goes to where the notification was started.
+The system MUST send Back on every journey page to the place the trader came from: the page they saved and continued from, Overview, the review or the dashboard, surviving a refresh, a refused save, a sub-page round trip and a new session. The trail keeps the newest 40 places; past them the oldest drop and Back ends at Overview. With nothing to go back to it MUST go to Overview, except the commodity type page, which goes to where the notification was started.
 
 #### Scenario: Back goes to the page "Save and continue" was pressed on
 **ID**: SCN-PLANTS-FLOW-017-A
@@ -334,6 +341,13 @@ The system MUST send Back on every journey page to the place the trader came fro
 - **GIVEN** a notification started with the dashboard's create button
 - **WHEN** the user follows the Back link on the commodity type page
 - **THEN** the dashboard is shown
+
+#### Scenario: Past 40 places the oldest drop and Back ends at Overview
+**ID**: SCN-PLANTS-FLOW-017-H
+- **GIVEN** the user has pressed Save and continue on more than 40 pages in a row
+- **WHEN** they follow Back repeatedly
+- **THEN** Back steps through the newest 40 places
+- **AND** Overview is shown after them
 
 #### Scenario: A page opened by its address goes Back to Overview
 **ID**: SCN-PLANTS-FLOW-017-G

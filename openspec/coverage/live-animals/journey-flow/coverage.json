@@ -113,7 +113,8 @@
           "coverage": "partial",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/poultry-rail-transit.spec.ts", "test": "walks a poultry-by-rail notification in transit from create to the review, with no identification task and every overview task complete", "strength": "partial", "notes": "no red probe run against this link; the walk takes the rail half, saving arrival details on to the transit-countries page" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should go from the arrival details to the transit countries by %s with every other answer blank", "strength": "partial", "notes": "asserts the next-page path for the scenario's input; not seen failing against the previous rule" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should go from the arrival details to the transit countries by %s with every earlier answer saved", "strength": "partial", "notes": "asserts the landing path for the scenario's input; not red-probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/save-and-continue.spec.ts", "test": "arrival details opened from Overview goes to the transit countries by road and to the transporter list by air", "strength": "partial", "notes": "not red-probed" }
           ]
         },
         {
@@ -127,10 +128,20 @@
         },
         {
           "id": "SCN-FLOW-003-M",
-          "name": "With only the country of origin saved, main import reason goes on to commodity details",
+          "name": "With only the country of origin saved, main import reason goes on to What are you importing?",
           "coverage": "partial",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should go from the main import reason to Commodity details with only the country of origin saved", "strength": "partial", "notes": "asserts the next-page path for the scenario's input; not seen failing against the previous rule" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should go from the main import reason to What are you importing? with only the country of origin saved", "strength": "partial", "notes": "asserts the landing path for the scenario's input; not red-probed" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/kit.test.js", "test": "Should land on What are you importing? from the main import reason with only the country of origin saved", "strength": "partial", "notes": "asserts the Save and continue target through nextTarget; not red-probed" }
+          ]
+        },
+        {
+          "id": "SCN-FLOW-003-O",
+          "name": "Arrival details by Rail or Road with no commodity saved goes to What are you importing?",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should go from the arrival details by %s to What are you importing? with only the country of origin saved", "strength": "partial", "notes": "asserts the landing path; not red-probed" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "by road with only the country of origin saved goes to What are you importing? and Overview offers no transit countries row", "strength": "partial", "notes": "browser proof of both Thens; not red-probed" }
           ]
         },
         {
@@ -228,17 +239,18 @@
     {
       "id": "REQ-FLOW-005",
       "name": "A page is offered only once its prerequisites are answered and what it asks for is in scope",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-FLOW-005-A",
-          "name": "A page whose prerequisites are unanswered is passed over",
-          "coverage": "full",
+          "name": "A page whose prerequisites are unanswered is not opened",
+          "coverage": "partial",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/gates.test.js", "test": "Should gate What are you importing? until countryOfOrigin is answered", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/gates.test.js", "test": "Should gate every section after What are you importing? until an item-level commodityCode is answered", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should land from %s on a page that Overview offers for %j", "strength": "partial", "notes": "asserts the landing page passes the Overview gate; not red-probed" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/gates.test.js", "test": "Should gate What are you importing? until countryOfOrigin is answered", "strength": "partial", "notes": "tests the gate, not the asking-page landing" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/gates.test.js", "test": "Should gate every section after What are you importing? until an item-level commodityCode is answered", "strength": "partial", "notes": "tests the gate, not the asking-page landing" }
           ],
-          "notes": "Thin Playwright: no E2E dedicated to prerequisite skipping; evidence is unit flow/gates."
+          "notes": "No E2E proves the asking-page landing; evidence is dispatch.test.js and gates.test.js."
         }
       ]
     },
@@ -571,6 +583,14 @@
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should send Back to the dashboard for a notification started from the dashboard with $name", "strength": "partial", "notes": "not seen failing" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/controller.test.js", "test": "Should send Back to the INS type question for this notification started there with $name", "strength": "partial", "notes": "not seen failing" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/controller.test.js", "test": "Should open the first page of the new notification carrying where it was started", "strength": "partial", "notes": "both start places are put on the trail" }
+          ]
+        },
+        {
+          "id": "SCN-FLOW-018-I",
+          "name": "Past 40 places the oldest drop and Back ends at Overview",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/trail.test.js", "test": "Should lose the oldest place of a trail past the longest", "strength": "partial", "notes": "proves the cap on the pushed trail; Back ending at Overview is not asserted" }
           ]
         },
         {

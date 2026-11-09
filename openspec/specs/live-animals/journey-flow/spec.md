@@ -92,7 +92,7 @@ The system MUST, on a valid Save and continue from a journey page, go to the nex
 
 #### Scenario: Arrival details goes on to transit countries only for rail or road
 **ID**: SCN-FLOW-003-K
-- **GIVEN** the user is on arrival details, reached from any start, with the other answers left blank
+- **GIVEN** the user is on arrival details, reached from any start, with where it is coming from and what is being imported saved and the other answers left blank
 - **WHEN** they save it with Rail or Road chosen
 - **THEN** transit countries is shown
 - **WHEN** instead they save it with Air or Sea chosen
@@ -104,11 +104,18 @@ The system MUST, on a valid Save and continue from a journey page, go to the nex
 - **WHEN** they follow the back link to what are you importing and save it
 - **THEN** main import reason is shown
 
-#### Scenario: With only the country of origin saved, main import reason goes on to commodity details
+#### Scenario: With only the country of origin saved, main import reason goes on to What are you importing?
 **ID**: SCN-FLOW-003-M
 - **GIVEN** a notification holding only its country of origin and main import reason opened from its task on Overview
 - **WHEN** the user saves and continues
-- **THEN** commodity details is shown, not check your answers
+- **THEN** What are you importing? is shown, not check your answers
+
+#### Scenario: Arrival details by Rail or Road with no commodity saved goes to What are you importing?
+**ID**: SCN-FLOW-003-O
+- **GIVEN** a notification holding only its country of origin, with arrival details opened
+- **WHEN** the user saves it with Rail or Road chosen
+- **THEN** What are you importing? is shown
+- **AND** Overview does not offer the Transit countries task
 
 #### Scenario: A notification continued in another browser session goes on to the same next page
 **ID**: SCN-FLOW-003-N
@@ -178,13 +185,14 @@ The system MUST let the user leave a hub-linked page other than the origin of th
 
 ### Requirement: A page is offered only once its prerequisites are answered and what it asks for is in scope
 **ID**: REQ-FLOW-005
-The system MUST offer a page only when every strictly-earlier answer it depends on has been given and at least one of the things it asks for is in scope for this notification, and MUST otherwise pass over it.
+The system MUST offer a page only when every strictly-earlier answer it depends on has been given and at least one of the things it asks for is in scope for this notification. A Save and continue that would reach a page whose earlier answers are missing MUST open the page that asks for the first missing answer, and Overview MUST offer exactly the pages that rule opens.
 
-#### Scenario: A page whose prerequisites are unanswered is passed over
+#### Scenario: A page whose prerequisites are unanswered is not opened
 **ID**: SCN-FLOW-005-A
 - **GIVEN** a notification whose earlier answers a later page depends on have not been given
-- **WHEN** the journey reaches the point that page would be offered
-- **THEN** the page is not offered, and the journey continues past it
+- **WHEN** Save and continue would reach that page
+- **THEN** the page that asks for the first missing answer is shown
+- **AND** Overview does not offer the later page
 
 ### Requirement: Check your answers is open whatever the notification owes; the notification is submitted only once every task row is ready
 **ID**: REQ-FLOW-006
@@ -366,7 +374,7 @@ The system MUST, when a user chooses Live animals on the Import Notification Ser
 
 ### Requirement: Back on every journey page goes to the place the trader came from
 **ID**: REQ-FLOW-018
-The system MUST send Back on every journey page to the place the trader came from: the page they saved and continued from, Overview, the review (from a Change link) or the dashboard (from a dashboard card), surviving a refresh, a refused save, a sub-page round trip and a new session. With nothing to go back to it MUST go to Overview, but the origin page goes to where the notification was started, and Consignment addresses and Contact address go to Overview after an address book return.
+The system MUST send Back on every journey page to where the trader came from: the page they saved from, Overview, the review (from a Change link) or the dashboard (from a dashboard card), surviving a refresh, a refused save, a sub-page round trip and a new session. With nothing to go back to it MUST go to Overview, but the origin page goes to where the notification was started, and Consignment addresses and Contact address go to Overview after an address book return. The trail holds 40 places.
 
 #### Scenario: Back goes to the page "Save and continue" was pressed on
 **ID**: SCN-FLOW-018-A
@@ -412,6 +420,13 @@ The system MUST send Back on every journey page to the place the trader came fro
 - **WHEN** the user follows the Back link on the origin of the import page of each
 - **THEN** the first opens the dashboard
 - **AND** the second opens the Import Notification Service's "What are you importing?" question for that notification
+
+#### Scenario: Past 40 places the oldest drop and Back ends at Overview
+**ID**: SCN-FLOW-018-I
+- **GIVEN** the user has pressed Save and continue on more than 40 pages in a row
+- **WHEN** they follow Back repeatedly
+- **THEN** Back steps through the newest 40 places
+- **AND** Overview is shown after them
 
 #### Scenario: A page opened by its address goes Back to Overview
 **ID**: SCN-FLOW-018-H

@@ -98,7 +98,7 @@ The system MUST offer save-and-continue, save-and-return-to-overview and cancel-
 
 ### Requirement: The back link goes to where the notification was started, or to where the user came from
 **ID**: REQ-PLANTS-COMMODITY-TYPE-006
-The system MUST send the user from this page to where the notification was started (the dashboard, or the Import Notification Service question), to Overview when opened from Overview, and to the review when opened from a Change link; opened by its address, to the dashboard before any answer is saved and to Overview after. A commodity type change that removes lines MUST remove them whichever save button was pressed.
+The system MUST send the user from this page to where the notification was started (the dashboard, or the Import Notification Service question), to Overview when opened from Overview, and to the review when opened from a Change link; opened by its address, to the dashboard before any answer is saved and to Overview after. A commodity type change that removes lines MUST remove them and open the commodities list reporting the removed lines, whichever save button was pressed.
 
 #### Scenario: The back link opens the dashboard before any answer is saved
 **ID**: SCN-PLANTS-COMMODITY-TYPE-006-A
@@ -124,11 +124,11 @@ The system MUST send the user from this page to where the notification was start
 - **WHEN** the user follows the Change link that opens the commodity-type page and then the back link
 - **THEN** the review is shown
 
-#### Scenario: Save and return to overview removes the lines the new type does not hold and opens Overview
+#### Scenario: Save and return to overview removes the lines the new type does not hold and opens the commodities list reporting them
 **ID**: SCN-PLANTS-COMMODITY-TYPE-006-E
 - **GIVEN** a notification holding potato commodity lines
 - **WHEN** the user changes the commodity type to wood and cut trees and selects "Save and return to overview"
-- **THEN** Overview is shown
+- **THEN** the commodities list is shown reporting the lines removed
 - **AND** the potato lines are gone
 
 #### Scenario: Save and continue after removing lines opens the commodities list, whose back link opens the commodity type page

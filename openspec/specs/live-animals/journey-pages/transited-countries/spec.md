@@ -152,7 +152,7 @@ The system MUST return the user, when they follow the back link from the transit
 
 ### Requirement: The page shows Overview only when the means of transport is air or sea, or none is saved
 **ID**: REQ-TRANSIT-COUNTRIES-008
-The system MUST show Overview when the transited countries page is opened and the saved means of transport is Air or Sea, or none is saved. The system MUST show the page when the saved means of transport is Rail or Road, whatever else is saved. The system MUST save no countries and show Overview when the page is submitted with Air, Sea or no means saved.
+The system MUST show Overview when the transited countries page is opened and the saved means of transport is Air or Sea, or none is saved. The system MUST show the page when the saved means of transport is Rail or Road and the country of origin and a commodity are saved, and otherwise MUST open the page that asks for the first missing answer. The system MUST save no countries and show Overview when the page is submitted with Air, Sea or no means saved.
 
 #### Scenario: Opening the page with air, sea or no means saved shows Overview
 **ID**: SCN-TRANSIT-COUNTRIES-008-A
@@ -167,14 +167,15 @@ The system MUST show Overview when the transited countries page is opened and th
 - **THEN** Overview is shown
 - **AND** no transited countries are saved
 
-#### Scenario: Opening or submitting the page by rail or road with only the means saved shows the page
+#### Scenario: Opening or submitting the page by rail or road with a required earlier answer missing opens the page that asks for it
 **ID**: SCN-TRANSIT-COUNTRIES-008-C
 - **GIVEN** the saved means of transport is Rail or Road
-- **AND** no country of origin or commodity is saved
-- **WHEN** the user opens the transited countries page
-- **THEN** the page is shown
-- **WHEN** the user saves and continues
-- **THEN** the transporter list is shown
+- **AND** no country of origin is saved
+- **WHEN** the user opens the transited countries page, or saves and continues from it
+- **THEN** Where is this consignment coming from? is shown
+- **GIVEN** a country of origin is saved and no commodity
+- **WHEN** the user opens the transited countries page, or saves and continues from it
+- **THEN** What are you importing? is shown
 
 ### Requirement: The search offers the origin countries and their territories, each territory named with its country
 **ID**: REQ-TRANSIT-COUNTRIES-009

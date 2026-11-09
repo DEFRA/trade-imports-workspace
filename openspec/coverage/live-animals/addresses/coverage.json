@@ -411,9 +411,7 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/address-book-navigation.spec.ts", "test": "a picker row's View link opens the address in the INS address book, whose Back returns to the same picker with the search kept", "strength": "full", "notes": "red-probed: fails when the View link carries no return (Back lands on the INS address book list); @compose, so it runs on the compose stack only" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "a picker row shows the street line, then town and postcode on one line, and ends with only a View link", "strength": "partial", "notes": "asserts the searched row's only link is 'View <name>'; does not follow it" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker spans the full content column and shows an address on separate lines with town and postcode together, with a View link to it in the INS address book returning to this picker", "strength": "partial", "notes": "asserts the View link's exact href and accessible name in stub mode; INS is not running, so Back is not followed" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/view-model/table-rows.test.js", "test": "Should end each row with a 'View' link to the address, named for screen readers by the address's name", "strength": "partial", "notes": "red-probed: fails when the link sits inside a details element; proves the cell holds only the link" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "picker spans the full content column and shows an address on separate lines with town and postcode together, with a View link to it in the INS address book returning to this picker", "strength": "partial", "notes": "asserts the View link's exact href and accessible name in stub mode; INS is not running, so Back is not followed" }
           ]
         },
         {
@@ -423,6 +421,15 @@
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js", "test": "Should link each row to its INS address page, returning to this picker with its search and selection", "strength": "partial", "notes": "red-probed: fails without the return; covers the search and the chosen address on page 1" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/party-picker.controller.test.js", "test": "Should return to the page being shown and keep changing when the picker was opened to change an answer", "strength": "full", "notes": "red-probed: fails without the return; with the selection test, covers page, chosen address and change context" }
+          ]
+        },
+        {
+          "id": "SCN-ADDR-009-C",
+          "name": "Each address ends with only a View link",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/party-picker/view-model/table-rows.test.js", "test": "Should end each row with a 'View' link to the address, named for screen readers by the address's name", "strength": "full", "notes": "red-probed: fails when a details cell follows the link's cell; asserts the last cell holds only an A element, its href and its visually hidden address name" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-picker.spec.ts", "test": "a picker row shows the street line, then town and postcode on one line, and ends with only a View link", "strength": "partial", "notes": "asserts the searched row's last cell reads exactly 'View <name>', so nothing else shows there; does not assert the text is a link, and checks one row" }
           ]
         }
       ]

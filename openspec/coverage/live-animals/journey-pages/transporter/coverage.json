@@ -516,6 +516,59 @@
           ]
         }
       ]
+    },
+    {
+      "id": "REQ-TRANSPORTER-008",
+      "name": "Each row ends with a \"View details\" link to that transporter's record, whose Back returns to this list",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-TRANSPORTER-008-A",
+          "name": "Every row carries a named \"View details\" link",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-animals-frontend",
+              "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js",
+              "test": "every row ends with a View details link naming its own transporter",
+              "strength": "full",
+              "notes": "red probe: removing the details cell from transporterTableRows turns this spec red"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-animals-frontend",
+              "file": "src/client/javascripts/components/transporter-filter.test.js",
+              "test": "Should leave the View details link intact when the search term matches the transporter name",
+              "strength": "full",
+              "notes": "red probe: including the details cell in the client-side search-highlight word cells turns this spec red, since the highlighter overwrites the cell's innerHTML"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/pages/transporter.spec.ts",
+              "test": "names the transporter in a commercial and a private row's View details link",
+              "strength": "partial",
+              "notes": "not run when written; the ladder's end-to-end rung runs it against the stack"
+            }
+          ]
+        },
+        {
+          "id": "SCN-TRANSPORTER-008-B",
+          "name": "Following it shows the record; Back returns to this list",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/features/address-book/transporter-added-via-address-book.spec.ts",
+              "test": "its View details link opens the transporter's address book record, and Back returns to this list",
+              "strength": "partial",
+              "notes": "proves the scenario for an organisation-added transporter only, and that the record shown is headed with the transporter's name; a shipped/demo transporter's link bounces back to the list with no record shown, which this scenario does not claim to cover"
+            }
+          ]
+        }
+      ]
     }
   ]
 }

@@ -142,3 +142,20 @@ The system MUST show the transporter list with no serious or critical accessibil
 - **THEN** the page has no serious or critical accessibility violations
 - **WHEN** the user submits a transporter that is not on the list
 - **THEN** the page, now showing the error summary and the in-fieldset error message, has no serious or critical accessibility violations
+
+### Requirement: Each row ends with a "View details" link to that transporter's record, whose Back returns to this list
+**ID**: REQ-TRANSPORTER-008
+The system MUST end every row of the transporter list with a "View details" link whose visually hidden text names that transporter. For a transporter the organisation added through the address book, following that link MUST open that transporter's record, whose Back link MUST return to this same transporter list. For a transporter the service ships, which has no address book record, following that link MUST return the user to this same transporter list.
+
+#### Scenario: Every row carries a named "View details" link
+**ID**: SCN-TRANSPORTER-008-A
+- **GIVEN** the user is on the transporter list
+- **WHEN** the page loads
+- **THEN** every row ends with a "View details" link whose visually hidden text names that row's own transporter
+
+#### Scenario: Following it shows the record; Back returns to this list
+**ID**: SCN-TRANSPORTER-008-B
+- **GIVEN** the user has added a transporter through the address book
+- **WHEN** they follow its "View details" link
+- **THEN** a page headed with that transporter's name shows its record
+- **AND** following its Back link returns to this same transporter list

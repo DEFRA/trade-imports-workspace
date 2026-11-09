@@ -72,3 +72,9 @@ The system MUST discard a commercial transporter entered through the add route w
 - **GIVEN** the user has added a private transporter through the add route
 - **WHEN** they add a transporter again, choose "Commercial" and save, then add again and choose "Private"
 - **THEN** the private transporter details form is shown with every field blank and the Country select back on the United Kingdom, not the previously entered details
+
+#### Scenario: Cancelling an add of the other type keeps the record the earlier type held
+**ID**: SCN-OB-TRANSPORTER-003-C
+- **GIVEN** the user has added a private transporter through the add route
+- **WHEN** they add a transporter again, choose "Commercial", and cancel that form without saving it
+- **THEN** adding again and choosing "Private" shows the private transporter details form holding the details they entered, because no change of type was saved

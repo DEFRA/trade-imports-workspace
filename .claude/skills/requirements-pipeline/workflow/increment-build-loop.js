@@ -5250,10 +5250,11 @@ const gateAndLandThemeFixes = async (id, theme, ruledFixes, phases, fix) => {
   )
   const ladderHeld = await heldDuringThemeReview(id, 'theme ladder', ladder)
   if (ladderHeld) return ladderHeld
-  if (!ladder?.green) {
+  const ranNoRungs = (ladder?.ran ?? []).length === 0
+  if (!ladder?.green || ranNoRungs) {
     return themeReviewStop(id, {
       reason: 'theme-review-red',
-      why: 'its ladder went red',
+      why: ranNoRungs ? 'its ladder proved nothing: it ran no gate rung at all' : 'its ladder went red',
       evidence: ladder ? (ladder.failures ?? []).join(' | ') || ladder.summary : 'the theme ladder agent died'
     })
   }
@@ -7161,7 +7162,7 @@ ${RUN_WITH_BASH}`,
   }
   const builtTheme = IS_BRANCH ? themeCheck?.record.theme : null
   if (builtTheme) themeReviewsRun += 1
-  const themeReview = builtTheme ? await engineeringReviewOfTheme(id, builtTheme, rowGatePhases) : null
+  const themeReview = builtTheme ? await engineeringReviewOfTheme(id, builtTheme, OFFERED_GATE_PHASES) : null
   reviewChecks.push(...(themeReview?.checks ?? []))
   const themeStop = themeReview?.stop
     ? { ...themeReview.stop, detail: [themeReview.stop.detail, themeCheck?.stop?.detail].filter(Boolean).join('. Also: ') }

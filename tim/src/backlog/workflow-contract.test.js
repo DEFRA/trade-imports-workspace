@@ -7834,6 +7834,35 @@ describe('increment-build-loop', () => {
           )
           expect(themeLabels(run)).toContain('inc-900 preserve')
         })
+        test('refuses a theme ladder that reports green having run no gate rung', async () => {
+          const run = await runTheme({
+            'inc-900 theme ladder': {
+              green: true,
+              ran: [],
+              summary: 'no gate'
+            },
+            'inc-900 preserve': { ok: true, summary: 'patches saved' }
+          })
+
+          expect(run.result.stopped.reason).toBe('theme-review-red')
+          expect(run.result.stopped.detail).toContain(
+            'its ladder proved nothing: it ran no gate rung at all'
+          )
+        })
+
+        test('gives the theme ladder the phases this run can run, not the last row’s', async () => {
+          const lastRowOwesNoPhase = {
+            'inc-900 branch': { ...ROW, gatePhases: [] }
+          }
+          const prompt = promptOf(
+            await runTheme(lastRowOwesNoPhase, { e2e: 'ci' }),
+            'inc-900 theme ladder'
+          )
+
+          expect(prompt).toContain('--phase unit')
+          expect(prompt).toContain('--phase fit')
+          expect(prompt).not.toContain('--phase e2e')
+        })
 
         test('lists a repo whose theme reviewer returned nothing for a review by hand', async () => {
           const run = await runTheme({ 'inc-900 theme review:ins': null })

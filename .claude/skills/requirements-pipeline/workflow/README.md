@@ -915,7 +915,9 @@ Three things it never governs, so that a lower rigour never lowers correctness:
   `git diff origin/main...HEAD` in every repo, and is the backstop for whatever a `fast` row's
   single reviewer missed. A rejection by a `fast` row's judge is recorded in `refutedFindings` as
   a verifier's refutation would be, so that review and the run's review checks re-read it at
-  every preset.
+  every preset. Its own ladder runs the phases the RUN can run, never the last row's: a theme
+  whose last row owed no gate would otherwise be landed on a ladder that proved nothing, so a
+  ladder reporting green with an empty `ran[]` stops the run as `theme-review-red`.
 
 **Style review moves to the theme rather than disappearing.** The code reviewer does not catch
 what the style reviewer catches, and the format and lint rungs catch neither. So at `standard`

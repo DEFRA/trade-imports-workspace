@@ -11,9 +11,9 @@ Claude generates the dashboard JSON and an alert build sheet from the
 templates in `assets/`; the developer imports and builds them in the
 CDP dev Grafana, because nothing else can write to it.
 
-It was written from EUDPA-632, the spike on
-`trade-imports-reference-data`, and its code recipe from EUDPA-674 on
-`trade-imports-address-book`. For a Java service, every metric is a
+Its dashboard and alert steps come from a spike on
+`trade-imports-reference-data`, and its code recipe from the reference
+implementation on `trade-imports-address-book`. For a Java service, every metric is a
 Micrometer meter published by `EmfMeterRegistry` (`references/METRICS.md`
 → "Publish"). That is the one way this skill builds metrics for Java.
 A Node service has no recipe yet: "What is proven" below says what the
@@ -52,7 +52,7 @@ skill and point its plan at these steps.
 | Metrics, Java service | Proven by tests on `trade-imports-address-book` (`EmfMeterRegistry`, the EMF documents it writes, the allowlist, `@Timed` through the Spring proxy). `[UNPROVEN]` in dev CloudWatch until that release is checked there. reference-data's older direct-EMF metrics reached dev CloudWatch under the PascalCase names; moving it to this way renames every metric and dimension to dot case, so its dashboard and alerts are rebuilt (`references/METRICS.md` → "A service built the old way") |
 | Log line, Java service | Proven by tests on `trade-imports-address-book`: `EcsEventEncoderTest` and `ExternalCallRecorderIT` check that the encoded JSON holds a nested `event` object with a numeric duration, and a failure's flat `error.type` and `error.message` with no stack trace (`references/LOGGING.md` → "How to write the fields"). The same encoder's line reached dev OpenSearch from reference-data 0.27.0 on 2026-10-21; CDP dropped the earlier MDC version (`references/LOGGING.md` → "What was learned on reference-data"). `[UNPROVEN]` in dev OpenSearch for address-book until its release is checked there |
 | Metrics and log line, Node service | Not written. `trade-imports-animals-frontend`, `-ins-frontend` and `-plants-frontend` already have `src/server/common/helpers/external-call-metrics.js`, which publishes the old PascalCase names (`references/METRICS.md` → "A service built the old way"); the first Node ticket adds a Node reference here |
-| Dashboard and alerts, PascalCase names | Done on reference-data in dev (EUDPA-632): the dashboard imported and showing CloudWatch and OpenSearch data on 2026-10-21, and the alerts built and fired on 2026-10-22 (`references/ALERTS.md` → "Prove they fire"). Not routed to Slack or promoted |
+| Dashboard and alerts, PascalCase names | Done on reference-data in dev: the dashboard imported and showing CloudWatch and OpenSearch data on 2026-10-21, and the alerts built and fired on 2026-10-22 (`references/ALERTS.md` → "Prove they fire"). Not routed to Slack or promoted |
 | Dashboard and alert templates, dot-case names | Written for the names address-book publishes, from the CDP docs and the PascalCase versions above. `[UNPROVEN]`: not yet imported into Grafana or fired anywhere. Nor are the database rule 1a and the `<timed-name>` panel, which had no PascalCase version |
 | Slack routing, promotion, alert tests in test and prod | **Taken from the CDP docs, not yet done on a real service.** Every fact that comes only from the docs is marked `[UNPROVEN]` where it is stated |
 

@@ -63,8 +63,7 @@ Format. No EMF code at a call site. `@Timed`, `@Counted`,
 `Timer.builder`, `Counter` and `Gauge` all publish properly, with their
 tags as dimensions.
 
-The reference implementation is `trade-imports-address-book`
-(EUDPA-674), package `uk.gov.defra.trade.imports.addressbook.metrics`,
+The reference implementation is `trade-imports-address-book`, package `uk.gov.defra.trade.imports.addressbook.metrics`,
 with its tests alongside. `[UNPROVEN]` in dev CloudWatch until that
 release is checked there. Read it before writing anything.
 
@@ -75,7 +74,7 @@ service's `metrics` package and change only the package:
 
 | Class | What it does |
 |---|---|
-| `EmfMeterRegistry` | A `StepMeterRegistry` that publishes its gauges, counters, timers and distribution summaries once a step (`aws.emf.step`, one minute by default) in the `aws.emf.namespace` namespace, tags as the only dimensions. Timers and distribution summaries publish every value recorded since the last publish (timers in ms), so CloudWatch computes `SampleCount`, `Sum`, `Average`, `p95` and `Maximum` itself; the EMF library splits more than 100 values across documents. Counters publish the last step's count; gauges their value when finite. Long task timers, function counters, function timers and time gauges are not published. One meter failing to publish is logged at warn and the rest still go |
+| `EmfMeterRegistry` | A `StepMeterRegistry` that publishes its gauges, counters, timers and distribution summaries once a step (`aws.emf.step`, one minute by default) in the `aws.emf.namespace` namespace, tags as the only dimensions. Timers and distribution summaries publish every value recorded since the last publish (timers in ms), so CloudWatch computes `SampleCount`, `Sum`, `Average`, `p95` and `Maximum` itself; the EMF library splits more than 100 values across documents. Counters publish the last step's count; gauges their value when finite. Gauges and distribution summaries publish in the CloudWatch unit of their base unit (`bytes` as Bytes); with no base unit, a distribution summary publishes as Count and a gauge as None. Long task timers, function counters, function timers and time gauges are not published. One meter failing to publish is logged at warn and the rest still go |
 | `ValueRecordingTimer`, `ValueRecordingDistributionSummary`, `RecordedValues` | Package-private: Micrometer's step timer and summary, also keeping each recorded value until the registry takes it |
 | `ExternalCallRecorder` | Logs each call to a dependency (`LOGGING.md`) and records it as the timer `external.call.duration` and the distribution summary `external.call.failure` (0 or 1 per call), both tagged `dependency` and `operation`. `recordSuccess` and `recordFailure` (with the cause), not a boolean flag. It records a call it is given; it does not time one or keep its outcome. Each metric name is written once, at its one registration call, and the `dependency` tag key is `ExternalCallRecorder.DEPENDENCY_TAG`, which `DependencyAvailabilityMetrics` uses too. A service with its own `ExternalCallMetrics` replaces it ("A service built the old way") |
 
@@ -163,7 +162,7 @@ names, not the dot-case names above (their `main`, checked 2026-11-06):
 
 | Service | Where | Publishes |
 |---|---|---|
-| `trade-imports-reference-data` (EUDPA-632) | `metrics` package: `EmfMetricWriter`, `ExternalCallMetrics`, scheduled `DependencyAvailabilityMetrics` and `CacheMetrics`, `LookupMetrics` | Every old name in the table below |
+| `trade-imports-reference-data` | `metrics` package: `EmfMetricWriter`, `ExternalCallMetrics`, scheduled `DependencyAvailabilityMetrics` and `CacheMetrics`, `LookupMetrics` | Every old name in the table below |
 | `trade-imports-dynamics-gateway` | `metrics/ExternalCallMetrics.java` and `metrics/ExternalCall.java`, measuring the Service Bus send in `QueueMessageSender` | `ExternalCallDuration`, `ExternalCallFailure`, dimensions `Dependency`, `Operation` |
 | `trade-imports-animals-frontend`, `-ins-frontend`, `-plants-frontend` | `src/server/common/helpers/external-call-metrics.js` | `ExternalCallDuration`, `ExternalCallFailure`, dimensions `Dependency`, `Operation` |
 
@@ -227,8 +226,8 @@ heartbeats, which are fresh, so alert on it (below).
 ### A database
 
 A database the service has configured is a dependency (`SKILL.md` Step
-1). Written and tested on `trade-imports-address-book` (EUDPA-674,
-package `uk.gov.defra.trade.imports.addressbook.metrics`), where MongoDB
+1). Written and tested on `trade-imports-address-book` (package
+`uk.gov.defra.trade.imports.addressbook.metrics`), where MongoDB
 is the only dependency. `[UNPROVEN]` in dev CloudWatch until that release
 is checked there.
 

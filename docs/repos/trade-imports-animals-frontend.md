@@ -39,7 +39,7 @@ The animals frontend builds every INS frontend URL from one setting, `tradeImpor
 |-----------|------|---------|---------|
 | Animals to INS | `/address-book` | Nothing | The service navigation's Address book item |
 | Animals to INS | `/address-book/add` | `journey-type`, `notification-id`, `fulfilment-id`, `handshake-token` | The address handshake: the user picks or adds an address |
-| Animals to INS | `/address-book/{addressId}` | `return` (the picker's `/live-animals` path, with its search, page, chosen address and change marker) | A party picker row's View link |
+| Animals to INS | `/address-book/{addressId}` | `return` (the picker's `/live-animals` path, with its search, page, chosen address and change marker) | A party picker row's View link. Not offered with `STUB_MODE`, when no INS frontend runs, and neither is the picker's add-address button |
 | Animals to INS | `/notification-type` | `notification-id`, `current-notification-type` | The live animals origin page's Back link, when the run began at the start entry |
 | INS to animals | `/live-animals/start` | Nothing | The type question's Live animals choice |
 | INS to animals | `/live-animals/notifications/{reference}/origin` | Nothing | The type question with Live animals kept for that notification |

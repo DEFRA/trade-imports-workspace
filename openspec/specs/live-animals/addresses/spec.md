@@ -275,11 +275,11 @@ The system MUST show an empty-state message in place of the results count when a
 
 ### Requirement: A listed address opens in the INS address book, whose Back returns to the same list
 **ID**: REQ-ADDR-009
-The system MUST end each listed address with a 'View' link, named for screen readers by the address's name, that opens that address in the INS address book. The address book's Back link MUST bring the user back to the same list of the same notification, with the same search, the same page and the same address chosen, and, when they opened the list to change an answer, saving MUST still return them where a change of answer does.
+When the address book service is available, the system MUST end each listed address with a 'View' link, named for screen readers by the address's name, that opens that address in the INS address book. The address book's Back link MUST bring the user back to the same list of the same notification, with the same search, the same page and the same address chosen, and, when they opened the list to change an answer, saving MUST still return them where a change of answer does. When the address book service is not available (stub mode), the system MUST end each listed address at its country, with no 'View' link.
 
 #### Scenario: View opens the address in the INS address book and Back returns to the list with its search
 **ID**: SCN-ADDR-009-A
-- **GIVEN** the user is choosing an address for a consignment role and has searched for an address
+- **GIVEN** the user is choosing an address for a consignment role, the address book service is available, and they have searched for an address
 - **WHEN** they follow that address's 'View' link
 - **THEN** the address opens in the INS address book
 - **WHEN** they select Back
@@ -287,15 +287,21 @@ The system MUST end each listed address with a 'View' link, named for screen rea
 
 #### Scenario: Back from View keeps the page and the chosen address while changing an answer
 **ID**: SCN-ADDR-009-B
-- **GIVEN** the user opened the list to change a role's address, chose an address, and moved to a later page
+- **GIVEN** the address book service is available, and the user opened the list to change a role's address, chose an address, and moved to a later page
 - **WHEN** they follow an address's 'View' link and then select Back
 - **THEN** the same page of the list is shown with their chosen address still selected, and saving returns them where a change of answer does
 
 #### Scenario: Each address ends with only a View link
 **ID**: SCN-ADDR-009-C
-- **GIVEN** the user is choosing an address for a consignment role
+- **GIVEN** the user is choosing an address for a consignment role, and the address book service is available
 - **WHEN** the list is shown
 - **THEN** each address's last column holds a single 'View' link, announced with the address's name, and nothing else
+
+#### Scenario: Each address ends at its country, with no View link, in stub mode
+**ID**: SCN-ADDR-009-D
+- **GIVEN** the user is choosing an address for a consignment role, and the address book service is not available (stub mode)
+- **WHEN** the list is shown
+- **THEN** the list's columns end at Country, and each address's last column holds its country, with no 'View' link
 
 ### Requirement: Choosing a role's address is paged, and a choice made on any page is the one saved
 **ID**: REQ-ADDR-010

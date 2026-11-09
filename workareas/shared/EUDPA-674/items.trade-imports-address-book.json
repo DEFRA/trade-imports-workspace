@@ -1,0 +1,78 @@
+{
+  "ticket": "EUDPA-674",
+  "repo": "trade-imports-address-book",
+  "items": [
+    {
+      "id": 1,
+      "line": 51,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "timedAspect takes MeterRegistry meterRegistry (line 45) while countedAspect takes MeterRegistry registry (line 51) for the same injected MeterRegistry; a reader of countedAspect cannot tell from the name which registry it holds, and emfMeterRegistry's local is also named registry (line 38) for a different type (EmfMeterRegistry).",
+      "fix": "Must: the injected MeterRegistry has one name across every bean method in MetricsConfig, and the EmfMeterRegistry built in emfMeterRegistry has a name of its own. One way: rename countedAspect's parameter to meterRegistry and the local in emfMeterRegistry to emfRegistry.",
+      "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/configuration/MetricsConfig.java",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 2,
+      "line": 28,
+      "severity": "Major",
+      "category": "logging",
+      "issue": "emfMeterRegistry is created only when aws.emf.enabled=true and then logs the namespace and step (line 40); when the property is false or unset the bean is absent and nothing logs that CloudWatch publishing is off, so support looking at an empty custom dashboard cannot tell from OpenSearch whether EMF was switched off.",
+      "fix": "Must: the service's startup log says whether EMF metrics publishing is on and, when it is, the namespace and step. One way: keep the enabled log, and add a @ConditionalOnProperty(havingValue=false, matchIfMissing=true) bean or ApplicationRunner that logs that EMF publishing is off.",
+      "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/configuration/MetricsConfig.java",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 3,
+      "line": 131,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "readingsOf always builds gauges with Unit.NONE (line 131) and distribution summaries with Unit.NONE (line 128), ignoring Meter.Id.getBaseUnit(). application.yml allowlists jvm.memory.used/committed/max (base unit bytes) and external.call.failure is a 0/1 summary, so CloudWatch receives Bytes metrics as None and the failure summary as None instead of Count; EmfMeterRegistryTest asserts units for timers and counters but not for a bytes gauge or the failure summary.",
+      "fix": "Must: a gauge or summary is published with the CloudWatch Unit that matches its base unit when CloudWatch knows it (bytes → Bytes, and Count when the meter is a dimensionless count such as external.call.failure); None only when there is no known unit. One way: map id.getBaseUnit() (and treat null/empty count-like summaries as Count) in one helper used by readingsOf, with EmfMeterRegistryTest asserting the unit for a bytes gauge and for external.call.failure.",
+      "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/metrics/EmfMeterRegistry.java",
+      "disposition": "Merged",
+      "status": "—",
+      "notes": "merged into #6"
+    },
+    {
+      "id": 4,
+      "line": 95,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "management.metrics.enable.jvm.memory.{committed,used,max} lets through Micrometer gauges whose base unit is bytes, but EmfMeterRegistry.publish readings always use Unit.NONE for gauges (EmfMeterRegistry.java readingsOf), so CloudWatch stores them as unit None and dashboards cannot treat them as bytes.",
+      "fix": "Must: every allowlisted gauge is published with the CloudWatch unit that matches its Meter.Id base unit when CloudWatch knows that unit (bytes → Bytes), and Unit.NONE only when it has none. One way: map id.getBaseUnit() in EmfMeterRegistry for gauges (and use Count for dimensionless distribution summaries such as external.call.failure), with a unit assertion in EmfMeterRegistryTest for a bytes gauge.",
+      "file": "src/main/resources/application.yml",
+      "disposition": "Merged",
+      "status": "—",
+      "notes": "merged into #6"
+    },
+    {
+      "id": 5,
+      "line": 98,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "publish_writesAFiniteGaugeAndSkipsANaNOne asserts the gauge value but never unitOf(document); no test registers a gauge with base unit bytes or asserts external.call.failure publishes as Count. EmfDocuments.unitOf exists and is used for timers (Milliseconds) and counters (Count), so the missing unit asserts leave the Unit.NONE behaviour in EmfMeterRegistry unproved as wrong.",
+      "fix": "Must: a test fails if a bytes gauge is published with a unit other than Bytes, and if external.call.failure is published with a unit other than Count. One way: extend EmfMeterRegistryTest with those two unit assertions beside the existing value asserts.",
+      "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/metrics/EmfMeterRegistryTest.java",
+      "disposition": "Merged",
+      "status": "—",
+      "notes": "merged into #6"
+    },
+    {
+      "id": 6,
+      "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/metrics/EmfMeterRegistry.java",
+      "line": "131",
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "One rule, 3 findings: #3, #4, #5 — gauges and distribution summaries must publish with the CloudWatch unit that matches the meter's base unit (bytes → Bytes; dimensionless counts such as external.call.failure → Count), and tests must lock that in; application.yml allowlists jvm.memory.* that depend on it",
+      "fix": "Must: one owner holds the unit mapping in EmfMeterRegistry.readingsOf; the allowlist stays as the list of wanted meters; EmfMeterRegistryTest asserts Bytes for a bytes gauge and Count for external.call.failure. One way: EmfMeterRegistry is the owner — map id.getBaseUnit() (and Count for count-like summaries) there, keep the jvm.memory allowlist, add the two unit asserts in EmfMeterRegistryTest.",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    }
+  ]
+}

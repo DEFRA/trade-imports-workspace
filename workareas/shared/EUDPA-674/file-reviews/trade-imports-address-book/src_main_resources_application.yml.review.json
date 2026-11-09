@@ -1,0 +1,21 @@
+{
+  "file": "src/main/resources/application.yml",
+  "repo": "trade-imports-address-book",
+  "commit": "491f0276ddc5772d9171a926337fbab7a1f771b3",
+  "pr": 22,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T10:56:45Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Allowlists jvm.memory.* gauges that EmfMeterRegistry publishes without a Bytes unit.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 95,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "management.metrics.enable.jvm.memory.{committed,used,max} lets through Micrometer gauges whose base unit is bytes, but EmfMeterRegistry.publish readings always use Unit.NONE for gauges (EmfMeterRegistry.java readingsOf), so CloudWatch stores them as unit None and dashboards cannot treat them as bytes.",
+      "fix": "Must: every allowlisted gauge is published with the CloudWatch unit that matches its Meter.Id base unit when CloudWatch knows that unit (bytes → Bytes), and Unit.NONE only when it has none. One way: map id.getBaseUnit() in EmfMeterRegistry for gauges (and use Count for dimensionless distribution summaries such as external.call.failure), with a unit assertion in EmfMeterRegistryTest for a bytes gauge."
+    }
+  ],
+  "reconciled_at": "2026-11-09T10:58:13Z"
+}

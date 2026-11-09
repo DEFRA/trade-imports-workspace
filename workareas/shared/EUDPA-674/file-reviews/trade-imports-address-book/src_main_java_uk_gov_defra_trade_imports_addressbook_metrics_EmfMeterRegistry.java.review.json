@@ -1,0 +1,21 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/metrics/EmfMeterRegistry.java",
+  "repo": "trade-imports-address-book",
+  "commit": "491f0276ddc5772d9171a926337fbab7a1f771b3",
+  "pr": 22,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T10:56:45Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Publishes every recorded timer value correctly, but gauges and distribution summaries always use Unit.NONE.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 131,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "readingsOf always builds gauges with Unit.NONE (line 131) and distribution summaries with Unit.NONE (line 128), ignoring Meter.Id.getBaseUnit(). application.yml allowlists jvm.memory.used/committed/max (base unit bytes) and external.call.failure is a 0/1 summary, so CloudWatch receives Bytes metrics as None and the failure summary as None instead of Count; EmfMeterRegistryTest asserts units for timers and counters but not for a bytes gauge or the failure summary.",
+      "fix": "Must: a gauge or summary is published with the CloudWatch Unit that matches its base unit when CloudWatch knows it (bytes → Bytes, and Count when the meter is a dimensionless count such as external.call.failure); None only when there is no known unit. One way: map id.getBaseUnit() (and treat null/empty count-like summaries as Count) in one helper used by readingsOf, with EmfMeterRegistryTest asserting the unit for a bytes gauge and for external.call.failure."
+    }
+  ],
+  "reconciled_at": "2026-11-09T10:58:13Z"
+}

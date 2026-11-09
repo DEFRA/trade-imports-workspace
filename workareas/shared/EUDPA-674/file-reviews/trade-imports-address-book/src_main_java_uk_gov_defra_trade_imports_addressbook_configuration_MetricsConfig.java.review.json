@@ -1,0 +1,29 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/addressbook/configuration/MetricsConfig.java",
+  "repo": "trade-imports-address-book",
+  "commit": "491f0276ddc5772d9171a926337fbab7a1f771b3",
+  "pr": 22,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T10:56:45Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "EMF registry start logs when enabled, but the disabled path is silent and countedAspect renames the MeterRegistry parameter.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 51,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "timedAspect takes MeterRegistry meterRegistry (line 45) while countedAspect takes MeterRegistry registry (line 51) for the same injected MeterRegistry; a reader of countedAspect cannot tell from the name which registry it holds, and emfMeterRegistry's local is also named registry (line 38) for a different type (EmfMeterRegistry).",
+      "fix": "Must: the injected MeterRegistry has one name across every bean method in MetricsConfig, and the EmfMeterRegistry built in emfMeterRegistry has a name of its own. One way: rename countedAspect's parameter to meterRegistry and the local in emfMeterRegistry to emfRegistry."
+    },
+    {
+      "id": 2,
+      "line": 28,
+      "severity": "Major",
+      "category": "logging",
+      "issue": "emfMeterRegistry is created only when aws.emf.enabled=true and then logs the namespace and step (line 40); when the property is false or unset the bean is absent and nothing logs that CloudWatch publishing is off, so support looking at an empty custom dashboard cannot tell from OpenSearch whether EMF was switched off.",
+      "fix": "Must: the service's startup log says whether EMF metrics publishing is on and, when it is, the namespace and step. One way: keep the enabled log, and add a @ConditionalOnProperty(havingValue=false, matchIfMissing=true) bean or ApplicationRunner that logs that EMF publishing is off."
+    }
+  ],
+  "reconciled_at": "2026-11-09T10:58:13Z"
+}

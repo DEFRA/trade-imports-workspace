@@ -9,7 +9,7 @@
  * from the diff alone comes out truncated.
  *
  * Emits JSON on stdout:
- *   { theme, workarea, branch, totals, domains: { <domain>: { scenarios, files,
+ *   { theme, workarea, branch, linkBranch, totals, domains: { <domain>: { scenarios, files,
  *     rows } }, rows, warnings, checks }
  *
  * Fails rather than guessing when:
@@ -490,6 +490,7 @@ const output = {
   theme,
   workarea,
   branch,
+  linkBranch,
   commits: commits.map((c) => ({ sha: c.sha.slice(0, 8), subject: c.subject })),
   totals: {
     scenarios: totalAdded,

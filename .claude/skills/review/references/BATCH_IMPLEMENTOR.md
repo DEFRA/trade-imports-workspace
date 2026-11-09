@@ -193,6 +193,9 @@ Red tests fixed:
   ...
 
 Run `~/git/defra/trade-imports-workspace/tools/review/review-counts.sh EUDPA-XXXXX` for the updated breakdown.
+
+Nothing is pushed or posted. Once you push these commits, post what
+they closed to the PRs (review SKILL.md, Step R7).
 ```
 
 ---

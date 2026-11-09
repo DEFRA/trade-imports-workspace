@@ -740,6 +740,38 @@ Then:
 3. Update the top-level Verdict if warranted.
 4. Update the AC Check table if any AC status has changed.
 
+## Step R7: Post the re-review
+
+The PR still carries the fresh review's comment and verdict, so post
+the refresh's outcome to every PR whose repo it re-reviewed. Skip a PR
+whose `changes[]` entry in the latest `re_review` has `changed: false`.
+
+Post only to heads that are on GitHub. A refresh of local, unpushed
+commits posts nothing: say so in the Completion Output, and post once
+they are pushed. The batch implementor's commits are local too, so after
+the user pushes them, run this step again to report what they closed.
+
+Before each post, read the PR's head:
+
+```bash
+gh pr view {pr} --repo DEFRA/{repo} --json headRefOid --jq .headRefOid
+```
+
+Then post the counts, naming that head:
+
+```bash
+~/git/defra/trade-imports-workspace/tools/review/share-review.sh EUDPA-XXXXX --repo {repo} --pr {pr} --comment-only --refresh --head {headRefOid}
+```
+
+For a PR someone else authored, drop `--comment-only` only if they are
+walking the review from the handoff branch; otherwise keep it. The
+comment names the commit first reviewed, the commit re-reviewed and,
+when the head is past it, says the later commits have not been
+re-reviewed. Update the verdict in `review-index.md` (Step R6) before
+posting: the comment carries it.
+
+Capture each comment URL for the Completion Output.
+
 ## Refresh Verdict Guidelines
 
 | Verdict | Criteria |
@@ -760,6 +792,10 @@ Summary:
 - New issues found: [N]
 
 Updated: ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/review-index.md + review.{repo}.md files
+
+PR comments posted (Step R7):
+- {repo}#{pr} → {url}
+(or: not posted, the re-reviewed heads are not pushed)
 ```
 
 ## Scripts cheat-sheet
@@ -781,7 +817,7 @@ All under `~/git/defra/trade-imports-workspace/tools/review/`:
 | `review-add-item.sh` | Append a newly-found violation; returns the new ID |
 | `review-counts.sh` | Final reports (walker + batch implementor) — breakdown by Disposition+Status |
 | `aggregate-file-reviews.sh` | Fresh Step 5 — write `items.{repo}.json` from per-file `.review.json` files; emit File Analysis Summary / Items markdown |
-| `share-review.sh` | Fresh Step 7 — post the review as a PR comment; `--comment-only` for PRs you authored, otherwise also push handoff branch `chore/EUDPA-X` to the workspace remote |
+| `share-review.sh` | Fresh Step 7 — post the review as a PR comment; `--comment-only` for PRs you authored, otherwise also push handoff branch `chore/EUDPA-X` to the workspace remote. Refresh Step R7 — `--refresh --head SHA` posts the re-review's counts |
 | `render-items.sh` | Render `items.{repo}.json` as the `## Items` markdown view; `--write` puts it into `review.{repo}.md` |
 | `file-review-init.sh` / `file-review-add-item.sh` / `file-review-set-verdict.sh` | Per-file JSON helpers used by the FILE_REVIEWER persona |
 | `refresh/scope.sh` | Refresh Steps R1-R3 orchestrator |

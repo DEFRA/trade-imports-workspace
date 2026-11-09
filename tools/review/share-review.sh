@@ -33,6 +33,15 @@
 # way, so an over-long comment fails here with the figures rather than at
 # the API.
 #
+# --refresh posts the outcome of a refresh review: the --summary counts under
+# a re-review heading, naming the commit first reviewed and the commit the
+# latest re-review read (the last entry for that repo in re_reviews[] of
+# .review-meta.json). It refuses a repo with no re-review recorded.
+#
+# --head SHA, with --refresh and one PR, names the PR's head. When it is not
+# the commit the re-review read, the body says that the commits after it are
+# counted by what they closed but have not been re-reviewed.
+#
 # --dry-run skips git mutations and the comment POST; instead it renders
 # the comment bodies (one per PR) to /tmp and reports where they landed.
 #
@@ -53,6 +62,8 @@ COMMENT_ONLY=0
 DRY_RUN=0
 JSON=0
 SUMMARY=0
+REFRESH=0
+HEAD_SHA=""
 
 # What GitHub accepts in one issue-comment body.
 GITHUB_COMMENT_LIMIT=65536
@@ -60,7 +71,7 @@ GITHUB_COMMENT_LIMIT=65536
 usage() {
     cat >&2 <<EOF
 Usage: $0 EUDPA-XXXXX [--repo R] [--pr N] [--comment-only] [--summary]
-                      [--branch B] [--dry-run] [--json]
+                      [--refresh [--head SHA]] [--branch B] [--dry-run] [--json]
 
   --repo R         Only PRs in this repo. PR numbers repeat across repos,
                    so pass --repo and --pr together to pin one PR.
@@ -75,7 +86,13 @@ Usage: $0 EUDPA-XXXXX [--repo R] [--pr N] [--comment-only] [--summary]
                    passes that at a few hundred items, so a large review
                    needs this. Also the readable choice for announcing an
                    outcome rather than handing over work.
-  --branch B       Handoff branch name (default chore/EUDPA-XXXXX).
+  --refresh        Post a refresh review's outcome: the --summary counts
+                   under a re-review heading, naming the commit first
+                   reviewed and the commit the latest re-review read.
+  --head SHA       With --refresh, --repo and --pr: the PR's head. When it
+                   is past the re-reviewed commit, the body says the later
+                   commits have not been re-reviewed.
+  --branch B      Handoff branch name (default chore/EUDPA-XXXXX).
   --dry-run        Render the bodies to /tmp; no git mutations, no POST.
   --json           Emit a JSON summary on stdout.
 EOF
@@ -89,6 +106,8 @@ while [[ $# -gt 0 ]]; do
         --pr) PR_FILTER="$2"; shift 2 ;;
         --comment-only) COMMENT_ONLY=1; shift ;;
         --summary) SUMMARY=1; shift ;;
+        --refresh) REFRESH=1; SUMMARY=1; shift ;;
+        --head) HEAD_SHA="$2"; shift 2 ;;
         --branch) BRANCH_OVERRIDE="$2"; shift 2 ;;
         --dry-run) DRY_RUN=1; shift ;;
         --json) JSON=1; shift ;;
@@ -98,6 +117,10 @@ while [[ $# -gt 0 ]]; do
 done
 
 [[ -z "$TICKET" ]] && usage
+if [[ -n "$HEAD_SHA" ]] && [[ "$REFRESH" == "0" || -z "$REPO_FILTER" || -z "$PR_FILTER" ]]; then
+    echo "--head needs --refresh, --repo and --pr: a head belongs to one PR." >&2
+    exit 1
+fi
 
 review_dir="$WORKSPACE/workareas/reviews/$TICKET"
 meta="$review_dir/.review-meta.json"
@@ -210,8 +233,23 @@ pr_bodies=()
 while IFS=$'\t' read -r repo pr; do
     body_tmp=$(mktemp -t "share-review-$TICKET-pr$pr-XXXXXX.md")
 
+    reviewed_sha=$(echo "$prs_json" | jq -r --arg repo "$repo" \
+        'first(.[] | select(.repo == $repo) | .commit) // "" | .[0:8]')
+    re_reviewed_sha=""
+    if [[ "$REFRESH" == "1" ]]; then
+        re_reviewed_sha=$(jq -r --arg repo "$repo" '
+            [(.re_reviews // [])[] | .changes[] | select(.repo == $repo) | .current_commit]
+            | last // "" | .[0:8]' "$meta")
+        if [[ -z "$re_reviewed_sha" ]]; then
+            echo "No re-review recorded for $repo in $meta. Run a refresh review first." >&2
+            exit 1
+        fi
+    fi
+
     {
-        if [[ "$COMMENT_ONLY" == "1" ]]; then
+        if [[ "$REFRESH" == "1" ]]; then
+            echo "# Code re-review — $TICKET"
+        elif [[ "$COMMENT_ONLY" == "1" ]]; then
             echo "# Code review — $TICKET"
         else
             echo "# Code review handoff — $TICKET"
@@ -221,11 +259,14 @@ while IFS=$'\t' read -r repo pr; do
             echo "**Verdict:** $verdict"
         fi
         echo "**Reviewer:** @$reviewer"
-        # Name the commit the findings were raised against, so a reader can
-        # tell what the verdict covers when the head has since moved.
-        reviewed_sha=$(echo "$prs_json" | jq -r --arg repo "$repo" \
-            'first(.[] | select(.repo == $repo) | .commit) // "" | .[0:8]')
-        if [[ -n "$reviewed_sha" ]]; then
+        if [[ "$REFRESH" == "1" ]]; then
+            [[ -n "$reviewed_sha" ]] && echo "**First reviewed at:** \`$reviewed_sha\`"
+            echo "**Re-reviewed at:** \`$re_reviewed_sha\`"
+            head_short="${HEAD_SHA:0:8}"
+            if [[ -n "$head_short" && "$head_short" != "$re_reviewed_sha" ]]; then
+                echo "**PR head:** \`$head_short\`. The commits after \`$re_reviewed_sha\` are counted below by the items they closed, but have not been re-reviewed."
+            fi
+        elif [[ -n "$reviewed_sha" ]]; then
             echo "**Reviewed at:** \`$reviewed_sha\`"
         fi
         if [[ "$COMMENT_ONLY" == "0" ]]; then

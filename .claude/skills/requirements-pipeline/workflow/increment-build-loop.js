@@ -834,14 +834,24 @@ const reportedCompletionLine = (label, notes) =>
 
 const COMPLETION_LABELS = ['Probes', 'Docs updated']
 
+const E2E_PROBE_LINE = E2E_IS_LOCAL
+  ? `
+  An end-to-end link is probed against the leased stack as it is: the stack runs in dev mode, serving each frontend
+  from its repo's src and restarting it on a change, so nothing is rebuilt. Give \`tim build probe\` the frontend's
+  \`--reload-url\` (http://localhost:3000/health for animals, http://localhost:3003/health for plants) and run the
+  spec after \`--\` with \`npm --prefix ${TILDE}/repos/trade-imports-ins-tests run test:docker-compose -- <spec file>
+  -g '<test name>'\`. Running a spec against the stack is using it, not rebuilding it. Never leave a link partial
+  because probing it "needs the stack rebuilt" or "only the gate may": probe it.`
+  : ''
+
 const COMPLETION_LINES_DUTY = `
 PROBES AND DOCS — two more lines in notes, each on a line of its own, whatever the row's repos:
 - \`Probes: <n> full links, <n> red then green\`, adding \`; partial: <ids and why>\` for any link left partial, or
   \`Probes: none — <reason>\` when this row writes or upgrades no coverage link to "full". A link is "full" only once
   you have inverted the production line its test depends on, seen the test fail, restored the line and seen it pass,
-  by ${SKILLS}/frontend-change/references/SPEC_SYNC.md "The red probe". The leased stack holds each frontend's
-  default port, so a FIT test runs as \`npm --prefix ${TILDE}/<repoPath> run test:fit:ci -- <spec file>\`, never
-  \`test:fit\`, with this machine's \`--workers\` count from GUARD RAILS after the spec file.
+  by ${SKILLS}/frontend-change/references/SPEC_SYNC.md "The red probe", with \`tim build probe\`. The leased stack holds
+  each frontend's default port, so a FIT test runs as \`npm --prefix ${TILDE}/<repoPath> run test:fit:ci -- <spec file>\`,
+  never \`test:fit\`, with this machine's \`--workers\` count from GUARD RAILS after the spec file.${E2E_PROBE_LINE}
 - \`Docs updated: <paths>\`, or \`Docs updated: none — searched <terms> in <dirs>\`. Search the changed repos' \`docs/\`,
   the recipes, the JSDoc and Javadoc of every function you changed, comments within ten lines of every hunk, and
   convention test names, for the behaviour you changed. Every one that now states the old way is part of this change:
@@ -1300,7 +1310,10 @@ const OTHER_COMPOSE_GUARD = `- A command that starts any other Docker Compose pr
 const STACK_GUARD = `- THE WORKSPACE STACK IS LEASED TO THIS RUN, with \`tim docker lease\`, as \`${RUN_HOLDER}\`. The run takes it
   once, before its first increment, and gives it back once, at the end. Never start, stop, restart or rebuild it — no
   \`tim docker up\`, \`dev\` or \`down\`, no \`tim docker lease acquire\` or \`release\`, no \`run-stack.sh\` or
-  \`stop-stack.sh\`, no \`docker compose\` against it. The gate is the only thing that rebuilds it.
+  \`stop-stack.sh\`, no \`docker compose\` against it. The gate is the only thing that rebuilds it. You need no
+  rebuild to test a change against it: it runs in dev mode, serving each frontend from its repo's src and restarting
+  it a few seconds after a file there changes. Running a tests-repo spec against it, or \`tim build probe\` with
+  \`--reload-url\`, is using it as it is.
 ${OTHER_COMPOSE_GUARD}`
 
 // Under `e2e: "ci"` the run takes no lease and the stack is deliberately down, so

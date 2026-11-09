@@ -297,6 +297,26 @@ For each link this increment writes as `full`, or upgrades to `full`:
 4. Restore the line exactly. Run the test again. It **must pass**.
 5. Check `git -C <target repo> diff` shows no trace of the inversion.
 
+`tim build probe` does steps 2 to 5 for you. Use it.
+
+An end-to-end link (a tests-repo spec) is probed the same way, against the
+workspace stack. The stack runs in dev mode: it serves each frontend from its
+repo's `src` and restarts it on a change. So an inverted line is live a few
+seconds after it is written, and nothing is rebuilt. Give `--reload-url` with
+the frontend's health URL. The probe waits for the restart before each run:
+
+```bash
+tim build probe trade-imports-animals-frontend <file> --line <n> \
+  --reload-url http://localhost:3000/health --json -- \
+  npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests \
+  run test:docker-compose -- <spec file> -g '<test name>'
+```
+
+The plants frontend's health URL is `http://localhost:3003/health`. A result
+whose `redWhenInverted` is null means the service did not restart on the
+change, so nothing was proved. Never record an end-to-end link as `partial`
+because probing it "needs the stack rebuilt": it does not.
+
 If the test stays green in step 3, it does not witness the scenario.
 Rework the assertion and probe again, or record the link as `partial`
 with a `notes` clause saying what it does not prove. Never mark `full`

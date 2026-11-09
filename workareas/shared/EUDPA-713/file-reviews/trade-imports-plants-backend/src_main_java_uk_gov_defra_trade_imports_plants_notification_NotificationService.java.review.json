@@ -1,0 +1,21 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/plants/notification/NotificationService.java",
+  "repo": "trade-imports-plants-backend",
+  "commit": "0169caaf183f4c31d981aa1900c3bc3b9b6281bc",
+  "pr": 16,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T14:57:53Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new cross-organisation warn in requireTraderNotification repeats #43's double-logging on the 404 path; the other prior items (#20, #22, #43) are still open and were not re-reported.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 405,
+      "severity": "Major",
+      "category": "logging",
+      "issue": "New since 0169caaf, the same double-logging as #43 on the 404 path: requireTraderNotification (lines 404-410) logs log.warn(\"Trader notification access denied for referenceNumber={} organisationId={}\") and then throws NotFoundException, which GlobalExceptionHandler.handleNotFoundException (GlobalExceptionHandler.java:201) logs again as log.warn(\"Resource not found (trace: {})\", traceId, ex) with a stack trace. So every cross-organisation replace, copy, submit, amend, cancel-amend, soft-delete or update writes two WARN lines for one refusal, and the second one does not say it was a cross-organisation refusal.",
+      "fix": "Must: a cross-organisation request refused with 404 writes exactly one WARN line, carrying the reference number, the caller's organisation id and the trace id, and that line says the notification belongs to another organisation; this is fixed the same way as #43 for the 403 path. One way: drop the service-level warn and throw a NotFoundException whose message names the reference and organisation id while the response detail stays generic, or keep the service warn and have the handler log NotFoundException at debug without a stack trace."
+    }
+  ],
+  "reconciled_at": "2026-11-09T14:58:04Z"
+}

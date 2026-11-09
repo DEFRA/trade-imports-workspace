@@ -1,0 +1,37 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/plants/exceptions/GlobalExceptionHandler.java",
+  "repo": "trade-imports-plants-backend",
+  "commit": "0169caaf183f4c31d981aa1900c3bc3b9b6281bc",
+  "pr": 16,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:03:20Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new 403 handler maps ForbiddenException correctly, but it logs the refusal a second time, copies the ProblemDetail boilerplate again, and has no test of its response body.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 178,
+      "severity": "Major",
+      "category": "logging",
+      "issue": "One fulfilments-read refusal is logged twice: NotificationService.findFulfilmentsView logs 'Fulfilment read denied for referenceNumber={} organisationId={}' at WARN (NotificationService.java:137), then handleForbiddenException logs 'Forbidden (trace: {})' at WARN again with the full stack trace of an expected refusal (GlobalExceptionHandler.java:178). The house rule is one log line per outcome-changing branch.",
+      "fix": "Must: a 403 refusal writes exactly one WARN line, carrying the trace id, reference number and organisation id, and the throwable is not logged a second time for the same decision. One way: keep the service's WARN (it holds the ids) and drop the log call from handleForbiddenException, or move the ids onto ForbiddenException and log only in the handler."
+    },
+    {
+      "id": 2,
+      "line": 176,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "handleForbiddenException (lines 176-193) is another verbatim copy of the build-ProblemDetail block every handler in the file repeats: read MDC trace.id, forStatusAndDetail, setType(URI.create(\"https://api.cdp.defra.cloud/problems/...\")), setTitle, then 'if (traceId != null) setProperty(\"traceId\", traceId)' (also lines 36-48, 66-82, 91-103, 128-142, 150-167, 200-216, 223-239, 250-266). The trace-id rule and the problem-type URI base have nine homes.",
+      "fix": "Must: one private method owns building a ProblemDetail from status, detail, problem slug and title, including the type URI base and the trace-id property; every handler, including the new 403 one, calls it. One way: add problem(HttpStatus status, String detail, String slug, String title) and reduce each handler to its log line plus that call and any extra properties."
+    },
+    {
+      "id": 3,
+      "line": 176,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The new 403 handler has no test of its response body. GlobalExceptionHandlerTest covers every sibling handler (handleNotFoundException_shouldReturnNotFound, ..._shouldHandleNullTraceId, and so on) but has no handleForbiddenException case, and NotificationIT.java:371 asserts only status().isForbidden(). Removing setType, setTitle or the traceId property leaves every test green.",
+      "fix": "Must: a test fails if the 403 response loses its forbidden problem type, its 'Forbidden' title, its detail, or its traceId (present when MDC holds one, absent when it does not). One way: add handleForbiddenException_shouldReturnForbidden and handleForbiddenException_shouldHandleNullTraceId to GlobalExceptionHandlerTest, mirroring the NotFound pair."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:37Z"
+}

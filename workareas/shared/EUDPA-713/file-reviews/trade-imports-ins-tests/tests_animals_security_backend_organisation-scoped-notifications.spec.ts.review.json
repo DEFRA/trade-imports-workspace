@@ -1,0 +1,48 @@
+{
+  "file": "tests/animals/security/backend/organisation-scoped-notifications.spec.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "864a95e370a926f7c165f56ffbae32d641474414",
+  "pr": 83,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:03:43Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The assertion is correct against the AC's backend 403, but the spec sits in the @active security suite that PR and CDP runs skip, covers only fulfilments while its plants twin covers list and mutations, and copies set-up the twins should share.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 8,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The only cross-organisation e2e check for animals sits under security/ tagged @active, so it never runs where a regression would be caught: PR runs exclude @active (docs/testing/e2e-tests-gh-actions.md:9, :84), CDP refuses security:active (README.md:496), and only the scheduled main-image active scan picks it up. It also uses the plain request fixture, not proxiedNotificationApi (fixtures/security.ts), so its traffic never passes through ZAP and adds nothing to the scan that justifies the security/ home.",
+      "fix": "Must: the 'organisation B cannot read organisation A's notification' check runs on the animals-backend and animals-frontend PR e2e run. One way: move the spec to tests/animals/e2e/features/ (as tests/ins/e2e/features/address-book holds the address-book API refusal checks) and drop the @active tag; do the same for the plants twin.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 2,
+      "line": 9,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The animals spec proves only the fulfilments 403. Its plants twin in this same PR (tests/plants/security/backend/organisation-scoped-notifications.spec.ts:33-66) also proves that another organisation's list by reference returns no rows and that amend, replace, submit, copy and soft-delete return 404. The AC 'Tests show that a user in organisation A cannot see or change a notification that belongs to organisation B' is witnessed for animals only by NotificationIT, not against the deployed stack, and the twins now disagree on what they prove.",
+      "fix": "Must: the animals and plants specs witness the same cross-organisation cases: list by reference returns nothing, and every scoped mutation returns 404. One way: add the list and mutate tests to this spec using the listNotifications and mutation methods NotificationApiClient already has.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 3,
+      "line": 6,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Test set-up copied between twin specs: OTHER_ORGANISATION_ID = '9999999' is declared at line 6 here and again at tests/plants/security/backend/organisation-scoped-notifications.spec.ts:7, and the 'capture the RestClientError and assert its status' block (lines 18-24) is inlined here, written again as a local expectStatus in the plants twin (:9-18), and a third time as expectedValidationRefusalOf in tests/ins/e2e/features/address-book/expected-api-refusal.ts:10-16.",
+      "fix": "Must: one shared home for the other-organisation id and one shared helper that asserts an API call is refused with a given status; both twin specs (and the ins refusal helper, where it fits) call them, with no local copies left. One way: export OTHER_ORGANISATION_ID beside E2E_ORGANISATION_ID in adapters/http/trader-api-headers.ts, and promote a refusal helper (await pending.then(() => undefined, (e) => e) plus status assert) into shared test support.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 4,
+      "line": 10,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "Line 10 builds the owner client as new NotificationApiClient(request, undefined, undefined, E2E_ORGANISATION_ID): E2E_ORGANISATION_ID is already the constructor default, the notificationApi fixture in fixtures/ui.ts:141 already builds exactly this client, and the positional undefined placeholders (also line 16) hide which arguments are skipped. Line 2 imports E2E_ORGANISATION_ID through the address-book-api-client re-export rather than its home, adapters/http/trader-api-headers.ts, which the plants twin imports from.",
+      "fix": "Must: the owner side uses the existing notificationApi fixture, the other-organisation client is built without positional undefined placeholders, and any E2E_ORGANISATION_ID import comes from trader-api-headers. One way: take notificationApi from the fixtures, and add an otherOrganisationNotificationApi fixture (or an options object on the constructor) for the second client."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:35Z"
+}

@@ -1,0 +1,22 @@
+{
+  "file": "src/server/app/services/persistence/records/real/http/get-fulfilment.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "a535ca5361917faf1d70a8b8a87a054d97e5aeab",
+  "pr": 461,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:01:47Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "403-to-undefined mapping meets the AC (frontend shows 404) and is tested in real.requests.test.js, but the refusal branch is silent in the frontend log.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 21,
+      "severity": "Major",
+      "category": "logging",
+      "issue": "The new 403 branch (lines 21-23) turns the backend's refusal of another organisation's notification into 'not found' and logs nothing, so the frontend's log never shows that a signed-in user was refused a notification; support cannot tell a cross-organisation read from a genuinely missing reference during an incident. The house rule: another service refusing what this one accepted logs once at warn with the ids support searches by. The module already has a logger (records/real/logger.js) that nothing here uses.",
+      "fix": "Must: when the backend answers 403 for a fulfilment read, the frontend logs it once at warn with the journey reference (and the caller's organisation id) before returning undefined. One way: import { logger } from '../logger.js' and in the 403 branch call logger.warn({ journeyId }, 'Backend refused fulfilment read for another organisation') before return undefined.",
+      "best_practice": "node/pino-logging.md"
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:34Z"
+}

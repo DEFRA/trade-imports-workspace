@@ -1,0 +1,45 @@
+{
+  "file": "src/server/common/helpers/organisation-id.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "a535ca5361917faf1d70a8b8a87a054d97e5aeab",
+  "pr": 461,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:02:05Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The tests cover the happy paths, but they call the deprecated alias, leave async-context state behind, and do not pin withOrganisationId's scoping or the organisationId/currentRelationshipId precedence.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 4,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "Lines 4 and 36 call bindOrganisationId, an alias this same PR adds and marks @deprecated in organisation-id.js:35-36 in favour of enterOrganisationIdForTests. One concept now has two names, the new test exercises the deprecated one, and the preferred name has no test of its own.",
+      "fix": "Must: the test-only context setter has one name, and this test (and every other caller: test-support.js, journey.test.js, headers.test.js, real.requests.test.js) calls that name. One way: delete the bindOrganisationId alias, rename the callers to enterOrganisationIdForTests, and update the describe block here."
+    },
+    {
+      "id": 2,
+      "line": 41,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "'Should scope currentOrganisationId to withOrganisationId' asserts only the value inside the callback. Nothing checks that the value ends when the callback returns, or that the callback's result comes back, so replacing storage.run with storage.enterWith(organisationId); return fn() in organisation-id.js:40-41 keeps this test green. The title claims scoping that the assertions do not prove.",
+      "fix": "Must: the test fails if withOrganisationId leaks its value past the callback or drops the callback's return value. One way: assert currentOrganisationId() outside the call after it returns (from a known starting value), and assert withOrganisationId returns what fn returns."
+    },
+    {
+      "id": 3,
+      "line": 35,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "'Should expose the value bound for this request' (lines 35-39) has no request in it, and its bindOrganisationId call uses AsyncLocalStorage.enterWith, which leaves '5900001' set for the rest of the runner's async context. Nothing resets it, so later tests in this file start with a stale organisation id (headers.test.js has to reset with bindOrganisationId(undefined) for the same reason). The leak would also mask a check that the value is unset outside withOrganisationId.",
+      "fix": "Must: the title says what the assertion proves, and no test in this file starts with an organisation id left over from another. One way: retitle to 'Should return the organisation id entered for the current async context', and reset the context in an afterEach (or run the body inside withOrganisationId)."
+    },
+    {
+      "id": 4,
+      "line": 11,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The new fallback in sessionOrganisationId (organisation-id.js:11, credentials.organisationId ?? credentials.currentRelationshipId) is tested only with one field set at a time (lines 11-25). No test sets both, so swapping the operands keeps every test green, and which one wins is the rule the backend trusts as the notification owner (the AC names currentRelationshipId as the owner).",
+      "fix": "Must: a test pins which value organisationIdOf returns when credentials carry both organisationId and currentRelationshipId, and fails if that order flips. One way: add a case with both set to different values and assert the expected one; if the intended winner is currentRelationshipId per the AC, fix the source order first."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:34Z"
+}

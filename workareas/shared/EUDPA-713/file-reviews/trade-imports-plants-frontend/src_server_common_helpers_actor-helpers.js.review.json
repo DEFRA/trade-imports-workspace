@@ -1,0 +1,29 @@
+{
+  "file": "src/server/common/helpers/actor-helpers.js",
+  "repo": "trade-imports-plants-frontend",
+  "commit": "baffe546d79377675924fcd7d6d492dc9dcdd4f2",
+  "pr": 139,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:04:45Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The one-line change is functionally correct but duplicates the organisation-id lookup rule now also in organisationIdOf and is not covered by any buildActor test.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 12,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "buildActor:12-13 re-implements the organisation lookup 'credentials.organisationId ?? credentials.currentRelationshipId' that this PR also writes into organisationIdOf (organisation-id.js:23), whose JSDoc says it is 'The one place this value is read'. Two homes for one rule: if the precedence or source changes (e.g. delegation for plants), the actor's organisationId and the Trade-Imports-Organisation-Id header can disagree. Both names also survive for one concept now that auth/controller.js:94 copies organisationId into currentRelationshipId.",
+      "fix": "Must: one function owns how the organisation id is read from session credentials, and buildActor and organisationIdOf both call it, so the organisation-id.js JSDoc claim is true. One way: export organisationIdFromCredentials(credentials) from organisation-id.js, have organisationIdOf call it with request?.auth?.credentials, and set actor.organisationId from it."
+    },
+    {
+      "id": 2,
+      "line": 13,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The new precedence in buildActor (organisationId first, currentRelationshipId as fallback) has no test: actor-helpers.test.js is unchanged and every case sets only currentRelationshipId, so reverting line 13 to 'credentials.currentRelationshipId' or dropping the fallback keeps the suite green. Session credentials from sessionAuth() (test-helpers/session-auth.js:6) carry only organisationId, which is exactly the case the change exists for.",
+      "fix": "Must: a buildActor test fails if the actor stops taking organisationId from credentials that carry only organisationId, and one fails if organisationId stops winning over currentRelationshipId when both are set. One way: add two cases to actor-helpers.test.js asserting actor.organisationId for { organisationId } alone and for { organisationId: 'a', currentRelationshipId: 'b' } (or cover this through the shared owner's test if the rule moves to organisation-id.js)."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:37Z"
+}

@@ -1,0 +1,55 @@
+{
+  "file": "tests/plants/security/backend/organisation-scoped-notifications.spec.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "864a95e370a926f7c165f56ffbae32d641474414",
+  "pr": 83,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:04:40Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The assertions are correct against the plants backend, but the @active security placement keeps them out of every PR and CDP run, cancel-amend is not covered, and the refusal helper and seeding are duplicated instead of shared.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 20,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The cross-organisation tests sit under tests/plants/security/ and carry @active (lint-suite-tags forces @active there), so no regular run picks them up. npm test, test:docker-compose and test:docker-compose:ci all grep-invert @active. security:active is refused on CDP and is manual-dispatch only. There is no test:docker-compose:plants:security:active script, and docs/security.md still says 'Plants has no security specs yet'. A plants-backend PR (scope tests/plants/) therefore never runs the check that org A cannot see or change org B's notification.",
+      "fix": "Must: the cross-organisation read, list and mutate assertions run in the plants suite on every trade-imports-plants-backend pull request. One way: move the spec to tests/plants/e2e/ (for example tests/plants/e2e/backend/organisation-scoped-notifications.spec.ts) and drop @active. Keep only ZAP-traffic specs under security/.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 2,
+      "line": 44,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "'returns 404 when another organisation mutates a notification' (lines 44-66) covers amend, replace, submit, copy and soft-delete but never calls cancelAmendNotification. The AC lists 'cancelling an amendment' among the operations that must return 404, and the plants backend scopes it (NotificationService.cancelAmendNotification -> requireTraderNotification, line 212). NotificationIT.organisationScope_shouldHideNotificationFromOtherOrganisation omits it too, so no test fails if the cancel-amend scoping is removed.",
+      "fix": "Must: a test fails when another organisation's POST /notifications/{ref}/cancel-amend stops returning 404. One way: add await expectStatus(() => otherOrgApi.cancelAmendNotification(referenceNumber), 404) to this test. The notification is SUBMITTED, so an unscoped cancel-amend would not answer 404 either."
+    },
+    {
+      "id": 3,
+      "line": 9,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "expectStatus (lines 9-18) is a local copy of the 'call, catch, assert RestClientError with status N' rule. The animals twin spec tests/animals/security/backend/organisation-scoped-notifications.spec.ts (lines 17-24) has the same thing inline, and tests/ins/e2e/features/address-book/expected-api-refusal.ts already owns the 400 variant (expectedValidationRefusalOf). That makes three homes for one assertion rule.",
+      "fix": "Must: one shared helper owns 'this API call is refused with status N', and both organisation-scope specs (and the 400 variant) call it, with no local copies left. One way: promote a helper such as expectRefusalWith(pending, status) next to RestClient in adapters/http/ or in a shared test-support module, build expectedValidationRefusalOf on it, and delete the inline copies."
+    },
+    {
+      "id": 4,
+      "line": 22,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "All three tests repeat the same set-up: getPlantsBackendBaseUrl(), an owner NotificationApiClient for E2E_ORGANISATION_ID, createNotification, recordReferenceNumber, and in two of them submitNotification. They also each build an otherOrgApi client (lines 22-28, 34-38, 46-51). This PR adds a plantsNotificationApi fixture in fixtures/ui.ts (new NotificationApiClient(request, getPlantsBackendBaseUrl()), whose default organisation is already E2E_ORGANISATION_ID) that builds the owner client, yet nothing uses it.",
+      "fix": "Must: the owner client, the seeded notification and the other-organisation client are each built in one place, and the owner client comes from the plantsNotificationApi fixture rather than a hand-built copy. One way: take plantsNotificationApi as the owner, and put the create/record/submit seeding and the other-org client in a test.beforeEach or a small shared fixture.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 5,
+      "line": 55,
+      "severity": "Minor",
+      "category": "test-readability",
+      "issue": "otherOrgApi.saveNotification(referenceNumber, concurrencyToken, { referenceNumber, concurrencyToken }) passes referenceNumber and concurrencyToken a second time in the notification body. NotificationApiClient.saveNotification already spreads both into the body ({ referenceNumber: id, concurrencyToken, ...notification }), so the extra object adds nothing and suggests a body field the caller has to supply.",
+      "fix": "Must: the replace call passes only what the client does not already supply. One way: otherOrgApi.saveNotification(referenceNumber, concurrencyToken)."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:35Z"
+}

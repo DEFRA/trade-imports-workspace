@@ -1,0 +1,38 @@
+{
+  "file": "src/server/app/routes-live-animals.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "a535ca5361917faf1d70a8b8a87a054d97e5aeab",
+  "pr": 461,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:01:53Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The organisation wrap around the entry guard is correct and needed, but it copies set-context.js's wrapping by hand, is untested (the NODE_ENV=test header fallback masks its removal), and leaves the add-a-set recipe describing the old guard.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 97,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The entry-guard onPreHandler (routes-live-animals.js:97-103) hand-writes the same request-context wrapping that contextualMethod in shared/set-context.js:100-105 owns: withOrganisationId(organisationIdOf(request), () => withSetContext(setId, ...)). Two homes for one rule about which context a set's lifecycle code runs in; the next context added (or a second set's gateway) has to remember both places.",
+      "fix": "Must: one function owns 'run this lifecycle method for this set with the request's organisation and set context', and both the route wrapping and the entry guard call it. One way: export a helper from shared/set-context.js (e.g. withRequestContext(setId, request, fn)) that contextualMethod uses, and register the guard as server.ext('onPreHandler', (request, h) => withRequestContext(SET_ID, request, async () => ...), { sandbox: 'plugin' })."
+    },
+    {
+      "id": 2,
+      "line": 98,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "No test fails if the new withOrganisationId wrap around the entry guard (line 98) is removed. entryGuardTarget calls get(request, h), which reaches the backend through records/real/http/headers.js; under NODE_ENV=test headers() falls back to '5900001' when no organisation is in context, and no-set-singletons.test.js only counts withSetContext(SET_ID in onPreHandler registrations. In production the missing wrap would throw 'Cannot reach the notifications backend without an organisation' (500) on every guarded journey page, or send no owner scope.",
+      "fix": "Must: a test turns red when the entry guard runs without the signed-in user's organisation in context, proving the guard's backend read carries that user's Trade-Imports-Organisation-Id. One way: an injected request to a guarded journey path as organisation A against the real-records backend mock (nock) asserting the header value is A's id, not the test fallback; or extend the no-set-singletons source check to require withOrganisationId( in every onPreHandler registration.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 3,
+      "line": 97,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "The set-gateway pattern now also enters the organisation context around the entry guard (lines 97-103), but the recipe that describes it is unchanged: src/server/app/docs/add-a-set.md (rule 4 and 'The entry guard is an onPreHandler registered on the server ... the gateway re-enters the context around the guard itself') names only withSetContext. A new set built from the recipe would register a guard with no organisation and fail every guarded page against the real backend.",
+      "fix": "Must: add-a-set.md describes the entry guard exactly as the gateway now registers it, including the organisation context (or the single helper from the duplication finding that supplies both). One way: update rule 4 and the entry-guard bullet in add-a-set.md to name the helper the guard runs inside."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:34Z"
+}

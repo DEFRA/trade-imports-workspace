@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/services/persistence/records/real/http/headers.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "a535ca5361917faf1d70a8b8a87a054d97e5aeab",
+  "pr": 461,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:01:38Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Sends the session organisation header and refuses without one, but production code carries a NODE_ENV=test fallback organisation that disables that guard in tests, and the header name is declared a second time beside the address book client's copy.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 9,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "Production headers() carries a test-only fallback: when no organisation is bound and NODE_ENV is 'test', it sends the hard-coded organisation '5900001' (line 9). Test set-up lives in production code, the guard that enforces the AC 'never call without a session organisation' is switched off by an env var, and any unit test that forgets to bind an organisation silently runs as org 5900001 instead of failing. headers.test.js:18 then tests the hack itself ('Should fall back to the test default organisation in test env').",
+      "fix": "Must: headers() takes the organisation only from currentOrganisationId() and throws whenever none is bound, in every environment; tests that reach the backend bind their organisation themselves through the shared test helper. One way: delete the NODE_ENV branch, bind '5900001' in engine/test-support.js (or a vitest setup file) for the tests that rely on it, and delete the fallback test in headers.test.js."
+    },
+    {
+      "id": 2,
+      "line": 4,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "ORGANISATION_ID_HEADER = 'Trade-Imports-Organisation-Id' (headers.js:4) re-declares a value the repo already names: services/address-book/client.js:9 has its own module-local const ORGANISATION_ID_HEADER with the same string. Two homes for one header name; a rename in one leaves the other sending the old header.",
+      "fix": "Must: one module owns the organisation header name, and both the notifications backend headers and the address book client import it. One way: export ORGANISATION_ID_HEADER from common/helpers/organisation-id.js (beside currentOrganisationId) and import it in both headers.js and address-book/client.js."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:34Z"
+}

@@ -1,0 +1,21 @@
+{
+  "file": "src/config/trader-organisation.test.js",
+  "repo": "trade-imports-performance-tests",
+  "commit": "69ff5ebc9f40c407353e9257568f6debbcdc9fb4",
+  "pr": 32,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:02:52Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The single test compares the function's output against the same constants it reads, so it cannot catch a wrong header name or organisation id.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 11,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The only test builds its expected value from the same TRADER_ORGANISATION_ID and TRADER_ORGANISATION_ID_HEADER constants the function reads, so it cannot fail on the two things that matter: the header name the backend filter requires ('Trade-Imports-Organisation-Id', TraderOrganisationHeaderFilter.java:26) and the org id seeded for the E2E stub user ('5900001'). Changing either constant in trader-organisation.js keeps it green, yet breaks every trader call in journeys.js:48, readiness.js:22 and eventing.js:151 with a missing-header rejection or 404s. The title also over-claims: 'sends the default E2E organisation id' when the function sends nothing and the assertion never pins which id is the default.",
+      "fix": "Must: the test turns red if the header name stops matching the backend's required header or the organisation id stops matching the seeded E2E stub user's, and its title states only that. One way: assert the literal object, expect(traderOrganisationHeaders()).toEqual({ 'Trade-Imports-Organisation-Id': '5900001' }), titled 'returns the Trade-Imports-Organisation-Id header carrying the E2E stub user organisation 5900001'."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:36Z"
+}

@@ -1,0 +1,39 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationAggregate.java",
+  "repo": "trade-imports-animals-backend",
+  "commit": "9cf4d45bff4a8f22798ec0f63e66f5879f1ea8ab",
+  "pr": 122,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:01:03Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The organisationId field and the compound indexes meet the AC, but there is a redundant single-field index, the field Javadocs describe callers and other modules, and no test proves the required indexes exist.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 49,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "The single-field @Indexed on organisationId (line 49) builds a third index that duplicates the prefix of both new compound indexes (organisationId_status_created, organisationId_status_arrivalDate, lines 25-32). Every query on organisationId alone, including deleteByOrganisationIdIsNull in OrganisationIdCleanup, is already served by either compound index's organisationId prefix, so the extra index only adds write and memory cost on every notification save.",
+      "fix": "Must: organisationId is indexed only by the compound indexes that the scoped repository queries use; no redundant single-field index. One way: remove @Indexed from the organisationId field and keep the two @CompoundIndex entries.",
+      "best_practice": "java/spring-data-mongodb.md"
+    },
+    {
+      "id": 2,
+      "line": 45,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Field Javadocs describe callers and other modules rather than the lines below, against the house comment rules. New in this PR: organisationId (lines 45-48) names the Trade-Imports-Organisation-Id request header and states 'Set once at create; never updated on later writes', a claim about NotificationService.createNotification/updateNotification, not the field. Same rule broken elsewhere in the file: class Javadoc (lines 19-23, 'Amend baselines snapshot...'), submittedAt (lines 57-62, describes submitNotification, amend, cancel-amend and the fulfilment-view projection), expireAt (lines 66-72, cites NotificationService.stampExpiry and 'notifications created before this field existed', which is history), preAmendNotification/preAmendFulfilments (lines 80-91, describe cancel-amend and submit behaviour).",
+      "fix": "Must: no comment in NotificationAggregate describes callers, other modules, request headers or history; set-once ownership and the amend/expiry rules live in the code that enforces them, the behaviour spec or docs/. One way: delete the organisationId Javadoc (the name already says what it holds) and cut the other field Javadocs down to what the field holds, or delete them, moving rationale to the repo's docs/ or the openspec spec."
+    },
+    {
+      "id": 3,
+      "line": 25,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The AC 'The notification collection has an index on organisationId together with status and the dashboard sort fields' is met only by the @CompoundIndexes annotation (lines 25-32), and no test in the PR proves the indexes exist with those keys. No IT calls mongoTemplate.indexOps(NotificationAggregate.class) (the pattern UploadSessionRepositoryIT already uses at line 52), so deleting or mis-keying either compound index, or a sort-field rename in NotificationSort (created, notification.transport.arrivalDate), leaves every test green.",
+      "fix": "Must: an integration test fails when either organisationId/status/sort-field compound index is missing or keyed differently from the fields NotificationSort sorts on. One way: add a NotificationRepositoryIT (or a case in NotificationIT) asserting mongoTemplate.indexOps(NotificationAggregate.class).getIndexInfo() contains both named indexes with the exact key order and directions, mirroring UploadSessionRepositoryIT.",
+      "best_practice": "java/testing/integration.md"
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:33Z"
+}

@@ -1,0 +1,54 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/EcsLoggingIT.java",
+  "repo": "trade-imports-animals-backend",
+  "commit": "9cf4d45bff4a8f22798ec0f63e66f5879f1ea8ab",
+  "pr": 122,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:00:50Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The org-header and owned-notification seeding are correct for the new ownership check, but the extracted reference is still hard-coded in one assertion, the log-line search is duplicated, comments narrate the code, and one test title over-claims.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 85,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The diff extracts the reference into LOGGING_TEST_REF (line 29) and uses it in both requests (lines 56, 121), but the url.full assertion at line 85 still hard-codes \"/notifications/LOGGING-TEST/document-uploads\". The rename stopped part-way: change the constant and the seeded notification, the request and the assertion drift apart.",
+      "fix": "Must: the reference appears once, in LOGGING_TEST_REF, and every use (seed, both requests, the url.full assertion) reads it. One way: contains(\"/notifications/\" + LOGGING_TEST_REF + \"/document-uploads\"), or a DOCUMENT_UPLOADS_PATH constant used by both requests and the assertion."
+    },
+    {
+      "id": 2,
+      "line": 54,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Comments narrate the code or describe other modules: line 54-55 (\"use an app endpoint so the controller's own INFO log carries the MDC fields\" - rationale about the controller), 60, 62, 76, 81, 93 (\"Verify ... fields\"), 102, 105, 111, 117 (\"Make request WITHOUT x-cdp-request-id header\"), 125, 141 (\"trace.id should not be present when header is missing\"), and the class Javadoc on a package-private test class (lines 22-25). The diff edits lines under the 54 and 117 comments without tidying them.",
+      "fix": "Must: no comment in the file restates the line below it, explains rationale or describes the controller; any intent they carry lives in names. One way: delete the comments and the class Javadoc, and extract the log-line search into a named helper (see the duplication finding) so the steps read without commentary.",
+      "best_practice": "java/modern-java.md"
+    },
+    {
+      "id": 3,
+      "line": 63,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Both requestLogging_shouldProduceEcsJsonFormat (lines 63-73) and missingTraceIdHeader_shouldLeaveTraceIdEmpty (lines 127-137) split captured stdout and search for the first JSON line carrying url.full, written two different ways. The first version also falls through to the last JSON line when none has url.full, so a missing request log fails later on an unrelated assertion rather than on 'no request log line'.",
+      "fix": "Must: one helper owns finding the request log line in captured output, both tests call it, and it fails with a clear message when no line carries url.full. One way: a private JsonNode requestLogLine(String output) that streams lines, parses those starting with '{', returns the first with url.full, and is asserted non-null with .as(\"Expected a log line with url.full\")."
+    },
+    {
+      "id": 4,
+      "line": 115,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Title missingTraceIdHeader_shouldLeaveTraceIdEmpty claims trace.id is left empty, but the assertion at line 142 proves the field is absent (logJson.has(\"trace.id\") is false). An empty-string trace.id would fail this test, so the title states the opposite of what it proves.",
+      "fix": "Must: the test title states what the assertion proves - that the request log line has no trace.id field. One way: rename to missingTraceIdHeader_shouldOmitTraceId."
+    },
+    {
+      "id": 5,
+      "line": 19,
+      "severity": "Minor",
+      "category": "structure",
+      "issue": "The two imports the diff adds (TraderOrganisationHeaderFilter, NotificationRepository, lines 19-20) sit after the static imports, apart from the other non-static imports at lines 3-14.",
+      "fix": "Must: the new imports sit with the file's other non-static imports. One way: move lines 19-20 into the import block above the static imports."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:33Z"
+}

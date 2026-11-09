@@ -1,0 +1,29 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/document/DocumentControllerIT.java",
+  "repo": "trade-imports-animals-backend",
+  "commit": "9cf4d45bff4a8f22798ec0f63e66f5879f1ea8ab",
+  "pr": 122,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:00:52Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The seeding change is correct, but it leaves the other-notification 404 test proving nothing about the handle, and no test shows document routes refusing another organisation.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 249,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "shouldReturn404_whenTheHandleBelongsToAnotherNotification (lines 249-257) no longer proves its title: setUpDocuments seeds only NOTIFICATION_REF (line 181), so the GET to /notifications/GBN-AG-26-OTHER0/document-upload-sessions/{handle} now 404s in NotificationService.requireTraderAccess (DocumentController.java:123) because GBN-AG-26-OTHER0 does not exist for the caller's organisation, before documentService.findSession ever compares the handle with the notification. Deleting the ref check in findSession would leave this test green.",
+      "fix": "Must: the test reaches documentService.findSession with a notification the caller owns, so the 404 can only come from the handle belonging to another notification. One way: call ensureTraderNotification(notificationRepository, \"GBN-AG-26-OTHER0\") in the test (or a second constant seeded in setUpDocuments) before the GET."
+    },
+    {
+      "id": 2,
+      "line": 178,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "This PR adds requireTraderAccess to the notification-scoped document routes (register, document-upload-sessions, list: DocumentController.java:93, :123, :174), but no test anywhere sends one of these requests from another organisation. This file only ever calls webClient(\"NoAuth\") with DEFAULT_TRADER_ORG_ID, DocumentControllerTest stubs requireTraderAccess with doNothing() (line 79), and NotificationIT's cross-organisation tests (lines 2675-2754) cover notification routes only. The AC 'Tests show that a user in organisation A cannot see or change a notification that belongs to organisation B' is unproven for documents, and dropping any one of those three requireTraderAccess calls leaves the suite green.",
+      "fix": "Must: for each notification-scoped document route, a test sends the request with another organisation's header against a notification the default organisation owns and asserts 404. One way: a nested OtherOrganisation class here using webClient(\"NoAuth\", OTHER_ORG_ID) for POST /notifications/{ref}/document-uploads, GET /notifications/{ref}/document-upload-sessions/{handle} and GET /notifications/{ref}/document-uploads, each expecting isNotFound()."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:33Z"
+}

@@ -1,0 +1,40 @@
+{
+  "file": "src/server/common/helpers/organisation-id.test.js",
+  "repo": "trade-imports-plants-frontend",
+  "commit": "baffe546d79377675924fcd7d6d492dc9dcdd4f2",
+  "pr": 139,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:05:09Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The organisationIdOf cases are sound, but the scoping test cannot catch a leak, the claim precedence is untested, and one test pins a test-only export.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 41,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "'Should scope currentOrganisationId to withOrganisationId' (lines 41-45) asserts only inside the callback. If withOrganisationId used storage.enterWith instead of storage.run, so the value leaked past the callback, the test would still pass: the title claims scoping, the assertions prove only that the value is visible inside. The previous test's bindOrganisationId('5900001') (line 36) also uses enterWith with no reset, so the binding tests share state across tests (headers.test.js resets it in afterEach; this file does not).",
+      "fix": "Must: the scoping test fails when withOrganisationId does not restore the outer value after its callback, and each binding test starts from a known store. One way: bind an outer value (or reset to undefined in afterEach, as headers.test.js does), call withOrganisationId('org-scoped', ...) asserting the inner value, then assert currentOrganisationId() is back to the outer value after the call.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 2,
+      "line": 11,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The PR adds a precedence rule to organisationIdOf (organisation-id.js:23, credentials.organisationId ?? credentials.currentRelationshipId) but no test sets both claims. Swapping the operands would leave every test in this file green (lines 11-25 each set only one claim). The ticket says the owner comes from currentRelationshipId and that plants will have delegation, so which claim wins when both are present is the behaviour that decides which organisation a notification is scoped to.",
+      "fix": "Must: a test fails if organisationIdOf stops preferring the claim the service intends when a session carries both organisationId and currentRelationshipId. One way: add a case with credentials { organisationId: '5900001', currentRelationshipId: '5900002' } asserting the intended winner, and title it by that rule.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 3,
+      "line": 35,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "Lines 35-39 test bindOrganisationId, which no production code calls: its only callers are this file, headers.test.js and engine/journey.test.js (production paths routes-high-risk-plants.js:93 and set-context.js:98 use withOrganisationId). The test pins a production export that exists only as a test seam, and its title 'Should expose the value bound for this request' claims a request the test does not have.",
+      "fix": "Must: the module exports only what production reaches, and tests set the organisation through the same mechanism production uses. One way: drop bindOrganisationId and this test, and have headers.test.js and journey.test.js run their calls inside withOrganisationId(...).",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:37Z"
+}

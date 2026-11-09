@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/lib/http-status.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "a535ca5361917faf1d70a8b8a87a054d97e5aeab",
+  "pr": 461,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:01:13Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The one-line addition is correct, but it adds a second name for 403, which statusCodes.forbidden in common/constants/status-codes.js already names.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 2,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "HTTP_STATUS_FORBIDDEN = 403 adds a second name for a value the repo already names: src/server/common/constants/status-codes.js:7 has 'forbidden: 403' (statusCodes.forbidden, used by common/helpers/errors.js:7). The PR widens the existing split between lib/http-status.js and common/constants/status-codes.js (both already name 400, 404, 413, 500) rather than reusing the owner of 403; its one caller is get-fulfilment.js:21.",
+      "fix": "Must: 403 has one named home in the frontend, and get-fulfilment.js reads it from there. One way: drop HTTP_STATUS_FORBIDDEN and import statusCodes.forbidden (and statusCodes.notFound) in get-fulfilment.js; folding the two status modules into one is a follow-up for the wider split."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:34Z"
+}

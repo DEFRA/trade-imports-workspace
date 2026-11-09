@@ -1,0 +1,30 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentControllerTrailingSlashTest.java",
+  "repo": "trade-imports-animals-backend",
+  "commit": "9cf4d45bff4a8f22798ec0f63e66f5879f1ea8ab",
+  "pr": 122,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:00:42Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Test still proves trailing-slash normalisation with the new org header, but adds a no-op doNothing stub copied from DocumentControllerTest and a mis-indented builder line.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 53,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "allowTraderNotificationAccess() (lines 53-56) stubs doNothing() on requireTraderAccess, a void method on a @MockitoBean that already does nothing by default. The set-up changes nothing, yet its name claims it grants access, and the same no-op block is copied verbatim in DocumentControllerTest.java:77-80.",
+      "fix": "Must: neither DocumentController test class carries set-up that has no effect; the mock's default void behaviour is what lets the request through. One way: delete the @BeforeEach method and the now-unused doNothing/anyString/BeforeEach imports here and in DocumentControllerTest.",
+      "best_practice": "java/testing/unit.md"
+    },
+    {
+      "id": 2,
+      "line": 67,
+      "severity": "Minor",
+      "category": "test-readability",
+      "issue": "The added .header(TraderOrganisationHeaderFilter.ORGANISATION_ID_HEADER, \"5900002\") call is indented 14 spaces while its sibling builder calls (.contentType, .content) sit at 12, so the chain reads as if .header were nested.",
+      "fix": "Must: every call in the mockMvc.perform(post(...)) builder chain sits at the same indent. One way: drop the line to 12 spaces to match .contentType and .content."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:33Z"
+}

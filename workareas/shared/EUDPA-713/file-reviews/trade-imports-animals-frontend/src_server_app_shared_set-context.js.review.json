@@ -1,0 +1,37 @@
+{
+  "file": "src/server/app/shared/set-context.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "a535ca5361917faf1d70a8b8a87a054d97e5aeab",
+  "pr": 461,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:02:04Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The organisation binding works but is hidden behind set-context names, duplicated by hand in the onPreHandler guard, and no test would fail if it were removed.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 100,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "routeWithSetContext / contextualMethod (lines 100-106, 146-150) now also bind the signed-in organisation into a second AsyncLocalStorage, but the names and the module say only 'set context'. A reader of routes-live-animals.js:107 cannot predict from routeWithSetContext(SET_ID, route) that every handler, pre and route ext also gets the organisation the backend headers (headers.js:8) depend on, and set-context.js (set-keyed seam registry) is not where anyone would look for the org-scoping that enforces EUDPA-713's 404/403 rules.",
+      "fix": "Must: the wrapper that binds per-request context for a set route says, by its name or by being composed from separately named wrappers, that it binds both the set and the request's organisation, and the organisation binding lives with the organisation helper rather than inside the set-context module. One way: export a routeWithRequestContext (or withRequestOrganisation(method)) from common/helpers/organisation-id.js and compose it with routeWithSetContext in routes-live-animals.js, leaving set-context.js free of organisation imports."
+    },
+    {
+      "id": 2,
+      "line": 103,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The rule 'run this lifecycle method inside withOrganisationId(organisationIdOf(request)) and withSetContext(setId)' is written twice: set-context.js:103-104 for route handlers/pre/ext, and routes-live-animals.js:98-101 for the plugin onPreHandler entry guard, each hand-nesting the same two wrappers. A third lifecycle point (e.g. a new server.ext in a set) must remember to copy it or its backend calls throw 'Cannot reach the notifications backend without an organisation' outside tests.",
+      "fix": "Must: one function owns wrapping a lifecycle method in the request's organisation and set context; both the route wrapper and the onPreHandler guard call it. One way: export the existing contextualMethod (under an honest name) and use it for the onPreHandler in routes-live-animals.js instead of nesting withOrganisationId/withSetContext by hand."
+    },
+    {
+      "id": 3,
+      "line": 103,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "No test proves the new organisation binding at line 103: set-context.test.js has no organisation case, and the records tests bind the organisation up front via bindOrganisationId (engine/test-support.js:164, real.requests.test.js beforeEach), while headers.js:9 falls back to '5900001' under NODE_ENV=test. Deleting withOrganisationId(organisationIdOf(request), ...) from contextualMethod leaves every unit test green, yet in production every backend call from a route handler would throw, and a wrong org source would send another organisation's id.",
+      "fix": "Must: a test fails if a route handler, an options.pre entry or a route ext wrapped by routeWithSetContext stops seeing currentOrganisationId() equal to the request's session organisation (request.auth.credentials), and sees undefined for an unauthenticated request. One way: add cases to set-context.test.js's #routeWithSetContext describe that call the wrapped handler/pre/ext with a fake request carrying auth.credentials.currentRelationshipId and assert currentOrganisationId() inside it, without any enterOrganisationIdForTests set-up."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:34Z"
+}

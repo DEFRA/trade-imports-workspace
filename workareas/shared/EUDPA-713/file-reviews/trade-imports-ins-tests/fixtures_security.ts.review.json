@@ -1,0 +1,21 @@
+{
+  "file": "fixtures/security.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "864a95e370a926f7c165f56ffbae32d641474414",
+  "pr": 83,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:02:07Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new proxiedPlantsNotificationApi fixture is unused dead code that duplicates the proxied-context set-up; no functional defect.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 9,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "proxiedPlantsNotificationApi (lines 9, 19-24) is added but nothing uses it: the only importer of fixtures/security.ts is tests/animals/security/backend/notification-submission.spec.ts, which uses proxiedNotificationApi, and the new tests/plants/security/backend/organisation-scoped-notifications.spec.ts builds its own NotificationApiClient from the plain request fixture (no ZAP proxy). The fixture is dead code, and it also copies the proxied-context set-up from proxiedNotificationApi (lines 15 and 21) for a second home.",
+      "fix": "Must: fixtures/security.ts declares only fixtures a spec uses, and the ZAP-proxied request context is built in one place. One way: delete proxiedPlantsNotificationApi and the getPlantsBackendBaseUrl import; or, if plants traffic is meant to go through ZAP, have the plants security spec use it and extract a shared proxiedContext helper both fixtures call."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:35Z"
+}

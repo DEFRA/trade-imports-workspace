@@ -1,0 +1,55 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/IntegrationBase.java",
+  "repo": "trade-imports-animals-backend",
+  "commit": "9cf4d45bff4a8f22798ec0f63e66f5879f1ea8ab",
+  "pr": 122,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:00:58Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The organisation-header default and the seeding helper are correct, but the helper's name hides delete-and-replace, its comments describe callers, the org id is duplicated in NotificationIT, and one overload is unreachable.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 161,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "ensureTraderNotification (lines 161, 166) deletes any notification already stored under the reference and saves a fresh DRAFT one. 'ensure' predicts a no-op when one exists; the name hides the delete-and-replace and the DRAFT status it forces.",
+      "fix": "Must: the helper's name says it replaces whatever is stored under the reference with a new draft owned by the organisation. One way: rename to replaceWithDraftNotification(repository, referenceNumber) / seedDraftNotificationOwnedBy, and update DocumentControllerIT:181 and EcsLoggingIT:43.",
+      "best_practice": "java/modern-java.md"
+    },
+    {
+      "id": 2,
+      "line": 157,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Comments describe callers and other modules, not the lines below: the Javadoc on ensureTraderNotification (157-160) explains that 'document routes can enforce requireTraderAccess' (DocumentController/NotificationService), and the class Javadoc (56-57) says 'tests currently pass \"NoAuth\"'. Javadoc on an internal test helper is also outside the contract-only rule, and the class Javadoc's webClient paragraph (54-58) no longer states that the client also sends the Trade-Imports-Organisation-Id header.",
+      "fix": "Must: no comment in IntegrationBase describes its callers or production code; the helper's name carries its meaning. One way: delete the Javadoc at 157-160, drop the 'tests currently pass NoAuth' sentence, and either delete the webClient paragraph of the class Javadoc or make it state both default headers.",
+      "best_practice": "java/modern-java.md"
+    },
+    {
+      "id": 3,
+      "line": 65,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The default trader organisation '5900002' has two homes in the IT hierarchy: DEFAULT_TRADER_ORG_ID here (line 65) and NotificationIT.ORG_ID (NotificationIT.java:63), a subclass that then asserts created.getOrganisationId() equals its own copy (NotificationIT:133, 1996) and passes it to webClient(\"NoAuth\", ORG_ID). Change one and the other silently disagrees.",
+      "fix": "Must: the IT bases own the default organisation id once, and NotificationIT uses the inherited constant. One way: delete NotificationIT.ORG_ID and reference DEFAULT_TRADER_ORG_ID (keep OTHER_ORG_ID local or promote it beside the default)."
+    },
+    {
+      "id": 4,
+      "line": 166,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "The three-argument ensureTraderNotification(repository, referenceNumber, organisationId) overload (166-177) has no caller outside the two-argument overload: DocumentControllerIT:181 and EcsLoggingIT:43 both use the default organisation, and no test seeds a notification for another organisation through it.",
+      "fix": "Must: the helper offers only what a test reaches. One way: fold the two overloads into one method using DEFAULT_TRADER_ORG_ID, or add the cross-organisation document test that needs the organisation parameter (e.g. a document route returning 404 for another organisation's notification)."
+    },
+    {
+      "id": 5,
+      "line": 34,
+      "severity": "Minor",
+      "category": "structure",
+      "issue": "The five new uk.gov.defra imports (lines 34-38) are inserted in the middle of the org.springframework block, between org.springframework.test.context.DynamicPropertySource and org.springframework.test.web.reactive.server.WebTestClient, breaking the file's lexicographic import order.",
+      "fix": "Must: imports are in the file's sorted order. One way: move the uk.gov.defra imports after the org.testcontainers imports."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:33Z"
+}

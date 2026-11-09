@@ -1,0 +1,21 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java",
+  "repo": "trade-imports-animals-backend",
+  "commit": "9cf4d45bff4a8f22798ec0f63e66f5879f1ea8ab",
+  "pr": 122,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T14:57:45Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new cross-organisation warn in requireTraderNotification duplicates the handler's NotFound warn, the same log-once breach as #58 at a second site; no functional regressions.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 452,
+      "severity": "Major",
+      "category": "logging",
+      "issue": "requireTraderNotification (:446-459, new since 9cf4d45) logs one cross-organisation refusal twice: log.warn(\"Trader notification access denied for referenceNumber={} organisationId={}\") at :453, then the thrown NotFoundException is logged again by GlobalExceptionHandler.handleNotFoundException (:227, log.warn(\"Resource not found (trace: {})\", traceId, ex)). Same rule as #58 (a refusal logs once), now at a second site that every trader route (update, copy, submit, amend, delete, requireTraderAccess for documents) passes through. It also adds an existsByReferenceNumber query on every miss whose only use is this log line.",
+      "fix": "Must: a trader request refused because the notification belongs to another organisation writes exactly one WARN line, carrying the reference number, the organisation id, the trace id and the fact that the notification exists elsewhere; an unknown reference still writes one line. One way: resolve #58 and this together with one approach, e.g. throw a NotFoundException subclass or carry a flag that the handler logs (with MDC organisationId and trace id), and drop the service-level log.warn."
+    }
+  ],
+  "reconciled_at": "2026-11-09T14:58:04Z"
+}

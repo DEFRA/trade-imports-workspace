@@ -1,0 +1,21 @@
+{
+  "file": "adapters/http/address-book-api-client.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "864a95e370a926f7c165f56ffbae32d641474414",
+  "pr": 83,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:02:00Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Moving the organisation id and header constants into trader-api-headers is correct, but the leftover re-export gives E2E_ORGANISATION_ID a second import path that the new animals spec uses.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 8,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "export { E2E_ORGANISATION_ID } (line 8) re-exports the constant now owned by adapters/http/trader-api-headers.ts, giving it two import paths. The PR's own new specs split across them: tests/animals/security/backend/organisation-scoped-notifications.spec.ts:2 imports it from '@adapters/http/address-book-api-client' (a notifications test reaching into the address-book client for it), while tests/plants/security/backend/organisation-scoped-notifications.spec.ts:2 and notification-api-client.ts:3 import it from '@adapters/http/trader-api-headers'. The animals spec is the re-export's only consumer.",
+      "fix": "Must: E2E_ORGANISATION_ID has one import path, trader-api-headers, and every consumer uses it. One way: delete line 8's re-export and change the animals organisation-scoped-notifications spec to import from '@adapters/http/trader-api-headers'."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:35Z"
+}

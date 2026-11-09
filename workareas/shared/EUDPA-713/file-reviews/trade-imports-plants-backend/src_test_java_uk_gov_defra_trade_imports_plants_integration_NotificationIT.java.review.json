@@ -1,0 +1,67 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/plants/integration/NotificationIT.java",
+  "repo": "trade-imports-plants-backend",
+  "commit": "0169caaf183f4c31d981aa1900c3bc3b9b6281bc",
+  "pr": 16,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:04:33Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The organisation-scoping tests miss AC routes (cancel-amend, reference-filtered list, POST update path), the missing-header test cannot fail without the filter, and the header set-up is copied into every request.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 363,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "organisationScope_shouldHideNotificationFromOtherOrganisation (363-407) leaves out three cross-organisation paths the AC names: cancelling an amendment (POST /{ref}/cancel-amend), the dashboard list filtered by reference number (GET /notifications?referenceNumber=..., AC: 'with or without a reference number'), and the update path of POST /notifications with a referenceNumber in the body (NotificationService.updateNotification:380). It also asserts only status codes after the cross-organisation PUT, submit and soft-delete, never that the stored notification is unchanged, so 'cannot change' is not shown.",
+      "fix": "Must: every trader route the AC lists has a test where organisation B gets 404 (403 for fulfilments) against organisation A's notification, including cancel-amend, the reference-filtered list returning zero, and POST /notifications with A's reference; and each write case asserts A's stored notification (status, fulfilments, concurrencyToken) is the same after the refused call. One way: put A's notification into AMEND for the cancel-amend case, and read it back with notificationRepository.findByReferenceNumber after the refused writes.",
+      "best_practice": "java/testing/integration.md"
+    },
+    {
+      "id": 2,
+      "line": 410,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "traderRoutes_shouldRejectRequestsWithoutOrganisationHeader (410-416) cannot fail without TraderOrganisationHeaderFilter: NotificationController.saveNotification:55 declares @RequestHeader(HEADER_ORGANISATION_ID) as required, so Spring answers 400 with MissingRequestHeaderException whether or not the filter exists. The title also claims 'traderRoutes' (plural) but only POST /notifications is sent, and the AC's case ('rather than returning every notification') is GET /notifications with no header, which is not tested.",
+      "fix": "Must: a test that turns red if the organisation header check is removed, covering GET /notifications without the header (no list returned) as well as a write route, with a title that names exactly the routes it sends. One way: assert the filter's problem detail ('Missing required header Trade-Imports-Organisation-Id') and status 400 for GET /notifications and POST /notifications, e.g. as a @ParameterizedTest over the routes.",
+      "best_practice": "java/testing/integration.md"
+    },
+    {
+      "id": 3,
+      "line": 363,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The title organisationScope_shouldHideNotificationFromOtherOrganisation says the notification is hidden, but line 371 asserts 403 Forbidden on GET /{ref}/fulfilments, which tells the caller the notification exists, while the writes assert 404. One test also drives eight endpoints in sequence, so the first failing call hides whether the rest are scoped.",
+      "fix": "Must: each test title states what its assertions prove (hidden from the list, 404 on each write, 403 on the fulfilments read), and one failing route does not mask the others. One way: split into organisationScope_list_shouldExcludeOtherOrganisationsNotifications, fulfilments_shouldReturn403_forAnotherOrganisation, and a @ParameterizedTest writes_shouldReturn404_forAnotherOrganisation over the write routes.",
+      "best_practice": "java/testing/integration.md"
+    },
+    {
+      "id": 4,
+      "line": 38,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The organisation header set-up is copied into every request: '.header(NotificationController.HEADER_ORGANISATION_ID, ORG_ID)' appears about 27 times (62, 99, 114, 125, 143, 146, 155, 165, 185, 205, 212, 217, 227, 239, 247, 252, 262, 276, 281, 287, 366 and on), and the same ORG_ID = \"5900002\" constant is declared again in NotificationControllerTest.java:40.",
+      "fix": "Must: one shared test helper owns the trader organisation id and how it is put on a request; NotificationIT and NotificationControllerTest call it and declare no local copy. One way: a static RequestPostProcessor such as asOrganisation(String organisationId) plus a TRADER_ORGANISATION_ID constant in a shared test-support class, used as mockMvc.perform(get(...).with(asOrganisation(TRADER_ORGANISATION_ID))).",
+      "best_practice": "java/testing/integration.md"
+    },
+    {
+      "id": 5,
+      "line": 74,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The file is laid out with // Given, // When, // Then comments (74, 77, 87, 94, 97, 111, 123, 132, 139, 153, 168, 180, 183, 192, 202, 210, 215, 225, 245, 260, 273, 279, 285, 296, 299, 307, 322, 325, 334, 344, 351), which the integration-test guide bans, and several describe things other than the lines below them: 97 'the fulfilments-view projection the frontend engine uses', 215 'loads submittedAt from the aggregate, not just the single read'. The class Javadoc (31-35) and the Javadoc on the private UTC_INSTANT constant (41) are doc comments on non-public test code. The two new tests already follow the blank-line layout, so the file now mixes both.",
+      "fix": "Must: no Given/When/Then comments and no doc comments in the file; set-up, action and assertions are separated by blank lines, and any set-up that needs a label is a named helper. One way: delete the comments, and extract e.g. givenSubmittedNotification() for the repeated create-then-submit set-up.",
+      "best_practice": "java/testing/integration.md"
+    },
+    {
+      "id": 6,
+      "line": 197,
+      "severity": "Minor",
+      "category": "coverage-gap",
+      "issue": "The AC says a copy belongs to the caller's organisation, but copy_shouldProduceAFreshDraftWithItsOwnReferenceNumber (179-198) asserts reference, status and fulfilments only, never copy.getOrganisationId(). Dropping the organisationId argument in NotificationService.copyNotification:122 would leave the copy unowned and this test green.",
+      "fix": "Must: an integration test asserts the copy's organisationId is the caller's organisation. One way: add assertThat(copy.getOrganisationId()).isEqualTo(ORG_ID) to the copy test.",
+      "best_practice": "java/testing/integration.md"
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:37Z"
+}

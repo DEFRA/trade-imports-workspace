@@ -1,0 +1,57 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/plants/notification/NotificationController.java",
+  "repo": "trade-imports-plants-backend",
+  "commit": "0169caaf183f4c31d981aa1900c3bc3b9b6281bc",
+  "pr": 16,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:03:54Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Organisation scoping is wired correctly through every trader endpoint and matches the AC (404 for writes, 403 for fulfilments), but the header constant, the organisation-id source and its logging each have two homes, and the class Javadoc carries rationale.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 46,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "HEADER_ORGANISATION_ID (line 46) is a second name for TraderOrganisationHeaderFilter.ORGANISATION_ID_HEADER (filter line 26), the same Trade-Imports-Organisation-Id header. Tests (NotificationControllerTest, NotificationIT) use the controller alias while the filter uses its own, so one header has two constant names in one repo.",
+      "fix": "Must: the Trade-Imports-Organisation-Id header has one constant, with one name, referenced by the filter, the controller and the tests. One way: delete the controller alias and use TraderOrganisationHeaderFilter.ORGANISATION_ID_HEADER (or move the constant to one shared home and point both at it).",
+      "best_practice": "java/modern-java.md"
+    },
+    {
+      "id": 2,
+      "line": 55,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "Two mechanisms carry the caller's organisation id. TraderOrganisationHeaderFilter validates the header (rejects blank) and stores it as request attribute REQUEST_ORGANISATION_ID (filter line 60), which nothing reads; the controller instead re-binds the raw header with @RequestHeader(value = HEADER_ORGANISATION_ID) on nine endpoints (lines 55, 74, 93, 111, 128, 145, 163, 178, 207), each with its own implicit required check. The rule 'which value is the trusted organisation id' has two homes.",
+      "fix": "Must: the controller receives the organisation id from the single mechanism that validated it, and no unused attribute or second required-check is left behind. One way: bind the filter's REQUEST_ORGANISATION_ID with @RequestAttribute on each endpoint (or a small argument resolver), and delete whichever of the attribute or the @RequestHeader path is not used."
+    },
+    {
+      "id": 3,
+      "line": 58,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "organisationId is now written into the message text of the post, replace, submit, amend, cancelAmend, findFulfilments and softDelete log lines (lines 58, 76, 113, 130, 147, 181, 209), while TraderOrganisationHeaderFilter already puts it in MDC for every trader request, and the ECS encoder emits all MDC fields (logback-spring.xml line 18). Every such line carries it twice, and copy (line 95) and findAll (line 167) carry it only once, so two rules decide where it appears.",
+      "fix": "Must: one mechanism puts organisationId on every trader-route log line, and the controller's messages do not repeat it. One way: rely on the filter's MDC field and remove the organisationId={} placeholders and arguments added to the controller log calls.",
+      "best_practice": "java/spring-boot.md"
+    },
+    {
+      "id": 4,
+      "line": 30,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Class Javadoc (lines 30-35) gives rationale and describes other modules: 'it is accepted so the frontend's wire contract is stable across journeys, but nothing consumes it until this service publishes events'. It narrates the frontend and a future state, not this class's contract; with this PR the organisation now comes from a header, never from ActorRequest, which the comment leaves unsaid.",
+      "fix": "Must: the Javadoc states only the public contract of these endpoints (or is removed), with rationale about ActorRequest moved to the repo's docs/ or the behaviour spec. One way: reduce it to 'Notification endpoints for the plants journey.' and record the ActorRequest decision in docs/.",
+      "best_practice": "doc-comments/BEST_PRACTICES.md"
+    },
+    {
+      "id": 5,
+      "line": 52,
+      "severity": "Minor",
+      "category": "correctness",
+      "issue": "Every trader endpoint can now answer 400 when Trade-Imports-Organisation-Id is missing or blank (TraderOrganisationHeaderFilter.logAndReject), but no @ApiResponse documents it: post (52), replace, copy, submit, amend, cancelAmend, findAll (152, no 400 at all), findFulfilments (174) and softDelete. The header itself is also invisible to callers reading the OpenAPI spec of copy/submit etc. beyond the parameter.",
+      "fix": "Must: the OpenAPI annotations for every trader endpoint list the 400 returned for a missing or blank organisation header. One way: add @ApiResponse(responseCode = \"400\", description = \"Missing Trade-Imports-Organisation-Id header\", content = @Content) to each, or a shared @ApiResponses meta-annotation.",
+      "best_practice": "java/openapi-springdoc.md"
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:37Z"
+}

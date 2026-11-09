@@ -1,0 +1,29 @@
+{
+  "file": "utils/playwright/with-service-base-urls.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "864a95e370a926f7c165f56ffbae32d641474414",
+  "pr": 83,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:02:55Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The doc-comment change is factually correct but extends a comment that names callers and carries rationale, and the function's name hides its process.env side effect; no functional defect.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 4,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The JSDoc the diff edits (lines 4-10) describes callers and other modules rather than the function's contract: it names NotificationApiClient (a consumer in adapters/http/notification-api-client.ts and fixtures/ui.ts, fixtures/security.ts), contrasts with 'frontend/admin base URLs' (domain-base-urls.ts) and carries design rationale ('Keyed by env var name so a new service is just another map entry, not a new function'). The diff extends the caller list with TRADE_IMPORTS_PLANTS_BACKEND_URL, so the comment now needs editing every time a new adapter or service uses this helper. House rules: a comment describes only the lines below it, never callers or other modules; rationale goes in docs/.",
+      "fix": "Must: the doc comment on withServiceBaseUrls states only its contract (for each entry, sets process.env[envVar] to the URL; throws when a URL is empty) and names no caller, consumer, sibling module or env var example. One way: replace lines 3-11 with '/** Sets each env var in serviceBaseUrls to its URL; throws if any URL is empty. */' and move the 'not scoped per domain' rationale to the repo's docs/ if it is worth keeping."
+    },
+    {
+      "id": 2,
+      "line": 12,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "withServiceBaseUrls(config, serviceBaseUrls) reads as a config transformer like withContainerHostResolver and withZapProxy (which return a new config), but it returns the config untouched (line 19) and its real effect is writing process.env (line 17). The name hides the side effect, and the sibling doing the same job for domain URLs is named applyDomainBaseUrls(...): void in utils/playwright/domain-base-urls.ts:22, so one concept has two shapes. Callers: playwright.config.ts:22, playwright.docker-compose.config.ts.",
+      "fix": "Must: the function's name says it sets process environment variables, and its signature matches applyDomainBaseUrls (no pass-through config). One way: rename to applyServiceBaseUrls(serviceBaseUrls: Record<string, string>): void, call it as a statement before the config is built in playwright.config.ts and playwright.docker-compose.config.ts, and rename the file to apply-service-base-urls.ts."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:35Z"
+}

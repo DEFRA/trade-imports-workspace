@@ -1,0 +1,29 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationServiceTest.java",
+  "repo": "trade-imports-animals-backend",
+  "commit": "9cf4d45bff4a8f22798ec0f63e66f5879f1ea8ab",
+  "pr": 122,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:01:13Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Mechanical re-scoping of every test to organisation-filtered lookups is correct and the new 403 fulfilments test is sound, but the owner-stamp assertion hides under an unrelated title and the new requireTraderAccess gate has no test anywhere.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 177,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The create-path owner stamp (createNotification sets organisationId from the caller, AC 1) is asserted only as an extra line (177) inside saveNotification_shouldCreateNotificationWithGeneratedReferenceNumber, whose title claims only the generated reference number; no test title states that a new notification is stored with the caller's organisation as owner, and copyNotification tests (e.g. copyNotification_shouldRetainCopiedFields ~1912) assert nothing about the copy's organisationId.",
+      "fix": "Must: one test whose title states that a created notification stores the caller's organisation ID as its owner proves it, and the reference-number test asserts only what its title claims. One way: move the captor and line 177 into saveNotification_shouldStoreCallersOrganisationAsOwner_onCreate, and add the same assertion to a copy test titled for it (copyNotification_shouldOwnTheCopyByCallersOrganisation)."
+    },
+    {
+      "id": 2,
+      "line": 797,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "NotificationService.requireTraderAccess (new public method, NotificationService.java:441, called by DocumentController.java:93/123/174 to gate document endpoints by organisation) has no test here; DocumentControllerTest and DocumentControllerTrailingSlashTest stub it with doNothing(), and no IT exercises a document endpoint from another organisation, so removing its organisation check leaves every test green.",
+      "fix": "Must: a test fails if requireTraderAccess stops refusing a reference number that the caller's organisation does not own. One way: add requireTraderAccess_shouldThrowNotFound_whenReferenceNotOwnedByOrganisation stubbing findByReferenceNumberAndOrganisationId(ref, ORG_ID) to Optional.empty() and asserting NotFoundException containing the ref, plus a passing case for an owned ref."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:33Z"
+}

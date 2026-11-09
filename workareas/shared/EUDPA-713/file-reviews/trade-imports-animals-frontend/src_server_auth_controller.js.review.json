@@ -1,0 +1,30 @@
+{
+  "file": "src/server/auth/controller.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "a535ca5361917faf1d70a8b8a87a054d97e5aeab",
+  "pr": 461,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:01:54Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The one added line writes a session key that the profile spread already holds and nothing reads, and the file's comments break the house comment rules; no functional defect.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 94,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "The added 'currentRelationshipId: profile.organisationId' does nothing. '...profile' on line 93 already carries currentRelationshipId, because the Bell profile spreads the token payload (src/plugins/auth.js:41) and sets organisationId from payload.currentRelationshipId (auth.js:44), so the line writes the value already there. sessionOrganisationId (common/helpers/organisation-id.js:10) reads 'organisationId ?? currentRelationshipId', and sign-in is refused without organisationId (controller.js:51), so nothing reads the key on this path. No controller.test.js test asserts it, and removing it turns no test red. It adds a second session key for the owning organisation ('one concept, one name') with no behaviour behind it.",
+      "fix": "Must: the OIDC sign-in session holds the owning organisation once, from the token, with no write that repeats a value '...profile' already supplies. One way: delete line 94. If the backend header must come from currentRelationshipId per the ticket's Tech Notes, make organisationIdOf/sessionOrganisationId the single reader of that key instead, and cover it with a controller.test.js test that reads the stored session."
+    },
+    {
+      "id": 2,
+      "line": 11,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The file's comments break the house comment rules. Lines 11-20: a JSDoc on the non-exported helper unauthorisedChrome, giving rationale about kit.base, set layouts and 'right today and wrong the moment a second set mounts', which is history and describes other modules. Lines 33-35 describe user and browser behaviour (bookmarks, the back button), not the lines below. Lines 37-38 describe Bell internals. Lines 70-73 describe Defra ID roles and Siti Agri, another service. Lines 117-120 give Entra/CDP-WAF rationale. Lines 135-136, 153-155 and 161-163 give rationale and a 'should never be called' caller claim. Line 107 duplicates what the name getSafeRedirect says.",
+      "fix": "Must: every comment left in controller.js describes only the lines directly below it, with no rationale about other services, callers, libraries or history, and no doc comment on a non-exported helper. Rationale moves to the repo's docs/ (auth sign-in/sign-out notes) or is deleted. One way: delete the JSDoc on unauthorisedChrome and the comments at 33-38, 70-73, 90, 101, 104, 107, 117-120, 135-136, 153-155 and 161-163, then move the sign-out round-trip and Siti Agri permissions rationale into docs/.",
+      "best_practice": "node/code-style.md"
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:34Z"
+}

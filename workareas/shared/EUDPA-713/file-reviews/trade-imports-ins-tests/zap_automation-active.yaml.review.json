@@ -1,0 +1,29 @@
+{
+  "file": "zap/automation-active.yaml",
+  "repo": "trade-imports-ins-tests",
+  "commit": "864a95e370a926f7c165f56ffbae32d641474414",
+  "pr": 83,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:03:32Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The plants-backend context is declared but no activeScan job attacks it, and the local stack never supplies its URL to ZAP.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 84,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "The plants-backend context (lines 84-96) is declared but no activeScan job names it: the jobs at lines 131-206 cover frontend, admin, ins, backend and address-book only. The new plants spec tests/plants/security/backend/organisation-scoped-notifications.spec.ts is tagged @active and drives traffic through ZAP, so security:active passes the no-traffic gate in run-and-gate.ts and reports plants-backend clean without ever attacking it. The referenceNumber dataDrivenNodes rule exists so activeScan fuzzes the id (header comment, lines 10-15), which never happens here. config/zap.ts ZAP_SCOPE_CONTEXTS also has no plants entry, so no per-domain active run covers it either.",
+      "fix": "Must: every context declared in automation-active.yaml is attacked by an activeScan job, and plants-backend is reachable by a scoped active run. One way: add an activeScan job with context: plants-backend, maxScanDurationInMins: 60 and the DOM XSS rule off like its siblings; update the cap comment at lines 137-142 (measured times and 'the four below') to cover it; add plants: ['plants-backend'] to ZAP_SCOPE_CONTEXTS in config/zap.ts."
+    },
+    {
+      "id": 2,
+      "line": 86,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "The new context URL ${ZAP_TRADE_IMPORTS_PLANTS_BACKEND_URL} is set for CDP only (entrypoint.sh:63). The local stack's ZAP container gets its context URLs from docker/stack/security.compose.yml in trade-imports-workspace, which lists the frontend, admin, ins, animals backend and address-book URLs but not plants-backend, and no workspace PR is in this set. A local security run therefore registers the plants-backend context with an unresolved URL, so its excludePaths and referenceNumber folding never apply to traffic on http://localhost:8091.",
+      "fix": "Must: the local ZAP container resolves ZAP_TRADE_IMPORTS_PLANTS_BACKEND_URL to the stack's plants-backend, on a same-named branch in trade-imports-workspace as rule 2 requires. One way: add ZAP_TRADE_IMPORTS_PLANTS_BACKEND_URL: ${ZAP_TRADE_IMPORTS_PLANTS_BACKEND_URL:-http://localhost:8091} to the zap service environment in docker/stack/security.compose.yml."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:35Z"
+}

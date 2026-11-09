@@ -1,0 +1,45 @@
+{
+  "file": "src/server/app/services/persistence/records/real/real.requests.test.js",
+  "repo": "trade-imports-plants-frontend",
+  "commit": "baffe546d79377675924fcd7d6d492dc9dcdd4f2",
+  "pr": 139,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:04:48Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new 403 test is correct and fails without the change, but no adapter request test asserts the organisation header this PR adds, and the new test over-claims in its title and copies the 404 test.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 150,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "No request in this file asserts the Trade-Imports-Organisation-Id header, the change this PR makes to every adapter call. The load (l.150), create (l.83), PUT (l.199), transition (l.307), copy (l.335) and soft-delete (l.355) tests assert URL, method, body and Idempotency-Key only, and run on headers.js's NODE_ENV=test fallback '5900001' without binding an organisation. Dropping headers() from get-fulfilment.js, put.js, create.js or transition.js turns nothing here red; headers.test.js only calls headers() directly.",
+      "fix": "Must: each adapter request path (load, create, replaceFulfilment, finalise/amend/cancelAmend, copy, softDelete) has an assertion that the request carries the organisation bound for the request, using a value distinct from the test-env fallback. One way: bindOrganisationId('5900042') in each describe's beforeEach and add expect(request.headers.get(ORGANISATION_ID_HEADER)).toBe('5900042') to the existing request-shape assertions."
+    },
+    {
+      "id": 2,
+      "line": 169,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Title 'Should return undefined when the fulfilment GET returns 403 for another organisation' claims more than the test proves: the set-up mocks a bare 403 and binds no organisation, so nothing about 'another organisation' is exercised or asserted.",
+      "fix": "Must: the title states only what the assertions prove. One way: 'Should return undefined when the fulfilment GET returns 403' (or fold into the 404 case per the duplication item)."
+    },
+    {
+      "id": 3,
+      "line": 169,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The new 403 test (l.169-178) is a line-for-line copy of the 404 test (l.158-167); only the mocked status and the title differ.",
+      "fix": "Must: one test body covers both refusal statuses that load maps to undefined. One way: it.each([[404, 'Not Found'], [403, 'Forbidden']])('Should return undefined when the fulfilment GET returns %i', ...)."
+    },
+    {
+      "id": 4,
+      "line": 20,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Two comments break the house comment rules: l.20-22 ('The adapter is manifest-agnostic — it moves an opaque fulfilment map over HTTP — so the payloads here are literal maps...') describes another module and carries rationale; l.153-154 ('Load path fires exactly one request — the fulfilments GET — and no other notifications endpoints...') restates the toHaveLength(1) assertion below it with a count.",
+      "fix": "Must: neither comment remains; any rationale worth keeping lives in the repo's docs/. One way: delete both comments; the constant names and the toHaveLength(1) assertion already say it."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:37Z"
+}

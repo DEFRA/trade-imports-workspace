@@ -1,0 +1,55 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/plants/filter/TraderOrganisationHeaderFilter.java",
+  "repo": "trade-imports-plants-backend",
+  "commit": "0169caaf183f4c31d981aa1900c3bc3b9b6281bc",
+  "pr": 16,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:03:54Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The filter rejects requests with no organisation header as the AC asks, but it sets a request attribute nothing reads, copies the 400 problem format without traceId, has two names for its header constant, and has no test that fails if it is removed.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 27,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "Line 60 stores the organisation ID in request attribute REQUEST_ORGANISATION_ID (\"trade.imports.traderOrganisationId\"), but nothing in the repo reads it: every NotificationController handler re-reads the raw header with @RequestHeader(HEADER_ORGANISATION_ID). Two mechanisms carry one value, and one of them is dead.",
+      "fix": "Must: the organisation ID reaches handlers by exactly one route, and no constant or attribute is left that nothing reads. One way: delete REQUEST_ORGANISATION_ID and the setAttribute call, keeping @RequestHeader in the controller (or have handlers take the attribute via @RequestAttribute and drop @RequestHeader)."
+    },
+    {
+      "id": 2,
+      "line": 70,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "logAndReject (lines 70-78) hand-builds the 400 ProblemDetail (title \"Bad Request\", type https://api.cdp.defra.cloud/problems/bad-request) that GlobalExceptionHandler.handleBadRequestException already owns (GlobalExceptionHandler.java:126-145). The copies already differ: the handler adds a traceId property from MDC and this one does not, so a missing-header 400 is the only problem response support cannot tie to a trace.",
+      "fix": "Must: one place defines the bad-request problem body, and the filter's 400 carries the same fields (including traceId) as every other 400. One way: extract a static ProblemDetail factory (e.g. ProblemDetails.badRequest(detail)) used by both GlobalExceptionHandler and the filter."
+    },
+    {
+      "id": 3,
+      "line": 71,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "Line 71 builds a logger per call with a fully qualified org.slf4j.LoggerFactory.getLogger(...), and line 75 inlines java.net.URI, instead of the repo's @Slf4j log field and imports (GlobalExceptionHandler and NotificationController both use @Slf4j).",
+      "fix": "Must: the filter logs through the same @Slf4j log field and imported types as the rest of the service. One way: annotate the class @Slf4j, call log.warn(...), and import java.net.URI.",
+      "best_practice": "java/spring-boot.md"
+    },
+    {
+      "id": 4,
+      "line": 55,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "No test fails if this filter is deleted. The only reject test, NotificationIT.traderRoutes_shouldRejectRequestsWithoutOrganisationHeader, sends POST /notifications with no header and asserts only 400, which the controller's required @RequestHeader already produces (MissingRequestHeaderException -> 400). The case only the filter catches, a blank header (line 55 isBlank()), is untested, as is the problem body (detail naming Trade-Imports-Organisation-Id, application/problem+json).",
+      "fix": "Must: a test turns red when the filter is removed or its blank check is dropped. One way: add a filter unit test (or IT cases) for a blank header and a missing header on a GET route that assert 400 with content type application/problem+json and detail 'Missing required header Trade-Imports-Organisation-Id', plus that DELETE /notifications and GET /notifications/reference-numbers pass without the header.",
+      "best_practice": "java/testing/unit.md"
+    },
+    {
+      "id": 5,
+      "line": 26,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "One header has two names: ORGANISATION_ID_HEADER here and NotificationController.HEADER_ORGANISATION_ID (NotificationController.java:46), declared only as an alias of this one; tests and handlers use the alias, the filter uses this.",
+      "fix": "Must: the organisation header constant has one name, used by the filter, the controller and the tests. One way: delete the HEADER_ORGANISATION_ID alias and reference TraderOrganisationHeaderFilter.ORGANISATION_ID_HEADER everywhere (or move the single constant to the controller beside HEADER_USER_ID and have the filter reference it)."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:37Z"
+}

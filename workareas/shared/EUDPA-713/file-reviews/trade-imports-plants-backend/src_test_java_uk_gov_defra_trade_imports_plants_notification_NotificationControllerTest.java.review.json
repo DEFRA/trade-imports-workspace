@@ -1,0 +1,31 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/plants/notification/NotificationControllerTest.java",
+  "repo": "trade-imports-plants-backend",
+  "commit": "0169caaf183f4c31d981aa1900c3bc3b9b6281bc",
+  "pr": 16,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:04:07Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The tests were updated mechanically for the new organisation header, but anyString() matchers mean none of them proves the header value reaches the service, and nothing in this slice tests that a request with no header is rejected.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 68,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Every service stub and never-verify matches the organisation argument with anyString() (lines 68, 115, 145, 158, 171, 184, 197, 211, 224, 253), so no controller test can fail if the controller passes the wrong organisation to the service, such as a value from the body or a constant. ORG_ID is sent as the header but never compared, so the one thing the change adds to each endpoint, header-to-service wiring, is unasserted at this layer.",
+      "fix": "Must: each positive-path test fails when the controller passes anything other than the Trade-Imports-Organisation-Id header value to the service. One way: stub with eq(ORG_ID) in place of anyString() on every when(...) for a trader route (the never() verifies can keep anyString()).",
+      "best_practice": "java/testing/unit.md"
+    },
+    {
+      "id": 2,
+      "line": 230,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "No test covers a trader route called without, or with a blank, Trade-Imports-Organisation-Id header. The AC says the backend rejects such a request rather than returning every notification, and the riskiest route is GET /notifications (line 230), but the only test of a missing header in the PR is NotificationIT.traderRoutes_shouldRejectRequestsWithoutOrganisationHeader, which posts to POST /notifications alone. TraderOrganisationHeaderFilter has no test of its own, and its exemptions (bulk DELETE, GET /notifications/reference-numbers) are only witnessed implicitly by the admin tests at lines 264-328. This @WebMvcTest slice already loads the filter, so a missing header on GET /notifications, a read route and a write route would each still reach the service if the filter's path check regressed, and nothing would fail.",
+      "fix": "Must: a test fails if any trader-facing notification route (list, fulfilments, replace, copy, submit, amend, cancel-amend, soft-delete, create) accepts a request with no or a blank organisation header, and asserts the service is never called. One way: a @ParameterizedTest here over those method/path pairs that sends no header and a blank header, expects 400 with the bad-request problem type, and verifies no interaction with notificationService.",
+      "best_practice": "java/testing/unit.md"
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:37Z"
+}

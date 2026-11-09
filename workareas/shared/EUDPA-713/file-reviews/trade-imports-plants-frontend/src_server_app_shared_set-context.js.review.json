@@ -1,0 +1,40 @@
+{
+  "file": "src/server/app/shared/set-context.js",
+  "repo": "trade-imports-plants-frontend",
+  "commit": "baffe546d79377675924fcd7d6d492dc9dcdd4f2",
+  "pr": 139,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:04:57Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The organisation binding works but is hidden behind set-context names, duplicated in the onPreHandler guard, and untested because headers.js falls back to a fixed organisation under test.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 95,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "contextualMethod (line 95) and the exported routeWithSetContext (line 141) now bind the request's organisation as well as the set (line 98), but both names, and the routeWithSetContext JSDoc at lines 133-140 ('every method it declares runs inside its own set'), still say only 'set context'. A reader of routes-high-risk-plants.js:102 cannot tell that this call is where every route handler gets the organisation the backend headers send, so the JSDoc is made untrue by the diff and the name hides a change.",
+      "fix": "Must: the function that wraps each route method has a name and contract that say it runs the method inside both its set and the signed-in organisation, or the organisation binding moves out so the set-context names are true again. One way: rename to routeWithRequestContext / requestContextMethod and update the JSDoc to name both bindings; or keep set-context.js about sets only and bind the organisation in its own extension (see the duplication finding).",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 2,
+      "line": 98,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The rule 'run this request's work inside the signed-in organisation' is written in two places: set-context.js:98 wraps every route method in withOrganisationId(organisationIdOf(request), ...), and routes-high-risk-plants.js:92-98 hand-writes the same wrap around the onPreHandler entry guard. Any new set-level extension that reaches the backend has to remember a third copy, and forgetting it throws in headers.js only in production (tests fall back to '5900001'). It also puts organisation scoping inside the module that owns set mounts (wrong layer).",
+      "fix": "Must: one function owns binding the request's organisation for backend calls, and both the route methods and the set's onPreHandler guard get it from that one owner. One way: export a single requestScoped(setId, request, fn) (or similar) from organisation-id.js or set-context.js that applies withOrganisationId and withSetContext together, and call it from contextualMethod and the onPreHandler in routes-high-risk-plants.js; mirror the change in the animals twin.",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 3,
+      "line": 98,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "No test proves the new organisation binding at line 98. set-context.test.js '#routeWithSetContext' asserts only currentSetId() inside wrapped handlers/extensions, and headers.js falls back to '5900001' whenever NODE_ENV is 'test', so deleting withOrganisationId(organisationIdOf(request), ...) leaves every unit test green while production calls to the notifications backend would throw 'Cannot reach the notifications backend without an organisation'. This is the line that carries the ticket AC (frontend sends the caller's organisation on list/read calls).",
+      "fix": "Must: a test fails when a route method wrapped by routeWithSetContext no longer runs with currentOrganisationId() equal to the organisation from request.auth.credentials. One way: in set-context.test.js, wrap a handler that returns currentOrganisationId(), call it with { auth: { credentials: { currentRelationshipId: 'org-b' } } }, and assert 'org-b'; add the same for an ext entry and a pre entry.",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:37Z"
+}

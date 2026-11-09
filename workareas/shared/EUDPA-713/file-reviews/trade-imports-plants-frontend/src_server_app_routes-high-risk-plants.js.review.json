@@ -1,0 +1,37 @@
+{
+  "file": "src/server/app/routes-high-risk-plants.js",
+  "repo": "trade-imports-plants-frontend",
+  "commit": "baffe546d79377675924fcd7d6d492dc9dcdd4f2",
+  "pr": 139,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:04:24Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Binding the organisation round the entry guard is correct and needed, but the binding rule now lives in two places, the add-a-set recipe was not updated, and no test fails if this wrap is removed because headers() falls back to a fixed id under NODE_ENV=test.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 92,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The rule 'run this request's code with its verified organisation bound' is written twice: here around the entry guard (routes-high-risk-plants.js:92-99, withOrganisationId(organisationIdOf(request), ...) nested round withSetContext(SET_ID, ...)) and in shared/set-context.js:97-100 contextualMethod (the same withOrganisationId(organisationIdOf(request), () => withSetContext(setId, ...)) pair). Every set gateway now has to remember to repeat the pairing for its own onPreHandler, and a gateway that forgets gets a 500 from headers() on every guarded deep link.",
+      "fix": "Must: one function owns entering a request's set and its organisation together; contextualMethod in set-context.js and this gateway's onPreHandler both call it, and neither spells out withOrganisationId(organisationIdOf(request), ...) itself. One way: export a withRequestContext(setId, request, fn) from shared/set-context.js that wraps withOrganisationId(organisationIdOf(request), () => withSetContext(setId, fn)), and use it in both places."
+    },
+    {
+      "id": 2,
+      "line": 92,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "The gateway pattern gained a step and its recipe was left behind. src/server/app/docs/add-a-set.md (rule 4, lines 64-70, and the entry-guard bullet at 233-235: 'the gateway re-enters its set around it') and docs/architecture.md 'Set context' (line 118) still say a gateway only re-enters its set around the onPreHandler entry guard. A second set built from add-a-set.md would leave its guard with no organisation bound, and headers() in records/real/http/headers.js throws 'Cannot reach the notifications backend without an organisation...' on every guarded path.",
+      "fix": "Must: add-a-set.md and architecture.md describe what a gateway's onPreHandler and routeWithSetContext now bind (set and organisation), so a new set built from the recipe reaches the backend with the session's organisation. One way: once the shared helper from the duplication finding exists, name it in rule 4 and the entry-guard bullet in place of withSetContext."
+    },
+    {
+      "id": 3,
+      "line": 93,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "No test fails if the withOrganisationId wrap at routes-high-risk-plants.js:93 is removed. The entry guard calls get(request, h) (entry-guard.js), which reaches the backend through records/real/http/headers.js, and headers() substitutes '5900001' whenever NODE_ENV === 'test', so an unbound guard still sends a header under vitest. The only test asserting Trade-Imports-Organisation-Id on a notifications call (engine/journey.test.js:361, 382) binds it by hand with bindOrganisationId and never goes through this plugin's onPreHandler; entry-guard.test.js does not assert the header.",
+      "fix": "Must: a test drives a guarded deep link through the registered plants plugin with real records, signed in as an organisation other than 5900001, and asserts the backend fetch carries that organisation in Trade-Imports-Organisation-Id; it goes red when the wrap at line 93 is removed. One way: drop the NODE_ENV test fallback in headers.js (reviewed on that file) so the missing binding throws, then add the injected-request case to the existing plugin-level suite (co-residency.test.js or routes.test.js)."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:37Z"
+}

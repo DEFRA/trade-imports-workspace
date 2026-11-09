@@ -1,0 +1,46 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java",
+  "repo": "trade-imports-animals-backend",
+  "commit": "9cf4d45bff4a8f22798ec0f63e66f5879f1ea8ab",
+  "pr": 122,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:01:48Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new organisation-scope ITs are sound but miss cancel-amend, the unfiltered dashboard list and header-over-body ownership, and the test organisation is named three ways, with submitAs not sending the organisation it is given.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 62,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "One organisation, three names, one of which mispredicts: ORG_ID (line 63, \"5900002\") duplicates IntegrationBase.DEFAULT_TRADER_ORG_ID (\"5900002\"), and its Javadoc 'The acting user's organisation, sent on submit and copy' (line 62) is now untrue - the owner comes from the Trade-Imports-Organisation-Id header, never the body. submitAs(referenceNumber, organisationId) (line 2580) always sends the default header via webClient(\"NoAuth\") and puts organisationId only in the body, so submitAs(ref, OTHER_ORG_ID) would not submit as that organisation. The new assertions at 133 and 1996 compare to ORG_ID and only pass because the two constants happen to share a value; the new tests mix webClient(\"NoAuth\", ORG_ID) with submitAs's implicit default.",
+      "fix": "Must: the test file names the trader's organisation once (the IntegrationBase constant), with no Javadoc restating where it is sent, and a helper whose name says it acts as an organisation sends that organisation in the header. One way: delete ORG_ID and its Javadoc and use DEFAULT_TRADER_ORG_ID; make submitAs call webClient(\"NoAuth\", organisationId) (or rename it to submitWithActorOrganisation if the body actor is what it means)."
+    },
+    {
+      "id": 2,
+      "line": 2673,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The cross-organisation IT (organisationScope_shouldHideNotificationFromOtherOrganisation, 2673-2732) misses parts of the AC that only an end-to-end Mongo test can prove: (1) cancel-amend (POST /{ref}/cancel-amend) for another organisation is never called, though the AC lists 'cancelling an amendment' and the controller now scopes it (NotificationController:174); (2) the dashboard list WITHOUT a reference number is never called as another organisation, so findAllViewByStatusInAndOrganisationId is proven only by Mockito stubs in NotificationServiceTest; (3) nothing proves the owner comes from the header and not the body - every request sends header and body organisation as the same \"5900002\"; (4) after the 404s on PUT/amend/soft-delete the stored notification is never re-read, so a write that lands before the 404 would still pass.",
+      "fix": "Must: an IT shows that organisation B gets 404 on cancel-amend, an empty dashboard list with no reference filter, and leaves organisation A's notification unchanged in Mongo (status, content); and an IT shows that a create whose body actor carries a different organisation is stored with the header's organisation. One way: put the notification into AMEND as ORG_ID and add the cancel-amend and unfiltered GET calls as OTHER_ORG_ID, then assert notificationRepository.findByReferenceNumber(ref) still has status AMEND/SUBMITTED and the original origin; add a post test with actor.organisationId=OTHER_ORG_ID and header ORG_ID asserting getOrganisationId() is ORG_ID."
+    },
+    {
+      "id": 3,
+      "line": 2736,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The new tests copy set-up the file already has: lines 2736-2740 rebuild createNotificationDto(\"GB\", \"Live cattle\") by hand to add fulfilments (the file does createNotificationDto + setFulfilments(sampleFulfilments()) at 1420-1421 and 2373-2374), and the 'POST, expect 200, read body, getReferenceNumber' block is pasted twice more (2675-2684, 2741-2750) instead of going through a helper like createNotificationWithLiteralConsignor (2569).",
+      "fix": "Must: the two organisation-scope tests create their notification through one shared helper and reuse createNotificationDto. One way: add private String createNotificationAs(NotificationDto dto, String organisationId) that posts via webClient(\"NoAuth\", organisationId) and returns the reference, and build the fulfilments DTO with createNotificationDto(...) then setFulfilments(sampleFulfilments()).",
+      "best_practice": "java/testing/unit.md"
+    },
+    {
+      "id": 4,
+      "line": 2656,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "The three new @Test methods (2656-2759) are appended after the private helpers (2525-2654), so the file's tests-then-helpers layout breaks and readers scanning the test list miss the organisation-scope tests.",
+      "fix": "Must: every @Test in NotificationIT sits above the private helper section. One way: move the three tests to sit before currentConcurrencyToken (2525), next to the other findAll/fulfilments tests."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:33Z"
+}

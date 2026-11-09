@@ -1,0 +1,21 @@
+{
+  "file": "config/service-base-urls.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "864a95e370a926f7c165f56ffbae32d641474414",
+  "pr": 83,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:02:03Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new getPlantsBackendBaseUrl is correct and wired in both Playwright configs, but it leaves the existing getBackendBaseUrl ambiguous about which backend it returns.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 13,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "getBackendBaseUrl (line 13) reads TRADE_IMPORTS_ANIMALS_BACKEND_URL, but now that getPlantsBackendBaseUrl (line 15) sits beside it the bare 'Backend' no longer tells the reader which backend it returns; the env var says animals, the getter does not, so one concept carries two names (its sole caller is the NotificationApiClient default at adapters/http/notification-api-client.ts:22, which plants fixtures override).",
+      "fix": "Must: the getter for the animals backend URL names the animals backend, matching its env var and its plants sibling, and every caller uses that name. One way: rename getBackendBaseUrl to getAnimalsBackendBaseUrl and update adapters/http/notification-api-client.ts."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:35Z"
+}

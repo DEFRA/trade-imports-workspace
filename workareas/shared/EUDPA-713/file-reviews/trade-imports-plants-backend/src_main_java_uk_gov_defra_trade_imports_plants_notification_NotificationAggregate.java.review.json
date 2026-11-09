@@ -1,0 +1,31 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/plants/notification/NotificationAggregate.java",
+  "repo": "trade-imports-plants-backend",
+  "commit": "0169caaf183f4c31d981aa1900c3bc3b9b6281bc",
+  "pr": 16,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:03:47Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "organisationId field and the AC's compound index are correct, but the single-field organisationId index duplicates the compound index's prefix and the field Javadoc describes callers rather than the field.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 43,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "The single-field @Indexed on organisationId (line 43) is a second index for an access path the new compound index organisationId_status_created (lines 24-26) already serves: organisationId is that index's prefix, so findAllViewByStatusInAndOrganisationId and deleteByOrganisationIdIsNull can both use it, and findByReferenceNumberAndOrganisationId resolves through the unique referenceNumber index. The extra index costs a write and storage on every save and serves no query.",
+      "fix": "Must: each query on organisationId is served by exactly one index on the notification collection, with no index whose fields are a prefix of another. One way: remove @Indexed from organisationId and keep the @CompoundIndex.",
+      "best_practice": "java/spring-data-mongodb.md"
+    },
+    {
+      "id": 2,
+      "line": 39,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Field Javadoc in this file describes callers and other modules instead of the lines below it, and doc comments sit on private fields that are not public API. Added by this PR: lines 39-42 on organisationId ('Set once at create from Trade-Imports-Organisation-Id; never updated on later writes') describe the controller header and NotificationService.createNotification/replace; nothing in this class enforces it (@Data generates a public setOrganisationId). Same breach already in the file: lines 55-60 (submittedAt names submitNotification and the fulfilment-view projection, with amend/cancel-amend narration), 63-68 (expireAt names NotificationService.stampExpiry and carries rationale for a plain index over a TTL index), 79 and 83 (baselines name cancelAmend and submit-from-amend), 76 ('never interpreted by the backend'), and 18-22 (class rationale about amend baselines).",
+      "fix": "Must: no comment in NotificationAggregate describes a caller, another class, a request header or rationale; any rule a comment stated lives in the code that enforces it, in the behaviour spec, or in the repo docs. One way: delete the field Javadoc at lines 39-42, 55-60, 63-68, 76, 79 and 83 and the class Javadoc rationale, and move the 'organisation set once at create, never changed' rule into the behaviour spec (or enforce it with @Setter(AccessLevel.NONE) on organisationId and set it through the builder at create).",
+      "best_practice": "java/modern-java.md"
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:37Z"
+}

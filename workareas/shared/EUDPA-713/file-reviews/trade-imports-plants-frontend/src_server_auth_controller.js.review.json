@@ -1,0 +1,39 @@
+{
+  "file": "src/server/auth/controller.js",
+  "repo": "trade-imports-plants-frontend",
+  "commit": "baffe546d79377675924fcd7d6d492dc9dcdd4f2",
+  "pr": 139,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:04:57Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The one-line change is a no-op that duplicates the claim-to-organisation mapping the Bell profile already owns, and the file carries comment and logging breaches; no functional defect.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 94,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The added 'currentRelationshipId: profile.organisationId' (line 94) re-sets a value '...profile' (line 93) already carries: the Bell profile in src/plugins/auth.js:54-58 spreads the JWT payload (which holds currentRelationshipId) and maps 'organisationId: payload.currentRelationshipId'. The line is a no-op on the real sign-in path, no test asserts it (controller.test.js never reads the cached session), and it reverses the one mapping auth.js:58 owns, so the session keeps one concept under two names that organisationIdOf and buildActor then reconcile with 'organisationId ?? currentRelationshipId'.",
+      "fix": "Must: the mapping between the Defra ID currentRelationshipId claim and the session's organisation id lives in one place (the Bell profile in src/plugins/auth.js), and the sign-in controller adds no second copy of it. One way: delete line 94; if a reader genuinely needs currentRelationshipId, rely on the payload spread already in the profile and cover it with a controller test that reads the cached session."
+    },
+    {
+      "id": 2,
+      "line": 21,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Comments describe callers, the provider, a library or rationale rather than the lines below, or restate the code: lines 21-23 (user bookmarking behaviour), 25-26 (Bell 'mode: try' internals), 53, 67-70 (Defra ID roles and Siti Agri API rationale), 90, 101, 104, 107, 117-120 (Entra/CDP-WAF querystring limit rationale), 135-136, 141, 153-155 (provider loop rationale), 161-163 (strategy behaviour narration).",
+      "fix": "Must: no comment in the file describes another module, the identity provider, a library or a user's browsing, and none restates its line; rationale that must survive lives in the repo's docs/ or the behaviour spec. One way: delete the restating comments (53, 90, 101, 104, 107, 141), move the Bell, Siti Agri, Entra/CDP-WAF and sign-out-loop rationale to docs/, and extract well-named helpers (for example dropLocalSession) where a name can carry what the comment said.",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 3,
+      "line": 114,
+      "severity": "Major",
+      "category": "logging",
+      "issue": "Outcome-changing branches log nothing: signout redirects an unauthenticated request to '/' (lines 114-116), signoutOidc redirects an already-signed-out request to '/' (line 156), and the organisation safeguard handler (lines 159-169), which the code says should never run, redirects silently. Support cannot tell during an incident that the safeguard fired or why a sign-out did not reach the provider.",
+      "fix": "Must: each of these redirect branches logs once at an appropriate level with the ids support searches by (session id or crn where available, and the redirect target). One way: request.logger?.warn({ redirect: safeRedirect }, 'Organisation route hit after sign-in') in the organisation handler and request.logger?.info(...) in the two unauthenticated sign-out branches.",
+      "best_practice": "node/pino-logging.md"
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:37Z"
+}

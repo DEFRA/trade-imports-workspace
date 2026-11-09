@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/services/persistence/records/real/config.js",
+  "repo": "trade-imports-plants-frontend",
+  "commit": "baffe546d79377675924fcd7d6d492dc9dcdd4f2",
+  "pr": 139,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:03:53Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "One-line constant addition is functionally correct, but HTTP_FORBIDDEN duplicates statusCodes.forbidden from the shared status-codes module.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 8,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "New HTTP_FORBIDDEN = 403 (line 8) is a second name for a value the repo already names: statusCodes.forbidden: 403 in src/server/common/constants/status-codes.js:7. Its siblings HTTP_NOT_FOUND (line 7, = statusCodes.notFound) and HTTP_CONFLICT (line 9, no shared entry) extend the same parallel table, so 403/404 now have two homes.",
+      "fix": "Must: each HTTP status code the plants frontend uses has one home, src/server/common/constants/status-codes.js, and the persistence client reads status codes from it. One way: delete HTTP_FORBIDDEN and HTTP_NOT_FOUND from config.js, add conflict: 409 to statusCodes, drop HTTP_CONFLICT, and have get-fulfilment.js and failed.js compare against statusCodes.forbidden / notFound / conflict."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:37Z"
+}

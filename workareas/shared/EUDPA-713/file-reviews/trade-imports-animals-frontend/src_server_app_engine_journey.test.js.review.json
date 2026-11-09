@@ -1,0 +1,31 @@
+{
+  "file": "src/server/app/engine/journey.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "a535ca5361917faf1d70a8b8a87a054d97e5aeab",
+  "pr": 461,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:00:49Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new organisation-header assertion cannot fail because of a test-env fallback to the same value, and the four added beforeEach bindings copy set-up journeyRequest already does, via a deprecated alias.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 375,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The organisation-header test (title line 357, assert line 375) cannot fail if the session's organisation stops reaching the request: headers.js falls back to '5900001' whenever NODE_ENV is 'test' (vitest's default), and '5900001' is exactly the value bound here and by journeyRequest (test-support.js:164, authenticatedCredentials.organisationId). Remove every binding and the assertion still passes, so the test does not prove the AC that the value comes from the verified session.",
+      "fix": "Must: the test fails when the signed-in organisation is not what the request carries; it asserts an organisation value no fallback can produce, taken from the request's credentials, and the title says the header carries the signed-in organisation. One way: build the request with credentials for a distinct organisation (e.g. '5900077') and assert that value, and drop the NODE_ENV==='test' fallback in http/headers.js so a missing binding throws in tests as in production.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 2,
+      "line": 230,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Lines 230, 354, 385 and 443 each add bindOrganisationId('5900001') to a beforeEach, copying set-up the shared helper already does: every test in those describes builds its request with journeyRequest, which binds authenticatedCredentials.organisationId ('5900001') itself (test-support.js:164). The copies also hard-code the literal instead of the shared credential, and import (line 36) the alias organisation-id.js marks @deprecated in favour of enterOrganisationIdForTests.",
+      "fix": "Must: the organisation binding for these tests lives in one place, the shared test helper, with no local copies and no use of the deprecated alias. One way: delete the four beforeEach bindOrganisationId calls and the line 36 import, relying on journeyRequest; if a describe needs a binding without journeyRequest, call enterOrganisationIdForTests(authenticatedCredentials.organisationId).",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:34Z"
+}

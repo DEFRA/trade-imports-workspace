@@ -1,0 +1,62 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/animals/filter/TraderOrganisationHeaderFilter.java",
+  "repo": "trade-imports-animals-backend",
+  "commit": "9cf4d45bff4a8f22798ec0f63e66f5879f1ea8ab",
+  "pr": 122,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:01:16Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The header check works for trader routes, but the admin-route exemptions are untested and duplicated from AdminSecretFilter, the 400 body copies GlobalExceptionHandler without traceId, and a request attribute is written that nothing reads.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 27,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "REQUEST_ORGANISATION_ID (line 27) is written as a request attribute at line 69 but nothing in src/ reads it: NotificationController takes the organisation again from the header with @RequestHeader(HEADER_ORGANISATION_ID). The attribute is an unreachable second channel for the same value, and its key 'trade.imports.traderOrganisationId' adds a third name for the concept beside the header and the MDC key 'organisationId'.",
+      "fix": "Must: the organisation id reaches the controller through one channel, and the filter declares nothing no caller uses. One way: delete REQUEST_ORGANISATION_ID and the setAttribute call, leaving the controller's @RequestHeader as the single reader."
+    },
+    {
+      "id": 2,
+      "line": 37,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Which /notifications routes are admin routes is written twice: here in shouldNotFilter (lines 43-54: DELETE exactly /notifications, POST /notifications/{ref}/replay, plus two GETs) and in AdminSecretFilter.shouldNotFilter (DELETE with uri.startsWith(\"/notifications\"), POST uri.matches(\"/notifications/[^/]+/replay\")). The copies already differ: AdminSecretFilter matches any DELETE under /notifications on getRequestURI, this one only the exact path on servletPath(). A new admin route has to be added in both, and a miss in this one returns 400 to the admin app.",
+      "fix": "Must: one owner decides whether a request is an admin notification route, and both filters ask it. One way: extract an AdminNotificationRoutes.matches(HttpServletRequest) in the filter package covering all four admin routes; AdminSecretFilter guards its subset and this filter skips all of them."
+    },
+    {
+      "id": 3,
+      "line": 43,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "No test proves the four admin exemptions in shouldNotFilter (lines 43-54). IntegrationBase.webClient always sends Trade-Imports-Organisation-Id as a default header, and the only header-less test (NotificationIT.traderRequests_shouldRejectMissingOrganisationHeader) covers POST /notifications. Deleting any of the four exemption branches leaves every test green, yet the ticket says GET /notifications/reference-numbers, /{ref}/outbox-events, /{ref}/replay and bulk DELETE /notifications stay unscoped for the admin app.",
+      "fix": "Must: a test fails if any admin route starts demanding the organisation header, and a test fails if a trader route (e.g. GET /notifications, GET /{ref}/fulfilments) stops demanding it. One way: a parameterised NotificationIT case that strips the header and calls each admin route expecting its normal status, plus a parameterised case over the trader routes expecting 400."
+    },
+    {
+      "id": 4,
+      "line": 81,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "logAndReject (lines 81-86) hand-builds the 400 problem body (type https://api.cdp.defra.cloud/problems/bad-request, title 'Bad Request') that GlobalExceptionHandler.handleBadRequestException already owns (GlobalExceptionHandler.java:182-192). The copies differ: the handler adds the traceId property from MDC, this one does not, so a missing-header 400 is the only bad-request response without a trace id.",
+      "fix": "Must: one place builds the bad-request ProblemDetail, and the filter's 400 carries the same fields (including traceId) as every other 400. One way: extract a static ProblemDetails.badRequest(detail) factory used by both GlobalExceptionHandler and this filter, or delegate to HandlerExceptionResolver with a BadRequestException."
+    },
+    {
+      "id": 5,
+      "line": 89,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "servletPath(request) (lines 89-100) does not always return the servlet path: when getServletPath() is empty it returns the request URI minus the context path, or the raw URI. The name's value word does not cover those values. It is also package-private static with no caller outside the class.",
+      "fix": "Must: the helper's name says it returns the path within the application, whichever source it read, and it is private. One way: rename to pathWithinApplication and make it private (or use Spring's UrlPathHelper.getPathWithinApplication and delete the helper)."
+    },
+    {
+      "id": 6,
+      "line": 79,
+      "severity": "Minor",
+      "category": "structure",
+      "issue": "The logger is looked up per call with a fully qualified org.slf4j.LoggerFactory.getLogger(...) at line 79, and java.net.URI is fully qualified at line 83, instead of @Slf4j and imports as RequestTracingFilter and GlobalExceptionHandler do. The com.fasterxml import (line 16) also sits after the org.springframework block.",
+      "fix": "Must: the class logs through a @Slf4j log field and imports URI, matching sibling filters. One way: add @Slf4j, import java.net.URI, and order imports as the repo's formatter does.",
+      "best_practice": "java/spring-boot.md"
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:33Z"
+}

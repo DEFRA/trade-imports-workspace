@@ -1,0 +1,37 @@
+{
+  "file": "src/server/app/services/persistence/records/real/http/headers.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "a535ca5361917faf1d70a8b8a87a054d97e5aeab",
+  "pr": 461,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:01:49Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The tests cover all three branches of headers() and would fail without them, but they use the deprecated bindOrganisationId alias and restate the test-default organisation literal that has three homes.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 3,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The new test imports and calls bindOrganisationId (lines 3, 9, 13, 19, 26), which the same PR marks @deprecated in organisation-id.js:35 as an alias of enterOrganisationIdForTests. A brand-new file adopts the deprecated name, so one concept (enter the organisation id for the test's async context) keeps two names, and the name 'bind' does not say it uses AsyncLocalStorage.enterWith for the rest of the context.",
+      "fix": "Must: this test sets the organisation through the one non-deprecated helper name, and no new file uses bindOrganisationId. One way: import enterOrganisationIdForTests and call it in place of bindOrganisationId; delete the alias once the other test callers (test-support.js, journey.test.js, real.requests.test.js, organisation-id.test.js) move too."
+    },
+    {
+      "id": 2,
+      "line": 21,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The test-env default organisation '5900001' is a bare literal in headers.js:9, asserted again as a literal here (line 21), and declared a third time as the authenticated test credential in engine/test-support.js:39-40. One value, three homes: change the test-support credential and headers() silently sends a different organisation than the signed-in test user, with this test still green.",
+      "fix": "Must: the test default organisation id has one owner that headers.js and this test both read, so the assertion follows the value rather than restating it. One way: export a named constant (e.g. TEST_DEFAULT_ORGANISATION_ID) from one module, use it in headers.js and test-support.js, and assert against it here."
+    },
+    {
+      "id": 3,
+      "line": 18,
+      "severity": "Minor",
+      "category": "test-readability",
+      "issue": "'Should fall back to the test default organisation in test env' depends on the runner's ambient NODE_ENV being 'test' rather than setting it, while its sibling (line 25) stubs NODE_ENV explicitly. The test's precondition is invisible in its set-up, and it also re-calls bindOrganisationId(undefined) (lines 19, 26) that afterEach (line 9) already does.",
+      "fix": "Must: each test's set-up states the NODE_ENV and organisation it depends on, and no set-up line is repeated between afterEach and the test. One way: vi.stubEnv('NODE_ENV', 'test') in the fallback test, and keep the undefined organisation either in the tests or in the hook, not both."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:34Z"
+}

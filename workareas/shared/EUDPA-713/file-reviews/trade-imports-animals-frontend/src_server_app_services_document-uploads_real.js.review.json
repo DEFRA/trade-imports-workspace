@@ -1,0 +1,38 @@
+{
+  "file": "src/server/app/services/document-uploads/real.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "a535ca5361917faf1d70a8b8a87a054d97e5aeab",
+  "pr": 461,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:02:01Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Correctly forwards the organisation header the backend now requires on document-upload routes, but borrows the header builder from persistence internals under a name that hides the scoping, and no test would catch the header being dropped.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 4,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "real.js:4 imports the backend request-header builder from persistence/records/real/http/headers.js, the notification-records persistence internals. Document uploads is a sibling service, not part of records persistence, yet now reaches three folders deep into another service's real/http folder for the rule 'every animals-backend call carries the trace header and the organisation header'. That rule is backend-wide (document-uploads, records, get-fulfilment all use it), so its home is the shared services/http/ folder beside traceHeaders and failedResponse (line 3 already imports from there).",
+      "fix": "Must: the 'animals-backend request headers' builder lives in one shared module that both persistence/records and document-uploads import from (services/http/), and no service imports from another service's real/http internals. One way: move headers.js and ORGANISATION_ID_HEADER to services/http/backend-headers.js, export it as backendHeaders, and update records, get-fulfilment and document-uploads imports."
+    },
+    {
+      "id": 2,
+      "line": 18,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "Lines 18, 32, 44, 58, 74, 86, 96 call headers(). The name predicts 'some request headers'; the body (persistence/records/real/http/headers.js) adds Content-Type: application/json even on bodiless GET/DELETE, adds Trade-Imports-Organisation-Id from the AsyncLocalStorage session context, and throws when no organisation is bound. Read at a call site in document-uploads, nothing says these calls are now organisation-scoped or can throw before any fetch, which is the whole point of the change for EUDPA-713.",
+      "fix": "Must: the name at each call site says these are the organisation-scoped animals-backend headers. One way: rename to organisationScopedBackendHeaders (or backendHeaders alongside the move in the structure item), keeping Content-Type only where a body is sent."
+    },
+    {
+      "id": 3,
+      "line": 18,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The PR switches all seven document-upload calls to send Trade-Imports-Organisation-Id, and the backend PR (DocumentController.register/session/list + TraderOrganisationHeaderFilter) now rejects /notifications/{ref}/document-uploads and /document-upload-sessions without it (400) and 403s another organisation. real.test.js is unchanged: sentAs() (real.test.js:21-25) checks only method, url and content-type, and the NODE_ENV==='test' fallback in headers() supplies '5900001' silently. Reverting any line here to traceHeaders() leaves every unit test green while register/findByCorrelationId/listByNotification fail in the stack.",
+      "fix": "Must: a real.test.js test turns red if any document-upload call stops sending the signed-in organisation in Trade-Imports-Organisation-Id. One way: bind an organisation with enterOrganisationIdForTests('org-a') in a beforeEach, add the header to sentAs(), and assert it equals 'org-a' on the register, findByCorrelationId and listByNotification requests (at least).",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:34Z"
+}

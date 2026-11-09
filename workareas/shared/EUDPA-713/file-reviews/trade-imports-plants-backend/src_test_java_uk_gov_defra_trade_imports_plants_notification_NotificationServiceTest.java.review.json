@@ -1,0 +1,55 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/plants/notification/NotificationServiceTest.java",
+  "repo": "trade-imports-plants-backend",
+  "commit": "0169caaf183f4c31d981aa1900c3bc3b9b6281bc",
+  "pr": 16,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:04:19Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Mechanical org-ID threading is correct and strict stubs pin the scoped lookup, but no test proves a copy is owned by the caller or that the owner survives writes, and the file carries banned comments and an abbreviated name.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 411,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "No test proves the AC 'A copy of a notification belongs to the caller's organisation'. copyNotification_shouldCreateAFreshDraftCarryingTheFulfilments (L402-417) asserts reference, status and fulfilments but not result.getOrganisationId(), and NotificationIT.copy_shouldProduceAFreshDraftWithItsOwnReferenceNumber does not either. If NotificationService.copyNotification passed source.getOrganisationId() (or null) to createNotification, every test stays green.",
+      "fix": "Must: a test fails when a copy is not owned by the calling organisation. One way: give stored() an owner, call copyNotification(REFERENCE, 2L, ORG_ID) and assert result.getOrganisationId() isEqualTo ORG_ID (a copy test where the source carries a different org than the caller would prove it is the caller's, not the source's)."
+    },
+    {
+      "id": 2,
+      "line": 78,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The stored() fixture (L78-87) builds an aggregate with no organisationId, yet every test returns it from findByReferenceNumberAndOrganisationId(REFERENCE, ORG_ID) - a row the org-scoped query could never return. As a result no test proves the owner is set once on create and kept on update, replace, submit, amend, cancel-amend or soft-delete: a write path that overwrote or cleared organisationId (e.g. setNotificationDetails setting it from the DTO) would pass every test here.",
+      "fix": "Must: the fixture matches what the scoped query returns (owner = ORG_ID), and at least one write-path test fails if a save, replace or amend changes or clears the owner. One way: add .organisationId(ORG_ID) to stored() and assert result.getOrganisationId() isEqualTo ORG_ID in saveNotification_shouldUpdateExistingDraft_whenReferenceSupplied and amendNotification_shouldSnapshotContentAndFulfilmentsAsTheRestorePoint."
+    },
+    {
+      "id": 3,
+      "line": 550,
+      "severity": "Minor",
+      "category": "coverage-gap",
+      "issue": "NotificationService.findFulfilmentsView gained a new branch (reference exists in another organisation -> warn log + ForbiddenException) but the only unit test, findFulfilmentsView_shouldThrowNotFound_whenReferenceDoesNotExist (L549-559), covers the NotFound path, and its 'does not exist' premise rests on Mockito's default false for existsByReferenceNumber, which the Given never states. The 403 status is witnessed by NotificationIT.organisationScope_shouldHideNotificationFromOtherOrganisation, so this is a unit-level gap only.",
+      "fix": "Must: both outcomes of findFulfilmentsView's miss are proven at unit level, each with its existsByReferenceNumber premise set explicitly. One way: stub existsByReferenceNumber(REFERENCE) to false in the NotFound test, and add findFulfilmentsView_shouldThrowForbidden_whenReferenceBelongsToAnotherOrganisation stubbing it true and asserting ForbiddenException."
+    },
+    {
+      "id": 4,
+      "line": 156,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Comments the house rules and unit.md forbid, in a file this PR edits throughout: // Given / // When / // Then / // When / Then labels in every test (e.g. L96, L100, L104, L209, L466); rationale comments describing other code - L114 'the prod-safe default', L128 '— the second independent safeguard', L466 '— no second write'; and a Javadoc block on a test method (L156-160) explaining DST rationale, though Javadoc goes only on an API contract and rationale goes in docs/.",
+      "fix": "Must: the file carries no Given/When/Then labels, no rationale comments and no Javadoc on test methods; set-up, action and assertions are separated by blank lines and any needed explanation is in the test name or the repo's docs/. One way: delete the labels and the L114/L128/L466 trailing text, and drop the Javadoc at L156-160 (the title already says 'ExactNumberOfElapsedDays..._whenJvmDefaultZoneObservesDst').",
+      "best_practice": "java/testing/unit.md"
+    },
+    {
+      "id": 5,
+      "line": 37,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "New constant ORG_ID names the concept 'org' while production names it organisationId (NotificationService parameters, NotificationAggregate.organisationId, NotificationController.HEADER_ORGANISATION_ID). One concept, one name: the same abbreviation is repeated in NotificationControllerTest.java:40 and NotificationIT.java:38-39 (ORG_ID, OTHER_ORG_ID).",
+      "fix": "Must: the tests name the owning organisation with the same word production uses. One way: rename ORG_ID to ORGANISATION_ID (and OTHER_ORG_ID to OTHER_ORGANISATION_ID) in NotificationServiceTest, NotificationControllerTest and NotificationIT.",
+      "best_practice": "java/modern-java.md"
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:37Z"
+}

@@ -1,0 +1,45 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationController.java",
+  "repo": "trade-imports-animals-backend",
+  "commit": "9cf4d45bff4a8f22798ec0f63e66f5879f1ea8ab",
+  "pr": 122,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:01:12Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Header wiring scopes every trader route correctly, but the actor's organisation is still taken from the body, the header has two constant names and two read paths, and the OpenAPI text does not describe the scoping.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 44,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "HEADER_ORGANISATION_ID is a second name for TraderOrganisationHeaderFilter.ORGANISATION_ID_HEADER (filter line 26). One header now has two constants with two word orders, and DocumentController and NotificationControllerTest import the alias while the filter uses the original.",
+      "fix": "Must: the Trade-Imports-Organisation-Id header has one constant with one name, used by the filter, both controllers and the tests. One way: delete HEADER_ORGANISATION_ID and reference TraderOrganisationHeaderFilter.ORGANISATION_ID_HEADER everywhere, or move the constant here as HEADER_ORGANISATION_ID (matching HEADER_TRACE_ID and HEADER_USER_ID) and have the filter use it."
+    },
+    {
+      "id": 2,
+      "line": 56,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "Two mechanisms carry the caller's organisation: TraderOrganisationHeaderFilter validates the header and stores it as request attribute REQUEST_ORGANISATION_ID (filter line 69), but nothing reads that attribute; every handler here (lines 56, 77, 98, 131, 154, 174, 194, 209, 271) re-reads the raw header with @RequestHeader. The value the filter checked and the value the handler uses come from two separate reads, and the attribute is dead.",
+      "fix": "Must: the organisation ID a handler acts on comes through one path, the one the filter validated, and nothing is set that no code reads. One way: bind it with @RequestAttribute(TraderOrganisationHeaderFilter.REQUEST_ORGANISATION_ID) in each handler, or drop the request attribute from the filter and keep @RequestHeader."
+    },
+    {
+      "id": 3,
+      "line": 279,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "resolveActor (line 279) still builds the Actor from the request body via ActorRequest.toActor(), which copies actor.organisationId from the body. The ticket's tech note says the backend takes the organisation ID from the header and never from the body, including actor.organisationId. A trader in org A sending header A and body actor.organisationId=B gets the notification owned by A but an outbox event audited as acting for B, on post, replace, copy, submit, amend, cancel-amend and soft-delete.",
+      "fix": "Must: every Actor built for a trader-facing write carries the header's organisation ID, and a body-supplied actor.organisationId has no effect on the stored notification or its outbox events. One way: pass organisationId into resolveActor and build the Actor with it, overriding the body value, with a controller or IT test that sends a conflicting body value and asserts the outbox event records the header value."
+    },
+    {
+      "id": 4,
+      "line": 184,
+      "severity": "Minor",
+      "category": "comments",
+      "issue": "The OpenAPI contract no longer says what the endpoints do: findAll's description (line 184) says it returns 'a paginated list of import notifications' with no mention that only the caller's organisation's are returned; the 404 descriptions on replace, copy, submit, amend, cancel-amend and soft-delete (lines 71, 90, 119, 147, 168, 265) say 'not found' though they also cover another organisation's notification; and no endpoint documents the 400 the filter returns when Trade-Imports-Organisation-Id is missing. POST /notifications (line 51) has no @ApiResponse at all.",
+      "fix": "Must: each trader-facing operation's OpenAPI text states that results are scoped to the caller's organisation, that another organisation's notification answers as not found (403 for fulfilments), and that a missing organisation header answers 400. One way: extend the findAll description and the 404 descriptions, and add a 400 @ApiResponse for the missing header."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:33Z"
+}

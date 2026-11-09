@@ -1,0 +1,46 @@
+{
+  "file": "src/server/common/helpers/organisation-id.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "a535ca5361917faf1d70a8b8a87a054d97e5aeab",
+  "pr": 461,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:02:35Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Org-id binding via AsyncLocalStorage is functionally sound, but the file ships a leaky test-only binder under two names, duplicates the currentRelationshipId mapping already done at sign-in, and carries untrue or rule-breaking comments.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 36,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "One function, two names: bindOrganisationId (line 36) is a @deprecated alias of enterOrganisationIdForTests (line 31), yet every caller in the PR uses the deprecated name (engine/test-support.js:164, engine/journey.test.js:230/354/385/443, real.requests.test.js:57, http/headers.test.js:9/13/19/26, organisation-id.test.js:36) and nothing calls enterOrganisationIdForTests. The @deprecated tag is history in code for a name this PR introduces.",
+      "fix": "Must: the test-only binder has exactly one exported name, every caller uses it, and no @deprecated alias remains. One way: delete bindOrganisationId and rename its callers to enterOrganisationIdForTests (or keep one name and delete the other)."
+    },
+    {
+      "id": 2,
+      "line": 31,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "A test-only helper ships in the production module: enterOrganisationIdForTests (lines 30-33) calls storage.enterWith, which binds the organisation id for the rest of the current async context instead of a scoped call. Tests already compensate for the leak (http/headers.test.js:9/19/26 call bindOrganisationId(undefined) to reset it), and any production import of it would bind an organisation id beyond one request.",
+      "fix": "Must: production code exposes only the scoped binder (withOrganisationId); test set-up that binds an organisation lives in test support and cannot leak across tests. One way: move the enterWith binder into engine/test-support.js (exporting the storage access it needs, or having tests wrap their bodies in withOrganisationId), and drop the reset-to-undefined calls."
+    },
+    {
+      "id": 3,
+      "line": 10,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The currentRelationshipId -> organisationId mapping now has two homes. plugins/auth.js:44 already sets credentials.organisationId from payload.currentRelationshipId, auth/controller.js:94 and stub-sign-in.js:49-50 write both keys with the same value, and sessionOrganisationId (line 10) re-derives it with credentials.organisationId ?? credentials.currentRelationshipId. The fallback is unreachable for any session this app builds, and it reads organisationId first although the ticket names currentRelationshipId as the owner's source, so the two homes can silently disagree if one session writer changes.",
+      "fix": "Must: one place decides which session claim is the owning organisation, and every reader takes the value from that place. One way: read only the key the session writers guarantee (credentials.organisationId, set from currentRelationshipId at sign-in) and drop the ?? fallback, or make sign-in write one key only and read that one here."
+    },
+    {
+      "id": 4,
+      "line": 13,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Comments in this file are untrue or break the comment rules. The organisationIdOf JSDoc (lines 13-26) says 'The one place this value is read', which this PR makes untrue (actor-helpers.js:14 reads via sessionOrganisationId; http/headers.js:8 reads via currentOrganisationId); it describes callers and other services (address book, backend) and carries rationale; and lines 24-25 use Javadoc {@code ...} syntax, which JSDoc does not render. Line 5's '(not the request)' explains the name sessionOrganisationId, and lines 30 and 35 narrate the enterWith mechanism and a deprecation, neither a contract.",
+      "fix": "Must: every doc comment in the file states only the contract of the export below it, is true for the current code, mentions no callers or other services, uses JSDoc syntax (backticks, not {@code}), and no comment exists to explain a name. One way: cut organisationIdOf's doc to its return contract (the session's owning organisation, undefined when unauthenticated), move the 'never from a payload' rationale to docs/, and delete the comments on lines 5, 30 and 35 once findings on those exports are resolved.",
+      "best_practice": "node/code-style.md"
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:34Z"
+}

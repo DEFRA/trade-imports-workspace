@@ -1,0 +1,29 @@
+{
+  "file": "src/k6/readiness.js",
+  "repo": "trade-imports-performance-tests",
+  "commit": "69ff5ebc9f40c407353e9257568f6debbcdc9fb4",
+  "pr": 32,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:03:06Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Sending the trader organisation header to the animals and plants readiness probes is correct, since both backends now filter on it, but the probe helper names misstate their boolean return, and a failed probe hides the status or error that caused it.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 18,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "readBackend (line 18) and the new readTraderBackend (line 21) return a boolean (status === 200), not what was read; the names predict a response or body. Sibling probes in the same file name the answer they check: insAddressBookAnswers (line 47), referenceDataHasCountries (line 24).",
+      "fix": "Must: each probe helper's name says it returns whether the backend answered 200, matching the file's other probe names. One way: rename to backendAnswers(url, headers) and traderBackendAnswers(url), and update the four call sites in failedProbes."
+    },
+    {
+      "id": 2,
+      "line": 61,
+      "severity": "Major",
+      "category": "logging",
+      "issue": "attempt() (lines 61-67) swallows every thrown error with an empty catch, and readBackend/readTraderBackend (lines 18-22) drop the status they got. A timeout then reports only the probe name ('animals backend read'), so nobody running the suite can tell an organisation-header refusal (400/403 from TraderOrganisationHeaderFilter, which this change exists to satisfy) from a backend that is down.",
+      "fix": "Must: a readiness failure names, for each failed probe, the last status or error it saw, and no catch is empty. One way: have each probe return { ok, detail } (detail = status code or err.message), keep the last detail per probe in failedProbes, and include it in the thrown error, e.g. 'animals backend read (403)'."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:36Z"
+}

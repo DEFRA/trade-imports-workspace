@@ -1,0 +1,38 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/animals/exceptions/GlobalExceptionHandler.java",
+  "repo": "trade-imports-animals-backend",
+  "commit": "9cf4d45bff4a8f22798ec0f63e66f5879f1ea8ab",
+  "pr": 122,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:00:50Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new 403 handler meets the AC but has no unit test, copies a fifth ProblemDetail block instead of extracting it, and double-logs each refusal without the ids in one line.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 199,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "handleForbiddenException (lines 199-219) has no test in GlobalExceptionHandlerTest, where every sibling handler has a pair (e.g. handleBadRequestException_shouldReturnBadRequestWithDetail / _shouldHandleNullTraceId at lines 439-480). The only witness, NotificationIT.organisationScope_shouldReturn403ForFulfilmentsWhenOrganisationDiffers (NotificationIT.java:2735-2758), asserts expectStatus().isForbidden() alone, so deleting setType, setTitle, the traceId property or the problem+json content type turns nothing red.",
+      "fix": "Must: a test fails if the 403 response loses its forbidden problem type, its 'Forbidden' title, the exception's detail, the traceId property when MDC holds one, or the application/problem+json content type, and one proves the null-traceId path. One way: add handleForbiddenException_shouldReturnForbiddenWithDetail and handleForbiddenException_shouldHandleNullTraceId to GlobalExceptionHandlerTest, mirroring the BadRequestException pair.",
+      "best_practice": "java/testing/unit.md"
+    },
+    {
+      "id": 2,
+      "line": 199,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "handleForbiddenException (lines 199-219) is a line-for-line copy of handleBadRequestException (177-197), itself repeated in handleNotFoundException (224-244) and handleConflictException (249-269): read MDC trace id, forStatusAndDetail(status, ex.getMessage()), setType(URI.create(literal)), setTitle(literal), set traceId if non-null, build a problem+json ResponseEntity. The file already extracts this shape once for parameter errors (requestParameterProblem, line 153), so the new handler adds a fifth copy beside an existing extraction instead of using one.",
+      "fix": "Must: one private method in GlobalExceptionHandler owns building a status/type/title/detail ProblemDetail response with the traceId property and problem+json content type; the forbidden handler and the bad-request, not-found and conflict handlers it copies call it. One way: extract problemResponse(HttpStatus status, URI type, String title, String detail) and make each handler log then return problemResponse(...), with the type URIs as constants beside TYPE_VALIDATION_ERROR."
+    },
+    {
+      "id": 3,
+      "line": 202,
+      "severity": "Major",
+      "category": "logging",
+      "issue": "One cross-organisation fulfilments refusal logs twice at WARN: NotificationService.findFulfilmentsView logs 'Fulfilment read denied for referenceNumber={} organisationId={}' (NotificationService.java:156-159) and then throws, and handleForbiddenException logs 'Forbidden (trace: {})' with the full stack trace (GlobalExceptionHandler.java:202). The handler line carries no organisation id and the service line carries no trace id, so support has to join two lines to read one decision, and an expected refusal emits a stack trace.",
+      "fix": "Must: each 403 refusal produces one WARN line that carries the reference number, the caller's organisation id and the trace id. One way: keep the service's line (MDC already puts trace.id on it) and drop the handler's log, or have the handler log once with the ids and remove the service line."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:33Z"
+}

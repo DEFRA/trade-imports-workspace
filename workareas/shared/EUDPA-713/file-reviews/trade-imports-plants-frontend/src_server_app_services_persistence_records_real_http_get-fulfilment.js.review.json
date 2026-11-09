@@ -1,0 +1,22 @@
+{
+  "file": "src/server/app/services/persistence/records/real/http/get-fulfilment.js",
+  "repo": "trade-imports-plants-frontend",
+  "commit": "baffe546d79377675924fcd7d6d492dc9dcdd4f2",
+  "pr": 139,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:04:34Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Mapping 403 to undefined correctly makes another organisation's notification show as 404 through currentJourney, and real.requests.test.js covers it, but the refusal is not logged.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 17,
+      "severity": "Major",
+      "category": "logging",
+      "issue": "The new HTTP_FORBIDDEN branch (lines 17-19) turns the backend's 403 for another organisation's notification into undefined and logs nothing. backendFetch logs only connection retries, and currentJourney (engine/journey.js:105-108) throws Boom.notFound without a log, so a cross-organisation read leaves no frontend trace with the journeyId. This is another service refusing what this one asked for, which the house rules say must log at warn. Lines 14-19 are also two branches with the same body.",
+      "fix": "Must: a 403 from the fulfilments GET logs once at warn with the journeyId and status before the caller sees it as not found, and the not-found and forbidden outcomes share one branch. One way: create a module logger with createLogger(), test response.status against [HTTP_NOT_FOUND, HTTP_FORBIDDEN] in a single condition, and in it call logger.warn({ journeyId, status: response.status }, 'Notification fulfilments refused by the backend') when the status is 403.",
+      "best_practice": "node/pino-logging.md"
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:37Z"
+}

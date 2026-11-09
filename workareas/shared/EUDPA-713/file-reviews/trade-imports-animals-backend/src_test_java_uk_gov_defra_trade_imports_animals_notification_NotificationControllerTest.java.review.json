@@ -1,0 +1,45 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationControllerTest.java",
+  "repo": "trade-imports-animals-backend",
+  "commit": "9cf4d45bff4a8f22798ec0f63e66f5879f1ea8ab",
+  "pr": 122,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:01:27Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The signature updates are correct, but the admin-route tests now send the org header and so no longer prove those routes are exempt, the replace test cannot tell header from body organisation, and no test covers a missing header on the list or {ref} routes.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 1100,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The bulk DELETE /notifications tests (lines 1100, 1121, 1136, 1154, 1171) and the GET /notifications/reference-numbers tests (lines 1240, 1260, 1281) now send Trade-Imports-Organisation-Id, although the ticket keeps these admin routes unscoped and TraderOrganisationHeaderFilter.shouldNotFilter exempts them. These were the only tests that called those routes without the header (IntegrationBase.webClient adds it to every IT request), so deleting either exemption from shouldNotFilter would break the admin app and no test would go red. The outbox-events and replay tests still omit the header, so only these two exemptions lost their proof.",
+      "fix": "Must: a test calls bulk DELETE /notifications and GET /notifications/reference-numbers without the organisation header and gets the admin response, so removing either exemption from TraderOrganisationHeaderFilter turns a test red. One way: remove the added .header(HEADER_ORGANISATION_ID, ORG_ID) lines from the delete_* and findAllReferenceNumbers_* tests, as the outbox-events and replay tests already do."
+    },
+    {
+      "id": 2,
+      "line": 95,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "replace_shouldPassTheActorThroughToTheEditEvent sets the body actor's organisationId to \"5900002\" (line 95), the same value as ORG_ID sent in the header, then verifies eq(ORG_ID) (line 113). A controller that passed actor.getOrganisationId() as the owner would still pass. The other test, replace_shouldPassANullActor_whenTheBodyCarriesNone, verifies the owner with anyString() (line 133). So no test shows that PUT takes the owner from the header and not from the body, which the AC requires ('never from the request body, including actor.organisationId'). The post, copy, submit, cancel-amend and soft-delete tests do show this, because their body actor uses 'org-001'.",
+      "fix": "Must: a replace test sends a body actor organisationId that differs from the header and verifies that the service gets the header value as the owner. One way: set the actor to organisationId(\"org-001\") at line 95 and in the argThat at line 112 (or verify eq(ORG_ID) in the null-actor test), and use ORG_ID rather than the literal \"5900002\" wherever the header value is meant."
+    },
+    {
+      "id": 3,
+      "line": 970,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "TraderOrganisationHeaderFilter is a @Component, so this @WebMvcTest runs it, yet the file has no test that a trader route called without Trade-Imports-Organisation-Id gets a 400 and never reaches NotificationService. The filter has no unit test, and the only missing-header test is NotificationIT.traderRequests_shouldRejectMissingOrganisationHeader, which covers POST /notifications only. The AC names the list: 'The backend rejects a trader-facing request that carries no organisation ID, rather than returning every notification'. Nothing proves this for GET /notifications or the {ref} routes, or that a blank header is refused (the filter's isBlank branch).",
+      "fix": "Must: tests show that GET /notifications, and each trader {ref} route, return 400 with no service call when the organisation header is missing or blank. One way: add a parameterised test in this class over the trader routes that sends no header (and one that sends \"  \"), expects status().isBadRequest() and verifyNoInteractions(notificationService)."
+    },
+    {
+      "id": 4,
+      "line": 105,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The same request set-up, .header(HEADER_ORGANISATION_ID, ORG_ID), is copied into about 60 mockMvc.perform calls (lines 105, 128, 183, 241 ... 1420), sometimes before and sometimes after contentType. Because every trader request repeats it, a reader cannot tell which requests need the header and which have it by accident. That is how the admin delete and reference-numbers tests came to carry it (see the admin-route finding).",
+      "fix": "Must: the trader-request set-up lives in one place that every trader-route test uses, and admin-route tests do not use it. One way: add a private helper such as traderRequest(MockHttpServletRequestBuilder) that adds the organisation header, or a request post-processor (asTrader()) passed to .with(...), and use it in place of the copied .header(...) lines."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:33Z"
+}

@@ -1,0 +1,49 @@
+{
+  "file": "src/server/app/services/persistence/records/real/real.requests.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "a535ca5361917faf1d70a8b8a87a054d97e5aeab",
+  "pr": 461,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:01:55Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The organisation-header test cannot tell the session-bound organisation from the hard-coded test fallback, and the new 403 test over-claims in its title and duplicates the 404 test; no functional bugs in this file.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 434,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "\"Should send the reader's organisation to the backend\" (434-448) cannot fail on the behaviour its title claims: it asserts '5900001', which is exactly the NODE_ENV=test fallback hard-coded in http/headers.js. Its describe binds nothing, and the only bind (57, also '5900001', via enterWith in a beforeEach of a different describe) is indistinguishable from that fallback. Removing currentOrganisationId() from headers() leaves this test green, so it proves only that some header is sent, not that the reader's (session-bound) organisation travels.",
+      "fix": "Must: the test binds an organisation id that differs from any default, in the same async context as the call, and asserts that exact id on the Trade-Imports-Organisation-Id header, so the test turns red if headers() stops reading the bound organisation. One way: inside the test call withOrganisationId('5900042', () => records.list({ page: 1 })) and expect '5900042'; drop the bind from the unrelated beforeEach at 57.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 2,
+      "line": 161,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Title \"Should return undefined when the fulfilment GET returns 403 for another organisation\" (161) claims more than the assertions prove: the mock just answers 403 for any request and nothing in set-up or assertions involves a second organisation. The organisation clause is a backend scenario restated as a frontend test claim.",
+      "fix": "Must: the title states only what the assertions prove (a 403 from the fulfilment GET loads as undefined). One way: 'Should return undefined when the fulfilment GET returns 403'.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 3,
+      "line": 161,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The new 403 test (161-170) is a line-for-line copy of the 404 test (150-159), differing only in the mocked status and body text. Two tests now own one rule: a refused or missing fulfilment GET loads as undefined.",
+      "fix": "Must: one test body covers every status that load maps to undefined, so adding or changing a status is one edit. One way: it.each([[404, 'Not Found'], [403, 'Forbidden']])('Should return undefined when the fulfilment GET returns %s', ...).",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 4,
+      "line": 17,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The test imports bindOrganisationId (17, 57), which the same PR adds to organisation-id.js only as a @deprecated alias of enterOrganisationIdForTests. New code calls a name its own PR marks deprecated, leaving two names for one test helper.",
+      "fix": "Must: this file uses the one non-deprecated name for binding a test organisation (or withOrganisationId), and organisation-id.js keeps a single name for the helper. One way: import enterOrganisationIdForTests (or withOrganisationId, per the first finding) and delete the bindOrganisationId alias once no caller remains.",
+      "best_practice": "node/code-style.md"
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:34Z"
+}

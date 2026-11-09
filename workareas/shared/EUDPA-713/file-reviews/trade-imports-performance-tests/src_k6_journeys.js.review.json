@@ -1,0 +1,21 @@
+{
+  "file": "src/k6/journeys.js",
+  "repo": "trade-imports-performance-tests",
+  "commit": "69ff5ebc9f40c407353e9257568f6debbcdc9fb4",
+  "pr": 32,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:03:21Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The header is added correctly to all three trader backend replay calls, but the organisation id is a fixed constant kept apart from the signed-in identity, so the two can drift silently.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 48,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "backendParams (journeys.js:48) stamps every backend replay call with the fixed TRADER_ORGANISATION_ID ('5900001', config/trader-organisation.js:5), while the notification those calls read and replace was created by the frontend under the organisation of options.credentials (journeys.js:506, startUserSession:131). The signed-in identity (IDENTITY.crn in config/smoke.js:7) and the organisation the backend calls claim are two separate homes for one identity: pass credentials for CRN 2100010102 (whose first organisation in the Defra ID stub is 5900002) and the fulfilments/list/replace calls get refused by the new ownership check, failing 'backend fulfilments read succeeds' with no hint why.",
+      "fix": "Must: the organisation id on the journey's backend calls comes from the same owner as the identity the journey signs in with, so changing one cannot leave the other behind. One way: put the organisation id beside the crn in IDENTITY (or in the credentials object passed to notificationJourney) and have backendParams build the header from run.credentials, deleting the free-standing TRADER_ORGANISATION_ID."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:36Z"
+}

@@ -1,0 +1,21 @@
+{
+  "file": "zap/automation-context.yaml",
+  "repo": "trade-imports-ins-tests",
+  "commit": "864a95e370a926f7c165f56ffbae32d641474414",
+  "pr": 83,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:04:02Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The plants-backend context is correct for plants-backend's actuator surface and NotificationController paths, and it matches the passive and active plans, but the workspace stack's ZAP container never receives the env var it relies on, so the context does nothing outside CDP.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 70,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "The new plants-backend context reads ${ZAP_TRADE_IMPORTS_PLANTS_BACKEND_URL}, but only CDP's entrypoint.sh:63 sets it. The workspace ZAP daemon (docker/stack/security.compose.yml environment block, on main and on origin/feat/EUDPA-713-organisation-scoped-notifications) passes only the ANIMALS_FRONTEND/ADMIN/INS_FRONTEND/ANIMALS_BACKEND/ADDRESS_BOOK URLs. ZAP resolves ${VAR} from its own process env, so in the local stack and in the workspace's security-active-scan.yml run this context is registered with a literal placeholder URL. Traffic from the new @active plants spec to localhost:8091 then matches no context, so the referenceNumber folding and actuator excludes in this file never apply there. The plan has failOnError: false, so the run does not flag it",
+      "fix": "Must: every environment that runs this plan (CDP and the workspace stack's ZAP container, local and CI) resolves ZAP_TRADE_IMPORTS_PLANTS_BACKEND_URL to the plants backend's real base URL. One way: add 'ZAP_TRADE_IMPORTS_PLANTS_BACKEND_URL: ${ZAP_TRADE_IMPORTS_PLANTS_BACKEND_URL:-http://localhost:8091}' to docker/stack/security.compose.yml's zap environment on the workspace's feat/EUDPA-713-organisation-scoped-notifications branch, which already exists, so the cross-repo branch names stay the same"
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:35Z"
+}

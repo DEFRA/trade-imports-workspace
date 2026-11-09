@@ -1,0 +1,37 @@
+{
+  "file": "src/server/common/helpers/organisation-id.js",
+  "repo": "trade-imports-plants-frontend",
+  "commit": "baffe546d79377675924fcd7d6d492dc9dcdd4f2",
+  "pr": 139,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:05:06Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Request-scoped organisation binding via AsyncLocalStorage is functionally sound, but the organisation-claim fallback duplicates buildActor's rule, bindOrganisationId is a test-only enterWith export, and the JSDoc describes callers and makes a now-untrue 'one place' claim.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 23,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "organisationIdOf now carries the rule 'organisationId, else currentRelationshipId' (line 23), which buildActor already owns at actor-helpers.js:12-13 (credentials.organisationId ?? credentials.currentRelationshipId). Two homes for one rule: a change to which claim names the owning organisation (e.g. plants delegation via onBehalfOfOrganisationId) must be made twice, and the backend header and the actor's organisationId can drift apart. The fallback is also unreachable in production: every session writer (auth/controller.js:91-94, auth/stub-sign-in.js:49-50) stores both keys with the same value, so only the new unit test exercises it.",
+      "fix": "Must: one function decides which session claim is the organisation id, and both organisationIdOf and buildActor's actor.organisationId get the value from it; no branch exists that no session can reach. One way: have buildActor call organisationIdOf-style logic on credentials (e.g. export an organisationIdOfCredentials(credentials) here and use it in both), or drop the currentRelationshipId fallback from both since every session sets organisationId."
+    },
+    {
+      "id": 2,
+      "line": 27,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "bindOrganisationId (lines 26-29) is exported from production code but has no production caller: grep finds it only in organisation-id.test.js, engine/journey.test.js:361 and http/headers.test.js. It uses AsyncLocalStorage.enterWith, which binds the value for the rest of the current synchronous run and every async continuation after it, so it leaks between tests in the same file (headers.test.js has to rebind undefined to undo it) and would leak across a request if anyone used it in a handler. House rule: build only what this change makes reachable; production request scoping already goes through withOrganisationId (routes-high-risk-plants.js:93, set-context.js:98).",
+      "fix": "Must: the module exports only what production uses to scope the organisation per request, and tests scope it the same way production does. One way: delete bindOrganisationId and have the tests wrap their bodies in withOrganisationId('5900001', async () => ...)."
+    },
+    {
+      "id": 3,
+      "line": 5,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The JSDoc on organisationIdOf (lines 5-17) describes other services and callers (the address book, the backend passing it on, 'those services treat it as the authenticated organisation') and carries rationale, and its claim 'The one place this value is read' is now untrue: buildActor (actor-helpers.js:12-13) reads the same claims and headers.js reads it via currentOrganisationId. The bindOrganisationId JSDoc (line 26) names its callers ('for outbound backend calls'). House rules: a comment describes only the lines below it, no counts, rationale goes in docs/ or the behaviour spec, doc comments state the exported contract only.",
+      "fix": "Must: each exported function's doc comment states only its own contract (what it returns from what input, and what undefined means), with no description of callers, downstream services or rationale, and no claim the code contradicts; the 'never from a payload' rationale lives in the repo's docs/ or the behaviour spec. One way: cut organisationIdOf's JSDoc to 'The organisation the signed-in user acts for, from the verified session; undefined when unauthenticated.', give currentOrganisationId/withOrganisationId a one-line contract, and move the trust rationale to docs/."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:37Z"
+}

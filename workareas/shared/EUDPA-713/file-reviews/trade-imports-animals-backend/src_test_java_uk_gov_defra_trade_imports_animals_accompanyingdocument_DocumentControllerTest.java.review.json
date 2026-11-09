@@ -1,0 +1,40 @@
+{
+  "file": "src/test/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentControllerTest.java",
+  "repo": "trade-imports-animals-backend",
+  "commit": "9cf4d45bff4a8f22798ec0f63e66f5879f1ea8ab",
+  "pr": 122,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:00:56Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The test only adds the organisation header and a blanket pass-through stub, so no test fails if register, list or session stop scoping by organisation, and the header is sent to endpoints that never read it.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 77,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The new organisation check on register (DocumentController.register) and list (DocumentController.list) is untested: the @BeforeEach at :77-80 stubs requireTraderAccess to pass for every ref and org, and no test makes it throw. Deleting notificationService.requireTraderAccess(ref, organisationId) from either endpoint leaves every test green. DocumentControllerIT has no cross-organisation case for documents either, so nothing proves the AC 'a user in organisation A cannot see or change a notification that belongs to organisation B' for document uploads. The session endpoint (GET /notifications/{ref}/document-upload-sessions/{correlation-id}), which also gained the check, has no test in this file at all.",
+      "fix": "Must: for register and list (and the session lookup), a test fails if the endpoint stops scoping by the caller's organisation: when the notification belongs to another organisation the response is 404 and documentService is never reached; and a request without Trade-Imports-Organisation-Id is refused with 400. One way: in Register and ListDocuments add a test that stubs doThrow(new NotFoundException(...)).when(notificationService).requireTraderAccess(REF, \"5900002\") and asserts status().isNotFound() plus verify(documentService, never()).registerUpload/findByNotificationRef; add one missing-header test asserting 400; or add the cross-organisation case to DocumentControllerIT against a real notification owned by another org.",
+      "best_practice": "java/testing/unit.md"
+    },
+    {
+      "id": 2,
+      "line": 203,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The organisation header is added to requests on endpoints that never read it and sit outside TraderOrganisationHeaderFilter (which only filters /notifications paths): every Claim test (:203, 228, 250, 263, 275, 289, 300, 314, 331, 352, 368), GetByUploadId (:448, 464) and ScanResult (:484, 503, 522). ScanResult is the cdp-uploader callback, which never carries a trader organisation. The header tells the reader these endpoints are organisation-scoped when they are not, and removing it changes no outcome.",
+      "fix": "Must: a test sends Trade-Imports-Organisation-Id only to endpoints that read it (register, list, session), so the requests show which endpoints are organisation-scoped. One way: delete the .header(...) line from the Claim, GetByUploadId and ScanResult requests.",
+      "best_practice": "java/testing/unit.md"
+    },
+    {
+      "id": 3,
+      "line": 78,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "allowTraderNotificationAccess (:77-80) stubs a void method on a @MockitoBean with doNothing(), which is already what the mock does, so it is set-up that changes nothing and implies the check needs opting into. The same stub is copied verbatim into DocumentControllerTrailingSlashTest.java:55. The org id literal \"5900002\" is also repeated inline at 23 request sites (:94 through :522) with no name saying it is the caller's organisation.",
+      "fix": "Must: no set-up line that has no effect, no copy of it in a second test class, and one named constant for the caller's organisation id used at every request site. One way: delete the @BeforeEach here and in DocumentControllerTrailingSlashTest; add private static final String CALLER_ORGANISATION_ID = \"5900002\" (or reuse a shared fixture such as UploadSessionFixtures) and use it in each .header(...).",
+      "best_practice": "java/testing/unit.md"
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:33Z"
+}

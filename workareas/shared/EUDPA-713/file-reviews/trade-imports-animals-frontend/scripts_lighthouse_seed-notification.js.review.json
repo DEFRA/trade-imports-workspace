@@ -1,0 +1,29 @@
+{
+  "file": "scripts/lighthouse/seed-notification.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "a535ca5361917faf1d70a8b8a87a054d97e5aeab",
+  "pr": 461,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:00:37Z",
+  "verdict": "SAFE",
+  "verdict_reason": "A small fail-fast guard that makes the Lighthouse seed stop early with a clear message when the dashboard does not render; only Minor findings: the guard has no test, and one doc comment describes its caller.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 268,
+      "severity": "Minor",
+      "category": "coverage-gap",
+      "issue": "The new dashboard-status guard in createNotification (lines 268-272) has no test: removing it turns nothing in seed-notification.test.js red, although that file already drives submitNotification through a fake client (test.js:104-122).",
+      "fix": "Must: a test in seed-notification.test.js fails when the guard is removed, proving createNotification throws naming the dashboard status and posts nothing to the create path when the dashboard answers non-200. One way: a fakeClient whose document() answers status 403, then expect createNotification(client) to reject with /Dashboard did not render \\(403\\)/ and client.posts to equal []."
+    },
+    {
+      "id": 2,
+      "line": 211,
+      "severity": "Minor",
+      "category": "comments",
+      "issue": "The SEED_SHAPES JSDoc (line 211) says the shapes are 'keyed by the name the URL list uses', describing another module (the caller's URL list) rather than the contract of the export below it.",
+      "fix": "Must: the SEED_SHAPES doc comment states only this export's own contract, or there is none. One way: '/** The notification shapes the audit seeds, by shape name. */'."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:34Z"
+}

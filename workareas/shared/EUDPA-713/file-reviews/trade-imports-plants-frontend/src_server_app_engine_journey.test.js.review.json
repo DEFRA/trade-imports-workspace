@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/engine/journey.test.js",
+  "repo": "trade-imports-plants-frontend",
+  "commit": "baffe546d79377675924fcd7d6d492dc9dcdd4f2",
+  "pr": 139,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:03:51Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The updated list-call test asserts the same organisation id the test-env fallback in headers.js supplies, so it cannot fail and does not prove the session organisation reaches the backend.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 361,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "'Should request the page asked for with the organisation header' (L361, L382) cannot fail: it binds '5900001', which is exactly the value headers.js falls back to when NODE_ENV is test (headers.js: currentOrganisationId() ?? (process.env.NODE_ENV === 'test' ? '5900001' : undefined)), so deleting the bind, or the currentOrganisationId() read, leaves it green. It also binds by hand with enterWith in beforeEach instead of going through the request's session organisation (production binds via withOrganisationId(organisationIdOf(request)) in set-context.js contextualMethod), so it never proves the signed-in organisation reaches the list call, and the enterWith bind is never reset, leaking into the later 'backend requests carry the authenticated actor' describe.",
+      "fix": "Must: the test goes red if the organisation id sent on the list call stops coming from the signed-in session; the value it asserts differs from the test-env fallback, and no bound organisation outlives the test. One way: build the journeyRequest with credentials whose organisationId is a distinct value (e.g. '5900042'), run listKnownJourneys inside withOrganisationId(organisationIdOf(request), ...), assert the header equals that value, and drop the beforeEach bindOrganisationId."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:37Z"
+}

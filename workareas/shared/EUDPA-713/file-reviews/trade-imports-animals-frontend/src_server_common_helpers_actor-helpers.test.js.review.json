@@ -1,0 +1,30 @@
+{
+  "file": "src/server/common/helpers/actor-helpers.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "a535ca5361917faf1d70a8b8a87a054d97e5aeab",
+  "pr": 461,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:02:12Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new test pins an organisationId-over-currentRelationshipId precedence that contradicts the AC and cannot occur in production, and it duplicates the shared baseCredentials set-up.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 26,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "The new test (lines 26-36) pins credentials.organisationId over currentRelationshipId when the two differ ('5900001' wins over '5900002'), but the AC says the owner 'comes from the Defra ID currentRelationshipId claim' and the tech notes say 'The owner is always currentRelationshipId'. Production never builds such a session: auth/controller.js:94 and stub-sign-in.js:49-50 set both fields to the same value, so the test proves a precedence that is unreachable and the opposite of the ticket's rule (sessionOrganisationId in organisation-id.js:10).",
+      "fix": "Must: the session carries one organisation field read by one rule that matches the AC (currentRelationshipId is the owner), and the buildActor test proves that rule with values production can produce. One way: if both fields stay, make sessionOrganisationId prefer currentRelationshipId and retitle/re-assert this test to 'uses currentRelationshipId as the actor organisation'; or drop the duplicate session field and delete the precedence test."
+    },
+    {
+      "id": 2,
+      "line": 27,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The new test (lines 27-33) rebuilds the credentials inline (contactId 2100010101, name) instead of spreading the describe's baseCredentials, and writes sub as the literal 'entra-oid-001' beside the file's entraOid constant, so one value has two spellings in the file.",
+      "fix": "Must: the test's credentials state only what differs from baseCredentials, and the sub value is named once. One way: buildActor({ ...baseCredentials, organisationId: '5900001', currentRelationshipId: '5900002' }).",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:34Z"
+}

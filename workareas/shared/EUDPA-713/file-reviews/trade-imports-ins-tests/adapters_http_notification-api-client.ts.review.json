@@ -1,0 +1,45 @@
+{
+  "file": "adapters/http/notification-api-client.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "864a95e370a926f7c165f56ffbae32d641474414",
+  "pr": 83,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:02:37Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The organisation header reaches every scoped endpoint correctly, but listNotifications is misnamed for its return type, the organisation constructor parameter and the headers getter diverge from or copy AddressBookApiClient, and several comments describe the backend",
+  "todos": [
+    {
+      "id": 1,
+      "line": 97,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "listNotifications (line 97) is named for a list of notifications but is typed to return only { totalElements: number }, so a caller can read a count and never the notifications the name promises; the only caller (tests/plants/security/backend/organisation-scoped-notifications.spec.ts:40) reads totalElements alone",
+      "fix": "Must: the method's name and its declared return type predict the same value. One way: rename it countNotifications and return the number (page.totalElements), or keep the name and type the full page response (content plus totalElements) as a model under domain/animals/models/api"
+    },
+    {
+      "id": 2,
+      "line": 24,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "The new organisationId is the fourth positional constructor parameter (line 24), behind two optional ones, so every caller that sets it passes placeholders: new NotificationApiClient(request, undefined, undefined, OTHER_ORGANISATION_ID) in tests/animals/security/backend/organisation-scoped-notifications.spec.ts:10,15, and an undefined apiKey throughout the plants spec. The sibling AddressBookApiClient (address-book-api-client.ts:37-42) takes the same organisation as its second parameter, so the two trader clients choose an organisation in two different ways",
+      "fix": "Must: a caller chooses the organisation without passing undefined for parameters it does not care about, and NotificationApiClient and AddressBookApiClient take the organisation the same way. One way: take an options object ({ baseUrl, apiKey, organisationId }) after request in both clients, or move organisationId to second place to match AddressBookApiClient"
+    },
+    {
+      "id": 3,
+      "line": 29,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The private headers getter (lines 29-31, returning { [ORGANISATION_ID_HEADER]: this.organisationId }) is a copy of AddressBookApiClient's getter at address-book-api-client.ts:46-48, so the rule for how a trader request names its organisation now has two homes",
+      "fix": "Must: one function owns building the organisation header from an organisation id, and both clients call it. One way: export organisationHeaders(organisationId) from adapters/http/trader-api-headers.ts beside ORGANISATION_ID_HEADER and delete both getters"
+    },
+    {
+      "id": 4,
+      "line": 8,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Comments in the file describe the backend and the callers, not the lines below them: lines 8-10 narrate NotificationService.writeWithOutbox, ShedLock and how human clicks and tests race; the createNotification JSDoc (lines 37-41) names the backend's ReferenceNumberGenerator and uses Javadoc {@code} syntax in TypeScript; the saveNotification JSDoc (lines 53-58) explains how the backend resolves party references onto the NotificationEdited event, which also now competes with the organisation header this PR adds as the organisation the backend uses",
+      "fix": "Must: each comment left in the file states only the contract of the lines below it (the exported method's inputs, result and errors) and names no backend class, event or caller; rationale about the outbox lock lives in the repo's docs/ or nowhere. One way: rename the constants to say what they retry (e.g. SUBMIT_RETRY_ATTEMPTS) and delete lines 8-10; cut the two JSDoc blocks down to what the caller passes and gets back"
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:35Z"
+}

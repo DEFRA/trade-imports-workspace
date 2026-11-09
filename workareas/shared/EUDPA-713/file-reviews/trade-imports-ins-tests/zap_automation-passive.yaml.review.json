@@ -1,0 +1,29 @@
+{
+  "file": "zap/automation-passive.yaml",
+  "repo": "trade-imports-ins-tests",
+  "commit": "864a95e370a926f7c165f56ffbae32d641474414",
+  "pr": 83,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:04:08Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The plants-backend context mirrors the other two plans as check-context-sync requires, but its URL env var is not supplied to the local or GitHub Actions ZAP daemon, and the unqualified 'backend' context name is now ambiguous.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 65,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "The new plants-backend context reads ${ZAP_TRADE_IMPORTS_PLANTS_BACKEND_URL}, but only entrypoint.sh (CDP) exports it. The workspace's docker/stack/security.compose.yml passes the other five ZAP_* vars to the ZAP daemon with localhost defaults (lines 11-15) and not this one, on main and on origin/feat/EUDPA-713-organisation-scoped-notifications. The local stack and the GitHub Actions security scan therefore register this context with the literal placeholder as its URL, so traffic from the new @active plants spec (tests/plants/security/backend/organisation-scoped-notifications.spec.ts) to localhost:8091 falls outside every context. The workspace repo has no PR in this set.",
+      "fix": "Must: every environment that runs these ZAP plans gives the ZAP daemon a real URL for ZAP_TRADE_IMPORTS_PLANTS_BACKEND_URL, changed on the same branch name across repos. One way: add 'ZAP_TRADE_IMPORTS_PLANTS_BACKEND_URL: ${ZAP_TRADE_IMPORTS_PLANTS_BACKEND_URL:-http://localhost:8091}' to docker/stack/security.compose.yml on feat/EUDPA-713-organisation-scoped-notifications in the workspace and raise that PR alongside this one"
+    },
+    {
+      "id": 2,
+      "line": 48,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "With plants-backend added (line 63), the context named 'backend' (line 48) no longer says which backend it is: its URL is ZAP_TRADE_IMPORTS_ANIMALS_BACKEND_URL, and the address-book comment at lines 76-77 ('Same actuator surface as backend') now sits directly under the plants-backend block, so a reader cannot tell which of the two it means. One concept, one name: the env var already says animals.",
+      "fix": "Must: each backend context's name says which service it covers, and every comment and reference names one context unambiguously. One way: rename 'backend' to 'animals-backend' in all three plans (check-context-sync keeps them identical), in the activeScan job's 'context:' in automation-active.yaml and in ZAP_SCOPE_CONTEXTS in config/zap.ts, and make the address-book comment name animals-backend"
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:35Z"
+}

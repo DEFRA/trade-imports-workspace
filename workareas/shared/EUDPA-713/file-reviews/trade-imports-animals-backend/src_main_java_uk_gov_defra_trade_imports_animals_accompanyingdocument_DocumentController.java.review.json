@@ -1,0 +1,47 @@
+{
+  "file": "src/main/java/uk/gov/defra/trade/imports/animals/accompanyingdocument/DocumentController.java",
+  "repo": "trade-imports-animals-backend",
+  "commit": "9cf4d45bff4a8f22798ec0f63e66f5879f1ea8ab",
+  "pr": 122,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:01:11Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The three notification-keyed document routes now check ownership, but the upload-id routes stay unscoped, the new checks are untested, and the header constant has two names.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 144,
+      "severity": "Major",
+      "category": "security",
+      "issue": "Only the three /notifications/{ref}/... document routes check the owning organisation (lines 93, 123, 174). The upload-id routes the frontend also calls for a trader (claim :144, get :195, delete :216, downloadFile :261; services/document-uploads/real.js:28,72,84,94) take no organisation header and are outside TraderOrganisationHeaderFilter (shouldNotFilter skips any path not starting /notifications). A trader in organisation B who holds an upload id from organisation A's notification can read its metadata, stream the file, delete it, or claim it into A's notification - against the story's 'other organisations cannot see or change our consignments' and the AC that reading or changing another organisation's notification returns 404.",
+      "fix": "Must: every trader-facing document route, including those keyed by upload id, returns 404 when the upload belongs to a notification outside the caller's organisation, and rejects a request with no organisation id. One way: require the organisation header on claim/get/delete/file, resolve the upload's notificationRef in DocumentService, call notificationService.requireTraderAccess(ref, organisationId) before acting, and extend the filter's path match to /document-uploads (keeping scan-results, the cdp-uploader callback, excluded)."
+    },
+    {
+      "id": 2,
+      "line": 93,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The new ownership checks at lines 93, 123 and 174 have no test that fails without them. DocumentControllerTest stubs requireTraderAccess to do nothing for every test (@BeforeEach allowTraderNotificationAccess, DocumentControllerTest.java:77-79), and DocumentControllerIT has no organisation set-up at all, so deleting any of the three calls leaves the suite green. The AC asks for tests showing organisation A cannot see or change organisation B's notification.",
+      "fix": "Must: for register, session and list, a test sends organisation B's id for a notification owned by organisation A, asserts 404, and goes red if the requireTraderAccess call is removed. One way: in DocumentControllerIT, seed a notification with organisationId A and call each route with header B; assert 404 and that no upload session was written for register.",
+      "best_practice": "java/testing/integration.md"
+    },
+    {
+      "id": 3,
+      "line": 88,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The organisation header has two names for one value: DocumentController reads NotificationController.HEADER_ORGANISATION_ID (lines 34, 88, 119, 172), which is only an alias for TraderOrganisationHeaderFilter.ORGANISATION_ID_HEADER (NotificationController.java:44), while DocumentControllerTest sends TraderOrganisationHeaderFilter.ORGANISATION_ID_HEADER. The document package now depends on the notification controller for a constant the filter owns.",
+      "fix": "Must: one constant names the Trade-Imports-Organisation-Id header and every controller and test refers to it by that one name. One way: import TraderOrganisationHeaderFilter.ORGANISATION_ID_HEADER here (and in NotificationController), delete the HEADER_ORGANISATION_ID alias, and drop the NotificationController import."
+    },
+    {
+      "id": 4,
+      "line": 80,
+      "severity": "Minor",
+      "category": "comments",
+      "issue": "The public contract of register, session and list is now out of date: register's OpenAPI responses (lines 80-84) list no 404 though requireTraderAccess now throws NotFoundException for another organisation's notification, none of the three documents the 400 for a missing organisation header, and their Javadoc (lines 69-75, 100-106, 156-161) has no @param for the new organisationId parameter.",
+      "fix": "Must: each of the three operations documents the organisation header, the 404 for a notification outside the caller's organisation, and the 400 for a missing header, in both the OpenAPI annotations and the Javadoc @param list. One way: add @ApiResponse(responseCode = \"404\") to register, a 400 response to session and list, and an @param organisationId line to each Javadoc.",
+      "best_practice": "java/openapi-springdoc.md"
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:33Z"
+}

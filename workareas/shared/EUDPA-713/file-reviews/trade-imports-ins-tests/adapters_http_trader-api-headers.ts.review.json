@@ -1,0 +1,29 @@
+{
+  "file": "adapters/http/trader-api-headers.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "864a95e370a926f7c165f56ffbae32d641474414",
+  "pr": 83,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:02:13Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Correct header name, but the default organisation id duplicates config/users.ts and is still re-exported from the address-book client, giving it two homes and two import paths.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 1,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "E2E_ORGANISATION_ID = '5900001' (lines 1-2) restates config/users.ts:10, where users.andrew.organisationId = '5900001' already owns the default sign-in's organisation, and defaultUser = users.andrew (users.ts:23). The doc comment on line 1 exists only to tie the literal back to CRN 2100010101, which users.andrew.crn already holds, and it describes another module (the sign-in flow), which the house comment rule forbids. Change the stub org in users.ts and the API clients keep sending the old one.",
+      "fix": "Must: the default E2E organisation id has one home, config/users.ts, and the API clients' default reads it from there; no second literal and no comment decoding it. One way: export const E2E_ORGANISATION_ID = defaultUser.organisationId (importing defaultUser from @config/users) and delete the doc comment, or drop the constant and default the clients' organisationId parameter to defaultUser.organisationId."
+    },
+    {
+      "id": 2,
+      "line": 2,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "This module was extracted as the owner of E2E_ORGANISATION_ID, but adapters/http/address-book-api-client.ts:8 still re-exports it (export { E2E_ORGANISATION_ID }), so the constant has two import paths: tests/animals/security/backend/organisation-scoped-notifications.spec.ts:2 imports it from address-book-api-client while tests/plants/security/backend/organisation-scoped-notifications.spec.ts:2 imports it from trader-api-headers. A notification spec depending on the address-book client for an organisation id is the wrong layer. A promoted helper whose old export remains is the copied-mechanism case.",
+      "fix": "Must: E2E_ORGANISATION_ID (or whatever replaces it per the duplication finding) is imported from one module by every caller, and address-book-api-client.ts no longer re-exports it. One way: delete the re-export on address-book-api-client.ts:8 and point the animals organisation-scoped-notifications spec at the owning module."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:35Z"
+}

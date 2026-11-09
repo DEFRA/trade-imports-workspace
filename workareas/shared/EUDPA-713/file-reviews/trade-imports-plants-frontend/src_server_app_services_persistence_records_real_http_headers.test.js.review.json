@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/services/persistence/records/real/http/headers.test.js",
+  "repo": "trade-imports-plants-frontend",
+  "commit": "baffe546d79377675924fcd7d6d492dc9dcdd4f2",
+  "pr": 139,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:04:34Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The tests prove the header is sent and refused correctly, but they bind the organisation through a leaking test-only mechanism and lock in a test-env fallback organisation in production code.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 9,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "The tests bind the organisation with bindOrganisationId (AsyncLocalStorage.enterWith), which no production code uses: routes-high-risk-plants.js:93 and shared/set-context.js:98 both use withOrganisationId. enterWith leaks the store past the test, and the afterEach reset at line 9 runs in the hook's own context, so the tests at lines 19 and 26 each repeat bindOrganisationId(undefined) to protect themselves. The same reset is written three times, and the tests do not use the mechanism production uses.",
+      "fix": "Must: each test binds its organisation through the same scoped mechanism production uses, with no binding that outlives the test and no repeated reset. One way: wrap each headers() call in withOrganisationId('5900042', () => headers()) or withOrganisationId(undefined, ...), and drop the afterEach bindOrganisationId reset and the per-test bindOrganisationId(undefined) lines."
+    },
+    {
+      "id": 2,
+      "line": 18,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "'Should fall back to the test default organisation in test env' (lines 18-22) pins a test-only branch in production code: headers.js falls back to the literal '5900001' when NODE_ENV is 'test'. That is a guess at the organisation, which organisation-id.js's own contract forbids ('none of them may substitute a guess'), and it exists only so other tests (for example engine/journey.test.js) can call the backend client without binding an organisation. This test locks that seam in.",
+      "fix": "Must: headers.js has no NODE_ENV branch and no default organisation; a test that needs an organisation binds one itself, and this file tests only the bound and unbound cases. One way: remove the fallback from headers.js, delete this test, have the tests that relied on it bind '5900001' through withOrganisationId or a shared test helper, and make the line-25 test the plain unbound case without stubbing NODE_ENV."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:37Z"
+}

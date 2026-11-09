@@ -1,0 +1,48 @@
+{
+  "file": "src/server/app/services/persistence/records/real/http/headers.js",
+  "repo": "trade-imports-plants-frontend",
+  "commit": "baffe546d79377675924fcd7d6d492dc9dcdd4f2",
+  "pr": 139,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:04:28Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Sends the session organisation header correctly, but carries a NODE_ENV=test fallback organisation in production code, duplicates the header name with the address-book client, and refuses silently without a traceable log.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 8,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "headers() carries a test-only branch in production code: lines 8-10 substitute the hard-coded organisation '5900001' when NODE_ENV is 'test'. That makes the 'never substitute a guess' contract in organisation-id.js:16 untrue under test, so any unit or route test that forgets to bind an organisation still reaches the backend mock with a header and passes, hiding exactly the missing-binding defect this guard exists to catch. It also gives the test organisation a second home beside authenticatedCredentials in engine/test-support.js:24-25, and headers.test.js:18 ('Should fall back to the test default organisation in test env') exists only to cover the branch.",
+      "fix": "Must: headers() has no NODE_ENV branch and no hard-coded organisation; it sends the bound organisation or throws, in every environment, and tests that reach the real records client bind the organisation through the shared test helper (engine/test-support.js, using authenticatedCredentials.organisationId). One way: delete the '?? (process.env.NODE_ENV === ...)' fallback and its test, then make the test-support set-up (or a vitest setup file) bind authenticatedCredentials.organisationId for tests that call the real client without a request.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 2,
+      "line": 5,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The organisation header name now has two homes in this repo: ORGANISATION_ID_HEADER = 'Trade-Imports-Organisation-Id' here (line 5) and the literal 'Trade-Imports-Organisation-Id' in services/address-book/client.js:26, whose own headers(orgId) builder (client.js:24-28) also repeats the Content-Type and tracing-header shape and re-derives tracingHeader from TRACING_HEADER (client.js:9) instead of importing it from records/real/config.js as this file does. A rename or casing change to the header on one side silently breaks scoping on the other.",
+      "fix": "Must: one constant owns the Trade-Imports-Organisation-Id header name and every outbound client that sends it (notifications backend and address book) uses that constant. One way: move ORGANISATION_ID_HEADER beside organisationIdOf in common/helpers/organisation-id.js (or a shared http headers module) and import it in both headers.js and address-book/client.js."
+    },
+    {
+      "id": 3,
+      "line": 1,
+      "severity": "Minor",
+      "category": "structure",
+      "issue": "The new import of currentOrganisationId reaches up six directories ('../../../../../../common/helpers/organisation-id.js') and is placed above the third-party '@defra/hapi-tracing' import, breaking the file's external-then-local import order (lines 1-3).",
+      "fix": "Must: imports are ordered external packages first, then local modules, as in the rest of the repo. One way: move line 1 below the '@defra/hapi-tracing' import (or use the repo's path alias if one exists for src/server/common).",
+      "best_practice": "node/code-style.md"
+    },
+    {
+      "id": 4,
+      "line": 11,
+      "severity": "Major",
+      "category": "logging",
+      "issue": "The refusal at lines 11-15 (no bound organisation, so the backend call is refused) logs nothing and throws a bare Error with no context: support sees a generic 500 with no request path, trace id or which backend operation was attempted, and cannot tell a missing session binding from an unauthenticated caller during an incident.",
+      "fix": "Must: the refusal is traceable — the thrown error, or a single warn log at the point of refusal, carries the trace id and the operation so support can search for it. One way: throw a named error type the server's error handler logs with { err } and the trace id from getTraceId(), rather than a plain Error.",
+      "best_practice": "node/pino-logging.md"
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:37Z"
+}

@@ -1,0 +1,21 @@
+{
+  "file": "src/k6/eventing.js",
+  "repo": "trade-imports-performance-tests",
+  "commit": "69ff5ebc9f40c407353e9257568f6debbcdc9fb4",
+  "pr": 32,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:03:11Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Functionally harmless, but the organisation header is sent to the admin outbox-events route the backend exempts, which misstates which routes are organisation-scoped.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 151,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "confirmEventArrival now sends traderOrganisationHeaders() to GET /notifications/{ref}/outbox-events (lines 149-152), and readBody gained a headers parameter (line 50) only for this call. That route is an admin route the ticket puts out of scope and the backend exempts from the header (TraderOrganisationHeaderFilter.shouldNotFilter: 'GET' + '/notifications/[^/]+/outbox-events' returns true; class Javadoc: 'Admin routes (... outbox-event listing) are excluded'). The helper's own JSDoc says it is for 'trader notification API calls'. The call tells the next reader the outbox listing is organisation-scoped when it is not, and the header has no effect on the result.",
+      "fix": "Must: the perf test sends the organisation header only to routes the backend scopes by organisation, so the code states the same rule as TraderOrganisationHeaderFilter; readBody carries no parameter that no caller needs. One way: drop the traderOrganisationHeaders() argument and the import from eventing.js, and revert readBody to readBody(url)."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:36Z"
+}

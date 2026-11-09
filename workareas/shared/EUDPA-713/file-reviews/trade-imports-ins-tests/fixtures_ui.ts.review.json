@@ -1,0 +1,21 @@
+{
+  "file": "fixtures/ui.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "864a95e370a926f7c165f56ffbae32d641474414",
+  "pr": 83,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:02:25Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new plantsNotificationApi fixture is correct but unused, while the plants org-scoping spec rebuilds the same client by hand in every test.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 144,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The new plantsNotificationApi fixture (ui.ts:144-146) is used by no spec, while tests/plants/security/backend/organisation-scoped-notifications.spec.ts:23,35,46 builds the same client by hand three times (new NotificationApiClient(request, getPlantsBackendBaseUrl(), undefined, E2E_ORGANISATION_ID) - passing undefined applies the same defaults the fixture gets). The animals twin spec does the same beside the existing notificationApi fixture (animals spec:10). So the PR adds a fixture nothing reaches and keeps the set-up copied per test.",
+      "fix": "Must: the owner-organisation plants client has one home, and every plants (and animals) org-scoping test takes it from there; no spec rebuilds it locally, and no fixture exists that nothing uses. One way: have the plants spec take plantsNotificationApi (and the animals spec notificationApi) as the owner client from the fixture, and build only the other-organisation client inline - or delete plantsNotificationApi if the specs keep their own clients."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:35Z"
+}

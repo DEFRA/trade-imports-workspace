@@ -1,0 +1,39 @@
+{
+  "file": "src/server/app/engine/test-support.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "a535ca5361917faf1d70a8b8a87a054d97e5aeab",
+  "pr": 461,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:00:55Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "journeyRequest now hides an ambient organisation binding that duplicates local test copies and a production test-env fallback, so the bind cannot fail any test; no functional bug.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 164,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "journeyRequest (line 160-183) now also calls bindOrganisationId (AsyncLocalStorage.enterWith) at line 164, so a function whose name predicts 'build a request object' silently changes ambient async state that outlives the call and leaks into later code in the same test context. It also binds the fixed authenticatedCredentials.organisationId, not the organisation of the request it returns, so a caller passing overrides.auth gets a request for one organisation while backend headers carry another.",
+      "fix": "Must: building a test request changes no ambient state; the organisation the backend headers carry in a test is set by a helper whose name says it does that, and it matches the credentials on the request under test. One way: move the binding into a named helper (e.g. inside useBackendRecords' beforeEach, or an exported actAsAuthenticatedOrganisation()) that enters organisationIdOf(request) / authenticatedCredentials.organisationId, and restore journeyRequest to a pure object builder.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 2,
+      "line": 164,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The test organisation binding has several homes: journeyRequest binds it here (line 164); journey.test.js:230, :354, :385, :443 and real.requests.test.js:57 each bind the literal '5900001' in their own beforeEach (journey.test.js's tests also call journeyRequest, so those copies are now redundant); and production headers.js:7-9 falls back to '5900001' when NODE_ENV is 'test'. Because of that fallback the bind at line 164 cannot change any test outcome — removing it leaves every test green.",
+      "fix": "Must: one shared test helper owns putting the signed-in organisation in scope for backend calls, every test that needs it calls that helper, the local bindOrganisationId('5900001') copies are deleted, and production headers.js carries no NODE_ENV test fallback (so a test that forgets the helper fails loudly). One way: add the binding to useBackendRecords (or one exported helper) using authenticatedCredentials.organisationId, delete the beforeEach copies and the fallback in headers.js.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 3,
+      "line": 34,
+      "severity": "Minor",
+      "category": "history",
+      "issue": "test-support.js imports bindOrganisationId, which organisation-id.js:35-36 marks @deprecated as an alias of enterOrganisationIdForTests. A new caller of a deprecated alias keeps two names for one function alive; the alias is a renamed-from artefact.",
+      "fix": "Must: one name for the test-only organisation binder, and no deprecated alias in organisation-id.js. One way: import enterOrganisationIdForTests here and in the other test callers, then delete the bindOrganisationId alias."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:34Z"
+}

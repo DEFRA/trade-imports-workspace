@@ -1,0 +1,29 @@
+{
+  "file": "src/config/trader-organisation.js",
+  "repo": "trade-imports-performance-tests",
+  "commit": "69ff5ebc9f40c407353e9257568f6debbcdc9fb4",
+  "pr": 32,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-09T12:03:18Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The organisation id and header are correct for stub CRN 2100010101 (defra-id-stub mock.json), but the identity's organisation is held apart from IDENTITY.crn and the doc comments describe other repos and callers.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 5,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "The stub sign-in identity now has two homes: its CRN is IDENTITY.crn in src/config/smoke.js:7 ('2100010101'), and its organisation is TRADER_ORGANISATION_ID = '5900001' here, tied to that CRN only by the comment on lines 1-4. Every suite signs in with IDENTITY.crn (smoke.k6.js:74, peak-day.k6.js:77, background-volume.k6.js:57, breakpoint-stubs.k6.js:39, design-target.js:242), and the backend now 404s any read whose header org differs from the session org that created the notification, so changing the CRN without this constant silently breaks every direct backend read in journeys.js:48, eventing.js:151 and readiness.js:22.",
+      "fix": "Must: the identity the suites sign in as and the organisation id it owns live in one object, and the organisation header is built from that object. One way: add organisationId: '5900001' to IDENTITY in smoke.js (or move IDENTITY into this module) and have traderOrganisationHeaders read IDENTITY.organisationId, deleting TRADER_ORGANISATION_ID."
+    },
+    {
+      "id": 2,
+      "line": 1,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Both doc comments describe things other than the lines below them. Lines 1-4 describe other repos ('matches trade-imports-ins-tests E2E_ORGANISATION_ID and address-book fixtures') and call this k6 suite's user the 'E2E stub user'. Line 9 describes callers ('animals/plants trader notification API calls') and is untrue: the headers also go to the readiness probe (readiness.js:22) and to /notifications/{ref}/outbox-events (eventing.js:151), which the ticket keeps unscoped admin endpoints.",
+      "fix": "Must: no comment in the file names another repo, a test fixture or the callers; the exported function's JSDoc, if kept, states only its contract (what it returns). One way: delete the comment on lines 1-4 (the structure fix makes the CRN link explicit in code) and reword line 9 to 'The organisation header for the signed-in stub identity.' or delete it."
+    }
+  ],
+  "reconciled_at": "2026-11-09T12:05:36Z"
+}

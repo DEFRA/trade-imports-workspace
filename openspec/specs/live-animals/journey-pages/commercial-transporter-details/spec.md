@@ -19,13 +19,13 @@ The system MUST ask the user for the commercial transporter's name or organisati
 
 ### Requirement: A complete set of commercial transporter details is saved as one record and reloads into the form
 **ID**: REQ-COMMERCIAL-TRANS-002
-The system MUST save the transporter's details together as a single record once every mandatory field is given, MUST return the user to Overview, and MUST show the saved values again in the form when they return to it through the add route.
+The system MUST save the transporter's details together as a single record once every mandatory field is given, MUST go on to Upload documents on Save and continue, and MUST show the saved values again in the form when they return to it through the add route.
 
-#### Scenario: Completing the details saves them and returns to Overview
+#### Scenario: Completing the details saves them and goes on to Upload documents
 **ID**: SCN-COMMERCIAL-TRANS-002-A
 - **GIVEN** the user is on the commercial transporter details page with every mandatory field entered
 - **WHEN** they save and continue
-- **THEN** they return to Overview
+- **THEN** Upload documents is shown
 
 #### Scenario: Returning to the page shows the saved details in the form
 **ID**: SCN-COMMERCIAL-TRANS-002-B
@@ -78,7 +78,7 @@ The system MUST add a commercial transporter saved from this page to the transpo
 - **GIVEN** the user has saved a complete set of commercial transporter details
 - **WHEN** they open the transporter list
 - **THEN** a row for that transporter is shown with its radio checked
-- **WHEN** they save the list without changing the choice
+- **WHEN** they save the list with "Save and return to overview", without changing the choice
 - **THEN** they return to Overview, and the commercial transporter form still shows the saved authorisation number
 
 ### Requirement: The back link returns to the transporter type question

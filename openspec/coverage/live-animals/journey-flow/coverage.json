@@ -121,8 +121,8 @@
           "name": "Following a back link and saving again carries on",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "following Back and choosing Save and continue carries on to the next step, not the overview", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/opening-run.spec.ts", "test": "following Back from the main import reason and choosing Save and continue carries the run on to the main import reason, not the overview", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "following Back and choosing Save and continue carries on to the next step", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/save-and-continue.spec.ts", "test": "following Back from the main import reason to What are you importing? and choosing Save and continue returns to the main import reason", "strength": "full", "notes": "" }
           ]
         },
         {
@@ -131,6 +131,14 @@
           "coverage": "partial",
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should go from the main import reason to Commodity details with only the country of origin saved", "strength": "partial", "notes": "asserts the next-page path for the scenario's input; not seen failing against the previous rule" }
+          ]
+        },
+        {
+          "id": "SCN-FLOW-003-N",
+          "name": "A notification continued in another browser session goes on to the same next page",
+          "coverage": "partial",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/save-and-continue.spec.ts", "test": "saving What are you importing? in a fresh browser session after saving the origin goes on to the main import reason", "strength": "partial", "notes": "saves origin in one browser session, then opens What are you importing? in a fresh session and continues to Main import reason; not red-probed, because a probe needs the stack rebuilt and the implementor does not run the E2E phase" }
           ]
         }
       ]
@@ -154,9 +162,9 @@
           "name": "Save and return to overview commits the input and returns to Overview",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "Save and return to overview on a new notification saves the answer and shows the overview rather than commodity details", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "Save and return to overview on a new notification saves the answer and shows the overview", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/save-actions.test.js", "test": "Should commit the page and redirect to the hub on Save and return to overview", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/save-and-return-to-overview.spec.ts", "test": "main import reason: on a new notification, saves the answer and shows the overview rather than commodity details", "strength": "partial", "notes": "not red-probed in this change; the implementor does not run the E2E phase" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/save-and-return-to-overview.spec.ts", "test": "main import reason: on a new notification, saves the answer and shows the overview", "strength": "partial", "notes": "not red-probed in this change; the implementor does not run the E2E phase" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/task-page-exits.spec.ts", "test": "Cancel and return to overview discards typed input; Save and return to overview commits and lands on the hub", "strength": "full", "notes": "" }
           ]
         },
@@ -244,7 +252,7 @@
           "name": "Continuing from check your answers is refused while a task row is outstanding",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/opening-run.spec.ts", "test": "ends on the review page after Save and continue, naming what is outstanding, when the notification is incomplete", "strength": "full", "notes": "Continue on the unfinished review stays on it, with the outstanding tasks named and the summary focused" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/save-and-continue.spec.ts", "test": "ends on the review page after Save and continue, naming what is outstanding, when the notification is incomplete", "strength": "full", "notes": "Continue on the unfinished review stays on it, with the outstanding tasks named and the summary focused" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/gates.test.js", "test": "Should lock the review section on a blank journey", "strength": "partial", "notes": "the review section's gate on a blank journey; does not drive the refused Continue" }
           ]
         },
@@ -296,7 +304,7 @@
           "name": "A draft with nothing saved, resumed from the dashboard, opens at the first page",
           "coverage": "partial",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.test.js", "test": "Should send a journey with no entered answer to the entry page while the run is %s", "strength": "partial", "notes": "the run record alone no longer admits the request" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.test.js", "test": "Should send %s of a notification with no entered answer to the entry page", "strength": "partial", "notes": "a journey holding no entered answer is sent to the entry page whatever page is asked for" }
           ]
         }
       ]
@@ -417,10 +425,10 @@
         },
         {
           "id": "SCN-FLOW-013-E",
-          "name": "Outside an amendment the CPH number page and the origin page keep their primary action alone",
+          "name": "On a draft the CPH number page and the origin page keep their primary action alone",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "while amending, the origin page and the CPH number page end with Save and continue alone, and the contact address page ends as it does on a draft", "strength": "partial", "notes": "asserts the origin and CPH number pages end with Save and continue alone while amending" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "ends with the primary alone, being reached from the addresses page", "strength": "full", "notes": "the CPH number page on a draft; red when the page renders a second action, green restored" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/origin.spec.ts", "test": "renders the page controls, with Save and continue as the form's only button and no link in the form", "strength": "partial", "notes": "the origin page only" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "ends with Save and continue alone", "strength": "full", "notes": "the origin page only" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/save-actions.test.js", "test": "Should end a page reached from another page with the primary alone", "strength": "partial", "notes": "the non-amend macro ending" }

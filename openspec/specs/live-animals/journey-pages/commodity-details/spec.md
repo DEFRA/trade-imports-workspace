@@ -175,7 +175,7 @@ The system MUST list every number of animals error in the error summary before a
 
 ### Requirement: The page ends with Save and continue, Save and return to overview and Cancel and return to overview
 **ID**: REQ-COMMODITY-DETAILS-011
-Outside an amendment the system MUST end the commodity details page with "Save and continue", "Save and return to overview" and "Cancel and return to overview", on a draft as when opened from Overview.
+The system MUST end the commodity details page with "Save and continue", "Save and return to overview" and "Cancel and return to overview", on a draft and while amending, as when opened from Overview.
 
 #### Scenario: A page reached by Save and continue offers all three controls
 **ID**: SCN-COMMODITY-DETAILS-011-A

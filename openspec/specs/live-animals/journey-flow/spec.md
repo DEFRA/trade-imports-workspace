@@ -44,13 +44,13 @@ The system MUST, on a valid Save and continue from a journey page, go to the nex
 **ID**: SCN-FLOW-003-C
 - **GIVEN** the user is on What are you importing?, reached from a new notification, from its task on Overview or from a reopened draft
 - **WHEN** they save a selection and continue
-- **THEN** Main import reason is shown, not Overview
+- **THEN** Main import reason is shown
 
 #### Scenario: Roles and addresses goes on to Contact address, never the CPH number page, even when complete
 **ID**: SCN-FLOW-003-D
 - **GIVEN** a consignment that needs a CPH number, every other task complete, and roles and addresses open
 - **WHEN** the user saves and continues
-- **THEN** Contact address for this consignment is shown, not the CPH number page and not Overview
+- **THEN** Contact address for this consignment is shown, not the CPH number page
 
 #### Scenario: A page opened from Overview has the same address as from any other start
 **ID**: SCN-FLOW-003-E
@@ -102,13 +102,19 @@ The system MUST, on a valid Save and continue from a journey page, go to the nex
 **ID**: SCN-FLOW-003-L
 - **GIVEN** the user is on main import reason
 - **WHEN** they follow the back link to what are you importing and save it
-- **THEN** main import reason is shown, not Overview
+- **THEN** main import reason is shown
 
 #### Scenario: With only the country of origin saved, main import reason goes on to commodity details
 **ID**: SCN-FLOW-003-M
 - **GIVEN** a notification holding only its country of origin and main import reason opened from its task on Overview
 - **WHEN** the user saves and continues
 - **THEN** commodity details is shown, not check your answers
+
+#### Scenario: A notification continued in another browser session goes on to the same next page
+**ID**: SCN-FLOW-003-N
+- **GIVEN** a draft whose origin of the import was saved in one browser session
+- **WHEN** the user opens What are you importing? in another browser session, chooses a species and saves and continues
+- **THEN** Main import reason is shown
 
 ### Requirement: A page the hub links to directly, other than the origin of the import page, offers both a discard-and-exit and a save-and-exit route back to Overview
 **ID**: REQ-FLOW-004
@@ -257,7 +263,7 @@ The system MUST keep the user on a collection page — one that holds several re
 
 ### Requirement: A journey sent to its first page goes on from there to the next page that applies
 **ID**: REQ-FLOW-011
-The system MUST, on a valid Save and continue on the first page after the user was sent there from another page, take them to the next page that applies, not to Overview.
+The system MUST, on a valid Save and continue on the first page after the user was sent there from another page, take them to the next page that applies.
 
 #### Scenario: Saving the entry page after a redirect shows What are you importing?
 **ID**: SCN-FLOW-011-A
@@ -305,7 +311,7 @@ While a notification is being amended, each journey page MUST end with exactly t
 - **WHEN** the user opens the origin of the import page or the CPH number page
 - **THEN** each ends with "Save and continue" alone
 
-#### Scenario: Outside an amendment the CPH number page and the origin page keep their primary action alone
+#### Scenario: On a draft the CPH number page and the origin page keep their primary action alone
 **ID**: SCN-FLOW-013-E
 - **GIVEN** a draft notification
 - **WHEN** the user opens the CPH number page or the origin of the import page

@@ -84,6 +84,12 @@ The system MUST, on a valid Save and continue from a journey page, go to the nex
 - **WHEN** they save a line
 - **THEN** the commodities list is shown
 
+#### Scenario: A notification continued in another browser session goes on to the same next page
+**ID**: SCN-PLANTS-FLOW-003-J
+- **GIVEN** a draft whose commodity type and a commodity line were saved in one browser session
+- **WHEN** the user opens the commodities list in another browser session and continues
+- **THEN** origin is shown
+
 ### Requirement: A page the hub links to directly offers both a discard-and-exit and a save-and-exit route back to Overview
 **ID**: REQ-PLANTS-FLOW-004
 The system MUST let the user leave a page the hub links to directly by discarding anything typed since it was last saved or by committing it, returning to Overview either way. Saving and returning MUST make the same checks as saving and continuing: a missing or invalid answer keeps the user on the page with an error for each, what they entered kept and nothing saved.

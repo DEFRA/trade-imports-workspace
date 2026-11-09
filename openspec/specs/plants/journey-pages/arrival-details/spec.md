@@ -171,7 +171,7 @@ The system MUST refuse an expected time of arrival that is not on the 24-hour cl
 
 ### Requirement: The page offers a full set of save controls and is reachable from Overview
 **ID**: REQ-PLANTS-ARRIVAL-DETAILS-010
-The system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview, MUST send the back link to the place the user came from (REQ-PLANTS-FLOW-017) — arrival status (origin for potatoes) after Save and continue there, the review from a Change link, Overview otherwise — MUST reach the page from the Overview arrival row, and MUST go on to the place of destination on save-and-continue from every start. While amending, REQ-PLANTS-FLOW-014 governs how it ends.
+The system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview, MUST send the back link to the place the user came from (REQ-PLANTS-FLOW-017) — arrival status (origin for potatoes) after Save and continue there, the review from a Change link, Overview otherwise — MUST reach the page from the Overview arrival row, and MUST go on to the place of destination on save-and-continue from every start. It ends the same way on a draft and while amending.
 
 #### Scenario: The page is reachable from the Overview arrival row for potatoes
 **ID**: SCN-PLANTS-ARRIVAL-DETAILS-010-A

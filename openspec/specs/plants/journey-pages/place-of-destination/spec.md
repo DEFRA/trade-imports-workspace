@@ -135,7 +135,7 @@ The system MUST keep a place of destination whose address-book record has since 
 
 ### Requirement: The page offers a full set of save controls and is reachable from Overview
 **ID**: REQ-PLANTS-PLACE-OF-DESTINATION-007
-Outside an amendment, the system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page (while amending, `plants/journey-flow` REQ-PLANTS-FLOW-014 governs), and MUST reach the page from the Overview destination task row.
+The system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page, on a draft and while amending alike, and MUST reach the page from the Overview destination task row.
 
 #### Scenario: The page is reachable from the Overview destination row
 **ID**: SCN-PLANTS-PLACE-OF-DESTINATION-007-A

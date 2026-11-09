@@ -8,7 +8,7 @@ Collects the identification numbers a high-risk plants notification owes for its
 
 ### Requirement: The page shows only the identification fields in scope for the commodity type
 **ID**: REQ-PLANTS-IDENT-NUMBERS-001
-The system MUST show only the identification-number fields owed for the notification's commodity type, each with its own label and hint, under the parties section caption, and MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview. While the notification is being amended, `plants/journey-flow` REQ-PLANTS-FLOW-014 governs how the page ends instead.
+The system MUST show only the identification-number fields owed for the notification's commodity type, each with its own label and hint, under the parties section caption, and MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview. The page ends the same way on a draft and while amending.
 
 #### Scenario: Plants for planting shows supplier and consignment only
 **ID**: SCN-PLANTS-IDENT-NUMBERS-001-A
@@ -79,7 +79,7 @@ The system MUST refuse on either save control a mandatory field on offer that is
 
 ### Requirement: Save-and-return saves; cancel discards later edits; back returns to the previous step after Save and continue and to Overview otherwise
 **ID**: REQ-PLANTS-IDENT-NUMBERS-004
-The system MUST save the current values and reach Overview on save-and-return-to-overview, MUST reach Overview without saving later edits on cancel-and-return-to-overview, and MUST send the back link to the place the user came from (REQ-PLANTS-FLOW-017): the consignor (the place of destination for potatoes) after Save and continue there, the review from a Change link on the review, and Overview otherwise. While amending, no cancel control is offered (`plants/journey-flow` REQ-PLANTS-FLOW-014).
+The system MUST save the current values and reach Overview on save-and-return-to-overview, MUST reach Overview without saving later edits on cancel-and-return-to-overview, and MUST send the back link to the place the user came from (REQ-PLANTS-FLOW-017): the consignor (the place of destination for potatoes) after Save and continue there, the review from a Change link on the review, and Overview otherwise. The same holds while amending.
 
 #### Scenario: On a draft opened from a Change link, the back link opens the review
 **ID**: SCN-PLANTS-IDENT-NUMBERS-004-D

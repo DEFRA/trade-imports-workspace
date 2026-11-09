@@ -8,7 +8,7 @@ Asks which address-book record is the consignor. The page is titled "Consignor".
 
 ### Requirement: The page asks for a consignor with the searchable address-book picker
 **ID**: REQ-PLANTS-CONSIGNOR-001
-The system MUST ask which address is the consignor, showing the parties section caption, a short description that this is the sender, and the searchable address-book picker. Outside an amendment it MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview. While the notification is being amended, `plants/journey-flow` REQ-PLANTS-FLOW-014 governs how the page ends instead.
+The system MUST ask which address is the consignor, showing the parties section caption, a short description that this is the sender, and the searchable address-book picker. It MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview, on a draft and while amending alike.
 
 #### Scenario: The page presents its caption, heading, description and search
 **ID**: SCN-PLANTS-CONSIGNOR-001-A
@@ -29,7 +29,7 @@ The system MUST open this page when the user follows Overview's consignor task r
 
 ### Requirement: A chosen consignor is accepted, continues the journey, and persists
 **ID**: REQ-PLANTS-CONSIGNOR-003
-The system MUST accept a chosen address, continue to identification numbers on save-and-continue from every start, Overview included, and MUST show that address still chosen when the user returns. Choosing a different address MUST replace the previous one. Outside an amendment (REQ-PLANTS-CONSIGNOR-001), save-and-return-to-overview MUST save without continuing, and cancel-and-return-to-overview MUST reach Overview without saving.
+The system MUST accept a chosen address, continue to identification numbers on save-and-continue from every start, Overview included, and MUST show that address still chosen when the user returns. Choosing a different address MUST replace the previous one. Save-and-return-to-overview MUST save without continuing, and cancel-and-return-to-overview MUST reach Overview without saving, on a draft and while amending alike.
 
 #### Scenario: Choosing a consignor saves, continues to identification numbers, and persists on return
 **ID**: SCN-PLANTS-CONSIGNOR-003-A

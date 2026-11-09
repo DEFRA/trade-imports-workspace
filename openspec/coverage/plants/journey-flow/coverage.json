@@ -98,9 +98,17 @@
           "name": "A newly created notification is walked through the journey to check your answers",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "renders accessible confirmation copy, actions and a bare heading", "strength": "partial", "notes": "completeNotification helper walks the opening run to check your answers — witness via setup, not the named assertion" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "renders accessible confirmation copy, actions and a bare heading", "strength": "partial", "notes": "completeNotification helper walks the journey by Save and continue to check your answers — witness via setup, not the named assertion" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/journey.spec.ts", "test": "ware potatoes from Spain before arrival: sign in, submit and view the saved notification", "strength": "full", "notes": "the contact save lands on check your answers, which continues to the declaration" },
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/navigation.test.js", "test": "Should go from the contact address to nothing, the review page being the fallback", "strength": "partial", "notes": "the journey ends on the review; its start is the commodity type page" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-FLOW-003-J",
+          "name": "A notification continued in another browser session goes on to the same next page",
+          "coverage": "partial",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/save-and-continue.spec.ts", "test": "Save and continue on the commodities page in a fresh browser session goes on to origin", "strength": "partial", "notes": "saves the commodity type and a line in one browser session, then opens the commodities list in a fresh session and continues to origin; not probed" }
           ]
         },
         {
@@ -402,7 +410,7 @@
           "name": "Choosing a plants type opens a new draft at the entry question",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.test.js", "test": "Should start a notification and land on its first question carrying where it was started", "strength": "full", "notes": "run for the create POST and the start entry; removing the opening-run call turns it red" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.test.js", "test": "Should open the first page of the new notification carrying where it was started", "strength": "full", "notes": "run for the create POST and the start entry; red when the create helper stops carrying the start place on the redirect" },
             { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "the start entry opens a new notification at its first question", "strength": "partial", "notes": "proves the landing page and heading in a browser; not probed" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/notification-type/notification-type.spec.ts", "test": "choosing Plants for planting signs the user in to the plants service and opens a new plants draft at its first page", "strength": "partial", "notes": "walks the hand-over from the Import Notification Service through the plants service sign-in to the new draft" }
           ]

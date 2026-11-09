@@ -205,7 +205,7 @@ render_item_counts() {
     echo "| Status | Items |"
     echo "|---|---|"
     jq -r '
-        [.items[] | (.status // "—") + " / " + (.disposition // "none")]
+        [.items[] | if .disposition == null then "Not walked" else (.status // "—") + " / " + .disposition end]
         | group_by(.) | map({k: .[0], n: length}) | sort_by(-.n)
         | .[] | "| \(.k) | \(.n) |"
     ' "$items_file"
@@ -217,7 +217,7 @@ render_item_counts() {
         | ["Critical", "Major", "Minor"]
         | map(. as $sev | {
             sev: $sev,
-            open: ([$all[] | select(.severity == $sev and .status == "Not Done")] | length),
+            open: ([$all[] | select(.severity == $sev and (.disposition == null or .status == "Not Done"))] | length),
             total: ([$all[] | select(.severity == $sev)] | length)
           })
         | .[] | select(.total > 0) | "| \(.sev) | \(.open) | \(.total) |"
@@ -302,7 +302,7 @@ while IFS=$'\t' read -r repo pr; do
             # a request to triage.
             open_count=""
             if [[ "$SUMMARY" == "1" && -f "$items_file" ]]; then
-                open_count=$(jq -r '[.items[] | select(.status == "Not Done")] | length' "$items_file")
+                open_count=$(jq -r '[.items[] | select(.disposition == null or .status == "Not Done")] | length' "$items_file")
             fi
 
             echo "## Action this review"

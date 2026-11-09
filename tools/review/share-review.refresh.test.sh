@@ -5,7 +5,8 @@
 #
 # Builds a throwaway review workarea with two re-reviews recorded, then checks
 # that --refresh renders the counts under a re-review heading naming the first
-# reviewed commit and the latest re-reviewed one, that --head notes commits
+# reviewed commit and the latest re-reviewed one, counts items nobody has
+# walked as open, that --head notes commits
 # the re-review did not read only when the head is past it, that --head is
 # refused without one PR and --refresh, and that a repo with no re-review is
 # refused. Exits 0 when every check passes, 1 when any fails.
@@ -89,7 +90,8 @@ cat > "$REVIEW_DIR/items.$REPO.json" <<'EOF'
   "items": [
     { "id": 1, "severity": "Major", "issue": "Fixed item issue text", "disposition": "Fix", "status": "Done", "notes": "abc1234" },
     { "id": 2, "severity": "Minor", "issue": "Open item issue text", "disposition": "Fix", "status": "Not Done", "notes": null },
-    { "id": 3, "severity": "Major", "issue": "Declined item issue text", "disposition": "Won't Fix", "status": "—", "notes": "no evidence" }
+    { "id": 3, "severity": "Major", "issue": "Declined item issue text", "disposition": "Won't Fix", "status": "—", "notes": "no evidence" },
+    { "id": 4, "severity": "Minor", "issue": "Unwalked item issue text", "disposition": null, "status": null, "notes": null }
   ]
 }
 EOF
@@ -109,7 +111,9 @@ else
     check_contains "names the latest re-review"         "$body" '**Re-reviewed at:** `cccccccc`'
     check_contains "counts the fixed items"             "$body" "| Done / Fix | 1 |"
     check_contains "counts the declined items"          "$body" "| — / Won't Fix | 1 |"
-    check_contains "says how many remain open"          "$body" "1 item(s) remain open in this repo."
+    check_contains "counts the unwalked items"          "$body" "| Not walked | 1 |"
+    check_contains "counts unwalked items as open"      "$body" "| Minor | 2 | 2 |"
+    check_contains "says how many remain open"          "$body" "2 item(s) remain open in this repo."
     check_absent   "carries no per-item rows"           "$body" "Fixed item issue text"
     check_absent   "notes no head without --head"       "$body" "**PR head:**"
     rm -f "$body"

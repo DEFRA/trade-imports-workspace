@@ -373,10 +373,23 @@ base's. A merge that conflicts stops the row, naming the files. A failure names 
 
 ## Before the first increment
 
-1. **Raise the workflow size limit** — `/config` → *Dynamic workflow size*. One
+1. **Check the workflow size limit, and only ask if it is not already raised.** One
    increment is up to 60 agents on Claude and 68 on Codex with `ciFixAttempts: 3`, and 4 more for each attempt
-   beyond three, against a default guideline of 15. You cannot set
-   this for the user and the run is throttled without it. The tool's own hard
+   beyond three, against a default guideline of 15. The run is throttled without it.
+
+   **Read it before you ask for it.** You cannot set it, but you can see it:
+
+   ```bash
+   grep -n 'workflowSizeGuideline' ~/.claude.json
+   ```
+
+   `"unrestricted"` means this step is already done — say so in a clause and move on.
+   Anything else, or no such key, is when you ask the user for `/config` →
+   *Dynamic workflow size*. Asking without reading it first spends the user's
+   attention on a setting they had already dealt with, which is how a pre-flight
+   loses their trust.
+
+   The tool's own hard
    cap of 1000 agents per run is what `agent-budget` below stops at, around 16
    increments on Claude and 14 on Codex. Under the branch lifecycle the run also
    keeps room for one theme's engineering review: twice the number of repos, plus 9.
@@ -787,7 +800,7 @@ fix, re-review and ladder, and the fixes land on the branch as one commit per re
 net behind each row's own review, never a replacement. Report each of its `reviewChecks` entries (the commit it
 landed, its refuted findings, any repo it could not review) with the theme's other review checks. The full lifecycle
 has no theme branch, so it runs no theme review. See
-[`../workflow/README.md`](../workflow/README.md#the-ci-fixer-and-a-whole-theme-are-reviewed-too).
+[`../workflow/README.md`](../workflow/README.md#the-ci-fixer-the-quality-gate-fixer-and-a-whole-theme-are-reviewed-too).
 
 - Archive the run first (step 3c), then read its first `log()` line —
   `increment-build-loop: resolved configuration {…}`:
@@ -1045,7 +1058,7 @@ handover prompt.
 | `done-failed` | The merge is real but the ticket would not move to the finished status. Under the branch lifecycle: the push is real but `tim backlog set --status done` failed |
 | `row-invalid` | Branch lifecycle only. The row's `repos`, `merge` or `gatePhases` do not fit the run: a repo it does not configure, a merge into a repo the row does not build, a gate phase that does not exist |
 | `merge-failed` | Branch lifecycle only. A merge the row asks for would not start. The attempt is preserved as patches and the merge aborted |
-| `push-failed` | Branch lifecycle only. The land stage committed and recorded the commit, but the push was rejected: somebody else pushed to the branch. Nothing is lost; a human reconciles the branch. A theme's engineering review whose commit would not push stops here too |
+| `push-failed` | Branch lifecycle only. The land stage committed and recorded the commit, but the push did not go. Nothing is lost. The land stage says which kind it was: a push the workspace's pre-push quality gate refused goes to a quality gate fixer first — it reads the gate's verdict with `tim sonar gate`, covers what `new_coverage` named or fixes the violations where they are, commits without pushing, has its commit style reviewed, and the push runs again, up to `ciFixAttempts` times — so this stop means every attempt was spent, or the fixer refused rather than weaken a test or buy the gate off. A push git rejected as non-fast-forward means somebody else pushed to the branch, and a human reconciles it: no fixer runs. Either way the attempt is recorded at the `ladder` stage, after the commit, so a relaunch runs the ladder and pushes rather than resuming at the pull request stage on a commit that is not on the branch. A theme's engineering review whose commit would not push stops here too |
 | `no-open-pr` | Branch lifecycle only. A repo the row builds has no open PR for the branch, and this lifecycle never raises one. Before any increment, the run also refuses to start when any repo checked out on the branch, built by the rows or not, has no open PR: CI publishes a branch image only from a PR, so without one a stacked branch's E2E runs that repo's `:latest` |
 
 **A stop that preserved its attempt resumes at the stage it reached.** The row records

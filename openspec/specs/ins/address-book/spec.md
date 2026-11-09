@@ -568,7 +568,7 @@ The system MUST show the edit form's Country select with no blank option and the
 
 ### Requirement: The add form names its first field 'Name or organisation' and, wherever it offers every country, opens its Country select on 'Select a country' first, with United Kingdom selected from the address book after choosing 'Origin or Consignor' and no country chosen from the place of origin and consignor pickers and the consignment contact page
 **ID**: REQ-INS-ADDR-027
-The system MUST label the add form's name 'Name or organisation', keep 'County (optional)' on it, and, wherever the add form offers every country, open its Country select on a blank first option reading 'Select a country'. The address book's add form after choosing 'Destination, Consignee or Importer' or 'Branch' offers United Kingdom alone, as REQ-INS-ADDR-044 states. After 'Origin or Consignor' it MUST select United Kingdom; from the place of origin and consignor pickers and the consignment contact page, none.
+The system MUST label the add form's name 'Name or organisation', keep 'County (optional)' on it, and, wherever it offers every country, open its Country select on a blank first option reading 'Select a country', selecting United Kingdom after 'Origin or Consignor' and none from the journey pickers or the consignment contact page.
 
 #### Scenario: The add form names the name field 'Name or organisation' and keeps County
 **ID**: SCN-INS-ADDR-027-A
@@ -641,6 +641,13 @@ The system MUST hold the address book search in a 'Filter addresses' disclosure,
 - **GIVEN** the user is viewing the address book with the 'Filter addresses' disclosure open
 - **WHEN** they type in the Search field and do not submit
 - **THEN** the list and its results line stay as they were
+
+#### Scenario: The same search field matches a transporter by its name, address, type, country or approval number
+**ID**: SCN-INS-ADDR-028-G
+- **GIVEN** the user is on the Transporter tab
+- **WHEN** they search by a transporter's name, its address, its type, its country, or its approval number where it has one
+- **THEN** only the matching transporters are shown
+- **AND** the not-applicable word shown for a transporter with no approval number is never itself matched
 
 ### Requirement: The success banner after an add, edit or delete stays until the user leaves or reloads the page
 **ID**: REQ-INS-ADDR-029
@@ -900,7 +907,7 @@ The system MUST, on the add page reached from a notification's role picker, offe
 
 ### Requirement: The address book service records an address's roles and refuses missing roles, unknown roles, roles from more than one group and a receiving role outside the United Kingdom
 **ID**: REQ-INS-ADDR-037
-The address book service MUST record an address's roles and return them on read, in the order given with any repeat dropped. A create or an update MUST give at least one of the six roles, and an update MUST replace the stored roles with those it gives. It MUST refuse, with a validation error naming the field and saving nothing: missing roles or a role outside the six; roles from more than one of the groups place of origin and consignor, consignee, importer and place of destination, and branch address; and an address holding consignee, importer or place of destination whose country is not the United Kingdom. It MUST NOT record an address type, ignoring one a create or update carries. Its published contract MUST mark the roles required.
+The address book service MUST record an address's roles, in the order given with repeats dropped, and an update MUST replace them with those given. A create or update MUST give at least one of the six roles. It MUST refuse, naming the field, saving nothing: missing or unknown roles; roles spanning more than one group; or a receiving role outside the United Kingdom. It MUST record no address type, and its contract MUST mark roles required.
 
 #### Scenario: An address created with roles reads back with the same roles
 **ID**: SCN-INS-ADDR-037-A
@@ -957,29 +964,28 @@ The address book service MUST record an address's roles and return them on read,
 - **WHEN** an address is created with roles and an address type
 - **THEN** it is saved, and reads back with its roles and no address type
 
-### Requirement: The address book list is split into three tabs, each a link that loads the list on that tab
+### Requirement: The address book list is split into four tabs, each a link that loads the list on that tab
 **ID**: REQ-INS-ADDR-038
-The system MUST split the address book list into three tabs, 'Origin and Consignor', 'Destination, Consignee and Importer' and 'Branch', in that order, each a link that loads the list on that tab with or without JavaScript, the selected one marked and its panel headed with its name followed by 'addresses'. No tab, or an unknown one, MUST show Origin and Consignor. A search and its pages MUST stay on the selected tab. A tab link MUST open page 1, keeping the search and dropping the Type.
+The system MUST split the address book list into four tabs, 'Origin and Consignor', 'Destination, Consignee and Importer', 'Transporter' and 'Branch', in that order, each a link that loads the list on that tab with or without JavaScript, the selected one marked and its panel headed with its name. No tab, or an unknown one, MUST show Origin and Consignor. A search and its pages MUST stay on the selected tab. A tab link MUST open page 1, keeping the search and dropping the Type.
 
-#### Scenario: The three tabs are shown in order with the selected one marked
+#### Scenario: The four tabs are shown in order with the selected one marked
 **ID**: SCN-INS-ADDR-038-A
 - **GIVEN** the user is signed in
 - **WHEN** they view the address book
-- **THEN** the tabs 'Origin and Consignor', 'Destination, Consignee and Importer' and 'Branch' are shown in that order
+- **THEN** the tabs 'Origin and Consignor', 'Destination, Consignee and Importer', 'Transporter' and 'Branch' are shown in that order
 - **AND** the selected tab is marked
-- **AND** no 'Transporter' tab is shown
 
 #### Scenario: Each tab's panel is headed for its address type
 **ID**: SCN-INS-ADDR-038-B
 - **GIVEN** the user is viewing the address book
 - **WHEN** they open each tab in turn
-- **THEN** the panel is headed 'Origin and Consignor addresses', 'Destination, Consignee and Importer addresses' and 'Branch addresses' respectively
+- **THEN** the panel is headed 'Origin and Consignor addresses', 'Destination, Consignee and Importer addresses', 'Transporter addresses' and 'Branch addresses' respectively
 
 #### Scenario: No tab or an unknown tab shows Origin and Consignor
 **ID**: SCN-INS-ADDR-038-C
 - **WHEN** the user opens the address book with no tab chosen
 - **THEN** the 'Origin and Consignor' tab is selected
-- **WHEN** they open it with a tab that is not one of the three
+- **WHEN** they open it with a tab that is not one of the four
 - **THEN** the 'Origin and Consignor' tab is selected
 
 #### Scenario: Following a tab with JavaScript off loads that tab
@@ -1002,9 +1008,9 @@ The system MUST split the address book list into three tabs, 'Origin and Consign
 - **THEN** page 1 of that tab is shown with the search kept in the Search field and 'Select one' chosen as the Type
 - **AND** the list is that tab's matches for the search
 
-### Requirement: Each tab lists the addresses holding one of its roles, with their roles in the Type column
+### Requirement: Each role-backed tab lists the addresses holding one of its roles, with their roles in the Type column; the Transporter tab lists the organisation's transporters
 **ID**: REQ-INS-ADDR-039
-The system MUST list on the selected tab the addresses the address book service returns for that tab's roles (REQ-INS-ADDR-040): place of origin and consignor on 'Origin and Consignor', consignee, importer and place of destination on 'Destination, Consignee and Importer', and branch address on 'Branch'. The Type column MUST show an address's roles by their labels, joined by a comma and a space.
+The system MUST list on the selected tab the addresses the address book service returns for that tab's roles (REQ-INS-ADDR-040): place of origin and consignor on 'Origin and Consignor', consignee, importer and place of destination on 'Destination, Consignee and Importer', and branch address on 'Branch'. The Type column MUST show an address's roles by their labels, joined by a comma and a space. The Transporter tab instead lists the organisation's transporters, under their own columns.
 
 #### Scenario: Each tab lists the addresses holding its roles
 **ID**: SCN-INS-ADDR-039-A
@@ -1015,7 +1021,7 @@ The system MUST list on the selected tab the addresses the address book service 
 - **THEN** the second address is listed and the first is not
 - **AND** the 'Origin and Consignor' tab lists neither
 
-#### Scenario: The Type column names the address's roles and the columns are the same on every tab
+#### Scenario: The Type column names the address's roles and the columns are the same on every role-backed tab
 **ID**: SCN-INS-ADDR-039-C
 - **GIVEN** the address book holds an address with the roles place of origin and consignor
 - **WHEN** the user views the tab that lists it
@@ -1027,6 +1033,15 @@ The system MUST list on the selected tab the addresses the address book service 
 - **GIVEN** the address book holds an address with each of the six roles alone
 - **WHEN** the user views the tabs that list them
 - **THEN** the Types read 'Place of origin', 'Consignor', 'Consignee', 'Importer', 'Place of destination' and 'Branch'
+
+#### Scenario: The Transporter tab's columns show a commercial transporter's approval number and the not-applicable word on a private one
+**ID**: SCN-INS-ADDR-039-E
+- **GIVEN** the organisation has added a commercial transporter with an approval number and a private transporter
+- **WHEN** the user views the 'Transporter' tab
+- **THEN** the columns are Name, Address, Approval number and Type, with the Action heading visually hidden
+- **AND** the commercial transporter's Approval number cell shows its stored number
+- **AND** the private transporter's Approval number cell reads 'Not applicable'
+- **AND** each transporter's Address cell ends with its country
 
 ### Requirement: The address book service lists the addresses holding any of the roles asked for
 **ID**: REQ-INS-ADDR-040
@@ -1060,17 +1075,18 @@ The address book service MUST, asked for one or more roles, return only the call
 - **WHEN** the list is asked for no role
 - **THEN** every live address is returned
 
-### Requirement: The address book list filters the selected tab by a Type chosen in the 'Filter addresses' disclosure
+### Requirement: The address book list filters the selected tab by a Type chosen in the 'Filter addresses' disclosure, each tab offering its own Type options
 **ID**: REQ-INS-ADDR-041
-The system MUST hold in the 'Filter addresses' disclosure a select labelled 'Type' offering 'Select one' and then only the selected tab's options. Submitting a Type MUST list only that tab's addresses holding it, across all its pages, keeping the tab selected, with or without JavaScript. Choosing a Type alone MUST NOT change the list. The results line MUST count the matches, pagination MUST show only past one page of eight, and the links to the pages MUST keep the tab, the search and the Type.
+The system MUST hold in the 'Filter addresses' disclosure a 'Type' select offering 'Select one' and then the selected tab's own options: a role-backed tab's roles, or, on the Transporter tab, 'Commercial' and 'Private'. Submitting a Type MUST list only that tab's addresses or transporters holding it, across all pages, with or without JavaScript, and MUST NOT change the list until submitted. The results line and pagination MUST count and page the matches, keeping the tab, the search and the Type.
 
-#### Scenario: Each tab offers Select one and then its own Types
+#### Scenario: Each role-backed tab offers Select one and then its own Types, and the Transporter tab offers Commercial and Private
 **ID**: SCN-INS-ADDR-041-A
 - **GIVEN** the user is viewing the address book
 - **WHEN** they look at the Type select on each tab in turn
 - **THEN** 'Origin and Consignor' offers 'Select one', 'Place of Origin' and 'Consignor'
 - **AND** 'Destination, Consignee and Importer' offers 'Select one', 'Consignee', 'Importer' and 'Place of Destination'
 - **AND** 'Branch' offers 'Select one' and 'Branch Address'
+- **AND** the 'Transporter' tab offers 'Select one', 'Commercial' and 'Private', in that order
 
 #### Scenario: A submitted Type lists only the tab's addresses holding it
 **ID**: SCN-INS-ADDR-041-B
@@ -1108,6 +1124,13 @@ The system MUST hold in the 'Filter addresses' disclosure a select labelled 'Typ
 - **THEN** both addresses are listed and the list reads 'Showing 1-2 of 2'
 - **AND** no pagination is shown
 
+#### Scenario: A Type on the Transporter tab lists only that type's transporters, counted across the whole category
+**ID**: SCN-INS-ADDR-041-G
+- **GIVEN** the 'Transporter' tab runs past one page, and two commercial transporters matching a search lie beyond the first page among private ones that also match
+- **WHEN** the user submits the search with 'Commercial' chosen
+- **THEN** only the two commercial transporters are listed and the list reads 'Showing 1-2 of 2'
+- **AND** no pagination is shown
+
 ### Requirement: The address book service matches a search against search roles
 **ID**: REQ-INS-ADDR-042
 The address book service MUST, given search roles, return the caller's organisation's live addresses holding any of them as well as the addresses the search text and country codes match, kept within any roles asked for (REQ-INS-ADDR-040). It MUST refuse a search role outside the six with a 400 bad request.
@@ -1126,14 +1149,14 @@ The address book service MUST, given search roles, return the caller's organisat
 
 ### Requirement: Adding an address from the address book starts by choosing its address type
 **ID**: REQ-INS-ADDR-043
-The system MUST open 'Choose an address type' when the user chooses 'Add a new address' on the address book. Continuing with a type chosen MUST open the add form, and with none chosen MUST show 'Select an address type'. The system MUST remember the chosen type and what was posted with the add form while the add is in progress, reopening the form with it, and clear both on a new add or a save. A save with no type chosen MUST open 'Choose an address type' and save nothing.
+The system MUST open 'Choose an address type' when the user chooses 'Add a new address', and MUST send a continued choice to the add form for a type that groups roles, to the add-a-transporter pages for 'Transporter', or back with 'Select an address type' for none. The chosen type MUST persist while the add is in progress, clearing on a new add or a save. The add form MUST reopen 'Choose an address type' and save nothing when reached or saved with no stored type it serves.
 
-#### Scenario: The address type page offers the three types with their hints
+#### Scenario: The address type page offers the four types with their hints
 **ID**: SCN-INS-ADDR-043-A
 - **GIVEN** the user is on the address book
 - **WHEN** they choose 'Add a new address'
 - **THEN** 'Choose an address type' opens under the caption 'Add a new address', with a 'Continue' button and a 'Back' link to the address book
-- **AND** the options are 'Origin or Consignor' with the hint 'Place of origin, Consignor', 'Destination, Consignee or Importer' with the hint 'Place of destination, Consignee, Importer' and 'Branch' with the hint 'Branch address', in that order and with none chosen
+- **AND** the options are 'Origin or Consignor' with the hint 'Place of origin, Consignor', 'Destination, Consignee or Importer' with the hint 'Place of destination, Consignee, Importer', 'Transporter' with the hint 'Private, Commercial' and 'Branch' with the hint 'Branch address', in that order and with none chosen
 - **AND** the options sit in a group whose legend repeats the heading for screen readers
 
 #### Scenario: Continuing with no type chosen shows the problem on the options
@@ -1149,6 +1172,19 @@ The system MUST open 'Choose an address type' when the user chooses 'Add a new a
 - **WHEN** they choose 'Origin or Consignor', 'Destination, Consignee or Importer' or 'Branch' and select 'Continue'
 - **THEN** the add form opens under the caption 'Add new address', headed 'Add address and contact details', with no status tag
 - **AND** its 'Back' link goes to 'Choose an address type'
+
+#### Scenario: Choosing Transporter opens the add-a-transporter pages instead of the add form
+**ID**: SCN-INS-ADDR-043-I
+- **GIVEN** the user is on 'Choose an address type'
+- **WHEN** they choose 'Transporter' and select 'Continue'
+- **THEN** the add-a-transporter pages open, not the address add form
+
+#### Scenario: Opening or saving the add form with Transporter chosen opens the address type question and saves nothing
+**ID**: SCN-INS-ADDR-043-J
+- **GIVEN** 'Transporter' is the address type stored from an earlier visit to 'Choose an address type'
+- **WHEN** the user opens the address add form directly, or posts a save to it
+- **THEN** 'Choose an address type' opens instead
+- **AND** nothing is saved
 
 #### Scenario: The chosen type is remembered until a new add starts or the address is saved
 **ID**: SCN-INS-ADDR-043-D

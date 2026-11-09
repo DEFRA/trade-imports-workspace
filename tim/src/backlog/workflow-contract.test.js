@@ -3576,6 +3576,17 @@ describe('increment-build-loop', () => {
           '159:- **Test at 587-607:** expect the first option to be the select text, and retitle it to "the no-JavaScript list opens with the select text".'
         const RENAMED_TEST_TITLE_DICTATED =
           '160:- The test at a.test.js:40 is currently titled "Should show the cap", and the renamed test is titled "Should refuse a sixteenth document".'
+        const OUT_OF_SCOPE_HEADING = '528:## 7. Out of scope'
+        const DOCS_UNTRUE_HEADING = '724:## 12. Docs this makes untrue'
+        const OPERABILITY_HEADING = '778:## 13. Operability'
+        const REPO_SUBHEADING =
+          '178:### frontend — `repos/trade-imports-animals-frontend`'
+        const TEMPLATE_ALREADY_CARRIES_A_COMMENT =
+          '572:- `private-transporter-details.njk:98` carries a comment explaining where the page is'
+        const EXISTING_TITLE_QUOTED_PAST_A_WRAP =
+          '753:  — the test title "heads the type question with the choice it asks for, under the'
+        const RETITLED_IN_AN_UNTRUE_DOC =
+          '757:- The retitled test is titled "Should refuse a sixteenth document".'
 
         const FINDING_ON_HOMES = {
           kind: 'structural',
@@ -3691,7 +3702,7 @@ describe('increment-build-loop', () => {
           )
 
           expect(prompt).toContain(
-            "`grep -n -i -E 'comment|jsdoc|javadoc|docblock|arrange|title|test name|should |log|warn|describe\\(|it\\(|test\\(' ~/ws/workareas/shared/args-fixture/plans/inc-900.md`"
+            "`grep -n -i -E '^## |comment|jsdoc|javadoc|docblock|arrange|title|test name|should |log|warn|describe\\(|it\\(|test\\(' ~/ws/workareas/shared/args-fixture/plans/inc-900.md`"
           )
         })
 
@@ -3843,6 +3854,74 @@ describe('increment-build-loop', () => {
             EXISTING_TEST_RETITLED,
             RENAMED_TEST_TITLE_DICTATED
           ])
+        })
+
+        test('passes a plan whose out-of-scope and untrue-docs sections report code text that is already there', async () => {
+          const run = await runPlannedWith(
+            {
+              'inc-900 plan lint': lintFound(
+                OUT_OF_SCOPE_HEADING,
+                TEMPLATE_ALREADY_CARRIES_A_COMMENT,
+                DOCS_UNTRUE_HEADING,
+                EXISTING_TITLE_QUOTED_PAST_A_WRAP
+              )
+            },
+            BASELINE_ANSWER,
+            PLANNED,
+            implementAnswer(['frontend:src/a.js'])
+          )
+
+          expect(stageLabels(run)).not.toContain('inc-900 replan')
+          expect(stageLabels(run)).toContain('inc-900 implement')
+        })
+
+        test('still sends back dictated text inside those sections, and a comment line in the section after them', async () => {
+          const run = await runPlannedWith(
+            {
+              'inc-900 plan lint': lintFound(
+                OUT_OF_SCOPE_HEADING,
+                TEMPLATE_ALREADY_CARRIES_A_COMMENT,
+                QUOTED_LOG,
+                DOCS_UNTRUE_HEADING,
+                RETITLED_IN_AN_UNTRUE_DOC,
+                OPERABILITY_HEADING,
+                KEPT_COMMENT
+              )
+            },
+            BASELINE_ANSWER,
+            PLANNED,
+            PLANNED,
+            implementAnswer(['frontend:src/a.js'])
+          )
+          const replan = promptOf(run, 'inc-900 replan')
+
+          expect(
+            [
+              TEMPLATE_ALREADY_CARRIES_A_COMMENT,
+              QUOTED_LOG,
+              RETITLED_IN_AN_UNTRUE_DOC,
+              KEPT_COMMENT
+            ].filter((line) =>
+              replan.includes(line.replace(/^\d+:/, '').trim())
+            )
+          ).toEqual([QUOTED_LOG, RETITLED_IN_AN_UNTRUE_DOC, KEPT_COMMENT])
+        })
+
+        test('reads a repo subheading as part of the section it sits in, not as a section of its own', async () => {
+          const run = await runPlannedWith(
+            {
+              'inc-900 plan lint': lintFound(
+                OUT_OF_SCOPE_HEADING,
+                REPO_SUBHEADING,
+                TEMPLATE_ALREADY_CARRIES_A_COMMENT
+              )
+            },
+            BASELINE_ANSWER,
+            PLANNED,
+            implementAnswer(['frontend:src/a.js'])
+          )
+
+          expect(stageLabels(run)).not.toContain('inc-900 replan')
         })
 
         test('stops with plan-refused, naming the line, when the replan still writes code text', async () => {
@@ -5132,12 +5211,12 @@ describe('increment-build-loop', () => {
             )
           )
 
-          expect(run.result.increments.length).toBe(16)
+          expect(run.result.increments.length).toBe(13)
           expect(run.result.stopped.reason).toBe('agent-budget')
-          expect(run.result.stopped.detail).toContain('16 increment(s) landed')
+          expect(run.result.stopped.detail).toContain('13 increment(s) landed')
         })
 
-        test('budgets four more agents for each CI fix attempt beyond three', async () => {
+        test('budgets a CI fix and a quality gate fix for each attempt beyond three', async () => {
           const run = await runLoop(scriptPath, {
             args: {
               ...BASE_ARGS,
@@ -5154,9 +5233,9 @@ describe('increment-build-loop', () => {
             ]
           })
 
-          expect(run.result.increments.length).toBe(13)
+          expect(run.result.increments.length).toBe(10)
           expect(run.result.stopped.detail).toContain(
-            'at up to 72 agents per increment on claude'
+            'at up to 97 agents per increment on claude'
           )
         })
 
@@ -6302,6 +6381,219 @@ describe('increment-build-loop', () => {
       const MARKED_DONE = { ok: true, summary: 'done' }
       const NO_GATE = { ok: true, summary: 'no gate' }
 
+      describe('a push the pre-push quality gate refuses', () => {
+        const GATE_REFUSAL =
+          'Local build/test/Sonar quality gate failed — push blocked. new_coverage 83.8 is under the floor of 90'
+        const GATE_BLOCKED = {
+          landed: true,
+          pushed: false,
+          commit: 'aaa1111',
+          pushBlocked: 'quality-gate',
+          blockedRepos: ['tests'],
+          summary: GATE_REFUSAL
+        }
+        const BRANCH_MOVED = {
+          landed: true,
+          pushed: false,
+          commit: 'aaa1111',
+          pushBlocked: 'non-fast-forward',
+          blockedRepos: ['tests'],
+          summary: 'rejected: somebody else pushed to the branch'
+        }
+        const GATE_FIXED = {
+          ok: true,
+          summary: 'Covered the three untested files.',
+          commits: [{ repo: 'tests', sha: 'ccc3333' }]
+        }
+        const PUSHED_AFTER_THE_FIX = {
+          pushed: true,
+          summary: 'tests pushed once the coverage landed'
+        }
+        const STILL_BLOCKED = {
+          pushed: false,
+          pushBlocked: 'quality-gate',
+          blockedRepos: ['tests'],
+          summary: 'still under the floor'
+        }
+        const ATTEMPT_RECORDED = { ok: true, summary: 'attempt recorded' }
+        const EVERY_PUSH_BLOCKED = {
+          'inc-900 push 2': STILL_BLOCKED,
+          'inc-900 push 3': STILL_BLOCKED,
+          'inc-900 push 4': STILL_BLOCKED
+        }
+        const LOCAL_COPY = {
+          file: 'tests:src/auth.spec.ts',
+          line: 9,
+          severity: 'major',
+          category: 'duplication',
+          what: 'The new test keeps its own copy of the sign-in steps.',
+          why: 'Two copies drift.',
+          fix: 'Call the journey helper.'
+        }
+
+        const STAGES = {
+          workspace: WORKSPACE_ANSWER,
+          preflight: { ok: true, summary: '1' },
+          'inc-900 branch': ROW,
+          'inc-900 baseline': BASELINE,
+          'inc-900 plan': PLAN,
+          'inc-900 implement': IMPLEMENTED,
+          'inc-900 ladder': GREEN_LADDER,
+          'inc-900 branch-guard:land': ON_BRANCH,
+          'inc-900 land': GATE_BLOCKED,
+          'inc-900 gate fix 1': GATE_FIXED,
+          'inc-900 gate fix 2': GATE_FIXED,
+          'inc-900 gate fix 3': GATE_FIXED,
+          'inc-900 gate fix 1 review': NO_FINDINGS,
+          'inc-900 gate fix 2 review': NO_FINDINGS,
+          'inc-900 gate fix 3 review': NO_FINDINGS,
+          'inc-900 push 2': PUSHED_AFTER_THE_FIX,
+          'inc-900 attempt': ATTEMPT_RECORDED,
+          'inc-900 pr': FOUND,
+          'inc-900 ci watch': CI_GREEN,
+          'inc-900 done': MARKED_DONE,
+          'inc-900 gate check': NO_GATE
+        }
+        const isRowReviewer = (label) =>
+          /^inc-900 (style:|review:|consistency$)/.test(label)
+
+        const runGate = (overrides = {}, argsOverride = {}) =>
+          runLoop(scriptPath, {
+            args: { ...BRANCH_ARGS, ...argsOverride },
+            answers: (prompt, { label }) => {
+              const answers = { ...STAGES, ...overrides }
+              if (Object.hasOwn(answers, label)) return answers[label]
+              return isRowReviewer(label) ? NO_FINDINGS : null
+            }
+          })
+
+        test('fixes what the gate named, reviews the fix for style, then pushes and carries on', async () => {
+          const run = await runGate()
+
+          expect(
+            labelsOf(run).filter((label) =>
+              /^inc-900 (land|gate fix 1|gate fix 1 review|push 2|pr)$/.test(
+                label
+              )
+            )
+          ).toEqual([
+            'inc-900 land',
+            'inc-900 gate fix 1',
+            'inc-900 gate fix 1 review',
+            'inc-900 push 2',
+            'inc-900 pr'
+          ])
+          expect(run.result.stopped.reason).toBe('count-reached')
+        })
+
+        test('tells the gate fixer to read the verdict, commit without pushing and never buy the gate off', async () => {
+          const prompt = promptOf(await runGate(), 'inc-900 gate fix 1')
+
+          expect(prompt).toContain(GATE_REFUSAL)
+          expect(prompt).toContain('tim sonar gate <the repo name>')
+          expect(prompt).toContain('Do NOT push')
+          expect(prompt).toContain('NEVER buy the gate off')
+          expect(prompt).toContain(
+            'A `new_coverage` condition below its floor is MISSING TESTS and nothing else'
+          )
+        })
+
+        test('sends a style finding on the fix to a style fix that commits without pushing', async () => {
+          const run = await runGate({
+            'inc-900 gate fix 1 review': { findings: [LOCAL_COPY] },
+            'inc-900 gate fix 1 style': GATE_FIXED
+          })
+
+          expect(labelsOf(run)).toContain('inc-900 gate fix 1 style')
+          expect(promptOf(run, 'inc-900 gate fix 1 style')).toContain(
+            'Do NOT push: a later stage owns that'
+          )
+        })
+
+        test('fixes a quality-gate refusal and leaves a non-fast-forward one alone', async () => {
+          const refused = await runGate()
+          const moved = await runGate({ 'inc-900 land': BRANCH_MOVED })
+
+          expect({
+            qualityGate: labelsOf(refused).includes('inc-900 gate fix 1'),
+            branchMoved: labelsOf(moved).includes('inc-900 gate fix 1')
+          }).toEqual({ qualityGate: true, branchMoved: false })
+          expect(moved.result.stopped.reason).toBe('push-failed')
+        })
+
+        test('stops at push-failed once every fix attempt has been spent', async () => {
+          const run = await runGate(EVERY_PUSH_BLOCKED)
+
+          expect(
+            labelsOf(run).filter((label) =>
+              /^inc-900 (gate fix \d|push \d)$/.test(label)
+            )
+          ).toEqual([
+            'inc-900 gate fix 1',
+            'inc-900 push 2',
+            'inc-900 gate fix 2',
+            'inc-900 push 3',
+            'inc-900 gate fix 3',
+            'inc-900 push 4'
+          ])
+          expect(run.result.stopped.reason).toBe('push-failed')
+          expect(labelsOf(run)).not.toContain('inc-900 pr')
+        })
+
+        test('records the attempt at the ladder, so a relaunch does not resume at the pull request stage', async () => {
+          const run = await runGate(EVERY_PUSH_BLOCKED)
+
+          expect(promptOf(run, 'inc-900 attempt')).toContain(
+            '"stage":"ladder","reason":"push-failed"'
+          )
+          expect(promptOf(run, 'inc-900 attempt')).toContain(
+            `"work":{"kind":"wip","branch":"${WORKING_BRANCH}","sha":"aaa1111"}`
+          )
+        })
+
+        test('says in the stop that the attempt must be set by hand when it could not be recorded', async () => {
+          const run = await runGate({
+            ...EVERY_PUSH_BLOCKED,
+            'inc-900 attempt': null
+          })
+
+          expect(run.result.stopped.detail).toContain(
+            'The attempt could not be recorded'
+          )
+        })
+
+        test('stops where the gate fixer refuses, without pushing again', async () => {
+          const run = await runGate({
+            'inc-900 gate fix 1': {
+              ok: false,
+              summary: 'The only fix would weaken a test.'
+            }
+          })
+
+          expect(labelsOf(run)).not.toContain('inc-900 push 2')
+          expect(run.result.stopped.detail).toContain(
+            'The quality gate fixer refused: The only fix would weaken a test.'
+          )
+        })
+
+        test('tells the land stage to classify a refused push and to push a branch ahead of origin', async () => {
+          const prompt = promptOf(await runGate(), 'inc-900 land')
+
+          expect(prompt).toContain('pushBlocked `quality-gate`')
+          expect(prompt).toContain(
+            'Push a repo whose branch is AHEAD OF ORIGIN too, even one you committed nothing in'
+          )
+        })
+
+        test('tells the branch stage that a push-failed attempt outranks the commit it records', async () => {
+          const prompt = promptOf(await runGate(), 'inc-900 branch')
+
+          expect(prompt).toContain(
+            'An `attempt` whose `reason` is "push-failed" wins over'
+          )
+        })
+      })
+
       test('takes a row’s own rigour over the run’s, and says so', async () => {
         const run = await runBranch(
           { rigour: 'full' },
@@ -6371,6 +6663,16 @@ describe('increment-build-loop', () => {
           MERGE_STARTED,
           ...reviewedAndLanded,
           ...after
+        )
+
+      const runMergeRowWith = (overrides) =>
+        runBranch(
+          overrides,
+          MERGE_ROW,
+          BASELINE,
+          PLAN,
+          MERGE_STARTED,
+          ...reviewedAndLanded
         )
 
       test('raises no ticket, checks the branch, and merges nothing', async () => {
@@ -6814,6 +7116,38 @@ describe('increment-build-loop', () => {
         )
       })
 
+      test('tells the ladder to skip a plan check needing the stack, and to carry on, when e2e is proved in CI', async () => {
+        const prompt = promptOf(
+          await runMergeRowWith({ e2e: 'ci' }),
+          'inc-900 ladder'
+        ).replace(/\s+/g, ' ')
+
+        expect(prompt).toContain(
+          'SKIP a check that needs the workspace stack up'
+        )
+        expect(prompt).toContain(
+          'is NOT a failure: never put one in failures[]'
+        )
+        expect(prompt).toContain(
+          'CARRY ON through every rung below — a skipped check never ends the ladder'
+        )
+        expect(prompt).not.toContain(
+          'runs against the stack the run holds, as THE WORKSPACE STACK below says'
+        )
+      })
+
+      test('tells the ladder to run a plan check needing the stack against the run’s own stack when e2e is local', async () => {
+        const prompt = promptOf(
+          await runMergeRowWith({ e2e: 'local' }),
+          'inc-900 ladder'
+        ).replace(/\s+/g, ' ')
+
+        expect(prompt).toContain(
+          'runs against the stack the run holds, as THE WORKSPACE STACK below says'
+        )
+        expect(prompt).not.toContain('SKIP a check that needs')
+      })
+
       test('runs every phase the row owes in the ladder, even after a red one', async () => {
         const prompt = promptOf(await runMergeRow(null), 'inc-900 ladder')
 
@@ -7047,6 +7381,38 @@ describe('increment-build-loop', () => {
           readsTheCheckStart: true,
           readsTheHeadCommit: true,
           refusesRatherThanFixes: true
+        })
+      })
+
+      test('has the branch CI fixer weigh a sibling repo’s image publish before it changes a line for a red E2E', async () => {
+        const run = await runMergeRow(
+          FOUND,
+          { green: false, failures: ['E2E Tests'], summary: 'red' },
+          null
+        )
+        const prompt = promptOf(run, 'inc-900 ci fix 1').replace(/\s+/g, ' ')
+
+        expect({
+          namesTheSecondStaleness: prompt.includes(
+            'its run started before a sibling repo’s branch image had finished publishing'.replace(
+              '’',
+              "'"
+            )
+          ),
+          readsThePublishTime: prompt.includes(
+            'select(.name == "publish / Publish branch-tagged index") | .completed_at'
+          ),
+          rerunsRatherThanFixes: prompt.includes(
+            'change NO code, re-run the failed jobs once with `gh run rerun <run id> --failed`'
+          ),
+          readsTheSnapshot: prompt.includes(
+            'an app rendering copy, a heading or a field that this branch has already changed is an old image'
+          )
+        }).toEqual({
+          namesTheSecondStaleness: true,
+          readsThePublishTime: true,
+          rerunsRatherThanFixes: true,
+          readsTheSnapshot: true
         })
       })
 
@@ -7468,6 +7834,35 @@ describe('increment-build-loop', () => {
           )
           expect(themeLabels(run)).toContain('inc-900 preserve')
         })
+        test('refuses a theme ladder that reports green having run no gate rung', async () => {
+          const run = await runTheme({
+            'inc-900 theme ladder': {
+              green: true,
+              ran: [],
+              summary: 'no gate'
+            },
+            'inc-900 preserve': { ok: true, summary: 'patches saved' }
+          })
+
+          expect(run.result.stopped.reason).toBe('theme-review-red')
+          expect(run.result.stopped.detail).toContain(
+            'its ladder proved nothing: it ran no gate rung at all'
+          )
+        })
+
+        test('gives the theme ladder the phases this run can run, not the last row’s', async () => {
+          const lastRowOwesNoPhase = {
+            'inc-900 branch': { ...ROW, gatePhases: [] }
+          }
+          const prompt = promptOf(
+            await runTheme(lastRowOwesNoPhase, { e2e: 'ci' }),
+            'inc-900 theme ladder'
+          )
+
+          expect(prompt).toContain('--phase unit')
+          expect(prompt).toContain('--phase fit')
+          expect(prompt).not.toContain('--phase e2e')
+        })
 
         test('lists a repo whose theme reviewer returned nothing for a review by hand', async () => {
           const run = await runTheme({ 'inc-900 theme review:ins': null })
@@ -7513,7 +7908,7 @@ describe('increment-build-loop', () => {
             }
           })
 
-          expect(run.result.increments.length).toBe(16)
+          expect(run.result.increments.length).toBe(13)
           expect(run.result.stopped.detail).toContain(
             "keeping 21 for a theme's engineering review"
           )

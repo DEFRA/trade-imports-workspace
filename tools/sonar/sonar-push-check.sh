@@ -112,6 +112,72 @@ COMMON_ARGS=(
   "-Dsonar.qualitygate.wait=true"
 )
 
+# Leave the tree as we found it. The commands below drop analysis artefacts in
+# the repo they run in: `sonar-scanner` writes .scannerwork/, `mvn sonar:sonar`
+# writes .sonar/, and a repo's own `npm run lint` can write a
+# dependency-cruiser cache. Only trade-imports-animals-frontend gitignores any
+# of them, so without this the gate leaves every repo it checks with a dirty
+# tree. That breaks anything downstream that asserts a clean tree — the
+# increment build loop's baseline goes red before it edits a line — and risks
+# the artefact being staged into a real commit by something that stages what is
+# untracked.
+#
+# Removes ONLY untracked paths that appeared while this script ran: a path you
+# already had is left alone, and a tracked file is never touched. `target/`,
+# `node_modules/` and `.cache/` are gitignored in these repos, so they never
+# show up here in the first place.
+UNTRACKED_BEFORE=$(git -c core.quotePath=false status --porcelain 2>/dev/null | grep '^??' | cut -c4-)
+
+cleanup_analysis_artefacts() {
+  local after path
+  after=$(git -c core.quotePath=false status --porcelain 2>/dev/null | grep '^??' | cut -c4-)
+  while IFS= read -r path; do
+    [ -n "$path" ] || continue
+    # Never step outside the repo, and never near git's own state, however the
+    # path reached us.
+    case "$path" in
+      /* | *..* | .git | .git/*) continue ;;
+    esac
+    printf '%s\n' "$UNTRACKED_BEFORE" | grep -qxF -- "$path" && continue
+    rm -rf -- "$path"
+  done <<< "$after"
+}
+
+# On every exit path, so a blocked push cleans up as thoroughly as a passing one.
+trap cleanup_analysis_artefacts EXIT
+
+# This hook's stderr comes back to its caller as one message, and a Spring Boot
+# `mvn clean verify` writes megabytes of it: 2.955 MB on
+# trade-imports-address-book, whose integration tests log every request at
+# DEBUG with a stack trace per handled exception. `mvn -q` cannot quiet that —
+# it is the application's own logger, not Maven's. An agent that pushes such a
+# repo therefore received more text than its whole context window held and died
+# on the spot, so a gate that was right to block (two duplicated string
+# literals) destroyed the work rather than naming what to fix.
+#
+# So each long command writes to a log instead, and only its tail comes back.
+# `.cache/` is gitignored in these repos and already holds the prepush marker,
+# so the log never dirties the tree and cleanup_analysis_artefacts never sees
+# it. The tail is long enough to carry Maven's own ERROR block and the
+# "QUALITY GATE STATUS" line that explains a Sonar refusal.
+BUILD_LOG_DIR=.cache
+BUILD_LOG=$BUILD_LOG_DIR/sonar-push-check.log
+BUILD_LOG_TAIL_LINES=60
+
+run_logged() {
+  local result
+  mkdir -p "$BUILD_LOG_DIR"
+  "$@" > "$BUILD_LOG" 2>&1
+  result=$?
+  if [ $result -ne 0 ]; then
+    echo "" >&2
+    echo "Failed: $1. Last $BUILD_LOG_TAIL_LINES lines of $(pwd)/$BUILD_LOG:" >&2
+    tail -n "$BUILD_LOG_TAIL_LINES" "$BUILD_LOG" >&2
+    echo "" >&2
+  fi
+  return $result
+}
+
 echo "Running local Sonar pre-push check for $PROJECT_KEY (this can take a few minutes; needs Docker running for repos with Testcontainers-based integration tests)..." >&2
 
 if [ -f pom.xml ]; then
@@ -130,14 +196,14 @@ if [ -f pom.xml ]; then
   # any repo using Testcontainers, but it measures what jacoco-check and
   # (via mvn's normal lifecycle) sonar:sonar actually see — matching what
   # this check is meant to verify before a push leaves the machine.
-  mvn -q clean verify sonar:sonar "${COMMON_ARGS[@]}" "${PR_ARGS[@]}" 1>&2
+  run_logged mvn -q clean verify sonar:sonar "${COMMON_ARGS[@]}" "${PR_ARGS[@]}"
   RESULT=$?
 elif [ -f package.json ]; then
   if ! command -v sonar-scanner &> /dev/null; then
     echo "sonar-scanner not installed — skipping local Sonar pre-push check (CI will still run it)" >&2
     exit 0
   fi
-  npm ci 1>&2
+  run_logged npm ci
   NPM_CI_RESULT=$?
   if [ $NPM_CI_RESULT -ne 0 ]; then
     echo "npm ci failed — push blocked" >&2
@@ -151,7 +217,7 @@ elif [ -f package.json ]; then
   #
   # `npm run --if-present` so repos without these scripts are unaffected —
   # this one script is shared by every Sonar-integrated repo.
-  npm run --if-present format:check 1>&2
+  run_logged npm run --if-present format:check
   if [ $? -ne 0 ]; then
     echo "" >&2
     echo "Formatting check failed — push blocked. Fix it with:" >&2
@@ -160,7 +226,7 @@ elif [ -f package.json ]; then
     exit 2
   fi
 
-  npm run --if-present lint 1>&2
+  run_logged npm run --if-present lint
   if [ $? -ne 0 ]; then
     echo "" >&2
     echo "Lint failed — push blocked. Auto-fixable problems:" >&2
@@ -169,7 +235,7 @@ elif [ -f package.json ]; then
     exit 2
   fi
 
-  npm test 1>&2
+  run_logged npm test
   TEST_RESULT=$?
   if [ $TEST_RESULT -ne 0 ]; then
     echo "npm test failed — push blocked" >&2
@@ -187,11 +253,19 @@ elif [ -f package.json ]; then
   # outcome. `.cache/` is gitignored in these repos.
   #
   # Harmless for repos with no pre-push hook yet — nothing reads the file.
+  #
+  # Clear our own leavings before that judgement, or they make it for us: a
+  # repo whose `npm run lint` writes a dependency-cruiser cache (as
+  # trade-imports-animals-frontend's does, to src/server/common/cache.json)
+  # arrives here dirty for a reason that has nothing to do with HEAD, and the
+  # marker is never written — so its git pre-push hook repeats the whole suite
+  # every time. The EXIT trap cannot cover this: it fires after the check.
+  cleanup_analysis_artefacts
   if [ -z "$(git status --porcelain 2>/dev/null)" ]; then
     mkdir -p .cache && git rev-parse HEAD > .cache/prepush-verified
   fi
   # Static analysis only — does not re-run the tests that just produced coverage.
-  sonar-scanner "${COMMON_ARGS[@]}" "${PR_ARGS[@]}" 1>&2
+  run_logged sonar-scanner "${COMMON_ARGS[@]}" "${PR_ARGS[@]}"
   RESULT=$?
 else
   exit 0
@@ -200,6 +274,9 @@ fi
 if [ $RESULT -ne 0 ]; then
   echo "" >&2
   echo "Local build/test/Sonar quality gate failed — push blocked. See https://sonarcloud.io/dashboard?id=${PROJECT_KEY}${PR_NUMBER:+&pullRequest=$PR_NUMBER}" >&2
+  echo "Which conditions it failed, and the issues behind them:" >&2
+  echo "  tim sonar gate ${PROJECT_KEY#DEFRA_}${PR_NUMBER:+ --pull-request $PR_NUMBER} --json" >&2
+  echo "  tim sonar issues ${PROJECT_KEY#DEFRA_}${PR_NUMBER:+ --pull-request $PR_NUMBER} --json" >&2
   exit 2
 fi
 

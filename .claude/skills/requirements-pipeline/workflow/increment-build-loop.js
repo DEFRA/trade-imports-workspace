@@ -141,12 +141,13 @@ const APPROVAL_POLLS = Math.max(1, Math.ceil(APPROVAL_WAIT_MINUTES / 2))
 
 const AGENT_CAP = 1000
 const BUDGETED_CI_FIX_ATTEMPTS = 3
-const AGENTS_PER_INCREMENT_AT_BUDGETED_CI_FIXES = { claude: 60, codex: 68 }
+const AGENTS_PER_INCREMENT_AT_BUDGETED_CI_FIXES = { claude: 73, codex: 81 }
 const AGENTS_PER_CI_FIX_ATTEMPT = 4
+const AGENTS_PER_GATE_FIX_ATTEMPT = 4
 const STARTUP_AGENTS = 4
 const agentsPerIncrement = () =>
   AGENTS_PER_INCREMENT_AT_BUDGETED_CI_FIXES[EXECUTOR] +
-  Math.max(0, CI_FIX_ATTEMPTS - BUDGETED_CI_FIX_ATTEMPTS) * AGENTS_PER_CI_FIX_ATTEMPT
+  Math.max(0, CI_FIX_ATTEMPTS - BUDGETED_CI_FIX_ATTEMPTS) * (AGENTS_PER_CI_FIX_ATTEMPT + AGENTS_PER_GATE_FIX_ATTEMPT)
 const agentsThrough = (increments) => STARTUP_AGENTS + increments * agentsPerIncrement()
 
 if (!WORKAREA_REL) {
@@ -1330,6 +1331,15 @@ stack the run already holds, as THE WORKSPACE STACK below says.`
 or calls a service over \`localhost\`. This run proves its end-to-end behaviour on each repo's pull request instead,
 so the stack is deliberately down. Say which checks you skipped and why; their absence is not a finding.`
 
+const LADDER_STACK_LINE = E2E_IS_LOCAL
+  ? `A check that needs the workspace stack up runs against the stack the run holds, as THE WORKSPACE STACK below
+   says, after the gate.`
+  : `SKIP a check that needs the workspace stack up — one that drives a browser against it, or calls a service over
+   \`localhost\`. This run takes no stack and proves end-to-end behaviour on each repo's own pull request instead, so a
+   stack that is down is neither \`stackHeld\` nor \`stackDown\`, and a check you skipped for it is NOT a failure:
+   never put one in failures[]. Name each one you skipped in your summary, and CARRY ON through every rung below —
+   a skipped check never ends the ladder.`
+
 const CODEX_SECTION_5_STACK_LINE = E2E_IS_LOCAL
   ? `A section 5 check that needs the workspace stack up runs against
 the stack as it is: it is already up, leased to this run as \`${RUN_HOLDER}\`. Never acquire or release that lease, and
@@ -2405,8 +2415,8 @@ delete, rename or extract. Write its \`file\` as \`<repoKey>:<repo-relative path
 If the lines are clean, return an empty findings array.
 Return the structured output only.`
 
-const ciStyleFixPrompt = ({ id, attempt, findings, branch, commitNames, workspaceRule }) => `You are the CI STYLE FIXER for increment ${id}, attempt ${attempt}. A style reviewer read the CI fixer's commits and
-found the code-quality defects below. Fix exactly these, commit and push. You merge nothing, and you never create,
+const ciStyleFixPrompt = ({ id, attempt, findings, branch, commitNames, workspaceRule, pushAfter = true }) => `You are the CI STYLE FIXER for increment ${id}, attempt ${attempt}. A style reviewer read the CI fixer's commits and
+found the code-quality defects below. Fix exactly these, ${pushAfter ? 'commit and push' : 'and commit'}. You merge nothing, and you never create,
 edit or close a pull request.
 ${guardrails()}${workspaceRule}
 ${HOUSE_RULES_TO_WRITE}
@@ -2420,27 +2430,37 @@ TASK:
 2. Fix each finding. Never weaken, skip or delete a test, and never disable a check. A finding that is wrong, or that
    cannot be fixed without weakening a test, goes in your summary instead.
 3. Prove it with the narrowest suite that covers the files, to a log under ${WORKAREA_TILDE}/logs/, read once.
-4. Commit on \`${branch}\` with a conventional message naming ${commitNames}, then push it by HOW TO PUSH above.
+4. Commit on \`${branch}\` with a conventional message naming ${commitNames}${pushAfter ? ', then push it by HOW TO PUSH above' : '. Do NOT push: a later stage owns that'}.
 5. Report every commit in commits[].
 Return the structured output only.`
 
-const reviewThenStyleFixCiCommits = async ({ id, attempt, fix, branch, commitNames, workspaceRule = '' }) => {
+const reviewThenStyleFixCiCommits = async ({
+  id,
+  attempt,
+  fix,
+  branch,
+  commitNames,
+  workspaceRule = '',
+  what = 'ci fix',
+  phase: phaseName = 'CI',
+  pushAfter = true
+}) => {
   const commits = (fix?.commits ?? []).filter((commit) => commit?.sha)
   if (commits.length === 0) return null
   const review = await agent(
     ciFixReviewPrompt(id, attempt, commits),
-    code({ label: `${id} ci fix ${attempt} review`, phase: 'CI', schema: CODE_QUALITY_FINDINGS_SCHEMA })
+    code({ label: `${id} ${what} ${attempt} review`, phase: phaseName, schema: CODE_QUALITY_FINDINGS_SCHEMA })
   )
   if (!review) {
-    log(`${id}: the style review of CI fix ${attempt} returned no result — the watcher looks again`)
+    log(`${id}: the style review of ${what} ${attempt} returned no result — the stage carries on`)
     return null
   }
   const findings = (review.findings ?? []).filter(isCodeQuality)
   if (findings.length === 0) return null
-  log(`${id}: the style review of CI fix ${attempt} found ${findings.length} code-quality finding(s) — sending them to a style fix once`)
+  log(`${id}: the style review of ${what} ${attempt} found ${findings.length} code-quality finding(s) — sending them to a style fix once`)
   return agent(
-    ciStyleFixPrompt({ id, attempt, findings, branch, commitNames, workspaceRule }),
-    code({ label: `${id} ci fix ${attempt} style`, phase: 'CI', schema: CI_FIX_SCHEMA })
+    ciStyleFixPrompt({ id, attempt, findings, branch, commitNames, workspaceRule, pushAfter }),
+    code({ label: `${id} ${what} ${attempt} style`, phase: phaseName, schema: CI_FIX_SCHEMA })
   )
 }
 
@@ -2826,7 +2846,16 @@ const CI_FIXER_STALE_RULE = `CHECK THE FAILURE IS ABOUT THIS HEAD BEFORE YOU CHA
    here. For the failing check: \`gh api repos/<owner>/<name>/check-runs/<check-run-id> --jq '.started_at'\`, and the
    head it should have run on: \`git -C ${TILDE}/<repoPath> log -1 --format=%cI\`. Started BEFORE that commit → the
    check never saw this code: report ok:false saying so and naming both times, and re-run nothing and fix nothing.
-   Spending an attempt on a stale check is how EUDPA-693's inc-024 burned five of them on correct code.`
+   Spending an attempt on a stale check is how EUDPA-693's inc-024 burned five of them on correct code.
+   AN E2E CHECK RUNS AGAINST A BRANCH IMAGE OF EVERY OTHER REPO, so it goes stale a second way the test above cannot
+   see: its run started before a sibling repo's branch image had finished publishing, so the stack it drove was that
+   repo's previous image, however fresh the commit under the check. For EVERY repo this increment pushed, compare the
+   check's \`started_at\` with when that repo's image went up:
+   \`gh api repos/<owner>/<name>/commits/<sha>/check-runs --jq '.check_runs[] | select(.name == "publish / Publish branch-tagged index") | .completed_at'\`.
+   Started before any one of them → the stack ran an old image: change NO code, re-run the failed jobs once with
+   \`gh run rerun <run id> --failed\`, and watch that run to its end. The page snapshot in
+   \`test-results/*/error-context.md\` settles it either way: an app rendering copy, a heading or a field that this
+   branch has already changed is an old image, never a defect in the code you are about to edit.`
 
 const conflictStopDetail = (id, ci, branch) =>
   `${id}: ${ci.blocked}. GitHub runs no checks on it. Merge ${IS_BRANCH ? 'its base branch' : `origin/${BASE_BRANCH}`} into ${branch} in that repo, push, then run again`
@@ -3317,7 +3346,7 @@ Return the structured output only.`,
 const deniedChecksOf = (plan) =>
   (plan?.checks ?? []).map((check) => check.command).filter(isDeniedCommand)
 
-const PLAN_LINT_PREFILTER = 'comment|jsdoc|javadoc|docblock|arrange|title|test name|should |log|warn|describe\\(|it\\(|test\\('
+const PLAN_LINT_PREFILTER = '^## |comment|jsdoc|javadoc|docblock|arrange|title|test name|should |log|warn|describe\\(|it\\(|test\\('
 
 const COMMENT_WORDS = '(comments?|jsdoc|javadoc|doc comments?|docblocks?)'
 
@@ -3363,12 +3392,17 @@ const CODE_TEXT_DIRECTIVES = [
   },
   {
     kind: 'dictated comment or doc comment text',
+    dictation: true,
     pattern: new RegExp(
       `\\b(update|updates|change|changes|edit|edits|correct|corrects|amend|amends|fix|fixes|extend|extends|expand|expands)\\b[^;]{0,60}?\\b${NOT_IN_A_RELATIVE_CLAUSE}${COMMENT_WORDS}\\b[^;]{0,80}?\\b(to say|saying|to read|to explain|explaining|to state|stating|to note|noting|to mention|mentioning|to describe|describing)\\b`,
       'i'
     )
   },
-  { kind: 'Arrange/Act/Assert comments or a dictated test body', pattern: /\barrange[ ,/&-]+act[ ,/&-]+assert\b/i },
+  {
+    kind: 'Arrange/Act/Assert comments or a dictated test body',
+    dictation: true,
+    pattern: /\barrange[ ,/&-]+act[ ,/&-]+assert\b/i
+  },
   {
     kind: 'a prescribed test title',
     pattern: new RegExp(
@@ -3379,6 +3413,7 @@ const CODE_TEXT_DIRECTIVES = [
   },
   {
     kind: 'a quoted log message',
+    dictation: true,
     pattern: new RegExp(
       `(\\blogger\\.\\w+\\([^"“\`')]{0,60}?|\\b(log|logs|logged|warn|warns)\\b[^"“\`'.;:()]{0,30}?\\s*(:|saying|reading|that (reads|says)|with (the )?(message|text|wording)|as)?\\s*)${QUOTED_TEXT}`,
       'i'
@@ -3411,22 +3446,42 @@ const writesCodeText = ({ pattern, excusedIn }, prose) =>
     ? prose.split(SENTENCE_BREAK).some((sentence) => pattern.test(sentence) && !excusedIn(sentence))
     : pattern.test(prose)
 
-const codeTextDirectiveOf = (grepLine, checkCommands) => {
+// Two sections report code text that is already there rather than writing any: what the row leaves alone, and the doc
+// comments and test titles its change makes untrue. A comment a template already carries, or the words an existing
+// test is titled with, is those sections doing their job, so only a dictated form counts in them. The lint sees one
+// grep line at a time, so a bullet the plan hard-wrapped loses the file reference that would excuse its quote anyway.
+const REPORTS_EXISTING_TEXT_SECTION = /^##\s+\d*\.?\s*(out of scope|docs this makes untrue)\b/i
+
+const PLAN_SECTION_HEADING = /^\d+:\s*(##\s+[^#].*)$/
+
+const DICTATION_DIRECTIVES = CODE_TEXT_DIRECTIVES.filter((directive) => directive.dictation)
+
+const directivesFor = (prose, reportsExistingText) =>
+  reportsExistingText && !DICTATED_TITLE.test(prose) ? DICTATION_DIRECTIVES : CODE_TEXT_DIRECTIVES
+
+const codeTextDirectiveOf = (grepLine, checkCommands, reportsExistingText = false) => {
   const [, lineNumber, text] = grepLine.match(/^(\d+):(.*)$/) ?? [null, '?', grepLine]
   if (CHECK_COMMAND_LINE.test(text.trim())) return null
   const prose = proseOf(text, checkCommands)
   if (isInstructionNotToWrite(prose)) return null
-  const directive = CODE_TEXT_DIRECTIVES.find((candidate) => writesCodeText(candidate, prose))
+  const directive = directivesFor(prose, reportsExistingText).find((candidate) => writesCodeText(candidate, prose))
   return directive ? { lineNumber, kind: directive.kind, text: text.trim() } : null
 }
 
-const codeTextDirectivesIn = (stdout, checkCommands = []) =>
-  String(stdout ?? '')
+const codeTextDirectivesIn = (stdout, checkCommands = []) => {
+  let reportsExistingText = false
+  return String(stdout ?? '')
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean)
-    .map((line) => codeTextDirectiveOf(line, checkCommands))
+    .map((line) => {
+      const heading = line.match(PLAN_SECTION_HEADING)
+      if (!heading) return codeTextDirectiveOf(line, checkCommands, reportsExistingText)
+      reportsExistingText = REPORTS_EXISTING_TEXT_SECTION.test(heading[1])
+      return null
+    })
     .filter(Boolean)
+}
 
 const planLintCommand = (id) => `grep -n -i -E ${shellQuoted(PLAN_LINT_PREFILTER)} ${WORKAREA_TILDE}/plans/${id}.md`
 
@@ -4089,7 +4144,9 @@ STEP 3 — REPORT THE ROW'S FIELDS, copied from STEP 1, never interpreted:
 - awaitCi: verbatim when it is true or false. Leave it out when it is null or absent.
 - rigour: verbatim when it is full, standard or fast. Leave it out when it is null or absent.
 - attempt: the row's \`attempt\` object exactly as written, every field as it is. null when the row has none.
-- resumeAt, from \`commit\`, \`prs\` and \`attempt\` alone. \`prs\` non-empty → "ci". Otherwise \`commit\` set → "pr".
+- resumeAt, from \`commit\`, \`prs\` and \`attempt\` alone. An \`attempt\` whose \`reason\` is "push-failed" wins over
+  both of the others → its \`stage\`: the commit it records is on this machine and not on the branch, so the row has
+  nothing for a pull request or CI to read yet. Otherwise \`prs\` non-empty → "ci". Otherwise \`commit\` set → "pr".
   Otherwise \`attempt\` set, with \`planReviewed\` true and a \`stage\` of implement, review or ladder → that stage.
   Otherwise "build". Never from anything else you can see in the repos: a dirty tree belongs to an earlier attempt and
   STEP 2 has already refused it.
@@ -4265,6 +4322,21 @@ ${ciE2eEvidenceStep()}
    green. ok:true only if steps 1 and 2 passed. Put each red rung's reason in your summary, word for word.
 Return the structured output only.`
 
+const PUSH_BLOCKED_KINDS = ['quality-gate', 'non-fast-forward', 'other']
+
+const PUSH_BLOCKED_PROPERTY = {
+  type: 'string',
+  enum: PUSH_BLOCKED_KINDS,
+  description:
+    'Why the push did not go, when pushed is false. quality-gate: it was refused before git ran, by the workspace pre-push quality gate. non-fast-forward: git rejected it because the branch has moved. other: anything else. Leave it out when pushed is true'
+}
+
+const BLOCKED_REPOS_PROPERTY = {
+  type: 'array',
+  items: { type: 'string' },
+  description: 'The repoKey of every repo whose push did not go. Leave it out when pushed is true'
+}
+
 const BRANCH_LAND_SCHEMA = {
   type: 'object',
   required: ['landed', 'pushed', 'summary'],
@@ -4272,10 +4344,30 @@ const BRANCH_LAND_SCHEMA = {
     landed: { type: 'boolean', description: 'Every repo with changes is committed, or no backlog repo had any' },
     pushed: { type: 'boolean', description: 'Every commit you made is pushed to the branch. true when you made none' },
     commit: { type: 'string', description: 'The SHA of each commit you made, space separated in the order of the configured repos' },
+    pushBlocked: PUSH_BLOCKED_PROPERTY,
+    blockedRepos: BLOCKED_REPOS_PROPERTY,
     summary: { type: 'string' }
   },
   additionalProperties: false
 }
+
+const PUSH_RETRY_SCHEMA = {
+  type: 'object',
+  required: ['pushed', 'summary'],
+  properties: {
+    pushed: { type: 'boolean', description: 'Every repo you were given is pushed to the branch' },
+    pushBlocked: PUSH_BLOCKED_PROPERTY,
+    blockedRepos: BLOCKED_REPOS_PROPERTY,
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
+const pushBlockedStep = () => `SAY WHY A PUSH DID NOT GO. This workspace runs a quality gate before any \`git push\`: when the gate fails the push
+   is refused before git runs at all, and the refusal names the gate and the project's SonarCloud dashboard. That is
+   pushBlocked \`quality-gate\`. A push git itself rejected because the branch has moved is \`non-fast-forward\`.
+   Anything else is \`other\`. Name every repo whose push did not go in blockedRepos, by its repoKey. Never fix a
+   quality-gate refusal yourself and never push again after one: a later stage owns both.`
 
 const branchLandPrompt = (id, behaviourChanges, started) => `Increment ${id} is implemented, reviewed, judged and verified green on \`${BASE_BRANCH}\`. COMMIT IT AND PUSH IT.
 ${guardrails()}
@@ -4309,9 +4401,12 @@ TASK:
    Leave the status alone.
 7. Push every repo you committed in, by HOW TO PUSH above:
    \`git -C ${TILDE}/<repoPath> push origin refs/heads/${BASE_BRANCH}:refs/heads/${BASE_BRANCH}\`. A rejected push is
-   pushed:false, saying which repo and what git said. Never \`--force\`.${testsImageFirstRule(id, BASE_BRANCH)}
-8. When no backlog repo had changes and none was mid-merge, commit nothing and push nothing: landed:true, pushed:true,
-   no commit, and say so in your summary.
+   pushed:false, saying which repo and what git said. Never \`--force\`.
+   Push a repo whose branch is AHEAD OF ORIGIN too, even one you committed nothing in: an earlier attempt's commit that
+   the quality gate refused is here and not on the branch. \`git -C ${TILDE}/<repoPath> status -sb\` names it as ahead.
+7a. ${pushBlockedStep()}${testsImageFirstRule(id, BASE_BRANCH)}
+8. When no backlog repo had changes, none was mid-merge and none is ahead of origin, commit nothing and push nothing:
+   landed:true, pushed:true, no commit, and say so in your summary.
 Report landed, pushed, the commit SHA or SHAs, and a summary.
 Return the structured output only.`
 
@@ -4429,6 +4524,128 @@ ${SONAR_GATE_RULE}
 8. If you cannot work out what is failing, or the fix would need work outside this increment's scope, report
    ok:false saying exactly that. An honest refusal is worth more than a speculative push.
 Return the structured output only.`
+
+const blockedReposLine = (repos) =>
+  repos.length > 0
+    ? repos.map((key) => `- ${key}, at ${repoTildeOfKey(key) ?? `<the path of repo ${key}>`}`).join('\n')
+    : '- the land stage named none: find them yourself, as every repo whose branch `git status -sb` reports ahead of origin'
+
+const gateFixPrompt = (id, attempt, repos, refusal, plan) => `You are the QUALITY GATE FIXER for increment ${id}, attempt ${attempt} of ${CI_FIX_ATTEMPTS}.
+The increment is committed on \`${BASE_BRANCH}\` and the workspace's pre-push quality gate refused the push, so the
+commit is here and nothing is on the branch. Fix what the gate named and commit it. You do not push — a later stage
+owns that — you merge nothing, and you never create, edit or un-draft a pull request.
+${guardrails()}
+${HOUSE_RULES_TO_WRITE}
+${ciFixStandards(plan)}
+${readIncrement(id)}
+THE REPOS WHOSE PUSH WAS REFUSED:
+${blockedReposLine(repos)}
+WHAT THE GATE SAID:
+${refusal}
+
+TASK:
+1. READ THE GATE'S VERDICT, not its refusal line. The check that blocked the push ran the real scanner, so the
+   analysis is on SonarCloud already: \`tim sonar gate <the repo name> --pull-request <n>\` names every failed
+   condition with its threshold and what the code measured, and \`tim sonar issues <the repo name> --pull-request <n>\`
+   names the issues behind a condition that counts violations. Find the number with
+   \`gh pr list --repo <ghRepo> --head ${BASE_BRANCH} --json number\`; where the repo has no pull request yet, read the
+   branch's own gate with \`--branch ${BASE_BRANCH}\` instead.
+2. A \`new_coverage\` condition below its floor is MISSING TESTS and nothing else. The repo's own coverage output names
+   which lines: \`coverage/lcov.info\` for a Node repo, \`target/site/jacoco/jacoco.xml\` for a Java one, both written
+   by the suite the gate just ran. Test the behaviour those uncovered lines carry, each test stated as what it proves
+   and red without the line it covers. Never add a test only to raise the number.
+3. Every other condition is a code defect where the code is: a literal repeated until it should be named, a lambda
+   holding two calls that can throw, an assertion that reads a value twice. Fix it there.
+4. NEVER buy the gate off. No exclusion added to \`sonar-project.properties\`, a \`pom.xml\` or a quality profile, no
+   floor lowered, no rule disabled, no test weakened, skipped or deleted, and no \`@SuppressWarnings\` or
+   \`eslint-disable\` added to quiet a rule.
+5. Prove it locally with the narrowest suite that covers what you changed, to a log under ${WORKAREA_TILDE}/logs/,
+   read once. The gate itself runs again when a later stage pushes: that is its proof, not yours to repeat.
+6. Commit on \`${BASE_BRANCH}\`, one commit per repo, with a conventional message naming increment ${id}.
+   ${HEAD_BRANCH_CHECK} must print \`${BASE_BRANCH}\` first. Never check out another branch, never create one.
+   Report every commit in commits[]. Do NOT push.
+7. A condition you cannot clear without weakening a test or buying the gate off is ok:false saying exactly that. So is
+   a fix that belongs outside this increment's repos. An honest refusal is worth more than a bought gate.
+Return the structured output only.`
+
+const pushRetryPrompt = (id, attempt, repos) => `Increment ${id} is committed on \`${BASE_BRANCH}\` and the quality gate refused its push. The gate fixer has just
+committed what the gate named, on attempt ${attempt}. PUSH NOW. You change no file, you commit nothing, you merge
+nothing, and you never \`--force\`.
+${guardrails()}
+${PUSH_RULE}${testsImageFirstRule(id, BASE_BRANCH)}
+THE REPOS TO PUSH — each one's branch is ahead of origin, carrying the increment's commit and the fixer's:
+${blockedReposLine(repos)}
+
+TASK:
+1. For each repo above, ${HEAD_BRANCH_CHECK} must print \`${BASE_BRANCH}\`. Anything else: pushed:false naming the
+   repo, and touch nothing in it.
+2. Push each one by HOW TO PUSH above. The quality gate runs again as you do: that is what proves the fix.
+3. ${pushBlockedStep()}
+Report pushed, and a summary saying what each repo did.
+Return the structured output only.`
+
+const pushPastTheQualityGate = async ({ id, land, plan }) => {
+  let state = land
+  let attempt = 0
+  while (!state.pushed && state.pushBlocked === 'quality-gate' && attempt < CI_FIX_ATTEMPTS) {
+    attempt += 1
+    const repos = state.blockedRepos ?? []
+    log(`${id}: PUSH REFUSED BY THE QUALITY GATE in ${repos.join(', ') || 'a repo it did not name'} — fix attempt ${attempt} of ${CI_FIX_ATTEMPTS}`)
+    const fix = await agent(
+      gateFixPrompt(id, attempt, repos, state.summary, plan),
+      code({ label: `${id} gate fix ${attempt}`, phase: 'Land', schema: BRANCH_CI_FIX_SCHEMA })
+    )
+    if (!fix?.ok) {
+      const why = fix ? `refused: ${fix.summary}` : 'died'
+      log(`${id}: the quality gate fixer ${why}`)
+      return { ...state, summary: `${state.summary} The quality gate fixer ${why}` }
+    }
+    await reviewThenStyleFixCiCommits({
+      id,
+      attempt,
+      fix,
+      branch: BASE_BRANCH,
+      commitNames: `increment ${id}`,
+      what: 'gate fix',
+      phase: 'Land',
+      pushAfter: false
+    })
+    const retry = await agent(
+      pushRetryPrompt(id, attempt, repos),
+      light({ label: `${id} push ${attempt + 1}`, phase: 'Land', schema: PUSH_RETRY_SCHEMA })
+    )
+    if (!retry) {
+      log(`${id}: the push after gate fix ${attempt} died`)
+      return { ...state, summary: `${state.summary} The push after gate fix ${attempt} died.` }
+    }
+    state = {
+      ...state,
+      pushed: retry.pushed,
+      pushBlocked: retry.pushBlocked,
+      blockedRepos: retry.blockedRepos ?? repos,
+      summary: retry.summary
+    }
+  }
+  if (state.pushed) log(`${id}: the quality gate passed after ${attempt} fix ${attempt === 1 ? 'attempt' : 'attempts'}`)
+  return state
+}
+
+const recordBlockedAttempt = (id, commit, planReviewed) =>
+  agent(
+    `Increment ${id} is committed on \`${BASE_BRANCH}\` but its push was refused, so the work is here and nothing is on
+the branch. Record how far the attempt got, so a relaunch runs its ladder and pushes rather than planning and
+implementing it again. That is your whole job: change no file, commit nothing, push nothing.
+${guardrails()}
+${SET_ROW_RULE}
+Run exactly one command, the attempt as one single-quoted JSON argument, with \`at\` the time
+\`date -u +%Y-%m-%dT%H:%M:%SZ\` prints:
+\`${setRow(id, `--attempt '{"stage":"ladder","reason":"push-failed","at":"<that time>","planReviewed":${planReviewed === true},"work":{"kind":"wip","branch":"${BASE_BRANCH}","sha":"${commit ?? ''}"}}'`)}\`
+The row keeps the commit it already records: recording a commit clears an attempt, so this writes the attempt after it
+and never a commit alongside it.
+Report ok:true only when tim exited 0 and its JSON reports ok:true.
+Return the structured output only.`,
+    light({ label: `${id} attempt`, phase: 'Land', schema: incrementSchema })
+  )
 
 const markDoneOnBranch = (id, commit) =>
   agent(
@@ -5033,10 +5250,11 @@ const gateAndLandThemeFixes = async (id, theme, ruledFixes, phases, fix) => {
   )
   const ladderHeld = await heldDuringThemeReview(id, 'theme ladder', ladder)
   if (ladderHeld) return ladderHeld
-  if (!ladder?.green) {
+  const ranNoRungs = (ladder?.ran ?? []).length === 0
+  if (!ladder?.green || ranNoRungs) {
     return themeReviewStop(id, {
       reason: 'theme-review-red',
-      why: 'its ladder went red',
+      why: ranNoRungs ? 'its ladder proved nothing: it ran no gate rung at all' : 'its ladder went red',
       evidence: ladder ? (ladder.failures ?? []).join(' | ') || ladder.summary : 'the theme ladder agent died'
     })
   }
@@ -6160,8 +6378,8 @@ ran green: their runs are evidence, not proof.
 ${ladderGateStep(rowGatePhases, gateLogs(id, 'ladder'))}
 2. THE INCREMENT'S OWN CHECKS. The plan's section 5, "Invariants to prove", then its section 6, "Increment-specific
    checks beyond the gate", as the plan writes them, each to its own log under ${WORKAREA_TILDE}/logs/ named
-   \`${id}-ladder-<step>.log\`, reading each log ONCE. These are the only commands you choose to run. One that needs
-   the workspace stack up runs against the stack the run holds, as THE WORKSPACE STACK below says, after the gate.
+   \`${id}-ladder-<step>.log\`, reading each log ONCE. These are the only commands you choose to run.
+   ${LADDER_STACK_LINE}
    A check in a form GUARD RAILS lists as DENIED is a plan defect: never rewrite it into another form to get round
    the deny list. Put "denied form: <command>" in failures[] and go on to the next check.
    The plan states decisions, not a script. A plan check that only fails because the implementor or fixer departed
@@ -6328,10 +6546,18 @@ Return the structured output only.`,
     break
   }
 
+  if (IS_BRANCH && !land.pushed && land.pushBlocked === 'quality-gate' && CI_FIX_ATTEMPTS > 0) {
+    land = await pushPastTheQualityGate({ id, land, plan })
+  }
+
   if (IS_BRANCH && !land.pushed) {
     log(`${id}: PUSH FAILED — ${land.summary}`)
-    results.push({ id, branch: workBranch, outcome: 'push-failed', commit: land.commit, detail: land.summary, findings: findingCounts() })
-    stopped = { reason: 'push-failed', detail: `${id}: ${land.summary}` }
+    const recorded = await recordBlockedAttempt(id, land.commit, Boolean(plan?.ok))
+    const detail = recorded?.ok
+      ? land.summary
+      : `${land.summary} The attempt could not be recorded (${recorded?.summary ?? 'the agent died'}), so set it by hand before the next run: the row records a commit that is not on the branch, and a commit alone resumes at the pull request stage.`
+    results.push({ id, branch: workBranch, outcome: 'push-failed', commit: land.commit, detail, findings: findingCounts() })
+    stopped = { reason: 'push-failed', detail: `${id}: ${detail}` }
     break
   }
 
@@ -6936,7 +7162,7 @@ ${RUN_WITH_BASH}`,
   }
   const builtTheme = IS_BRANCH ? themeCheck?.record.theme : null
   if (builtTheme) themeReviewsRun += 1
-  const themeReview = builtTheme ? await engineeringReviewOfTheme(id, builtTheme, rowGatePhases) : null
+  const themeReview = builtTheme ? await engineeringReviewOfTheme(id, builtTheme, OFFERED_GATE_PHASES) : null
   reviewChecks.push(...(themeReview?.checks ?? []))
   const themeStop = themeReview?.stop
     ? { ...themeReview.stop, detail: [themeReview.stop.detail, themeCheck?.stop?.detail].filter(Boolean).join('. Also: ') }

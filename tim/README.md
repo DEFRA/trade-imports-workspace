@@ -569,8 +569,10 @@ CDP script. The tests repo's E2E is one `e2e` rung that runs its whole suite; a
 machine that times out under the full stack sets `PLAYWRIGHT_WORKERS` (e.g. 2
 on a 16 GB machine) in its shell profile.
 
-A rung whose `run` is `tim build duplication` runs that command in the
-rung's folder. Every repo in gates.json has one, in the unit phase.
+A rung whose `run` is `tim build duplication` or `tim build coverage` runs that
+command in the rung's folder, in the unit phase. Every repo in gates.json has a
+duplication rung; a repo whose suite writes a coverage report has a coverage
+rung too, straight after the rung that writes it.
 
 ### `tim build duplication` — test code a branch copies
 
@@ -592,6 +594,40 @@ The result is `{base, minLines, minTokens, changedTestFiles, clones}`. Each
 clone is `{lines, tokens, first, second}`, and `first` and `second` are
 `{file, startLine, endLine}`. It exits 1 with `DUPLICATION_FOUND` when it
 finds a clone, and 2 when `--base` does not exist.
+
+### `tim build coverage` — how much of what a branch adds its tests cover
+
+```bash
+tim build coverage trade-imports-ins-frontend --json   # a folder under repos/, or a path
+tim build coverage . --base origin/main --floor 90     # the defaults
+```
+
+Measures what a SonarCloud `new_coverage` condition measures, locally and
+before the push rather than after it: every line and condition added since
+`--base`, committed or not, that the repo's own coverage report knows about,
+covered over coverable. It reads the report the suite has already written —
+`coverage/lcov.info` for a Node project, `target/site/jacoco/jacoco.xml` beside
+each `pom.xml` of a Java one, each found beside its own manifest so a
+sub-project such as `tim/` is read in its own folder — and runs no test itself.
+
+It applies the project's own Sonar properties, from
+`sonar-project.properties` or a pom's `<sonar.*>` properties: a file must be
+under `sonar.sources` where that is set, and out of `sonar.exclusions`,
+`sonar.coverage.exclusions` and `sonar.test.inclusions`. Without them the
+number counts files the gate never measures — a FIT helper, say — and reads
+far below the gate's own. A changed file the report does not name at all, such
+as a test, is left out either way.
+
+The result is `{base, floor, reports, measuredAt, files, toCover, met, percent,
+floorMet}`, and each file is `{file, lines, covered, conditions,
+coveredConditions, uncovered}`. It exits 1 with `COVERAGE_UNDER_FLOOR` below
+the floor, naming every uncovered line, and 2 when no report has been written
+or `--base` does not exist.
+
+`measuredAt` is when the report was written, and the text output says so: a
+narrow test run (`npm test -- one.test.js`) overwrites the report with just
+that run's files, so the number is the whole repo only when the whole suite
+wrote it. In the gate the rung runs straight after the suite, so it is.
 
 ### `tim build push-workflows` — which workflows a pushed commit starts
 

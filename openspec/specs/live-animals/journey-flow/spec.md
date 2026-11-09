@@ -326,7 +326,7 @@ The system MUST NOT offer a discard-and-exit or a save-and-exit route back to Ov
 **ID**: SCN-FLOW-012-A
 - **GIVEN** the user has reached a page by following a link or action on another page, rather than a hub row
 - **WHEN** the page is shown
-- **THEN** only its primary save-and-continue action is offered, with no separate "Save and return to overview" or "Cancel and return to overview" control
+- **THEN** only that page's own primary action is offered, with no separate "Save and return to overview" or "Cancel and return to overview" control
 
 ### Requirement: While a notification is being amended, a page ends with Save and return, Save and continue and Save and return to overview
 **ID**: REQ-FLOW-013
@@ -452,3 +452,21 @@ The system MUST, on a draft notification, give a page opened from a Change link 
 - **GIVEN** the review of a draft notification
 - **WHEN** the user follows a Change link that opens Identification details, Arrival details, Transporter details, Contact address for consignment or Consignment addresses
 - **THEN** the Back link on that page opens Overview
+
+### Requirement: Each transporter add form opens only for the type it belongs to
+**ID**: REQ-FLOW-019
+The system MUST send the user to the transporter type question, rather than showing a transporter add form, when the notification's saved transporter type is not the type that form belongs to — including when no type is saved. This MUST hold whether the add form is opened or posted to.
+
+#### Scenario: Opening the private transporter form without the private type chosen lands on the type question
+**ID**: SCN-FLOW-019-A
+- **GIVEN** the notification's saved transporter type is not Private, or no type is saved
+- **WHEN** the user opens or posts to the private transporter form
+- **THEN** the transporter type question is shown instead
+- **AND** nothing is saved
+
+#### Scenario: Opening the commercial transporter form without the commercial type chosen lands on the type question
+**ID**: SCN-FLOW-019-B
+- **GIVEN** the notification's saved transporter type is not Commercial, or no type is saved
+- **WHEN** the user opens or posts to the commercial transporter form
+- **THEN** the transporter type question is shown instead
+- **AND** nothing is saved

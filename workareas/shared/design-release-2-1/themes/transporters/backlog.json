@@ -117,7 +117,7 @@
         "inc-040"
       ],
       "theme": "transporters",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -168,7 +168,20 @@
           "id": "inc-173"
         }
       ],
-      "rigour": "fast"
+      "rigour": "fast",
+      "commit": "bd2fddce 1e270d0",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/467",
+          "repo": "trade-imports-animals-frontend",
+          "number": 467
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/92",
+          "repo": "trade-imports-ins-tests",
+          "number": 92
+        }
+      ]
     },
     {
       "id": "inc-037",
@@ -510,7 +523,7 @@
         "inc-038"
       ],
       "theme": "transporters",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -565,12 +578,12 @@
       "prs": [
         {
           "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/467",
-          "repo": "DEFRA/trade-imports-animals-frontend",
+          "repo": "trade-imports-animals-frontend",
           "number": 467
         },
         {
           "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/92",
-          "repo": "DEFRA/trade-imports-ins-tests",
+          "repo": "trade-imports-ins-tests",
           "number": 92
         }
       ]
@@ -592,7 +605,7 @@
         "inc-038"
       ],
       "theme": "transporters",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -645,7 +658,20 @@
         "Country settled 6 November by ruling:ian-2026-11-06 decision 6: a commercial transporter's country is forced, with no reference-data lookup, and persisted as the code XI displayed as \"Northern Ireland\", both constants in the service. The form already fixes the country, posts it in a hidden field and refuses a tampered value rather than correcting it (c-055), so nothing changes on the page; what changes is that the stored value becomes a code rather than today's display string 'Northern Ireland'. XI is this estate's existing code for Northern Ireland — trade-imports-schemas' DOCOM samples carry \"countryId\": \"XI\" with \"countryName\": \"United Kingdom (Northern Ireland)\" against Belfast BT postcodes — and being distinct from GB it keeps the must-be-Northern-Ireland rule enforceable from the stored value alone, with no postcode parsing. MDM could not serve it in any case: its country list is the origin and export list, with no United Kingdom entry.",
         "Re-analysis 6 November (animals frontend c31daf4d). Mostly copy. Criterion 1 not met by one word: 'Add commercial transporter', missing the article. Criterion 2 is a restructure, not an addition: main passes titleText: copy.guidanceTitle, so 'Help with transporter authorisation' is the notification banner's own title and there is no inner heading — that title moves into the body as a heading and 'Important' takes its place. Criteria 3, 4 and 5 are a capitalisation fix: main has lowercase 'zip' in the label, the required message and the max-length message. Worth doing in one place, because the private transporter form already uses the capitalised 'Postcode or Zip code' in all three, so the two forms disagree today and this brings commercial into line with private rather than changing both. Criterion 6 is one word: main reads 'Enter the transporter authorisation number' where the design says 'a'. Criterion 7 is root cause 2 of the re-analysis: the recordProvided(values) guard means a completely blank form raises no errors at all; the field order itself already matches."
       ],
-      "gate": null
+      "gate": null,
+      "commit": "bfcf85188e2bafc3de905a10fb459394fc4034c1 4e3e0a9c74e7d0a8e58e535b162a31ee80dfc056",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/467",
+          "repo": "trade-imports-animals-frontend",
+          "number": 467
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/92",
+          "repo": "trade-imports-ins-tests",
+          "number": 92
+        }
+      ]
     },
     {
       "id": "inc-042",
@@ -942,7 +968,7 @@
         "inc-074"
       ],
       "theme": "transporters",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "addressbook",
@@ -977,7 +1003,10 @@
         "req-2041",
         "req-2198"
       ],
-      "openQuestions": [],
+      "openQuestions": [
+        "For the designer: on the Transporter tab, should the Type column read the transporter's own type (Commercial or Private), as the prototype sets and the code now does, or the word Transporter? Acceptance criterion 2 of this row says the Type column reads Transporter on the tabs that show a Type column; criterion 3 says Type reads Commercial or Private for the same column on the same tab, so the two criteria set two different things for one element and the code had to pick one. The design source agrees with criterion 3: prototype-dr2-1-source-p15-036 (workareas/shared/design-release-2-1/distil/working-set.json:22080) says a transporter's Type is its own type, Commercial or Private, defaulting to Commercial. Criterion 2's cited claims say something else: prototype-dr2-1-source-p15-024 (working-set.json:21972) only categorises address types, and trace-prototype-dr2-1-p16-031 (working-set.json:39977) only gives the panel heading Transporter addresses. The code follows criterion 3: repos/trade-imports-ins-frontend/src/server/app/features/address-book/view-model/list.js:143 sets typeLabel from copyByTransporterType, fed copy.list.transporterTypes (features/address-book/copy.en.js:54-57, PRIVATE Private and COMMERCIAL Commercial) from list/list.controller.js:231. Options: (a) keep the transporter's own type, and correct criterion 2; or (b) show the word Transporter, in which case say which rows carry it, given ruling:ian-2026-11-06 decision 5 makes a transporter a record in its own collection with no address role, so no row on a role-backed tab can ever read Transporter. Raised by the design finding on view-model/list.js:143.",
+        "Spec gap left by the coverage fix on SCN-INS-ADDR-041-G: no scenario in openspec/specs/ins/address-book/spec.md states that a Type the selected tab does not offer is ignored, the whole tab listed and the ignored value logged once, although the code does it and two tests prove it (repos/trade-imports-ins-frontend/src/server/app/features/address-book/list/list.type-filter.controller.test.js:136 for the Branch tab and :163 for the Transporter tab, neither linked anywhere in openspec/coverage/ins/address-book/coverage.json). The transporter one was wrongly linked to SCN-INS-ADDR-041-G, whose THENs are a filtered count and no pagination, and this increment removes that link. Either add one scenario under REQ-INS-ADDR-041 covering both tabs and link both tests to it, or decide the behaviour stays unspecified. Raised by the coverage-gap finding on openspec/coverage/ins/address-book/coverage.json:4688."
+      ],
       "notes": [
         "Combines the Transporter tab (req-2040), its columns (req-1135) and its Type filter (req-2041): one tab, one blocker, one set-up. Rewrite of the existing blocked row inc-075, keeping its id. Still blocked: the 26 October ruling says nothing about transporters, so ruling:sam-2026-10-09-pm's block stands, and this re-distil only restates the requirements and renumbers the afternoon ruling's claims. Two changes from the existing row's text: its 'Search on the Transporter tab finds a transporter by part of its approval number' criterion is dropped, because no requirement here states it and the search requirement it leaned on (req-1119, held by the address-book split) matches on name, type labels, address lines and country name, not on an approval number; and 'with no Country column' is replaced by naming the four columns and the action column exactly, which proves the same thing positively. Whether a transporter's approval number becomes searchable is for the re-distil after the transporter decision. The category and type query parameter names are the INS service's to choose, so no criterion names one. Waits on the address book split branch's tabs and search rows (externalDependsOn on shared/design-release-2-1/themes/address-book inc-067 and inc-069) and on the add-a-transporter row.",
         "Re-distil 2 November: req-2198 (the search also matches a transporter's approval number) is added here, where the transporter tab's list and search are built, and it waits on the same decision about transporter management. It was given to no area, so the combiner drafted its criterion.",
@@ -993,7 +1022,25 @@
           "id": "inc-069"
         }
       ],
-      "rigour": "full"
+      "rigour": "full",
+      "commit": "50080f2874440ab41e9b042a7a3322bb726f3e78 2b415257f1a356511d0fca3ef64820e5f3cd7af1",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-address-book/pull/23",
+          "repo": "trade-imports-address-book",
+          "number": 23
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/76",
+          "repo": "trade-imports-ins-frontend",
+          "number": 76
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/92",
+          "repo": "trade-imports-ins-tests",
+          "number": 92
+        }
+      ]
     },
     {
       "id": "inc-076",
@@ -1009,7 +1056,7 @@
         "inc-037"
       ],
       "theme": "transporters",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "insfrontend",
@@ -1045,7 +1092,11 @@
       "requirements": [
         "req-394"
       ],
-      "openQuestions": [],
+      "openQuestions": [
+        "For the product owner: every row of the transporter list now carries a \"View details\" link to /address-book/<id>, but the six transporters the service ships are in-repo constants with slug ids and no address-book record (frontend src/server/app/services/transporters/records.js:44-46, appended verbatim by partiesFor at src/server/app/services/transporters/index.js:41-44), so following one of those links fails the 24-hex address id check and redirects straight back to the list with nothing shown (insfrontend src/server/app/features/address-book/address-id-params.js:9-27, src/server/app/features/address-book/view/view.controller.js:49-56, src/server/app/features/address-book/return-to.js:95). AC1 (each row ends with a \"View details\" link) and AC2 (following it opens that transporter details page showing its record) therefore cannot both hold for a shipped row, and the new FIT case at src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js:347 pins the href of exactly such a row. Options: (a) keep the link on every row and accept that a shipped row bounces back to the list until the shipped transporters get real address-book records (inc-265, blocked); (b) build the link only for a row the organisation added through the address book and leave a shipped row action cell empty, which narrows AC1 to added rows; (c) give the shipped transporters real address-book records now. Raised by the inc-076 review finding on transporters/rows.js:66.",
+        "For the designer: a transporter \"View details\" link now opens the INS address book generic address view page, which shows name, address, email and phone and offers Change and Delete (insfrontend src/server/app/features/address-book/view/view.controller.js:25-27 for the row fields, :60-61 for editHref and deleteHref), so it shows less about the transporter than the list row did: the Approval number and Type columns the list shows (frontend src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/rows.js:52-54, headed per prototype-dr2-1-source-p7-021/-p7-026) appear nowhere on it. The design release says only that each row has a \"View details\" link to the address-book view page carrying a return path back to /transporter (workareas/shared/design-release-2-1/distil/extract/prototype-dr2-1-source.part7.json:209-217, quoting app/views/design-release-2.1/transporter.html:159-161 at commit 04a073b) and explicitly records the opened page as unseen: \"No trace followed a View details link, so the transporter detail page and the return to the transporter list are unseen\", confidence gap (workareas/shared/design-release-2-1/distil/extract/trace-prototype-dr2-1.part8.json:739-745). The code therefore chose a page for a case the design source does not show. Questions: should a transporter details page also show its approval number and type, and should Change and Delete be offered from inside a notification journey, or is the address-only view right as it stands? The answer decides whether trade-imports-ins-frontend needs a transporter-aware view page in this theme. Raised by the inc-076 review finding on transporters/rows.js:68.",
+        "Deployment prerequisite, no session may write to cdp-app-config: the animals frontend now builds the return it hands INS from its own new config key tradeImportsAnimalsFrontend.baseUrl (frontend src/config/config.js:439-446, env TRADE_IMPORTS_ANIMALS_FRONTEND_URL, default http://localhost:3000), and INS validates that return against its own copy of the same origin (insfrontend src/server/app/features/address-book/return-to.js:33-46). Unset in a deployed environment the default localhost origin is refused, the refusal is logged at info and Back lands on /address-book instead of the transporter list, and the new e2e round trip tests/animals/e2e/features/address-book/transporter-added-via-address-book.spec.ts:64 (toHaveURL(listUrl)) goes red there, since npm test grep-inverts only @compose, @a11y, @active and @dynamics. Whoever owns cdp-app-config must set TRADE_IMPORTS_ANIMALS_FRONTEND_URL on trade-imports-animals-frontend per environment to the same browser-visible origin INS is configured with, before this reaches a real environment. Raised by the inc-076 review finding on src/config/config.js:439."
+      ],
       "notes": [
         "Blocked by ruling:sam-2026-10-09-pm-p2-043 (c-285). Kept apart: it needs transporter records with a details page (the address-book rows it depends on) and the reshaped list. The requirement itself says the link is built only once such a details page exists and that until then the list carries no action column, so the row cannot be split into a link now and a page later. c-052 (precedence): the link is adopted, against the parity backlog's claim that it waited.",
         "Unchanged by this re-distil apart from wording.",
@@ -1060,7 +1111,25 @@
           "id": "inc-066"
         }
       ],
-      "rigour": "fast"
+      "rigour": "fast",
+      "commit": "8138887c3791f136d3b5dbed34301d3b2119cfdd 35c20ba5604f23990e45d97fb51854b2c55d5438",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-frontend/pull/76",
+          "repo": "DEFRA/trade-imports-ins-frontend",
+          "number": 76
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/467",
+          "repo": "DEFRA/trade-imports-animals-frontend",
+          "number": 467
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/92",
+          "repo": "DEFRA/trade-imports-ins-tests",
+          "number": 92
+        }
+      ]
     },
     {
       "id": "inc-240",
@@ -1073,7 +1142,7 @@
       ],
       "dependsOn": [],
       "theme": "transporters",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -1108,7 +1177,12 @@
       "requirements": [
         "req-402"
       ],
-      "openQuestions": [],
+      "openQuestions": [
+        "For the designer: the transporter success banner lowercases every letter of the name after the first, so \"ABC Transport Ltd\" reads \"Abc transport ltd transporter added\" and the shipped names read \"J & g campbell ltd\" and \"García livestock transport sl\". The design source sets the rule only for a plain two-word name — inc-039 acceptanceCriteria[1], \"the name with only its first letter capitalised, so adding Hill Haulage reads Hill haulage transporter added\" (prototype:dr2-1-source p7-045 to -p7-047) — and the code implements it as name.charAt(0).toUpperCase() + name.slice(1).toLowerCase() at frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add-session.js:57-58, with the shipped names at frontend:src/server/app/services/transporters/records.js. The GOV.UK style guide keeps proper nouns and abbreviations capitalised (https://www.gov.uk/guidance/style-guide/a-to-z-of-gov-uk-style#capitalisation). Should the banner keep lowercasing the whole name after the first letter, or show the name exactly as the trader typed it and only ensure its first letter is a capital? (review finding 12)",
+        "For the designer: both transporter forms label the postcode field \"Postcode or Zip code\", with the errors \"Enter a postcode or Zip code\" and \"Postcode or Zip code must be 12 characters or less\" (frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:185, :207, :224, :243), exactly as inc-041 acceptanceCriteria[2] to [4] set them (prototype:dr2-1-source p7-103). The same capitalisation is already used service-wide (insfrontend:src/server/app/features/address-book/copy/copy.en.js:10; plants:src/server/app/sets/high-risk-plants/journeys/linear/features/party-edit/copy/copy.en.js:11). The GOV.UK style guide asks for sentence case with no capitals on common nouns (https://www.gov.uk/guidance/style-guide/a-to-z-of-gov-uk-style#capitalisation), which would make it \"zip code\". Keep \"Postcode or Zip code\" as the prototype sets it, or change all four strings — and the service-wide copies with them — to \"Postcode or zip code\"? (review finding 16)",
+        "For the designer: the transporter type question refuses a blank choice with two different strings for one page. The import notification service says \"Select what kind of transporter it is\" (insfrontend:src/server/app/features/address-book/copy/copy.en.js:234, asserted at insfrontend:.../transporter/transporter-type.controller.test.js:24 and pinned by tests:domain/ins/constants/transporter-types.ts:12), while the animals journey says \"Select a transporter type\" (frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/copy/copy.en.js:169, pinned by tests:tests/animals/e2e/pages/transporter-add.spec.ts:51). The design source sets one error for that page: \"Select a transporter type\" (prototype:dr2-1-source p7-057; inc-038 acceptanceCriteria), and inc-074 says choosing Transporter in the address book goes through the same add-a-transporter pages while naming no refusal copy of its own. Should both routes read \"Select a transporter type\", or should the prototype change to the longer \"Select what kind of transporter it is\"? Whichever is chosen, the other side and the two test constants move with it. (review findings 46 and 78)",
+        "For the designer: the address book Transporter tab reuses the address copy — the filter summary \"Filter addresses\", the hint \"Search by name, address or country\", the intro \"Manage your addresses for use across all your import notifications\" and the button \"Add a new address\" (insfrontend:src/server/app/features/address-book/copy/copy.en.js:21, :23, :25, :33, rendered for every tab by insfrontend:.../list/list.njk:20-44) — while on that tab the search also matches a transporter approval number and type (insfrontend:.../list/list.controller.js:199-210). inc-075 sets the approval-number matching but says nothing about that tab filter heading, hint, intro or add button, so the code chose the address wording. Should the Transporter tab carry transporter wording — for example \"Filter transporters\", \"Search by name, address, country, approval number or type\" and \"Add a new transporter\" — or keep the address wording on every tab? (review finding 47)"
+      ],
       "notes": [
         "One slice, req-402. New in this re-distil: it sat in no row before. Not blocked by c-285: the check works over the transporter list as it stands, and the afternoon ruling of 9 October blocks only transporter management, so it is kept apart from the blocked transporter rows and can build now. c-346 (precedence) puts the data specification above the prototype and today's service, both of which let a blank save carry on; the claims c-346 overruled are not relied on anywhere in this row. The message is the copy the service already holds under its required-transporter key in the transport copy folder, so no copy file changes and nothing is invented. The general rule that both save buttons make the same checks on every page (req-1625) is the journey foundation's and builds on its own branch; this row is the transporter list's own instance of it and does not wait for it.",
         "Trimmed 6 November: its navigation (where Save and continue and Back go, the opening run, amend returns) was taken out; EUDPA-774 owns it.",
@@ -1116,7 +1190,20 @@
         "Rigour set to fast on 6 November, overriding tim build rigour's 'standard'. The 6 November re-analysis found the whole row is one validator swap: transporters/validate.js already names the right message but reaches it through oneOf, which allows '', and requiredOneOf already exists beside it. Two existing tests invert (transporters.controller.test.js:167 and :210). Nothing new is designed."
       ],
       "gate": null,
-      "rigour": "fast"
+      "rigour": "fast",
+      "commit": "69a1d87941525e6d17ec4a5f2695a43049b714ee 6dd193387767bc39f4c2d635ffef70ecd63109b6",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/467",
+          "repo": "trade-imports-animals-frontend",
+          "number": 467
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/92",
+          "repo": "trade-imports-ins-tests",
+          "number": 92
+        }
+      ]
     }
   ]
 }

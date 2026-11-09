@@ -517,7 +517,6 @@ The system MUST honour a return given when the view or delete page is opened, if
 - **GIVEN** an address opened from a live-animals party picker with a return that is the picker's own '/live-animals' path, carrying its search
 - **WHEN** they select Back
 - **THEN** that picker opens on the animals frontend, with the search kept
-- **AND** a path that only begins with the letters 'live-animals', such as '/live-animalsx', is still a page of this service
 
 ### Requirement: The edit page is headed 'Edit address and contact details' and returns the user to where they opened it
 **ID**: REQ-INS-ADDR-025

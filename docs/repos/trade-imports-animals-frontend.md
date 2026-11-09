@@ -39,12 +39,13 @@ The animals frontend builds every INS frontend URL from one setting, `tradeImpor
 |-----------|------|---------|---------|
 | Animals to INS | `/address-book` | Nothing | The service navigation's Address book item |
 | Animals to INS | `/address-book/add` | `journey-type`, `notification-id`, `fulfilment-id`, `handshake-token` | The address handshake: the user picks or adds an address |
+| Animals to INS | `/address-book/{addressId}` | `return` (the picker's `/live-animals` path, with its search, page, chosen address and change marker) | A party picker row's View link |
 | Animals to INS | `/notification-type` | `notification-id`, `current-notification-type` | The live animals origin page's Back link, when the run began at the start entry |
 | INS to animals | `/live-animals/start` | Nothing | The type question's Live animals choice |
 | INS to animals | `/live-animals/notifications/{reference}/origin` | Nothing | The type question with Live animals kept for that notification |
 | INS to animals | `/live-animals/notifications/{reference}`, or `.../notification-view` when SUBMITTED | Nothing | A dashboard row |
 | INS to animals | `/live-animals/notifications/{notification-id}/address-return` | `fulfilment-id`, `handshake-token` (when one was sent), `addressId` and `landing` (when set) | The return from the address handshake |
-| INS to animals | A page on the configured animals origin | Whatever the URL holds | The `return` query an address-book page honours |
+| INS to animals | A URL on the configured animals origin, or a `/live-animals` path resolved against it | Whatever the URL holds | The `return` query an address-book page honours, except when the INS frontend runs with `STUB_MODE` |
 
 The Dashboard item and the service name in the animals service navigation stay inside the animals frontend.
 

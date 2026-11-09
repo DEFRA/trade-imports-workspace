@@ -2021,6 +2021,101 @@
         "Combiner: dropped the criterion about the live animals decisions record, because this row changes nothing in that repo; an acceptance criterion covers only what the row changes.",
         "Merged into inc-019: ruling:sam-2026-11-06b claim 3 fixes the backlog at exactly three rows, each depending on the one before it, and the owner chose to union each row's criteria, requirements and sources into them."
       ]
+    },
+    {
+      "id": "inc-023",
+      "title": "Save and continue never opens a page whose earlier required answers are missing, and both frontends' rulings ledger, routing docs and review page Change links say and do one thing",
+      "detail": "The engineering review of the built theme found Save and continue judges only whether a page applies to the notification and skips the journey's required earlier answers, while the Overview checks both, so a trader can be sent to a page the Overview does not offer. The owner rules that Save and continue honours the required earlier answers: when the next page that applies needs one that is missing, the trader goes to the page that asks for it. The same review found the high-risk plants rulings ledger was edited in place rather than superseded, the plants journey spec still describes routing that no longer exists, a plants commodity type exit that contradicts its rulings, and docs and twin code that disagree with each other or with the code. This row puts all of that right in both frontends, live animals first.",
+      "acceptanceCriteria": [
+        "In both frontends a valid Save and continue goes to the next page in the journey page order that applies to the notification; when that page needs an earlier answer the journey requires before it (live animals: where it is coming from and what is being imported; high-risk plants: commodity type and where it is coming from) and that answer is missing, it goes to the page that asks for that answer instead (owner ruling 2026-11-09)",
+        "Live animals: Save and continue on main import reason with only where it is coming from saved goes to What are you importing?; Arrival details by Rail or Road with no commodity saved goes to What are you importing?; with a commodity saved, Arrival details by Rail or Road goes to transit countries from every start",
+        "High-risk plants: Save and continue from any page whose next page needs a missing commodity type or country of origin goes to the page that asks for it",
+        "In both frontends the page Save and continue opens is always one the Overview offers for that notification: one rule decides both, with one owner, mirrored in each frontend",
+        "Opening live animals transit countries when the means of transport is neither Rail nor Road goes to the Overview, and when a required earlier answer is missing goes to the page that asks for it; each redirect logs once with the notification id and its cause",
+        "High-risk plants: after a change of commodity type removes commodity lines, the trader is sent where rulings c-013, d-029 and d-023 set, with the banner saying lines were removed, whichever save control was pressed",
+        "The high-risk plants rulings ledger holds d-008, d-013, d-014, d-069 and d-085 as they are on main; the save and continue routing, Back and draft-controls rulings this theme built are recorded as new decisions that supersede them through the ledger's own tool; the ledger, the panel rulings and the journey spec agree, and none of them describes a change context, an exit target or an opening run",
+        "Both frontends' routing docs and add-a-page recipes state the required-earlier-answer rule in plain words",
+        "Both frontends' docs name the module that owns the trail of where the trader came from and the level an unrecognised trail is logged at, and the code matches them",
+        "Both frontends' docs explain the return marker carried on sub-page round trips, when a link carries it and when it carries the trail, and the two are checked against their allowed values and logged in the same way",
+        "Both frontends' docs say when a page is kept out of the Save and continue order as a sub-page, when it sits in no section and when it sits in no task row, and state the rule for a skip that does not add the skipped page to the trail",
+        "The review page's Change links are built the same way in both frontends, passing where the trader came from in one shape",
+        "High-risk plants works out its list of journey cookies from the journey as live animals does, so adding or removing a journey cookie is one change",
+        "The live animals and high-risk plants journey-flow behaviour specs state the required-earlier-answer rule with a scenario for each example above, and the Back rule states that the trail keeps the newest 40 places, past which the oldest drop and Back ends at the Overview"
+      ],
+      "sources": [
+        {
+          "source": "document:ticket-eudpa-774",
+          "ref": "Acceptance criteria: Save and continue"
+        },
+        {
+          "source": "ruling:sam-2026-11-06b",
+          "ref": "claim 31: the plants ledger"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "flow, hub, transit countries, shared kit and trail, review page Change links, docs"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "flow, hub, commodity type, spec ledger and journey spec, session persistence, docs"
+        }
+      ],
+      "repos": [
+        "frontend",
+        "plantsfrontend"
+      ],
+      "kind": "fix",
+      "dependsOn": [
+        "inc-019"
+      ],
+      "status": "todo",
+      "gate": "Open live animals main import reason from the Overview with only where it is coming from saved and press Save and continue: it lands on What are you importing?. Open Arrival details, choose Road with no commodity saved: Save and continue lands on What are you importing?, and the transit countries row is not on the Overview. Read the plants ledger diff against main: the five decisions are unchanged and the new ones supersede them.",
+      "notes": [
+        "Raised from the theme engineering review, workareas/shared/eudpa-774/engineering-review.md, sections 5.1, 5.2, 5.3, 5.4, 5.10, 5.11 and 5.13 (first and fourth bullets), and section 4's sub-page and skip rows. Read it before planning.",
+        "Owner ruling 2026-11-09, given in session after reading the review: Save and continue must not skip prerequisites. The inc-001 plan's decision 4 dropped them only to stop a jump to the review page when a later row is opened with only origin saved; sending the trader to the page that asks for the missing answer fixes that case without dropping them.",
+        "Canary first: live animals half before high-risk plants."
+      ]
+    },
+    {
+      "id": "inc-024",
+      "title": "Every journey test proves exactly where Save and continue and Back land, and the routing scenarios in both journey specs are proven",
+      "detail": "The engineering review found tests that prove less than they claim: high-risk plants browser specs that accept any trail on any page address, live animals walk helpers that open the Overview by address instead of checking where Save and continue landed, a test title that says the opposite of what it asserts, tests-repo specs that carry the session into a 'new session', assertions inside flows and page objects, and an animals Change-link journey that skips to the review page by address. Proven coverage in both journey specs also fell by about 150 rows. This row makes every such test exact and proves the rewritten routing scenarios again.",
+      "acceptanceCriteria": [
+        "High-risk plants browser specs assert each page's address exactly, with the exact trail where one is expected; none accepts any trail or extra query; the address picker check fails on any alert again",
+        "Live animals browser-spec walk helpers check the page each Save and continue lands on before they open another page by address",
+        "Every test title in both frontends and the tests repo states what its assertions prove",
+        "The Welsh save-control copy is pinned with the other save-control copy tests",
+        "Tests repo: the Back-in-a-new-session specs open the new session with only the sign-in cookie through the existing fresh-session fixture, and no second fresh-session mechanism remains",
+        "Tests repo: assertions sit in specs or a shared checks module, never in flows or page objects",
+        "Tests repo: one documented way asserts which journey page is open and one asserts the exact trail; no spec hand-types a trail query",
+        "Live animals end-to-end: after a review page Change link, Save and continue walks through each later page that applies to the review page, checking each page, as high-risk plants already does",
+        "Every live animals and high-risk plants journey-flow and journey-pages scenario this theme rewrote is linked to a test shown to fail when the behaviour breaks and pass when restored, and marked full; any that cannot be is named in this row's notes with the reason"
+      ],
+      "sources": [
+        {
+          "source": "repo:tests",
+          "ref": "page objects, flows, fixtures, animals and plants e2e specs"
+        },
+        {
+          "source": "repo:workspace-openspec",
+          "ref": "live-animals and plants journey-flow and journey-pages coverage"
+        }
+      ],
+      "repos": [
+        "frontend",
+        "plantsfrontend",
+        "tests"
+      ],
+      "kind": "test",
+      "dependsOn": [
+        "inc-023"
+      ],
+      "status": "todo",
+      "gate": "Compare the count of full coverage rows under live-animals and plants with main and with this branch before the row; read any scenario left partial and its reason.",
+      "notes": [
+        "Raised from the theme engineering review, workareas/shared/eudpa-774/engineering-review.md, sections 5.5, 5.6, 5.7, 5.8, 5.12 and the coverage risk in section 6. Read it before planning.",
+        "Depends on inc-023 because that row changes where Save and continue lands when an earlier answer is missing; tests written here prove the final behaviour."
+      ]
     }
   ]
 }

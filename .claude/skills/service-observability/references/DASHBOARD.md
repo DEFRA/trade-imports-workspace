@@ -70,6 +70,9 @@ listing the values.
 
 Use `Minimum` for `external.dependency.available`. With more than one task, each
 publishes its own value, and `Minimum` shows a single unhealthy task.
+The status panel's text mode is "Value and name", so each value carries
+its dependency's name: Grafana's default hides the name when there is
+only one series, leaving "Available" with nothing to say what is.
 
 Split each panel by every dimension its metric is published with, as in
 the table. CloudWatch does not add up across a published dimension, so

@@ -273,16 +273,35 @@ The system MUST show an empty-state message in place of the results count when a
 - **WHEN** they search for a term that matches nothing
 - **THEN** an empty-state message is shown in place of the count, and the search field still holds the term they searched for
 
-### Requirement: An address's full details can be read without leaving the list
+### Requirement: A listed address opens in the INS address book, whose Back returns to the same list
 **ID**: REQ-ADDR-009
-The system MUST let the user expand a listed address to read the rest of its details in place, without navigating away, so nothing already entered or selected is lost.
+When the address book service is available, the system MUST end each listed address with a 'View' link, named for screen readers by the address's name, that opens that address in the INS address book. The address book's Back link MUST bring the user back to the same list of the same notification, with the same search, the same page and the same address chosen, and, when they opened the list to change an answer, saving MUST still return them where a change of answer does. When the address book service is not available (stub mode), the system MUST end each listed address at its country, with no 'View' link.
 
-#### Scenario: Expanding an address shows its details in place
+#### Scenario: View opens the address in the INS address book and Back returns to the list with its search
 **ID**: SCN-ADDR-009-A
-- **GIVEN** the user is choosing an address for a consignment role
-- **WHEN** they expand a listed address's details
-- **THEN** the rest of that record, including its town, is shown in place
-- **AND** the user remains on the list
+- **GIVEN** the user is choosing an address for a consignment role, the address book service is available, and they have searched for an address
+- **WHEN** they follow that address's 'View' link
+- **THEN** the address opens in the INS address book
+- **WHEN** they select Back
+- **THEN** they return to the same list of the same notification, with their search still applied
+
+#### Scenario: Back from View keeps the page and the chosen address while changing an answer
+**ID**: SCN-ADDR-009-B
+- **GIVEN** the address book service is available, and the user opened the list to change a role's address, chose an address, and moved to a later page
+- **WHEN** they follow an address's 'View' link and then select Back
+- **THEN** the same page of the list is shown with their chosen address still selected, and saving returns them where a change of answer does
+
+#### Scenario: Each address ends with only a View link
+**ID**: SCN-ADDR-009-C
+- **GIVEN** the user is choosing an address for a consignment role, and the address book service is available
+- **WHEN** the list is shown
+- **THEN** each address's last column holds a single 'View' link, announced with the address's name, and nothing else
+
+#### Scenario: Each address ends at its country, with no View link, in stub mode
+**ID**: SCN-ADDR-009-D
+- **GIVEN** the user is choosing an address for a consignment role, and the address book service is not available (stub mode)
+- **WHEN** the list is shown
+- **THEN** the list's columns end at Country, and each address's last column holds its country, with no 'View' link
 
 ### Requirement: Choosing a role's address is paged, and a choice made on any page is the one saved
 **ID**: REQ-ADDR-010
@@ -324,3 +343,25 @@ For an address entered by hand whose fields become mandatory only once one of th
 - **THEN** the save is blocked with an error naming the missing address field
 - **WHEN** they complete every mandatory field in the address
 - **THEN** the save succeeds and the record is added
+
+### Requirement: The list spans the content column and shows each address on its own lines
+**ID**: REQ-ADDR-015
+The system MUST lay the list of addresses for a consignment role across the full width of the content column. It MUST show each address's street lines on their own lines, then its town or city, county and postcode together on one line, joined by commas, with blank parts left out. The country has its own column.
+
+#### Scenario: An address shows its street lines, then its town, county and postcode on one line
+**ID**: SCN-ADDR-015-A
+- **GIVEN** the address book holds an address with two street lines, a town, a county and a postcode
+- **WHEN** the user finds it on the list for a consignment role
+- **THEN** its address shows each street line on its own line, then the town, county and postcode on one line, for example 'Carlisle, Cumbria, CA1 3CC'
+
+#### Scenario: Blank parts are left out
+**ID**: SCN-ADDR-015-B
+- **GIVEN** an address has no second street line and no county
+- **WHEN** it is listed
+- **THEN** it shows its street line, then its town and postcode on one line, for example 'Leeds, LS1 6HB', with no blank line
+
+#### Scenario: The list spans the full content column
+**ID**: SCN-ADDR-015-C
+- **GIVEN** the user is choosing an address for a consignment role
+- **WHEN** the list is shown
+- **THEN** it spans the full width of the content column

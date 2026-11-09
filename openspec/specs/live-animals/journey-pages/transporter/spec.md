@@ -159,3 +159,20 @@ The system MUST end every row of the transporter list with a "View details" link
 - **WHEN** they follow its "View details" link
 - **THEN** a page headed with that transporter's name shows its record
 - **AND** following its Back link returns to this same transporter list
+
+### Requirement: A transporter must be chosen
+**ID**: REQ-TRANSPORTER-009
+The system MUST refuse either save control when no transporter is chosen, keeping the user on the list with the message "Select a transporter from the list" in a "There is a problem" summary linking to the first transporter option and shown inline above the table, and MUST leave the notification's transporter unchanged.
+
+#### Scenario: Continuing with nothing chosen is refused
+**ID**: SCN-TRANSPORTER-009-A
+- **GIVEN** the user is on the transporter list
+- **WHEN** they press "Save and continue" with nothing chosen
+- **THEN** they stay on the list with "Select a transporter from the list" in a "There is a problem" summary linking to the first transporter option and shown inline above the table
+
+#### Scenario: Returning to overview with nothing chosen is refused the same way
+**ID**: SCN-TRANSPORTER-009-B
+- **GIVEN** the user is on the transporter list
+- **WHEN** they press "Save and return to overview" with nothing chosen
+- **THEN** they stay on the list with the same summary and the same inline error
+- **AND** the notification's transporter is left as it was

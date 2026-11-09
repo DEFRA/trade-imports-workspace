@@ -112,6 +112,40 @@ COMMON_ARGS=(
   "-Dsonar.qualitygate.wait=true"
 )
 
+# Leave the tree as we found it. The commands below drop analysis artefacts in
+# the repo they run in: `sonar-scanner` writes .scannerwork/, `mvn sonar:sonar`
+# writes .sonar/, and a repo's own `npm run lint` can write a
+# dependency-cruiser cache. Only trade-imports-animals-frontend gitignores any
+# of them, so without this the gate leaves every repo it checks with a dirty
+# tree. That breaks anything downstream that asserts a clean tree — the
+# increment build loop's baseline goes red before it edits a line — and risks
+# the artefact being staged into a real commit by something that stages what is
+# untracked.
+#
+# Removes ONLY untracked paths that appeared while this script ran: a path you
+# already had is left alone, and a tracked file is never touched. `target/`,
+# `node_modules/` and `.cache/` are gitignored in these repos, so they never
+# show up here in the first place.
+UNTRACKED_BEFORE=$(git -c core.quotePath=false status --porcelain 2>/dev/null | grep '^??' | cut -c4-)
+
+cleanup_analysis_artefacts() {
+  local after path
+  after=$(git -c core.quotePath=false status --porcelain 2>/dev/null | grep '^??' | cut -c4-)
+  while IFS= read -r path; do
+    [ -n "$path" ] || continue
+    # Never step outside the repo, and never near git's own state, however the
+    # path reached us.
+    case "$path" in
+      /* | *..* | .git | .git/*) continue ;;
+    esac
+    printf '%s\n' "$UNTRACKED_BEFORE" | grep -qxF -- "$path" && continue
+    rm -rf -- "$path"
+  done <<< "$after"
+}
+
+# On every exit path, so a blocked push cleans up as thoroughly as a passing one.
+trap cleanup_analysis_artefacts EXIT
+
 echo "Running local Sonar pre-push check for $PROJECT_KEY (this can take a few minutes; needs Docker running for repos with Testcontainers-based integration tests)..." >&2
 
 if [ -f pom.xml ]; then
@@ -187,6 +221,14 @@ elif [ -f package.json ]; then
   # outcome. `.cache/` is gitignored in these repos.
   #
   # Harmless for repos with no pre-push hook yet — nothing reads the file.
+  #
+  # Clear our own leavings before that judgement, or they make it for us: a
+  # repo whose `npm run lint` writes a dependency-cruiser cache (as
+  # trade-imports-animals-frontend's does, to src/server/common/cache.json)
+  # arrives here dirty for a reason that has nothing to do with HEAD, and the
+  # marker is never written — so its git pre-push hook repeats the whole suite
+  # every time. The EXIT trap cannot cover this: it fires after the check.
+  cleanup_analysis_artefacts
   if [ -z "$(git status --porcelain 2>/dev/null)" ]; then
     mkdir -p .cache && git rev-parse HEAD > .cache/prepush-verified
   fi

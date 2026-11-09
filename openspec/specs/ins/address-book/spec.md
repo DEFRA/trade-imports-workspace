@@ -453,7 +453,7 @@ The system MUST take the user to the address book list, with no 'Page not found'
 
 ### Requirement: The view and delete pages return the user to the page they opened the address from
 **ID**: REQ-INS-ADDR-024
-The system MUST honour a return given when the view or delete page is opened, if it is a page of this service or, outside stub mode, exactly that environment's animals frontend, and MUST ignore any other. The view page's Back MUST go to it, and Edit and Delete MUST carry it on. The delete page's Back and 'No, cancel' MUST go to the view page still carrying it. 'Yes, delete' and a dead link MUST land on it, or on the list when it is one of that address's own pages.
+The system MUST honour a return given when the view or delete page is opened, if it is a page of this service or, outside stub mode, exactly that environment's animals frontend, and MUST ignore any other. A return that is a path under '/live-animals' MUST be taken as that page on the animals frontend, resolved against that environment's animals frontend URL, never as a page of this service. The view page's Back MUST go to it, and Edit and Delete MUST carry it on. The delete page's Back and 'No, cancel' MUST go to the view page still carrying it. 'Yes, delete' and a dead link MUST land on it, or on the list when it is one of that address's own pages.
 
 #### Scenario: Back from the view page follows a return to a page of this service
 **ID**: SCN-INS-ADDR-024-A
@@ -503,7 +503,7 @@ The system MUST honour a return given when the view or delete page is opened, if
 #### Scenario: In stub mode only a return to a page of this service is honoured
 **ID**: SCN-INS-ADDR-024-H
 - **GIVEN** the service runs in stub mode
-- **WHEN** an address is opened with a return on the animals frontend
+- **WHEN** an address is opened with a return on the animals frontend, as a URL or as a '/live-animals' path
 - **THEN** Back goes to the address book list
 
 #### Scenario: A dead link carrying an honoured return lands on it
@@ -511,6 +511,13 @@ The system MUST honour a return given when the view or delete page is opened, if
 - **GIVEN** a view or delete link for an address that is not live in the book carries an honoured return that is not one of that address's own pages
 - **WHEN** it is opened
 - **THEN** the return page opens, not the address book and not a 'Page not found' page
+
+#### Scenario: A return given as a live-animals path opens that page on the animals frontend
+**ID**: SCN-INS-ADDR-024-J
+- **GIVEN** an address opened from a live-animals party picker with a return that is the picker's own '/live-animals' path, carrying its search
+- **WHEN** they select Back
+- **THEN** that picker opens on the animals frontend, with the search kept
+- **AND** a path that only begins with the letters 'live-animals', such as '/live-animalsx', is still a page of this service
 
 ### Requirement: The edit page is headed 'Edit address and contact details' and returns the user to where they opened it
 **ID**: REQ-INS-ADDR-025

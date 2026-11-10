@@ -17,7 +17,9 @@
 # feat/EUDPA-690-type-question do not — and a name test on its own silently
 # leaves those themes with no pull requests on the page.
 #
-# Usage: bash fetch-prs.sh
+# Usage: npm run prs (from this directory). The Bash deny list blocks a bare
+#        `bash fetch-prs.sh`, so the npm script is the route an agent can take —
+#        the same one `npm run build` and `npm run check` already use.
 
 set -euo pipefail
 

@@ -6,11 +6,11 @@ both run the generator and the renderer from `combined/`, and the only file that
 `build/scope.json`. The third is the journey map, which only exists per journey — its generator and markup live under
 `combined/journey-map-page/` and its journey lives here.
 
-| Page | Link | Source here |
-|---|---|---|
-| Animals work by theme | https://claude.ai/code/artifact/846e4fb9-ebe0-49d0-a7f9-00bd1d89badf | `progress-page/` |
-| Animals theme build order | https://claude.ai/code/artifact/61aaf990-8a86-4d61-9bd9-5e623cd7ee92 | `build-order-page/` |
-| Animals Journey Page Map | https://claude.ai/code/artifact/9add006f-18c8-40e8-bdba-138b22bb5d90 | `journey-map-page/` |
+| Page | Link | Source here | Favicon |
+|---|---|---|---|
+| Animals work by theme | https://claude.ai/code/artifact/846e4fb9-ebe0-49d0-a7f9-00bd1d89badf | `progress-page/` | 📋 |
+| Animals theme build order | https://claude.ai/code/artifact/61aaf990-8a86-4d61-9bd9-5e623cd7ee92 | `build-order-page/` | 🧭 |
+| Animals Journey Page Map | https://claude.ai/code/artifact/9add006f-18c8-40e8-bdba-138b22bb5d90 | `journey-map-page/` | 🗺️ |
 
 The whole-programme pair stays where it was: [work by
 theme](https://claude.ai/code/artifact/466c571f-880f-478e-971e-dbf10c53b7d5) and [build
@@ -42,14 +42,15 @@ npm run build   # writes data.js, and index.html from the shared markup with thi
 npm run check   # runs the page's own renderer against the new data
 ```
 
-For the progress page, run `bash ../../../combined/progress-page/build/fetch-prs.sh` first whenever the pull requests
+For the progress page, run `npm run prs` in `../../../combined/progress-page/build/` first whenever the pull requests
 may have moved.
 
 `npm run build` writes `index.html` here as well as `data.js`. It is a copy of the shared markup with the title
 swapped, so **do not edit `index.html` in these folders** — edit the one under `combined/` and rebuild, or the change
 is lost on the next run. The pages read `data.scope` at run time for everything else they say about being a slice.
 
-Then republish each page passing its artifact URL above, with `data.js` as a supporting file.
+Then republish each page passing its artifact URL above, with `data.js` as a supporting file and the favicon from the
+table — a changed favicon reads as a different page to anyone who keeps the tab open.
 
 ## The journey map's own input
 

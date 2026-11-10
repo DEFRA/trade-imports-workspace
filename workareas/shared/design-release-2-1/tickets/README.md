@@ -140,8 +140,16 @@ records EUDPA-789 under both `ins` and `animals`. The theme was delivered as six
 tickets (EUDPA-706 to 711) and then EUDPA-721's picker work, all scoped by Jira
 key rather than by theme slug, so `tickets.json` lists those keys under
 `rowScopes` for `derive-scenarios` to find the footprint. All merged to `main`;
-the ticket is `Deskcheck`. 50 scenarios (44 INS, 6 live animals) are partly
-proved, and are being raised to fully proved under EUDPA-646.
+the ticket is `Deskcheck`. 7 scenarios (2 INS, 5 live animals) are partly
+proved, each one only an end-to-end test can prove in full.
+
+A later change is made under EUDPA-789 itself: every address type, and every
+role picker's add page, offers every country, and the address book accepts any
+role in any country. Its commits are scoped by the ticket key, which
+`tickets.json` records for the theme, so they count inside the footprint. It
+changed existing scenarios, not the count. While it is on
+`feat/EUDPA-789-any-country`, the ticket's spec links point at that branch;
+regenerate them to `main` once it merges.
 
 Every theme's per-domain scenarios and files sum to its own totals, which is how
 a dropped or double-counted file gets caught. Each new ticket *relates to* the

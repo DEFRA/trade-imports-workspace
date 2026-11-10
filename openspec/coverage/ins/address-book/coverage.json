@@ -203,7 +203,7 @@
     {
       "id": "REQ-INS-ADDR-005",
       "name": "The add and edit forms ask for the same Standard Address Block, with two fields optional",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-INS-ADDR-005-A",
@@ -247,7 +247,7 @@
         {
           "id": "SCN-INS-ADDR-005-B",
           "name": "The country field lists every country alphabetically, United Kingdom in its place",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "e2e",
@@ -263,7 +263,7 @@
               "file": "tests/ins/e2e/features/address-book/address-book-country-list.spec.ts",
               "test": "the edit form's Country select lists every country reference data serves alphabetically, United Kingdom in its place, with no Select a country option",
               "strength": "partial",
-              "notes": "no test opens the add form from the consignment contact page"
+              "notes": "not red-probed"
             },
             {
               "type": "unit",
@@ -280,6 +280,30 @@
               "test": "Should serve the captured reference-data list through getCountries",
               "strength": "partial",
               "notes": "stub mode serves the captured unfiltered list"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "renders every field, hints and populated country options",
+              "strength": "full",
+              "notes": "address book add after Origin or Consignor; red-probed: fails when the country list is not sorted by name"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "from the ${partyName} handshake opens the Country select on Select a country and offers every captured country, alphabetically, as a plain select",
+              "strength": "full",
+              "notes": "place of origin, consignor and consignment contact handshakes; red-probed: fails when the country list is not sorted by name"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/edit.fit.spec.js",
+              "test": "lists the countries alphabetically with no blank option and the stored country selected",
+              "strength": "full",
+              "notes": "edit form; red-probed: fails when the country list is not sorted by name"
             }
           ]
         }
@@ -459,7 +483,7 @@
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-              "test": "${typeLabel} saved with every offered role ticked lands on its tab with the new address first",
+              "test": "${typeLabel} saved with every offered role ticked lands on its tab with the new address first, its roles as its Type",
               "strength": "partial",
               "notes": "not red-probed"
             }
@@ -617,7 +641,7 @@
     {
       "id": "REQ-INS-ADDR-011",
       "name": "Deleting an address asks for confirmation, summarising the address, before it is removed",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-INS-ADDR-011-A",
@@ -754,7 +778,7 @@
         {
           "id": "SCN-INS-ADDR-011-F",
           "name": "Deleting an address with a blank name says Address deleted",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
@@ -763,6 +787,14 @@
               "test": "Should word a blank name without a name",
               "strength": "partial",
               "notes": "the banner wording helper alone; no redirect or rendered banner asserted"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/delete/delete.controller.test.js",
+              "test": "Should land on the address book saying Address deleted after deleting an address with a blank name",
+              "strength": "full",
+              "notes": "route-level unit witness: posts the delete and follows its cookies to the rendered list, as no stub path makes an address with a blank name; red-probed: fails when the blank-name wording branch is removed, and when the banner is never set"
             }
           ]
         }
@@ -1226,7 +1258,7 @@
     {
       "id": "REQ-INS-ADDR-016",
       "name": "Adding from a journey handshake refuses an unrecognised journey type",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-INS-ADDR-016-A",
@@ -1246,22 +1278,22 @@
         {
           "id": "SCN-INS-ADDR-016-B",
           "name": "A held handshake that no longer resolves is discarded",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/handshake-context.test.js",
               "test": "clears and ignores a session handshake %s, and logs it once at warn",
-              "strength": "partial",
-              "notes": "not red-probed; asserts the discard and its one warn line with the journey type, notification and party"
+              "strength": "full",
+              "notes": "mechanism witness: no user path holds a handshake that stops resolving, as the journey registry is fixed at deploy time; red-probed: fails when the resolvability check, the session clear or the logged ids are removed"
             }
           ]
         },
         {
           "id": "SCN-INS-ADDR-016-C",
           "name": "An incomplete handshake is refused",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
@@ -1270,6 +1302,14 @@
               "test": "logs an incomplete payload handshake once at warn before refusing it",
               "strength": "partial",
               "notes": "not red-probed; asserts the 400 and its one warn line"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST with a journey type but no notification or party is refused as a bad request, saves nothing and logs the refusal once at warn",
+              "strength": "full",
+              "notes": "route-level; red-probed: fails when the incomplete handshake is let through, and when the warn message changes"
             }
           ]
         }
@@ -1278,12 +1318,12 @@
     {
       "id": "REQ-INS-ADDR-018",
       "name": "A missing name, postcode, country or phone number is named in the words the form uses for it",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-INS-ADDR-018-A",
           "name": "Leaving name, postcode, country and phone blank on add names each in the form's words",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "e2e",
@@ -1291,7 +1331,7 @@
               "file": "tests/ins/e2e/features/address-book/address-book-validation-messages.spec.ts",
               "test": "saving the add form with a role ticked and name, postcode, country and phone left blank shows only those four messages, at the top and against each field",
               "strength": "partial",
-              "notes": "no test opens the add form from the consignment contact page"
+              "notes": "not red-probed"
             },
             {
               "type": "fit",
@@ -1307,14 +1347,22 @@
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
               "test": "POST with invalid data re-renders form with errors",
               "strength": "partial",
-              "notes": "summary links for all four; the field messages are not asserted individually"
+              "notes": "address book entry; summary and field messages for all four"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "from ${entry}, saving with the name, postcode, country and phone blank shows each message in the summary and against its field",
+              "strength": "full",
+              "notes": "address book after Origin or Consignor, consignor picker and consignment contact page; red-probed: fails when a blank country passes the country rule"
             }
           ]
         },
         {
           "id": "SCN-INS-ADDR-018-B",
           "name": "Clearing name, postcode and phone on edit with no country chosen shows the same messages, and nothing is saved",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "e2e",
@@ -1339,21 +1387,29 @@
               "test": "a rejected save keeps the edits rather than the stored address",
               "strength": "partial",
               "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/edit/edit.controller.test.js",
+              "test": "Should show the name, postcode, country and phone messages and send nothing when those are cleared on an address whose stored country is not offered",
+              "strength": "full",
+              "notes": "unit witness only: stub mode seeds no address with a country the list does not offer, so no fit test reaches this; red-probed: fails when the edit is sent despite field errors, and when a blank country passes the country rule"
             }
           ]
         },
         {
           "id": "SCN-INS-ADDR-018-C",
           "name": "A country that is not offered is refused as if none were chosen",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
               "test": "POST with a country the reference data does not list shows the select-a-country error",
-              "strength": "partial",
-              "notes": "no test opens the add form from the consignment contact page"
+              "strength": "full",
+              "notes": "address book add; unit witness, as only a crafted request posts a country the list does not offer; red-probed: fails when the country rule accepts any non-blank value"
             },
             {
               "type": "unit",
@@ -1368,8 +1424,16 @@
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/edit/edit.controller.test.js",
               "test": "Should refuse a country the reference data does not list with Select a country, sending nothing",
-              "strength": "partial",
-              "notes": "the edit form; no test opens the add form from the consignment contact page"
+              "strength": "full",
+              "notes": "edit form; red-probed: fails when the country rule accepts any non-blank value"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST from the %s handshake with %s shows Select a country and saves nothing",
+              "strength": "full",
+              "notes": "consignor and consignment contact handshakes; unit witness, as no user path posts a country the list does not offer; red-probed: fails when the country rule accepts any non-blank value"
             }
           ]
         },
@@ -2487,7 +2551,7 @@
     {
       "id": "REQ-INS-ADDR-027",
       "name": "The add form names its first field 'Name or organisation' and, wherever it offers every country, opens its Country select on 'Select a country' first, with United Kingdom selected from the address book after choosing 'Origin or Consignor' and no country chosen from the place of origin and consignor pickers and the consignment contact page",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-INS-ADDR-027-A",
@@ -2570,7 +2634,7 @@
         {
           "id": "SCN-INS-ADDR-027-D",
           "name": "The add form opened from a journey's pickers selects no country",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
@@ -2578,7 +2642,15 @@
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
               "test": "GET from the %s handshake opens the Country select on Select a country, offers every served country and shows every field",
               "strength": "partial",
-              "notes": "role handshakes; no test opens the add form from the consignment contact page"
+              "notes": "role handshakes; mechanism"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "from the ${partyName} handshake opens the Country select on Select a country and offers every captured country, alphabetically, as a plain select",
+              "strength": "full",
+              "notes": "place of origin, consignor and consignment contact handshakes; red-probed: fails when a handshake form opens on United Kingdom (every row), and when the consignment contact form offers United Kingdom alone (contact row)"
             }
           ]
         }
@@ -3513,7 +3585,7 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "POST from the consignor handshake with %s shows Select a country and saves nothing",
+              "test": "POST from the %s handshake with %s shows Select a country and saves nothing",
               "strength": "full",
               "notes": "for no country and a country the list does not offer; red-probed: fails when the United Kingdom branch applies to every context"
             }
@@ -5164,15 +5236,15 @@
         {
           "id": "SCN-INS-ADDR-043-F",
           "name": "A notification journey's handshake opens the add form directly",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
               "test": "GET from a role handshake offers Save and select, Save and return to address page and a Cancel and return to hub link, and carries the journey forward in hidden fields",
-              "strength": "partial",
-              "notes": "an existing test that runs with no type chosen; not red-probed"
+              "strength": "full",
+              "notes": "runs with no type chosen; red-probed: fails when a handshake add no longer skips the address type check"
             },
             {
               "type": "e2e",
@@ -5181,6 +5253,30 @@
               "test": "Save and select on the INS add page reached from the ${role} picker saves the address holding that role, selects it for the role and lands on Roles and addresses with the added banner",
               "strength": "partial",
               "notes": "for Consignor; an existing test that reaches the add form from the picker and hands the address back; run on the leased stack by the gate; not red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST of Save and select returns to the journey with the new address id and the select landing, logs the hand-back once, and shows no address-book banner",
+              "strength": "full",
+              "notes": "red-probed: fails when the hand-back URL drops the address id, and when the address type check is not skipped"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "from a role handshake offers Back to the journey, ${copy.add.saveAndSelect}, ${copy.add.saveAndReturnToAddressPage} and a Cancel and return to hub link",
+              "strength": "full",
+              "notes": "opened with no type chosen; red-probed: fails when the address type check is not skipped"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "Save and select with Importer ticked on the consignee page lists the address under the Consignee and Importer roles",
+              "strength": "full",
+              "notes": "JavaScript off; red-probed: fails when the hand-back URL drops the address id, and when the address type check is not skipped"
             }
           ]
         },
@@ -5289,20 +5385,20 @@
     {
       "id": "REQ-INS-ADDR-044",
       "name": "Adding an address from the address book saves it with the roles ticked",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-INS-ADDR-044-A",
           "name": "Origin or Consignor offers Place of origin and Consignor after the contact fields",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
               "test": "GET after Origin or Consignor is chosen shows a section break after the contact fields, then the roles question with Place of origin and Consignor unticked and without hints",
-              "strength": "partial",
-              "notes": "not red-probed"
+              "strength": "full",
+              "notes": "red-probed: fails when the section break is removed, the legend or hint is swapped, the role order is reversed, every role is ticked, or a role carries a hint"
             },
             {
               "type": "unit",
@@ -5316,9 +5412,9 @@
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-              "test": "${typeLabel} opens with the address and contact fields, a section break, then the roles question offering its roles unticked, and ${countryOffered}",
-              "strength": "partial",
-              "notes": "not red-probed"
+              "test": "${typeLabel} opens with the address and contact fields, a section break, then the roles question offering its roles unticked and without hints, and ${countryOffered}",
+              "strength": "full",
+              "notes": "Origin or Consignor row; red-probed: fails when an address search field is added, the section break is removed, the legend or hint is swapped, the role order is reversed, every role is ticked, or a role carries a hint"
             },
             {
               "type": "e2e",
@@ -5372,15 +5468,15 @@
         {
           "id": "SCN-INS-ADDR-044-C",
           "name": "An invalid field and no role ticked show both errors together",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
               "test": "POST with an invalid field and no role ticked shows the field error and the roles error together, in page order",
-              "strength": "partial",
-              "notes": "not red-probed"
+              "strength": "full",
+              "notes": "Origin or Consignor; red-probed: fails when the roles error is dropped beside a field error, and when it is listed before the field errors"
             },
             {
               "type": "unit",
@@ -5405,20 +5501,28 @@
               "test": "saving with an invalid field and no role shows the field error and the roles error together, in page order",
               "strength": "partial",
               "notes": "runs once per address type; Not probed with an inverted production line."
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "${typeLabel} saved with the name blank and no role shows the name error then the roles error, against their questions and in the summary",
+              "strength": "full",
+              "notes": "runs once per address type; red-probed: fails when the roles error is dropped beside a field error, and when it is listed before the field errors"
             }
           ]
         },
         {
           "id": "SCN-INS-ADDR-044-D",
           "name": "Saving stores every ticked role, and a role the type does not offer is not stored",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
               "test": "POST with Consignor ticked and a role the type does not offer saves only Consignor, logs the discarded role and lands on the Origin and Consignor list",
-              "strength": "partial",
+              "strength": "full",
               "notes": "red-probed: fails when a posted role the type does not offer is kept"
             },
             {
@@ -5452,13 +5556,21 @@
               "test": "ticking every offered role and saving lands on its tab, lists the address with its roles, and stores its roles and its country",
               "strength": "partial",
               "notes": "runs once per address type; run on the leased stack by the gate; not red-probed; stored roles are compared sorted, so the order they are stored in is not proven by this test"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST with Place of origin and Consignor ticked sends both roles to the address book, Place of origin first",
+              "strength": "full",
+              "notes": "what the frontend sends the address book; red-probed: fails when the kept roles are reversed"
             }
           ]
         },
         {
           "id": "SCN-INS-ADDR-044-E",
           "name": "Saving an address lands on its type's tab with the address first",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
@@ -5472,9 +5584,9 @@
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-              "test": "${typeLabel} saved with every offered role ticked lands on its tab with the new address first",
-              "strength": "partial",
-              "notes": "not red-probed"
+              "test": "${typeLabel} saved with every offered role ticked lands on its tab with the new address first, its roles as its Type",
+              "strength": "full",
+              "notes": "runs once per address type; red-probed: fails when the save lands without the type's tab, when the Type column shows role codes, and (Origin or Consignor row) when the rows are listed in reverse"
             },
             {
               "type": "fit",
@@ -5497,7 +5609,7 @@
         {
           "id": "SCN-INS-ADDR-044-F",
           "name": "Destination, Consignee or Importer fixes the country to United Kingdom",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
@@ -5512,16 +5624,16 @@
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
               "test": "GET after %s is chosen offers United Kingdom alone, selected",
-              "strength": "partial",
-              "notes": "Proves the country only; the section break and the absent address search are not proven by it."
+              "strength": "full",
+              "notes": "red-probed: fails when the type offers every country"
             },
             {
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-              "test": "${typeLabel} opens with the address and contact fields, a section break, then the roles question offering its roles unticked, and ${countryOffered}",
-              "strength": "partial",
-              "notes": "Not probed with an inverted production line."
+              "test": "${typeLabel} opens with the address and contact fields, a section break, then the roles question offering its roles unticked and without hints, and ${countryOffered}",
+              "strength": "full",
+              "notes": "Destination, Consignee or Importer row; red-probed: fails when an address search field is added, the section break is removed, the legend or hint is swapped, the role order is reversed, every role is ticked, or a role carries a hint; also when the place roles are no longer put first, and when the type offers every country"
             },
             {
               "type": "fit",
@@ -5547,13 +5659,12 @@
               "strength": "partial",
               "notes": "for Destination, Consignee or Importer; Not probed with an inverted production line."
             }
-          ],
-          "notes": "The 'no address search' and 'section break' Thens rest on fit and e2e tests not probed with an inverted production line."
+          ]
         },
         {
           "id": "SCN-INS-ADDR-044-G",
           "name": "Branch offers the one role and fixes the country to United Kingdom",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
@@ -5568,16 +5679,16 @@
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
               "test": "GET after %s is chosen offers United Kingdom alone, selected",
-              "strength": "partial",
-              "notes": "Proves the country only; the section break and the absent address search are not proven by it."
+              "strength": "full",
+              "notes": "red-probed: fails when the type offers every country"
             },
             {
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-              "test": "${typeLabel} opens with the address and contact fields, a section break, then the roles question offering its roles unticked, and ${countryOffered}",
-              "strength": "partial",
-              "notes": "Not probed with an inverted production line."
+              "test": "${typeLabel} opens with the address and contact fields, a section break, then the roles question offering its roles unticked and without hints, and ${countryOffered}",
+              "strength": "full",
+              "notes": "Branch row; red-probed: fails when an address search field is added, the section break is removed, the legend or hint is swapped, the role order is reversed, every role is ticked, or a role carries a hint; also when Branch offers a second role, and when the type offers every country"
             },
             {
               "type": "e2e",
@@ -5595,8 +5706,7 @@
               "strength": "partial",
               "notes": "for Branch; Not probed with an inverted production line."
             }
-          ],
-          "notes": "The 'no address search' and 'section break' Thens rest on fit and e2e tests not probed with an inverted production line."
+          ]
         },
         {
           "id": "SCN-INS-ADDR-044-H",
@@ -5741,7 +5851,7 @@
     {
       "id": "REQ-INS-ADDR-046",
       "name": "The add page reached from a role picker asks what else the address should be used for, offering the other roles on its side",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-INS-ADDR-046-A",
@@ -5800,7 +5910,7 @@
         {
           "id": "SCN-INS-ADDR-046-C",
           "name": "Saving with nothing ticked raises no error",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
@@ -5808,7 +5918,7 @@
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
               "test": "POST from the %s handshake saves the address with only its own role when the posted role is from outside its side",
               "strength": "partial",
-              "notes": "saves a valid address with no offered role ticked; not red-probed"
+              "notes": "posts a role from outside its side, not nothing ticked"
             },
             {
               "type": "e2e",
@@ -5817,6 +5927,14 @@
               "test": "Save and select on the INS add page reached from the ${role} picker saves the address holding that role, selects it for the role and lands on Roles and addresses with the added banner",
               "strength": "partial",
               "notes": "for Consignor; saves with nothing ticked and lands on the journey; run on the leased stack by the gate; not red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "POST from the %s handshake with nothing ticked hands the address back saved with only its own role",
+              "strength": "full",
+              "notes": "runs once per role; red-probed: fails when the party's own role is left out of the save, and when a handshake save raises the roles error"
             }
           ]
         },

@@ -20,6 +20,11 @@ on:
         description: 'Branch name to probe for service images'
         required: true
         type: string
+      run-smoke:
+        description: 'Run the k6 smoke job (cross-journey perf thresholds). Turn off when the calling repo only needs Playwright coverage.'
+        required: false
+        type: boolean
+        default: true
       shard-total:
         description: 'Number of shards to split the tests over, from 1 to 6'
         required: false
@@ -261,9 +266,10 @@ jobs:
   # caller's E2E check fails with it.
   smoke:
     if: >
-      github.event_name == 'workflow_dispatch' ||
-      github.event_name == 'workflow_call' ||
-      !github.event.pull_request.draft
+      (github.event_name == 'workflow_dispatch' ||
+       github.event_name == 'workflow_call' ||
+       !github.event.pull_request.draft) &&
+      (github.event_name != 'workflow_call' || inputs.run-smoke)
     uses: DEFRA/trade-imports-performance-tests/.github/workflows/smoke.yml@main
     with:
       branch: ${{ inputs.branch || github.head_ref || github.ref_name }}

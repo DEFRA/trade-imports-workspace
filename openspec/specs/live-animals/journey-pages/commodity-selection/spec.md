@@ -319,7 +319,7 @@ The system MUST show, in bold, the part of a commodity heading or a species labe
 
 ### Requirement: With JavaScript, the results and the tally refresh in place
 **ID**: REQ-COMMODITY-SELECT-017
-With JavaScript on, the system MUST refresh the results and the tally on the same page, without the page reloading, as the user types, ticks or unticks a result, removes a species or clears the selection. It MUST announce through a polite status message how many species a typed search lists, or that it lists none. It MUST keep focus on a tick box the user used, and move focus to the search box when the control the user pressed is gone. When the results cannot be fetched, it MUST post the page as it would without JavaScript. A save pressed while a refresh is on its way MUST wait for it, so the save holds what the refresh shows.
+With JavaScript on, the system MUST refresh the results and the tally on the same page, without the page reloading, as the user types, ticks or unticks a result, removes a species or clears the selection. It MUST announce through a polite status message how many species a typed search lists, or that it lists none. It MUST keep focus on a tick box the user used, and move focus to the search box when the control the user pressed is gone. When the results cannot be fetched, it MUST post the page as it would without JavaScript. A save pressed while a refresh is on its way MUST wait for it, so the save holds what the refresh shows. Each refresh MUST start from what the one before it left, so a later search never brings back a choice an earlier Clear all or remove took away.
 
 #### Scenario: Typing lists the matching species without pressing Search
 **ID**: SCN-COMMODITY-SELECT-017-A
@@ -362,3 +362,9 @@ With JavaScript on, the system MUST refresh the results and the tally on the sam
 - **GIVEN** the user has JavaScript turned on, has chosen one species, and the results are slow to arrive
 - **WHEN** they clear the selection and save before the results have refreshed
 - **THEN** the save is refused with "Select a commodity" and nothing is chosen
+
+#### Scenario: A search pressed straight after Clear all keeps the cleared species out
+**ID**: SCN-COMMODITY-SELECT-017-H
+- **GIVEN** the user has JavaScript turned on, has chosen one species, and the results are slow to arrive
+- **WHEN** they clear the selection, search for another species before the results have refreshed, tick it and save
+- **THEN** only the species they ticked after clearing is chosen

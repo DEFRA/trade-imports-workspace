@@ -217,8 +217,8 @@
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "counts what has been chosen and clears it on request", "strength": "partial", "notes": "checks the panel counts the choice, shows the commodity as a bold line with its species beneath, and disappears when the selection is cleared; not probed" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "counts and lists what has been chosen, and clears it on request", "strength": "partial", "notes": "checks the panel's commodity line and per-species entries, and that Clear all empties it; not probed" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should summarise the stored selection, counted and grouped by code", "strength": "full", "notes": "probed: selectedSummary's shape inverted went red (search.controller.test.js:318, count/heading/groups mismatch), restored went green" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "shows a Remove control named for each chosen species", "strength": "partial", "notes": "checks the panel offers a button whose accessible name is Remove followed by the species' label, for every chosen species; not probed" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should summarise the stored selection, counted, grouped by code and each named by its Latin name", "strength": "full", "notes": "probed: selectedSummary's shape inverted went red (count/heading/groups mismatch), restored went green; the Latin-name chip label is checked by the same assertion" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "shows each chosen species as a chip of its Latin name with a Remove control named for it", "strength": "partial", "notes": "checks each chosen species shows as its Latin name alone under its commodity line, with a button named Remove followed by that Latin name; not probed" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "lists each chosen commodity with one entry per chosen species offering a Remove control", "strength": "partial", "notes": "checks one panel entry per chosen species under its commodity line, each with a Remove control named for that species; not probed" }
           ]
         },
@@ -555,6 +555,24 @@
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "a search pressed straight after Clear all keeps the selection cleared", "strength": "full", "notes": "slows the results route; probed: refreshes sent at once rather than one after another went red, restored went green" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/client/javascripts/components/multi-select-search.test.js", "test": "Should send a search pressed while Clear all is refreshing only once it lands, from the form it left", "strength": "full", "notes": "covered by the same probe as the fit test above" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/additional-details-scope.spec.ts", "test": "a saved unweaned-animals answer is cleared when the commodities change to ones the question is not asked for", "strength": "partial", "notes": "clears a saved selection and searches again straight away; failed while refreshes could overlap; not probed" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-017-I",
+          "name": "Escape hides the results and clicking the search box shows them again",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "hides the results on Escape, keeping the term, and shows them again when the search box is clicked", "strength": "full", "notes": "probed: the module's dropdown wiring left out went red, restored went green" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/client/javascripts/components/multi-select-search.test.js", "test": "Should hide the results on Escape in the search box, keeping the term, and show them again when the box is focused", "strength": "full", "notes": "covered by the same probe as the fit test above" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-017-J",
+          "name": "A click outside the search hides the results and keeps what is chosen",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "hides the results on a click outside the search, keeping what is chosen", "strength": "full", "notes": "probed: the module's dropdown wiring left out went red, restored went green" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/client/javascripts/components/multi-select-search.test.js", "test": "Should hide the results only once a click outside the search has landed, and keep them for a click inside it", "strength": "full", "notes": "covered by the same probe as the fit test above" }
           ]
         }
       ]

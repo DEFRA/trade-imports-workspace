@@ -107,15 +107,15 @@
     {
       "id": "REQ-PLANTS-CYA-006",
       "name": "A draft notification invites submission and withholds post-submission actions",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-PLANTS-CYA-006-A",
           "name": "The draft view invites submission and withholds delete and cancel-amendment",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "renders saved answers, scoped cards and accessible Change links that open their page on the review trail and go on with Save and continue", "strength": "partial", "notes": "completeNotification asserts Now submit heading and body; does not assert delete/cancelAmend absent" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should offer Cancel amendment only while amending, and the banner only after cancelling", "strength": "partial", "notes": "submitted and amending branches prove delete vs cancelAmend; draft withhold is implied by readOnly false → deleteHref null in controller, not asserted on a draft GET" }
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "renders saved answers, scoped cards and accessible Change links that open their page on the review trail and go on with Save and continue", "strength": "full", "notes": "the walk ends on the draft review's submit heading and body; red then green with the read-only branch always taken" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should show a draft review as editable with the Draft status and no Delete or Cancel amendment link", "strength": "full", "notes": "red then green with Delete always offered and with Cancel amend offered on every status" }
           ]
         }
       ]
@@ -191,15 +191,15 @@
     {
       "id": "REQ-PLANTS-CYA-010",
       "name": "A review's back link goes to the place the user came from; the submitted view's back link opens the notification list",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-PLANTS-CYA-010-A",
           "name": "Back goes to the last page Save and continue was pressed on",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should go to %s", "strength": "partial", "notes": "the page Save and continue was pressed on; not seen failing" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/back.spec.ts", "test": "after Save and continue from the contact address it opens the contact address, and Back steps back through the pages Save and continue was pressed on", "strength": "partial", "notes": "not seen failing; needs the stack" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should go to %s", "strength": "full", "notes": "red then green with the review's Back ignoring the request's trail" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/back.spec.ts", "test": "after Save and continue from the contact address it opens the contact address, and Back steps back through the pages Save and continue was pressed on", "strength": "full", "notes": "red then green with Back dropping the places beneath the newest" }
           ]
         },
         {
@@ -214,9 +214,9 @@
         {
           "id": "SCN-PLANTS-CYA-010-C",
           "name": "An amendment's review opened by its address has a back link to Overview",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should go to %s", "strength": "partial", "notes": "Overview when nothing says where the trader came from; not seen failing" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should send Back from an amendment opened with no trail to Overview", "strength": "full", "notes": "red then green with an amendment's fallback the dashboard" }
           ]
         },
         {
@@ -231,28 +231,29 @@
         {
           "id": "SCN-PLANTS-CYA-010-E",
           "name": "A review opened from Overview has a back link to Overview, and save and return opens Overview",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should go to %s", "strength": "partial", "notes": "Overview when opened from Overview; not seen failing" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should go to %s", "strength": "full", "notes": "the Overview case; red then green with Overview's start address the dashboard's" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should continue through the registered review flow and honour the overview exit without writing", "strength": "full", "notes": "red then green with the overview exit ignored" }
           ]
         },
         {
           "id": "SCN-PLANTS-CYA-010-F",
           "name": "A review opened from a dashboard card has a back link to the dashboard, before and after a Change link round trip",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should go to %s", "strength": "partial", "notes": "the dashboard when opened from a dashboard card; not seen failing" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should push the review onto its own trail on every Change link", "strength": "partial", "notes": "not seen failing" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/back.spec.ts", "test": "opened by Amend on a submitted notification dashboard card it opens the dashboard, before and after a Change link round trip", "strength": "partial", "notes": "not seen failing; needs the stack" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should go to %s", "strength": "full", "notes": "the dashboard case; red then green with the review's Back ignoring the request's trail and with the dashboard's start address Overview's" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should push the review onto its own trail on every Change link", "strength": "full", "notes": "red then green with the Change links carrying the review alone" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/back.spec.ts", "test": "opened by Amend on a submitted notification dashboard card it opens the dashboard, before and after a Change link round trip", "strength": "full", "notes": "red then green with the dashboard's start address Overview's and with the Change links carrying the review alone" }
           ]
         },
         {
           "id": "SCN-PLANTS-CYA-010-G",
           "name": "A refused Continue keeps the review's back link",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should keep the Back link the review had", "strength": "partial", "notes": "not seen failing" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/back.spec.ts", "test": "after Continue is refused it still opens the contact address", "strength": "partial", "notes": "not seen failing; needs the stack" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should keep the Back link the review had", "strength": "full", "notes": "red then green with a refused Continue's Back ignoring the request's trail" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/back.spec.ts", "test": "after Continue is refused it still opens the contact address", "strength": "full", "notes": "red then green with a refused Continue's Back ignoring the request's trail" }
           ]
         }
       ]

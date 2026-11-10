@@ -94,7 +94,7 @@
     {
       "id": "REQ-PLANTS-COMMODITIES-006",
       "name": "The page ends with its primary action alone, and continuing with a line saved opens origin",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-PLANTS-COMMODITIES-006-A",
@@ -118,9 +118,9 @@
         {
           "id": "SCN-PLANTS-COMMODITIES-006-C",
           "name": "A list left empty by a commodity type change refuses Save and continue",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.controller.test.js", "test": "Should hold an empty consignment at the collection floor", "strength": "partial", "notes": "not seen failing" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.controller.test.js", "test": "Should hold a consignment left empty by a type change at the collection floor, still reporting the removed lines", "strength": "full", "notes": "red then green with an empty list never refused" }
           ]
         }
       ]
@@ -128,38 +128,40 @@
     {
       "id": "REQ-PLANTS-COMMODITIES-007",
       "name": "The back link returns to commodity type after Save and continue, to the review from a Change link, and to Overview otherwise",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-PLANTS-COMMODITIES-007-C",
           "name": "On a draft opened from a Change link, the back link opens the review",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/test-support.js", "test": "Should go to %s", "strength": "partial", "notes": "not seen failing" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.controller.test.js", "test": "Should go to %s", "strength": "full", "notes": "red then green with the list's Back ignoring the request's trail" }
           ]
         },
         {
           "id": "SCN-PLANTS-COMMODITIES-007-A",
           "name": "The back link opens Overview when the list was opened from Overview",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/test-support.js", "test": "Should go to %s", "strength": "partial", "notes": "not seen failing" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.controller.test.js", "test": "Should go to %s", "strength": "full", "notes": "the Overview case; red then green with Overview's start address the dashboard's" }
           ]
         },
         {
           "id": "SCN-PLANTS-COMMODITIES-007-B",
           "name": "After Save and continue, the back link opens commodity type",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/test-support.js", "test": "Should go to %s", "strength": "partial", "notes": "not seen failing" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.controller.test.js", "test": "Should go to %s", "strength": "full", "notes": "red then green with the list's Back ignoring the request's trail" }
           ]
         },
         {
           "id": "SCN-PLANTS-COMMODITIES-007-D",
           "name": "After a visit to commodity details, the back link still opens commodity type",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.controller.test.js", "test": "Should send Back to the previous page on the trail, carrying the rest of the trail", "strength": "partial", "notes": "not seen failing" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.controller.test.js", "test": "Should send Back to the previous page on the trail, carrying the rest of the trail", "strength": "full", "notes": "red then green with the list's Back ignoring the request's trail" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/details/details.controller.test.js", "test": "Should carry the trail through every redirect", "strength": "full", "notes": "red then green with the list and details addresses dropping the trail" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "woodWithoutBark: Back on the commodities list, arrival details, identification numbers and contact opens the step Save and continue came from", "strength": "full", "notes": "red then green with the commodity addresses dropping the trail" }
           ]
         }
       ]

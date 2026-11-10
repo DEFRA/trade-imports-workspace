@@ -32,7 +32,7 @@
     {
       "id": "REQ-PLANTS-FLOW-003",
       "name": "Saving and continuing goes to the next page that applies, whatever way the page was reached",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-PLANTS-FLOW-003-A",
@@ -71,11 +71,10 @@
         },
         {
           "id": "SCN-PLANTS-FLOW-003-D",
-          "name": "The commodities list goes on to origin, even with only the commodity type saved",
-          "coverage": "partial",
+          "name": "The commodities list goes on to origin once a commodity line is saved",
+          "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/navigation.test.js", "test": "Should go from the commodities list to origin with only the commodity type saved", "strength": "partial", "notes": "partial: the scenario's GIVEN holds no line, so the list opens commodity details and refuses Continue; the Then that origin is shown holds only once a line exists" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.controller.test.js", "test": "Should go on to origin when the list is continued", "strength": "partial", "notes": "partial: probed red then green with the list's Continue going back to the list, but the scenario's GIVEN holds no line, so the list opens commodity details and refuses Continue" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/list/list.controller.test.js", "test": "Should go on to origin when the list is continued", "strength": "full", "notes": "seeds a commodity type and one commodity line and nothing else; red then green with the list's Continue going back to the list. Opening the list with no line opens commodity details; that is not Continue" }
           ]
         },
         {
@@ -88,10 +87,11 @@
         },
         {
           "id": "SCN-PLANTS-FLOW-003-F",
-          "name": "Nothing marks a page as opened from Overview",
-          "coverage": "partial",
+          "name": "A task link carries only the mark that the page was opened from Overview",
+          "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/save-and-continue.spec.ts", "test": "a task opened from its Overview row opens its own page, and Save and continue goes to the next page in the journey order", "strength": "partial", "notes": "opens Identification numbers from its Overview row and asserts its address and the next page; the other tasks are not opened" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/controller.test.js", "test": "Should link every task row to its page with exactly the Overview mark added", "strength": "full", "notes": "every linked task row on a complete notification is its page path plus only the Overview mark; red then green with the mark left off" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/save-and-continue.spec.ts", "test": "a task opened from its Overview row opens its own page carrying only the Overview mark in its address, and Save and continue goes to the next page in the journey order", "strength": "full", "notes": "Identification numbers opened from its Overview row has its whole address carrying exactly the Overview mark, and Save and continue goes to the next page; red then green with the mark left off, against the dev-mode stack" }
           ]
         },
         {

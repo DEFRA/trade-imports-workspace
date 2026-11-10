@@ -236,7 +236,7 @@ With JavaScript, the system MUST show the chosen country's code as a fixed prefi
 
 ### Requirement: On a notification, the back link follows where the origin page was opened from
 **ID**: REQ-ORIGIN-013
-For a notification, the origin page's Back link MUST open the Import Notification Service's "What are you importing?" question when it was started there, the dashboard when it was started from the create button (both also after going back from What are you importing?, with or without answers), Overview when opened from Overview, and the review when opened from a Change link. A notification not opened in this session that holds no answers MUST open the dashboard.
+On a notification, the origin page's Back link MUST open where the page was opened from: the Import Notification Service's "What are you importing?" question when started there, the dashboard when started from the create button (also after going back from What are you importing?), Overview when opened from Overview, and the review when opened from a Change link. A notification holding no answers MUST open the dashboard if not opened in this session, and show this page when asked for Overview.
 
 #### Scenario: The back link opens the dashboard when the page was opened from the dashboard
 **ID**: SCN-ORIGIN-013-A
@@ -250,11 +250,12 @@ For a notification, the origin page's Back link MUST open the Import Notificatio
 - **WHEN** they open the origin of the import page from Overview and follow the back link
 - **THEN** Overview is shown
 
-#### Scenario: The back link opens Overview when the page was opened from Overview before any answer is saved
+#### Scenario: Overview asked for with nothing saved shows the origin page, whose back link opens the dashboard
 **ID**: SCN-ORIGIN-013-C
-- **GIVEN** the user has started a notification, saved nothing and opened Overview
-- **WHEN** they open the origin of the import page from Overview and follow the back link
-- **THEN** Overview is shown
+- **GIVEN** the user has started a notification and saved nothing
+- **WHEN** they ask for Overview
+- **THEN** the origin of the import page is shown
+- **AND** its back link opens the notification dashboard
 
 #### Scenario: The back link opens the dashboard when the page is reached by going back from What are you importing?
 **ID**: SCN-ORIGIN-013-D

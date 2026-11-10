@@ -33,7 +33,7 @@
     {
       "id": "REQ-FLOW-003",
       "name": "Saving and continuing goes to the next page that applies, whatever way the page was reached",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-FLOW-003-A",
@@ -71,12 +71,12 @@
         },
         {
           "id": "SCN-FLOW-003-E",
-          "name": "A page opened from Overview has the same address as from any other start",
-          "coverage": "partial",
+          "name": "A page opened from Overview has the same address as from any other start, plus only the mark that it was opened from Overview",
+          "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/save-and-continue.spec.ts", "test": "a task opened from its Overview row opens its own page, and Save and continue goes to the next page in the journey order", "strength": "partial", "notes": "proves the second Then only: red then green with the next step moved two pages, against the dev-mode stack (workareas/shared/eudpa-774/logs/inc-027-probe-nextstep-e2e)" }
-          ],
-          "notes": "The first Then, 'the page's address is the one every start uses, with nothing added to it or to the link to mark that it came from Overview', is untrue of the application: Overview's task links carry the trail from=overview. The second Then, saving goes to the next page, is proven."
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.test.js", "test": "Should link every task row to its page with exactly the Overview mark added", "strength": "full", "notes": "every linked task row on a complete notification is its page path plus only the Overview mark; red then green with the mark left off" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/save-and-continue.spec.ts", "test": "a task opened from its Overview row opens its own page carrying only the Overview mark in its address, and Save and continue goes to the next page in the journey order", "strength": "full", "notes": "the page opened from its Overview row has its whole address carrying exactly the Overview mark, and Save and continue goes to the next page; red then green with the mark left off, against the dev-mode stack" }
+          ]
         },
         {
           "id": "SCN-FLOW-003-F",
@@ -394,10 +394,18 @@
           "name": "A page reached via a detour offers only its primary action",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "reaches the type question from the list, not before it, with neither type chosen", "strength": "full", "notes": "calls the shared expectPageEndsWithPrimaryAlone helper against the type question page itself; red then green with the type question showing its overview return controls (workareas/shared/eudpa-774/logs/inc-030-probe-type-question-primary-alone-fit)" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "ends with the primary alone, being reached from the addresses page", "strength": "full", "notes": "a detour page outside the transporter area, so the rule is shown to hold beyond that one feature; red then green with the page showing its overview return controls (workareas/shared/eudpa-774/logs/inc-030-probe-cph-number-primary-alone-fit)" }
-          ],
-          "notes": "Proved on the transporter type question and the CPH number page. The private and commercial transporter details forms end with their primary action and Cancel and return to dashboard, so no test proves this scenario's Then on them."
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "reaches the type question from the list, not before it, with neither type chosen", "strength": "full", "notes": "calls the shared expectPageEndsWithPrimaryAlone helper against the type question page itself; red then green with the type question showing its overview return controls" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "ends with the primary alone, being reached from the addresses page", "strength": "full", "notes": "a detour page outside the transporter area, so the rule is shown to hold beyond that one feature; red then green with the page showing its overview return controls" }
+          ]
+        },
+        {
+          "id": "SCN-FLOW-012-B",
+          "name": "The private and commercial transporter details forms end with their primary action and Cancel and return to dashboard",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "private transporter page ends with exactly the primary and the cancel, offering no overview return control", "strength": "full", "notes": "the private form ends with its primary and Cancel and return to dashboard alone; red then green with the secondary reading Save and return to overview" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "ends with exactly the primary and the cancel, offering no overview return control", "strength": "full", "notes": "the commercial form ends with its primary and Cancel and return to dashboard alone; red then green with the secondary reading Save and return to overview" }
+          ]
         }
       ]
     },
@@ -573,7 +581,7 @@
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/consignment-details.controller.test.js", "test": "Should keep Back on the page saved when the page is shown again after a refusal", "strength": "partial", "notes": "a refused save shows the page again with the same Back link" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/back.spec.ts", "test": "after a page opened by a Change link is refreshed, its Back still opens the review", "strength": "full", "notes": "red then green with the origin page's Back ignoring the request's trail, against the dev-mode stack (workareas/shared/eudpa-774/logs/inc-028-probe-origin-refresh-back-e2e)" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "lands on the transporter list opened from the review, whose Back link opens the review", "strength": "full", "notes": "red then green with the transporter save redirecting to the bare list address (workareas/shared/eudpa-774/logs/inc-028-probe-transporter-save-trail-fit)" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details/commercial-transporter-details.controller.test.js", "test": "Should go to the transporter list carrying the trail", "strength": "partial", "notes": "proves the save step of adding a transporter; red then green with the redirect dropping the trail (workareas/shared/eudpa-774/logs/inc-030-probe-commercial-save-trail-unit)" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details/commercial-transporter-details.controller.test.js", "test": "Should go to the transporter list carrying the trail", "strength": "partial", "notes": "proves the save step of adding a transporter; red then green with the redirect dropping the trail" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/trail.test.js", "test": "Should carry the trail through a documents upload-return cycle with the entry committed", "strength": "full", "notes": "red then green with the documents page address dropping the trail (workareas/shared/eudpa-774/logs/inc-028-probe-documents-href-trail-unit)" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/change-from-cya.spec.ts", "test": "the documents Change link opens the page with a Back link to the review, which stays after a refusal, after Save and add another and after Remove", "strength": "full", "notes": "red then green with the documents page address dropping the trail and with the refused-save render dropping it, against the dev-mode stack (workareas/shared/eudpa-774/logs/inc-028-probe-documents-href-trail-e2e, workareas/shared/eudpa-774/logs/inc-028-probe-refused-save-back-e2e)" }
           ]
@@ -584,7 +592,7 @@
           "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/address-return/controller.test.js", "test": "Should land on the Consignment addresses page carrying no trail, even when the request carries one", "strength": "full", "notes": "red then green with the landing carrying the review on its trail (workareas/shared/eudpa-774/logs/inc-028-probe-address-return-landing-unit)" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts", "test": "whose Back opens the Overview", "strength": "full", "notes": "asserts the Back link's exact address; red then green with the landing carrying the review on its trail, against the dev-mode stack (workareas/shared/eudpa-774/logs/inc-028-probe-address-return-landing-e2e)" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts", "test": "Save and select on the INS add page reached from the ${role} picker saves the address holding that role, selects it for the role and lands on Roles and addresses with the added banner, whose Back opens the Overview", "strength": "full", "notes": "asserts the Back link's exact address; red then green with the landing carrying the review on its trail, against the dev-mode stack" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should go on to the contact address with the trail extended by this page when continuing %s", "strength": "full", "notes": "includes a page opened with no trail; red then green with the next step moved one page on (workareas/shared/eudpa-774/logs/inc-028-probe-onward-step-unit)" }
           ]
         },

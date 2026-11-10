@@ -61,15 +61,16 @@ The system MUST return the user, when they follow the back link from the upload 
 
 ### Requirement: A notification can hold at most fifteen accompanying documents
 **ID**: REQ-DOCS-003
-The system MUST accept up to fifteen documents per notification and MUST reject a sixteenth with an error that links to the Attachment field and shows on that field, preserving the reference value entered, without discarding the fifteen already added.
+The system MUST accept up to fifteen documents per notification, MUST close the add control at fifteen with the limit stated beside it, and MUST refuse a further document with the limit message in the error summary, linked to the list of added documents and shown on no field, without discarding the fifteen already added.
 
 #### Scenario: A fifteenth document is accepted and a sixteenth is rejected
 **ID**: SCN-DOCS-003-A
 - **GIVEN** a notification already has fourteen accompanying documents added
 - **WHEN** the user adds a fifteenth document
 - **THEN** it is accepted and the list shows fifteen documents
-- **WHEN** the user then tries to add a sixteenth document
-- **THEN** the error summary reads "You can upload a maximum of 15 files" and links to the Attachment field, the same message shows on that field, and the reference value entered is preserved
+- **AND** the add control is closed, with "You can upload a maximum of 15 files" beside it
+- **WHEN** the user then tries to save a further document
+- **THEN** the error summary reads "You can upload a maximum of 15 files" and links to the list of added documents, and no field shows an error
 - **AND** the list still shows only the original fifteen documents
 
 ### Requirement: Each accompanying document has a maximum file size

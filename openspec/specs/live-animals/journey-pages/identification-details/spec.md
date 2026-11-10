@@ -140,13 +140,13 @@ The system MUST let the user add identifier records up to the declared number of
 
 ### Requirement: Every animal record must carry at least one identifier
 **ID**: REQ-IDENT-008
-The system MUST require each animal record to carry at least one of the identifiers open to it — a microchip, passport, tattoo, ear tag or horse name — and MUST hold the section incomplete, naming each record at fault, until every one does.
+The system MUST require each animal record to carry at least one of the identifiers open to it — a microchip, passport, tattoo, ear tag or horse name — and MUST leave the Identification details task on Overview reading "To do" while any record carries none.
 
-#### Scenario: A record carrying no identifier holds the section incomplete
+#### Scenario: A record carrying no identifier leaves the Identification details task To do
 **ID**: SCN-IDENT-008-A
-- **GIVEN** the user has added an animal record for a commodity line
-- **WHEN** that record carries none of the identifiers open to it
-- **THEN** the section is held incomplete, and the record at fault is named
+- **GIVEN** a notification holds an animal record carrying none of the identifiers open to it
+- **WHEN** the user opens Overview
+- **THEN** the Identification details task reads "To do"
 
 ### Requirement: Saving a record with no identifier given at all is refused, focusing the species' first identifier field
 **ID**: REQ-IDENT-009

@@ -52,11 +52,11 @@ The system MUST, on a valid Save and continue from a journey page, go to the nex
 - **WHEN** the user saves and continues
 - **THEN** Contact address for this consignment is shown, not the CPH number page
 
-#### Scenario: A page opened from Overview has the same address as from any other start
+#### Scenario: A page opened from Overview has the same address as from any other start, plus only the mark that it was opened from Overview
 **ID**: SCN-FLOW-003-E
 - **GIVEN** Overview
 - **WHEN** the user opens any task
-- **THEN** the page's address is the one every start uses, with nothing added to it or to the link to mark that it came from Overview
+- **THEN** the page's address is the one every start uses, plus only the mark that it was opened from Overview
 - **AND** saving and continuing goes to the next page that applies
 
 #### Scenario: Upload documents keeps its add-another round trip before going on
@@ -281,13 +281,19 @@ The system MUST, on a valid Save and continue on the first page after the user w
 
 ### Requirement: A page reached from another page, not from the hub directly, ends with only its primary action
 **ID**: REQ-FLOW-012
-The system MUST NOT offer a discard-and-exit or a save-and-exit route back to Overview on a page reached from another page rather than linked from the hub directly, and MUST instead let the user leave only the way they came in, once they complete that page's own primary action.
+The system MUST NOT offer a discard-and-exit or a save-and-exit route back to Overview on a page reached from another page rather than linked from the hub directly, and MUST instead let the user leave only the way they came in, once they complete that page's own primary action. The private and commercial transporter details forms are the exception: each ends with its primary action and a secondary "Cancel and return to dashboard".
 
 #### Scenario: A page reached via a detour offers only its primary action
 **ID**: SCN-FLOW-012-A
 - **GIVEN** the user has reached a page by following a link or action on another page, rather than a hub row
 - **WHEN** the page is shown
 - **THEN** only that page's own primary action is offered, with no separate "Save and return to overview" or "Cancel and return to overview" control
+
+#### Scenario: The private and commercial transporter details forms end with their primary action and Cancel and return to dashboard
+**ID**: SCN-FLOW-012-B
+- **GIVEN** the user is on the private or the commercial transporter details form
+- **WHEN** the page is shown
+- **THEN** it ends with its primary action and "Cancel and return to dashboard", and offers no overview return control
 
 ### Requirement: While a notification is being amended, a page ends with exactly the controls it shows on a draft
 **ID**: REQ-FLOW-013

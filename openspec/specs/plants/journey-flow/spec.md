@@ -51,9 +51,9 @@ The system MUST, on a valid Save and continue from a journey page, go to the nex
 - **WHEN** the user saves arrival status and then arrival details
 - **THEN** arrival details follows arrival status, and saving arrival details shows the place of destination
 
-#### Scenario: The commodities list goes on to origin, even with only the commodity type saved
+#### Scenario: The commodities list goes on to origin once a commodity line is saved
 **ID**: SCN-PLANTS-FLOW-003-D
-- **GIVEN** a notification with only its commodity type saved
+- **GIVEN** a notification with its commodity type and one commodity line saved, and nothing else
 - **WHEN** the user continues from the commodities list
 - **THEN** origin is shown, not Overview and not commodity details
 
@@ -63,11 +63,11 @@ The system MUST, on a valid Save and continue from a journey page, go to the nex
 - **WHEN** the user chooses an address and saves and continues
 - **THEN** identification numbers is shown
 
-#### Scenario: Nothing marks a page as opened from Overview
+#### Scenario: A task link carries only the mark that the page was opened from Overview
 **ID**: SCN-PLANTS-FLOW-003-F
 - **GIVEN** Overview
 - **WHEN** the user opens a task
-- **THEN** the page's address is the one every start uses, with nothing added to it or to the link
+- **THEN** the page's address is the one every start uses, plus only the mark that it was opened from Overview
 
 #### Scenario: A potato notification skips arrival status and the consignor
 **ID**: SCN-PLANTS-FLOW-003-G

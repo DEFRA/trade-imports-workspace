@@ -15,7 +15,7 @@ Tickets 1 to 3 are merged. Ticket 4, the list, is fully built: inc-063, inc-069 
 | [workspace #172](https://github.com/DEFRA/trade-imports-workspace/pull/172) (draft) | the spec, the theme backlog, `snagging.md`, `deferred.md` |
 
 **Next, in order:**
-1. Get the designer's answers to S-01, S-02 and S-03 in `../design-release-2-1/snagging.md`. Apply each on `feat/EUDPA-710-design-release-2-1-address-book-list` and move it to "Settled".
+1. Get the designer's answers to S-01, S-02 and S-03 in `../design-release-2-1/address-book-snagging.md`. Apply each on `feat/EUDPA-710-design-release-2-1-address-book-list` and move it to "Settled".
 2. Agree the seven PRs with the team, mark #172 ready, and merge them together, address book first.
 3. Ticket 5 (EUDPA-706, journey add page: inc-077, 078, 082, 080). Open `feat/EUDPA-706-design-release-2-1-address-book-journey-add` in its repos with draft PRs, the workspace one **from `main`**. Pull every clone, then launch the loop with `lifecycle: 'branch'` one increment at a time.
 

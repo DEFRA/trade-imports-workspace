@@ -165,14 +165,20 @@ for (const row of rows) {
  * So the scope may name the theme or any Jira key `tickets.json` records for it,
  * and the type may be any conventional one. A commit that matches but wrote no
  * spec simply yields no scenarios — the `-- openspec/` limit already handles it.
+ *
+ * A theme delivered as several tickets, each on its own branch, has no commit
+ * scoped by the theme: every row commit is scoped by its ticket's key. Its
+ * `tickets.json` entry under `rowScopes` lists those keys, and a commit scoped
+ * by any of them counts as a row commit.
  */
 const ticketsFile = path.join(workareaDir, 'tickets', 'tickets.json')
-const themeKeys = fs.existsSync(ticketsFile)
-  ? Object.values(readJson(ticketsFile).themes?.[theme] || {})
-  : []
+const tickets = fs.existsSync(ticketsFile) ? readJson(ticketsFile) : {}
+const themeKeys = Object.values(tickets.themes?.[theme] || {})
+const rowScopes = tickets.rowScopes?.[theme] || []
 
 const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-const scopePattern = [theme, ...themeKeys].map(escape).join('|')
+const scopePattern = [theme, ...themeKeys, ...rowScopes].map(escape).join('|')
+const rowScopePattern = [theme, ...rowScopes].map(escape).join('|')
 
 const commitsMatching = (pattern) =>
   git('log', '-E', '--grep=' + pattern, '--format=%H%x09%s', branch, '--', 'openspec/')
@@ -184,14 +190,14 @@ const commitsMatching = (pattern) =>
       return { sha, subject }
     })
 
-// A row's commit is scoped by the theme. These define the theme's footprint:
-// the spec files it is entitled to speak for.
-const rowCommits = commitsMatching('^[a-z]+\\(.*' + escape(theme) + '\\):')
+// A row's commit is scoped by the theme or one of its row scopes. These define
+// the theme's footprint: the spec files it is entitled to speak for.
+const rowCommits = commitsMatching('^[a-z]+\\(.*(' + rowScopePattern + ')\\):')
 
 const commits = commitsMatching('^[a-z]+\\(.*(' + scopePattern + ')\\):')
 
 if (!commits.length) fail('no commits on ' + branch + ' whose subject scopes "' + theme + '" and which touch openspec/')
-if (!rowCommits.length) fail('no commits on ' + branch + ' scoped by the theme slug "' + theme + '" — without them there is no footprint to judge review commits against')
+if (!rowCommits.length) fail('no commits on ' + branch + ' scoped by the theme slug "' + theme + '" or a row scope tickets.json lists for it — without them there is no footprint to judge review commits against')
 
 /**
  * The scenario headings each commit added, per spec file.
@@ -348,6 +354,7 @@ for (const commit of rowCommits) {
 
 const rowShas = new Set(rowCommits.map((c) => c.sha))
 const outsideFootprint = []
+const counted = new Set()
 
 // Scenarios a human judged to be the theme's after all, despite falling outside
 // its footprint. Anything not listed stays excluded, so the default is
@@ -384,9 +391,18 @@ for (const commit of commits) {
       continue
     }
 
+    // A later commit that moves or rewords a scenario's heading adds that line
+    // again in its diff, so a scenario is counted once, however many of the
+    // theme's commits add it.
     const located = headings
       .map((heading) => locateAddedScenario(commit.sha, relPath, heading))
       .filter((scenario) => scenario.state !== 'removed')
+      .filter((scenario) => {
+        const key = relPath + '#' + (scenario.found ? scenario.found.id : scenario.heading)
+        if (counted.has(key)) return false
+        counted.add(key)
+        return true
+      })
     if (!located.length) continue
 
     if (!domains[domain]) {

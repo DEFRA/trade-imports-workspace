@@ -63,7 +63,7 @@ The system MUST search the commodity reference data against a commodity's code a
 
 ### Requirement: Matching species are grouped under the commodity they belong to, one group per matching commodity
 **ID**: REQ-COMMODITY-SELECT-004
-The system MUST group the species a search matches under a heading of their commodity code, MUST render a separate group for each commodity code a search matches, and MUST say so plainly when a search matches nothing. A species listed under two codes is two separate choices.
+The system MUST group the species a search matches under a heading of their commodity, reading as the commodity's name with its code in round brackets, or the code alone where no name is known, MUST render a separate group for each commodity code a search matches, and MUST say so plainly when a search matches nothing. A species listed under two codes is two separate choices.
 
 #### Scenario: A search groups its matching species under their commodity heading
 **ID**: SCN-COMMODITY-SELECT-004-A
@@ -82,6 +82,13 @@ The system MUST group the species a search matches under a heading of their comm
 - **GIVEN** the user is on the commodity selection page
 - **WHEN** they search for a term that matches no commodity or species
 - **THEN** the page says no results were found, and lists no species
+
+#### Scenario: A commodity heading names the commodity with its code in brackets
+**ID**: SCN-COMMODITY-SELECT-004-D
+- **GIVEN** a search matching species under a commodity whose name is known
+- **WHEN** the results are shown
+- **THEN** the group's heading reads as the commodity's name with its code in round brackets
+- **AND** a group whose commodity has no known name is headed by its code alone
 
 ### Requirement: The page explains what a commodity code is and links out to look one up
 **ID**: REQ-COMMODITY-SELECT-005
@@ -293,7 +300,7 @@ The system MUST list no more than a hundred species for one search.
 
 ### Requirement: Search results are listed in order: commodity heading, then species label
 **ID**: REQ-COMMODITY-SELECT-015
-The system MUST list a search's matching commodity groups in order of their heading, and MUST list each group's species in order of the label they are offered under.
+The system MUST list a search's matching commodity groups in order of their commodity code, and MUST list each group's species in order of the label they are offered under.
 
 #### Scenario: A search lists its groups and species alphabetically
 **ID**: SCN-COMMODITY-SELECT-015-A

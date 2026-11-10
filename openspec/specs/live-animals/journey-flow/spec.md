@@ -396,9 +396,43 @@ The system MUST send Back on every journey page to where the trader came from: t
 
 #### Scenario: Back steps through the visited pages in reverse
 **ID**: SCN-FLOW-018-D
-- **GIVEN** the review of a draft notification
-- **WHEN** the user follows a Change link that opens Identification details, Arrival details, Transporter details, Contact address for consignment or Consignment addresses
-- **THEN** the Back link on that page opens Overview
+- **GIVEN** the user opened Arrival details from Overview and selected "Save and continue" on each page in turn until the review
+- **WHEN** they follow the Back link on each page in turn
+- **THEN** each earlier page is shown in reverse order
+- **AND** Overview is shown from Arrival details
+
+#### Scenario: Back keeps the place after a sub-page round trip, a refresh and a refused save
+**ID**: SCN-FLOW-018-E
+- **GIVEN** a page opened from a Change link on the review
+- **WHEN** the user refreshes the page, or adds a transporter, or uploads a document, or has a save refused, and then follows the Back link
+- **THEN** the review is shown
+
+#### Scenario: Consignment addresses goes Back to Overview after an Import Notification Service address book return
+**ID**: SCN-FLOW-018-F
+- **GIVEN** the user added an address through the Import Notification Service address book and returned to Consignment addresses
+- **WHEN** they follow the Back link
+- **THEN** Overview is shown
+- **AND** "Save and continue" on Consignment addresses still goes on to Contact address for consignment
+
+#### Scenario: The origin of the import page goes Back to where the notification was started
+**ID**: SCN-FLOW-018-G
+- **GIVEN** a notification started with the dashboard's create button, and another started from the Import Notification Service question with Live animals chosen
+- **WHEN** the user follows the Back link on the origin of the import page of each
+- **THEN** the first opens the dashboard
+- **AND** the second opens the Import Notification Service's "What are you importing?" question for that notification
+
+#### Scenario: A page opened by its address goes Back to Overview
+**ID**: SCN-FLOW-018-H
+- **GIVEN** a page of a draft notification opened by its address, or by a link that names a place the journey does not have
+- **WHEN** the user follows the Back link
+- **THEN** Overview is shown
+
+#### Scenario: Past 40 places the oldest drop and Back ends at Overview
+**ID**: SCN-FLOW-018-I
+- **GIVEN** the user has pressed Save and continue on more than 40 pages in a row
+- **WHEN** they follow Back repeatedly
+- **THEN** Back steps through the newest 40 places
+- **AND** Overview is shown after them
 
 ### Requirement: Each transporter add form opens only for the type it belongs to
 **ID**: REQ-FLOW-019

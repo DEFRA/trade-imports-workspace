@@ -122,3 +122,13 @@ The system MUST require the private transporter's mandatory fields from the mome
 - **GIVEN** the user is on the private transporter details page with every field blank
 - **WHEN** they save and continue
 - **THEN** the save is refused, the trader stays on the form, and the error summary lists the six required messages in the page's own field order
+
+### Requirement: The back link returns to the transporter type question
+**ID**: REQ-PRIVATE-TRANS-009
+The system MUST return the user to the transporter type question when they follow the back link from the private transporter details page.
+
+#### Scenario: The back link opens the transporter type question
+**ID**: SCN-PRIVATE-TRANS-009-A
+- **GIVEN** the user is on the private transporter details page
+- **WHEN** they follow the back link
+- **THEN** the transporter type question is shown

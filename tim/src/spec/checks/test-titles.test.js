@@ -113,6 +113,26 @@ describe('checkTestTitlesExist', () => {
     ).toEqual([])
   })
 
+  test('names a link whose title only a title with fewer than two fixed words would expand to', () => {
+    const root = workspaceHolding({
+      [TEST_FILE]: [
+        "test.each(cases)('%s', () => {})",
+        "test.each(rows)('$name', () => {})",
+        "test.each(rows)('Should %s', () => {})"
+      ].join('\n')
+    })
+
+    expect(
+      findingsFor(root, [{ test: 'Should spin the widget on load' }]).findings
+    ).toEqual([
+      {
+        check: 'test-titles',
+        capability: 'widgets',
+        message: `SCN-WIDGET-001-A links the test "Should spin the widget on load", which is not in ${REPO}/${TEST_FILE}.`
+      }
+    ])
+  })
+
   test('names the scenario and title of a link whose title the file does not hold', () => {
     const root = workspaceHolding({
       [TEST_FILE]: "test('Should spin the widget on load, then stop', () => {})"

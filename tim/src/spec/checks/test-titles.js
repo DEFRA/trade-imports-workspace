@@ -23,6 +23,15 @@ const titlePatternOf = (literal) =>
     's'
   )
 
+const isTitlePattern = (literal) => {
+  const fewestFixedWords = 2
+  const fixedWords = literal.replaceAll(PLACEHOLDER, ' ').match(/[A-Za-z]+/g)
+  return (
+    HAS_PLACEHOLDER.test(literal) &&
+    (fixedWords?.length ?? 0) >= fewestFixedWords
+  )
+}
+
 const RELATIVE_IMPORT = /(?:from|import)\s*\(?\s*['"](\.{1,2}\/[^'"]+)['"]/g
 
 const titlesIn = (source) => {
@@ -32,9 +41,7 @@ const titlesIn = (source) => {
   return {
     sources: [source],
     exact: new Set(literals.map(unescaped)),
-    patterns: literals
-      .filter((literal) => HAS_PLACEHOLDER.test(literal))
-      .map(titlePatternOf)
+    patterns: literals.filter(isTitlePattern).map(titlePatternOf)
   }
 }
 

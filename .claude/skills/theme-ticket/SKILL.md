@@ -278,7 +278,11 @@ this order:
   then the `GIVEN` / `WHEN` / `THEN` / `AND` steps as a bullet list with the
   keyword bolded. Copy the text; do not paraphrase it.
 - **`h3. The work behind this change`** — a table of this domain's rows: id,
-  what it changed, state.
+  what it changed, state. The sentence above the table names every kind of row
+  the table holds, follow-up tickets included. When a later row replaces an
+  earlier row's behaviour, both rows say so, so a reader checking the table
+  against the acceptance criteria does not find two rows that contradict each
+  other.
 - **`h3. Where this is specified`** — a table of this domain's spec files, each
   name a link to the file on the branch, with the scenario count it gained. State
   the domain's totals, and that the description is generated and regenerated when

@@ -158,3 +158,31 @@ The system MUST let the user delete a draft from the dashboard, and a submitted 
 - **GIVEN** a notification is being amended
 - **WHEN** the user views it on check-your-answers
 - **THEN** no "Delete notification" is offered
+
+### Requirement: Trader notification reads and writes are scoped to the caller's organisation
+**ID**: REQ-PLANTS-LIFECYCLE-009
+The plants backend MUST persist each new notification under the `Trade-Imports-Organisation-Id` header supplied at create, MUST reject trader requests without that header, and MUST treat reads and lifecycle writes for another organisation's reference as not found (403 for fulfilment reads when the reference exists under a different owner).
+
+#### Scenario: A copied notification belongs to the copying organisation
+**ID**: SCN-PLANTS-LIFECYCLE-009-A
+- **GIVEN** a notification owned by organisation A
+- **WHEN** organisation A copies it
+- **THEN** the new draft notification is owned by organisation A
+
+#### Scenario: Another organisation cannot change a notification through trader lifecycle writes
+**ID**: SCN-PLANTS-LIFECYCLE-009-B
+- **GIVEN** organisation A owns a submitted notification
+- **WHEN** organisation B attempts to amend, replace, submit, copy, cancel-amend, or soft-delete it
+- **THEN** the backend responds as if the notification were not found for organisation B
+
+#### Scenario: A trader request without an organisation header is rejected
+**ID**: SCN-PLANTS-LIFECYCLE-009-C
+- **GIVEN** a trader-facing notification endpoint
+- **WHEN** the caller sends no `Trade-Imports-Organisation-Id` header
+- **THEN** the backend responds with a client error that names the missing header
+
+#### Scenario: Another organisation cannot read fulfilments for a notification it does not own
+**ID**: SCN-PLANTS-LIFECYCLE-009-D
+- **GIVEN** organisation A owns a submitted notification
+- **WHEN** organisation B requests that notification's fulfilments
+- **THEN** the backend responds with forbidden

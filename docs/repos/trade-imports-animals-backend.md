@@ -12,7 +12,7 @@ REST API microservice providing business logic and data persistence for the trad
 - **Framework:** Spring Boot
 - **Build tool:** Maven
 - **API style:** REST (SpringDoc / OpenAPI / Swagger)
-- **Auth:** JWT
+- **Auth:** JWT for admin and document routes; trader notification routes trust the caller's `Trade-Imports-Organisation-Id` header for tenant scoping (400 when missing or blank). `GET /notifications/reference-numbers` and bulk `DELETE /notifications` are unscoped admin routes.
 - **Database:** MongoDB (Spring Data)
 - **Caching:** Caffeine (in-memory); Redis available
 - **AWS integration:** STS, Cognito, CloudWatch metrics, S3, SQS, SNS (AWS SDK v2)
@@ -29,6 +29,13 @@ REST API microservice providing business logic and data persistence for the trad
 | AWS (S3, SQS, SNS) | File storage and messaging; floci in dev |
 | AWS (STS, Cognito) | Identity / credential handling |
 | CloudWatch | Metrics and observability |
+
+## Integrations
+
+| Direction | System | Mechanism | Purpose |
+|-----------|--------|-----------|---------|
+| Inbound | trade-imports-animals-frontend | REST, port 8085, `/notifications` (trader routes require `Trade-Imports-Organisation-Id`; unscoped: GET `/reference-numbers`, bulk DELETE) | Notification CRUD and lifecycle |
+| Inbound | trade-imports-ins-tests | HTTP via workspace stack | End-to-end tests (the `animals` domain) |
 
 ## How to run
 

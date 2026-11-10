@@ -27,8 +27,12 @@ External call mdm/get-countries success in 2 ms
 | `error.message` | A failure only: the cause's message | — |
 | `trace.id` | Set by the request filter, not by this code | — |
 
-Only use fields on CDP's allowed ECS list (the CDP logging how-to). A
-field that is not on the list is dropped.
+Only use fields on CDP's allowed list: `include_keys` in
+[`cdp-opensearch-core` `modules/opensearch_ingestion/vars.tf`](https://github.com/DEFRA/cdp-opensearch-core/blob/main/modules/opensearch_ingestion/vars.tf),
+which the `cdp-logs` pipeline applies before it writes a service's
+logs to OpenSearch. A field that is not on the list is dropped without
+any error, though the raw line is kept in S3. A field of the service's
+own, such as `mongodb.server_connection`, never reaches OpenSearch.
 
 Never put a token, a subscription key, a request body or a full URL
 with query parameters in the line.
@@ -110,13 +114,12 @@ reaches OpenSearch flat.
 - **The first tests passed while the fields were being dropped.** They
   read the MDC on the captured log event, not the JSON the encoder
   writes. Test the encoded JSON (see Tests).
-- **`error.*` may be dropped as well.** The failure line's reason
-  travels only in its flat `error.type` and `error.message` fields, as
-  does the ECS encoder's own `error.*` on any line with a throwable. If
-  CDP keeps `error.*` only nested, as it does `event.*`, the failure
-  line reaches OpenSearch with `event.outcome:failure` and no reason.
-  `[UNPROVEN]` Check a failure line in dev OpenSearch before relying on
-  the reason.
+- **`error.*` is kept flat.** The failure line's reason travels only in
+  its flat `error.type` and `error.message` fields, as does the ECS
+  encoder's own `error.*` on any line with a throwable. Unlike
+  `event.*`, CDP's `include_keys` lists both forms: `error.type` and
+  `error/type`, `error.message` and `error/message`. `[UNPROVEN]` that a
+  failure line has been seen with its reason in dev OpenSearch.
 - **The exception's type and message are logged, but not the HTTP
   status.** When a call throws, the line carries `error.type` and
   `error.message`. A call that returns a failure status with no
@@ -130,7 +133,7 @@ reaches OpenSearch flat.
 | Encoder unit test (address-book's `EcsEventEncoderTest`): log through a real logger, then `encoder.encode(event)` and parse the JSON | The `event.*` key-value pairs nested in an `event` object with the prefix stripped, and an integral duration a JSON integer; a throwable's ECS `error.type`, `error.message` and `error.stack_trace` still written after the `event` object; `error.*` key-value pairs written as top-level fields with no stack trace, and `event.*` pairs not flattened beside them; with a throwable, its `error.*` fields written instead of the `error.*` key-value pairs; a line with no `event.*` or `error.*` key-value pairs byte-for-byte the ECS encoder's; strings escaped; a null value as JSON `null`; a non-finite `Double` or `Float` as a string |
 | Unit test with a capturing log appender, a successful call (address-book's `ExternalCallRecorderTest`) | One INFO line per call, with the four `event.*` key-value pairs, the duration a `Long`, and no throwable |
 | Unit test with a capturing log appender, a failed call (address-book's `ExternalCallRecorderTest`) | One WARN line per call, with `event.outcome` `failure`, `error.type` and `error.message` from the cause, and no throwable |
-| Integration test (address-book's `ExternalCallRecorderIT`) capturing stdout with `testsupport/CapturedConsole` around a real request or command, then parsing the console line with the given `event.action` | A successful insert, sent with `x-cdp-request-id`, writes a line with `trace.id` and the nested `event` object with an integral duration. A failed find writes a line with `event.outcome` `failure`, `error.type` and `error.message`, and no `error.stack_trace` |
+| Integration test (address-book's `ExternalCallRecorderIT`) capturing stdout with `testsupport/CapturedConsole` around a real request or command, then finding the console line with the given `event.action` through `CapturedConsole.requiredFirstJsonLine` | A successful insert, sent with `x-cdp-request-id`, writes a line with `trace.id` and the nested `event` object with an integral duration. A failed find writes a line with `event.outcome` `failure`, `error.type` and `error.message`, and no `error.stack_trace` |
 
 The integration test is the one that fails if `logback-spring.xml` is
 left on the plain ECS encoder. The unit tests alone would still pass.
@@ -158,3 +161,51 @@ Record it; do not fix it here.
 Note for Java services: on reference-data the header is forwarded on
 `RestClient` calls only. Calls made through Feign do not carry it. That
 does not stop a request being followed *through* the service.
+
+## Follow a request into MongoDB's own log
+
+A service with a CDP MongoDB has a second saved search,
+`<service>-mongo`, holding the database server's own log lines. It is
+a separate index from the service's logs, written by CDP's Fluent Bit
+and not filtered by `include_keys`. Its lines carry `ctx` (the
+connection, `conn<n>`), `attr.command` and `attr.error`, but no
+`trace.id`: the server never sees the request.
+
+To join them, send the request's `trace.id` to MongoDB as each
+command's `comment`. The server writes the comment into its log line
+as `attr.command.comment`, so filtering `<service>-mongo` on
+`attr.command.comment:"<trace.id>"` finds the request's commands.
+
+- **Only slow and failed operations reach the server's log** (slower
+  than `slowms`, 100 ms by default). A fast command leaves no line,
+  with or without a comment. That is when you look, so it is enough.
+- **Do not send the connection id instead.** A field such as
+  `mongodb.server_connection` on the service's call line is dropped by
+  `include_keys`, and a pooled connection serves many requests.
+- **Set it once, in the `MongoTemplate`, not per query.** Spring Data's
+  `@Meta(comment = ...)` takes only a fixed string. Repository finds
+  reach the driver through a `MongoTemplate` method a subclass cannot
+  override. The one hook every command passes is
+  `MongoTemplate.prepareCollection`, so override it to return the
+  collection wrapped so that each covered command carries the MDC's
+  `trace.id` as its comment: `find` (`FindIterable.comment`),
+  `countDocuments` (`CountOptions`), `insertOne` (`InsertOneOptions`)
+  and `replaceOne` (`ReplaceOptions`), and re-wrap the collections its
+  `with...` methods return. Register the subclass as the `MongoTemplate`
+  bean; Spring Boot's own backs off. Cover more driver methods only when
+  the service calls them.
+
+The reference implementation is `TraceIdCommentingMongoTemplate` and
+`TraceIdCommentedCollection` in `trade-imports-address-book`'s
+`tracing` package.
+
+`[UNPROVEN]` that `attr.command.comment` survives CDP's
+`mongo_conversions.lua` into `<service>-mongo`. Check a slow or failed
+command in dev OpenSearch.
+
+### Tests
+
+| Test | Proves |
+|---|---|
+| Unit test of the wrapped collection over a mocked driver `MongoCollection` (address-book's `TraceIdCommentedCollectionTest`) | With `trace.id` in the MDC: a find's iterable carries it as the comment; a count and a replace carry it on the options they were given, which keep their other settings; an insert with no options is sent with `InsertOneOptions` carrying it; a collection made by `withWriteConcern` carries it too. With no `trace.id`, each command runs unchanged. A driver failure reaches the caller as the driver threw it |
+| Integration test against a real MongoDB with the profiler on (address-book's `MongoCommandCommentIT`): set `profile: 2`, run requests sent with `x-cdp-request-id`, then read `system.profile` for entries whose `command.comment` is that id | A create, a get by id, an update and a list (with `pageSize=1`, so the count runs) reach the server with the request's id as the comment: `insert`, `query`, `update` and `command` (the count). A command run outside a request reaches it with no comment. The profiler records the same command document the server's log does |

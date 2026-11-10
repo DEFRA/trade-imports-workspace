@@ -278,7 +278,9 @@ is checked there.
   and code names, never the server's `errmsg`: a duplicate key's
   `errmsg` holds the key's value. A command that never
   reaches the server (no server to select) fires no listener event, so
-  these metrics do not show an outage; the heartbeat does.
+  these metrics do not show an outage; the heartbeat does. To follow a
+  slow command into MongoDB's own log, send `trace.id` as each command's
+  comment: `LOGGING.md` → "Follow a request into MongoDB's own log".
 - **Alerts.** Which rules a service with a database gets:
   `assets/alerts.template.md` → "Check".
 - **Test it** with unit tests that feed the listener cluster

@@ -2399,20 +2399,19 @@
     },
     {
       "id": "inc-030",
-      "title": "The workspace branch holds main's rewritten live-animals transporter and addresses specs, with this branch's proven coverage carried onto them",
-      "detail": "Workspace PR 226 conflicts with main. Merge origin/main into the workspace branch (a merge commit, never a rebase or force-push). git merge-tree --write-tree --name-only HEAD origin/main lists the conflicts: increment-build-loop.js and eleven live-animals openspec files (journey-flow, addresses, journey-obligations/transporter, and the transporter, transporter-type, private-transporter-details and commercial-transporter-details pages, spec and coverage). In increment-build-loop.js the one hunk is CI_FIXER_STALE_RULE's second paragraph: take main's side, which already covers every repo's branch image including the tests repo's. In openspec, main's wording is the behaviour of record wherever main rewrote a scenario to match its transporter and addresses change (animals-frontend ccff731e, already merged into this branch's animals-frontend). Keep this branch's scenarios that main does not touch, and keep the save-and-continue scenarios this branch added. Carry every full coverage link this branch proved onto the matching scenario, renumbered if main renumbered it, and probe it again with tim build probe if the scenario's Then changed. A scenario main added with no proving link on this branch gets one, probed red then green against the leased dev-mode stack with --reload-url http://localhost:3000/health where it is end-to-end. Resolve the follow-ups the earlier rows raised about these specs: SCN-PRIVATE-TRANS-005-B, SCN-COMMERCIAL-TRANS-008-A and 008-B as main writes them, and SCN-COMMERCIAL-TRANS-008-B's title.",
+      "title": "Live animals specs merged from main carry this branch's proven coverage, and spec lint is clean",
+      "detail": "origin/main is already merged into the workspace branch (merge commit 95e3259e), taking main's side wherever the two clashed. This branch's head before the merge was 402c6c0b; main was 8cca7a39. That left tim spec lint --capability live-animals with 20 problems: coverage ids main's specs no longer hold (such as SCN-FLOW-018-E to 018-I and SCN-COMMERCIAL-TRANS-008-B) and requirement names that no longer match, across journey-flow, addresses, journey-obligations/transporter, and the transporter, transporter-type, private-transporter-details, commercial-transporter-details and check-your-answers pages. Main's wording is the behaviour of record wherever main rewrote a scenario. Compare each of those capabilities' spec.md and coverage.json at 402c6c0b with HEAD (git show 402c6c0b:<path>). Where the merge dropped a save-and-continue scenario this branch added and main did not replace, restore it. Carry every full link this branch proved onto the matching main scenario, under main's id and requirement name; probe it again with tim build probe when that scenario's Then differs from the one it was proved against. Drop a link only when no main scenario matches, and say which. A main scenario with no full link gets one, probed red then green; end-to-end links against the leased dev-mode stack with --reload-url http://localhost:3000/health. The workspace commit is openspec/ only; do not touch the merge or anything outside openspec/.",
       "acceptanceCriteria": [
-        "origin/main is merged into the workspace branch with every conflict resolved and pushed; gh pr view 226 shows the PR mergeable",
-        "increment-build-loop.js takes main's CI_FIXER_STALE_RULE wording, and npm --prefix ~/git/defra/trade-imports-workspace/tim test passes",
-        "Every live-animals scenario main rewrote reads as main has it, and every scenario this branch added that main does not touch is kept",
+        "tim spec lint is clean for live-animals and plants",
         "Full scenarios under live-animals are at least 674, and at least main's count for the same capabilities, read with tim spec gaps before and after",
-        "Every coverage link carried onto a scenario whose Then changed is probed again with tim build probe, red with its owning line inverted and green once restored; end-to-end links against the leased dev-mode stack with --reload-url",
-        "tim spec lint is clean for live-animals and plants; the Probes line gives the full counts before and after"
+        "Every scenario main rewrote reads as main has it; every save-and-continue scenario this branch added that main did not replace is present",
+        "Every link carried onto a scenario whose Then changed is probed again with tim build probe, red with its owning line inverted and green once restored; end-to-end links against the leased dev-mode stack with --reload-url",
+        "The row's notes name every link dropped because no main scenario matches, and the Probes line gives the full counts before and after"
       ],
       "sources": [
         {
           "source": "repo:workspace-openspec",
-          "ref": "origin/main live-animals transporter and addresses specs"
+          "ref": "live-animals specs at 402c6c0b (this branch) and 8cca7a39 (main)"
         },
         {
           "source": "repo:frontend",
@@ -2423,12 +2422,14 @@
         "frontend",
         "tests"
       ],
-      "kind": "chore",
+      "kind": "test",
       "dependsOn": [
         "inc-026"
       ],
       "status": "todo",
-      "notes": []
+      "notes": [
+        "Re-cut after the first run was refused at plan: the branch lifecycle cannot merge into the workspace repo, so the merge was done outside the loop (95e3259e) and this row is the coverage repair only."
+      ]
     }
   ]
 }

@@ -147,9 +147,10 @@ the wire names above, so the form posts straight to `createAddress`.
 
 **Change an address.** The same form on `/address-book/{addressId}/change`,
 filled from `getAddress`, saving with `updateAddress(orgId, id, values)`.
-Give the `{addressId}` route an `addressIdParams` Joi object (with a
-`failAction` that answers "not found", following
-`~/git/defra/trade-imports-workspace/repos/trade-imports-ins-frontend/src/server/app/features/address-book/address-id-params.js`),
+Give the `{addressId}` route an `addressIdParams` Joi object and a
+`failAction` that redirects back to the address book, following
+`redirectingRecordIdRouteOptions` in
+`~/git/defra/trade-imports-workspace/repos/trade-imports-ins-frontend/src/server/app/features/address-book/record-id-params.js`,
 so a stale or made-up id never reaches the handler.
 
 **Find an address by postcode.** The old prototype had a lookup. There is no

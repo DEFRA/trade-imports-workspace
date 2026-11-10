@@ -38,16 +38,16 @@
     {
       "id": "REQ-COMMODITY-SELECT-003",
       "name": "A search can match a commodity's code or a species' common or Latin name",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-COMMODITY-SELECT-003-A",
           "name": "Searching by common name offers each matching species under each live-animal code that lists it, by its Latin name with its common name in brackets",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "finds cattle by their common name", "strength": "partial", "notes": "searches 'cattle' and finds Bos taurus and four other species under 0102, each shown by its Latin name with its common name in brackets" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "offers each species by its label", "strength": "partial", "notes": "searches 'buffalo' and finds Bubalus, Bubalus bubalis and Syncerus by Latin name with common name in brackets; does not check the code group" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "lists reference-data's groups by commodity heading and each group's species by label, in that order", "strength": "partial", "notes": "searches 0102, cattle, horse, domestic cat and ostrich, and checks the page shows reference-data's groups in heading order, each group's species in label order, the label built from reference-data's own scientific-and-common-name pair; not probed" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "finds cattle by their common name", "strength": "full", "notes": "states each species label literally; red then green with the label the Latin name alone and with rows not grouped under their code (workareas/shared/eudpa-774/logs/inc-028-probe-species-label-fit, workareas/shared/eudpa-774/logs/inc-028-probe-species-grouping-fit)" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "lists reference-data's groups by commodity heading and each group's species by label, in that order", "strength": "full", "notes": "red then green with the label the Latin name alone and with rows not grouped under their code, against the dev-mode stack (workareas/shared/eudpa-774/logs/inc-028-probe-species-label-e2e, workareas/shared/eudpa-774/logs/inc-028-probe-species-grouping-e2e)" }
           ]
         },
         {
@@ -61,11 +61,11 @@
         {
           "id": "SCN-COMMODITY-SELECT-003-C",
           "name": "Searching by commodity code offers the species that search returns under that code, by its Latin name with its common name in brackets",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-reference-data", "file": "src/test/java/uk/gov/defra/trade/imports/integration/CommoditiesControllerIT.java", "test": "searchCommodities_listsAndCountsTheSpeciesOfACommodityFoundByCode", "strength": "partial", "notes": "reference-data integration test (recorded as unit, the nearest type); MDM answers one 0102 commodity row; reference-data lists its 15 species by Latin name and counts 15; never looks at the page" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "shows Bison bison among 15 species under a searched 0102 code", "strength": "partial", "notes": "counts the 15 species inside the 0102 group and finds Bison bison there by its label; not probed" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "lists reference-data's groups by commodity heading and each group's species by label, in that order", "strength": "partial", "notes": "searches 0102 and checks every group and species on the page against reference-data, now including the species-label order; not probed" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "shows Bison bison among 15 species under a searched 0102 code", "strength": "full", "notes": "states the species label literally under its code's group; red then green with the label the Latin name alone and with rows not grouped under their code (workareas/shared/eudpa-774/logs/inc-028-probe-species-label-fit, workareas/shared/eudpa-774/logs/inc-028-probe-species-grouping-fit)" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "lists reference-data's groups by commodity heading and each group's species by label, in that order", "strength": "full", "notes": "red then green with the label the Latin name alone and with rows not grouped under their code, against the dev-mode stack (workareas/shared/eudpa-774/logs/inc-028-probe-species-label-e2e, workareas/shared/eudpa-774/logs/inc-028-probe-species-grouping-e2e)" }
           ]
         },
         {
@@ -307,13 +307,7 @@
       "name": "A notification must carry at least one commodity line",
       "coverage": "none",
       "scenarios": [
-        {
-          "id": "SCN-COMMODITY-SELECT-010-A",
-          "name": "A notification with no commodity line cannot be submitted",
-          "coverage": "none",
-          "tests": [],
-          "notes": "The tests that prove this are only on an open Design Release 2.1 theme branch, not on main yet."
-        }
+        { "id": "SCN-COMMODITY-SELECT-010-A", "name": "A notification with no commodity line cannot be submitted", "coverage": "none", "tests": [], "notes": "The tests that prove this are only on an open Design Release 2.1 theme branch, not on main yet." }
       ]
     },
     {

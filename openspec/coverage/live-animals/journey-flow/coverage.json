@@ -6,7 +6,7 @@
     {
       "id": "REQ-FLOW-001",
       "name": "The journey has one page order, the order Overview lists its tasks in",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-FLOW-001-A",
@@ -21,11 +21,12 @@
         {
           "id": "SCN-FLOW-001-B",
           "name": "The transport pages are offered in order",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "does not ask the transporter type before the list", "strength": "partial", "notes": "proves the scenario's AND clause — the type question is not offered before the combined list — but not the three-step order itself" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "does not ask the transporter type before the list", "strength": "partial", "notes": "proves the scenario's AND clause — the type question is not offered before the combined list — but not the three-step order itself" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "arrival details lead to transit countries, then the transporter list, then Upload documents", "strength": "full", "notes": "red then green with the next step moved two pages and with the transporter list before transit countries (workareas/shared/eudpa-774/logs/inc-027-probe-nextstep-fit-transport, inc-027-probe-transport-order-fit)" }
           ],
-          "notes": "Covered in pieces rather than end to end: first step (dispatch), arrival → transit (unit), last step (dispatch), and the type-not-before-list clause (fit). No single test walks arrival → transit → transporter-list as one sequence and asserts that three-step order, which is why every link is partial and the scenario stays partial."
+          "notes": "The AND clause (the transporter type question and the two forms are not offered as steps) has no line that offers them: they are in no flow section, so the walk's exact landings (transit countries, then the transporter list, then Upload documents) are what witness it."
         }
       ]
     },
@@ -45,17 +46,19 @@
         {
           "id": "SCN-FLOW-003-B",
           "name": "Contact address goes to check your answers whatever is owed",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should go on from Contact address to nothing, the review page being the fallback", "strength": "partial", "notes": "asserts the next-page path for the scenario's input; not seen failing against the previous rule" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should go on from Contact address to nothing, the review page being the fallback", "strength": "partial", "notes": "asserts the next-page path for the scenario's input; not seen failing against the previous rule" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/save-and-continue.spec.ts", "test": "ends on the review page after Save and continue, naming what is outstanding, when the notification is incomplete", "strength": "full", "notes": "with a contact address chosen; red then green with the review no longer the end of the journey, against the dev-mode stack (workareas/shared/eudpa-774/logs/inc-027-probe-kit-review-e2e)" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/save-and-continue.spec.ts", "test": "contact address saved with no address chosen goes to check your answers, naming what is outstanding", "strength": "full", "notes": "with no contact address chosen; asserts the review's address and the whole list of what is outstanding; red then green with the review no longer the end of the journey (workareas/shared/eudpa-774/logs/inc-027-probe-kit-review-e2e)" }
           ]
         },
         {
           "id": "SCN-FLOW-003-C",
           "name": "What are you importing goes on to Main import reason",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should create one line per chosen species in canonical order, with its common name", "strength": "partial", "notes": "asserts the redirect to Main import reason after the save" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should create one line per chosen species in canonical order, with its common name", "strength": "full", "notes": "asserts the redirect to Main import reason after the save; red then green with the save's next target changed (workareas/shared/eudpa-774/logs/inc-027-probe-commit-next)" }
           ]
         },
         {
@@ -71,15 +74,17 @@
           "name": "A page opened from Overview has the same address as from any other start",
           "coverage": "partial",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/save-and-continue.spec.ts", "test": "a task opened from its Overview row opens its own page, and Save and continue goes to the next page in the journey order", "strength": "partial", "notes": "opens Main import reason from its Overview row and asserts its address and the next page; the other tasks are not opened" }
-          ]
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/save-and-continue.spec.ts", "test": "a task opened from its Overview row opens its own page, and Save and continue goes to the next page in the journey order", "strength": "partial", "notes": "proves the second Then only: red then green with the next step moved two pages, against the dev-mode stack (workareas/shared/eudpa-774/logs/inc-027-probe-nextstep-e2e)" }
+          ],
+          "notes": "The first Then, 'the page's address is the one every start uses, with nothing added to it or to the link to mark that it came from Overview', is untrue of the application: Overview's task links carry the trail from=overview. The second Then, saving goes to the next page, is proven."
         },
         {
           "id": "SCN-FLOW-003-F",
           "name": "Upload documents keeps its add-another round trip before going on",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should append nothing and redirect to Roles and addresses for an untouched form returned with Save and continue", "strength": "partial", "notes": "the going-on half; the add-another stay is covered by the existing documents specs" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should append nothing and redirect to Roles and addresses for an untouched form returned with Save and continue", "strength": "partial", "notes": "the going-on half; the add-another stay is covered by the existing documents specs" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "Save and add another stays on Upload documents with the row listed, and Save and continue then opens Roles and addresses", "strength": "full", "notes": "red then green with Save and add another leaving the page and with the next step moved two pages (workareas/shared/eudpa-774/logs/inc-027-probe-documents-add-another-fit, inc-027-probe-nextstep-fit-transport)" }
           ]
         },
         {
@@ -147,9 +152,9 @@
         {
           "id": "SCN-FLOW-003-N",
           "name": "A notification continued in another browser session goes on to the same next page",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/save-and-continue.spec.ts", "test": "saving What are you importing? in a fresh browser session after saving the origin goes on to the main import reason", "strength": "partial", "notes": "saves origin in one browser session, then opens What are you importing? in a fresh session and continues to Main import reason; not red-probed, because a probe needs the stack rebuilt and the implementor does not run the E2E phase" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/save-and-continue.spec.ts", "test": "saving What are you importing? in a fresh browser session after saving the origin goes on to the main import reason", "strength": "full", "notes": "saves origin in one browser session, then opens What are you importing? in a fresh session and continues to Main import reason; red then green with the next step moved two pages, against the dev-mode stack (workareas/shared/eudpa-774/logs/inc-027-probe-nextstep-e2e)" }
           ]
         }
       ]
@@ -239,18 +244,18 @@
     {
       "id": "REQ-FLOW-005",
       "name": "A page is offered only once its prerequisites are answered and what it asks for is in scope",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-FLOW-005-A",
           "name": "A page whose prerequisites are unanswered is not opened",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should land from %s on a page that Overview offers for %j", "strength": "partial", "notes": "asserts the landing page passes the Overview gate; not red-probed" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should land from %s on a page that Overview offers for %j", "strength": "full", "notes": "asserts the landing page passes the Overview gate; red then green with the landing always the unopened page (workareas/shared/eudpa-774/logs/inc-027-probe-asking-page-unit)" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/gates.test.js", "test": "Should gate What are you importing? until countryOfOrigin is answered", "strength": "partial", "notes": "tests the gate, not the asking-page landing" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/gates.test.js", "test": "Should gate every section after What are you importing? until an item-level commodityCode is answered", "strength": "partial", "notes": "tests the gate, not the asking-page landing" }
-          ],
-          "notes": "No E2E proves the asking-page landing; evidence is dispatch.test.js and gates.test.js."
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/gates.test.js", "test": "Should gate every section after What are you importing? until an item-level commodityCode is answered", "strength": "partial", "notes": "tests the gate, not the asking-page landing" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/arrival-transit.fit.spec.js", "test": "by road with only the country of origin saved goes to What are you importing? and Overview offers no transit countries row", "strength": "full", "notes": "the Overview row is red then green with page prerequisites no longer checked (workareas/shared/eudpa-774/logs/inc-027-probe-page-gate-fit); the landing is the unit link's, because the transit page redirects itself to the same page" }
+          ]
         }
       ]
     },
@@ -283,14 +288,14 @@
     {
       "id": "REQ-FLOW-008",
       "name": "A notification with no answer the user entered opens at its first page",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-FLOW-008-A",
           "name": "Overview, check your answers, the declaration and the confirmation page show the first page",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.test.js", "test": "Should send %s of a notification with no entered answer to the entry page", "strength": "partial", "notes": "one case each for Overview, the review page, the declaration and the confirmation page" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.test.js", "test": "Should send %s of a notification with no entered answer to the entry page", "strength": "full", "notes": "one case each for Overview, the review page, the declaration and the confirmation page; red then green with every notification let through (workareas/shared/eudpa-774/logs/inc-027-probe-entry-guard-unit)" }
           ]
         },
         {
@@ -305,18 +310,19 @@
         {
           "id": "SCN-FLOW-008-C",
           "name": "The first page, its pages and the dashboard actions open where they are asked for",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.test.js", "test": "Should exempt the dashboard, the entry page and its children, and start", "strength": "partial", "notes": "the first page and its children" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.test.js", "test": "Should exempt the %s action", "strength": "partial", "notes": "amend, cancel-amend, copy and delete" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.test.js", "test": "Should exempt the dashboard, the entry page and its children, and start", "strength": "full", "notes": "the first page and its children; red then green with the entry page's children guarded (workareas/shared/eudpa-774/logs/inc-027-probe-guard-exempt-entry)" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.test.js", "test": "Should exempt the %s action", "strength": "full", "notes": "amend, cancel-amend, copy and delete; red then green with the actions guarded (workareas/shared/eudpa-774/logs/inc-027-probe-guard-exempt-actions)" }
           ]
         },
         {
           "id": "SCN-FLOW-008-D",
           "name": "A draft with nothing saved, resumed from the dashboard, opens at the first page",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.test.js", "test": "Should send %s of a notification with no entered answer to the entry page", "strength": "partial", "notes": "a journey holding no entered answer is sent to the entry page whatever page is asked for" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/entry-guard.test.js", "test": "Should send %s of a notification with no entered answer to the entry page", "strength": "partial", "notes": "a journey holding no entered answer is sent to the entry page whatever page is asked for" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/save-and-continue.spec.ts", "test": "a draft with nothing saved, resumed from the dashboard, opens at the first page", "strength": "full", "notes": "red then green with every notification let through, against the dev-mode stack (workareas/shared/eudpa-774/logs/inc-027-probe-entry-guard-e2e)" }
           ]
         }
       ]
@@ -421,10 +427,11 @@
         {
           "id": "SCN-FLOW-013-C",
           "name": "Save and continue while amending goes on through the rest of the journey to check your answers",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/save-actions.test.js", "test": "Should send Save and continue on to the next page that applies, from a Change link or not", "strength": "partial", "notes": "one page; the walk to the review is the next page's rule" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/change-from-cya.spec.ts", "test": "Save and continue on a page opened by a Change link goes on, and the review shows the changed answer", "strength": "partial", "notes": "after a Change link presses Save and continue on each later page, checking each page's exact address with its trail, to the review" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/change-from-cya.spec.ts", "test": "Save and continue on a page opened by a Change link goes on, and the review shows the changed answer", "strength": "partial", "notes": "after a Change link presses Save and continue on each later page, checking each page's exact address with its trail, to the review" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "the reason for import Change link opens the main import reason on the review trail, and Save and continue walks each later page back to the amend review", "strength": "full", "notes": "amends a submitted notification; red then green with the next step moved two pages and with the review no longer the end of the journey, against the dev-mode stack (workareas/shared/eudpa-774/logs/inc-027-probe-nextstep-e2e, inc-027-probe-kit-review-e2e)" }
           ]
         },
         {
@@ -502,15 +509,15 @@
     {
       "id": "REQ-FLOW-017",
       "name": "A notification started from the Import Notification Service's type question opens at the entry page",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-FLOW-017-A",
           "name": "Choosing Live animals opens a new draft at Origin of the import",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "the start entry opens a new notification at the origin page with a Draft strip", "strength": "partial", "notes": "proves the page and the Draft strip with the reference in a browser; not probed, and does not walk the next page" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/notification-type/notification-type.spec.ts", "test": "choosing Live animals signs the user in to the animals service and opens a new draft at Origin of the import", "strength": "partial", "notes": "walks the hand-over from the Import Notification Service through the animals service's sign-in to the new draft" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "the start entry opens a new notification at the origin page with a Draft strip", "strength": "full", "notes": "proves the page and the Draft strip with the reference in a browser; red then green with the new notification opening the dashboard (workareas/shared/eudpa-774/logs/inc-027-probe-start-origin-fit)" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/notification-type/notification-type.spec.ts", "test": "choosing Live animals signs the user in to the animals service and opens a new draft at Origin of the import, whose Save and continue opens What are you importing?", "strength": "full", "notes": "walks the hand-over from the Import Notification Service through the animals service's sign-in to the new draft, then saves Origin of the import; red then green with the new notification opening the dashboard and with the step search starting at the page saved, against the dev-mode stack (workareas/shared/eudpa-774/logs/inc-027-probe-start-origin-e2e, inc-027-probe-nextstep-from-origin-e2e)" }
           ]
         }
       ]

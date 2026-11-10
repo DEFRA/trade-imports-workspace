@@ -54,22 +54,42 @@ so it carries no data source ids. The OpenSearch variable's plugin type,
 reference-data, 2026-10-21). `[UNPROVEN]` that the CloudWatch region
 `default` is right for CDP.
 
+The panels sit in Grafana rows, one section each, and every row can be
+collapsed with the arrow beside its title. A collapsed row runs none of
+its queries; saving the dashboard keeps rows as they were left. Only
+"Dependency status" sits above the first row, so it stays in view with
+every section collapsed.
+
+| Row | Panels |
+|---|---|
+| (none, always shown) | Dependency status, every dependency |
+| `<dependency>`, one row per dependency | Calls, Failed calls, Failure rate, Call time |
+| Caches | Cache hits and misses |
+| Business events | One panel per business metric |
+| Dependency call logs | Slowest dependency calls |
+| Timers | One panel per `@Timed` name |
+
 Every CloudWatch query uses `*` for each dimension with "match exact"
 off, so a panel shows one series per published combination without
-listing the values.
+listing the values. The one exception is `dependency` in a dependency's
+row, which is set to that dependency, so the row shows its operations
+alone.
 
 | Panel | Metric | Statistic | Split by |
 |---|---|---|---|
 | Dependency status, one value per dependency | `external.dependency.available` | `Minimum` | `dependency` |
-| Calls per dependency | `external.call.duration` | `SampleCount` | `dependency`, `operation` |
-| Failed calls | `external.call.failure` | `Sum` | `dependency`, `operation` |
-| Failure rate | `external.call.failure` | `Average`, with the percent (0-1) unit | `dependency`, `operation` |
-| Call time: average, 95th percentile, slowest | `external.call.duration` | `Average`, `p95`, `Maximum` | `dependency`, `operation` |
+| Calls | `external.call.duration` | `SampleCount` | `operation`, with `dependency` set to the row's |
+| Failed calls | `external.call.failure` | `Sum` | `operation`, with `dependency` set to the row's |
+| Failure rate | `external.call.failure` | `Average`, with the percent (0-1) unit | `operation`, with `dependency` set to the row's |
+| Call time: average, 95th percentile, slowest | `external.call.duration` | `Average`, `p95`, `Maximum` | `operation`, with `dependency` set to the row's |
 | Cache hits and misses | `cache.hit`, `cache.miss` | `Sum` | `cache` |
 | Business events | the service's own metric | `Sum` | its dimension |
 
 Use `Minimum` for `external.dependency.available`. With more than one task, each
 publishes its own value, and `Minimum` shows a single unhealthy task.
+The status panel's text mode is "Value and name", so each value carries
+its dependency's name: Grafana's default hides the name when there is
+only one series, leaving "Available" with nothing to say what is.
 
 Split each panel by every dimension its metric is published with, as in
 the table. CloudWatch does not add up across a published dimension, so
@@ -126,18 +146,28 @@ Claude writes the service's dashboard to
 2. Replace every `<service>` with the service name. If the service's
    `aws.emf.namespace` is not its name, use the namespace in the
    `namespace` fields and the name everywhere else.
-3. Make one copy of the `<business-metric> by <business-dimension>`
+3. Make one copy of the `<dependency>` row, with the four panels after
+   it, per `dependency` value the service publishes ("The dimension
+   values" above), replacing `<dependency>` everywhere in the copy (the row
+   title, each panel description and each `dependency` dimension). Put
+   the copies one after another in `panels`. A dependency's section is
+   17 high (the row's 1, then two panel rows of 8), so add 17 to every
+   `y` in the second copy, 34 in the third, and so on, and move every
+   row and panel after the last copy down by 17 for each dependency
+   past the first.
+4. Make one copy of the `<business-metric> by <business-dimension>`
    panel per business metric on the agreed list (Step 2), filling in the
    metric and its dimension everywhere they appear in the panel (the
    title, description, `metricName`, `dimensions` and the legend
-   `label`), and laying
-   each copy out on the grid. Delete the panel if there are none.
-4. Delete "Cache hits and misses" if the service has no cache.
-5. List the service's `@Timed` names, in one command:
+   `label`), and laying the copies out two to a row under "Business
+   events". If there are none, delete the panel and its row.
+5. Delete "Cache hits and misses" and its "Caches" row if the service
+   has no cache.
+6. List the service's `@Timed` names, in one command:
    `grep -rhoE --include='*.java' --exclude-dir=target --exclude-dir=node_modules --exclude-dir=test '@Timed\((value *= *)?"[^"]+"' <repo>`.
    Each line is `@Timed("<name>"`; the name is between the quotes. No
    output means the service has no timers, a Node service included:
-   delete the panel.
+   delete the panel and its "Timers" row.
    Otherwise make one copy of the `<timed-name>` panel per name, replacing
    `<timed-name>` everywhere in the copy (title, description and each
    `metricName`), and lay the copies out two to a row from the template
@@ -148,9 +178,10 @@ Claude writes the service's dashboard to
    each name is let through the
    service's `management.metrics.enable` allowlist (`METRICS.md` →
    "Rules"); a denied timer publishes nothing.
-6. Check the result is valid JSON (`jq empty <file>`) and that no
-   placeholder is left (`grep -nE '<service>|<business-|<timed-' <file>`
-   finds nothing).
+7. Check the result is valid JSON (`jq empty <file>`) and that no
+   placeholder is left
+   (`grep -nE '<service>|<dependency>|<business-|<timed-' <file>` finds
+   nothing).
 
 ## Import
 

@@ -2787,15 +2787,15 @@
         {
           "id": "SCN-INS-ADDR-028-F",
           "name": "Text typed and not submitted leaves the list unchanged",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
               "test": "leaves the list as it is while text is typed and not yet submitted",
-              "strength": "partial",
-              "notes": "no client script filters the list, so this passes without one; a script that filtered as the user types would turn it red"
+              "strength": "full",
+              "notes": "asserts the URL, the results line and every row; red-probed: fails when a client script hides the rows that do not contain the typed text"
             }
           ]
         },
@@ -2835,12 +2835,12 @@
     {
       "id": "REQ-INS-ADDR-029",
       "name": "The success banner after an add, edit or delete stays until the user leaves or reloads the page",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-INS-ADDR-029-A",
           "name": "The banner is still shown ten seconds later",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "e2e",
@@ -2849,13 +2849,21 @@
               "test": "the success banner after an edit is still showing 10 seconds later, and a reload shows no banner",
               "strength": "partial",
               "notes": "run green against the stack; not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "keeps the Success banner shown ten seconds after the save",
+              "strength": "full",
+              "notes": "page.clock run forward ten seconds; red-probed: fails when a client timer removes the success banner after five seconds"
             }
           ]
         },
         {
           "id": "SCN-INS-ADDR-029-B",
           "name": "Reloading the list shows no banner",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "e2e",
@@ -2864,6 +2872,14 @@
               "test": "the success banner after an edit is still showing 10 seconds later, and a reload shows no banner",
               "strength": "partial",
               "notes": "run green against the stack; not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
+              "test": "shows the saved address and no Success banner when the address book is reloaded",
+              "strength": "full",
+              "notes": "red-probed: fails when the success message is read from the session without clearing it"
             }
           ]
         }
@@ -2872,28 +2888,28 @@
     {
       "id": "REQ-INS-ADDR-030",
       "name": "A page number out of range shows a real page of addresses",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-INS-ADDR-030-A",
           "name": "A page number below 1 or not a number shows the first page",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/list/list.controller.test.js",
               "test": "asks for page 1 when the page number is %s",
-              "strength": "partial",
-              "notes": "page 0 and abc each ask the service for page 1; not red-probed"
+              "strength": "full",
+              "notes": "page 0 and abc each ask the service for page 1; red-probed: fails when an unusable page number is read as page 2"
             },
             {
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
-              "test": "shows the first page when the page number is 0",
-              "strength": "partial",
-              "notes": "Showing 1-8 of 30; not red-probed"
+              "test": "shows the first page when the page number is ${pageNumber}",
+              "strength": "full",
+              "notes": "for 0 and abc; red-probed: fails when an unusable page number is read as page 2"
             }
           ]
         },
@@ -2985,19 +3001,19 @@
     {
       "id": "REQ-INS-ADDR-032",
       "name": "A search matches an address by its name, address, town, county, postcode, country or the labels of its roles",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-INS-ADDR-032-A",
           "name": "A term inside an address line finds that address",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
               "repo": "trade-imports-address-book",
               "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java",
               "test": "partialWordSearchMatchesAddressLineTwoCaseInsensitively",
-              "strength": "partial",
+              "strength": "full",
               "notes": "the service matches address line 2, ignoring case; red-probed: fails when the search drops address line 2"
             },
             {
@@ -3015,6 +3031,14 @@
               "test": "finds an address by a term inside its address line 1",
               "strength": "partial",
               "notes": "address line 1 in stub mode, red-probed: fails when the stub ignores the term"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "finds an address by a lower-case term inside its address line 2",
+              "strength": "full",
+              "notes": "stub mode; red-probed: fails when the stub search ignores address line 2. The service half is the AddressSearchIT link"
             }
           ]
         },
@@ -3161,15 +3185,15 @@
         {
           "id": "SCN-INS-ADDR-032-F",
           "name": "An address just added with a role is found by that role's label",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
               "test": "finds an address saved with Consignor ticked by searching Consignor",
-              "strength": "partial",
-              "notes": "not red-probed"
+              "strength": "full",
+              "notes": "red-probed: fails when the list sends no role labels matching the search"
             },
             {
               "type": "e2e",
@@ -3184,7 +3208,7 @@
         {
           "id": "SCN-INS-ADDR-032-G",
           "name": "A role label the Type filter shows finds an address whose Type column reads otherwise",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
@@ -3193,6 +3217,14 @@
               "test": "Should give the roles whose Type column label or Type option label contains %j, ignoring case",
               "strength": "partial",
               "notes": "the 'branch address' case gives BRANCH_ADDRESS, the role the search sends; does not render the list; not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "finds an address holding the Branch address role by searching the Branch tab for branch address, with Branch as its Type",
+              "strength": "full",
+              "notes": "red-probed: fails when only a role's Type column label is matched, not its option label"
             }
           ]
         }
@@ -4024,28 +4056,28 @@
     {
       "id": "REQ-INS-ADDR-038",
       "name": "The address book list is split into four tabs, each a link that loads the list on that tab",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-INS-ADDR-038-A",
           "name": "The four tabs are shown in order with the selected one marked",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/list/list.tabs.controller.test.js",
               "test": "names the four tabs in order as links to the list on each tab, marking the Origin and Consignor tab as current",
-              "strength": "partial",
-              "notes": "red-probed on the selected marker only: fails when the default tab changes; the order and the absent Transporter tab are not probed"
+              "strength": "full",
+              "notes": "red-probed: fails when the default tab changes, and when the tabs are listed in reverse order"
             },
             {
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
               "test": "shows the four tabs in order with Origin and Consignor selected when no tab is chosen",
-              "strength": "partial",
-              "notes": "not red-probed"
+              "strength": "full",
+              "notes": "red-probed: fails when the tabs are listed in reverse order, and when no tab is marked current"
             },
             {
               "type": "e2e",
@@ -4130,15 +4162,15 @@
         {
           "id": "SCN-INS-ADDR-038-D",
           "name": "Following a tab with JavaScript off loads that tab",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
               "test": "loads the tab that is followed",
-              "strength": "partial",
-              "notes": "red-probed: fails when the Branch tab also holds a consignee address; the Then clause of following the link with JavaScript off is still unprobed"
+              "strength": "full",
+              "notes": "JavaScript off; red-probed: fails when the tab links drop the address type, and when only the Branch tab link drops it"
             },
             {
               "type": "e2e",
@@ -4153,7 +4185,7 @@
         {
           "id": "SCN-INS-ADDR-038-E",
           "name": "A search on a tab lists only that tab's matches and its pages keep the tab and the search",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
@@ -4177,7 +4209,7 @@
               "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
               "test": "keeps the Branch tab, its heading and only its matches when a search is submitted",
               "strength": "partial",
-              "notes": "not red-probed"
+              "notes": "searches 'depot', which matches nothing on another tab, so it stays green when the tab's roles are dropped"
             },
             {
               "type": "e2e",
@@ -4186,6 +4218,14 @@
               "test": "each role-backed tab opens with its own panel heading, the columns Name, Type, Address, Country and Action, and exactly the addresses the test added, with their roles",
               "strength": "partial",
               "notes": "run by the gate; not run or red-probed here"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "keeps the Branch tab and lists only its matches for a search that also matches another tab, and its page links keep the tab and the search",
+              "strength": "full",
+              "notes": "red-probed: fails when the tab's roles are dropped from the list request, when the page links drop the tab, and when they drop the search"
             }
           ]
         },
@@ -4233,7 +4273,7 @@
     {
       "id": "REQ-INS-ADDR-039",
       "name": "Each role-backed tab lists the addresses holding one of its roles, with their roles in the Type column; the Transporter tab lists the organisation's transporters",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-INS-ADDR-039-A",
@@ -4269,7 +4309,7 @@
         {
           "id": "SCN-INS-ADDR-039-C",
           "name": "The Type column names the address's roles and the columns are the same on every role-backed tab",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
@@ -4299,9 +4339,9 @@
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
-              "test": "shows Place of origin, Consignor and Consignee, Place of destination in the Type column of the addresses holding them",
-              "strength": "partial",
-              "notes": "not red-probed"
+              "test": "shows Place of origin, Consignor and Consignee, Place of destination in the Type column under the columns Name, Type, Address, Country and a visually hidden Action",
+              "strength": "full",
+              "notes": "red-probed: fails when the Type cell is left empty, when an extra Country heading is put first, and when the Action heading loses govuk-visually-hidden"
             },
             {
               "type": "e2e",
@@ -4316,7 +4356,7 @@
         {
           "id": "SCN-INS-ADDR-039-D",
           "name": "Each role has its own label",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
@@ -4333,6 +4373,14 @@
               "test": "Should word the tab labels, panel headings, Type heading and role labels",
               "strength": "partial",
               "notes": "not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "labels each of the six roles held alone in the Type column",
+              "strength": "full",
+              "notes": "red-probed: fails when the Type cell shows role codes in place of labels, and when the Consignee column label reads Importer"
             }
           ]
         },
@@ -4650,7 +4698,7 @@
         {
           "id": "SCN-INS-ADDR-041-C",
           "name": "Matches past one page are counted and paged, and the pages keep the tab, the search and the Type",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
@@ -4691,21 +4739,29 @@
               "test": "links each page shown with the Transporter tab, the search term, the chosen type and the page number only",
               "strength": "partial",
               "notes": "asserts each page link carries the tab, the search term, the chosen type and the page number; not red-probed against this scenario"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "counts and pages the matches holding the Type past one page, and the next page keeps the tab, the search and the Type",
+              "strength": "full",
+              "notes": "red-probed: fails when the page links drop the Type, when no Type option is marked selected, and when the page size is 9"
             }
           ]
         },
         {
           "id": "SCN-INS-ADDR-041-D",
           "name": "Choosing a Type without submitting leaves the list as it was",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
-              "test": "leaves the URL and the whole tab listed when a Type is chosen and not submitted",
-              "strength": "partial",
-              "notes": "holds by construction, as the page has no script that listens to the select; not red-probed"
+              "test": "requests no page and leaves the URL and the whole tab listed when a Type is chosen and not submitted",
+              "strength": "full",
+              "notes": "records navigation requests; red-probed: fails when a client script submits the filter form as the Type select changes"
             }
           ]
         },
@@ -4735,7 +4791,7 @@
         {
           "id": "SCN-INS-ADDR-041-F",
           "name": "A Type finds the addresses holding it beyond the first page of the tab",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
@@ -4752,6 +4808,14 @@
               "test": "a role filter finds the addresses holding it beyond the first page of the tab, counted and without pagination",
               "strength": "partial",
               "notes": "passed against the stack; not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "lists the addresses holding the Type that lie beyond the first page of the tab, counted and without pagination",
+              "strength": "full",
+              "notes": "red-probed: fails when the chosen Type is ignored and the tab's roles are asked for, and when the stub filters by role only within the first page"
             }
           ]
         },

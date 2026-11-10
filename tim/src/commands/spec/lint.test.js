@@ -66,7 +66,11 @@ afterEach(() => {
 const seedWorkspace = (specText) => {
   root = mkdtempSync(join(tmpdir(), 'tim-spec-lint-cli-'))
   writeFileSync(join(root, 'Makefile'), 'all:\n')
-  mkdirSync(join(root, 'repos'), { recursive: true })
+  mkdirSync(join(root, 'repos', 'trade-imports-x', 'src'), { recursive: true })
+  writeFileSync(
+    join(root, 'repos', 'trade-imports-x', 'src', 'a.test.js'),
+    "test('spins', () => {})"
+  )
   mkdirSync(join(root, 'openspec', 'specs', 'widgets'), { recursive: true })
   mkdirSync(join(root, 'openspec', 'coverage', 'widgets'), { recursive: true })
   writeFileSync(join(root, 'openspec', 'specs', 'widgets', 'spec.md'), specText)

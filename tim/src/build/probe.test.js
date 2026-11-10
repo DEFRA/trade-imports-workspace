@@ -192,7 +192,7 @@ describe('testCommandFor', () => {
     ])
   })
 
-  test('runs a Java test class through mvn verify, unit or integration', () => {
+  test('runs a Java test class through mvn verify without the JaCoCo coverage check, unit or integration', () => {
     expect(testCommandFor('src/test/java/uk/gov/NotificationIT.java')).toEqual([
       'mvn',
       '-B',
@@ -200,7 +200,8 @@ describe('testCommandFor', () => {
       '-Dtest=NotificationIT',
       '-Dit.test=NotificationIT',
       '-Dsurefire.failIfNoSpecifiedTests=false',
-      '-Dfailsafe.failIfNoSpecifiedTests=false'
+      '-Dfailsafe.failIfNoSpecifiedTests=false',
+      '-Djacoco.skip=true'
     ])
   })
 

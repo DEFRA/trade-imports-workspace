@@ -699,8 +699,9 @@ it runs the test, writes the file back byte for byte, checks git shows no
 change to it, and runs the test again. Give the test as `--test-file` or as a
 command after `--`, with every option before the `--`. `--test-file` runs a
 `*.test.js` through `npm test -- --no-coverage`, a `*.fit.spec.js` through
-`test:fit:ci`, and a Java class through `mvn verify` with `-Dtest` and
-`-Dit.test`.
+`test:fit:ci`, and a Java class through `mvn verify` with `-Dtest`,
+`-Dit.test` and `-Djacoco.skip=true`: one class never meets the project's
+coverage threshold, so the check would fail the run whatever the test did.
 
 The result is `{file, inversion, redWhenInverted, greenAfterRestore, restored,
 logs}`. `redWhenInverted` true means the test failed without the line, so it

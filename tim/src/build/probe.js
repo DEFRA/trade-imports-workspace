@@ -15,7 +15,8 @@ const mavenCommandFor = (testFile) => {
     `-Dtest=${testClass}`,
     `-Dit.test=${testClass}`,
     '-Dsurefire.failIfNoSpecifiedTests=false',
-    '-Dfailsafe.failIfNoSpecifiedTests=false'
+    '-Dfailsafe.failIfNoSpecifiedTests=false',
+    '-Djacoco.skip=true'
   ]
 }
 
@@ -37,7 +38,7 @@ const TEST_COMMANDS = [
 /**
  * The command that runs one test file in its repo: Vitest through
  * `npm test` without coverage, a FIT spec through `test:fit:ci`, or a Java
- * test class through `mvn verify`.
+ * test class through `mvn verify` without JaCoCo.
  *
  * @param {string} testFile - Relative to the repo
  * @returns {string[]}

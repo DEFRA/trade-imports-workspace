@@ -2179,19 +2179,36 @@
       "dependsOn": [
         "inc-024"
       ],
-      "status": "todo",
+      "status": "done",
       "gate": "Compare full coverage rows under live-animals with main and with this branch before the row; read every scenario left partial and its reason.",
       "notes": [
         "ATTEMPT FAILED: implementor could not finish; no repo held changes at preserve time (animals-frontend, plants-frontend and ins-tests all clean, on the branch, no merge in progress, zero local commits ahead of origin); no merge aborted; local commits none moved back; no patches written, logs at workareas/shared/eudpa-774/logs/inc-025-preserve-repo-state.json; workspace openspec coverage change (live-animals/journey-flow/coverage.json) stashed as stash@{0} failed-inc-025",
         "Restarted after the first attempt's implementor stopped after 2 of 139 scenarios. Split into inc-025 (F1 to F3), inc-027 (F4 to F8) and inc-028 (F9 to F11). SCN-FLOW-003-M and 003-O are already full, committed in the workspace."
+      ],
+      "openQuestions": [
+        "Twin fix: trade-imports-plants-frontend fit/high-risk-plants-journey.js:235-238 needs `visitOverviewThenOpen(page, reference, path)` to open the plants Overview and click the row link (not two page.goto calls), renamed to say so (as the animals twin `openFromOverviewRow`), with its callers origin.fit.spec.js:129, arrival-details.fit.spec.js:175, arrival-status.fit.spec.js:152, place-of-destination.fit.spec.js:157, consignor-select.fit.spec.js:164 and docs testing.md:64 updated, and origin.fit.spec.js:124 probed red under the plants Overview TRAIL_START entry inversion in shared/trail.js — as the inc-025 review finding that the plants Back-to-Overview tests pass on the empty-trail fallback alone."
+      ],
+      "commit": "9bd99d168d2e08877f06860b681e0b94892c521c (trade-imports-animals-frontend); workspace openspec/ spec commit bec157ea (workspace only, not pushed)",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/468",
+          "repo": "trade-imports-animals-frontend",
+          "number": 468
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/93",
+          "repo": "trade-imports-ins-tests",
+          "number": 93
+        }
       ]
     },
     {
       "id": "inc-026",
-      "title": "Every high-risk plants journey-flow scenario left partial is proven by a test that fails when the behaviour breaks",
-      "detail": "The 24 plants journey-flow scenarios tim spec gaps --partial --capability plants/journey-flow lists, with their reasons in inc-024's notes. The leased stack runs in dev mode, serving the plants frontend from repos/trade-imports-plants-frontend/src and restarting on a change; tim build probe --reload-url http://localhost:3003/health waits for that restart. Probe each again, relink where the right test is a unit or controller test, write a test where none exists.",
+      "title": "Every high-risk plants journey-flow and journey-pages scenario left partial is proven by a test that fails when the behaviour breaks",
+      "detail": "The 61 plants scenarios tim spec gaps --partial lists: 24 under plants/journey-flow, with their reasons in inc-024's notes, and 37 under plants/journey-pages (the per-page Back scenarios, whose per-page controller Back test already goes red under the trailBackLink inversion but is not the linked test, and the save-control, status, removal-report and search-announcement scenarios). The leased stack runs in dev mode, serving the plants frontend from repos/trade-imports-plants-frontend/src and restarting on a change; tim build probe --reload-url http://localhost:3003/health waits for that restart. Probe each again, relink where the right test is a unit or controller test, write a test where none exists. Group scenarios that share an owning line or test file and probe them together. Once this row lands, full scenarios under plants must be at least main's count for the same capabilities. This row was inc-026 and inc-029, combined to cut the per-row overhead.",
       "acceptanceCriteria": [
-        "Every plants journey-flow scenario tim spec gaps lists as partial is covered",
+        "Every plants journey-flow and journey-pages scenario tim spec gaps lists as partial is covered",
+        "Full scenarios under plants are at least main's count for the same capabilities",
         "Every scenario this row names is either full, linked to a test that tim build probe showed red with its owning production line inverted and green once restored, or named in this row's notes with the exact Then no test can witness and why. Stopping with scenarios unattempted, or deferring them to another run, is not done",
         "End-to-end and browser links are probed against the leased dev-mode stack with tim build probe --reload-url; none is left partial for needing the stack, a rebuild, or the gate",
         "A link whose test cannot witness its scenario is replaced by one that does; a scenario with no witness gets a new test in the repo whose layer owns the behaviour",
@@ -2247,8 +2264,31 @@
       "dependsOn": [
         "inc-025"
       ],
-      "status": "todo",
-      "gate": "Compare full coverage rows under live-animals with main and with this branch before the row; read every scenario left partial and its reason."
+      "status": "done",
+      "gate": "Compare full coverage rows under live-animals with main and with this branch before the row; read every scenario left partial and its reason.",
+      "notes": [
+        "Partial SCN-FLOW-003-E: Then \"the page's address is the one every start uses, with nothing added to it or to the link to mark that it came from Overview\" — Overview's task links carry the trail from=overview, so the application does not have that behaviour",
+        "Probes: 36 full links, 36 red then green under tim build probe; full live-animals scenarios 593 -> 629 of 705",
+        "Partial SCN-CPH-009-A: Then \"focus stays in the county box\" — the CPH template has no script and no focus attribute, so no production line moves or keeps focus between the boxes and a test of it cannot be seen failing when a line is removed",
+        "Partial SCN-CPH-009-B: Then \"focus stays in the parish box\" — the CPH template has no script and no focus attribute, so no production line moves or keeps focus between the boxes and a test of it cannot be seen failing when a line is removed",
+        "Partial SCN-PRIVATE-TRANS-005-B: Then \"Upload documents is shown\" AND \"its back link opens the transporter list\" — a valid private transporter save redirects to the transporter list, not Upload documents, so the application does not have that behaviour",
+        "Partial SCN-COMMERCIAL-TRANS-008-A: Then \"Upload documents is shown\" AND \"its back link opens the transporter list\" — a valid commercial transporter save redirects to the transporter list, not Upload documents, so the application does not have that behaviour",
+        "Partial SCN-COMMERCIAL-TRANS-008-B: Then \"Upload documents is shown\" AND \"its back link opens the transporter list\" — a commercial transporter save from the review's Change link redirects to the transporter list carrying the review on the trail, not Upload documents, so the application does not have that behaviour",
+        "Partial SCN-CONTACT-003-A: Then \"check your answers is shown, and no error summary is shown\" — the review the test reaches shows an error summary naming what is outstanding, the contact address among it, so \"no error summary is shown\" is untrue of the application"
+      ],
+      "commit": "dc14755d9775f7d3ceb1646e37c49ed032530f2b 82b11a38586caa9502470eabbaa3d27f7f6b82f3",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/468",
+          "repo": "trade-imports-animals-frontend",
+          "number": 468
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/93",
+          "repo": "trade-imports-ins-tests",
+          "number": 93
+        }
+      ]
     },
     {
       "id": "inc-028",
@@ -2310,11 +2350,12 @@
         "tests"
       ],
       "kind": "test",
-      "dependsOn": [
-        "inc-026"
-      ],
-      "status": "todo",
-      "gate": "Compare full coverage rows under plants with main and with this branch before the row; read every scenario left partial and its reason."
+      "dependsOn": [],
+      "status": "merged-into",
+      "gate": "Compare full coverage rows under plants with main and with this branch before the row; read every scenario left partial and its reason.",
+      "notes": [
+        "Merged into inc-026: the plants work was split too finely, so both plants capabilities are one row to cut the per-row overhead."
+      ]
     }
   ]
 }

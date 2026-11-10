@@ -590,7 +590,7 @@ The system MUST label the add form's name 'Name or organisation', keep 'County (
 - **THEN** United Kingdom is selected
 - **AND** the Country select's blank first option reads 'Select a country'
 
-#### Scenario: The add form opened from a journey's pickers selects no country
+#### Scenario: The add form opened from the place of origin or consignor picker or the consignment contact page selects no country
 **ID**: SCN-INS-ADDR-027-D
 - **GIVEN** the user opens the add form from a notification's place of origin or consignor picker or its consignment contact page
 - **WHEN** the page is shown

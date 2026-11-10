@@ -225,6 +225,91 @@
           ]
         }
       ]
+    },
+    {
+      "id": "REQ-LIFECYCLE-009",
+      "name": "Trader notification reads and writes are scoped to the caller's organisation",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-LIFECYCLE-009-A",
+          "name": "A copied notification belongs to the copying organisation",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-animals-backend",
+              "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java",
+              "test": "copy_shouldCreateNewDraftFromSourceNotification",
+              "strength": "full",
+              "notes": "asserts organisationId on copy"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-animals-backend",
+              "file": "src/test/java/uk/gov/defra/trade/imports/animals/notification/NotificationServiceTest.java",
+              "test": "copyNotification_shouldCreateNewDraftWithNewReferenceNumber",
+              "strength": "partial",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-LIFECYCLE-009-B",
+          "name": "Another organisation cannot change a notification through trader lifecycle writes",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-animals-backend",
+              "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java",
+              "test": "organisationScope_shouldHideNotificationFromOtherOrganisation",
+              "strength": "full",
+              "notes": "amend, put, submit, copy, cancel-amend, soft-delete return not found for other organisation"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-animals-backend",
+              "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java",
+              "test": "organisationScope_shouldReturn403ForFulfilmentsWhenOrganisationDiffers",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-animals-backend",
+              "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java",
+              "test": "traderRequests_shouldRejectMissingOrganisationHeader",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-animals-backend",
+              "file": "src/test/java/uk/gov/defra/trade/imports/animals/integration/NotificationIT.java",
+              "test": "organisationScope_post_shouldTakeOrganisationFromHeader_notBodyActor",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/features/organisation-scoped-notifications.spec.ts",
+              "test": "returns 404 when another organisation mutates a notification",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/features/organisation-scoped-notifications.spec.ts",
+              "test": "returns 403 when another organisation reads fulfilments",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        }
+      ]
     }
   ]
 }

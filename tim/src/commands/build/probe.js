@@ -135,7 +135,7 @@ export const registerProbe = (build, timVersion) =>
     .option('--replace <text>', 'What to put in place of the search text')
     .option(
       '--test-file <path>',
-      'The test file to run, relative to the repo: a *.test.js runs through npm test without coverage, a *.fit.spec.js through test:fit:ci, a Java class through mvn verify'
+      'The test file to run, relative to the repo: a *.test.js runs through npm test without coverage, a *.fit.spec.js through test:fit:ci, a Java class through mvn verify without JaCoCo'
     )
     .option(
       '--logs <dir>',

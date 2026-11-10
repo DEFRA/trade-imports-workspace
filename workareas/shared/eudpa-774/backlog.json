@@ -2503,6 +2503,46 @@
           "number": 93
         }
       ]
+    },
+    {
+      "id": "inc-032",
+      "title": "Every coverage link names a test that exists, so spec lint is clean across live animals, plants, ins and admin",
+      "detail": "tim spec lint's binding group now fails a coverage link whose test file or title is not in the checkout under repos/. It lists 50 such links: plants 21, ins 18, live-animals 10, admin 1 (run tim spec lint --binding --json for the list). Almost all are tests that were retitled, moved to another file, or folded into a broader test. For each: find the test that now holds the behaviour (git log -S or git grep on the old title's distinctive words, in the linked repo), and relink to its current file and title. Keep the link's strength only when the test still asserts every Then the link claimed; where the new test proves less, set the strength from what it proves and say so in the notes; where it was folded into a test that proves more, keep it. A full link whose test changed its assertions is probed again with tim build probe, red with its owning line inverted and green once restored, end-to-end links against the leased dev-mode stack with --reload-url. Where no test holds the behaviour any more, drop the link and, if that leaves the scenario without a full link, write the test the row's layer owns. ins links point into trade-imports-ins-frontend, trade-imports-address-book and the tests repo; admin's into trade-imports-animals-admin; read those repos on their current branch and change no code in them. Change no application behaviour.",
+      "acceptanceCriteria": [
+        "tim spec lint is clean for live-animals, plants, ins and admin, with no test-titles finding and nothing skipped",
+        "Every relinked full link names a test that asserts every Then the link claims; a weaker one is set to the strength its test proves, with the reason in its notes",
+        "Every full link whose test's assertions changed is probed again with tim build probe, red then green",
+        "Full scenarios under live-animals stay at least 709 and under plants at least 405, read with tim spec gaps before and after; the Probes line gives both"
+      ],
+      "sources": [
+        {
+          "source": "repo:workspace-openspec",
+          "ref": "coverage.json links across live-animals, plants, ins and admin"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "test files the live-animals links name"
+        },
+        {
+          "source": "repo:plantsfrontend",
+          "ref": "test files the plants links name"
+        },
+        {
+          "source": "repo:tests",
+          "ref": "e2e specs the links name"
+        }
+      ],
+      "repos": [
+        "frontend",
+        "plantsfrontend",
+        "tests"
+      ],
+      "kind": "test",
+      "dependsOn": [
+        "inc-031"
+      ],
+      "status": "todo",
+      "notes": []
     }
   ]
 }

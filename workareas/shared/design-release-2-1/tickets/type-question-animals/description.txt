@@ -1,0 +1,148 @@
+h3. Background
+
+Design Release 2.1 asks "What are you importing?" in the Import notification service front door before a notification is created. Choosing Live animals there starts a live animals notification, so a live animals notification now begins at "Origin of the import" with its Draft tag and reference already shown.
+
+This ticket covers what that means *inside the live animals journey*: where Back goes from a notification started at the front door, and where Back goes on a page opened from a Change link on the review. The front door's question itself, its four types and why Germinal products is not offered yet are on the front door's ticket, EUDPA-690.
+
+Germinal products is not offered on the front door question until the germinal products set has a start page, so today every notification this question starts in the animals service is a live animals one.
+
+This ticket covers the *live animals journey only*. The high-risk plants journey has its own ticket, EUDPA-780, and the front door has EUDPA-690, all under the same epic. The work was merged to main on 6 November 2026.
+
+h3. What changes for the user
+
+h4. Starting from the Import notification service question
+
+Choosing Live animals and continuing creates a new draft and opens "Origin of the import" with the Draft tag and its new reference. Back on that page returns to the front door's "What are you importing?" question with Live animals selected, not to the animals service's own commodity page of the same title. That holds whether the trader has just arrived or has walked back along the opening pages. Opened from Overview, the origin page's Back link goes to Overview instead.
+
+h4. Back links on pages opened from a review Change link
+
+A page opened from a Change link on the review of a draft now goes Back to the journey page before it, rather than to the review. Main import reason goes Back to "What are you importing?", which in turn continues to Commodity details and then the review. Commodity details, Additional animal details, Transit countries and the commodity selection page each go Back to the page before them in the journey. Pages whose Back link is Overview in the normal run (Origin of the import, Identification details, Arrival details, Transporter details, Contact address for consignment and Consignment addresses) keep Overview.
+
+h3. Acceptance criteria
+
+Copied from the service's behaviour specification. All 14 scenarios for the live animals journey are listed in full.
+
+h4. Starting from the Import notification service question
+
+h5. Choosing Live animals opens a new draft at Origin of the import
+
+* *GIVEN* the user is on the Import Notification Service's "What are you importing?" question
+* *WHEN* they choose Live animals and continue
+* *THEN* a new draft is created and the "Origin of the import" page is shown with the Draft tag and its new reference
+* *AND* saving that page continues the opening sequence
+
+h5. The back link opens the Import Notification Service question when the notification was started from it
+
+* *GIVEN* the user has started a notification from the Import Notification Service's "What are you importing?" question and reached the origin of the import page
+* *WHEN* they follow the back link
+* *THEN* the Import Notification Service's "What are you importing?" question is shown, not the commodities page of the same title
+* *AND* Live animals is selected
+
+h5. The back link opens Overview when a notification started from the Import Notification Service question is opened from Overview
+
+* *GIVEN* the user has started a notification from the Import Notification Service's "What are you importing?" question and opened Overview
+* *WHEN* they open the origin of the import page from Overview and follow the back link
+* *THEN* Overview is shown
+
+h5. The back link opens the Import Notification Service question when the origin page is reached by going back along the opening sequence
+
+* *GIVEN* a notification started from the Import Notification Service's "What are you importing?" question
+* *WHEN* the user goes back along the opening run to the origin of the import page and follows the back link
+* *THEN* the Import Notification Service's "What are you importing?" question is shown
+* *AND* Live animals is selected
+
+h4. Back links on pages opened from a review Change link
+
+h5. Main import reason opened from its Change link goes Back to What are you importing?
+
+* *GIVEN* the review of a draft notification
+* *WHEN* the user follows the Change link for the reason for import
+* *THEN* the Back link on Main import reason opens What are you importing?
+* *WHEN* they select "Save and continue"
+* *THEN* the review is shown
+
+h5. What are you importing? opened by that Back link continues to Commodity details
+
+* *GIVEN* What are you importing? opened by the Back link on Main import reason from a Change link
+* *WHEN* the user selects "Save and continue"
+* *THEN* Commodity details is shown
+* *AND* selecting "Save and continue" there shows the review
+
+h5. The origin of the import page keeps the Back link it has without a Change link
+
+* *GIVEN* the review of a draft notification
+* *WHEN* the user follows the Change link for the import details
+* *THEN* the Back link on the origin of the import page opens Overview
+
+h5. The pages whose opening-sequence Back link is Overview keep Overview from a Change link
+
+* *GIVEN* the review of a draft notification
+* *WHEN* the user follows a Change link that opens Identification details, Arrival details, Transporter details, Contact address for consignment or Consignment addresses
+* *THEN* the Back link on that page opens Overview
+
+h5. On a draft opened from a Change link, the back link opens what are you importing
+
+* *GIVEN* the review of a draft notification
+* *WHEN* the user follows the Change link for the reason for import and then the back link
+* *THEN* "What are you importing?" is shown
+
+h5. On a draft opened from a Change link, the back link opens what are you importing
+
+* *GIVEN* the review of a draft notification
+* *WHEN* the user follows a Change link to commodity details and then the back link
+* *THEN* "What are you importing?" is shown
+
+h5. On a draft opened from a Change link, the back link opens the origin of the import
+
+* *GIVEN* a draft notification with what are you importing opened by the back link from the main import reason page that a Change link opened
+* *WHEN* the user follows the back link
+* *THEN* the origin of the import page is shown
+
+h5. On a draft opened from a Change link, the back link opens the page before it
+
+* *GIVEN* the review of a draft notification
+* *WHEN* the user follows the Change link for the additional animal details and then the back link
+* *THEN* identification details is shown when any chosen commodity needs identifiers
+* *AND* commodity details is shown otherwise
+
+h5. The back link opens Overview when the page was opened from the review's Change link on a draft
+
+* *GIVEN* the review of a draft notification
+* *WHEN* the user follows the Change link for the roles and addresses and then the back link
+* *THEN* Overview is shown, not the review
+
+h5. On a draft opened from a Change link, Back goes to arrival details
+
+* *GIVEN* the review of a draft notification
+* *WHEN* the user follows the Change link for the transit countries and selects Back
+* *THEN* the arrival details page is shown
+
+h3. The work behind this change
+
+||Row||What it changed||State||
+|inc-148|Ask 'What are you importing?' before a notification is created|Done|
+|inc-150|Origin's Back link goes to the type question for a notification started there, and the type question picks the notification back up|Done|
+|inc-171|Back from a page opened by a review Change link goes to the previous journey page, in animals and plants|Done|
+|inc-255|Every animals run step takes its Back link from the shared run Back link helper|Done|
+|inc-252|Frontend tests set config and serve Defra ID discovery instead of mocking their own modules|Done|
+|inc-253|The animals and plants session cookie states its SameSite setting, and the config says which cookie it sets|Done|
+|inc-256|Animals frontend tidy: one shape guard for the session adapters, comments that say what code does, and a current Lighthouse doc|Done|
+|inc-257|Animals controller tests seed state through named helpers instead of driveHandler's long options list|Done|
+
+All built and merged. Rows inc-148, inc-150 and inc-171 also changed the front door or the high-risk plants frontend, so they appear on those tickets too. Rows inc-252, inc-253, inc-256 and inc-257 tidy the frontend's tests, session cookie settings and code; they change nothing a user can see. The theme has 19 rows: three changed only the animals admin service (its Defra ID settings and its security audit) and one changed only the test suites, so those four appear on no ticket.
+
+h3. Where this is specified
+
+The full behaviour lives in the service's behaviour specification, in the workspace repository. The live animals specification gained 14 scenarios across 8 files. Each link opens the file as it stands on main.
+
+||Specification||New scenarios||
+|[Journey flow|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-flow/spec.md]|5|
+|[Origin of the import|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/origin-of-import/spec.md]|3|
+|[Additional animal details|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/additional-details/spec.md]|1|
+|[Commodity details|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/commodity-details/spec.md]|1|
+|[What are you importing? (commodity selection)|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/commodity-selection/spec.md]|1|
+|[Consignment addresses|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/consignment-addresses/spec.md]|1|
+|[Main import reason|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/import-reason/spec.md]|1|
+|[Transit countries|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/transited-countries/spec.md]|1|
+
+Across the theme's three tickets that is 55 scenarios in 21 files: 14 here, 25 for the front door and 16 for high-risk plants. This description is generated from that specification. If it changes, this ticket is regenerated to match.

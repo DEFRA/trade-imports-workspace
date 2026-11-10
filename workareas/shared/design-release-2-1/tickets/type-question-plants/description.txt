@@ -1,0 +1,169 @@
+h3. Background
+
+Design Release 2.1 asks "What are you importing?" in the Import notification service front door before a notification is created. Choosing Plants for planting, Potatoes (seed and ware) or Wood products there starts a new high-risk plants draft and opens the plants journey's own "What are you importing?" entry page.
+
+The same theme also makes Back on a page opened from a review Change link go to the journey page before it, and makes Save and return to overview on three plants pages make the same checks as Save and continue.
+
+Plants does *not* get one change live animals gets: on live animals, Back from the first page of a notification started at the front door returns to the front door's question with Live animals selected. This theme does not change where Back goes on the plants journey's first page.
+
+This ticket covers the *high-risk plants journey only*. The front door's question, its four types and why Germinal products is not offered yet are on the front door's ticket, EUDPA-690. Live animals has its own ticket, EUDPA-779. All three sit under the same epic. The work was merged to main on 6 November 2026.
+
+h3. What changes for the user
+
+h4. Starting from the Import notification service question
+
+Any of the three plants types on the front door's question creates a new high-risk plants draft and opens its "What are you importing?" entry page.
+
+h4. Back links on pages opened from a review Change link
+
+A page opened from a Change link on the review of a draft now goes Back to the journey page before it, rather than to the review. Origin goes Back to the commodities list, the commodities list to commodity type, arrival status to origin, arrival details to arrival status (or origin for potatoes), place of destination to arrival details, consignor to place of destination, identification numbers to consignor (or place of destination for potatoes), and the contact to identification numbers. The commodity type page keeps its Back link to Overview, and while amending a notification identification numbers keeps its Back link to Overview.
+
+h4. Save and return to overview makes the same checks as Save and continue
+
+On the commodity type, consignor and place of destination pages, Save and return to overview now refuses a value the page does not offer, just as Save and continue does. The trader stays on the page with the error, and nothing is saved: on commodity type the commodity lines are kept, and on the address pages the search term is kept.
+
+h3. Acceptance criteria
+
+Copied from the service's behaviour specification. All 16 scenarios for the high-risk plants journey are listed in full.
+
+h4. Starting from the Import notification service question
+
+h5. Choosing a plants type opens a new draft at the entry question
+
+* *GIVEN* the user is on the Import Notification Service's "What are you importing?" question
+* *WHEN* they choose Plants for planting, Potatoes (seed and ware) or Wood products and continue
+* *THEN* a new high-risk plants draft is created and its "What are you importing?" entry page is shown
+
+h4. Back links on pages opened from a review Change link
+
+h5. The origin page opened from its Change link goes Back to the commodities list
+
+* *GIVEN* the review of a draft notification
+* *WHEN* the user follows the Change link for the country of origin
+* *THEN* the Back link on the origin page opens the commodities list
+* *WHEN* they change the country and select "Save and continue"
+* *THEN* the review is shown with the new country
+
+h5. On a draft opened from a Change link, the back link opens the commodities list
+
+* *GIVEN* the review of a draft notification
+* *WHEN* the user follows the Change link for the country of origin and then the back link
+* *THEN* the commodities list is shown
+
+h5. On a draft opened from a Change link, the back link opens commodity type
+
+* *GIVEN* the review of a draft notification
+* *WHEN* the user follows a Change link to the commodities list and then the back link
+* *THEN* the commodity type page is shown
+
+h5. The commodity type page keeps the Back link it has without a Change link
+
+* *GIVEN* the review of a draft notification
+* *WHEN* the user opens the commodity type page from a Change link
+* *THEN* its Back link opens Overview
+
+h5. On a draft opened from a Change link, the back link opens origin
+
+* *GIVEN* the review of a draft notification asked whether it has arrived
+* *WHEN* the user follows the Change link for the arrival status and then the back link
+* *THEN* the origin page is shown
+
+h5. On a draft opened from a Change link, the back link opens arrival status, or origin for potatoes
+
+* *GIVEN* the review of a draft notification
+* *WHEN* the user follows the Change link for the arrival details and then the back link
+* *THEN* the arrival-status page is shown
+* *WHEN* instead they are on a potatoes notification
+* *THEN* the origin page is shown
+
+h5. On a draft opened from a Change link, the back link opens the arrival details
+
+* *GIVEN* the review of a draft notification
+* *WHEN* the user follows the Change link for the place of destination and then the back link
+* *THEN* the arrival details page is shown
+
+h5. On a draft opened from a Change link, the back link opens the place of destination
+
+* *GIVEN* the review of a draft notification
+* *WHEN* the user follows the Change link for the consignor and then the back link
+* *THEN* the place of destination page is shown
+
+h5. Identification numbers opened from a Change link goes Back to the consignor
+
+* *GIVEN* the review of a draft plants-for-planting or wood notification
+* *WHEN* the user follows the Change link for the identification numbers
+* *THEN* the Back link opens the consignor page
+
+h5. On a draft opened from a Change link, the back link opens the consignor, or the place of destination for potatoes
+
+* *GIVEN* the review of a draft notification
+* *WHEN* the user follows the Change link for the identification numbers and then the back link
+* *THEN* the consignor page is shown
+* *WHEN* instead they are on a potatoes notification
+* *THEN* the place of destination page is shown
+
+h5. On a draft opened from a Change link, the back link opens identification numbers
+
+* *GIVEN* the review of a draft notification
+* *WHEN* the user follows the Change link for the contact and then the back link
+* *THEN* the identification numbers page is shown
+
+h5. A page opened from a Change link on the review while amending keeps its Back link to Overview
+
+* *GIVEN* the review of a notification being amended
+* *WHEN* the user follows the Change link for the identification numbers
+* *THEN* the Back link opens Overview, not the review
+
+h4. Save and return to overview makes the same checks as Save and continue
+
+h5. An out-of-list value on save and return to overview is rejected and the lines are kept
+
+* *GIVEN* the notification holds commodity lines and the user submits a commodity type value the page does not offer
+* *WHEN* they save and return to overview
+* *THEN* they stay on the page with the error shown
+* *AND* no type is left checked
+* *AND* the commodity lines are still held
+
+h5. Save and return to overview with a value not in the book is refused
+
+* *GIVEN* the user is on the consignor page and a value that is not an address in the book is submitted
+* *WHEN* they select save and return to overview
+* *THEN* they stay on the page and "Select a consignor from the list" is shown
+* *AND* the search term is kept and no consignor is saved
+
+h5. Save and return to overview with a value not in the book is refused
+
+* *GIVEN* the user is on the place of destination page and a value that is not an address in the book is submitted
+* *WHEN* they select save and return to overview
+* *THEN* they stay on the page and "Select a place of destination from the list" is shown
+* *AND* the search term is kept and no place of destination is saved
+
+h3. The work behind this change
+
+||Row||What it changed||State||
+|inc-148|Ask 'What are you importing?' before a notification is created|Done|
+|inc-171|Back from a page opened by a review Change link goes to the previous journey page, in animals and plants|Done|
+|inc-247|Save and return to overview on the plants commodity type page makes the same checks as Save and continue|Done|
+|inc-259|Save and return on the plants consignor and place of destination pages makes the same checks as Save and continue|Done|
+|inc-252|Frontend tests set config and serve Defra ID discovery instead of mocking their own modules|Done|
+|inc-253|The animals and plants session cookie states its SameSite setting, and the config says which cookie it sets|Done|
+
+All built and merged. Rows inc-148 and inc-171 also changed the front door or the live animals frontend, so they appear on those tickets too. Rows inc-252 and inc-253 tidy the frontend's tests and its session cookie settings; they change nothing a user can see. The theme has 19 rows: three changed only the animals admin service (its Defra ID settings and its security audit) and one changed only the test suites, so those four appear on no ticket.
+
+h3. Where this is specified
+
+The full behaviour lives in the service's behaviour specification, in the workspace repository. The plants specification gained 16 scenarios across 10 files. Each link opens the file as it stands on main.
+
+||Specification||New scenarios||
+|[Journey flow|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-flow/spec.md]|5|
+|[Consignor|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/consignor-select/spec.md]|2|
+|[Place of destination|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/place-of-destination/spec.md]|2|
+|[Arrival details|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/arrival-details/spec.md]|1|
+|[Arrival status|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/arrival-status/spec.md]|1|
+|[Commodities|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/commodities/spec.md]|1|
+|[Contact for the consignment|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/consignment-contact-select/spec.md]|1|
+|[Identification numbers|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/identification-numbers/spec.md]|1|
+|[Origin|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/origin/spec.md]|1|
+|[Commodity type|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/commodity-type/spec.md]|1|
+
+Across the theme's three tickets that is 55 scenarios in 21 files: 16 here, 25 for the front door and 14 for live animals. This description is generated from that specification. If it changes, this ticket is regenerated to match.

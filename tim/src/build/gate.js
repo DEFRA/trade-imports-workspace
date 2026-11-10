@@ -19,7 +19,9 @@ import {
   planRungs,
   MVN_VERIFY,
   PHASES,
-  TIM_DUPLICATION
+  TIM_COVERAGE,
+  TIM_DUPLICATION,
+  TIM_RUNGS
 } from './gates.js'
 import { isPortHeld, portHolder, describeHolder } from './ports.js'
 import {
@@ -75,22 +77,23 @@ const machineSummary = (machine) =>
       }
     : null
 
-const duplicationCommand = () => ({
+const timRungCommand = (subcommand) => ({
   command: process.execPath,
-  args: [TIM_CLI, 'build', 'duplication', '.'],
+  args: [TIM_CLI, 'build', subcommand, '.'],
   env: { TIM_NO_AUTO_PULL: '1' }
 })
 
 /**
  * The command a planned rung runs: its npm script with its scope and worker
- * count, `mvn -B verify`, or tim's duplication check.
+ * count, `mvn -B verify`, or one of tim's own checks.
  *
  * @param {{run: string, scope: string[], workers?: number}} rung
  * @returns {{command: string, args: string[], env?: object}}
  */
 export const rungCommand = (rung) => {
   if (rung.run === MVN_VERIFY) return { command: 'mvn', args: ['-B', 'verify'] }
-  if (rung.run === TIM_DUPLICATION) return duplicationCommand()
+  if (rung.run === TIM_DUPLICATION) return timRungCommand('duplication')
+  if (rung.run === TIM_COVERAGE) return timRungCommand('coverage')
   return npmCommandFor(rung)
 }
 
@@ -113,7 +116,7 @@ const readScripts = (path) => {
  */
 export const cannotRunBecause = ({ repo, path, run }) => {
   if (!existsSync(path)) return `${repo} is not cloned at ${path}.`
-  if (run === TIM_DUPLICATION) return null
+  if (TIM_RUNGS.includes(run)) return null
   if (run === MVN_VERIFY) {
     return existsSync(join(path, 'pom.xml'))
       ? null
@@ -539,7 +542,7 @@ const exclusiveMs = (runs) =>
     .filter(({ rung }) => isExclusive(rung))
     .reduce((total, { startedAt, endedAt }) => total + endedAt - startedAt, 0)
 
-const runsNpm = ({ run }) => run !== MVN_VERIFY && run !== TIM_DUPLICATION
+const runsNpm = ({ run }) => run !== MVN_VERIFY && !TIM_RUNGS.includes(run)
 
 const npmFolders = (plan) => [
   ...new Map(

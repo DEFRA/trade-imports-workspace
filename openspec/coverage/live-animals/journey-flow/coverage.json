@@ -48,9 +48,9 @@
           "name": "Contact address goes to check your answers whatever is owed",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should go on from Contact address to nothing, the review page being the fallback", "strength": "partial", "notes": "asserts the next-page path for the scenario's input; not seen failing against the previous rule" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/save-and-continue.spec.ts", "test": "ends on the review page after Save and continue, naming what is outstanding, when the notification is incomplete", "strength": "full", "notes": "with a contact address chosen; red then green with the review no longer the end of the journey, against the dev-mode stack (workareas/shared/eudpa-774/logs/inc-027-probe-kit-review-e2e)" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/save-and-continue.spec.ts", "test": "contact address saved with no address chosen goes to check your answers, naming what is outstanding", "strength": "full", "notes": "with no contact address chosen; asserts the review's address and the whole list of what is outstanding; red then green with the review no longer the end of the journey (workareas/shared/eudpa-774/logs/inc-027-probe-kit-review-e2e)" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "picking a commercial transporter saves it with its type and persists", "strength": "full", "notes": "list save lands on Overview" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/opening-run.test.js", "test": "Should send the consignment details page to the identification surface mid-run, and to the hub outside the run", "strength": "full", "notes": "outside the opening run, section last page rests on the hub" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/commercial-transporter-scope.spec.ts", "test": "commercial transporter is owed only for the commercial type and is wiped when the type changes; the form opens under its own browser title, offers the authorisation guidance in a banner titled \"Important\", labels its postcode field \"Postcode or Zip code\" and refuses a wholly blank save naming every required field", "strength": "full", "notes": "commercial add-form save → Overview" }
           ]
         },
         {
@@ -615,6 +615,35 @@
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/trail.test.js", "test": "Should go to Overview when there is no trail and no fallback", "strength": "full", "notes": "probed: trailBackLink returning the fallback whenever a trail exists turns it red, restored green" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/trail.test.js", "test": "Should go to the fallback and log once for %s", "strength": "full", "notes": "probed: trailBackLink returning the fallback whenever a trail exists turns it red, restored green" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-FLOW-019",
+      "name": "Each transporter add form opens only for the type it belongs to",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-FLOW-019-A",
+          "name": "Opening the private transporter form without the private type chosen lands on the type question",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.test.js", "test": "Should redirect the GET to the type question, logging once", "strength": "full", "notes": "parameterised over the commercial type stored and no type stored" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.test.js", "test": "Should redirect the POST to the type question, saving nothing and logging once", "strength": "full", "notes": "parameterised over the commercial type stored and no type stored" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "opening the private form before a type is chosen lands on the type question", "strength": "full", "notes": "probed by making redirectUnlessOwnTransporterType in own-transporter-type.js always return undefined" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/transporter-add.spec.ts", "test": "redirects the private form to the type question when no type has been chosen", "strength": "partial", "notes": "not probed" }
+          ]
+        },
+        {
+          "id": "SCN-FLOW-019-B",
+          "name": "Opening the commercial transporter form without the commercial type chosen lands on the type question",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details/commercial-transporter-details.controller.test.js", "test": "Should redirect the GET to the type question, logging once", "strength": "full", "notes": "parameterised over the private type stored and no type stored" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details/commercial-transporter-details.controller.test.js", "test": "Should redirect the POST to the type question, saving nothing and logging once", "strength": "full", "notes": "parameterised over the private type stored and no type stored" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "opening the commercial form with the private type chosen lands on the type question", "strength": "full", "notes": "probed by making redirectUnlessOwnTransporterType in own-transporter-type.js always return undefined" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/transporter-add.spec.ts", "test": "redirects the commercial form to the type question when the private type was chosen", "strength": "partial", "notes": "not probed" }
           ]
         }
       ]

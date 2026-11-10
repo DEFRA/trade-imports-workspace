@@ -1,0 +1,956 @@
+{
+  "capability": "ins/transporters",
+  "areaCode": "INS-TRANSPORTER",
+  "specFile": "openspec/specs/ins/transporters/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-INS-TRANSPORTER-001",
+      "name": "The transporter type question asks whether the transporter is private or commercial",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-TRANSPORTER-001-A",
+          "name": "The transporter type question shows its caption, heading, warning, options and Continue",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/transporter-type.controller.test.js",
+              "test": "GET shows the caption, the heading, the warning, two options with the commercial hint, Continue and Back to the address type question, none chosen",
+              "strength": "full",
+              "notes": "red-probed: inverted the warning copy, saw the assertion fail, restored it"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/transporter-type.fit.spec.js",
+              "test": "opens with the caption, heading, warning, both options with the commercial hint, Continue, and Back to the address type question",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/transporters/transporter-type.spec.ts",
+              "test": "opens the transporter type question with its caption, heading, warning, both options with the commercial hint, and Continue, and Back returns to the address type question",
+              "strength": "partial",
+              "notes": "written and typechecked; not run — no workspace stack in this run"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-TRANSPORTER-001-B",
+          "name": "Back returns to the address type question",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/transporter-type.controller.test.js",
+              "test": "GET shows the caption, the heading, the warning, two options with the commercial hint, Continue and Back to the address type question, none chosen",
+              "strength": "partial",
+              "notes": "asserts the Back href; not separately red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/transporters/transporter-type.spec.ts",
+              "test": "opens the transporter type question with its caption, heading, warning, both options with the commercial hint, and Continue, and Back returns to the address type question",
+              "strength": "partial",
+              "notes": "written and typechecked; not run — no workspace stack in this run"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-TRANSPORTER-002",
+      "name": "Continuing the transporter type question with nothing chosen refuses the save",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-TRANSPORTER-002-A",
+          "name": "Continuing with nothing chosen shows the refusal and stores no type",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/transporter-type.controller.test.js",
+              "test": "POST with nothing chosen keeps the trader on the page with the refusal inline and as the summary link to the first option, and stores no type",
+              "strength": "full",
+              "notes": "asserts the exact refusal message and summary link against the live required-one-of rule"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/transporters/transporter-type.spec.ts",
+              "test": "continuing with nothing chosen keeps the trader on the page with the refusal against the options and in the summary, whose link focuses the first option",
+              "strength": "partial",
+              "notes": "written and typechecked; not run — no workspace stack in this run"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-TRANSPORTER-003",
+      "name": "The chosen transporter type decides which form opens, and opening a form without its type chosen returns to the type question",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-TRANSPORTER-003-A",
+          "name": "Private opens the private form and Commercial the commercial form",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/transporter-type.controller.test.js",
+              "test": "POST of PRIVATE opens the private transporter form",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/transporter-type.controller.test.js",
+              "test": "POST of COMMERCIAL opens the commercial transporter form",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/transporter-type.fit.spec.js",
+              "test": "Private opens the private form and Commercial the commercial form",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-TRANSPORTER-003-B",
+          "name": "Opening a form without its type chosen returns to the type question",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/private-transporter.controller.test.js",
+              "test": "GET without a transporter type chosen returns to the transporter type question",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/commercial-transporter.controller.test.js",
+              "test": "GET without a transporter type chosen returns to the transporter type question",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/transporter-forms.fit.spec.js",
+              "test": "opening it with no transporter type chosen returns to the transporter type question",
+              "strength": "partial",
+              "notes": "run green on both forms; not red-probed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-TRANSPORTER-004",
+      "name": "The private transporter form asks for the Standard Address Block, the contact fields and the transporter's country",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-TRANSPORTER-004-A",
+          "name": "The private transporter form shows its fields",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/private-transporter.controller.test.js",
+              "test": "GET with the type chosen shows the form fields, title and Cancel reading the address-book cancel label",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/transporter-forms.fit.spec.js",
+              "test": "shows its caption, heading, fields and Back to the transporter type question, with no serious or critical accessibility violations",
+              "strength": "partial",
+              "notes": "run green, including the axe check; not red-probed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-TRANSPORTER-005",
+      "name": "The commercial transporter form asks for the Standard Address Block, the contact fields and an approval number, with a fixed country",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-TRANSPORTER-005-A",
+          "name": "The commercial transporter form shows its fields and the fixed country",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/commercial-transporter.controller.test.js",
+              "test": "GET with the type chosen shows the form fields including the approval number, the fixed country, title and Cancel",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/transporter-forms.fit.spec.js",
+              "test": "shows its caption, heading, the fixed Northern Ireland country and the approval number field, with no serious or critical accessibility violations",
+              "strength": "partial",
+              "notes": "run green, including the axe check; not red-probed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-TRANSPORTER-006",
+      "name": "A commercial transporter's country is fixed to Northern Ireland, and a tampered value is refused",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-TRANSPORTER-006-A",
+          "name": "A tampered country is refused",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/commercial-transporter.controller.test.js",
+              "test": "A tampered country posted in place of the hidden field is refused rather than corrected, and creates nothing",
+              "strength": "full",
+              "notes": "red-probed: widened the oneOf fixed-country rule to also accept GB, saw the assertion fail, restored it"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterRequestValidationTest.java",
+              "test": "aCommercialTransporterNotInNorthernIrelandIsRefusedOnCountryCode",
+              "strength": "full",
+              "notes": "red-probed: made CommercialTransporterCountryValidator always return true, saw the test fail, restored it"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/TransporterCrudIT.java",
+              "test": "aCommercialTransporterOutsideNorthernIrelandIsRefusedOnCountryCode",
+              "strength": "partial",
+              "notes": "ran green as part of mvn verify; not separately red-probed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-TRANSPORTER-007",
+      "name": "Cancel on either transporter form returns to the address book filtered to transporters, adding nothing",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-TRANSPORTER-007-A",
+          "name": "Cancel with partial values entered saves nothing",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/private-transporter.controller.test.js",
+              "test": "Cancel reads the address-book cancel label and goes to the address book filtered to transporters",
+              "strength": "partial",
+              "notes": "run green; not red-probed. The commercial form reads the same shared Back-and-Cancel owner, so this test is the witness for both"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/transporter-forms.fit.spec.js",
+              "test": "Cancel with values entered returns to the address book filtered to transporters, creating nothing",
+              "strength": "partial",
+              "notes": "run green on both forms; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/transporters/private-transporter.spec.ts",
+              "test": "Cancel with partial values entered reads Cancel and return to address book, lands on the address book filtered to transporters, and adds no transporter",
+              "strength": "partial",
+              "notes": "written and typechecked; not run — no workspace stack in this run"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/transporters/commercial-transporter.spec.ts",
+              "test": "Cancel with partial values entered reads Cancel and return to address book, lands on the address book filtered to transporters, and adds no transporter",
+              "strength": "partial",
+              "notes": "written and typechecked; not run — no workspace stack in this run"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-TRANSPORTER-008",
+      "name": "Saving either transporter form shows the address book's success message and the address book filtered to transporters, with the new transporter first",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-TRANSPORTER-008-A",
+          "name": "Saving a private transporter shows the success banner and lists it first",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/private-transporter.controller.test.js",
+              "test": "A valid save sends exactly the posted fields as the transporter body, with type PRIVATE, and lands on the address book filtered to transporters with the success banner set",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/transporter-forms.fit.spec.js",
+              "test": "a valid save shows the success banner and lists the transporter first, carrying the not-applicable approval number, with no serious or critical accessibility violations in the error state",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/transporters/private-transporter.spec.ts",
+              "test": "saving shows the success message and the address book filtered to transporters, the new transporter first with its type, address and country, and the not-applicable approval number, scoped to its organisation",
+              "strength": "partial",
+              "notes": "written and typechecked; not run — no workspace stack in this run"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-TRANSPORTER-008-B",
+          "name": "Saving a commercial transporter shows the success banner and lists it first with its approval number",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/commercial-transporter.controller.test.js",
+              "test": "A valid save sends the fixed country code and type COMMERCIAL, and lands on the address book filtered to transporters with the success banner set",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/transporter-forms.fit.spec.js",
+              "test": "a valid save shows the success banner and lists the transporter first with its approval number and type",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/transporters/commercial-transporter.spec.ts",
+              "test": "saving shows the success message and the address book filtered to transporters, the new transporter first with its type, address, approval number and country, scoped to its organisation",
+              "strength": "partial",
+              "notes": "written and typechecked; not run — no workspace stack in this run"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-TRANSPORTER-009",
+      "name": "The address book service holds a transporter as its own record, scoped to the caller's organisation, with no roles and an intrinsic private-or-commercial type",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-TRANSPORTER-009-A",
+          "name": "A created transporter is scoped to its organisation",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/TransporterScopingIT.java",
+              "test": "orgBBrowsingItsOwnPathCannotSeeOrReachOrgAsTransporter",
+              "strength": "partial",
+              "notes": "ran green as part of mvn verify; not separately red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/TransporterScopingIT.java",
+              "test": "organisationIdIsStampedOnCreateAndScopesReads",
+              "strength": "partial",
+              "notes": "ran green as part of mvn verify; not separately red-probed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-TRANSPORTER-010",
+      "name": "The address book service refuses a transporter outside the private-or-commercial shape",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-TRANSPORTER-010-A",
+          "name": "A transporter type outside private and commercial is refused",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/TransporterCrudIT.java",
+              "test": "aTransporterTypeOutsidePrivateOrCommercialIsRefused",
+              "strength": "partial",
+              "notes": "ran green as part of mvn verify; not separately red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-TRANSPORTER-010-B",
+          "name": "An approval number is required for commercial and refused for private",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterRequestValidationTest.java",
+              "test": "aCommercialTransporterWithNoApprovalNumberIsRefusedOnApprovalNumber",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterRequestValidationTest.java",
+              "test": "aPrivateTransporterWithAnApprovalNumberIsRefusedOnApprovalNumber",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-TRANSPORTER-010-C",
+          "name": "A commercial transporter's country must be Northern Ireland",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterRequestValidationTest.java",
+              "test": "aCommercialTransporterNotInNorthernIrelandIsRefusedOnCountryCode",
+              "strength": "full",
+              "notes": "red-probed: made CommercialTransporterCountryValidator always return true, saw the test fail, restored it"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/transporter/TransporterRequestValidationTest.java",
+              "test": "aPrivateTransporterMayBeInAnyCountry",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-TRANSPORTER-011",
+      "name": "The address book service lists, searches and tombstones an organisation's transporters",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-INS-TRANSPORTER-011-A",
+          "name": "The organisation's live transporters are listed newest first",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/TransporterCrudIT.java",
+              "test": "newestTransporterIsFirstOnTheList",
+              "strength": "partial",
+              "notes": "ran green as part of mvn verify; not separately red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-TRANSPORTER-011-B",
+          "name": "The list is searchable and narrowable",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/TransporterSearchIT.java",
+              "test": "aSearchTermMatchesTheName",
+              "strength": "partial",
+              "notes": "ran green as part of mvn verify; not separately red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/TransporterSearchIT.java",
+              "test": "aSearchTermMatchesTheApprovalNumber",
+              "strength": "partial",
+              "notes": "ran green as part of mvn verify; not separately red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/TransporterSearchIT.java",
+              "test": "aCountryCodeNarrowsToTransportersInThatCountry",
+              "strength": "partial",
+              "notes": "ran green as part of mvn verify; not separately red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/TransporterSearchIT.java",
+              "test": "aTypeFilterKeepsOnlyThatType",
+              "strength": "partial",
+              "notes": "ran green as part of mvn verify; not separately red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/transporters/private-transporter.spec.ts",
+              "test": "the Transporter tab search finds a saved private transporter by its name, its type word, its address and its country",
+              "strength": "partial",
+              "notes": "written and typechecked; not run — no workspace stack in this run"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/transporters/commercial-transporter.spec.ts",
+              "test": "the Transporter tab search finds a saved commercial transporter by its name, its type word, its address, its approval number and its country",
+              "strength": "partial",
+              "notes": "written and typechecked; not run — no workspace stack in this run"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-TRANSPORTER-011-C",
+          "name": "A deleted transporter is tombstoned, not removed",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/TransporterSearchIT.java",
+              "test": "aSoftDeletedTransporterLeavesTheListAndStaysReadableByIdMarkedDeleted",
+              "strength": "partial",
+              "notes": "ran green as part of mvn verify; not separately red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/TransporterSearchIT.java",
+              "test": "deletingAnAlreadyDeletedTransporterChangesNothing",
+              "strength": "partial",
+              "notes": "ran green as part of mvn verify; not separately red-probed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-TRANSPORTER-012",
+      "name": "A transporter has its own details page, at its own URL, offering to edit or delete it",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-TRANSPORTER-012-A",
+          "name": "The View link on a transporter row opens that transporter's own page",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.controller.test.js",
+              "test": "renders a transporter's View link at its own transporter URL, carrying the Transporter tab as its return",
+              "strength": "full"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/transporter-view.fit.spec.js",
+              "test": "opens from the list at its own transporter URL, headed with its name, with no serious or critical accessibility violations",
+              "strength": "full"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-TRANSPORTER-012-B",
+          "name": "A commercial transporter's page shows its approval number and a private transporter's does not",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/view.controller.test.js",
+              "test": "Should show the fixed Northern Ireland country, the approval number and the type for a commercial transporter",
+              "strength": "full"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/view.controller.test.js",
+              "test": "Should show no approval number row for a private transporter, which cannot hold one",
+              "strength": "full"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/transporter-view.fit.spec.js",
+              "test": "shows a commercial transporter’s approval number and its fixed Northern Ireland country",
+              "strength": "full"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-TRANSPORTER-012-C",
+          "name": "The page offers to edit or delete the transporter being viewed",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/view.controller.test.js",
+              "test": "Should offer to edit and to delete this same transporter",
+              "strength": "full"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/view.controller.test.js",
+              "test": "Should carry the return it was opened with on to Edit and Delete",
+              "strength": "full"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-TRANSPORTER-012-D",
+          "name": "Back from a transporter's page returns to the address book on the Transporter tab",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/view.controller.test.js",
+              "test": "Should go back to the address book on the Transporter tab when opened without a return",
+              "strength": "full"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/transporter-view.fit.spec.js",
+              "test": "Back returns to the address book filtered to transporters",
+              "strength": "full"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-TRANSPORTER-012-E",
+          "name": "A transporter that is not live returns the user to the address book",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/view.controller.test.js",
+              "test": "Should redirect to the Transporter tab when no transporter is live at that id",
+              "strength": "full"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/view.controller.test.js",
+              "test": "Should redirect to the Transporter tab for a soft-deleted transporter tombstone",
+              "strength": "full"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/view.controller.test.js",
+              "test": "Should redirect to the Transporter tab for another organisation's transporter",
+              "strength": "full"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-TRANSPORTER-013",
+      "name": "Editing a transporter replaces the whole record, keeping its type, and refuses an edit of one that is not live",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-TRANSPORTER-013-A",
+          "name": "The edit form opens holding the stored values and does not ask the type again",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/edit.controller.test.js",
+              "test": "Should open the private form holding the stored transporter's values",
+              "strength": "full"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/edit.controller.test.js",
+              "test": "Should not ask the transporter type again",
+              "strength": "full"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/transporter-edit.fit.spec.js",
+              "test": "opens the form holding the stored values, with no serious or critical accessibility violations",
+              "strength": "full"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-TRANSPORTER-013-B",
+          "name": "Saving an edit replaces the record and confirms it by name",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/edit.controller.test.js",
+              "test": "Should send the edited fields with the stored type, and land on the Transporter tab",
+              "strength": "full"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/transporter-edit.fit.spec.js",
+              "test": "saves a changed name, confirming it and listing the transporter under it",
+              "strength": "full"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-TRANSPORTER-013-C",
+          "name": "An optional field left blank on an edit is cleared",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/edit.controller.test.js",
+              "test": "Should clear an optional field left blank",
+              "strength": "full"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-TRANSPORTER-013-D",
+          "name": "A commercial transporter's fixed country and required approval number hold on edit",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/edit.controller.test.js",
+              "test": "Should open the commercial form with its approval number and its country fixed and disabled",
+              "strength": "full"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/edit.controller.test.js",
+              "test": "Should refuse a commercial edit whose approval number was cleared",
+              "strength": "full"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/edit.controller.test.js",
+              "test": "Should refuse a commercial edit whose country was tampered with",
+              "strength": "full"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/edit.controller.test.js",
+              "test": "Should keep a commercial transporter commercial, under the fixed country",
+              "strength": "full"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-TRANSPORTER-013-E",
+          "name": "Cancelling an edit leaves the stored transporter as it was",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/edit.controller.test.js",
+              "test": "Should leave the transporter as it was on Cancel, returning to its own page",
+              "strength": "full"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/transporter-edit.fit.spec.js",
+              "test": "Cancel leaves the transporter as it was",
+              "strength": "full"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-TRANSPORTER-013-F",
+          "name": "Editing a transporter that is not live returns the user to the address book",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/edit.controller.test.js",
+              "test": "Should redirect to the Transporter tab when no transporter is live at that id",
+              "strength": "full"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/edit.controller.test.js",
+              "test": "Should redirect to the Transporter tab when the transporter is not live",
+              "strength": "full"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/edit.controller.test.js",
+              "test": "Should redirect to the Transporter tab for another organisation's transporter",
+              "strength": "full"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-INS-TRANSPORTER-014",
+      "name": "Deleting a transporter asks for confirmation, summarising it, and tombstones it",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-TRANSPORTER-014-A",
+          "name": "The delete page summarises the transporter before it is deleted",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/delete.controller.test.js",
+              "test": "Should ask for confirmation, summarising the transporter it would delete",
+              "strength": "full"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/delete.controller.test.js",
+              "test": "Should offer an action to confirm and a way to cancel back to the transporter",
+              "strength": "full"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/transporter-delete.fit.spec.js",
+              "test": "asks for confirmation, summarising the transporter, with no serious or critical accessibility violations",
+              "strength": "full"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-TRANSPORTER-014-B",
+          "name": "Confirming the deletion removes it from the list and confirms it by name",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/delete.controller.test.js",
+              "test": "Should delete the transporter and land on the Transporter tab",
+              "strength": "full"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/transporter-delete.fit.spec.js",
+              "test": "confirming removes it from the list and says so by name",
+              "strength": "full"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-TRANSPORTER-014-C",
+          "name": "Cancelling the deletion leaves the transporter in the address book",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/transporter-delete.fit.spec.js",
+              "test": "cancelling leaves the transporter in the address book",
+              "strength": "full"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-TRANSPORTER-014-D",
+          "name": "Deleting a transporter that is not live returns the user to the address book",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/delete.controller.test.js",
+              "test": "Should redirect to the Transporter tab when no transporter is live at that id",
+              "strength": "full"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/delete.controller.test.js",
+              "test": "Should redirect to the Transporter tab without deleting when it is not live",
+              "strength": "full"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/transporter/delete.controller.test.js",
+              "test": "Should redirect to the Transporter tab when the transporter went while being deleted",
+              "strength": "full"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

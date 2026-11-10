@@ -84,42 +84,6 @@
   },
   "themes": [
     {
-      "id": "transporters",
-      "title": "The transporter step, with transporter management waiting on requirements",
-      "why": "The transporter list, type, add and details folders, the transporters and address lookup services, the INS backend's address lookup, the stub's federated lookup, and the address book's transporter type, tab and hand-over (inc-043 builds now; inc-008, inc-037 to inc-042, inc-044 and inc-074 to inc-076 wait on whether the service manages transporters, ruling:sam-2026-10-09-pm claims 34 to 36). The address book's transporter code is new code beside the address book's own folders, so it touches none of them. It holds 12 rows, 1 of them ready to build.",
-      "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transporters",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-details-save.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/fit",
-        "frontend:src/server/app/services/transporters",
-        "frontend:src/server/app/services/address-lookup",
-        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/addresslookup",
-        "stub:src/main/java/uk/gov/defra/trade/imports/stubs/federated",
-        "stub:src/test/java/uk/gov/defra/trade/imports/stubs/federated",
-        "tests:page-objects/animals/transporter-page.ts",
-        "tests:page-objects/animals/transporter-add-page.ts",
-        "tests:page-objects/animals/private-transporter-page.ts",
-        "tests:page-objects/animals/commercial-transporter-page.ts",
-        "tests:page-objects/animals/transporter-selection-page.ts",
-        "tests:tests/animals/e2e/pages/transporter.spec.ts",
-        "tests:tests/animals/e2e/pages/transporter-add.spec.ts",
-        "tests:tests/animals/e2e/pages/transporter-selection.spec.ts",
-        "addressbook:src/main/java/uk/gov/defra/trade/imports/addressbook/transporter",
-        "insfrontend:src/server/app/features/address-book/transporter",
-        "tests:tests/ins/e2e/features/transporters"
-      ],
-      "dependsOn": [
-        "address-book",
-        "documents",
-        "journey-foundation",
-        "reference-lists"
-      ]
-    },
-    {
       "id": "identification-and-permanent-address",
       "title": "Identification details and the permanent address page",
       "why": "The animal identification folder and its evaluation, the permanent address folder and the backend's animal identifier (inc-045 to inc-058; pigs, sheep and goats' ear tags in inc-051 wait on the MDM catalogue). inc-046, inc-047 and inc-050 moved to design-snagging inc-214 on 19 October. It holds 8 rows, 7 of them ready to build.",
@@ -380,8 +344,8 @@
     },
     {
       "id": "obligation-model",
-      "title": "The journey's obligation model carries the data specification's own markings",
-      "why": "req-2206 and req-2207 change how an answer's obligation is recorded and judged, in the journey platform's obligation model: frontend:src/server/app/model/obligations and its plants twin, which hold the manifest, the evaluator and the completeness rules. No other theme touches that folder. Every feature theme changes a set's own pages or its obligation sections, and the two split-off themes that own shared code own the journey flow, the shared layout and the reference services instead, so the model can be changed once here while the feature themes build in parallel.",
+      "title": "The journey's obligation model carries the data specification's own markings (dropped)",
+      "why": "Dropped on 2026-11-10 by ruling:sam-2026-11-10b: its one row, inc-245, is dropped because main already does what it promised. req-2206 and req-2207 change how an answer's obligation is recorded and judged, in the journey platform's obligation model: frontend:src/server/app/model/obligations and its plants twin, which hold the manifest, the evaluator and the completeness rules. No other theme touches that folder. Every feature theme changes a set's own pages or its obligation sections, and the two split-off themes that own shared code own the journey flow, the shared layout and the reference services instead, so the model can be changed once here while the feature themes build in parallel.",
       "touches": [
         "frontend:src/server/app/model/obligations",
         "plantsfrontend:src/server/app/model/obligations",
@@ -2008,72 +1972,172 @@
       },
       "at": "2026-10-26T11:55:30.903Z",
       "pickUp": []
+    },
+    {
+      "theme": "transporters",
+      "title": "The transporter step, with the address book managing transporters",
+      "why": "The transporter list, type, add and details folders, the transporters and address lookup services, the INS backend address lookup, the stub federated lookup, and the address book transporter type, tab and hand-over. ruling:ian-2026-11-06 lifted the transporter-management block (c-285) on 6 November: the address book manages transporters as per-organisation records like every other address, and adding one mid journey uses the address book hand-off already built for addresses (inc-077, inc-078, inc-080). It holds 12 rows: 10 to build, inc-044 done on main (EUDPA-739), and inc-042 still blocked on the INS address lookup becoming a real feature. The rows were written when the journey owned transporters, so they need re-distilling against the address-book-owned design before they build. Approved transporters are parked. The address book transporter code is new code beside the address book own folders, so it touches none of them.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transporters",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transporters-select",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-details-save.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/transport/fit",
+        "frontend:src/server/app/services/transporters",
+        "frontend:src/server/app/services/address-lookup",
+        "insbackend:src/main/java/uk/gov/defra/trade/imports/ins/backend/addresslookup",
+        "stub:src/main/java/uk/gov/defra/trade/imports/stubs/federated",
+        "stub:src/test/java/uk/gov/defra/trade/imports/stubs/federated",
+        "tests:page-objects/animals/transporter-page.ts",
+        "tests:page-objects/animals/transporter-add-page.ts",
+        "tests:page-objects/animals/private-transporter-page.ts",
+        "tests:page-objects/animals/commercial-transporter-page.ts",
+        "tests:page-objects/animals/transporter-selection-page.ts",
+        "tests:tests/animals/e2e/pages/transporter.spec.ts",
+        "tests:tests/animals/e2e/pages/transporter-add.spec.ts",
+        "tests:tests/animals/e2e/pages/transporter-selection.spec.ts",
+        "addressbook:src/main/java/uk/gov/defra/trade/imports/addressbook/transporter",
+        "insfrontend:src/server/app/features/address-book/transporter",
+        "tests:tests/ins/e2e/features/transporters"
+      ],
+      "dependsOn": [
+        "address-book",
+        "documents",
+        "journey-foundation",
+        "reference-lists"
+      ],
+      "branch": "feat/EUDPA-781-design-release-2-1-transporters",
+      "workarea": "shared/design-release-2-1/themes/transporters",
+      "backlog": "themes/transporters/backlog.json",
+      "increments": [
+        "inc-008",
+        "inc-037",
+        "inc-265",
+        "inc-038",
+        "inc-039",
+        "inc-040",
+        "inc-041",
+        "inc-042",
+        "inc-044",
+        "inc-074",
+        "inc-075",
+        "inc-076",
+        "inc-240"
+      ],
+      "requirements": [
+        "req-432",
+        "req-386",
+        "req-387",
+        "req-390",
+        "req-392",
+        "req-399",
+        "req-470",
+        "req-2172",
+        "req-397",
+        "req-398",
+        "req-416",
+        "req-417",
+        "req-420",
+        "req-421",
+        "req-422",
+        "req-425",
+        "req-427",
+        "req-413",
+        "req-414",
+        "req-440",
+        "req-441",
+        "req-442",
+        "req-428",
+        "req-429",
+        "req-431",
+        "req-434",
+        "req-443",
+        "req-444",
+        "req-447",
+        "req-448",
+        "req-449",
+        "req-450",
+        "req-451",
+        "req-456",
+        "req-457",
+        "req-1819",
+        "req-472",
+        "req-1198",
+        "req-1203",
+        "req-1204",
+        "req-1205",
+        "req-1206",
+        "req-461",
+        "req-462",
+        "req-463",
+        "req-2042",
+        "req-2040",
+        "req-1135",
+        "req-2041",
+        "req-2198",
+        "req-394",
+        "req-402"
+      ],
+      "fingerprints": {
+        "req-432": "a209d7c1720de1ea00c98ca74b07f4d6746303f8a3891bee8690eb578e08f25e",
+        "req-386": "58096a7dbf32848d953dfb9bfb1fd6671d070d74999632167375eeb3aa76e509",
+        "req-387": "c078dd101416e2f97897728f388fa215c45d36791d2a6b7dacecf8fdd20af6af",
+        "req-390": "6d333f9118720088042c3032660d350fb28af5c28b5bbe656782fc7fcdaefcbe",
+        "req-392": "e46b0f50e77374546a43b4a9c438a803c438dd90f80bd3aacf4ec5c829402bf5",
+        "req-399": "ddb84b44158982da23754dade838d629ae145b3b59c03e2e2c91d3cfa5a27815",
+        "req-470": "ad6d58c752dbea7ee7af7bd96125169b10cd2536b57ffd68fcc6997ae044e09d",
+        "req-2172": "4bd484300063c95ebfa18631083951315bce1c9b7c38aec17866b3000655829f",
+        "req-397": "be8b318e77b094b50a46fcf546fb7bdf4945189839c3fef4c16ed4979934c92c",
+        "req-398": "1afdff36fabcb40395213e30b452c0eda6c2237a3ab786c4fa5f3b89fe8e165d",
+        "req-416": "b6b849e7ff6822f3b65a03d085d4dd237696c426b15b1718eaed310a22a3b11f",
+        "req-417": "6b11d97d46202fd7ae38c86f2107fc35445f2b481565af4c6dd8708521d9cec7",
+        "req-420": "9fa8db0a19a11b9fc74fe934240192ad0cd6470885696e17a7695e18b7ad7818",
+        "req-421": "d5c8142d15db8fabe23f00ff624236a9f88fd4cf3d229bbfa2e896ccabbba50c",
+        "req-422": "0f5aee8a7af617dfb3abffd89b9a8c593f0ca71cf56cf0ab40f27f6f191dc93e",
+        "req-425": "8d38b842231854eda994d6a78149105eff5760a5675001e21ee491243dc451b6",
+        "req-427": "4d3fd9c4ab02cc1f50736170ca447a9ecf7d509530dce699044d5b6c93c25fe8",
+        "req-413": "24cdcd2c231ed89bb2c6ffd5dc55b0f37f5c075b1ef468abd2954eda7a1b332d",
+        "req-414": "76a2818869eeeeb22ef534baa8eb5ee27c570c7116b9869d9da6b77ee5802ccb",
+        "req-440": "f032e0cac9edc4fe88074cd693a9e9a6e2780fb51dee9768d4f20d670de1a698",
+        "req-441": "cde0e927ad3e697e18dcfc52ceba223e9c0a2d73d23c5128d1f5469586ad182b",
+        "req-442": "1a10edc364376a3f39e4cf459dcf7e958a6f80605c5a5d0b34c8706e9b94aff0",
+        "req-428": "6280a22080c9fd93442df69bc9b7d99ee51839134855dc3e7f3c93fcefacec58",
+        "req-429": "10b5e2e2f46f0ab88dcb3cd3754b6f77c5c3b463776999d891009c90e5e7e4cd",
+        "req-431": "e47dbfc056b9ce27168b6b23ee37163a783e38e4bd3d69c0390f8e1332ab6e4f",
+        "req-434": "14d99a9be5cbbaf5f5df59638fd7e969d5901e0b7b442f1765ea809bf1bffcb4",
+        "req-443": "dafcfe35596cffae108559f5366d91f18de44246a4ffa27ea2e27817c518fb49",
+        "req-444": "4d5671145be5c915f4c25085784bf1b61dc170987da546b41e64e6c77708de57",
+        "req-447": "da445d8d7d994134abb28abe6525f42c0dd79baeb5da39b64e59b3f56d6b23ec",
+        "req-448": "19ef72d9536cafd507bfa48206e9c6bd19b467287f6c3e08b61114118fdd1f28",
+        "req-449": "d015b5a8e042b2dabaf962a336f393b47be91a2ae76d55811e0558138080862a",
+        "req-450": "6cce067f11b192c48e01b6147481cfc145124ee50bb759c49907f8c6d7041481",
+        "req-451": "f1aac2352a56d320b27b7a185a586ae056b871c5462450d429cd1e4e8fe2298d",
+        "req-456": "f8fbe7b3d45827e3e147dc02ce3fd8cbc479a85970fdec209a28fd42de0b9b48",
+        "req-457": "53d3a943747f218ca6a0784d1ab02f0ebcd606549bb1c8300de8f6098c3e4f95",
+        "req-1819": "e9388ec3c7f3b12a1475d12577f93e91250cd38506d5d11e79aff301157d7ee9",
+        "req-472": "1189dbd0193aabce02d3ec4ff56a0b85e16fc2323284d048773c13fbcf8cda4c",
+        "req-1198": "428749520a64b037dce223384bdb2cd6802f962f72f3780425760ebc957bb70a",
+        "req-1203": "d048e59e0a6a4f3a90963fdff186c8c2b45454ffad16fcdafad84deb2c2dcc81",
+        "req-1204": "507f8b905834f993e4ca878451e149367bd8adbf0dc5daac6c00867dd4cceb4a",
+        "req-1205": "a8b011231593dcaf88afb93fe02ed9601876f1ab61bb6d459e1af9b01954f80d",
+        "req-1206": "a27644761a08c1ec90d1fa5e12b01e8382bcb3edd04408e306761fe179e51fc1",
+        "req-461": "deb5c273d566e997a43ee8536190b084089605657ab29003370e94b3316d606c",
+        "req-462": "49b250562a2cdd1b07bf34072f8dc7e05221bf887ac95e3badd56d2aa5153828",
+        "req-463": "b3de9a30302fc9605454fd0fa48858de2f5de7b8a9dc975a0a5775d56396cb3b",
+        "req-2042": "575458171b9ddf5abcdd1adb384c2bb71821772dfedfdaaacbe8ed1a0b6edde4",
+        "req-2040": "6289ab5aac147cb6974d7412b1f71e4aa8aa0df10856e025dcb27d6e0e753e76",
+        "req-1135": "cc665bedc007b7c01605f33683535a272bc32336e3463446f71467c5c0cc1971",
+        "req-2041": "2f48cac3fc97831f0d8935b4844cf45b10be9985efc1a4e1ccfba1831c4e2d26",
+        "req-2198": "a73811ce83ec6c617a7eb7d53379a5b231bebc693942504ca0a34ef26d5ab8f8",
+        "req-394": "63f0c2312e0103336cf58512b7f890551849be075cca9f16f1a0cac1d34bbe02",
+        "req-402": "66f73ca91e0cc1603bfa985386b834eac7136da6810674cc07f0cfcb7ee043b2"
+      },
+      "at": "2026-11-06T17:42:53.682Z"
     }
   ],
   "increments": [
-    {
-      "id": "inc-008",
-      "title": "The private transporter's country list is the United Kingdom plus reference data's export countries, as the master data serves them",
-      "detail": "The private transporter's Country select offers the United Kingdom plus the export country list exactly as the master data service serves it through reference data, never edited in code. Locally and in CDP dev that is the stub's fixture; in CDP test it is the real master data. Where the served list differs from the design's, the difference goes to the master data content report rather than into code. Blocked: the private transporter's country waits with the rest of transporter management.",
-      "acceptanceCriteria": [
-        "In the fit suites, on the local stack and in CDP dev, the private transporter's Country select offers the United Kingdom plus every country the stub fixture serves for the export country list, under the fixture's names and in its count, and no other option. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-129 to -p1-134; document:dr1-parity-notes document-dr1-parity-notes-p1-037; trace:animals-fit trace-animals-fit-p19-015-m1)",
-        "In CDP test, the private transporter's Country select offers the United Kingdom plus exactly the countries reference data returns for the export country list there, with none added, renamed or removed in code. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-141 to -p1-149)",
-        "A private transporter saved with any country from the list shows that country when the trader returns to the form, and on the review. (trace:e2e trace-e2e-p11-061)"
-      ],
-      "dependsOn": [
-        "inc-040"
-      ],
-      "theme": "transporters",
-      "status": "blocked",
-      "kind": "feat",
-      "repos": [
-        "frontend",
-        "tests"
-      ],
-      "sources": [
-        {
-          "source": "ruling:sam-2026-10-09",
-          "ref": "ruling-sam-2026-10-09-p1-129 to -p1-149: list content is the master data's; depends on the stub tidy-up row"
-        },
-        {
-          "source": "ruling:sam-2026-10-09-pm",
-          "ref": "ruling-sam-2026-10-09-pm-p2-040: this row is blocked"
-        },
-        {
-          "source": "document:dr1-parity-notes",
-          "ref": "document-dr1-parity-notes-p1-037"
-        },
-        {
-          "source": "trace:animals-fit",
-          "ref": "trace-animals-fit-p19-015-m1"
-        },
-        {
-          "source": "trace:e2e",
-          "ref": "trace-e2e-p11-061"
-        },
-        {
-          "source": "repo:referencedata",
-          "ref": "repo-referencedata-p1-091"
-        }
-      ],
-      "requirements": [
-        "req-432"
-      ],
-      "openQuestions": [
-        "Blocked on transporter requirements: whether the service manages transporters at all, and whether the address book or some other functionality does it (ruling:sam-2026-10-09-pm-p2-031 to -p2-037, -p2-040, c-285). The ruling names nobody to decide it; whoever owns transporter requirements decides, and the transporter area is then worked again."
-      ],
-      "notes": [
-        "Blocked again by ruling:sam-2026-10-09-pm-p2-040 (c-285, precedence). Its content stays the master data's: the outermost regions, territories and Crown Dependencies the design shows are not added in code (req-1818, out of scope). Kept apart from the private form row because it depends on the stub tidy-up row, which changes the names and count its tests assert, and on the private form row, which changes the same select's order and default. referencedata is not in repos: nothing in reference-data changes.",
-        "Re-analysis 27 Oct (main checked at animals-frontend ba85c222 after EUDPA-617 c3183a8e): the block still applies; the 26 October ruling is about the save buttons only. On main the private Country select already draws the United Kingdom plus reference data's export country labels (services/countries/index.js addressCountries; private-transporter-details.controller.js), and the stub tidy-up is done, so criteria 1 and 2 may already hold. Check the stub-mode countries (services/countries/stub.js) against the tidied fixture, then cut the row to what is left."
-      ],
-      "gate": null,
-      "externalDependsOn": [
-        {
-          "workarea": "shared/design-release-2-1/themes/reference-lists",
-          "id": "inc-173"
-        }
-      ]
-    },
     {
       "id": "inc-014",
       "title": "Waiting on design: commodity search lists results as the trader types, in both animals sets, once commodities come from MDM",
@@ -2142,6 +2206,10 @@
         {
           "source": "ruling:sam-2026-10-09-pm",
           "ref": "ruling-sam-2026-10-09-pm-p1-059, -p1-060, -p2-009"
+        },
+        {
+          "source": "ruling:sam-2026-11-10",
+          "ref": "Decided 2"
         }
       ],
       "requirements": [
@@ -2160,7 +2228,8 @@
       "notes": [
         "Combines the drafts of the commodities, germinal-products areas for this row: they change the same pages, record and journey, so building them apart would repeat the same set-up, review and ladder.",
         "Combines the live-typing slice (req-072), the live-region slice (req-073) and the tick-and-Escape slice (req-074): one client-side behaviour on one page, none observable apart from the others. Kept apart from the MDM catalogue row because it carries a second blocker, design's unanswered question, that the catalogue does not. The existing row inc-014 also holds the germinal set's copy of this behaviour (req-1782, the germinal-products area's), so the combiner should keep inc-014's id, theme (waiting-on-design), gate, dependencies and its germinal criterion, and merge the germinal-products area's draft into it, as the 9 October afternoon ruling makes design's question one increment. Its external dependency on the commodities-and-reason search-results row (inc-013) stays. The prototype's whole list shipped with the page is not copied (c-012 outcome; its overruled claims are not named). A new client-side entry must be wired into the frontend's build, or it fails silently. Design snagging merged to main 23 Oct: the joined blue icon search button is now one shared macro, appSubmittedSearch, built from MoJ Search classes; build the last criterion by switching the commodity search page to it rather than with new markup, and reuse the bold-match helper for as-you-type results. Re-analysis 27 Oct (main checked at animals-frontend ba85c222 after EUDPA-617 c3183a8e): the block still applies in part. Design's question is unanswered. The live-animals half of the MDM block has gone, because the search now calls reference-data; the germinal half still waits. The EUDPA-616 branch predates EUDPA-617 and edits a file it deleted, so it needs rebasing; it carries no Escape handling, no results label and no 'options selected' announcement, and its own icon button duplicates main's shared macro.",
-        "existingRow inc-014, the waiting-on-design row that already holds this area's req-1782 beside the commodities area's live-animals half of the same behaviour (req-072, req-073, req-074). The combiner keeps inc-014's id, its waiting-on-design theme, its blocked status, its dependency on inc-016 and the criteria already there, and merges these germinal criteria in, as one increment for the search-as-you-type question. Kept apart from the germinal catalogue row (inc-191) because it carries a second blocker, design's answer, which the catalogue does not. The germinal criteria are written as conditionals because the behaviour exists only if design keeps it."
+        "existingRow inc-014, the waiting-on-design row that already holds this area's req-1782 beside the commodities area's live-animals half of the same behaviour (req-072, req-073, req-074). The combiner keeps inc-014's id, its waiting-on-design theme, its blocked status, its dependency on inc-016 and the criteria already there, and merges these germinal criteria in, as one increment for the search-as-you-type question. Kept apart from the germinal catalogue row (inc-191) because it carries a second blocker, design's answer, which the catalogue does not. The germinal criteria are written as conditionals because the behaviour exists only if design keeps it.",
+        "ruling:sam-2026-11-10: commodity search is being handled by a separate ticket. This design call stays blocked until that ticket has been implemented and does not go to the designer before then. The joined search button and the 'cattle' search listing germinal codes belong to that ticket."
       ],
       "gate": "Look at the as-you-type search with and without JavaScript, with a screen reader's announcements, before any other client-side component copies its pattern; check its script is in the built bundle on a fresh stack.",
       "externalDependsOn": [
@@ -2507,492 +2576,6 @@
           "id": "inc-029"
         }
       ]
-    },
-    {
-      "id": "inc-037",
-      "title": "The transporter list's layout, search, approval-number column and shipped transporters",
-      "detail": "A trader choosing a transporter sees the list laid out as the design lays it out: a visible 'Select a transporter' sub-heading above the search and the table, the 'Add a transporter' button beside the search rather than below the table, 'Not applicable' where a transporter has no approval number, and a search that also matches a transporter's type and status. The service ships the design's eight transporter records, four commercial and four private, in place of the two placeholder commercial ones. The list's error state is checked for accessibility like its other states. Blocked: listing and searching transporters is transporter management, which is not yet settled.",
-      "acceptanceCriteria": [
-        "The transporter list shows a visible sub-heading 'Select a transporter' above the search box and the transporter table. (prototype:dr2-1-source prototype-dr2-1-source-p7-015; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-076)",
-        "The fieldset round the transporter table carries the legend 'Select a transporter', visually hidden, so screen readers announce it and the page shows the words once. (prototype:dr2-1-source prototype-dr2-1-source-p7-022; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-083)",
-        "The secondary 'Add a transporter' button sits beside the search box, above the transporter table, and opens the transporter type question. (prototype:dr2-1-source prototype-dr2-1-source-p7-020; prototype:dr2-1-specs prototype-dr2-1-specs-p2-104; repo:tests repo-tests-p1-127; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-081)",
-        "The transporter list in its error state, saved with nothing chosen, has no serious or critical accessibility violations against WCAG 2.0, 2.1 and 2.2 A and AA rules. (repo:frontend repo-frontend-p12-152; trace:animals-fit trace-animals-fit-p18-098)",
-        "Searching the list for 'Commercial', 'Private', 'Approved' or 'New' leaves only the transporters of that type or status, and a search for a transporter's name, address or approval number leaves only the transporters that match it. (prototype:dr2-1-source prototype-dr2-1-source-p7-018; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-078, -p9-046)",
-        "A transporter with no approval number shows 'Not applicable' in the Approval number column. (prototype:dr2-1-source prototype-dr2-1-source-p7-084; trace:prototype-dr2-1 trace-prototype-dr2-1-p9-044)",
-        "The list's commercial transporters are exactly these four, each Commercial and Approved: Yusen Logistics (Romania) SRL (Bulevardul General Paul Teodorescu 4, Sector 6, 061344 Bucharest, Romania; RO/BUCHAREST/T1/00092010), Roadtrain Ltd (The Roadtrain Complex, Bluebell Industrial Estate, Dublin 12, D12 P046, Republic of Ireland; IE/DUBLIN/T1/00092011), Danish Meat Export ApS (Vesterbrogade 12, 1620 Copenhagen, Denmark; DK/COPENHAGEN/T1/00081002) and Portuguese Livestock Lda (Rua Augusta 250, 1100-053 Lisbon, Portugal; PT/LISBON/T1/00071003). (prototype:dr2-1-source prototype-dr2-1-source-p7-028, -p7-029, -p7-031, -p7-032; prototype:dr2-1-specs prototype-dr2-1-specs-p4-031; document:dr1-parity-backlog document-dr1-parity-backlog-p8-008 to -p8-015)",
-        "The list's private transporters are exactly these four: Aberdeen Livestock Ltd (15 Union Street, Aberdeen, AB11 5BN, United Kingdom; UK/ABERDEEN/T1/00092001; Approved), Romanian Agri Exports SRL (Bulevardul Unirii 22, 03083 Bucharest, Romania; RO/BUCHAREST/T1/00061004; New), Slovak Farm Export (Obchodná 2, 811 06 Bratislava, Slovakia; SK/BRATISLAVA/T1/00051005; Approved) and Finnish Livestock Oy (Mannerheimintie 10, 00100 Helsinki, Finland; FI/HELSINKI/T1/00041006; New), each saved with its address parts and its country when chosen. (prototype:dr2-1-source prototype-dr2-1-source-p7-030, -p7-033, -p7-034, -p7-035; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-084, -p8-085)",
-        "Picking any one of those eight transporters and saving keeps it chosen when the trader returns to the list, and the end-to-end journeys that pick a transporter pick one of them. (trace:prototype-dr2-1 trace-prototype-dr2-1-p9-003; repo:tests repo-tests-p1-131, -p1-132)",
-        "The commercial transporters the transporter list offers are the approved transporters the service's approved-transporter list holds, so a commercial transporter that list does not hold is not offered. (confluence:6497338582 confluence-6497338582-p2-077; repo:frontend repo-frontend-p12-036; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-031, -p2-050)"
-      ],
-      "dependsOn": [],
-      "theme": "transporters",
-      "status": "blocked",
-      "kind": "feat",
-      "repos": [
-        "frontend",
-        "tests"
-      ],
-      "sources": [
-        {
-          "source": "prototype:dr2-1-source",
-          "ref": "prototype-dr2-1-source-p7-015 to -p7-035, -p7-084 (transporter.html; data/transporters.js)"
-        },
-        {
-          "source": "trace:prototype-dr2-1",
-          "ref": "trace-prototype-dr2-1-p8-076 to -p8-085; -p9-003, -p9-044, -p9-046"
-        },
-        {
-          "source": "prototype:dr2-1-specs",
-          "ref": "prototype-dr2-1-specs-p2-104; -p4-031"
-        },
-        {
-          "source": "repo:frontend",
-          "ref": "repo-frontend-p12-017 to -p12-039, -p12-152 (features/transport/transporters; services/transporters; fit axe checks)"
-        },
-        {
-          "source": "repo:tests",
-          "ref": "repo-tests-p1-127 to -p1-132 (page-objects/animals/transporter-page.ts; tests/animals/e2e/pages/transporter.spec.ts)"
-        },
-        {
-          "source": "trace:animals-fit",
-          "ref": "trace-animals-fit-p18-019 to -p18-098"
-        },
-        {
-          "source": "document:dr1-parity-backlog",
-          "ref": "document-dr1-parity-backlog-p8-008 to -p8-017"
-        },
-        {
-          "source": "ruling:sam-2026-10-09-pm",
-          "ref": "ruling-sam-2026-10-09-pm-p2-031 to -p2-038: listing and searching transporters is blocked on transporter requirements"
-        }
-      ],
-      "requirements": [
-        "req-386",
-        "req-387",
-        "req-390",
-        "req-392",
-        "req-397",
-        "req-398",
-        "req-399",
-        "req-470",
-        "req-2172"
-      ],
-      "openQuestions": [
-        "Blocked on transporter requirements: whether the service manages transporters at all, and whether the address book or some other functionality does it (ruling:sam-2026-10-09-pm-p2-031 to -p2-038, c-285). The ruling names nobody to decide it; whoever owns transporter requirements decides, and the transporter area is then worked again.",
-        "Which approved-transporter list the commercial transporters offered on the list come from. The notification data specification leaves it as its one open point and names nobody to settle it; whoever owns transporter requirements decides, and this area is re-distilled then."
-      ],
-      "notes": [
-        "Blocked by ruling:sam-2026-10-09-pm-p2-038 (c-285, precedence). Combines the list page's layout and copy (req-386, req-387, req-392, req-399), its search (req-390), its accessibility gap (req-470) and the shipped records (req-397, req-398): all observed on the one list page. c-057 (precedence): the design's four commercial records replace the two placeholders, so the tests repo must stop picking 'García Livestock Transport SL' by name. The list keeps its real path and form field names (req-1821, already met).",
-        "Re-analysis 27 Oct (main checked at animals-frontend ba85c222 after EUDPA-617 c3183a8e): the block still applies. Design snagging inc-210 merged to main on 23 October, so criterion 5 (search also matching type and status) is already met there (transport/transporters/rows.js searchTextOf), and criterion 3 may be too: transporters.njk now has the search and 'Add a transporter' in a grid row above the fieldset, whose 'Select a transporter' legend is visible and medium. Check both against main when the block lifts and cut what is done. Criteria 1 and 2 then come down to adding the visible sub-heading and making that legend visually hidden. The no-match and filtered accessibility checks are in the fit spec; the error-state one is still missing. Not done: 'Not applicable' and the eight records.",
-        "req-405 (where Save and continue goes from the list in the journey run) left this row in this re-distil: it is a change to the journey's page order, which the journey-foundation branch owns, and it is not blocked, so leaving it here would hold it behind c-285. It is handed to that branch in splitOff.",
-        "Re-distil 2 November: req-2172 (commercial transporters come from the service's approved-transporter list) is added here, where the list's records are built, and it waits on the same transporter requirements this row waits on. It was given to no area, so the combiner drafted its criterion.",
-        "Re-distil 2 November: req-405 (where the transporter list's 'Save and continue' goes in the journey run) leaves this row. The journey's step order is the split-off journey-foundation theme's code, so it is handed to that branch to pick up."
-      ],
-      "gate": "Check the eight shipped transporters on the list and that every E2E journey that picks a transporter now picks one of DR2.1's records: later rows and other areas' journeys rely on these records.",
-      "externalDependsOn": [
-        {
-          "workarea": "shared/design-release-2-1/themes/design-snagging",
-          "id": "inc-210"
-        }
-      ]
-    },
-    {
-      "id": "inc-038",
-      "title": "The transporter type question's copy, and refusing a blank choice",
-      "detail": "The page where a trader picks Commercial or Private before adding a transporter takes the design's warning, legend and button copy, shows the page without the notification status strip as the design does, and holds a trader who continues without choosing, instead of silently storing an empty type and returning to the list. Each add form sends a trader who reaches it without having chosen that type back to this question. Blocked: adding transporters is transporter management, which is not yet settled.",
-      "acceptanceCriteria": [
-        "The transporter type page's warning text reads 'Check the transporter list before adding new transporters to avoid duplicates.' (prototype:dr2-1-source prototype-dr2-1-source-p7-050; prototype:dr2-1-specs prototype-dr2-1-specs-p2-112; trace:prototype-dr2-1 trace-prototype-dr2-1-p9-007)",
-        "The transporter type radios' visually hidden legend reads 'Choose a transporter type'. (prototype:dr2-1-source prototype-dr2-1-source-p7-053; trace:prototype-dr2-1 trace-prototype-dr2-1-p9-008)",
-        "The page's only button reads 'Continue'. (prototype:dr2-1-source prototype-dr2-1-source-p7-058; trace:prototype-dr2-1 trace-prototype-dr2-1-p9-010)",
-        "Continuing with no option chosen keeps the trader on the page with the error 'Select a transporter type' in a 'There is a problem' summary linking to the first option and inline above the radios, and leaves the notification's transporter type as it was. (prototype:dr2-1-source prototype-dr2-1-source-p7-057; prototype:dr2-1-specs prototype-dr2-1-specs-p2-114; trace:prototype-dr2-1 trace-prototype-dr2-1-p9-011, -p9-012)",
-        "A submitted transporter type that is neither Private nor Commercial is refused with 'Select a transporter type'. (prototype:dr2-1-source prototype-dr2-1-source-p7-057; repo:frontend repo-frontend-p12-061; trace:animals-fit trace-animals-fit-p20-014)",
-        "Opening or posting the private transporter form without Private chosen, or the commercial transporter form without Commercial chosen, takes the trader to the transporter type question. (prototype:dr2-1-source prototype-dr2-1-source-p7-061; repo:tests repo-tests-p1-141)",
-        "The transporter list and the commercial transporter form show the notification status strip; the transporter type question and the private transporter form show their page without it. (prototype:dr2-1-source prototype-dr2-1-source-p7-049-m1, -p7-064; trace:prototype-dr2-1 trace-prototype-dr2-1-p9-005-m1)"
-      ],
-      "dependsOn": [],
-      "theme": "transporters",
-      "status": "blocked",
-      "kind": "feat",
-      "repos": [
-        "frontend",
-        "tests"
-      ],
-      "sources": [
-        {
-          "source": "prototype:dr2-1-source",
-          "ref": "prototype-dr2-1-source-p7-049-m1 to -p7-064 (transporter-add.html; routes)"
-        },
-        {
-          "source": "prototype:dr2-1-specs",
-          "ref": "prototype-dr2-1-specs-p2-112, -p2-114"
-        },
-        {
-          "source": "trace:prototype-dr2-1",
-          "ref": "trace-prototype-dr2-1-p9-005-m1 to -p9-012"
-        },
-        {
-          "source": "repo:frontend",
-          "ref": "repo-frontend-p12-056 to -p12-069 (features/transport/transporter-add)"
-        },
-        {
-          "source": "repo:tests",
-          "ref": "repo-tests-p1-135, -p1-141 (page-objects/animals/transporter-add-page.ts; tests/animals/e2e/pages/transporter-add.spec.ts)"
-        },
-        {
-          "source": "trace:animals-fit",
-          "ref": "trace-animals-fit-p20-010 to -p20-014"
-        },
-        {
-          "source": "ruling:sam-2026-10-09-pm",
-          "ref": "ruling-sam-2026-10-09-pm-p2-039: the transporter type question is blocked"
-        }
-      ],
-      "requirements": [
-        "req-416",
-        "req-417",
-        "req-420",
-        "req-421",
-        "req-422",
-        "req-425",
-        "req-427"
-      ],
-      "openQuestions": [
-        "Blocked on transporter requirements: whether the service manages transporters at all, and whether the address book or some other functionality does it (ruling:sam-2026-10-09-pm-p2-031 to -p2-037, -p2-039, c-285). The ruling names nobody to decide it; whoever owns transporter requirements decides, and the transporter area is then worked again."
-      ],
-      "notes": [
-        "Blocked by ruling:sam-2026-10-09-pm-p2-039 (c-285, precedence). Combines the type page's copy (req-416, req-417, req-422), its validation (req-420, req-421), the add forms' guard that sends a trader back to it (req-425) and the status strip left off this page and the private form (req-427, c-053 precedence): one page and its entry guard, reviewed together.",
-        "Unchanged by this re-distil apart from wording: no later ruling touches these requirements."
-      ],
-      "gate": null
-    },
-    {
-      "id": "inc-039",
-      "title": "Saving an added transporter returns to the list with it chosen and a success banner; cancelling goes to the dashboard",
-      "detail": "After adding a private or commercial transporter from the journey, the trader goes back to the transporter list, where the new transporter is the first row, already chosen, under a one-time success banner. Both add forms gain a 'Cancel and return to dashboard' button that abandons the add, and keep what the trader typed if a save was refused and they come back to the form later. Added transporters belong to the organisation, so they stay on its list for later notifications. Blocked: adding transporters is transporter management, which is not yet settled.",
-      "acceptanceCriteria": [
-        "Saving a complete private or commercial transporter from the journey returns the trader to the transporter list, with the new transporter as the first row and already chosen. (prototype:dr2-1-source prototype-dr2-1-source-p7-108, -p7-109; prototype:dr2-1-specs prototype-dr2-1-specs-p2-121, -p2-122; trace:prototype-dr2-1 trace-prototype-dr2-1-p9-039, -p9-041)",
-        "The list then shows a GOV.UK success notification banner titled 'Success' reading '<name> transporter added', the name with only its first letter capitalised, so adding 'Hill Haulage' reads 'Hill haulage transporter added'; with no name it reads 'Transporter added'. (prototype:dr2-1-source prototype-dr2-1-source-p7-045, -p7-046, -p7-047; trace:prototype-dr2-1 trace-prototype-dr2-1-p9-040)",
-        "The banner shows once: reloading the list, or coming back to it later, shows the list with no banner. (prototype:dr2-1-source prototype-dr2-1-source-p7-047)",
-        "Both add forms end with exactly two controls: a primary 'Save and continue' and a secondary 'Cancel and return to dashboard'. (prototype:dr2-1-source prototype-dr2-1-source-p7-081, -p7-082; prototype:dr2-1-specs prototype-dr2-1-specs-p2-123; document:dr1-parity-notes document-dr1-parity-notes-p1-055 to -p1-059)",
-        "'Cancel and return to dashboard' on either add form, even with partial or invalid values entered, shows no error, adds no transporter, leaves the notification's chosen transporter as it was before the add began, and takes the trader to the dashboard, wherever the notifications list lives. (prototype:dr2-1-source prototype-dr2-1-source-p7-083; prototype:dr2-1-specs prototype-dr2-1-specs-p2-123; trace:prototype-dr2-1 trace-prototype-dr2-1-p9-048, -p9-049; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-109)",
-        "Values entered on an add form whose save was refused are shown again in their fields when the trader leaves and later returns to that form, until the form is saved or cancelled. (prototype:dr2-1-source prototype-dr2-1-source-p7-080)"
-      ],
-      "dependsOn": [
-        "inc-037",
-        "inc-038"
-      ],
-      "theme": "transporters",
-      "status": "blocked",
-      "kind": "feat",
-      "repos": [
-        "frontend",
-        "tests"
-      ],
-      "sources": [
-        {
-          "source": "prototype:dr2-1-source",
-          "ref": "prototype-dr2-1-source-p7-045 to -p7-047, -p7-080 to -p7-083, -p7-108, -p7-109"
-        },
-        {
-          "source": "prototype:dr2-1-specs",
-          "ref": "prototype-dr2-1-specs-p2-121 to -p2-123, -p2-131"
-        },
-        {
-          "source": "trace:prototype-dr2-1",
-          "ref": "trace-prototype-dr2-1-p9-039 to -p9-049"
-        },
-        {
-          "source": "document:dr1-parity-notes",
-          "ref": "document-dr1-parity-notes-p1-055 to -p1-059"
-        },
-        {
-          "source": "repo:frontend",
-          "ref": "repo-frontend-p12-069, -p12-114, -p12-116 (features/transport/transporter-details-save.js; services/transporters/register.js)"
-        },
-        {
-          "source": "ruling:sam-2026-10-09",
-          "ref": "ruling-sam-2026-10-09-p1-109: links point wherever the notifications list lives"
-        },
-        {
-          "source": "ruling:sam-2026-10-09-pm",
-          "ref": "ruling-sam-2026-10-09-pm-p2-039: the add pages and what follows a save are blocked"
-        }
-      ],
-      "requirements": [
-        "req-413",
-        "req-414",
-        "req-440",
-        "req-441",
-        "req-442"
-      ],
-      "openQuestions": [
-        "Blocked on transporter requirements: whether the service manages transporters at all, and whether the address book or some other functionality does it (ruling:sam-2026-10-09-pm-p2-031 to -p2-037, -p2-039, c-285). The ruling names nobody to decide it; whoever owns transporter requirements decides, and the transporter area is then worked again."
-      ],
-      "notes": [
-        "Blocked by ruling:sam-2026-10-09-pm-p2-039 (c-285, precedence). Combines what happens when an add form is saved (req-413, req-414), its buttons (req-440), cancelling (req-441) and keeping unsaved values (req-442): the shared save-and-cancel behaviour of the two add forms. c-056 (precedence): the overview return controls stay off the add forms and the design's 'Cancel and return to dashboard' is adopted. The end-to-end journeys that today expect an add to carry the journey on must expect the transporter list. Depends on the list row and the type question row.",
-        "Unchanged by this re-distil apart from wording the fourth criterion as the two controls the forms show rather than the controls they do not."
-      ],
-      "gate": "Look at where a saved add lands, the success banner and the cancel button: the address-book add row and the germinal transporter copy reuse this save-and-cancel behaviour."
-    },
-    {
-      "id": "inc-040",
-      "title": "The private transporter form's heading, country select and required fields",
-      "detail": "The private transporter form takes the design's heading and shows the name field straight under it. Its country select opens on United Kingdom, every option a country name in alphabetical order. A completely blank form is refused, naming every required field, instead of saving nothing and carrying on. Blocked: adding transporters is transporter management, which is not yet settled.",
-      "acceptanceCriteria": [
-        "The private transporter page's heading reads 'Add a private transporter' and its browser title 'Add a private transporter - Import notification service - GOV.UK', under the caption 'Add a new transporter'. (prototype:dr2-1-source prototype-dr2-1-source-p7-062; prototype:dr2-1-specs prototype-dr2-1-specs-p2-115; trace:prototype-dr2-1 trace-prototype-dr2-1-p9-015)",
-        "The first thing under the private transporter page's heading is the name or organisation name field. (prototype:dr2-1-source prototype-dr2-1-source-p7-062; repo:frontend repo-frontend-p12-120; trace:prototype-dr2-1 trace-prototype-dr2-1-p9-015)",
-        "The Country select is a plain select that opens with United Kingdom chosen, and every one of its options is a country name, listed in alphabetical order with United Kingdom in its alphabetical place. (prototype:dr2-1-source prototype-dr2-1-source-p7-072, -p7-073-m1; prototype:dr2-1-specs prototype-dr2-1-specs-p2-117; trace:prototype-dr2-1 trace-prototype-dr2-1-p9-023, -p9-025)",
-        "Saving a completely blank private transporter form keeps the trader on the form, and 'There is a problem' lists 'Enter a name or organisation name', 'Enter address line 1', 'Enter a town or city', 'Enter a postcode or Zip code', 'Enter an email address' and 'Enter a phone number', in that order. (prototype:dr2-1-specs prototype-dr2-1-specs-p2-120; trace:prototype-dr2-1 trace-prototype-dr2-1-p9-031)"
-      ],
-      "dependsOn": [
-        "inc-038"
-      ],
-      "theme": "transporters",
-      "status": "blocked",
-      "kind": "feat",
-      "repos": [
-        "frontend",
-        "tests"
-      ],
-      "sources": [
-        {
-          "source": "prototype:dr2-1-source",
-          "ref": "prototype-dr2-1-source-p7-062, -p7-072, -p7-073-m1 (transporter-add-private.html; transporter-add-private-fields.html)"
-        },
-        {
-          "source": "prototype:dr2-1-specs",
-          "ref": "prototype-dr2-1-specs-p2-115, -p2-117, -p2-120"
-        },
-        {
-          "source": "trace:prototype-dr2-1",
-          "ref": "trace-prototype-dr2-1-p9-015 to -p9-031"
-        },
-        {
-          "source": "repo:frontend",
-          "ref": "repo-frontend-p12-119 to -p12-125 (features/transport/private-transporter-details)"
-        },
-        {
-          "source": "repo:tests",
-          "ref": "repo-tests-p1-141 (page-objects/animals/private-transporter-page.ts)"
-        },
-        {
-          "source": "ruling:sam-2026-10-09-pm",
-          "ref": "ruling-sam-2026-10-09-pm-p2-039: the add pages are blocked"
-        }
-      ],
-      "requirements": [
-        "req-428",
-        "req-429",
-        "req-431",
-        "req-434"
-      ],
-      "openQuestions": [
-        "Blocked on transporter requirements: whether the service manages transporters at all, and whether the address book or some other functionality does it (ruling:sam-2026-10-09-pm-p2-031 to -p2-037, -p2-039, c-285). The ruling names nobody to decide it; whoever owns transporter requirements decides, and the transporter area is then worked again."
-      ],
-      "notes": [
-        "Blocked by ruling:sam-2026-10-09-pm-p2-039 (c-285, precedence). Combines the private form's copy (req-428, req-429), its country select's order and default (req-431) and its blank-form validation (req-434): one form. c-054 (precedence): how the list is presented is not its content, so the UK default and the alphabetical order with no placeholder option are built here, while the list's content is the country-list row's (req-432). The select stays a plain select, not an autocomplete. Depends on the type question row.",
-        "Design snagging merged to main 23 Oct: the empty country option's copy key is now transporterDetails countrySelectText, not countryPlaceholder (transport/copy/copy.en.js and copy.cy.js), and its value is the shared SELECT_A_COUNTRY constant that errors.countryRequired also uses. When the third criterion leaves the select with country names only, remove countrySelectText and keep the countryRequired error. The plants party edit page has a twin key with the same name.",
-        "Unchanged by this re-distil apart from wording the second and third criteria as what the page shows rather than what it no longer shows."
-      ],
-      "gate": null
-    },
-    {
-      "id": "inc-041",
-      "title": "The commercial transporter form's heading, guidance banner, postcode copy and required fields",
-      "detail": "The commercial transporter form takes the design's heading, its 'Important' guidance banner, its 'Postcode or Zip code' wording and its authorisation-number message, and refuses a completely blank form, naming every required field, instead of saving nothing and carrying on. Every address field is still typed by hand. Blocked: adding transporters is transporter management, which is not yet settled.",
-      "acceptanceCriteria": [
-        "The commercial transporter page's heading reads 'Add a commercial transporter' and its browser title 'Add a commercial transporter - Import notification service - GOV.UK', under the caption 'Add a new transporter'. (prototype:dr2-1-source prototype-dr2-1-source-p7-086; prototype:dr2-1-specs prototype-dr2-1-specs-p2-124; trace:prototype-dr2-1 trace-prototype-dr2-1-p9-050)",
-        "The authorisation guidance is a GOV.UK notification banner titled 'Important', whose content opens with the heading 'Help with transporter authorisation'. (prototype:dr2-1-source prototype-dr2-1-source-p7-089; prototype:dr2-1-specs prototype-dr2-1-specs-p2-125; trace:prototype-dr2-1 trace-prototype-dr2-1-p9-053)",
-        "The commercial transporter form's postcode field is labelled 'Postcode or Zip code'. (prototype:dr2-1-source prototype-dr2-1-source-p7-103; trace:prototype-dr2-1 trace-prototype-dr2-1-p9-063; trace:e2e trace-e2e-p11-060)",
-        "A blank postcode on that form shows 'Enter a postcode or Zip code'. (prototype:dr2-1-source prototype-dr2-1-source-p7-103; prototype:dr2-1-specs prototype-dr2-1-specs-p2-130; trace:prototype-dr2-1 trace-prototype-dr2-1-p9-069)",
-        "A postcode over 12 characters on that form shows 'Postcode or Zip code must be 12 characters or less'. (prototype:dr2-1-source prototype-dr2-1-source-p7-103; trace:animals-fit trace-animals-fit-p21-029)",
-        "A blank authorisation number shows 'Enter a transporter authorisation number'. (prototype:dr2-1-source prototype-dr2-1-source-p7-091; prototype:dr2-1-specs prototype-dr2-1-specs-p2-130; trace:prototype-dr2-1 trace-prototype-dr2-1-p9-068)",
-        "Saving a completely blank commercial transporter form keeps the trader on the form, and 'There is a problem' lists 'Enter a transporter authorisation number', 'Enter a name or organisation name', 'Enter address line 1', 'Enter a town or city', 'Enter a postcode or Zip code', 'Enter an email address' and 'Enter a phone number', in that order. (prototype:dr2-1-specs prototype-dr2-1-specs-p2-130; trace:prototype-dr2-1 trace-prototype-dr2-1-p9-067)"
-      ],
-      "dependsOn": [
-        "inc-038"
-      ],
-      "theme": "transporters",
-      "status": "blocked",
-      "kind": "feat",
-      "repos": [
-        "frontend",
-        "tests"
-      ],
-      "sources": [
-        {
-          "source": "prototype:dr2-1-source",
-          "ref": "prototype-dr2-1-source-p7-086 to -p7-103 (transporter-add-commercial.html; transporter-add-commercial-fields.html; transporter-authorisation-banner.html)"
-        },
-        {
-          "source": "prototype:dr2-1-specs",
-          "ref": "prototype-dr2-1-specs-p2-124, -p2-125, -p2-130"
-        },
-        {
-          "source": "trace:prototype-dr2-1",
-          "ref": "trace-prototype-dr2-1-p9-050 to -p9-069"
-        },
-        {
-          "source": "repo:frontend",
-          "ref": "repo-frontend-p12-081 to -p12-105 (features/transport/commercial-transporter-details)"
-        },
-        {
-          "source": "repo:tests",
-          "ref": "repo-tests-p1-138, -p1-139 (page-objects/animals/commercial-transporter-page.ts)"
-        },
-        {
-          "source": "trace:animals-fit",
-          "ref": "trace-animals-fit-p20-024 to -p21-029"
-        },
-        {
-          "source": "ruling:sam-2026-10-09-pm",
-          "ref": "ruling-sam-2026-10-09-pm-p2-039: the add pages are blocked"
-        }
-      ],
-      "requirements": [
-        "req-443",
-        "req-444",
-        "req-447",
-        "req-448",
-        "req-449",
-        "req-450",
-        "req-451"
-      ],
-      "openQuestions": [
-        "Blocked on transporter requirements: whether the service manages transporters at all, and whether the address book or some other functionality does it (ruling:sam-2026-10-09-pm-p2-031 to -p2-037, -p2-039, c-285). The ruling names nobody to decide it; whoever owns transporter requirements decides, and the transporter area is then worked again."
-      ],
-      "notes": [
-        "Blocked by ruling:sam-2026-10-09-pm-p2-039 (c-285, precedence). Combines the commercial form's copy (req-443, req-444, req-447), its changed messages (req-448, req-449, req-450) and its blank-form validation (req-451): one form. A country other than Northern Ireland posted to this form is still refused with today's message (req-455, c-055, already met). The Northern Ireland address search waits in its own row. Depends on the type question row.",
-        "Unchanged by this re-distil apart from wording: no later ruling touches these requirements."
-      ],
-      "gate": null
-    },
-    {
-      "id": "inc-042",
-      "title": "Find a commercial transporter's Northern Ireland address with an address search",
-      "detail": "A trader adding a commercial transporter can search for a Northern Ireland address instead of typing it, and the blank address fields are filled from the address chosen. The search calls the same address lookup as the other address searches and keeps only results whose postcode starts 'BT'. It is built as a search the trader submits, working without JavaScript, with every field still shown. The lookup stub gains Northern Ireland addresses so the search and the fill can be seen in the fit suites and on the local stack. Blocked twice: on the address lookup becoming a real feature, and on transporter management being settled.",
-      "acceptanceCriteria": [
-        "In the fit suites, on the local stack and in CDP dev, the commercial transporter form offers an address search labelled 'Search for an address' with the placeholder 'Start typing...' and a search icon button named 'Search', and lists the addresses found under 'Address search results'. (prototype:dr2-1-source prototype-dr2-1-source-p7-093, -p7-094, -p7-098; prototype:dr2-1-specs prototype-dr2-1-specs-p2-127; trace:prototype-dr2-1 trace-prototype-dr2-1-p9-059)",
-        "Every address the search lists has a postcode starting 'BT': in the fit suites and on the local stack the results are the lookup stub's Northern Ireland addresses, and in CDP dev they are the lookup's results whose postcode starts 'BT'. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-178 to -p1-187)",
-        "The lookup stub holds Northern Ireland addresses with 'BT' postcodes and returns them for a search, so the search and the fill can be seen in the fit suites and on the local stack. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-178 to -p1-187)",
-        "Choosing an address from the results fills address line 1, address line 2, town or city and postcode wherever the trader left the field blank, from what the lookup returns, and leaves the name, the county and every field the trader filled as they were. (prototype:dr2-1-source prototype-dr2-1-source-p7-095; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-180; trace:prototype-dr2-1 trace-prototype-dr2-1-p9-060)"
-      ],
-      "dependsOn": [
-        "inc-041"
-      ],
-      "theme": "transporters",
-      "status": "blocked",
-      "kind": "feat",
-      "repos": [
-        "insbackend",
-        "stub",
-        "frontend",
-        "tests"
-      ],
-      "sources": [
-        {
-          "source": "prototype:dr2-1-source",
-          "ref": "prototype-dr2-1-source-p7-093 to -p7-098 (transporter-add-commercial-fields.html)"
-        },
-        {
-          "source": "prototype:dr2-1-specs",
-          "ref": "prototype-dr2-1-specs-p2-127, -p2-132"
-        },
-        {
-          "source": "trace:prototype-dr2-1",
-          "ref": "trace-prototype-dr2-1-p9-059, -p9-060, -p9-077"
-        },
-        {
-          "source": "ruling:sam-2026-10-09",
-          "ref": "ruling-sam-2026-10-09-p1-178 to -p1-187: address search waits on the lookup; Northern Ireland stub addresses"
-        },
-        {
-          "source": "ruling:sam-2026-10-09-pm",
-          "ref": "ruling-sam-2026-10-09-pm-p2-041: blocked on the lookup and on transporter management"
-        },
-        {
-          "source": "repo:frontend",
-          "ref": "repo-frontend-p12-080 (features/transport/commercial-transporter-details, no address search today)"
-        }
-      ],
-      "requirements": [
-        "req-456",
-        "req-457",
-        "req-1819"
-      ],
-      "openQuestions": [
-        "Blocked: the address lookup must become a real feature first. Today only the EUDPA-390 address lookup spike exists, gated to dev and local on a standalone page and not wired in. Whoever builds address search must land it (ruling:sam-2026-10-09, c-217, c-218).",
-        "Blocked on transporter requirements too: whether the service manages transporters at all, and whether the address book or some other functionality does it (ruling:sam-2026-10-09-pm-p2-031 to -p2-037, -p2-041, c-285). The ruling names nobody to decide it; the transporter area is worked again once both land."
-      ],
-      "notes": [
-        "Combines the search (req-456), the fill from a chosen address (req-457) and the lookup stub's Northern Ireland addresses (req-1819): one widget and the stub data that makes it observable. c-218 (precedence): the search calls the same address lookup as the other searches and keeps only BT postcodes. Per c-305 the search is a form with a submit button that works without JavaScript and every field stays visible (req-2105, already met, must stay met). The JavaScript version that hides the fields behind the search is in the waiting-on-design row. Depends on the commercial form row.",
-        "Coherence (19 Oct): build the 'Search for an address' box with design-snagging inc-210's server search control (the same icon button and blue), so the service has one search look.",
-        "Re-analysis 27 Oct (main checked at animals-frontend ba85c222 after EUDPA-617 c3183a8e): both blocks still apply. ins-frontend main adds the address-lookup spike routes only in dev or local, and the address-book theme's real-lookup rows are themselves blocked.",
-        "Criteria are written per environment because the address lookup is set up only on the local stack and in CDP dev (c-217); nothing here claims the search works in CDP test."
-      ],
-      "gate": null,
-      "externalDependsOn": [
-        {
-          "workarea": "shared/design-release-2-1/themes/design-snagging",
-          "id": "inc-210"
-        }
-      ]
-    },
-    {
-      "id": "inc-044",
-      "title": "Remove the unlinked approved commercial transporter register page",
-      "detail": "The old 'Search for an approved commercial transporter' page can still be opened by its address though nothing links to it, and it writes the transporter inconsistently with the transporter list. Removing it, with its tests, leaves one way to choose a transporter: the transporter list. Blocked: the removal waits with the rest of transporter management.",
-      "acceptanceCriteria": [
-        "Opening the notification's register page address shows the service's page not found. (prototype:dr2-1-source prototype-dr2-1-source-p7-059, -p7-060; repo:frontend repo-frontend-p12-071; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-112)",
-        "Choosing a commercial transporter from the transporter list still saves it with its type. (trace:animals-fit trace-animals-fit-p18-062; trace:e2e trace-e2e-p11-078)"
-      ],
-      "dependsOn": [],
-      "theme": "transporters",
-      "status": "blocked",
-      "kind": "chore",
-      "repos": [
-        "frontend",
-        "tests"
-      ],
-      "sources": [
-        {
-          "source": "prototype:dr2-1-source",
-          "ref": "prototype-dr2-1-source-p7-059, -p7-060"
-        },
-        {
-          "source": "repo:frontend",
-          "ref": "repo-frontend-p12-071 to -p12-078 (features/transport/transporters-select; page.js)"
-        },
-        {
-          "source": "repo:tests",
-          "ref": "repo-tests-p1-143 to -p1-147-m1 (page-objects/animals/transporter-selection-page.ts; tests/animals/e2e/pages/transporter-selection.spec.ts; flows/animals/journey.ts)"
-        },
-        {
-          "source": "trace:e2e",
-          "ref": "trace-e2e-p11-078 to -p11-084, -p11-096"
-        },
-        {
-          "source": "ruling:sam-2026-10-09-pm",
-          "ref": "ruling-sam-2026-10-09-pm-p2-042: this row is blocked"
-        },
-        {
-          "source": "jira:EUDPA-739",
-          "ref": "To Do: orphaned page 'Search for an approved commercial transporter'"
-        }
-      ],
-      "requirements": [
-        "req-472"
-      ],
-      "openQuestions": [
-        "Blocked on transporter requirements: whether the service manages transporters at all, and whether the address book or some other functionality does it (ruling:sam-2026-10-09-pm-p2-031 to -p2-037, -p2-042, c-285). The ruling names nobody to decide it; whoever owns transporter requirements decides, and the transporter area is then worked again."
-      ],
-      "notes": [
-        "Blocked by ruling:sam-2026-10-09-pm-p2-042 (c-285): the row stays, blocked. Kept apart: it removes a whole page with its end-to-end spec, page object and journey helper.",
-        "Re-analysis 27 Oct (main checked at animals-frontend ba85c222 after EUDPA-617 c3183a8e): ticket EUDPA-739 recorded, and its scope matches the first criterion and names the parts to remove: the controller, template, copy, route, section caption entry and tests (transport/transporters-select/, transport/page.js, transport/copy/copy.en.js, features/index.js, flow section-captions test, contract test; tests repo page-objects/animals/transporter-selection-page.ts and tests/animals/e2e/pages/transporter-selection.spec.ts). The block still applies: no later ruling settles transporter requirements, so the ticket is new evidence, not an unblock.",
-        "The removal also touches the journey flow's section captions and the transport copy folder, which the journey-foundation and design-snagging branches own: the plan must take whatever those branches have landed by then."
-      ],
-      "gate": null,
-      "ticket": "EUDPA-739"
     },
     {
       "id": "inc-045",
@@ -3346,7 +2929,7 @@
     },
     {
       "id": "inc-053",
-      "title": "Germinal identification dates and donor: single text inputs with V4's date and length checks",
+      "title": "Germinal identification dates and donor: text inputs with the 'Choose date' calendar, and V4's date and length checks",
       "detail": "On the germinal identification page the collection and production dates are each a single text input with an example hint, working without JavaScript. The donor name or identification and the identification number or mark are each capped at 58 characters, each date must be given as a day, month and four-digit year and must be a real date, and nothing else is checked: any real date, past or future, is accepted, a one- or two-digit day and month are accepted, and the production date is never compared with the collection date. Errors are listed in field order, each linked to its own field. On the germinal products set's copy of the identification page, the collection and production dates are each a single text input with the hint 'For example, 27/03/2026', which works without JavaScript. No range rule applies to either date, and the production date is not checked against the collection date. A date in the wrong form, a date that is not real, and an identification number or mark over 58 characters are each refused with their own message, in the error summary and inline on the field.",
       "acceptanceCriteria": [
         "On the germinal identification page 'Collection date' and 'Production date' are each a single text input with the hint 'For example, 27/03/2026', and both can be typed in and saved with JavaScript turned off, reading back as typed. (prototype:dr2-1-source prototype-dr2-1-source-p5-020; prototype:dr2-1-specs prototype-dr2-1-specs-p2-055; trace:prototype-dr2-1 trace-prototype-dr2-1-p5-073, -p5-074; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-091; c-283)",
@@ -3367,7 +2950,9 @@
         "A 'Collection date' of 99/99/2026 shows 'Collection date must be a real date' in the error summary and inline on the field. (prototype:dr2-1-source prototype-dr2-1-source-p5-030)",
         "A 'Production date' of 31/02/2026 shows 'Production date must be a real date' in the error summary and inline on the field. (prototype:dr2-1-source prototype-dr2-1-source-p5-030)",
         "When a germinal save fails any of these rules, nothing is saved: opening the page again shows the values saved before, while the failing response keeps what was typed in the form. (repo:frontend repo-frontend-p6-073; conflicts:c-039)",
-        "The germinal page's Welsh copy holds a machine-draft Welsh entry for the date hint and for each of these messages, and stays not shown to users. (repo:frontend repo-frontend-p6-100)"
+        "The germinal page's Welsh copy holds a machine-draft Welsh entry for the date hint and for each of these messages, and stays not shown to users. (repo:frontend repo-frontend-p6-100)",
+        "Each germinal date field has a 'Choose date' toggle opening a month grid with previous and next year and month buttons, 'Select' and 'Close', and picking a day fills that date's text input; with JavaScript off the text input works as before. (trace:prototype-dr2-1 trace-prototype-dr2-1-p5-076; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-044, -p1-045, -p1-092; c-283; ruling:interaction-designer-2026-11-09; ruling:sam-2026-11-10)",
+        "The calendar is the Ministry of Justice date picker the live animals dates use, styled as design snagging inc-206 left them: the blue 'Choose date' button and the calendar opening in the page. (ruling:interaction-designer-2026-11-09 point 6; design-snagging inc-206; ruling:sam-2026-11-10)"
       ],
       "dependsOn": [
         "inc-052"
@@ -3423,6 +3008,14 @@
         {
           "source": "repo:frontend",
           "ref": "animal-identification.controller.js:110-135, copy/copy.cy.js (repo-frontend-p6-073, p6-100)"
+        },
+        {
+          "source": "ruling:sam-2026-11-10",
+          "ref": "Decided 1: the calendar merges in from inc-192"
+        },
+        {
+          "source": "ruling:interaction-designer-2026-11-09",
+          "ref": "point 6: keep the MOJ date picker"
         }
       ],
       "requirements": [
@@ -3440,19 +3033,25 @@
         "req-256",
         "req-257",
         "req-258",
-        "req-259"
+        "req-259",
+        "req-253"
       ],
       "openQuestions": [],
       "notes": [
         "Combines the drafts of the germinal-products, animal-identification areas for this row: they change the same pages, record and journey, so building them apart would repeat the same set-up, review and ladder.",
-        "existingRow inc-053, which already holds this area's req-254, req-260, req-1797 and req-2097 to req-2102 beside the animal-identification area's req-252 and req-255 to req-259 (the same inputs and messages, stated from that area), with their nothing-saved-on-failure, no-JavaScript and Welsh criteria. The combiner keeps inc-053's id, theme and dependency on inc-052 and merges these criteria with the ones already there; req-2097 to req-2102 are the cross-area pass's germinal restatements of req-252 and req-255 to req-259, so one criterion each covers both. Combines the single-text-input dates (req-2097), the length errors (req-254, req-2098), the date format and real-date errors (req-2099 to req-2102), the date leniency (req-260) and the error order (req-1797): the same page and the same validation, proved by one germinal walk. c-283 (ruled): the dates are single text inputs now, and the 'Choose date' calendar (req-253) is its own blocked row. Build the two dates as plain GOV.UK text inputs rather than the shared date field, whose house calendar the germinal dates are not yet to have. The dates are stored as entered, so this row needs no record change beyond the storage the identification page row lands.",
+        "existingRow inc-053, which already holds this area's req-254, req-260, req-1797 and req-2097 to req-2102 beside the animal-identification area's req-252 and req-255 to req-259 (the same inputs and messages, stated from that area), with their nothing-saved-on-failure, no-JavaScript and Welsh criteria. The combiner keeps inc-053's id, theme and dependency on inc-052 and merges these criteria with the ones already there; req-2097 to req-2102 are the cross-area pass's germinal restatements of req-252 and req-255 to req-259, so one criterion each covers both. Combines the single-text-input dates (req-2097), the length errors (req-254, req-2098), the date format and real-date errors (req-2099 to req-2102), the date leniency (req-260) and the error order (req-1797): the same page and the same validation, proved by one germinal walk. c-283 (ruled): the dates are single text inputs, enhanced by the 'Choose date' calendar (req-253, merged in from inc-192 by ruling:sam-2026-11-10). The dates are stored as entered, so this row needs no record change beyond the storage the identification page row lands.",
         "A thin slice, not a row to keep alone. Combiner: req-252 and req-255 to req-259 already sit in inc-053 with the germinal-products area's sibling requirements for the same page and fields (the donor length, the date leniency and the error order), so merge this draft into inc-053, keeping its id and the germinal-products theme. Building it apart would repeat the germinal page set-up, review and walk.",
         "Observable only once the germinal products set's identification page exists, which the germinal-products area's row for that page creates (inc-052), so this slice lands after it.",
-        "The 'Choose date' calendar is a separate requirement waiting on design (inc-192 in waiting-on-design), so this slice is not held up by it. Build the two dates as plain GOV.UK text inputs, not with the shared date field, which always carries the house calendar. The hint 'For example, 27/03/2026' is the prototype's germinal wording; the service's other date hints read '27/3/2026'.",
+        "The 'Choose date' calendar (req-253) was merged in from inc-192 by ruling:sam-2026-11-10: germinal products follow live animals and are not a design question. Build the two dates with the shared date field, so they carry the house MOJ calendar the live animals dates have. The hint 'For example, 27/03/2026' is the prototype's germinal wording; the service's other date hints read '27/3/2026'.",
         "Dates are stored as entered, so this slice needs no backend change beyond the storage inc-052 builds."
       ],
       "gate": null,
-      "externalDependsOn": []
+      "externalDependsOn": [
+        {
+          "workarea": "shared/design-release-2-1/themes/design-snagging",
+          "id": "inc-206"
+        }
+      ]
     },
     {
       "id": "inc-054",
@@ -3807,262 +3406,6 @@
       "externalDependsOn": []
     },
     {
-      "id": "inc-074",
-      "title": "Choosing Transporter when adding to the address book hands over to adding a transporter",
-      "detail": "A trader who keeps transporters alongside their addresses needs to add one from the same place they add an address. 'Choose an address type' therefore offers 'Transporter' as well, and choosing it leaves the address form behind and opens the add-a-transporter pages, which start by asking what kind of transporter it is. Nobody has yet decided whether the service manages transporters at all, or whether the address book or something else does, so this waits: the option would otherwise lead nowhere. A trader who starts adding a transporter from the address book goes through the same add-a-transporter pages, but they lead back to the address book rather than into a notification: the Back link returns to the address book's add page, the cancel button offers a return to the address book, and a save puts the new transporter at the top of the address book's transporter list, held as the organisation's. Blocked: the address book's transporter rows wait on transporter management being settled. Once it is decided that the address book manages transporters, the address types a trader chooses from when adding an address include 'Transporter', so a transporter can be added to the book alongside the other parties. It is blocked with the rest of transporter management: offering the type with nowhere to add a transporter leads nowhere.",
-      "acceptanceCriteria": [
-        "'Choose an address type' offers the radio 'Transporter' with the hint 'Private, Commercial', listed third, before 'Branch' (prototype:dr2-1-source p16-008; trace:prototype-dr2-1 p16-042; prototype:dr2-1-specs p6-110)",
-        "On the compose stack and in CDP, choosing 'Transporter' and continuing leaves the address book's add and opens the add-a-transporter page, wherever transporter records and their pages are kept; reached that way, that page's 'Back' link returns to 'Choose an address type' (prototype:dr2-1-source p16-017; trace:prototype-dr2-1 p16-048, p16-052; prototype:dr2-1-specs p6-148; ruling:sam-2026-10-09 p1-093)",
-        "That page shows the caption 'Add a new transporter' and the heading and page title 'Choose a transporter type' (trace:prototype-dr2-1 p16-049; prototype:dr2-1-specs p6-148)",
-        "That page shows the warning 'Check the transporter list before adding new transporters to avoid duplicates.' (trace:prototype-dr2-1 p16-050)",
-        "That page offers the radios 'Private transporter' and 'Commercial', the second with the hint 'This can only be a commercial transporter from Northern Ireland.', and a 'Continue' button (trace:prototype-dr2-1 p16-051, p16-051-m1)",
-        "When adding a transporter was started from the address book, the transporter type question's Back link goes to the address book's add page. (prototype:dr2-1-source prototype-dr2-1-source-p7-051)",
-        "When adding a transporter was started from the address book, both add forms' cancel button reads 'Cancel and return to address book' and goes to the address book filtered to transporters, adding no transporter. (prototype:dr2-1-source prototype-dr2-1-source-p7-082, -p7-083)",
-        "When adding a transporter was started from the address book, saving shows the address book's success message and the address book filtered to transporters, with the new transporter at the top carrying its type label (Private or Commercial), its address, its approval number, its country and its contact details. (prototype:dr2-1-source prototype-dr2-1-source-p7-110, -p7-111)",
-        "That new transporter is found by an address book search for its name, its type, its address, its approval number or its country. (prototype:dr2-1-source prototype-dr2-1-source-p7-112)",
-        "A transporter added from the address book is on the transporter list of the organisation's next notification, ready to pick. (repo:frontend repo-frontend-p12-146; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-093)",
-        "Adding an address offers the address type 'Transporter', after 'Place of Destination' and before the divider, with the hint 'This is the person or company responsible for transporting the consignment.' (prototype:dr2-1-source prototype-dr2-1-source-p15-110; repo:tests repo-tests-p5-095; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-044)"
-      ],
-      "dependsOn": [
-        "inc-038",
-        "inc-039"
-      ],
-      "theme": "transporters",
-      "status": "blocked",
-      "kind": "feat",
-      "repos": [
-        "addressbook",
-        "insfrontend",
-        "frontend",
-        "tests"
-      ],
-      "sources": [
-        {
-          "source": "prototype:dr2-1-source",
-          "ref": "p16-008, p16-017"
-        },
-        {
-          "source": "trace:prototype-dr2-1",
-          "ref": "p16-042, p16-048 to p16-052, p16-051-m1"
-        },
-        {
-          "source": "prototype:dr2-1-specs",
-          "ref": "p6-110, p6-148"
-        },
-        {
-          "source": "ruling:sam-2026-10-09",
-          "ref": "p1-066, p1-093: which service owns transporter records, and the posted field names, follow the real services"
-        },
-        {
-          "source": "ruling:sam-2026-10-09-pm",
-          "ref": "p2-031 to p2-037, p2-041, p2-044: transporter management waits on requirements, and the type choice leaves Transporter out until it is decided"
-        },
-        {
-          "source": "repo:addressbook",
-          "ref": "p1-054"
-        },
-        {
-          "source": "prototype:dr2-1-source",
-          "ref": "prototype-dr2-1-source-p7-051, -p7-082, -p7-083, -p7-110 to -p7-112"
-        },
-        {
-          "source": "ruling:sam-2026-10-09",
-          "ref": "ruling-sam-2026-10-09-p1-093: which service owns transporter records follows the real services"
-        },
-        {
-          "source": "ruling:sam-2026-10-09-pm",
-          "ref": "ruling-sam-2026-10-09-pm-p2-031, -p2-043: the address book's transporter rows are blocked"
-        },
-        {
-          "source": "repo:frontend",
-          "ref": "repo-frontend-p12-146 (services/transporters/register.js)"
-        },
-        {
-          "source": "prototype:dr2-1-source",
-          "ref": "prototype-dr2-1-source-p15-110 (the Transporter type and its hint)"
-        },
-        {
-          "source": "repo:tests",
-          "ref": "repo-tests-p5-095 (a stored address record carries no type today)"
-        },
-        {
-          "source": "ruling:sam-2026-10-09-pm",
-          "ref": "ruling-sam-2026-10-09-pm-p2-031 to p2-035, p2-044 (Transporter stays out of the address type choice until transporter management is decided)"
-        }
-      ],
-      "requirements": [
-        "req-1198",
-        "req-1203",
-        "req-1204",
-        "req-1205",
-        "req-1206",
-        "req-461",
-        "req-462",
-        "req-463",
-        "req-2042"
-      ],
-      "openQuestions": [
-        "Blocked on transporter management (ruling:sam-2026-10-09-pm p2-031 to p2-037, p2-041, p2-044; c-306): it must be decided whether the service manages transporters at all and, if so, whether the address book or something else does. The ruling names nobody to decide it or when, so whoever owns transporter requirements decides, and the transporter area and this row are re-distilled once they have. No safe default: offering the option with nowhere to add a transporter leads nowhere.",
-        "Where the add-a-transporter pages live, and which service holds transporter records, follow the real services once transporter management is decided (ruling:sam-2026-10-09 p1-093), so no criterion names a route, a field or a path.",
-        "Blocked on transporter requirements: whether the service manages transporters at all, and whether the address book or some other functionality does it (ruling:sam-2026-10-09-pm-p2-031 to -p2-037, -p2-043, c-285, c-306). The ruling names nobody to decide it. No safe default: offering Transporter in the address book with nowhere to add one leads nowhere.",
-        "The product owner decides whether the service manages transporters and, if so, whether in the address book (ruling:sam-2026-10-09-pm, transporter management, ruling-sam-2026-10-09-pm-p2-031 to p2-035, p2-044); the transporter area is then re-distilled. No safe default: offering Transporter with nowhere to add one leads nowhere."
-      ],
-      "notes": [
-        "Combines the drafts of the address-book-add-and-edit, transporters, address-book-list areas for this row: they change the same pages, record and journey, so building them apart would repeat the same set-up, review and ladder.",
-        "Combines this area's five transporter slices into the one route a trader walks: the Transporter option on the type page (req-1198), the hand-over off the address form (req-1203) and the add-a-transporter type page's caption, warning and radios (req-1204 to req-1206). Building them apart would repeat the same set-up, review and ladder on one journey that is blocked as a whole.",
-        "Combiner: merge into the existing blocked row inc-074 and keep its id, its transporters theme, its dependsOn (inc-038, inc-039) and its externalDependsOn on the address-book split workarea (inc-061, inc-067) exactly as they are: the Transporter radio goes on the 'Choose an address type' page that the split-off address-book branch owns, so this row reaches that code only through those external dependencies and must not list it in touches.",
-        "Combiner: merge with the transporters area's draft for the same row (req-461 to req-463, the Back link, cancel and save on the address-book route, still adopted and blocked) and the address-book-list area's draft (req-2042, the Transporter option's place in the type list), as inc-074 already does; add addressbook to repos if one of those drafts keeps a record change, which none of this area's five requirements needs.",
-        "Two placements of the Transporter option are still in play: this area's req-1198 puts it third, before 'Branch', and req-2042 (another area) puts it after 'Place of Destination' and before the divider. The merged row must keep one, checked against the three-option type page the address-book branch builds. Flagged on the last re-distil and still unresolved.",
-        "Still blocked after this re-distil: the 9 October afternoon ruling's block stands unchanged (c-306 names nothing overruled), so only the wording moved - the release name and the source-matching phrases came out of the title, detail and criteria.",
-        "repos is in merge order: the add-a-transporter pages live in the animals frontend today, the INS front door links to them, and the end-to-end suite exercises both.",
-        "Blocked by ruling:sam-2026-10-09-pm-p2-043 (c-285). Combines the address-book entry route's Back link (req-461), cancel (req-462) and save (req-463): one alternative route through the same add pages. Combiner: merge into the existing blocked row inc-074 with the address-book-add-and-edit area's draft, as the backlog already does, keeping its id and its transporters theme: one route from the address book's type page through the add-a-transporter pages and back. Which service owns transporter records and where their pages live follow the real services, so no criterion names a field or a path. repos lists addressbook and insfrontend before frontend because the record and the address book pages are the providers. Depends on the type question row and the save-and-cancel row.",
-        "Unchanged by this re-distil apart from wording: no later ruling touches these three requirements.",
-        "This area's only share of the existing blocked row inc-074 (choosing Transporter when adding to the address book hands over to adding a transporter), which already holds req-2042. Combiner: merge this into inc-074 with the address-book-add-and-edit and transporters areas' drafts, keeping inc-074's id, its transporters theme and its repos, rather than keeping a second row. The existing row's note of 27 October asks that its first criterion ('listed third, before Branch') and its last ('after Place of Destination and before the divider') be checked against the split address-book branch's type page, which has three options, and that one be kept: this draft keeps only the 'after Place of Destination and before the divider' placing, which is the one req-2042 states. Still blocked: the 26 October ruling says nothing about transporters. Waits on the address book split branch's type-choice row (externalDependsOn on shared/design-release-2-1/themes/address-book inc-061)."
-      ],
-      "gate": null,
-      "externalDependsOn": [
-        {
-          "workarea": "shared/design-release-2-1/themes/address-book",
-          "id": "inc-061"
-        },
-        {
-          "workarea": "shared/design-release-2-1/themes/address-book",
-          "id": "inc-067"
-        }
-      ]
-    },
-    {
-      "id": "inc-075",
-      "title": "Transporter tab: transporters listed with approval number and type, and filtered by type",
-      "detail": "Once it is decided that the address book manages transporters, the address book list gains a Transporter tab between 'Destination, Consignee and Importer' and 'Branch', headed 'Transporter addresses', with its own columns (Name, Address, Approval number and Type) and a Type filter of 'Commercial' and 'Private', so a trader can see and narrow the organisation's transporters in the same place as its other addresses. It is blocked with the rest of transporter management: nobody has decided whether the service manages transporters at all, or, if it does, whether the address book or something else does.",
-      "acceptanceCriteria": [
-        "The address book list shows a 'Transporter' tab between 'Destination, Consignee and Importer' and 'Branch', headed 'Transporter addresses', holding the organisation's addresses of the transporter type (prototype:dr2-1-source prototype-dr2-1-source-p15-022 to prototype-dr2-1-source-p15-024; trace:prototype-dr2-1 trace-prototype-dr2-1-p16-006, trace-prototype-dr2-1-p16-031; prototype:dr2-1-specs prototype-dr2-1-specs-p6-088, prototype-dr2-1-specs-p6-097)",
-        "Such an address's Type column reads 'Transporter' on the tabs that show a Type column (prototype:dr2-1-source prototype-dr2-1-source-p15-024; trace:prototype-dr2-1 trace-prototype-dr2-1-p16-031)",
-        "On the Transporter tab the table's columns are Name, Address, Approval number and Type, then the action column with no visible heading; the address's last line carries the country, an approval number reads in the form 'RO/BUCHAREST/T1/00092010', and Type reads 'Commercial' or 'Private' (prototype:dr2-1-source prototype-dr2-1-source-p15-031, prototype-dr2-1-source-p15-036; trace:prototype-dr2-1 trace-prototype-dr2-1-p16-032 to trace-prototype-dr2-1-p16-035, trace-prototype-dr2-1-p16-132; prototype:dr2-1-specs prototype-dr2-1-specs-p6-098)",
-        "On the Transporter tab the Type filter offers 'Select one', 'Commercial' and 'Private', and the list it returns holds, across the whole category and filtered on the server, every transporter whose transporter type equals the choice (prototype:dr2-1-source prototype-dr2-1-source-p15-017; trace:prototype-dr2-1 trace-prototype-dr2-1-p16-024; repo:addressbook repo-addressbook-p3-046)",
-        "With Welsh selected, the Transporter tab, its heading, its column headings and its Type filter options show their Welsh copy (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p2-045)",
-        "On the address book's transporter tab, the search matches a transporter's approval number as well as its name, town or city and postcode, so entering an approval number finds that transporter. (prototype:dr2-1-source prototype-dr2-1-source-p15-020; repo:insfrontend repo-insfrontend-p2-070; repo:addressbook repo-addressbook-p3-032)"
-      ],
-      "dependsOn": [
-        "inc-074"
-      ],
-      "theme": "transporters",
-      "status": "blocked",
-      "kind": "feat",
-      "repos": [
-        "addressbook",
-        "insfrontend",
-        "tests"
-      ],
-      "sources": [
-        {
-          "source": "prototype:dr2-1-source",
-          "ref": "prototype-dr2-1-source-p15-017, p15-022 to p15-024, p15-031, p15-036"
-        },
-        {
-          "source": "trace:prototype-dr2-1",
-          "ref": "trace-prototype-dr2-1-p16-006, p16-024, p16-031 to p16-035, p16-132"
-        },
-        {
-          "source": "prototype:dr2-1-specs",
-          "ref": "prototype-dr2-1-specs-p6-088, p6-097, p6-098"
-        },
-        {
-          "source": "repo:addressbook",
-          "ref": "repo-addressbook-p3-046 (the list API filters on q and countryCode only, with no type filter)"
-        },
-        {
-          "source": "ruling:sam-2026-10-09-pm",
-          "ref": "ruling-sam-2026-10-09-pm-p2-031 to p2-035, p2-041, p2-043, p2-045 (transporter management blocked; the Transporter tab, its columns and its Welsh wait)"
-        }
-      ],
-      "requirements": [
-        "req-2040",
-        "req-1135",
-        "req-2041",
-        "req-2198"
-      ],
-      "openQuestions": [
-        "The product owner decides whether the service manages transporters and, if so, whether in the address book (ruling:sam-2026-10-09-pm, transporter management, ruling-sam-2026-10-09-pm-p2-031 to p2-035, p2-041, p2-043); the transporter area is then re-distilled and this row rewritten to that decision. No safe default: a Transporter tab with no transporter entries behind it would show an empty, unreachable category."
-      ],
-      "notes": [
-        "Combines the Transporter tab (req-2040), its columns (req-1135) and its Type filter (req-2041): one tab, one blocker, one set-up. Rewrite of the existing blocked row inc-075, keeping its id. Still blocked: the 26 October ruling says nothing about transporters, so ruling:sam-2026-10-09-pm's block stands, and this re-distil only restates the requirements and renumbers the afternoon ruling's claims. Two changes from the existing row's text: its 'Search on the Transporter tab finds a transporter by part of its approval number' criterion is dropped, because no requirement here states it and the search requirement it leaned on (req-1119, held by the address-book split) matches on name, type labels, address lines and country name, not on an approval number; and 'with no Country column' is replaced by naming the four columns and the action column exactly, which proves the same thing positively. Whether a transporter's approval number becomes searchable is for the re-distil after the transporter decision. The category and type query parameter names are the INS service's to choose, so no criterion names one. Waits on the address book split branch's tabs and search rows (externalDependsOn on shared/design-release-2-1/themes/address-book inc-067 and inc-069) and on the add-a-transporter row.",
-        "Re-distil 2 November: req-2198 (the search also matches a transporter's approval number) is added here, where the transporter tab's list and search are built, and it waits on the same decision about transporter management. It was given to no area, so the combiner drafted its criterion."
-      ],
-      "gate": null,
-      "externalDependsOn": [
-        {
-          "workarea": "shared/design-release-2-1/themes/address-book",
-          "id": "inc-069"
-        }
-      ]
-    },
-    {
-      "id": "inc-076",
-      "title": "Each transporter on the list links to its details page",
-      "detail": "A trader should be able to check a transporter's full record before choosing it. Once the service holds transporter records with a details page, each row of the transporter list ends with a 'View details' link to that transporter's details page, which brings the trader back to the transporter list they came from. The details page lives where the service holds transporter records, in its own conventions. Blocked: it needs transporter records with a details page, which waits on transporter management being settled.",
-      "acceptanceCriteria": [
-        "Each row of the transporter list ends with a 'View details' link whose visually hidden text names that transporter. (prototype:dr2-1-source prototype-dr2-1-source-p7-026; trace:prototype-dr2-1 trace-prototype-dr2-1-p8-089, -p8-089-m1)",
-        "Following a transporter's 'View details' opens that transporter's details page showing its record, and its Back link returns to the same notification's transporter list. (trace:prototype-dr2-1 trace-prototype-dr2-1-p8-090, -p9-047; prototype:dr2-1-specs prototype-dr2-1-specs-p2-106; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-070, -p1-093)"
-      ],
-      "dependsOn": [
-        "inc-074",
-        "inc-075",
-        "inc-037"
-      ],
-      "theme": "transporters",
-      "status": "blocked",
-      "kind": "feat",
-      "repos": [
-        "insfrontend",
-        "frontend",
-        "tests"
-      ],
-      "sources": [
-        {
-          "source": "prototype:dr2-1-source",
-          "ref": "prototype-dr2-1-source-p7-026"
-        },
-        {
-          "source": "trace:prototype-dr2-1",
-          "ref": "trace-prototype-dr2-1-p8-089, -p8-089-m1, -p8-090, -p9-047"
-        },
-        {
-          "source": "prototype:dr2-1-specs",
-          "ref": "prototype-dr2-1-specs-p2-106"
-        },
-        {
-          "source": "ruling:sam-2026-10-09",
-          "ref": "ruling-sam-2026-10-09-p1-070, -p1-093: the details page in the real services' conventions"
-        },
-        {
-          "source": "ruling:sam-2026-10-09-pm",
-          "ref": "ruling-sam-2026-10-09-pm-p2-043: this row is blocked"
-        },
-        {
-          "source": "repo:frontend",
-          "ref": "repo-frontend-p12-029 (features/transport/transporters, no action column today)"
-        }
-      ],
-      "requirements": [
-        "req-394"
-      ],
-      "openQuestions": [
-        "Blocked on transporter requirements: whether the service manages transporters at all, and whether the address book or some other functionality does it (ruling:sam-2026-10-09-pm-p2-031 to -p2-037, -p2-043, c-285). Until it is decided there is no transporter details page for the link to open."
-      ],
-      "notes": [
-        "Blocked by ruling:sam-2026-10-09-pm-p2-043 (c-285). Kept apart: it needs transporter records with a details page (the address-book rows it depends on) and the reshaped list. The requirement itself says the link is built only once such a details page exists and that until then the list carries no action column, so the row cannot be split into a link now and a page later. c-052 (precedence): the link is adopted, against the parity backlog's claim that it waited.",
-        "Unchanged by this re-distil apart from wording."
-      ],
-      "gate": null,
-      "externalDependsOn": [
-        {
-          "workarea": "shared/design-release-2-1/themes/address-book",
-          "id": "inc-066"
-        }
-      ]
-    },
-    {
       "id": "inc-087",
       "title": "Role-filtered party pickers on one page",
       "detail": "Makes each live-animals party picker, and the high-risk plants frontend's consignor and place of destination pickers, offer only the organisation's addresses saved for that party's role, all on one page, so a trader is never offered a destination address as a place of origin. An address saved for several roles shows on each of their pickers, an address saved as an exporter shows on the consignor picker, and an address saved with no role shows on every picker until it is given one, so nobody loses an address on a guess. Both frontends' stub books get roles on their canned records, so stub mode filters as the real thing does. Because each picker now lists one role's addresses, the list fits on one page and the restatement of the choice above it is no longer needed. Search stays the server search behind the submitting search button; filtering as the trader types waits on design in its own row.",
@@ -4233,16 +3576,12 @@
     },
     {
       "id": "inc-090",
-      "title": "Picker 'View' link to the INS address book and back, and the picker's address lines and width",
-      "detail": "Each live animals party picker row offers a link to that saved address's own record in the Import Notification Service address book, carrying the picker it was followed from as a return parameter, so a trader who sees a wrong saved address can correct or delete the record and come straight back to the picker they left. Where a row keeps an in-place details disclosure, it stops repeating the name, address lines and country the row's own columns already show. The address book is the only place an address is written, so the record and its edit stay there; its record page already honours a return to the animals journey. High-risk plants pickers are not wired to the address book and are left alone. Replaces each live-animals picker row's in-place details expander with a 'View' link that opens the address in the INS address book, carrying that picker as its return, so a trader can read, correct or delete the record and come back to the picker they left. The INS frontend stays the one place an address is shown in full and the address book's only writer. On the animals and the high-risk plants pickers each address line shows on its own line, which reads more easily in a narrow column. The high-risk plants pickers are not wired to the INS address book, so they keep their in-place details disclosure.",
+      "title": "High-risk plants pickers' address lines and trimmed details disclosure",
+      "detail": "The animals half of this row shipped under EUDPA-721: each live animals party picker row ends with a 'View' link that opens that saved address's own record in the Import Notification Service address book, carrying the picker it was followed from as its return, so a trader can read, correct or delete the record and come back to the picker they left. The in-place details expander is gone from those rows, and their Address column layout follows that ticket. The INS frontend stays the one place an address is shown in full and the address book's only writer. What is left is the high-risk plants pickers. They are not wired to the INS address book, so they keep their in-place details disclosure; where a row keeps it, it stops repeating the name, address lines and country the row's own columns already show. On the high-risk plants pickers each address line shows on its own line, which reads more easily in a narrow column.",
       "acceptanceCriteria": [
-        "Each live animals party picker row offers a link to that saved address's own record in the address book, carrying the picker it was followed from as a return parameter for the same notification. (document:dr1-parity-backlog p7-037, p7-042; ruling:sam-2026-10-09-pm p3-064)",
-        "On the compose stack, following that link opens the address's own record page, with its Edit and Delete controls; its Back link, and the return after saving an edit, cancelling or deleting, bring the trader back to the same party picker of the same notification, with that notification's selection intact. (document:dr1-parity-backlog p7-040, p7-042)",
         "Where a party picker row keeps an in-place details disclosure, it shows the telephone number and email address only, and the name, address lines and country appear in the row's own columns. (document:dr1-parity-backlog p7-036, p7-045)",
-        "Each animals picker row's last cell is a 'View' link that opens that address in the INS address book, carrying a return to the same party picker of the same notification (prototype:dr2-1-source prototype-dr2-1-source-p8-062; trace:prototype-dr2-1 trace-prototype-dr2-1-p6-060; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-064)",
-        "On the compose stack, following a picker's 'View' link opens that address in the INS address book, and its Back link, and the return after editing or deleting the record, bring the trader back to the same party picker of the same notification (trace:prototype-dr2-1 trace-prototype-dr2-1-p6-061; prototype:dr2-1-source prototype-dr2-1-source-p8-062; document:dr1-parity-backlog document-dr1-parity-backlog-p7-036, document-dr1-parity-backlog-p7-042)",
-        "The 'View' link has a Welsh machine-draft counterpart (repo:frontend repo-frontend-p9-089)",
-        "On the animals party pickers and on the high-risk plants consignor and place of destination pickers, the Address column shows each address line, town or city, county and postcode the record holds on its own line (prototype:dr2-1-source prototype-dr2-1-source-p8-060; trace:prototype-dr2-1 trace-prototype-dr2-1-p6-066; repo:frontend repo-frontend-p9-061; repo:plantsfrontend repo-plantsfrontend-p6-011; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-038)",
+        "The live animals party pickers stay as EUDPA-721 shipped them: this row changes neither their 'View' link and its return nor their Address column layout (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-064)",
+        "On the high-risk plants consignor and place of destination pickers, the Address column shows each address line, town or city, county and postcode the record holds on its own line (prototype:dr2-1-source prototype-dr2-1-source-p8-060; trace:prototype-dr2-1 trace-prototype-dr2-1-p6-066; repo:plantsfrontend repo-plantsfrontend-p6-011; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-038)",
         "Each high-risk plants picker row's last cell is a 'View details' disclosure that opens in place and lists the record's name, address lines, country, phone number and email address (repo:plantsfrontend repo-plantsfrontend-p6-012; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p3-064)"
       ],
       "dependsOn": [],
@@ -4309,7 +3648,9 @@
       "notes": [
         "Combines the drafts of the party-address-add-and-edit, consignment-parties areas for this row: they change the same pages, record and journey, so building them apart would repeat the same set-up, review and ladder.",
         "Pass 1 and pass 2 within this area: this is the area's only change to how a saved address is reached from a picker, so it stands alone. It is the same change as the consignment parties area's picker 'View' link (that area carries whether the in-place disclosure survives at all, and the address-line and page-width work), so the combiner keeps the existing row id inc-090 and merges the two drafts there, as the backlog already does. Verified on main 2 Nov: the picker row still renders the in-place pickerDetailsCell expander with no link out (party-picker/_cells.njk), so the change is still needed; the address book half is already on its own main (features/address-book/return-to.js honours a return on the animals frontend's origin and refuses anything else, and the record page carries it on Edit and Delete), so insfrontend is not in repos. Animals only: ruling:sam-2026-10-09-pm p3-064 says plants is not wired to the address book, so no plants criterion is drafted here and plantsfrontend is not in repos; the plants guard belongs to the consignment parties area's draft. Withdrawn claims avoided: c-106 overrules document-dr1-parity-backlog p7-001, p7-011 and p7-035, none of which this row cites. The builder should accept only a return inside the animals journey, as the add handshake already does, so the link is no open redirect; that is a safeguard rather than a source requirement, so it is left out of the criteria.",
-        "Re-drafted on this re-distil from existing row inc-090; neither requirement changed in substance. Combines the 'View' link with the Address column's line-per-line layout, because both change the same picker results row and the same address-line helper, so building them apart would repeat the same set-up, review and ladder. c-097: the prototype wins over the in-place expander; the tests repo's expander test (repo-tests-p5-014) changes with it. c-096: the prototype wins over the comma-joined column. The INS half is already on origin/main of the INS frontend: features/address-book/return-to.js accepts a return that is an INS path or a URL on the animals frontend's origin and refuses anything else, and the view page uses it for Back and carries it on Edit and Delete, so insfrontend is not in this row's repos and no external dependency on the address-book branch is needed for it. The builder should keep that allow-list behaviour when it sends the picker's return, so the link is no open redirect; that is a safeguard rather than a source requirement, so it is not a criterion. In stub mode, where no INS frontend runs, the fit suite observes only that the link is there with its return; where it leads is observed on the compose stack, which is why criterion 2 names it. The plants criterion is a guard that the plants pickers keep their disclosure; the plants change in this row is the address lines only, which is why plantsfrontend is in repos. The return to a germinal products picker is req-1831's concern, not this row's. CARRY OVER: the existing row inc-090 also holds req-1960 (each picker row links to its record in the INS address book and back) and a criterion from the 19 October designers review that each animals picker uses the full page width through the service's display surface; both are other areas' and this draft leaves them for the combiner to carry over with inc-090's id. Main checked at origin/main: party-picker/_cells.njk still has the pickerDetailsCell expander, wired in view-model/table-rows.js; address lines are comma-joined in animals party-picker/view-model/address-lines.js and in plants address-book-picker/address-lines.js. Theme: consignment-parties."
+        "Re-drafted on this re-distil from existing row inc-090; neither requirement changed in substance. Combines the 'View' link with the Address column's line-per-line layout, because both change the same picker results row and the same address-line helper, so building them apart would repeat the same set-up, review and ladder. c-097: the prototype wins over the in-place expander; the tests repo's expander test (repo-tests-p5-014) changes with it. c-096: the prototype wins over the comma-joined column. The INS half is already on origin/main of the INS frontend: features/address-book/return-to.js accepts a return that is an INS path or a URL on the animals frontend's origin and refuses anything else, and the view page uses it for Back and carries it on Edit and Delete, so insfrontend is not in this row's repos and no external dependency on the address-book branch is needed for it. The builder should keep that allow-list behaviour when it sends the picker's return, so the link is no open redirect; that is a safeguard rather than a source requirement, so it is not a criterion. In stub mode, where no INS frontend runs, the fit suite observes only that the link is there with its return; where it leads is observed on the compose stack, which is why criterion 2 names it. The plants criterion is a guard that the plants pickers keep their disclosure; the plants change in this row is the address lines only, which is why plantsfrontend is in repos. The return to a germinal products picker is req-1831's concern, not this row's. CARRY OVER: the existing row inc-090 also holds req-1960 (each picker row links to its record in the INS address book and back) and a criterion from the 19 October designers review that each animals picker uses the full page width through the service's display surface; both are other areas' and this draft leaves them for the combiner to carry over with inc-090's id. Main checked at origin/main: party-picker/_cells.njk still has the pickerDetailsCell expander, wired in view-model/table-rows.js; address lines are comma-joined in animals party-picker/view-model/address-lines.js and in plants address-book-picker/address-lines.js. Theme: consignment-parties.",
+        "EUDPA-721 (feat/EUDPA-721-picker-view-link) builds the animals half of this row: the five live-animals pickers span the full content column, each row ends with a 'View' link to the INS address book whose return keeps the picker's search, page, chosen address and change context, and the 'View details' disclosure is gone. Its address lines follow the prototype ('Hull, HU9 5PX'): street lines on their own lines, then town or city, county and postcode on one line. That is decided against this row's criterion putting each of those on its own line. Still open here: the high-risk plants pickers' address lines and their trimmed disclosure. Choosing one address layout across pages is a separate EUDPA-646 snagging ticket. It also needed the INS frontend to resolve a relative /live-animals return against the animals frontend URL (ins-frontend PR #77, REQ-INS-ADDR-024 / SCN-INS-ADDR-024-J), so the INS half did change, though the notes above say it needed none. The criteria for the animals 'View' link, its compose-stack return and its Welsh draft are dropped from this row as done under EUDPA-721, and the address-line criterion covers the plants pickers only, so the build loop does not build the animals half again.",
+        "Criterion conflict, decided for the prototype: the dropped compose-stack return criterion said the return after saving an edit lands on the party picker, which contradicts Design Release 2.1. The prototype's edit save (app/routes.js POST /address-book/:addressId/edit, the same at 56371e2) always lands on the address book list with '<Name> address updated', ignoring the return, and the INS spec says the same (REQ-INS-ADDR-009). Back and Cancel from the edit page, Back from the view page, and 'Yes, delete' do land on the return, in the prototype and in the INS frontend. EUDPA-721 follows the prototype. A re-distil must not bring back a saved edit returning to the picker unless the design changes."
       ],
       "gate": null,
       "externalDependsOn": [
@@ -4489,7 +3830,7 @@
         "inc-091"
       ],
       "theme": "waiting-on-design",
-      "status": "blocked",
+      "status": "dropped",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -4507,22 +3848,22 @@
         {
           "source": "ruling:sam-2026-10-09-pm",
           "ref": "p1-044, p1-046, p1-048, p1-071, p1-072 (design question 7)"
-        }
+        },
+        "ruling:interaction-designer-2026-11-09"
       ],
       "requirements": [
         "req-711",
         "req-712"
       ],
-      "openQuestions": [
-        "Design question 7 is answered for the boxes (Sam, 20 Oct): three labelled boxes as drawn, no cursor jump, the whole number kept when typed or pasted in one go, already built without JavaScript. Still for design: whether the JavaScript digit filter and paste spreading are wanted on top. Built as design says, or dropped if design drops it (ruling:sam-2026-10-09-pm p1-044, p1-046, p1-048, p1-071, p1-072; c-288)."
-      ],
+      "openQuestions": [],
       "notes": [
         "Carried over from the existing row inc-093, still blocked: req-711 and req-712 both carry blockedBy design question 7 (c-288). The criteria stay as what the row builds if design keeps the prototype's behaviour; rewrite them to design's answer when it comes. Its theme is waiting-on-design.",
         "Wording fixed to the criterion rules on this pass: criteria 1 and 4 now state what the box and the focus do instead of what does not happen, and the detail no longer dates the ruling.",
         "Depends on the county parish holding number page row: it changes the same page's boxes, so it lands after their attributes change.",
         "c-006: no automatic focus moves (req-713 out of scope). c-114 and req-715: the server's per-part errors stay as the backstop.",
         "It is the first client script on this page and needs its own bundle entry and its own with- and without-JavaScript proof. Design snagging inc-219 is on main: the boxes have no maxlength and a whole number typed or pasted into County is split on the server, so the 2, 3 and 4 digit stop must come from the script alone.",
-        "Keeps its existing external dependency on the design-snagging-b split's inc-219."
+        "Keeps its existing external dependency on the design-snagging-b split's inc-219.",
+        "Dropped: ruling:interaction-designer-2026-11-09 point 5 answers design question 7. The boxes follow the GOV.UK date input's behaviour with no JavaScript on top: no digit filter, no paste spreading, no focus moving. design-snagging-b inc-219 built them that way."
       ],
       "gate": null,
       "externalDependsOn": [
@@ -7124,7 +6465,7 @@
       ],
       "dependsOn": [],
       "theme": "waiting-on-design",
-      "status": "blocked",
+      "status": "dropped",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -7142,12 +6483,11 @@
         {
           "source": "prototype:dr2-1-source",
           "ref": "app/views/design-release-2.1/dashboard-templates.html:61-74"
-        }
+        },
+        "ruling:interaction-designer-2026-11-09"
       ],
       "requirements": [],
-      "openQuestions": [
-        "Design answers design question 11 (templates sort): whether Manage templates gets a sort that really reorders the list and, if so, which options it offers. Built as design says, or this row is dropped if design drops the sort (req-1299 blockedBy; c-185)."
-      ],
+      "openQuestions": [],
       "notes": [
         "Re-distil (9 October afternoon ruling): c-185 now replaces the inert select the earlier row built. The ruling moves the whole sort row to the waiting-on-design theme (ruling:sam-2026-10-09-pm claim 93), so this row is blocked on design question 11 and the combiner should give it that theme rather than type-question-and-templates; its touches sit inside the templates folder, which the combiner must square with the theme boundary (the row lands after the templates theme, so it can take that folder once the templates theme is split off or landed). The earlier criteria (the four inert options, outside any form, no reorder) are withdrawn with c-185's earlier outcome.",
         "Depends on inc-157: the reorder criterion needs two saved templates. The dependency on the INS dashboard's sort row (inc-136) stays removed: the templates sort is its own control.",
@@ -7156,7 +6496,8 @@
         "Restored to blocked (20 Oct): the type-question-and-templates branch is stale and no row there holds req-1299, so this row keeps it. Builds after type-question-and-templates inc-157 is rebuilt from main.",
         "Re-analysis 27 Oct (main checked at animals-frontend ba85c222 after EUDPA-617 c3183a8e): block still applies: design question 11 is unanswered, and manage templates is only on the stale type-question-and-templates branch (its manage-templates.fit.spec.js:92-96 asserts no Sort by).",
         "req-1299 removed 27 Oct: the split-off type-question-and-templates theme builds it.",
-        "Re-distil 2 November: the title and detail are rewritten to drop a release name, a requirement id and an open-question number from the row's own words. What the row waits for is unchanged and is stated in its open question."
+        "Re-distil 2 November: the title and detail are rewritten to drop a release name, a requirement id and an open-question number from the row's own words. What the row waits for is unchanged and is stated in its open question.",
+        "Dropped: ruling:interaction-designer-2026-11-09 point 4. Templates are dropped for now (already parked by ruling:sam-2026-11-04), which settles design question 11. If templates come back, the sort comes back as a question with them."
       ],
       "gate": null,
       "externalDependsOn": [
@@ -8227,7 +7568,7 @@
       ],
       "dependsOn": [],
       "theme": "waiting-on-design",
-      "status": "blocked",
+      "status": "dropped",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -8262,16 +7603,16 @@
         {
           "source": "repo:plantsfrontend",
           "ref": "repo-plantsfrontend-p5-028"
-        }
+        },
+        "ruling:sam-2026-11-09"
       ],
       "requirements": [
         "req-020"
       ],
-      "openQuestions": [
-        "Design question 13: design must say whether the accessible autocomplete's own result and selection announcements can stand. The custom wording is built only if design says they cannot; otherwise this row is dropped. No safe default: the ruling puts it to design."
-      ],
+      "openQuestions": [],
       "notes": [
-        "Keeps inc-189, rewritten only where the requirement has moved on: it now names the germinal products set's origin page as well, because req-020 covers the origin page of both animals sets, and the criteria are split so that the results label and the selection announcement are checked separately. Kept apart from any Search-button row because it waits on a different design question; if the arrival-and-transit area drafts the same question for the port and transit boxes, the combiner may merge them into one waiting-on-design row. The wording is a change to the shared accessible-autocomplete wrapper's options in each frontend (src/client/javascripts/components/accessible-autocomplete.js, kept identical in both), plus the origin pages' copy keys, so it is listed under shared rather than touches: journey-foundation and design-snagging both own parts of that wrapper on their own branches, and design snagging has already reworked it on main (page placeholder, bolded matches through templates.suggestion, decorative joined search span, change event on confirm, the selectText and searchPlaceholder copy keys). The germinal products clause can only be observed once the germinal products set's origin page exists, which the germinal-products theme builds: that is a real ordering need for the combiner to record, not a criterion that cannot be observed. This row's existing theme is waiting-on-design, which sources.json's goal reserves for JavaScript-only prototype behaviour blocked on design, one increment per design question; the requirements behind it have not moved to another theme's code, so it keeps that theme, and waiting-on-design's touches do not claim the autocomplete wrapper, so no theme overlap arises."
+        "Keeps inc-189, rewritten only where the requirement has moved on: it now names the germinal products set's origin page as well, because req-020 covers the origin page of both animals sets, and the criteria are split so that the results label and the selection announcement are checked separately. Kept apart from any Search-button row because it waits on a different design question; if the arrival-and-transit area drafts the same question for the port and transit boxes, the combiner may merge them into one waiting-on-design row. The wording is a change to the shared accessible-autocomplete wrapper's options in each frontend (src/client/javascripts/components/accessible-autocomplete.js, kept identical in both), plus the origin pages' copy keys, so it is listed under shared rather than touches: journey-foundation and design-snagging both own parts of that wrapper on their own branches, and design snagging has already reworked it on main (page placeholder, bolded matches through templates.suggestion, decorative joined search span, change event on confirm, the selectText and searchPlaceholder copy keys). The germinal products clause can only be observed once the germinal products set's origin page exists, which the germinal-products theme builds: that is a real ordering need for the combiner to record, not a criterion that cannot be observed. This row's existing theme is waiting-on-design, which sources.json's goal reserves for JavaScript-only prototype behaviour blocked on design, one increment per design question; the requirements behind it have not moved to another theme's code, so it keeps that theme, and waiting-on-design's touches do not claim the autocomplete wrapper, so no theme overlap arises.",
+        "Dropped: ruling:sam-2026-11-09 point 1 answers design question 13. The country search keeps the accessible autocomplete's own announcements, with no 'Country search results' label and no 'Selected <country>' announcement."
       ],
       "gate": null,
       "externalDependsOn": []
@@ -8341,17 +7682,17 @@
     },
     {
       "id": "inc-192",
-      "title": "Waiting on design: the germinal dates' 'Choose date' calendar",
+      "title": "The germinal dates' 'Choose date' calendar",
       "detail": "The germinal collection and production dates are built as single text inputs, and the design shows them with a calendar toggle as well. Advice is against a calendar for a date a user reads off a document, so the calendar waits on design's answer: a calendar enhancing the text input, a plain date field, or the three-part date input instead. This row builds whichever design answers, or is dropped if design is content with the text input alone.",
       "acceptanceCriteria": [
-        "If design keeps the calendar: each germinal date field has a 'Choose date' toggle opening a month grid with previous and next year and month buttons, 'Select' and 'Close', and picking a day fills that date's text input; with JavaScript off the text input works as before. (trace:prototype-dr2-1 trace-prototype-dr2-1-p5-076; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-044, -p1-045, -p1-092; c-283)",
-        "If design answers that the three-part date input will do instead: each germinal date is asked as Day, Month and Year fields, and the format, real-date and leniency rules of the single-input row still apply to the date they make. (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-092; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-064)"
+        "Each germinal date field has a 'Choose date' toggle opening a month grid with previous and next year and month buttons, 'Select' and 'Close', and picking a day fills that date's text input; with JavaScript off the text input works as before. (trace:prototype-dr2-1 trace-prototype-dr2-1-p5-076; ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-044, -p1-045, -p1-092; c-283; ruling:interaction-designer-2026-11-09)",
+        "The calendar is the Ministry of Justice date picker the other dates in both frontends use, styled as design snagging inc-206 left them: the blue 'Choose date' button and the calendar opening in the page (ruling:interaction-designer-2026-11-09 point 6; design-snagging inc-206)"
       ],
       "dependsOn": [
         "inc-053"
       ],
       "theme": "waiting-on-design",
-      "status": "blocked",
+      "status": "merged-into",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -8369,16 +7710,21 @@
         {
           "source": "ruling:sam-2026-10-09-pm",
           "ref": "ruling-sam-2026-10-09-pm-p1-044, -p1-045, -p1-092"
+        },
+        "ruling:interaction-designer-2026-11-09",
+        {
+          "source": "ruling:sam-2026-11-10",
+          "ref": "Decided 1"
         }
       ],
       "requirements": [
         "req-253"
       ],
-      "openQuestions": [
-        "Design must answer whether the germinal dates keep the calendar, or a plain date field or the three-part date input will do instead: built as design says, and the row is dropped if the single text input already built is enough (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-092; c-283)."
-      ],
+      "openQuestions": [],
       "notes": [
-        "existingRow inc-192, whose id, waiting-on-design theme, blocked status, dependency on inc-053 and external dependency (inc-206 in design-snagging) the combiner keeps. One slice (req-253). c-283 (ruled): the single text input with its hint is built now in inc-053, and this row only enhances or replaces it. If design keeps the calendar, build each germinal date with the shared date field so it takes the house look rather than a style of its own; the package the calendar needs is already a dependency of the frontend."
+        "existingRow inc-192, whose id, waiting-on-design theme, blocked status, dependency on inc-053 and external dependency (inc-206 in design-snagging) the combiner keeps. One slice (req-253). c-283 (ruled): the single text input with its hint is built now in inc-053, and this row only enhances or replaces it. If design keeps the calendar, build each germinal date with the shared date field so it takes the house look rather than a style of its own; the package the calendar needs is already a dependency of the frontend.",
+        "Released from blocked to todo: ruling:interaction-designer-2026-11-09 point 6 answers c-283's design question. Keep the MOJ date picker; the three-part date input alternative is gone.",
+        "Merged on 2026-11-10 into inc-053 by ruling:sam-2026-11-10: germinal products follow live animals as their reference and are not a design question, so the calendar lands with the germinal dates it enhances. req-253 and both criteria are now in inc-053."
       ],
       "gate": null,
       "externalDependsOn": [
@@ -8506,11 +7852,9 @@
         "With JavaScript, the address fields and the contact-details section are shown from the start when an address has been looked up, when address line 1 holds a value, when any address field carries an error, or after a refused save, with the search text and the chosen address still shown. (prototype:dr2-1-source prototype-dr2-1-source-p7-097; repo:frontend repo-frontend-p12-085)",
         "Without JavaScript, the commercial transporter form shows every address and contact field from the start. (repo:frontend repo-frontend-p12-085; trace:animals-fit trace-animals-fit-p20-036)"
       ],
-      "dependsOn": [
-        "inc-042"
-      ],
+      "dependsOn": [],
       "theme": "waiting-on-design",
-      "status": "blocked",
+      "status": "deferred",
       "kind": "feat",
       "repos": [
         "insfrontend",
@@ -8581,7 +7925,8 @@
         {
           "source": "ruling:sam-2026-10-09-pm",
           "ref": "ruling-sam-2026-10-09-pm: design question 10 goes in the one waiting-on-design increment; also blocked on the lookup and on transporter management"
-        }
+        },
+        "ruling:sam-2026-11-09"
       ],
       "requirements": [
         "req-649",
@@ -8596,14 +7941,7 @@
         "req-2044",
         "req-458"
       ],
-      "openQuestions": [
-        "Blocked on the design question about the address search's layout (ruling:sam-2026-10-09-pm p1-086): the design team must say whether the search keeps the search-only layout that hides the address fields behind a pick or an 'Enter address manually' button, or uses the GOV.UK address pattern with the fields always visible. If the pattern will do, this row is dropped at the next re-distil; otherwise design may keep or drop each behaviour, including whether matches list as the trader types and whether the custom result-count announcement stays (ruling:sam-2026-10-09-pm p1-027; conflicts:c-287).",
-        "Blocked on the address lookup becoming a real feature (ruling:sam-2026-10-09-pm p1-087; conflicts:c-217): the team building the front door's and the backend's address lookup must finish it, as only a gated spike exists today. Who: that team. This area is re-distilled once it lands.",
-        "Blocked on design question 10 (ruling:sam-2026-10-09-pm p1-086, p1-087; c-305): the design team must say whether the address search can use the standard address pattern with the fields always visible. If it can, this row is dropped at the next re-distil; if it cannot, design may keep or drop each behaviour here, so there is no safe default to build.",
-        "Blocked on the address lookup (ruling:sam-2026-10-09 p1-178, p1-180; c-217): the team building the INS front door's and INS backend's address lookup must make it a real feature first, in every environment. Today only the dev-and-local spike exists and no address book page offers a lookup. This area is re-distilled once both land, which also settles when the 'Enter address manually' button shows, because no trace ever shows it revealed.",
-        "Design question 10: whether the GOV.UK address pattern with every field visible will do, or the fields may be hidden behind the search. Design answers it; until then nothing is built (c-305, c-006).",
-        "Blocked on the address lookup becoming a real feature, and on transporter requirements: whether the service manages transporters at all, and whether the address book or some other functionality does it (c-218, c-285)."
-      ],
+      "openQuestions": [],
       "notes": [
         "Combines the drafts of the party-address-add-and-edit, address-book-add-and-edit, transporters areas for this row: they change the same pages, record and journey, so building them apart would repeat the same set-up, review and ladder.",
         "Pass 2 merged five requirements into one row: they are all the same client-side enhancement of the same add-address pages, with the same two blockers, so building them apart would repeat the same set-up, review and ladder. Kept blocked rather than todo because there is no safe default to build: design may replace the whole layout with the GOV.UK address pattern, and the lookup the search needs does not exist yet. Verified on main 2 Nov: the front door has only features/address-lookup-spike/, no journey page uses a lookup, and there is no 'Enter address manually' control anywhere. Withdrawn claims avoided: c-109 overrules trace-prototype-dr2-1 p7-014 and p7-051-m1, so the error criterion cites p7-051 and the specs instead; the prototype's summary links pointing at hidden fields do not survive, which is why the criterion requires the fields to be shown. Provenance corrected on this draft: req-653, req-654 and req-1957 still carry ruling:sam-2026-10-09-pm claim references p1-017, p1-090, p1-091 and p1-092, which the renumbering moved onto the templates sort control and the germinal date fields; the design-question-10 claims are p1-086 and p1-087, and the JavaScript ruling is p1-027, so those are cited. The combiner keeps the existing row id inc-194 and its waiting-on-design theme, merging this draft with the address book add-and-edit and transporters area drafts there, as the backlog already does: the ruling calls the design question one increment. This row changes only the front door's client-side enhancement scripts and the enhancement specs, so it does not touch the address book theme's server-side add pages.",
@@ -8616,7 +7954,8 @@
         "Still blocked after this re-distil: c-305 and c-217 name nothing overruled and both blocks stand. The wording moved only to take out the release name, the source-matching phrases and the ids.",
         "repos is in merge order: the front door holds the page and its script, and the end-to-end suite exercises it afterwards.",
         "One slice, req-458. Combiner: merge into the existing waiting-on-design row inc-194, which already holds it beside the address book's search-only layout, and keep its id and theme: the hide-and-reveal is one behaviour across both places and design answers question 10 once. Its no-JavaScript counterpart (req-2105) is already met and must stay met. Depends on the commercial transporter address search row.",
-        "Blocked three ways: design question 10, the address lookup, and transporter management. Only design can unblock the first."
+        "Blocked three ways: design question 10, the address lookup, and transporter management. Only design can unblock the first.",
+        "Deferred: ruling:sam-2026-11-09 point 2. Address search is Design Release 2.1 concept work, not needed for the deadline. Every add-address page on main shows all its fields, which works with and without JavaScript. Pick this up only when address search is planned, and then start from design question 10 and a real address lookup."
       ],
       "gate": null,
       "externalDependsOn": [
@@ -8627,6 +7966,10 @@
         {
           "workarea": "shared/design-release-2-1/themes/address-book",
           "id": "inc-081"
+        },
+        {
+          "workarea": "shared/design-release-2-1/themes/transporters",
+          "id": "inc-042"
         }
       ]
     },
@@ -8646,7 +7989,7 @@
         "inc-185"
       ],
       "theme": "waiting-on-design",
-      "status": "blocked",
+      "status": "dropped",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -8669,16 +8012,16 @@
         {
           "source": "ruling:sam-2026-10-09-pm",
           "ref": "ruling-sam-2026-10-09-pm-p1-040, p1-075 to p1-077, p1-084"
-        }
+        },
+        "ruling:interaction-designer-2026-11-09"
       ],
       "requirements": [
         "req-1393"
       ],
-      "openQuestions": [
-        "Design question 9 (design must answer): are the amend and cancel-amendment dialogs built at all, and if so with which tested government component? Expected answer: not built, and this row is then dropped. Built only if design makes a strong case; the Ministry of Justice's modal dialog is not accepted."
-      ],
+      "openQuestions": [],
       "notes": [
-        "Draft for merging into inc-195, which already covers req-1393; the combiner keeps its id and its waiting-on-design theme. req-1393 still carries its blocker, design question 9, so the row stays blocked with no safe default to build: the pages it would enhance are built by the amend and cancel-amendment rows, and nobody can build a dialog without an accepted component. Depends on those rows, on the amend status bar row on the journey-foundation branch and on the germinal copies, whose pages it would enhance. A 27 October reading found no dialog in either frontend, so the block still applies."
+        "Draft for merging into inc-195, which already covers req-1393; the combiner keeps its id and its waiting-on-design theme. req-1393 still carries its blocker, design question 9, so the row stays blocked with no safe default to build: the pages it would enhance are built by the amend and cancel-amendment rows, and nobody can build a dialog without an accepted component. Depends on those rows, on the amend status bar row on the journey-foundation branch and on the germinal copies, whose pages it would enhance. A 27 October reading found no dialog in either frontend, so the block still applies.",
+        "Dropped: ruling:interaction-designer-2026-11-09 point 3 answers design question 9. Amend and cancel amendment are their own pages in the Design Release 2.1 designs, not dialogs, and inc-120, inc-121 and inc-185 build those pages."
       ],
       "gate": null,
       "externalDependsOn": [
@@ -8918,8 +8261,8 @@
       "detail": "Many live animals browser tests still prove looks by class list, fixed alignment, line height or a hard-coded colour, and find buttons and boxes by class. That breaks the programme rule that a browser test never writes a fixed style and compares only with GOV.UK values read at run time or a screenshot. The tests move to accessible names and roles, the looks they stop asserting move to the screenshot suite, the type-aheads gain accented searches, and shared test steps keep only what more than one spec uses.",
       "acceptanceCriteria": [
         "Every live animals browser test that checks how a page looks proves it by a screenshot, by position or size against another element, or by a value read from GOV.UK at run time. None writes a fixed colour, pixel size, line height, text alignment or class list. (loop:design-snagging-followups inc-225 followUps[8]; inc-226 followUps[0]-[5], [13]; inc-228 followUps[1])",
-        "The live animals browser tests find the Overview's buttons and commodity totals, the arrival details labels and the review's cards by role, accessible name or heading. (loop:design-snagging-followups inc-226 followUps[0], [2], [4], [13])",
-        "The screenshot suite shows the looks those tests stop asserting: the arrival details medium labels, the transit countries remove column and the Upload documents actions column right-aligned, the Overview's buttons and commodity totals with their captions, and the review's last card. (loop:design-snagging-followups inc-226 followUps[0]-[4], [13])",
+        "The live animals browser tests find the arrival details labels, the Upload documents actions, the transporter tags and legends and the type-ahead buttons by role, accessible name or heading, not by class. (loop:design-snagging-followups inc-226 followUps[2], [4], [13]; ruling:sam-2026-11-10b)",
+        "The screenshot suite shows the looks those tests stop asserting: the arrival details medium labels and the Upload documents actions column right-aligned. (loop:design-snagging-followups inc-226 followUps[1], [3]; ruling:sam-2026-11-10b)",
         "Each live animals type-ahead is proven in the browser to offer a matching name when the trader's search and the name differ only by accents, with the matching letters in bold. (loop:design-snagging-followups inc-228 followUps[4])",
         "A browser-test step, reader or selector used by one spec lives in that spec, and one used by several has a single owner. The live animals testing guide lists as shared only the steps more than one spec uses. (loop:design-snagging-followups inc-225 followUps[8]; inc-226 followUps[10], [11])",
         "Every live animals browser test and the animals screenshot suite pass, on both screenshot baselines. (loop:design-snagging-followups inc-226)"
@@ -8936,6 +8279,10 @@
         {
           "source": "loop:design-snagging-followups",
           "ref": "inc-225 followUps[8]; inc-226 followUps[0]-[5], [10], [11], [13]; inc-228 followUps[1], [4]"
+        },
+        {
+          "source": "ruling:sam-2026-11-10b",
+          "ref": "Decided 2"
         }
       ],
       "requirements": [],
@@ -8943,7 +8290,8 @@
       "notes": [
         "Covers inc-225 followUps[8]; inc-226 followUps[0] (animals half), [1], [2], [3], [4], [5] (all but cph-number), [10], [11], [13]; inc-228 followUps[1], [4]. Duplicate folded in: inc-228 followUps[8].",
         "Places found on main 27 Oct: hub.fit.spec.js:36, :348-354, :447-452; arrival-transit.fit.spec.js:210-211, :222, :833; upload.fit.spec.js:712-715; check-answers.fit.spec.js:47-48, :146-151; additional-details.fit.spec.js:74-77; origin.fit.spec.js:151-161; consignment-details.fit.spec.js:112-121; section-caption.fit.spec.js:51; import-reason.fit.spec.js:153; transporters.fit.spec.js:344-347, :498, :785; type-ahead.fit.spec.js:183, :229-253, :256, :377-379, :471; fit/live-animals-journey.js:102; docs/testing.md:74.",
-        "Ownership: most of these specs sit in folders other themes own (hub, check-answers, documents, origin, additional-details, import-reason, consignment-details, fit/ and docs/ are split-off themes; transport/fit is the blocked transporters theme). The test-hygiene theme names only the unowned files in its touches and lands after the split-off themes whose specs it edits. transporters.fit.spec.js and arrival-transit.fit.spec.js stay in this row so they do not wait on the blocked transporters theme."
+        "Ownership: most of these specs sit in folders other themes own (hub, check-answers, documents, origin, additional-details, import-reason, consignment-details, fit/ and docs/ are split-off themes; transport/fit is the blocked transporters theme). The test-hygiene theme names only the unowned files in its touches and lands after the split-off themes whose specs it edits. transporters.fit.spec.js and arrival-transit.fit.spec.js stay in this row so they do not wait on the blocked transporters theme.",
+        "Trimmed on 2026-11-10 by ruling:sam-2026-11-10b. The Overview and review checks (hub.fit.spec.js totals box, buttons and caption line height; check-answers.fit.spec.js visually-hidden and summary-card classes; the review's last-card screenshot) moved to overview-and-review inc-098 and inc-101, the theme that rewrites those tests; this row does not edit hub.fit.spec.js or check-answers.fit.spec.js. The Overview and transit countries screenshots are already on the tests repo's main (overview-totals.visual.spec.ts, transited-countries.visual.spec.ts). The transporters theme has landed, so the ownership note about it being blocked no longer applies. Checked on main 10 Nov (animals-frontend 1dff7901): the class checks are still there, at arrival-transit.fit:216/227/1004, upload.fit:737/740, origin.fit:153/159/162, consignment-details.fit:133-144, additional-details.fit:129/132, import-reason.fit:180, section-caption.fit:51, transporters.fit:308/387/390/565/851, type-ahead.fit:183/230-231/256/378/471; expectStyle is exported from fit/live-animals-journey.js:116 with one user, while docs/testing.md:81 calls it shared."
       ],
       "gate": null
     },
@@ -8952,14 +8300,14 @@
       "title": "Links that bring the trader back to the page they came from follow one rule in live animals",
       "detail": "Add another commodity, the commodity list's Change, and Edit details on a party each build their 'come back here' link separately, though one shared rule already reads the marker back. One shared rule builds them too. The type-ahead bold-letters helper keeps its single-use literals inside the functions that use them, and the client helpers folder loses its leftover placeholder file.",
       "acceptanceCriteria": [
-        "Add another commodity and Change on Commodity details and Identification details, and Edit details on every party from the consignment addresses, contact and review pages, still return the trader to the page they came from, keeping a review Change's context. (loop:design-snagging-followups inc-233 followUps[3], [4])",
+        "Edit details on every party from the consignment addresses, contact and review pages, and the consignment addresses page's link to the county parish holding number page, still return the trader to the page they came from, keeping a review Change's context. (loop:design-snagging-followups inc-233 followUps[3], [4]; ruling:sam-2026-11-10b)",
         "The live animals journey builds every link that names a page to return to by one shared rule, and reads it back by one, so the marker's name and the change context are each written once. (loop:design-snagging-followups inc-233 followUps[3], [4])",
         "Type-ahead suggestions still show the matching letters in bold and anything the trader typed as plain text, never markup. (loop:design-snagging-followups inc-228 followUps[2], [6])",
         "Every literal used by one function lives in that function, and the client helpers folder holds only real code. (loop:design-snagging-followups inc-228 followUps[2], [6], [7]; .claude/rules/code-quality.md:59)"
       ],
       "dependsOn": [],
       "theme": "test-hygiene",
-      "status": "todo",
+      "status": "blocked",
       "kind": "refactor",
       "repos": [
         "frontend"
@@ -8968,13 +8316,20 @@
         {
           "source": "loop:design-snagging-followups",
           "ref": "inc-233 followUps[3], [4]; inc-228 followUps[2], [6], [7]"
+        },
+        {
+          "source": "ruling:sam-2026-11-10b",
+          "ref": "Decided 3"
         }
       ],
       "requirements": [],
-      "openQuestions": [],
+      "openQuestions": [
+        "Waits for the save and continue work (EUDPA-774, feat/EUDPA-774-save-and-continue-through-journey) to merge, per ruling:sam-2026-11-10b. Then re-check the places in the notes against main and release this row."
+      ],
       "notes": [
         "On main 27 Oct: addresses/party-edit/edit-href.js:4-13 and commodities/commodity-question-detour.js:9-16 each build the query; kit.readReturnMarker is at shared/kit.js:201 (journey-foundation, merged, owns shared/); bold-matches.js:3-14; src/client/common/helpers/.gitkeep.",
-        "Keep partyEditHref's call signature, so consignment-parties' addresses/controller.js and contact/controller.js stay untouched."
+        "Keep partyEditHref's call signature, so consignment-parties' addresses/controller.js and contact/controller.js stay untouched.",
+        "Blocked on 2026-11-10 by ruling:sam-2026-11-10b until the save and continue work (EUDPA-774, branch feat/EUDPA-774-save-and-continue-through-journey, workareas/shared/eudpa-774), being built on another machine, has merged; then re-check these places against main and release the row. The commodities half is on main already (57e85889: commodity-question-detour.js uses kit.withReturnMarker; every reader uses kit.readReturnMarker). Left on main 10 Nov: edit-href.js:10 builds its own query (keep partyEditHref's call signature); addresses/controller.js:57 hard-codes 'cph-number?return=addresses'; bold-matches.js:3-9 and :14 keep HTML_ESCAPES and MATCH_CLASS at module level (the plants copy already has them inside their functions; copy it); src/client/common/helpers/.gitkeep. Not markers for this row: amend-form-actions.js:6 and the INS address-book handshake's return URL."
       ],
       "gate": null
     },
@@ -9105,59 +8460,6 @@
       "notes": [
         "Sits beside inc-140 (success banner titled 'Success'). Both change the list's banners, so build them one after the other in the theme. Once this lands, inc-140's note that the copied banner is never reached no longer applies.",
         "The wording lives in src/server/app/shared/copy.en.js and copy.cy.js (notificationActions.copy.successTitle and successBody), in journey-foundation's split-off shared/ folder, which is merged. It is left out of animals-dashboard's touches for that reason; the two strings change with this row."
-      ],
-      "gate": null
-    },
-    {
-      "id": "inc-240",
-      "title": "The transporter list refuses a save with no transporter chosen",
-      "detail": "The data specification makes the transporter mandatory before the trader moves on, so the transporter step cannot be left empty. Today a blank save shows no error and carries on. After this row, either save button on the transporter list holds the trader on the list and names what is missing, and the notification's transporter is only ever set by a real choice. This works over the transporter list as it stands, so it does not wait on how transporters are managed.",
-      "acceptanceCriteria": [
-        "On the transporter list, pressing 'Save and continue' with no transporter chosen keeps the trader on the list and shows 'Select a transporter from the list' in a 'There is a problem' summary that links to the first transporter option, and again inline above the transporter table. (confluence:6497338582 confluence-6497338582-p2-070, -p2-082, -p2-092; repo:frontend repo-frontend-p12-155)",
-        "Pressing 'Save and return to overview' with no transporter chosen is refused in the same way: the trader stays on the transporter list with the same summary and the same inline error, and the notification's transporter is left as it was. (ruling:sam-2026-10-26 ruling-sam-2026-10-26-p1-002, -p1-003, -p1-008, -p1-013)",
-        "Choosing a transporter and pressing either button saves it: 'Save and return to overview' goes to the overview, and in both cases the transporter is still chosen when the trader returns to the list. (repo:frontend repo-frontend-p12-047; trace:animals-fit trace-animals-fit-p18-076; trace:e2e trace-e2e-p11-093)"
-      ],
-      "dependsOn": [],
-      "theme": "transporters",
-      "status": "todo",
-      "kind": "feat",
-      "repos": [
-        "frontend",
-        "tests"
-      ],
-      "sources": [
-        {
-          "source": "confluence:6497338582",
-          "ref": "confluence-6497338582-p2-070, -p2-082, -p2-092: the commercial and the private transporter are mandatory to proceed"
-        },
-        {
-          "source": "ruling:sam-2026-10-26",
-          "ref": "ruling-sam-2026-10-26-p1-002, -p1-003, -p1-008, -p1-013: both save buttons make exactly the same checks, with no page an exception"
-        },
-        {
-          "source": "repo:frontend",
-          "ref": "repo-frontend-p12-047, -p12-155 (features/transport/transporters/validate.js; features/transport/copy/copy.en.js transporterRequired)"
-        },
-        {
-          "source": "repo:tests",
-          "ref": "repo-tests-p1-128 (page-objects/animals/transporter-page.ts)"
-        },
-        {
-          "source": "trace:animals-fit",
-          "ref": "trace-animals-fit-p18-076"
-        },
-        {
-          "source": "trace:e2e",
-          "ref": "trace-e2e-p11-093"
-        }
-      ],
-      "requirements": [
-        "req-402"
-      ],
-      "openQuestions": [],
-      "notes": [
-        "One slice, req-402. New in this re-distil: it sat in no row before. Not blocked by c-285: the check works over the transporter list as it stands, and the afternoon ruling of 9 October blocks only transporter management, so it is kept apart from the blocked transporter rows and can build now. c-346 (precedence) puts the data specification above the prototype and today's service, both of which let a blank save carry on; the claims c-346 overruled are not relied on anywhere in this row. The message is the copy the service already holds under its required-transporter key in the transport copy folder, so no copy file changes and nothing is invented. The general rule that both save buttons make the same checks on every page (req-1625) is the journey foundation's and builds on its own branch; this row is the transporter list's own instance of it and does not wait for it.",
-        "Trimmed 6 November: its navigation (where Save and continue and Back go, the opening run, amend returns) was taken out; EUDPA-774 owns it."
       ],
       "gate": null
     },
@@ -9406,7 +8708,7 @@
       ],
       "dependsOn": [],
       "theme": "obligation-model",
-      "status": "todo",
+      "status": "dropped",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -9425,6 +8727,10 @@
         {
           "source": "ruling:sam-2026-10-09-pm",
           "ref": "claims 43 and 44: where a row changes a page or behaviour plants also has, the same increment changes plants"
+        },
+        {
+          "source": "ruling:sam-2026-11-10b",
+          "ref": "Decided 1"
         }
       ],
       "requirements": [
@@ -9435,7 +8741,8 @@
       "notes": [
         "New on this re-distil, for req-2206 and req-2207, which the 2 November widening of the data specification brought in. They were given to no area, so the combiner drafted them. One row, not two: both are the same model's vocabulary, both are judged by the same evaluator and both are observed through the same pages and the same overview, so building them apart would repeat the whole set-up, review and ladder.",
         "Its own theme, obligation-model, because the model folder (frontend:src/server/app/model/obligations and its plants twin) is the one piece of shared code no other theme touches: every feature theme changes a set's pages or its obligation sections, and the split-off themes that own shared code own the journey flow, the shared layout and the reference services. Nothing else in this backlog waits for it, so it builds in the first wave in parallel with everything else.",
-        "What this row changes is the model's vocabulary and how it is judged, not which marking any one answer carries. Each page's own row states what that page refuses; a page whose code a split-off theme owns takes its marking on that branch."
+        "What this row changes is the model's vocabulary and how it is judged, not which marking any one answer carries. Each page's own row states what that page refuses; a page whose code a split-off theme owns takes its marking on that branch.",
+        "Dropped on 2026-11-10 by ruling:sam-2026-11-10b. Main already tells a hard stop from a submission check: each page refuses a missing required answer itself (origin, reason for import, contact, port of entry, transporters), the review refuses submission, both save buttons make the same checks (inc-232) and accompanying documents, V4's one all-or-nothing group, are refused when half-filled. The model has had allOrNothingOfIds and anyOfIds since September. The pages still to do carry their own hard stops: inc-243 (parties), inc-244 (germinal) and the separate commodity search ticket. Lost: the manifest never names 'mandatory to proceed' as its own marking, and no single test proves the markings together; raise a refactor if that is wanted later. Evidence: stale-theme-review/findings.json."
       ],
       "gate": "Look at how the model records the four markings and the all-or-nothing group, and at the words each refusal uses, before the feature rows mark their own answers by it: every later page's hard stops and every later overview reading are written against this vocabulary."
     },

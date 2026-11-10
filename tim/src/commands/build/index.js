@@ -19,6 +19,7 @@ import { registerRuns } from './runs.js'
 import { registerStart } from './start.js'
 import { registerProbe } from './probe.js'
 import { registerDuplication } from './duplication.js'
+import { registerCoverage } from './coverage.js'
 import { registerMeasure } from './measure.js'
 import { registerWorkers } from './workers.js'
 import { registerRigour } from './rigour.js'
@@ -520,6 +521,7 @@ export const register = (program, { timVersion }) => {
   registerRuns(build, timVersion)
   registerProbe(build, timVersion)
   registerDuplication(build, timVersion)
+  registerCoverage(build, timVersion)
   registerMeasure(build, timVersion)
   registerWorkers(build, timVersion)
   registerRigour(build, timVersion)

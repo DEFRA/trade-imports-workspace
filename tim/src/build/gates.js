@@ -18,6 +18,10 @@ export const MVN_VERIFY = 'mvn verify'
 
 export const TIM_DUPLICATION = 'tim build duplication'
 
+export const TIM_COVERAGE = 'tim build coverage'
+
+export const TIM_RUNGS = [TIM_DUPLICATION, TIM_COVERAGE]
+
 const E2E_SCRIPT = /^test:docker-compose(:[a-z0-9-]+)*$/
 const NPM_SCRIPT = /^[a-z0-9][a-z0-9:_-]*$/i
 const RUNG_NAME = /^[a-z0-9][a-z0-9-]*$/
@@ -92,14 +96,12 @@ const rungProblems = (rung, remoteScripts) => {
   const { name, phase, run, scope, scopeFrom, ports, forRepos, exclusive } =
     rung
   const isMaven = run === MVN_VERIFY
-  const isDuplication = run === TIM_DUPLICATION
+  const isTimRung = TIM_RUNGS.includes(run)
   return [
-    !isMaven && !isDuplication && !NPM_SCRIPT.test(run)
-      ? `"${run}" is not an npm script name, "${MVN_VERIFY}" or "${TIM_DUPLICATION}".`
+    !isMaven && !isTimRung && !NPM_SCRIPT.test(run)
+      ? `"${run}" is not an npm script name, "${MVN_VERIFY}" or one of ${TIM_RUNGS.map((rung) => `"${rung}"`).join(', ')}.`
       : null,
-    isDuplication && phase !== 'unit'
-      ? `"${TIM_DUPLICATION}" runs in the unit phase.`
-      : null,
+    isTimRung && phase !== 'unit' ? `"${run}" runs in the unit phase.` : null,
     looksRemote(run) || remoteScripts.includes(run)
       ? `"${run}" runs against a remote or CDP environment. The gate only runs local checks.`
       : null,

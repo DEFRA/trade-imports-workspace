@@ -980,6 +980,14 @@
               "test": "returns 500 with the heading, intro, Add button and filter but no results line or table, and logs the failure once",
               "strength": "full",
               "notes": "red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.type-filter.controller.test.js",
+              "test": "offers the Type select of the Transporter tab, with the chosen Type selected, on the page shown when the address book cannot be reached",
+              "strength": "partial",
+              "notes": "asserts the filter's Type select is still shown with the chosen Type selected on the error page; not red-probed against this scenario"
             }
           ]
         },
@@ -2047,9 +2055,17 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/return-to.test.js",
-              "test": "Should ignore an animals frontend URL in stub mode but still honour a path",
+              "test": "Should ignore an animals frontend URL in stub mode but still honour a page of this service",
               "strength": "full",
               "notes": ""
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/return-to.test.js",
+              "test": "Should ignore a live-animals path in stub mode rather than treat it as a page of this service",
+              "strength": "full",
+              "notes": "red-probed: fails when a live-animals path is honoured as a page of this service"
             }
           ]
         },
@@ -2105,6 +2121,29 @@
               "test": "Should land on an honoured return without deleting an unknown id",
               "strength": "full",
               "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-024-J",
+          "name": "A return given as a live-animals path opens that page on the animals frontend",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/features/address-book/address-book-navigation.spec.ts",
+              "test": "a picker row's View link opens the address in the INS address book, whose Back returns to the same picker with the search kept",
+              "strength": "full",
+              "notes": "red-probed: with the live-animals rule off, Back lands on the INS host's /live-animals path; @compose, so compose stack only"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/return-to.test.js",
+              "test": "Should honour the live-animals path %s as that page on the animals frontend outside stub mode",
+              "strength": "full",
+              "notes": "red-probed: fails when a live-animals path is honoured as a page of this service; covers the set base itself and a picker path with its query"
             }
           ]
         }
@@ -2734,6 +2773,14 @@
               "test": "Clear search returns to the searched tab with its Type filter kept, no search applied and the Search field empty",
               "strength": "partial",
               "notes": "follows the link and asserts the tab, the Type kept and the empty Search field; not red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.type-filter.controller.test.js",
+              "test": "links Clear search on the Transporter tab to the tab with the chosen type kept and no search",
+              "strength": "partial",
+              "notes": "asserts the Clear search href keeps the tab and the chosen type with no search; not red-probed against this scenario"
             }
           ]
         },
@@ -2749,6 +2796,37 @@
               "test": "leaves the list as it is while text is typed and not yet submitted",
               "strength": "partial",
               "notes": "no client script filters the list, so this passes without one; a script that filtered as the user types would turn it red"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-028-G",
+          "name": "The same search field matches a transporter by its name, address, type, country or approval number",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/view-model/list.test.js",
+              "test": "Should give the type whose label contains the term",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/transporters/private-transporter.spec.ts",
+              "test": "the Transporter tab search finds a saved private transporter by its name, its type word, its address and its country",
+              "strength": "partial",
+              "notes": "written and typechecked; not run — no workspace stack in this run"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/transporters/commercial-transporter.spec.ts",
+              "test": "the Transporter tab search finds a saved commercial transporter by its name, its type word, its address, its approval number and its country",
+              "strength": "partial",
+              "notes": "written and typechecked; not run — no workspace stack in this run"
             }
           ]
         }
@@ -2839,6 +2917,14 @@
               "test": "shows the last page, asked for a second time, when the page number is past the last page",
               "strength": "full",
               "notes": "red-probed: fails when the list serves the empty page"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.controller.test.js",
+              "test": "names the chosen transporter type among the past-last-page filters it already carries",
+              "strength": "partial",
+              "notes": "asserts the last page is asked for a second time carrying the chosen transporter type; not red-probed against this scenario"
             }
           ]
         }
@@ -3929,19 +4015,19 @@
     },
     {
       "id": "REQ-INS-ADDR-038",
-      "name": "The address book list is split into three tabs, each a link that loads the list on that tab",
+      "name": "The address book list is split into four tabs, each a link that loads the list on that tab",
       "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-INS-ADDR-038-A",
-          "name": "The three tabs are shown in order with the selected one marked",
+          "name": "The four tabs are shown in order with the selected one marked",
           "coverage": "partial",
           "tests": [
             {
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/list/list.tabs.controller.test.js",
-              "test": "names the three tabs in order as links to the list on each tab, marking the Origin and Consignor tab as current",
+              "test": "names the four tabs in order as links to the list on each tab, marking the Origin and Consignor tab as current",
               "strength": "partial",
               "notes": "red-probed on the selected marker only: fails when the default tab changes; the order and the absent Transporter tab are not probed"
             },
@@ -3949,7 +4035,7 @@
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
-              "test": "shows the three tabs in order with Origin and Consignor selected when no tab is chosen",
+              "test": "shows the four tabs in order with Origin and Consignor selected when no tab is chosen",
               "strength": "partial",
               "notes": "not red-probed"
             },
@@ -3957,7 +4043,7 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts",
-              "test": "the three tabs read in order, Origin and Consignor is current on a plain open and on an unknown tab, and Transporter is not offered",
+              "test": "the four tabs read in order, Origin and Consignor is current on a plain open and on an unknown tab, and Transporter is offered",
               "strength": "partial",
               "notes": "run by the gate; not run or red-probed here"
             }
@@ -3966,7 +4052,7 @@
         {
           "id": "SCN-INS-ADDR-038-B",
           "name": "Each tab's panel is headed for its address type",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
@@ -3988,9 +4074,17 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts",
-              "test": "each tab opens with its own panel heading, the columns Name, Type, Address, Country and Action, and exactly the addresses the test added, with their roles",
+              "test": "each role-backed tab opens with its own panel heading, the columns Name, Type, Address, Country and Action, and exactly the addresses the test added, with their roles",
               "strength": "partial",
               "notes": "run by the gate; not run or red-probed here"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.tabs.controller.test.js",
+              "test": "heads the Transporter tab panel with \"Transporter addresses\"",
+              "strength": "full",
+              "notes": "red-probed: fails when copy.en.js's Transporter heading reverts to 'Transporters'"
             }
           ]
         },
@@ -4019,7 +4113,7 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts",
-              "test": "the three tabs read in order, Origin and Consignor is current on a plain open and on an unknown tab, and Transporter is not offered",
+              "test": "the four tabs read in order, Origin and Consignor is current on a plain open and on an unknown tab, and Transporter is offered",
               "strength": "partial",
               "notes": "run by the gate; not run or red-probed here"
             }
@@ -4081,7 +4175,7 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts",
-              "test": "each tab opens with its own panel heading, the columns Name, Type, Address, Country and Action, and exactly the addresses the test added, with their roles",
+              "test": "each role-backed tab opens with its own panel heading, the columns Name, Type, Address, Country and Action, and exactly the addresses the test added, with their roles",
               "strength": "partial",
               "notes": "run by the gate; not run or red-probed here"
             }
@@ -4130,7 +4224,7 @@
     },
     {
       "id": "REQ-INS-ADDR-039",
-      "name": "Each tab lists the addresses holding one of its roles, with their roles in the Type column",
+      "name": "Each role-backed tab lists the addresses holding one of its roles, with their roles in the Type column; the Transporter tab lists the organisation's transporters",
       "coverage": "partial",
       "scenarios": [
         {
@@ -4158,7 +4252,7 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts",
-              "test": "each tab opens with its own panel heading, the columns Name, Type, Address, Country and Action, and exactly the addresses the test added, with their roles",
+              "test": "each role-backed tab opens with its own panel heading, the columns Name, Type, Address, Country and Action, and exactly the addresses the test added, with their roles",
               "strength": "partial",
               "notes": "run by the gate; not run or red-probed here"
             }
@@ -4166,7 +4260,7 @@
         },
         {
           "id": "SCN-INS-ADDR-039-C",
-          "name": "The Type column names the address's roles and the columns are the same on every tab",
+          "name": "The Type column names the address's roles and the columns are the same on every role-backed tab",
           "coverage": "partial",
           "tests": [
             {
@@ -4205,7 +4299,7 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts",
-              "test": "each tab opens with its own panel heading, the columns Name, Type, Address, Country and Action, and exactly the addresses the test added, with their roles",
+              "test": "each role-backed tab opens with its own panel heading, the columns Name, Type, Address, Country and Action, and exactly the addresses the test added, with their roles",
               "strength": "partial",
               "notes": "run by the gate; not run or red-probed here"
             }
@@ -4231,6 +4325,69 @@
               "test": "Should word the tab labels, panel headings, Type heading and role labels",
               "strength": "partial",
               "notes": "not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-039-E",
+          "name": "The Transporter tab's columns show a commercial transporter's approval number and the not-applicable word on a private one",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/transporter-forms.fit.spec.js",
+              "test": "a valid save shows the success banner and lists the transporter first, carrying the not-applicable approval number, with no serious or critical accessibility violations in the error state",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/transporter-forms.fit.spec.js",
+              "test": "a valid save shows the success banner and lists the transporter first with its approval number and type",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/view-model/list.test.js",
+              "test": "Should give the not-applicable word for a transporter with no approval number",
+              "strength": "full",
+              "notes": "red-probed: made approvalNumberTextOf always return the not-applicable word, saw the commercial case fail, restored it"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-tabs.spec.ts",
+              "test": "the Transporter tab opens with its own panel heading, the columns Name, Address, Approval number and Type, and the transporter the test added",
+              "strength": "partial",
+              "notes": "written and typechecked; not run — no workspace stack in this run"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "lists the organisation transporters under Name, Address, Approval number and Type, each Address cell ending in the country",
+              "strength": "partial",
+              "notes": "run green via the gate; not red-probed here"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/view-model/list.test.js",
+              "test": "Should map a commercial transporter to a row with its stored approval number and its fixed country label",
+              "strength": "full",
+              "notes": "red-probed: dropped the country from postalLines, saw both transporter-row tests fail, restored it"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/view-model/list.test.js",
+              "test": "Should map a private transporter to a row with the not-applicable approval number and its resolved country label",
+              "strength": "full",
+              "notes": "red-probed: dropped the country from postalLines, saw both transporter-row tests fail, restored it"
             }
           ]
         }
@@ -4385,12 +4542,12 @@
     },
     {
       "id": "REQ-INS-ADDR-041",
-      "name": "The address book list filters the selected tab by a Type chosen in the 'Filter addresses' disclosure",
+      "name": "The address book list filters the selected tab by a Type chosen in the 'Filter addresses' disclosure, each tab offering its own Type options",
       "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-INS-ADDR-041-A",
-          "name": "Each tab offers Select one and then its own Types",
+          "name": "Each role-backed tab offers Select one and then its own Types, and the Transporter tab offers Commercial and Private",
           "coverage": "full",
           "tests": [
             {
@@ -4424,6 +4581,30 @@
               "test": "each tab, reached through its link, offers Select one with no value and then only its own roles",
               "strength": "partial",
               "notes": "passed against the stack; not red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.type-filter.controller.test.js",
+              "test": "offers the Type select the options of the Transporter tab only, led by Select one with no value, Commercial before Private",
+              "strength": "full",
+              "notes": "red-probed: reordered the Transporter tab's typeFilter values to Private before Commercial, saw it fail, restored it"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "lists only the commercial transporter, keeps the tab and shows the type chosen, when submitted with ${how}",
+              "strength": "partial",
+              "notes": "run green via the gate; not red-probed here"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-transporter-type-filter.spec.ts",
+              "test": "offers Select one, then Commercial and Private, in that order",
+              "strength": "partial",
+              "notes": "written and typechecked; not run — no workspace stack in this run"
             }
           ]
         },
@@ -4494,6 +4675,14 @@
               "test": "a role filter matching one address counts one",
               "strength": "partial",
               "notes": "passed against the stack; not red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.type-filter.controller.test.js",
+              "test": "links each page shown with the Transporter tab, the search term, the chosen type and the page number only",
+              "strength": "partial",
+              "notes": "asserts each page link carries the tab, the search term, the chosen type and the page number; not red-probed against this scenario"
             }
           ]
         },
@@ -4555,6 +4744,37 @@
               "test": "a role filter finds the addresses holding it beyond the first page of the tab, counted and without pagination",
               "strength": "partial",
               "notes": "passed against the stack; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-041-G",
+          "name": "A Type on the Transporter tab lists only that type's transporters, counted across the whole category",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/list/list.type-filter.controller.test.js",
+              "test": "asks the address book for the chosen transporter type and shows it chosen",
+              "strength": "partial",
+              "notes": "asserts the address book is asked for the chosen type and the select shows it chosen; does not assert the filtered count or the absence of pagination"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/list.fit.spec.js",
+              "test": "lists only the commercial transporter, keeps the tab and shows the type chosen, when submitted with ${how}",
+              "strength": "partial",
+              "notes": "run green via the gate; not red-probed here"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/address-book/address-book-transporter-type-filter.spec.ts",
+              "test": "a Type filter finds the transporters holding it beyond the first page of the tab, counted and without pagination",
+              "strength": "partial",
+              "notes": "written and typechecked; not run — no workspace stack in this run"
             }
           ]
         }
@@ -4636,14 +4856,14 @@
       "scenarios": [
         {
           "id": "SCN-INS-ADDR-043-A",
-          "name": "The address type page offers the three types with their hints",
+          "name": "The address type page offers the four types with their hints",
           "coverage": "full",
           "tests": [
             {
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/address-type/address-type.controller.test.js",
-              "test": "GET shows the caption, the heading, a visually hidden legend, the three address types with their hints in order and none chosen, Continue and Back to the address book",
+              "test": "GET shows the caption, the heading, a visually hidden legend, the four address types with their hints in order and none chosen, Continue and Back to the address book",
               "strength": "full",
               "notes": "red-probed: fails when a hint reads differently"
             },
@@ -4651,7 +4871,7 @@
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/address-type.fit.spec.js",
-              "test": "opens from Add a new address with the caption, heading, the three types and their hints in order, and Back to the address book",
+              "test": "opens from Add a new address with the caption, heading, the four types and their hints in order, and Back to the address book",
               "strength": "partial",
               "notes": "run by the gate; not red-probed"
             },
@@ -4659,7 +4879,7 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-add-type.spec.ts",
-              "test": "Add a new address opens Choose an address type with its caption, the three types and their hints in order, Continue and Back to the address book",
+              "test": "Add a new address opens Choose an address type with its caption, the four types and their hints in order, Continue and Back to the address book",
               "strength": "partial",
               "notes": "run on the leased stack by the gate; not red-probed"
             }
@@ -4951,6 +5171,44 @@
               "test": "after a refused save of ${label}, choosing it again shows the address, the contact details and the ticked role entered",
               "strength": "partial",
               "notes": "Not probed with an inverted production line."
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-043-I",
+          "name": "Choosing Transporter opens the add-a-transporter pages instead of the add form",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/address-type/address-type.controller.test.js",
+              "test": "POST of Transporter leaves the add form behind and opens the add-a-transporter page, and logs the hand-over once",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/fit/transporter-type.fit.spec.js",
+              "test": "choosing Transporter on the address type question hands over to the transporter type question",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
+            }
+          ]
+        },
+        {
+          "id": "SCN-INS-ADDR-043-J",
+          "name": "Opening or saving the add form with Transporter chosen opens the address type question and saves nothing",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET with the Transporter type stored (which this form does not serve) redirects to the address type page and logs the stored type",
+              "strength": "partial",
+              "notes": "run green; not red-probed"
             }
           ]
         }

@@ -19,7 +19,7 @@ The system MUST ask the notification for one transporter, chosen from a single l
 
 ### Requirement: Adding a transporter not on the list asks its type first, to decide which form to show
 **ID**: REQ-OB-TRANSPORTER-002
-The system MUST ask for the type of a transporter being added from the list (Commercial or Private) before showing its form, MUST show only the form for the type chosen, and MUST go on to Upload documents on Save and continue once the add is complete. It MUST keep the record for the organisation: it joins the transporter list, marked as new, is the notification's checked pick, and is offered on the list of the organisation's later notifications.
+The system MUST ask for the type of a transporter being added from the list — Commercial or Private — before showing the form for it, MUST show the matching form, and MUST return the user to Overview once the add is complete, keeping the record for the organisation as the notification's checked pick on the transporter list, as the scenarios below detail.
 
 #### Scenario: Adding a commercial transporter asks its type, then the commercial form
 **ID**: SCN-OB-TRANSPORTER-002-A
@@ -67,8 +67,14 @@ The system MUST discard a commercial transporter entered through the add route w
 - **WHEN** they add a transporter again, choose "Private" and save, then add again and choose "Commercial"
 - **THEN** the commercial transporter form is shown empty, not the previously entered details
 
-#### Scenario: Returning to Private after adding as Commercial shows an empty private form
+#### Scenario: Returning to Private after adding as Commercial shows the private form blank, Country select back on the United Kingdom
 **ID**: SCN-OB-TRANSPORTER-003-B
 - **GIVEN** the user has added a private transporter through the add route
 - **WHEN** they add a transporter again, choose "Commercial" and save, then add again and choose "Private"
-- **THEN** the private transporter details form is shown empty, not the previously entered details
+- **THEN** the private transporter details form is shown with every field blank and the Country select back on the United Kingdom, not the previously entered details
+
+#### Scenario: Cancelling an add of the other type keeps the record the earlier type held
+**ID**: SCN-OB-TRANSPORTER-003-C
+- **GIVEN** the user has added a private transporter through the add route
+- **WHEN** they add a transporter again, choose "Commercial", and cancel that form without saving it
+- **THEN** adding again and choosing "Private" shows the private transporter details form holding the details they entered, because no change of type was saved

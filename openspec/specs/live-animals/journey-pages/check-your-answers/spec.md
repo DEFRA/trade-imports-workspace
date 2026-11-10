@@ -323,3 +323,13 @@ The system MUST check a draft's chosen species against the commodity reference d
 - **WHEN** the user continues from the review
 - **THEN** the user moves on to the declaration
 - **AND** that species is not named as one to choose again
+
+### Requirement: The Transport details card shows a private transporter's saved country
+**ID**: REQ-CYA-015
+The system MUST show a private transporter's saved country on the Transport details card's Country row.
+
+#### Scenario: A private transporter's saved country shows on the review
+**ID**: SCN-CYA-015-A
+- **GIVEN** a private transporter has been saved with a country from the offered list
+- **WHEN** the user views the review
+- **THEN** the Transport details card's Country row shows that country

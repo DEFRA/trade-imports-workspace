@@ -168,7 +168,7 @@ The system MUST report how many species have been chosen, showing each chosen co
 
 #### Scenario: Unticking a shown species and then removing it leaves it unchosen without an error
 **ID**: SCN-COMMODITY-SELECT-008-D
-- **GIVEN** a species whose tick box is on screen and ticked
+- **GIVEN** the user has JavaScript turned off, and a species whose tick box is on screen and ticked
 - **WHEN** the user clears that tick box and then uses that species' remove control
 - **THEN** the page is shown with that species not chosen and the other choices still chosen, not an error page
 
@@ -316,3 +316,49 @@ The system MUST show, in bold, the part of a commodity heading or a species labe
 - **GIVEN** a search for part of a commodity heading
 - **WHEN** the results are shown
 - **THEN** that part of the heading is in bold and the rest is not
+
+### Requirement: With JavaScript, the results and the tally refresh in place
+**ID**: REQ-COMMODITY-SELECT-017
+With JavaScript on, the system MUST refresh the results and the tally on the same page, without the page reloading, as the user types, ticks or unticks a result, removes a species or clears the selection. It MUST announce through a polite status message how many species a typed search lists, or that it lists none. It MUST keep focus on a tick box the user used, and move focus to the search box when the control the user pressed is gone. When the results cannot be fetched, it MUST post the page as it would without JavaScript. A save pressed while a refresh is on its way MUST wait for it, so the save holds what the refresh shows.
+
+#### Scenario: Typing lists the matching species without pressing Search
+**ID**: SCN-COMMODITY-SELECT-017-A
+- **GIVEN** the user has JavaScript turned on
+- **WHEN** they type a term of three or more characters into the search box
+- **THEN** the matching species are listed under their commodity, with the matched part in bold, and the page has not reloaded
+
+#### Scenario: A typed search announces how many species it lists
+**ID**: SCN-COMMODITY-SELECT-017-B
+- **GIVEN** the user has JavaScript turned on
+- **WHEN** they type a term that matches three species, then a term that matches none
+- **THEN** a polite status message says "3 results available", then "No results found"
+
+#### Scenario: Species ticked under two typed searches are both kept and saved
+**ID**: SCN-COMMODITY-SELECT-017-C
+- **GIVEN** the user has JavaScript turned on
+- **WHEN** they tick a species under one typed search, then another under a second typed search, and save
+- **THEN** the tally shows both before the save, and both are chosen when the page is opened again
+
+#### Scenario: Unticking a species drops it from the tally and keeps focus on its tick box
+**ID**: SCN-COMMODITY-SELECT-017-D
+- **GIVEN** the user has JavaScript turned on and has ticked one species
+- **WHEN** they untick it
+- **THEN** the tally is no longer shown, and focus is still on that species' tick box
+
+#### Scenario: Removing a species and clearing all work in place and return focus to the search box
+**ID**: SCN-COMMODITY-SELECT-017-E
+- **GIVEN** the user has JavaScript turned on and has chosen two species
+- **WHEN** they use the remove control for one of them, then clear the selection
+- **THEN** the tally first shows the other species alone, then is no longer shown, the search box keeps its term, and focus is on the search box after each
+
+#### Scenario: When the results cannot be fetched, the search posts the page instead
+**ID**: SCN-COMMODITY-SELECT-017-F
+- **GIVEN** the user has JavaScript turned on and the results cannot be fetched
+- **WHEN** they search
+- **THEN** the page is posted and shows the results it lists without JavaScript
+
+#### Scenario: A save pressed straight after Clear all holds nothing chosen
+**ID**: SCN-COMMODITY-SELECT-017-G
+- **GIVEN** the user has JavaScript turned on, has chosen one species, and the results are slow to arrive
+- **WHEN** they clear the selection and save before the results have refreshed
+- **THEN** the save is refused with "Select a commodity" and nothing is chosen

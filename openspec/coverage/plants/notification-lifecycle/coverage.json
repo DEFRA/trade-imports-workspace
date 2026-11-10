@@ -229,6 +229,59 @@
           "notes": "The tests that prove this are only on an open Design Release 2.1 theme branch, not on main yet."
         }
       ]
+    },
+    {
+      "id": "REQ-PLANTS-LIFECYCLE-009",
+      "name": "Trader notification reads and writes are scoped to the caller's organisation",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-LIFECYCLE-009-A",
+          "name": "A copied notification belongs to the copying organisation",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-backend",
+              "file": "src/test/java/uk/gov/defra/trade/imports/plants/integration/NotificationIT.java",
+              "test": "copy_shouldProduceAFreshDraftWithItsOwnReferenceNumber",
+              "strength": "full",
+              "notes": "asserts organisationId on copy"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-backend",
+              "file": "src/test/java/uk/gov/defra/trade/imports/plants/notification/NotificationServiceTest.java",
+              "test": "copyNotification_shouldCreateAFreshDraftCarryingTheFulfilments",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-LIFECYCLE-009-B",
+          "name": "Another organisation cannot change a notification through trader lifecycle writes",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-backend",
+              "file": "src/test/java/uk/gov/defra/trade/imports/plants/integration/NotificationIT.java",
+              "test": "writes_shouldReturn404_forAnotherOrganisation",
+              "strength": "partial",
+              "notes": "parameterized over amend, put, submit, copy, soft-delete"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-backend",
+              "file": "src/test/java/uk/gov/defra/trade/imports/plants/integration/NotificationIT.java",
+              "test": "fulfilments_shouldReturn403_forAnotherOrganisation",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        }
+      ]
     }
   ]
 }

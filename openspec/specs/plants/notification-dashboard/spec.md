@@ -203,3 +203,13 @@ The system MUST show an "Alpha" tag and a message that the service is new and as
 - **GIVEN** the user has started a notification
 - **WHEN** they view one of its pages
 - **THEN** the "Alpha" tag and feedback link are still shown
+
+### Requirement: The dashboard lists only notifications owned by the caller's organisation
+**ID**: REQ-PLANTS-DASH-012
+The backend MUST scope trader notification list reads to the organisation named in `Trade-Imports-Organisation-Id`, so another organisation's notifications never appear in the paginated result.
+
+#### Scenario: Another organisation's submitted notification is absent from the list
+**ID**: SCN-PLANTS-DASH-012-A
+- **GIVEN** organisation A has submitted a notification
+- **WHEN** organisation B requests the notification list
+- **THEN** the list contains no notifications owned by organisation A

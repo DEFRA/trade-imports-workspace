@@ -3427,7 +3427,7 @@ const CODE_TEXT_DIRECTIVES = [
   {
     kind: 'a quoted log message',
     pattern: new RegExp(
-      `(\\blogger\\.\\w+\\([^"“\`')]{0,60}?|\\b(log|logs|logged|warn|warns)\\b[^"“\`'.;:()]{0,30}?\\s*(:|saying|reading|that (reads|says)|with (the )?(message|text|wording)|as)?\\s*)${QUOTED_TEXT}`,
+      `(\\blogger\\.\\w+\\([^"“\`')]{0,60}?|\\b(log|logs|logged|warn|warns)\\b(?!\\s+(shows?|showed|names?|named|lists?|listed|has|had|holds?|records?|recorded)\\b)[^"“\`'.;:()]{0,30}?\\s*(:|saying|reading|that (reads|says)|with (the )?(message|text|wording)|as)?\\s*)${QUOTED_TEXT}`,
       'i'
     )
   }

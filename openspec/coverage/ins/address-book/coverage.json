@@ -2933,50 +2933,50 @@
     {
       "id": "REQ-INS-ADDR-031",
       "name": "The address book service serves a requested page size from 1 to 100",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-INS-ADDR-031-A",
           "name": "A requested page size is served",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
               "repo": "trade-imports-address-book",
               "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressListIT.java",
               "test": "list_shouldReturn8ItemsAcross4Pages_whenPageSizeIs8",
-              "strength": "partial",
-              "notes": "not red-probed"
+              "strength": "full",
+              "notes": "asserts the page size, the count, the pages and the first and last address of the page; red-probed: fails when the service serves the default page size instead of the one requested"
             }
           ]
         },
         {
           "id": "SCN-INS-ADDR-031-B",
           "name": "A page size outside 1 to 100 is refused",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
               "repo": "trade-imports-address-book",
               "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressListIT.java",
               "test": "list_shouldReturn400BadRequestProblemWithNoErrorsMap_whenPageSizeIsOutOfRangeOrNonNumeric",
-              "strength": "partial",
-              "notes": "not red-probed"
+              "strength": "full",
+              "notes": "0, 101, -1 and abc; red-probed: the out-of-range rows fail when the range check never refuses, the abc row when the type-mismatch handler is removed"
             }
           ]
         },
         {
           "id": "SCN-INS-ADDR-031-C",
           "name": "No page size gives 25 addresses a page",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
               "repo": "trade-imports-address-book",
               "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressListIT.java",
               "test": "list_shouldReturn25ItemsAcross2Pages_whenNoPageSizeIsRequested",
-              "strength": "partial",
-              "notes": "not red-probed"
+              "strength": "full",
+              "notes": "red-probed: fails when the default page size is 20"
             }
           ]
         }
@@ -2998,7 +2998,7 @@
               "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java",
               "test": "partialWordSearchMatchesAddressLineTwoCaseInsensitively",
               "strength": "partial",
-              "notes": "the service matches address line 2, ignoring case; not red-probed"
+              "notes": "the service matches address line 2, ignoring case; red-probed: fails when the search drops address line 2"
             },
             {
               "type": "e2e",
@@ -3730,7 +3730,7 @@
     {
       "id": "REQ-INS-ADDR-037",
       "name": "The address book service records an address's roles and refuses missing roles, unknown roles, roles from more than one group and a receiving role outside the United Kingdom",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-INS-ADDR-037-A",
@@ -3828,15 +3828,15 @@
         {
           "id": "SCN-INS-ADDR-037-E",
           "name": "An update that omits the roles is refused and the address keeps them",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
               "repo": "trade-imports-address-book",
               "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressUpdateIT.java",
               "test": "put_shouldReturn400KeyedByRolesAndKeepStoredValues_whenBodyOmitsRoles",
-              "strength": "partial",
-              "notes": "not red-probed"
+              "strength": "full",
+              "notes": "red-probed: fails when roles are no longer required"
             },
             {
               "type": "e2e",
@@ -3851,23 +3851,23 @@
         {
           "id": "SCN-INS-ADDR-037-F",
           "name": "A create without roles or with an empty list of roles is refused naming the roles",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
               "repo": "trade-imports-address-book",
               "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressCrudIT.java",
               "test": "post_shouldReturn400KeyedByRolesAndSaveNothing_whenRolesAreMissing",
-              "strength": "partial",
-              "notes": "not red-probed"
+              "strength": "full",
+              "notes": "red-probed: fails when roles are no longer required"
             },
             {
               "type": "unit",
               "repo": "trade-imports-address-book",
               "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressCrudIT.java",
               "test": "post_shouldReturn400KeyedByRolesAndSaveNothing_whenRolesAreEmpty",
-              "strength": "partial",
-              "notes": "not red-probed"
+              "strength": "full",
+              "notes": "red-probed: fails when roles are no longer required"
             },
             {
               "type": "unit",
@@ -3898,15 +3898,23 @@
         {
           "id": "SCN-INS-ADDR-037-G",
           "name": "The published contract marks the roles required",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
               "repo": "trade-imports-address-book",
-              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressComplianceIT.java",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/ApiContractComplianceIT.java",
               "test": "liveAddressRequestHasTheLockedRequiredProperties",
-              "strength": "partial",
-              "notes": "not red-probed"
+              "strength": "full",
+              "notes": "red-probed: fails when the request publishes roles under another name"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/ApiContractComplianceIT.java",
+              "test": "liveAddressRequestRolesHasTheLockedMinimumNumberOfItems",
+              "strength": "full",
+              "notes": "the at-least-one-role half; red-probed: fails when the request publishes roles under another name"
             }
           ]
         },
@@ -3999,15 +4007,15 @@
         {
           "id": "SCN-INS-ADDR-037-J",
           "name": "An address type a request carries is not recorded",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
               "repo": "trade-imports-address-book",
               "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressCrudIT.java",
               "test": "post_shouldIgnoreAnAddressType_whenTheBodyCarriesOne",
-              "strength": "partial",
-              "notes": "not red-probed"
+              "strength": "full",
+              "notes": "saves, then reads the address back by id with its roles and no address type; probed by inverting the read-back assert, as no production line records an address type"
             }
           ]
         }
@@ -4396,7 +4404,7 @@
     {
       "id": "REQ-INS-ADDR-040",
       "name": "The address book service lists the addresses holding any of the roles asked for",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-INS-ADDR-040-A",
@@ -4495,20 +4503,20 @@
         {
           "id": "SCN-INS-ADDR-040-C",
           "name": "An unknown role is refused",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
               "repo": "trade-imports-address-book",
               "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressListIT.java",
               "test": "list_shouldReturn400BadRequestProblemWithNoErrorsMap_whenARoleIsUnknown",
-              "strength": "partial",
-              "notes": "not red-probed"
+              "strength": "full",
+              "notes": "red-probed: fails when TRANSPORTER becomes a known role"
             },
             {
               "type": "unit",
               "repo": "trade-imports-address-book",
-              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressComplianceIT.java",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/ApiContractComplianceIT.java",
               "test": "liveApiDocsHaveTheLockedAllowedValuesForRolesAndTheListFilterParameters",
               "strength": "partial",
               "notes": "not red-probed"
@@ -4518,15 +4526,15 @@
         {
           "id": "SCN-INS-ADDR-040-D",
           "name": "Every live address is listed when no role is asked for",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
               "repo": "trade-imports-address-book",
               "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressListIT.java",
               "test": "list_shouldReturnEveryLiveAddress_whenNoRoleIsGiven",
-              "strength": "partial",
-              "notes": "not red-probed"
+              "strength": "full",
+              "notes": "red-probed: fails when the role filter is applied with no role given"
             },
             {
               "type": "e2e",
@@ -4783,7 +4791,7 @@
     {
       "id": "REQ-INS-ADDR-042",
       "name": "The address book service matches a search against search roles",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-INS-ADDR-042-A",
@@ -4827,20 +4835,20 @@
         {
           "id": "SCN-INS-ADDR-042-B",
           "name": "An unknown search role is refused",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "unit",
               "repo": "trade-imports-address-book",
               "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressSearchIT.java",
               "test": "list_shouldReturn400BadRequestProblemWithNoErrorsMap_whenASearchRoleIsUnknown",
-              "strength": "partial",
-              "notes": "not red-probed"
+              "strength": "full",
+              "notes": "red-probed: fails when TRANSPORTER becomes a known role"
             },
             {
               "type": "unit",
               "repo": "trade-imports-address-book",
-              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressComplianceIT.java",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/ApiContractComplianceIT.java",
               "test": "liveApiDocsHaveTheLockedAllowedValuesForRolesAndTheListFilterParameters",
               "strength": "partial",
               "notes": "locks the allowed values of role and searchRole; not red-probed"

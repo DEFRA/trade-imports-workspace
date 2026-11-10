@@ -77,7 +77,7 @@ derived="$("$DERIVE" --workspace "$WORKSPACE" --workarea release --theme address
 check "both row commits are read" "$(jq '.commits | length' <<< "$derived")" "2"
 check "the theme total counts both scenarios" "$(jq '.totals.scenarios' <<< "$derived")" "2"
 check "the scenarios fall to the front door" \
-    "$(jq -c '[.domains.ins.scenarios[].id]' <<< "$derived")" '["SCN-A","SCN-B"]'
+    "$(jq -c '[.domains.ins.scenarios[].id] | sort' <<< "$derived")" '["SCN-A","SCN-B"]'
 
 echo "A scenario a later row commit moves is still counted once"
 write_spec "An address can be deleted" SCN-B "The list shows addresses" SCN-A

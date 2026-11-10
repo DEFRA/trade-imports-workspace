@@ -339,11 +339,11 @@ The system MUST refuse the add-address page when the request carries a journey h
 
 ### Requirement: A missing name, postcode, country or phone number is named in the words the form uses for it
 **ID**: REQ-INS-ADDR-018
-The system MUST tell the user 'Enter a name or organisation', 'Enter a postcode or Zip code', 'Select a country' (also when the country is not one offered) or 'Enter a phone number' when that field is missing, in the 'There is a problem' summary and against the field, on the edit form and on each add form that offers a choice of country. The address book MUST refuse a create or update missing any of them with the same message, keyed by that field.
+The system MUST tell the user 'Enter a name or organisation', 'Enter a postcode or Zip code', 'Select a country' (also when the country is not one offered) or 'Enter a phone number' when that field is missing, in the 'There is a problem' summary and against the field, on the edit form and on every add form. The address book MUST refuse a create or update missing any of them with the same message, keyed by that field.
 
 #### Scenario: Leaving name, postcode, country and phone blank on add names each in the form's words
 **ID**: SCN-INS-ADDR-018-A
-- **GIVEN** the user is adding an address on the address book's add form after choosing 'Origin or Consignor', or on the add form reached from a notification's place of origin or consignor picker or its consignment contact page
+- **GIVEN** the user is adding an address on the address book's add form after choosing any address type, or on the add form reached from a notification's place of origin or consignor picker or its consignment contact page
 - **WHEN** they leave the name, postcode and phone number blank, with no country chosen (clearing the United Kingdom the address book's add form opens with), and save
 - **THEN** the summary and each field show 'Enter a name or organisation', 'Enter a postcode or Zip code', 'Select a country' and 'Enter a phone number'
 

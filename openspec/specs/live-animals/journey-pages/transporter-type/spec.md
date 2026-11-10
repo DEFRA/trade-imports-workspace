@@ -17,15 +17,15 @@ The system MUST ask the user what type of transporter is being added, offering P
 - **THEN** it asks the transporter type, offering Private then Commercial and a Continue action
 - **AND** no type is shown as chosen
 
-### Requirement: A chosen transporter type is accepted
+### Requirement: A chosen transporter type is accepted and opens its details form
 **ID**: REQ-TRANSPORTER-TYPE-002
-The system MUST accept a chosen transporter type, saving it without error.
+The system MUST accept a chosen transporter type without error and open that type's details form, storing nothing until that form is saved.
 
-#### Scenario: Choosing a transporter type saves without error
+#### Scenario: Choosing the commercial transporter type opens its details form without error
 **ID**: SCN-TRANSPORTER-TYPE-002-A
 - **GIVEN** the user is on the transporter type page
 - **WHEN** they choose the commercial transporter type and continue
-- **THEN** the answer is saved and no error summary is shown
+- **THEN** the commercial transporter details form opens and no error summary is shown
 
 ### Requirement: The commercial option warns it can only be a Northern Ireland transporter
 **ID**: REQ-TRANSPORTER-TYPE-003

@@ -22,18 +22,18 @@
     },
     {
       "id": "REQ-TRANSPORTER-TYPE-002",
-      "name": "A chosen transporter type is accepted",
+      "name": "A chosen transporter type is accepted and opens its details form",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-TRANSPORTER-TYPE-002-A",
-          "name": "Choosing a transporter type saves without error",
+          "name": "Choosing the commercial transporter type opens its details form without error",
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/transporter-add.spec.ts", "test": "accepts a valid transporter type", "strength": "partial", "notes": "clicks the page's own Continue button; not probed" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "commercial branch routes to the add-commercial form", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "private branch routes to its details page and persists on back", "strength": "full", "notes": "probed by inverting transporter-add.controller.js nextSlugForTransporterType" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add/transporter-add.controller.test.js", "test": "Should send a commercial transporter to the details form", "strength": "full", "notes": "probed by inverting transporter-add.controller.js nextSlugForTransporterType" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add/transporter-add.controller.test.js", "test": "Should hold a commercial choice as flow-only state, leaving the stored type untouched, and send the trader to its details form", "strength": "full", "notes": "asserts the redirect to the commercial details form, no error, and the stored type left untouched; probed: nextSlugForTransporterType choosing the private page for a commercial choice turns it red, restored green (workareas/shared/eudpa-774/logs/inc-032-probe-SCN-TRANSPORTER-TYPE-002-A)" }
           ]
         }
       ]

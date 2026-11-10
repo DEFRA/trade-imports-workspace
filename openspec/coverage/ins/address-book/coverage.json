@@ -253,7 +253,7 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-country-list.spec.ts",
-              "test": "the add form's Country select lists Select a country first, then every country reference data serves alphabetically, United Kingdom in its place",
+              "test": "the add form's Country select for a ${addressTypeLabels[addressType]} address lists Select a country first, then every country reference data serves alphabetically, United Kingdom in its place",
               "strength": "partial",
               "notes": "run on the leased stack by the gate; not red-probed"
             },
@@ -304,6 +304,14 @@
               "test": "lists the countries alphabetically with no blank option and the stored country selected",
               "strength": "full",
               "notes": "edit form; red-probed: fails when the country list is not sorted by name"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET after %s is chosen lists Select a country then every served country, with United Kingdom selected",
+              "strength": "full",
+              "notes": "for DESTINATION_CONSIGNEE_OR_IMPORTER and BRANCH; red-probed: fails when the add form offers United Kingdom alone"
             }
           ]
         }
@@ -2550,7 +2558,7 @@
     },
     {
       "id": "REQ-INS-ADDR-027",
-      "name": "The add form names its first field 'Name or organisation' and, wherever it offers every country, opens its Country select on 'Select a country' first, with United Kingdom selected from the address book after choosing 'Origin or Consignor' and no country chosen from the place of origin and consignor pickers and the consignment contact page",
+      "name": "The add form names its first field 'Name or organisation' and opens its Country select on 'Select a country' first, with United Kingdom selected from the address book and from the consignee, importer and place of destination pickers, and no country chosen from the place of origin and consignor pickers and the consignment contact page",
       "coverage": "full",
       "scenarios": [
         {
@@ -2609,7 +2617,7 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-add-roles.spec.ts",
-              "test": "an ${addressTypeLabels[addressTypes.originOrConsignor]} address lists Select a country first and opens with United Kingdom selected",
+              "test": "a ${addressTypeLabels[addressType]} address lists Select a country first and opens with United Kingdom selected",
               "strength": "partial",
               "notes": "run on the leased stack by the gate; not red-probed"
             },
@@ -2628,6 +2636,14 @@
               "test": "Origin or Consignor opens the address form with United Kingdom selected, Back shows it chosen and a new add starts with none chosen",
               "strength": "partial",
               "notes": "run by the gate; not red-probed"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/features/address-book/add/add.controller.test.js",
+              "test": "GET after %s is chosen lists Select a country then every served country, with United Kingdom selected",
+              "strength": "full",
+              "notes": "for DESTINATION_CONSIGNEE_OR_IMPORTER and BRANCH; red-probed: fails when the address book's add form opens with no country chosen"
             }
           ]
         },
@@ -3378,7 +3394,7 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "POST from the consignee handshake keeps the journey, the Draft status, the notification id and United Kingdom alone on the form when the API rejects the address",
+              "test": "POST from the consignee handshake keeps the journey, the Draft status, the notification id and United Kingdom selected on the form when the API rejects the address",
               "strength": "full",
               "notes": "red-probed: fails when the strip is not passed to the layout"
             }
@@ -3464,7 +3480,7 @@
     },
     {
       "id": "REQ-INS-ADDR-035",
-      "name": "The add page reached from a notification's role picker offers any country for a place of origin or consignor and the United Kingdom alone for a consignee, importer or place of destination",
+      "name": "The add page reached from a notification's role picker offers every country, opening on 'Select a country' for a place of origin or consignor and on United Kingdom for a consignee, importer or place of destination",
       "coverage": "full",
       "scenarios": [
         {
@@ -3500,46 +3516,46 @@
         },
         {
           "id": "SCN-INS-ADDR-035-B",
-          "name": "The consignee, importer and place of destination pages offer the United Kingdom alone",
+          "name": "The consignee, importer and place of destination pages offer every country, opening on United Kingdom",
           "coverage": "full",
           "tests": [
             {
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "GET from the %s handshake offers United Kingdom alone, selected, with every field shown",
+              "test": "GET from the %s handshake lists Select a country then every served country, with United Kingdom selected, and shows every field",
               "strength": "full",
-              "notes": "for consignee, importer and placeOfDestination; red-probed: fails when the registry's United Kingdom fulfilment ids are emptied"
+              "notes": "for consignee, importer and placeOfDestination; red-probed: fails when the add form offers United Kingdom alone, and when these pickers open with no country chosen"
             },
             {
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "POST from the consignee handshake keeps the journey, the Draft status, the notification id and United Kingdom alone on the form when the API rejects the address",
-              "strength": "full",
-              "notes": "red-probed: fails when the address book 400 re-render drops the handshake context"
+              "test": "POST from the consignee handshake keeps the journey, the Draft status, the notification id and United Kingdom selected on the form when the API rejects the address",
+              "strength": "partial",
+              "notes": "checks the list and selection on the page shown again, not on opening"
             },
             {
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "POST from the consignee handshake shows the recoverable-error banner and United Kingdom alone, selected, when the address book fails",
-              "strength": "full",
-              "notes": "red-probed: fails when the address book failure re-render drops the handshake context"
+              "test": "POST from the consignee handshake shows the recoverable-error banner and keeps United Kingdom selected when the address book fails",
+              "strength": "partial",
+              "notes": "checks the list and selection on the page shown again, not on opening"
             },
             {
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-              "test": "from the consignee handshake offers United Kingdom alone, selected, with every field shown",
-              "strength": "partial",
-              "notes": "run by the gate; not red-probed"
+              "test": "from the consignee handshake opens the Country select on United Kingdom, offers every captured country alphabetically, and shows every field",
+              "strength": "full",
+              "notes": "red-probed: fails when the add form offers United Kingdom alone"
             },
             {
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/animals/e2e/features/address-book/addresses-add-handshake.spec.ts",
-              "test": "the INS add page reached from the Consignee picker offers United Kingdom alone, already selected",
+              "test": "the INS add page reached from the Consignee picker opens on United Kingdom and offers every captured country, alphabetically",
               "strength": "partial",
               "notes": "run on the leased stack by the gate; not red-probed"
             }
@@ -3547,24 +3563,16 @@
         },
         {
           "id": "SCN-INS-ADDR-035-C",
-          "name": "A consignee, importer or place of destination address is saved as United Kingdom whatever country is posted",
+          "name": "A consignee, importer or place of destination address is saved with the country chosen",
           "coverage": "full",
           "tests": [
             {
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "POST from the consignee handshake saves the address as United Kingdom whatever country is posted",
+              "test": "POST from the consignee handshake saves the country posted",
               "strength": "full",
-              "notes": "red-probed: fails when the posted country is not fixed to GB"
-            },
-            {
-              "type": "unit",
-              "repo": "trade-imports-ins-frontend",
-              "file": "src/server/app/features/address-book/address-countries.test.js",
-              "test": "Should offer United Kingdom alone, accept only GB and fix the posted country to GB for %s",
-              "strength": "full",
-              "notes": "for the consignee; red-probed: fails when the posted country is not fixed to GB"
+              "notes": "red-probed: fails when the posted country is replaced with United Kingdom before saving"
             },
             {
               "type": "e2e",
@@ -3578,7 +3586,7 @@
         },
         {
           "id": "SCN-INS-ADDR-035-D",
-          "name": "A place of origin or consignor address with no country, or one the list does not offer, is refused",
+          "name": "An address from any role picker with no country, or one the list does not offer, is refused",
           "coverage": "full",
           "tests": [
             {
@@ -3600,9 +3608,9 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "POST from the consignee handshake with the name, postcode, country and phone blank lists the name, postcode and phone errors only, and keeps United Kingdom selected",
+              "test": "POST from the consignee handshake with the name, postcode and phone blank lists those three errors only and saves nothing",
               "strength": "full",
-              "notes": "red-probed: fails when the blank country is not fixed to GB before validation"
+              "notes": "red-probed: fails when the posted country is not one the form accepts"
             },
             {
               "type": "fit",
@@ -3833,7 +3841,7 @@
     },
     {
       "id": "REQ-INS-ADDR-037",
-      "name": "The address book service records an address's roles and refuses missing roles, unknown roles, roles from more than one group and a receiving role outside the United Kingdom",
+      "name": "The address book service records an address's roles in any country and refuses missing roles, unknown roles and roles from more than one group",
       "coverage": "full",
       "scenarios": [
         {
@@ -4063,24 +4071,24 @@
         },
         {
           "id": "SCN-INS-ADDR-037-I",
-          "name": "A receiving role outside the United Kingdom is refused naming the country",
+          "name": "An address holding sending, receiving or branch roles is saved outside the United Kingdom",
           "coverage": "full",
           "tests": [
             {
               "type": "unit",
               "repo": "trade-imports-address-book",
               "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressCrudIT.java",
-              "test": "post_shouldReturn400KeyedByCountryCodeAndSaveNothing_whenAReceivingRoleIsOutsideTheUk",
+              "test": "post_shouldSaveAReceivingAddressOutsideTheUk",
               "strength": "full",
-              "notes": "red-probed: fails when the receiving-roles-in-the-UK rule is removed"
+              "notes": "red-probed: fails when countryCode must be GB"
             },
             {
               "type": "unit",
               "repo": "trade-imports-address-book",
               "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressUpdateIT.java",
-              "test": "put_shouldReturn400KeyedByCountryCodeAndKeepStoredValues_whenAReceivingRoleIsOutsideTheUk",
+              "test": "put_shouldSaveAReceivingAddressOutsideTheUk",
               "strength": "full",
-              "notes": "red-probed: fails when the receiving-roles-in-the-UK rule is removed"
+              "notes": "red-probed: fails when countryCode must be GB"
             },
             {
               "type": "unit",
@@ -4094,17 +4102,25 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-roles.spec.ts",
-              "test": "a create holding a receiving role outside the United Kingdom is refused naming the country and saves nothing",
+              "test": "an address holding ${group} roles outside the United Kingdom is saved",
               "strength": "partial",
               "notes": "not red-probed"
             },
             {
-              "type": "e2e",
-              "repo": "trade-imports-ins-tests",
-              "file": "tests/ins/e2e/features/address-book/address-book-roles.spec.ts",
-              "test": "an address holding sending roles outside the United Kingdom is saved",
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/integration/AddressCrudIT.java",
+              "test": "post_shouldSaveABranchAddressOutsideTheUk",
+              "strength": "full",
+              "notes": "red-probed: fails when countryCode must be GB"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-address-book",
+              "file": "src/test/java/uk/gov/defra/trade/imports/addressbook/address/AddressRequestValidationTest.java",
+              "test": "validate_findsNoViolationForRolesOneAddressCanHoldTogether",
               "strength": "partial",
-              "notes": "not red-probed"
+              "notes": "validates the request only; nothing is saved or read back"
             }
           ]
         },
@@ -5412,7 +5428,7 @@
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-              "test": "${typeLabel} opens with the address and contact fields, a section break, then the roles question offering its roles unticked and without hints, and ${countryOffered}",
+              "test": "${typeLabel} opens with the address and contact fields, a section break, then the roles question offering its roles unticked and without hints, and every captured country with United Kingdom selected",
               "strength": "full",
               "notes": "Origin or Consignor row; red-probed: fails when an address search field is added, the section break is removed, the legend or hint is swapped, the role order is reversed, every role is ticked, or a role carries a hint"
             },
@@ -5490,7 +5506,7 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "POST after %s is chosen with the name, postcode and phone blank and France posted lists those three errors only",
+              "test": "POST after %s is chosen with the name, postcode and phone blank and France posted lists those three errors only and keeps France selected",
               "strength": "partial",
               "notes": "Not probed with an inverted production line."
             },
@@ -5608,7 +5624,7 @@
         },
         {
           "id": "SCN-INS-ADDR-044-F",
-          "name": "Destination, Consignee or Importer fixes the country to United Kingdom",
+          "name": "Destination, Consignee or Importer offers its three roles and every country, opening on United Kingdom",
           "coverage": "full",
           "tests": [
             {
@@ -5623,15 +5639,15 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "GET after %s is chosen offers United Kingdom alone, selected",
+              "test": "GET after %s is chosen lists Select a country then every served country, with United Kingdom selected",
               "strength": "full",
-              "notes": "red-probed: fails when the type offers every country"
+              "notes": "for DESTINATION_CONSIGNEE_OR_IMPORTER and BRANCH; red-probed: fails when the add form offers United Kingdom alone"
             },
             {
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-              "test": "${typeLabel} opens with the address and contact fields, a section break, then the roles question offering its roles unticked and without hints, and ${countryOffered}",
+              "test": "${typeLabel} opens with the address and contact fields, a section break, then the roles question offering its roles unticked and without hints, and every captured country with United Kingdom selected",
               "strength": "full",
               "notes": "Destination, Consignee or Importer row; red-probed: fails when an address search field is added, the section break is removed, the legend or hint is swapped, the role order is reversed, every role is ticked, or a role carries a hint; also when the place roles are no longer put first, and when the type offers every country"
             },
@@ -5655,7 +5671,7 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-add-roles.spec.ts",
-              "test": "a ${addressTypeLabels[addressType]} address offers United Kingdom alone, selected",
+              "test": "a ${addressTypeLabels[addressType]} address lists Select a country first and opens with United Kingdom selected",
               "strength": "partial",
               "notes": "for Destination, Consignee or Importer; Not probed with an inverted production line."
             }
@@ -5663,7 +5679,7 @@
         },
         {
           "id": "SCN-INS-ADDR-044-G",
-          "name": "Branch offers the one role and fixes the country to United Kingdom",
+          "name": "Branch offers the one role and every country, opening on United Kingdom",
           "coverage": "full",
           "tests": [
             {
@@ -5678,15 +5694,15 @@
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "GET after %s is chosen offers United Kingdom alone, selected",
+              "test": "GET after %s is chosen lists Select a country then every served country, with United Kingdom selected",
               "strength": "full",
-              "notes": "red-probed: fails when the type offers every country"
+              "notes": "for DESTINATION_CONSIGNEE_OR_IMPORTER and BRANCH; red-probed: fails when the add form offers United Kingdom alone"
             },
             {
               "type": "fit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/fit/add.fit.spec.js",
-              "test": "${typeLabel} opens with the address and contact fields, a section break, then the roles question offering its roles unticked and without hints, and ${countryOffered}",
+              "test": "${typeLabel} opens with the address and contact fields, a section break, then the roles question offering its roles unticked and without hints, and every captured country with United Kingdom selected",
               "strength": "full",
               "notes": "Branch row; red-probed: fails when an address search field is added, the section break is removed, the legend or hint is swapped, the role order is reversed, every role is ticked, or a role carries a hint; also when Branch offers a second role, and when the type offers every country"
             },
@@ -5702,7 +5718,7 @@
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/ins/e2e/features/address-book/address-book-add-roles.spec.ts",
-              "test": "a ${addressTypeLabels[addressType]} address offers United Kingdom alone, selected",
+              "test": "a ${addressTypeLabels[addressType]} address lists Select a country first and opens with United Kingdom selected",
               "strength": "partial",
               "notes": "for Branch; Not probed with an inverted production line."
             }
@@ -5710,16 +5726,16 @@
         },
         {
           "id": "SCN-INS-ADDR-044-H",
-          "name": "A Destination or Branch address is saved as United Kingdom whatever country is posted",
+          "name": "A Destination or Branch address is saved with the country chosen",
           "coverage": "full",
           "tests": [
             {
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "POST after %s is chosen with France posted saves United Kingdom",
+              "test": "POST after %s is chosen with France posted saves France",
               "strength": "full",
-              "notes": ""
+              "notes": "red-probed: fails when the posted country is replaced with United Kingdom before saving"
             },
             {
               "type": "e2e",
@@ -5733,14 +5749,14 @@
         },
         {
           "id": "SCN-INS-ADDR-044-I",
-          "name": "A Destination or Branch address names only the missing name, postcode and phone number",
+          "name": "A Destination or Branch address names only the missing name, postcode and phone number and keeps the country chosen",
           "coverage": "full",
           "tests": [
             {
               "type": "unit",
               "repo": "trade-imports-ins-frontend",
               "file": "src/server/app/features/address-book/add/add.controller.test.js",
-              "test": "POST after %s is chosen with the name, postcode and phone blank and France posted lists those three errors only",
+              "test": "POST after %s is chosen with the name, postcode and phone blank and France posted lists those three errors only and keeps France selected",
               "strength": "full",
               "notes": ""
             }

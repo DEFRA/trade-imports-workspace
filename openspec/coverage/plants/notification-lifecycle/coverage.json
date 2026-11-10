@@ -233,7 +233,7 @@
     {
       "id": "REQ-PLANTS-LIFECYCLE-009",
       "name": "Trader notification reads and writes are scoped to the caller's organisation",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-PLANTS-LIFECYCLE-009-A",
@@ -268,22 +268,44 @@
               "repo": "trade-imports-plants-backend",
               "file": "src/test/java/uk/gov/defra/trade/imports/plants/integration/NotificationIT.java",
               "test": "writes_shouldReturn404_forAnotherOrganisation",
-              "strength": "partial",
-              "notes": "parameterized over amend, put, submit, copy, soft-delete"
-            },
-            {
-              "type": "fit",
-              "repo": "trade-imports-plants-backend",
-              "file": "src/test/java/uk/gov/defra/trade/imports/plants/integration/NotificationIT.java",
-              "test": "fulfilments_shouldReturn403_forAnotherOrganisation",
               "strength": "full",
-              "notes": ""
+              "notes": "parameterized over amend, put, submit, copy, cancel-amend, soft-delete"
             },
             {
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/plants/e2e/features/organisation-scoped-notifications.spec.ts",
               "test": "returns 404 when another organisation mutates a notification",
+              "strength": "full",
+              "notes": "includes cancelAmendNotification"
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-LIFECYCLE-009-C",
+          "name": "A trader request without an organisation header is rejected",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-backend",
+              "file": "src/test/java/uk/gov/defra/trade/imports/plants/integration/NotificationIT.java",
+              "test": "traderRoutes_shouldRejectRequestsWithoutOrganisationHeader",
+              "strength": "partial",
+              "notes": "parameterized over GET /notifications and POST /notifications"
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-LIFECYCLE-009-D",
+          "name": "Another organisation cannot read fulfilments for a notification it does not own",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-backend",
+              "file": "src/test/java/uk/gov/defra/trade/imports/plants/integration/NotificationIT.java",
+              "test": "fulfilments_shouldReturn403_forAnotherOrganisation",
               "strength": "full",
               "notes": ""
             },

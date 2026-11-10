@@ -172,5 +172,29 @@ The backend MUST persist each new notification under the `Trade-Imports-Organisa
 #### Scenario: Another organisation cannot change a notification through trader lifecycle writes
 **ID**: SCN-LIFECYCLE-009-B
 - **GIVEN** organisation A owns a submitted notification
-- **WHEN** organisation B attempts to amend, replace, submit, copy, or soft-delete it
+- **WHEN** organisation B attempts to amend, replace, submit, copy, cancel-amend, or soft-delete it
+- **THEN** the backend responds as if the notification were not found for organisation B
+
+#### Scenario: A trader request without an organisation header is rejected
+**ID**: SCN-LIFECYCLE-009-C
+- **GIVEN** a trader-facing notification endpoint
+- **WHEN** the caller sends no `Trade-Imports-Organisation-Id` header
+- **THEN** the backend responds with a client error that names the missing header
+
+#### Scenario: Another organisation cannot read fulfilments for a notification it does not own
+**ID**: SCN-LIFECYCLE-009-D
+- **GIVEN** organisation A owns a submitted notification
+- **WHEN** organisation B requests that notification's fulfilments
+- **THEN** the backend responds with forbidden
+
+#### Scenario: When fulfilment read is refused for another organisation, the frontend treats the notification as not found
+**ID**: SCN-LIFECYCLE-009-E
+- **GIVEN** the backend refuses a fulfilment read with forbidden because the notification belongs to another organisation
+- **WHEN** the live animals frontend loads that notification for display
+- **THEN** the user sees a not-found response rather than the notification's answers
+
+#### Scenario: Another organisation cannot use document routes for a notification it does not own
+**ID**: SCN-LIFECYCLE-009-F
+- **GIVEN** organisation A owns a notification with upload sessions registered
+- **WHEN** organisation B calls register, session lookup, or list document-upload routes for that reference
 - **THEN** the backend responds as if the notification were not found for organisation B

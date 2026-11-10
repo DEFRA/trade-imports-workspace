@@ -172,5 +172,17 @@ The plants backend MUST persist each new notification under the `Trade-Imports-O
 #### Scenario: Another organisation cannot change a notification through trader lifecycle writes
 **ID**: SCN-PLANTS-LIFECYCLE-009-B
 - **GIVEN** organisation A owns a submitted notification
-- **WHEN** organisation B attempts to amend, replace, submit, copy, or soft-delete it
+- **WHEN** organisation B attempts to amend, replace, submit, copy, cancel-amend, or soft-delete it
 - **THEN** the backend responds as if the notification were not found for organisation B
+
+#### Scenario: A trader request without an organisation header is rejected
+**ID**: SCN-PLANTS-LIFECYCLE-009-C
+- **GIVEN** a trader-facing notification endpoint
+- **WHEN** the caller sends no `Trade-Imports-Organisation-Id` header
+- **THEN** the backend responds with a client error that names the missing header
+
+#### Scenario: Another organisation cannot read fulfilments for a notification it does not own
+**ID**: SCN-PLANTS-LIFECYCLE-009-D
+- **GIVEN** organisation A owns a submitted notification
+- **WHEN** organisation B requests that notification's fulfilments
+- **THEN** the backend responds with forbidden

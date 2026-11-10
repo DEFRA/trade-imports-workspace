@@ -1,0 +1,350 @@
+[
+  {
+    "id": "inc-245",
+    "originalPurpose": "The 3 November re-distil against the Live Animals & Germinals Data Fields V4 page wanted the shared obligation model to record four markings (mandatory to proceed, mandatory to submit, optional, conditional) and an all-or-nothing group, so a page would stop only on a hard stop and a half-filled group could never be stored. It got its own theme because nobody else's theme touches the model folder, and it was meant to fix the vocabulary that later page rows would be written against.",
+    "raisedBy": "The 3 November 2026 re-distil (workspace commit 4116b9b2, chore(EUDPA-693), #200), from requirements req-2206 and req-2207, the V4 page's Mandatory column (confluence-6497338582 p1-011 to p1-016), and Sam's 9 October afternoon ruling (claims 43 and 44: plants takes the same change). It is also tied to open question 30 in report.md (conflict c-372, how far the save-button checks reach), which is still unanswered.",
+    "items": [
+      {
+        "item": "The model carries only mandatory or optional",
+        "status": "still-true",
+        "evidence": "animals-frontend origin/main: across sets/*/obligations and model there are 70 status: 'mandatory' and 35 status: 'optional', with no other value. effectiveStatus falls back to 'mandatory' at model/obligations/state-queries.js:36. Plants twin: 97 mandatory and 38 optional, the same vocabulary."
+      },
+      {
+        "item": "A mandatory answer is enforced at submission, and each page's hard stops are written in the page",
+        "status": "still-true",
+        "evidence": "Submission refusal: declaration/controller.js:33,159 (notReadyToSubmit, from d1e6e1ca on 11 Sep). Page hard stops: origin/validate.js:92-101 (country, plus region code when 'yes'), port-of-entry/validate.js:23-26 (means of transport), transporters/validate.js:37-40 (transporter). This is the working split the row asks the model to name. The behaviour already exists; only the model does not label it."
+      },
+      {
+        "item": "The two kinds of mandatory can't be told apart",
+        "status": "partly",
+        "evidence": "True inside the model's vocabulary. In behaviour they are already separate: page validation is the hard stop and the obligation status is the submission check. Feature themes keep adding hard stops page by page: f9d48dab EUDPA-760 (country of origin required on Save and continue, 4 Nov), inc-240 in the transporters theme (done, merged in 67deda9e EUDPA-781)."
+      },
+      {
+        "item": "Save and return to overview skips the checks, so the two buttons differ",
+        "status": "fixed",
+        "evidence": "25c23ef8 (26 Oct, #436): inc-232 in design-snagging-followups, done. Save and return now makes the same checks as Save and continue in animals and plants. The isHubExit/allowMissing bypass is gone from lib/validate."
+      },
+      {
+        "item": "A half-filled all-or-nothing group can be stored",
+        "status": "fixed",
+        "evidence": "The only all-or-nothing group in V4 is the accompanying document block (type, attachment type, reference, date of issue). Main models it as a 0-to-15 collection whose fields are all mandatory (sets/live-animals/obligations/sections/documents.js:19-55). Upload documents now refuses a part-filled document on every button: form/payload.js:61-65 startsADocument and controller.js:402-404 refuseUnaddedDocument, both from 25c23ef8."
+      },
+      {
+        "item": "No all-or-nothing rule exists in the model (req-2207's note, citing repo-frontend-p2-004)",
+        "status": "gone",
+        "evidence": "Wrong when the row was raised. requires.allOrNothingOfIds has been in model/obligations/state-queries.js:84-106 since d1e6e1ca (11 Sep). Completeness reads it through bridge/status/completeness/index.js:48, and docs/cardinality.md:14 documents it. Plants has the same at state-queries.js:85. No manifest uses it yet, because the documents block is modelled as a collection."
+      },
+      {
+        "item": "Overview row reads Complete when all or none of the group is given",
+        "status": "still-true",
+        "evidence": "Already how it works. The documents group has no minEntries (documents.js:24-27), so an empty collection is satisfied, and instance-complete.js:53-66 needs every mandatory field of each entry. allOrNothingOfIds returns no error for none or all (state-queries.js:92)."
+      },
+      {
+        "item": "Conditional answers are judged at the level they apply at (notification, commodity line, unit)",
+        "status": "still-true",
+        "evidence": "Already built, as req-2206's own note says (repo-frontend-p2-143): applyTo gates with per-index scope in model/obligations/evaluator/scope/make-in-scope-check.js and helpers/equals-gate.js:20 (regionCode flips between mandatory and optional)."
+      },
+      {
+        "item": "Plants shares the model and takes the same change",
+        "status": "partly",
+        "evidence": "Plants has its own twin of model/obligations with the same two-value vocabulary and allOrNothingOfIds. Plants has no upload documents page (inc-231 notes), and the V4 page covers animals and germinals only, so plants has no all-or-nothing group for this row to apply."
+      },
+      {
+        "item": "Theme touches tests/animals|plants/e2e/features/obligation-markings",
+        "status": "still-true",
+        "evidence": "No obligation-markings folder (or any path with 'obligation') under tests/ on ins-tests origin/main (31c34b7). Nothing was ever built."
+      },
+      {
+        "item": "AC1 cites confluence-6497338582-p1-011 for mandatory to proceed",
+        "status": "unclear",
+        "evidence": "The citation is off by one. In the extract, p1-011 is 'Optional can be left blank' and p1-012 is mandatory to proceed. AC2 and AC3 are shifted the same way (p1-014 is mandatory to submit)."
+      }
+    ],
+    "stillWaitingOnIt": "Nothing. No row in backlog.json or any themes/*/backlog.json lists inc-245 or obligation-model in dependsOn, and the row's own notes say nothing waits for it. report.md:925 claims every feature theme's markings rest on it, but the feature rows have shipped page-level hard stops without it: inc-232 and inc-240 are done, EUDPA-760 is merged. Rows that overlap it: inc-232 (done, both save buttons make the same checks and documents are all-or-nothing on every button), inc-231 (dropped into inc-232), inc-240 (done, transporter hard stop), inc-243 (consignment-parties, todo) and inc-244 (germinal-products, todo, which covers germinal quantity, the one germinal field V4 marks mandatory to proceed). Open question 30 (c-372, how far the save-button checks reach) lists inc-245 as affected, but it is about each page's checks, not the model.",
+    "relevance": "drop",
+    "recommendation": "Drop it. The behaviour it promises is already on main, built a different way.\n\nHard stops are each page's own validation, added page by page in the feature themes. Submission checks are the obligation status plus the review page's refusal. Both save buttons now make the same checks (inc-232). The one all-or-nothing group in V4, accompanying documents, is refused when half-filled on every button and reads complete when empty or full. The model has also had allOrNothingOfIds since September.\n\nEach remaining mandatory-to-proceed field belongs on its own page's row. inc-243 covers the parties pages and inc-244 the germinal pages; origin and transporters are already done.\n\nWhat is lost if dropped: the model would never record 'mandatory to proceed' as its own marking. Whether a field is a hard stop would stay in page code, not in the manifest. No single test suite (the obligation-markings E2E) would prove the four markings together. Nothing in the release needs these things.\n\nIf Sam wants that single source of truth later, it is a refactor and can be raised as one.",
+    "verdict": {
+      "agrees": true,
+      "corrections": [
+        "Small fix, verdict unchanged. The recommendation says only origin and transporters are 'already done', which undercounts. On main, other pages already refuse a blank required answer before you can leave them: reason for import (import-reason/validate.js uses requiredOneOf for purpose, destination country and port of exit), contact (contact/validate.js, contactRequired) and port of entry (means of transport). Commodity, type, species and number of animals are with the separate commodities search ticket, as Sam said. They are not this row's work.",
+        "Something the colleague missed, which supports dropping the row. V4 also has an 'at least one' group marking: Animal Identifiers is mandatory to submit when at least one of its fields is given. The row's four markings leave it out. Main already has it as requires.anyOfIds in sets/live-animals/obligations/sections/commodities/identifiers.js:63, so the row's vocabulary was incomplete when it was raised, and the model already covers the case.",
+        "Confirmed: the AC citations are shifted by one. In distil/extract/confluence-6497338582.json, p1-011 is Optional, p1-012 is mandatory to proceed and p1-014 is mandatory to submit. AC1 cites p1-011, AC2 cites p1-012 and AC3 cites p1-014, so each points at the wrong line. This only matters if the row is kept.",
+        "Checked and true on origin/main: 25c23ef8 (save-and-return makes the same checks, 26 Oct), f9d48dab (EUDPA-760, 4 Nov), d1e6e1ca (11 Sep) and 67deda9e (EUDPA-781, 9 Nov) are all on main. allOrNothingOfIds is at state-queries.js:85, and plants has its own copy. The isHubExit/allowMissing bypass is gone. Every field in the documents collection is mandatory, with no minEntries and maxEntries 15. startsADocument and refuseUnaddedDocument are at controller.js:402-403. The tests repo has no obligation-markings folder. The row has dependsOn [], and nothing else in the backlog references inc-245. The documents block is the only all-or-nothing group in V4, and germinal Quantity is the one germinal field marked mandatory to proceed (p5-074)."
+      ],
+      "finalRelevance": "drop",
+      "finalRecommendation": "Drop the obligation-model row (the one about telling a hard stop from a submission check and keeping groups all-or-nothing). What it promises is already on main, built a different way.\n\n- Hard stops: each page's own validation does this. Origin, reason for import, contact, port of entry and transporters already refuse a blank required answer.\n- Submission checks: the obligation status and the review page's refusal handle these.\n- Both save buttons: they make the same checks since the design-snagging fix.\n- Accompanying documents: the one all-or-nothing group in V4. It is refused when half-filled and reads complete when empty or full.\n- 'At least one' (animal identifiers): already in the model as anyOfIds.\n- Conditional answers: already judged per scope by applyTo.\n\nThe mandatory-to-proceed fields still open belong to their own rows:\n- consignment parties: inc-243\n- germinal quantity: inc-244\n- commodity, type, species and number of animals: the separate commodities search ticket\n\nWhat is lost: the manifest would never name 'mandatory to proceed' as its own marking, and no single E2E suite would prove all the markings together. Nothing in the release needs either. If Sam later wants the manifest to be the single source of truth, raise that as a refactor.\n\nThe open question about how far the save-button checks reach (c-372) is about each page's checks, not the model, so dropping this row loses nothing there."
+    }
+  },
+  {
+    "id": "inc-234",
+    "originalPurpose": "The design-snagging follow-up runs (the type-ahead style tidy, the move of looks checks to screenshots, and the plants accent work) left review notes that no remaining theme owned. This row collects the live animals half: browser tests that still prove looks by class list, fixed alignment or line height, or find controls by class, which breaks the programme rule that browser tests only compare with GOV.UK values read at run time or a screenshot. It also adds browser tests for accented type-ahead searches and tidies which test steps count as shared.",
+    "raisedBy": "The 27 Oct 2026 re-analysis of the Design Release 2.1 backlog against main (workspace commit f7731db0, PR #176), which triaged design-snagging-followups loop notes inc-225 [8], inc-226 [0]-[5], [10], [11], [13] and inc-228 [1], [4] (record: reanalysis/followups.json). All three source rows are done and merged.",
+    "items": [
+      {
+        "item": "Hub: totals boxes found by class (TOTAL_BOX = '.app-commodity-total')",
+        "status": "still-true",
+        "evidence": "animals-frontend origin/main 1dff7901 features/hub/hub.fit.spec.js:36, used at :82, :447, :468, :480"
+      },
+      {
+        "item": "Hub: buttons found by '.govuk-button-group .govuk-button' and checked for not having govuk-button--secondary",
+        "status": "still-true",
+        "evidence": "hub/hub.fit.spec.js:348 and :354 (unchanged)"
+      },
+      {
+        "item": "Hub: caption wrap measured by computed line height",
+        "status": "still-true",
+        "evidence": "hub/hub.fit.spec.js:447-461 (unchanged)"
+      },
+      {
+        "item": "Arrival details: medium labels proved by govuk-label--m class",
+        "status": "moved",
+        "evidence": "was arrival-transit.fit.spec.js:210-211, now transport/fit/arrival-transit.fit.spec.js:215-216; file reshaped by 2038fc3a (EUDPA-694 arrival and transit)"
+      },
+      {
+        "item": "Arrival details: hint colour read inline with getComputedStyle",
+        "status": "moved",
+        "evidence": "was :222, now arrival-transit.fit.spec.js:227 (still inline, compared at :230, :235)"
+      },
+      {
+        "item": "Transit countries: remove column proved by text-align right",
+        "status": "moved",
+        "evidence": "was :833, now arrival-transit.fit.spec.js:1004"
+      },
+      {
+        "item": "Upload documents: actions cell and header proved by text-align right",
+        "status": "moved",
+        "evidence": "was upload.fit.spec.js:712-715, now documents/fit/upload.fit.spec.js:737 and :740 (moved by ede4702c / 414d327f)"
+      },
+      {
+        "item": "Review: expectOnlyHiddenMissing checks govuk-visually-hidden class",
+        "status": "moved",
+        "evidence": "was check-answers.fit.spec.js:47-48, now check-answers/check-answers.fit.spec.js:42-44"
+      },
+      {
+        "item": "Review: last block checked for govuk-summary-card class",
+        "status": "moved",
+        "evidence": "was :146-151, now check-answers.fit.spec.js:141-146"
+      },
+      {
+        "item": "Additional details: legends checked for govuk-fieldset__legend--m",
+        "status": "moved",
+        "evidence": "was :74-77, now additional-details/additional-details.fit.spec.js:129, :132"
+      },
+      {
+        "item": "Origin: label and legend size classes",
+        "status": "moved",
+        "evidence": "was :151-161, now origin/origin.fit.spec.js:152-162"
+      },
+      {
+        "item": "Consignment details: heading-l, heading-m and label--s classes",
+        "status": "moved",
+        "evidence": "was :112-121, now commodities/fit/consignment-details.fit.spec.js:133-144 (c93708d1, EUDPA-693)"
+      },
+      {
+        "item": "Section caption: govuk-visually-hidden class",
+        "status": "still-true",
+        "evidence": "features/section-caption.fit.spec.js:51"
+      },
+      {
+        "item": "Import reason: legend govuk-visually-hidden class",
+        "status": "moved",
+        "evidence": "was :153, now import-reason/import-reason.fit.spec.js:180 (c93708d1)"
+      },
+      {
+        "item": "Transporters: status tags found by .govuk-tag--green / --magenta, bold by .govuk-!-font-weight-bold, legends by govuk-visually-hidden",
+        "status": "moved",
+        "evidence": "was :344-347, :498, :785; now transport/fit/transporters.fit.spec.js:387, :390, :565, :308, :851 (reshaped by 67deda9e, EUDPA-781 transporters)"
+      },
+      {
+        "item": "Type-ahead: '.app-autocomplete__button' literal written three times",
+        "status": "still-true",
+        "evidence": "features/type-ahead.fit.spec.js:183, :256, :471"
+      },
+      {
+        "item": "Type-ahead: no-JavaScript label size proved by govuk-label--s/--m classes",
+        "status": "still-true",
+        "evidence": "type-ahead.fit.spec.js:229-231 and :251"
+      },
+      {
+        "item": "Type-ahead: inline computed colour read",
+        "status": "still-true",
+        "evidence": "type-ahead.fit.spec.js:378; fit/live-animals-journey.js has a private reader at :256 but exports none"
+      },
+      {
+        "item": "expectStyle exported from fit/live-animals-journey.js with one user, while the testing guide calls it shared",
+        "status": "moved",
+        "evidence": "fit/live-animals-journey.js:116 (was :102); only user type-ahead.fit.spec.js:8, :361, :406; docs/testing.md:81 (was :74) still says shared"
+      },
+      {
+        "item": "Animals type-aheads have no accented-search browser test",
+        "status": "still-true",
+        "evidence": "no accent case in type-ahead.fit.spec.js; behaviour is unit-tested only (src/client/common/helpers/search-fold.test.js, bold-matches.test.js, components/accessible-autocomplete.test.js)"
+      },
+      {
+        "item": "Screenshot suite shows the Overview's buttons, totals and captions",
+        "status": "fixed",
+        "evidence": "ins-tests origin/main 31c34b7 tests/animals/e2e/visual/overview-totals.visual.spec.ts:10-14 (full-page Overview screenshot)"
+      },
+      {
+        "item": "Screenshot suite shows the transit countries remove column",
+        "status": "fixed",
+        "evidence": "tests/animals/e2e/visual/transited-countries.visual.spec.ts:17-24 (full page with one country added)"
+      },
+      {
+        "item": "Screenshot suite shows arrival details labels, Upload documents actions column and the review's last card",
+        "status": "still-true",
+        "evidence": "no arrival-details, upload or check-answers spec under tests/animals/e2e/visual/ (refused-review is the submitted view, not the review page)"
+      },
+      {
+        "item": "Ownership note: transporters.fit.spec.js stays here because the transporters theme is blocked",
+        "status": "partly",
+        "evidence": "transporters theme is now done=11, blocked=2 (themes/transporters/backlog.json); main moved via 67deda9e EUDPA-781, so the reason no longer holds"
+      },
+      {
+        "item": "Theme waits on split-off themes that own the edited specs",
+        "status": "partly",
+        "evidence": "arrival-and-transit, commodities-and-reason, design-snagging, documents, journey-foundation, origin-page are all done; overview-and-review still has 17 todo rows (inc-098, inc-101, inc-110, inc-117 rewrite hub and review tests)"
+      }
+    ],
+    "stillWaitingOnIt": "Nothing depends on it: no row or theme lists inc-234 or test-hygiene in dependsOn. Sibling rows split from the same triage are inc-236 (the plants half, test-hygiene), inc-237 (party and CPH tests, consignment-parties) and inc-238 (identification tests). The hub and review parts overlap the overview-and-review theme's open rows: inc-098 hub regions, inc-101 and inc-110 review cards and buttons, inc-117 review test coverage.",
+    "relevance": "trim",
+    "recommendation": "Keep the row but trim it. Every class, alignment and line-height check it names is still on main. Most have only moved lines because later themes rewrote those specs, and none of those rewrites removed the checks. Two of the screenshot items are already done: the full-page Overview and the transit countries page with one country. Drop those, and drop the stale reason for keeping transporters here, since the transporters theme has now landed. Move the hub and review parts into the overview-and-review theme, whose open rows rewrite those very tests, so that work happens once. What is left can be built now, because every other theme it waited on is done: arrival, transit, documents, origin, additional details, consignment details, import reason, section caption, transporters and the type-ahead (accent browser tests, label size read at run time, one owner for the button selector, a shared computed-style reader, and moving expectStyle so the testing guide is true). Dropping the whole row would lose the only plan to bring the live animals browser tests into line with the programme rule, and the only browser test of accented type-ahead search. Today that is proven by unit tests alone.",
+    "verdict": {
+      "agrees": true,
+      "corrections": [
+        "Small path fix: expectStyle is exported from fit/live-animals-journey.js:116 at the root of the animals frontend repo, not from a fit/ folder under the journey. The testing guide that calls it shared is src/server/app/sets/live-animals/docs/testing.md:81. Its only user is still type-ahead.fit.spec.js (lines 8, 361 and 406), and the private computed-style reader is in the exported contentWidthOf at :254-256. The finding stands.",
+        "The hand-over to overview-and-review is overstated. That theme does touch hub/ and check-answers.fit.spec.js (its touches list in themes.json), and inc-098 names hub.fit. But inc-101, inc-110 and inc-117 never mention the class, line-height or totals-box checks. Moving the hub and review parts there only does the work once if the class-list clean-up goes into those rows' acceptance criteria in writing. If it does not, those checks have no owner.",
+        "Moving them costs something the colleague did not say. Overview-and-review depends on identification-and-permanent-address, and that theme has not been split yet: it has 10 todo, 1 blocked and 1 dropped in the main backlog. Its own 17 todo rows are behind it too. So the hub and review clean-up becomes the last thing in line, not something that can be built now.",
+        "Not every 'still on main' check is a class or alignment check. Origin, consignment details, additional details, import reason and section caption check size or visually-hidden classes (origin.fit:153/159/162, consignment-details.fit:133-144 heading-l/heading-m/label--s, additional-details.fit:129/132, import-reason.fit:180, section-caption.fit:51). All are confirmed on main 1dff7901, and so are hub.fit:36/354/452-461, arrival-transit.fit:216/227/1004, upload.fit:737/740, check-answers.fit:43/146, transporters.fit:308/387/390/565/851 and type-ahead.fit:183/230-231/256/378/471.",
+        "Both screenshot items marked fixed are confirmed on tests main. overview-totals.visual.spec.ts is a full-page Overview screenshot with saved counts. transited-countries.visual.spec.ts has an empty screenshot and a one-country (France) screenshot. Neither tests repo nor frontend has an arrival-details, upload or check-answers screenshot (refused-review is a different view), so that item is still open.",
+        "The 'waits on split-off themes' framing is a bit off. test-hygiene is not a split theme in themes.json, and inc-234 has dependsOn []. Nothing blocks it on paper. The only real ordering risk is clashing with overview-and-review's rewrite of the hub and review tests."
+      ],
+      "finalRelevance": "trim",
+      "finalRecommendation": "Keep the row (live animals browser tests that prove looks by class list), but trim it as the colleague says.\n\n**Drop:**\n- The Overview screenshot and the transit-countries screenshot: both are already on tests main.\n- The stale reason for keeping transporters here: the transporters theme has 11 done and 2 blocked.\n\n**Build now:** the parts no other theme will touch.\n- Arrival details labels, hint colour and transit remove column (arrival-transit.fit).\n- Upload documents actions column (upload.fit).\n- Size classes on origin, consignment details, additional details and import reason.\n- The section caption.\n- Transporter tags, bold text and legends.\n- The type-ahead work: an accented-search browser test (today unit tests only), label size read at run time, one owner for the '.app-autocomplete__button' selector, a shared computed-style reader, and moving expectStyle or fixing the testing guide at src/server/app/sets/live-animals/docs/testing.md:81.\n- Screenshots for arrival details, Upload documents and the review's last card. None exist yet.\n\n**Hub and review parts:** only move them into overview-and-review if the clean-up is written into those rows.\n- What to add: inc-098 for the hub totals box, buttons and caption line height; inc-101 or inc-117 for the review's visually-hidden and summary-card class checks.\n- Otherwise they lose their only owner: inc-101, inc-110 and inc-117 don't mention them today.\n- The cost of moving: they then wait behind identification-and-permanent-address, which hasn't been split yet (10 todo rows).\n- The alternative: keep them here and do them after overview-and-review lands.\n\n**Don't drop the whole row.** That would lose the only plan to bring these tests into line with the programme rule, and the only planned browser test of accented type-ahead search."
+    }
+  },
+  {
+    "id": "inc-235",
+    "originalPurpose": "The build loop's reviews of two design-snagging follow-up rows left tidy-ups nobody owned. One was the \"Add another commodity\" fix (inc-233): three places each built their own \"come back here\" link even though one shared rule already read it back. The other was the plants type-aheads accent fix (inc-228): the bold-letters helper kept single-use values at module level, and the client helpers folder still held an empty placeholder file. This row was meant to gather those into one live animals refactor.",
+    "raisedBy": "Raised by the loop from design-snagging-followups follow-ups: inc-233 followUps[3], [4] and inc-228 followUps[2], [6], [7]. Both rows are done and merged (inc-233: animals-frontend PR 437; inc-228: plants-frontend PR 125). The row's note checks main on 27 Oct, and it was filed into test-hygiene with the 2.1 re-analysis. The follow-up wording itself is gone: followUps is null on both rows in the theme backlog, now and in its history (commits 0d48a0e3 and 6bb2cdf1). So the row's own text is the only record left.",
+    "items": [
+      {
+        "item": "Commodities (Add another commodity, and Change on Commodity details and Identification details) builds its own return query",
+        "status": "fixed",
+        "evidence": "trade-imports-animals-frontend origin/main features/commodities/commodity-question-detour.js:15-19 now calls kit.withReturnMarker. Changed in 57e85889 (EUDPA-617 review follow-ups, PR 449, 30 Oct)."
+      },
+      {
+        "item": "One shared rule builds return links: kit has a builder next to readReturnMarker, with the marker name written once",
+        "status": "fixed",
+        "evidence": "src/server/app/shared/kit.js:193 RETURN_PARAMETER = 'return', :196 withReturnMarker, :208 readReturnMarker. Added in 57e85889."
+      },
+      {
+        "item": "Party Edit details builds its own return query (addresses/party-edit/edit-href.js)",
+        "status": "still-true",
+        "evidence": "features/addresses/party-edit/edit-href.js:10 `new URLSearchParams({ return: returnSlug })`, then :12 kit.appendChangeContext. It has not moved to kit.withReturnMarker. Callers: addresses/controller.js:49, contact/controller.js:50, check-answers/controller.js:59, the cards contact-address.js:35 and roles-and-addresses.js:51."
+      },
+      {
+        "item": "Every return link in live animals goes through the shared builder (a new hand-built link the row does not name)",
+        "status": "partly",
+        "evidence": "features/addresses/controller.js:57 hard-codes `pagePath(journeyId, 'cph-number?return=addresses')`. Its reader, cph-number/controller.js:26, already uses kit.readReturnMarker. The literal dates from d1e6e1ca and was edited again in 032c9ed8."
+      },
+      {
+        "item": "Reading the marker back goes through kit.readReturnMarker",
+        "status": "fixed",
+        "evidence": "party-edit/party-edit.controller.js:29, commodity-question-detour.js:26 and cph-number/controller.js:26 all call kit.readReturnMarker (kit.js:208)."
+      },
+      {
+        "item": "bold-matches.js keeps single-use literals at module scope (breaks .claude/rules/code-quality.md:59, 'A literal value used by one function lives in that function')",
+        "status": "still-true",
+        "evidence": "src/client/common/helpers/bold-matches.js:3-9 HTML_ESCAPES is used only by escapeHtml. :14 MATCH_CLASS is used only by strongMatch. The rule is still on workspace origin/main at .claude/rules/code-quality.md:59."
+      },
+      {
+        "item": "src/client/common/helpers/.gitkeep is a leftover placeholder in a folder that now holds real code",
+        "status": "still-true",
+        "evidence": "origin/main still tracks src/client/common/helpers/.gitkeep (0 bytes), next to bold-matches.js, search-fold.js and their tests."
+      },
+      {
+        "item": "Type-ahead bold letters still escape what the trader typed (a guard for the refactor)",
+        "status": "still-true",
+        "evidence": "bold-matches.js:11-12 escapeHtml, used at :17 and :26-31. Tests are in bold-matches.test.js (extended in c93708d1)."
+      }
+    ],
+    "stillWaitingOnIt": "No row or theme depends on inc-235 or names it in dependsOn. No theme depends on test-hygiene either. It shares its theme with inc-234 (live animals browser tests) and inc-236 (plants tests and guides), but neither needs it. Elsewhere, inc-193 (party pickers filter as you type, blocked in waiting-on-design) will reuse bold-matches.js and search-fold.js but does not tidy them. inc-013 (commodities-and-reason, done) used the same helpers. Neither overlaps this work.",
+    "relevance": "trim",
+    "recommendation": "Keep the row but trim it. Main has done half of it: the commodities link now uses the shared kit.withReturnMarker (57e85889), and all three readers use kit.readReturnMarker. Drop the commodity criteria and the 27 Oct notes for commodity-question-detour.js and kit.js. What is left is small: switch partyEditHref (edit-href.js:10) to kit.withReturnMarker, keeping its call signature. Also switch the hard-coded 'cph-number?return=addresses' link in addresses/controller.js:57, which the row does not mention yet. Move HTML_ESCAPES and MATCH_CLASS inside the functions that use them, and delete the .gitkeep. If the row is dropped, live animals keeps two hand-built return links beside the shared builder (the marker name is written in three places), plus a small house-rule breach and a dead placeholder file. Users would see no difference. It would also suit merging into a general code-tidy row, because none of it is test work, whatever the theme's name says.",
+    "verdict": {
+      "agrees": true,
+      "corrections": [
+        "Paths are shortened. The live animals features sit under src/server/app/sets/live-animals/journeys/linear/features/ on origin/main, so features/addresses/... in the evidence means that folder. The line numbers are right.",
+        "I checked these against animals-frontend origin/main and found them correct: the commodities link uses kit.withReturnMarker (commodity-question-detour.js:16-19, changed in 57e85889, PR 449). kit.js:193/196/208 hold RETURN_PARAMETER, withReturnMarker and readReturnMarker. edit-href.js:10 still builds `new URLSearchParams({ return: returnSlug })`. addresses/controller.js:57 still hard-codes 'cph-number?return=addresses'. bold-matches.js:3-9 and :14 still keep HTML_ESCAPES and MATCH_CLASS at module level. src/client/common/helpers/.gitkeep is still tracked.",
+        "Missing context: the plants copy of bold-matches.js on plants-frontend origin/main already has the fix. htmlEscapes sits inside escapeHtml, the bold class is written inline in strongMatch, and its helpers folder has no .gitkeep. So the animals copy is the one lagging behind (inc-228's follow-ups came from the plants PR). The animals fix can copy the plants version.",
+        "Switching partyEditHref to kit.withReturnMarker is safe for existing tests. encodeURIComponent and URLSearchParams both turn '/' into %2F, which contact/controller.test.js:38 expects ('consignment%2Fcontact%2Fselect'). Slugs have no spaces, so the '+' versus '%20' difference never comes up.",
+        "Not extra hand-built markers, so they don't belong in this row: amend-form-actions.js:6 ('return' is the value of the Save and return button), and ins-address-book-urls.js:30/42 plus addresses/ins-handshake.js:17 (the INS address-book handshake's own return URL, a separate marker for a separate service)."
+      ],
+      "finalRelevance": "trim",
+      "finalRecommendation": "Keep inc-235 but trim it, as the colleague says. Main has already done the commodities half: the commodities link is built with kit.withReturnMarker, and all three readers use kit.readReturnMarker. So drop the commodity acceptance criterion and the 27 Oct notes for commodity-question-detour.js and kit.js.\n\nWhat is left, all in animals-frontend:\n- Switch partyEditHref (edit-href.js:10) to kit.withReturnMarker, keeping its call signature.\n- Switch the hard-coded 'cph-number?return=addresses' link (addresses/controller.js:57) to the shared builder. The row does not name this one yet.\n- Move HTML_ESCAPES and MATCH_CLASS inside the functions that use them, matching the plants copy of bold-matches.js, which already does this.\n- Delete src/client/common/helpers/.gitkeep.\n\nIf the row is dropped, nothing changes for users. The code keeps two hand-built return links beside the shared builder, a small breach of the house rule on literals, and a dead file. None of it is test work, so it also suits merging into a general code-tidy row if one exists. Nothing depends on it."
+    }
+  },
+  {
+    "id": "inc-236",
+    "originalPurpose": "The loop raised it on 27 October from follow-ups left by three design-snagging-followups rows: inc-225 (animals type-ahead style tests), inc-226 (looks checks move to screenshots) and inc-228 (plants type-aheads ignore accents). It gathers the plants-side and tests-repo tidy-ups no other theme owns: a testing guide with a false claim and a broken sentence, browser readers that rename their arguments on the way into the page, arrival labels proven by class, a behaviour spec silent on accent matching, and no plants screenshot command.",
+    "raisedBy": "The design-snagging-followups build loop's follow-ups on inc-225 ([0], [1], [7]), inc-226 ([0] plants half, [8]) and inc-228 ([0], [9]), written into the Design Release 2.1 backlog under the test-hygiene theme. Its notes are pinned to main on 27 Oct 2026. The source rows on the follow-ups theme backlog no longer hold the followUps arrays (followUps is null), so the row's own criteria are now the only record.",
+    "items": [
+      {
+        "item": "Plants testing guide says keeping readers in type-ahead.fit.spec.js means 'the coverage report never counts them as source'. That implies a shared reader would count, which is untrue: vitest only covers src/**/*.js and leaves out *.spec.js, sonar leaves out *.fit.spec.js, and fit/ sits outside src/ anyway",
+        "status": "still-true",
+        "evidence": "plants-frontend origin/main src/server/app/sets/high-risk-plants/docs/testing.md:98-100; vitest.config.js:23-25; sonar-project.properties:10,16"
+      },
+      {
+        "item": "Broken sentence in the guide's shared-helpers section: the expectPickerResultsLayout sentence stops at 'content under the page heading are' and the next paragraph starts straight after it",
+        "status": "still-true",
+        "evidence": "plants-frontend origin/main docs/testing.md:93-95"
+      },
+      {
+        "item": "fit/high-risk-plants-journey.js readers pass values into the page under different names from the ones they take (govukColourOf takes token, uses name inside the page; computedStyle takes property, uses name inside the page)",
+        "status": "still-true",
+        "evidence": "plants-frontend origin/main fit/high-risk-plants-journey.js:63-67, 76-84"
+      },
+      {
+        "item": "type-ahead.fit.spec.js govukReferenceStyleOf renames element/classes/focused/properties to tagName/className/isFocused/names when it passes them into the page",
+        "status": "still-true",
+        "evidence": "plants-frontend origin/main .../features/type-ahead.fit.spec.js:375-400 (same pattern at arrival-details.fit.spec.js:73-79, code to portCode)"
+      },
+      {
+        "item": "Plants arrival details labels proven medium by toHaveClass(/govuk-label--m/). These are the only class-list checks left in plants fit specs",
+        "status": "still-true",
+        "evidence": "plants-frontend origin/main .../arrival-details/arrival-details.fit.spec.js:182-183, 298-299; that file last changed 23 Oct (f6bf287)"
+      },
+      {
+        "item": "Plants behaviour spec does not say the place of landing and genus searches ignore case and accents, with the matching letters in bold. The origin page spec already says this for countries; the browser tests already prove it for landing ('Dóv') and genus ('Cást')",
+        "status": "still-true",
+        "evidence": "workspace origin/main openspec/specs/plants/journey-pages/arrival-details/spec.md:62 (no accent wording), commodity-details/spec.md (no genus search wording); compare origin/spec.md:22; plants type-ahead.fit.spec.js:64-66, 80-81"
+      },
+      {
+        "item": "Tests repo has plants screenshot specs but no plants-only screenshot command, and the README's domain table shows a dash for plants visual. That contradicts its own line 428, which says plants has @visual specs",
+        "status": "still-true",
+        "evidence": "ins-tests origin/main package.json:41,48,61 (animals:visual only); README.md:101,104,427-428; tests/plants/e2e/visual/arrival-date-picker.visual.spec.ts exists"
+      },
+      {
+        "item": "Note: plants arrival-details belongs to the arrival-and-transit theme, so this row waits for it",
+        "status": "partly",
+        "evidence": "arrival-and-transit merged on 4 Nov (animals-frontend 2038fc3a, #402) and all its rows are done or dropped. Plants only got a security fix under that ticket (ed29ede) and none of its rows touched plants arrival-details, so nothing is left to wait for"
+      }
+    ],
+    "stillWaitingOnIt": "No row depends on inc-236. Sister rows: inc-234 (test-hygiene) does the same for live animals: class lists, accent proofs, guide sharing rules. inc-237 (consignment-parties) does party and CPH tests in animals. Neither touches plants or the tests repo's plants command, so nothing overlaps. The theme's dependsOn list still names seven themes. The one that mattered for this row, arrival-and-transit, has landed.",
+    "relevance": "keep",
+    "recommendation": "Keep it as it is. All five criteria still hold on main, checked item by item, and nothing has fixed any of them since 27 October. It is small, low-risk test and doc work in plants-frontend, ins-tests and the workspace openspec, and it can be built now: arrival-and-transit has merged and left plants arrival-details untouched. If it were dropped, the plants guide would keep a false coverage claim and a broken sentence, and the plants arrival labels would stay the last class-list checks against the house rule. The landing and genus accent matching would also stay out of the behaviour spec, and plants screenshots would have no command of their own. One small fix for whoever builds it: the README's domain table needs its plants visual dash replaced as well as the new command added.",
+    "verdict": {
+      "agrees": true,
+      "corrections": [
+        "Two of the files the row touches have changed since 27 October. On 6 Nov, d66241e (EUDPA-690, the 'What are you importing?' type question) rewrote the plants testing guide's picker paragraph and 44 lines of fit/high-risk-plants-journey.js. Neither change fixed anything the row lists. The broken expectPickerResultsLayout sentence (guide lines 93-95), the coverage claim and both reader renames are all still on main. So the finding stands, but 'nothing has touched these files' would be wrong.",
+        "Small line fix: on origin/main the false coverage claim is at guide lines 99-101, not 98-100.",
+        "The coverage claim is false, as the colleague says. Shared helpers live in fit/, outside src/, so neither vitest (which covers src/**/*.js) nor sonar (whose sources are src/ minus *.fit.spec.js) would count them. Builders should fix the wording, not move code.",
+        "The README's plants row is correct to show dashes for a11y and security: tests/plants/a11y and tests/plants/security hold only a .gitkeep. Only the visual dash is wrong, because tests/plants/e2e/visual has four specs with baselines. The fix is the visual cell plus a test:docker-compose:plants:visual script. Nothing more is needed.",
+        "Sam's 10 Nov ruling that commodity search is handled by a separate ticket covers the animals commodity search row inc-014 (the joined search button, search as you type, germinal codes). It does not cover the plants genus type-ahead on Commodity details, which is already built and tested ('Cást'). So the genus accent wording in this row is not blocked by that ruling."
+      ],
+      "finalRelevance": "keep",
+      "finalRecommendation": "Keep it as it is. I re-checked every criterion on origin/main and all five still hold:\n\n- The plants testing guide has a false coverage claim and a broken sentence.\n- The fit readers in high-risk-plants-journey.js, type-ahead.fit.spec.js and arrival-details.fit.spec.js rename their arguments on the way into the page.\n- The only plants class-list checks left are toHaveClass(/govuk-label--m/) on arrival-details (lines 182 and 298).\n- The plants behaviour spec does not say the landing and genus searches ignore case and accents. The origin spec already says this for countries.\n- The tests repo has no plants screenshot command, and the README's plants visual cell shows a dash.\n\nThe 6 Nov commit d66241e changed the guide and the journey helper without fixing any of this.\n\nThe arrival-and-transit theme has merged and did not touch plants arrival-details, so nothing blocks the build. Sam's commodity search ruling is about the animals search, not the plants genus type-ahead.\n\nDropping the row would lose small but real fixes: wrong text in the guide, the last label checks that test a CSS class against the house rule, a gap in the spec where the tests already prove accent matching, and the missing command.\n\nFor whoever builds it:\n- Reword the coverage claim (fit/ sits outside src/ anyway); don't move code.\n- Fix only the README's plants visual cell. The a11y and security dashes are right, because those folders are empty."
+    }
+  }
+]

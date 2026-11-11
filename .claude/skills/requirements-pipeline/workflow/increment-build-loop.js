@@ -2846,6 +2846,12 @@ const CI_SCHEMA = {
       }
     },
     failures: { type: 'array', items: { type: 'string' }, description: 'One line per failing job, naming the check and what it said' },
+    advisory: {
+      type: 'array',
+      items: { type: 'string' },
+      description:
+        'One line per ADVISORY check that fired, naming the check, its repo and what it flagged. An advisory check reports rather than gates, so it belongs here and never in failures[], and it never makes green false. It is not noise to be dropped either: the caller carries these lines through to its report so a person reads them before the branch is merged'
+    },
     blocked: { type: 'string', description: '"none", or one line naming the stop condition that fired' },
     stopReason: {
       type: 'string',
@@ -2868,6 +2874,19 @@ For each pr: \`gh pr view <url> --json mergeable,mergeStateStatus\`
   state "red", stopReason "${PR_CONFLICT}", blocked "<repo> PR <url> conflicts with its base", and the same line in
   failures[]. No code fix in this row clears it: the base must be merged into the branch.
 - anything else → that pr can be watched.`
+
+const ADVISORY_CHECK_STEP = `AN ADVISORY CHECK IS NOT A FAILURE, and it never reaches a fixer. A repo can run a check that reports rather than
+gates: the animals frontend's "Signed-off pages" lists the tests of a signed-off page that a pull request changes,
+and its own workflow comments it "Not a required check: it flags a change for a person to decide and never blocks
+the merge". The wait script works this out for you from \`config/advisory-ci-checks.json\`, marks each such line
+\`(advisory: ...)\`, and exits 6 when the ONLY failing checks are advisory ones.
+On exit 6: green:true, stopReason "none", and put one line per advisory check in \`advisory[]\` — naming the check,
+its repo and, from the check's own job summary, WHAT it flagged. Never put it in failures[], never send a fixer at
+it, and never re-run it: what it reports is true and re-running says the same thing again.
+Read its job summary so your line says something a person can act on, not just the check's name:
+\`gh run view <run-id> --repo <ghRepo> --log\` for the job the advisory line names, or the run's summary.
+Exit 1 with some lines marked advisory is a real red: something else failed. Put the advisory ones in \`advisory[]\`
+and only the genuinely failing checks in failures[], so a fixer is sent at the failure and not at the flag.`
 
 const STALE_RERUNS = 2
 
@@ -4520,15 +4539,17 @@ Then, for EACH pr, in the order listed:
    Read that log ONCE. Exit 0 → green. Exit 1 → RED: one line per failing check in failures[], naming the check and
    what it said. Exit 2 → not resolved yet: run it again, at most ${CI_WATCH_WINDOWS} times per PR in all, then state
    "unresolved", which counts as RED. Exit 4 → no checks at all: state "unresolved", blocked "no checks on <repo>",
-   stopReason "no-checks". An absence of evidence is not green. Exit 5 → by step 2 below.
+   stopReason "no-checks". An absence of evidence is not green. Exit 5 → by step 2 below. Exit 6 → by step 3 below.
 2. ${STALE_ROLLUP_STEP}
-3. For a RED check, name the failing job precisely enough for a fixer to act. Get the detail with
+3. ${ADVISORY_CHECK_STEP}
+4. For a RED check, name the failing job precisely enough for a fixer to act. Get the detail with
    \`gh run view <run-id> --repo <ghRepo> --log-failed\`, redirected to a log you read once. Where the failing
    job is Playwright, say so: its real evidence is \`test-results/*/error-context.md\`, not the run output.
 
 \`blocked\` is ONLY for something a code fix in this row cannot address: a conflict with the base, no checks, \`gh\`
 refused, the PR is gone. Setting it stops the run outright. A failing test is NOT blocked: it is a red check, and a
-fixer gets it. green:true ONLY if EVERY pr resolved green. stopReason "pr-red" for an ordinary red.
+fixer gets it. green:true ONLY if EVERY pr resolved green, counting a pr whose only failing checks were advisory as
+green and reporting those in \`advisory[]\`. stopReason "pr-red" for an ordinary red.
 Return the structured output only.`
 
 const branchCiFixPrompt = (id, attempt, prList, seen, plan) => `You are the CI FIXER for increment ${id}, attempt ${attempt} of ${CI_FIX_ATTEMPTS}.
@@ -6704,9 +6725,11 @@ Return the structured output only.`,
         break
       }
 
+      const advisory = ci?.advisory ?? []
       const ciOutcome = () => {
         if (repos.length === 0) return 'none: the row changes no backlog repo'
         if (!rowAwaitsCi) return 'not awaited: the row sets awaitCi false'
+        if (advisory.length > 0) return `green, with ${advisory.length} advisory check(s) flagged for a person to read before the branch merges`
         return 'green'
       }
 
@@ -6718,6 +6741,7 @@ Return the structured output only.`,
         commit: land?.commit,
         prs: prs.map((p) => p.url),
         ci: ciOutcome(),
+        ...(advisory.length > 0 ? { advisory } : {}),
         leftUncommitted: workspaceEdits,
         ...(resumedFrom ? { resumedFrom } : {}),
         ...(rowRigour === RIGOUR ? {} : { rigour: rowRigour }),
@@ -6726,7 +6750,7 @@ Return the structured output only.`,
         followUps: plan?.followUps
       })
       log(
-        `${id}: LANDED on ${workBranch}, CI ${ciOutcome()} — ${findingTally()}${workspaceEdits.length ? `. Left uncommitted for the orchestrator: ${workspaceEdits.join(', ')}` : ''}`
+        `${id}: LANDED on ${workBranch}, CI ${ciOutcome()} — ${findingTally()}${advisory.length ? `. ADVISORY, for a person before the merge: ${advisory.join('; ')}` : ''}${workspaceEdits.length ? `. Left uncommitted for the orchestrator: ${workspaceEdits.join(', ')}` : ''}`
       )
       break finish
     }
@@ -6815,6 +6839,14 @@ Then, for EACH pr, in the order listed:
    - Exit 4 → the PR has NO checks: state "unresolved", green:false, and put "no checks configured on <repo>" in
      blocked. Merging on an absence of evidence is not merging on green.
    - Exit 5 → by step 3 below.
+   - Exit 6 → the ONLY failing checks are ADVISORY: checks that report rather than gate, which
+     \`config/advisory-ci-checks.json\` names and the wait script marks \`(advisory: ...)\`. There is nothing for a
+     fixer to do and nothing to re-run: what the check reports is true. But this lifecycle MERGES, and an advisory
+     check exists to be read by a person before that happens, so **STOP, and this is not a failure.** green:false,
+     put one line per advisory check in \`advisory[]\` naming the check, its repo and what it flagged from the
+     check's own job summary, and put the same in \`blocked\` as
+     "<repo>: advisory check <name> flagged <what> — a person decides before this merges". Merge NOTHING. The
+     increment resumes from its \`prs\` field once somebody has recorded the decision.
 3. ${STALE_ROLLUP_STEP}
 4. For a RED check, name the failing job precisely enough for a fixer to act. Get the detail with
    \`gh run view <run-id> --repo <ghRepo> --log-failed\`, redirected to a log you read once. Where the failing

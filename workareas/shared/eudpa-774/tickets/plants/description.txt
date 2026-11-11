@@ -1,0 +1,319 @@
+h3. Background
+
+Before this change, Save and continue on a high-risk plants notification only went on to the next page during the notification's first pass. Once the trader had seen Overview or the review page, almost every Save and continue went back to Overview instead, so the same page went to different places depending on how the trader got there. Testers reported this as inconsistent.
+
+Now every journey page follows one rule. Save and continue goes on to the next page in the journey that applies, from every start: a new notification, Overview, a reopened draft, a review page Change link or an amendment. Save and return to overview is the one way back to Overview. Back goes to wherever the trader came from. The old "opening run" routing has been removed, not patched.
+
+This ticket covers the *high-risk plants journey only*. The live animals journey got the same rule in the same work and has its own ticket, EUDPA-793, under the same epic. Plants keeps its own page order, which starts with what is being imported (the commodity type) rather than where it is coming from, and skips arrival status and the consignor for potatoes. The original story is EUDPA-774.
+
+One thing differs from EUDPA-774's acceptance criteria. That story said amend pages should show Save and continue only. A later ruling replaced that, so a page being amended shows the same buttons and links as on a draft: Save and continue, Save and return to overview, and Cancel and return to overview.
+
+This work is merged to main.
+
+h3. What changes for the user
+
+h4. One page order
+
+The journey's pages run in the order Overview lists its tasks: What are you importing?, the commodities list, origin, arrival status, arrival details, place of destination, consignor, identification numbers, contact address, then check your answers. A page that does not apply is skipped: a potato notification is not asked arrival status and has no consignor.
+
+h4. Save and continue always goes on
+
+From any page, however it was reached, Save and continue goes to the next page that applies. A notification can be walked from the dashboard's create button to check your answers without returning to Overview. The commodities list goes on to origin once it holds a line, and commodity details returns to the list. The last page, the contact address, always goes to check your answers, which names anything still outstanding.
+
+h4. No page opens before the answers it depends on
+
+If Save and continue would reach a page whose earlier required answers are missing, the page that asks for the first missing answer is shown instead, and Overview does not offer the later page. Origin with no commodity type saved goes to the commodity type page.
+
+h4. Back goes to where the trader came from
+
+On every journey page, Back goes to the page Save and continue was pressed on, to Overview when the page was opened from Overview, or to the review when it was opened from a Change link or the review's error summary. A trader can press Save and continue several times, then press Back to step through those pages in reverse. The place is kept across refreshes, refused saves, a refused Continue on the review, and editing an address's details. The review page's own Back follows the same trail.
+
+h4. Change links and amendments carry on to the review
+
+A Change link on the review opens the page that collects the answer, and Save and continue then goes on through the rest of the journey to check your answers. Amend opens check your answers, and amending works the same way.
+
+h4. Amend pages look like draft pages
+
+A page being amended, including the commodities list and the address pickers, ends with the same buttons and links as on a draft. Cancel and return to overview opens Overview without saving what was typed.
+
+h4. A notification with nothing saved opens at its first page
+
+Asking for Overview, check your answers, the declaration or the confirmation page of a notification with nothing saved shows the commodity type page. Until something is saved, Cancel and return to overview on that page opens the dashboard.
+
+h3. Acceptance criteria
+
+Copied from the service's behaviour specification. These 32 scenarios carry the change's distinct behaviours. The high-risk plants specification gained *75 scenarios across 13 files* in total. Every file is linked under "Where this is specified" below, with the number it gained, so any of them can be read in full.
+
+h4. Page order and Save and continue
+
+h5. The journey's pages run in a fixed order
+
+* *GIVEN* a notification being worked on
+* *WHEN* its pages are followed from the start
+* *THEN* they run in this order: What are you importing?, the commodities list, origin, arrival status, arrival details, place of destination, consignor, identification numbers, contact address, and finally check your answers, the declaration and the confirmation
+* *AND* Overview lists its tasks in the same order
+
+h5. A newly created notification is walked through the journey to check your answers
+
+* *GIVEN* the user has just created a notification from the dashboard
+* *WHEN* they save each page in turn, answering every step
+* *THEN* they are taken through every in-scope step in turn: commodity type, commodities list, origin, arrival status, arrival details, place of destination, consignor, identification numbers and contact
+* *AND* they arrive at check your answers once the last step is saved
+
+h5. A task link carries only the mark that the page was opened from Overview
+
+* *GIVEN* Overview
+* *WHEN* the user opens a task
+* *THEN* the page's address is the one every start uses, plus only the mark that it was opened from Overview
+
+h5. Saving the entry page after a redirect shows the commodities list
+
+* *GIVEN* the user was sent to the commodity-type page because the notification held no answer they entered
+* *WHEN* they choose a type and save and continue
+* *THEN* the commodities list is shown
+
+h5. The commodities list goes on to origin once a commodity line is saved
+
+* *GIVEN* a notification with its commodity type and one commodity line saved, and nothing else
+* *WHEN* the user continues from the commodities list
+* *THEN* origin is shown, not Overview and not commodity details
+
+h5. Commodity details goes back to the commodities list
+
+* *GIVEN* the user opened commodity details from the commodities list
+* *WHEN* they save a line
+* *THEN* the commodities list is shown
+
+h5. A list left empty by a commodity type change refuses Save and continue
+
+* *GIVEN* the user changed the commodity type so that every commodity line was removed
+* *WHEN* the list is shown and they select "Save and continue"
+* *THEN* the list is shown again with the error "Add at least one commodity"
+
+h5. Save and continue after removing lines opens the commodities list, whose back link opens the commodity type page
+
+* *GIVEN* a notification holding potato commodity lines
+* *WHEN* the user changes the commodity type to wood and cut trees and selects "Save and continue"
+* *THEN* the commodities list is shown reporting the lines removed
+* *AND* its back link opens the commodity type page
+
+h5. Arrival details goes on to the place of destination
+
+* *GIVEN* arrival status or arrival details opened from Overview
+* *WHEN* the user saves arrival status and then arrival details
+* *THEN* arrival details follows arrival status, and saving arrival details shows the place of destination
+
+h5. A potato notification skips arrival status and the consignor
+
+* *GIVEN* a potato notification
+* *WHEN* the user saves origin
+* *THEN* arrival details is shown
+* *WHEN* they save the place of destination
+* *THEN* identification numbers is shown
+
+h5. Consignor goes on to identification numbers
+
+* *GIVEN* a plants-for-planting or wood notification and the consignor task opened from Overview
+* *WHEN* the user chooses an address and saves and continues
+* *THEN* identification numbers is shown
+
+h5. Contact address goes to check your answers whatever is owed
+
+* *GIVEN* a notification with tasks outstanding and the contact address page open
+* *WHEN* the user saves and continues, with or without a contact address chosen
+* *THEN* check your answers is shown, naming what is outstanding
+
+h5. A blank save opens check your answers
+
+* *GIVEN* the user is on the contact page of a notification that is not being amended, with no address chosen and no contact address held yet
+* *WHEN* they save and continue
+* *THEN* check your answers is shown with no contact error summary
+* *AND* the contact task shows not yet started
+* *AND* returning to the page still shows no address chosen
+
+h5. A notification continued in another browser session goes on to the same next page
+
+* *GIVEN* a draft whose commodity type and a commodity line were saved in one browser session
+* *WHEN* the user opens the commodities list in another browser session and continues
+* *THEN* origin is shown
+
+h4. Pages whose earlier answers are missing
+
+h5. A page whose prerequisites are unanswered is not opened
+
+* *GIVEN* a notification whose earlier answers a later page depends on have not been given
+* *WHEN* Save and continue would reach that page
+* *THEN* the page that asks for the first missing answer is shown
+* *AND* Overview does not offer the later page
+
+h5. Origin with no commodity type saved goes to the commodity type page
+
+* *GIVEN* a notification with only its country of origin saved
+* *WHEN* the user saves and continues from origin
+* *THEN* the commodity type page is shown
+
+h4. Back
+
+h5. Back goes to the page "Save and continue" was pressed on
+
+* *GIVEN* the user opened the origin page from its Overview task and chose a country
+* *WHEN* they select "Save and continue" and then the Back link on the next page
+* *THEN* the origin page is shown
+
+h5. Back goes to Overview when the page was opened from Overview
+
+* *GIVEN* the Overview of a draft notification
+* *WHEN* the user opens the identification numbers page from its task and follows the Back link
+* *THEN* Overview is shown
+
+h5. Back goes to the review when the page was opened from a Change link
+
+* *GIVEN* the review of a draft notification
+* *WHEN* the user follows the Change link for the country of origin and then the Back link
+* *THEN* the review is shown
+
+The same Back scenarios are specified page by page for the commodities list, origin, arrival status, arrival details, place of destination, consignor, identification numbers, contact and commodity type. Where the page before differs for potatoes, both are stated.
+
+h5. Back steps through the visited pages in reverse
+
+* *GIVEN* the user selected "Save and continue" on the contact address page after the destination and identification numbers pages
+* *WHEN* they follow the Back link on the review and then on each page in turn
+* *THEN* the contact address page, the identification numbers page and the place of destination page are shown in that order
+
+h5. Back keeps the place after a sub-page round trip, a refresh and a refused Continue
+
+* *GIVEN* a page opened from a Change link on the review
+* *WHEN* the user refreshes the page, or edits an address's details and returns, or has a save refused, or has "Continue" refused on the review, and then follows the Back link
+* *THEN* the place the page was opened from is shown
+
+h5. The commodity type page goes Back to where the notification was started
+
+* *GIVEN* a notification started with the dashboard's create button
+* *WHEN* the user follows the Back link on the commodity type page
+* *THEN* the dashboard is shown
+
+A notification started from the Import Notification Service's "What are you importing?" question goes Back to that question.
+
+h5. A page opened by its address goes Back to Overview
+
+* *GIVEN* a page of a draft notification opened by its address, or by a link that names a place the journey does not have
+* *WHEN* the user follows the Back link
+* *THEN* Overview is shown
+
+h5. Past 40 places the oldest drop and Back ends at Overview
+
+* *GIVEN* the user has pressed Save and continue on more than 40 pages in a row
+* *WHEN* they follow Back repeatedly
+* *THEN* Back steps through the newest 40 places
+* *AND* Overview is shown after them
+
+h5. A review opened from a dashboard card has a back link to the dashboard, before and after a Change link round trip
+
+* *GIVEN* the review opened by Amend on a dashboard card
+* *WHEN* the user follows a Change link, follows the back link on the page it opens, and then follows the back link on the review
+* *THEN* the plants notification list is shown
+
+The review's back link also opens the contact address after Save and continue there or after a refused Continue, and Overview when opened from Overview or by its address.
+
+h4. Change links and amending
+
+h5. Editing an answer via Change and saving and continuing through the journey shows the new value on check-your-answers
+
+* *GIVEN* the user is on check-your-answers
+* *WHEN* they follow a Change link for country of origin, choose a different country and save and continue through the journey
+* *THEN* they arrive at check-your-answers, showing the new country
+* *WHEN* they follow a Change link for a commodity line, change its quantity and save and continue through the commodities list
+* *THEN* they arrive at check-your-answers, showing the new quantity
+
+h5. Starting an amendment opens check your answers with editing enabled
+
+* *GIVEN* a submitted notification exists
+* *WHEN* the user starts an amendment on it from the dashboard
+* *THEN* they land on check your answers, with the notification's status shown as "Amend"
+
+h5. A Change link opens the page that collects the answer and Save and continue goes on to the review
+
+* *GIVEN* the review of a notification being amended
+* *WHEN* the user follows the Change link for the identification numbers and selects "Save and continue" on it and on the pages that follow
+* *THEN* the review is shown with the new producer number
+
+h5. A page opened while amending ends with the draft controls
+
+* *GIVEN* a notification being amended
+* *WHEN* the user opens Identification numbers from Overview
+* *THEN* it ends with "Save and continue" and "Save and return to overview" buttons, and a "Cancel and return to overview" link on its own line below them
+
+The commodities list and the consignor, place of destination and consignment contact pickers also end as they do on a draft while amending.
+
+h5. Cancel and return to overview while amending opens Overview without saving
+
+* *GIVEN* a notification being amended and a value typed on a page
+* *WHEN* the user selects "Cancel and return to overview"
+* *THEN* Overview is shown with the Amend status and the Cancel amend link
+* *AND* the typed value is not saved
+
+h4. A notification with nothing saved
+
+h5. Overview, check your answers, the declaration and the confirmation page show the first page
+
+* *GIVEN* a notification that holds no answer the user entered
+* *WHEN* the user opens Overview, check your answers, the declaration or the confirmation page
+* *THEN* the commodity-type page is shown
+
+h5. Cancel and return to overview on the first page opens the dashboard until something is saved
+
+* *GIVEN* the commodity-type page of a notification with nothing saved
+* *WHEN* the user selects "Cancel and return to overview"
+* *THEN* the dashboard is shown
+* *WHEN* after saving the commodity type they select it again
+* *THEN* Overview is shown
+
+h3. The work behind this change
+
+The work was planned as 21 high-risk plants rows and built as three rows that change the application (inc-001, inc-002 and inc-019) and one that tightens it (inc-023). Each planned row it absorbed is shown as built in one of those. The other rows changed no behaviour: they made every test prove exactly where Save and continue and Back land, and kept the behaviour specification in step with the application. Most rows also changed the live animals frontend, so they appear on its ticket too.
+
+||Row||What it changed||State||
+|inc-001|One page order: Save and continue goes on to the next page that applies from every start, Change links and amendments carry on to the review page, and amend pages show the draft controls|Done|
+|inc-002|Every page: Back goes to wherever the trader came from, sub-page round trips keep it, the review page's Back follows the same trail, and each page's own Save and continue and amend endings follow the one rule|Done|
+|inc-003|Pages being amended show the same buttons and links as on a draft|Built in inc-001|
+|inc-004|Change links and amendments carry on through the journey to the review page|Built in inc-001|
+|inc-005|A notification with nothing saved opens at its first page|Built in inc-001|
+|inc-008|Commodity type and the commodities list go on through the journey and Back goes where the trader came from|Built in inc-002|
+|inc-009|Origin goes on to the arrival page that applies, and the early pages' specs and tests state the one rule|Built in inc-002|
+|inc-012|Arrival and destination pages continue to the next page that applies and go Back to where the trader came from|Built in inc-002|
+|inc-016|Place of destination, Consignor, Identification numbers and Contact go on through the journey and go Back to where the trader came from|Built in inc-002|
+|inc-017|Sub-page round trips keep where the trader came from on the address and contact pages|Built in inc-002|
+|inc-018|Arrival, destination, address and contact pages show the draft controls while amending|Built in inc-002|
+|inc-019|The journey routes by one page order with no run record, and the routing docs, recipes and rulings ledger describe the one rule|Done|
+|inc-020|The routing docs describe one Save and continue rule, one Back rule and the same controls on draft and amend pages|Built in inc-019|
+|inc-021|The add-a-page, add-a-field, add-a-section and add-a-collection recipes wire a new page to the one rule|Built in inc-019|
+|inc-022|The rulings ledger records the one Save and continue and Back rule and no opening run|Built in inc-019|
+|inc-023|Save and continue never opens a page whose earlier required answers are missing, and the review page's Change links follow the one rule|Done|
+|inc-024|Every journey test proves exactly where Save and continue and Back land|Done|
+|inc-026|Every journey-flow and journey-pages scenario left partly proven is proven by a test that fails when the behaviour breaks|Done|
+|inc-029|Journey-pages scenarios left partly proven are proven by tests|Built in inc-026|
+|inc-031|Scenarios whose wording the application contradicted now say what the application does, and are proven|Done|
+|inc-032|Every coverage link names a test that exists|Done|
+
+The programme has 32 rows in all. The eleven not listed here changed only the live animals frontend.
+
+h3. Where this is specified
+
+The full behaviour lives in the service's behaviour specification, in the workspace repository. The high-risk plants specification gained 75 scenarios across these 13 files. Each link opens the file on main.
+
+||Specification||New scenarios||
+|[Journey flow|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-flow/spec.md]|34|
+|[Check your answers|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/check-your-answers/spec.md]|6|
+|[Consignment contact select|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/consignment-contact-select/spec.md]|6|
+|[Commodities|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/commodities/spec.md]|5|
+|[Commodity type|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/commodity-type/spec.md]|4|
+|[Consignor select|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/consignor-select/spec.md]|4|
+|[Origin|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/origin/spec.md]|4|
+|[Arrival details|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/arrival-details/spec.md]|3|
+|[Place of destination|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/place-of-destination/spec.md]|3|
+|[Arrival status|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/arrival-status/spec.md]|2|
+|[Identification numbers|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/identification-numbers/spec.md]|2|
+|[Commodity details|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/journey-pages/commodity-details/spec.md]|1|
+|[Notification lifecycle|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/plants/notification-lifecycle/spec.md]|1|
+
+This description is generated from those specifications. If a specification changes, this ticket is regenerated to match.

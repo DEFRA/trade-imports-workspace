@@ -297,34 +297,28 @@ while IFS=$'\t' read -r repo pr; do
         fi
 
         if [[ "$COMMENT_ONLY" == "1" ]]; then
-            # A summary announces an outcome, so what it asks for depends
-            # on whether anything is still open. The full table is always
-            # a request to triage.
+            # --comment-only posts to a PR the author owns. The footer
+            # states outcome only — no handoff branch, no walk/implement
+            # instructions aimed at someone else's workspace.
             open_count=""
-            if [[ "$SUMMARY" == "1" && -f "$items_file" ]]; then
+            if [[ -f "$items_file" ]]; then
                 open_count=$(jq -r '[.items[] | select(.disposition == null or .status == "Not Done")] | length' "$items_file")
             fi
 
-            echo "## Action this review"
+            echo "## Status"
             echo
-            if [[ -n "$open_count" && "$open_count" == "0" ]]; then
+            if [[ -f "$items_file" && "$open_count" == "0" ]]; then
                 cat <<EOF
-Nothing is open in this repo. The review state lives in
-\`workareas/reviews/$TICKET/\` in the reviewer's workspace, with every
-item's disposition and the commit that closed it.
+All tracked **Fix** items for this repo are **Done** on this branch (see the Status and Notes columns above). **Merged** rows are sub-findings folded into those Fix items.
 EOF
+            elif [[ -f "$items_file" && -n "$open_count" && "$open_count" != "0" ]]; then
+                cat <<EOF
+**$open_count** item(s) remain open. The author applies them on this PR branch; local tracker: \`workareas/reviews/$TICKET/\`.
+EOF
+            elif [[ -f "$items_file" ]]; then
+                echo "See the item table above."
             else
-                [[ -n "$open_count" ]] && echo "$open_count item(s) remain open in this repo." && echo
-                cat <<EOF
-The review state lives in \`workareas/reviews/$TICKET/\` in the
-reviewer's workspace. Triage and apply it from a Claude Code session
-opened there:
-
-\`\`\`
-walk review $TICKET
-implement review $TICKET
-\`\`\`
-EOF
+                echo "_Review detail: \`workareas/reviews/$TICKET/\` on the author's machine._"
             fi
             cat <<EOF
 

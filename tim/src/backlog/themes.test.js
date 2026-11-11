@@ -87,6 +87,25 @@ describe('themeProblems', () => {
     ])
   })
 
+  test('passes two themes that touch the same code when one lands after the other', () => {
+    const backlog = editTheme(themedBacklog(), 'commodity', (theme) => ({
+      ...theme,
+      touches: [...theme.touches, 'frontend:src/server/origin/region']
+    }))
+
+    expect(themeProblems(backlog)).toEqual([])
+  })
+
+  test('passes a theme that touches the code of a theme it lands after through another theme', () => {
+    const chained = editTheme(themedBacklog(), 'documents', (theme) => ({
+      ...theme,
+      dependsOn: ['commodity'],
+      touches: [...theme.touches, 'frontend:src/server/origin/region']
+    }))
+
+    expect(themeProblems(chained)).toEqual([])
+  })
+
   test('refuses a theme that touches a whole repo another theme touches part of', () => {
     const backlog = editTheme(themedBacklog(), 'documents', (theme) => ({
       ...theme,
@@ -451,6 +470,16 @@ describe('themeProblems over a theme split off early', () => {
     expect(themeProblems(backlog)).toEqual([
       'Themes "documents" and "origin" overlap: frontend:src/server/origin/upload (documents) and frontend:src/server/origin (origin). Two themes that touch the same code raise conflicting pull requests.'
     ])
+  })
+
+  test('passes a theme left in the backlog that touches the code of a theme split off that it lands after', () => {
+    const backlog = editTheme(splitOffOrigin(), 'documents', (theme) => ({
+      ...theme,
+      dependsOn: ['origin'],
+      touches: [...theme.touches, 'frontend:src/server/origin/upload']
+    }))
+
+    expect(themeProblems(backlog)).toEqual([])
   })
 
   test('refuses a theme in both "themes" and "splitOff"', () => {

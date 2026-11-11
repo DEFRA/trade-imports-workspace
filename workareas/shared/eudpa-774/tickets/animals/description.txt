@@ -1,0 +1,346 @@
+h3. Background
+
+Before this change, Save and continue on a live animals notification only went on to the next page during the notification's first pass. Once the trader had seen Overview or the review page, almost every Save and continue went back to Overview instead, so the same page went to different places depending on how the trader got there. Testers reported this as inconsistent.
+
+Now every journey page follows one rule. Save and continue goes on to the next page in the journey that applies, from every start: a new notification, Overview, a reopened draft, a review page Change link or an amendment. Save and return to overview is the one way back to Overview. Back goes to wherever the trader came from. The old "opening run" routing has been removed, not patched.
+
+This ticket covers the *live animals journey only*. The high-risk plants journey got the same rule in the same work and has its own ticket, EUDPA-794, under the same epic. Plants keeps its own page order, which starts with what is being imported rather than where it is coming from. The original story is EUDPA-774.
+
+One thing differs from EUDPA-774's acceptance criteria. That story said amend pages should show Save and continue only. A later ruling replaced that, so a page being amended shows the same buttons and links as on a draft: Save and continue, Save and return to overview, and Cancel and return to overview.
+
+This work is merged to main.
+
+h3. What changes for the user
+
+h4. One page order
+
+The journey's pages run in the order Overview lists its tasks: Where is this consignment coming from?, What are you importing?, Main import reason, Commodity details, Identification details, Additional details, Arrival details, Transit countries, Transport details, Upload documents, Roles and addresses, Contact address for this consignment, then check your answers. A page that does not apply is skipped: transit countries only appears for Rail or Road, and identification details only when a chosen species needs identifiers.
+
+h4. Save and continue always goes on
+
+From any page, however it was reached, Save and continue goes to the next page that applies. A notification can be walked from the dashboard's create button to check your answers without returning to Overview. The last page, the contact address, always goes to check your answers, which names anything still outstanding.
+
+h4. No page opens before the answers it depends on
+
+If Save and continue would reach a page whose earlier required answers are missing, the page that asks for the first missing answer is shown instead, and Overview does not offer the later page.
+
+h4. Back goes to where the trader came from
+
+On every journey page, Back goes to the page Save and continue was pressed on, to Overview when the page was opened from Overview, or to the review when it was opened from a Change link. A trader can open a page from Overview, press Save and continue several times, then press Back to step through those pages in reverse. The place is kept across refreshes, refused saves, adding a transporter and uploading a document. The review page's own Back follows the same trail.
+
+h4. Change links and amendments carry on to the review
+
+A Change link on the review opens the page that collects the answer, and Save and continue then goes on through the rest of the journey to check your answers. Amend opens check your answers, and amending works the same way.
+
+h4. Amend pages look like draft pages
+
+A page being amended ends with the same buttons and links as on a draft. The origin page and the CPH number page offer Save and continue alone, on a draft and while amending. Cancel and return to overview opens Overview without saving what was typed.
+
+h4. A notification with nothing saved opens at its first page
+
+Asking for Overview, check your answers, the declaration or the confirmation page of a notification with nothing saved shows the origin of the import page. Resuming such a draft from the dashboard does the same.
+
+h3. Acceptance criteria
+
+Copied from the service's behaviour specification. These 34 scenarios carry the change's distinct behaviours. The live animals specification gained *114 scenarios across 21 files* in total. Every file is linked under "Where this is specified" below, with the number it gained, so any of them can be read in full.
+
+h4. Page order and Save and continue
+
+h5. The journey's pages run in a fixed order
+
+* *GIVEN* a notification being worked on
+* *WHEN* its pages are followed from the start
+* *THEN* they run in this order: Where is this consignment coming from?, What are you importing?, Main import reason, Commodity details, Identification details, Additional details, Arrival details, Transit countries, Transport details, Upload documents, Roles and addresses, Contact address for this consignment, and finally check your answers, the declaration and the confirmation
+* *AND* Overview lists its tasks in the same order
+
+h5. A newly created notification is walked through the whole journey to review
+
+* *GIVEN* the user has just created a notification from the dashboard
+* *WHEN* they save each page in turn, answering every step
+* *THEN* they are taken through origin of the import, what are you importing, main import reason, commodity details, identification details, additional details, arrival details, transit countries when the means of transport is Rail or Road, the transporter, upload documents, roles and addresses and the contact address, in that order
+* *AND* they arrive at check your answers once the contact address is saved, without returning to Overview partway through
+
+h5. A page opened from Overview has the same address as from any other start, plus only the mark that it was opened from Overview
+
+* *GIVEN* Overview
+* *WHEN* the user opens any task
+* *THEN* the page's address is the one every start uses, plus only the mark that it was opened from Overview
+* *AND* saving and continuing goes to the next page that applies
+
+h5. What are you importing goes on to Main import reason
+
+* *GIVEN* the user is on What are you importing?, reached from a new notification, from its task on Overview or from a reopened draft
+* *WHEN* they save a selection and continue
+* *THEN* Main import reason is shown
+
+h5. Commodity details goes on to identification details, or to additional details when nothing needs identifying
+
+* *GIVEN* the user is on commodity details
+* *WHEN* they save valid counts for a species that needs identifiers
+* *THEN* identification details is shown
+* *WHEN* instead no chosen species needs identifiers
+* *THEN* additional details is shown
+
+h5. Arrival details goes on to transit countries only for rail or road
+
+* *GIVEN* the user is on arrival details, reached from any start, with where it is coming from and what is being imported saved and the other answers left blank
+* *WHEN* they save it with Rail or Road chosen
+* *THEN* transit countries is shown
+* *WHEN* instead they save it with Air or Sea chosen
+* *THEN* the transporter list is shown
+
+h5. Save and continue saves the countries in the order added and shows the transporter list
+
+* *GIVEN* the user is on the transited countries page with countries added
+* *WHEN* they save and continue
+* *THEN* the countries are saved in the order they were added
+* *AND* the transporter list is shown
+
+h5. Completing the details saves them and returns to the transporter list, chosen
+
+* *GIVEN* the user is on the commercial transporter details page with every mandatory field entered
+* *WHEN* they save and continue
+* *THEN* they return to the transporter list, with the saved transporter already chosen
+
+The private transporter details page does the same.
+
+h5. A complete document saved with Save and continue is added and Roles and addresses is shown
+
+* *GIVEN* the user has filled in the reference, document type, date of issue and chosen a file
+* *WHEN* they save and continue
+* *THEN* the document is added once
+* *AND* Roles and addresses is shown
+
+h5. Roles and addresses goes on to Contact address, never the CPH number page, even when complete
+
+* *GIVEN* a consignment that needs a CPH number, every other task complete, and roles and addresses open
+* *WHEN* the user saves and continues
+* *THEN* Contact address for this consignment is shown, not the CPH number page
+
+h5. The CPH number page goes on to Roles and addresses
+
+* *GIVEN* the user is on the CPH number page
+* *WHEN* they save and continue
+* *THEN* they are taken to the consignment addresses page
+
+h5. Contact address goes to check your answers whatever is owed
+
+* *GIVEN* a notification with tasks outstanding and the contact address page open
+* *WHEN* the user saves and continues, with or without a contact address chosen
+* *THEN* check your answers is shown, naming what is outstanding
+
+h5. Following a back link and saving again carries on
+
+* *GIVEN* the user is on main import reason
+* *WHEN* they follow the back link to what are you importing and save it
+* *THEN* main import reason is shown
+
+h5. A notification continued in another browser session goes on to the same next page
+
+* *GIVEN* a draft whose origin of the import was saved in one browser session
+* *WHEN* the user opens What are you importing? in another browser session, chooses a species and saves and continues
+* *THEN* Main import reason is shown
+
+h4. Pages whose earlier answers are missing
+
+h5. A page whose prerequisites are unanswered is not opened
+
+* *GIVEN* a notification whose earlier answers a later page depends on have not been given
+* *WHEN* Save and continue would reach that page
+* *THEN* the page that asks for the first missing answer is shown
+* *AND* Overview does not offer the later page
+
+h5. Arrival details by Rail or Road with no commodity saved goes to What are you importing?
+
+* *GIVEN* a notification holding only its country of origin, with arrival details opened
+* *WHEN* the user saves it with Rail or Road chosen
+* *THEN* What are you importing? is shown
+* *AND* Overview does not offer the Transit countries task
+
+h4. Back
+
+h5. Back goes to the page "Save and continue" was pressed on
+
+* *GIVEN* the user opened Arrival details from its Overview task and chose road as the means of transport
+* *WHEN* they select "Save and continue" and then the Back link on Transit countries
+* *THEN* Arrival details is shown
+
+h5. Back goes to Overview when the page was opened from Overview
+
+* *GIVEN* the Overview of a draft notification
+* *WHEN* the user opens Arrival details from its task and follows the Back link
+* *THEN* Overview is shown
+
+h5. Back goes to the review when the page was opened from a Change link
+
+* *GIVEN* the review of a draft notification
+* *WHEN* the user follows the Change link for the reason for import and then the Back link
+* *THEN* the review is shown
+
+The same three Back scenarios are specified page by page for main import reason, commodity details, identification details, additional details, arrival details, transited countries, the transporter list, consignment addresses and contact address, and the Change-link one for what are you importing, the origin page and the CPH number page.
+
+h5. Back steps through the visited pages in reverse
+
+* *GIVEN* the user opened Arrival details from Overview and selected "Save and continue" on each page in turn until the review
+* *WHEN* they follow the Back link on each page in turn
+* *THEN* each earlier page is shown in reverse order
+* *AND* Overview is shown from Arrival details
+
+h5. Back keeps the place after a sub-page round trip, a refresh and a refused save
+
+* *GIVEN* a page opened from a Change link on the review
+* *WHEN* the user refreshes the page, or adds a transporter, or uploads a document, or has a save refused, and then follows the Back link
+* *THEN* the review is shown
+
+h5. The origin of the import page goes Back to where the notification was started
+
+* *GIVEN* a notification started with the dashboard's create button, and another started from the Import Notification Service question with Live animals chosen
+* *WHEN* the user follows the Back link on the origin of the import page of each
+* *THEN* the first opens the dashboard
+* *AND* the second opens the Import Notification Service's "What are you importing?" question for that notification
+
+h5. Consignment addresses goes Back to Overview after an Import Notification Service address book return
+
+* *GIVEN* the user added an address through the Import Notification Service address book and returned to Consignment addresses
+* *WHEN* they follow the Back link
+* *THEN* Overview is shown
+* *AND* "Save and continue" on Consignment addresses still goes on to Contact address for consignment
+
+h5. A page opened by its address goes Back to Overview
+
+* *GIVEN* a page of a draft notification opened by its address, or by a link that names a place the journey does not have
+* *WHEN* the user follows the Back link
+* *THEN* Overview is shown
+
+h5. Past 40 places the oldest drop and Back ends at Overview
+
+* *GIVEN* the user has pressed Save and continue on more than 40 pages in a row
+* *WHEN* they follow Back repeatedly
+* *THEN* Back steps through the newest 40 places
+* *AND* Overview is shown after them
+
+h5. A review opened from a dashboard card has a back link to the dashboard
+
+* *GIVEN* the user opened the review by View, or by Amend, on a notification's dashboard card
+* *WHEN* they follow the back link
+* *THEN* the dashboard is shown
+
+The review's back link also opens the contact address after Save and continue there, Overview when opened from Overview or by its address, and the dashboard from a submitted view. A Change link round trip leaves it as it was.
+
+h4. Change links and amending
+
+h5. Editing an answer via Change and saving and continuing through the journey shows the new value on check-your-answers
+
+* *GIVEN* the user is on check-your-answers
+* *WHEN* they follow a Change link, edit the answer, and save and continue on each page that follows
+* *THEN* they arrive at check-your-answers, showing the new value
+
+h5. Starting an amendment opens check your answers with editing enabled
+
+* *GIVEN* a submitted notification exists
+* *WHEN* the user starts an amendment on it from the dashboard
+* *THEN* they land on check your answers, with the notification's status shown as "Amend"
+
+h5. Save and continue while amending goes on through the rest of the journey to check your answers
+
+* *GIVEN* a page opened from the review's Change link while amending
+* *WHEN* the user saves and continues on each page in turn
+* *THEN* each goes on to the next page that applies
+* *AND* the last page that applies goes to check your answers
+
+h5. A page opened from Overview while amending ends with the draft controls
+
+* *GIVEN* a notification being amended
+* *WHEN* the user opens Arrival details from Overview
+* *THEN* it ends with "Save and continue" and "Save and return to overview" buttons side by side
+* *AND* "Cancel and return to overview" is offered on its own line below them
+
+h5. The origin page and the CPH number page offer Save and continue alone while amending
+
+* *GIVEN* a notification being amended
+* *WHEN* the user opens the origin of the import page or the CPH number page
+* *THEN* each ends with "Save and continue" alone
+
+h5. Cancel and return to overview while amending opens Overview without saving
+
+* *GIVEN* a notification being amended and a value typed on a page
+* *WHEN* the user selects "Cancel and return to overview"
+* *THEN* Overview is shown with the Amend status and the Cancel amend link
+* *AND* the typed value is not saved
+
+h4. A notification with nothing saved
+
+h5. Overview, check your answers, the declaration and the confirmation page show the first page
+
+* *GIVEN* a notification that holds no answer the user entered
+* *WHEN* the user opens Overview, check your answers, the declaration or the confirmation page
+* *THEN* the origin of the import page is shown
+
+h5. A draft with nothing saved, resumed from the dashboard, opens at the first page
+
+* *GIVEN* a draft with nothing saved, listed on the dashboard
+* *WHEN* the user selects Resume
+* *THEN* the origin of the import page is shown
+
+h3. The work behind this change
+
+The work was planned as 26 live animals rows and built as three rows that change the application (inc-001, inc-002 and inc-019) and one that tightens it (inc-023). Each planned row it absorbed is shown as built in one of those. The other rows changed no behaviour: they made every test prove exactly where Save and continue and Back land, and kept the behaviour specification in step with the application. Most rows also changed the high-risk plants frontend, so they appear on its ticket too.
+
+||Row||What it changed||State||
+|inc-001|One page order: Save and continue goes on to the next page that applies from every start, Change links and amendments carry on to the review page, and amend pages show the draft controls|Done|
+|inc-002|Every page: Back goes to wherever the trader came from, sub-page round trips keep it, the review page's Back follows the same trail, and each page's own Save and continue and amend endings follow the one rule|Done|
+|inc-003|Pages being amended show the same buttons and links as on a draft|Built in inc-001|
+|inc-004|Change links and amendments carry on through the journey to the review page|Built in inc-001|
+|inc-005|A notification with nothing saved opens at its first page|Built in inc-001|
+|inc-006|Origin, commodity selection and main import reason go on through the journey and Back goes where the trader came from|Built in inc-002|
+|inc-007|Commodity details, identification details and additional details go on through the journey and Back goes where the trader came from|Built in inc-002|
+|inc-009|The early pages' specs and tests state the one rule|Built in inc-002|
+|inc-010|Arrival and transport pages continue to the next page that applies|Built in inc-002|
+|inc-011|Arrival and transport pages go Back to where the trader came from|Built in inc-002|
+|inc-013|Upload documents goes on to Roles and addresses and goes Back to where the trader came from|Built in inc-002|
+|inc-014|Roles and addresses and Consignment contact go Back to where the trader came from|Built in inc-002|
+|inc-015|CPH number goes Back to the page that opened it and goes on through the journey from a Change link|Built in inc-002|
+|inc-017|Sub-page round trips keep where the trader came from on the address and contact pages|Built in inc-002|
+|inc-018|Arrival, transport, documents, address and contact pages show the draft controls while amending|Built in inc-002|
+|inc-019|The journey routes by one page order with no run record, and the routing docs and recipes describe the one rule|Done|
+|inc-020|The routing docs describe one Save and continue rule, one Back rule and the same controls on draft and amend pages|Built in inc-019|
+|inc-021|The add-a-page, add-a-field, add-a-section and add-a-collection recipes wire a new page to the one rule|Built in inc-019|
+|inc-023|Save and continue never opens a page whose earlier required answers are missing, and the review page's Change links follow the one rule|Done|
+|inc-024|Every journey test proves exactly where Save and continue and Back land|Done|
+|inc-025|Each page's Back, the review's Back and the origin page's Back are proven by tests that fail when the trail is ignored|Done|
+|inc-027|CPH, transporter add pages, What are you importing? returns, Save and continue landings and the entry guard are proven by tests|Done|
+|inc-028|Page endings while amending, trail round trips and page content are proven by tests|Done|
+|inc-030|Specs merged from main carry this work's proven coverage|Done|
+|inc-031|Scenarios whose wording the application contradicted now say what the application does, and are proven|Done|
+|inc-032|Every coverage link names a test that exists|Done|
+
+The programme has 32 rows in all. The six not listed here changed only the high-risk plants frontend.
+
+h3. Where this is specified
+
+The full behaviour lives in the service's behaviour specification, in the workspace repository. The live animals specification gained 114 scenarios across these 21 files. Each link opens the file on main.
+
+||Specification||New scenarios||
+|[Journey flow|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-flow/spec.md]|43|
+|[Check your answers|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/check-your-answers/spec.md]|10|
+|[Commodity selection|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/commodity-selection/spec.md]|6|
+|[Commodity details|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/commodity-details/spec.md]|5|
+|[Transited countries|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/transited-countries/spec.md]|5|
+|[Contact address|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/contact-address/spec.md]|4|
+|[Identification details|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/identification-details/spec.md]|4|
+|[Origin of import|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/origin-of-import/spec.md]|4|
+|[Transporter|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/transporter/spec.md]|4|
+|[Upload documents|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/upload-documents/spec.md]|4|
+|[Additional details|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/additional-details/spec.md]|3|
+|[Arrival details|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/arrival-details/spec.md]|3|
+|[Commercial transporter details|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/commercial-transporter-details/spec.md]|3|
+|[Consignment addresses|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/consignment-addresses/spec.md]|3|
+|[Import reason|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/import-reason/spec.md]|3|
+|[Private transporter details|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/private-transporter-details/spec.md]|3|
+|[Transporter type|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/transporter-type/spec.md]|2|
+|[Notification lifecycle|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/notification-lifecycle/spec.md]|2|
+|[Transporter obligations|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-obligations/transporter/spec.md]|1|
+|[CPH number|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/journey-pages/cph-number/spec.md]|1|
+|[Notification dashboard|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/live-animals/notification-dashboard/spec.md]|1|
+
+This description is generated from those specifications. If a specification changes, this ticket is regenerated to match.

@@ -2,13 +2,13 @@
 
 ## Purpose
 
-Which notification the user is working on and what state it is in, shown on every page of its journey.
+Which notification the user is working on and what state it is in, shown on every page of its journey. The declaration (`live-animals/journey-pages/declaration`), the transporter type question and the private transporter form (`live-animals/journey-pages/transporter-type`, `live-animals/journey-pages/private-transporter-details`) are the exceptions.
 
 ## Requirements
 
 ### Requirement: Every page of a notification shows what state it is in
 **ID**: REQ-STATUS-REF-001
-The system MUST show the notification's current state on every page of its journey except the declaration page (REQ-DECLARATION-007), and MUST distinguish the states by colour: blue for Draft, green for Submitted, yellow for Amend, and grey for Deleted.
+The system MUST show the notification's current state on every page of its journey except the declaration page, the transporter type question and the private transporter form, and MUST distinguish the states by colour: blue for Draft, green for Submitted, yellow for Amend, and grey for Deleted.
 
 #### Scenario: Each state is shown, and distinguished by colour
 **ID**: SCN-STATUS-REF-001-A
@@ -18,7 +18,7 @@ The system MUST show the notification's current state on every page of its journ
 
 ### Requirement: Every page of a notification shows its reference number, from the moment it is created
 **ID**: REQ-STATUS-REF-002
-The system MUST show the notification's GBN-AG reference number on every page of its journey, from the first page onward, except the declaration page (`live-animals/journey-pages/declaration` REQ-DECLARATION-007). The reference is given to the notification when it is created, so it MUST be shown before the user has saved any answer.
+The system MUST show the notification's GBN-AG reference number on every page of its journey, from the first page onward, except the declaration page, the transporter type question and the private transporter form. The reference is given to the notification when it is created, so it MUST be shown before the user has saved any answer.
 
 #### Scenario: The reference is shown on the entry page before anything is saved
 **ID**: SCN-STATUS-REF-002-A
@@ -31,6 +31,14 @@ The system MUST show the notification's GBN-AG reference number on every page of
 - **GIVEN** the user has just started a new notification
 - **WHEN** they save their first answer, and then visit Overview and any task page
 - **THEN** every one of those pages shows the notification's state of "Draft" and its GBN-AG-shaped reference number
+
+#### Scenario: The transporter list and the commercial transporter form show the state and reference; the type question and the private transporter form show neither
+**ID**: SCN-STATUS-REF-002-C
+- **GIVEN** a notification being worked on
+- **WHEN** the user opens the transporter list or the commercial transporter form
+- **THEN** the notification's state and reference are shown
+- **WHEN** the user opens the transporter type question or the private transporter form
+- **THEN** neither is shown
 
 ### Requirement: No state or reference is shown where there is no notification to describe
 **ID**: REQ-STATUS-REF-003

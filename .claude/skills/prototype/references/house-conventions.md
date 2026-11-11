@@ -67,7 +67,7 @@ before trusting it.
 - `~/git/defra/trade-imports-workspace/docs/best-practices/node/hapi.md` §3
 - `~/git/defra/trade-imports-workspace/repos/trade-imports-ins-frontend/src/server/app/features/address-book/add/add.controller.js`
   and
-  `~/git/defra/trade-imports-workspace/repos/trade-imports-ins-frontend/src/server/app/features/address-book/address-id-params.js`
+  `~/git/defra/trade-imports-workspace/repos/trade-imports-ins-frontend/src/server/app/features/address-book/record-id-params.js`
   — the `{id}` route's Joi params object and `failAction`.
 - The plants recipes:
   `~/git/defra/trade-imports-workspace/repos/trade-imports-plants-frontend/src/server/app/sets/high-risk-plants/docs/add-a-page.md`

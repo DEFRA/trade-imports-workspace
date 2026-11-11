@@ -130,6 +130,24 @@ describe('tim build probe', () => {
     })
   })
 
+  test('refuses a --reload-url that is not a full URL', async () => {
+    await workspaceWithRepo()
+
+    const run = await runTim(
+      probeArgs(['--line', '2', '--reload-url', 'localhost:3000'])
+    )
+
+    expect({
+      exitCode: run.exitCode,
+      messages: envelopeOf(run).errors.map(({ message }) => message)
+    }).toEqual({
+      exitCode: 2,
+      messages: [
+        '--reload-url must be a full URL, such as http://localhost:3000/health.'
+      ]
+    })
+  })
+
   test('refuses a run with neither --line nor --search', async () => {
     await workspaceWithRepo()
 
@@ -181,6 +199,34 @@ describe('renderProbeText', () => {
       'The test still passed with the search text in src/prices.js replaced, so it does not witness that change.',
       'It still failed once the file was back, so it was failing before the probe. Read /logs/restored.log.',
       'Logs: /logs/inverted.log and /logs/restored.log.'
+    ])
+  })
+
+  test('says the test was not run when the service did not restart on the inverted file', () => {
+    expect(
+      renderProbeText({
+        ...outcome,
+        redWhenInverted: null,
+        greenAfterRestore: false,
+        reload: { inverted: 'not-restarted', restored: 'not-restarted' }
+      }).split('\n')
+    ).toEqual([
+      'The service did not restart with line 4 of src/prices.js blanked out, so the test was not run against it.',
+      'Check the service is up and serving the file from source (tim docker lease status).'
+    ])
+  })
+
+  test('says the restored run was skipped when the service did not start again', () => {
+    expect(
+      renderProbeText({
+        ...outcome,
+        redWhenInverted: true,
+        greenAfterRestore: false,
+        reload: { inverted: 'restarted', restored: 'not-started' }
+      }).split('\n')
+    ).toEqual([
+      'The test failed with line 4 of src/prices.js blanked out.',
+      'The service stopped and did not start again once the file was back, so the test was not run against it.'
     ])
   })
 

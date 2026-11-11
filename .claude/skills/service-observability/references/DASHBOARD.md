@@ -1,9 +1,10 @@
 Build the service's custom Grafana dashboard in the CDP dev playground.
 Parent-loaded: path and Bash rules come from `SKILL.md`.
 
-The template was first imported for reference-data (EUDPA-632). Each
-fact that comes only from the CDP monitoring docs is marked
-`[UNPROVEN]`.
+`SKILL.md` → "What is proven" says which parts have been done on a real
+service. `[UNPROVEN]` This dot-case template has not been imported
+anywhere. Each fact that comes only from the CDP monitoring docs is
+marked `[UNPROVEN]`.
 
 Claude generates the dashboard JSON from
 `assets/dashboard.template.json`; the developer imports it in Grafana.
@@ -53,26 +54,65 @@ so it carries no data source ids. The OpenSearch variable's plugin type,
 reference-data, 2026-10-21). `[UNPROVEN]` that the CloudWatch region
 `default` is right for CDP.
 
+The panels sit in Grafana rows, one section each, and every row can be
+collapsed with the arrow beside its title. A collapsed row runs none of
+its queries; saving the dashboard keeps rows as they were left. Only
+"Dependency status" sits above the first row, so it stays in view with
+every section collapsed.
+
+| Row | Panels |
+|---|---|
+| (none, always shown) | Dependency status, every dependency |
+| `<dependency>`, one row per dependency | Calls, Failed calls, Failure rate, Call time |
+| Caches | Cache hits and misses |
+| Business events | One panel per business metric |
+| Dependency call logs | Slowest dependency calls |
+| Timers | One panel per `@Timed` name |
+
 Every CloudWatch query uses `*` for each dimension with "match exact"
 off, so a panel shows one series per published combination without
-listing the values.
+listing the values. The one exception is `dependency` in a dependency's
+row, which is set to that dependency, so the row shows its operations
+alone.
 
 | Panel | Metric | Statistic | Split by |
 |---|---|---|---|
-| Dependency status, one value per dependency | `DependencyAvailable` | `Minimum` | `Dependency` |
-| Calls per dependency | `ExternalCallDuration` | `SampleCount` | `Dependency`, `Operation` |
-| Failed calls | `ExternalCallFailure` | `Sum` | `Dependency`, `Operation` |
-| Failure rate | `ExternalCallFailure` | `Average`, times 100 | `Dependency`, `Operation` |
-| Call time: average, 95th percentile, slowest | `ExternalCallDuration` | `Average`, `p95`, `Maximum` | `Dependency`, `Operation` |
-| Cache hits and misses | `CacheHit`, `CacheMiss` | `Sum` | `Cache` |
+| Dependency status, one value per dependency | `external.dependency.available` | `Minimum` | `dependency` |
+| Calls | `external.call.duration` | `SampleCount` | `operation`, with `dependency` set to the row's |
+| Failed calls | `external.call.failure` | `Sum` | `operation`, with `dependency` set to the row's |
+| Failure rate | `external.call.failure` | `Average`, with the percent (0-1) unit | `operation`, with `dependency` set to the row's |
+| Call time: average, 95th percentile, slowest | `external.call.duration` | `Average`, `p95`, `Maximum` | `operation`, with `dependency` set to the row's |
+| Cache hits and misses | `cache.hit`, `cache.miss` | `Sum` | `cache` |
 | Business events | the service's own metric | `Sum` | its dimension |
 
-Use `Minimum` for `DependencyAvailable`. With more than one task, each
+Use `Minimum` for `external.dependency.available`. With more than one task, each
 publishes its own value, and `Minimum` shows a single unhealthy task.
+The status panel's text mode is "Value and name", so each value carries
+its dependency's name: Grafana's default hides the name when there is
+only one series, leaving "Available" with nothing to say what is.
 
 Split each panel by every dimension its metric is published with, as in
 the table. CloudWatch does not add up across a published dimension, so
-a panel on `ExternalCallFailure` split by `Dependency` alone is empty.
+a panel on `external.call.failure` split by `dependency` alone is empty.
+
+One more panel per `@Timed("<name>")` annotation in the service's
+`src/main` (`METRICS.md` → "Publish" puts one on every controller
+endpoint and public service method). `EmfMeterRegistry` publishes each
+timer as the metric `<name>`, one value per call in milliseconds, with
+the `@Timed` tags `class`, `method` and `exception` as dimensions.
+
+| Panel title | Series | Query |
+|---|---|---|
+| `<timed-name>` | Average, p95, Slowest | `<timed-name>`, `Average`, `p95`, `Maximum` (ms) |
+| | Calls | `<timed-name>`, `SampleCount`, on the right axis |
+
+Every query sets all three dimensions, `class`, `method` and
+`exception`, each to `*`, as the template does: a query missing one finds
+no data. Each series is labelled by `exception`, so failed calls show
+apart from `none`. A timer registered in code (`meterRegistry.timer("…")`)
+publishes with its own tags as dimensions, not `class`, `method` and
+`exception`. Give it a panel only if the team asks: copy `<timed-name>`
+and set the dimensions to that timer's tags, each to `*`.
 
 One panel reads logs, not metrics:
 
@@ -88,11 +128,14 @@ nested object with a numeric `event.duration` (`LOGGING.md` → "How to
 write the fields"). CDP drops the flat MDC form.
 
 The dimension values for the service come from its code. For
-reference-data: `Dependency` is `mdm` or `trade-token`; `Cache` is
-`MDM_COUNTRIES_CACHE` or `MDM_POE_CACHE`; `LookupType` is `countries` or
-`ports-of-entry`. A service with a database also has its ping
-(`METRICS.md` → "A database"), for example `Dependency` `mongodb` with
-`Operation` `ping`.
+reference-data, once moved to the dot-case names (it publishes the old
+ones until then: `METRICS.md` → "A service built the old way"):
+`dependency` is `mdm` or `trade-token`; `cache` is
+`MDM_COUNTRIES_CACHE` or `MDM_POE_CACHE`; `lookup.type` is `countries` or
+`ports-of-entry`. A service with a database has `dependency` `mongodb`,
+its status from the driver's heartbeats and, if its commands are
+measured, an `operation` from a fixed set of command names, with every
+other command as `other` (`METRICS.md` → "A database").
 
 ## Generate
 
@@ -103,13 +146,41 @@ Claude writes the service's dashboard to
 2. Replace every `<service>` with the service name. If the service's
    `aws.emf.namespace` is not its name, use the namespace in the
    `namespace` fields and the name everywhere else.
-3. Make one copy of the `<business-metric> by <business-dimension>`
+3. Make one copy of the `<dependency>` row, with the four panels after
+   it, per `dependency` value the service publishes ("The dimension
+   values" above), replacing `<dependency>` everywhere in the copy (the row
+   title, each panel description and each `dependency` dimension). Put
+   the copies one after another in `panels`. A dependency's section is
+   17 high (the row's 1, then two panel rows of 8), so add 17 to every
+   `y` in the second copy, 34 in the third, and so on, and move every
+   row and panel after the last copy down by 17 for each dependency
+   past the first.
+4. Make one copy of the `<business-metric> by <business-dimension>`
    panel per business metric on the agreed list (Step 2), filling in the
-   metric and its dimension, and laying each copy out on the grid. Delete
-   the panel if there are none.
-4. Delete "Cache hits and misses" if the service has no cache.
-5. Check the result is valid JSON (`jq empty <file>`) and that no
-   placeholder is left (`grep -nE '<service>|<business-' <file>` finds
+   metric and its dimension everywhere they appear in the panel (the
+   title, description, `metricName`, `dimensions` and the legend
+   `label`), and laying the copies out two to a row under "Business
+   events". If there are none, delete the panel and its row.
+5. Delete "Cache hits and misses" and its "Caches" row if the service
+   has no cache.
+6. List the service's `@Timed` names, in one command:
+   `grep -rhoE --include='*.java' --exclude-dir=target --exclude-dir=node_modules --exclude-dir=test '@Timed\((value *= *)?"[^"]+"' <repo>`.
+   Each line is `@Timed("<name>"`; the name is between the quotes. No
+   output means the service has no timers, a Node service included:
+   delete the panel and its "Timers" row.
+   Otherwise make one copy of the `<timed-name>` panel per name, replacing
+   `<timed-name>` everywhere in the copy (title, description and each
+   `metricName`), and lay the copies out two to a row from the template
+   panel's position down. Where a controller and a service time the same
+   operation (`controller.list.time`,
+   `service.list.time`), put the pair on one row, controller on
+   the left, so the time spent outside the service reads across. Check
+   each name is let through the
+   service's `management.metrics.enable` allowlist (`METRICS.md` →
+   "Rules"); a denied timer publishes nothing.
+7. Check the result is valid JSON (`jq empty <file>`) and that no
+   placeholder is left
+   (`grep -nE '<service>|<dependency>|<business-|<timed-' <file>` finds
    nothing).
 
 ## Import

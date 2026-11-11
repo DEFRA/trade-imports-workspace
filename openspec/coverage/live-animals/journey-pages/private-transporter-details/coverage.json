@@ -13,7 +13,7 @@
           "name": "The page presents its name and address questions, marking two fields optional",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "private transporter page renders all address fields and explanatory copy", "strength": "full", "notes": "asserts every field label from copy, including 'Address line 2 (optional)' and 'County (optional)'; field-group partial-fill behaviour is owned by live-animals/addresses, not duplicated here" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "private transporter page opens on the name or organisation name field, directly under its heading, and labels every field", "strength": "full", "notes": "asserts the name field is first under the heading and every field label from copy, including 'Address line 2 (optional)' and 'County (optional)'; this capability owns the private form's required-field behaviour, not duplicated in live-animals/addresses" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "private transporter phone number hints the international dialling code", "strength": "full", "notes": "" }
           ]
         },
@@ -28,17 +28,35 @@
       ]
     },
     {
+      "id": "REQ-PRIVATE-TRANS-008",
+      "name": "The Country select opens with the United Kingdom chosen and offers only country names, in alphabetical order",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PRIVATE-TRANS-008-A",
+          "name": "The Country select opens on the United Kingdom among country names in alphabetical order",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "private transporter country select opens on the United Kingdom and offers every country in alphabetical order", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.test.js", "test": "Should open a fresh GET’s select on the United Kingdom, offering nothing but the offered countries in order", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
       "id": "REQ-PRIVATE-TRANS-002",
       "name": "A complete set of private transporter details is saved as one record and reloads into the form",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-PRIVATE-TRANS-002-A",
-          "name": "Completing the details saves them and returns to Overview",
+          "name": "Completing the details saves them and returns to the transporter list, chosen",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/private-transporter-scope.spec.ts", "test": "keyed-in details are owed only for the private type; a partial fill blocks the save; changing the type wipes them", "strength": "full", "notes": "after completing mandatory fields, asserts Overview" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "saves and persists a complete private transporter record", "strength": "full", "notes": "" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/private-transporter-scope.spec.ts", "test": "the saved country shows on the review's Transport details card, and a saved private transporter survives an add of the other type that the trader cancels", "strength": "partial", "notes": "no red probe run against this assertion" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.test.js", "test": "Should save the record and redirect to the transporter list", "strength": "partial", "notes": "witnesses the redirect destination only; the chosen row is decided by the transporter list's own handler; red then green with the save landing on Upload documents (workareas/shared/eudpa-774/logs/inc-030-probe-private-save-landing-unit)" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "saves and persists a complete private transporter record", "strength": "partial", "notes": "no red probe run against this assertion" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "lands on the transporter list with the new transporter first and checked, under the named success banner", "strength": "full", "notes": "red probe: inverting the newest-first ordering/selected-row choice turns this spec red" }
           ]
         },
         {
@@ -46,8 +64,67 @@
           "name": "Returning to the page shows the saved details in the form",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/private-transporter-scope.spec.ts", "test": "keyed-in details are owed only for the private type; a partial fill blocks the save; changing the type wipes them", "strength": "full", "notes": "reopens and asserts name and country values" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/private-transporter-scope.spec.ts", "test": "the saved country shows on the review's Transport details card, and a saved private transporter survives an add of the other type that the trader cancels", "strength": "full", "notes": "reopens and asserts name and country values" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "saves and persists a complete private transporter record", "strength": "full", "notes": "also asserts email on return" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PRIVATE-TRANS-007",
+      "name": "A saved private transporter returns the user to the transporter list already chosen, and survives the list's own save",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PRIVATE-TRANS-007-A",
+          "name": "The save puts the trader straight on the list with the new transporter checked, surviving the list's own save",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "saves and persists a complete private transporter record", "strength": "full", "notes": "red probe: clearing the address the list's own re-save commits turns this spec red" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PRIVATE-TRANS-005",
+      "name": "The page ends with exactly a primary save and a secondary cancel, which abandons the add and leaves an unchanged type's chosen transporter alone",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PRIVATE-TRANS-005-A",
+          "name": "The page offers exactly the primary and the cancel control",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/save-actions.test.js", "test": "Should end the page with exactly the primary and the secondary, in that order, and no overview return control", "strength": "full", "notes": "proves the shared macro both add forms call for their end controls" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "private transporter page ends with exactly the primary and the cancel, offering no overview return control", "strength": "partial", "notes": "no red probe run at the FIT level — the macro it exercises is unit-tested in save-actions.test.js" }
+          ]
+        },
+        {
+          "id": "SCN-PRIVATE-TRANS-005-B",
+          "name": "Cancelling with the stored type unchanged leaves the chosen transporter alone and shows no error",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.test.js", "test": "Should add no transporter, commit nothing, show no error and redirect to the dashboard, logging once", "strength": "full", "notes": "driven by the shared itCancelsTheAddForEveryStoredType registrar, for the form's own type stored, the other type stored and no type stored" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "keeping the stored type: leaves the chosen transporter alone and returns to the dashboard with no error", "strength": "partial", "notes": "no red probe run at the FIT level — the cancel branch it exercises is probed at unit level above" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "cancel takes the trader to the dashboard", "strength": "partial", "notes": "no red probe run at the FIT level" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/transporter-add-save-cancel.spec.ts", "test": "cancelling with the stored type kept leaves the chosen transporter alone, adds nothing and shows no error", "strength": "partial", "notes": "no red probe run against this assertion" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PRIVATE-TRANS-006",
+      "name": "Values a refused save left behind are shown again until the form is saved or cancelled",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PRIVATE-TRANS-006-A",
+          "name": "Leaving a refused form and returning to it shows what was entered",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.test.js", "test": "Should remember the entered values under the form’s own type", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.test.js", "test": "Should show the entered transporter instead of the saved answer", "strength": "partial", "notes": "no red probe run against this specific assertion" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.test.js", "test": "Should clear the entered transporter once a complete record is saved", "strength": "partial", "notes": "no red probe run against this specific assertion" }
           ]
         }
       ]
@@ -75,25 +152,42 @@
         },
         {
           "id": "SCN-PRIVATE-TRANS-003-C",
-          "name": "An invalid country blocks the save and clears, rather than preserving",
+          "name": "An invalid country blocks the save and reopens the select on the United Kingdom, rather than preserving",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "private transporter validation: out-of-list country focuses the cleared select and preserves other values", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "private transporter validation: out-of-list country is refused, focuses the select reopened on the United Kingdom, and preserves other values", "strength": "full", "notes": "" }
           ]
         }
       ]
     },
     {
       "id": "REQ-PRIVATE-TRANS-004",
-      "name": "A completely blank private transporter record is accepted",
+      "name": "The private transporter form's mandatory fields are required outright, not only once another has been filled in",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-PRIVATE-TRANS-004-A",
-          "name": "Saving the page with nothing entered succeeds",
+          "name": "Saving a wholly blank form is refused, naming every required field in order",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "a completely blank private transporter record is optional", "strength": "full", "notes": "submits with nothing filled in and asserts Overview, no error summary" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "saving a wholly blank private transporter form keeps the trader on it, naming every required field in order", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.test.js", "test": "Should refuse a form posted blank in every field, naming the country alongside the other required fields, and save nothing", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PRIVATE-TRANS-009",
+      "name": "The back link returns to the transporter type question",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PRIVATE-TRANS-009-A",
+          "name": "The back link opens the transporter type question",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.test.js", "test": "Should point Back at the type question", "strength": "full", "notes": "red then green with the Back link naming the transporter list (workareas/shared/eudpa-774/logs/inc-027-probe-private-back-page)" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/private-transporter-details/private-transporter-details.controller.test.js", "test": "Should carry the trail on Back when the trader is changing an answer", "strength": "full", "notes": "registered from the transport test-support; red then green with the Back link dropping the trail (workareas/shared/eudpa-774/logs/inc-027-probe-private-back-trail)" }
           ]
         }
       ]

@@ -28,7 +28,7 @@ Does NOT own:
 | Direction | System | Mechanism | Purpose |
 |-----------|--------|-----------|---------|
 | Inbound | Browser users | HTTP, port 3003 | Serves the journey pages |
-| Outbound | trade-imports-plants-backend | REST (`/notifications`), `TRADE_IMPORTS_PLANTS_BACKEND_URL`, default `localhost:8091` | Persist and read notifications and fulfilments |
+| Outbound | trade-imports-plants-backend | REST (`/notifications`), `TRADE_IMPORTS_PLANTS_BACKEND_URL`, default `localhost:8091`; org id sent as `Trade-Imports-Organisation-Id` | Persist and read notifications and fulfilments |
 | Outbound | trade-imports-reference-data | REST (`/countries`, `/ports-of-entry`), `TRADE_IMPORTS_REFERENCE_DATA_URL`, default `localhost:8086` | Countries and ports, primed in real mode |
 | Outbound | trade-imports-address-book | REST (`/organisation/{orgId}/addresses`), `TRADE_IMPORTS_ADDRESS_BOOK_URL`, default `localhost:8089`; org id sent as `Trade-Imports-Organisation-Id` | Address picker |
 | Outbound | Defra ID (OIDC; trade-imports-defra-id-stub locally) | OIDC via Hapi Bell / cookie / JWT | Sign-in and sign-out |

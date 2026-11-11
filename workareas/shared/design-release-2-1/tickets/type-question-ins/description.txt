@@ -1,0 +1,235 @@
+h3. Background
+
+Design Release 2.1 asks "What are you importing?" before a notification is created. The question lives in the Import notification service front door, and Create new on the dashboard now opens it instead of going straight into one service's journey.
+
+The question offers four types: Live animals; Plants for planting; Potatoes (seed and ware); Wood products. Live animals hands over to the live animals journey, and the three plants types hand over to the high-risk plants journey. A trader who is not yet signed in to the receiving service is signed in on the way.
+
+*Germinal products is not offered yet.* The design shows it, but the animals service has no germinal products start page to hand over to. The choice comes back once that start page exists, in a later piece of work.
+
+Templates (Manage templates, and starting a notification from a template) were planned alongside this question and are parked. They are not part of this ticket.
+
+This ticket covers the *Import notification service front door only*. The live animals journey (EUDPA-779) and the high-risk plants journey (EUDPA-780) have their own tickets under the same epic, for how a notification started here carries on in each. The work was merged to main on 6 November 2026.
+
+h3. What changes for the user
+
+h4. The 'What are you importing?' question
+
+Create new opens a page titled "What are you importing?" with the caption "About the consignment" and the four types above, none selected. The page has a single Continue button: no Save and return to overview, no cancel link, no Draft tag and no reference, because no notification exists yet. Continuing with nothing chosen shows "Select what you are importing". Back returns to the home without creating anything.
+
+h4. Going back to the question from a notification
+
+From a live animals notification's "Origin of the import" page, Back returns to this question with Live animals selected. Continuing with Live animals picks the same notification back up rather than creating a second one. Choosing a plants type instead starts a plants notification and leaves the live animals one exactly as it was. Opening the question afresh with Create new shows nothing selected.
+
+h4. Create new on the dashboard
+
+Create new is offered whether the dashboard lists notifications, is empty, shows no results for a search, or could not load the notifications.
+
+h4. Service navigation
+
+The navigation reads Dashboard, Address book, Manage account and Log out. Dashboard is the current item on the dashboard and on the type question; Address book is current on the address book and an address's own pages; nothing is current elsewhere, such as an error page.
+
+h3. Acceptance criteria
+
+Copied from the service's behaviour specification. All 25 scenarios for the Import notification service front door are listed in full.
+
+h4. The 'What are you importing?' question
+
+h5. The question shows its title, options and single Continue button
+
+* *GIVEN* a signed-in user has chosen to start a new notification
+* *WHEN* the question is shown
+* *THEN* the browser title is "What are you importing? - Import notification service - GOV.UK"
+* *AND* the heading is "What are you importing?" with the caption "About the consignment"
+* *AND* the options are, in order, Live animals; Plants for planting; Potatoes (seed and ware); Wood products
+* *AND* no hint is shown and no option is selected
+* *AND* the page ends with a single "Continue" button, with no "Save and return to overview" and no cancel link
+
+h5. Back returns to the home and no notification is created
+
+* *GIVEN* the question is shown
+* *WHEN* the user follows Back
+* *THEN* the Import Notification Service home is shown
+* *AND* no notification has been created
+
+h5. The question shows no Draft tag and no reference
+
+* *GIVEN* the question is shown
+* *WHEN* the user reads the page
+* *THEN* no Draft tag and no notification reference are shown
+
+h5. The question shows the Alpha phase banner with an email feedback link
+
+* *GIVEN* the question is shown
+* *WHEN* the user reads the page
+* *THEN* the "Alpha" phase banner shows "This is a new service. Help us improve it and give your feedback by email."
+* *AND* the feedback link opens an email to the service desk
+
+h5. Continuing with nothing chosen shows the error
+
+* *GIVEN* the question is shown with no option chosen
+* *WHEN* the user selects "Continue"
+* *THEN* the page is shown again with an error summary titled "There is a problem" listing "Select what you are importing", linked to the first option
+* *AND* the same message is shown on the options
+* *AND* the browser title starts "Error: "
+
+h5. Live animals opens a new live-animals draft
+
+* *GIVEN* the question is shown
+* *WHEN* the user chooses Live animals and continues
+* *THEN* a new live-animals draft is created and its "Origin of the import" page is shown
+* *AND* the page shows the Draft tag and a new GBN-AG reference
+
+h5. A plants type opens a new high-risk plants draft
+
+* *GIVEN* the question is shown
+* *WHEN* the user chooses Plants for planting, Potatoes (seed and ware) or Wood products and continues
+* *THEN* a new high-risk plants draft is created and the high-risk plants journey's first page is shown
+* *AND* no live-animals notification is created
+
+h5. A user signed in to the Import Notification Service only is signed in to the animals service on the way
+
+* *GIVEN* the user is signed in to the Import Notification Service and not to the animals service
+* *WHEN* the user chooses Live animals and continues
+* *THEN* the user is signed in to the animals service on the way
+* *AND* the new draft's "Origin of the import" page is shown
+
+h5. A user signed in to the Import Notification Service only is signed in to the high-risk plants service on the way
+
+* *GIVEN* the user is signed in to the Import Notification Service and not to the high-risk plants service
+* *WHEN* the user chooses Plants for planting and continues
+* *THEN* the user is signed in to the high-risk plants service on the way without the browser blocking a step
+* *AND* a new high-risk plants draft's first page is shown
+
+h4. Going back to the question from a notification
+
+h5. The question shows Live animals selected for a notification
+
+* *GIVEN* the user follows Back from a live-animals notification's "Origin of the import" page
+* *WHEN* the question is shown
+* *THEN* Live animals is selected and no other option is
+
+h5. Keeping Live animals returns to the same notification
+
+* *GIVEN* the question is shown for a live-animals notification
+* *WHEN* the user continues with Live animals still selected
+* *THEN* that notification's "Origin of the import" page is shown with the same reference and the Draft tag
+* *AND* the live animals notifications list holds no additional notification
+
+h5. Choosing Plants for planting leaves the notification unchanged
+
+* *GIVEN* the question is shown for a live-animals notification that holds answers
+* *WHEN* the user chooses Plants for planting and continues
+* *THEN* the high-risk plants journey's first page is shown
+* *AND* the live-animals notification still has its reference, its Draft status and every answer it had
+
+h5. Create new after a round trip from a notification shows nothing selected
+
+* *GIVEN* the user has been taken from a live-animals notification back to the question
+* *WHEN* they open the question again with Create new on the Import Notification Service home
+* *THEN* no option is selected
+
+h5. A user signed out of the Import Notification Service on the way back from a notification still reaches the question with Live animals selected
+
+* *GIVEN* the user is signed in to the animals service and has been signed out of the Import Notification Service
+* *WHEN* they follow Back from a live-animals notification's "Origin of the import" page
+* *THEN* the user is signed in to the Import Notification Service on the way
+* *AND* the question is shown with Live animals selected
+
+h5. A user signed out of the animals service on the way back to a notification still reaches its origin page
+
+* *GIVEN* the question is shown for a live-animals notification and the user has been signed out of the animals service
+* *WHEN* they continue with Live animals still selected
+* *THEN* the user is signed in to the animals service on the way
+* *AND* that notification's "Origin of the import" page is shown
+
+h4. Create new on the dashboard
+
+h5. Starting from a dashboard that lists notifications asks what is being imported
+
+* *GIVEN* notifications are listed on the dashboard
+* *WHEN* the user chooses "Create new"
+* *THEN* the question "What are you importing?" is shown
+* *AND* no option is selected and the second option is Plants for planting
+
+h5. Starting from an empty dashboard asks the same question
+
+* *GIVEN* the organisation has no notifications
+* *WHEN* the dashboard is shown
+* *THEN* "Create new" is still offered
+* *AND* choosing it shows the question "What are you importing?"
+
+h5. Create new is still offered after a search that matches nothing
+
+* *GIVEN* the user searches for a reference number that matches no notification
+* *WHEN* the "No notifications found" message is shown
+* *THEN* "Create new" is still offered
+* *AND* choosing it shows the question "What are you importing?"
+
+h5. Create new is still offered when the notifications cannot be loaded
+
+* *GIVEN* the notifications list cannot be loaded
+* *WHEN* the dashboard is shown with "Sorry, there is a problem with the service. Try again in a few minutes."
+* *THEN* "Create new" is still offered under the dashboard heading
+
+h4. Service navigation
+
+h5. A signed-in user sees the four items in order
+
+* *GIVEN* the user is signed in
+* *WHEN* they view any page
+* *THEN* the navigation offers, in order, Dashboard, Address book, Manage account and Log out
+
+h5. Following Dashboard from the address book opens the dashboard
+
+* *GIVEN* the user is signed in and on the address book
+* *WHEN* they follow Dashboard in the navigation
+* *THEN* the dashboard is shown
+
+h5. Dashboard is the current item on the dashboard
+
+* *GIVEN* the user is on the dashboard
+* *WHEN* they view the navigation
+* *THEN* Dashboard is the current item
+
+h5. Dashboard is the current item on the notification type question
+
+* *GIVEN* the user is on the notification type question
+* *WHEN* they view the navigation
+* *THEN* Dashboard is the current item
+
+h5. Address book is the current item on the address book and an address's own pages
+
+* *GIVEN* the user is on the address book or on an address's add, view, edit or delete page
+* *WHEN* they view the navigation
+* *THEN* Address book is the current item
+
+h5. No item is current on a page outside both sections
+
+* *GIVEN* the user is on a page that is neither in the dashboard nor in the address book, such as an error page
+* *WHEN* they view the navigation
+* *THEN* no item is the current item
+
+h3. The work behind this change
+
+||Row||What it changed||State||
+|inc-148|Ask 'What are you importing?' before a notification is created|Done|
+|inc-149|Create new on today's INS home starts every notification at the type question|Done|
+|inc-150|Origin's Back link goes to the type question for a notification started there, and the type question picks the notification back up|Done|
+|inc-263|The INS type question offers no Germinal products choice while the animals service has no germinal products start page|Done|
+|inc-260|The workspace docs and INS spec describe the type question's links and the service navigation|Done|
+|inc-251|The INS frontend rewrites browser-facing Defra ID URLs in one place|Done|
+|inc-252|Frontend tests set config and serve Defra ID discovery instead of mocking their own modules|Done|
+|inc-254|The INS dashboard's functional tests reach its empty state and share their helpers|Done|
+
+All built and merged. Rows inc-148 and inc-150 also changed the live animals or high-risk plants frontend, so they appear on those tickets too. Rows inc-251, inc-252 and inc-254 tidy how the front door handles Defra ID addresses and how its tests are set up; they change nothing a user can see. The theme has 19 rows: three changed only the animals admin service (its Defra ID settings and its security audit) and one changed only the test suites, so those four appear on no ticket.
+
+h3. Where this is specified
+
+The full behaviour lives in the service's behaviour specification, in the workspace repository. The front door's specification gained 25 scenarios across 3 files. Each link opens the file as it stands on main.
+
+||Specification||New scenarios||
+|[Notification type question|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/ins/notification-type/spec.md]|15|
+|[Service navigation|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/ins/service-navigation/spec.md]|6|
+|[Notification dashboard|https://github.com/DEFRA/trade-imports-workspace/blob/main/openspec/specs/ins/notification-dashboard/spec.md]|4|
+
+Across the theme's three tickets that is 55 scenarios in 21 files: 25 here, 14 for live animals and 16 for high-risk plants. This description is generated from that specification. If it changes, this ticket is regenerated to match.

@@ -1,0 +1,300 @@
+h3. Background
+
+Design Release 2.1 changes how a trader chooses the animals in a consignment, how many of each they say they are bringing, and when the service asks whether any of them are unweaned. It also makes "Save and return to overview" behave consistently wherever it appears in the live animals journey.
+
+The change is all in the live animals service. High-risk plants and the Import notification service front door are untouched by this theme, so there are no sibling tickets to read alongside this one.
+
+This work is not yet merged. It sits on the branch feat/EUDPA-693-commodities-and-reason across the animals frontend, the test suite and the performance tests, with one open pull request per repository. The specification links below point at that branch and will be regenerated against main once it merges.
+
+Two further changes in this theme are held, waiting on other services, and are not described here: offering each commodity's types from MDM and narrowing the species to them (inc-029), which needs reference data to serve an MDM commodity type list, and a chicken species page from the MDM stub (inc-249).
+
+h3. What changes for the user
+
+h4. Finding and choosing a species
+
+A trader searching the commodity page can search by a species' common name, by its scientific name or one word of it, or by a commodity code. Whichever route they take, each species is offered the same way: its scientific name with its common name in round brackets, for example "Bos taurus (Domestic Cattle)". Where the reference data holds no common name for a species, it is offered by its scientific name alone, with no empty brackets.
+
+Results are listed alphabetically, and the part of a label or a commodity heading that the search matched is shown in bold, so a trader can see why something was returned.
+
+Choices are gathered in a tally above the results. It shows each commodity as a bold line with the chosen species beneath it, and each entry carries its own Remove control named for that species. Removing one species leaves the others chosen. All of this works with JavaScript turned off.
+
+h4. Saying how many animals and packages
+
+For every species chosen, the trader is asked a number of animals, and a number of packages where that species' commodity calls for one. A commodity the reference data does not count in packages is asked for a number of animals only.
+
+Neither figure can exceed 2,147,483,647, which is the largest number the service is able to store. Above that the save is refused with an error against that species' own field, and the digits the trader typed are kept so they can correct them rather than start again.
+
+Pressing Enter in a quantity field saves the counts rather than removing a row. Removing one row keeps the numbers already typed into the others, even before anything is saved.
+
+h4. Asking about unweaned animals
+
+The unweaned question is asked only when the consignment carries a commodity capable of being unweaned. A consignment of only cats, dogs and ferrets is not asked. Adding an equine, pig, sheep or goat commodity brings the question into play as a mandatory answer, and it is asked alongside the question about what the animals are certified for.
+
+h4. Save and return to overview
+
+"Save and return to overview" now makes the same checks as "Save and continue". It refuses a partly answered reveal while amending, refuses an invalid answer while keeping a valid answer already given to the other question on the page, and accepts a page left entirely blank. Used part-way through the opening sequence it returns the trader to Overview rather than carrying them on to the next step.
+
+h4. Arrival details
+
+A means of transport to the port of entry is now required. Saving without one is refused with "Select a means of transport to the port of entry" — shown both in the error summary and above the question itself — the browser page title starts "Error: ", the chosen port is kept on screen, and nothing is saved. This holds for both save actions, and the Arrival details task goes back to reading "To do" on Overview. The arrival and transit theme (EUDPA-694) specified this same rule, and the two specifications were reconciled when its work was merged into this branch; the wording above is the agreed one.
+
+h4. What Overview and the review show
+
+The Additional details task tracks To do, In progress and Complete on its own two answers alone. A commodity carrying no identifiers leaves the Identification details row out of Overview altogether. Where two species sit under one commodity, the identification summary shows them as one row listing both labels, with their numbers of animals totalled.
+
+h3. Acceptance criteria
+
+Copied from the behaviour specification. This theme added or changed 36 scenarios across 8 specification files; the distinct behaviours are written out below, and where a family of scenarios proves the same rule by a different route, the family is named rather than repeated.
+
+h4. Finding and choosing a species
+
+h5. Searching by common name offers each matching species under each live-animal code that lists it, by its Latin name with its common name in brackets
+
+* *GIVEN* the user is on the commodity selection page
+* *WHEN* they search by a species' common name
+* *THEN* each matching species is offered under each live-animal commodity code that lists it, by its Latin name with its common name in round brackets
+
+The same label format is proved for the other two search routes: searching by commodity code (SCN-COMMODITY-SELECT-003-C) and searching by a species' Latin name or one word of it (SCN-COMMODITY-SELECT-003-D).
+
+h5. A species the reference data holds no common name for is offered by its Latin name alone
+
+* *GIVEN* the reference data holds no common name for a species a search matches
+* *WHEN* the results are shown
+* *THEN* that species is offered by its Latin name alone, with no brackets
+
+h5. A search lists its groups and species alphabetically
+
+* *GIVEN* a search whose commodity lists its species in another order
+* *WHEN* the results are shown
+* *THEN* the species are listed in label order under their commodity heading, and the commodity groups are in heading order
+
+h5. A search bolds the part of a species label it matched
+
+* *GIVEN* a search for part of a species' label
+* *WHEN* the results are shown
+* *THEN* that part of the label is in bold and the rest is not
+
+The same bolding is proved for a commodity heading (SCN-COMMODITY-SELECT-016-B).
+
+h5. The tally reports the choice as a bold commodity line and its species, and clearing empties it
+
+* *GIVEN* the user has chosen one species on the commodity selection page
+* *WHEN* the page next renders
+* *THEN* the tally reports one chosen, showing the commodity as a bold line with the species beneath it
+* *AND* each entry offers a control whose accessible name is "Remove" followed by that species' label
+* *WHEN* the user clears the selection
+* *THEN* the tally is no longer shown
+
+h5. Removing one chosen species leaves the other chosen
+
+* *GIVEN* the user has chosen two species under different commodities
+* *WHEN* they use the remove control named for one of them
+* *THEN* that species is gone from the tally, the other is still chosen, and the results on screen are still listed
+
+h5. With JavaScript off, searching, removing a species and clearing all still work
+
+* *GIVEN* the user has JavaScript turned off
+* *WHEN* they search, remove one chosen species, and clear the selection
+* *THEN* each of the three works
+
+h5. Unticking a shown species and then removing it leaves it unchosen without an error
+
+* *GIVEN* a species whose tick box is on screen and ticked
+* *WHEN* the user clears that tick box and then uses that species' remove control
+* *THEN* the page is shown with that species not chosen and the other choices still chosen, not an error page
+
+h5. A removal naming a species the page never offered is refused and changes nothing
+
+* *GIVEN* a removal naming a species the page's results and the saved commodity lines have never held, however it was submitted
+* *WHEN* the page responds
+* *THEN* the request is refused, no page is rendered back, and the selection is unchanged
+
+h4. Saying how many animals and packages
+
+h5. A number of animals above the largest the service stores is refused on its own field
+
+* *GIVEN* the user is entering a number of animals for one species
+* *WHEN* they enter a number above 2,147,483,647 and save
+* *THEN* the save is blocked, with the error "Number of animals must be 2,147,483,647 or fewer" against that species' own field
+* *AND* the field still shows the digits they typed
+
+h5. A number of packages above the largest the service stores is refused on its own field
+
+* *GIVEN* the user is entering a number of packages for one species
+* *WHEN* they enter a number above 2,147,483,647 and save
+* *THEN* the save is blocked, with the error "Number of packages must be 2,147,483,647 or fewer" against that species' own field
+* *AND* the field still shows the digits they typed
+
+The boundary itself is accepted for both figures: a number of animals at 2,147,483,647 (SCN-COMMODITY-DETAILS-013-B) and a number of packages at 2,147,483,647 (SCN-COMMODITY-DETAILS-013-D).
+
+h5. A line whose commodity is not counted in packages is asked for a number of animals only
+
+* *GIVEN* the user has added a commodity line
+* *WHEN* its commodity is one the reference data serves but is not counted in packages
+* *THEN* that line is asked for a number of animals only, both on the commodity details page and on the review
+
+h5. Pressing Enter in a quantity field saves the counts
+
+* *GIVEN* the user has entered valid counts for every species
+* *WHEN* they press Enter in a quantity field
+* *THEN* the counts are saved and the page the primary save leads to is shown
+
+h5. Numbers typed into other rows survive a removal
+
+* *GIVEN* the user has typed numbers into more than one species' fields and has not yet saved
+* *WHEN* they remove one row
+* *THEN* that row is gone from the table and from the selection
+* *AND* every other species' field still holds the number typed into it
+
+h5. A removal submitted again shows the page as it stands rather than removing another row
+
+* *GIVEN* the user has removed a row
+* *WHEN* the same removal is submitted again
+* *THEN* the commodity details page is shown holding the rows the first removal left, with nothing further removed
+
+h5. Each row's Species cell lists the labels chosen under it
+
+* *GIVEN* the user has chosen two species under commodity code 0102
+* *WHEN* they view the commodity details page
+* *THEN* the table has the columns "Commodity code" and "Species"
+* *AND* the 0102 row reads 0102 and the label of each of the two species
+
+h4. Asking about unweaned animals
+
+h5. A consignment with an unweaned-eligible commodity is asked about unweaned animals
+
+* *GIVEN* the user has reached the additional details page for a consignment at least one of whose commodity lines is among those the service treats as capable of being unweaned
+* *WHEN* the page loads
+* *THEN* it asks the unweaned question alongside the certification question, with the unweaned question's hint and both of its options
+* *AND* an answer given to the unweaned question is saved and still shown as chosen when the page is reopened
+
+h5. A cats-dogs-and-ferrets-only consignment is not asked about unweaned animals
+
+* *GIVEN* a notification whose only commodity line carries the cats, dogs, ferrets and other live mammals commodity (01061900)
+* *WHEN* the user works through the journey
+* *THEN* the notification is not asked whether it contains unweaned animals
+
+h5. Adding an equine, pig, sheep or goat commodity also brings the question into play
+
+* *GIVEN* a notification whose commodity lines carry no commodity requiring unweaned-animal tracking
+* *WHEN* the user adds a line carrying an equine, a pig, a sheep or a goat commodity
+* *THEN* the notification is asked whether it contains unweaned animals, as a mandatory answer
+
+h4. Save and return to overview
+
+h5. Save and return refuses a partly answered reveal while amending
+
+* *GIVEN* the main import reason page of a notification being amended, with "Transit" chosen and its port of exit and destination country left blank
+* *WHEN* the user selects "Save and return"
+* *THEN* they stay on the page, which shows an error for each missing answer
+* *AND* nothing is saved
+
+h5. Save and return to overview refuses the same invalid certification purpose, keeping a valid unweaned answer
+
+* *GIVEN* the user has validly answered the unweaned question
+* *WHEN* they submit an invalid certification purpose and choose save and return to overview
+* *THEN* the save is refused, an error links to and focuses the certification question, with nothing shown as chosen there
+* *AND* the unweaned question still shows the answer already given
+
+h5. Save and return to overview refuses the same invalid unweaned answer, keeping a valid certification purpose
+
+* *GIVEN* the user has validly answered the certification question
+* *WHEN* they submit an invalid unweaned answer and choose save and return to overview
+* *THEN* the save is refused with "Select a valid option" for the unweaned question and nothing is saved
+* *AND* the certification question still shows the purpose already chosen
+
+h5. Save and return to overview accepts the page with both questions left blank
+
+* *GIVEN* the user is on the additional details page with neither question answered
+* *WHEN* they choose save and return to overview
+* *THEN* the blank answers are saved
+* *AND* reopening the page shows neither question answered
+
+h5. Save and return to overview inside the sequence goes to Overview rather than the next step
+
+* *GIVEN* the user is in the opening sequence on main import reason, with the reason and the question it opens answered
+* *WHEN* they select "Save and return to overview"
+* *THEN* Overview is shown, not commodity details
+
+The same is proved from the additional details page, which goes to Overview rather than the port of entry (SCN-FLOW-016-B).
+
+h4. Arrival details
+
+h5. Save and continue with no means of transport is refused
+
+* *GIVEN* the user is on the arrival details page with no means of transport chosen
+* *WHEN* they save and continue
+* *THEN* they stay on the arrival details page
+* *AND* the error summary and the means of transport both show "Select a means of transport to the port of entry"
+* *AND* the browser page title starts "Error: "
+
+h5. Arrival details saved and returned without a means of transport is refused
+
+* *GIVEN* the Arrival details page with a port of entry chosen and no means of transport
+* *WHEN* the user selects "Save and return to overview"
+* *THEN* they stay on the page showing "Select a means of transport to the port of entry" and the port of entry is still chosen
+* *WHEN* they then open Overview
+* *THEN* the Arrival details task reads "To do"
+* *AND* opening the task shows the port of entry empty
+
+The same refusal is proved once more for the second save action (SCN-ARRIVAL-006-C).
+
+h4. What Overview and the review show
+
+h5. The Additional details task walks To do, In progress and Complete on its own answers alone
+
+* *GIVEN* a consignment whose commodities put the unweaned question in scope, with no import reason saved
+* *WHEN* the user views Overview before either question is answered
+* *THEN* Additional details reads To do
+* *WHEN* only what the animals are certified for is answered and the user views Overview
+* *THEN* Additional details reads In progress
+* *WHEN* the unweaned question is also answered and the user views Overview
+* *THEN* Additional details reads Complete
+
+h5. Choosing a commodity that needs no identifiers leaves the row out
+
+* *GIVEN* the user has chosen a commodity that carries no identifiers
+* *WHEN* they view Overview
+* *THEN* no Identification details row is shown
+* *AND* the second section lists Commodity details, then Additional details, in that order
+
+h5. Two species of one commodity share a row listing both labels and their total
+
+* *GIVEN* the user has chosen two species under one commodity (for example, two cattle species with 2 and 3 animals)
+* *WHEN* they open the identification details page
+* *THEN* the summary shows one row for that commodity code, listing both labels
+* *AND* its number of animals is the total of the two species
+
+h3. The work behind this change
+
+|| Increment || What it changed || State ||
+| inc-247 | The theme branch took in what main had landed since it was cut | Done |
+| inc-013 | Commodity search results sorted and bolded, and a selected panel of removable species chips | Done |
+| inc-015 | The performance walk visits the main import reason between the commodity page and Commodity details | Done |
+| inc-018 | Hard stops: means of transport on arrival details, and number of packages on commodity details | Done |
+| inc-246 | Save and return to overview makes the same checks as Save and continue on the main import reason and additional details pages | Done |
+| inc-023 | The unweaned question is asked for equines, cattle, pigs, sheep and goats | Done |
+| inc-024 | The number of packages question is pinned to the V4 Data Fields commodity list | Done |
+| inc-025 | Species read as their scientific name with the common name in brackets | Done |
+| inc-026 | The frontend's stub commodity fixture matches what the MDM stub serves | Done |
+| inc-027 | Remove on Commodity details keeps the numbers the trader has typed but not yet saved | Done |
+| inc-028 | A number of animals beyond what the service can store is refused on its own field | Done |
+| inc-029 | The commodity page offers each commodity's types from MDM and narrows the species to them | Blocked, waiting on reference data |
+
+The theme holds 19 increments in total. The 12 above are the ones that change what a user sees in the live animals service. Two were dropped as deliberate decisions not to do the work: inc-012, a live-animal commodity catalogue matching Design Release 2.1, and inc-022, keeping earlier answers on a blank main import reason and additional details. The remaining five changed only test suites or brought the branch up to date with main, so they carry no behaviour to check.
+
+h3. Where this is specified
+
+|| Specification file || Scenarios this theme added or changed ||
+| [commodity-selection|https://github.com/DEFRA/trade-imports-workspace/blob/feat/EUDPA-693-commodities-and-reason/openspec/specs/live-animals/journey-pages/commodity-selection/spec.md] | 12 |
+| [commodity-details|https://github.com/DEFRA/trade-imports-workspace/blob/feat/EUDPA-693-commodities-and-reason/openspec/specs/live-animals/journey-pages/commodity-details/spec.md] | 8 |
+| [journey-flow|https://github.com/DEFRA/trade-imports-workspace/blob/feat/EUDPA-693-commodities-and-reason/openspec/specs/live-animals/journey-flow/spec.md] | 4 |
+| [additional-details|https://github.com/DEFRA/trade-imports-workspace/blob/feat/EUDPA-693-commodities-and-reason/openspec/specs/live-animals/journey-pages/additional-details/spec.md] | 4 |
+| [journey-obligations/commodity-selection|https://github.com/DEFRA/trade-imports-workspace/blob/feat/EUDPA-693-commodities-and-reason/openspec/specs/live-animals/journey-obligations/commodity-selection/spec.md] | 3 |
+| [arrival-details|https://github.com/DEFRA/trade-imports-workspace/blob/feat/EUDPA-693-commodities-and-reason/openspec/specs/live-animals/journey-pages/arrival-details/spec.md] | 2 |
+| [overview|https://github.com/DEFRA/trade-imports-workspace/blob/feat/EUDPA-693-commodities-and-reason/openspec/specs/live-animals/journey-pages/overview/spec.md] | 2 |
+| [identification-details|https://github.com/DEFRA/trade-imports-workspace/blob/feat/EUDPA-693-commodities-and-reason/openspec/specs/live-animals/journey-pages/identification-details/spec.md] | 1 |
+
+36 scenarios across 8 specification files, all in the live animals service. Every scenario the theme added or changed is in one of the files above, including those collapsed into a family in the criteria.
+
+This description is generated from the behaviour specification, and is regenerated whenever that specification changes. If a criterion above and the service disagree, the service is the thing to raise a defect against — unless the specification is what moved, in which case this ticket will say so the next time it is regenerated.

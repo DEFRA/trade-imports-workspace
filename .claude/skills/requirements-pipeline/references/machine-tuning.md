@@ -226,8 +226,13 @@ replace it with a measured one.
 }
 ```
 
-- **Animals FIT: 4.** The only count that finishes. The rule's back-off does not
-  apply when the lower counts fail outright.
+- **Animals FIT: 4 — superseded, now 8.** See
+  [Re-measured with the stack down](#animals-fit-re-measured-with-the-stack-down)
+  below. "The only count that finishes" was true of the figures above and
+  misleading as a conclusion: the suite never completed at 2 or 3 because the
+  machine was swapping, not because it needed more than 4 workers, and 4 was also
+  the ceiling of `tim build tune`'s default `--counts 2,3,4`. With the stack down
+  the same suite runs at 12 workers in 256s.
 - **Plants FIT: 4.** Fastest by 71s over 3 workers, and the *lowest* shell start
   time of the three counts (42 ms against 130 ms at 3).
 - **ins-frontend FIT: 4.** Fastest, and the whole suite is half a minute.
@@ -243,6 +248,48 @@ assumes a lower count that does not. For plants and ins-frontend the lower count
 swaps *more* than the chosen one, so backing off would have cost time and bought
 no headroom. The counts above are the fastest completing count per rung, not the
 rule's output.
+
+### Animals FIT re-measured with the stack down
+
+Every figure in the section above was taken **with the workspace stack up**,
+because `tim build tune` takes the lease and starts the stack before it times
+anything. A theme is built here with `e2e: "ci"`, which takes no lease and leaves
+the stack down, so the tune measured a machine under load no `ci` gate ever
+creates — 20 containers and Docker's 10 GiB against the host's 18.
+
+Re-timed on 3 November on one tree (the `inc-013` working tree, which the build
+run's own final gate had just proved green at 650 passed), stack down, nothing
+else heavy running, `npm run test:fit:ci -- --workers=N` in
+`repos/trade-imports-animals-frontend`:
+
+| workers | wall | suite | against 4 |
+|---|---|---|---|
+| 4 | 636s | 10.6m | — |
+| 6 | 428s | 7.1m | −33% |
+| 8 | 332s | 5.5m | −48% |
+| 12 | 256s | 4.2m | −60% |
+
+All four runs: 650 passed. **Set to 8.**
+
+**Why 8 and not 12,** when 12 is 76s faster. The curve had still not flattened at
+12, so the rule's "fewest workers past which the time stops falling" has no answer
+in this range — 12 is simply the host's logical core count, where sampling had to
+stop. Three things argue against taking it: 12 workers leaves no core for anything
+the gate or a stage runs alongside; these counts also govern a stage's own FIT run
+outside the gate, which has no guarantee of running alone; and this measurement
+sampled **wall time only**, not swap or shell-start latency, which is exactly what
+the rule backs off on and exactly what made the figures above wrong. 8 takes
+nearly half the time off and leaves four cores. Going further is a job for
+`tim build tune --counts 8,10,12` with its `tim build measure` sampling, with the
+stack down.
+
+**The lesson for the other rungs.** Plants FIT, ins-frontend FIT and the E2E count
+are all still the hand-assembled caps from the section above: measured with the
+stack up, and capped at the tune default's ceiling of 4. Plants FIT is a suite of
+comparable size to animals', so it is very likely low for the same two reasons.
+Do not trust any of them without re-measuring; and when re-measuring, pass
+`--counts` that reach past 4 and run with the stack in the state the gate will
+actually be in.
 
 ### Docker Desktop
 

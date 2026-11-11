@@ -13,25 +13,27 @@
           "name": "The page presents its question with no type preselected",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "reaches the type question from the list, not before it", "strength": "full", "notes": "asserts exactly two radios in order Private, Commercial, neither pre-checked, Private carrying no accessible description" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/transporter-add.spec.ts", "test": "leaves the transporter type unchecked on load", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "reaches the type question from the list, not before it, with neither type chosen", "strength": "full", "notes": "asserts exactly two radios in order Private, Commercial, neither checked, Private carrying no accessible description, and the page ends with its own Continue button alone; red then green with the stored type defaulting to Private (workareas/shared/eudpa-774/logs/inc-030-probe-type-nothing-chosen-fit)" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/transporter-add.spec.ts", "test": "leaves the transporter type unchecked on load", "strength": "partial", "notes": "not probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/transporter-add.spec.ts", "test": "renders the page controls", "strength": "partial", "notes": "asserts the Continue button and both radios are offered; not probed" }
           ]
         }
       ]
     },
     {
       "id": "REQ-TRANSPORTER-TYPE-002",
-      "name": "A chosen transporter type is accepted",
+      "name": "A chosen transporter type is accepted and opens its details form",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-TRANSPORTER-TYPE-002-A",
-          "name": "Choosing a transporter type saves without error",
+          "name": "Choosing the commercial transporter type opens its details form without error",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/transporter-add.spec.ts", "test": "accepts a valid transporter type", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/transporter-add.spec.ts", "test": "accepts a valid transporter type", "strength": "partial", "notes": "clicks the page's own Continue button; not probed" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "commercial branch routes to the add-commercial form", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "private branch routes to its details page and persists on back", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "private branch routes to its details page and persists on back", "strength": "full", "notes": "probed by inverting transporter-add.controller.js nextSlugForTransporterType" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add/transporter-add.controller.test.js", "test": "Should hold a commercial choice as flow-only state, leaving the stored type untouched, and send the trader to its details form", "strength": "full", "notes": "asserts the redirect to the commercial details form, no error, and the stored type left untouched; probed: nextSlugForTransporterType choosing the private page for a commercial choice turns it red, restored green (workareas/shared/eudpa-774/logs/inc-032-probe-SCN-TRANSPORTER-TYPE-002-A)" }
           ]
         }
       ]
@@ -46,22 +48,66 @@
           "name": "The commercial option carries the Northern Ireland condition",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "reaches the type question from the list, not before it", "strength": "full", "notes": "asserts the Commercial radio's accessible description equals 'This can only be a commercial transporter from Northern Ireland.'" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "reaches the type question from the list, not before it, with neither type chosen", "strength": "full", "notes": "asserts the Commercial radio's accessible description equals 'This can only be a commercial transporter from Northern Ireland.'" }
           ]
         }
       ]
     },
     {
       "id": "REQ-TRANSPORTER-TYPE-004",
-      "name": "The page warns the trader to search the list first, under a new-transporter caption",
+      "name": "The page warns the trader to check the list for duplicates, under a new-transporter caption",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-TRANSPORTER-TYPE-004-A",
-          "name": "The page carries the new-transporter caption and search-first warning",
+          "name": "The page carries the new-transporter caption and duplicate-check warning",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "heads the type question with the choice it asks for, under the new-transporter caption, and warns the trader to search first", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "heads the type question with the choice it asks for, under the new-transporter caption, and warns the trader to check the list for duplicates", "strength": "full", "notes": "probed by hardcoding the rendered warning text in transporter-add.njk" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/transporter-add.spec.ts", "test": "renders the page controls", "strength": "partial", "notes": "asserts the duplicate-check warning sentence is shown; not probed" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TRANSPORTER-TYPE-005",
+      "name": "A transporter type must be chosen",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TRANSPORTER-TYPE-005-A",
+          "name": "Continuing with nothing chosen is refused",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add/transporter-add.controller.test.js", "test": "Should keep the trader on the page with an error when nothing is chosen, leaving the stored type unchanged", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "transporter type validation: continuing with nothing chosen shows the message in the summary and inline, and the summary link focuses the first option", "strength": "full", "notes": "probed by swapping requiredOneOf back to oneOf in transporter-add.controller.js" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/transporter-add.spec.ts", "test": "refuses continuing with nothing chosen, and keeps a previously chosen type on a later visit", "strength": "partial", "notes": "not probed" }
+          ]
+        },
+        {
+          "id": "SCN-TRANSPORTER-TYPE-005-B",
+          "name": "A submitted type the page does not offer is refused",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add/transporter-add.controller.test.js", "test": "Should reject a transporter type the journey does not offer, with the feature’s own message, and log exactly one refusal", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "transporter type validation: out-of-list value links to and focuses the cleared group", "strength": "partial", "notes": "not probed — swapping requiredOneOf for oneOf does not fail this test, since an out-of-list value is rejected by the allowed-values list either way; the unit link on this scenario was probed" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TRANSPORTER-TYPE-006",
+      "name": "The back link returns to the transporter list, keeping where the user came from",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TRANSPORTER-TYPE-006-A",
+          "name": "The back link opens the transporter list",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add/transporter-add.controller.test.js", "test": "Should carry the trail on Back when the trader is changing an answer", "strength": "full", "notes": "registered from the transport test-support; red then green with the type question's Back link dropping the trail (workareas/shared/eudpa-774/logs/inc-027-probe-add-back-trail)" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.test.js", "test": "Should open the type question carrying the review on the trail when opened from a review Change link", "strength": "full", "notes": "red then green with the list's Add a transporter link dropping the trail (workareas/shared/eudpa-774/logs/inc-027-probe-transporters-add-trail)" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add/transporter-add.controller.test.js", "test": "Should point Back at the transporter list", "strength": "full", "notes": "red then green with the type question's Back link naming another page (workareas/shared/eudpa-774/logs/inc-027-probe-add-back-page)" }
           ]
         }
       ]

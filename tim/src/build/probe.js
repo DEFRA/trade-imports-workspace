@@ -3,6 +3,7 @@ import { basename, isAbsolute, join, relative, resolve } from 'node:path'
 import { runToLog } from '../exec/exec.js'
 import { TimError } from '../errors.js'
 import { hasUncommittedChanges } from './git-files.js'
+import { RELOAD_OUTCOMES, waitForRestart } from './reload-wait.js'
 
 export const DEFAULT_TEST_TIMEOUT_SECONDS = 270
 
@@ -15,7 +16,8 @@ const mavenCommandFor = (testFile) => {
     `-Dtest=${testClass}`,
     `-Dit.test=${testClass}`,
     '-Dsurefire.failIfNoSpecifiedTests=false',
-    '-Dfailsafe.failIfNoSpecifiedTests=false'
+    '-Dfailsafe.failIfNoSpecifiedTests=false',
+    '-Djacoco.skip=true'
   ]
 }
 
@@ -37,7 +39,7 @@ const TEST_COMMANDS = [
 /**
  * The command that runs one test file in its repo: Vitest through
  * `npm test` without coverage, a FIT spec through `test:fit:ci`, or a Java
- * test class through `mvn verify`.
+ * test class through `mvn verify` without JaCoCo.
  *
  * @param {string} testFile - Relative to the repo
  * @returns {string[]}
@@ -147,11 +149,24 @@ const isRestored = async (repoPath, file, path, original) =>
   readFileSync(path).equals(original) &&
   !(await hasUncommittedChanges(repoPath, file))
 
+const reloadAfterWrite = (reloadUrl, reloadTiming) =>
+  reloadUrl === undefined
+    ? Promise.resolve(RELOAD_OUTCOMES.restarted)
+    : waitForRestart(reloadUrl, reloadTiming)
+
+const servesTheWrite = (reload) => reload === RELOAD_OUTCOMES.restarted
+
 /**
  * Prove whether a test witnesses one production line: apply the inversion,
  * run the test, put the file back byte for byte, check git sees no change,
  * and run the test again. A test that still passes with the line inverted
  * (`redWhenInverted` false) does not witness that line.
+ *
+ * With `reloadUrl`, each test run waits for the service at that URL to
+ * restart on the written file first, so an end-to-end test runs against the
+ * workspace stack's dev mode serving the inverted, then the restored, source.
+ * When the service does not restart and serve again, that test is not run:
+ * `redWhenInverted` is null, or `greenAfterRestore` false.
  *
  * @param {object} args
  * @param {string} args.repoPath - A git checkout
@@ -160,7 +175,9 @@ const isRestored = async (repoPath, file, path, original) =>
  * @param {string[]} args.testCommand - The command and its arguments, run in repoPath
  * @param {string} args.logsDir
  * @param {number} [args.timeoutMs] - For each test run; a run that times out counts as failed
- * @returns {Promise<{file: string, inversion: object, redWhenInverted: boolean, greenAfterRestore: boolean, restored: boolean, logs: {inverted: string, restored: string|null}}>}
+ * @param {string} [args.reloadUrl] - A URL the service serving the file answers with a 2xx once it is up
+ * @param {object} [args.reloadTiming] - Passed to waitForRestart
+ * @returns {Promise<{file: string, inversion: object, redWhenInverted: boolean|null, greenAfterRestore: boolean, restored: boolean, reload: {inverted: string, restored: string}|null, logs: {inverted: string|null, restored: string|null}}>}
  * @throws {TimError} DIRTY_TREE when the file has uncommitted changes; USAGE or NOT_FOUND when the file or inversion is wrong
  */
 export const runProbe = async ({
@@ -169,7 +186,9 @@ export const runProbe = async ({
   inversion,
   testCommand,
   logsDir,
-  timeoutMs = DEFAULT_TEST_TIMEOUT_SECONDS * 1000
+  timeoutMs = DEFAULT_TEST_TIMEOUT_SECONDS * 1000,
+  reloadUrl,
+  reloadTiming
 }) => {
   const relativeFile = repoRelativeFile(repoPath, file)
   const path = join(realpathSync(repoPath), relativeFile)
@@ -188,26 +207,41 @@ export const runProbe = async ({
   const logs = logPathsFor(logsDir, relativeFile)
   const testRun = { testCommand, repoPath, timeoutMs }
 
-  let redWhenInverted
+  let redWhenInverted = null
+  let invertedReload
   try {
     writeFileSync(path, inverted)
-    redWhenInverted = !(await testPasses({
-      ...testRun,
-      logPath: logs.inverted
-    }))
+    invertedReload = await reloadAfterWrite(reloadUrl, reloadTiming)
+    if (servesTheWrite(invertedReload)) {
+      redWhenInverted = !(await testPasses({
+        ...testRun,
+        logPath: logs.inverted
+      }))
+    }
   } finally {
     writeFileSync(path, original)
   }
 
+  const restoredReload = await reloadAfterWrite(reloadUrl, reloadTiming)
   const restored = await isRestored(repoPath, relativeFile, path, original)
   const greenAfterRestore =
-    restored && (await testPasses({ ...testRun, logPath: logs.restored }))
+    restored &&
+    servesTheWrite(restoredReload) &&
+    (await testPasses({ ...testRun, logPath: logs.restored }))
   return {
     file: relativeFile,
     inversion,
     redWhenInverted,
     greenAfterRestore,
     restored,
-    logs: { inverted: logs.inverted, restored: restored ? logs.restored : null }
+    reload:
+      reloadUrl === undefined
+        ? null
+        : { inverted: invertedReload, restored: restoredReload },
+    logs: {
+      inverted: redWhenInverted === null ? null : logs.inverted,
+      restored:
+        restored && servesTheWrite(restoredReload) ? logs.restored : null
+    }
   }
 }

@@ -1,0 +1,137 @@
+*As* a trader filling in an import notification (live animals or high-risk plants),
+*I want* Save and continue to always take me to the next page of the journey,
+*So that* the journey behaves the same way every time.
+
+h3. The problem
+
+Today Save and continue only goes to the next page on a notification's first pass. The code calls this the opening run.
+
+The opening run ends as soon as Overview or the review page is shown. That happens when a trader:
+* presses Back, Cancel or Save and return to overview
+* reopens a draft from the dashboard
+
+After that, almost every Save and continue goes to Overview instead.
+
+So the same page goes to different places depending on how the trader got there. Testers have reported this as inconsistent.
+
+h3. What we want
+
+One rule for every page:
+* *Save and continue* goes to the next page in the journey that applies
+* *Save and return to overview* is how a trader goes back to Overview
+* *Back* goes to wherever the trader came from
+
+h3. Recommendation
+
+Remove the opening run and the return-to-overview routing altogether, as if they had never existed. Do not add exceptions to them.
+
+The routing becomes simpler:
+* one journey order that Save and continue follows
+* Back to wherever the trader came from
+* Save and return to overview as the one way back to Overview
+
+This applies to the shared journey platform in both the live animals and high-risk plants frontends, so the two stay the same.
+
+Investigation of today's behaviour, page by page, with the code and tests: attached ({{save-and-continue-investigation.md}}).
+
+h3. Scope
+
+*In:*
+* live animals and high-risk plants journeys
+* Save and continue and Back on every journey page
+* the shared routing in each frontend's platform code
+* the behaviour spec and the tests
+
+*Out:*
+* Save and return to overview (unchanged)
+* the review page's Continue, the declaration and the confirmation page
+
+h3. Acceptance criteria
+
+h4. Page order
+
+* Each journey has one page order: the order its Overview lists the tasks in.
+* Live animals:
+*# where it is coming from
+*# what is being imported
+*# main import reason
+*# commodity details
+*# identification details
+*# additional details
+*# arrival details
+*# transit countries
+*# transport details
+*# upload documents
+*# roles and addresses
+*# contact
+*# then the review page
+
+h4. Save and continue
+
+* Once the page is valid, it goes to the next page in that order that applies to the notification.
+* A page that does not apply is skipped.
+* It behaves the same however the trader reached the page: a new notification, Overview, a reopened draft, the dashboard, a review page Change link or an amendment.
+* On the last page it goes to the review page.
+* Arrival details by Rail or Road goes to "Which countries will the consignment travel through?".
+* Arrival details by Air or Sea goes to Transport details.
+
+h4. Save and return to overview
+
+* It always goes to Overview.
+
+h4. Back
+
+* Back on any journey page goes to the page the trader came from: the previous journey page, Overview or the review page.
+* A trader can open a page from Overview, press Save and continue several times, then press Back to step through those pages in reverse.
+* Back on the page they opened from Overview goes to Overview.
+
+h4. Removing the old routing
+
+* The code, docs and tests contain no opening run, no run state and no return-to-overview routing for Save and continue.
+* There is no second page order.
+* The behaviour spec states the one rule. Every scenario about the opening run, or about returning to Overview on Save and continue, is rewritten to it or removed.
+* The live animals and high-risk plants frontends route in the same way, with the same rule in each frontend's platform code.
+
+h4. Amending a submitted notification
+
+* Amend opens the review page (check your answers).
+* A Change link on the review page opens the right page of the journey.
+* From there the journey behaves as normal: Save and continue goes on through the rest of the journey, then to the review page.
+* Amend journey pages show Save and continue only. There is no button that goes straight back to the review page.
+
+{panel:bgColor=#deebff}
+*Tech Notes*
+
+*How the opening run works today* (live animals; plants has the same platform code):
+* {{flow/run-state.js}} holds a per-notification run flag in the session.
+* The dashboard's create starts it. Showing Overview or the review page ends it.
+* {{shared/kit.js}} {{nextTarget}} applies, in order:
+*# Save and return to overview
+*# the {{change}} parameter, back to the review
+*# the run's next step
+*# {{nextInTaskRow}} in {{flow/navigation.js}}, which in practice means Overview
+* The set's {{flow/run.js}} {{RUN_STEPS}} carry run-only fields: {{endsRunWhenComplete}}, {{backCandidates}}, {{offersBackWhen}}.
+
+*Page orders in the code:*
+* The order a trader sees, on Overview and in the opening run, is already the same.
+* The code also keeps two internal lists in other orders, which nobody sees:
+** the sections in {{flow/flow.js}} (documents and roles and addresses before arrival details)
+** the row list in {{flow/task-rows.js}} (documents last, though Overview shows it as section 4)
+* Both go, leaving the one order.
+
+*Removing it, not patching it:*
+* Delete the run state and everything that starts, ends or reads it.
+* Keep one ordered list of the journey's pages with their gates ({{pageGatePasses}}), and derive the next page from it.
+* Back needs to know where the trader came from, which the page order alone cannot tell. Carry that on the link or form, as the {{change}} parameter does today, not in session state.
+* Delete today's fixed Back targets: {{backCandidates}}, {{offersBackWhen}}, and the Back links hard-wired to Overview on arrival details, the transporter list, upload documents, roles and addresses and contact.
+* Delete {{nextInTaskRow}}, the run-only step fields and any second page order that nothing else needs.
+* Delete tests whose subject is the opening run. Do not invert them.
+* Amend's two buttons come from {{shared/amend-form-actions.js}}. The Save and return to review button and the {{change}} return to the review go, leaving Save and continue.
+
+*Spec that changes:*
+* REQ-FLOW-003 and REQ-FLOW-007 in {{openspec/specs/live-animals/journey-flow/spec.md}}
+* the plants journey flow spec
+* page specs that state a Save and continue destination, for example the transporter details pages
+
+*Background:* the return-to-overview rule came in with EUDPA-691 and a 9 October ruling. This ticket replaces both.
+{panel}

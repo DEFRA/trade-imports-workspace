@@ -15,7 +15,7 @@
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "asks for the authorisation number, the name, the address and the contact details", "strength": "full", "notes": "asserts every field label from copy.commercialTransporterDetails.fields is visible" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "fixes the country to Northern Ireland and does not let the trader change it", "strength": "full", "notes": "confirms the country select is disabled, holds one option, and a hidden input carries the value to the server" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "the commercial branch of the add route opens the form, under the new-transporter caption", "strength": "full", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "the commercial branch of the add route opens the form, under the new-transporter caption, and titles the browser tab to match", "strength": "full", "notes": "" }
           ]
         }
       ]
@@ -27,11 +27,12 @@
       "scenarios": [
         {
           "id": "SCN-COMMERCIAL-TRANS-002-A",
-          "name": "Completing the details saves them and returns to Overview",
+          "name": "Completing the details saves them and returns to the transporter list, chosen",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "saves a hand-entered commercial transporter and persists every value", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/commercial-transporter-scope.spec.ts", "test": "commercial transporter is owed only for the commercial type and is wiped when the type changes", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details/commercial-transporter-details.controller.test.js", "test": "Should save a hand-entered transporter in Northern Ireland and redirect to the transporter list", "strength": "partial", "notes": "witnesses the redirect destination only; the chosen row is decided by the transporter list's own handler; red then green with the save landing on Upload documents (workareas/shared/eudpa-774/logs/inc-030-probe-commercial-save-landing-unit)" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "saves a hand-entered commercial transporter, lands on the transporter list first and checked under the named banner, and persists every value", "strength": "full", "notes": "red probe: inverting the newest-first ordering/selected-row choice turns this spec red" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/commercial-transporter-scope.spec.ts", "test": "commercial transporter is owed only for the commercial type and is wiped when the type changes", "strength": "partial", "notes": "no red probe run against this assertion" }
           ]
         },
         {
@@ -39,7 +40,7 @@
           "name": "Returning to the page shows the saved details in the form",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "saves a hand-entered commercial transporter and persists every value", "strength": "full", "notes": "reopens the page directly and confirms every field, including the fixed country, still holds its saved value" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "saves a hand-entered commercial transporter, lands on the transporter list first and checked under the named banner, and persists every value", "strength": "full", "notes": "reopens the page directly and confirms every field, including the fixed country, still holds its saved value" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/commercial-transporter-scope.spec.ts", "test": "commercial transporter is owed only for the commercial type and is wiped when the type changes", "strength": "full", "notes": "re-enters via the add route and confirms approvalNumber and nameOrOrganisationName are pre-filled" }
           ]
         }
@@ -52,10 +53,10 @@
       "scenarios": [
         {
           "id": "SCN-COMMERCIAL-TRANS-003-A",
-          "name": "The page carries the same authorisation guidance as the list",
+          "name": "The page carries the same authorisation guidance as the list, in a banner titled \"Important\"",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "opens with the transporter-authorisation guidance the list states", "strength": "full", "notes": "asserts the same copy.transporters.guidance content (lead, conditions, DAERA-valid, EU-not-valid, link) inside this page's own notification banner" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "opens with the transporter-authorisation guidance the list states, in a banner titled \"Important\" headed by the guidance at level 2", "strength": "full", "notes": "asserts the same copy.transporters.guidance content (lead, conditions, DAERA-valid, EU-not-valid, link) inside this page's own notification banner, plus the banner's own title and the level of the heading inside it" }
           ]
         }
       ]
@@ -74,7 +75,7 @@
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "commercial transporter validation: empty name or organisation name links to and focuses the preserved field", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "commercial transporter validation: empty address line 1 links to and focuses the preserved field", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "commercial transporter validation: empty town or city links to and focuses the preserved field", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "commercial transporter validation: empty postcode or zip code links to and focuses the preserved field", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "commercial transporter validation: empty postcode or Zip code links to and focuses the preserved field", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "commercial transporter validation: empty email address links to and focuses the preserved field", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "commercial transporter validation: empty phone number links to and focuses the preserved field", "strength": "full", "notes": "" }
           ]
@@ -90,39 +91,106 @@
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "commercial transporter validation: address line 2 over 255 characters links to and focuses the preserved value", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "commercial transporter validation: town or city over 100 characters links to and focuses the preserved value", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "commercial transporter validation: county over 100 characters links to and focuses the preserved value", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "commercial transporter validation: postcode or zip code over 12 characters links to and focuses the preserved value", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "commercial transporter validation: postcode or Zip code over 12 characters links to and focuses the preserved value", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "commercial transporter validation: email address over 254 characters links to and focuses the preserved value", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "commercial transporter validation: phone number over 20 characters links to and focuses the preserved value", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-COMMERCIAL-TRANS-004-C",
+          "name": "An over-length Postcode or Zip code is refused with the message that names the field as the form labels it",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "commercial transporter validation: postcode or Zip code over 12 characters links to and focuses the preserved value", "strength": "full", "notes": "asserts the exact message the over-length postcode shows, by its error-summary link text" }
           ]
         }
       ]
     },
     {
       "id": "REQ-COMMERCIAL-TRANS-005",
-      "name": "A completely blank commercial transporter record is accepted",
+      "name": "The commercial transporter form's mandatory fields are required outright, not only once another has been filled in",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-COMMERCIAL-TRANS-005-A",
-          "name": "Saving the page with nothing entered succeeds",
+          "name": "Saving a wholly blank form is refused, naming every required field in order",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "a completely blank commercial transporter record is optional", "strength": "full", "notes": "note for whoever next reviews live-animals/addresses: private-transporter-details has the identical 'a completely blank ... record is optional' fit test and behaviour, but no equivalent requirement documenting it either — same gap, out of scope for this pass" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details/commercial-transporter-details.controller.test.js", "test": "Should refuse a wholly blank form, naming the seven required fields in the page’s field order, and save nothing", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "saving a wholly blank commercial transporter form keeps the trader on it, naming every required field in order", "strength": "full", "notes": "" }
           ]
         }
       ]
     },
     {
       "id": "REQ-COMMERCIAL-TRANS-006",
-      "name": "A saved commercial transporter joins the transporter list, already chosen",
+      "name": "A saved commercial transporter returns the user to the transporter list already chosen, and survives the list's own save",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-COMMERCIAL-TRANS-006-A",
-          "name": "The transporter just added is the checked row on the list and survives saving the list",
+          "name": "The save puts the trader straight on the list with the new transporter checked, surviving the list's own save",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "a transporter the trader added is on the list, checked, and saving the list again leaves it alone", "strength": "full", "notes": "radio checked on the list, Save returns to Overview, approval number still in the form" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "a transporter the trader added is on the list, checked, and saving the list again leaves it alone", "strength": "full", "notes": "the save lands on the list directly; red then green with the save landing on Upload documents (workareas/shared/eudpa-774/logs/inc-030-probe-commercial-add-lands-on-list-fit)" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMERCIAL-TRANS-007",
+      "name": "The page ends with exactly a primary save and a secondary cancel, which abandons the add and leaves an unchanged type's chosen transporter alone",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMERCIAL-TRANS-007-A",
+          "name": "The page offers exactly the primary and the cancel control",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/save-actions.test.js", "test": "Should end the page with exactly the primary and the secondary, in that order, and no overview return control", "strength": "full", "notes": "proves the shared macro both add forms call for their end controls" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "ends with exactly the primary and the cancel, offering no overview return control", "strength": "partial", "notes": "no red probe run at the FIT level — the macro it exercises is unit-tested in save-actions.test.js" }
+          ]
+        },
+        {
+          "id": "SCN-COMMERCIAL-TRANS-007-B",
+          "name": "Cancelling with the stored type unchanged leaves the chosen transporter alone and shows no error",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details/commercial-transporter-details.controller.test.js", "test": "Should add no transporter, commit nothing, show no error and redirect to the dashboard, logging once", "strength": "full", "notes": "driven by the shared itCancelsTheAddForEveryStoredType registrar, for the form's own type stored, the other type stored and no type stored" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/commercial-transporter-details.fit.spec.js", "test": "cancelling leaves the commercial transporter already chosen still checked, adds no row and returns to the dashboard with no error", "strength": "partial", "notes": "no red probe run at the FIT level — the cancel branch it exercises is probed at unit level above" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMERCIAL-TRANS-008",
+      "name": "Values a refused save left behind are shown again until the form is saved or cancelled",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMERCIAL-TRANS-008-A",
+          "name": "Leaving a refused form and returning to it shows what was entered",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details/commercial-transporter-details.controller.test.js", "test": "Should remember the entered values under the form’s own type", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details/commercial-transporter-details.controller.test.js", "test": "Should show the entered transporter instead of the saved answer", "strength": "partial", "notes": "no red probe run against this specific assertion" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details/commercial-transporter-details.controller.test.js", "test": "Should clear the entered transporter once a complete record is saved", "strength": "partial", "notes": "no red probe run against this specific assertion" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMERCIAL-TRANS-009",
+      "name": "The back link returns to the transporter type question",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMERCIAL-TRANS-009-A",
+          "name": "The back link opens the transporter type question",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details/commercial-transporter-details.controller.test.js", "test": "Should point Back at the type question", "strength": "full", "notes": "red then green with the Back link naming the transporter list (workareas/shared/eudpa-774/logs/inc-027-probe-commercial-back-page)" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/commercial-transporter-details/commercial-transporter-details.controller.test.js", "test": "Should carry the trail on Back when the trader is changing an answer", "strength": "full", "notes": "registered from the transport test-support; red then green with the Back link dropping the trail (workareas/shared/eudpa-774/logs/inc-027-probe-commercial-back-trail)" }
           ]
         }
       ]

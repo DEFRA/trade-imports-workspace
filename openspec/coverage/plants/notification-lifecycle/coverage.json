@@ -74,17 +74,17 @@
     },
     {
       "id": "REQ-PLANTS-LIFECYCLE-005",
-      "name": "Amending a submitted notification re-enters it at Overview",
+      "name": "Amending a submitted notification opens its check your answers",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-PLANTS-LIFECYCLE-005-A",
-          "name": "Starting an amendment opens Overview with editing enabled",
+          "name": "Starting an amendment opens check your answers with editing enabled",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "cancel amendment from dashboard restores submitted answers and read-only CYA", "strength": "full", "notes": "amend() lands on Overview with Amend tag and Cancel amend" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.test.js", "test": "Should unfreeze a known submitted notification and land on its hub", "strength": "full", "notes": "amend POST redirects to hub path" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "resubmitting an amended arrival date preserves the original on-time flag", "strength": "partial", "notes": "also starts amendment from dashboard; focuses late-flag rather than Overview landing" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "cancel amendment from dashboard restores submitted answers and read-only CYA", "strength": "full", "notes": "amend() lands on the review page with the Amend tag and Cancel amend" },
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.test.js", "test": "Should unfreeze a known submitted notification and land on its review page", "strength": "full", "notes": "amend POST redirects to the review page and leaves the journey amending" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "resubmitting an amended arrival date preserves the original on-time flag", "strength": "partial", "notes": "also starts the amendment from the dashboard and lands on the review page; focuses on the late flag" }
           ]
         },
         {
@@ -192,7 +192,7 @@
           "name": "A draft offers no Cancel amend",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/start.spec.ts", "test": "the Overview carries the journey strip and the task rows landed so far", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/start.spec.ts", "test": "the Overview shows the journey strip, the Draft status, the four group captions and each task row state", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/hub/hub.fit.spec.js", "test": "shows the draft tag and the notification reference", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should show no link in the strip without a Cancel amend control", "strength": "full", "notes": "" }
           ]
@@ -209,7 +209,7 @@
           "name": "Deleting a draft removes it from the dashboard",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/start.spec.ts", "test": "Yes, delete notification soft-deletes it and drops it from the listing", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/start.spec.ts", "test": "Yes, delete notification shows the deleted banner and the reference no longer matches a dashboard search", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/delete-notification/delete-notification.fit.spec.js", "test": "confirmation removes the notification and shows the success banner", "strength": "full", "notes": "" }
           ]
         },
@@ -227,6 +227,97 @@
           "coverage": "none",
           "tests": [],
           "notes": "The tests that prove this are only on an open Design Release 2.1 theme branch, not on main yet."
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-LIFECYCLE-009",
+      "name": "Trader notification reads and writes are scoped to the caller's organisation",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-LIFECYCLE-009-A",
+          "name": "A copied notification belongs to the copying organisation",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-backend",
+              "file": "src/test/java/uk/gov/defra/trade/imports/plants/integration/NotificationIT.java",
+              "test": "copy_shouldProduceAFreshDraftWithItsOwnReferenceNumber",
+              "strength": "full",
+              "notes": "asserts organisationId on copy"
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-backend",
+              "file": "src/test/java/uk/gov/defra/trade/imports/plants/notification/NotificationServiceTest.java",
+              "test": "copyNotification_shouldCreateAFreshDraftCarryingTheFulfilments",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-LIFECYCLE-009-B",
+          "name": "Another organisation cannot change a notification through trader lifecycle writes",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-backend",
+              "file": "src/test/java/uk/gov/defra/trade/imports/plants/integration/NotificationIT.java",
+              "test": "writes_shouldReturn404_forAnotherOrganisation",
+              "strength": "full",
+              "notes": "parameterized over amend, put, submit, copy, cancel-amend, soft-delete"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/plants/e2e/features/organisation-scoped-notifications.spec.ts",
+              "test": "returns 404 when another organisation mutates a notification",
+              "strength": "full",
+              "notes": "includes cancelAmendNotification"
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-LIFECYCLE-009-C",
+          "name": "A trader request without an organisation header is rejected",
+          "coverage": "partial",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-backend",
+              "file": "src/test/java/uk/gov/defra/trade/imports/plants/integration/NotificationIT.java",
+              "test": "traderRoutes_shouldRejectRequestsWithoutOrganisationHeader",
+              "strength": "partial",
+              "notes": "parameterized over GET /notifications and POST /notifications"
+            }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-LIFECYCLE-009-D",
+          "name": "Another organisation cannot read fulfilments for a notification it does not own",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-backend",
+              "file": "src/test/java/uk/gov/defra/trade/imports/plants/integration/NotificationIT.java",
+              "test": "fulfilments_shouldReturn403_forAnotherOrganisation",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/plants/e2e/features/organisation-scoped-notifications.spec.ts",
+              "test": "returns 403 when another organisation reads fulfilments",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
         }
       ]
     }

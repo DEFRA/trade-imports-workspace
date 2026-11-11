@@ -8,7 +8,7 @@ What the browser tab and the screen reader announce for a page of the Import not
 
 ### Requirement: Every page's title names the page, then the service, then GOV.UK, joined by hyphens
 **ID**: REQ-INS-PAGE-TITLE-001
-The system MUST title every page with the page's own name, then the service name, then the GOV.UK brand word, in that order and joined by hyphens. The system MUST NOT separate them with a pipe. The home page is titled Dashboard. An address's own page is titled with that address's name; the delete page is titled 'Delete this address?'; the edit page is titled 'Edit address and contact details'; the add page is titled 'Add address and contact details'.
+The system MUST title every page with the page's own name, then the service name, then the GOV.UK brand word, in that order, joined by hyphens and never by a pipe. The home page is titled Dashboard, an address's own page with its name, the delete page 'Delete this address?', the edit page 'Edit address and contact details', the add page 'Add address and contact details' and the address type page 'Choose an address type'.
 
 #### Scenario: A page's title reads page name, service name, GOV.UK
 **ID**: SCN-INS-PAGE-TITLE-001-A
@@ -54,9 +54,15 @@ The system MUST title every page with the page's own name, then the service name
 
 #### Scenario: The add page reached from the address book is titled Add address and contact details
 **ID**: SCN-INS-PAGE-TITLE-001-H
-- **GIVEN** a signed-in trader who follows 'Add a new address' from their address book
+- **GIVEN** a signed-in trader who follows 'Add a new address' from their address book and chooses an address type
 - **WHEN** the add page opens
 - **THEN** the title reads `Add address and contact details - Import notification service - GOV.UK`
+
+#### Scenario: The address type page is titled Choose an address type
+**ID**: SCN-INS-PAGE-TITLE-001-I
+- **GIVEN** a signed-in trader who follows 'Add a new address' from their address book
+- **WHEN** the address type page opens
+- **THEN** the title reads `Choose an address type - Import notification service - GOV.UK`
 
 ### Requirement: A page showing errors opens its whole title with an error prefix
 **ID**: REQ-INS-PAGE-TITLE-002
@@ -67,6 +73,12 @@ The system MUST open the title of a page showing errors with an error prefix, ah
 - **GIVEN** the trader has submitted a page that answers back with an error summary, such as the add address page with nothing filled in
 - **WHEN** the page's title is read
 - **THEN** it opens with the error prefix, followed by the page's name, the service name and GOV.UK as before, such as `Error: Add address and contact details - Import notification service - GOV.UK`
+
+#### Scenario: The address type page showing its error is titled with the error prefix
+**ID**: SCN-INS-PAGE-TITLE-002-B
+- **GIVEN** the trader has selected 'Continue' on the address type page with no type chosen
+- **WHEN** the page's title is read
+- **THEN** it reads `Error: Choose an address type - Import notification service - GOV.UK`
 
 ### Requirement: An error page's title follows the same pattern
 **ID**: REQ-INS-PAGE-TITLE-003

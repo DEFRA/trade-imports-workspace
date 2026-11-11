@@ -30,14 +30,14 @@ The system MUST NOT take the user on to the declaration while a task is still ou
 
 ### Requirement: An origin that commodity lines no longer allow blocks continue, with a correction into origin
 **ID**: REQ-PLANTS-OB-REVIEW-003
-The system MUST refuse to continue from check-your-answers when the saved country of origin falls outside the narrowest scope of the notification's commodity lines, showing an error that links into the origin page under change context, and MUST leave the notification's status unchanged. While amending, the error shows only once Continue is refused (`plants/journey-pages/check-your-answers` REQ-PLANTS-CYA-014). Origin scopes are governed by `plants/journey-obligations/origin`.
+The system MUST refuse to continue from check-your-answers when the saved country of origin falls outside the narrowest scope of the notification's commodity lines, showing an error that links into the origin page, whose back link opens the review, and MUST leave the notification's status unchanged. While amending, the error shows only once Continue is refused (`plants/journey-pages/check-your-answers` REQ-PLANTS-CYA-014). Origin scopes are governed by `plants/journey-obligations/origin`.
 
 #### Scenario: A saved country that a new ware-potato line disallows blocks continue with a link to origin
 **ID**: SCN-PLANTS-OB-REVIEW-003-A
 - **GIVEN** a draft notification has saved a French origin under seed potatoes
 - **WHEN** the user adds a ware-potato commodity line and continues from check-your-answers
 - **THEN** they remain on check-your-answers, still Draft
-- **AND** an error summary offers a correction that opens origin under change context, naming the ware-potato countries
+- **AND** an error summary offers a correction that opens origin, whose back link opens the review, naming the ware-potato countries
 
 ### Requirement: A copied address that breaks the address book's rules blocks continue and submit
 **ID**: REQ-PLANTS-OB-REVIEW-004

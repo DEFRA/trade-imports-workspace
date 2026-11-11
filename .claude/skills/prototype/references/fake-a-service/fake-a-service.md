@@ -589,7 +589,7 @@ on the page first (below) and the refusal never reaches the user.
    throws `Boom.notFound()` (`designer-rules/route-params-validated` fails
    without it), in its own `features/templates/template-id-params.js`, the
    same shape as the saved transporters example's
-   `transporter-id-params.js` and ins-frontend's `address-id-params.js`:
+   `transporter-id-params.js`:
 
    ```js
    import Boom from '@hapi/boom'

@@ -54,7 +54,7 @@
     }
   },
   "theme": "commodities-and-reason",
-  "branch": "feat/EUDPA-693-design-release-2-1-commodities-and-reason",
+  "branch": "feat/EUDPA-693-commodities-and-reason",
   "parent": {
     "workarea": "shared/design-release-2-1",
     "wave": 3,
@@ -157,6 +157,58 @@
       ]
     },
     {
+      "id": "inc-247",
+      "title": "The theme branch takes in what main has landed since it was cut",
+      "detail": "inc-013 committed to the theme branch and opened its pull requests, but the run stopped at pr-conflict: trade-imports-ins-tests #79 conflicts with its base, so GitHub runs no checks on it at all and the row cannot be proved. Main has moved under the branch since it was cut this afternoon - the animals frontend by 2 commits and the tests repo by 3 (f36cedd test(EUDPA-669) multi-commodity persistence E2E, 7ce3c4e fix(EUDPA-759) the origin page ending with Save and continue alone, 18407cf marking the contact address return test slow). The performance tests repo has not moved and is left out. Two files conflict, both in the tests repo, and both because EUDPA-669 touched exactly the files inc-013 rewrote.",
+      "dependsOn": [],
+      "theme": "commodities-and-reason",
+      "status": "done",
+      "kind": "chore",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "merge": {
+        "frontend": "origin/main",
+        "tests": "origin/main"
+      },
+      "gatePhases": [],
+      "sources": [],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null,
+      "externalDependsOn": [],
+      "acceptanceCriteria": [
+        "origin/main is merged into feat/EUDPA-693-commodities-and-reason in the animals frontend and in the tests repo, as one two-parent merge commit each, with no conflict markers left in any file.",
+        "page-objects/animals/commodity-selection-page.ts keeps main's independent additions: the errorSummaryOn import from @page-objects/shared/govuk-banners and the errorSummary getter, and main's renamed signatures species(species: CommodityLine) and searchAndCheckSpecies(speciesList: CommodityLine[]).",
+        "page-objects/animals/commodity-selection-page.ts RESTORES the commodityGroups getter that main removed, returning this.page.getByRole('group', { name: /^\\d+$/ }). Main removed it only as a by-product of deleting the one assertion block that used it, and inc-013's rewritten ordering assertions read it three times. Without it the merged spec does not compile.",
+        "page-objects/animals/commodity-selection-page.ts keeps inc-013's four appended members unchanged - commodityLine, speciesEntry, removeSpecies and pressRemoveSpecies - which read this.selectedSummary and touch nothing main changed.",
+        "In tests/animals/e2e/pages/commodities.spec.ts inc-013's rewritten test \"groups the matching species under their commodity code, in reference-data's order\" wins over main's deletion. Main deleted the commodityGroups count-and-accessible-name block over `groups`; inc-013 replaces it with the same assertions over `orderedGroups` plus the emphasis assertions, so main's deletion is subsumed rather than reverted.",
+        "Nothing else main landed in either repo is lost: the tests repo keeps 7ce3c4e's origin-page change and 18407cf's slow marker, and the frontend keeps both of its two new commits.",
+        "Every pull request reports no conflict with its base, so GitHub runs its checks again: trade-imports-ins-tests #79 reads MERGEABLE rather than CONFLICTING, and trade-imports-animals-frontend #456 stays MERGEABLE.",
+        "Every pull request is green."
+      ],
+      "notes": [
+        "Written at the pr-conflict stop rather than hand-merged, per workareas/shared/design-release-2-1/themes/HOW-TO-BUILD.md: 'Never merge main in by hand on a theme branch. A hand merge is unreviewed, unproved and invisible to the backlog, and leaves the next row to discover it.' The loop's own stop detail advises the hand merge instead; HOW-TO-BUILD is the programme's rule and wins. Follows the inc-040 template from the documents theme.",
+        "Placed before inc-013 so it builds first. inc-013 is status todo with its commit (frontend fc7aafec, tests 196a087) and both pull requests already recorded, and attempt cleared - recording a commit clears the attempt - so it has no stage to resume at. Watch whether it re-plans from the top rather than going straight to CI; if it does, that is a gap worth reporting, because a row holding a commit and a pr but still todo has lost its resume point.",
+        "gatePhases is [] because the theme runs e2e: 'ci': the rows prove themselves on their pull requests, so this row owes no local gate phase either.",
+        "Only the tests repo conflicts. The frontend is merely 2 commits behind and is included because HOW-TO-BUILD has one row cover every repo that needs the merge, which stops the next row discovering the same drift. The performance tests repo is behind by 0 and is left out."
+      ],
+      "commit": "081cbf5faa218ab8a326b3663de998ec43a8483f 4cd114949043f1f8f36160a550ad3385f6a3835c b548cdf9",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/456",
+          "repo": "trade-imports-animals-frontend",
+          "number": 456
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/79",
+          "repo": "trade-imports-ins-tests",
+          "number": 79
+        }
+      ]
+    },
+    {
       "id": "inc-013",
       "title": "Commodity search results sorted and bolded, and a selected panel of removable species chips",
       "detail": "The server-rendered commodity page lists results alphabetically with the matched text in bold, and shows what has been chosen as one bold commodity line followed by a chip per species, by Latin name, each with its own remove button, so a trader can drop one choice without clearing everything. This is how the list reads and behaves, not what is in it: the entries are whatever MDM serves (ruling:sam-2026-10-09-pm claim 2), and only the reading follows the prototype. Ruling 2026-10-09 afternoon blocked these four until commodities came from MDM; they came on 27 October, so the row goes ahead. The rest of the old row (the error on the search field, the soft Save and return, clearing the unweaned answer) moved to the commodity wording row and goes ahead.",
@@ -170,7 +222,7 @@
       ],
       "dependsOn": [],
       "theme": "commodities-and-reason",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -215,10 +267,28 @@
         "Re-analysis 2 Nov: no text is bolded today, because the checkbox items take speciesLabel, which is the plain Latin name (frontend origin/main:.../features/commodities/species-label.js:1). The selected panel already exists and is grouped the right way but with the wrong parts: selectedSummary groups the selection by commodity code and lists its species (search/view-model/selected-summary.js:11-21), and the template renders each group as a bold legend followed by the species joined with ', ' in one list item (search/search.njk:66-73). So criterion 3's structure is half there with the bare code where the name belongs, and criterion 4 is absent entirely: there is no per-species remove control, only one 'Clear all' button (search.njk:74-79). Criterion 5 holds for what exists, since the page is one form posting to itself with Search and Clear as named submit buttons and no client-side behaviour, so the chips' remove buttons need only be submit buttons too.",
         "Design snagging merged to main 23 Oct: the 'Select a commodity' error now always sits on the search box (SEARCH_FIELD 'commoditySearch' in search.controller.js), not on the tick boxes, and the refusal is logged. The page's Back link follows the opening run. The animals frontend has a bold-matching helper for type-aheads (src/client/common/helpers/bold-matches.js and search-fold.js, strong class app-autocomplete__match, with accent folding) and a server escapeHtml in shared/escape-html.js. Builder: reuse both for the bold matches rather than adding a third. The look of the commodity search box moved to waiting-on-design inc-014 and is not this row's.",
         "In flight 2 Nov, EUDPA-616 (the commodity search type-ahead) is a complement to this row, not a substitute, and nothing is in flight today: all three of its pull requests were closed unmerged on 23 Oct (animals frontend #425, ins-tests #51, workspace #147) and the branch is gone from the remote, four days before EUDPA-617 rewrote the feature. Jira still says In Dev. That ticket delivers this row's criterion 2 and part of criterion 3 as a JavaScript enhancement and explicitly keeps the server-rendered flow as the no-JavaScript fallback, so it covers neither criterion 1 (alphabetical sorting) nor criterion 4 (a remove button per chip), and cannot satisfy criterion 5, which needs those buttons to work by posting the page. This row owns the server-rendered behaviour; EUDPA-616 owns the enhancement over it. Whichever lands second reuses the other's matching and emphasis. Worth quarrying from the closed frontend #425 diff: a reusable live-search macro and client module outside the commodities feature, a GET .../commodities/results route rendering the same results partial the page uses, and matching.js reporting the ranges it matched so the template renders them as <strong> with no HTML built in JavaScript.",
-        "Re-analysis 2 Nov: the earlier note that the commodity heading rule has one owner called commodities.commodityLabel, used by search/view-model/legend.js, is out of date. EUDPA-617 rewrote the feature: the owner is legendFor (search/view-model/labels.js:1), which is the identity function on the code, used by the result groups, the selected panel and, through buildCommodityGroups (features/commodities/view-model/commodity-groups.js:6), Commodity details. The selected panel's bold line should take legendFor too, so it picks up inc-012's naming decision in one place. The row's label format in criterion 1 ('common name (Latin name)') rests on inc-025, which restores the common name to speciesLabel."
+        "Re-analysis 2 Nov: the earlier note that the commodity heading rule has one owner called commodities.commodityLabel, used by search/view-model/legend.js, is out of date. EUDPA-617 rewrote the feature: the owner is legendFor (search/view-model/labels.js:1), which is the identity function on the code, used by the result groups, the selected panel and, through buildCommodityGroups (features/commodities/view-model/commodity-groups.js:6), Commodity details. The selected panel's bold line should take legendFor too, so it picks up inc-012's naming decision in one place. The row's label format in criterion 1 ('common name (Latin name)') rests on inc-025, which restores the common name to speciesLabel.",
+        "ATTEMPT FAILED: workspace stack was unavailable (lease released by previous holder); E2E spec written but not executed; all staged changes preserved in patches; stash refs: frontend stash@{0}, tests stash@{0}, openspec stash@{0}; patch files at logs/inc-013-preserve-*.patch"
       ],
       "gate": null,
-      "externalDependsOn": []
+      "externalDependsOn": [],
+      "commit": "fc7aafecd01dc140931241f098d0f5b4d29e96a9 196a0878a268ebd81a569aa3f9a146289d93816b",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/456",
+          "repo": "trade-imports-animals-frontend",
+          "number": 456
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/79",
+          "repo": "trade-imports-ins-tests",
+          "number": 79
+        }
+      ],
+      "merge": {
+        "frontend": "origin/main",
+        "tests": "origin/main"
+      }
     },
     {
       "id": "inc-015",
@@ -229,7 +299,7 @@
       ],
       "dependsOn": [],
       "theme": "commodities-and-reason",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -301,6 +371,29 @@
           "workarea": "shared/design-release-2-1/themes/journey-foundation",
           "id": "inc-001"
         }
+      ],
+      "merge": {
+        "frontend": "origin/main",
+        "tests": "origin/main",
+        "perftests": "origin/main"
+      },
+      "commit": "85dd20d35b38e2e7afa2144496a1c7cda9ef5eb8",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/456",
+          "repo": "trade-imports-animals-frontend",
+          "number": 456
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/79",
+          "repo": "trade-imports-ins-tests",
+          "number": 79
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-performance-tests/pull/30",
+          "repo": "trade-imports-performance-tests",
+          "number": 30
+        }
       ]
     },
     {
@@ -313,7 +406,7 @@
       ],
       "dependsOn": [],
       "theme": "commodities-and-reason",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -341,7 +434,9 @@
         "req-1642",
         "req-1643"
       ],
-      "openQuestions": [],
+      "openQuestions": [
+        "For the designer: should the live-animals \"Number of packages (when required)\" field be a hard stop on \"Commodity details\", or stay optional? Raised by the inc-018 review, which found the row second acceptance criterion unbuilt because the design sources disagree for live animals. The criterion rests on one merged phrase at workareas/shared/design-release-2-1/prototype-specs/COVERAGE.md:161-162 (\"Hard stops: type, region code when Yes, commodity, number of animals/packages/weight/temperature, means of transport, contact address, declaration\"). Three sources say the opposite for live animals. V4, which sources.json ranks above the prototype on a Mandatory marking: workareas/shared/design-release-2-1/distil/extract/confluence-6497338582.part1.json:801-806 quotes the Mandatory cell verbatim as \"Optional\" - \"Number of packages is Optional: it can be left blank\". The prototype own source: workareas/shared/design-release-2-1/distil/extract/prototype-dr2-1-source.part3.json:226-234 - the live-animal packages field is not validated for live-animal species, quoting app/routes.js:1125-1130. The prototype own suite: workareas/shared/design-release-2-1/prototype-specs/e2e/description-of-the-goods.fit.spec.js:53-57 expects only \"Enter the number of animals\" on an empty live-animals save, while :90-103 (cattle semen 05111000) shows weight, packages and temperature are the germinal page three hard stops - which the merged COVERAGE.md phrase conflates. The code follows V4 and the prototype: repos/trade-imports-animals-frontend/src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/fields.js:27-35 composes integerInRange (a blank passes) and obligations/sections/commodities/lines.js keeps status \"optional\". Options. A - keep it optional (what the code, V4 and the prototype set): retire inc-018 acceptance criterion 2 and req-1643, re-distil claim prototype-dr2-1-specs-p7-139 against confluence-6497338582-p1-099 and prototype-dr2-1-source-p3-028/-p3-035, and build the three germinal hard stops (weight, packages, temperature) in the germinal-products theme instead. B - make it a hard stop: the live-animals page then differs from the V4 Mandatory marking and from the prototype own behaviour, and a trader importing chickens can no longer continue past a blank \"Number of packages (when required)\" box."
+      ],
       "notes": [
         "Combines two hard-stop slices (req-1642 arrival, req-1643 packages): both change which answers are required to proceed, in the obligations rather than the page content, and are reviewed together. Which species ask for a number of packages is req-112 (another area); this row only makes the question required where it is asked. Existing tests that say arrival details is enforced as a whole page (transit-means-scope) change with it.",
         "Salvage: trade-imports-animals-frontend f94b0823, trade-imports-ins-tests 120e234 on stale branch feat/EUDPA-693-design-release-2-1-commodities-and-reason; rebuild on a fresh branch from main. Take the meansRule in port-of-entry/validate.js, requiredIntegerInRange for packages in consignment-details/fields.js, numberOfPackages 'mandatory' in obligations/sections/commodities/lines.js, and the two error strings in English and Welsh. Also take the branch's tests showing the other arrival answers stay optional and a no-packages line still saves: they guard the new rules from going too far. Plants arrival details is not touched. The germinal half of req-1642 is observed in germinal-products inc-182, which already depends on this row in themes.json.",
@@ -351,7 +446,24 @@
         "Ordering risk, recorded 2 Nov: this row has no dependency on inc-024 and is buildable now, but building it first makes main's package list blocking rather than merely present. Today a trader importing chickens sees an optional 'Number of packages (when required)' box they can leave blank; after this row they cannot continue without filling it. If inc-024 then narrows the list, that hard stop comes off again. The criterion is written to inherit the list ('a line that asks for a number of packages'), so this row stays correct either way - but whoever plays it should know it raises the cost of getting inc-024 wrong, and may prefer to take inc-024's answer first, or to land the hard stop only on the six codes the prototype and main agree on (0101, 0102, 0103, 010410, 010420, 01061900).",
         "Design snagging merged to main 23 Oct: neither hard stop is on main yet, but both pages' code moved, so salvage commit f94b0823 will not apply cleanly. consignment-details/fields.js was split: fieldsFor now composes animalsValidatorsFor and packagesValidatorsFor, and the packages rule (still integerInRange, so optional) sits in packagesValidatorsFor. The consignment-details controller, its tests and the commodities copy files were rewritten, and its refusals now answer 400. On arrival details, port-of-entry.controller.js takes the empty option from copy.means.selectText ('Select one') and labels options through means-of-transport-label.js (Air, Rail, Road, Sea); validate.js still uses oneOf for meansOfTransport. Builder: change integerInRange to requiredIntegerInRange inside packagesValidatorsFor, add the meansRule to port-of-entry/validate.js, and add the two error strings to main's rewritten copy files by hand. Arrival-and-transit inc-028 adds the same means rule: whichever lands second reuses it."
       ],
-      "gate": null
+      "gate": null,
+      "merge": {
+        "frontend": "origin/main",
+        "tests": "origin/main"
+      },
+      "commit": "f4772eb5 5655a1a",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/456",
+          "repo": "trade-imports-animals-frontend",
+          "number": 456
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/79",
+          "repo": "trade-imports-ins-tests",
+          "number": 79
+        }
+      ]
     },
     {
       "id": "inc-019",
@@ -364,7 +476,7 @@
       ],
       "dependsOn": [],
       "theme": "commodities-and-reason",
-      "status": "todo",
+      "status": "dropped",
       "kind": "test",
       "repos": [
         "tests"
@@ -399,13 +511,129 @@
         "One slice (req-1656).",
         "Tests only: the walk proves behaviour main already has, rather than needing a frontend change.",
         "Re-analysis 2 Nov: unblocked. MDM now serves chicken, so the walk can run. MDM gives it under two codes, 01051111 ('Weighing not more than 185 g:Fowls of the species Gallus domesticus, Grandparent and parent female chicks: Laying stocks') and 01059400 ('Fowls of the species Gallus domesticus'), each with species Gallus gallus, common name 'Chicken' (frontend origin/main:src/server/app/services/_capture/fixtures/commodities.json). Criterion 1 named 010511 and Gallus domesticus, neither of which MDM holds, so it now names 01051111 and Gallus gallus; the walk may pick 01059400 instead, as both are selectable and the fixture holds both.",
-        "Re-analysis 2 Nov: dependsOn inc-012 dropped. The row needed that row only to bring poultry into the catalogue, and MDM has done it. Criteria 2 and 3 rest on poultry carrying no identifier, which is already true on main: COMMODITY_IDENTIFIERS covers only 0102, 0101 and 01061900, so IDENTIFIED_CODES excludes poultry and the Identification details page and its task drop out (frontend origin/main:src/server/app/sets/live-animals/services/commodities/rules.js:6-34). Criterion 1's CPH number is consistent too, since CPH_EXEMPT_CODES is 0101 and 01061900 only (rules.js:80). No poultry test exists anywhere in the tests repo today, so the walk is wholly new."
+        "Re-analysis 2 Nov: dependsOn inc-012 dropped. The row needed that row only to bring poultry into the catalogue, and MDM has done it. Criteria 2 and 3 rest on poultry carrying no identifier, which is already true on main: COMMODITY_IDENTIFIERS covers only 0102, 0101 and 01061900, so IDENTIFIED_CODES excludes poultry and the Identification details page and its task drop out (frontend origin/main:src/server/app/sets/live-animals/services/commodities/rules.js:6-34). Criterion 1's CPH number is consistent too, since CPH_EXEMPT_CODES is 0101 and 01061900 only (rules.js:80). No poultry test exists anywhere in the tests repo today, so the walk is wholly new.",
+        "Dropped 4 November: the plan stage refused it. Its first criterion requires the poultry-by-rail walk to reach 'Import notification submitted' through the real stack, and that is unreachable today for a reason living in repos/trade-imports-stub, which is not in this theme's repos. Split into inc-248 (everything the branch can prove today, up to and including the review) and inc-249 (the submission, blocked on the stub serving a chicken species). The row's 2 November note that 'MDM now serves chicken' was wrong: it cited the frontend's stub-mode capture fixture, not what the stack serves."
       ],
       "gate": null,
       "externalDependsOn": [
         {
           "workarea": "shared/design-release-2-1/themes/journey-foundation",
           "id": "inc-001"
+        }
+      ],
+      "merge": {
+        "tests": "origin/main"
+      }
+    },
+    {
+      "id": "inc-248",
+      "title": "End-to-end proof: poultry by rail in transit, as far as the review",
+      "detail": "Replaces inc-019, which the plan stage refused because its first criterion could not be built in the tests repo. This row keeps everything the branch can prove today: the poultry-by-rail walk itself, that no Identification details step or task appears for a chicken line, and that every overview task reads Complete with the review showing the journey's answers. Reaching 'Import notification submitted' is split out to inc-249, which is blocked on the stub serving a chicken species.",
+      "dependsOn": [],
+      "theme": "commodities-and-reason",
+      "status": "done",
+      "kind": "test",
+      "repos": [
+        "tests"
+      ],
+      "merge": {
+        "tests": "origin/main"
+      },
+      "gatePhases": [],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "e2e/journeys.fit.spec.js:237-250 p2-011, p4-069"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p13-002, p13-182, p13-194, p13-195"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null,
+      "externalDependsOn": [],
+      "acceptanceCriteria": [
+        "The tests repo walks a poultry-by-rail notification from create to the review page: origin Germany, Chicken (01051111) Gallus gallus, 'Transit' with an exit port and the Republic of Ireland as destination country, arrival by rail with a transport identification, transit through Belgium and France, a transporter and a CPH number. The walk stops at the review and asserts nothing about submitting (prototype:dr2-1-specs e2e/journeys.fit.spec.js:237-250 p4-069; trace:prototype-dr2-1 p13-002, p13-182)",
+        "In that walk no 'Identification details' page is shown and the overview has no 'Identification details' task (prototype:dr2-1-specs e2e/journeys.fit.spec.js:237-250 p2-011)",
+        "In that walk every task on the overview reads 'Complete' before the review is opened, asserted as the whole task list against the real hub order of ELEVEN rows: 'Where is this consignment coming from?', 'What are you importing?', 'Main import reason', 'Commodity details', 'Additional details', 'Arrival details', 'Transit countries', 'Transport details', 'Upload documents', 'Roles and addresses', 'Contact address for this consignment' (frontend features/hub/controller.js:26-42, features/hub/copy/copy.en.js:25-63)",
+        "The review shows Germany, Transit, Belgium and the chosen transporter (trace:prototype-dr2-1 p13-194, p13-195)"
+      ],
+      "notes": [
+        "Replaces inc-019, refused at the plan stage on 4 November. The refusal is recorded in full on inc-019 and the run result; the short version is that criterion 1's 'Import notification submitted' is unreachable on the stack for a reason living in repos/trade-imports-stub, which is not in this theme's repos.",
+        "inc-019's own 2 November note was wrong and must not be reused: it said 'MDM now serves chicken, so the walk can run', citing frontend origin/main:src/server/app/services/_capture/fixtures/commodities.json. That file is the frontend's STUB-MODE capture, read by sets/live-animals/services/commodities/stub.js only when STUB_MODE is true, so it is what the FIT suite sees and not what the stack serves. The stack runs LIVE_ANIMALS_MODE=real with no STUB_MODE (docker/stack/frontend.compose.yml:39-88, frontend src/config/config.js:265-270), so commodity reads go to reference-data. Chicken works in stub mode; the stack path does not. This theme's inc-026 already records that the two captures have drifted.",
+        "Criterion 3's task list is ELEVEN rows, not the prototype's ten: the prototype's HUB_ROWS omits 'Transit countries'. Assert against the real hub order above, not against the prototype.",
+        "Why the three criteria hold on the branch today, from the plan stage's reading: IDENTIFIED_CODES is ['0102','0101','01061900'] (frontend services/commodities/rules.js:6-35), so for a chicken line the identification gate fails (flow/gates.js inScopeReachable over collectsOf('animalIdentification')), the opening run skips the step (flow/run.js:46-50) and the animalIdentification task row is conditional with applies: identifiesAnAnimal so rowStatus is NA and the hub drops it (flow/task-rows.js:55-61, features/hub/controller.js:56). CPH_EXEMPT_CODES is ['0101','01061900'] (rules.js:79), so a chicken consignment does owe a CPH number. transitedCountries is in scope for RAILWAY and optional (obligations/sections/transport.js:96-111), so with a country added the row reads Complete (bridge/status/index.js:56-63). numberOfPackages is optional for every code (obligations/sections/commodities/lines.js:54-62), so Commodity details reads Complete with the animal count alone.",
+        "Exemplar: walkOpeningRunHorseBySea (tests flows/animals/journey.ts:708-766) with tests/animals/e2e/journeys/horse-temporary-admission.spec.ts as the spec shape. Its whole-list taskNames/taskStatuses assertion proves criteria 2 and 3 together in one positive assertion rather than asserting an absence."
+      ],
+      "commit": "e55fe5c7eb37b5ade343e6c2924fde266aadf725",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/456",
+          "repo": "trade-imports-animals-frontend",
+          "number": 456
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/79",
+          "repo": "trade-imports-ins-tests",
+          "number": 79
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-performance-tests/pull/30",
+          "repo": "trade-imports-performance-tests",
+          "number": 30
+        }
+      ]
+    },
+    {
+      "id": "inc-249",
+      "title": "End-to-end proof: the poultry-by-rail walk submits the notification",
+      "detail": "The second half of inc-019: the poultry-by-rail walk reaches Import notification submitted rather than stopping at the review. On the stack the animals frontend runs LIVE_ANIMALS_MODE=real with no STUB_MODE, so every commodity read goes to reference-data and through to the MDM stub. The stub served no species page for the chicken code the walk picks, so the review's species check marked the line unlisted and the notification could not be submitted. Built on 6 November by adding that species page to repos/trade-imports-stub, which joined this row's repos.",
+      "dependsOn": [],
+      "theme": "commodities-and-reason",
+      "status": "done",
+      "kind": "test",
+      "repos": [
+        "tests",
+        "stub"
+      ],
+      "merge": {
+        "tests": "origin/main",
+        "stub": "origin/main"
+      },
+      "gatePhases": [],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "e2e/journeys.fit.spec.js:237-250 p4-069"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p13-002, p13-182"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null,
+      "externalDependsOn": [],
+      "acceptanceCriteria": [
+        "The poultry-by-rail walk of inc-248 continues past the review and reaches 'Import notification submitted' (prototype:dr2-1-specs e2e/journeys.fit.spec.js:237-250 p4-069; trace:prototype-dr2-1 p13-002, p13-182)",
+        "The review's species check does not mark the chicken line unlisted, because the MDM stub serves a species page for the commodity code the walk picks"
+      ],
+      "notes": [
+        "Built 6 November 2026 in trade-imports-stub (PR 32). src/main/resources/responses/mdmProductSpeciesResponses.json gains a 01051111 species page carrying Gallus gallus, common name Chicken. The record is the one mdmProductSearchResponses.json already carried for that code from the TST recapture in 1cadd94, so the search and species fixtures now agree.",
+        "Proof: mvn verify green, 156 unit and 35 integration. The new ProductControllerTest case getCommoditySpecies_shouldAnswerChicken_forTheCodeTheSearchOffers fails alone when the fixture entry is deleted, on totalElements 1 against 0.",
+        "The open question - who owns the stub chicken species, and does the row belong in this theme - was settled by adding stub to this row's repos rather than moving the row.",
+        "Left out, as the earlier notes marked it strongly wanted rather than required: a search-term key in mdmProductSearchResponses.json a trader would plausibly type for chicken. The walk searches 010 today, which already returns 01051111.",
+        "Do not reinstate inc-019's claim that MDM already serves chicken. That rested on the frontend's stub-mode capture fixture, not on what the stack serves. See inc-248's notes for the full reading."
+      ],
+      "commit": "87f43de70bf5d270831f3a75edc380ef7f2e4fa0",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-stub/pull/32",
+          "repo": "trade-imports-stub",
+          "number": 32
         }
       ]
     },
@@ -420,7 +648,7 @@
       ],
       "dependsOn": [],
       "theme": "commodities-and-reason",
-      "status": "todo",
+      "status": "dropped",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -459,13 +687,97 @@
         "c-211 settles 'Save and return to overview': it saves without the required-answer checks, but an answer failing its own format rule, such as an impossible date, is still refused (ruling:sam-2026-10-07). No today source shows what 'Save and return to overview' does on these pages (trace-animals-fit-p7-079, trace-animals-fit-p12-068): the builder reads the shared save actions and changes only what differs. Kept apart from the journey-order row because it changes no route. Depends on inc-003, the shared soft-save foundation.",
         "Salvage: trade-imports-animals-frontend fa115bd6, trade-imports-ins-tests 50c4042 on stale branch feat/EUDPA-693-design-release-2-1-commodities-and-reason; rebuild on a fresh branch from main. Take toAnswers' blank-reason guard in import-reason/validate.js, kit.skipsRequiredChecks and its use in the import reason controller, and answeredOnly in additional-details/controller.js. req-168 (the reason task completes on its own answers) already holds on main. The branch's task-rows and soft-save tests for it are optional regression cover.",
         "Re-analysis 2 Nov: the behaviour is still absent and the fix the salvage note names is still right, but two claims in the note below have gone stale. Neither allowMissing nor kit.isHubExit exists anywhere on main; kit offers requestSaveChoice, hubExitTarget and returnedSaveChoice instead (frontend origin/main:src/server/app/shared/kit.js:158-183), and kit.recoverableSave returns { value, failure }, not { value } (kit.js:392, used at features/import-reason/controller.js:110-123). Criterion 1 fails on main for the reason the note gives: reasonForImport is validated with oneOf rather than requiredOneOf, so a blank passes, revealsFor('') returns no reveal rules, and toAnswers then returns reasonForImport: '' with none of the revealed answers (features/import-reason/validate.js:98-105, :135-145) - so a blank save overwrites the stored reason and drops destinationCountry, portOfExit and exitDate with it. Criterion 3 is half met: additional-details validates both fields with oneOf so a blank save shows no error and reaches the overview, but the page declares no toAnswers at all (features/additional-details/validate.js:14-20, :30-40), so blanks overwrite earlier answers. The row's externalDependsOn on journey-foundation inc-003 is satisfied: that row is done and the branch merged on 13 October. Builder: pin both halves of criterion 3, not just the new half.",
-        "Design snagging merged to main 23 Oct: none of this row's behaviour is on main, but both controllers were rewritten, so salvage commit fa115bd6 will not apply cleanly. import-reason/controller.js and additional-details/controller.js now render through render(request, h, current, values, options), take their Back link from kit.runBackLink, and call kit.recoverableSave(request, thunk, fallback), which returns { value }. import-reason/validate.js renamed its blanks helper to fieldsToBlankWhenStale and reads countries from countries.countryAndSubdivisionOptionsNamedWithCountry(); toAnswers is unchanged. The import reason page already passes allowMissing: kit.isHubExit(request) on submit. Builder: add toAnswers' blank-reason guard, kit.skipsRequiredChecks and additional details' answeredOnly to main's code by hand, and write the tests against main's rewritten import-reason and additional-details tests and fit specs."
+        "Design snagging merged to main 23 Oct: none of this row's behaviour is on main, but both controllers were rewritten, so salvage commit fa115bd6 will not apply cleanly. import-reason/controller.js and additional-details/controller.js now render through render(request, h, current, values, options), take their Back link from kit.runBackLink, and call kit.recoverableSave(request, thunk, fallback), which returns { value }. import-reason/validate.js renamed its blanks helper to fieldsToBlankWhenStale and reads countries from countries.countryAndSubdivisionOptionsNamedWithCountry(); toAnswers is unchanged. The import reason page already passes allowMissing: kit.isHubExit(request) on submit. Builder: add toAnswers' blank-reason guard, kit.skipsRequiredChecks and additional details' answeredOnly to main's code by hand, and write the tests against main's rewritten import-reason and additional-details tests and fit specs.",
+        "Dropped at the commodities-and-reason pre-flight on 3 November and replaced by inc-246. All three of this row's acceptance criteria cited claims that conflict c-332 lists as overruled: prototype-dr2-1-source-p4-079 (criterion 1), -p4-075 (criterion 2) and -p3-071 (criterion 3). The 26 October ruling withdrew the soft save recorded in c-211 and its plants counterpart c-313 and makes 'Save and return to overview' run exactly the checks 'Save and continue' runs on every page that offers both buttons, so this row built behaviour that is no longer wanted. req-166, req-168 and req-180 move to inc-246, which builds c-372's default reading. The notes above are kept for the code-level findings they record, but their c-211 soft-save framing is withdrawn."
       ],
       "gate": null,
       "externalDependsOn": [
         {
           "workarea": "shared/design-release-2-1/themes/journey-foundation",
           "id": "inc-003"
+        }
+      ]
+    },
+    {
+      "id": "inc-246",
+      "title": "Save and return to overview makes the same checks as Save and continue on the main import reason and additional details pages",
+      "detail": "The 26 October ruling makes 'Save and return to overview' run exactly the checks 'Save and continue' runs, on every page that offers both buttons, with no page an exception. It withdrew the soft save this theme's earlier row was built on. On these two pages the button therefore differs from 'Save and continue' only in where it goes when the page passes: the notification overview rather than the next journey page, and the review page when the trader is amending. How far the checks reach is still open (c-372) and this row builds the default reading: each page keeps the hard stops it already applies on 'Save and continue' and gains none, so the follow-up answers a chosen reason reveals are refused on both buttons alike, and no answer becomes newly mandatory. Separately, the main import reason task is judged on the reason's own answers, with Additional details its own task.",
+      "dependsOn": [],
+      "theme": "commodities-and-reason",
+      "status": "done",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "ruling:sam-2026-10-26",
+          "ref": "ruling-sam-2026-10-26-p1-004, p1-008, p1-012, p1-013"
+        },
+        {
+          "source": "confluence:6497338582",
+          "ref": "confluence-6497338582-p1-018"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p4-076, p4-077, p4-078, p4-080, p4-081"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p4-112, trace-e2e-p4-116"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "trace-animals-fit-p7-054, p7-079, p12-068"
+        }
+      ],
+      "requirements": [
+        "req-166",
+        "req-168",
+        "req-180"
+      ],
+      "openQuestions": [
+        "Blank-reason data loss on the main import reason page, which c-372's default reading does not close. reasonForImport is validated with oneOf rather than requiredOneOf whatever the save path (frontend origin/main:src/server/app/sets/live-animals/journeys/linear/features/import-reason/validate.js:99-110), so a blank reason passes on 'Save and continue' too. revealsFor('') then composes no reveal rules at all, toAnswers emits reasonForImport: '' with none of the revealed answers (:135-145), and blanks: fieldsToBlankWhenStale (:55-56, :152) clears the stored ones, so destinationCountry, portOfExit and exitDate are dropped. Under c-372's default the page keeps only the hard stops it already applies, and the reason field has none, so this row does not make the reason mandatory and the data loss survives it. Is the blank-reason save a defect to fix on its own terms, independent of c-372, or does c-372's second reading own it?"
+      ],
+      "gate": null,
+      "externalDependsOn": [
+        {
+          "workarea": "shared/design-release-2-1/themes/journey-foundation",
+          "id": "inc-003"
+        }
+      ],
+      "acceptanceCriteria": [
+        "On the main import reason page, 'Save and return to overview' applies every check 'Save and continue' applies: a chosen reason's revealed follow-up answers are refused when missing or invalid, with an error in the summary and inline for each one, and the trader stays on the page with the reason still chosen, its reveal open and every entry shown back (ruling:sam-2026-10-26 ruling-sam-2026-10-26-p1-008, ruling-sam-2026-10-26-p1-013)",
+        "With every answer on the main import reason page passing, 'Save and return to overview' saves them and shows the notification overview, and 'Save and continue' saves them and shows the next journey page, the two differing in nothing else (ruling:sam-2026-10-26 ruling-sam-2026-10-26-p1-008)",
+        "When the trader is amending, the main import reason page's 'Save and return' action applies the same checks and, once they pass, shows the notification review rather than the overview; while a template is being edited from its review it saves the template and returns to that review (prototype:dr2-1-source prototype-dr2-1-source-p4-076, prototype-dr2-1-source-p4-077)",
+        "On the additional details page, 'Save and return to overview' applies every check 'Save and continue' applies: because both questions are optional to proceed, a blank answer is saved and the trader moves on, while an answer that is not one of the offered options is refused with 'Select a valid option' and the trader stays on the page with the other answer kept (ruling:sam-2026-10-26 ruling-sam-2026-10-26-p1-008, prototype:dr2-1-source prototype-dr2-1-source-p3-071)",
+        "No answer on either page becomes mandatory that 'Save and continue' does not already refuse, so a trader can still leave a part-filled page and come back, which is what the overview's task statuses and the review page's submit check depend on (c-372 default reading)",
+        "The main import reason task counts as complete once a reason allowed for the notification is saved with the follow-up answers that reason calls for, whether or not Additional details is answered, and is not complete with no reason saved (prototype:dr2-1-source prototype-dr2-1-source-p4-080, prototype-dr2-1-source-p4-081)"
+      ],
+      "notes": [
+        "Replaces inc-022, which was dropped at the commodities-and-reason pre-flight on 3 November. Every one of inc-022's three acceptance criteria cited a claim that conflict c-332 lists as overruled - prototype-dr2-1-source-p4-079 (criterion 1), -p4-075 (criterion 2) and -p3-071 (criterion 3) - because the 26 October ruling withdrew the soft save recorded in c-211 and its plants counterpart c-313. inc-022 therefore built the withdrawn behaviour. req-166 and req-180 were applied to this row at that pre-flight and their fingerprints copied into the parent's splitOff pointer.",
+        "This row is this theme's two pages' share of one programme-wide rule, so keep it consistent with its siblings rather than inventing a local reading: req-2202 covers every live animals and germinal products template page (type-question-and-templates), req-329 covers arrival details and transit countries (arrival-and-transit) and req-2136 covers the high-risk plants commodity type page. The ruling names live animals and high-risk plants; the germinal products set takes the rule too, because it is built from copies of these pages and the ruling makes no page an exception (ruling-sam-2026-10-26-p1-024).",
+        "c-372 is unsettled and this row builds its default. The two readings build different services: 'exactly the same checks as Save and continue' keeps each page's existing hard stops and adds nothing, while 'an error for each answer that is missing or not valid' would refuse a page whenever any mandatory answer is blank and undo the leave-and-come-back model. Criterion 5 pins the default so a builder cannot drift into the second reading. If c-372 is answered the other way, this row is revisited rather than rewritten in place.",
+        "Where the mechanism already is on main: every revealed field's rule is already conditional, stored ? oneOf(...) : requiredOneOf(...) (frontend origin/main:src/server/app/sets/live-animals/journeys/linear/features/import-reason/validate.js:58-72), and journey-foundation inc-003 built the generic soft-save seam this row now narrows - kit offers requestSaveChoice, hubExitTarget and returnedSaveChoice (shared/kit.js:158-183) and kit.recoverableSave returns { value, failure } (kit.js:392, used at features/import-reason/controller.js:110-123). So the change is to stop relaxing the checks on the hub-exit path, not to add a validation layer. Neither allowMissing nor kit.isHubExit exists on main despite what inc-022's older notes said.",
+        "Design snagging merged to main on 23 October and rewrote both controllers, so neither of inc-022's salvage commits applies. Both pages now render through render(request, h, current, values, options) and take their Back link from kit.runBackLink; import-reason/validate.js renamed its blanks helper to fieldsToBlankWhenStale. Build against main's rewritten import-reason and additional-details unit tests and fit specs rather than the stale branch's.",
+        "req-168's delta is recorded as change, with deltaNote saying main's 'Main reason for import' row completes only once the Additional details page after it is saved too (trace-e2e-p4-112, trace-e2e-p4-116), while inc-022's 2 November re-analysis note claimed it already held on main. The two disagree. The plan stage reads the real code, so settle it there: if criterion 6 already holds, say so in the plan and prove it with a regression test rather than changing code."
+      ],
+      "merge": {
+        "frontend": "origin/main",
+        "tests": "origin/main"
+      },
+      "commit": "d6fb730af6e45487a69be2276fa96175806c30de 64860e21dfe5ccea2495d7cca1b5f5e47ff09589",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/456",
+          "repo": "trade-imports-animals-frontend",
+          "number": 456
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/79",
+          "repo": "trade-imports-ins-tests",
+          "number": 79
         }
       ]
     },
@@ -480,7 +792,7 @@
       ],
       "dependsOn": [],
       "theme": "commodities-and-reason",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -520,7 +832,73 @@
         "Widened 2 Nov by the V4 Data Fields page, which specifies five commodities for the unweaned question, not two: 0101 equines (horses, asses, mules, hinnies), 0102 cattle, 0103 pigs, 010410 sheep, 010420 goats (confluence:6497338582, the 'Contains Unweaned Animals' expand macro). The row previously said cattle and pigs, taken from the prototype. Main asks only cattle (UNWEANED_CODES = ['0102']), so four codes are missing, not one. Note the history: frontend 598c6045 removed horses under DR1 parity ('DR1 asks that question only of cattle and pigs'), which V4 contradicts - V4 is the later data-fields specification, so it wins, but the builder should expect that commit's tests to need changing and should say in the commit why horses are back. Full comparison: reanalysis/v4-data-fields-commodity-rules-2026-11-02.md.",
         "Re-analysis 2 Nov: the earlier note that main keys the unweaned list on the name 'Cow' is wrong now. UNWEANED_CODES is a list of codes holding CATTLE_CODE, which is '0102' (frontend origin/main:src/server/app/sets/live-animals/services/commodities/rules.js:2, :78), read through unweanedCommodityCodes (services/commodities/index.js:46) and applied by unweanedApplies, which both the additional details page and its validation use (features/additional-details/validate.js:7, :21-27). So the cattle half already holds and is keyed in a way a rename cannot break: the change is adding SWINE_CODE ('0103', already exported from rules.js) to UNWEANED_CODES. Criterion 2 is a regression check rather than work, already proved by the page's own tests, which seed commodityCode '0102' (features/additional-details/validate.test.js:6, controller.test.js:34). Criterion 3's review row reads from the same unweanedApplies rule, so it should follow without separate work."
       ],
-      "gate": null
+      "gate": null,
+      "merge": {
+        "frontend": "origin/main",
+        "tests": "origin/main"
+      },
+      "commit": "6843ef057b8e281dfc0de93dd126f7c6da9c2527 efab23bf049e021d024aeecb8069287344a36a83",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/456",
+          "repo": "trade-imports-animals-frontend",
+          "number": 456
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/79",
+          "repo": "trade-imports-ins-tests",
+          "number": 79
+        }
+      ]
+    },
+    {
+      "id": "inc-250",
+      "title": "The theme branch takes main in again, so inc-024's pull request can run its checks",
+      "detail": "inc-024 is committed and pushed but its CI cannot run: trade-imports-ins-tests #79 conflicts with its base, and GitHub runs no checks on a conflicting pull request. The tests repo is 10 commits behind main and the performance tests repo is 2 behind; the animals frontend is level. inc-024 carries its own merge of origin/main, but that merge belongs to the branch stage, which the row passed hours ago - a retry picks the row up at the CI watch stage instead, so the row's own merge can no longer help it. Hence a merge row, as at inc-247.",
+      "dependsOn": [],
+      "theme": "commodities-and-reason",
+      "status": "done",
+      "kind": "chore",
+      "repos": [
+        "tests",
+        "perftests"
+      ],
+      "merge": {
+        "tests": "origin/main",
+        "perftests": "origin/main"
+      },
+      "gatePhases": [],
+      "sources": [],
+      "requirements": [],
+      "openQuestions": [],
+      "gate": null,
+      "externalDependsOn": [],
+      "acceptanceCriteria": [
+        "origin/main is merged into feat/EUDPA-693-commodities-and-reason in the tests repo and in the performance tests repo, as one two-parent merge commit each, with no conflict markers left in any file.",
+        "The single conflicting file, tests/animals/e2e/journeys/horse-temporary-admission.spec.ts, takes main's test signature: the test is called as test('walks a horse-by-sea notification under temporary admission from create to submitted, with every task complete', { tag: '@cross-browser' }, async ({ animalsJourney, animalsPages, pages }) => { ... }), with the callback as the THIRD argument and the body indented to match. That tag is EUDPA-24's cross-browser work and must not be lost.",
+        "Inside that body the branch's own two assertions are kept verbatim: await expect(additionalAnimalDetails.getByRole('term')).toHaveText(['Certified for', 'Includes unweaned animals']); and await expect(additionalAnimalDetails.getByRole('definition')).toHaveText(['Registered equine animal', 'No']); — they are inc-023's proof that the unweaned question is asked for an equine, and dropping them would silently un-prove a landed row.",
+        "Nothing else EUDPA-24 landed is lost: the mobile-webkit project, the cross-browser PROFILE and scripts, docs/cross-browser.md, and the @cross-browser tags on the other animals, INS and animals-admin specs.",
+        "trade-imports-ins-tests #79 reports no conflict with its base, so GitHub runs its checks again, and trade-imports-animals-frontend #456 stays mergeable."
+      ],
+      "notes": [
+        "Why a merge row rather than the hand merge the loop's stop message asks for: HOW-TO-BUILD is explicit that a hand merge on a theme branch is unreviewed, unproved and invisible to the backlog. Same reasoning as inc-247.",
+        "The lesson this row records: a per-row merge only protects a row that has not yet reached its branch stage. inc-024 sat in CI retries for hours across two runs while main moved 10 commits, and a retry re-enters at the CI watch stage, so the row's merge field was behind it and could not fire. Rows that stall in CI need a merge row, not a merge field.",
+        "Placed before inc-024 so it builds first. inc-024 keeps its commits 615c48bf and df3cef9 and its two pull requests; once this row lands and #79 stops conflicting, inc-024's CI can finally be watched.",
+        "inc-024's own CI failure is still outstanding and is recorded on that row: the k6 smoke job, check 'submitted through the declaration page', NOT Playwright. Do not let this merge row's success be read as inc-024 being fixed."
+      ],
+      "commit": "0419715c0b81dfb162644cfbee34ab6d7ee7eed5 a783620a5f5f2390f9ca143e508f2742aec594fd",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/79",
+          "repo": "trade-imports-ins-tests",
+          "number": 79
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-performance-tests/pull/30",
+          "repo": "trade-imports-performance-tests",
+          "number": 30
+        }
+      ]
     },
     {
       "id": "inc-024",
@@ -533,7 +911,7 @@
       ],
       "dependsOn": [],
       "theme": "commodities-and-reason",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -572,9 +950,27 @@
         "MDM offers no package-type options today, checked 2 Nov. packageType is an empty array on all 49 commodity rows in the capture (repos/trade-imports-stub origin/main:src/main/resources/responses/mdmProductSearchResponses.json; same in repos/trade-imports-reference-data src/test/resources/integration/mdm-product-search-0102-response.json:32), and the field is not on the /commodities?codes= endpoint reference-data actually calls, which returns only code, description, isGerminal, isSelectable and speciesCount (stub mdmProductCommoditiesResponses.json). So reading packageType would need MDM to populate it and reference-data to read it from the search response or a widened by-code response. The vocabulary would not be MDM's own either: the GBN-AG schema holds the package type as an open string from the UNECE PackageTypeCode list, UN/EDIFACT Recommendation 21, with cage and crate as its examples (repos/trade-imports-schemas schemas/core/defra-unvtd-canonical-core-v1.schema.json:511-527 and schemas/profiles/imports/gb/gbn-ag-v1.schema.json:365-379). MDM's packageType[] would therefore be a per-commodity shortlist of UNECE codes, not a list of its own.",
         "The physical logic favours main's list over the prototype's, which weakens the prototype side further than the demo-data provenance alone does. The GBN-AG schema says the package group is optional and names the reason: 'consignments where the animals are loose-loaded (for example livestock in a single trailer compartment) omit it' (gbn-ag-v1.schema.json:283). The prototype asks for a package count on exactly the livestock that travel loose - cattle, horses, pigs, sheep, goats - and not on the commodities that really do arrive in packages: day-old chicks in boxes, bees in hives, reptiles and parrots in crates, ornamental fish in bags. The frontend's own hint says 'Such as crates, bags or boxes'. So if anything the prototype's list is inverted, and main including the poultry, bee, reptile and parrot codes is defensible. What is still unexplained is main's inconsistency inside its own groups: domestic rabbits (01061410) are asked but other rabbits (01061490) are not, and birds of prey, parrots and other birds are asked while ratites (01063300) and pigeons (01063910) are not.",
         "Related, and not this row's to fix: the service collects a package count but never a package type, and the backend sends LogisticsPackage(null, null, totalNoOfPackages) (repos/trade-imports-animals-backend src/main/java/uk/gov/defra/trade/imports/animals/outbox/gbnag/LogisticsPackage.java:12). The GBN-AG schema requires typeCode beside itemQuantity and types it as a string, and that record carries no @JsonInclude(NON_NULL) where its siblings do, so the payload serialises typeCode as an explicit null and fails the schema either way - present-but-null against the string type, or absent against required if NON_NULL were added. Nothing validates the outbox payload against gbn-ag-v1.schema.json anywhere outside the schemas repo, so this is unchecked. Raise it against the GBN-AG payload owner, not here; it matters to this row only in that answering 'which commodities need a package count' may also need 'and what type of package', which no page asks today.",
-        "If the ruling goes Design Release 2.1's way, the change is PACKAGE_COUNT_CODES in services/commodities/rules.js plus the consignment-details and check-answers tests that pin the current list. If it goes MDM's way, reference-data must also pass packageType through, which reference-lists owns, so that would add a repo this theme does not have."
+        "If the ruling goes Design Release 2.1's way, the change is PACKAGE_COUNT_CODES in services/commodities/rules.js plus the consignment-details and check-answers tests that pin the current list. If it goes MDM's way, reference-data must also pass packageType through, which reference-lists owns, so that would add a repo this theme does not have.",
+        "CI evidence from the 4 Nov ci-red stop, recorded because the loop's own stop message misattributed it. The loop said 'E2E Tests failed (Playwright; evidence in test-results/*/error-context.md)'. That is wrong: in run 41856254618 all three Playwright shards passed (e2e/e2e 1,3 2,3 and 3,3 all success) and the ONLY failing job was 'e2e / smoke / Smoke run', the k6 suite. There is no Playwright error-context to read, so do not look there. The real failure: k6 threshold 'checks{scenario:live-animals}' crossed at rate=96.55% against 'rate>0.99'. The other three scenarios - high-risk-plants, ins-address-book, ins-front-door - were all 100%, so this is specific to the live-animals walk and not a stack or platform fault. The named check that failed is 'submitted through the declaration page' at 50%, 1 pass and 1 fail across iterations, alongside a 'value>=1' check reading 0. It failed identically on attempts 2 and 3, so it is deterministic rather than flaky. Candidate cause: the live-animals k6 walk no longer supplies an answer the journey now demands before the declaration will submit - inc-018 added hard stops on means of transport and number of packages, inc-024 pins which commodities ask for packages, and inc-015 moved the main import reason into the walk between the commodity page and Commodity details. Read repos/trade-imports-performance-tests src/k6/live-animals.js and src/config/test-data.js against the frontend's current obligations before changing anything. Note also that the smoke job passes on main - main's E2E failures are Playwright shard jobs, never smoke - so the branch is what differs."
       ],
-      "gate": null
+      "gate": null,
+      "merge": {
+        "frontend": "origin/main",
+        "tests": "origin/main"
+      },
+      "commit": "615c48bf df3cef9",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/456",
+          "repo": "trade-imports-animals-frontend",
+          "number": 456
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/79",
+          "repo": "trade-imports-ins-tests",
+          "number": 79
+        }
+      ]
     },
     {
       "id": "inc-025",
@@ -587,7 +983,7 @@
       ],
       "dependsOn": [],
       "theme": "commodities-and-reason",
-      "status": "todo",
+      "status": "done",
       "kind": "fix",
       "repos": [
         "frontend",
@@ -612,7 +1008,9 @@
         }
       ],
       "requirements": [],
-      "openQuestions": [],
+      "openQuestions": [
+        "Twin fix: trade-imports-plants-frontend src/server/app/sets/high-risk-plants/journeys/linear/features/commodities/fit/list.fit.spec.js:161 needs its removal test (\"removes the line the Remove button names\") to prove the removal with a positive assertion of what the table reads afterwards instead of `await expect(page.getByRole('table')).not.toContainText(MARIS_PIPER)`, as the same defect judged fix-now in trade-imports-animals-frontend .../commodities/fit/consignment-details.fit.spec.js:318 and :333 (house rule, Ids and history: \"Prove a removal with an exact positive assertion\"). Not changed in this increment because inc-025 builds only in the animals frontend and the tests repo."
+      ],
       "notes": [
         "Corrected 2 Nov after the re-distil: the label format is the other way round from what this row first said. V4 writes species selections as 'scientific name then common name in brackets' - Bison bison (Bison), Bos spp. (Cattle species), Bos taurus (Cattle), Bubalus bubalis (Water buffalo) (confluence:6497338582 confluence-6497338582-p1-091). This row first said 'common name (Latin name)', following Design Release 1 parity (frontend 949bb9d6, 'offer each species as its common name with the Latin name in brackets'). V4 outranks the prototype and the parity work on a field's format, so the Latin name leads. The fallback changes with it: where MDM holds no common name the label is the scientific name alone, not the commodity name in brackets.",
         "Raised by the 2 Nov re-analysis as a regression rather than by a source. speciesLabel returns the Latin name alone (frontend origin/main:src/server/app/sets/live-animals/journeys/linear/features/commodities/species-label.js:1), and it is the one seam every listing goes through, so this is one change in one place plus the tests that followed the regression. The frontend had delivered the common-name format under Design Release 1 parity (frontend 949bb9d6, 'offer each species as its common name with the Latin name in brackets'), and EUDPA-617 replaced it on 27 Oct (c3183a8e).",
@@ -620,9 +1018,27 @@
         "The tests followed the regression rather than catching it, so they change with it: tests origin/main:tests/animals/e2e/pages/consignment-details.spec.ts:91-92 now asserts 'Bos taurus'. Builder: pin the label format in the tests so the next capture or client change cannot drop it again.",
         "The fallback matters more than it looks: many species in MDM's capture hold a null common name (Capreolus, Gazella, Elephas, Kobus, Pholidota and others under 01061900), so a format that assumes a common name would leave those labels bracketed or blank.",
         "inc-013 criterion 1 names the 'common name (Latin name)' label format, so that row rests on this one.",
-        "In flight 2 Nov, EUDPA-669: it stores MDM's species commonName on every line and sends it downstream to PIMS, but leaves speciesLabel and legendFor untouched (verified by diff against origin/main). So that ticket confirms and secures this row's data source without doing its display work. Build this row after EUDPA-669 merges, so the stored commonName is already there to read."
+        "In flight 2 Nov, EUDPA-669: it stores MDM's species commonName on every line and sends it downstream to PIMS, but leaves speciesLabel and legendFor untouched (verified by diff against origin/main). So that ticket confirms and secures this row's data source without doing its display work. Build this row after EUDPA-669 merges, so the stored commonName is already there to read.",
+        "Pre-flight hand-verification, 3 Nov: the repo extracts are 26 Oct and record no commit, so they were checked by date. repo:frontend moved 18 commits to 30 Oct, all of it before the 2 Nov re-analysis that already read this row against main; repo:perftests has moved nothing since. The one change this row has never been read against is trade-imports-ins-tests 57f2716 (3 Nov), which renames the ostrich latin name in domain/animals/constants/commodity-lines.ts from 'Struthio' to 'Struthio spp.' because MDM no longer returns the short form. Species checkbox values are built from the commodity code and the latin name, so read that file from current main rather than the extract when writing this row's scientific-name assertions."
       ],
-      "gate": null
+      "gate": null,
+      "merge": {
+        "frontend": "origin/main",
+        "tests": "origin/main"
+      },
+      "commit": "9d294bd1c858cc858e8ab05c60c150e4c0c4696c 098c9bd501ebec6b564d4590cd9f85c0ce5ec68c",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/456",
+          "repo": "DEFRA/trade-imports-animals-frontend",
+          "number": 456
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/79",
+          "repo": "DEFRA/trade-imports-ins-tests",
+          "number": 79
+        }
+      ]
     },
     {
       "id": "inc-026",
@@ -634,7 +1050,7 @@
       ],
       "dependsOn": [],
       "theme": "commodities-and-reason",
-      "status": "todo",
+      "status": "done",
       "kind": "fix",
       "repos": [
         "frontend",
@@ -651,13 +1067,34 @@
         }
       ],
       "requirements": [],
-      "openQuestions": [],
+      "openQuestions": [
+        "Confirm against real MDM whether the domestic dog is still spelled 'Canis familiaris' under 01061900, and correct the permanent-address rule (src/server/app/sets/live-animals/services/commodities/rules.js:65-70), its obligations spec (openspec/specs/live-animals/journey-obligations/commodity-selection/spec.md:105) and the set's services doc together. Raised by the finding that src/server/app/sets/live-animals/docs/services.md:60 told readers this question was already \"tracked as a backlog row\" when no such row existed in this theme backlog; inc-026 leaves rules.js and the obligations spec untouched on the strength of that deferral (plan D3a).",
+        "A committed check compares the animals frontend's captured commodity fixture with the stub's saved MDM product search, so the whole list stays in step. No repo holds both files, so it needs a workspace tim subcommand or a check in the stub repo. Raised by the finding that inc-026 rests acceptance criterion two's second half on this being \"carried by a named backlog row\" (plan D2) when no such row existed; until it lands, only the nine pinned code-and-species triples in src/server/app/services/_capture/fixtures.test.js hold the two files together, and nothing fires on drift in the rest of the list."
+      ],
       "notes": [
         "Raised by the 2 Nov re-analysis rather than by a source. The frontend fixture (frontend origin/main:src/server/app/services/_capture/fixtures/commodities.json) was captured on 27 Oct with EUDPA-617 (c3183a8e) and gives Bos taurus the common name 'Cattle or Cow'. The stub was corrected on 28 Oct to return 'Domestic Cattle' as the 0102 common name (stub afb74c3) and recaptured from TST on 30 Oct (stub 5cf8a70), so it now gives 'Domestic Cattle'. The frontend fixture has not moved since, so it is three days behind the stub it mirrors.",
         "Nothing is red today because speciesLabel shows the Latin name only, so no common name reaches a page (frontend origin/main:src/server/app/sets/live-animals/journeys/linear/features/commodities/species-label.js:1). inc-025 makes the common name visible, so this row should land with or before it; otherwise stub-mode tests and stack tests assert different words for the same species.",
-        "The capture mechanism already exists (frontend origin/main:src/server/app/services/_capture/capture.js and fixtures.js), so the recapture is a run rather than new code. The check is the new part: compare the fixture against what the stub serves, in the frontend's own tests, so it runs without the stack."
+        "The capture mechanism already exists (frontend origin/main:src/server/app/services/_capture/capture.js and fixtures.js), so the recapture is a run rather than new code. The check is the new part: compare the fixture against what the stub serves, in the frontend's own tests, so it runs without the stack.",
+        "Pre-flight hand-verification, 3 Nov: trade-imports-ins-tests 57f2716 (3 Nov) is direct evidence for this row and postdates both the 26 Oct extract and the 2 Nov re-analysis. It reports that the stub and MDM disagreed on the ostrich latin name - the stub served 'Struthio' where MDM serves 'Struthio spp.' - which broke two specs on cdp test while they passed on cdp dev, and it worked round the divergence in the tests repo's own constants rather than in the stub. So a stub-versus-MDM species-name drift of exactly the kind this row exists to close is already proven in production-like environments. Builder: read repos/trade-imports-stub's mdmProductSearchResponses.json and the frontend's _capture/fixtures/commodities.json from current main, and check the ostrich specifically."
       ],
-      "gate": null
+      "gate": null,
+      "merge": {
+        "frontend": "origin/main",
+        "tests": "origin/main"
+      },
+      "commit": "8094cae25e12474b2c9b81d4c293ea8338eda43c cc43224108bdf9697666a2975d87256b9d1244ba",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/456",
+          "repo": "trade-imports-animals-frontend",
+          "number": 456
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/79",
+          "repo": "trade-imports-ins-tests",
+          "number": 79
+        }
+      ]
     },
     {
       "id": "inc-027",
@@ -669,7 +1106,7 @@
       ],
       "dependsOn": [],
       "theme": "commodities-and-reason",
-      "status": "todo",
+      "status": "done",
       "kind": "fix",
       "repos": [
         "frontend",
@@ -694,7 +1131,24 @@
         "Main has the seam: the remove action and its post handler sit in features/commodities/consignment-details/remove/actions.js and remove/post-remove.js, and the page's values come through view-model/groups.js, which reads values[animalsField(index)] (frontend origin/main). So the fix is carrying the submitted values through the remove round trip rather than re-reading the saved answers.",
         "Related but separate: inc-018 makes the number of packages a hard stop. A Remove that drops typed numbers would make that hard stop fire on numbers the trader had in fact entered, so this row is worth landing before or with inc-018."
       ],
-      "gate": null
+      "gate": null,
+      "merge": {
+        "frontend": "origin/main",
+        "tests": "origin/main"
+      },
+      "commit": "1f954ca3 b458ff2 8b39973f",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/456",
+          "repo": "trade-imports-animals-frontend",
+          "number": 456
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/79",
+          "repo": "trade-imports-ins-tests",
+          "number": 79
+        }
+      ]
     },
     {
       "id": "inc-028",
@@ -706,7 +1160,7 @@
       ],
       "dependsOn": [],
       "theme": "commodities-and-reason",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -722,19 +1176,104 @@
         "req-2132"
       ],
       "openQuestions": [
-        "Is the V4 figure a value cap or a digit count? The same table row writes 'max 9,223,372,036,854,775,807' while its own examples are 25 and 5000, which read as digit counts. The re-distil raised this as its question 5 (c-325) and the default it names is the value cap. If the answer is a digit count, this row's criteria change to a length rule. Who acts: Sam."
+        "Is the V4 figure a value cap or a digit count? The same table row writes 'max 9,223,372,036,854,775,807' while its own examples are 25 and 5000, which read as digit counts. The re-distil raised this as its question 5 (c-325) and the default it names is the value cap. If the answer is a digit count, this row's criteria change to a length rule. Who acts: Sam.",
+        "For the designer: the V4 Live Animals & Germinals Data Fields table sets the cap for number_of_animals_quantity but no error wording for a value above it — its Type cell reads only \"numeric - whole number, max 9,223,372,036,854,775,807\" (workareas/shared/design-release-2-1/sources/6497338582.json, mirrored from https://eaflood.atlassian.net/wiki/spaces/EUDP/pages/6497338582/Live+Animals+Germinals+Data+Fields+-+V4#number_of_animals_quantity). The code therefore chose the wording: copy.en.js:67-68 renders \"Number of animals must be 9,223,372,036,854,775,807 or fewer\" (src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js, Welsh draft at copy.cy.js:71-72), and the behaviour spec now quotes it (openspec/specs/live-animals/journey-pages/commodity-details/spec.md:199). GDS error-message guidance asks for concise wording that tells the user what to do (https://design-system.service.gov.uk/components/error-message/), and no neighbouring message in this block quotes a figure of that size (animalsWholeNumber is \"Enter a whole number greater than 0\", copy.en.js:66); the field also carries no hint by design (sets/live-animals/docs/page-design.md:288-289), so the error is the only place the cap is told. Options: (a) keep \"Number of animals must be 9,223,372,036,854,775,807 or fewer\", naming the exact figure; (b) word it without the figure, for example \"Enter a smaller number of animals\"; (c) keep the figure in the error and add a hint stating the cap, against the current no-hint rule for this question. Raised by review finding 9 on inc-028 (design, nit).",
+        "The number-of-animals cap: inc-028's design source (Live Animals & Germinals Data Fields - V4 v210, captured at workareas/shared/design-release-2-1/sources/6497338582.json, the number_of_animals_quantity row: \"numeric - whole number, max 9,223,372,036,854,775,807\") and inc-028's own acceptance criteria both set 9,223,372,036,854,775,807, but the frontend caps at 2,147,483,647 (src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/fields.js:17, message \"Number of animals must be 2,147,483,647 or fewer\") because CommodityComplement.totalNoOfAnimals is a Java Integer in trade-imports-animals-backend, recorded at src/server/app/sets/live-animals/docs/limits.md:24-28. A trader entering 3,000,000,000 is refused a value the specification calls valid. Which is it: widen the backend field to a long and restore the 64-bit cap (a change in trade-imports-animals-backend, outside this theme's repos), or get the V4 page corrected to the 32-bit limit? Related and unfixed either way: that backend field holds the SUM of a commodity's species lines (services/persistence/records/notification-mapper/mapper-a/commodity.js:47 sends totalNoOfAnimals: totalOf(group, numberOfAnimalsQuantity)) while the cap is applied per line, so two lines of 2,000,000,000 under one CN code still overflow it. Raised by the engineering review of commodities-and-reason, findings 2 and 3.",
+        "For the designer: species labels built from MDM's common name. The design source (Live Animals & Germinals Data Fields - V4 v210, workareas/shared/design-release-2-1/sources/6497338582.json, the Species row's example cell) gives short, sentence-case examples - \"Bison bison (Bison)\", \"Bos spp. (Cattle species)\", \"Bos taurus (Cattle)\", \"Bubalus bubalis (Water buffalo)\". The code wraps MDM's commonName verbatim as scientific name plus common name in round brackets (src/server/app/sets/live-animals/journeys/linear/features/commodities/species-label.js:5), so the commodity search now offers \"Mustela spp. (Weasels (including ermines, polecats, ferrets, and related species))\" - brackets inside brackets, over 70 characters - pinned at search.controller.test.js:193-194 and search.fit.spec.js:153, and \"Bos taurus (Domestic Cattle)\" and \"Bubalus (Water Buffaloes)\" in Title Case (search.controller.test.js:151-153) where the source shows \"(Cattle)\" and \"(Water buffalo)\". The GDS style guide sets sentence case for content (https://www.gov.uk/guidance/style-guide/a-to-z#capitalisation). The source shows no species whose common name itself contains brackets or runs that long, so the code chose. Two questions: (1) should a species whose MDM common name already contains brackets, or is this long, still read as \"scientific name (common name)\", or as the scientific name alone, or truncated, or with the inner brackets removed? (2) should MDM's Title Case common names be shown verbatim, or sentence-cased to match the source's examples? Until this is answered the code keeps what it has. Raised by the engineering review of commodities-and-reason, finding 6 (design, minor).",
+        "Twin fix: trade-imports-plants-frontend src/server/app/sets/high-risk-plants/docs/add-a-collection.md (lines 282, 307, 315) teaches the same positional removal the animals recipe does - \"a submit button named action with a remove:<index> value\" and \"refuse an index the collection has no entry for\" - which commodities-and-reason replaced for the commodity collection with the entry being removed (the commodity code on a code row, the species line key on a species row), recorded three times in the animals set's page-design.md:289-299 \"so a repeated or stale removal is refused rather than taking another row\". The plants recipe needs the same correction, or an explicit statement of which plants collections keep an index and why. trade-imports-plants-frontend is outside this theme's repos, so it is recorded here rather than fixed. Raised by the engineering review of commodities-and-reason, finding 12 (comments, minor)."
       ],
       "notes": [
         "Pick-up from the 2 November re-distil: req-2132, new since the split, and the first requirement this programme has taken from V4's Type column rather than from the prototype.",
         "Main validates the number of animals with requiredIntegerInRange(animalsField(index), { min: 1 }) and no maximum (frontend origin/main:src/server/app/sets/live-animals/journeys/linear/features/commodities/consignment-details/fields.js:18-27), so the cap is new. The error belongs on the line's own field, as the animals and packages errors already do.",
         "Build this after question 5 is answered if the answer is quick; otherwise build the default (the value cap) and say so in the commit, since a length rule is a small change on top."
       ],
-      "gate": null
+      "gate": null,
+      "merge": {
+        "frontend": "origin/main",
+        "tests": "origin/main"
+      },
+      "commit": "731f6c7b 8d08cfe",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/456",
+          "repo": "trade-imports-animals-frontend",
+          "number": 456
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/79",
+          "repo": "trade-imports-ins-tests",
+          "number": 79
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-performance-tests/pull/30",
+          "repo": "trade-imports-performance-tests",
+          "number": 30
+        }
+      ]
+    },
+    {
+      "id": "inc-251",
+      "title": "The theme branch takes in what main has landed in the tests repo since the engineering review",
+      "kind": "chore",
+      "theme": "commodities-and-reason",
+      "status": "done",
+      "repos": [
+        "tests"
+      ],
+      "merge": {
+        "tests": "origin/main"
+      },
+      "gatePhases": [],
+      "awaitCi": false,
+      "dependsOn": [],
+      "detail": "trade-imports-ins-tests pull request 79 is CONFLICTING/DIRTY against main, so it keeps its last check rollup and GitHub does not run its checks again. The branch is 19 commits ahead and 3 behind. One file conflicts: tests/animals/e2e/journeys/dynamics/notification-data-gaps.spec.ts. Both sides extracted the same inline submit-and-poll duplication into a helper, but into different helpers, which is why git cannot reconcile them. Main (6e0bbcc, EUDPA-637) added waitForNotificationRow to config/animals-dynamics.ts and also deleted the file's long explanatory comment block. The branch (f404140, the theme's engineering review) added utils/playwright/submitted-dynamics-row.ts exporting submittedDynamicsRow, and separately replaced the GBN_AG_CATTLE_COMMON_NAME import with commodityLines so the species reads its label. Main's helper is the mechanism that exists: it lives in config/animals-dynamics.ts and has two callers, notification-data-gaps.spec.ts and notification-data.spec.ts. The branch's helper has one caller and was created in the same commit. The house rule is to extend the mechanism that exists rather than add a second beside it, so main's helper wins and the branch's is deleted. The branch's species-label change is this theme's own work and is kept. The frontend and performance-tests pull requests are MERGEABLE and are not part of this row.",
+      "acceptanceCriteria": [
+        "origin/main is merged into feat/EUDPA-693-commodities-and-reason in trade-imports-ins-tests as one two-parent merge commit, with no conflict markers left in any file.",
+        "tests/animals/e2e/journeys/dynamics/notification-data-gaps.spec.ts keeps main's waitForNotificationRow, imported from @config/animals-dynamics, as the only way that spec waits for a submitted notification row.",
+        "tests/animals/e2e/journeys/dynamics/notification-data-gaps.spec.ts keeps main's deletion of the long explanatory comment block at the head of the file.",
+        "tests/animals/e2e/journeys/dynamics/notification-data-gaps.spec.ts keeps the branch's commodityLines import from @domain/animals/constants/commodity-lines in place of GBN_AG_CATTLE_COMMON_NAME, so the species reads its label.",
+        "utils/playwright/submitted-dynamics-row.ts is deleted, and no file imports submittedDynamicsRow, because waitForNotificationRow is the one owner of that rule.",
+        "notification-data.spec.ts still calls waitForNotificationRow and is unchanged by this row.",
+        "The trade-imports-ins-tests pull request reports no conflict with its base, so GitHub runs its checks again."
+      ],
+      "notes": [
+        "A merge row rather than a merge field, on the inc-247 and inc-250 pattern. inc-028 carried merge: origin/main and absorbed 11 commits at its branch stage, but main moved again and the theme's engineering review then edited a file main had also edited. A row that has already pushed re-enters at the CI watch stage, past the branch stage where a merge field fires, so only a row can take this in.",
+        "awaitCi is false because the pull request cannot run checks while it conflicts. The checks run once the conflict clears.",
+        "The conflict is the house rule the engineering review was itself enforcing - one rule, one owner - arriving from both sides at once. Nothing is wrong with either helper; main's simply has the prior claim and the wider use."
+      ],
+      "sources": [],
+      "requirements": [],
+      "openQuestions": [
+        "Twin fix: trade-imports-ins-tests tests/animals-admin/e2e/features/outbox-event-notification.spec.ts needs the same one-concept-one-name fix as notification-data-gaps.spec.ts - at :122 it asserts expect(line.commonName).toBe(commodityLines.cattle.commonName) off the separately imported module constant (:4) while the adjacent :123 asserts expect(line.scientificName).toBe(cowLine.species.latinName) off the destructured commodity line (:47), and MANDATORY_COMMODITY_LINES.cattle.species IS commodityLines.cattle (domain/animals/constants/journey-commodity-line-answers.ts:29), so cowLine.species.commonName returns the identical value with no import. Not fixed in inc-251 because that file is untouched by both sides of the origin/main merge and editing it would add unreviewed change to the merge commit; it needs its own increment, which should also drop the then-unused commodityLines import.",
+        "Acceptance criterion 4 wording is superseded by the house-rule fix inside inc-251: it asks the spec to keep the commodityLines import from @domain/animals/constants/commodity-lines, but the one-concept-one-name fix reads the common name off cowLine.species (the same object, per journey-commodity-line-answers.ts:29), which leaves that import unused and so lint-failing. The substance of criterion 4 still holds and is what the plan now proves - the species reads its label from the commodity-lines constants reached through the submitted answers, and GBN_AG_CATTLE_COMMON_NAME is gone from the file and from the repo. Criterion 4 should be reworded to pin the label source rather than the import statement.",
+        "For the designer: the selected panel on the commodity page gives every remove chip the accessible name \"Remove <species label>\" (frontend src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/selected-summary.js:16-20 passes hiddenText: label), which matches what the design source sets - \"Remove <Latin name>\", such as \"Remove Bos taurus\" (backlog commodities-and-reason inc-013 acceptance criterion 4, from trace:prototype-dr2-1 p3-036, p3-074, p13-023 and prototype:dr2-1-specs p1-060). The design source shows only one commodity code per species, but the journey supports one species under two codes (live-animals/docs/services.md:62-64; search.fit.spec.js:310-316 covers Gallus gallus under 01051111 and 01059400), and in that case two chips carry the identical accessible name \"Remove Gallus gallus (Chicken)\", told apart only by their form value. search.njk:65-72 renders the code as a bold <p> followed by an unassociated <ul>, so the markup does not say which code a chip belongs to either. WCAG 2.4.6 requires a control name to identify its purpose (https://www.w3.org/WAI/WCAG21/Understanding/headings-and-labels.html) and the sibling Selected commodities table already names its control \"Remove <code> <label>\" (features/commodities/view-model/selected-commodity-rows.js:51). Options: (a) the panel chip reads \"Remove <code> <label>\" as the table does, (b) the commodity code becomes a real heading the chip list is associated with so \"Remove <label>\" stays unique within its group, or (c) keep it as it is and accept two identical names when one species is chosen under two codes. (a) or (b) needs copy.en.js and copy.cy.js changed together plus a test for the two-code case. Raised by the engineering review of the theme.",
+        "Open question from the engineering review (inc-026, acceptance criterion 2: a check fails when the two drift apart, so the next MDM recapture cannot leave the fixture behind without someone noticing). Nothing compares the frontend fixture src/server/app/services/_capture/fixtures/commodities.json with what the MDM stub serves: fixtures.test.js:51-89 pins the fixture against nine hand-written code/Latin/common triples in the same repo, and live-animals/docs/services.md:108-118 states the hole outright - the fixture is derived by hand from the stub saved MDM response, neither suite compares the fixture against the other, and no automated check compares the two files. The two files live in trade-imports-animals-frontend and trade-imports-stub, so no in-repo test can compare them and any real check needs a repo this theme does not build in; deferred for that reason rather than rejected. Options: (a) have capture:live-animals (or a new script) regenerate the fixture from the stub saved 010 search response and assert a clean working tree in CI, (b) publish the fixture code|latinName|commonName vocabulary and assert it from trade-imports-ins-tests against what reference-data serves on the running stack, or (c) accept a hand-maintained fixture and keep the services.md paragraph that records the gap. inc-026 is not complete until one is chosen.",
+        "Open question from the engineering review (inc-028). The new quantity cap guards each species line (frontend .../commodities/consignment-details/fields.js:16-42, BACKEND_QUANTITY_MAX 2147483647) but not the per-commodity totals the backend stores: services/persistence/.../mapper-a/commodity.js:46-47 sends totalNoOfAnimals and totalNoOfPackages as the SUM of every line sharing a CN code into the animals backend Integer fields (CommodityComplement.java:16-17), so two 0102 lines of 2,000,000,000 animals each pass every frontend check and the PUT carries 4,000,000,000, above Integer.MAX_VALUE; the trader is refused at submit with no field to correct, while the error copy promises that a number of 2,147,483,647 or fewer is accepted. live-animals/docs/limits.md:22-37 records the gap rather than closing it. Deferred because closing it needs a decision code cannot settle and widens the row beyond the per-field rule inc-028 asked for. Options: (a) validate the per-commodity-code sums on Commodity details and raise the error on the lines of the offending code - if so, which line carries the error and what does it say, (b) leave the sum to the backend but log its refusal at warn with the journeyId and the commodity code so support can see it, and say in limits.md that the trader gets no field-level error for it, or (c) widen the backend fields to 64-bit so the design source cap holds and the frontend cap can go.",
+        "For the designer: Commodity details refuses a number of animals above 2,147,483,647 and tells the trader \"Number of animals must be 2,147,483,647 or fewer\" (frontend .../commodities/consignment-details/fields.js:16 BACKEND_QUANTITY_MAX and copy.en.js animalsAboveMax; pinned in the tests repo at page-objects/animals/consignment-details-page.ts:33 and tests/animals/e2e/pages/consignment-details.spec.ts:45-58). The design source sets a different cap: inc-028 cites confluence:6497338582 confluence-6497338582-p1-102, which caps the number of animals per line at 9,223,372,036,854,775,807, the largest signed 64-bit integer. The service enforces the narrower 32-bit limit because the animals backend stores CommodityComplement.totalNoOfAnimals, CommodityComplement.totalNoOfPackages and Species.noOfPackages as Java Integer (recorded in live-animals/docs/limits.md:22-28), and the design source says nothing about what a trader should be told when the stated limit cannot be stored, so the code chose both the limit and the sentence. GDS error-message guidance prefers telling the user what to do over quoting a system limit (https://design-system.service.gov.uk/components/error-message/). Options: (a) keep \"Number of animals must be 2,147,483,647 or fewer\", (b) change to wording that does not quote a system limit, such as \"Enter a smaller number of animals\", or (c) honour the design source cap by widening the backend fields to 64-bit. Raised by the engineering review of the theme."
+      ],
+      "commit": "c24dfe3b3ee342eae0156851e8be1ae625ad2caa",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/456",
+          "repo": "frontend",
+          "number": 456
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/79",
+          "repo": "trade-imports-ins-tests",
+          "number": 79
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-performance-tests/pull/30",
+          "repo": "trade-imports-performance-tests",
+          "number": 30
+        }
+      ]
     },
     {
       "id": "inc-029",
       "title": "The commodity page offers each commodity's types from MDM and narrows the species to them",
-      "detail": "The V4 data fields page gives a commodity line a Type selection beside its commodity and species, and says its values come from MDM. Where a type applies to the chosen commodity, the commodity page offers that commodity's types from MDM's type list and narrows the species on offer to the ones that type covers. Blocked: reference-data serves no type list today, so there is nothing for the page to offer.",
+      "detail": "The V4 data fields page gives a commodity line a Type selection beside its commodity and species, and says its values come from MDM. Where a type applies to the chosen commodity, the commodity page offers that commodity's types from MDM's type list and narrows the species on offer to the ones that type covers. Dropped from this theme on 6 November and raised as EUDPA-777: reference-data serves no type list, and serving one is the MDM integration's work, which nothing in this theme can do. The work is unchanged - only its home is. Tracking it here would hold the theme open indefinitely, the same reading that dropped inc-012.",
       "acceptanceCriteria": [
         "Where MDM holds types for the chosen commodity, the commodity page offers that commodity's types from MDM's list through trade-imports-reference-data. (confluence:6497338582 confluence-6497338582-p1-081)",
         "Choosing a type narrows the species on offer to the species that type covers, and a commodity with no types in MDM asks no type question. (confluence:6497338582)",
@@ -742,7 +1281,7 @@
       ],
       "dependsOn": [],
       "theme": "commodities-and-reason",
-      "status": "blocked",
+      "status": "dropped",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -762,15 +1301,20 @@
         "req-2130",
         "req-2131"
       ],
-      "openQuestions": [
-        "Blocked on reference-data serving MDM's type list. The commodity and species halves of req-2130 are already met: the frontend reads both from reference-data (frontend origin/main:src/server/app/sets/live-animals/services/commodities/client.js:7-16, and reference-data's CommoditySearchService). The type half is not: reference-data's CommodityGroup carries only a code and a list of species (referencedata origin/main:.../CommodityGroup.java:13-16), its CommoditySpecies only a Latin and a common name, and MDM's own commodity rows carry no populated type field. Who acts: whoever owns the MDM integration must serve the type list through reference-data, which the split-off reference-lists theme owns; then this row builds in the frontend."
-      ],
+      "openQuestions": [],
       "notes": [
         "Pick-up from the 2 November re-distil: req-2130 and req-2131, both new since the split, combined here because they are one page behaviour over one list. Their pick-up entries read 'Blocked on MDM commodities'; the block is narrowed to the type list alone, because the commodity and species lists arrived with EUDPA-617 on 27 October and that judgement was made against a 26 October repo extract.",
         "Main has a types seam already, but hard-coded rather than from MDM: typeFor and typesFor in services/commodities/rules.js read a TYPES_BY_CODE table holding Domestic and Game for 0102 only, with every other code a single blank type, and the GAME_SPECIES set naming Bos spp. (frontend origin/main:rules.js:82-110). The EUDPA-669 branch widens that set but keeps the table. So this row replaces a local table with MDM's list, the same shape of change inc-012's naming question would need.",
-        "Note the Domestic/Game split on 0102 came from the IPAFFS commodity-categories extract rather than from MDM, per the EUDPA-669 branch's own doc, so whoever builds this should check whether MDM's type list reproduces it before deleting the table."
+        "Note the Domestic/Game split on 0102 came from the IPAFFS commodity-categories extract rather than from MDM, per the EUDPA-669 branch's own doc, so whoever builds this should check whether MDM's type list reproduces it before deleting the table.",
+        "Pre-flight 3 Nov: the block was re-checked against current main rather than the 26 Oct extract, because a lifted block silently withholds work. It still holds. reference-data's commodity package on origin/main is CommoditiesController, CommodityGroup, CommodityLine, CommoditySearchResponse, CommoditySearchService, CommoditySpecies, SpeciesCheckRequest/Response/Service, and CommodityGroup is a record of code plus List<CommoditySpecies> only - no type field, no type list, and nothing matching commodityType, animalSubcategory or breedCategory anywhere in src/main/java. So there is still nothing for the commodity page to offer, and the row stays blocked.",
+        "6 November 2026: raised as EUDPA-777, a Story under EUDPA-328, covering both halves - reference-data serving MDM's type list, and the commodity page offering the type question and narrowing species. req-2130 and req-2131 move with it. https://eaflood.atlassian.net/browse/EUDPA-777",
+        "The block was re-checked against main on 6 November before the ticket was raised, and still holds: reference-data's CommodityGroup is a record of code plus a list of CommoditySpecies, with no type field, and nothing matching commodityType, animalSubcategory or breedCategory anywhere in src/main/java."
       ],
-      "gate": null
+      "gate": null,
+      "merge": {
+        "frontend": "origin/main",
+        "tests": "origin/main"
+      }
     }
   ]
 }

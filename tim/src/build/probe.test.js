@@ -1,7 +1,15 @@
 import { describe, test, expect, afterEach } from 'vitest'
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import {
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  watch,
+  writeFileSync
+} from 'node:fs'
+import { createServer } from 'node:http'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
+import { setTimeout as sleep } from 'node:timers/promises'
 import {
   createRepoOnBranchFromMain,
   git as gitIn
@@ -23,11 +31,68 @@ const PRICE_CHECK = [
 
 let root
 let logsDir
+let service
 
-afterEach(() => {
+afterEach(async () => {
+  await service?.stop()
+  service = undefined
   rmSync(root, { recursive: true, force: true })
   rmSync(logsDir, { recursive: true, force: true })
 })
+
+const QUICK_RELOAD = {
+  stopWithinMs: 1_500,
+  startWithinMs: 3_000,
+  intervalMs: 50
+}
+
+const priceOf = (source) => {
+  const number = (name) =>
+    Number(source.match(new RegExp(`${name} = ([\\d.]+)`))?.[1] ?? Number.NaN)
+  return number('basePrice') * (1 + number('vatRate'))
+}
+
+const listenWith = (port, handler) =>
+  new Promise((resolve) => {
+    const server = createServer(handler)
+    server.listen(port, '127.0.0.1', () => resolve(server))
+  })
+
+const close = (server) =>
+  new Promise((resolve) => {
+    server.closeAllConnections()
+    server.close(resolve)
+  })
+
+const reloadingPriceService = async (sourcePath, { restarts = true } = {}) => {
+  const serveFrom = (source) => (request, response) =>
+    response.end(request.url === '/health' ? 'ok' : String(priceOf(source)))
+  let server = await listenWith(0, serveFrom(readFileSync(sourcePath, 'utf8')))
+  const { port } = server.address()
+  let restarting = Promise.resolve()
+  const restart = async () => {
+    await close(server)
+    await sleep(150)
+    server = await listenWith(port, serveFrom(readFileSync(sourcePath, 'utf8')))
+  }
+  const watcher = watch(sourcePath, () => {
+    if (restarts) restarting = restarting.then(restart)
+  })
+  return {
+    port,
+    stop: async () => {
+      watcher.close()
+      await restarting
+      if (server.listening) await close(server)
+    }
+  }
+}
+
+const servedPriceCheck = (port) => [
+  process.execPath,
+  '-e',
+  `fetch('http://127.0.0.1:${port}/price').then((r) => r.text()).then((price) => process.exit(Number(price) === 12 ? 0 : 1))`
+]
 
 const git = (...args) => gitIn(root, ...args)
 
@@ -159,6 +224,54 @@ describe('runProbe', () => {
     expect(readFileSync(join(root, 'src', 'prices.js'), 'utf8')).toBe(edited)
   })
 
+  test('with a reload URL, runs each test against the service once it has restarted on the written file', async () => {
+    await committedRepo()
+    service = await reloadingPriceService(join(root, 'src', 'prices.js'))
+
+    const outcome = await probe({
+      inversion: { line: 2 },
+      testCommand: servedPriceCheck(service.port),
+      reloadUrl: `http://127.0.0.1:${service.port}/health`,
+      reloadTiming: QUICK_RELOAD
+    })
+
+    expect({
+      ...verdictOf(outcome),
+      reload: outcome.reload
+    }).toEqual({
+      redWhenInverted: true,
+      greenAfterRestore: true,
+      restored: true,
+      reload: { inverted: 'restarted', restored: 'restarted' }
+    })
+  })
+
+  test('with a reload URL whose service never restarts, runs no test and says so', async () => {
+    await committedRepo()
+    service = await reloadingPriceService(join(root, 'src', 'prices.js'), {
+      restarts: false
+    })
+
+    const outcome = await probe({
+      inversion: { line: 2 },
+      testCommand: servedPriceCheck(service.port),
+      reloadUrl: `http://127.0.0.1:${service.port}/health`,
+      reloadTiming: QUICK_RELOAD
+    })
+
+    expect({
+      ...verdictOf(outcome),
+      reload: outcome.reload,
+      logs: outcome.logs
+    }).toEqual({
+      redWhenInverted: null,
+      greenAfterRestore: false,
+      restored: true,
+      reload: { inverted: 'not-restarted', restored: 'not-restarted' },
+      logs: { inverted: null, restored: null }
+    })
+  })
+
   test('refuses a file outside the repo', async () => {
     await committedRepo()
 
@@ -192,7 +305,7 @@ describe('testCommandFor', () => {
     ])
   })
 
-  test('runs a Java test class through mvn verify, unit or integration', () => {
+  test('runs a Java test class through mvn verify without the JaCoCo coverage check, unit or integration', () => {
     expect(testCommandFor('src/test/java/uk/gov/NotificationIT.java')).toEqual([
       'mvn',
       '-B',
@@ -200,7 +313,8 @@ describe('testCommandFor', () => {
       '-Dtest=NotificationIT',
       '-Dit.test=NotificationIT',
       '-Dsurefire.failIfNoSpecifiedTests=false',
-      '-Dfailsafe.failIfNoSpecifiedTests=false'
+      '-Dfailsafe.failIfNoSpecifiedTests=false',
+      '-Djacoco.skip=true'
     ])
   })
 

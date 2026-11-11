@@ -223,36 +223,40 @@
     },
     {
       "id": "REQ-PLANTS-ORIGIN-010",
-      "name": "The back link opens the commodities list in the opening sequence, and otherwise depends on whether the journey already has an answer",
+      "name": "The back link opens the commodities list after Save and continue, and otherwise goes to where the user came from",
       "coverage": "full",
       "scenarios": [
         {
-          "id": "SCN-PLANTS-ORIGIN-010-A",
-          "name": "The back link opens the dashboard before any answer is saved",
+          "id": "SCN-PLANTS-ORIGIN-010-E",
+          "name": "The error summary's link to the origin page has a back link to the review",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.test.js", "test": "Should send Back to the dashboard while nothing is committed", "strength": "full", "notes": "asserts backLink is '/'" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/check-answers/controller.test.js", "test": "Should recheck origin after a commodity change and refuse Continue with a link to origin", "strength": "full", "notes": "red then green with the error summary's links carrying no trail" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/review.spec.ts", "test": "Back from the origin opened from the review's error summary opens the review", "strength": "full", "notes": "asserts the origin Back opens the review at its exact address; red then green with the error summary's links carrying no trail" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-ORIGIN-010-D",
+          "name": "On a draft opened from a Change link, the back link opens the review",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.test.js", "test": "Should go to %s", "strength": "full", "notes": "red then green with the page's Back ignoring the request's trail" }
           ]
         },
         {
           "id": "SCN-PLANTS-ORIGIN-010-B",
-          "name": "The back link opens Overview once an answer is saved",
+          "name": "The back link opens Overview when the page was opened from Overview",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js", "test": "sends Back to the overview once the notification has an answer and the page is opened from the overview", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.test.js", "test": "Should send Back to the overview once the notification has an answer", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.test.js", "test": "Should go to %s", "strength": "full", "notes": "the Overview case; red then green with Overview's start address the dashboard's" }
           ]
         },
         {
           "id": "SCN-PLANTS-ORIGIN-010-C",
-          "name": "In the opening sequence, the back link opens the commodities list",
+          "name": "After Save and continue, the back link opens the commodities list",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/origin.fit.spec.js", "test": "sends Back to the commodities list in the opening run", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/origin.spec.ts", "test": "following Back from origin to the commodities list and choosing Save and continue returns to origin, not the overview", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.test.js", "test": "Should send Back to the commodities list while the opening run is on", "strength": "partial", "notes": "href only" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.test.js", "test": "Should keep Back on the commodities list when the page is shown again after a refusal in the run", "strength": "partial", "notes": "href only" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/flow/run.test.js", "test": "Should send origin back to the commodities list", "strength": "partial", "notes": "the run policy's answer only" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/origin/controller.test.js", "test": "Should go to %s", "strength": "full", "notes": "red then green with the page's Back ignoring the request's trail" }
           ]
         }
       ]
@@ -267,14 +271,7 @@
           "name": "Saving a country completes the origin row",
           "coverage": "full",
           "tests": [
-            {
-              "type": "e2e",
-              "repo": "trade-imports-ins-tests",
-              "file": "tests/plants/e2e/features/origin.spec.ts",
-              "test": "the origin task row reads Completed once a country is saved",
-              "strength": "full",
-              "notes": ""
-            }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/origin.spec.ts", "test": "the origin task row reads Completed once a country is saved", "strength": "full", "notes": "" }
           ]
         }
       ]
@@ -309,14 +306,14 @@
     {
       "id": "REQ-PLANTS-ORIGIN-013",
       "name": "With JavaScript, the country search has a joined search button",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-PLANTS-ORIGIN-013-A",
           "name": "The search button is GOV.UK blue with a white magnifying glass",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/origin.spec.ts", "test": "shows a GOV.UK blue search button with a white magnifying glass icon", "strength": "partial", "notes": "not probed: the stack serves the frontend as built" }
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/type-ahead.fit.spec.js", "test": "draws the search button GOV.UK blue with a white magnifying glass", "strength": "full", "notes": "asserts the button's computed background and its glass from the button's before pseudo-element; red then green with the blue style replaced by white, with a dark glass background and with the button's class removed" }
           ]
         },
         {
@@ -333,30 +330,30 @@
     {
       "id": "REQ-PLANTS-ORIGIN-014",
       "name": "With JavaScript, the country search announces its results",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-PLANTS-ORIGIN-014-A",
           "name": "The search box is described by the assistive hint",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/origin.spec.ts", "test": "the country search box is described by the assistive hint and shows its placeholder and no hint", "strength": "partial", "notes": "" }
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/type-ahead.fit.spec.js", "test": "describes the search box by the assistive hint", "strength": "full", "notes": "red then green with the assistive hint text overridden" }
           ]
         },
         {
           "id": "SCN-PLANTS-ORIGIN-014-B",
           "name": "The number of results is announced after typing",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/origin.spec.ts", "test": "announces the number of results after typing", "strength": "partial", "notes": "not probed: the stack serves the frontend as built" }
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/type-ahead.fit.spec.js", "test": "announces how many results are available after typing", "strength": "full", "notes": "red then green with the results status text overridden" }
           ]
         },
         {
           "id": "SCN-PLANTS-ORIGIN-014-C",
           "name": "The highlighted country is announced",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/origin.spec.ts", "test": "announces the highlighted country after moving onto its suggestion", "strength": "partial", "notes": "not probed: the stack serves the frontend as built" }
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/type-ahead.fit.spec.js", "test": "announces the highlighted country with its place among the results", "strength": "full", "notes": "red then green with the highlighted-option status text overridden" }
           ]
         }
       ]

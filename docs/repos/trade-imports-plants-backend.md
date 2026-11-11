@@ -19,13 +19,13 @@ Does NOT own:
 - Journey UI, validation copy or flow: the plants frontend does.
 - Reference data, addresses, identity.
 - Outbound publishing: no outbox, no GBN-AG event publishing and no PIMS routing exist yet, and unlike the animals backend, no SQS, SNS or S3 code is present. This is a gap to close, not the intended end state: an outbox is planned for the plants backend, on the same pattern as the animals backend (see [`architecture-overview.md`](architecture-overview.md#known-gaps-and-inconsistencies)).
-- Authentication: no auth or JWT dependency is in `pom.xml` and no security config was found. Unclear from code whether access control relies on the platform network.
+- Authentication: no auth or JWT dependency is in `pom.xml`. Trader notification routes trust the caller's `Trade-Imports-Organisation-Id` header for tenant scoping (400 when missing or blank); `GET /notifications/reference-numbers` and bulk `DELETE /notifications` are unscoped admin routes.
 
 ## Integrations
 
 | Direction | System | Mechanism | Purpose |
 |-----------|--------|-----------|---------|
-| Inbound | trade-imports-plants-frontend | REST, port 8091, `/notifications` (POST, PUT `/{ref}`, `/{ref}/copy`, `/submit`, `/amend`, `/cancel-amend`, `/soft-delete`, GET list, GET `/{ref}/fulfilments`, GET `/reference-numbers`, DELETE) | Notification CRUD and lifecycle |
+| Inbound | trade-imports-plants-frontend | REST, port 8091, `/notifications` (trader routes require `Trade-Imports-Organisation-Id`; unscoped: GET `/reference-numbers`, bulk DELETE) | Notification CRUD and lifecycle |
 | Inbound | trade-imports-ins-tests | HTTP via workspace stack | End-to-end tests (the `plants` domain) |
 | Outbound | MongoDB | Spring Data, database `trade-imports-plants-backend` | `notifications` aggregate and `audit` collections |
 | Outbound | CloudWatch (EMF) | AWS embedded metrics to `AWS_EMF_AGENT_ENDPOINT` | Metrics |

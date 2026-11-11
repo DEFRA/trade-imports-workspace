@@ -25,6 +25,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { readScope, inputFile, writeScopedPage } from '../../scope.mjs'
+import { backlogFiles, declaredDependencies } from '../../deps.mjs'
 
 const canonicalBuild = path.dirname(fileURLToPath(import.meta.url))
 const canonicalPage = path.resolve(canonicalBuild, '..')
@@ -78,18 +79,6 @@ function readJson(file) {
   }
 }
 
-/** Every backlog in the workarea: the main one, then one per split-off theme. */
-function backlogFiles() {
-  const files = [path.join(workarea, 'backlog.json')]
-  const themesDir = path.join(workarea, 'themes')
-  for (const entry of fs.readdirSync(themesDir, { withFileTypes: true })) {
-    if (!entry.isDirectory()) continue
-    const file = path.join(themesDir, entry.name, 'backlog.json')
-    if (fs.existsSync(file)) files.push(file)
-  }
-  return files
-}
-
 const editorial = readJson(EDITORIAL_FILE)
 const meta = readJson(META_FILE).themes
 const splitThemes = readJson(SPLIT_FILE).themes || []
@@ -99,7 +88,7 @@ const prsByBranch = readJson(PRS_FILE).branches || {}
 const prsFetchedAt = readJson(PRS_FILE).fetchedAt
 const delivery = readJson(DELIVERY_FILE).themes || {}
 
-const files = backlogFiles()
+const files = backlogFiles(workarea)
 const everyRow = []
 for (const file of files) {
   const backlog = readJson(file)
@@ -115,9 +104,9 @@ if (!rows.length) throw new Error('the scope in ' + path.join(here, 'scope.json'
 /**
  * A row id is unique within one backlog, but two backlogs can carry the same
  * one: the split-off themes numbered their new rows from a sequence the parent
- * backlog was already using. A dependency is therefore read in the depending
- * row's own backlog first, which always lands on the row that was meant. A
- * clash that forces a lookup across backlogs throws instead of guessing.
+ * backlog was already using. A dependency is therefore read in the backlog it
+ * names, then in the depending row's own, either of which lands on the row that
+ * was meant. A clash neither settles throws instead of guessing.
  */
 const rowInBacklog = new Map(rows.map((row) => [row.from + '#' + row.id, row]))
 
@@ -132,16 +121,20 @@ const sharedIds = [...rowsOfId]
   .map(([id, found]) => ({ id, backlogs: found.map((row) => row.from).sort() }))
   .sort((a, b) => a.id.localeCompare(b.id))
 
-/** The row a dependency names, read in the depending row's own backlog first. */
-function dependency(backlog, dependencyId) {
-  const sameBacklog = rowInBacklog.get(backlog + '#' + dependencyId)
-  if (sameBacklog) return sameBacklog
-  const found = rowsOfId.get(dependencyId) || []
+/** The row a dependency names: the backlog it names, else the depending row's own. */
+function dependency(dep, ownBacklog) {
+  for (const backlog of [dep.backlog, ownBacklog]) {
+    if (!backlog) continue
+    const found = rowInBacklog.get(backlog + '#' + dep.id)
+    if (found) return found
+  }
+  const found = rowsOfId.get(dep.id) || []
   if (found.length === 0) return null
   if (found.length > 1) {
     throw new Error(
-      'the dependency on ' + dependencyId + ' in ' + backlog + ' names no row in that backlog, and ' +
-        dependencyId + ' is used by rows in themes ' +
+      'the dependency on ' + dep.id + ' in ' + ownBacklog + ' names no row in that backlog or in ' +
+        (dep.backlog || 'any backlog of its own') + ', and ' + dep.id +
+        ' is used by rows in themes ' +
         [...new Set(found.map((row) => row.theme))].sort().join(', ') +
         '. Renumber one of them before the page can say what waits on what.'
     )
@@ -151,8 +144,9 @@ function dependency(backlog, dependencyId) {
 
 /** Everything a row waits on, whichever field records it. */
 function dependenciesOf(row) {
-  const ids = [...(row.dependsOn || []), ...(row.externalDependsOn || []).map((dep) => dep.id)]
-  return [...new Set(ids)].map((id) => dependency(row.from, id)).filter(Boolean)
+  return declaredDependencies(workarea, row)
+    .map((dep) => dependency(dep, row.from))
+    .filter(Boolean)
 }
 
 /* --------------------------------------------------------------- statuses --- */

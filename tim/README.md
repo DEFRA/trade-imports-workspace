@@ -537,6 +537,15 @@ unit rungs read. A red or flaky E2E rung leaves each stack container's log
 beside its own, as `gate-stack-after-<repo>-<rung>-<container>.log`, written
 before the stack goes.
 
+On a Mac the gate stops the machine sleeping until it ends, with
+`caffeinate -s -i` waiting on the gate's own process. A Mac nobody is using
+falls asleep and then keeps waking for a few seconds of maintenance and
+sleeping again. Each sleep freezes the Docker VM, the stack and Playwright
+together, so pages that answer in a quarter of a second take several, and
+the long cross-service E2E tests run out of time. Holding a sleep assertion
+is the fix, not a longer timeout. If `caffeinate` cannot start, the gate says
+so on stderr and carries on.
+
 If the stack was down, the gate starts it, leases it and always releases it
 afterwards. If this holder already leases it, the gate does not start it
 again: it rebuilds only the services whose image inputs changed, restarts
@@ -560,8 +569,10 @@ CDP script. The tests repo's E2E is one `e2e` rung that runs its whole suite; a
 machine that times out under the full stack sets `PLAYWRIGHT_WORKERS` (e.g. 2
 on a 16 GB machine) in its shell profile.
 
-A rung whose `run` is `tim build duplication` runs that command in the
-rung's folder. Every repo in gates.json has one, in the unit phase.
+A rung whose `run` is `tim build duplication` or `tim build coverage` runs that
+command in the rung's folder, in the unit phase. Every repo in gates.json has a
+duplication rung; a repo whose suite writes a coverage report has a coverage
+rung too, straight after the rung that writes it.
 
 ### `tim build duplication` — test code a branch copies
 
@@ -583,6 +594,40 @@ The result is `{base, minLines, minTokens, changedTestFiles, clones}`. Each
 clone is `{lines, tokens, first, second}`, and `first` and `second` are
 `{file, startLine, endLine}`. It exits 1 with `DUPLICATION_FOUND` when it
 finds a clone, and 2 when `--base` does not exist.
+
+### `tim build coverage` — how much of what a branch adds its tests cover
+
+```bash
+tim build coverage trade-imports-ins-frontend --json   # a folder under repos/, or a path
+tim build coverage . --base origin/main --floor 90     # the defaults
+```
+
+Measures what a SonarCloud `new_coverage` condition measures, locally and
+before the push rather than after it: every line and condition added since
+`--base`, committed or not, that the repo's own coverage report knows about,
+covered over coverable. It reads the report the suite has already written —
+`coverage/lcov.info` for a Node project, `target/site/jacoco/jacoco.xml` beside
+each `pom.xml` of a Java one, each found beside its own manifest so a
+sub-project such as `tim/` is read in its own folder — and runs no test itself.
+
+It applies the project's own Sonar properties, from
+`sonar-project.properties` or a pom's `<sonar.*>` properties: a file must be
+under `sonar.sources` where that is set, and out of `sonar.exclusions`,
+`sonar.coverage.exclusions` and `sonar.test.inclusions`. Without them the
+number counts files the gate never measures — a FIT helper, say — and reads
+far below the gate's own. A changed file the report does not name at all, such
+as a test, is left out either way.
+
+The result is `{base, floor, reports, measuredAt, files, toCover, met, percent,
+floorMet}`, and each file is `{file, lines, covered, conditions,
+coveredConditions, uncovered}`. It exits 1 with `COVERAGE_UNDER_FLOOR` below
+the floor, naming every uncovered line, and 2 when no report has been written
+or `--base` does not exist.
+
+`measuredAt` is when the report was written, and the text output says so: a
+narrow test run (`npm test -- one.test.js`) overwrites the report with just
+that run's files, so the number is the whole repo only when the whole suite
+wrote it. In the gate the rung runs straight after the suite, so it is.
 
 ### `tim build push-workflows` — which workflows a pushed commit starts
 
@@ -654,8 +699,9 @@ it runs the test, writes the file back byte for byte, checks git shows no
 change to it, and runs the test again. Give the test as `--test-file` or as a
 command after `--`, with every option before the `--`. `--test-file` runs a
 `*.test.js` through `npm test -- --no-coverage`, a `*.fit.spec.js` through
-`test:fit:ci`, and a Java class through `mvn verify` with `-Dtest` and
-`-Dit.test`.
+`test:fit:ci`, and a Java class through `mvn verify` with `-Dtest`,
+`-Dit.test` and `-Djacoco.skip=true`: one class never meets the project's
+coverage threshold, so the check would fail the run whatever the test did.
 
 The result is `{file, inversion, redWhenInverted, greenAfterRestore, restored,
 logs}`. `redWhenInverted` true means the test failed without the line, so it
@@ -704,18 +750,20 @@ JSON also carries `agentMs`, the sum. The increment and stage come from the
 agent's label (`inc-004 review:frontend` → `inc-004`, `review`); agents with no
 increment id sit under `(run)`.
 
-### `tim jira create|attach|link|assign|epics` — the Jira write surface
+### `tim jira create|update|attach|link|assign|epics` — the Jira write surface
 
-`tim jira ticket`/`comments` and `epics` are read-only. `create`, `attach`,
-`link` and `assign` write to Jira, so they follow one rule: **dry run by
-default, a real write needs an explicit `--confirm`** (or, for `create`, a
-matching `--confirm <planId>`). Nothing in the `.claude/settings.json`
+`tim jira ticket`/`comments` and `epics` are read-only. `create`, `update`,
+`attach`, `link` and `assign` write to Jira, so they follow one rule: **dry
+run by default, a real write needs an explicit `--confirm`** (or, for
+`create`, a matching `--confirm <planId>`). Nothing in the `.claude/settings.json`
 allowlist stops `tim jira *`, so this contract — not the allowlist — is what
 keeps a skill from creating something nobody agreed to.
 
 ```bash
 tim jira create --from ticket.json --json          # dry run: prints the plan (fields, attachments with sizes, warnings) and a planId
 tim jira create --from ticket.json --confirm <planId> --json   # creates the issue, attaches every file, links every `relates`, writes ticket.created.json
+tim jira update EUDPA-200 --summary "A clearer title"   # dry run: the fields that would change, and their new values
+tim jira update EUDPA-200 --description-file description.txt --confirm  # writes only the fields that differ, then reads the ticket back to check
 tim jira attach EUDPA-200 diagram.svg notes.md     # dry run: what would be attached
 tim jira attach EUDPA-200 diagram.svg --confirm    # attaches for real; --replace re-attaches over an existing filename instead of adding a duplicate
 tim jira link EUDPA-200 relates EUDPA-100          # dry run
@@ -761,6 +809,16 @@ other way round it fails with `UNKNOWN` and names the stored direction.
 reports `unchanged`, even with `--confirm`. `--json` puts
 `{mode, key, accountId, previousAssignee, assignee}` in `result` (`mode` is `dry-run`,
 `assigned` or `unchanged`).
+
+`tim jira update` rewrites a ticket that already exists: `--summary` for the
+title, and `--description` or `--description-file` (not both) for the
+description, as Jira wiki markup. It reads the ticket first and sends only
+the fields whose value differs, so a field already holding that value is
+left out of the write and a re-run reports `unchanged` rather than stamping
+the ticket's history with a no-op. After the write it reads the ticket back
+and fails with `UNKNOWN`, naming the field, if Jira still shows the old
+value. `--json` puts `{mode, key, fields, before, url, after}` in `result`
+(`mode` is `dry-run`, `updated` or `unchanged`).
 
 `tim jira comment` takes the text from `--body` or `--file`, not both, and
 sends it as Jira wiki markup. A ticket that already has a comment with the

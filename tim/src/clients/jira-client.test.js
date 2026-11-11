@@ -305,6 +305,49 @@ describe('createIssue', () => {
   })
 })
 
+describe('updateIssue', () => {
+  test('puts the fields verbatim and returns the key and browse url', async () => {
+    mockPool(BASE)
+      .put('/rest/api/2/issue/EUDPA-200', {
+        fields: { summary: 'A clearer title' }
+      })
+      .reply(204)
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    const result = await client.updateIssue('EUDPA-200', {
+      summary: 'A clearer title'
+    })
+
+    expect(result).toEqual({
+      key: 'EUDPA-200',
+      url: `${BASE}/browse/EUDPA-200`
+    })
+  })
+
+  test('maps a 400 with field errors to TimError(USAGE) carrying the reasons', async () => {
+    mockPool(BASE)
+      .put('/rest/api/2/issue/EUDPA-200')
+      .reply(400, { errors: { summary: 'Summary is required.' } })
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    await expect(
+      client.updateIssue('EUDPA-200', { summary: '' })
+    ).rejects.toMatchObject({
+      name: 'TimError',
+      code: 'USAGE',
+      message: expect.stringContaining('Summary is required.')
+    })
+  })
+
+  test('maps 404 to TimError(NOT_FOUND)', async () => {
+    mockPool(BASE).put('/rest/api/2/issue/EUDPA-200').reply(404, {})
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    await expect(
+      client.updateIssue('EUDPA-200', { summary: 'x' })
+    ).rejects.toMatchObject({ name: 'TimError', code: 'NOT_FOUND' })
+  })
+})
+
 describe('attachFiles', () => {
   let filePath
 

@@ -13,7 +13,10 @@ The `<AREA>` in every `REQ-<AREA>-NNN` / `SCN-<AREA>-NNN-<LETTER>` ID. Assigned 
 | ins/authentication | INS-AUTH |
 | ins/notification-dashboard | INS-DASH |
 | ins/notification-tracking | INS-TRACK |
+| ins/notification-type | INS-NTYPE |
 | ins/page-titles | INS-PAGE-TITLE |
+| ins/service-navigation | INS-NAV |
+| ins/transporters | INS-TRANSPORTER |
 | live-animals/addresses | ADDR |
 | live-animals/authentication | AUTH |
 | live-animals/journey-flow | FLOW |

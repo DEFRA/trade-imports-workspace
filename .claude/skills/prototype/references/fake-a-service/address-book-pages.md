@@ -35,7 +35,7 @@ book API refuses, with the API's own messages.
 | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `listAddresses(orgId, { page, q, countryCode })` | `{ items, page, pageSize, totalItems, totalPages }`, 25 to a page, as the API pages. Starts with the stub address book and the release's extra parties. |
 | `getAddress(orgId, id)`                          | One address. Throws an error with `status: 404` when the organisation has none by that id.                                                              |
-| `createAddress(orgId, body)`                     | Saves and returns the address, with an `id` made from its name. Any extra field (a `usages` list, say) is kept.                                         |
+| `createAddress(orgId, body)`                     | Saves and returns the address, with an `id` made from its name. Any extra field (its `roles`, say) is kept.                             |
 | `updateAddress(orgId, id, body)`                 | Lays the changes over the address and returns it.                                                                                                       |
 | `deleteAddress(orgId, id)`                       | Deletes it (a starter address is hidden for that organisation until Reset).                                                                             |
 | `isValidationFailure(error)`                     | True for the 400 a refused save throws.                                                                                                                 |
@@ -147,9 +147,10 @@ the wire names above, so the form posts straight to `createAddress`.
 
 **Change an address.** The same form on `/address-book/{addressId}/change`,
 filled from `getAddress`, saving with `updateAddress(orgId, id, values)`.
-Give the `{addressId}` route an `addressIdParams` Joi object (with a
-`failAction` that answers "not found", following
-`~/git/defra/trade-imports-workspace/repos/trade-imports-ins-frontend/src/server/app/features/address-book/address-id-params.js`),
+Give the `{addressId}` route an `addressIdParams` Joi object and a
+`failAction` that redirects back to the address book, following
+`redirectingRecordIdRouteOptions` in
+`~/git/defra/trade-imports-workspace/repos/trade-imports-ins-frontend/src/server/app/features/address-book/record-id-params.js`,
 so a stale or made-up id never reaches the handler.
 
 **Find an address by postcode.** The old prototype had a lookup. There is no
@@ -157,14 +158,19 @@ address lookup service here, so build the manual form, and log a design gap:
 "Find an address by postcode: needs a real service (an address lookup such as
 OS Places); the prototype asks for the address by hand".
 
-**Address categories** ("what is this address used for": consignor,
-consignee, importer). The real address book has no types on purpose: the
-same address can be a consignor on one notification and a consignee on the
-next. To test the idea, add a `govukCheckboxes` named `usages` to the add
-form. `createAddress` keeps the list on the record, and the list page can
-show it or filter by it. Log it as a design gap that says the real address
-book has no categories, so it needs a decision from the INS team, not only a
-build. Add a line to `openQuestions` in the service's `contract.json` too.
+**Address types and roles** ("what is this address used for": consignor,
+consignee, importer). The real address book has them, so copy its pages
+rather than inventing a shape. 'Add a new address' first opens 'Choose an
+address type', offering 'Origin or Consignor', 'Destination, Consignee or
+Importer' and 'Branch' (`address-type/`). The add form then asks 'What can
+this address be used for?' with a `govukCheckboxes` named `roles`, offering
+only the chosen type's roles (`add/` and `fields.js`). The list has one tab
+per address type (`address-book-tabs.js`) and a Type filter that narrows the
+open tab to one role (`list/`). Every address holds at least one role, and
+`createAddress` sends the roles; the address type is only the pages'
+grouping of roles, worked out from them and never stored. All of these are under
+`~/git/defra/trade-imports-workspace/repos/trade-imports-ins-frontend/src/server/app/features/address-book/`,
+with their labels in its `copy/copy.en.js`.
 
 ## Step 3: "are you sure?" before deleting
 
@@ -206,5 +212,4 @@ export const copy = {
 | address-book | Address book pages: list, add by hand, change, delete with a check page | Prototype-owned service `ins-address-book` (`src/server/app/services/ins-address-book`), a copy of the INS frontend's API | Belongs to the Import Notification Service frontend: it owns the address book and is its only writer; plants-frontend only reads it. The INS team needs the design, not the plants team. | <frame> |
 ```
 
-and, when built, one row each for the postcode lookup and address categories
-as described above.
+and, when built, one row for the postcode lookup as described above.

@@ -36,15 +36,27 @@ The system MUST show the chosen address in a role's section, in place of the lin
 - **THEN** that role's section shows the name in bold, then each address line on its own line, the last line ending with the country, such as "Hull, HU9 5PX, United Kingdom"
 - **AND** the section offers "Change" and "Edit details" links, and does not offer the link that adds an address
 
-### Requirement: The back link returns to Overview
+### Requirement: The back link returns to where the user came from
 **ID**: REQ-CONSIGN-ADDR-003
-The system MUST return the user to Overview when they follow the back link from the consignment addresses page.
+The system MUST return the user, when they follow the back link from the consignment addresses page, to the page they saved and continued from, to Overview when they opened it from its Overview task, and to the review when they opened it from a Change link on the review, as `live-animals/journey-flow` describes. That page is Upload documents.
 
-#### Scenario: The back link opens Overview
+#### Scenario: After Save and continue, the back link opens the page before
 **ID**: SCN-CONSIGN-ADDR-003-A
-- **GIVEN** the user is on the consignment addresses page
+- **GIVEN** the user reached the consignment addresses page by saving and continuing from Upload documents
+- **WHEN** they follow the back link
+- **THEN** that page is shown
+
+#### Scenario: The back link opens Overview when the page was opened from Overview
+**ID**: SCN-CONSIGN-ADDR-003-B
+- **GIVEN** the user opened the consignment addresses page from its task on Overview
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+#### Scenario: The back link opens the review when the page was opened from a Change link
+**ID**: SCN-CONSIGN-ADDR-003-C
+- **GIVEN** the review of a draft notification
+- **WHEN** the user follows the Change link that opens the consignment addresses page and then the back link
+- **THEN** the review is shown
 
 ### Requirement: Overview's task for this page shows Completed once every role has an address
 **ID**: REQ-CONSIGN-ADDR-004

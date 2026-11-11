@@ -79,7 +79,34 @@ beforeEach(() => {
       '\n'
     )
   )
+  mkdirSync(join(root, 'repos', 'trade-imports-x', 'src'), { recursive: true })
+  writeFileSync(
+    join(root, 'repos', 'trade-imports-x', 'src', 'a.test.js'),
+    "test('spins', () => {})"
+  )
 })
+
+const coverageLinking = (link) => {
+  const coverage = validCoverage()
+  const [requirement] = coverage.requirements
+  const [scenario] = requirement.scenarios
+  const [validLink] = scenario.tests
+  return {
+    ...coverage,
+    requirements: [
+      {
+        ...requirement,
+        scenarios: [{ ...scenario, tests: [{ ...validLink, ...link }] }]
+      }
+    ]
+  }
+}
+
+const writeCoverage = (coverage) =>
+  writeFileSync(
+    join(root, 'openspec', 'coverage', 'widgets', 'coverage.json'),
+    JSON.stringify(coverage)
+  )
 
 afterEach(() => {
   rmSync(root, { recursive: true, force: true })
@@ -95,6 +122,41 @@ describe('runSpecLint', () => {
     expect(result.findings).toEqual([])
     expect(result.capabilityCount).toBe(1)
     expect(result.skipped).toEqual([])
+  })
+
+  test('names a coverage link whose test title its file does not hold', async () => {
+    writeCoverage(coverageLinking({ test: 'spins twice' }))
+
+    const result = await runSpecLint({
+      workspaceRoot: root,
+      run: cleanOpenspecRun
+    })
+
+    expect(result.findings).toEqual([
+      {
+        check: 'test-titles',
+        capability: 'widgets',
+        message:
+          'SCN-WIDGET-001-A links the test "spins twice", which is not in trade-imports-x/src/a.test.js.'
+      }
+    ])
+  })
+
+  test('reports the repo of a coverage link it could not check as skipped', async () => {
+    writeCoverage(coverageLinking({ repo: 'trade-imports-y' }))
+
+    const result = await runSpecLint({
+      workspaceRoot: root,
+      run: cleanOpenspecRun
+    })
+
+    expect(result.skipped).toEqual([
+      {
+        check: 'test-titles',
+        repo: 'trade-imports-y',
+        reason: 'not checked out under repos/'
+      }
+    ])
   })
 
   test('flags a capability with a spec.md but no coverage.json', async () => {

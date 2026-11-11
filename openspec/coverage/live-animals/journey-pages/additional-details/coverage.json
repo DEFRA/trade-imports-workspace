@@ -64,42 +64,52 @@
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "unweaned validation: invalid option links to and focuses the group while preserving the valid certification", "strength": "full", "notes": "" }
           ]
+        },
+        {
+          "id": "SCN-ADDL-DETAILS-003-C",
+          "name": "Save and return to overview refuses the same invalid certification purpose, keeping a valid unweaned answer",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "certification validation: the same refusal holds Save and return to overview, keeping the valid unweaned answer checked", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-ADDL-DETAILS-003-D",
+          "name": "Save and return to overview refuses the same invalid unweaned answer, keeping a valid certification purpose",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/controller.test.js", "test": "Should refuse an out-of-list unweaned answer with the shared default message and keep the valid certification answer submitted alongside it", "strength": "full", "notes": "" }
+          ]
         }
       ]
     },
     {
       "id": "REQ-ADDL-DETAILS-004",
-      "name": "The back link returns to the page before it in the opening sequence, and to Overview otherwise",
+      "name": "The back link returns to where the user came from",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-ADDL-DETAILS-004-A",
-          "name": "The back link opens Overview when the page was opened from Overview",
+          "name": "After Save and continue, the back link opens the page before",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "back link returns to the notification hub", "strength": "full", "notes": "set-up visits the overview, so the run has ended" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/controller.test.js", "test": "Should go Back to the overview when the page is opened from the overview", "strength": "partial", "notes": "href only" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/controller.test.js", "test": "Should go to the page Save and continue was pressed on", "strength": "full", "notes": "Probed: the page's trail dropped from kit.trailBackLink turns this case red and restoring it turns it green" }
           ]
         },
         {
           "id": "SCN-ADDL-DETAILS-004-B",
-          "name": "In the opening sequence, the back link opens identification details when a chosen commodity needs identifiers",
+          "name": "The back link opens Overview when the page was opened from Overview",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "in the opening run, Back from Additional details opens Identification details when a chosen species needs identifiers", "strength": "full", "notes": "red with Identification details dropped from the run's Back candidates" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/controller.test.js", "test": "Should go Back to identification in the opening run when a chosen species needs identifiers", "strength": "partial", "notes": "href only; the page it opens is not followed" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/controller.test.js", "test": "Should keep Back on identification when the page is shown again after a refusal in the run", "strength": "partial", "notes": "href only" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should send the additional details page back to the animal identification page when a chosen species needs identifiers", "strength": "partial", "notes": "the run policy's answer only" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/controller.test.js", "test": "Should go to Overview when opened from Overview", "strength": "full", "notes": "Probed: the Overview start entry resolved to the dashboard in trail.js turns this case red and restoring it turns it green" }
           ]
         },
         {
           "id": "SCN-ADDL-DETAILS-004-C",
-          "name": "In the opening sequence, the back link opens commodity details when nothing chosen needs identifiers",
+          "name": "The back link opens the review when the page was opened from a Change link",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "in the opening run, Back from Additional details opens Commodity details when no chosen species needs identifiers", "strength": "full", "notes": "Atlantic salmon; red with Commodity details dropped from the run's Back candidates" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/controller.test.js", "test": "Should go Back to the consignment details in the opening run when no chosen species needs identifiers", "strength": "partial", "notes": "href only; the page it opens is not followed" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should send the additional details page back to the consignment details page when no chosen species needs identifiers", "strength": "partial", "notes": "the run policy's answer only" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/controller.test.js", "test": "Should go to the review when opened from a Change link", "strength": "full", "notes": "Probed: the page's trail dropped from kit.trailBackLink turns this case red and restoring it turns it green" }
           ]
         }
       ]
@@ -114,8 +124,17 @@
           "name": "A consignment with no unweaned-eligible commodity is not asked about unweaned animals",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "does not ask a horses-only consignment about unweaned animals", "strength": "full", "notes": "asserts the unweaned group is absent for a horses-only (Equus caballus) consignment" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "saves a horses-only consignment without an unweaned answer", "strength": "full", "notes": "save-and-continue succeeds with only the certification question answered" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "asks only the certification question", "strength": "full", "notes": "asserts the unweaned group is absent for a cats-dogs-ferrets (Felis catus) consignment" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "saves without an unweaned answer and reopens with the certification answer alone", "strength": "full", "notes": "save-and-continue succeeds with only the certification question answered" }
+          ]
+        },
+        {
+          "id": "SCN-ADDL-DETAILS-005-B",
+          "name": "A consignment with an unweaned-eligible commodity is asked about unweaned animals",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "asks the unweaned question alongside certification, with its hint and both options", "strength": "full", "notes": "an equine (Equus caballus) consignment" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "saves the unweaned answer and shows it chosen when the page is reopened", "strength": "full", "notes": "" }
           ]
         }
       ]
@@ -133,6 +152,23 @@
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/additional-details.spec.ts", "test": "renders the page controls", "strength": "full", "notes": "asserts the certification question's description is exactly the ITAHC hint" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "renders service-backed certification options and conditional copy", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/copy/copy.test.js", "test": "Should name the ITAHC as the source of the certification purpose, in English and Welsh", "strength": "partial", "notes": "copy only, English and Welsh" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-ADDL-DETAILS-007",
+      "name": "Both save actions accept the page with neither question answered",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-ADDL-DETAILS-007-A",
+          "name": "Save and return to overview accepts the page with both questions left blank",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/additional-details.fit.spec.js", "test": "saves both questions blank on Save and return to overview and persists the blank state", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/additional-details/controller.test.js", "test": "Should go to the overview with every answer blank and commit the blank answers", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/save-and-return-to-overview.spec.ts", "test": "additional details: accepts the save with both questions left blank and shows the task still to do", "strength": "partial", "notes": "not red-probed in this change; the implementor does not run the E2E phase" }
           ]
         }
       ]

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Asks how and when the consignment arrives at its port of entry, and confines the arrival date to the window the service accepts. The page is titled "Arrival details".
+Asks how and when the consignment arrives at its port of entry, and confines the arrival date to the window the service accepts. The page is titled "Arrival details". The means of transport is the one answer the page needs before it goes on; the arrival date, port of entry, transport identification and document reference can all be left for later.
 
 ## Requirements
 
@@ -94,16 +94,31 @@ The system MUST accept the arrival details once every required answer is given, 
 - **WHEN** they answer every arrival question and save and continue
 - **THEN** the answers are saved and no error summary is shown
 
-### Requirement: Saving the page empty keeps a draft and moves on
+### Requirement: A means of transport is required to save the page
 **ID**: REQ-ARRIVAL-006
-The system MUST NOT refuse to save the arrival details page when nothing has been answered: it MUST save the blank draft, show no error summary, and carry the user on to the next page. Whether the arrival details are complete is checked later, when the user continues from check your answers.
+The system MUST refuse to save the arrival details page, on both "Save and continue" and "Save and return to overview", while no means of transport is chosen. It MUST keep the user on the page, link the error "Select a means of transport to the port of entry" from the error summary to the means of transport, show the same message above the means of transport in its error style, start the browser page title with "Error: ", save nothing and show the other answers entered back.
 
-#### Scenario: Saving with nothing answered keeps a draft and moves on
+#### Scenario: Save and continue with no means of transport is refused
 **ID**: SCN-ARRIVAL-006-A
-- **GIVEN** the user is on the arrival details page with nothing answered
+- **GIVEN** the user is on the arrival details page with no means of transport chosen
 - **WHEN** they save and continue
-- **THEN** no error summary is shown
-- **AND** the user is taken on to the next page in the journey
+- **THEN** they stay on the arrival details page
+- **AND** the error summary and the means of transport both show "Select a means of transport to the port of entry"
+- **AND** the browser page title starts "Error: "
+
+#### Scenario: A refused save shows the other answers back and saves nothing
+**ID**: SCN-ARRIVAL-006-B
+- **GIVEN** the user has chosen a port of entry and entered an arrival date but no means of transport
+- **WHEN** they save and continue
+- **THEN** the port of entry and arrival date are shown back
+- **AND** re-opening the page from the overview shows them empty
+
+#### Scenario: Save and return to overview refuses the save the same way
+**ID**: SCN-ARRIVAL-006-C
+- **GIVEN** the user has chosen a port of entry and no means of transport
+- **WHEN** they select "Save and return to overview"
+- **THEN** they remain on the arrival details page with the same error, the port they chose still shown
+- **AND** reopening the task from Overview shows no saved port
 
 ### Requirement: The arrival date is confined to one week back and six months ahead
 **ID**: REQ-ARRIVAL-007
@@ -186,15 +201,27 @@ The system MUST reject a port of entry or means of transport that is not one of 
 - **THEN** an error is shown, the means-of-transport dropdown is focused with nothing chosen
 - **AND** the page's other answers, including the chosen port, are still held
 
-### Requirement: The back link returns to Overview
+### Requirement: The back link returns to where the user came from
 **ID**: REQ-ARRIVAL-010
-The system MUST return the user to Overview when they follow the back link from the arrival details page.
+The system MUST return the user, when they follow the back link from the arrival details page, to the page they saved and continued from, to Overview when they opened it from its Overview task, and to the review when they opened it from a Change link on the review, as `live-animals/journey-flow` describes. That page is Additional details.
 
-#### Scenario: The back link opens Overview
+#### Scenario: After Save and continue, the back link opens the page before
 **ID**: SCN-ARRIVAL-010-A
-- **GIVEN** the user is on the arrival details page
+- **GIVEN** the user reached the arrival details page by saving and continuing from Additional details
+- **WHEN** they follow the back link
+- **THEN** that page is shown
+
+#### Scenario: The back link opens Overview when the page was opened from Overview
+**ID**: SCN-ARRIVAL-010-B
+- **GIVEN** the user opened the arrival details page from its task on Overview
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+#### Scenario: The back link opens the review when the page was opened from a Change link
+**ID**: SCN-ARRIVAL-010-C
+- **GIVEN** the review of a draft notification
+- **WHEN** the user follows the Change link that opens the arrival details page and then the back link
+- **THEN** the review is shown
 
 ### Requirement: Only the means of transport is needed to continue
 **ID**: REQ-ARRIVAL-011

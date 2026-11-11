@@ -6,7 +6,7 @@
     {
       "id": "REQ-CYA-001",
       "name": "The review draws the same six numbered sections as Overview, in order, whatever the notification holds",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-CYA-001-A",
@@ -38,7 +38,8 @@
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts", "test": "after completing every section the check-your-answers page renders the answered rows", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "renders entered and missing answers in their summary rows", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should resolve service-backed labels for coded answers", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/horse-temporary-admission.spec.ts", "test": "walks a horse-by-sea notification under temporary admission from create to submitted, with every task complete", "strength": "partial", "notes": "review shows the horse's origin, species, reason with exit date and port, certification, sea arrival and transporter" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/horse-temporary-admission.spec.ts", "test": "walks a horse-by-sea notification under temporary admission from create to submitted, with every task complete", "strength": "partial", "notes": "review shows the horse's origin, species, reason with exit date and port, certification, sea arrival and transporter" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/poultry-rail-transit.spec.ts", "test": "walks a poultry-by-rail notification in transit from create to the review, with no identification task and every overview task complete", "strength": "partial", "notes": "no red probe run against this link; review shows the consignment's origin, species, reason with destination country and port of exit, transit countries and transporter" }
           ]
         },
         {
@@ -53,10 +54,11 @@
         {
           "id": "SCN-CYA-001-G",
           "name": "The arrival details card names the means of transport as the arrival page offers it",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts", "test": "after completing every section the check-your-answers page renders the answered rows", "strength": "partial", "notes": "asserts the Means of transport row reads Road; not probed against a reverted line" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/horse-temporary-admission.spec.ts", "test": "walks a horse-by-sea notification under temporary admission from create to submitted, with every task complete", "strength": "partial", "notes": "Sea on the submitted view" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/horse-temporary-admission.spec.ts", "test": "walks a horse-by-sea notification under temporary admission from create to submitted, with every task complete", "strength": "partial", "notes": "Sea on the submitted view" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should read %s back as %s", "strength": "full", "notes": "red then green with the stored code shown (workareas/shared/eudpa-774/logs/inc-028-probe-cya-means-row-unit)" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts", "test": "after completing every section the check-your-answers page renders the answered rows", "strength": "full", "notes": "red then green with the stored code shown, against the dev-mode stack (workareas/shared/eudpa-774/logs/inc-028-probe-cya-means-row-e2e)" }
           ]
         },
         {
@@ -115,74 +117,106 @@
     },
     {
       "id": "REQ-CYA-003",
-      "name": "A back link returns to Overview from a draft's or an amendment's review, and to the notification list from a submitted notification's view",
+      "name": "A review's back link goes to the place the user came from, and a submitted notification's view goes to the dashboard",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-CYA-003-A",
-          "name": "A draft's review back link opens Overview",
+          "name": "The review's back link opens the contact address after Save and continue there",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "back link returns to the notification hub", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should go Back to the last journey page when the trader pressed Save and continue on it", "strength": "full", "notes": "Probed: the review's trail dropped from trailBackLink in check-answers/controller.js turns this case red and restoring it turns it green" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/back.spec.ts", "test": "after Save and continue from the contact address it opens the contact address, whose Back opens Overview", "strength": "full", "notes": "Probed against the dev-mode stack: the review's trail dropped from trailBackLink in check-answers/controller.js turns this test red and restoring it turns it green" }
           ]
         },
         {
           "id": "SCN-CYA-003-B",
-          "name": "The submitted view's back link opens the notification list",
+          "name": "The submitted view's back link opens the dashboard",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should go Back to the notification list from a submitted notification", "strength": "partial", "notes": "href only" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/promoted-lifecycle.spec.ts", "test": "Back from a submitted notification's view opens the notification list", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should go Back to the dashboard from a submitted notification", "strength": "full", "notes": "Probed: the submitted fallback in check-answers/controller.js resolved to Overview turns this case red and restoring it turns it green" }
           ]
         },
         {
           "id": "SCN-CYA-003-C",
-          "name": "An amendment's review back link opens Overview",
+          "name": "A review opened from Overview has a back link to Overview",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should go Back to the overview from the review of a notification being amended", "strength": "partial", "notes": "href only" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/promoted-lifecycle.spec.ts", "test": "Back from an amendment review opens the overview", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should go Back to Overview when the review was opened from Overview", "strength": "full", "notes": "Probed: the Overview start entry resolved to the dashboard in trail.js turns this case red and restoring it turns it green" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/back.spec.ts", "test": "opened from the Overview review button it opens Overview", "strength": "full", "notes": "Probed against the dev-mode stack: the Overview start entry resolved to the dashboard in trail.js turns this test red and restoring it turns it green" }
           ]
         },
         {
           "id": "SCN-CYA-003-D",
-          "name": "The submitted view shown after an amendment is cancelled has a back link to the notification list",
+          "name": "The submitted view shown after an amendment is cancelled has a back link to the dashboard",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cancel-amend/cancel-amend.fit.spec.js", "test": "Back from the restored submitted view opens the notification list", "strength": "full", "notes": "red with a submitted view's Back link pointing at the overview" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should go Back to the notification list from the submitted view shown after an amendment is cancelled", "strength": "partial", "notes": "href only" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should go Back to the dashboard from the submitted view shown after an amendment is cancelled", "strength": "full", "notes": "Probed: the submitted fallback in check-answers/controller.js resolved to Overview turns this case red and restoring it turns it green" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/back-entry-points.spec.ts", "test": "after an amendment is cancelled the review opens the dashboard", "strength": "full", "notes": "Probed against the dev-mode stack: the submitted fallback in check-answers/controller.js resolved to Overview turns this test red and restoring it turns it green" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-003-E",
+          "name": "A review opened from a dashboard card has a back link to the dashboard",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should go Back to the dashboard when the review was opened from a dashboard card", "strength": "full", "notes": "Probed: the dashboard start entry resolved to Overview in trail.js turns the submitted, draft and amend cases red and restoring it turns them green" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/back.spec.ts", "test": "opened from a submitted notification dashboard card it opens the dashboard", "strength": "full", "notes": "Probed against the dev-mode stack: the dashboard start entry resolved to Overview in trail.js turns this test red and restoring it turns it green" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-003-F",
+          "name": "A Change link round trip leaves the review's back link as it was",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/back.spec.ts", "test": "opened by Amend on the dashboard it opens the dashboard, before and after a Change link round trip", "strength": "full", "notes": "Probed against the dev-mode stack: the review's Change link trail replaced by the request's trail in check-answers/controller.js turns this test red and restoring it turns it green" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should push the review onto its own trail on every Change link of a %s review", "strength": "full", "notes": "Probed: the review's Change link trail replaced by the request's trail in check-answers/controller.js turns the draft and amend cases red and restoring it turns them green" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-003-G",
+          "name": "A review with nothing saying where the user came from has a back link to Overview",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should fall back when %s", "strength": "full", "notes": "Probed: the draft fallback in check-answers/controller.js resolved to the dashboard turns the draft and amend cases red and restoring it turns them green" }
           ]
         }
       ]
     },
     {
       "id": "REQ-CYA-004",
-      "name": "A Change link returns to check-your-answers",
-      "coverage": "partial",
+      "name": "A Change link opens the page that collects the answer, and Save and continue goes on through the journey to check your answers",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-CYA-004-A",
-          "name": "Editing an answer via Change returns to check-your-answers with the new value",
+          "name": "Editing an answer via Change and saving and continuing through the journey shows the new value on check-your-answers",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/change-from-cya.spec.ts", "test": "a Change link opens the answering page with change context and the save returns to check your answers with the new value", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "Change link threads context and returns to the same review after saving", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-resubmit.spec.ts", "test": "resubmits an amended notification: Submitted → Amend → Submitted with the edited answer kept", "strength": "partial", "notes": "proves the amend leg: the Change-link save is the page's Save and return" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "Change link carries the change marker and Save and continue goes on to the next page", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-resubmit.spec.ts", "test": "resubmits an amended notification: Submitted → Amend → Submitted with the edited answer kept", "strength": "partial", "notes": "proves the amend leg: the Change-link save is the page's Save and return" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/change-from-cya.spec.ts", "test": "Save and continue on a page opened by a Change link goes on, and the review shows the changed answer", "strength": "partial", "notes": "after the reason-for-import Change link presses Save and continue on each later page, checking each page's exact address with its trail and its heading, to the review, which shows Research" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "a Change link opens the page that collects the answer, and Save and continue opens What are you importing?", "strength": "partial", "notes": "while amending, asserts the Change link opens the answering page and Save and continue goes on" }
           ]
         },
         {
           "id": "SCN-CYA-004-B",
-          "name": "Changing the contact address from its card returns to the review",
-          "coverage": "none",
-          "tests": [],
-          "notes": "change-from-cya.spec.ts in trade-imports-ins-tests now changes only origin and additional details from the review; no test opens the contact address page from its review card and returns to the review."
+          "name": "Changing the contact address from its card opens the contact address page, and Save and continue opens the review",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/change-from-cya.spec.ts", "test": "Save and continue on a page opened by a Change link goes on, and the review shows the changed answer", "strength": "partial", "notes": "after the reason-for-import Change link presses Save and continue on each later page, checking each page's exact address with its trail and its heading, to the review, which shows Research" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/change-from-cya.spec.ts", "test": "the contact address Change link opens the page on the review trail, and choosing another address and Save and continue returns to the review showing it", "strength": "full", "notes": "red then green with the review no longer the end of the journey, against the dev-mode stack (workareas/shared/eudpa-774/logs/inc-027-probe-kit-review-e2e)" }
+          ]
         },
         {
           "id": "SCN-CYA-004-C",
-          "name": "Changing documents from a document card returns to the review",
-          "coverage": "none",
-          "tests": [],
-          "notes": "The tests that prove this are only on an open Design Release 2.1 theme branch, not on main yet."
+          "name": "Changing documents from a document card opens upload documents, and Save and continue goes on through the journey to the review",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/change-from-cya.spec.ts", "test": "the documents Change link opens the page with a Back link to the review, which stays after a refusal, after Save and add another and after Remove", "strength": "partial", "notes": "asserts the documents Change link opens upload documents; does not continue from it" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should send an untouched form returned with Save and continue from a page opened with a Change link on to Roles and addresses", "strength": "partial", "notes": "asserts Save and continue from a page opened with a Change link goes on to Roles and addresses" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/change-from-cya.spec.ts", "test": "the documents Change link opens Upload documents on the review trail, and Save and continue walks each later page back to the review", "strength": "full", "notes": "red then green with the next step moved two pages and with the review no longer the end of the journey, against the dev-mode stack (workareas/shared/eudpa-774/logs/inc-027-probe-nextstep-e2e, inc-027-probe-kit-review-e2e)" }
+          ]
         }
       ]
     },
@@ -218,13 +252,7 @@
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should show the declaration once the notification is complete", "strength": "full", "notes": "drives the review's Continue as it posts to the declaration" }
           ]
         },
-        {
-          "id": "SCN-CYA-006-B",
-          "name": "Transit countries are not owed for submission",
-          "coverage": "none",
-          "tests": [],
-          "notes": "The tests that prove this are only on an open Design Release 2.1 theme branch, not on main yet."
-        }
+        { "id": "SCN-CYA-006-B", "name": "Transit countries are not owed for submission", "coverage": "none", "tests": [], "notes": "The tests that prove this are only on an open Design Release 2.1 theme branch, not on main yet." }
       ]
     },
     {
@@ -244,7 +272,7 @@
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should title the summary There is a problem", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should name only the cards still outstanding as the trader gets further", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should leave focus where it is when the page is merely visited", "strength": "full", "notes": "the summary stands on load without stealing focus; focus moves only on a refused Continue (SCN-CYA-007-B)" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/opening-run.spec.ts", "test": "ends the opening run on the review page, naming what is outstanding, when the notification is incomplete", "strength": "full", "notes": "the review reached at the end of the opening run names the main import reason and roles and addresses as outstanding" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/save-and-continue.spec.ts", "test": "ends on the review page after Save and continue, naming what is outstanding, when the notification is incomplete", "strength": "full", "notes": "the review reached after Save and continue names the main import reason and roles and addresses as outstanding" }
           ]
         },
         {
@@ -257,7 +285,7 @@
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should refuse Continue on a brand-new draft, naming what is outstanding", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should move focus to the summary when Continue is refused", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should show the summary when Continue is refused", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/opening-run.spec.ts", "test": "ends the opening run on the review page, naming what is outstanding, when the notification is incomplete", "strength": "full", "notes": "Continue on the unfinished review keeps the user on it with the summary focused" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/save-and-continue.spec.ts", "test": "ends on the review page after Save and continue, naming what is outstanding, when the notification is incomplete", "strength": "full", "notes": "Continue on the unfinished review keeps the user on it with the summary focused" }
           ]
         }
       ]
@@ -278,13 +306,7 @@
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "ends with the last card and offers no way to submit again", "strength": "full", "notes": "asserts no submit/continue action alongside the copy-as-new action" }
           ]
         },
-        {
-          "id": "SCN-CYA-008-C",
-          "name": "Delete opens the delete confirmation",
-          "coverage": "none",
-          "tests": [],
-          "notes": "The tests that prove this are only on an open Design Release 2.1 theme branch, not on main yet."
-        }
+        { "id": "SCN-CYA-008-C", "name": "Delete opens the delete confirmation", "coverage": "none", "tests": [], "notes": "The tests that prove this are only on an open Design Release 2.1 theme branch, not on main yet." }
       ]
     },
     {
@@ -382,7 +404,7 @@
     },
     {
       "id": "REQ-CYA-013",
-      "name": "Ports, destination countries and document types read back exactly as they were offered",
+      "name": "Ports, destination and transited countries and document types read back exactly as they were offered",
       "coverage": "full",
       "scenarios": [
         {
@@ -408,7 +430,7 @@
           "name": "A territory destination country is named with its country",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should name a subdivision destination country with its parent country", "strength": "full", "notes": "FR-MQ reads 'Martinique (France)'" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should name a destination territory with its parent country", "strength": "full", "notes": "FR-MQ reads 'Martinique (France)'" }
           ]
         },
         {
@@ -418,13 +440,21 @@
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should name a CITES_PERMIT_OR_CERTIFICATE document with the label the documents page offers it under", "strength": "full", "notes": "one case per label shape, each asserting the rendered row against the documents feature's own types map; red probe: delete the type's entry from the documents copy module and the row falls back to undefined" }
           ]
+        },
+        {
+          "id": "SCN-CYA-013-E",
+          "name": "A transited territory is named with its country",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should name a transited territory with its parent country", "strength": "full", "notes": "ES-CN and FR read 'Canary Islands (Spain), France'" }
+          ]
         }
       ]
     },
     {
       "id": "REQ-CYA-014",
       "name": "Continuing a draft is refused while it holds a species the reference data no longer lists",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-CYA-014-A",
@@ -447,9 +477,48 @@
         {
           "id": "SCN-CYA-014-C",
           "name": "An amendment continues to the declaration without a species check",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/refusal.test.js", "test": "Should return no species error for an amendment holding an unlisted species", "strength": "partial", "notes": "the species check alone; not driven through an amend Continue" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should show the declaration on Continue of an amendment holding a species not listed under its code", "strength": "full", "notes": "red then green with every status species-checked (workareas/shared/eudpa-774/logs/inc-028-probe-species-check-amend)" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/refusal.test.js", "test": "Should return no species error for an amendment holding an unlisted species", "strength": "full", "notes": "red then green with every status species-checked (workareas/shared/eudpa-774/logs/inc-028-probe-species-check-amend)" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CYA-015",
+      "name": "The Transport details card shows a private transporter's saved country",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CYA-015-A",
+          "name": "A private transporter's saved country shows on the review",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-animals-frontend",
+              "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js",
+              "test": "Should show a private transporter's saved country on the transport-details card's Country row",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "fit",
+              "repo": "trade-imports-animals-frontend",
+              "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js",
+              "test": "saves and persists a complete private transporter record",
+              "strength": "full",
+              "notes": "asserts the review's Country row after saving"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/animals/e2e/features/private-transporter-scope.spec.ts",
+              "test": "the saved country shows on the review's Transport details card, and a saved private transporter survives an add of the other type that the trader cancels",
+              "strength": "partial",
+              "notes": "no red probe run against this assertion"
+            }
           ]
         }
       ]

@@ -2,81 +2,103 @@
 
 ## Purpose
 
-How the high-risk plants journey moves from one page to the next: the order pages come in, when one is skipped, the opening sequence a newly created notification runs, and where a journey opened out of context is sent. Overview, the dashboard and the commodity-details entry sub-page are not steps in this order.
+How the high-risk plants journey moves from one page to the next: the one order pages come in, when one is skipped, where a journey opened out of context is sent, and how a page ends while a notification is being amended. Overview, the dashboard and the commodity-details sub-page are not steps in this order.
 
 ## Requirements
 
-### Requirement: The journey is ordered as nine sections, each a sequence of pages
+### Requirement: The journey has one page order, the order Overview lists its tasks in
 **ID**: REQ-PLANTS-FLOW-001
-The system MUST order the journey as nine sections, and MUST offer each section's pages in a fixed sequence.
+The system MUST give the journey one page order, the order Overview lists its tasks in, and MUST offer pages in that order whatever way the user reached them. Overview, the dashboard and the commodity-details sub-page are not steps in it: commodity details is reached only from the commodities list.
 
-#### Scenario: The journey's sections run in a fixed order
+#### Scenario: The journey's pages run in a fixed order
 **ID**: SCN-PLANTS-FLOW-001-A
-- **GIVEN** a notification is being worked on
-- **WHEN** its sections are followed from the start
-- **THEN** they run in this order: the dashboard; commodity type and the commodities list; the commodity-details entry sub-page; origin; arrival status and arrival details; place of destination; consignor and identification numbers; contact address; and finally check your answers, declaration and confirmation
+- **GIVEN** a notification being worked on
+- **WHEN** its pages are followed from the start
+- **THEN** they run in this order: What are you importing?, the commodities list, origin, arrival status, arrival details, place of destination, consignor, identification numbers, contact address, and finally check your answers, the declaration and the confirmation
+- **AND** Overview lists its tasks in the same order
 
-#### Scenario: The arrival section sequences its pages in order
+#### Scenario: The arrival pages are offered in order
 **ID**: SCN-PLANTS-FLOW-001-B
-- **GIVEN** a user is working through the arrival section for a notification that asks the arrival-status question
-- **WHEN** they continue from each page in turn
+- **GIVEN** a user working through the arrival pages for a notification that asks the arrival-status question
+- **WHEN** they save each page in turn
 - **THEN** they are offered arrival status and then arrival details, in that order, skipping any that is not in scope
 
-### Requirement: These flow sections are not the same grouping as the Overview task rows
-**ID**: REQ-PLANTS-FLOW-002
-The system MUST treat the journey's flow sections and the Overview page's task rows as separate groupings: there are nine flow sections against the hub's task rows, and a task row MUST NOT be assumed to correspond one-to-one with the section a page is reached through. Overview groups its rows under four numbered headings, which is a third grouping again.
-
-#### Scenario: A single task row spans pages from more than one flow position
-**ID**: SCN-PLANTS-FLOW-002-A
-- **GIVEN** the commodities task row on Overview
-- **WHEN** the user opens it
-- **THEN** it covers the commodity-type page, the commodities list and the commodity-details entry sub-page together, even though the flow places the entry sub-page in a section of its own
-
-### Requirement: Continuing from a page moves on only within its own Overview task, and otherwise returns to Overview
+### Requirement: Saving and continuing goes to the next page that applies, whatever way the page was reached
 **ID**: REQ-PLANTS-FLOW-003
-Outside the opening sequence (REQ-PLANTS-FLOW-007) and a change made from check your answers, continuing from a page MUST go to the next in-scope page of that section in the same Overview task, and otherwise MUST return to Overview. A page in no Overview task (check your answers, the declaration) MUST go on to the next page of its section (REQ-PLANTS-FLOW-006). The system MUST NOT add a marker to a page's address, link or form to tell such a save.
+The system MUST, on a valid Save and continue from a journey page, go to the next page in the journey's order that applies, skipping any that does not, and the last page that applies MUST go to check your answers whatever is owed. It MUST do so however the page was reached, and a Save and continue that leaves optional answers blank MUST still go on. Commodity details MUST go back to the commodities list, and the list MUST go on to origin.
 
 #### Scenario: Continuing skips a page that is not in scope
 **ID**: SCN-PLANTS-FLOW-003-A
-- **GIVEN** the user is on a page whose section holds a later page that is not in scope for this notification
+- **GIVEN** the user is on a page followed by a page that is not in scope for this notification
 - **WHEN** they save and continue
 - **THEN** they are taken past the page that is not in scope, to the next one that is
 
-#### Scenario: Finishing the last page of a section returns to Overview
+#### Scenario: Contact address goes to check your answers whatever is owed
 **ID**: SCN-PLANTS-FLOW-003-B
-- **GIVEN** the user is on the last page of a section that is still in scope, and the opening sequence has finished
-- **WHEN** they save and continue
-- **THEN** they return to Overview rather than continuing into another section
+- **GIVEN** a notification with tasks outstanding and the contact address page open
+- **WHEN** the user saves and continues, with or without a contact address chosen
+- **THEN** check your answers is shown, naming what is outstanding
 
-#### Scenario: Arrival details opened from Overview returns to Overview, not the place of destination
+#### Scenario: Origin with no commodity type saved goes to the commodity type page
+**ID**: SCN-PLANTS-FLOW-003-K
+- **GIVEN** a notification with only its country of origin saved
+- **WHEN** the user saves and continues from origin
+- **THEN** the commodity type page is shown
+
+#### Scenario: Arrival details goes on to the place of destination
 **ID**: SCN-PLANTS-FLOW-003-C
-- **GIVEN** the opening sequence has ended and the arrival task opened from Overview
+- **GIVEN** arrival status or arrival details opened from Overview
 - **WHEN** the user saves arrival status and then arrival details
-- **THEN** arrival details follows arrival status, and saving arrival details shows Overview, not the place of destination
+- **THEN** arrival details follows arrival status, and saving arrival details shows the place of destination
 
-#### Scenario: A task of more than one page moves through its own pages first
+#### Scenario: The commodities list goes on to origin once a commodity line is saved
 **ID**: SCN-PLANTS-FLOW-003-D
-- **GIVEN** the opening sequence has ended
-- **WHEN** the user opens what are you importing from Overview and saves the commodity type
-- **THEN** the commodities list is shown
-- **WHEN** they continue from it
-- **THEN** Overview is shown
+- **GIVEN** a notification with its commodity type and one commodity line saved, and nothing else
+- **WHEN** the user continues from the commodities list
+- **THEN** origin is shown, not Overview and not commodity details
 
-#### Scenario: Consignor opened from Overview returns to Overview, not identification numbers
+#### Scenario: Consignor goes on to identification numbers
 **ID**: SCN-PLANTS-FLOW-003-E
-- **GIVEN** a plants-for-planting or wood notification whose opening sequence has ended and the consignor task opened from Overview
+- **GIVEN** a plants-for-planting or wood notification and the consignor task opened from Overview
 - **WHEN** the user chooses an address and saves and continues
-- **THEN** Overview is shown, not identification numbers, which has its own task
+- **THEN** identification numbers is shown
 
-#### Scenario: Nothing marks a page as opened from Overview
+#### Scenario: A task link carries only the mark that the page was opened from Overview
 **ID**: SCN-PLANTS-FLOW-003-F
 - **GIVEN** Overview
 - **WHEN** the user opens a task
-- **THEN** the page's address is the one the opening sequence uses, with nothing added to it or to the link
+- **THEN** the page's address is the one every start uses, plus only the mark that it was opened from Overview
+
+#### Scenario: A potato notification skips arrival status and the consignor
+**ID**: SCN-PLANTS-FLOW-003-G
+- **GIVEN** a potato notification
+- **WHEN** the user saves origin
+- **THEN** arrival details is shown
+- **WHEN** they save the place of destination
+- **THEN** identification numbers is shown
+
+#### Scenario: A newly created notification is walked through the journey to check your answers
+**ID**: SCN-PLANTS-FLOW-003-H
+- **GIVEN** the user has just created a notification from the dashboard
+- **WHEN** they save each page in turn, answering every step
+- **THEN** they are taken through every in-scope step in turn: commodity type, commodities list, origin, arrival status, arrival details, place of destination, consignor, identification numbers and contact
+- **AND** they arrive at check your answers once the last step is saved
+
+#### Scenario: Commodity details goes back to the commodities list
+**ID**: SCN-PLANTS-FLOW-003-I
+- **GIVEN** the user opened commodity details from the commodities list
+- **WHEN** they save a line
+- **THEN** the commodities list is shown
+
+#### Scenario: A notification continued in another browser session goes on to the same next page
+**ID**: SCN-PLANTS-FLOW-003-J
+- **GIVEN** a draft whose commodity type and a commodity line were saved in one browser session
+- **WHEN** the user opens the commodities list in another browser session and continues
+- **THEN** origin is shown
 
 ### Requirement: A page the hub links to directly offers both a discard-and-exit and a save-and-exit route back to Overview
 **ID**: REQ-PLANTS-FLOW-004
-The system MUST let the user leave a page the hub links to directly by discarding anything typed since it was last saved or by committing it, returning to Overview either way. Saving and returning MUST make the same checks as saving and continuing: a missing or invalid answer keeps the user on the page with an error for each, what they entered kept and nothing saved. While the notification is being amended, REQ-PLANTS-FLOW-014 governs how the page ends instead.
+The system MUST let the user leave a page the hub links to directly by discarding anything typed since it was last saved or by committing it, returning to Overview either way. Saving and returning MUST make the same checks as saving and continuing: a missing or invalid answer keeps the user on the page with an error for each, what they entered kept and nothing saved.
 
 #### Scenario: Cancel and return to overview discards unsaved input
 **ID**: SCN-PLANTS-FLOW-004-A
@@ -106,23 +128,24 @@ The system MUST let the user leave a page the hub links to directly by discardin
 
 ### Requirement: A page is offered only once its prerequisites are answered and what it asks for is in scope
 **ID**: REQ-PLANTS-FLOW-005
-The system MUST offer a page only when every strictly-earlier answer it depends on has been given and at least one of the things it asks for is in scope for this notification, and MUST otherwise pass over it.
+The system MUST offer a page only when every strictly-earlier answer it depends on has been given and at least one of the things it asks for is in scope for this notification. A Save and continue that would reach a page whose earlier answers are missing MUST open the page that asks for the first missing answer, and Overview MUST offer exactly the pages that rule opens.
 
-#### Scenario: A page whose prerequisites are unanswered is passed over
+#### Scenario: A page whose prerequisites are unanswered is not opened
 **ID**: SCN-PLANTS-FLOW-005-A
 - **GIVEN** a notification whose earlier answers a later page depends on have not been given
-- **WHEN** the journey reaches the point that page would be offered
-- **THEN** the page is not offered, and the journey continues past it
+- **WHEN** Save and continue would reach that page
+- **THEN** the page that asks for the first missing answer is shown
+- **AND** Overview does not offer the later page
 
 #### Scenario: Arrival status is passed over for a potato notification
 **ID**: SCN-PLANTS-FLOW-005-B
 - **GIVEN** a potato notification whose origin has been answered
-- **WHEN** the journey reaches the arrival section
+- **WHEN** the journey reaches the arrival pages
 - **THEN** arrival status is not offered, and arrival details is offered instead
 
 ### Requirement: Check your answers is open whatever the notification owes; the notification is submitted only once every task row is ready
 **ID**: REQ-PLANTS-FLOW-006
-The system MUST show check your answers at the end of the opening run, or by its own URL, whatever the notification owes, naming what is outstanding. Overview's check-and-submit row MUST stay withheld until every task row is ready (REQ-PLANTS-OB-REVIEW-001), a row being ready when fulfilled, not applicable or optional. Until then, continuing from check your answers MUST NOT open the declaration, and confirming a declaration opened directly MUST return to check your answers without submitting.
+The system MUST show check your answers at the end of the journey, or by its own URL, whatever the notification owes, naming what is outstanding. Overview's check-and-submit row MUST stay withheld until every task row is ready (REQ-PLANTS-OB-REVIEW-001), a row being ready when fulfilled, not applicable or optional. Until then, continuing from check your answers MUST NOT open the declaration, and confirming a declaration opened directly MUST return to check your answers without submitting.
 
 #### Scenario: Continuing from check your answers is refused while a task row is outstanding
 **ID**: SCN-PLANTS-FLOW-006-A
@@ -137,57 +160,35 @@ The system MUST show check your answers at the end of the opening run, or by its
 - **WHEN** the user goes to check their answers
 - **THEN** check your answers is shown, leading on to the declaration and then the confirmation
 
-### Requirement: A notification created in this session runs an opening sequence ending on check your answers
-**ID**: REQ-PLANTS-FLOW-007
-The system MUST walk a newly created notification through an opening sequence of the journey's answer pages, skipping any step not in scope, and MUST deliver the user to check your answers once the last step is saved, whether or not every task is complete. Reaching Overview or check your answers MUST end the sequence; following a back link MUST NOT.
-
-#### Scenario: A newly created notification is walked through the opening sequence to check your answers
-**ID**: SCN-PLANTS-FLOW-007-A
-- **GIVEN** the user has just created a notification from the dashboard
-- **WHEN** they save each page in turn, answering every step
-- **THEN** they are taken through every in-scope step of the opening sequence in turn: commodity type, commodities list, origin, arrival status, arrival details, place of destination, consignor, identification numbers and contact
-- **AND** they arrive at check your answers once the last step is saved
-
-#### Scenario: An opening-sequence step not yet in scope is skipped
-**ID**: SCN-PLANTS-FLOW-007-B
-- **GIVEN** the user is in the opening sequence and the next step is not yet in scope
-- **WHEN** they save the page they are on
-- **THEN** they are taken to the next step that is in scope
-
-#### Scenario: Revisiting an opening-sequence page after the run has finished does not resume it
-**ID**: SCN-PLANTS-FLOW-007-C
-- **GIVEN** the user has already completed the opening sequence for a notification and reached Overview or check your answers
-- **WHEN** they open origin again and save it
-- **THEN** they return to Overview, not to arrival status, the next step the sequence would have taken
-- **AND** a revisited page with a later page in its own Overview task, such as commodity type or arrival status, goes on only to that page (REQ-PLANTS-FLOW-003), never past the end of its task
-
-#### Scenario: The opening sequence ends on check your answers even when tasks are outstanding
-**ID**: SCN-PLANTS-FLOW-007-D
-- **GIVEN** the user is in the opening sequence with tasks outstanding
-- **WHEN** they save the last step
-- **THEN** check your answers shows the unfinished notification and names every outstanding task
-
-#### Scenario: Following a back link and saving again carries the opening sequence on
-**ID**: SCN-PLANTS-FLOW-007-E
-- **GIVEN** the user is in the opening sequence on origin
-- **WHEN** they follow the back link to the commodities list and save it
-- **THEN** origin is shown, not Overview
-
-### Requirement: A journey opened out of context is sent to its entry page
+### Requirement: A notification with no answer the user entered opens at its first page
 **ID**: REQ-PLANTS-FLOW-008
-The system MUST send a user to the commodity-type page when they open a page of a journey that neither began its opening sequence in this session nor holds any answer the user has entered. The commodity-type page and the pages beneath it MUST be exempt, so the redirect cannot loop, as MUST the actions taken against a notification from the dashboard — amending, cancelling an amendment, copying and deleting.
+The system MUST send a user to the commodity-type page when they open Overview, check your answers, the declaration or the confirmation page of a notification that holds no answer the user has entered, and MUST open every page once the user has saved an answer. The commodity-type page and the pages beneath it MUST be exempt, so the redirect cannot loop, as MUST the actions taken against a notification from the dashboard — amending, cancelling an amendment, copying and deleting.
 
-#### Scenario: A deep link to an unknown journey lands on the entry page
+#### Scenario: Overview, check your answers, the declaration and the confirmation page show the first page
 **ID**: SCN-PLANTS-FLOW-008-A
-- **GIVEN** a link to a page deep inside a journey that this session did not create and that holds no answers the user entered
-- **WHEN** the user opens it
-- **THEN** they land on the commodity-type page for that journey
+- **GIVEN** a notification that holds no answer the user entered
+- **WHEN** the user opens Overview, check your answers, the declaration or the confirmation page
+- **THEN** the commodity-type page is shown
 
-#### Scenario: A journey carrying answers the user entered opens where it was asked for
+#### Scenario: A notification carrying an answer the user entered opens where it was asked for
 **ID**: SCN-PLANTS-FLOW-008-B
-- **GIVEN** a link to a page inside a journey that already holds an answer the user entered
+- **GIVEN** a link to a page inside a notification that already holds an answer the user entered
 - **WHEN** the user opens it
 - **THEN** that page is shown, rather than the entry page
+
+#### Scenario: The first page, its pages and the dashboard actions open where they are asked for
+**ID**: SCN-PLANTS-FLOW-008-C
+- **GIVEN** a notification that holds no answer the user entered
+- **WHEN** the user opens the commodity-type page, a page beneath it, or amends, cancels an amendment of, copies or deletes the notification
+- **THEN** it opens where it was asked for
+
+#### Scenario: Cancel and return to overview on the first page opens the dashboard until something is saved
+**ID**: SCN-PLANTS-FLOW-008-D
+- **GIVEN** the commodity-type page of a notification with nothing saved
+- **WHEN** the user selects "Cancel and return to overview"
+- **THEN** the dashboard is shown
+- **WHEN** after saving the commodity type they select it again
+- **THEN** Overview is shown
 
 ### Requirement: Only answers the user entered count as starting a journey
 **ID**: REQ-PLANTS-FLOW-009
@@ -196,32 +197,32 @@ The system MUST count only an answer the user gave when deciding whether a journ
 #### Scenario: A journey holding only system-populated values is treated as unstarted
 **ID**: SCN-PLANTS-FLOW-009-A
 - **GIVEN** a journey this session did not create, holding no answers beyond values the system populated itself
-- **WHEN** the user opens a page deep inside it
+- **WHEN** the user opens Overview, check your answers, the declaration or the confirmation page
 - **THEN** they are sent to the commodity-type page
 
-### Requirement: A collection page reached by changing an answer stays in that context until its own finishing action
+### Requirement: A collection page stays on the page across its adds and removes, and its finishing action goes on
 **ID**: REQ-PLANTS-FLOW-010
-The system MUST keep the user on a collection page — one that holds several records, such as the commodities list — reached by changing an answer from check your answers, across any add or remove they make there, rather than returning to check your answers after each one. Only the page's own finishing action MUST return them to check your answers, at which point it MUST show the change they made.
+The system MUST keep the user on a collection page — one that holds several records, such as the commodities list — across any add or remove they make there, however the page was reached. Only the page's own finishing action MUST go on, to the next page that applies.
 
-#### Scenario: Changing a commodity line while changing stays on the collection until finishing
+#### Scenario: Changing a commodity line stays on the collection until finishing
 **ID**: SCN-PLANTS-FLOW-010-A
 - **GIVEN** the user has followed a Change link from check your answers to a commodity line
 - **WHEN** they change the line and continue back through the commodities list
-- **THEN** they return to check your answers only after the list's finishing action, now showing the changed line
+- **THEN** commodity details goes back to the commodities list, and the list goes on to origin
 
-### Requirement: A journey reached out of context continues from the entry page through the next step
+### Requirement: A journey sent to its first page goes on from there through the next step
 **ID**: REQ-PLANTS-FLOW-011
-The system MUST, after sending the user to the commodity-type page because the journey had neither an opening sequence in this session nor answers they entered, take them on to the next in-scope step of the journey when they save that page, rather than leaving them only at Overview.
+The system MUST, on a valid Save and continue on the commodity-type page after the user was sent there from another page, take them on to the commodities list.
 
-#### Scenario: Saving the entry page after a redirect continues through the section
+#### Scenario: Saving the entry page after a redirect shows the commodities list
 **ID**: SCN-PLANTS-FLOW-011-A
-- **GIVEN** the user was sent to the commodity-type page because the journey had no opening sequence in this session and held no answers they entered
+- **GIVEN** the user was sent to the commodity-type page because the notification held no answer they entered
 - **WHEN** they choose a type and save and continue
-- **THEN** they are taken to the next step of the commodity section, not left only at Overview
+- **THEN** the commodities list is shown
 
 ### Requirement: A page reached from another page, not from the hub directly, ends with only its primary action
 **ID**: REQ-PLANTS-FLOW-012
-The system MUST NOT offer a discard-and-exit or a save-and-exit route back to Overview on a page reached from another page rather than linked from the hub directly, and MUST instead let the user leave only the way they came in, once they complete that page's own primary action. While the notification is being amended, REQ-PLANTS-FLOW-014 governs how the page ends instead.
+The system MUST NOT offer a discard-and-exit or a save-and-exit route back to Overview on a page reached from another page rather than linked from the hub directly, and MUST instead let the user leave only the way they came in, once they complete that page's own primary action.
 
 #### Scenario: A page reached via a detour offers only its primary action
 **ID**: SCN-PLANTS-FLOW-012-A
@@ -229,55 +230,53 @@ The system MUST NOT offer a discard-and-exit or a save-and-exit route back to Ov
 - **WHEN** the page is shown
 - **THEN** only its primary save-and-continue action is offered, with no separate "Save and return to overview" or "Cancel and return to overview" control
 
-### Requirement: The opening sequence is not the same order as the flow sections, and omits commodity-details
-**ID**: REQ-PLANTS-FLOW-013
-The system MUST treat the opening sequence's order as its own and MUST NOT assume it matches the flow sections in REQ-PLANTS-FLOW-001. The commodity-details entry sub-page MUST NOT be a step of the sequence — the commodities list sends a trader with no lines there and takes them back.
-
-#### Scenario: The opening sequence does not treat commodity-details as a step
-**ID**: SCN-PLANTS-FLOW-013-A
-- **GIVEN** the user is in the opening sequence on the commodities list with no lines yet saved
-- **WHEN** they continue without adding a line, or add a line and return through the list
-- **THEN** commodity-details is reached only via the list, not as its own opening-sequence step after the list
-- **AND** finishing the list continues the opening sequence to origin (or the next in-scope step), not into a separate commodity-details spine step
-
-### Requirement: While a notification is being amended, a page ends with Save and return, Save and continue and Save and return to overview
+### Requirement: While a notification is being amended, a page ends with exactly the controls it shows on a draft
 **ID**: REQ-PLANTS-FLOW-014
-While a notification is being amended, the system MUST end each page the hub links to directly with a primary "Save and return" to the review, a secondary "Save and continue" that goes on as usual, and a secondary "Save and return to overview" button, with no "Cancel and return to overview". The consignor, place of destination and consignment contact pickers and the commodities list MUST end with the first two only. A page MUST keep its usual Back link, never one to the review.
+While a notification is being amended, each journey page MUST end with exactly the controls the same page shows on a draft, in the same layout, and the status strip MUST still show the Amend status and its Cancel amend link. A page opened from a Change link on the review goes on by Save and continue through the journey to the review, and after a commodity line is changed from the review, commodity details goes to the commodities list and the list to origin.
 
-#### Scenario: A page opened while amending ends with the three amend controls, and Save and return goes back to the review showing the change
+#### Scenario: A page opened while amending ends with the draft controls
 **ID**: SCN-PLANTS-FLOW-014-A
 - **GIVEN** a notification being amended
 - **WHEN** the user opens Identification numbers from Overview
-- **THEN** it ends with "Save and return", "Save and continue" and "Save and return to overview" buttons, and no "Cancel and return to overview"
-- **WHEN** they change the producer number and select "Save and return"
+- **THEN** it ends with "Save and continue" and "Save and return to overview" buttons, and a "Cancel and return to overview" link on its own line below them
+
+#### Scenario: A Change link opens the page that collects the answer and Save and continue goes on to the review
+**ID**: SCN-PLANTS-FLOW-014-E
+- **GIVEN** the review of a notification being amended
+- **WHEN** the user follows the Change link for the identification numbers and selects "Save and continue" on it and on the pages that follow
 - **THEN** the review is shown with the new producer number
 
-#### Scenario: Save and continue while amending goes to the next page of the task
+#### Scenario: Save and continue while amending goes to the next page that applies
 **ID**: SCN-PLANTS-FLOW-014-B
 - **GIVEN** a plants-for-planting notification being amended
 - **WHEN** the user selects "Save and continue" on Arrival status
-- **THEN** Arrival details is shown, whose Back link goes to Overview
+- **THEN** Arrival details is shown
 - **WHEN** they select "Save and return to overview" on Arrival details
 - **THEN** Overview is shown
 
-#### Scenario: The address pickers offer two controls while amending, and Save and return goes back to the review
+#### Scenario: The address pickers end as they do on a draft while amending
 **ID**: SCN-PLANTS-FLOW-014-C
 - **GIVEN** a notification being amended
 - **WHEN** the user opens the consignor, place of destination or consignment contact picker
-- **THEN** each ends with "Save and return" and "Save and continue" and no "Save and return to overview"
-- **AND** "Save and return" on the consignor picker returns to the review
+- **THEN** each ends with the controls it shows on a draft
 
-#### Scenario: The commodities list offers two controls while amending
+#### Scenario: The commodities list ends as it does on a draft while amending
 **ID**: SCN-PLANTS-FLOW-014-D
 - **GIVEN** a notification being amended
 - **WHEN** the user opens the commodities list
-- **THEN** it ends with "Save and return" and "Save and continue", with no "Save and return to overview" and no "Cancel and return to overview"
-- **AND** "Save and return" returns to the review
-- **AND** "Save and continue" goes to Overview
+- **THEN** it ends with the controls it shows on a draft
+- **AND** "Save and continue" goes to origin
+
+#### Scenario: Cancel and return to overview while amending opens Overview without saving
+**ID**: SCN-PLANTS-FLOW-014-F
+- **GIVEN** a notification being amended and a value typed on a page
+- **WHEN** the user selects "Cancel and return to overview"
+- **THEN** Overview is shown with the Amend status and the Cancel amend link
+- **AND** the typed value is not saved
 
 ### Requirement: A page the hub links to directly keeps its two buttons side by side and its overview exit below them
 **ID**: REQ-PLANTS-FLOW-015
-Outside an amendment, the system MUST end a page the hub links to directly with its primary action and "Save and return to overview" side by side, and "Cancel and return to overview" on its own line below them. While a notification is being amended, it MUST instead put "Save and return" and "Save and continue" side by side, and "Save and return to overview" on its own line below them.
+The system MUST end a page the hub links to directly with its primary action and "Save and return to overview" side by side, and "Cancel and return to overview" on its own line below them, on a draft and while the notification is being amended.
 
 #### Scenario: Cancel and return to overview sits on its own line below the two buttons
 **ID**: SCN-PLANTS-FLOW-015-A
@@ -286,9 +285,72 @@ Outside an amendment, the system MUST end a page the hub links to directly with 
 - **THEN** its primary action and "Save and return to overview" sit side by side
 - **AND** "Cancel and return to overview" sits on its own line below them
 
-#### Scenario: While amending, Save and return to overview sits on its own line below the two save buttons
+#### Scenario: While amending, the layout is the same as on a draft
 **ID**: SCN-PLANTS-FLOW-015-B
 - **GIVEN** a notification being amended
 - **WHEN** the user opens a page the hub links to directly
-- **THEN** "Save and return" and "Save and continue" sit side by side
-- **AND** "Save and return to overview" sits on its own line below them
+- **THEN** "Save and continue" and "Save and return to overview" sit side by side
+- **AND** "Cancel and return to overview" sits on its own line below them
+
+### Requirement: A notification started from the Import Notification Service's type question opens at the entry page
+**ID**: REQ-PLANTS-FLOW-016
+The system MUST, when a user chooses Plants for planting, Potatoes (seed and ware) or Wood products on the Import Notification Service's "What are you importing?" question, create a new draft notification and open it at the entry page, exactly as starting from its own dashboard does.
+
+#### Scenario: Choosing a plants type opens a new draft at the entry question
+**ID**: SCN-PLANTS-FLOW-016-A
+- **GIVEN** the user is on the Import Notification Service's "What are you importing?" question
+- **WHEN** they choose Plants for planting, Potatoes (seed and ware) or Wood products and continue
+- **THEN** a new high-risk plants draft is created and its "What are you importing?" entry page is shown
+
+### Requirement: Back on every journey page goes to the place the trader came from
+**ID**: REQ-PLANTS-FLOW-017
+The system MUST send Back on every journey page to the place the trader came from: the page they saved and continued from, Overview, the review or the dashboard, surviving a refresh, a refused save, a sub-page round trip and a new session. The trail keeps the newest 40 places; past them the oldest drop and Back ends at Overview. With nothing to go back to it MUST go to Overview, except the commodity type page, which goes to where the notification was started.
+
+#### Scenario: Back goes to the page "Save and continue" was pressed on
+**ID**: SCN-PLANTS-FLOW-017-A
+- **GIVEN** the user opened the origin page from its Overview task and chose a country
+- **WHEN** they select "Save and continue" and then the Back link on the next page
+- **THEN** the origin page is shown
+
+#### Scenario: Back goes to Overview when the page was opened from Overview
+**ID**: SCN-PLANTS-FLOW-017-B
+- **GIVEN** the Overview of a draft notification
+- **WHEN** the user opens the identification numbers page from its task and follows the Back link
+- **THEN** Overview is shown
+
+#### Scenario: Back goes to the review when the page was opened from a Change link
+**ID**: SCN-PLANTS-FLOW-017-C
+- **GIVEN** the review of a draft notification
+- **WHEN** the user follows the Change link for the country of origin and then the Back link
+- **THEN** the review is shown
+
+#### Scenario: Back steps through the visited pages in reverse
+**ID**: SCN-PLANTS-FLOW-017-D
+- **GIVEN** the user selected "Save and continue" on the contact address page after the destination and identification numbers pages
+- **WHEN** they follow the Back link on the review and then on each page in turn
+- **THEN** the contact address page, the identification numbers page and the place of destination page are shown in that order
+
+#### Scenario: Back keeps the place after a sub-page round trip, a refresh and a refused Continue
+**ID**: SCN-PLANTS-FLOW-017-E
+- **GIVEN** a page opened from a Change link on the review
+- **WHEN** the user refreshes the page, or edits an address's details and returns, or has a save refused, or has "Continue" refused on the review, and then follows the Back link
+- **THEN** the place the page was opened from is shown
+
+#### Scenario: The commodity type page goes Back to where the notification was started
+**ID**: SCN-PLANTS-FLOW-017-F
+- **GIVEN** a notification started with the dashboard's create button
+- **WHEN** the user follows the Back link on the commodity type page
+- **THEN** the dashboard is shown
+
+#### Scenario: Past 40 places the oldest drop and Back ends at Overview
+**ID**: SCN-PLANTS-FLOW-017-H
+- **GIVEN** the user has pressed Save and continue on more than 40 pages in a row
+- **WHEN** they follow Back repeatedly
+- **THEN** Back steps through the newest 40 places
+- **AND** Overview is shown after them
+
+#### Scenario: A page opened by its address goes Back to Overview
+**ID**: SCN-PLANTS-FLOW-017-G
+- **GIVEN** a page of a draft notification opened by its address, or by a link that names a place the journey does not have
+- **WHEN** the user follows the Back link
+- **THEN** Overview is shown

@@ -6,6 +6,8 @@
 # Prints one line per check as "<bucket> <name> <link>", then a summary line.
 # A failing check that predates the PR's head commit gets a trailing
 # "(stale: started <time>, head committed <time>)" on its line.
+# A failing check this repo lists as advisory gets a trailing
+# "(advisory: not a required check, needs a person's decision)".
 # Exit codes:
 #   0  every check passed (skipped checks count as passed)
 #   1  at least one check failed or was cancelled on the current head
@@ -13,6 +15,27 @@
 #   4  the PR has no checks at all — absence of evidence, not a pass
 #   5  every failing check started before the head commit — a stale rollup,
 #      not a failure. Re-run the failing jobs; do not fix code for it.
+#   6  nothing failed but an advisory check — nothing to fix in code, and
+#      nothing to merge on either until a person has read what it flagged.
+#
+# Why exit 6 exists: a repo can run a check that reports rather than gates.
+# The animals frontend's "Signed-off pages" is the first: it lists the tests of
+# a signed-off page that a pull request changes, and its own workflow comments
+# it as "Not a required check: it flags a change for a person to decide and
+# never blocks the merge". Read as red it stopped a build run whose every other
+# check was green, and it would have stopped the next run the same way, because
+# the change it flags is real and a code fixer has nothing to fix. Read as green
+# it would vanish, which is worse: the whole point is that somebody sees it.
+# So it gets its own exit code and its own summary line, and the caller decides.
+#
+# Which checks are advisory is committed config, never inferred: GitHub's
+# "required" list is empty on a repo whose branch is unprotected, so asking
+# GitHub would make every check advisory. config/advisory-ci-checks.json names
+# them per repo. A check absent from that file is a gate, as before.
+#
+# Mixed case is red, not advisory: if anything else failed, exit 1, because
+# something about the current head really is failing. Advisory checks are left
+# out of that count but still listed, so a red PR shows both.
 #
 # Why exit 5 exists: GitHub does not re-run a pull request's checks when its
 # base branch moves, so a PR keeps showing a failure from before its last
@@ -42,6 +65,18 @@ fi
 if [[ "$REPO" != */* ]]; then
     REPO="DEFRA/${REPO}"
 fi
+
+ADVISORY_CONFIG="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/config/advisory-ci-checks.json"
+
+# The check names this repo treats as advisory, as a JSON array. An unreadable
+# or silent config yields [], so every check stays a gate: this test only ever
+# downgrades a red the config names.
+advisory_names() {
+    [[ -f "$ADVISORY_CONFIG" ]] || { echo '[]'; return 0; }
+    jq -c --arg repo "${REPO##*/}" \
+        '(.[$repo].advisory // .default.advisory // [])' \
+        "$ADVISORY_CONFIG" 2>/dev/null || echo '[]'
+}
 
 # When the PR's head commit was committed, as an ISO-8601 Z string. Empty when
 # either call fails, which makes every failing check read as current.
@@ -98,29 +133,41 @@ if [[ "$failed" -eq 0 ]]; then
 fi
 
 HEAD_AT=$(head_committed_at)
+ADVISORY=$(advisory_names)
 
 # A failing check is stale when it started before the head commit. An absent or
 # zero-value startedAt says nothing about when it ran, so it counts as current:
-# this test only ever downgrades a red it can prove is out of date.
-STALE_FILTER='
+# this test only ever downgrades a red it can prove is out of date. An empty
+# $head means the lookup failed, and then nothing is stale, for the same reason.
+# A failing check is advisory when this repo's config names it.
+FILTERS='
   def startedBefore($head):
     (.startedAt // "") as $at
-    | $at != "" and ($at | startswith("0001")) == false and $at < $head;
+    | $head != "" and $at != "" and ($at | startswith("0001")) == false and $at < $head;
   def failing: .bucket == "fail" or .bucket == "cancel";
+  def isAdvisory($names): .name as $n | ($names | index($n)) != null;
 '
 
-if [[ -n "$HEAD_AT" ]]; then
-    echo "$CHECKS" | jq -r --arg head "$HEAD_AT" "$STALE_FILTER"'
-      .[]
-      | if (failing and startedBefore($head))
-        then "\(.bucket) \(.name) \(.link) (stale: started \(.startedAt), head committed \($head))"
-        else "\(.bucket) \(.name) \(.link)"
-        end'
-    current=$(echo "$CHECKS" | jq --arg head "$HEAD_AT" "$STALE_FILTER"'
-      [.[] | select(failing) | select(startedBefore($head) | not)] | length')
-else
-    echo "$CHECKS" | jq -r '.[] | "\(.bucket) \(.name) \(.link)"'
-    current="$failed"
+echo "$CHECKS" | jq -r --arg head "$HEAD_AT" --argjson advisory "$ADVISORY" "$FILTERS"'
+  .[]
+  | if (failing and isAdvisory($advisory))
+    then "\(.bucket) \(.name) \(.link) (advisory: not a required check, needs a person to decide)"
+    elif (failing and startedBefore($head))
+    then "\(.bucket) \(.name) \(.link) (stale: started \(.startedAt), head committed \($head))"
+    else "\(.bucket) \(.name) \(.link)"
+    end'
+
+# Real failures: failing, not advisory, and not provably stale.
+current=$(echo "$CHECKS" | jq --arg head "$HEAD_AT" --argjson advisory "$ADVISORY" "$FILTERS"'
+  [.[] | select(failing) | select(isAdvisory($advisory) | not) | select(startedBefore($head) | not)] | length')
+advisory_failed=$(echo "$CHECKS" | jq --argjson advisory "$ADVISORY" "$FILTERS"'
+  [.[] | select(failing) | select(isAdvisory($advisory))] | length')
+
+if [[ "$current" -eq 0 ]] && [[ "$advisory_failed" -gt 0 ]]; then
+    names=$(echo "$CHECKS" | jq -r --argjson advisory "$ADVISORY" "$FILTERS"'
+      [.[] | select(failing) | select(isAdvisory($advisory)) | .name] | join(", ")')
+    echo "SUMMARY: advisory — nothing failed but ${advisory_failed} advisory check(s): ${names}. Not a code failure, and not green either: a person reads what it flagged before this merges"
+    exit 6
 fi
 
 if [[ "$current" -eq 0 ]]; then
@@ -128,5 +175,5 @@ if [[ "$current" -eq 0 ]]; then
     exit 5
 fi
 
-echo "SUMMARY: red — ${current} of ${total} checks failed on the current head ($((failed - current)) stale)"
+echo "SUMMARY: red — ${current} of ${total} checks failed on the current head ($((failed - current - advisory_failed)) stale, ${advisory_failed} advisory)"
 exit 1

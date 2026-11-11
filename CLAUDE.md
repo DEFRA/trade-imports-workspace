@@ -75,6 +75,8 @@ The house rules on comments, names, structure, logging and tests live in [`.clau
 
 Fix it, whoever caused it. "Pre-existing", "flaky", "unrelated", "environmental" and "track it separately" never close a failure. A different test failing on each run points to a race: read `test-results/*/error-context.md` and find it. If you cannot fix it (it needs product input or credentials you lack), say so and ask.
 
+One exception: for a test linked to a signed-off scenario, fix the code, not the test, unless a person has ruled. See [`.claude/rules/signed-off-pages.md`](.claude/rules/signed-off-pages.md).
+
 ### 7. Canary first
 
 To make one change across several repos, services or environments, apply it to one target that needs the whole change, check it, then do the rest. Check every target afterwards, not a sample.

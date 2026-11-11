@@ -257,6 +257,20 @@ file, with the reasoning dated beside it, and re-derive:
 { "include": { "<theme>": { "<spec path>": ["<scenario heading>"] } } }
 ```
 
+The opposite happens too. A row commit made just after merging `main` can carry
+another ticket's scenarios into the theme's diff. Check every domain that has
+scenarios but no rows. Where you judge scenarios to be another ticket's, list
+them under `exclude` in the same shape, with the reasoning and the other ticket
+beside them. They are reported as `excludedByOverride`.
+
+### A backlog with no themes, merged by squash
+
+A backlog whose rows carry no `theme` is one theme. Pass the row commits'
+scope (the build args' `scope`) as `--theme`, and every row is read. A
+squash merge leaves `main` with one commit and no row commits, so in the
+MERGE flow pass `--branch main --commits-from <theme branch>`. The commits
+come from the local theme branch, and the links point at `main`.
+
 Anything not listed stays out, so the default is conservative and every inclusion
 is a decision someone can read back.
 

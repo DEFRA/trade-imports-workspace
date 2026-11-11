@@ -169,7 +169,7 @@ export const register = (program, { timVersion }) => {
     )
     .option(
       '--base <ref>',
-      'With --repo: the ref in each repo to compare its files with, committed and uncommitted, such as origin/main'
+      'With --repo: the ref each repo branched from, such as origin/main. Compares its files, committed and uncommitted, with where HEAD left that ref, so changes the ref has had since are left out'
     )
     .addHelpText(
       'after',

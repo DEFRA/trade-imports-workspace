@@ -4758,7 +4758,7 @@ ${guardrails()}
    \`${signedOffCommand(id, rowRepos, workspace)}\`
    It compares the workspace's uncommitted \`openspec/\` with HEAD${workspace.workspaceOnWorkBranch ? `, the workspace's commits on this branch, a resumed attempt's
    included, with \`origin/${BASE_BRANCH}\`` : ''}, and each of the increment's repos, committed and uncommitted, with
-   \`origin/${BASE_BRANCH}\`.
+   where it left \`origin/${BASE_BRANCH}\`.
 2. Read that file once with \`jq -c '{ok, signedOff: [.result.signedOff[]? | {change, id, capability}], errors}' ${signedOffLog(id)}\`.
 3. Report \`exitCode\` as tim's exit code.
    - 0 → nothing signed off changes: ok:true, changes 0.

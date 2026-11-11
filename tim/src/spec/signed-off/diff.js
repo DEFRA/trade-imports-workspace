@@ -217,10 +217,24 @@ const statusPairs = (fields) =>
     fields[index * 2 + 1]
   ])
 
+const mergeBaseOf = async (repoPath, repo, base) => {
+  const result = await run('git', ['merge-base', base, 'HEAD'], {
+    cwd: repoPath
+  })
+  if (result.exitCode !== 0) {
+    throw new TimError(
+      'NOT_FOUND',
+      `Can't find where repos/${repo} left ${base}. Fetch first, or name another --base.`
+    )
+  }
+  return result.stdout.trim()
+}
+
 const changedRepoFiles = async (repoPath, repo, base) => {
+  const mergeBase = await mergeBaseOf(repoPath, repo, base)
   const result = await run(
     'git',
-    ['diff', '--name-status', '--no-renames', '-z', base],
+    ['diff', '--name-status', '--no-renames', '-z', mergeBase],
     { cwd: repoPath }
   )
   if (result.exitCode !== 0) {
@@ -306,11 +320,12 @@ const linkedTestChanges = async (workspaceRoot, repo, base) => {
  * Every change to a signed-off scenario: one the commits or ranges added
  * already signed off, rewrote, removed or took the Signed off mark from;
  * with `uncommitted`, the same for the workspace's uncommitted change to
- * `openspec/` against HEAD, new files included; and, for each of `repos`
- * against `base`, each signed-off scenario in the workspace's own
- * `openspec/` whose linked test in that repo is edited or deleted,
- * counting uncommitted work. `ticketDraft` is the Jira ticket for a person
- * to approve or refuse them, or null when there are none.
+ * `openspec/` against HEAD, new files included; and, for each of `repos`,
+ * each signed-off scenario in the workspace's own `openspec/` whose linked
+ * test in that repo is edited or deleted since HEAD left `base`, counting
+ * uncommitted work. A test only `base` has changed since is left out.
+ * `ticketDraft` is the Jira ticket for a person to approve or refuse them,
+ * or null when there are none.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot

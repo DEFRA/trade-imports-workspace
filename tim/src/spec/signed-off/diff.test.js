@@ -408,6 +408,34 @@ describe('#diffSignedOff over a repo', () => {
     ])
   })
 
+  test('Should compare from where the branch left the base, leaving out a linked test only the base has edited since', async () => {
+    const workspacePath = await workspaceWithSpec([LISTS, SAVES])
+    const repoPath = await serviceRepo(workspacePath)
+    await git(repoPath, 'checkout', '--quiet', '-b', 'feature')
+    writeFiles(repoPath, { [FIT_FILE]: 'fit, edited on the branch\n' })
+    await commitAll(repoPath, 'edit the fit spec on the branch')
+    await git(repoPath, 'checkout', '--quiet', 'main')
+    writeFiles(repoPath, { [UNIT_FILE]: 'unit, edited on main\n' })
+    await commitAll(repoPath, 'edit the unit test on main')
+    await git(repoPath, 'checkout', '--quiet', 'feature')
+
+    const result = await diffSignedOff({
+      workspaceRoot: workspacePath,
+      repos: [REPO],
+      base: 'main'
+    })
+
+    expect(
+      result.signedOff.map(({ id, change, test }) => ({
+        id,
+        change,
+        file: test.file
+      }))
+    ).toEqual([
+      { id: 'SCN-ORIGIN-001-A', change: 'test-edited', file: FIT_FILE }
+    ])
+  })
+
   test('Should leave out a changed file that a signed-off scenario links in another repo', async () => {
     const workspacePath = await workspaceWithSpec([
       {

@@ -13,7 +13,7 @@ const foundInWords = ({ uncommitted, commit, sha, range, repo, base }) => {
   if (uncommitted) return "the workspace's uncommitted openspec/ change"
   if (commit !== undefined) return `commit ${sha.slice(0, SHORT_SHA_LENGTH)}`
   if (range !== undefined) return `range ${range}`
-  return `repos/${repo} against ${base}, committed and uncommitted`
+  return `repos/${repo} since it left ${base}, committed and uncommitted`
 }
 
 const versionLines = (label, version, missing) =>

@@ -83,7 +83,7 @@ describe('#draftSignedOffTicket', () => {
         'Capability: plants/journey-pages/origin',
         'What happens: A linked test is edited',
         'Why it counts: A test linked to it in coverage.json is edited: trade-imports-plants-frontend/src/origin.test.js.',
-        'Found in: repos/trade-imports-plants-frontend against origin/main, committed and uncommitted',
+        'Found in: repos/trade-imports-plants-frontend since it left origin/main, committed and uncommitted',
         'Test: trade-imports-plants-frontend/src/origin.test.js',
         '  "saves the country"',
         'Steps, unchanged in the spec:',

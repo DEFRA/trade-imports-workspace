@@ -1,0 +1,905 @@
+{
+  "programme": "design-release-2-1-identification-and-permanent-address",
+  "generatedFrom": [
+    "ruling:sam-2026-10-09-pm",
+    "ruling:sam-2026-10-09-templates",
+    "ruling:sam-2026-10-09",
+    "ruling:sam-2026-10-07",
+    "confluence:6497338582",
+    "document:dr1-parity-notes",
+    "document:dr1-parity-backlog",
+    "prototype:dr2-1-source",
+    "trace:prototype-dr2-1",
+    "prototype:dr2-1-specs",
+    "repo:backend",
+    "repo:insbackend",
+    "repo:addressbook",
+    "repo:referencedata",
+    "repo:stub",
+    "repo:frontend",
+    "repo:insfrontend",
+    "repo:plantsfrontend",
+    "repo:tests",
+    "repo:perftests",
+    "trace:animals-fit",
+    "trace:ins-fit",
+    "trace:e2e",
+    "ruling:sam-2026-10-26"
+  ],
+  "invariants": [
+    "Every new or changed English string gets a Welsh draft beside it in the same change, as the service's other copy does.",
+    "Every changed page works fully without JavaScript: every state change is a form post, every search and filter a form with a button that submits it, and JavaScript only enhances a page that already works (ruling:sam-2026-10-09-pm claim 6; conflicts:c-006).",
+    "A behaviour is built with GOV.UK Frontend first, then another tested government library (Ministry of Justice, HMRC, Scottish Government); no custom JavaScript is written to copy the prototype, pop-ups are not built and confirmations stay pages (ruling:sam-2026-10-09-pm claims 5, 7 and 19).",
+    "Pages are built from GOV.UK Frontend components and govuk-* classes; the prototype's custom app-dr2-* blocks are not copied.",
+    "A search box is the real frontend's accessible autocomplete over a native select and behaves as the real frontend configures it; its entries are what MDM serves through reference-data, and only how the list reads follows the prototype (ruling:sam-2026-10-09-pm claims 1 to 4).",
+    "Where a row changes a page or behaviour the high-risk plants frontend also has, the same increment changes plants too: plants mirrors the structure, wording patterns, components and behaviour, and keeps its own questions, data and step order (ruling:sam-2026-10-09-pm claims 43 and 44).",
+    "Shared wording in a frontend's shared copy is never reworded in place; a set-specific string goes in the feature's own copy (ruling:sam-2026-10-09-pm claim 41).",
+    "Notification statuses are only ever added, never renamed or removed, and each new status is mapped in every frontend that reads it before the animals backend first sends it (ruling:sam-2026-10-09-pm claim 42).",
+    "A page in its error state keeps the 'Error: ' prefix on its browser title (conflicts:c-006).",
+    "Every save control a page offers makes exactly the same checks on that page's answers, with no page an exception: a missing or invalid answer keeps the trader on the page with an error for each one and what they entered still shown, and the controls differ only in where they go once every answer passes (ruling:sam-2026-10-26).",
+    "Notifications, templates and address book entries stay scoped to the signed-in user's organisation (or user, for templates); nothing lists another organisation's records.",
+    "Each increment updates the tests repo's specs, page objects and journey helpers its change breaks, in the same change."
+  ],
+  "repos": {
+    "frontend": {
+      "path": "repos/trade-imports-animals-frontend",
+      "github": "DEFRA/trade-imports-animals-frontend"
+    },
+    "backend": {
+      "path": "repos/trade-imports-animals-backend",
+      "github": "DEFRA/trade-imports-animals-backend"
+    },
+    "tests": {
+      "path": "repos/trade-imports-ins-tests",
+      "github": "DEFRA/trade-imports-ins-tests"
+    }
+  },
+  "theme": "identification-and-permanent-address",
+  "branch": "feat/EUDPA-796-design-release-2-1-identification-and-permanent-address",
+  "parent": {
+    "workarea": "shared/design-release-2-1",
+    "wave": 4,
+    "landsAfter": [
+      "commodities-and-reason",
+      "design-snagging",
+      "journey-foundation",
+      "type-question-and-templates"
+    ]
+  },
+  "touches": [
+    "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification",
+    "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/evaluation.js",
+    "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js",
+    "frontend:src/server/app/sets/live-animals/journeys/linear/features/permanent-address",
+    "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/AnimalIdentifier.java",
+    "tests:page-objects/animals/animal-identification-page.ts",
+    "tests:page-objects/animals/permanent-address-page.ts",
+    "tests:tests/animals/e2e/pages/animal-identification.spec.ts",
+    "tests:tests/animals/e2e/pages/permanent-address.spec.ts",
+    "tests:tests/animals/e2e/journeys/pet-cats-air-permanent-address.spec.ts"
+  ],
+  "increments": [
+    {
+      "id": "inc-045",
+      "title": "Identification details opened from template review returns to template review",
+      "detail": "Opened from template review, Identification details' Back link and a valid save go back to template review, as the journey's other pages do.",
+      "acceptanceCriteria": [
+        "When the page was opened from template review, its 'Back' link goes back to template review, and 'Save and continue' on a valid page returns there, as the journey's other pages do. (prototype:dr2-1-source prototype-dr2-1-source-p5-007, prototype-dr2-1-source-p5-012; repo:frontend repo-frontend-p6-005, repo-frontend-p6-074)"
+      ],
+      "dependsOn": [],
+      "theme": "identification-and-permanent-address",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "app/routes.js:10730-10732, 1796-1800, 1495-1511 (prototype-dr2-1-source-p5-007, p5-010, p5-011, p5-012)"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p5-051, p5-063, p5-068"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "prototype-dr2-1-specs-p2-045, p2-053, p4-017"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "animal-identification.controller.js (repo-frontend-p6-005, p6-009, p6-074)"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p6-004, p6-057"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "trace-animals-fit-p10-012, p10-079"
+        },
+        {
+          "source": "repo:tests",
+          "ref": "flows/animals/journey.ts answerAnimalIdentification (repo-tests-p1-066-m1)"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "ruling-sam-2026-10-09-p1-057, p1-196, p1-198"
+        }
+      ],
+      "requirements": [
+        "req-199",
+        "req-200",
+        "req-201"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "The template-review return waits for the template review page (type-question-and-templates inc-156). That page is not on main and will be rebuilt from main on that theme's fresh branch.",
+        "The template-review return is the journey's generic entry-point rule, applied in this page's controller; it changes no file the split-off type-question-and-templates theme owns (its check-answers/view-model/template-review folder), so it stays here.",
+        "The opening-run Back link to Commodity details, the page's place and skipping in the journey order, and the Overview and Check your answers returns left this row: EUDPA-774 owns them.",
+        "Trimmed 6 November: its navigation (where Save and continue and Back go, the opening run, amend returns) was taken out; EUDPA-774 owns it.",
+        "Verified against main 11 November: not buildable, and correctly wired for it. There is no template journey or template review page on main (no template-review or templateReview anywhere under src), and ruling:sam-2026-11-04 de-prioritised templates, parking the type-question-and-templates theme's 12 rows. Its externalDependsOn on that theme's inc-156 is therefore accurate and tim backlog next already skips this row. No action needed unless templates is un-parked, but note the knock-on: inc-241 dependsOn this row, so substantive V4 work is parked behind templates too."
+      ],
+      "gate": null,
+      "externalDependsOn": [
+        {
+          "workarea": "shared/design-release-2-1/themes/commodities-and-reason",
+          "id": "inc-015"
+        },
+        {
+          "workarea": "shared/design-release-2-1/themes/type-question-and-templates",
+          "id": "inc-156"
+        }
+      ]
+    },
+    {
+      "id": "inc-048",
+      "title": "An empty species panel is refused on its own save, even beside a filled one",
+      "detail": "One identifier is enough to save a live animal, but an animal with no identifier at all is not a record. Today 'Enter at least one identifier for this animal' fires only when nothing is typed anywhere on the page, so with two species an empty panel's save is skipped silently while the other's data is there. The check moves to each panel: a panel save with every identifier of its current animal blank is refused on that panel. The page's own 'Save and continue' and 'Save and return to overview' still never block on missing identifiers, and the page still shows no message about the submit rule.",
+      "acceptanceCriteria": [
+        "With cattle and dogs on the page, an ear tag typed into the cattle panel and nothing typed into the dog panel, pressing the dog panel's 'Save and add another' saves nothing and shows 'Enter at least one identifier for this animal' in the 'There is a problem' summary and inline on the dog panel's first identifier field; the summary link focuses that field. (repo:frontend repo-frontend-p6-027; document:dr1-parity-backlog document-dr1-parity-backlog-p5-019; conflicts:c-042)",
+        "Pressing 'Save and finish' on a species' last animal still to enter, with every identifier of that animal blank, is refused the same way and the animal stays to enter. (repo:frontend repo-frontend-p6-027; conflicts:c-042)",
+        "A partly filled animal, with one identifier given and the rest blank, saves with no error and is listed in that panel's saved-animals table. (repo:frontend repo-frontend-p6-019; conflicts:c-042)",
+        "Pressing the page's 'Save and continue' or 'Save and return to overview' with every identifier blank saves no animal, shows no error and takes the trader on. (repo:frontend repo-frontend-p6-028; conflicts:c-042)"
+      ],
+      "dependsOn": [],
+      "theme": "identification-and-permanent-address",
+      "status": "todo",
+      "kind": "fix",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "repo:frontend",
+          "ref": "form/forms.js, records/append.js, copy/copy.en.js (repo-frontend-p6-019, p6-027, p6-028)"
+        },
+        {
+          "source": "document:dr1-parity-backlog",
+          "ref": "inc-103 finding.correction (document-dr1-parity-backlog-p5-019)"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "ruling-sam-2026-10-09-p1-057, p1-188"
+        },
+        {
+          "source": "ruling:sam-2026-10-07",
+          "ref": "ruling-sam-2026-10-07-p1-010"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "app/routes.js:12498-12523 (prototype-dr2-1-source-p5-071)"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p5-065"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "trace-animals-fit-p11-006, p11-007, p11-009"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p6-102, p6-106"
+        }
+      ],
+      "requirements": [
+        "req-234"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "Unchanged in substance by this re-distil; criteria 3 and 4 were added so the row states the whole of req-234 as it stands, including the halves that must keep working.",
+        "Kept apart from the per-species save row: it is a validation fix with its own conflict (c-042), and merging it would take that row past a comfortable review size. One identifier is enough (c-041), so the every-identifier rule and the per-identifier blank errors are not built. req-234 is the live half only (ruling-sam-2026-10-09-p1-057).",
+        "The existing message and its link stay; only where the check is made changes. No new copy, so no Welsh change.",
+        "inc-047 was folded into design-snagging inc-214 on 19 October (review:designers-2026-10-19 S17, S18), so this row waits on that work, which merged to main on 23 Oct.",
+        "Design snagging merged to main 23 Oct: buildLineForms (animal-identification/form/forms.js) now reads only the pressed card's form on 'Save and add another' (linesToReadFormsFor), so withEmptyFormGuard's 'any data' check now looks at that card alone and criterion 1 may already hold. Start by writing the criteria as tests against main. Change code only where a test fails, which may be the last-animal 'Save and finish' path.",
+        "Re-analysis 27 Oct (main checked at animals-frontend ba85c222 after EUDPA-617 c3183a8e): the re-analysis judged this already met on main (animal-identification/form/forms.js:87-95, 135-145), but the verifier refuted that verdict, so the row stays todo. No test proves either of the first two criteria yet: the only test is a single-card empty save (animal-identification.controller.test.js:517-525). Start by writing them as tests against main, a two-card controller test and a cattle-and-dogs browser test, and change code only where a test fails.",
+        "Verified against main 11 November: criterion 1's core is already built and tested for the single-panel case. animal-identification.controller.test.js holds 'Should reject an empty Save and add another — never append a blank record, and log nothing', asserting the error 'Enter at least one identifier for this animal' on the ear tag field, HTTP 400, no animalIdentifiers appended and no refusal logged; the message is a real copy key, commodities/copy/copy.en.js:147 atLeastOneIdentifier. What is not proven is the part this row is named for: the multi-panel case with cattle filled and the dog panel empty, the error summary entry, and that its link focuses that field. Criteria 2 to 4 are also unproven. Build this as criteria-as-tests and expect to change little code."
+      ],
+      "gate": null,
+      "externalDependsOn": [
+        {
+          "workarea": "shared/design-release-2-1/themes/design-snagging-b",
+          "id": "inc-214"
+        }
+      ]
+    },
+    {
+      "id": "inc-049",
+      "title": "Identification counts as complete only when every animal is entered, and submit needs one entry per species when several are selected",
+      "detail": "Today the hub's Identification details row shows Complete straight after Commodity details, before any animal is identified, and stays Complete at 1 of 2. DR2.1 counts identification complete only when every animal of every selected species with identifier fields has a complete entry. For submitting, DR2.1 makes identification optional for a single species but needs at least one complete entry per species when more than one species is selected; the identification page itself shows no message for that rule.",
+      "acceptanceCriteria": [
+        "Straight after Commodity details, with no animals entered, the hub's Identification details row does not show Complete. (prototype:dr2-1-source prototype-dr2-1-source-p5-068; trace:e2e trace-e2e-p6-002; trace:animals-fit trace-animals-fit-p10-003-m1)",
+        "With 1 of 2 cattle entered, the row does not show Complete; once both are entered with ear tag and passport it shows Complete. (prototype:dr2-1-source prototype-dr2-1-source-p5-068; trace:e2e trace-e2e-p6-066)",
+        "A selected species with identifier fields but no number of animals keeps the row from showing Complete. (prototype:dr2-1-source prototype-dr2-1-source-p5-068)",
+        "With one species selected and no identification entered, the notification can be submitted. (prototype:dr2-1-source prototype-dr2-1-source-p5-070)",
+        "With two species with identifier fields selected and one of them without any complete entry, submitting is refused; once each has at least one complete entry, submitting goes ahead. (prototype:dr2-1-source prototype-dr2-1-source-p5-070; document:dr1-parity-backlog document-dr1-parity-backlog-p5-020)",
+        "The identification page shows no message about the submit rule. (prototype:dr2-1-source prototype-dr2-1-source-p5-070)"
+      ],
+      "requirements": [
+        "req-248",
+        "req-249"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p5-068, p5-070"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "trace-animals-fit-p10-002, p10-003, p10-003-m1, p10-091"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p6-002, p6-066"
+        },
+        {
+          "source": "document:dr1-parity-backlog",
+          "ref": "document-dr1-parity-backlog-p5-020"
+        }
+      ],
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "kind": "feat",
+      "theme": "identification-and-permanent-address",
+      "dependsOn": [
+        "inc-048"
+      ],
+      "status": "dropped",
+      "gate": null,
+      "openQuestions": [],
+      "notes": [
+        "Combines the hub completion rule and the submit rule: both read the same 'complete entry' definition from the every-identifier row and change the same obligation evaluation. The submit refusal's place and wording belong to the review-and-submit area, which owns the submit gate and its messages (req-animal-identification-056's why); the criterion asserts only that submitting is refused or goes ahead. If that area drafts a row for the same gate, the combiner should merge this submit criterion into it or set dependsOn. The germinal half of the completion rule (a germinal species counts once its entry is saved) is proved in the germinal panel row. Builds after the every-identifier row in this area.",
+        "Dropped: req-248 and req-249 are adopted as already met. ruling:sam-2026-10-09 claims 13, 36 and 37 split off their germinal halves and settle that one identifier is enough for Complete and for submit, which the live-animals code does today; the germinal bar is req-261 in inc-183."
+      ]
+    },
+    {
+      "id": "inc-051",
+      "title": "Pigs, sheep and goats are identified by ear tag only",
+      "detail": "Pigs (0103), sheep (010410) and goats (010420) are identified per animal by 'Ear tag' only. The live-animal catalogue reaches the service from master data management, and the commodity integration that brings these three in is not this programme's to build, so the row waits for it. Once they are offered, each selected pig, sheep or goat species gets a panel asking for one ear tag per animal.",
+      "acceptanceCriteria": [
+        "A selected pig species (0103) gets a panel asking for 'Ear tag' and no other identifier, once per animal. (prototype:dr2-1-source prototype-dr2-1-source-p5-017)",
+        "A selected sheep (010410) or goat (010420) species gets a panel asking for 'Ear tag' and no other identifier, once per animal. (prototype:dr2-1-source prototype-dr2-1-source-p5-021)",
+        "A pig, sheep or goat saved with an ear tag is listed in its saved-animals table, which has an 'Animal' column, an 'Ear tag' column and a 'Remove' action. (prototype:dr2-1-source prototype-dr2-1-source-p5-017, prototype-dr2-1-source-p5-021)",
+        "Which identifier fields a species panel asks for follows the species rather than the commodity code alone: on commodity code 0101 a horse panel asks for a horse name, while a donkey, pony, zebra, mule or hinny panel asks only for the identifiers that species takes. (confluence:6497338582 confluence-6497338582-p4-014, -p4-014-m1, -p4-043, -p4-106-m1; prototype:dr2-1-source prototype-dr2-1-source-p5-013; repo:frontend repo-frontend-p6-010)"
+      ],
+      "dependsOn": [],
+      "theme": "identification-and-permanent-address",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "app/data/commodity-identifiers.js:18-20; app/routes.js:1774-1778 (prototype-dr2-1-source-p5-017, p5-021)"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "ruling-sam-2026-10-09-pm.md claims 28, 29 and 32 (ruling-sam-2026-10-09-pm-p2-001, p2-024, p2-025)"
+        }
+      ],
+      "requirements": [
+        "req-219",
+        "req-220",
+        "req-2146"
+      ],
+      "openQuestions": [
+        "Blocked until commodities come from master data management: pigs (0103), sheep (010410) and goats (010420) join the live-animals catalogue only through the commodity integration, which this programme cannot build. Whoever owns that integration must deliver it, and Sam must rule the catalogue unblocked, before this row can be built (ruling:sam-2026-10-09-pm claims 28, 29 and 32)."
+      ],
+      "notes": [
+        "Still blocked: req-219 and req-220 both carry blockedBy, and the 9 October afternoon ruling names this row as waiting with the catalogue. Kept apart from the rest of the page so nothing else is held up.",
+        "The detail was rewritten this re-distil to drop the out-of-date count of today's catalogue and the release and row ids it used to carry.",
+        "The ear tag is already stored by the backend, so no backend change is expected. The per-commodity identifier list it needs lives in the live-animals commodity service, which the split-off commodities-and-reason theme also changes, so that folder is shared; the row also waits for that theme's row that offers these three commodities.",
+        "Re-analysis 27 Oct (main checked at animals-frontend ba85c222 after EUDPA-617 c3183a8e): the reason for the block may have gone, for Sam's call only. Commodity search now reads live animals through reference-data, and the captured fixture holds 0103 (services/_capture/fixtures/commodities.json:93), 010410 (:130) and 010420 (:151). The work is still unbuilt: COMMODITY_IDENTIFIERS gives those codes no identifiers (services/commodities/rules.js:6-18), so they skip Identification details. Its external dependency, commodities-and-reason inc-012, is still blocked on the same reason in that theme's backlog. Status unchanged.",
+        "Re-distil 2 November: req-2146 (which identifier fields a panel shows follows the species, not the commodity code alone) is added here. It waits on exactly what this row waits on, the commodity catalogue from master data management, because no two species share a code in today's five-commodity catalogue, and it changes the same species panel, so it is built in the same increment. It was given to no area, so the combiner drafted its criterion.",
+        "Verified against main 11 November. Two things have changed since the 27 October re-analysis this row records. First, its external dependency commodities-and-reason inc-012 is now dropped rather than blocked, so this row can never unblock by that dependency being met: a dropped row never satisfies. Second, inc-012's drop reasoning removes this row's stated blocker outright. It records that MDM commodities landed on 27 October (frontend c3183a8e), that ruling:sam-2026-10-09-pm claim 28's commodities carve-out has therefore expired, and that claim 25 now governs: a list's content is MDM's to change and 'never a reason to block a row'. The code position is unchanged and small: services/commodities/rules.js defines SWINE_CODE 0103, SHEEP_CODE 010410 and GOAT_CODE 010420 but gives none of them an entry in COMMODITY_IDENTIFIERS, so they still skip Identification details. The remaining work is to add ear-tag-only entries for those three codes. Needs a decision to unblock, which the row's earlier note reserves for Sam.",
+        "Unblocked 11 November. Scope check against ruling:ian-2026-11-11 point 2, because this row's identifier lists are exactly the kind of thing that can be prototype demo data: it is not. req-219 (pigs by ear tag) cites confluence-6497338582-p4-026 and p4-034, and req-220 (sheep and goats by ear tag) cites p4-034 — V4's own 'Ear tag identifier commodities' list, which names 0102 Cattle, 0103 Pig (Domestic), 010410 Sheep (Domestic) and 010420 Goats. The prototype claims each also carries (prototype-dr2-1-source-p5-017, p5-021) are kind 'data' read from the prototype's hard-coded commodity identifiers file, so they corroborate and decide nothing. req-2146 is V4-backed too (p4-014, p4-043, p4-106-m1). The commodities themselves are MDM's content and arrived on 27 October, so nothing here waits on a list."
+      ],
+      "gate": null,
+      "externalDependsOn": [
+        {
+          "workarea": "shared/design-release-2-1/themes/commodities-and-reason",
+          "id": "inc-012"
+        }
+      ]
+    },
+    {
+      "id": "inc-268",
+      "title": "Cattle and pigs are asked for a tattoo, as V4's tattoo commodity list says",
+      "detail": "V4's 'Tattoo identifier commodities' list names 01061900 (cats, dogs and ferrets), 0103 (pigs) and 0102 (bovine), but the frontend offers a tattoo on 01061900 alone: TATTOO_CODES derives from COMMODITY_IDENTIFIERS, which lists animalIdentifierTattoo under 01061900 only. A cattle panel gains a tattoo field after its ear tag and passport, and a pig panel gains one beside its ear tag. This reverses frontend commit b1ff013c, which removed the tattoo from cattle under DR1 parity on the grounds that DR1 asks a cow only for an ear tag and a passport; ruling:ian-2026-11-11 settles that V4 outranks every DR1 judgement, so V4's list is built and the parity change goes. The tattoo is placed last on cattle because that is where Design Release 2.1 puts it on the species that already ask for one.",
+      "acceptanceCriteria": [
+        "A cattle (0102) species panel on Identification details asks for 'Ear tag', 'Passport' and 'Tattoo', in that order, and an animal saved with a tattoo alone saves with no error and is listed in that panel's saved-animals table with its tattoo shown (confluence:6497338582 confluence-6497338582-p4-016, confluence-6497338582-p4-017, confluence-6497338582-p4-024, confluence-6497338582-p4-025; ruling:ian-2026-11-11; c-334)",
+        "A pig (0103) species panel asks for 'Ear tag' and 'Tattoo', and an animal saved with either one alone saves with no error (confluence:6497338582 confluence-6497338582-p4-024, confluence-6497338582-p4-025, confluence-6497338582-p4-106; ruling:ian-2026-11-11; c-334)",
+        "A cattle animal's saved-animals table has an 'Animal' column and one column per identifier the species asks for, the tattoo column included, with a 'Remove' action on each row (confluence:6497338582 confluence-6497338582-p4-105)",
+        "A tattoo of 59 characters is refused with 'Tattoo must be 58 characters or less' in the error summary and inline on the field, and one of 58 characters saves, on cattle and pigs as it already does on cats, dogs and ferrets (repo:frontend repo-frontend-p6-102)",
+        "The review page reads a cattle or pig animal's tattoo back in that species' identifier columns, as it already does for cats, dogs and ferrets (repo:frontend repo-frontend-p6-102; trace:animals-fit trace-animals-fit-p10-028)",
+        "A horse (0101) panel is not asked for a tattoo, and neither is any species V4's tattoo list does not name (confluence:6497338582 confluence-6497338582-p4-024)",
+        "The page's Welsh copy holds an entry for exactly the keys its English copy holds, and stays a machine draft (repo:frontend repo-frontend-p6-100)"
+      ],
+      "dependsOn": [
+        "inc-051"
+      ],
+      "theme": "identification-and-permanent-address",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "confluence:6497338582",
+          "ref": "confluence-6497338582-p4-016, p4-017, p4-018, p4-021, p4-022, p4-024, p4-025, p4-105, p4-106"
+        },
+        {
+          "source": "ruling:ian-2026-11-11",
+          "ref": "whole file: V4 outranks every DR1 judgement; c-334 settled by V4's list"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "repo-frontend-p6-100, p6-102"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "trace-animals-fit-p10-028"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p6-020"
+        }
+      ],
+      "requirements": [
+        "req-2154",
+        "req-2155"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "Raised 11 November from deferred.md's 'Tattoo identifier: the frontend offers it for 01061900 only; V4 also lists pigs and cattle', which the 2 November re-analysis found by reading the expand macros on confluence:6497338582 and which assigned the work to this theme. req-2154 (cattle) and req-2155 (pigs) existed already with status 'question' on c-334 and were in no row and in no theme pointer, so this is the first row to carry them.",
+        "c-334 was a question for two reasons and ruling:ian-2026-11-11 answers both. V4 against DR1: b1ff013c removed the tattoo from cattle deliberately under DR1 parity and dr1-parity-notes calls a tattoo on every cow a defect; V4 now outranks DR1 on every point, so the list is built and the parity change is reversed by this ruling rather than silently. V4 against itself: the expand's title counts two commodities while it lists five. The entries win, which is not new judgement — sources.json already tells the intake to 'claim the entries listed, never the count', because the same page titles the passport list six and lists nine. The page naming 0102 'Bovine' in this list and 'Cattle' in the others is a label difference, not a difference of scope.",
+        "Depends on inc-051, which changes the same COMMODITY_IDENTIFIERS map in services/commodities/rules.js to give pigs, sheep and goats their ear tag. Building them apart would have the two rows rewrite the same object, and inc-051 lands the pig entry this row then extends. Verified on main 11 November: COMMODITY_IDENTIFIERS carries 0102 as ear tag and passport, 0101 as microchip, passport and horse name, and 01061900 as microchip, passport and tattoo, so cattle and pigs have no tattoo today and the 58-character tattoo message already exists in commodities copy for the pet species to follow.",
+        "Scope check against ruling:ian-2026-11-11 point 2: this row rests on V4, not on prototype demo data. The prototype says the opposite on both commodities (prototype-dr2-1-source-p5-015 gives cattle ear tag and passport only, p5-017 gives pigs an ear tag only), and those claims are kind 'data' read from the prototype's hard-coded files, so they do not decide what the notification captures. Which commodities a rule covers is V4's.",
+        "Not in scope: the CPH allow-list, which is the other DR1-versus-V4 shape conflict the same re-analysis found. It changes the CPH page and its obligation rather than the identification page, so it stays in deferred.md for whoever owns that code.",
+        "Pointer state 11 November: req-2154 and req-2155 were added to the parent's splitOff pointer for this theme so a re-distil cannot draft a second row for them, but they carry no fingerprint yet. That is correct rather than missing: tim distil coverage fingerprints adopted requirements only, and both are still status 'question' in requirements.json. ruling:ian-2026-11-11 adopts them, and it is itself pending extraction, so the next re-distil is what flips their status, clears c-334 and gives them fingerprints. tim backlog check and tim distil coverage both pass in the meantime."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-054",
+      "title": "A permanent address page for cats, dogs and ferrets, with one card per animal and a same-as-destination choice",
+      "detail": "Each pet's permanent address is asked on its own page in the consignment parties section, opened from the consignment addresses page, instead of inside the animal identification form. Cats, dogs and ferrets need one. Other live mammals that share commodity code 01061900 do not. The page has a card for each animal that needs one, showing the identifiers already given, and asks for each whether the animal lives at the place of destination or at a new address, revealing the address fields only when a new address is chosen. Each animal's choice and address are stored with the notification, every field in its own place, and a trader can save what they know and come back.",
+      "acceptanceCriteria": [
+        "A consignment with cats, dogs or ferrets has a 'Permanent address' section on the consignment addresses page explaining 'A permanent address is where an animal:' with the bullets 'will permanently reside' and 'can be checked by the Animal and Plant Health Agency (APHA)', and the link 'Add a permanent address' to the permanent address page; a consignment of cats alone has five sections and no county parish holding section (prototype:dr2-1-source p9-023, p9-025; trace:prototype-dr2-1 p7-085, p7-106; prototype:dr2-1-specs p3-081; ruling:sam-2026-10-09-pm p2-014, p2-015)",
+        "A consignment of cattle, horses or another 01061900 species, such as 'Carnivora excluding Canis familiaris, Felis catus, Mustela putorius furio', has a consignment addresses page with no permanent address section, and opening the permanent address page for it sends the trader to the consignment addresses page (prototype:dr2-1-source p9-023, p9-024; trace:prototype-dr2-1 p7-109; document:dr1-parity-backlog p6-012, p6-015; ruling:sam-2026-10-09-pm p2-014, p2-015)",
+        "The permanent address page has the caption 'Consignment parties', the heading 'Permanent address', the browser title 'Permanent address - Import notification service - GOV.UK' and a back link to the consignment addresses page (prototype:dr2-1-source p9-021, p9-032, p9-033; trace:prototype-dr2-1 p13-109, p13-110; prototype:dr2-1-specs p3-082, p3-108)",
+        "The animal identification page asks only for each animal's identifiers, and its species card ends with the identifier fields (document:dr1-parity-backlog p6-058; trace:e2e p6-028)",
+        "The page shows one card for each animal that needs a permanent address, as many as were entered for each species, headed with the scientific name and a running number such as 'Felis catus 1'; a ferret gets a card, and another 01061900 species on the same consignment gets none (prototype:dr2-1-source p9-037, p9-038; trace:prototype-dr2-1 p7-091, p13-111; prototype:dr2-1-specs p3-084)",
+        "Each card shows the animal's entered identifiers in inset text as 'label: value', such as 'Microchip: MICROCHIP-1', leaving out blank ones, and shows no inset when none are entered (prototype:dr2-1-source p9-039; trace:prototype-dr2-1 p13-111)",
+        "Each card asks 'Select an address' with the options 'Same as the place of destination (POD)' and 'Enter a new address', neither chosen when the page first opens; once a place of destination is given, the first option's hint is that address on one line, such as 'Riverside Holding Facility, East Farm Road, Leeds, LS25 3EB, United Kingdom' (prototype:dr2-1-source p9-040, p9-041, p9-042; trace:prototype-dr2-1 p7-092, p7-094, p7-095, p13-112; prototype:dr2-1-specs p3-085)",
+        "'Enter a new address' has the hint 'This is where they will stay after spending 48 hours at the place of destination.', and choosing it reveals that animal's own address fields inside its card, with 'Email address' before 'Phone number' (prototype:dr2-1-source p9-042, p9-043, p9-050, p9-051; trace:prototype-dr2-1 p7-093, p7-097, p7-098, p13-113; prototype:dr2-1-specs p3-086, p3-090)",
+        "Outside an amendment the page ends with the primary 'Save and continue' button alone, which saves and returns to the consignment addresses page (document:dr1-parity-notes p1-055, p1-056, p1-058; trace:prototype-dr2-1 p7-104; prototype:dr2-1-source p9-077)",
+        "An animal saved as 'Same as the place of destination (POD)' has the place of destination's name, address, country, email and phone as its permanent address on the review page, and reopening the permanent address page shows that option selected (prototype:dr2-1-source p9-067, p9-068; trace:prototype-dr2-1 p13-115; prototype:dr2-1-specs p4-039)",
+        "A new address saved with a county and no address line 2 reopens with 'Enter a new address' selected, each value in its own field: the county in 'County', the town in 'Town or city' and the postcode in 'Postcode or Zip code', with country United Kingdom (ruling:sam-2026-10-07 p1-010; prototype:dr2-1-source p9-068; trace:e2e p6-032)",
+        "An animal left with no option chosen is saved with no permanent address: the page saves the other animals and returns to the consignment addresses page, the permanent address section there reads as incomplete, and the notification cannot be submitted until every animal that needs one has an address with a name (prototype:dr2-1-source p9-062, p9-063, p9-074; trace:prototype-dr2-1 p7-102; prototype:dr2-1-specs p3-089)",
+        "With the Welsh language chosen, every new string on the permanent address page and the addresses page's permanent address section shows in Welsh, marked as a machine draft that must not ship without Welsh Language Standards sign-off (repo:frontend p10-050, p10-083)"
+      ],
+      "dependsOn": [],
+      "theme": "identification-and-permanent-address",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "backend",
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "app/views/design-release-2.1/permanent-address-animals.html; app/views/partials/permanent-address-new-address-fields.html; app/data/consignment-address-sections.js:79-88, 124-131 (p9-021 to p9-068, p9-074, p9-077)"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "p7-085 to p7-102, p7-104, p7-106, p7-109, p13-109 to p13-115"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "e2e/consignment-parties.fit.spec.js (p3-081 to p3-086, p3-089, p3-090, p3-108, p4-039)"
+        },
+        {
+          "source": "document:dr1-parity-backlog",
+          "ref": "inc-057, inc-058 (p6-004 to p6-015, p6-058)"
+        },
+        {
+          "source": "document:dr1-parity-notes",
+          "ref": "inc-161 rule (b) (p1-055, p1-056, p1-058)"
+        },
+        {
+          "source": "ruling:sam-2026-10-07",
+          "ref": "p1-010"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "p1-073, p1-107, p1-108"
+        },
+        {
+          "source": "ruling:sam-2026-10-09-pm",
+          "ref": "p2-014, p2-015 (built now for cats and dogs, ferrets once catalogued)"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "p6-028, p6-032, p6-044"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "p10-050, p10-083"
+        }
+      ],
+      "requirements": [
+        "req-726",
+        "req-727",
+        "req-728",
+        "req-732",
+        "req-733",
+        "req-734",
+        "req-735",
+        "req-736",
+        "req-737",
+        "req-739",
+        "req-743",
+        "req-746",
+        "req-747",
+        "req-748"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "Carried over from the existing row inc-054, unchanged in substance on this re-distil: no requirement behind it moved, and none of its claims is overruled.",
+        "Combines the page, its addresses-page section, the per-animal cards, the same-as-destination choice, the new-address fields and how each is stored: building them apart would build the same page and the same stored record three times. Validation and the summaries are their own rows after it, to keep this one to one sitting.",
+        "Wording fixed to the criterion rules on this pass: criterion 4 now states what the identification page shows instead of quoting the address fields as gone, and criterion 12 states the saved state instead of 'raises no error'. Nothing else in the row changed.",
+        "Built for cats, dogs and ferrets by commodity code 01061900 and species; other live mammals under that code stay out (ruling sam-2026-10-09-pm p2-014, p2-015). MDM search reached frontend main on 27 October, so ferrets and the other 01061900 species are in the catalogue and the permanent-address species rule already lists them (services/commodities/rules.js PERMANENT_ADDRESS_SPECIES).",
+        "The page has a real slug of its own in the live-animals set's addresses section, with field names in the service's conventions, not the prototype's /permanent-address/select path (c-240); the criteria name the page, not the path. The storage shape of the same-as-destination answer is the plan's (c-239).",
+        "Conflicts followed: c-119 (built now, despite DR1's address-space block), c-044 (the address fields leave the identification page), c-111 ('Save and continue' alone outside amend, not the prototype's return controls), c-126 (county saved and every field read back in place; the prototype's field loss is not copied).",
+        "Still unbuilt at frontend main ba85c222: no permanent address page on main or any branch, and the backend's AnimalIdentifier carries only permanentAddress (AnimalIdentifier.java:20). The consignment addresses page is headed sections (addresses/controller.js sections() with hubSection, rendered by template.njk, CPH section added conditionally by cphSection) — add the Permanent address section the same way. On Identification details the address block sits inside each species summary card (_identification-card.njk card.showAddress, card.addressFields), which this row empties.",
+        "Keeps its existing external dependencies on the design-snagging splits (inc-214 for the identification card, inc-213 for the headed sections); the combiner should carry those over.",
+        "Verified against main 11 November: genuinely unbuilt and still correctly grounded. There is no features/permanent-address folder on main; permanent address is still a field on the identification page (animal-identification/_identification-card.njk, identifier/fields.js), which is what inc-057 changes. The address rework that landed since the 26 October extract (EUDPA-721 party pickers, EUDPA-706 journey add page, EUDPA-646 added-address banner) does not undermine this row: criterion 8 reveals each animal's own address fields inside its card, so the page uses inline fields rather than the INS address-book picker those commits reshaped. The consignment addresses page it hangs off did move under EUDPA-721, so read features/addresses as it now stands when planning criterion 1's new section.",
+        "Scope check against ruling:ian-2026-11-11: this row is V4-backed, not prototype demo data. Its V4 claims are confluence-6497338582-p2-046 (the notification captures a Permanent Address), p2-049 (required per animal when the commodity is Cats, Dogs or Ferrets), p2-050 (a different address per animal), p2-051 (can be set same as the place of destination), p2-052 (Standard Address Block validation), p2-055 (mandatory to submit) and p2-058 to p2-062 (the required-commodities list, whose title count of 3 does match its three entries). The six prototype claims of kind 'data' it also cites — p9-050, p9-051, p9-067, p9-068, p9-079, p9-080 — are field order, labels, hints and how the review reads the address back, which ruling point 4 leaves with the prototype as how a page looks and reads. One divergence is deliberate and should not be 'corrected': criterion 8 puts 'Email address' before 'Phone number' from the prototype, while V4's p6-005 lists the address block's ten fields with Telephone number before Email address. Page order is the prototype's call; V4's order describes the data block, not the page."
+      ],
+      "gate": "Look at the new permanent address page and the slimmed animal identification page together: it sets the per-animal card pattern the validation and summary rows copy, and it moves the address out of identification (c-044, c-119). Check a cat, a dog and a non-pet commodity each behave as stated, and check the stored shape the plan chose for the same-as-destination answer (c-239).",
+      "externalDependsOn": [
+        {
+          "workarea": "shared/design-release-2-1/themes/design-snagging-b",
+          "id": "inc-214"
+        },
+        {
+          "workarea": "shared/design-release-2-1/themes/design-snagging",
+          "id": "inc-213"
+        }
+      ]
+    },
+    {
+      "id": "inc-055",
+      "title": "The permanent address page checks each new address, names the animal in every error, and answers errors as an error page",
+      "detail": "With several animals on one page, the trader must be told which animal each error is about. A new address's name, first line, town, postcode, email and phone are required exactly when 'Enter a new address' is chosen, and the same-as-destination choice cannot be used before a place of destination exists. What the trader chose and typed is kept through an error and when the page is reopened, and the page explains what to do when no animals have been counted yet. Like the county parish holding and contact address pages, its error state is titled 'Error: ' and answered with HTTP 400.",
+      "acceptanceCriteria": [
+        "With 'Enter a new address' chosen and the fields left blank, saving shows 'Enter a name or organisation name', 'Enter address line 1', 'Enter a town or city', 'Enter a postcode or Zip code', 'Enter an email address' and 'Enter a phone number' on those fields; address line 2 and county save with any value or none, and email, phone and postcode are checked only for being blank (prototype:dr2-1-source p9-054 to p9-061; trace:prototype-dr2-1 p7-101; prototype:dr2-1-specs p3-105; trace:e2e p6-036 to p6-042)",
+        "Each address error in the error summary names its animal, such as 'Enter a name or organisation name for Felis catus 1' and 'Enter address line 1 for Felis catus 1', and links to the field; the message on the field itself reads 'Enter address line 1' (prototype:dr2-1-source p9-054 to p9-059; trace:prototype-dr2-1 p7-100; prototype:dr2-1-specs p3-091)",
+        "Choosing 'Same as the place of destination (POD)' before a place of destination is given shows 'Add a place of destination before you can continue' on that animal's radios and in an error summary titled 'There is a problem', linked to the radios (prototype:dr2-1-source p9-053, p9-053-m1; trace:prototype-dr2-1 p7-096; prototype:dr2-1-specs p3-088)",
+        "When the page shows errors, every animal's chosen option stays selected and a chosen 'Enter a new address' stays open with what was typed; reopening the page later shows each animal's saved choice selected and its saved address filled in (prototype:dr2-1-source p9-064, p9-064-m1; trace:prototype-dr2-1 p7-100-m1; trace:e2e p6-043)",
+        "With no animals that need a permanent address counted, the page shows 'Add the number of animals on consignment details before you can continue.', with 'consignment details' linking to that page, in place of the cards; saving from there leaves the notification as it was and returns to the consignment addresses page (prototype:dr2-1-source p9-065, p9-066)",
+        "When the permanent address page shows errors, its browser title starts 'Error: ' and the page answers with HTTP status 400; the county parish holding and contact address pages do the same in their error states (ruling:sam-2026-10-07 p1-010; trace:animals-fit p13-005, p13-030, p12-052; repo:frontend p10-034, p10-071)",
+        "With the Welsh language chosen, every new error message and the no-animals message show in Welsh, marked as a machine draft that must not ship without Welsh Language Standards sign-off (repo:frontend p10-050)"
+      ],
+      "dependsOn": [
+        "inc-054"
+      ],
+      "theme": "identification-and-permanent-address",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "app/views/design-release-2.1/permanent-address-animals.html (p9-053 to p9-066)"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "p7-096, p7-100, p7-100-m1, p7-101"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "p3-088, p3-091, p3-105"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "p6-036 to p6-043"
+        },
+        {
+          "source": "ruling:sam-2026-10-07",
+          "ref": "p1-010"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "p12-052, p13-005, p13-030"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "p10-034, p10-050, p10-071"
+        }
+      ],
+      "requirements": [
+        "req-740",
+        "req-741",
+        "req-742",
+        "req-744",
+        "req-745",
+        "req-1834"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "Carried over from the existing row inc-055, unchanged in substance: none of its requirements moved.",
+        "Combines the page's field validation, per-animal error summary, same-as-destination guard, value retention, empty state and error-page status: all are the page's error and edge behaviour, built on the same card pattern.",
+        "Wording fixed to the criterion rules on this pass: criterion 1 says what address line 2 and county do rather than calling them optional, criterion 2 quotes the inline message rather than saying the animal is left out, and criterion 5 says the notification is left as it was rather than 'saves nothing'.",
+        "req-1834: the county parish holding and contact pages already answer errors with 'Error: ' and 400, so only the new permanent address page changes here; the other half of the criterion is a regression guard.",
+        "c-242: the 'Error: ' prefix and 400 are kept against the prototype's plain title and 200. c-119: built now. Today's identification-form address messages are the same texts; they now fire on the choice, not on any field being filled.",
+        "Depends on the permanent address page row (same page; the cards must exist).",
+        "Scope check against ruling:ian-2026-11-11, which found one thing to carry into the plan. V4 specifies the Standard Address Block authoritatively (confluence-6497338582-p6-005 to p6-052) and says Permanent Address is that block with that block's field-level validation (p2-047, p2-052, which this theme cites). So the address limits are V4's, not this page's to invent: name and both address lines 255 characters, town or city and county 100, postcode 12, telephone 20, email 254, and p6-052 records that V4's Validation column states no format rule, pattern or permitted-character set for any address field. Criterion 1's 'email, phone and postcode are checked only for being blank' is therefore right on format and silent on length. Do not write new blank-only checks: req-1244, req-1867 and req-1869 carry these limits with delta 'exists', meaning they are already built in the INS frontend's address form and the address book API, so reuse that validation and its existing '<field> must be N characters or fewer' messages."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-056",
+      "title": "Permanent addresses are summarised on the consignment addresses page and listed per animal on the review page",
+      "detail": "Once permanent addresses are given, the trader sees at a glance what was given: one address when every animal shares it, or a count when they differ, with a Change link back to the page. The review page lists each animal's permanent address so the trader can check them before submitting.",
+      "acceptanceCriteria": [
+        "When every animal is saved as 'Same as the place of destination (POD)', or only one animal has an address, the consignment addresses page's permanent address section shows that one address with a 'Change' link to the permanent address page (prototype:dr2-1-source p9-071, p9-072, p9-073; trace:prototype-dr2-1 p7-104, p7-105, p13-116; prototype:dr2-1-specs p3-092, p3-106)",
+        "When the animals have different addresses, the section shows 'Permanent addresses added for N animals', N being the number of animals that need one, with a 'Change' link straight to the permanent address page (prototype:dr2-1-source p9-075, p9-075-m1; trace:prototype-dr2-1 p7-108, p13-116-m1)",
+        "The review page shows the permanent address as one row per animal, labelled with the species' common name and number, such as 'Domestic dog 1', whose value is that animal's saved address (prototype:dr2-1-source p9-079, p9-080; prototype:dr2-1-specs p4-039; repo:tests p5-077)",
+        "With no animals counted, the review page shows a single permanent address row labelled 'Address' (prototype:dr2-1-source p9-080)",
+        "With the Welsh language chosen, the new summary text and review labels show in Welsh, marked as a machine draft that must not ship without Welsh Language Standards sign-off (repo:frontend p10-050)"
+      ],
+      "dependsOn": [
+        "inc-054"
+      ],
+      "theme": "identification-and-permanent-address",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "app/data/consignment-address-sections.js (p9-071 to p9-075, p9-075-m1, p9-079, p9-080)"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "p7-104, p7-105, p7-108, p13-116, p13-116-m1"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "p3-092, p3-106, p4-039"
+        },
+        {
+          "source": "repo:tests",
+          "ref": "p5-077"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "p10-050"
+        }
+      ],
+      "requirements": [
+        "req-729",
+        "req-749"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "Carried over from the existing row inc-056, unchanged in substance. Criterion 2 now names the case it covers instead of opening with 'Otherwise'.",
+        "Combines the two read-back views of the saved permanent addresses: same stored data, same reviewer check.",
+        "Depends on the permanent address page row (it shows what that row saves).",
+        "Shares the consignment addresses page with the county parish holding display row, and the review page's rows with the overview-and-review area, whose theme is already split off: show the summary through the existing section object (chosen.lines for the one shared address, or the one 'Permanent addresses added for N animals' line, with changeHref to the permanent address page).",
+        "Keeps its existing external dependency on design-snagging inc-213 for the headed sections."
+      ],
+      "gate": null,
+      "externalDependsOn": [
+        {
+          "workarea": "shared/design-release-2-1/themes/design-snagging",
+          "id": "inc-213"
+        }
+      ]
+    },
+    {
+      "id": "inc-057",
+      "title": "The permanent address leaves the identification page",
+      "detail": "Today the cards for species that need a permanent address (cats, dogs and ferrets) carry a fraud warning, a permanent-address definition, the question 'Where will their permanent address be?' and eight address fields under the identifiers, validate them all-or-nothing, store the address on each animal and show it as a 'Permanent address' column. Each animal's permanent address is asked on its own permanent address page with the consignment's other parties, so it leaves this page with its validation, its table column and its storage from here.",
+      "acceptanceCriteria": [
+        "A cat, dog or ferret panel on Identification details asks only for that species' identifiers: its content is the identifier fields, the panel's save button and its saved-animals table. (ruling:sam-2026-10-07 ruling-sam-2026-10-07-p1-008; repo:frontend repo-frontend-p6-029; trace:e2e trace-e2e-p6-028; conflicts:c-044)",
+        "A dog or a ferret saved with its identifiers alone saves with no error and is listed in its saved-animals table. (repo:frontend repo-frontend-p6-044; trace:e2e trace-e2e-p6-036; conflicts:c-044)",
+        "The saved-animals table for cats, dogs and ferrets has an 'Animal' column, one column per identifier the species asks for, and a 'Remove' action. (repo:frontend repo-frontend-p6-082, repo-frontend-p6-085; trace:e2e trace-e2e-p6-046; conflicts:c-044)",
+        "A permanent address given on the permanent address page is still shown there after animals are saved or removed on Identification details. (ruling:sam-2026-10-07 ruling-sam-2026-10-07-p1-008; conflicts:c-044)",
+        "The page's Welsh copy holds an entry for exactly the keys its English copy holds, and stays a machine draft. (repo:frontend repo-frontend-p6-100)"
+      ],
+      "dependsOn": [
+        "inc-054"
+      ],
+      "theme": "identification-and-permanent-address",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "ruling:sam-2026-10-07",
+          "ref": "ruling-sam-2026-10-07-p1-008"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "ruling-sam-2026-10-09-p1-126"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "animal-identification/address/fields.js, records/append.js:11-24, _identification-card.njk, _saved-animals-table.njk, copy/copy.cy.js (repo-frontend-p6-029 to p6-044, p6-082, p6-085, p6-100)"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "trace-animals-fit-p10-039 to p10-050, p11-017 to p11-035"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p6-028 to p6-047"
+        }
+      ],
+      "requirements": [
+        "req-263",
+        "req-264",
+        "req-265"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "Unchanged in substance by this re-distil. Combines removing the address block, its validation and its table column and storage: one removal from the same panel, proved by one cat and dog walk.",
+        "Criteria 1, 3 and 5 were reworded this re-distil to state what the panel, the table and the Welsh copy hold, rather than quoting the copy and the errors that go.",
+        "Must not land before the consignment-parties area's row that asks each animal's permanent address on the permanent address page, or the service would stop capturing the address. The backend's per-animal permanent address field stays: the permanent address page may still use it.",
+        "Design snagging merged to main 23 Oct: the identification page was rebuilt. It now has one section per commodity and a summary card per species, with the form above the saved animals. The address block this row removes sits in commodities/animal-identification/_identification-card.njk, under card.showAddress and card.addressFields from card/view-model.js; the 'Permanent address' column is in _saved-animals-table.njk. Remove them there, and update identification.fit.spec.js's card locators (commodity h2, species h3).",
+        "Re-analysis 27 Oct (main checked at animals-frontend ba85c222 after EUDPA-617 c3183a8e): since EUDPA-617 the address block appears on every 01061900 card whose species is in PERMANENT_ADDRESS_SPECIES (cats, dogs, 'Canis lupus familiaris' and ferrets, services/commodities/rules.js:63-70), and the page has summary cards, not panels. On main the block is at _identification-card.njk:33-57 fed by card/view-model.js:99, 122-129; validation form/forms.js:40-56; storage records/append.js:12; column heading copy/copy.en.js:78; fraud warning copy/copy.en.js:90; the column is rendered in _saved-animals-table.njk. The review's identifier table also reads unit.permanentAddress (check-answers identifier-columns.js:17-18): outside this row's criteria, but the same storage."
+      ],
+      "gate": null,
+      "externalDependsOn": [
+        {
+          "workarea": "shared/design-release-2-1/themes/design-snagging-b",
+          "id": "inc-214"
+        }
+      ]
+    },
+    {
+      "id": "inc-058",
+      "title": "End-to-end proof: pet cats by air with permanent addresses",
+      "detail": "A pet-cats-by-air notification is proved end to end, with each cat's permanent address chosen on its own page reached from 'Roles and addresses' rather than typed into the identification form, so the permanent address page is shown to join up with the rest of the journey.",
+      "acceptanceCriteria": [
+        "The tests repo walks a pet-cats-by-air notification from create to 'Import notification submitted': Spain as the country of origin, 2 cats (Felis catus), 'Internal market' as a companion animal not for resale or rehoming, a microchip, a passport and a tattoo for each cat, arrival by air, and a transporter. (prototype:dr2-1-specs e2e/journeys.fit.spec.js:251-276 prototype-dr2-1-specs-p4-070)",
+        "In that walk, each cat's permanent address is chosen on the permanent address page reached from 'Roles and addresses': one 'Same as the place of destination (POD)' and one entered as a new address. (prototype:dr2-1-specs e2e/journeys.fit.spec.js:251-276 prototype-dr2-1-specs-p4-070; trace:prototype-dr2-1 trace-prototype-dr2-1-p13-001, trace-prototype-dr2-1-p13-181)",
+        "In that walk, every task on the overview reads 'Complete' before the review page is opened, and the review page shows Spain, 'Companion animal not for resale or rehoming', Felis catus and the new address's first line. (prototype:dr2-1-specs e2e/journeys.fit.spec.js:251-276 prototype-dr2-1-specs-p4-070)"
+      ],
+      "dependsOn": [
+        "inc-054",
+        "inc-057"
+      ],
+      "theme": "identification-and-permanent-address",
+      "status": "todo",
+      "kind": "test",
+      "repos": [
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "e2e/journeys.fit.spec.js:251-276 (pet cats by air); prototype-dr2-1-specs-p4-070"
+        },
+        {
+          "source": "trace:prototype-dr2-1",
+          "ref": "trace-prototype-dr2-1-p13-001, trace-prototype-dr2-1-p13-181"
+        },
+        {
+          "source": "repo:tests",
+          "ref": "today's in-form permanent address (repo-tests-p2-003, repo-tests-p2-006, repo-tests-p2-010)"
+        }
+      ],
+      "requirements": [
+        "req-1657"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "One slice (req-1657, c-119). Tests only: the frontend change it walks belongs to the rows that build the permanent address as its own page (inc-054) and take it off the identification form (inc-057), so it depends on both. The opening-run step order it walks is already on main.",
+        "Re-distil: existing row inc-058, unchanged but for its provenance brackets, which now name the claim ids."
+      ],
+      "gate": null,
+      "externalDependsOn": []
+    },
+    {
+      "id": "inc-238",
+      "title": "Identification details' browser tests read GOV.UK's green at run time and find the save buttons by role",
+      "detail": "The identification browser tests hard-code GOV.UK's green and find the page's save buttons by their group's class. They read the colour at run time and use the journey's shared save-controls step.",
+      "acceptanceCriteria": [
+        "The identification page's green tag is checked against GOV.UK's green read at run time. (loop:design-snagging-followups inc-225 followUps[5])",
+        "The identification page's test that the controls at the end of the page are the journey's own shared save controls finds them by role through the shared save-controls step. (loop:design-snagging-followups inc-226 followUps[6])"
+      ],
+      "dependsOn": [],
+      "theme": "identification-and-permanent-address",
+      "status": "todo",
+      "kind": "fix",
+      "repos": [
+        "frontend"
+      ],
+      "sources": [
+        {
+          "source": "loop:design-snagging-followups",
+          "ref": "inc-225 followUps[5]; inc-226 followUps[6]; inc-233 followUps[1]"
+        }
+      ],
+      "requirements": [],
+      "openQuestions": [],
+      "notes": [
+        "On main 27 Oct: commodities/fit/identification.fit.spec.js:30, :923, :360-364.",
+        "Trimmed 6 November: its navigation (where Save and continue and Back go, the opening run, amend returns) was taken out; EUDPA-774 owns it.",
+        "Verified against main 11 November (extracts were 26 October): still wholly unbuilt. The green tag is a hardcoded constant GOVUK_GREEN = 'rgb(15, 122, 82)' at commodities/fit/identification.fit.spec.js:35, used at :996, so criterion 1 stands. The end-of-page controls are found by CSS class, page.locator('.govuk-button-group') at :385, and there is no shared save-controls step anywhere under src/server/app/shared, so criterion 2 stands. 69a9715b moved other appearance checks on this page to screenshots and accessible names but left both of these."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-241",
+      "title": "Every selected species has an identification panel, and a species with no specific identifier is asked for identification details and a description",
+      "detail": "Today the page asks only about commodity lines whose commodity declares at least one identifier type: a line such as Atlantic salmon is listed in the 'Selected commodities' summary but gets no panel and no fields, so its animals cannot be identified at all. The notification data specification gives every such species two free-text answers instead, 'Identification details' and 'Description', each optional and at most 58 characters, so every selected species has a panel and some way of identifying its animals. Both values are stored on the animal record and read back when the page is reopened.",
+      "acceptanceCriteria": [
+        "The 'Selected commodities' summary on Identification details lists a row for every commodity line on the consignment, and every selected species below it has an identification panel of its own. (confluence:6497338582 confluence-6497338582-p4-060; prototype:dr2-1-source prototype-dr2-1-source-p5-035; repo:frontend repo-frontend-p6-007, repo-frontend-p6-094; conflicts:c-333)",
+        "A selected species whose commodity asks for none of passport, tattoo, ear tag or horse name is asked for 'Identification details' and 'Description' in its panel, in that order; an Atlantic salmon line is such a species today. (confluence:6497338582 confluence-6497338582-p4-046, confluence-6497338582-p4-054, confluence-6497338582-p4-060, confluence-6497338582-p4-061; repo:frontend repo-frontend-p6-008; trace:e2e trace-e2e-p6-017; conflicts:c-333)",
+        "'Identification details' and 'Description' are each a text input 20 characters wide, with the field label and no hint. (confluence:6497338582 confluence-6497338582-p4-044, confluence-6497338582-p4-052; prototype:dr2-1-source prototype-dr2-1-source-p5-024; repo:frontend repo-frontend-p6-017)",
+        "Both answers are optional: a panel with 'Identification details' filled and 'Description' blank saves the animal, and so does the other way round. (confluence:6497338582 confluence-6497338582-p4-049, confluence-6497338582-p4-057)",
+        "An 'Identification details' value of 59 characters shows 'Identification details must be 58 characters or less' in the error summary and inline on the field, and a value of 58 characters saves. (confluence:6497338582 confluence-6497338582-p4-045; prototype:dr2-1-source prototype-dr2-1-source-p5-028)",
+        "A 'Description' value of 59 characters shows 'Description must be 58 characters or less' in the error summary and inline on the field, and a value of 58 characters saves. (confluence:6497338582 confluence-6497338582-p4-053; prototype:dr2-1-source prototype-dr2-1-source-p5-028)",
+        "An animal saved from such a panel is listed in that panel's saved-animals table, whose columns are 'Animal', 'Identification details' and 'Description', with a 'Remove' action on each row. (repo:frontend repo-frontend-p6-085, repo-frontend-p6-086, repo-frontend-p6-090)",
+        "A species saved with its identification details and description still shows both values when the notification is reopened at Identification details. (confluence:6497338582 confluence-6497338582-p4-044, confluence-6497338582-p4-052; repo:frontend repo-frontend-p6-081)",
+        "The page's Welsh copy holds an entry for every key its English copy holds, the two field labels and their two length messages included, and stays a machine draft. (repo:frontend repo-frontend-p6-100)"
+      ],
+      "dependsOn": [],
+      "theme": "identification-and-permanent-address",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "backend",
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "confluence:6497338582",
+          "ref": "confluence-6497338582-p4-044, -p4-045, -p4-046, -p4-049, -p4-050, -p4-052, -p4-053, -p4-054, -p4-057, -p4-058, -p4-060, -p4-061"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "app/data/commodity-identifiers.js (prototype-dr2-1-source-p5-013, p5-024, p5-028, p5-035)"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "animal-identification/identifier/fields.js, summary/selected-commodities.js, identifier/table.js, copy/copy.en.js, copy/copy.cy.js (repo-frontend-p6-007, p6-008, p6-017, p6-081, p6-085, p6-086, p6-090, p6-094, p6-100, p6-102)"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "trace-animals-fit-p10-016, p10-022"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p6-011, p6-016, p6-017"
+        },
+        {
+          "source": "repo:backend",
+          "ref": "AnimalIdentifier.java"
+        }
+      ],
+      "requirements": [
+        "req-210",
+        "req-221",
+        "req-2149",
+        "req-2150",
+        "req-2151"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "New row this re-distil. Combines req-210 (every selected commodity listed, every selected species given a panel) with req-221 (the fallback panel) and the two free-text answers the notification data specification defines (req-2149, req-2150) and their length rule (req-2151): the same panel, the same two fields and one Atlantic salmon walk prove all of them, so building them apart would repeat the same set-up, review and ladder.",
+        "c-333 ruled: the data specification outranks the prototype, its traces and today's frontend on which data a notification captures, so the two free-text answers are built and every selected species gets a panel. prototype-dr2-1-source-p5-013's 'otherwise there are none' half is set aside; its first half, that a species' identifier fields come from its commodity's own list, still stands.",
+        "req-2149, req-2150 and req-2151 are given to no area in areas.json. They are the two fields this area's req-210 and req-221 ask for, and c-333's outcome names all five together, so this draft covers them here rather than leaving them for the combiner to place in a row of their own that would rebuild the same panel. Combiner: if another area's draft also claims them, keep them here, where the page is.",
+        "Which commodities fall back is everything absent from the data specification's passport, tattoo, ear tag and horse name lists (confluence-6497338582-p4-061). In today's live catalogue that is Atlantic salmon alone; poultry and the rest join with the MDM commodity catalogue, so the row needs no catalogue change.",
+        "The backend's AnimalIdentifier holds microchip, passport, tattoo, earTag, horseName and permanentAddress today, so it needs the two new values for criterion 8. The published GBN-AG payload is out of this row's criteria: the data specification gives the two answers no PIMS field, and the notification-record area owns publishing.",
+        "The fallback rule reads the commodity identifier list in the live-animals commodity service, and the two labels and messages are new keys in the commodities copy folder. Both are files the split-off commodities-and-reason theme also changes, so they are listed as shared, not owned: this row adds keys and a fallback branch rather than reshaping either file.",
+        "How the two answers show on Check your answers and on the submitted view belongs to the overview-and-review theme's identifier columns, not here.",
+        "Verified against main 11 November: genuinely unbuilt. No identificationDetails or animalIdentifierDescription field exists anywhere under sets/live-animals; the 58-character pattern exists for the other identifiers (commodities/copy/copy.en.js:122-126) so the shape to follow is there. Its V4 basis is current: the page has moved from version 210 to 221 and been renamed 'Live Animals & Germinals Data Dictionary', but the Animal Identifier rows this row cites (p4-044 to p4-061, including Identification details and Description) are textually identical between the two versions, so every claim still holds. The fallback list is also unchanged: COMMODITY_IDENTIFIERS at services/commodities/rules.js carries only 0102, 0101 and 01061900, so everything else falls back as the row says."
+      ],
+      "gate": "Check that a species with no specific identifier reads well on the page and on the saved-animals table: the two free-text answers are the pattern every later fallback commodity copies, so look at the panel's wording, the field order and the table headings before the rest of the catalogue arrives from MDM."
+    },
+    {
+      "id": "inc-242",
+      "title": "Pressing Enter in a species panel saves that panel's own animal and reaches no other panel's buttons",
+      "detail": "Today one hidden 'Save and finish' submit button sits at the top of the whole form and is the default submit for every field on the page, whichever species panel the field belongs to. With a panel per species, and a 'Remove' button on every saved animal, that single default submit is the wrong owner for a field: pressing Enter in a panel's field should save that panel's current animal, as the panel's own save button does, and it should never reach a 'Remove' action or another panel's save. The trader keeps every animal they have already saved and every value they have typed, and a keyboard or screen-reader user meets no button inside a panel that is not one of the panel's own.",
+      "acceptanceCriteria": [
+        "Pressing Enter in a field of a species panel that takes more than one animal saves that panel's current animal, as that panel's own save button does, and leaves the trader on the page with the values they entered still shown. (ruling:sam-2026-10-26 ruling-sam-2026-10-26-p1-016, -p1-017, -p1-018, -p1-019, -p1-020; repo:frontend repo-frontend-p6-076; trace:animals-fit trace-animals-fit-p10-081)",
+        "Pressing Enter in an identifier field of a species panel that already has saved animals leaves every one of those animals listed in that panel's saved-animals table, and leaves every other panel's saved animals listed too. (repo:frontend repo-frontend-p6-076, repo-frontend-p6-090, repo-frontend-p6-091; ruling:sam-2026-10-26 ruling-sam-2026-10-26-p1-019)",
+        "The buttons a keyboard or screen-reader user reaches inside a species panel are that panel's own save button and a 'Remove' action for each animal it has saved; tabbing forward from the panel's last identifier field reaches one of those next. (repo:frontend repo-frontend-p6-067, repo-frontend-p6-068, repo-frontend-p6-076, repo-frontend-p6-090)",
+        "The Identification details page passes its accessibility checks with a species panel open and animals saved in it. (repo:frontend repo-frontend-p6-101)"
+      ],
+      "dependsOn": [
+        "inc-048"
+      ],
+      "theme": "identification-and-permanent-address",
+      "status": "todo",
+      "kind": "fix",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "repo:frontend",
+          "ref": "animal-identification/animal-identification.njk:29, card/view-model.js, _saved-animals-table.njk, remove/post-remove.js, fit/axe.js (repo-frontend-p6-067, p6-068, p6-076, p6-090, p6-091, p6-101)"
+        },
+        {
+          "source": "trace:animals-fit",
+          "ref": "trace-animals-fit-p10-081, p11-040"
+        },
+        {
+          "source": "trace:e2e",
+          "ref": "trace-e2e-p6-060"
+        },
+        {
+          "source": "ruling:sam-2026-10-26",
+          "ref": "ruling-sam-2026-10-26-p1-017, p1-018, p1-019, p1-020"
+        }
+      ],
+      "requirements": [
+        "req-205",
+        "req-2158"
+      ],
+      "openQuestions": [
+        "Main saves every card holding a typed value when Enter is pressed (EUDPA-734's own commit message: 'Enter saves every card holding a typed value'), while criterion 1 says Enter in a panel saves 'that panel's current animal, as that panel's own save button does'. The two are compatible wherever only one panel has been typed into, so no criterion fails today, but they are different designs once two panels hold typed values. Confirm which is wanted before writing the keyboard walk, because the walk's assertions differ."
+      ],
+      "notes": [
+        "New row this re-distil: req-205 sat in no row before. A thin slice of its own, kept apart from the fallback-panel row: it needs a panel with saved animals and a keyboard walk, not a new commodity line, so the two share no set-up.",
+        "This row covers only what the default submit must never do. The other half of the keyboard behaviour, that pressing Enter in a panel for several animals saves that panel's current animal and keeps what the trader typed, is already a row on the design snagging follow-ups branch (inc-224, from ruling:sam-2026-10-26 claims 17 to 19), so it is deliberately left out here to avoid building it twice. Build this row's criteria as tests against whatever that branch has landed, and change code only where a test fails.",
+        "req-2158 states that same positive half and is given to no area in areas.json; it is left for the combiner, which should hand it to inc-224's branch rather than to this row.",
+        "req-205 names the mechanism (a visually hidden, aria-hidden, non-focusable submit per field). That is build guidance, not acceptance: the criteria state the outcomes a trader and a screen-reader user can observe, and the plan chooses how.",
+        "Design snagging merged to main 23 Oct: the page now has one section per commodity and a summary card per species, with the entry form above the saved animals and a 'Remove' button on each saved row, so the single top-of-form hidden submit now sits above several panels at once.",
+        "Re-distil 2 November: req-2158 (pressing Enter saves that panel's current animal) is folded in here. It was given to no area, and it is the positive half of the same keyboard behaviour this row already builds, on the same page, proven by the same keyboard walk, so it would repeat the whole set-up in a row of its own. The design snagging branch may already have landed part of it: build the criteria as tests first and change code only where a test fails.",
+        "Verified against main 11 November: EUDPA-734 (f72a7a0e, 27 October) has already landed most of this. The per-field hidden submit is now one top-of-form button, <button type=submit name=action value=implicit-submit class=govuk-visually-hidden aria-hidden=true tabindex=-1> in animal-identification.njk, and identification.fit.spec.js carries a passing test that Enter in an ear tag field saves the card and keeps the trader on the page with the saved row listed. Criterion 4 is met too: 'has no serious or critical axe violations once an animal is saved' at identification.fit.spec.js:848. Criterion 3 is the real remaining work: the spec holds no Tab-order walk at all (no press('Tab') or keyboard.press anywhere in it), so which buttons a keyboard user reaches inside a panel is unproven. Plan this row as criteria-as-tests first, per its earlier note."
+      ],
+      "gate": null
+    }
+  ]
+}

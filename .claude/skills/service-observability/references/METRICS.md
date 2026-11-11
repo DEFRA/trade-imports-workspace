@@ -55,6 +55,19 @@ Rules that held:
 
 Record the agreed table on the ticket.
 
+### Less for an internal tool
+
+Apply the same question to the service as a whole. Agreed for
+`trade-imports-animals-admin` on 2026-11-11: an internal tool whose few
+users are the team, whose failures never reach a customer, and whose
+dependencies alert on their own failures gets only the call metrics for
+the services it changes, its business metrics, the call log line and a
+dashboard. No availability metric, no custom alerts: the people who
+would get the alert are the people who see the failure, and CDP's
+default alerts already say when it is down. Record what is left out,
+and why, in the plan; the ticket's acceptance criteria give way for
+that service only.
+
 ## Publish (Java, Spring Boot)
 
 One way: every metric is an ordinary Micrometer meter, and
@@ -166,7 +179,8 @@ names, not the dot-case names above (their `main`, checked 2026-11-06):
 | `trade-imports-dynamics-gateway` | `metrics/ExternalCallMetrics.java` and `metrics/ExternalCall.java`, measuring the Service Bus send in `QueueMessageSender` | `ExternalCallDuration`, `ExternalCallFailure`, dimensions `Dependency`, `Operation` |
 | `trade-imports-animals-frontend`, `-ins-frontend`, `-plants-frontend` | `src/server/common/helpers/external-call-metrics.js` | `ExternalCallDuration`, `ExternalCallFailure`, dimensions `Dependency`, `Operation` |
 
-`trade-imports-animals-admin` publishes none of these metrics.
+`trade-imports-animals-admin` publishes none of these metrics: it goes
+straight to the dot-case names ("Publish (Node, hapi)").
 
 When this skill runs on one of them, move it to the new names first. A
 Java service moves to the one way above as well; a Node service renames
@@ -312,3 +326,54 @@ Run the repo's full build before pushing:
 ```bash
 mvn -f ~/git/defra/trade-imports-workspace/repos/<service>/pom.xml verify
 ```
+
+## Publish (Node, hapi)
+
+Written on `trade-imports-animals-admin` (branch
+`feat/EUDPA-674-admin-observability`, package
+`src/server/common/helpers/metrics/`), proven by its unit tests.
+`[UNPROVEN]` in dev CloudWatch and OpenSearch until that release is
+checked there.
+
+Node has no Micrometer and no aggregating registry. Each call writes one
+EMF document through `@defra/cdp-metrics` (which wraps
+`aws-embedded-metrics`), and CloudWatch works out `SampleCount`, `Sum`,
+`Average`, `p95` and `Maximum` from the documents. The names and
+dimensions are the same dot-case ones as Java's, so the dashboard and
+alert templates work unchanged.
+
+| Module | What it does |
+|---|---|
+| `publish-metrics.js` | `publishMetrics(dimensions, values)`: one EMF document in the `metrics.namespace` namespace (`AWS_EMF_NAMESPACE`, default the service name), with `dimensions` as its only dimension set. `getMetricsLogger(dimensions)` replaces the library's default `ServiceName`/`ServiceType`/`LogGroup` dimensions. Flushes without making the caller wait, and logs `Could not publish metrics` at warn with `{ err, dimensions }` when the flush fails |
+| `external-call-recorder.js` | `recordSuccess(externalCall, durationMs)` and `recordFailure(externalCall, durationMs, cause?)`: `external.call.duration` (Milliseconds) and `external.call.failure` (Count, 0 or 1) in one document, plus the log line (`LOGGING.md` → "How to write the fields (Node)") |
+| `measured-fetch.js` | `measuredFetch(externalCall, url, options)` in place of `fetch` in every client: times the call, records a status of 400 or over as a failure with no cause, and a thrown error as a failure with it, then returns the response or rethrows. This is the transport for `fetch` clients |
+| One module per business metric (`admin-action-metrics.js`) | One document per event, `Count` 1, tagged by its dimension |
+
+Rules:
+
+- **Set `AWS_EMF_ENVIRONMENT=Local` on the `dev`, `test` and `test:watch`
+  scripts.** EMF then goes to stdout, where a test reads it from a
+  `console.log` spy (`test-helpers/emf-documents.js`). Leave it unset on
+  CDP: the library detects ECS there.
+- **A client test that mocks `config` must return `metrics.namespace`,
+  and one that mocks the logger must give it `warn`.** Otherwise the
+  publish fails in the background, or the failure line throws.
+- **An HTTP call made by a library** (Bell's token exchange, through
+  `@hapi/wreck`) is reached only by a process-wide Wreck event hook. Not
+  written yet: admin left Defra ID out ("Work out the list" → "Less for
+  an internal tool").
+- **Availability, Redis and gauges** have no Node recipe yet. A gauge
+  would be a timer publishing the current value once a minute.
+
+Tests (vitest), mocking only `fetch` and, for the flush failure,
+`Metrics.prototype.getMetricsLogger`:
+
+| Test | Proves |
+|---|---|
+| `measured-fetch.test.js`, success | The response comes back; one document with the namespace, dimensions `[["dependency","operation"]]`, both metrics and their units; one info line with the nested `event` fields and an integral duration |
+| The same, a 503 and a thrown `TypeError` | Failure 1; one warn line; `error.type` and `error.message` only when it threw; the same error rethrown |
+| The same, the warn line encoded with `pino(ecsFormat(), stream)` | The JSON CDP receives has `event` nested, `error.type` and `error.message` flat, and no `error` object or stack trace |
+| The same, the flush rejecting | The caller still gets its response, and the warning is logged |
+| Each client's test | Every method records its `dependency` and `operation`; each replay or delete counts its business metric on success and not on refusal |
+
+Run `npm test`, `npm run lint` and `npm run format:check` before pushing.

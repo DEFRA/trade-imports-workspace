@@ -51,7 +51,7 @@ skill and point its plan at these steps.
 |---|---|
 | Metrics, Java service | Proven by tests on `trade-imports-address-book` (`EmfMeterRegistry`, the EMF documents it writes, the allowlist, `@Timed` through the Spring proxy). `[UNPROVEN]` in dev CloudWatch until that release is checked there. reference-data's older direct-EMF metrics reached dev CloudWatch under the PascalCase names; moving it to this way renames every metric and dimension to dot case, so its dashboard and alerts are rebuilt (`references/METRICS.md` → "A service built the old way") |
 | Log line, Java service | Proven by tests on `trade-imports-address-book`: `EcsEventEncoderTest` and `ExternalCallRecorderIT` check that the encoded JSON holds a nested `event` object with a numeric duration, and a failure's flat `error.type` and `error.message` with no stack trace (`references/LOGGING.md` → "How to write the fields"). The same encoder's line reached dev OpenSearch from reference-data 0.27.0 on 2026-10-21; CDP dropped the earlier MDC version (`references/LOGGING.md` → "What was learned on reference-data"). `[UNPROVEN]` in dev OpenSearch for address-book until its release is checked there |
-| Metrics and log line, Node service | Not written. `trade-imports-animals-frontend`, `-ins-frontend` and `-plants-frontend` already have `src/server/common/helpers/external-call-metrics.js`, which publishes the old PascalCase names (`references/METRICS.md` → "A service built the old way"); the first Node ticket adds a Node reference here |
+| Metrics and log line, Node service | Written on `trade-imports-animals-admin` (`references/METRICS.md` → "Publish (Node, hapi)", `references/LOGGING.md` → "How to write the fields (Node)") and proven by its unit tests, including the JSON the ECS formatter writes. `[UNPROVEN]` in dev CloudWatch and OpenSearch until that release is checked there. Covers `fetch` clients and business counters only: no availability, Redis or Wreck recipe yet. `trade-imports-animals-frontend`, `-ins-frontend` and `-plants-frontend` still publish the old PascalCase names from `src/server/common/helpers/external-call-metrics.js` (`references/METRICS.md` → "A service built the old way") |
 | Dashboard and alerts, PascalCase names | Done on reference-data in dev: the dashboard imported and showing CloudWatch and OpenSearch data on 2026-10-21, and the alerts built and fired on 2026-10-22 (`references/ALERTS.md` → "Prove they fire"). Not routed to Slack or promoted |
 | Dashboard and alert templates, dot-case names | Written for the names address-book publishes, from the CDP docs and the PascalCase versions above. `[UNPROVEN]`: not yet imported into Grafana or fired anywhere. Nor are the database rule 1a and the `<timed-name>` panel, which had no PascalCase version |
 | Slack routing, promotion, alert tests in test and prod | **Taken from the CDP docs, not yet done on a real service.** Every fact that comes only from the docs is marked `[UNPROVEN]` where it is stated |
@@ -116,7 +116,9 @@ database". The one exception is a database that is configured but that
 nothing reads or writes through: leave it out, say why on the ticket,
 and raise a ticket to remove the configuration. (On reference-data,
 MongoDB is configured but unused, so it is left out.) Do not measure,
-show or alert on a dependency that is not on that list.
+show or alert on a dependency that is not on that list. An internal
+tool used only by the team may get less than every dependency:
+`references/METRICS.md` → "Less for an internal tool".
 
 ## Step 2: Agree the metric list
 
@@ -134,10 +136,11 @@ Java service: follow `references/METRICS.md` → "Publish" and
 directly or has an `EmfMetricsPublisher`, move it to the registry first
 (`references/METRICS.md` → "A service built the old way").
 
-Node service: there is no recipe yet, and the Java classes do not
-apply. Read the Node row of "What is proven": the first Node ticket
-writes the Node reference and adds it to this skill as part of its
-work.
+Node service: follow `references/METRICS.md` → "Publish (Node, hapi)"
+and `references/LOGGING.md` → "How to write the fields (Node)". Copy the
+modules from `trade-imports-animals-admin`. Read the Node row of "What
+is proven" first: what it does not cover yet, the run that needs it
+writes and adds here.
 
 Raise the PR from a `feat/EUDPA-X-<slug>` branch and deploy to dev.
 Steps 4 to 6 need the metrics to be arriving in dev.

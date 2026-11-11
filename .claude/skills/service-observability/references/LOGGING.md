@@ -90,6 +90,35 @@ Two pieces, both in address-book:
 `trace.id` stays in the MDC, where the request filter puts it. It
 reaches OpenSearch flat.
 
+### How to write the fields (Node)
+
+pino with `@elastic/ecs-pino-format` writes a nested object as it is
+given, so no encoder is needed. In `external-call-recorder.js` on
+`trade-imports-animals-admin` (`METRICS.md` → "Publish (Node, hapi)"):
+
+```js
+const fields = {
+  event: { category: 'external-call', action, outcome, duration: nanos }
+}
+if (cause) {
+  fields['error.type'] = cause.name
+  fields['error.message'] = cause.message
+}
+logger[outcome === 'success' ? 'info' : 'warn'](fields, message)
+```
+
+- `event.duration` is `Math.round(durationMs * 1_000_000)`, an integer.
+- `error.*` are flat keys, as on Java. Do not pass `{ err }` here: the
+  ECS formatter turns it into an `error` object with a stack trace. The
+  caller's handler logs the error with its stack once.
+- `trace.id` comes from the logger's `mixin` (`getTraceId()` from
+  `@defra/hapi-tracing`), not from this code.
+- The ECS format applies only where `log.format` is `ecs` (production),
+  so the test encodes the captured fields with `pino(ecsFormat(),
+  stream)` and checks that JSON (`METRICS.md` → "Publish (Node, hapi)"
+  → Tests). `[UNPROVEN]` in dev OpenSearch until admin's release is
+  checked there.
+
 ### What was learned on reference-data
 
 - **CDP dropped the MDC version without any error.** Seen in dev on

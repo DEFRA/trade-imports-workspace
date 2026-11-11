@@ -162,7 +162,9 @@ Claude writes the service's dashboard to
    `label`), and laying the copies out two to a row under "Business
    events". If there are none, delete the panel and its row.
 5. Delete "Cache hits and misses" and its "Caches" row if the service
-   has no cache.
+   has no cache. Delete "Dependency status" if the service publishes no
+   `external.dependency.available` (`METRICS.md` → "Less for an internal
+   tool"), and move every panel up by its height, 4.
 6. List the service's `@Timed` names, in one command:
    `grep -rhoE --include='*.java' --exclude-dir=target --exclude-dir=node_modules --exclude-dir=test '@Timed\((value *= *)?"[^"]+"' <repo>`.
    Each line is `@Timed("<name>"`; the name is between the quotes. No

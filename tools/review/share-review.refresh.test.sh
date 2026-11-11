@@ -113,7 +113,7 @@ else
     check_contains "counts the declined items"          "$body" "| — / Won't Fix | 1 |"
     check_contains "counts the unwalked items"          "$body" "| Not walked | 1 |"
     check_contains "counts unwalked items as open"      "$body" "| Minor | 2 | 2 |"
-    check_contains "says how many remain open"          "$body" "2 item(s) remain open in this repo."
+    check_contains "says how many remain open"          "$body" "**2** item(s) remain open."
     check_absent   "carries no per-item rows"           "$body" "Fixed item issue text"
     check_absent   "notes no head without --head"       "$body" "**PR head:**"
     rm -f "$body"

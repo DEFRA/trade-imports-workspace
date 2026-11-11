@@ -497,3 +497,15 @@ An upload session takes one file and is then closed to further files. The system
 - **GIVEN** the user opens the upload documents page
 - **WHEN** the page is served
 - **THEN** the response forbids the browser storing it
+
+### Requirement: An empty file is refused
+**ID**: REQ-DOCS-022
+The system MUST refuse a file that holds no bytes, without adding it to the notification, with the error "The selected file is empty" linking to and focusing the file field, and MUST keep the reference, document type and date of issue already entered.
+
+#### Scenario: A file holding no bytes is refused, keeping the details entered
+**ID**: SCN-DOCS-022-A
+- **GIVEN** the user has entered a reference, a document type and a date of issue
+- **WHEN** they add a file that holds no bytes
+- **THEN** the error summary reads "The selected file is empty", linking to and focusing the file field
+- **AND** the reference, document type and date of issue are still shown
+- **AND** no added-documents table is shown

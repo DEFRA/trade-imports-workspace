@@ -337,3 +337,27 @@ The system MUST show a private transporter's saved country on the Transport deta
 - **GIVEN** a private transporter has been saved with a country from the offered list
 - **WHEN** the user views the review
 - **THEN** the Transport details card's Country row shows that country
+
+### Requirement: The review shows only the exit answers the main import reason asked for
+**ID**: REQ-CYA-016
+The system MUST show the Destination country, Exit date and Port of exit rows on the review only for the import reasons that ask them: Destination country and Port of exit for transit, Exit date and Port of exit for temporary admission horses, and none of the three for a reason that asks none of them.
+
+#### Scenario: A transit notification shows its destination country and port of exit, and no exit date
+**ID**: SCN-CYA-016-A
+- **GIVEN** a notification whose main import reason is transit, with a port of exit and a destination country saved
+- **WHEN** the user views the review
+- **THEN** the Destination country and Port of exit rows show what was saved
+- **AND** no Exit date row is shown
+
+#### Scenario: A temporary admission shows its exit date and port of exit, and no destination country
+**ID**: SCN-CYA-016-B
+- **GIVEN** a notification whose main import reason is temporary admission horses, with an exit date and a port of exit saved
+- **WHEN** the user views the review
+- **THEN** the Exit date and Port of exit rows show what was saved
+- **AND** no Destination country row is shown
+
+#### Scenario: A reason that asks none of the exit answers shows none of their rows
+**ID**: SCN-CYA-016-C
+- **GIVEN** a notification whose main import reason is re-entry
+- **WHEN** the user views the review
+- **THEN** no Destination country, Exit date or Port of exit row is shown

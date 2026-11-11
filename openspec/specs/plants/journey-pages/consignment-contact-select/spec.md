@@ -2,6 +2,8 @@
 
 ## Purpose
 
+**Maturity**: exploring
+
 Asks which address-book record is the consignment's point of contact, from a searchable, paged table of the organisation's address book that copies the chosen name and address at selection. The page is titled "Contact address for consignment".
 
 ## Requirements

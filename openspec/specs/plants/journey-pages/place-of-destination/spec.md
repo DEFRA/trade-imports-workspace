@@ -2,6 +2,8 @@
 
 ## Purpose
 
+**Maturity**: exploring
+
 Asks where the consignment is going, or where it is being kept now, chosen from the organisation's address book. The page is titled "Place of destination".
 
 ## Requirements

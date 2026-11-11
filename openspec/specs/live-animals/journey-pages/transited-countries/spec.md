@@ -2,6 +2,10 @@
 
 ## Purpose
 
+**Maturity**: detailing
+
+**Page**: transit-countries
+
 Asks which countries the consignment travels through on its way. The user searches for each country or territory the reference data service serves and adds them one at a time to a list, rather than ticking them in a set of checkboxes. The page is titled "Which countries will the consignment travel through?", its browser title is "Transit countries - Import notification service - GOV.UK", and it is asked only when the means of transport to the port of entry is rail or road and the country of origin and a commodity are saved.
 
 ## Requirements

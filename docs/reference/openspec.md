@@ -66,8 +66,9 @@ Aliases also exist under `openspec spec list|show|validate` — same idea.
 ## `tim spec` — lint and gaps
 
 The two deterministic checks the `spec-catchup` and `spec-cover` skills
-drive. No other `tim spec` subcommand exists — anything else here (the
-`jq` snippets below) is a hand query, not a maintained surface.
+drive. `tim spec diff` (see `tim spec diff --help`) reports what commits
+changed in the spec. Anything else here (the `jq` snippets below) is a
+hand query, not a maintained surface.
 
 ```bash
 tim spec lint --specs --coverage --binding [--capability live-animals|plants|germinal-products|ins|admin]
@@ -83,9 +84,9 @@ spec.
 
 | Command | Group/flag | Contract |
 |---|---|---|
-| `lint` | `--specs` | Conventions: Purpose, Requirements, ≥1 scenario, stable IDs, a THEN, MUST not SHALL, live cross-refs |
+| `lint` | `--specs` | Conventions: Purpose, Requirements, ≥1 scenario, stable IDs, a THEN, MUST not SHALL, live cross-refs, a page spec's Maturity and Page lines, well-formed Signed off marks, Signed off marks on a page spec only at `agreed` or `readyForLive` |
 | `lint` | `--coverage` | Shape, enums, scenario and requirement rollups, a `none` carries notes, `areaCode`, `specFile`, no id twice in one `coverage.json` |
-| `lint` | `--binding` | A `coverage.json` per `spec.md` and the reverse; ID parity; names verbatim; every link's file and test title present under `repos/` |
+| `lint` | `--binding` | A `coverage.json` per `spec.md` and the reverse; ID parity; names verbatim; every link's file and test title present under `repos/`; each page spec's Maturity matches its page's `maturity` in the frontend under `repos/` |
 | `gaps` | `--none` / `--partial` | Every non-full row (naming neither returns both; naming both unions them) |
 
 The three lint groups are independent — naming any narrows to those,
@@ -103,6 +104,60 @@ title (`%s`, `$name`, `${…}`) that expands to it, or as a method name. A
 link into a repo that is not checked out is not checked, and its repo is
 listed under `skipped`. It proves the named test exists, not that it
 witnesses the scenario: that is still the red probe's job.
+
+### Page maturity and signed-off scenarios
+
+Two marks tie the spec to a page's maturity banner. The full rules are in
+[`openspec/config.yaml`](../../openspec/config.yaml).
+
+| Mark | Where | Lint checks |
+|---|---|---|
+| `**Maturity**: exploring` | First line under `## Purpose` in every `journey-pages` page spec | Present once, under Purpose, one of `exploring`, `detailing`, `agreed`, `readyForLive`. Admin page specs may leave it out. No other spec carries one. |
+| `**Page**: hub` | Under `## Purpose` in a `journey-pages` page spec whose folder name is not its page's `id` | At most once, under Purpose, only in a page spec, one word: the `id` in the page's `page.js`, declared by one `page.js` only. |
+| `**Signed off**: 2026-11-11` | The line directly after a scenario's ID line, in any spec | Once per scenario, directly after the ID line, a real `YYYY-MM-DD` date. Never on a requirement or outside a scenario. In a page spec, only when its Maturity is `agreed` or `readyForLive`. |
+
+With the frontend checked out under `repos/`, the binding group also
+checks each page spec's Maturity line matches the `maturity` its page
+declares. The page is the one in a `page.js` under the frontend's `src/`
+whose `id` is the spec's folder name, or the one its Page line names.
+
+| Spec prefix | Frontend |
+|---|---|
+| `live-animals` | `trade-imports-animals-frontend` |
+| `plants` | `trade-imports-plants-frontend` |
+| `ins` | `trade-imports-ins-frontend` |
+
+Admin page specs are not checked. A frontend that is not checked out is
+listed under `skipped`, as `page-maturity`.
+
+A signed-off scenario is part of a signed-off page's contract, and the
+tests its coverage links are that contract's evidence. A change to
+either needs a person's decision.
+
+### The spec check on pull requests
+
+[`.github/workflows/spec-check.yml`](../../.github/workflows/spec-check.yml)
+runs on every workspace pull request that touches `openspec/`,
+`tim/src/spec/` or the workflow itself. It is not a required check.
+
+| Step | Runs | Fails when |
+|---|---|---|
+| Lint the Behaviour Spec | `tim spec lint` | Lint finds anything |
+| Check signed-off scenarios | `tim spec diff --signed-off --range 'HEAD^1..HEAD'` | A change touches a signed-off scenario (exit 3) |
+
+- Both steps run, and each writes its report to the job summary. A
+  signed-off change also prints the ticket draft for a person to raise.
+- The checkout is the pull request's merge commit at depth 2. Its first
+  parent is the base branch's tip, so `HEAD^1..HEAD` is what the pull
+  request's commits change on the base branch.
+- No service repo is checked out. The job creates an empty `repos/`,
+  which `tim` needs to recognise the workspace root, so lint lists every
+  repo's test-title check under `skipped`. The linked-test half of
+  `tim spec diff --signed-off` (`--repo`, `--base`) does not run here: it
+  belongs in each service repo's own pull request check.
+- A red check is a prompt, not a block. Raise the ticket from the draft
+  and keep the pull requests as drafts until a person approves or refuses
+  the change.
 
 `tim spec gaps` is **not** the `spec-catchup` work list — a scenario can
 be `coverage: "full"` and still have drifted words. It's `spec-cover`'s

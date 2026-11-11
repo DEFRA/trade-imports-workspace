@@ -2,6 +2,8 @@
 
 ## Purpose
 
+**Maturity**: exploring
+
 Asks which address-book record is the consignor. The page is titled "Consignor".
 
 ## Requirements

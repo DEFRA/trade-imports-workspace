@@ -2,6 +2,10 @@
 
 ## Purpose
 
+**Maturity**: detailing
+
+**Page**: consignmentDetails
+
 Asks how much of each chosen species the consignment carries — one number of animals and, where the commodity calls for it, a number of packages — grouped under the commodity and species chosen on the previous page. The page is titled "Commodity details".
 
 ## Requirements

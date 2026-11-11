@@ -40,7 +40,7 @@ The system MUST, when 'Continue' is selected with neither option chosen, keep th
 
 ### Requirement: The chosen transporter type decides which form opens, and opening a form without its type chosen returns to the type question
 **ID**: REQ-INS-TRANSPORTER-003
-The system MUST open the private transporter form when 'Private transporter' is chosen and continued, and the commercial transporter form when 'Commercial' is chosen and continued. Opening either form directly without its type stored as chosen MUST open the transporter type question instead.
+The system MUST open the private transporter form when 'Private transporter' is chosen and continued, and the commercial transporter form when 'Commercial' is chosen and continued. Opening either form directly without its type stored as chosen MUST open the transporter type question instead. Each form's 'Back' link MUST open the transporter type question with that form's type still chosen.
 
 #### Scenario: Private opens the private form and Commercial the commercial form
 **ID**: SCN-INS-TRANSPORTER-003-A
@@ -57,26 +57,37 @@ The system MUST open the private transporter form when 'Private transporter' is 
 - **WHEN** they open the private transporter form or the commercial transporter form directly
 - **THEN** the transporter type question opens instead
 
+#### Scenario: Back from either form returns to the type question with its type still chosen
+**ID**: SCN-INS-TRANSPORTER-003-C
+- **GIVEN** the user has chosen 'Private transporter' and continued to the private transporter form
+- **WHEN** they select 'Back'
+- **THEN** the transporter type question opens with 'Private transporter' chosen
+- **GIVEN** the user has chosen 'Commercial' and continued to the commercial transporter form
+- **WHEN** they select 'Back'
+- **THEN** the transporter type question opens with 'Commercial' chosen
+
 ### Requirement: The private transporter form asks for the Standard Address Block, the contact fields and the transporter's country
 **ID**: REQ-INS-TRANSPORTER-004
-The system MUST ask, on the private transporter form, for name, address line 1, town or city, postcode, country, email address and phone number as mandatory, and address line 2 and county as optional, grouped under 'Address' and 'Contact details', offering every country the reference data service serves.
+The system MUST caption the private transporter form 'Add a new transporter' and head it 'Add a private transporter', and MUST ask on it for name, address line 1, town or city, postcode, country, email address and phone number as mandatory, and address line 2 and county as optional, grouped under 'Address' and 'Contact details', offering every country the reference data service serves.
 
 #### Scenario: The private transporter form shows its fields
 **ID**: SCN-INS-TRANSPORTER-004-A
 - **GIVEN** the user is on the private transporter form
 - **WHEN** the page is shown
-- **THEN** it asks for 'Name or organisation', 'Address line 1', 'Address line 2 (optional)', 'Town or city', 'County (optional)', 'Postcode or Zip code', 'Country', 'Email address' and 'Phone number'
+- **THEN** it is captioned 'Add a new transporter' and headed 'Add a private transporter'
+- **AND** it asks for 'Name or organisation', 'Address line 1', 'Address line 2 (optional)', 'Town or city', 'County (optional)', 'Postcode or Zip code', 'Country', 'Email address' and 'Phone number'
 - **AND** the address fields sit under 'Address' and the email and phone fields under 'Contact details'
 
 ### Requirement: The commercial transporter form asks for the Standard Address Block, the contact fields and an approval number, with a fixed country
 **ID**: REQ-INS-TRANSPORTER-005
-The system MUST ask, on the commercial transporter form, for the same fields as the private form plus a mandatory approval number, and MUST show the country fixed to Northern Ireland rather than offering a choice.
+The system MUST caption the commercial transporter form 'Add a new transporter' and head it 'Add a commercial transporter', MUST ask on it for the same fields as the private form plus a mandatory approval number, and MUST show the country fixed to Northern Ireland rather than offering a choice.
 
 #### Scenario: The commercial transporter form shows its fields and the fixed country
 **ID**: SCN-INS-TRANSPORTER-005-A
 - **GIVEN** the user is on the commercial transporter form
 - **WHEN** the page is shown
-- **THEN** it asks for 'Name or organisation', 'Approval number', 'Address line 1', 'Address line 2 (optional)', 'Town or city', 'County (optional)', 'Postcode or Zip code', 'Email address' and 'Phone number'
+- **THEN** it is captioned 'Add a new transporter' and headed 'Add a commercial transporter'
+- **AND** it asks for 'Name or organisation', 'Approval number', 'Address line 1', 'Address line 2 (optional)', 'Town or city', 'County (optional)', 'Postcode or Zip code', 'Email address' and 'Phone number'
 - **AND** the country shows as 'Northern Ireland', fixed rather than offered as a choice
 
 ### Requirement: A commercial transporter's country is fixed to Northern Ireland, and a tampered value is refused

@@ -2,6 +2,10 @@
 
 ## Purpose
 
+**Maturity**: detailing
+
+**Page**: accompanying-documents
+
 The accompanying documents attached to a notification — uploading, virus-scanning, viewing, removing, their durability once attached, and the condition under which the page itself can be opened. The page is titled "Upload documents"; whether it is offered at all and whether a journey opened out of context lands here are `live-animals/journey-flow`'s (REQ-FLOW-005, REQ-FLOW-008, REQ-FLOW-009), and every Overview row being linked with no blocked state is `live-animals/journey-pages/overview`'s (REQ-OVERVIEW-002).
 
 A document reference's rules (REQ-DOCS-006) are not chosen here: the Live
@@ -493,3 +497,15 @@ An upload session takes one file and is then closed to further files. The system
 - **GIVEN** the user opens the upload documents page
 - **WHEN** the page is served
 - **THEN** the response forbids the browser storing it
+
+### Requirement: An empty file is refused
+**ID**: REQ-DOCS-022
+The system MUST refuse a file that holds no bytes, without adding it to the notification, with the error "The selected file is empty" linking to and focusing the file field, and MUST keep the reference, document type and date of issue already entered.
+
+#### Scenario: A file holding no bytes is refused, keeping the details entered
+**ID**: SCN-DOCS-022-A
+- **GIVEN** the user has entered a reference, a document type and a date of issue
+- **WHEN** they add a file that holds no bytes
+- **THEN** the error summary reads "The selected file is empty", linking to and focusing the file field
+- **AND** the reference, document type and date of issue are still shown
+- **AND** no added-documents table is shown

@@ -2,6 +2,8 @@
 
 ## Purpose
 
+**Maturity**: detailing
+
 Asks the further questions a consignment's commodities call for — what the animals are certified for, and whether any are unweaned. The page is titled "Additional details".
 
 ## Requirements

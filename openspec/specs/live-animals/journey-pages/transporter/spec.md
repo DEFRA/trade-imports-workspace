@@ -2,6 +2,10 @@
 
 ## Purpose
 
+**Maturity**: detailing
+
+**Page**: transporters
+
 Lists the organisation's own transporters, held in the address book, followed by the ones the service ships, letting the user choose one for the consignment or add a new one. The page is titled "Transporter details". Which transporter is required, and what adding one asks, is governed by `live-animals/journey-obligations/transporter`.
 
 ## Requirements

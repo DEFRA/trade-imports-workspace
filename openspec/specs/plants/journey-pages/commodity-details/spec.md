@@ -2,6 +2,8 @@
 
 ## Purpose
 
+**Maturity**: exploring
+
 The entry sub-page for one commodity line: asks which category of goods it is, then reveals the fields that category calls for. The page is titled "Commodity details".
 
 ## Requirements

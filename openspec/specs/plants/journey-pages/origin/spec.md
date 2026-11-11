@@ -2,6 +2,8 @@
 
 ## Purpose
 
+**Maturity**: exploring
+
 Asks where the consignment comes from. The page is titled "Origin of the import".
 
 ## Requirements

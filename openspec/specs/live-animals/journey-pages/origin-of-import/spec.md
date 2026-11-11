@@ -2,6 +2,10 @@
 
 ## Purpose
 
+**Maturity**: detailing
+
+**Page**: origin
+
 The journey's entry page, asking where the consignment is coming from. The page is titled "Origin of the import".
 
 ## Requirements

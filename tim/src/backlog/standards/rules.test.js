@@ -326,6 +326,15 @@ describe('#extractPointers', () => {
     expect(pointsTo).toEqual([])
   })
 
+  test('a path with a <placeholder> in it is a pattern, not a pointer', () => {
+    const body =
+      '- Its spec under `openspec/specs/<domain>/journey-pages/<page>/spec.md` has a level.'
+
+    const { pointsTo } = extractPointers(body, { scopeRootRelative: '' })
+
+    expect(pointsTo).toEqual([])
+  })
+
   test('a continuation line of a list item is read', () => {
     const body = [
       '- Key file: `language.md` — plain English, active voice,',

@@ -2,6 +2,8 @@
 
 ## Purpose
 
+**Maturity**: detailing
+
 Asks for the name, address and authorisation number of a commercial transporter that is not on the transporter list, keyed in by hand. A commercial transporter added this way can only be based in Northern Ireland, so the country is shown rather than asked. Reached only via "Add a transporter" from the transporter list, after choosing "Commercial" on the type question — not as a mandatory branch of the transport section itself. The page is titled "Add a commercial transporter".
 
 ## Requirements

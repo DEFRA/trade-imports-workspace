@@ -1,6 +1,6 @@
 # GitHub Actions — Best Practices
 
-Applies to every repo in the trade-imports workspace. Covers the publish-HTML-report-to-`gh-pages` story (E2E + Lighthouse), the checkout-depth knobs that interact with it, how a pipeline calls a repo's tests (§7), and how to read a red or missing E2E or Lighthouse check (§8). Broader CI standardisation (e.g. `cdp-build-action` conventions, conventional-commits migration) is out of scope here.
+Applies to every repo in the trade-imports workspace. Covers the publish-HTML-report-to-`gh-pages` story (E2E + Lighthouse), the checkout-depth knobs that interact with it, how a pipeline calls a repo's tests (§7), how to read a red or missing E2E or Lighthouse check (§8), and the rule that protects `main` (§9). Broader CI standardisation (e.g. `cdp-build-action` conventions, conventional-commits migration) is out of scope here.
 
 ---
 
@@ -150,7 +150,35 @@ A red check on a PR is a failure to fix (see `CLAUDE.md` rule 6). These are the 
 
 **Lighthouse red with "Seed step origin was rejected (400)".** The branch is behind `main`, and `main` changed the seed script or the page it drives. Check `gh api repos/DEFRA/<repo>/compare/main...<branch> --jq .behind_by`. If it is behind, merge `main` in (never rebase a live PR branch) and wait for the re-run before reading the seed script.
 
+**E2E red in seconds, with no Playwright report.** The branch image did not publish, so no E2E ran. The report step marks that a failure, because a skipped check would count as a pass under the main ruleset (§9). Read the `Publish Branch Image` run for the branch and re-run it.
+
 **A re-run went green but the PR still shows red.** `gh run rerun --failed` does not refresh the check run a reporting workflow posted to another repo's PR. Dispatch a fresh run instead, for example `tools/github-actions/trigger-workflow.sh trade-imports-ins-tests workspace-e2e-tests.yml <branch>`. Confirm any outcome with `gh run view <id> --json conclusion`, not the PR rollup.
+
+## 9. `main` takes only a branch that is up to date and green
+
+Every repo protects `main` with one repository ruleset, `Protect main branch`. It blocks deletion and force-pushes, and requires named checks to pass on a branch that is up to date with `main`. [`config/main-branch-rules.json`](../../config/main-branch-rules.json) lists each repo's required checks.
+
+**Why.** A pull request's checks test its code merged with `main` as it stood when they ran. Two pull requests can each go green, touch different lines, and still break `main` together. Without the up-to-date rule, the second merges on a stale green. That happened on 11 November 2026: the animals backend's `main` stopped compiling, and no release could publish.
+
+**What it asks of you.**
+
+- When `main` moves, your pull request shows "This branch is out-of-date". Press **Update branch** (or `gh pr update-branch <n>`), then wait for the checks to go green again.
+- Merge `main` in. Never rebase a live pull request branch.
+- An admin can still merge past the rule, through the pull request only. Use it for an emergency, and say why on the pull request.
+
+**Choosing a required check.** A required check must report on every pull request, including Dependabot PRs and drafts. A check that never reports blocks the pull request for good. A check that is skipped counts as passed.
+
+- Require the job that builds and tests the repo, plus `E2E Tests` where the repo has it.
+- Never require a check that a path filter or a job `if:` can stop from being created.
+- `E2E Tests` is posted by the workspace's `report-e2e-status` action. It reports skipped for Dependabot, whose image publish is skipped. It reports a failure when the image publish failed.
+
+**Known gaps.**
+
+- A pull request from a fork never gets `E2E Tests`, so it waits for an admin.
+- An `E2E Tests` check left in progress by a cancelled run blocks the merge until `Publish Branch Image` or `E2E Tests` is re-run for the branch.
+- A pull request opened with `GITHUB_TOKEN` (the plants prototype's upstream sync) starts no workflows, so its required checks never report.
+
+**Changing the rule.** Edit `config/main-branch-rules.json` first, then apply it with `gh api -X PUT repos/DEFRA/<repo>/rulesets/<id>`. Check the result with `gh api repos/DEFRA/<repo>/rules/branches/main`. Keep **Update branch** turned on (`allow_update_branch`) in every repo.
 
 ---
 

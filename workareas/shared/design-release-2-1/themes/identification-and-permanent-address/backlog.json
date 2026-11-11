@@ -165,7 +165,7 @@
       ],
       "dependsOn": [],
       "theme": "identification-and-permanent-address",
-      "status": "todo",
+      "status": "done",
       "kind": "fix",
       "repos": [
         "frontend",
@@ -226,7 +226,19 @@
         }
       ],
       "rigour": "fast",
-      "commit": "01e46646 3d7f469"
+      "commit": "01e46646 3d7f469",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/476",
+          "repo": "trade-imports-animals-frontend",
+          "number": 476
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/100",
+          "repo": "trade-imports-ins-tests",
+          "number": 100
+        }
+      ]
     },
     {
       "id": "inc-049",
@@ -324,13 +336,7 @@
         "Verified against main 11 November. Two things have changed since the 27 October re-analysis this row records. First, its external dependency commodities-and-reason inc-012 is now dropped rather than blocked, so this row can never unblock by that dependency being met: a dropped row never satisfies. Second, inc-012's drop reasoning removes this row's stated blocker outright. It records that MDM commodities landed on 27 October (frontend c3183a8e), that ruling:sam-2026-10-09-pm claim 28's commodities carve-out has therefore expired, and that claim 25 now governs: a list's content is MDM's to change and 'never a reason to block a row'. The code position is unchanged and small: services/commodities/rules.js defines SWINE_CODE 0103, SHEEP_CODE 010410 and GOAT_CODE 010420 but gives none of them an entry in COMMODITY_IDENTIFIERS, so they still skip Identification details. The remaining work is to add ear-tag-only entries for those three codes. Needs a decision to unblock, which the row's earlier note reserves for Sam.",
         "Unblocked 11 November. Scope check against ruling:ian-2026-11-11 point 2, because this row's identifier lists are exactly the kind of thing that can be prototype demo data: it is not. req-219 (pigs by ear tag) cites confluence-6497338582-p4-026 and p4-034, and req-220 (sheep and goats by ear tag) cites p4-034 — V4's own 'Ear tag identifier commodities' list, which names 0102 Cattle, 0103 Pig (Domestic), 010410 Sheep (Domestic) and 010420 Goats. The prototype claims each also carries (prototype-dr2-1-source-p5-017, p5-021) are kind 'data' read from the prototype's hard-coded commodity identifiers file, so they corroborate and decide nothing. req-2146 is V4-backed too (p4-014, p4-043, p4-106-m1). The commodities themselves are MDM's content and arrived on 27 October, so nothing here waits on a list."
       ],
-      "gate": null,
-      "externalDependsOn": [
-        {
-          "workarea": "shared/design-release-2-1/themes/commodities-and-reason",
-          "id": "inc-012"
-        }
-      ]
+      "gate": null
     },
     {
       "id": "inc-268",
@@ -479,7 +485,9 @@
         "req-747",
         "req-748"
       ],
-      "openQuestions": [],
+      "openQuestions": [
+        "The two committed visual baselines for the identification card (repos/trade-imports-ins-tests/tests/animals/e2e/visual/identification-card.visual.spec.ts-snapshots/identification-card-chromium-darwin.png and -chromium-linux.png) were not regenerated, although this increment empties the address block that screenshot captures: the spec's set-up changed from saveAnimalWithPermanentAddress to saveAnimalWithPassport (identification-card.visual.spec.ts:11) and _identification-card.njk lost the warning, the guidance bullets, the sub-heading and the eight address inputs (28 deletions). Both PNGs are untouched at their 6 November bytes, so the @visual run will fail on a stale baseline. Regeneration needs the workspace stack (npm run test:visual:update:macos, test:visual:update:linux, then test:docker-compose:visual), and this build run deliberately keeps the stack down, so it could not be done here. Who regenerates both baselines (CI compares against the linux one) and when, before the tests repo PR's @visual run is relied on?"
+      ],
       "notes": [
         "Carried over from the existing row inc-054, unchanged in substance on this re-distil: no requirement behind it moved, and none of its claims is overruled.",
         "Combines the page, its addresses-page section, the per-animal cards, the same-as-destination choice, the new-address fields and how each is stored: building them apart would build the same page and the same stored record three times. Validation and the summaries are their own rows after it, to keep this one to one sitting.",
@@ -503,7 +511,25 @@
           "id": "inc-213"
         }
       ],
-      "rigour": "full"
+      "rigour": "full",
+      "commit": "d2eb9e8c3637744f2b258b07b0c0d0d3a00a2df8 99347323f06ddff1ff06edd9baffd8efedd07b1e",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-backend/pull/126",
+          "repo": "trade-imports-animals-backend",
+          "number": 126
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/476",
+          "repo": "trade-imports-animals-frontend",
+          "number": 476
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/100",
+          "repo": "trade-imports-ins-tests",
+          "number": 100
+        }
+      ]
     },
     {
       "id": "inc-055",

@@ -160,6 +160,26 @@ The system MUST refuse a card's save button when every identifier field on that 
 - **WHEN** they follow the resulting error
 - **THEN** that species' first identifier field is focused, and remains empty
 
+#### Scenario: A species' own refusal does not depend on another species' card holding a value
+**ID**: SCN-IDENT-009-B
+- **GIVEN** one species' card holds a filled identifier field and another species' card holds none
+- **WHEN** the blank card's own save button is pressed
+- **THEN** that card's save is refused, with that species' first identifier field focused when the resulting error is followed
+- **AND** the filled card has no animal saved and its identifier field is shown empty again
+
+#### Scenario: A page with every identifier blank passes Save and continue and Save and return to overview
+**ID**: SCN-IDENT-009-C
+- **GIVEN** every identifier field on the page is blank
+- **WHEN** the user presses Save and continue or Save and return to overview
+- **THEN** no refusal is shown and the user is taken on
+- **AND** no animal record is saved
+
+#### Scenario: A blank save on a species' last animal still to enter is refused and that animal stays to enter
+**ID**: SCN-IDENT-009-D
+- **GIVEN** a species whose earlier animals are saved and whose card offers "Save and finish" for its last animal still to enter, with every identifier field on that card blank
+- **WHEN** the user presses "Save and finish"
+- **THEN** the save is refused, the species' first identifier field carries the error, and that animal is still to enter with its saved animals unchanged
+
 ### Requirement: A typed identifier value has a maximum length
 **ID**: REQ-IDENT-010
 The system MUST reject a typed identifier value of more than 58 characters in a form that a save submits, with the message "<identifier> must be 58 characters or less" naming Microchip, Passport, Tattoo, Ear tag or Horse name, MUST link the resulting error to and focus the field, MUST preserve the over-length value, and MUST save a value of 58 characters typed with spaces around it without them.

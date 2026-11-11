@@ -135,7 +135,8 @@
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/animal-identification.spec.ts", "test": "accepts a valid ear tag", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "saves a Mustela putorius furo identified only by its microchip and reads the number back", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "adds a complete record and reads it back as a row of the saved-animals table", "strength": "full", "notes": "cat with passport + permanent address" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "adds a complete record and reads it back as a row of the saved-animals table", "strength": "full", "notes": "cat with passport + permanent address" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should save one typed identifier with the rest blank and list it in the saved-animals table", "strength": "full", "notes": "one identifier given, the rest left blank, saves with no error and reads back with the blank field shown empty in the saved-animals table; red when identifierProvided requires every scoped field rather than any one" }
           ]
         }
       ]
@@ -220,6 +221,35 @@
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "validation: an empty record links to and focuses the first identifier", "strength": "full", "notes": "cat microchip focused and empty" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should reject an empty Save and add another — never append a blank record, and log nothing", "strength": "partial", "notes": "rejects with atLeastOneIdentifier — does not assert focus" }
+          ]
+        },
+        {
+          "id": "SCN-IDENT-009-B",
+          "name": "A species' own refusal does not depend on another species' card holding a value",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should reject a blank card's own Save and add another beside a filled sibling, reading neither card's value", "strength": "full", "notes": "two lines, the blank card's own add index refused, the filled sibling's own index never read; red when linesToReadFormsFor reads every line regardless of the pressed action" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "validation: a blank card is refused on its own Save and add another, beside a filled sibling card, saving neither", "strength": "full", "notes": "cattle filled, bison blank, bison's own save refused and focused, neither card saved and the cattle field shown empty again; red when linesToReadFormsFor reads every line regardless of the pressed action" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/animal-identification.spec.ts", "test": "refuses a blank card on its own Save and add another beside a filled sibling, and focuses that card on the error link", "strength": "partial", "notes": "not probed — needs the workspace stack" }
+          ]
+        },
+        {
+          "id": "SCN-IDENT-009-C",
+          "name": "A page with every identifier blank passes Save and continue and Save and return to overview",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should exit without appending when no form holds data — the zero-record pass", "strength": "full", "notes": "Save and continue with every field blank goes on with no error" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should exit to the overview without appending when every identifier is blank", "strength": "full", "notes": "Save and return to overview with every field blank goes to the overview with no error; red when parseAddAction's null fallback is replaced with a real index" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "validation: Save and return to overview with every identifier blank shows no error and goes to the overview", "strength": "full", "notes": "red when parseAddAction's null fallback is replaced with a real index" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/animal-identification.spec.ts", "test": "saves no animal and shows no error when Save and return to overview is pressed with every identifier blank", "strength": "partial", "notes": "reopened card asks for its first animal with no saved row; not probed — needs the workspace stack" }
+          ]
+        },
+        {
+          "id": "SCN-IDENT-009-D",
+          "name": "A blank save on a species' last animal still to enter is refused and that animal stays to enter",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should reject a blank Save and finish on a line's last animal without appending it", "strength": "full", "notes": "one line of two animals with one record saved, the card offering Save and finish, refused on a blank post with the saved record intact; red when withEmptyFormGuard's anyData is forced true" }
           ]
         }
       ]

@@ -56,7 +56,71 @@ If the user asks to build / implement / follow the plan, follow
 makes the change under the house rules in
 `~/git/defra/trade-imports-workspace/.claude/rules/code-quality.md`,
 runs a delete-first comment pass over touched code, and raises a PR.
-Verifies with unit tests, lint, E2E and GitHub Actions.
+Verifies with unit tests, lint, E2E and GitHub Actions. Between a green
+verification and the PR it syncs the behaviour spec and runs the
+signed-off check, as below.
+
+### Sync the behaviour spec
+
+Only once verification is green. The Behaviour Spec under `openspec/`
+in this workspace records intended behaviour (`specs/`) and which tests
+prove it (`coverage/`). A ticket that changes behaviour without it
+leaves drift for the next person to absorb.
+
+The steps are `frontend-change` Step 5, whatever the repo — read
+`~/git/defra/trade-imports-workspace/.claude/skills/frontend-change/SKILL.md`
+→ "Step 5: Sync the behaviour spec" and its `references/SPEC_SYNC.md`
+before the first write. In short:
+
+1. **Find the capabilities** the diff touches, new files included
+   (`git -C <repo> add -N .`, then `git -C <repo> diff`).
+2. **No observable change** (a refactor, a dependency bump): write
+   nothing and report `Spec sync: none` with the reason.
+3. **Write `spec.md`** under `openspec/specs/<path>/` for the behaviour
+   the ticket changed: merge into an existing capability, or prove a new
+   one is new and mint its AREA code.
+4. **Write `coverage.json`** under `openspec/coverage/<path>/` for the
+   scenarios you touched. A link is `full` only after a red probe.
+5. **Validate**, once per capability written, then lint the whole spec:
+
+   ```bash
+   ~/git/defra/trade-imports-workspace/tools/frontend-change/openspec-validate.sh --root ~/git/defra/trade-imports-workspace <capability-path> [<capability-path> ...]
+   ```
+
+   ```bash
+   tim spec lint
+   ```
+
+6. **Self-check** every added or changed scenario against the diff
+   hunk that implements its THEN, and every link you wrote against a
+   test file in the diff.
+
+A failed validate, lint or self-check is a halt: fix it before the PR.
+Commit the spec on the same branch name in the workspace, and raise its
+PR beside the repo PRs (`CLAUDE.md` rule 2).
+
+### Before the pull request: the signed-off check
+
+Run it once the spec and code are committed, before raising any PR, for
+Implement and Refactor alike: the range reads commits only. Once for the
+workspace's `openspec/`, then once for each repo you changed:
+
+```bash
+tim spec diff --signed-off --range origin/main...HEAD --json
+```
+
+```bash
+tim spec diff --signed-off --repo <repo> --base origin/main --json
+```
+
+Exit 0 means no signed-off scenario changes: raise the PRs as normal.
+Exit 3 is a trip: follow
+`~/git/defra/trade-imports-workspace/.claude/rules/signed-off-pages.md`
+→ "When it trips". Raise every PR on the branch as a draft linked to the
+ticket it raises, and never take one out of draft. A red test linked to
+a signed-off scenario means the code is wrong: fix the code, not the
+test. A Refactor that trips has changed behaviour it should not have:
+undo that change rather than raising it.
 
 ### Refactor
 
@@ -79,6 +143,11 @@ would help, offer it and let them answer.
 This is rule 3's treatment of merging a PR, for the same reason: both
 reach other people, and neither is yours to trigger unprompted. It holds
 even when the work is finished and the comment would be accurate.
+
+The one exception is the ticket a signed-off trip raises (see "Before
+the pull request: the signed-off check"). The workspace rule in
+`.claude/rules/signed-off-pages.md` asks for it, so raise it without
+asking, and name it in your report.
 
 When the user does ask, follow
 `~/git/defra/trade-imports-workspace/docs/best-practices/jira/ticket-conventions.md`:

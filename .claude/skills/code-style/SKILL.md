@@ -496,6 +496,22 @@ cannot do from here (a credential, a platform change, a decision that
 belongs to someone else), and report what is red, what you tried and
 what is needed.
 
+## Step I3a: The signed-off check
+
+A style fix changes no behaviour, so it changes no signed-off scenario.
+Prove it before the work goes to a pull request, once per repo the
+groups touched:
+
+```bash
+tim spec diff --signed-off --repo <repo> --base origin/main --json
+```
+
+Exit 0 is the proof. Exit 3 is a trip: a fix edited a test linked to a
+signed-off scenario. Stop and raise it,
+following `~/git/defra/trade-imports-workspace/.claude/rules/signed-off-pages.md`
+→ "When it trips": the ticket, and every pull request a draft. Report it
+in Step I4.
+
 ## Step I4: Final Report
 
 After all groups are processed (or stopped early):
@@ -508,6 +524,7 @@ Results:
   ⏭️  Auto-Resolved: {N} items (already fixed)
   ❌ Failed:        {N} items
   🧪 Red tests fixed: {N} (commit per fix)
+  🔏 Signed-off:    [clear / tripped — the ticket and the scenarios]
   🚫 Stopped:       [yes/no — what blocked the fix and what is needed]
 
 Done:

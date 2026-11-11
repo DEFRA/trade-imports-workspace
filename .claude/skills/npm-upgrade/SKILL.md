@@ -225,6 +225,22 @@ overrides and their reasons, and records each override in
 covers, or a check that fails with every override back) is reported
 for a decision, with its worktree kept.
 
+## Before the pull request: the signed-off check
+
+An upgrade changes no behaviour, so it changes no signed-off scenario.
+Prove it before raising a pull request, once per upgraded repo:
+
+```bash
+tim spec diff --signed-off --repo <repo> --base origin/main --json
+```
+
+Exit 0 is the proof. Exit 3 is a trip: the upgrade, or a manual
+package's code change, edited a test linked to a signed-off scenario.
+Stop and raise it, following
+`~/git/defra/trade-imports-workspace/.claude/rules/signed-off-pages.md`
+→ "When it trips": the ticket, and every pull request a draft. A red
+linked test means the upgrade broke the page: fix the code, not the test.
+
 ## Failures
 
 Surface any error to the user with the raw output. Do not retry or

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The Import Notification Service's landing page: a single list of notifications, searchable by reference number, showing each one's status, and where a new notification starts. It lists live animals notifications only today, because it aggregates the events the animals backend publishes; high-risk plants and germinal products notifications are not listed.
+The Import Notification Service's landing page: a single list of notifications, searchable by reference number, showing each one's status, and where a new notification starts. It lists live animals notifications only today, because it aggregates the events the animals backend publishes; high-risk plants and germinal products notifications are not listed. Each signed-in organisation sees only its own notifications in that list.
 
 ## Requirements
 
@@ -90,3 +90,13 @@ The system MUST offer a "Create new" button under the dashboard heading and abov
 - **GIVEN** the notifications list cannot be loaded
 - **WHEN** the dashboard is shown with "Sorry, there is a problem with the service. Try again in a few minutes."
 - **THEN** "Create new" is still offered under the dashboard heading
+
+### Requirement: The dashboard lists only notifications owned by the caller's organisation
+**ID**: REQ-INS-DASH-006
+The INS backend MUST scope `GET /notifications` to the organisation named in `Trade-Imports-Organisation-Id`, and the dashboard MUST pass the signed-in organisation on every list call, so another organisation's notifications never appear in the paginated result or in a reference search.
+
+#### Scenario: Another organisation's submitted notification is absent from the list
+**ID**: SCN-INS-DASH-006-A
+- **GIVEN** organisation A has submitted a notification that appears in the aggregated read model
+- **WHEN** organisation B requests the notification list or searches by organisation A's reference
+- **THEN** the list contains no notifications owned by organisation A

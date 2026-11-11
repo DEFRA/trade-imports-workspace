@@ -3,7 +3,8 @@ import {
   checkIdsPresent,
   checkIdParity,
   checkNameParity,
-  checkGlobalIdUniqueness
+  checkGlobalIdUniqueness,
+  checkCoverageIdsUnique
 } from './ids.js'
 
 const requirement = (overrides = {}) => ({
@@ -177,5 +178,29 @@ describe('checkGlobalIdUniqueness', () => {
           f.message.includes('also in: widgets')
       )
     ).toBe(true)
+  })
+})
+
+describe('checkCoverageIdsUnique', () => {
+  test('passes when every coverage id appears once', () => {
+    expect(checkCoverageIdsUnique(capability())).toEqual([])
+  })
+
+  test('names a scenario id that has two coverage entries', () => {
+    const [onlyRequirement] = coverage().requirements
+    const [scenario] = onlyRequirement.scenarios
+    const twice = coverage({
+      requirements: [
+        { ...onlyRequirement, scenarios: [scenario, { ...scenario }] }
+      ]
+    })
+
+    expect(checkCoverageIdsUnique(capability({ cov: twice }))).toEqual([
+      {
+        check: 'ids',
+        capability: 'widgets',
+        message: 'SCN-WIDGET-001-A has 2 entries in coverage.json. Keep one.'
+      }
+    ])
   })
 })

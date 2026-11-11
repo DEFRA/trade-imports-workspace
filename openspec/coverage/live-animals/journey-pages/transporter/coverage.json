@@ -6,7 +6,7 @@
     {
       "id": "REQ-TRANSPORTER-001",
       "name": "The list shows the organisation's own transporters ahead of the ones the service ships, in headed columns, with a status tag",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-TRANSPORTER-001-A",
@@ -49,15 +49,15 @@
         {
           "id": "SCN-TRANSPORTER-001-C",
           "name": "A transporter the organisation added through the address book is on the list and can be picked",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/animals/e2e/features/address-book/transporter-added-via-address-book.spec.ts",
-              "test": "is on the transporter list of the organisation's next notification, with its approval number, and can be picked and saved",
-              "strength": "partial",
-              "notes": "no red probe run against this assertion"
+              "test": "is on the transporter list of the organisation's next notification, tagged New, with its approval number, and can be picked and saved",
+              "strength": "full",
+              "notes": "asserts the row, its approval number and the New tag, then picks and saves; red then green with the organisation's own transporters left off the list (workareas/shared/eudpa-774/logs/inc-030-probe-org-transporters-listed-e2e); red then green with the New tag text removed from the row (workareas/shared/eudpa-774/logs/inc-030-probe-transporter-new-tag-e2e)"
             }
           ]
         }
@@ -441,7 +441,7 @@
               "type": "fit",
               "repo": "trade-imports-animals-frontend",
               "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js",
-              "test": "reaches the type question from the list, not before it",
+              "test": "reaches the type question from the list, not before it, with neither type chosen",
               "strength": "full",
               "notes": ""
             },
@@ -520,7 +520,7 @@
     {
       "id": "REQ-TRANSPORTER-008",
       "name": "Each row ends with a \"View details\" link to that transporter's record, whose Back returns to this list",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-TRANSPORTER-008-A",
@@ -556,15 +556,15 @@
         {
           "id": "SCN-TRANSPORTER-008-B",
           "name": "Following it shows the record; Back returns to this list",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             {
               "type": "e2e",
               "repo": "trade-imports-ins-tests",
               "file": "tests/animals/e2e/features/address-book/transporter-added-via-address-book.spec.ts",
               "test": "its View details link opens the transporter's address book record, and Back returns to this list",
-              "strength": "partial",
-              "notes": "proves the scenario for an organisation-added transporter only, and that the record shown is headed with the transporter's name; a shipped/demo transporter's link bounces back to the list with no record shown, which this scenario does not claim to cover"
+              "strength": "full",
+              "notes": "proves the scenario for an organisation-added transporter only, and that the record shown is headed with the transporter's name; a shipped/demo transporter's link bounces back to the list with no record shown, which this scenario does not claim to cover; red then green with the View details link dropping the list as its return (workareas/shared/eudpa-774/logs/inc-030-probe-view-details-return-e2e)"
             }
           ]
         }
@@ -635,6 +635,46 @@
               "strength": "partial",
               "notes": "not run when written; the ladder's end-to-end rung runs it against the stack"
             }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-TRANSPORTER-010",
+      "name": "The back link returns to where the user came from, and an Add a transporter round trip keeps it",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-TRANSPORTER-010-A",
+          "name": "The back link opens the page before after Save and continue there",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.test.js", "test": "Should go to the page Save and continue was pressed on", "strength": "full", "notes": "Probed: the page's trail dropped from kit.trailBackLink turns this case red and restoring it turns it green" }
+          ]
+        },
+        {
+          "id": "SCN-TRANSPORTER-010-B",
+          "name": "The back link opens Overview when the list was opened from Overview",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.test.js", "test": "Should go to Overview when opened from Overview", "strength": "full", "notes": "Probed: the Overview start entry resolved to the dashboard in trail.js turns this case red and restoring it turns it green" }
+          ]
+        },
+        {
+          "id": "SCN-TRANSPORTER-010-C",
+          "name": "The back link opens the review when the list was opened from a Change link",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.test.js", "test": "Should go to the review when opened from a Change link", "strength": "full", "notes": "Probed: the page's trail dropped from kit.trailBackLink turns this case red and restoring it turns it green" }
+          ]
+        },
+        {
+          "id": "SCN-TRANSPORTER-010-D",
+          "name": "Adding a transporter keeps the list's back link",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporter-add/transporter-add.controller.test.js", "test": "Should carry the trail on Back when the trader is changing an answer", "strength": "full", "notes": "registered from the transport test-support; red then green with the type question's Back link dropping the trail (workareas/shared/eudpa-774/logs/inc-027-probe-add-back-trail)" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/transporters/transporters.controller.test.js", "test": "Should open the type question carrying the review on the trail when opened from a review Change link", "strength": "full", "notes": "red then green with the list's Add a transporter link dropping the trail (workareas/shared/eudpa-774/logs/inc-027-probe-transporters-add-trail)" }
           ]
         }
       ]

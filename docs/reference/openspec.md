@@ -84,21 +84,25 @@ spec.
 | Command | Group/flag | Contract |
 |---|---|---|
 | `lint` | `--specs` | Conventions: Purpose, Requirements, ≥1 scenario, stable IDs, a THEN, MUST not SHALL, live cross-refs |
-| `lint` | `--coverage` | Shape, enums, scenario and requirement rollups, a `none` carries notes, `areaCode`, `specFile` |
-| `lint` | `--binding` | A `coverage.json` per `spec.md` and the reverse; ID parity; names verbatim |
+| `lint` | `--coverage` | Shape, enums, scenario and requirement rollups, a `none` carries notes, `areaCode`, `specFile`, no id twice in one `coverage.json` |
+| `lint` | `--binding` | A `coverage.json` per `spec.md` and the reverse; ID parity; names verbatim; every link's file and test title present under `repos/` |
 | `gaps` | `--none` / `--partial` | Every non-full row (naming neither returns both; naming both unions them) |
 
 The three lint groups are independent — naming any narrows to those,
 naming none runs all three, and whatever didn't run is reported as "not
-selected" rather than omitted. `--binding` only checks the joins between
-spec.md and coverage.json — pairing, ID parity, names verbatim; it does
-not prove `--specs` or `--coverage` — binding can be green while a THEN
-is missing or a rollup is wrong.
+selected" rather than omitted. `--binding` only checks the joins — between
+spec.md and coverage.json (pairing, ID parity, names verbatim), and between
+each coverage link and its test file; it does not prove `--specs` or
+`--coverage` — binding can be green while a THEN is missing or a rollup is
+wrong.
 
-Lint has **no `--links` group** — a coverage link naming a test that no
-longer exists is not a lint finding. `spec-catchup` is what notices that
-(comparing links against the suite report, then the source), not `tim
-spec lint`.
+The link check reads the test file in the local checkout under `repos/`,
+on whatever branch it is on. A title passes when the file, or a module it
+imports by a relative path, holds it word for word, as a parameterised
+title (`%s`, `$name`, `${…}`) that expands to it, or as a method name. A
+link into a repo that is not checked out is not checked, and its repo is
+listed under `skipped`. It proves the named test exists, not that it
+witnesses the scenario: that is still the red probe's job.
 
 `tim spec gaps` is **not** the `spec-catchup` work list — a scenario can
 be `coverage: "full"` and still have drifted words. It's `spec-cover`'s

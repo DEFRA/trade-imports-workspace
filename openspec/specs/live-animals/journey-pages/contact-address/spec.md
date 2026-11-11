@@ -34,13 +34,13 @@ The system MUST accept a chosen contact address, copying it onto the notificatio
 
 ### Requirement: The contact address is optional, and saving without one is never refused
 **ID**: REQ-CONTACT-003
-The system MUST allow the contact address page to be saved with no address chosen, without an error. Outside the opening sequence, saving MUST return the user to Overview; inside it, saving ends the sequence on check your answers (`live-animals/journey-flow` REQ-FLOW-007).
+The system MUST allow the contact address page to be saved with no address chosen, without an error, and saving MUST go to check your answers (`live-animals/journey-flow` REQ-FLOW-003).
 
-#### Scenario: Saving with no address chosen is allowed and exits to Overview
+#### Scenario: Saving with no address chosen is allowed and goes to check your answers
 **ID**: SCN-CONTACT-003-A
-- **GIVEN** the user opened the contact address page from Overview, with no address chosen
+- **GIVEN** the user opened the contact address page, with no address chosen
 - **WHEN** they save and continue
-- **THEN** they return to Overview, and no error summary is shown
+- **THEN** check your answers is shown, and no error summary is shown
 
 ### Requirement: An invalid submitted option is refused without preserving it
 **ID**: REQ-CONTACT-004
@@ -53,12 +53,24 @@ The system MUST refuse to save a submitted value that does not match one of the 
 - **THEN** the save is refused, an error links to and focuses the option group
 - **AND** no option is shown as chosen
 
-### Requirement: The back link returns to Overview
+### Requirement: The back link returns to where the user came from
 **ID**: REQ-CONTACT-005
-The system MUST return the user to Overview when they follow the back link from the contact address page.
+The system MUST return the user, when they follow the back link from the contact address page, to the page they saved and continued from, to Overview when they opened it from its Overview task, and to the review when they opened it from a Change link on the review, as `live-animals/journey-flow` describes. That page is Consignment addresses.
 
-#### Scenario: The back link opens Overview
+#### Scenario: After Save and continue, the back link opens the page before
 **ID**: SCN-CONTACT-005-A
-- **GIVEN** the user is on the contact address page
+- **GIVEN** the user reached the contact address page by saving and continuing from Consignment addresses
+- **WHEN** they follow the back link
+- **THEN** that page is shown
+
+#### Scenario: The back link opens Overview when the page was opened from Overview
+**ID**: SCN-CONTACT-005-B
+- **GIVEN** the user opened the contact address page from its task on Overview
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+#### Scenario: The back link opens the review when the page was opened from a Change link
+**ID**: SCN-CONTACT-005-C
+- **GIVEN** the review of a draft notification
+- **WHEN** the user follows the Change link that opens the contact address page and then the back link
+- **THEN** the review is shown

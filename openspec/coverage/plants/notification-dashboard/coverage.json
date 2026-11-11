@@ -22,9 +22,9 @@
           "name": "Starting a new notification opens the journey's entry page",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/start.spec.ts", "test": "starting a notification opens the run on the commodity-type page", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/start.spec.ts", "test": "starting a notification opens the commodity-type page", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/dashboard.fit.spec.js", "test": "starts a notification and lands on its first question", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.test.js", "test": "Should start a notification, begin its opening run and land on its first question", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/dashboard/controller.test.js", "test": "Should open the first page of the new notification carrying where it was started", "strength": "full", "notes": "" }
           ]
         },
         {
@@ -306,6 +306,36 @@
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/shared/layout.test.js", "test": "Should place the banner above the back link", "strength": "partial", "notes": "layout always includes the banner when a back link is present — not a journey-page product assertion" }
           ],
           "notes": "GAP: no fit/e2e on a notification page asserts Alpha + feedback still shown"
+        }
+      ]
+    },
+    {
+      "id": "REQ-PLANTS-DASH-012",
+      "name": "The dashboard lists only notifications owned by the caller's organisation",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PLANTS-DASH-012-A",
+          "name": "Another organisation's submitted notification is absent from the list",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "fit",
+              "repo": "trade-imports-plants-backend",
+              "file": "src/test/java/uk/gov/defra/trade/imports/plants/integration/NotificationIT.java",
+              "test": "organisationScope_list_shouldExcludeOtherOrganisationsNotifications",
+              "strength": "full",
+              "notes": "backend list scoped to Trade-Imports-Organisation-Id"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/plants/e2e/features/organisation-scoped-notifications.spec.ts",
+              "test": "returns no rows when another organisation lists by reference",
+              "strength": "full",
+              "notes": ""
+            }
+          ]
         }
       ]
     }

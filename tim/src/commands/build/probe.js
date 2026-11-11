@@ -31,6 +31,14 @@ const probeOptionsSchema = z
     testFile: z.string().trim().min(1).optional(),
     testCommand: z.array(z.string()),
     logs: z.string().trim().min(1).optional(),
+    reloadUrl: z
+      .string()
+      .trim()
+      .regex(
+        /^https?:\/\/[^/\s]+/,
+        '--reload-url must be a full URL, such as http://localhost:3000/health.'
+      )
+      .optional(),
     timeoutSeconds: z.coerce
       .number({ message: '--timeout-seconds must be a number.' })
       .positive('--timeout-seconds must be more than 0.')
@@ -76,10 +84,35 @@ const describeInversion = ({ file, inversion }) =>
  * @param {object} outcome
  * @returns {string}
  */
+const RELOAD_FAILURES = {
+  'not-restarted': 'did not restart',
+  'not-started': 'stopped and did not start again'
+}
+
+const reloadFailureText = (reload, when) =>
+  `The service ${RELOAD_FAILURES[reload]} ${when}, so the test was not run against it.`
+
 export const renderProbeText = (outcome) => {
-  const { redWhenInverted, greenAfterRestore, restored, file, logs } = outcome
+  const { redWhenInverted, greenAfterRestore, restored, file, logs, reload } =
+    outcome
   if (!restored) {
     return `The probe could not put ${file} back exactly as git has it. Check it with git diff before you do anything else.`
+  }
+  if (redWhenInverted === null) {
+    return [
+      reloadFailureText(reload.inverted, `with ${describeInversion(outcome)}`),
+      greenAfterRestore
+        ? 'It passed once the file was back.'
+        : 'Check the service is up and serving the file from source (tim docker lease status).'
+    ].join('\n')
+  }
+  if (reload && reload.restored !== 'restarted') {
+    return [
+      redWhenInverted
+        ? `The test failed with ${describeInversion(outcome)}.`
+        : `The test still passed with ${describeInversion(outcome)}.`,
+      reloadFailureText(reload.restored, 'once the file was back')
+    ].join('\n')
   }
   const verdict = redWhenInverted
     ? `The test failed with ${describeInversion(outcome)}, so it witnesses that change.`
@@ -135,11 +168,15 @@ export const registerProbe = (build, timVersion) =>
     .option('--replace <text>', 'What to put in place of the search text')
     .option(
       '--test-file <path>',
-      'The test file to run, relative to the repo: a *.test.js runs through npm test without coverage, a *.fit.spec.js through test:fit:ci, a Java class through mvn verify'
+      'The test file to run, relative to the repo: a *.test.js runs through npm test without coverage, a *.fit.spec.js through test:fit:ci, a Java class through mvn verify without JaCoCo'
     )
     .option(
       '--logs <dir>',
       'Where the two test runs write their logs (default: workareas/build-probe/ in the workspace)'
+    )
+    .option(
+      '--reload-url <url>',
+      "The health URL of the service that serves the file from source, such as the workspace stack's dev-mode frontend: before each test run, the probe waits for it to restart on the written file and serve again"
     )
     .option(
       '--timeout-seconds <n>',
@@ -147,11 +184,11 @@ export const registerProbe = (build, timVersion) =>
       String(DEFAULT_TEST_TIMEOUT_SECONDS)
     )
     .description(
-      'Check that a test fails without the line it covers. The probe blanks out the line (or replaces the search text), runs the test, puts the file back byte for byte, checks git shows no change to it, and runs the test again. redWhenInverted true means the test witnesses the line. redWhenInverted false means it does not: the line is dead, or the test checks something else. The probe refuses a file with uncommitted changes, so commit first. Put every option, --json included, before the --. Exits 1 only when the file could not be put back.'
+      "Check that a test fails without the line it covers. The probe blanks out the line (or replaces the search text), runs the test, puts the file back byte for byte, checks git shows no change to it, and runs the test again. redWhenInverted true means the test witnesses the line. redWhenInverted false means it does not: the line is dead, or the test checks something else. For an end-to-end test, run it against the workspace stack in dev mode, which serves each frontend from its repo's src and restarts on a change: give --reload-url, and the probe waits for that restart before each run. When the service does not restart and serve again, that run is skipped: redWhenInverted is null. The probe refuses a file with uncommitted changes, so commit first. Put every option, --json included, before the --. Exits 1 only when the file could not be put back."
     )
     .addHelpText(
       'after',
-      '\nExamples:\n  tim build probe trade-imports-plants-frontend src/server/app/origin/controller.js --line 42 --test-file src/server/app/origin/controller.test.js --json\n  tim build probe . tim/src/build/gate.js --search "exitCode === 0" --replace "exitCode !== 0" --json -- npm --prefix tim test -- src/build/gate.test.js'
+      '\nExamples:\n  tim build probe trade-imports-plants-frontend src/server/app/origin/controller.js --line 42 --test-file src/server/app/origin/controller.test.js --json\n  tim build probe . tim/src/build/gate.js --search "exitCode === 0" --replace "exitCode !== 0" --json -- npm --prefix tim test -- src/build/gate.test.js\n  tim build probe trade-imports-animals-frontend src/server/app/shared/trail.js --line 30 --reload-url http://localhost:3000/health --json -- npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-ins-tests run test:docker-compose -- tests/animals/e2e/journeys/back-entry-points.spec.ts'
     )
     .action(async function probeAction(repo, file, testCommand, opts) {
       const globalOpts = this.optsWithGlobals()
@@ -165,6 +202,7 @@ export const registerProbe = (build, timVersion) =>
           testFile: opts.testFile,
           testCommand,
           logs: opts.logs,
+          reloadUrl: opts.reloadUrl,
           timeoutSeconds: opts.timeoutSeconds
         })
         const workspaceRoot = resolveWorkspaceRoot({
@@ -180,7 +218,8 @@ export const registerProbe = (build, timVersion) =>
           logsDir: parsed.logs
             ? resolve(parsed.logs)
             : join(workspaceRoot, 'workareas', 'build-probe'),
-          timeoutMs: parsed.timeoutSeconds * 1000
+          timeoutMs: parsed.timeoutSeconds * 1000,
+          reloadUrl: parsed.reloadUrl
         })
         emit(
           globalOpts.json

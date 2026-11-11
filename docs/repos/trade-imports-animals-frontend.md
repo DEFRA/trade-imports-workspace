@@ -31,6 +31,15 @@ User-facing web application that guides users through a multi-step form wizard f
 | AWS (S3, SQS) | File/message handling via backend; floci in dev |
 | Defra ID (OIDC) | Authentication |
 
+## Integrations
+
+| Direction | System | Mechanism | Purpose |
+|-----------|--------|-----------|---------|
+| Inbound | Browser users | HTTP, port 3000 | Serves the journey pages |
+| Outbound | trade-imports-animals-backend | REST (`/notifications`), `TRADE_IMPORTS_ANIMALS_BACKEND_URL`, default `localhost:8085`; org id sent as `Trade-Imports-Organisation-Id` | Persist and read notifications and fulfilments |
+| Outbound | Defra ID (OIDC; trade-imports-defra-id-stub locally) | OIDC via Hapi Bell / cookie / JWT | Sign-in and sign-out |
+| Outbound | Redis | Catbox | Session cache (memory fallback) |
+
 ## Browser links with the INS frontend
 
 The animals frontend builds every INS frontend URL from one setting, `tradeImportsInsFrontend.baseUrl` (`TRADE_IMPORTS_INS_FRONTEND_URL`). The INS frontend builds every animals frontend URL from `TRADE_IMPORTS_ANIMALS_FRONTEND_URL`. Every link is a browser redirect or an anchor, never a service-to-service call.

@@ -85,6 +85,7 @@ const WORKSPACE = path.resolve(args.workspace || path.join(process.env.HOME, 'gi
 const git = (...a) => execFileSync('git', ['-C', WORKSPACE, ...a], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
 
 const branch = args.branch || git('rev-parse', '--abbrev-ref', 'HEAD').trim()
+const commitsRef = args['commits-from'] || branch
 const workareaDir = path.join(WORKSPACE, 'workareas', workarea)
 
 const fail = (message) => {
@@ -101,9 +102,14 @@ const readJson = (file) => JSON.parse(fs.readFileSync(file, 'utf8'))
 const themeBacklog = path.join(workareaDir, 'themes', theme, 'backlog.json')
 const mainBacklog = path.join(workareaDir, 'backlog.json')
 
+function rowsOfTheme(increments) {
+  const unthemed = increments.every((row) => !row.theme)
+  return unthemed ? increments : increments.filter((row) => row.theme === theme)
+}
+
 let rowSource
 if (fs.existsSync(themeBacklog)) rowSource = readJson(themeBacklog).increments
-else if (fs.existsSync(mainBacklog)) rowSource = readJson(mainBacklog).increments.filter((r) => r.theme === theme)
+else if (fs.existsSync(mainBacklog)) rowSource = rowsOfTheme(readJson(mainBacklog).increments)
 else fail('no backlog at ' + themeBacklog + ' or ' + mainBacklog)
 
 if (!rowSource.length) fail('no rows for theme ' + theme)
@@ -165,17 +171,23 @@ for (const row of rows) {
  * So the scope may name the theme or any Jira key `tickets.json` records for it,
  * and the type may be any conventional one. A commit that matches but wrote no
  * spec simply yields no scenarios — the `-- openspec/` limit already handles it.
+ *
+ * A theme delivered as several tickets, each on its own branch, has no commit
+ * scoped by the theme: every row commit is scoped by its ticket's key. Its
+ * `tickets.json` entry under `rowScopes` lists those keys, and a commit scoped
+ * by any of them counts as a row commit.
  */
 const ticketsFile = path.join(workareaDir, 'tickets', 'tickets.json')
-const themeKeys = fs.existsSync(ticketsFile)
-  ? Object.values(readJson(ticketsFile).themes?.[theme] || {})
-  : []
+const tickets = fs.existsSync(ticketsFile) ? readJson(ticketsFile) : {}
+const themeKeys = Object.values(tickets.themes?.[theme] || {})
+const rowScopes = tickets.rowScopes?.[theme] || []
 
 const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-const scopePattern = [theme, ...themeKeys].map(escape).join('|')
+const scopePattern = [theme, ...themeKeys, ...rowScopes].map(escape).join('|')
+const rowScopePattern = [theme, ...rowScopes].map(escape).join('|')
 
 const commitsMatching = (pattern) =>
-  git('log', '-E', '--grep=' + pattern, '--format=%H%x09%s', branch, '--', 'openspec/')
+  git('log', '-E', '--grep=' + pattern, '--format=%H%x09%s', commitsRef, '--', 'openspec/')
     .trim()
     .split('\n')
     .filter(Boolean)
@@ -184,14 +196,14 @@ const commitsMatching = (pattern) =>
       return { sha, subject }
     })
 
-// A row's commit is scoped by the theme. These define the theme's footprint:
-// the spec files it is entitled to speak for.
-const rowCommits = commitsMatching('^[a-z]+\\(.*' + escape(theme) + '\\):')
+// A row's commit is scoped by the theme or one of its row scopes. These define
+// the theme's footprint: the spec files it is entitled to speak for.
+const rowCommits = commitsMatching('^[a-z]+\\(.*(' + rowScopePattern + ')\\):')
 
 const commits = commitsMatching('^[a-z]+\\(.*(' + scopePattern + ')\\):')
 
-if (!commits.length) fail('no commits on ' + branch + ' whose subject scopes "' + theme + '" and which touch openspec/')
-if (!rowCommits.length) fail('no commits on ' + branch + ' scoped by the theme slug "' + theme + '" — without them there is no footprint to judge review commits against')
+if (!commits.length) fail('no commits on ' + commitsRef + ' whose subject scopes "' + theme + '" and which touch openspec/')
+if (!rowCommits.length) fail('no commits on ' + commitsRef + ' scoped by the theme slug "' + theme + '" or a row scope tickets.json lists for it — without them there is no footprint to judge review commits against')
 
 /**
  * The scenario headings each commit added, per spec file.
@@ -348,13 +360,21 @@ for (const commit of rowCommits) {
 
 const rowShas = new Set(rowCommits.map((c) => c.sha))
 const outsideFootprint = []
+const counted = new Set()
 
 // Scenarios a human judged to be the theme's after all, despite falling outside
 // its footprint. Anything not listed stays excluded, so the default is
 // conservative and every inclusion is a recorded decision.
 const overridesFile = path.join(workareaDir, 'tickets', 'footprint-overrides.json')
-const included = fs.existsSync(overridesFile) ? readJson(overridesFile).include?.[theme] || {} : {}
+const overrides = fs.existsSync(overridesFile) ? readJson(overridesFile) : {}
+const included = overrides.include?.[theme] || {}
 const isIncluded = (relPath, heading) => (included[relPath] || []).includes(heading)
+
+// Scenarios a human judged not to be the theme's, though one of its own commits
+// added them: another ticket's behaviour carried in by merging main.
+const excluded = overrides.exclude?.[theme] || {}
+const isExcluded = (relPath, heading) => (excluded[relPath] || []).includes(heading)
+const excludedByOverride = []
 
 for (const commit of commits) {
   // The row a commit belongs to, by matching its subject against the row titles.
@@ -377,6 +397,13 @@ for (const commit of commits) {
       headings = kept
     }
 
+    const judgedOut = headings.filter((heading) => isExcluded(relPath, heading))
+    if (judgedOut.length) {
+      excludedByOverride.push({ commit: commit.sha.slice(0, 8), file: relPath, scenarios: judgedOut })
+      headings = headings.filter((heading) => !isExcluded(relPath, heading))
+      if (!headings.length) continue
+    }
+
     const area = relPath.split('/')[0]
     const domain = SPEC_AREA_DOMAIN[area]
     if (!domain) {
@@ -384,9 +411,18 @@ for (const commit of commits) {
       continue
     }
 
+    // A later commit that moves or rewords a scenario's heading adds that line
+    // again in its diff, so a scenario is counted once, however many of the
+    // theme's commits add it.
     const located = headings
       .map((heading) => locateAddedScenario(commit.sha, relPath, heading))
       .filter((scenario) => scenario.state !== 'removed')
+      .filter((scenario) => {
+        const key = relPath + '#' + (scenario.found ? scenario.found.id : scenario.heading)
+        if (counted.has(key)) return false
+        counted.add(key)
+        return true
+      })
     if (!located.length) continue
 
     if (!domains[domain]) {
@@ -480,6 +516,7 @@ const output = {
   theme,
   workarea,
   branch,
+  commitsFrom: commitsRef,
   commits: commits.map((c) => ({ sha: c.sha.slice(0, 8), subject: c.subject })),
   totals: {
     scenarios: totalAdded,
@@ -493,6 +530,7 @@ const output = {
   // Scenarios a review commit wrote outside the theme's footprint. Reported so
   // a sweep that touched other behaviour is visible rather than lost.
   outsideFootprint,
+  excludedByOverride,
   checks: {
     scenarioSum: 'ok',
     perDomainSum,

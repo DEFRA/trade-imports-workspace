@@ -127,6 +127,30 @@ and the final tidy inc-221), which `derived.json` does not
 read. Merged-into rows are listed with that state; the dropped row inc-222 is
 left out. The work merged to main on 23 October (animals #421, plants #113, tests #42); the engineering review's follow-ups are in `themes/design-snagging-followups/backlog.json`.
 
+### Address book — 171 scenarios, 3 files
+
+| Folder | Jira | Domain | Rows | Scenarios | Spec files |
+|---|---|---|---|---|---|
+| `address-book/` | [EUDPA-789](https://eaflood.atlassian.net/browse/EUDPA-789) | INS front door | 24 | 155 | 2 |
+| `address-book/` | [EUDPA-789](https://eaflood.atlassian.net/browse/EUDPA-789) | Live animals journey | 2 + EUDPA-721 | 16 | 1 |
+
+155 + 16 = 171 scenarios and 2 + 1 = 3 files. One ticket covers both domains,
+in two sections, at the user's request (epic EUDPA-646), so `tickets.json`
+records EUDPA-789 under both `ins` and `animals`. The theme was delivered as six
+tickets (EUDPA-706 to 711) and then EUDPA-721's picker work, all scoped by Jira
+key rather than by theme slug, so `tickets.json` lists those keys under
+`rowScopes` for `derive-scenarios` to find the footprint. All merged to `main`;
+the ticket is `Deskcheck`. 7 scenarios (2 INS, 5 live animals) are partly
+proved, each one only an end-to-end test can prove in full.
+
+A later change is made under EUDPA-789 itself: every address type, and every
+role picker's add page, offers every country, and the address book accepts any
+role in any country. Its commits are scoped by the ticket key, which
+`tickets.json` records for the theme, so they count inside the footprint. It
+changed existing scenarios, not the count. While it is on
+`feat/EUDPA-789-any-country`, the ticket's spec links point at that branch;
+regenerate them to `main` once it merges.
+
 Every theme's per-domain scenarios and files sum to its own totals, which is how
 a dropped or double-counted file gets caught. Each new ticket *relates to* the
 ticket the theme was split with.

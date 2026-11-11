@@ -3542,6 +3542,8 @@ describe('increment-build-loop', () => {
           "55:   - The test reads the log from `driveHandler`'s result."
         const LOGGER_CALL =
           "57:   - The cap refusal calls `logger.info({ journeyId }, 'Capacity refused')`."
+        const PROBE_LOG_SHOWS =
+          '268:  → `redWhenInverted: true`, `greenAfterRestore: true`; the log shows the "no answer" row of "Should send Back to the overview" failing (ORIGIN-013-C).'
         const UI_COPY_TITLED =
           '383:  - REQ-OVERVIEW-011 (line 174): the requirement states only that the third task of "1. About the consignment" is titled "Main import reason".'
         const COMMENTS_NOT_COPIED =
@@ -3749,10 +3751,11 @@ describe('increment-build-loop', () => {
           expect(stageLabels(run)).toContain('inc-900 implement')
         })
 
-        test('passes without a replan a plan that only quotes rules, existing titles or UI copy, says what not to copy, or runs checks', async () => {
+        test('passes without a replan a plan that only quotes rules, existing titles, UI copy or what a probe log shows, says what not to copy, or runs checks', async () => {
           const run = await runPlannedWith(
             {
               'inc-900 plan lint': lintFound(
+                PROBE_LOG_SHOWS,
                 UI_COPY_TITLED,
                 COMMENTS_NOT_COPIED,
                 QUOTED_HOUSE_RULE,

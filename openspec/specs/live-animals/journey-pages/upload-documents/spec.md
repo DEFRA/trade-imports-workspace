@@ -31,11 +31,11 @@ The system MUST tell the user, before they add anything, which file types are ac
 
 ### Requirement: The page's back link follows where the user came from
 **ID**: REQ-DOCS-002
-The system MUST open the review page from the upload documents page's back link when the page was opened by changing an answer from the review, or whenever the notification is being amended however the page was opened, and MUST open Overview otherwise.
+The system MUST return the user, when they follow the back link from the upload documents page, to the page they saved and continued from (the transporter list), to Overview when they opened the page from its Overview task, and to the review when they opened it from a Change link on the review, as `live-animals/journey-flow` describes. The back link MUST stay the same after the page refuses a part-filled document, after Save and add another, after a removal and after a document is uploaded.
 
 #### Scenario: The back link opens Overview for a draft opened from Overview
 **ID**: SCN-DOCS-002-A
-- **GIVEN** the user opens the upload documents page from Overview, on a draft that is not being amended
+- **GIVEN** the user opens the upload documents page from Overview
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
 
@@ -45,11 +45,11 @@ The system MUST open the review page from the upload documents page's back link 
 - **WHEN** they follow the back link
 - **THEN** the review is shown
 
-#### Scenario: The back link opens the review while the notification is being amended, however the page was opened
+#### Scenario: The back link opens the transporter list after Save and continue there
 **ID**: SCN-DOCS-002-C
-- **GIVEN** the notification is being amended
-- **WHEN** the user opens the upload documents page from Overview and follows the back link
-- **THEN** the review is shown
+- **GIVEN** the user reached the upload documents page by saving and continuing from the transporter list
+- **WHEN** they follow the back link
+- **THEN** the transporter list is shown
 
 #### Scenario: The back link still opens the review after the page refuses a part-filled document
 **ID**: SCN-DOCS-002-D
@@ -61,15 +61,16 @@ The system MUST open the review page from the upload documents page's back link 
 
 ### Requirement: A notification can hold at most fifteen accompanying documents
 **ID**: REQ-DOCS-003
-The system MUST accept up to fifteen documents per notification and MUST reject a sixteenth with an error that links to the Attachment field and shows on that field, preserving the reference value entered, without discarding the fifteen already added.
+The system MUST accept up to fifteen documents per notification, MUST close the add control at fifteen with the limit stated beside it, and MUST refuse a further document with the limit message in the error summary, linked to the list of added documents and shown on no field, without discarding the fifteen already added.
 
 #### Scenario: A fifteenth document is accepted and a sixteenth is rejected
 **ID**: SCN-DOCS-003-A
 - **GIVEN** a notification already has fourteen accompanying documents added
 - **WHEN** the user adds a fifteenth document
 - **THEN** it is accepted and the list shows fifteen documents
-- **WHEN** the user then tries to add a sixteenth document
-- **THEN** the error summary reads "You can upload a maximum of 15 files" and links to the Attachment field, the same message shows on that field, and the reference value entered is preserved
+- **AND** the add control is closed, with "You can upload a maximum of 15 files" beside it
+- **WHEN** the user then tries to save a further document
+- **THEN** the error summary reads "You can upload a maximum of 15 files" and links to the list of added documents, and no field shows an error
 - **AND** the list still shows only the original fifteen documents
 
 ### Requirement: Each accompanying document has a maximum file size
@@ -358,11 +359,11 @@ The system MUST keep a document the user has filled in, whichever save button th
 - **AND** an error on the file says "Upload a document"
 - **AND** the user stays on the upload documents page
 
-#### Scenario: Save and continue with an untouched form leaves the page
+#### Scenario: Save and continue with an untouched form shows Roles and addresses
 **ID**: SCN-DOCS-016-C
 - **GIVEN** the user has added nothing and filled in nothing
 - **WHEN** they save and continue
-- **THEN** Overview is shown
+- **THEN** Roles and addresses is shown
 
 #### Scenario: Save and return to overview with a part-filled document is refused
 **ID**: SCN-DOCS-016-D
@@ -387,21 +388,18 @@ The system MUST keep a document the user has filled in, whichever save button th
 - **WHEN** they save and return to overview with only the reference filled in
 - **THEN** they stay on the upload documents page with an error for each detail not given, and no document is added
 
-#### Scenario: A complete document saved with Save and continue is added and held while it is scanned
+#### Scenario: A complete document saved with Save and continue is added and Roles and addresses is shown
 **ID**: SCN-DOCS-016-G
 - **GIVEN** the user has filled in the reference, document type, date of issue and chosen a file
 - **WHEN** they save and continue
-- **THEN** the document is added and listed as "Scanning for virus"
-- **AND** they stay on the upload documents page, which shows "You cannot continue until all documents have been scanned or removed"
-- **AND** the same holds while amending for "Save and return" and "Save and continue"
+- **THEN** the document is added once
+- **AND** Roles and addresses is shown
 
-#### Scenario: While amending, an untouched form leaves by the button chosen
+#### Scenario: While amending, Save and continue with an untouched form shows Roles and addresses
 **ID**: SCN-DOCS-016-H
 - **GIVEN** a notification being amended, with the upload documents page opened from a Change link and nothing filled in
-- **WHEN** the user selects "Save and return"
-- **THEN** the review is shown
-- **WHEN** they instead select "Save and continue"
-- **THEN** the page after upload documents is shown, not the review
+- **WHEN** the user selects "Save and continue"
+- **THEN** Roles and addresses is shown
 
 #### Scenario: Save and add another with a part-filled document is refused
 **ID**: SCN-DOCS-016-I

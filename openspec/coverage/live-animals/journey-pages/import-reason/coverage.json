@@ -23,15 +23,16 @@
     {
       "id": "REQ-IMPORT-REASON-002",
       "name": "A chosen reason that asks nothing further is accepted",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-IMPORT-REASON-002-A",
           "name": "Choosing a reason that asks nothing more saves without error",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/import-reason.spec.ts", "test": "accepts a valid import reason and returns to the overview", "strength": "partial", "notes": "Re-entry, which opens no reveal; asserts the save lands on Overview but not that the answer is saved" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "saves a valid reason, redirects and persists the answer", "strength": "partial", "notes": "saves and persists Internal market with a purpose, not a reason that asks nothing more" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "saves a valid reason, redirects and persists the answer", "strength": "partial", "notes": "saves and persists Internal market with a purpose, not a reason that asks nothing more" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "saves Re-entry with nothing more asked, goes on to the next page and offers Re-entry back", "strength": "full", "notes": "red then green with Re-entry revealing the purpose (workareas/shared/eudpa-774/logs/inc-028-probe-reentry-fit)" }
           ]
         }
       ]
@@ -65,15 +66,16 @@
     {
       "id": "REQ-IMPORT-REASON-004",
       "name": "The port of exit is chosen from the same list as the port of entry",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-IMPORT-REASON-004-A",
           "name": "The port of exit offers the port of entry's list",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.test.js", "test": "Should start each list with an empty Select one option followed directly by the served places or ports", "strength": "partial", "notes": "asserts exit portItems come from ports.list(); port-of-entry also builds from ports.list(), but no test asserts the two pages' offered lists are equal" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/port-of-exit-list.spec.ts", "test": "the temporary admission port of exit list opens on Select one, then offers the same ports, labelled and ordered the same way", "strength": "partial", "notes": "compares with the entry list's order and ports, not with the entry page itself" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/reference-lists/port-of-exit-list.spec.ts", "test": "the temporary admission port of exit list opens on Select one, then offers the same ports, labelled and ordered the same way", "strength": "partial", "notes": "compares with the entry list's order and ports, not with the entry page itself" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should offer the ports of exit that Arrival details offers as ports of entry, in the same order", "strength": "full", "notes": "red then green with the first port left out (workareas/shared/eudpa-774/logs/inc-028-probe-exit-port-list)" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/copy/copy.test.js", "test": "Should start each list with an empty Select one option followed directly by the served places or ports", "strength": "full", "notes": "asserts the list shape; red then green with the first port left out (workareas/shared/eudpa-774/logs/inc-028-probe-exit-port-list-copy)" }
           ]
         },
         {
@@ -174,36 +176,31 @@
     },
     {
       "id": "REQ-IMPORT-REASON-008",
-      "name": "The back link returns to what are you importing in the opening sequence, and to Overview otherwise",
+      "name": "The back link returns to where the user came from",
       "coverage": "full",
       "scenarios": [
         {
-          "id": "SCN-IMPORT-REASON-008-C",
-          "name": "On a draft opened from a Change link, the back link opens what are you importing",
-          "coverage": "full",
-          "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should go Back to What are you importing? carrying the change on a draft opened from a Change link", "strength": "full", "notes": "href only; red when the shared Back link helper's draft change-context condition is inverted" }
-          ]
-        },
-        {
           "id": "SCN-IMPORT-REASON-008-A",
-          "name": "The back link opens Overview when the page was opened from Overview",
+          "name": "After Save and continue, the back link opens the page before",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "back link returns to the overview when the page is opened from the overview", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should go Back to the overview when the page is opened from the overview", "strength": "partial", "notes": "href only" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should go to the page Save and continue was pressed on", "strength": "full", "notes": "Probed: the page's trail dropped from kit.trailBackLink turns this case red and restoring it turns it green" }
           ]
         },
         {
           "id": "SCN-IMPORT-REASON-008-B",
-          "name": "In the opening sequence, the back link opens what are you importing",
+          "name": "The back link opens Overview when the page was opened from Overview",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "fit/journey-smoke.fit.spec.js", "test": "following Back through the opening run and choosing Save and continue carries on to the next step, not the overview", "strength": "full", "notes": "follows Back from the main import reason and finds the species still chosen" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/opening-run.spec.ts", "test": "following Back from the main import reason and choosing Save and continue carries the run on to the main import reason, not the overview", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should go Back to What are you importing? while the opening run is on", "strength": "partial", "notes": "href only" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should keep Back on What are you importing? when the page is shown again after a refusal in the run", "strength": "partial", "notes": "href only" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/run.test.js", "test": "Should send the import reason page back to the commodities page", "strength": "partial", "notes": "the run policy's answer only" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should go to Overview when opened from Overview", "strength": "full", "notes": "Probed: the Overview start entry resolved to the dashboard in trail.js turns this case red and restoring it turns it green" }
+          ]
+        },
+        {
+          "id": "SCN-IMPORT-REASON-008-C",
+          "name": "The back link opens the review when the page was opened from a Change link",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should go to the review when opened from a Change link", "strength": "full", "notes": "Probed: the page's trail dropped from kit.trailBackLink turns this case red and restoring it turns it green" }
           ]
         }
       ]
@@ -333,7 +330,7 @@
     {
       "id": "REQ-IMPORT-REASON-013",
       "name": "Save and return makes the checks of Save and continue and clears the answers of a reason no longer chosen",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-IMPORT-REASON-013-A",
@@ -347,9 +344,11 @@
         {
           "id": "SCN-IMPORT-REASON-013-B",
           "name": "Changing the reason clears the saved purpose",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should clear the purpose saved for a reason no longer chosen when a transit reason with its answers is saved", "strength": "partial", "notes": "it reads the stored answers, not choosing Internal market again" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should clear the purpose saved for a reason no longer chosen when a transit reason with its answers is saved", "strength": "full", "notes": "red then green with the purpose kept in scope under another reason (workareas/shared/eudpa-774/logs/inc-028-probe-purpose-purge)" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/controller.test.js", "test": "Should leave every purpose unchecked when Internal market is chosen again after another reason was saved", "strength": "full", "notes": "red then green with the purpose kept in scope under another reason (workareas/shared/eudpa-774/logs/inc-028-probe-purpose-purge)" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/import-reason/import-reason.fit.spec.js", "test": "offers no purpose ticked when Internal market is chosen again after a transit reason was saved over it", "strength": "full", "notes": "red then green with the purpose kept in scope under another reason (workareas/shared/eudpa-774/logs/inc-028-probe-purpose-purge-fit)" }
           ]
         },
         {

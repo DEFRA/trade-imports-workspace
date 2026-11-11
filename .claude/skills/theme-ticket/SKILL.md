@@ -257,6 +257,20 @@ file, with the reasoning dated beside it, and re-derive:
 { "include": { "<theme>": { "<spec path>": ["<scenario heading>"] } } }
 ```
 
+The opposite happens too. A row commit made just after merging `main` can carry
+another ticket's scenarios into the theme's diff. Check every domain that has
+scenarios but no rows. Where you judge scenarios to be another ticket's, list
+them under `exclude` in the same shape, with the reasoning and the other ticket
+beside them. They are reported as `excludedByOverride`.
+
+### A backlog with no themes, merged by squash
+
+A backlog whose rows carry no `theme` is one theme. Pass the row commits'
+scope (the build args' `scope`) as `--theme`, and every row is read. A
+squash merge leaves `main` with one commit and no row commits, so in the
+MERGE flow pass `--branch main --commits-from <theme branch>`. The commits
+come from the local theme branch, and the links point at `main`.
+
 Anything not listed stays out, so the default is conservative and every inclusion
 is a decision someone can read back.
 
@@ -278,7 +292,11 @@ this order:
   then the `GIVEN` / `WHEN` / `THEN` / `AND` steps as a bullet list with the
   keyword bolded. Copy the text; do not paraphrase it.
 - **`h3. The work behind this change`** — a table of this domain's rows: id,
-  what it changed, state.
+  what it changed, state. The sentence above the table names every kind of row
+  the table holds, follow-up tickets included. When a later row replaces an
+  earlier row's behaviour, both rows say so, so a reader checking the table
+  against the acceptance criteria does not find two rows that contradict each
+  other.
 - **`h3. Where this is specified`** — a table of this domain's spec files, each
   name a link to the file on the branch, with the scenario count it gained. State
   the domain's totals, and that the description is generated and regenerated when

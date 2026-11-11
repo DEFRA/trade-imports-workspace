@@ -12,8 +12,10 @@ import {
   checkIdsPresent,
   checkIdParity,
   checkNameParity,
-  checkGlobalIdUniqueness
+  checkGlobalIdUniqueness,
+  checkCoverageIdsUnique
 } from './checks/ids.js'
+import { checkTestTitlesExist, testFileReader } from './checks/test-titles.js'
 import {
   checkScenarioRollup,
   checkRequirementRollup
@@ -71,6 +73,10 @@ const CAPABILITY_CHECKS = [
   { group: 'specs', run: (capability) => checkIdsPresent(capability) },
   { group: 'binding', run: (capability) => checkIdParity(capability) },
   { group: 'binding', run: (capability) => checkNameParity(capability) },
+  {
+    group: 'coverage',
+    run: (capability) => checkCoverageIdsUnique(capability)
+  },
   { group: 'coverage', run: (capability) => checkScenarioRollup(capability) },
   {
     group: 'coverage',
@@ -168,6 +174,19 @@ export const runSpecLint = async ({
     checks.flatMap((check) => check.run(entry, context))
   )
 
+  const testFiles = testFileReader(workspaceRoot)
+  const titleResults = wants('binding')
+    ? scoped.map((entry) => checkTestTitlesExist(entry, testFiles))
+    : []
+  const titleFindings = titleResults.flatMap((result) => result.findings)
+  const titleSkips = [
+    ...new Set(titleResults.flatMap((result) => result.uncheckedRepos))
+  ].map((repo) => ({
+    check: 'test-titles',
+    repo,
+    reason: 'not checked out under repos/'
+  }))
+
   const globalIdFindings = wants('specs')
     ? checkGlobalIdUniqueness(corpus.capabilities).filter((finding) =>
         inScope(finding.capability, capability)
@@ -178,7 +197,12 @@ export const runSpecLint = async ({
     specRoot,
     capabilityCount: scoped.length,
     groups,
-    findings: [...openspecFindings, ...localFindings, ...globalIdFindings],
-    skipped: unselectedGroupSkips(groups)
+    findings: [
+      ...openspecFindings,
+      ...localFindings,
+      ...titleFindings,
+      ...globalIdFindings
+    ],
+    skipped: [...unselectedGroupSkips(groups), ...titleSkips]
   }
 }

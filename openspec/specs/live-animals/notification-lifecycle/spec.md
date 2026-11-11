@@ -74,27 +74,33 @@ The system MUST NOT offer any way to change a submitted notification's answers u
 - **AND** no "Change" links are shown against any answer
 - **AND** no option to cancel an amendment is shown
 
-### Requirement: Amending a submitted notification re-enters it at Overview
+### Requirement: Amending a submitted notification opens its check your answers
 **ID**: REQ-LIFECYCLE-006
-The system MUST let the user start an amendment on a submitted notification from the dashboard, re-entering the notification at Overview with editing enabled and marked "Amend". The amendment MUST be startable in any browser session, not only the one that submitted the notification. When an amendment cannot be started, the dashboard MUST say that the notification could not be amended.
+The system MUST let the user start an amendment on a submitted notification from the dashboard, opening its check your answers with editing enabled and marked "Amend". The amendment MUST be startable in any browser session, not only the one that submitted the notification. When an amendment cannot be started, the dashboard MUST say that the notification could not be amended.
 
-#### Scenario: Starting an amendment opens Overview with editing enabled
+#### Scenario: Starting an amendment opens check your answers with editing enabled
 **ID**: SCN-LIFECYCLE-006-A
 - **GIVEN** a submitted notification exists
 - **WHEN** the user starts an amendment on it from the dashboard
-- **THEN** they land on Overview, with the notification's status shown as "Amend"
+- **THEN** they land on check your answers, with the notification's status shown as "Amend"
 
 #### Scenario: An amendment can be started in a later browser session than the one that submitted the notification
 **ID**: SCN-LIFECYCLE-006-C
 - **GIVEN** a notification was submitted in an earlier browser session
 - **WHEN** the user signs in again and starts an amendment on it from the dashboard
-- **THEN** they land on Overview, with the notification's status shown as "Amend" and its reference number shown
+- **THEN** they land on check your answers, with the notification's status shown as "Amend" and its reference number shown
 
 #### Scenario: The dashboard says when a notification could not be amended
 **ID**: SCN-LIFECYCLE-006-D
 - **GIVEN** a notification shown on the dashboard has since been deleted
 - **WHEN** the user starts an amendment on it from the dashboard
 - **THEN** the dashboard shows a notification banner titled "Important" that reads "This notification could not be amended."
+
+#### Scenario: A Change link on the amend review opens the page that collects that answer
+**ID**: SCN-LIFECYCLE-006-E
+- **GIVEN** a notification is being amended and its check your answers is shown
+- **WHEN** the user follows a Change link
+- **THEN** the page that collects that answer opens
 
 ### Requirement: Resubmitting an amendment keeps the edited answers and returns the notification to Submitted
 **ID**: REQ-LIFECYCLE-007
@@ -158,3 +164,43 @@ While amending, a status bar above each page's caption and heading MUST offer a 
 - **GIVEN** a draft notification
 - **WHEN** the user views Overview or a question page
 - **THEN** the status bar shows "Draft" and the reference, and no "Cancel amend"
+
+### Requirement: Trader notification reads and writes are scoped to the caller's organisation
+**ID**: REQ-LIFECYCLE-009
+The backend MUST persist each new notification under the `Trade-Imports-Organisation-Id` header supplied at create, MUST reject trader requests without that header, and MUST treat reads and lifecycle writes for another organisation's reference as not found (403 for fulfilment reads when the reference exists under a different owner).
+
+#### Scenario: A copied notification belongs to the copying organisation
+**ID**: SCN-LIFECYCLE-009-A
+- **GIVEN** a notification owned by organisation A
+- **WHEN** organisation A copies it
+- **THEN** the new draft notification is owned by organisation A
+
+#### Scenario: Another organisation cannot change a notification through trader lifecycle writes
+**ID**: SCN-LIFECYCLE-009-B
+- **GIVEN** organisation A owns a submitted notification
+- **WHEN** organisation B attempts to amend, replace, submit, copy, cancel-amend, or soft-delete it
+- **THEN** the backend responds as if the notification were not found for organisation B
+
+#### Scenario: A trader request without an organisation header is rejected
+**ID**: SCN-LIFECYCLE-009-C
+- **GIVEN** a trader-facing notification endpoint
+- **WHEN** the caller sends no `Trade-Imports-Organisation-Id` header
+- **THEN** the backend responds with a client error that names the missing header
+
+#### Scenario: Another organisation cannot read fulfilments for a notification it does not own
+**ID**: SCN-LIFECYCLE-009-D
+- **GIVEN** organisation A owns a submitted notification
+- **WHEN** organisation B requests that notification's fulfilments
+- **THEN** the backend responds with forbidden
+
+#### Scenario: When fulfilment read is refused for another organisation, the frontend treats the notification as not found
+**ID**: SCN-LIFECYCLE-009-E
+- **GIVEN** the backend refuses a fulfilment read with forbidden because the notification belongs to another organisation
+- **WHEN** the live animals frontend loads that notification for display
+- **THEN** the user sees a not-found response rather than the notification's answers
+
+#### Scenario: Another organisation cannot use document routes for a notification it does not own
+**ID**: SCN-LIFECYCLE-009-F
+- **GIVEN** organisation A owns a notification with upload sessions registered
+- **WHEN** organisation B calls register, session lookup, or list document-upload routes for that reference
+- **THEN** the backend responds as if the notification were not found for organisation B

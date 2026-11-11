@@ -22,14 +22,7 @@
           "name": "The page tells the user to notify each type in a separate notification",
           "coverage": "full",
           "tests": [
-            {
-              "type": "fit",
-              "repo": "trade-imports-plants-frontend",
-              "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/commodity-type.fit.spec.js",
-              "test": "renders the caption, the legend as the page heading and the hint",
-              "strength": "full",
-              "notes": "asserts copy.hint, including the separate-notifications instruction"
-            }
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/commodity-type.fit.spec.js", "test": "renders the caption, the legend as the page heading and the hint", "strength": "full", "notes": "asserts copy.hint, including the separate-notifications instruction" }
           ]
         }
       ]
@@ -45,7 +38,7 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/commodity-type.fit.spec.js", "test": "saves a choice, goes on to the commodities and shows it again on return", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/start.spec.ts", "test": "starting a notification opens the run on the commodity-type page", "strength": "partial", "notes": "confirms the page opens; does not itself re-verify the round-trip" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/start.spec.ts", "test": "starting a notification opens the commodity-type page", "strength": "partial", "notes": "confirms the page opens; does not itself re-verify the round-trip" }
           ]
         }
       ]
@@ -95,7 +88,7 @@
           "tests": [
             { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/controller.test.js", "test": "Should refuse no choice on Save and return to overview, keep the lines and save nothing", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/commodity-type.fit.spec.js", "test": "Save and return to overview with nothing submitted stays on the page, shows the error and keeps the saved type and line", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/commodities.spec.ts", "test": "save and return to overview: when no type is chosen, refuses the save, shows the error beside the options and leaves the commodities row not started", "strength": "partial", "notes": "a fresh notification with no lines" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/commodities.spec.ts", "test": "save and return to overview: when no type is chosen, refuses the save, shows the error beside the options and leaves Overview showing the first page", "strength": "partial", "notes": "a fresh notification with no lines" }
           ]
         }
       ]
@@ -136,16 +129,49 @@
     },
     {
       "id": "REQ-PLANTS-COMMODITY-TYPE-006",
-      "name": "The back link depends on whether the journey already has an answer",
+      "name": "The back link goes to where the notification was started, or to where the user came from",
       "coverage": "full",
       "scenarios": [
+        {
+          "id": "SCN-PLANTS-COMMODITY-TYPE-006-C",
+          "name": "The back link opens the Import Notification Service question when the notification was started there",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/controller.test.js", "test": "Should send Back to the Import Notification Service type question for a notification started there with %s", "strength": "full", "notes": "red then green with the service's start address the dashboard's" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-COMMODITY-TYPE-006-D",
+          "name": "The back link opens the review when the page was opened from a Change link",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/controller.test.js", "test": "Should send Back to the review when opened from a Change link", "strength": "full", "notes": "red then green with the page's Back ignoring the request's trail" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-COMMODITY-TYPE-006-E",
+          "name": "Save and return to overview removes the lines the new type does not hold and opens the commodities list reporting them",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/controller.test.js", "test": "Should remove the lines the new type does not hold and open the commodities list reporting them when Save and return to overview was pressed", "strength": "full", "notes": "red then green with the report redirect replaced by the next target and with the removed lines not reconciled" }
+          ]
+        },
+        {
+          "id": "SCN-PLANTS-COMMODITY-TYPE-006-F",
+          "name": "Save and continue after removing lines opens the commodities list, whose back link opens the commodity type page",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/controller.test.js", "test": "Should report the count on the commodities list it redirects to, with the commodity type on the trail", "strength": "full", "notes": "red then green with the commodity type page dropped from the list address's trail" }
+          ]
+        },
         {
           "id": "SCN-PLANTS-COMMODITY-TYPE-006-A",
           "name": "The back link opens the dashboard before any answer is saved",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/commodity-type.fit.spec.js", "test": "sends Back to the dashboard while the notification has no answer", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/start.spec.ts", "test": "starting a notification opens the run on the commodity-type page", "strength": "full", "notes": "asserts linkBack href is / while nothing is committed" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/controller.test.js", "test": "Should send Back to the dashboard while nothing is committed", "strength": "full", "notes": "red then green with the leave link always Overview" },
+            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/commodity-type.fit.spec.js", "test": "sends Back to the dashboard while the notification has no answer", "strength": "full", "notes": "red then green with the dashboard's start address Overview's" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/plants/e2e/features/back.spec.ts", "test": "after Start a new notification it opens the dashboard", "strength": "full", "notes": "red then green with the dashboard's start address Overview's" }
           ]
         },
         {
@@ -153,7 +179,7 @@
           "name": "The back link opens Overview once an answer is saved",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/commodity-type.fit.spec.js", "test": "sends Back to the overview once an answer is saved", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-plants-frontend", "file": "src/server/app/sets/high-risk-plants/journeys/linear/features/commodity-type/controller.test.js", "test": "Should send Back to Overview when opened from Overview", "strength": "full", "notes": "red then green with Overview's start address the dashboard's" }
           ]
         }
       ]

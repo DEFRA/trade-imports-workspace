@@ -73,55 +73,73 @@ On a notification's review, the system MUST draw a blank by the card it sits in:
 - **THEN** each blank answer in an unfinished card is left blank with "Missing" announced for a screen reader, with no mark beside or under it
 - **AND** the only visible marking on that card is its red left border and its "Complete" line, at desktop width and at phone width
 
-### Requirement: A back link returns to Overview from a draft's or an amendment's review, and to the notification list from a submitted notification's view
+### Requirement: A review's back link goes to the place the user came from, and a submitted notification's view goes to the dashboard
 **ID**: REQ-CYA-003
-The system MUST return the user to Overview when they follow the back link from the review of a draft or of an amendment, and MUST take them to the live-animals notification list when they follow it from a submitted notification's view.
+The system MUST return the user from the back link of a draft or amendment review to the page they saved and continued from, to Overview when they opened it from Overview or by its address, and to the dashboard when they opened it from a dashboard card. A Change link, an error-summary link or a refused Continue MUST leave that back link as it was. A submitted notification's view MUST go back to the dashboard.
 
-#### Scenario: A draft's review back link opens Overview
+#### Scenario: The review's back link opens the contact address after Save and continue there
 **ID**: SCN-CYA-003-A
-- **GIVEN** the user is on the review of a draft notification
+- **GIVEN** the user selected "Save and continue" on the contact address page and reached the review
 - **WHEN** they follow the back link
-- **THEN** Overview is shown
+- **THEN** the contact address page is shown
 
-#### Scenario: The submitted view's back link opens the notification list
+#### Scenario: The submitted view's back link opens the dashboard
 **ID**: SCN-CYA-003-B
 - **GIVEN** the user is on a submitted notification's view
 - **WHEN** they follow the back link
-- **THEN** the live-animals notification list is shown
+- **THEN** the dashboard is shown
 
-#### Scenario: An amendment's review back link opens Overview
+#### Scenario: A review opened from Overview has a back link to Overview
 **ID**: SCN-CYA-003-C
-- **GIVEN** the user is on the review of a notification being amended
+- **GIVEN** the user opened the review with the Review and submit button on Overview
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
 
-#### Scenario: The submitted view shown after an amendment is cancelled has a back link to the notification list
+#### Scenario: The submitted view shown after an amendment is cancelled has a back link to the dashboard
 **ID**: SCN-CYA-003-D
 - **GIVEN** the user has just cancelled an amendment and the submitted notification's view is shown with its cancelled message
 - **WHEN** they follow the back link
-- **THEN** the live-animals notification list is shown
+- **THEN** the dashboard is shown
 
-### Requirement: A Change link returns to check-your-answers
+#### Scenario: A review opened from a dashboard card has a back link to the dashboard
+**ID**: SCN-CYA-003-E
+- **GIVEN** the user opened the review by View, or by Amend, on a notification's dashboard card
+- **WHEN** they follow the back link
+- **THEN** the dashboard is shown
+
+#### Scenario: A Change link round trip leaves the review's back link as it was
+**ID**: SCN-CYA-003-F
+- **GIVEN** the review opened from a dashboard card
+- **WHEN** the user follows a Change link, follows the back link on the page it opens, and then follows the back link on the review
+- **THEN** the dashboard is shown
+
+#### Scenario: A review with nothing saying where the user came from has a back link to Overview
+**ID**: SCN-CYA-003-G
+- **GIVEN** the review of a draft notification or of an amendment, opened by its address
+- **WHEN** the user follows the back link
+- **THEN** Overview is shown
+
+### Requirement: A Change link opens the page that collects the answer, and Save and continue goes on through the journey to check your answers
 **ID**: REQ-CYA-004
-The system MUST return the user to check-your-answers after saving an answer edited via its Change link, even where answering that question during the normal flow would continue to a different page. For a notification being amended, that save is the page's "Save and return".
+The system MUST open the page that collects an answer when the user follows its Change link, and Save and continue on it MUST go on through the journey to the next page that applies and, past the last, to check-your-answers, showing the new value. This holds on a draft and while the notification is being amended.
 
-#### Scenario: Editing an answer via Change returns to check-your-answers with the new value
+#### Scenario: Editing an answer via Change and saving and continuing through the journey shows the new value on check-your-answers
 **ID**: SCN-CYA-004-A
 - **GIVEN** the user is on check-your-answers
-- **WHEN** they follow a Change link, edit the answer, and save it
-- **THEN** they return to check-your-answers, showing the new value
+- **WHEN** they follow a Change link, edit the answer, and save and continue on each page that follows
+- **THEN** they arrive at check-your-answers, showing the new value
 
-#### Scenario: Changing the contact address from its card returns to the review
+#### Scenario: Changing the contact address from its card opens the contact address page, and Save and continue opens the review
 **ID**: SCN-CYA-004-B
 - **GIVEN** the user is on the review of a draft
-- **WHEN** they follow the Contact address card's Change link, choose a contact address and save
-- **THEN** the contact address page opens, and after saving they return to the review showing that address
+- **WHEN** they follow the Contact address card's Change link, choose a contact address and save and continue
+- **THEN** the contact address page opens, and after saving the review is shown with that address
 
-#### Scenario: Changing documents from a document card returns to the review
+#### Scenario: Changing documents from a document card opens upload documents, and Save and continue goes on through the journey to the review
 **ID**: SCN-CYA-004-C
 - **GIVEN** a notification with a document uploaded
 - **WHEN** the user follows a document card's Change link and continues from the upload documents page
-- **THEN** they are back on the review
+- **THEN** they go on through the journey to the review
 
 ### Requirement: A draft notification offers submission and none of the post-submission actions
 **ID**: REQ-CYA-005

@@ -180,7 +180,7 @@ The service MUST list the organisation's live transporters newest first, searcha
 
 ### Requirement: A transporter has its own details page, at its own URL, offering to edit or delete it
 **ID**: REQ-INS-TRANSPORTER-012
-The system MUST show a transporter's own record on its own page, at a URL that names the transporter rather than an address, listing each field the transporter holds against its label: the Standard Address Block, the contact fields, the transporter's type, its country, and its approval number for a commercial transporter. It MUST leave out an optional field the transporter holds no value for, never as a blank row, and MUST NOT show an approval number row for a private transporter, which cannot hold one. It MUST offer to edit and to delete that transporter, and a way back to the address book filtered to the Transporter tab, or to the page it was opened from. A transporter that is not live in the organisation's address book MUST return the user to the address book rather than show a page.
+The system MUST show a transporter's own record on its own page, at a URL that names the transporter, listing each field it holds against its label, with no blank optional row and no approval number row for a private transporter. It MUST offer to edit and delete it, and a way back to the Transporter tab or the page it was opened from. A transporter that is not live MUST return the user to the address book.
 
 #### Scenario: The View link on a transporter row opens that transporter's own page
 **ID**: SCN-INS-TRANSPORTER-012-A
@@ -218,7 +218,7 @@ The system MUST show a transporter's own record on its own page, at a URL that n
 
 ### Requirement: Editing a transporter replaces the whole record, keeping its type, and refuses an edit of one that is not live
 **ID**: REQ-INS-TRANSPORTER-013
-The system MUST let the user edit a transporter from its own page, on a form asking for the same fields its add form asked for, holding the stored values, and MUST keep the transporter's type: the type question is not asked again, a private transporter stays private and a commercial one stays commercial, with a commercial transporter's country still fixed to Northern Ireland and its approval number still required. Saving MUST replace the whole record, clearing any optional field left blank, show a 'Success' banner reading '<Name> updated in your address book', and land on the address book filtered to the Transporter tab. Cancelling MUST discard the changes, leaving the stored transporter as it was. An edit of a transporter that is not live in the organisation's address book MUST return the user to the address book and change nothing.
+The system MUST let the user edit a transporter from its own page, on a form holding the stored values and keeping its type, a commercial one keeping its country fixed to Northern Ireland and its approval number required. Saving MUST replace the whole record, show a 'Success' banner reading '<Name> updated in your address book', and land on the Transporter tab. Cancelling MUST leave it as it was. Editing one that is not live MUST return the user to the address book.
 
 #### Scenario: The edit form opens holding the stored values and does not ask the type again
 **ID**: SCN-INS-TRANSPORTER-013-A
@@ -262,7 +262,7 @@ The system MUST let the user edit a transporter from its own page, on a form ask
 
 ### Requirement: Deleting a transporter asks for confirmation, summarising it, and tombstones it
 **ID**: REQ-INS-TRANSPORTER-014
-The system MUST ask the user to confirm before deleting a transporter, on a page summarising the transporter it is about to delete so they can see they have the right one. Confirming MUST tombstone the transporter rather than remove it, show a 'Success' banner reading '<Name> deleted from your address book', and land on the address book filtered to the Transporter tab with the transporter gone from the list. Cancelling MUST leave the transporter in the address book. A delete of a transporter that is not live in the organisation's address book MUST return the user to the address book and change nothing.
+The system MUST ask the user to confirm before deleting a transporter, on a page summarising it. Confirming MUST tombstone the transporter rather than remove it, show a 'Success' banner reading '<Name> deleted from your address book', and land on the Transporter tab without it. Cancelling MUST leave the transporter in the address book. A delete of a transporter that is not live MUST return the user to the address book and change nothing.
 
 #### Scenario: The delete page summarises the transporter before it is deleted
 **ID**: SCN-INS-TRANSPORTER-014-A

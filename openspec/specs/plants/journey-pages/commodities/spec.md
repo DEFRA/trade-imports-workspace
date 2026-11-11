@@ -64,9 +64,9 @@ The system MUST report, on this page, how many lines a commodity-type change rem
 - **THEN** it reports how many lines were removed and names the type they did not belong to
 - **AND** it offers a control to add a fresh line
 
-### Requirement: The page ends with its primary action alone, and continuing during the opening sequence leaves the section for origin
+### Requirement: The page ends with its primary action alone, and continuing with a line saved opens origin
 **ID**: REQ-PLANTS-COMMODITIES-006
-The system MUST offer only a save-and-continue action on this page, with no save-and-return or cancel-and-return control, and MUST take the user to the origin page once they continue with at least one line saved during the opening sequence. Outside the opening sequence, continuing returns to Overview (`plants/journey-flow` REQ-PLANTS-FLOW-003).
+The system MUST offer only a save-and-continue action on this page, with no save-and-return or cancel-and-return control, and MUST take the user to the origin page once they continue with at least one line saved, however the list was reached (`plants/journey-flow` REQ-PLANTS-FLOW-003). A list left empty by a commodity type change MUST refuse Save and continue with "Add at least one commodity".
 
 #### Scenario: The page offers only its primary action
 **ID**: SCN-PLANTS-COMMODITIES-006-A
@@ -74,30 +74,42 @@ The system MUST offer only a save-and-continue action on this page, with no save
 - **WHEN** the page is shown
 - **THEN** only the save-and-continue action is offered
 
-#### Scenario: Continuing with at least one line during the opening sequence leaves the section for origin
+#### Scenario: Continuing with at least one line opens origin however the list was reached
 **ID**: SCN-PLANTS-COMMODITIES-006-B
-- **GIVEN** a notification still in its opening sequence whose consignment holds at least one commodity line
+- **GIVEN** a notification whose consignment holds at least one commodity line
 - **WHEN** the user saves and continues from the list
 - **THEN** the origin page is shown
 
-### Requirement: The back link returns to commodity type in the opening sequence, and to Overview otherwise
-**ID**: REQ-PLANTS-COMMODITIES-007
-The system MUST return the user to the commodity type page when they follow the back link from the commodities list during the opening sequence, and to Overview when the list was opened from Overview. On a draft opened from a Change link on the review, the back link MUST open the commodity type page too, as `plants/journey-flow` describes.
+#### Scenario: A list left empty by a commodity type change refuses Save and continue
+**ID**: SCN-PLANTS-COMMODITIES-006-C
+- **GIVEN** the user changed the commodity type so that every commodity line was removed
+- **WHEN** the list is shown and they select "Save and continue"
+- **THEN** the list is shown again with the error "Add at least one commodity"
 
-#### Scenario: On a draft opened from a Change link, the back link opens commodity type
+### Requirement: The back link returns to commodity type after Save and continue, to the review from a Change link, and to Overview otherwise
+**ID**: REQ-PLANTS-COMMODITIES-007
+The system MUST return the user from the commodities list to the commodity type page after Save and continue there (also after a visit to commodity details), to the review from a Change link, and to Overview when the list was opened from Overview.
+
+#### Scenario: On a draft opened from a Change link, the back link opens the review
 **ID**: SCN-PLANTS-COMMODITIES-007-C
 - **GIVEN** the review of a draft notification
 - **WHEN** the user follows a Change link to the commodities list and then the back link
-- **THEN** the commodity type page is shown
+- **THEN** the review is shown
 
 #### Scenario: The back link opens Overview when the list was opened from Overview
 **ID**: SCN-PLANTS-COMMODITIES-007-A
-- **GIVEN** the opening sequence has ended and the user is on the commodities list
+- **GIVEN** the user opened the commodities list from Overview
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
 
-#### Scenario: In the opening sequence, the back link opens commodity type
+#### Scenario: After Save and continue, the back link opens commodity type
 **ID**: SCN-PLANTS-COMMODITIES-007-B
-- **GIVEN** the user is in the opening sequence and reached the commodities list from commodity type
+- **GIVEN** the user reached the commodities list from commodity type by saving and continuing
 - **WHEN** they follow the back link
+- **THEN** the commodity type page is shown
+
+#### Scenario: After a visit to commodity details, the back link still opens commodity type
+**ID**: SCN-PLANTS-COMMODITIES-007-D
+- **GIVEN** the user reached the commodities list from commodity type and opened commodity details from it
+- **WHEN** they return to the list and follow the back link
 - **THEN** the commodity type page is shown

@@ -40,7 +40,8 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "back link returns to the overview", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should go Back to the overview when the page is opened from the overview on a draft", "strength": "full", "notes": "red probe: make the review branch unconditional on returnsToReview alone — the test fails because the overview is no longer what the handler renders" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/trail.test.js", "test": "Should go to Overview for an empty trail", "strength": "partial", "notes": "the Back link of a page opened from Overview carries no trail and resolves to Overview; does not render the documents page" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/test-support.js", "test": "Should go to %s", "strength": "partial", "notes": "not seen failing" }
           ]
         },
         {
@@ -48,18 +49,17 @@
           "name": "The back link opens the review when changing an answer from the review",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should go Back to the review when the page was opened by changing an answer from the review", "strength": "full", "notes": "red probe: drop the change-context half of the review condition in shared/kit.js — the test fails" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "back link opens the review when the page was opened by changing an answer from the review", "strength": "full", "notes": "red probe: same change-context inversion — the rendered back link stops opening the review" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/change-from-cya.spec.ts", "test": "the documents Change link opens the page with a Back link to the review, which stays after a refusal, after Save and add another and after Remove", "strength": "partial", "notes": "the integration witness through the real stack — not probed against the stack" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "back link opens the review when the page was opened by changing an answer from the review", "strength": "partial", "notes": "not seen failing" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should go Back to the review when the page was opened by changing an answer from the review", "strength": "full", "notes": "red then green with the refused-save render dropping the trail (workareas/shared/eudpa-774/logs/inc-028-probe-refused-save-back-unit)" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/change-from-cya.spec.ts", "test": "the documents Change link opens the page with a Back link to the review, which stays after a refusal, after Save and add another and after Remove", "strength": "full", "notes": "red then green with the documents page address and the refused-save render dropping the trail, against the dev-mode stack (workareas/shared/eudpa-774/logs/inc-028-probe-documents-href-trail-e2e, workareas/shared/eudpa-774/logs/inc-028-probe-refused-save-back-e2e)" }
           ]
         },
         {
           "id": "SCN-DOCS-002-C",
-          "name": "The back link opens the review while the notification is being amended, however the page was opened",
+          "name": "The back link opens the transporter list after Save and continue there",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should go Back to the review while the notification is being amended, with nothing in the address saying where the trader came from", "strength": "full", "notes": "red probe: drop the amend half of the review condition in shared/kit.js — the test fails" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "Upload documents opened from Overview while amending has a Back link to the review", "strength": "partial", "notes": "the integration witness through the real stack — not probed against the stack" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should go to the page Save and continue was pressed on", "strength": "full", "notes": "Probed: the page's trail dropped from kit.trailBackLink turns this case red and restoring it turns it green" }
           ]
         },
         {
@@ -67,8 +67,8 @@
           "name": "The back link still opens the review after the page refuses a part-filled document",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should keep the review back link after the page refuses a part-filled document returned from the upload service", "strength": "full", "notes": "red probe: drop the change-context half of the review condition in shared/kit.js — the test fails" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/change-from-cya.spec.ts", "test": "the documents Change link opens the page with a Back link to the review, which stays after a refusal, after Save and add another and after Remove", "strength": "partial", "notes": "the integration witness through the real stack — not probed against the stack" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should keep the review back link after the page refuses a part-filled document returned from the upload service", "strength": "full", "notes": "red then green with the refused-save render dropping the trail (workareas/shared/eudpa-774/logs/inc-028-probe-refused-save-back-unit)" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/change-from-cya.spec.ts", "test": "the documents Change link opens the page with a Back link to the review, which stays after a refusal, after Save and add another and after Remove", "strength": "full", "notes": "red then green with the refused-save render dropping the trail, against the dev-mode stack (workareas/shared/eudpa-774/logs/inc-028-probe-refused-save-back-e2e)" }
           ]
         }
       ]
@@ -76,15 +76,18 @@
     {
       "id": "REQ-DOCS-003",
       "name": "A notification can hold at most fifteen accompanying documents",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-DOCS-003-A",
           "name": "A fifteenth document is accepted and a sixteenth is rejected",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-limits.spec.ts", "test": "accepts a fifteenth document and then shuts the add control, naming the cap", "strength": "partial", "notes": "fifteen Check-completed rows with no error summary, then the add control is aria-disabled with no formaction and the limit message beside it; it never sends a sixteenth document, so the rejection is not proved here — not probed against the stack" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "closes the add control once the maximum document capacity is reached, so no further file is sent", "strength": "partial", "notes": "uploads MAX_DOCUMENTS (15), then the add control is aria-disabled with no formaction and described by the limit message; it never sends a sixteenth document, so the summary, the Attachment field error and the kept reference are not witnessed; not probed" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-limits.spec.ts", "test": "accepts a fifteenth document and then shuts the add control, naming the cap", "strength": "partial", "notes": "fifteen Check-completed rows with no error summary, then the add control is aria-disabled with no formaction and the limit message beside it; it never sends a sixteenth document, so the rejection is not proved here; red then green against the stack with one fewer document allowed" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "closes the add control once the maximum document capacity is reached, so no further file is sent", "strength": "partial", "notes": "uploads MAX_DOCUMENTS (15), then the add control is aria-disabled with no formaction and described by the limit message; it never sends a further document, so the summary and the field errors are witnessed by the test below; red then green with one fewer document allowed" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "refuses a further document past the maximum with the limit message in the summary linked to the added documents, shown beside the disabled add button and on no field, and keeps every added document", "strength": "full", "notes": "fifteen uploaded, then a further document saved with Save and continue: the summary holds exactly the limit message, linked to the added-documents list, the only error message on the page is the one beside the closed add control, in the only error group, which holds that aria-disabled button, no document reference, type or date input is aria-invalid, and every row remains; red then green with the summary href pointed at the add control" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should refuse a returning upload past the cap with the maximum message, linked to the documents it already holds, and append nothing", "strength": "full", "notes": "red then green with the summary href pointed at the add control" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should refuse a Continue past the cap with the maximum message, which is the only refusal the page states, and log that refusal once", "strength": "partial", "notes": "stays green with the summary href pointed at the add control, so it does not witness the link target; it witnesses the message and the single refusal" }
           ]
         }
       ]
@@ -192,7 +195,7 @@
           "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should take on a document whose reference is %s", "strength": "full", "notes": "parameterised over an air waybill (125-12345675), a TRACES certificate (CHEDA.GB.2026.1234567), an invoice (INV 2026/0042) and a plain alphanumeric reference; asserts the redirect and the stored reference" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "lists the document under five headings with View file and Remove right-aligned at the end of the row", "strength": "partial", "notes": "uploads a hyphenated reference and reaches Check completed, but witnessing that reference reaching the row is incidental to the test's own THEN about the table's headings and action placement" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "lists the document under five headings with View file and Remove right-aligned at the end of the row, lined up with each other once they wrap", "strength": "partial", "notes": "uploads a hyphenated reference and reaches Check completed, but witnessing that reference reaching the row is incidental to the test's own THEN about the table's headings and action placement" }
           ]
         },
         {
@@ -225,7 +228,7 @@
           "name": "A clean upload becomes checked and viewable",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-scan-lifecycle.spec.ts", "test": "clean upload: Save and continue reaches the overview, and the row settles to Check completed with a view link on reopening", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-scan-lifecycle.spec.ts", "test": "clean upload: Save and return to overview reaches the overview, and the row settles to Check completed with a view link on reopening", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "uploads through the configured stub and renders the saved row", "strength": "partial", "notes": "Scanning for virus then Check completed on the row — does not assert view-link absence while scanning" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "a document still being scanned does not hold Save and continue, and settles when the trader comes back", "strength": "partial", "notes": "scanning then Check completed via a reopen; the view-link transition is covered better by E2E" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-large-uploads.spec.ts", "test": "uploads a file at the full limit, scans it, and serves the same bytes back", "strength": "partial", "notes": "a real scan resolves the row to Check completed and a View file link is there to follow — it does not assert the Scanning for virus state or the view link's absence before the scan resolves" }
@@ -262,7 +265,7 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "a document still being scanned does not hold Save and continue, and settles when the trader comes back", "strength": "full", "notes": "Continue reaches Overview while scanning; reopening the page lists the row settled to Check completed" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-scan-lifecycle.spec.ts", "test": "clean upload: Save and continue reaches the overview, and the row settles to Check completed with a view link on reopening", "strength": "partial", "notes": "guarded by firstScanStatus — the pending leg only runs when the real scan has not already settled before the first render" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-scan-lifecycle.spec.ts", "test": "clean upload: Save and return to overview reaches the overview, and the row settles to Check completed with a view link on reopening", "strength": "partial", "notes": "guarded by firstScanStatus — the pending leg only runs when the real scan has not already settled before the first render" }
           ]
         },
         {
@@ -286,7 +289,7 @@
           "name": "One document settles while another stays pending",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "updates one settled row in place, announces it and leaves a still-pending row alone", "strength": "full", "notes": "Check completed + view link + announcer; stuck row still Scanning for virus" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/scan-status.fit.spec.js", "test": "updates one settled row in place, announces it, leaves a still-pending row alone and lines up the actions it rebuilds", "strength": "full", "notes": "Check completed + view link + announcer; stuck row still Scanning for virus" }
           ]
         }
       ]
@@ -412,54 +415,127 @@
       "name": "The page tells the user what to attach, above the upload form",
       "coverage": "full",
       "scenarios": [
-        { "id": "SCN-DOCS-015-A", "name": "The guidance sits above the form", "coverage": "full", "tests": [ { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/guidance.fit.spec.js", "test": "tells the trader what to attach, above the form", "strength": "full", "notes": "" } ] },
-        { "id": "SCN-DOCS-015-B", "name": "The additional documents table is behind a closed expander", "coverage": "full", "tests": [ { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/guidance.fit.spec.js", "test": "keeps the additional-documents table behind a closed expander", "strength": "full", "notes": "" } ] },
-        { "id": "SCN-DOCS-015-C", "name": "The guidance links out to GOV.UK in a new tab", "coverage": "full", "tests": [ { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/guidance.fit.spec.js", "test": "links out to the GOV.UK guidance in a new tab", "strength": "full", "notes": "" } ] },
-        { "id": "SCN-DOCS-015-D", "name": "The additional documents table names the documents each consignment needs", "coverage": "full", "tests": [ { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/guidance.fit.spec.js", "test": "keeps the additional-documents table behind a closed expander", "strength": "partial", "notes": "reads the rows from copy, so the exact wording is pinned in copy.test.js" }, { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.test.js", "test": "Should carry the pre-form guidance the trader needs to act on", "strength": "full", "notes": "the additional-documents rows pinned exactly" } ] }
+        {
+          "id": "SCN-DOCS-015-A",
+          "name": "The guidance sits above the form",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/guidance.fit.spec.js", "test": "tells the trader what to attach, above the form", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-015-B",
+          "name": "The additional documents table is behind a closed expander",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/guidance.fit.spec.js", "test": "keeps the additional-documents table behind a closed expander", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-015-C",
+          "name": "The guidance links out to GOV.UK in a new tab",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/guidance.fit.spec.js", "test": "links out to the GOV.UK guidance in a new tab", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-015-D",
+          "name": "The additional documents table names the documents each consignment needs",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/guidance.fit.spec.js", "test": "keeps the additional-documents table behind a closed expander", "strength": "partial", "notes": "reads the rows from copy, so the exact wording is pinned in copy.test.js" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/copy/copy.test.js", "test": "Should carry the pre-form guidance the trader needs to act on", "strength": "full", "notes": "the additional-documents rows pinned exactly" }
+          ]
+        }
       ]
     },
     {
       "id": "REQ-DOCS-016",
       "name": "Every save button keeps a document the user has filled in, says what is missing from one half filled in, adds a complete one and lets an untouched form leave",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
-        { "id": "SCN-DOCS-016-A", "name": "Save and return to overview with every detail filled in adds the document and shows Overview", "coverage": "full", "tests": [
-          { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "Save and return to overview with every detail filled in shows Overview, and reopening lists the document with its chosen type", "strength": "full", "notes": "with and without JavaScript, through the stand-in upload service" },
-          { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should append the returned document once and redirect to where Save and return to overview leads", "strength": "full", "notes": "" },
-          { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-save-buttons.spec.ts", "test": "Save and return to overview: a document with every detail filled in shows Overview, and reopening Upload documents lists it", "strength": "partial", "notes": "with and without JavaScript, through the real uploader" }
-        ] },
-        { "id": "SCN-DOCS-016-B", "name": "Save and continue with only the document type says what is missing", "coverage": "full", "tests": [
-          { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "continue with a document type and nothing else says what is missing", "strength": "full", "notes": "the reference, date of issue and file errors" }
-        ] },
-        { "id": "SCN-DOCS-016-C", "name": "Save and continue with an untouched form leaves the page", "coverage": "full", "tests": [
-          { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "continue with an untouched form leaves the page, uploading being optional", "strength": "full", "notes": "" },
-          { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should append nothing and redirect to the overview for an untouched form returned with Save and continue", "strength": "full", "notes": "" },
-          { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-save-buttons.spec.ts", "test": "Save and continue: an untouched form shows Overview and adds no document", "strength": "partial", "notes": "with and without JavaScript" }
-        ] },
-        { "id": "SCN-DOCS-016-D", "name": "Save and return to overview with a part-filled document is refused", "coverage": "full", "tests": [
-          { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should refuse a part-filled form on the exit to the overview, naming each missing detail and appending nothing", "strength": "full", "notes": "the page POST, when the add form is closed" },
-          { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "Save and return to overview with a part-filled document stays on the page with an error for each missing detail and the typed reference kept", "strength": "full", "notes": "without JavaScript, through the stand-in upload service" },
-          { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-save-buttons.spec.ts", "test": "Save and return to overview: a part-filled document stays on the page with an error for each detail not given, keeps the typed reference and adds no document", "strength": "partial", "notes": "with and without JavaScript, and the same for Save and add another and Save and continue" }
-        ] },
-        { "id": "SCN-DOCS-016-E", "name": "A reference, date of issue and attachment with no document type is refused on save and continue", "coverage": "full", "tests": [
-          { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should ask for the document type when a reference, a date and a file arrive without one, appending nothing", "strength": "full", "notes": "" },
-          { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should show a reference and a date typed with no type chosen, and ask for the type, appending nothing", "strength": "full", "notes": "the page POST, when the add form is closed" },
-          { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-save-buttons.spec.ts", "test": "Save and continue: a reference, date of issue and attachment with no document type shows \"Select a document type\" and adds no document", "strength": "partial", "notes": "with and without JavaScript" }
-        ] },
-        { "id": "SCN-DOCS-016-F", "name": "The same rules hold without JavaScript", "coverage": "full", "tests": [
-          { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "Save and return to overview with every detail filled in shows Overview, and reopening lists the document with its chosen type", "strength": "full", "notes": "the no-JavaScript describe" },
-          { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "Save and return to overview with a part-filled document stays on the page with an error for each missing detail and the typed reference kept", "strength": "full", "notes": "" }
-        ] },
-        { "id": "SCN-DOCS-016-G", "name": "A complete document saved with Save and continue is added and held while it is scanned", "coverage": "none", "tests": [], "notes": "no test holds the trader on the page after a complete document is saved: controller.test.js's 'Should append the returned document once and redirect to where %s leads' redirects Save and continue and the amend Save and continue to the overview and the amend Save and return to the review, so the code may have moved away from this scenario's THENs — a spec-catchup question" },
-        { "id": "SCN-DOCS-016-H", "name": "While amending, an untouched form leaves by the button chosen", "coverage": "full", "tests": [
-          { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should send an untouched form returned with the amend Save and return from a page opened with a Change link to the review", "strength": "full", "notes": "" },
-          { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should send an untouched form returned with the amend Save and continue from a page opened with a Change link to the overview", "strength": "full", "notes": "" },
-          { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/kit.test.js", "test": "Should go on, not to the review, for the amend Save and continue from a page opened with change context", "strength": "full", "notes": "" }
-        ] },
-        { "id": "SCN-DOCS-016-I", "name": "Save and add another with a part-filled document is refused", "coverage": "partial", "tests": [
-          { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-save-buttons.spec.ts", "test": "Save and add another: a part-filled document stays on the page with an error for each detail not given, keeps the typed reference and adds no document", "strength": "partial", "notes": "with and without JavaScript; only the reference is typed" },
-          { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should refuse an untouched form returned with Save and add another, naming every missing detail", "strength": "partial", "notes": "an untouched form, not one part filled in" }
-        ] }
+        {
+          "id": "SCN-DOCS-016-A",
+          "name": "Save and return to overview with every detail filled in adds the document and shows Overview",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "Save and return to overview with every detail filled in shows Overview, and reopening lists the document with its chosen type", "strength": "full", "notes": "with and without JavaScript, through the stand-in upload service" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should append the returned document once and redirect to where Save and return to overview leads", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-save-buttons.spec.ts", "test": "Save and return to overview: a document with every detail filled in shows Overview, and reopening Upload documents lists it", "strength": "partial", "notes": "with and without JavaScript, through the real uploader" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-016-B",
+          "name": "Save and continue with only the document type says what is missing",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "continue with a document type and nothing else says what is missing", "strength": "full", "notes": "the reference, date of issue and file errors" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-016-C",
+          "name": "Save and continue with an untouched form shows Roles and addresses",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "continue with an untouched form leaves the page, uploading being optional", "strength": "full", "notes": "asserts the Consignment addresses heading after Save and continue" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should append nothing and redirect to Roles and addresses for an untouched form returned with Save and continue", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-save-buttons.spec.ts", "test": "Save and continue: an untouched form shows Roles and addresses", "strength": "full", "notes": "asserts the Roles and addresses heading; Overview is not shown" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-016-D",
+          "name": "Save and return to overview with a part-filled document is refused",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should refuse a part-filled form on the exit to the overview, naming each missing detail and appending nothing", "strength": "full", "notes": "the page POST, when the add form is closed" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "Save and return to overview with a part-filled document stays on the page with an error for each missing detail and the typed reference kept", "strength": "full", "notes": "without JavaScript, through the stand-in upload service" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-save-buttons.spec.ts", "test": "Save and return to overview: a part-filled document stays on the page with an error for each detail not given, keeps the typed reference and adds no document", "strength": "partial", "notes": "with and without JavaScript, and the same for Save and add another and Save and continue" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-016-E",
+          "name": "A reference, date of issue and attachment with no document type is refused on save and continue",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should ask for the document type when a reference, a date and a file arrive without one, appending nothing", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should show a reference and a date typed with no type chosen, and ask for the type, appending nothing", "strength": "full", "notes": "the page POST, when the add form is closed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-save-buttons.spec.ts", "test": "Save and continue: a reference, date of issue and attachment with no document type shows \"Select a document type\" and adds no document", "strength": "partial", "notes": "with and without JavaScript" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-016-F",
+          "name": "The same rules hold without JavaScript",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "Save and return to overview with every detail filled in shows Overview, and reopening lists the document with its chosen type", "strength": "full", "notes": "the no-JavaScript describe" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "Save and return to overview with a part-filled document stays on the page with an error for each missing detail and the typed reference kept", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-016-G",
+          "name": "A complete document saved with Save and continue is added and Roles and addresses is shown",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should append the returned document once and redirect to where %s leads", "strength": "full", "notes": "titled per button label at run time; the Save and continue case asserts the Roles and addresses redirect and one appended document; red then green with Save and continue made to stay and with the document taken on never saved (workareas/shared/eudpa-774/logs/inc-027-probe-documents-always-stay, inc-027-probe-documents-skip-save)" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-016-H",
+          "name": "While amending, Save and continue with an untouched form shows Roles and addresses",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should send an untouched form returned with Save and continue from a page opened with a Change link on to Roles and addresses", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-DOCS-016-I",
+          "name": "Save and add another with a part-filled document is refused",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-save-buttons.spec.ts", "test": "Save and add another: a part-filled document stays on the page with an error for each detail not given, keeps the typed reference and adds no document", "strength": "full", "notes": "red then green with the presence errors dropped, against the dev-mode stack (workareas/shared/eudpa-774/logs/inc-028-probe-documents-presence-e2e)" }
+          ]
+        }
       ]
     },
     {
@@ -467,7 +543,14 @@
       "name": "Two tabs on one notification each keep their own upload",
       "coverage": "full",
       "scenarios": [
-        { "id": "SCN-DOCS-017-A", "name": "Each of two tabs adds its own document", "coverage": "full", "tests": [ { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-two-tabs.spec.ts", "test": "keeps two tabs on one notification from taking each other’s upload", "strength": "full", "notes": "both rows reach Check completed, both survive a reload, and each row View file link serves back the bytes its own tab uploaded; the two fixtures are small and written to different lengths so a document serving the other tab bytes fails the comparison" } ] }
+        {
+          "id": "SCN-DOCS-017-A",
+          "name": "Each of two tabs adds its own document",
+          "coverage": "full",
+          "tests": [
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/documents-two-tabs.spec.ts", "test": "keeps two tabs on one notification from taking each other’s upload", "strength": "full", "notes": "both rows reach Check completed, both survive a reload, and each row View file link serves back the bytes its own tab uploaded; the two fixtures are small and written to different lengths so a document serving the other tab bytes fails the comparison" }
+          ]
+        }
       ]
     },
     {
@@ -515,7 +598,7 @@
     {
       "id": "REQ-DOCS-020",
       "name": "The page can be opened as soon as the origin of the import is answered",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-DOCS-020-A",
@@ -529,9 +612,9 @@
         {
           "id": "SCN-DOCS-020-B",
           "name": "Opening the page with the origin and what they are importing answered",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/entry.fit.spec.js", "test": "opening the page by its own address shows it titled \"Upload documents\" with only the origin and the species answered", "strength": "partial", "notes": "no production line conditions this page on later answers, so no inversion isolates the assertion; the test still proves the page opens with the commodity details unanswered" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/entry.fit.spec.js", "test": "opening the page by its own address shows it titled \"Upload documents\" with only the origin and the species answered", "strength": "full", "notes": "red then green with the entry guard also asking for the port of entry (workareas/shared/eudpa-774/logs/inc-028-probe-documents-ungated-fit)" }
           ]
         }
       ]
@@ -539,7 +622,7 @@
     {
       "id": "REQ-DOCS-021",
       "name": "A document can still be uploaded after leaving the page and coming back to it",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-DOCS-021-A",
@@ -560,11 +643,10 @@
         {
           "id": "SCN-DOCS-021-C",
           "name": "Coming back through a link that carries a session a file has already reached",
-          "coverage": "partial",
+          "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should open a session of its own when the session the request names has already taken a file", "strength": "partial", "notes": "reaches the page with a spent session carried in the link and checks a fresh one is opened; it saves no second document, so the added-documents table is never read" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should say which session had already taken a file, and that another was opened", "strength": "partial", "notes": "pins the two log lines and their ids, not what the user then sees added" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/fit/upload.fit.spec.js", "test": "renders a new upload session when a persisted pageshow fires", "strength": "partial", "notes": "drives the browser's restored-page signal in a real browser and checks the page stops offering the spent session; it saves no second document, so the added-documents table is never read" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/documents/controller.test.js", "test": "Should open a session of its own when the session the request names has already taken a file", "strength": "full", "notes": "opens the page with a spent session in the link and registers a fresh session of its own; red then green with a spent session always reused (workareas/shared/eudpa-774/logs/inc-028-probe-spent-session-unit)" }
           ]
         },
         {

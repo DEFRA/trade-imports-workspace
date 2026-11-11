@@ -65,34 +65,27 @@ The system MUST refuse to save an invalid answer to either question, on save and
 - **THEN** the save is refused with "Select a valid option" for the unweaned question and nothing is saved
 - **AND** the certification question still shows the purpose already chosen
 
-### Requirement: The back link returns to the page before it in the opening sequence, and to Overview otherwise
+### Requirement: The back link returns to where the user came from
 **ID**: REQ-ADDL-DETAILS-004
-The system MUST return the user, when they follow the back link from the additional details page during the opening sequence, to identification details when any chosen commodity needs identifiers and to commodity details otherwise, and MUST return them to Overview when the page was opened from its Overview task. On a draft opened from a Change link on the review, the back link MUST open the same page it opens in the opening sequence, as `live-animals/journey-flow` describes.
+The system MUST return the user, when they follow the back link from the additional details page, to the page they saved and continued from, to Overview when they opened it from its Overview task, and to the review when they opened it from a Change link on the review, as `live-animals/journey-flow` describes. That page is Identification details, or Commodity details when nothing chosen needs identifiers.
 
-#### Scenario: On a draft opened from a Change link, the back link opens the page before it
-**ID**: SCN-ADDL-DETAILS-004-D
-- **GIVEN** the review of a draft notification
-- **WHEN** the user follows the Change link for the additional animal details and then the back link
-- **THEN** identification details is shown when any chosen commodity needs identifiers
-- **AND** commodity details is shown otherwise
+#### Scenario: After Save and continue, the back link opens the page before
+**ID**: SCN-ADDL-DETAILS-004-A
+- **GIVEN** the user reached the additional details page by saving and continuing from Identification details, or Commodity details when nothing chosen needs identifiers
+- **WHEN** they follow the back link
+- **THEN** that page is shown
 
 #### Scenario: The back link opens Overview when the page was opened from Overview
-**ID**: SCN-ADDL-DETAILS-004-A
-- **GIVEN** the opening sequence has ended and the user opened additional details from its task on Overview
+**ID**: SCN-ADDL-DETAILS-004-B
+- **GIVEN** the user opened the additional details page from its task on Overview
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
 
-#### Scenario: In the opening sequence, the back link opens identification details when a chosen commodity needs identifiers
-**ID**: SCN-ADDL-DETAILS-004-B
-- **GIVEN** the user is in the opening sequence with cattle chosen and reached additional details from identification details
-- **WHEN** they follow the back link
-- **THEN** identification details is shown
-
-#### Scenario: In the opening sequence, the back link opens commodity details when nothing chosen needs identifiers
+#### Scenario: The back link opens the review when the page was opened from a Change link
 **ID**: SCN-ADDL-DETAILS-004-C
-- **GIVEN** the user is in the opening sequence with only Atlantic salmon chosen and reached additional details from commodity details
-- **WHEN** they follow the back link
-- **THEN** commodity details is shown
+- **GIVEN** the review of a draft notification
+- **WHEN** the user follows the Change link that opens the additional details page and then the back link
+- **THEN** the review is shown
 
 ### Requirement: The unweaned question is asked only when the consignment's commodities call for it
 **ID**: REQ-ADDL-DETAILS-005

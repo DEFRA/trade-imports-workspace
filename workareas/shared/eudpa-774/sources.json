@@ -1,0 +1,94 @@
+{
+  "programme": "eudpa-774-save-and-continue",
+  "goal": "In the live animals and high-risk plants import notification journeys, Save and continue always goes on to the next page of the journey that applies, ending at the review page, whether the page was reached from a new notification, Overview, a reopened draft, a copy, a new session, a review page Change link or an amendment. Back on every journey page goes to wherever the trader came from, except after a return from the Import Notification Service address book, where it goes to Overview. Back on the review page follows the trail where one exists; after a cancelled amendment it goes to the dashboard, and with no trail (the declaration, the confirmation page, a typed address, a new session) it goes to Overview on a draft or amendment and to the dashboard once submitted. Pages being amended show the same buttons and links as on a draft, with no button straight back to the review page. The review page's buttons and Continue, the declaration and the confirmation page stay as they are. The opening run and its return-to-Overview routing are removed as if they had never existed.",
+  "repos": {
+    "frontend": "repos/trade-imports-animals-frontend",
+    "plantsfrontend": "repos/trade-imports-plants-frontend",
+    "tests": "repos/trade-imports-ins-tests"
+  },
+  "reposWhy": "The routing lives in each frontend's own journey platform code (shared/kit.js, flow/*) and its set's journey pages: the live animals frontend and the high-risk plants frontend. The tests repo holds both journeys' E2E suites. The behaviour spec is in this workspace's openspec/, which the build loop keeps current on every row.",
+  "precedence": [
+    "ruling:sam-2026-11-06c",
+    "ruling:sam-2026-11-06b",
+    "ruling:sam-2026-11-06",
+    "document:brief-eudpa-774",
+    "document:ticket-eudpa-774",
+    "repo:frontend",
+    "repo:plantsfrontend",
+    "repo:tests",
+    "repo:workspace-openspec",
+    "document:save-and-continue-investigation"
+  ],
+  "sources": [
+    {
+      "id": "ruling:sam-2026-11-06c",
+      "kind": "ruling",
+      "locator": "workareas/shared/eudpa-774/sources/ruling-sam-2026-11-06c.md",
+      "scope": "whole file",
+      "role": "the owner's answer to the second DISTIL run's question: outranks every other source"
+    },
+    {
+      "id": "ruling:sam-2026-11-06b",
+      "kind": "ruling",
+      "locator": "workareas/shared/eudpa-774/sources/ruling-sam-2026-11-06b.md",
+      "scope": "whole file",
+      "role": "the owner's decisions after the first DISTIL run: outranks every other source"
+    },
+    {
+      "id": "ruling:sam-2026-11-06",
+      "kind": "ruling",
+      "locator": "workareas/shared/eudpa-774/sources/ruling-sam-2026-11-06.md",
+      "scope": "whole file",
+      "role": "the owner's decisions: outranks every other source"
+    },
+    {
+      "id": "document:brief-eudpa-774",
+      "kind": "document",
+      "locator": "workareas/shared/eudpa-774/sources/brief-eudpa-774.md",
+      "scope": "whole file: the rule being built, what to remove, what is out of scope, the spec and E2E tests wanted",
+      "role": "the owner's brief for this ticket: the rule, the remove-don't-patch list and the scope, after the owner's rulings"
+    },
+    {
+      "id": "document:ticket-eudpa-774",
+      "kind": "document",
+      "locator": "workareas/shared/eudpa-774/sources/ticket-eudpa-774.txt",
+      "scope": "whole file",
+      "role": "the Jira ticket: its acceptance criteria are the contract and overturn the earlier opening-run and return-to-Overview rulings the repos carry"
+    },
+    {
+      "id": "repo:frontend",
+      "kind": "repo",
+      "locator": "repos/trade-imports-animals-frontend",
+      "scope": "Journey routing only: src/server/app/shared/kit.js, amend-form-actions.js and save-actions.njk; src/server/app/flow/*; src/server/app/sets/live-animals/journeys/linear/flow/* (run.js, run-state, flow.js, task-rows.js, navigation, gates, entry-guard); how each journey page under sets/live-animals/journeys/linear/features decides its Save and continue destination, its Back link and its endings on a draft and while amending; the dashboard create, start and amend handlers; the hub and check-answers controllers; template mode if present; docs/flow-and-gates.md, docs/architecture.md and sets/live-animals/docs/*",
+      "role": "what exists today and what has already been ruled"
+    },
+    {
+      "id": "repo:plantsfrontend",
+      "kind": "repo",
+      "locator": "repos/trade-imports-plants-frontend",
+      "scope": "Journey routing only: src/server/app/shared/kit.js, amend-form-actions.js and save-actions.njk; src/server/app/flow/*; src/server/app/sets/high-risk-plants/journeys/linear/flow/*; how each journey page under sets/high-risk-plants/journeys/linear/features decides its Save and continue destination, its Back link and its endings on a draft and while amending; the dashboard create, start and amend handlers; the hub and check-answers controllers; docs/flow-and-gates.md, docs/architecture.md, sets/high-risk-plants/docs/*, and the routing rulings in sets/high-risk-plants/spec/decisions.json",
+      "role": "what exists today and what has already been ruled"
+    },
+    {
+      "id": "repo:tests",
+      "kind": "repo",
+      "locator": "repos/trade-imports-ins-tests",
+      "scope": "flows/animals/journey.ts, flows/plants/journey.ts and the notification-actions and seeded-journey helpers; the animals and plants e2e specs that assert a Save and continue or Back destination, the opening run, a return to Overview on save, or the amend endings (among them opening-run, overview-task-return, amend-endings, change-from-cya, transit-means-scope, transporter, contact-address and documents-save-buttons)",
+      "role": "what is already proven end to end"
+    },
+    {
+      "id": "repo:workspace-openspec",
+      "kind": "repo",
+      "locator": ".",
+      "scope": "openspec/specs/live-animals/journey-flow/spec.md and openspec/specs/plants/journey-flow/spec.md in full, and the requirements in openspec/specs/live-animals and openspec/specs/plants (journey-pages, notification-lifecycle and the rest) that state a Save and continue or Back destination, the opening sequence, a return to Overview on save, or the amend endings",
+      "role": "the behaviour spec as it stands: what has already been ruled and specified"
+    },
+    {
+      "id": "document:save-and-continue-investigation",
+      "kind": "document",
+      "locator": "workareas/shared/eudpa-774/sources/save-and-continue-investigation.md",
+      "scope": "whole file",
+      "role": "a page-by-page account of today's Save and continue and Back behaviour, written before EUDPA-690 merged: background on today, never a decision"
+    }
+  ]
+}

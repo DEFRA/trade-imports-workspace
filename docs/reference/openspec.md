@@ -66,8 +66,9 @@ Aliases also exist under `openspec spec list|show|validate` — same idea.
 ## `tim spec` — lint and gaps
 
 The two deterministic checks the `spec-catchup` and `spec-cover` skills
-drive. No other `tim spec` subcommand exists — anything else here (the
-`jq` snippets below) is a hand query, not a maintained surface.
+drive. `tim spec diff` (see `tim spec diff --help`) reports what commits
+changed in the spec. Anything else here (the `jq` snippets below) is a
+hand query, not a maintained surface.
 
 ```bash
 tim spec lint --specs --coverage --binding [--capability live-animals|plants|germinal-products|ins|admin]
@@ -117,6 +118,31 @@ Two marks tie the spec to a page's maturity banner. The full rules are in
 A signed-off scenario is part of a signed-off page's contract, and the
 tests its coverage links are that contract's evidence. A change to
 either needs a person's decision.
+
+### The spec check on pull requests
+
+[`.github/workflows/spec-check.yml`](../../.github/workflows/spec-check.yml)
+runs on every workspace pull request that touches `openspec/`,
+`tim/src/spec/` or the workflow itself. It is not a required check.
+
+| Step | Runs | Fails when |
+|---|---|---|
+| Lint the Behaviour Spec | `tim spec lint` | Lint finds anything |
+| Check signed-off scenarios | `tim spec diff --signed-off --range 'HEAD^1..HEAD'` | A change touches a signed-off scenario (exit 3) |
+
+- Both steps run, and each writes its report to the job summary. A
+  signed-off change also prints the ticket draft for a person to raise.
+- The checkout is the pull request's merge commit at depth 2. Its first
+  parent is the base branch's tip, so `HEAD^1..HEAD` is what the pull
+  request's commits change on the base branch.
+- No service repo is checked out. The job creates an empty `repos/`,
+  which `tim` needs to recognise the workspace root, so lint lists every
+  repo's test-title check under `skipped`. The linked-test half of
+  `tim spec diff --signed-off` (`--repo`, `--base`) does not run here: it
+  belongs in each service repo's own pull request check.
+- A red check is a prompt, not a block. Raise the ticket from the draft
+  and keep the pull requests as drafts until a person approves or refuses
+  the change.
 
 `tim spec gaps` is **not** the `spec-catchup` work list — a scenario can
 be `coverage: "full"` and still have drifted words. It's `spec-cover`'s

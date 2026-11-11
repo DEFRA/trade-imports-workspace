@@ -41,9 +41,10 @@
 # latest re-review read (the last entry for that repo in re_reviews[] of
 # .review-meta.json). It refuses a repo with no re-review recorded.
 #
-# --head SHA, with --refresh and one PR, names the PR's head. When it is not
-# the commit the re-review read, the body says that the commits after it are
-# counted by what they closed but have not been re-reviewed.
+# --head SHA, with --summary or --refresh and one PR, names the PR's head.
+# When it is not the commit last reviewed (the re-review's, with --refresh;
+# the first review's, without), the body says that the commits after it are
+# counted by what they closed but have not been reviewed.
 #
 # --dry-run skips git mutations and the comment POST; instead it renders
 # the comment bodies (one per PR) to /tmp and reports where they landed.
@@ -74,7 +75,7 @@ GITHUB_COMMENT_LIMIT=65536
 usage() {
     cat >&2 <<EOF
 Usage: $0 EUDPA-XXXXX [--repo R] [--pr N] [--comment-only] [--summary]
-                      [--refresh [--head SHA]] [--branch B] [--dry-run] [--json]
+                      [--refresh] [--head SHA] [--branch B] [--dry-run] [--json]
 
   --repo R         Only PRs in this repo. PR numbers repeat across repos,
                    so pass --repo and --pr together to pin one PR.
@@ -92,9 +93,9 @@ Usage: $0 EUDPA-XXXXX [--repo R] [--pr N] [--comment-only] [--summary]
   --refresh        Post a refresh review's outcome: the --summary counts
                    under a re-review heading, naming the commit first
                    reviewed and the commit the latest re-review read.
-  --head SHA       With --refresh, --repo and --pr: the PR's head. When it
-                   is past the re-reviewed commit, the body says the later
-                   commits have not been re-reviewed.
+  --head SHA       With --summary or --refresh, --repo and --pr: the PR's
+                   head. When it is past the commit last reviewed, the body
+                   says the later commits have not been reviewed.
   --branch B      Handoff branch name (default chore/EUDPA-XXXXX).
   --dry-run        Render the bodies to /tmp; no git mutations, no POST.
   --json           Emit a JSON summary on stdout.
@@ -120,8 +121,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 [[ -z "$TICKET" ]] && usage
-if [[ -n "$HEAD_SHA" ]] && [[ "$REFRESH" == "0" || -z "$REPO_FILTER" || -z "$PR_FILTER" ]]; then
-    echo "--head needs --refresh, --repo and --pr: a head belongs to one PR." >&2
+if [[ -n "$HEAD_SHA" ]] && [[ "$SUMMARY" == "0" || -z "$REPO_FILTER" || -z "$PR_FILTER" ]]; then
+    echo "--head needs --summary or --refresh, and --repo and --pr: a head belongs to one PR." >&2
     exit 1
 fi
 
@@ -278,7 +279,13 @@ render_item_counts() {
         | .[] | select(.total > 0) | "| \(.sev) | \(.open) | \(.total) |"
     ' "$items_file"
     echo
-    echo "_$(jq -r '.items | length' "$items_file") items in this repo. Each one, with its issue, what it must satisfy and the commit that closed it, is in \`$(basename "$items_file")\`._"
+    local count
+    count=$(jq -r '.items | length' "$items_file")
+    if [[ "$count" == "1" ]]; then
+        echo "_1 item in this repo. Its issue, what it must satisfy and the commit that closed it are in \`$(basename "$items_file")\`._"
+    else
+        echo "_$count items in this repo. Each one, with its issue, what it must satisfy and the commit that closed it, is in \`$(basename "$items_file")\`._"
+    fi
 }
 
 pr_repos=()
@@ -328,6 +335,10 @@ while IFS=$'\t' read -r repo pr; do
             fi
         elif [[ -n "$reviewed_sha" ]]; then
             echo "**Reviewed at:** \`$reviewed_sha\`"
+            head_short="${HEAD_SHA:0:8}"
+            if [[ -n "$head_short" && "$head_short" != "$reviewed_sha" ]]; then
+                echo "**PR head:** \`$head_short\`. The commits after \`$reviewed_sha\` are counted below by the items they closed, but have not been reviewed."
+            fi
         fi
         if [[ "$COMMENT_ONLY" == "0" ]]; then
             echo "**Handoff branch:** \`$BRANCH\` (workspace repo)"
@@ -366,7 +377,14 @@ while IFS=$'\t' read -r repo pr; do
 
             echo "## Status"
             echo
-            if [[ -f "$items_file" && "$open_count" == "0" ]]; then
+            if [[ -f "$items_file" && "$open_count" == "0" && "$SUMMARY" == "1" ]]; then
+                merged_count=$(jq -r '[.items[] | select(.disposition == "Merged")] | length' "$items_file")
+                if [[ "$merged_count" == "0" ]]; then
+                    echo "Every **Fix** item for this repo is **Done** on this branch."
+                else
+                    echo "Every **Fix** item for this repo is **Done** on this branch. **Merged** items are sub-findings folded into those Fix items."
+                fi
+            elif [[ -f "$items_file" && "$open_count" == "0" ]]; then
                 cat <<EOF
 All tracked **Fix** items for this repo are **Done** on this branch (see the Status and Notes columns above). **Merged** rows are sub-findings folded into those Fix items.
 EOF

@@ -116,6 +116,54 @@ items_with Minor Done > "$REVIEW_DIR/items.$MINOR_REPO.json"
 body=$(verdict_of "$CLEAN_REPO" 209)
 check_line "posts a plain APPROVED" "$body" "**Verdict:** APPROVED"
 
+check_has() {
+    local what="$1" file="$2" needle="$3"
+    if [[ -f "$file" ]] && grep -qF -- "$needle" "$file"; then
+        echo "  ok    $what"
+    else
+        echo "  FAIL  $what: '$needle' not in '$file'"
+        failures=$((failures + 1))
+    fi
+}
+
+check_lacks() {
+    local what="$1" file="$2" needle="$3"
+    if [[ -f "$file" ]] && ! grep -qF -- "$needle" "$file"; then
+        echo "  ok    $what"
+    else
+        echo "  FAIL  $what: '$needle' is in '$file', or there is no body"
+        failures=$((failures + 1))
+    fi
+}
+
+echo "A summary with nothing open and nothing merged"
+check_has   "says every Fix item is done" "$body" "Every **Fix** item for this repo is **Done** on this branch."
+check_lacks "points at no columns a summary lacks" "$body" "Status and Notes columns"
+check_lacks "mentions no Merged items" "$body" "**Merged**"
+check_has   "counts two items in the plural" "$body" "_2 items in this repo."
+
+echo "A summary with a Merged item"
+jq '.items += [{ id: 3, severity: "Minor", issue: "folded", disposition: "Merged", status: "—", notes: "merged into #1" }]' \
+    "$REVIEW_DIR/items.$CLEAN_REPO.json" > "$REVIEW_DIR/tmp.json"
+mv "$REVIEW_DIR/tmp.json" "$REVIEW_DIR/items.$CLEAN_REPO.json"
+body=$(verdict_of "$CLEAN_REPO" 209)
+check_has "says what Merged items are" "$body" "**Merged** items are sub-findings folded into those Fix items."
+
+echo "A repo with one item"
+jq '{items: [.items[0]]}' "$REVIEW_DIR/items.$CLEAN_REPO.json" > "$REVIEW_DIR/tmp.json"
+mv "$REVIEW_DIR/tmp.json" "$REVIEW_DIR/items.$CLEAN_REPO.json"
+body=$(verdict_of "$CLEAN_REPO" 209)
+check_has "counts one item in the singular" "$body" "_1 item in this repo. Its issue"
+
+echo "A summary told the PR's head"
+out=$("$SHARE" "$TICKET" --repo "$CLEAN_REPO" --pr 209 --comment-only --summary --head dddddddd44444444 --dry-run 2>&1)
+body=$(grep -oE '/[^ ]+share-review-[^ ]+' <<<"$out" | head -1)
+check_has "says the commits after the review have not been reviewed" "$body" \
+    '**PR head:** `dddddddd`. The commits after `cccccccc` are counted below by the items they closed, but have not been reviewed.'
+out=$("$SHARE" "$TICKET" --repo "$CLEAN_REPO" --pr 209 --comment-only --summary --head cccccccc --dry-run 2>&1)
+body=$(grep -oE '/[^ ]+share-review-[^ ]+' <<<"$out" | head -1)
+check_lacks "says nothing more when the head is the reviewed commit" "$body" "**PR head:**"
+
 echo
 if (( failures == 0 )); then
     echo "All checks passed."

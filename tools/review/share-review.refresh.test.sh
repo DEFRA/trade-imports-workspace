@@ -151,7 +151,7 @@ echo "Refuses --head without one PR and --refresh"
 "$SHARE" "$TICKET" --repo "$REPO" --comment-only --refresh --head eeeeeeee --dry-run > /dev/null 2>&1
 check "refused without --pr" "$?" "1"
 "$SHARE" "$TICKET" --repo "$REPO" --pr 1 --comment-only --head eeeeeeee --dry-run > /dev/null 2>&1
-check "refused without --refresh" "$?" "1"
+check "refused without --summary or --refresh" "$?" "1"
 
 echo "Refuses a repo with no re-review recorded"
 out=$("$SHARE" "$TICKET" --repo "$UNREVIEWED_REPO" --pr 2 --comment-only --refresh --dry-run 2>&1)

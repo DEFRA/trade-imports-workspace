@@ -4,6 +4,8 @@
 
 **Maturity**: detailing
 
+**Page**: consignment-contact-select
+
 Asks which address should be used as the consignment's point of contact, offering the address book as a plain list rather than the searchable one the consignment roles get. Governed by `live-animals/addresses`. The page is titled "Contact address for consignment".
 
 ## Requirements

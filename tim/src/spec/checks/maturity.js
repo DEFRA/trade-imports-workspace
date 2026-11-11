@@ -10,15 +10,16 @@ export const MATURITY_LEVELS = [
 ]
 
 const SIGNED_OFF_MENTION = /^\s*\*\*signed off\*\*/i
+const MATURITY_LINE = /^\*\*Maturity\*\*: (\S+)$/
 
 const linesOf = (text) => text.split(/\r\n|\r|\n/)
 
-const pageSpecDomain = (path) =>
+export const pageSpecDomain = (path) =>
   path.match(/^([^/]+)\/journey-pages\/[^/]+$/)?.[1] ?? null
 
 const requiresMaturity = (domain) => domain !== 'admin'
 
-const purposeLineRange = (lines) => {
+export const purposeLineRange = (lines) => {
   const start = lines.findIndex((line) => /^## Purpose\s*$/.test(line))
   if (start === -1) return null
   const next = lines.findIndex(
@@ -29,7 +30,7 @@ const purposeLineRange = (lines) => {
 
 const maturityLineFindings = (capability, { line, index }, purpose) => {
   const findings = []
-  const level = line.match(/^\*\*Maturity\*\*: (\S+)$/)?.[1]
+  const level = line.match(MATURITY_LINE)?.[1]
   if (!MATURITY_LEVELS.includes(level)) {
     findings.push(
       finding(
@@ -89,6 +90,26 @@ export const checkMaturityLine = (capability) => {
     ]
   }
   return maturityLineFindings(capability, mentions[0], purposeLineRange(lines))
+}
+
+/**
+ * The level a journey-pages page spec's one well-formed Maturity line
+ * gives. Null for any other spec, and for a page spec whose Maturity line
+ * is missing, repeated or malformed, which checkMaturityLine reports.
+ *
+ * @param {object} capability
+ * @returns {string|null}
+ */
+export const specMaturityOf = (capability) => {
+  if (!capability.hasSpec || pageSpecDomain(capability.path) === null) {
+    return null
+  }
+  const mentions = linesOf(capability.specText).filter((line) =>
+    /^\s*\*\*maturity\*\*/i.test(line)
+  )
+  if (mentions.length !== 1) return null
+  const level = mentions[0].match(MATURITY_LINE)?.[1]
+  return MATURITY_LEVELS.includes(level) ? level : null
 }
 
 const isRealDate = (isoDate) => {
@@ -168,4 +189,25 @@ export const checkSignedOffMarks = (capability) => {
     ),
     ...misplaced
   ]
+}
+
+/**
+ * A journey-pages page spec marks a scenario signed off only when its
+ * Maturity line is agreed or readyForLive.
+ *
+ * @param {object} capability
+ * @returns {object[]}
+ */
+export const checkSignedOffNeedsSignedOffPage = (capability) => {
+  const level = specMaturityOf(capability)
+  if (level === null || ['agreed', 'readyForLive'].includes(level)) return []
+  return capability.requirements
+    .flatMap((requirement) => requirement.scenarios)
+    .filter((scenario) => signedOffMentions(scenario.body).length > 0)
+    .map((scenario) =>
+      finding(
+        capability.path,
+        `Scenario "${scenario.name}" is marked Signed off, but the page is ${level}. Only a page at agreed or readyForLive has signed-off scenarios.`
+      )
+    )
 }

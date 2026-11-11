@@ -1,9 +1,10 @@
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { TimError } from '../../errors.js'
 import { run } from '../../exec/exec.js'
 import { buildCorpus } from '../corpus.js'
 import {
+  capabilityOf,
   changedCapabilities,
   coverageEntries,
   endsOf,
@@ -81,12 +82,14 @@ const scenarioEntry = ({ capability, before, after, foundIn, found }) => {
   }
 }
 
-const capabilitySpecChanges = async (cwd, ends, capability, foundIn) => {
-  const specPath = `openspec/specs/${capability}/spec.md`
-  const [beforeText, afterText] = await Promise.all([
-    fileAt(cwd, ends.from, specPath),
-    fileAt(cwd, ends.to, specPath)
-  ])
+const specPathOf = (capability) => `openspec/specs/${capability}/spec.md`
+
+const capabilitySpecChanges = ({
+  capability,
+  beforeText,
+  afterText,
+  foundIn
+}) => {
   const before = specScenarios(beforeText)
   const after = specScenarios(afterText)
   const entryFor = (key) => {
@@ -105,6 +108,14 @@ const capabilitySpecChanges = async (cwd, ends, capability, foundIn) => {
   return [...new Set([...before.keys(), ...after.keys()])].flatMap(entryFor)
 }
 
+const committedSpecChanges = async (cwd, ends, capability, foundIn) => {
+  const [beforeText, afterText] = await Promise.all([
+    fileAt(cwd, ends.from, specPathOf(capability)),
+    fileAt(cwd, ends.to, specPathOf(capability))
+  ])
+  return capabilitySpecChanges({ capability, beforeText, afterText, foundIn })
+}
+
 const foundInOf = (named, ends) =>
   named.range === undefined
     ? { commit: named.commit, sha: ends.to }
@@ -121,11 +132,66 @@ const specSignedOffChanges = async (cwd, named) => {
   const scenarios = (
     await Promise.all(
       capabilities.map((capability) =>
-        capabilitySpecChanges(cwd, ends, capability, foundInOf(named, ends))
+        committedSpecChanges(cwd, ends, capability, foundInOf(named, ends))
       )
     )
   ).flat()
   return { scenarios: scenarios.sort(byCapabilityThenId) }
+}
+
+const SPEC_PATHS = ['openspec/specs', 'openspec/coverage']
+
+const workspaceGitLines = async (cwd, args) => {
+  const result = await run('git', args, { cwd })
+  if (result.exitCode !== 0) {
+    throw new TimError(
+      'UNKNOWN',
+      `Can't read the workspace's uncommitted openspec/ change: ${result.stderr.trim()}`
+    )
+  }
+  return result.stdout.split('\n').filter((line) => line.trim() !== '')
+}
+
+const uncommittedCapabilities = async (cwd) => {
+  const [tracked, untracked] = await Promise.all([
+    workspaceGitLines(cwd, [
+      'diff',
+      '--name-only',
+      'HEAD',
+      '--',
+      ...SPEC_PATHS
+    ]),
+    workspaceGitLines(cwd, [
+      'ls-files',
+      '--others',
+      '--exclude-standard',
+      '--',
+      ...SPEC_PATHS
+    ])
+  ])
+  return [
+    ...new Set([...tracked, ...untracked].map(capabilityOf).filter(Boolean))
+  ].sort()
+}
+
+const workingTreeText = (cwd, path) => {
+  const fullPath = join(cwd, path)
+  return existsSync(fullPath) ? readFileSync(fullPath, 'utf8') : null
+}
+
+const uncommittedSpecChanges = async (cwd) => {
+  const capabilities = await uncommittedCapabilities(cwd)
+  const scenarios = await Promise.all(
+    capabilities.map(async (capability) =>
+      capabilitySpecChanges({
+        capability,
+        beforeText: await fileAt(cwd, 'HEAD', specPathOf(capability)),
+        afterText: workingTreeText(cwd, specPathOf(capability)),
+        foundIn: { uncommitted: true }
+      })
+    )
+  )
+  return scenarios.flat().sort(byCapabilityThenId)
 }
 
 const checkedOutRepoPath = async (workspaceRoot, repo, base) => {
@@ -238,40 +304,47 @@ const linkedTestChanges = async (workspaceRoot, repo, base) => {
 
 /**
  * Every change to a signed-off scenario: one the commits or ranges added
- * already signed off, rewrote, removed or took the Signed off mark from,
- * and, with `repo` and `base`, each signed-off scenario in the workspace's
- * own `openspec/` whose linked test in that repo is edited or deleted
- * against `base`, counting uncommitted work. `ticketDraft` is the Jira
- * ticket for a person to approve or refuse them, or null when there are
- * none.
+ * already signed off, rewrote, removed or took the Signed off mark from;
+ * with `uncommitted`, the same for the workspace's uncommitted change to
+ * `openspec/` against HEAD, new files included; and, for each of `repos`
+ * against `base`, each signed-off scenario in the workspace's own
+ * `openspec/` whose linked test in that repo is edited or deleted,
+ * counting uncommitted work. `ticketDraft` is the Jira ticket for a person
+ * to approve or refuse them, or null when there are none.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
  * @param {string[]} [args.commits]
  * @param {string[]} [args.ranges]
- * @param {string} [args.repo] - A folder under `repos/`
- * @param {string} [args.base] - A ref in that repo; given with `repo`
+ * @param {boolean} [args.uncommitted]
+ * @param {string[]} [args.repos] - Folders under `repos/`
+ * @param {string} [args.base] - A ref in each of `repos`; given with them
  * @returns {Promise<{signedOff: object[], skipped: {commit: string, reason: string}[], ticketDraft: {summary: string, description: string}|null}>}
- * @throws {TimError} NOT_FOUND when the repo or its base cannot be found
+ * @throws {TimError} NOT_FOUND when a repo or its base cannot be found
  */
 export const diffSignedOff = async ({
   workspaceRoot,
   commits = [],
   ranges = [],
-  repo,
+  uncommitted = false,
+  repos = [],
   base
 }) => {
   const named = [
     ...commits.map((commit) => ({ commit })),
     ...ranges.map((range) => ({ range }))
   ]
-  const [specOutcomes, testChanges] = await Promise.all([
+  const [specOutcomes, uncommittedChanges, testChanges] = await Promise.all([
     Promise.all(named.map((each) => specSignedOffChanges(workspaceRoot, each))),
-    repo === undefined ? [] : linkedTestChanges(workspaceRoot, repo, base)
+    uncommitted ? uncommittedSpecChanges(workspaceRoot) : [],
+    Promise.all(
+      repos.map((repo) => linkedTestChanges(workspaceRoot, repo, base))
+    )
   ])
   const signedOff = [
     ...specOutcomes.flatMap((outcome) => outcome.scenarios ?? []),
-    ...testChanges
+    ...uncommittedChanges,
+    ...testChanges.flat()
   ]
   return {
     signedOff,

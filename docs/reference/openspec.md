@@ -84,9 +84,9 @@ spec.
 
 | Command | Group/flag | Contract |
 |---|---|---|
-| `lint` | `--specs` | Conventions: Purpose, Requirements, ≥1 scenario, stable IDs, a THEN, MUST not SHALL, live cross-refs, a page spec's Maturity line, well-formed Signed off marks |
+| `lint` | `--specs` | Conventions: Purpose, Requirements, ≥1 scenario, stable IDs, a THEN, MUST not SHALL, live cross-refs, a page spec's Maturity and Page lines, well-formed Signed off marks, Signed off marks on a page spec only at `agreed` or `readyForLive` |
 | `lint` | `--coverage` | Shape, enums, scenario and requirement rollups, a `none` carries notes, `areaCode`, `specFile`, no id twice in one `coverage.json` |
-| `lint` | `--binding` | A `coverage.json` per `spec.md` and the reverse; ID parity; names verbatim; every link's file and test title present under `repos/` |
+| `lint` | `--binding` | A `coverage.json` per `spec.md` and the reverse; ID parity; names verbatim; every link's file and test title present under `repos/`; each page spec's Maturity matches its page's `maturity` in the frontend under `repos/` |
 | `gaps` | `--none` / `--partial` | Every non-full row (naming neither returns both; naming both unions them) |
 
 The three lint groups are independent — naming any narrows to those,
@@ -113,7 +113,22 @@ Two marks tie the spec to a page's maturity banner. The full rules are in
 | Mark | Where | Lint checks |
 |---|---|---|
 | `**Maturity**: exploring` | First line under `## Purpose` in every `journey-pages` page spec | Present once, under Purpose, one of `exploring`, `detailing`, `agreed`, `readyForLive`. Admin page specs may leave it out. No other spec carries one. |
-| `**Signed off**: 2026-11-11` | The line directly after a scenario's ID line, in any spec | Once per scenario, directly after the ID line, a real `YYYY-MM-DD` date. Never on a requirement or outside a scenario. |
+| `**Page**: hub` | Under `## Purpose` in a `journey-pages` page spec whose folder name is not its page's `id` | At most once, under Purpose, only in a page spec, one word: the `id` in the page's `page.js`, declared by one `page.js` only. |
+| `**Signed off**: 2026-11-11` | The line directly after a scenario's ID line, in any spec | Once per scenario, directly after the ID line, a real `YYYY-MM-DD` date. Never on a requirement or outside a scenario. In a page spec, only when its Maturity is `agreed` or `readyForLive`. |
+
+With the frontend checked out under `repos/`, the binding group also
+checks each page spec's Maturity line matches the `maturity` its page
+declares. The page is the one in a `page.js` under the frontend's `src/`
+whose `id` is the spec's folder name, or the one its Page line names.
+
+| Spec prefix | Frontend |
+|---|---|
+| `live-animals` | `trade-imports-animals-frontend` |
+| `plants` | `trade-imports-plants-frontend` |
+| `ins` | `trade-imports-ins-frontend` |
+
+Admin page specs are not checked. A frontend that is not checked out is
+listed under `skipped`, as `page-maturity`.
 
 A signed-off scenario is part of a signed-off page's contract, and the
 tests its coverage links are that contract's evidence. A change to

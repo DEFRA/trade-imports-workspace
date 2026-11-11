@@ -4,6 +4,8 @@
 
 **Maturity**: detailing
 
+**Page**: transporter-add
+
 Asks what kind of transporter is being added, so the journey knows which form to show next. The page is reached only from "Add a transporter" on the transporter list (`live-animals/journey-pages/transporter`, which carries the full DAERA/EU authorisation guidance) — it is no longer a mandatory step of the transport section itself. The page is titled "Choose a transporter type".
 
 ## Requirements

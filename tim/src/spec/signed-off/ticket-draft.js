@@ -9,7 +9,8 @@ const CHANGE_WORDS = {
 
 const SHORT_SHA_LENGTH = 12
 
-const foundInWords = ({ commit, sha, range, repo, base }) => {
+const foundInWords = ({ uncommitted, commit, sha, range, repo, base }) => {
+  if (uncommitted) return "the workspace's uncommitted openspec/ change"
   if (commit !== undefined) return `commit ${sha.slice(0, SHORT_SHA_LENGTH)}`
   if (range !== undefined) return `range ${range}`
   return `repos/${repo} against ${base}, committed and uncommitted`

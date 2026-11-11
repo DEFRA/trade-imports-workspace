@@ -4,6 +4,8 @@
 
 **Maturity**: detailing
 
+**Page**: accompanying-documents
+
 The accompanying documents attached to a notification — uploading, virus-scanning, viewing, removing, their durability once attached, and the condition under which the page itself can be opened. The page is titled "Upload documents"; whether it is offered at all and whether a journey opened out of context lands here are `live-animals/journey-flow`'s (REQ-FLOW-005, REQ-FLOW-008, REQ-FLOW-009), and every Overview row being linked with no blocked state is `live-animals/journey-pages/overview`'s (REQ-OVERVIEW-002).
 
 A document reference's rules (REQ-DOCS-006) are not chosen here: the Live

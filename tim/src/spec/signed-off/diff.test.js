@@ -284,6 +284,61 @@ describe('#diffSignedOff over the spec', () => {
   })
 })
 
+describe('#diffSignedOff over the uncommitted spec', () => {
+  const NEW_CAPABILITY = 'plants/journey-pages/destination'
+
+  test('Should report a signed-off scenario rewritten in the working tree, and one added signed off in a new spec file', async () => {
+    const workspacePath = await workspaceWithSpec([LISTS, SEARCH])
+    writeSpec(workspacePath, [
+      { ...LISTS, then: 'the page lists only some countries' },
+      { ...SEARCH, then: 'the country is offered first' }
+    ])
+    writeFiles(workspacePath, {
+      [`openspec/specs/${NEW_CAPABILITY}/spec.md`]: specOf([
+        { ...HINT, id: 'SCN-DEST-001-A' }
+      ])
+    })
+
+    const result = await diffSignedOff({
+      workspaceRoot: workspacePath,
+      uncommitted: true
+    })
+
+    expect(
+      result.signedOff.map(({ id, capability, change, foundIn }) => ({
+        id,
+        capability,
+        change,
+        foundIn
+      }))
+    ).toEqual([
+      {
+        id: 'SCN-DEST-001-A',
+        capability: NEW_CAPABILITY,
+        change: 'added',
+        foundIn: { uncommitted: true }
+      },
+      {
+        id: 'SCN-ORIGIN-001-A',
+        capability: CAPABILITY,
+        change: 'changed',
+        foundIn: { uncommitted: true }
+      }
+    ])
+  })
+
+  test('Should find nothing, with no ticket draft, when the working tree matches HEAD', async () => {
+    const workspacePath = await workspaceWithSpec([LISTS])
+
+    const result = await diffSignedOff({
+      workspaceRoot: workspacePath,
+      uncommitted: true
+    })
+
+    expect(result).toEqual({ signedOff: [], skipped: [], ticketDraft: null })
+  })
+})
+
 describe('#diffSignedOff over a repo', () => {
   test('Should report each edited or deleted test linked to a signed-off scenario, committed or not, naming the scenario', async () => {
     const workspacePath = await workspaceWithSpec([
@@ -304,7 +359,7 @@ describe('#diffSignedOff over a repo', () => {
 
     const result = await diffSignedOff({
       workspaceRoot: workspacePath,
-      repo: REPO,
+      repos: [REPO],
       base: 'HEAD~1'
     })
 
@@ -367,7 +422,7 @@ describe('#diffSignedOff over a repo', () => {
 
     const result = await diffSignedOff({
       workspaceRoot: workspacePath,
-      repo: REPO,
+      repos: [REPO],
       base: 'HEAD'
     })
 
@@ -381,7 +436,7 @@ describe('#diffSignedOff over a repo', () => {
     await expect(
       diffSignedOff({
         workspaceRoot: workspacePath,
-        repo: REPO,
+        repos: [REPO],
         base: 'origin/nope'
       })
     ).rejects.toMatchObject({
@@ -396,7 +451,7 @@ describe('#diffSignedOff over a repo', () => {
     await expect(
       diffSignedOff({
         workspaceRoot: workspacePath,
-        repo: 'nowhere',
+        repos: ['nowhere'],
         base: 'HEAD'
       })
     ).rejects.toMatchObject({

@@ -26,7 +26,7 @@ const jsonAt = async (cwd, ref, path) => {
   }
 }
 
-const capabilityOf = (file) =>
+export const capabilityOf = (file) =>
   file.match(SPEC_FILE)?.[1] ?? file.match(COVERAGE_FILE)?.[1] ?? null
 
 export const changedCapabilities = async (cwd, from, to) => {

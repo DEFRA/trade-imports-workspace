@@ -301,9 +301,11 @@ for whoever reviews a finished theme, `refutedFindings` every finding verificati
 - at **`no-buildable`**, when `tim backlog next` names nothing, or an explicit list is
   built out;
 - at **`agent-budget`**, before starting an increment that would take the run past the
-  `Workflow` tool's cap of 1000 agents. An increment is up to 60 agents on Claude and 68 on
-  Codex with `ciFixAttempts: 3`, and 4 more for each attempt beyond three, so a run fits
-  roughly 16 or 14 of them. Under the branch lifecycle the run also keeps
+  `Workflow` tool's cap of 1000 agents. An increment is up to 76 agents on Claude and 84 on
+  Codex with `ciFixAttempts: 3`, and 8 more for each attempt beyond three, so a run fits
+  roughly 13 or 11 of them. That worst case includes the signed-off check, and the ticket and
+  park agents a change to a signed-off scenario adds. A row parked for a signed-off ruling
+  counts towards the cap as a landed one does. Under the branch lifecycle the run also keeps
   room for one theme's engineering review (twice the number of repos, plus 9) and counts each
   one it runs. Nothing is wrong: launch again;
 - at **`gate`** (full lifecycle only), when an increment carries a designed HALT-FOR-REVIEW
@@ -474,6 +476,7 @@ refuses to commit a spec change rather than put it on the base branch with no re
 | Judge | 1 | Replaces the skills' interactive `WALKER`. Rules each surviving finding fix-now / defer / reject **without asking a human**. Every code-quality finding is fix-now, in each twin |
 | Fix | 1–3 (Claude) | Applies only what the judge ruled fix-now, after recording each repo's staged tree. Checks itself with the gate's unit and FIT phases, like the implementor. A style re-reviewer then reads only the fixer's hunks for code quality, and sends any new finding back to a second fix once |
 | Ladder | 1 | Runs `tim build gate --phase all` once into `logs/<id>-ladder/` (a row that owes only some phases: each of those, every one even after a red), then the plan's sections 5 and 6 checks, then validates the spec write again. Given the implementor's and fixer's notes and every baseline rung with its log |
+| Signed off | 1, plus 2 when it finds a change | After the branch guard, runs `tim spec diff --signed-off --uncommitted` with `--repo` for each of the row's repos and `--base origin/<branch>`. Under the full lifecycle, a row that builds the workspace adds `--range origin/<branch>...HEAD`, so a resumed attempt's committed spec change is checked too. Nothing found: the row lands as before. A change to a signed-off scenario, or an edit to a test linked to one: a light agent raises the ticket `result.ticketDraft` drafts (full lifecycle; the branch lifecycle writes the draft to `logs/<id>-signed-off-ticket/` instead), and a light agent sets the row to `blocked` with an open question naming the ticket, before it lands. Then the row lands and its pull requests are raised as drafts, or made drafts when already open. No CI is watched and nothing merges, and the loop builds the next row. A run that dies after the park leaves the row withheld, so no later launch merges it. See [the signed-off check](../references/BUILD.md#the-signed-off-check) |
 | Land | 2–4, plus up to 4 a quality gate fix attempt | A branch guard first: every repo must be on the run's branch, and one on another branch at the same commit is moved back. Then commits on green and records the commit; when the increment builds the workspace repo, a light agent reads back what its commit holds, and a second looks up any path the start stage could not name. Under the branch lifecycle it pushes too, and says why a push did not go: a refusal from the workspace's pre-push quality gate goes to a quality gate fixer, a non-fast-forward rejection does not — see [The CI fixer, the quality gate fixer and a whole theme are reviewed too](#the-ci-fixer-the-quality-gate-fixer-and-a-whole-theme-are-reviewed-too). The increment is not done until its PRs are merged, so the merge stage is what marks it. A red ladder, a failed land, a repo that cannot be moved back, or any other stop after implement goes through the same preserve step — a pushed wip commit — so the tree is left clean and the attempt recoverable |
 | CI fix review | 0–2 per CI fix | A style reviewer reads each commit the CI fixer pushed, for code quality, and sends any finding to one style fix before the watcher looks again. See [The CI fixer, the quality gate fixer and a whole theme are reviewed too](#the-ci-fixer-the-quality-gate-fixer-and-a-whole-theme-are-reviewed-too) |
 | Spec diff comment | 1–3, after the ticket closes | Full lifecycle only. A writer runs `tim spec diff` on the row's workspace merge commit and writes a Jira comment to `tickets/<id>-spec-diff.txt`: the scenarios added, changed and removed on `main`, one line on their coverage, and a link to every merged PR, in plain words with no backlog ids. A checker compares it with the diff and fixes it; a light agent posts it with `tim jira comment`, dry run then `--confirm`. The result carries `specDiffComment`. A failure at any step is recorded there and never stops the run |
@@ -629,6 +632,7 @@ spec behind.
 | Review | The consistency reviewer judges the write and any `none` reason against the plan's behaviour changes. Its findings on the spec are written `workspace:openspec/<path>` and verified against the workspace |
 | Fix | A fix that changes behaviour updates the spec too, and reports its own line |
 | Ladder | Red when neither the implementor nor the fixer reported a `Spec sync:` line; a fixer with none is normal. Otherwise it validates every capability the lines name that still exists, confirms each `deleted:` one is gone, and lints each prefix again |
+| Signed off | Before land, `tim spec diff --signed-off --uncommitted` checks the uncommitted write for a change to a signed-off scenario. A change parks the row for a person's ruling |
 | Land | Commits `openspec/` by the existing path-limited rule, with the same rollback: no second commit path |
 
 The prompts say what the spec records, from `openspec/config.yaml`: observable behaviour only. A wording change is

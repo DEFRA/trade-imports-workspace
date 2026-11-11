@@ -52,8 +52,9 @@ describe('tim spec diff', () => {
     ],
     [
       ['--signed-off'],
-      'Name what to check with --commit, --range, or --repo and --base.'
+      'Name what to check with --commit, --range, --uncommitted, or --repo and --base.'
     ],
+    [['--uncommitted'], '--uncommitted works with --signed-off only.'],
     [
       ['--signed-off', '--repo', 'trade-imports-plants-frontend'],
       'Give --repo and --base together.'

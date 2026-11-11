@@ -674,6 +674,7 @@ comment.
 ```bash
 tim spec diff --signed-off --range origin/main...HEAD
 tim spec diff --signed-off --repo trade-imports-plants-frontend --base origin/main --json
+tim spec diff --signed-off --uncommitted --repo trade-imports-plants-frontend --repo trade-imports-ins-tests --base origin/main --json
 ```
 
 With `--signed-off`, the report holds only changes to signed-off scenarios (a
@@ -690,11 +691,16 @@ it reports a scenario that is:
 Marking an existing scenario signed off is a promotion, reviewed in its own
 pull request, so it does not count.
 
+`--uncommitted` makes the same comparison between HEAD and the workspace's
+working tree under `openspec/`, new files included. The build loop uses it on
+each row's spec sync before the row is committed.
+
 `--repo <name> --base <ref>` reads the files changed in `repos/<name>` against
 `<ref>`, committed and uncommitted. It reports `test-edited` or `test-deleted`
 for each signed-off scenario in the workspace's `openspec/` whose test, linked
 by `repo` and `file` in `coverage.json`, is among them. A new file does not
-count. The scenario's links come from the workspace's working tree, so a
+count. Repeat `--repo` to check several repos against the same `--base` in one
+report. The scenario's links come from the workspace's working tree, so a
 scenario removed in the same change is caught by `--commit` or `--range`, not
 by `--repo`.
 

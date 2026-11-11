@@ -4,6 +4,8 @@
 
 **Maturity**: detailing
 
+**Page**: notification-view
+
 The page on which a whole notification is read back before submission, and read again once submitted. The page is titled "Review your notification".
 
 ## Requirements

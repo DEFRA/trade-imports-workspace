@@ -4,6 +4,8 @@
 
 **Maturity**: detailing
 
+**Page**: animalIdentification
+
 The identifier records entered for the animals of each species on a consignment: the page that groups identification into one section per commodity with one card per species, captures one record at a time, and limits how many records a species may hold. The page is titled "Identification details".
 
 ## Requirements

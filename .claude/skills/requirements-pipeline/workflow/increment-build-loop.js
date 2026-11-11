@@ -1,7 +1,7 @@
 export const meta = {
   name: 'increment-build-loop',
   description:
-    'Build backlog increments one at a time, each through a full ticket-to-merge lifecycle: raise the ticket → cut the branch → plan the decisions, homes and owners against the live tree → lint the plan for code text and review it before any code exists, stopping only on a structural finding → implement the plan and every detail finding the plan review left open and keep the Behaviour Spec current → style review + code review + consistency review → verify findings by kind (functional ones refuted by default, code-quality ones real by default) → judge, with the row\'s `rigour` deciding how much of the planning and reading it gets, and whether a verifier runs before the judge or the judge verifies the findings itself → fix → style re-review of the fix → the plan\'s ladder → commit → PR → CI, with a style review of every CI fix → merge → close the ticket → once a theme\'s last row lands, check the spec under every prefix it touched and, on a branch run, review the whole theme',
+    'Build backlog increments one at a time, each through a full ticket-to-merge lifecycle: raise the ticket → cut the branch → plan the decisions, homes and owners against the live tree → lint the plan for code text and review it before any code exists, stopping only on a structural finding → implement the plan and every detail finding the plan review left open and keep the Behaviour Spec current → style review + code review + consistency review → verify findings by kind (functional ones refuted by default, code-quality ones real by default) → judge, with the row\'s `rigour` deciding how much of the planning and reading it gets, and whether a verifier runs before the judge or the judge verifies the findings itself → fix → style re-review of the fix → the plan\'s ladder → a signed-off check, where a change to a signed-off scenario raises a ticket, keeps the PRs drafts and parks the row while the loop carries on → commit → PR → CI, with a style review of every CI fix → merge → close the ticket → once a theme\'s last row lands, check the spec under every prefix it touched and, on a branch run, review the whole theme',
   whenToUse:
     'Running any increment backlog under workareas/ in the one backlog shape (fields defined in .claude/skills/requirements-pipeline/references/backlog.schema.json): each row is a requirement, and the loop plans the how just in time. One invocation drains the backlog, deriving its own next increment and building each one with a full multi-agent quality pass, until stopAfter increments have landed or something stops it. Pass the configuration as args, an object or a JSON string. Every key this workflow needs is required, and a missing one stops the run before any agent starts. planOnly:true writes the plan and stops. lifecycle:"full" runs the ticket-to-merge lifecycle; lifecycle:"branch" builds straight onto an existing long-lived branch with no Jira and no merge, finding the open PRs rather than raising them.',
   phases: [
@@ -17,6 +17,7 @@ export const meta = {
     { title: 'Judge' },
     { title: 'Fix' },
     { title: 'Ladder' },
+    { title: 'Signed off' },
     { title: 'Land' },
     { title: 'Pull request' },
     { title: 'CI' },
@@ -141,7 +142,7 @@ const APPROVAL_POLLS = Math.max(1, Math.ceil(APPROVAL_WAIT_MINUTES / 2))
 
 const AGENT_CAP = 1000
 const BUDGETED_CI_FIX_ATTEMPTS = 3
-const AGENTS_PER_INCREMENT_AT_BUDGETED_CI_FIXES = { claude: 73, codex: 81 }
+const AGENTS_PER_INCREMENT_AT_BUDGETED_CI_FIXES = { claude: 76, codex: 84 }
 const AGENTS_PER_CI_FIX_ATTEMPT = 4
 const AGENTS_PER_GATE_FIX_ATTEMPT = 4
 const STARTUP_AGENTS = 4
@@ -4702,6 +4703,114 @@ Return the structured output only.`,
     light({ label: `${id} done`, phase: 'Done', schema: incrementSchema })
   )
 
+const SIGNED_OFF_PHASE = 'Signed off'
+
+const SIGNED_OFF_CHECK_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'exitCode', 'changes', 'summary'],
+  properties: {
+    ok: { type: 'boolean', description: 'tim exited 0, or exited 3 with `ok` true in its JSON envelope' },
+    exitCode: { type: 'number', description: 'The exit code tim spec diff finished with' },
+    changes: { type: 'integer', description: 'How many entries `result.signedOff` holds: 0 when tim exited 0' },
+    summary: {
+      type: 'string',
+      description: "Each change as `<change> <scenario id> <capability>`, or tim's error word for word when ok is false"
+    }
+  },
+  additionalProperties: false
+}
+
+const SIGNED_OFF_TICKET_SCHEMA = {
+  type: 'object',
+  required: ['ok', 'summary'],
+  properties: {
+    ok: { type: 'boolean' },
+    key: { type: 'string', description: 'The Jira key tim jira create raised or its receipt names. Left out when no Jira call is made' },
+    summary: { type: 'string' }
+  },
+  additionalProperties: false
+}
+
+const signedOffLog = (id) => `${WORKAREA_TILDE}/logs/${id}-signed-off.json`
+const signedOffDraftDir = (id) => `${WORKAREA}/logs/${id}-signed-off-ticket`
+const signedOffDraftDirTilde = (id) => `${WORKAREA_TILDE}/logs/${id}-signed-off-ticket`
+
+const repoFolderOf = (key) => REPO_PATH[key].replace(/^repos\//, '')
+
+const signedOffCommand = (id, rowRepos, { workspaceOnWorkBranch }) => {
+  const repoFlags = rowRepos.filter((key) => !isWorkspaceRepo(key)).map((key) => `--repo ${repoFolderOf(key)}`)
+  return [
+    'tim spec diff --signed-off --uncommitted',
+    workspaceOnWorkBranch ? `--range origin/${BASE_BRANCH}...HEAD` : null,
+    ...repoFlags,
+    repoFlags.length > 0 ? `--base origin/${BASE_BRANCH}` : null,
+    `--workspace ${TILDE} --json > ${signedOffLog(id)} 2> ${signedOffLog(id).replace(/\.json$/, '.err')}`
+  ]
+    .filter(Boolean)
+    .join(' ')
+}
+
+const signedOffCheckPrompt = (id, rowRepos, workspace) => `You are the SIGNED-OFF CHECK for increment ${id}. Its ladder is green, so its spec sync is
+verified. Say whether it changes a signed-off scenario in the Behaviour Spec, or edits a test linked to one. You change
+nothing: no file, no commit, no backlog write.
+${guardrails()}
+1. Run exactly one command, in the foreground:
+   \`${signedOffCommand(id, rowRepos, workspace)}\`
+   It compares the workspace's uncommitted \`openspec/\` with HEAD${workspace.workspaceOnWorkBranch ? `, the workspace's commits on this branch, a resumed attempt's
+   included, with \`origin/${BASE_BRANCH}\`` : ''}, and each of the increment's repos, committed and uncommitted, with
+   \`origin/${BASE_BRANCH}\`.
+2. Read that file once with \`jq -c '{ok, signedOff: [.result.signedOff[]? | {change, id, capability}], errors}' ${signedOffLog(id)}\`.
+3. Report \`exitCode\` as tim's exit code.
+   - 0 → nothing signed off changes: ok:true, changes 0.
+   - 3 with \`ok\` true → ok:true, \`changes\` the number of entries in \`signedOff\`, and each one in your summary.
+   - anything else, or 3 with \`ok\` false → ok:false, with \`errors[0].message\` word for word in your summary.
+Never judge whether a change is right: a person decides that.
+Return the structured output only.`
+
+const signedOffDraftSteps = (id) => `1. \`mkdir -p ${signedOffDraftDirTilde(id)}\`
+2. \`jq -r '.result.ticketDraft.description' ${signedOffLog(id)} > ${signedOffDraftDirTilde(id)}/description.txt\`
+3. \`jq -r '.result.ticketDraft.summary' ${signedOffLog(id)}\` prints the ticket's summary.`
+
+const signedOffTicketPrompt = (id, rowTicketKey) =>
+  IS_BRANCH
+    ? `You are the SIGNED-OFF TICKET STAGE for increment ${id}. It changes behaviour that was signed off, so a person must
+approve or refuse it. This lifecycle makes no Jira call: write tim's ticket draft where a person raises it from.
+${guardrails()}
+${signedOffDraftSteps(id)}
+4. Write that summary, word for word, to ${signedOffDraftDir(id)}/summary.txt with the Write tool.
+Change nothing else. Leave \`key\` out.
+Return the structured output only.`
+    : `You are the SIGNED-OFF TICKET STAGE for increment ${id}. It changes behaviour that was signed off, so a person must
+approve or refuse it. Raise the Jira ticket tim drafted. Change nothing else: no code, no commit, no backlog write.
+${guardrails()}
+${signedOffDraftSteps(id)}
+4. Write ${signedOffDraftDir(id)}/ticket.json with the Write tool:
+   \`{"schema":"tim-ticket/1","project":"${JIRA_PROJECT}","type":"Task","summary":"<that summary, word for word>","descriptionFile":"description.txt","parent":"${EPIC}","relates":["${rowTicketKey}"]}\`
+5. Check for a receipt: \`test -f ${signedOffDraftDirTilde(id)}/ticket.created.json\`. Where it exists, an earlier
+   attempt raised the ticket: report the key \`jq -r '.key' ${signedOffDraftDirTilde(id)}/ticket.created.json\` prints,
+   and skip steps 6 and 7.
+6. Dry run: \`tim jira create --from ${signedOffDraftDirTilde(id)}/ticket.json --workspace ${TILDE} --json\`. Read
+   \`result.planId\`.
+7. \`tim jira create --from ${signedOffDraftDirTilde(id)}/ticket.json --confirm <that planId> --workspace ${TILDE} --json\`.
+Report the key it created. ok:false, with tim's message word for word, when either call fails.
+Return the structured output only.`
+
+const signedOffQuestion = (id, signedOff) =>
+  signedOff.key
+    ? `Awaiting a signed-off ruling on ${signedOff.key}: this row changes ${signedOff.changes} signed-off scenario(s). Its pull requests stay drafts until a person approves or refuses the change.`
+    : `Awaiting a signed-off ruling: this row changes ${signedOff.changes} signed-off scenario(s). Raise the ticket drafted in ${signedOffDraftDirTilde(id)} for a person to approve or refuse the change. The pull requests stay drafts until then.`
+
+const parkForRulingPrompt = (id, signedOff) => `Increment ${id} changes behaviour that was signed off, and is about to land. Park its row
+now, before it lands, so no later launch builds, merges or closes it until a person rules on the change. That is your
+whole job.
+${guardrails()}
+${SET_ROW_RULE}
+Run exactly one command: \`${setRow(id, `--status blocked --open-question "${signedOffQuestion(id, signedOff)}"`)}\`
+It leaves \`ticket\`, \`branch\`, \`attempt\`, \`commit\` and \`prs\` in place, and the land and pull request stages still
+record theirs.
+Report ok:true only when tim exited 0 and its JSON reports ok:true.
+Return the structured output only.`
+
 const WORKSPACE_RETURN_SCHEMA = {
   type: 'object',
   required: ['ok', 'summary'],
@@ -5443,6 +5552,7 @@ const reviewChecks = []
 const refutedFindings = []
 const rowsBuiltWithoutStyleReview = []
 let built = 0
+let parkedForRuling = 0
 let lastId = null
 let stopped = null
 let themeReviewsRun = 0
@@ -5490,7 +5600,7 @@ while (stopped === null) {
     break
   }
 
-  if (agentsThrough(built + 1) + themeReviewAgents() > AGENT_CAP) {
+  if (agentsThrough(built + parkedForRuling + 1) + themeReviewAgents() > AGENT_CAP) {
     stopped = {
       reason: 'agent-budget',
       detail: `${built} increment(s) landed. Another would take this run past the Workflow tool's ${AGENT_CAP}-agent cap at up to ${agentsPerIncrement()} agents per increment on ${EXECUTOR}${IS_BRANCH ? `, keeping ${THEME_REVIEW_AGENTS} for a theme's engineering review` : ''}. Launch the workflow again with the same args to carry on`
@@ -5681,6 +5791,7 @@ while (stopped === null) {
   let mergesInProgress = []
   let workspaceEdits = []
   let specPrefixesOfRow = { planned: [], written: [] }
+  let signedOff = null
   let impl = null
   let files = []
   let fixResult = null
@@ -5730,6 +5841,72 @@ while (stopped === null) {
       detail: guard?.summary ?? 'the branch guard died',
       planReviewed: Boolean(plan?.ok)
     })
+  }
+
+  const preserveBeforeLand = async (outcome, reason, evidence) => {
+    results.push(
+      await preserveAttempt({ ...attempt, phaseName: 'Land', reason, evidence, outcome, detail: evidence, planReviewed: Boolean(plan?.ok) })
+    )
+    stopped = { reason: outcome, detail: `${id}: ${evidence}` }
+  }
+
+  const checkSignedOff = async () => {
+    phase(SIGNED_OFF_PHASE)
+    const check = await agent(
+      signedOffCheckPrompt(id, repos ?? REPO_KEYS, { workspaceOnWorkBranch: !IS_BRANCH && buildsWorkspace() }),
+      light({ label: `${id} signed off`, phase: SIGNED_OFF_PHASE, schema: SIGNED_OFF_CHECK_SCHEMA })
+    )
+    if (!check?.ok) {
+      await preserveBeforeLand('signed-off-check-failed', 'the signed-off check could not run', check?.summary ?? 'the check agent died')
+      return { stop: true }
+    }
+    if (check.changes === 0) return { found: null }
+    const raised = await agent(
+      signedOffTicketPrompt(id, ticket?.key),
+      light({ label: `${id} signed-off ticket`, phase: SIGNED_OFF_PHASE, schema: SIGNED_OFF_TICKET_SCHEMA })
+    )
+    if (!raised?.ok || (!IS_BRANCH && !raised.key)) {
+      await preserveBeforeLand('signed-off-ticket-failed', 'the ticket for its signed-off change could not be raised', raised?.summary ?? 'the ticket agent died')
+      return { stop: true }
+    }
+    const found = { changes: check.changes, key: raised.key ?? null, draft: signedOffDraftDirTilde(id), summary: check.summary }
+    const parkedRow = await agent(
+      parkForRulingPrompt(id, found),
+      light({ label: `${id} park`, phase: SIGNED_OFF_PHASE, schema: incrementSchema })
+    )
+    if (!parkedRow?.ok) {
+      await preserveBeforeLand('park-failed', 'its row could not be parked for a signed-off ruling', parkedRow?.summary ?? 'the park agent died')
+      return { stop: true }
+    }
+    log(
+      `${id}: CHANGES ${found.changes} SIGNED-OFF SCENARIO(S) — ${found.key ? `raised ${found.key}` : `ticket drafted in ${found.draft}`}. Its row is parked as blocked before it lands, so no later launch merges it; it lands and its pull requests stay drafts`
+    )
+    return { found }
+  }
+
+  const finishParkedRow = async () => {
+    const workspaceBack = !IS_BRANCH && buildsWorkspace() ? await returnWorkspaceToBase(id, workBranch) : { ok: true }
+    parkedForRuling += 1
+    results.push({
+      id,
+      ticket: ticket?.key,
+      branch: workBranch,
+      outcome: 'awaiting-signed-off-ruling',
+      signedOffTicket: signedOff.key,
+      signedOffDraft: signedOff.draft,
+      commit: land?.commit,
+      prs: prs.map((p) => p.url),
+      detail: signedOff.summary,
+      findings: findingCounts()
+    })
+    log(
+      `${id}: AWAITING A SIGNED-OFF RULING${signedOff.key ? ` on ${signedOff.key}` : ''} — landed and parked as blocked; the loop carries on with rows that do not wait for it`
+    )
+    if (!workspaceBack.ok) {
+      stopped = { reason: 'workspace-not-on-base', detail: workspaceBack.detail }
+      return false
+    }
+    return true
   }
 
   log(
@@ -6513,6 +6690,11 @@ Return the structured output only.`,
     break
   }
 
+  const signedOffChecked = await checkSignedOff()
+  if (signedOffChecked.stop) break
+  signedOff = signedOffChecked.found
+  phase('Land')
+
   const workspaceFiles = [...(impl.changedFiles ?? []), ...(fixResult?.changedFiles ?? [])].filter((file) =>
     file.startsWith(`${WORKSPACE_KEY}:`)
   )
@@ -6619,6 +6801,11 @@ Return the structured output only.`,
   let mergedCommits = []
 
   finish: {
+    if (IS_BRANCH && signedOff) {
+      if (!(await finishParkedRow())) break
+      continue
+    }
+
     if (IS_BRANCH) {
       let ci = null
       let ciAttempt = 0
@@ -6761,15 +6948,19 @@ For EACH of those repos, in that order${repos.includes(TESTS_KEY) ? ` — except
    non-fast-forward, report ok:false naming the repo; a diverged branch needs a human.
 4. LOOK FOR AN EXISTING PR FIRST. One command:
    \`gh pr list --repo <ghRepo> --head ${workBranch} --state all --json number,url,state,title\`
-   - It returns an OPEN pr → REUSE IT. Do not create anything. raised:false.
+   - It returns an OPEN pr → REUSE IT. Do not create anything. raised:false.${signedOff ? `
+     This increment changes signed-off behaviour, so make it a draft: \`gh pr ready <number> --repo <ghRepo> --undo\`.
+     A PR that is already a draft stays one. Then \`gh pr comment <number> --repo <ghRepo> --body "Waits on ${signedOff.key}, a ruling on a change to signed-off behaviour."\`` : ''}
    - It returns only a MERGED or CLOSED pr → report ok:false. A merged branch being re-pushed means the
      lifecycle is out of step and a new PR would hide that.
    - It returns nothing → create one:
      a. Write the body with the Write tool to ${WORKAREA}/logs/${id}-pr-<repo>.md. It says what changed, names
         the increment id and the ticket, and for an increment across several repos names the sibling repos and
         states the merge order and why. Plain GitHub markdown here — a PR body is markdown, unlike the Jira ticket.
-     b. \`gh pr create --repo <ghRepo> --base ${BASE_BRANCH} --head ${workBranch} --title "${ticket.key} <the increment title>" --body-file ${WORKAREA_TILDE}/logs/${id}-pr-<repo>.md\`
-     raised:true.
+     b. \`gh pr create --repo <ghRepo> --base ${BASE_BRANCH} --head ${workBranch}${signedOff ? ' --draft' : ''} --title "${ticket.key} <the increment title>" --body-file ${WORKAREA_TILDE}/logs/${id}-pr-<repo>.md\`
+     raised:true.${signedOff ? `
+     THIS INCREMENT CHANGES SIGNED-OFF BEHAVIOUR, and ${signedOff.key} asks a person to approve or refuse it. Raise every
+     PR as a draft, as above, and say in its body that it waits on ${signedOff.key}. Never take a PR out of draft.` : ''}
 5. **IMMEDIATELY** persist it: \`${setRow(id, `--pr '{"repo":"<repo>","url":"<url>","number":<n>}'`)}\`.
    It adds the PR, or merges these fields into the entry already recorded with that url. Do this after EACH
    repo, not once at the end: a run that dies between two PRs must not lose the first.
@@ -6790,6 +6981,11 @@ Return the structured output only.`,
 
     prs = [...pr.prs]
     log(`${id}: ${prs.length} PR(s) — ${prs.map((p) => p.url).join(' ')}`)
+
+    if (signedOff) {
+      if (!(await finishParkedRow())) break
+      continue
+    }
 
     phase('CI')
 
@@ -7247,6 +7443,7 @@ if (workspaceLeftOn) {
   stopped = { ...stopped, detail: `${stopped.detail.replace(/\.$/, '')}. ${workspaceStaysNote(workspaceLeftOn)}` }
 }
 
-log(`${WORKAREA_REL}: ${built} increment(s) landed — stopping: ${stopped.reason}. ${stopped.detail}`)
+const parkedNote = parkedForRuling > 0 ? `, ${parkedForRuling} more landed and parked awaiting a signed-off ruling` : ''
+log(`${WORKAREA_REL}: ${built} increment(s) landed${parkedNote} — stopping: ${stopped.reason}. ${stopped.detail}`)
 
 return { increments: results, specChecks, reviewChecks, refutedFindings, stopped }

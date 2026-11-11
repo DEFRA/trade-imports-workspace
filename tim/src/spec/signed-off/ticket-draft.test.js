@@ -115,4 +115,16 @@ describe('#draftSignedOffTicket', () => {
       ]
     })
   })
+
+  test("Should say a change found in the working tree is the workspace's uncommitted openspec/ change", () => {
+    const draft = draftSignedOffTicket([
+      { ...rewritten, foundIn: { uncommitted: true } }
+    ])
+
+    expect(
+      draft.description
+        .split('\n')
+        .filter((line) => line.startsWith('Found in'))
+    ).toEqual(["Found in: the workspace's uncommitted openspec/ change"])
+  })
 })

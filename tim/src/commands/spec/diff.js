@@ -9,36 +9,43 @@ import { makeSpecAction } from './shared.js'
 const NAME_THE_CHANGES =
   'Name at least one commit with --commit, such as a merge commit on main, or a range with --range.'
 const NAME_WHAT_TO_CHECK =
-  'Name what to check with --commit, --range, or --repo and --base.'
+  'Name what to check with --commit, --range, --uncommitted, or --repo and --base.'
 
 const optionsSchema = z
   .object({
     commit: z.array(z.string().trim().min(1)).default([]),
     range: z.array(z.string().trim().min(1)).default([]),
     signedOff: z.boolean().default(false),
+    uncommitted: z.boolean().default(false),
     repo: z
-      .string()
-      .trim()
-      .regex(/^[\w.-]+$/, 'Give --repo as a folder name under repos/.')
-      .optional(),
+      .array(
+        z
+          .string()
+          .trim()
+          .regex(/^[\w.-]+$/, 'Give --repo as a folder name under repos/.')
+      )
+      .default([]),
     base: z.string().trim().min(1).optional()
   })
   .superRefine((options, context) => {
     const complain = (message) => context.addIssue({ code: 'custom', message })
-    if ((options.repo === undefined) !== (options.base === undefined)) {
+    const namesRepos = options.repo.length > 0
+    if (namesRepos !== (options.base !== undefined)) {
       complain('Give --repo and --base together.')
       return
     }
     const namesChanges = options.commit.length + options.range.length > 0
     if (!options.signedOff) {
-      if (options.repo !== undefined) {
+      if (namesRepos) {
         complain('--repo and --base work with --signed-off only.')
+      } else if (options.uncommitted) {
+        complain('--uncommitted works with --signed-off only.')
       } else if (!namesChanges) {
         complain(NAME_THE_CHANGES)
       }
       return
     }
-    if (!namesChanges && options.repo === undefined) {
+    if (!namesChanges && !options.uncommitted && !namesRepos) {
       complain(NAME_WHAT_TO_CHECK)
     }
   })
@@ -113,7 +120,8 @@ const runDiff = ({ workspaceRoot }, parsed) =>
         workspaceRoot,
         commits: parsed.commit,
         ranges: parsed.range,
-        repo: parsed.repo,
+        uncommitted: parsed.uncommitted,
+        repos: parsed.repo,
         base: parsed.base
       })
     : diffSpecCommits({
@@ -151,12 +159,17 @@ export const register = (program, { timVersion }) => {
       'Report only changes to signed-off scenarios: added already signed off, name or steps changed, removed, or the Signed off mark removed. Exits 3 when it finds any, 0 when it finds none'
     )
     .option(
+      '--uncommitted',
+      "With --signed-off: the workspace's uncommitted change to openspec/, new files included, against HEAD"
+    )
+    .option(
       '--repo <name>',
-      "With --signed-off and --base: a repo under repos/. Reports each signed-off scenario in the workspace's openspec/ whose linked test in that repo is edited or deleted"
+      "With --signed-off and --base: a repo under repos/. Reports each signed-off scenario in the workspace's openspec/ whose linked test in that repo is edited or deleted. Repeat for several",
+      collect
     )
     .option(
       '--base <ref>',
-      'With --repo: the ref in that repo to compare its files with, committed and uncommitted, such as origin/main'
+      'With --repo: the ref in each repo to compare its files with, committed and uncommitted, such as origin/main'
     )
     .addHelpText(
       'after',
@@ -165,6 +178,7 @@ export const register = (program, { timVersion }) => {
         '  tim spec diff --commit 575f5f3c --json\n' +
         '  tim spec diff --commit e310d0af --commit 72fb2eda\n' +
         '  tim spec diff --range main...HEAD --signed-off\n' +
+        '  tim spec diff --signed-off --uncommitted --repo trade-imports-plants-frontend --repo trade-imports-ins-tests --base origin/main --json\n' +
         '  tim spec diff --signed-off --range origin/main...HEAD --repo trade-imports-plants-frontend --base origin/main --json'
     )
     .action(

@@ -1,6 +1,10 @@
 import { describe, test, expect } from 'vitest'
 import { parseSpecMarkdown } from '../corpus.js'
-import { checkMaturityLine, checkSignedOffMarks } from './maturity.js'
+import {
+  checkMaturityLine,
+  checkSignedOffMarks,
+  checkSignedOffNeedsSignedOffPage
+} from './maturity.js'
 
 const specText = ({
   purpose = '',
@@ -217,5 +221,44 @@ describe('checkSignedOffMarks', () => {
     expect(messagesOf(checkSignedOffMarks(capability))).toEqual([
       'A Signed off line sits outside a scenario. Only a scenario carries one.'
     ])
+  })
+})
+
+describe('checkSignedOffNeedsSignedOffPage', () => {
+  const signedOffPageAt = (level) =>
+    capabilityAt(
+      'plants/journey-pages/origin',
+      specText({
+        purpose: `**Maturity**: ${level}\n\n`,
+        scenarioMeta: '**Signed off**: 2026-11-11\n'
+      })
+    )
+
+  test('passes a signed-off scenario on an agreed or readyForLive page', () => {
+    const findings = ['agreed', 'readyForLive'].flatMap((level) =>
+      checkSignedOffNeedsSignedOffPage(signedOffPageAt(level))
+    )
+
+    expect(findings).toEqual([])
+  })
+
+  test('flags a signed-off scenario on an exploring or detailing page', () => {
+    const findings = ['exploring', 'detailing'].flatMap((level) =>
+      checkSignedOffNeedsSignedOffPage(signedOffPageAt(level))
+    )
+
+    expect(messagesOf(findings)).toEqual([
+      'Scenario "The page shows the country question" is marked Signed off, but the page is exploring. Only a page at agreed or readyForLive has signed-off scenarios.',
+      'Scenario "The page shows the country question" is marked Signed off, but the page is detailing. Only a page at agreed or readyForLive has signed-off scenarios.'
+    ])
+  })
+
+  test('passes a signed-off scenario in a shared spec, which has no page', () => {
+    const capability = capabilityAt(
+      'plants/journey-flow',
+      specText({ scenarioMeta: '**Signed off**: 2026-11-11\n' })
+    )
+
+    expect(checkSignedOffNeedsSignedOffPage(capability)).toEqual([])
   })
 })

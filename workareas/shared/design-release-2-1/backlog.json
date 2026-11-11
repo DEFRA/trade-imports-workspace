@@ -319,12 +319,10 @@
     {
       "id": "test-hygiene",
       "title": "Test and code tidy-ups left over from design snagging, in live animals and plants",
-      "why": "The design snagging follow-ups (inc-225, inc-226, inc-228, inc-233) that no remaining theme owns: live animals browser tests that prove looks by class (inc-234), the return-link builder and client helpers tidy (inc-235) and the plants tests and guides (inc-236). Most of the specs inc-234 and inc-236 edit sit in folders split-off themes own, so its touches name only the files no theme owns, and it lands after the split-off themes whose specs it edits. It holds 3 rows, 3 of them ready to build once those themes land.",
+      "why": "The design snagging follow-ups (inc-225, inc-226, inc-228, inc-233) that no remaining theme owns: live animals browser tests that prove looks by class (inc-234), the type-ahead bold-letters helper tidy (inc-235, its return-link half done by EUDPA-774) and the plants tests and guides (inc-236). Most of the specs inc-234 and inc-236 edit sit in folders split-off themes own, so its touches name only the files no theme owns, and it lands after the split-off themes whose specs it edits. It holds 3 rows, 3 of them ready to build once those themes land.",
       "touches": [
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/type-ahead.fit.spec.js",
         "frontend:src/server/app/sets/live-animals/journeys/linear/features/section-caption.fit.spec.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/addresses/party-edit",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/commodities/commodity-question-detour.js",
         "frontend:src/client/common/helpers",
         "plantsfrontend:fit/high-risk-plants-journey.js",
         "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/type-ahead.fit.spec.js",
@@ -8297,17 +8295,15 @@
     },
     {
       "id": "inc-235",
-      "title": "Links that bring the trader back to the page they came from follow one rule in live animals",
-      "detail": "Add another commodity, the commodity list's Change, and Edit details on a party each build their 'come back here' link separately, though one shared rule already reads the marker back. One shared rule builds them too. The type-ahead bold-letters helper keeps its single-use literals inside the functions that use them, and the client helpers folder loses its leftover placeholder file.",
+      "title": "The live animals type-ahead bold-letters helper keeps its literals inside the functions that use them",
+      "detail": "The live animals type-ahead bold-letters helper keeps two single-use literals at module level, against the house rule, and its folder still holds a leftover placeholder file. The high-risk plants copy already has the fix. The return-link half of this row was done by the save and continue work (EUDPA-774).",
       "acceptanceCriteria": [
-        "Edit details on every party from the consignment addresses, contact and review pages, and the consignment addresses page's link to the county parish holding number page, still return the trader to the page they came from, keeping a review Change's context. (loop:design-snagging-followups inc-233 followUps[3], [4]; ruling:sam-2026-11-10b)",
-        "The live animals journey builds every link that names a page to return to by one shared rule, and reads it back by one, so the marker's name and the change context are each written once. (loop:design-snagging-followups inc-233 followUps[3], [4])",
-        "Type-ahead suggestions still show the matching letters in bold and anything the trader typed as plain text, never markup. (loop:design-snagging-followups inc-228 followUps[2], [6])",
-        "Every literal used by one function lives in that function, and the client helpers folder holds only real code. (loop:design-snagging-followups inc-228 followUps[2], [6], [7]; .claude/rules/code-quality.md:59)"
+        "Type-ahead suggestions in live animals still show the matching letters in bold and anything the trader typed as plain text, never markup. (loop:design-snagging-followups inc-228 followUps[2], [6])",
+        "The bold-letters helper keeps each literal used by one function inside that function, as the high-risk plants copy already does, and the client helpers folder holds only real code. (loop:design-snagging-followups inc-228 followUps[2], [6], [7]; .claude/rules/code-quality.md:59)"
       ],
       "dependsOn": [],
       "theme": "test-hygiene",
-      "status": "blocked",
+      "status": "todo",
       "kind": "refactor",
       "repos": [
         "frontend"
@@ -8315,21 +8311,13 @@
       "sources": [
         {
           "source": "loop:design-snagging-followups",
-          "ref": "inc-233 followUps[3], [4]; inc-228 followUps[2], [6], [7]"
-        },
-        {
-          "source": "ruling:sam-2026-11-10b",
-          "ref": "Decided 3"
+          "ref": "inc-228 followUps[2], [6], [7]"
         }
       ],
       "requirements": [],
-      "openQuestions": [
-        "Waits for the save and continue work (EUDPA-774, feat/EUDPA-774-save-and-continue-through-journey) to merge, per ruling:sam-2026-11-10b. Then re-check the places in the notes against main and release this row."
-      ],
+      "openQuestions": [],
       "notes": [
-        "On main 27 Oct: addresses/party-edit/edit-href.js:4-13 and commodities/commodity-question-detour.js:9-16 each build the query; kit.readReturnMarker is at shared/kit.js:201 (journey-foundation, merged, owns shared/); bold-matches.js:3-14; src/client/common/helpers/.gitkeep.",
-        "Keep partyEditHref's call signature, so consignment-parties' addresses/controller.js and contact/controller.js stay untouched.",
-        "Blocked on 2026-11-10 by ruling:sam-2026-11-10b until the save and continue work (EUDPA-774, branch feat/EUDPA-774-save-and-continue-through-journey, workareas/shared/eudpa-774), being built on another machine, has merged; then re-check these places against main and release the row. The commodities half is on main already (57e85889: commodity-question-detour.js uses kit.withReturnMarker; every reader uses kit.readReturnMarker). Left on main 10 Nov: edit-href.js:10 builds its own query (keep partyEditHref's call signature); addresses/controller.js:57 hard-codes 'cph-number?return=addresses'; bold-matches.js:3-9 and :14 keep HTML_ESCAPES and MATCH_CLASS at module level (the plants copy already has them inside their functions; copy it); src/client/common/helpers/.gitkeep. Not markers for this row: amend-form-actions.js:6 and the INS address-book handshake's return URL."
+        "Re-checked on 2026-11-11 against animals-frontend origin/main b9ae05ed, after the save and continue work (EUDPA-774, PR #468) merged, and released from blocked. The return-link half is done, so its two criteria are dropped. EUDPA-774 moved the return-marker rule into shared/trail.js (RETURN_PARAMETER at :9, withReturnMarker at :83, readReturnMarker at :95, re-exported by kit.js). partyEditHref (addresses/party-edit/edit-href.js:4-8) now builds its link with withReturnMarker and withTrail. The Roles and addresses page's link to the CPH number page (addresses/controller.js:60-64) now uses kit.withReturnMarker inside kit.carryTrail. The commodities link (commodity-question-detour.js:18, 57e85889) and all three readers already used the shared rule. The only other hand-built 'return' is the INS address-book handshake's own return URL (ins-address-book-urls.js:30, :42; ins-handshake.js:17), which is a separate marker and not for this row. Left: src/client/common/helpers/bold-matches.js:3-9 HTML_ESCAPES (used only by escapeHtml at :11-12) and :14 MATCH_CLASS (used only by strongMatch at :16-17) stay at module level. Copy the plants-frontend version, which puts the escapes inside escapeHtml and writes the class inline. Delete src/client/common/helpers/.gitkeep. Keep bold-matches.test.js green."
       ],
       "gate": null
     },

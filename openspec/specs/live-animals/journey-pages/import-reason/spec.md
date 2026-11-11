@@ -2,7 +2,7 @@
 
 ## Purpose
 
-**Maturity**: detailing
+**Maturity**: agreed
 
 Asks why the consignment is being imported, and — for the internal market reason — what it is for. The page is titled "Main import reason", asking "What is the main reason for importing the animals?" as its (visually hidden) question.
 
@@ -14,6 +14,7 @@ The system MUST ask the user their reason for importing the consignment, offerin
 
 #### Scenario: The page presents its question with no reason preselected
 **ID**: SCN-IMPORT-REASON-001-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user has reached the import reason page without answering it before
 - **WHEN** the page loads
 - **THEN** it asks the reason for importing, offering the available reasons and a save-and-continue action
@@ -25,6 +26,7 @@ The system MUST accept a chosen import reason whose own questions, if it reveals
 
 #### Scenario: Choosing a reason that asks nothing more saves without error
 **ID**: SCN-IMPORT-REASON-002-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the import reason page
 - **WHEN** they choose the "Re-entry" reason and save and continue
 - **THEN** the answer is saved and no error summary is shown
@@ -35,6 +37,7 @@ The system MUST reveal a purpose question when the user chooses the internal mar
 
 #### Scenario: Choosing internal market reveals the purpose question and accepts an answer to it
 **ID**: SCN-IMPORT-REASON-003-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the import reason page
 - **WHEN** they choose the "Internal market" reason
 - **THEN** a purpose question appears, with no purpose shown as chosen
@@ -43,6 +46,7 @@ The system MUST reveal a purpose question when the user chooses the internal mar
 
 #### Scenario: Internal market without a purpose is refused on save and continue
 **ID**: SCN-IMPORT-REASON-003-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the import reason page
 - **WHEN** they choose "Internal market", leave the purpose unanswered and save and continue
 - **THEN** an error reading "Select a purpose in the internal market" is shown, with the purpose question still open under Internal market
@@ -54,12 +58,14 @@ The system MUST offer, for the port of exit under each reason that asks it, the 
 
 #### Scenario: The port of exit offers the port of entry's list
 **ID**: SCN-IMPORT-REASON-004-A
+**Signed off**: 2026-11-11
 - **GIVEN** the reason for importing calls for a port of exit
 - **WHEN** the user answers it
 - **THEN** the ports offered are those offered for the port of entry
 
 #### Scenario: Each port of exit reads its name, a dash and its code, in the port of entry's order
 **ID**: SCN-IMPORT-REASON-004-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user has chosen "Transit" or "Temporary admission horses"
 - **WHEN** the port of exit list is read in full
 - **THEN** after the placeholder "Select one" it holds every port, airports first, then seaports, then rail ports, each group A to Z by name
@@ -67,6 +73,7 @@ The system MUST offer, for the port of exit under each reason that asks it, the 
 
 #### Scenario: A chosen port of exit is kept and offered back
 **ID**: SCN-IMPORT-REASON-004-C
+**Signed off**: 2026-11-11
 - **GIVEN** the user has chosen "Transit"
 - **WHEN** they choose a port of exit, answer the destination country and save and continue
 - **THEN** no error is shown
@@ -78,18 +85,21 @@ The system MUST reveal Transit's own questions — the port of exit, then the de
 
 #### Scenario: Transit reveals the port of exit and then the destination country
 **ID**: SCN-IMPORT-REASON-005-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the import reason page
 - **WHEN** they choose "Transit"
 - **THEN** the port of exit and then the destination country are asked for inline, under that option
 
 #### Scenario: Transhipment or onward travel reveals the destination country alone
 **ID**: SCN-IMPORT-REASON-005-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the import reason page
 - **WHEN** they choose "Transhipment or onward travel"
 - **THEN** only the destination country is asked for inline, under that option
 
 #### Scenario: Temporary admission horses reveals the exit date and then the port of exit
 **ID**: SCN-IMPORT-REASON-005-C
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the import reason page
 - **WHEN** they choose "Temporary admission horses"
 - **THEN** the exit date and then the port of exit are asked for inline, under that option
@@ -100,6 +110,7 @@ The system MUST refuse to save from a reason whose revealed questions are only p
 
 #### Scenario: Answering only the port of exit under Transit is rejected, keeping the port and the reveal open
 **ID**: SCN-IMPORT-REASON-006-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user has chosen "Transit" and answered the port of exit but not the destination country
 - **WHEN** they save and continue
 - **THEN** an error focuses the destination country, with the reveal still open
@@ -107,6 +118,7 @@ The system MUST refuse to save from a reason whose revealed questions are only p
 
 #### Scenario: Save and return to overview refuses a partly answered reveal, keeping the reveal open
 **ID**: SCN-IMPORT-REASON-006-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user has chosen "Transit" and left the port of exit and the destination country blank
 - **WHEN** they save and return to overview
 - **THEN** they stay on the page, which shows "Select a port of exit" and "Select a destination country"
@@ -119,6 +131,7 @@ The system MUST refuse to save when the submitted import reason is not one of th
 
 #### Scenario: An invalid reason is rejected and not preserved
 **ID**: SCN-IMPORT-REASON-007-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the import reason page
 - **WHEN** they submit a reason that is not one of the available options and save
 - **THEN** the save is refused, an error links to and focuses the reason question, with no reason shown as chosen
@@ -129,18 +142,21 @@ The system MUST return the user, when they follow the back link from the main im
 
 #### Scenario: After Save and continue, the back link opens the page before
 **ID**: SCN-IMPORT-REASON-008-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user reached the main import reason page by saving and continuing from What are you importing?
 - **WHEN** they follow the back link
 - **THEN** that page is shown
 
 #### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-IMPORT-REASON-008-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user opened the main import reason page from its task on Overview
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
 
 #### Scenario: The back link opens the review when the page was opened from a Change link
 **ID**: SCN-IMPORT-REASON-008-C
+**Signed off**: 2026-11-11
 - **GIVEN** the review of a draft notification
 - **WHEN** the user follows the Change link that opens the main import reason page and then the back link
 - **THEN** the review is shown
@@ -151,18 +167,21 @@ The system MUST offer, for the destination country under both Transit and Transh
 
 #### Scenario: The transhipment destination country offers the origin countries and their territories
 **ID**: SCN-IMPORT-REASON-009-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user has chosen "Transhipment or onward travel"
 - **WHEN** the destination country list is read in full
 - **THEN** after the placeholder "Select one" it holds exactly the origin countries and territories the reference data service serves, by their served names, in alphabetical order
 
 #### Scenario: The transit destination country offers the same places
 **ID**: SCN-IMPORT-REASON-009-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user has chosen "Transit"
 - **WHEN** the destination country list is read in full
 - **THEN** it holds the same places as under "Transhipment or onward travel"
 
 #### Scenario: Each territory is named with its country
 **ID**: SCN-IMPORT-REASON-009-C
+**Signed off**: 2026-11-11
 - **GIVEN** either destination country list
 - **WHEN** a territory is read
 - **THEN** it reads "<territory> (<country>)", for example "Canary Islands (Spain)"
@@ -173,6 +192,7 @@ The system MUST save a territory chosen as the destination country without an er
 
 #### Scenario: A territory chosen as the destination country is kept
 **ID**: SCN-IMPORT-REASON-010-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user has chosen a reason that asks the destination country
 - **WHEN** they choose a territory and save and continue
 - **THEN** no error is shown
@@ -180,6 +200,7 @@ The system MUST save a territory chosen as the destination country without an er
 
 #### Scenario: A destination country saved before territories were offered is still shown
 **ID**: SCN-IMPORT-REASON-010-B
+**Signed off**: 2026-11-11
 - **GIVEN** the notification holds a destination country from the country list
 - **WHEN** the user reopens the page
 - **THEN** that country is shown as chosen
@@ -190,6 +211,7 @@ The system MUST head the page "Main import reason" and give it the browser title
 
 #### Scenario: The page reads Main import reason in its heading and browser title
 **ID**: SCN-IMPORT-REASON-011-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user opens the import reason page
 - **WHEN** it loads
 - **THEN** its heading reads "Main import reason"
@@ -201,6 +223,7 @@ The system MUST start every destination country and port of exit select on the p
 
 #### Scenario: A destination country select opens on Select one
 **ID**: SCN-IMPORT-REASON-012-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user has chosen "Transhipment or onward travel" or "Transit"
 - **WHEN** the destination country list is read
 - **THEN** its first option reads "Select one" and is selected
@@ -208,6 +231,7 @@ The system MUST start every destination country and port of exit select on the p
 
 #### Scenario: A port of exit select opens on Select one
 **ID**: SCN-IMPORT-REASON-012-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user has chosen "Transit" or "Temporary admission horses"
 - **WHEN** the port of exit list is read
 - **THEN** its first option reads "Select one" and is selected
@@ -215,6 +239,7 @@ The system MUST start every destination country and port of exit select on the p
 
 #### Scenario: Each destination country and port of exit search box reads Select one while empty
 **ID**: SCN-IMPORT-REASON-012-C
+**Signed off**: 2026-11-11
 - **GIVEN** the user has chosen a reason that reveals a destination country or a port of exit
 - **WHEN** the page has JavaScript and nothing is chosen
 - **THEN** each such search box reads "Select one"
@@ -225,6 +250,7 @@ The system MUST, on Save and return to overview, make the same checks as Save an
 
 #### Scenario: Transit without a port of exit is refused and keeps the country
 **ID**: SCN-IMPORT-REASON-013-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user has chosen "Transit" and given a destination country but no port of exit
 - **WHEN** they save and return to overview
 - **THEN** they stay on the page, which shows "Select a port of exit"
@@ -233,12 +259,14 @@ The system MUST, on Save and return to overview, make the same checks as Save an
 
 #### Scenario: Changing the reason clears the saved purpose
 **ID**: SCN-IMPORT-REASON-013-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user has saved "Internal market" with a purpose
 - **WHEN** they change the reason to "Transit", give a port of exit and a destination country, and save and return to overview
 - **THEN** choosing "Internal market" again shows no purpose chosen
 
 #### Scenario: An exit date that is not a real date is refused
 **ID**: SCN-IMPORT-REASON-013-D
+**Signed off**: 2026-11-11
 - **GIVEN** the user has chosen "Temporary admission horses" and entered the exit date 31/2/2026
 - **WHEN** they save and return to overview
 - **THEN** the page stays open and the exit date shows "Enter a real date"

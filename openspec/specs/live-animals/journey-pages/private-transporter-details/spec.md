@@ -2,7 +2,7 @@
 
 ## Purpose
 
-**Maturity**: detailing
+**Maturity**: agreed
 
 Asks for the name and address of a private transporter, keyed in by hand rather than chosen from the address book. Reached only via "Add a transporter" from the transporter list, after choosing "Private" on the type question — not as a mandatory branch of the transport section itself. The address itself is governed by `live-animals/addresses`. The page is titled "Add a private transporter" and carries no notification status strip.
 
@@ -14,6 +14,7 @@ The system MUST show the private transporter's name or organisation name field a
 
 #### Scenario: The page presents its name and address questions, marking two fields optional
 **ID**: SCN-PRIVATE-TRANS-001-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user has chosen the private transporter type and reached the private transporter details page
 - **WHEN** the page loads
 - **THEN** the name or organisation name field is the first thing under the page's heading
@@ -23,6 +24,7 @@ The system MUST show the private transporter's name or organisation name field a
 
 #### Scenario: The contact details close the form, email before phone
 **ID**: SCN-PRIVATE-TRANS-001-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the private transporter details page
 - **WHEN** the page loads
 - **THEN** the address ends at country, then an "Enter contact details" heading introduces the email address field followed by the telephone number field
@@ -33,6 +35,7 @@ The system MUST open the private transporter's Country select with the United Ki
 
 #### Scenario: The Country select opens on the United Kingdom among country names in alphabetical order
 **ID**: SCN-PRIVATE-TRANS-008-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user reaches the private transporter details page
 - **WHEN** the page loads
 - **THEN** the Country select shows the United Kingdom chosen
@@ -44,12 +47,14 @@ The system MUST save the transporter's name and address together as a single rec
 
 #### Scenario: Completing the details saves them and returns to the transporter list, chosen
 **ID**: SCN-PRIVATE-TRANS-002-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the private transporter details page with the name entered
 - **WHEN** they complete every mandatory address field and save and continue
 - **THEN** they return to the transporter list, with the saved transporter already chosen
 
 #### Scenario: Returning to the page shows the saved details in the form
 **ID**: SCN-PRIVATE-TRANS-002-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user has saved a complete set of private transporter details
 - **WHEN** they return to the private transporter details page
 - **THEN** the name and country they saved are shown in the form
@@ -60,6 +65,7 @@ The system MUST land the user who saves a private transporter on the transporter
 
 #### Scenario: The save puts the trader straight on the list with the new transporter checked, surviving the list's own save
 **ID**: SCN-PRIVATE-TRANS-007-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user has just saved a complete set of private transporter details
 - **WHEN** the save lands
 - **THEN** the transporter list is shown with that transporter's row checked
@@ -72,12 +78,14 @@ The system MUST end the page with exactly two controls: a primary "Save and cont
 
 #### Scenario: The page offers exactly the primary and the cancel control
 **ID**: SCN-PRIVATE-TRANS-005-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the private transporter details page
 - **WHEN** the page loads
 - **THEN** it ends with exactly "Save and continue" and a secondary "Cancel and return to dashboard", and offers no link back to the overview
 
 #### Scenario: Cancelling with the stored type unchanged leaves the chosen transporter alone and shows no error
 **ID**: SCN-PRIVATE-TRANS-005-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user already has a transporter of the private type chosen, and reaches the private transporter details page with some or all fields filled in
 - **WHEN** they choose "Cancel and return to dashboard"
 - **THEN** no error is shown, no transporter is added, and they are taken to the dashboard
@@ -89,6 +97,7 @@ The system MUST remember the values a refused save entered, and MUST show them a
 
 #### Scenario: Leaving a refused form and returning to it shows what was entered
 **ID**: SCN-PRIVATE-TRANS-006-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user's save of the private transporter details was refused for a missing or invalid field
 - **WHEN** they leave the page and later open it again
 - **THEN** the values they had entered are shown in the fields, not the previously saved answer
@@ -99,18 +108,21 @@ The system MUST reject a blank mandatory field, a field over its maximum length,
 
 #### Scenario: A blank mandatory field blocks the save without losing the rest of the address
 **ID**: SCN-PRIVATE-TRANS-003-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user has left one mandatory field blank in the private transporter's address
 - **WHEN** they try to save
 - **THEN** the save is blocked, an error links to and focuses that field, and every other field still shows what was entered
 
 #### Scenario: An over-length field blocks the save with its value preserved
 **ID**: SCN-PRIVATE-TRANS-003-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user has entered a value longer than a field's maximum length in the private transporter's address
 - **WHEN** they try to save
 - **THEN** the save is blocked, an error links to and focuses that field, and the over-length value is still shown
 
 #### Scenario: An invalid country blocks the save and reopens the select on the United Kingdom, rather than preserving
 **ID**: SCN-PRIVATE-TRANS-003-C
+**Signed off**: 2026-11-11
 - **GIVEN** the user has entered a country not in the offered list for the private transporter's address, alongside valid values in every other field
 - **WHEN** they try to save
 - **THEN** the save is blocked, the error names the country, the Country select shows the United Kingdom, and every other field still shows what was entered
@@ -121,6 +133,7 @@ The system MUST require the private transporter's mandatory fields from the mome
 
 #### Scenario: Saving a wholly blank form is refused, naming every required field in order
 **ID**: SCN-PRIVATE-TRANS-004-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the private transporter details page with every field blank
 - **WHEN** they save and continue
 - **THEN** the save is refused, the trader stays on the form, and the error summary lists the six required messages in the page's own field order
@@ -131,6 +144,7 @@ The system MUST return the user to the transporter type question when they follo
 
 #### Scenario: The back link opens the transporter type question
 **ID**: SCN-PRIVATE-TRANS-009-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the private transporter details page
 - **WHEN** they follow the back link
 - **THEN** the transporter type question is shown

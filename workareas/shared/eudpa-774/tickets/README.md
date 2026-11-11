@@ -7,7 +7,7 @@ The backlog has no themes, so the whole backlog is one theme. Its row commits ar
 | Folder | Jira | Domain | Rows | Scenarios | Spec files | Status |
 |---|---|---|---|---|---|---|
 | `animals/` | EUDPA-793 | Live animals | 26 | 114 | 21 | Deskcheck |
-| `plants/` | EUDPA-794 | High-risk plants | 21 | 75 | 13 | Deskcheck |
+| `plants/` | EUDPA-794 | High-risk plants | 21 | 75 | 13 | Done |
 
 114 + 75 = 189 scenarios across 21 + 13 = 34 files, which matches the theme's total in `derived.json`.
 

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-**Maturity**: detailing
+**Maturity**: agreed
 
 **Page**: consignmentDetails
 
@@ -16,6 +16,7 @@ The system MUST ask, for every species the user chose on the previous page, a nu
 
 #### Scenario: The page presents one set of questions per chosen species, all empty
 **ID**: SCN-COMMODITY-DETAILS-001-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user has chosen more than one species, from more than one commodity, and reaches the commodity details page for the first time
 - **WHEN** the page loads
 - **THEN** it groups each species' number-of-animals and number-of-packages questions under its own heading, nested under its commodity's heading
@@ -28,12 +29,14 @@ The system MUST accept the commodity details once every species' number of anima
 
 #### Scenario: Entering the counts for every species saves without error
 **ID**: SCN-COMMODITY-DETAILS-002-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the commodity details page with more than one species to answer for
 - **WHEN** they enter a number of animals, and a number of packages where asked for, for every species, then save and continue
 - **THEN** the answers are saved and no error summary is shown
 
 #### Scenario: Pressing Enter in a quantity field saves the counts
 **ID**: SCN-COMMODITY-DETAILS-002-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user has entered valid counts for every species
 - **WHEN** they press Enter in a quantity field
 - **THEN** the counts are saved and the page the primary save leads to is shown
@@ -44,18 +47,21 @@ The system MUST list the chosen commodities in a table with the columns "Commodi
 
 #### Scenario: The table lists each commodity with its code
 **ID**: SCN-COMMODITY-DETAILS-003-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user has chosen more than one species
 - **WHEN** they view the commodity details page
 - **THEN** the table lists each commodity by its code and the label of each species chosen under it; one row per code except under code 01061900 (see SCN-COMMODITY-DETAILS-003-C)
 
 #### Scenario: Removing one species leaves another's saved counts untouched
 **ID**: SCN-COMMODITY-DETAILS-003-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user has saved counts for two species under different commodities
 - **WHEN** they remove one
 - **THEN** it no longer appears in the table, and the other species' saved counts are unchanged
 
 #### Scenario: A commodity under code 01061900 lists each species as its own removable row
 **ID**: SCN-COMMODITY-DETAILS-003-C
+**Signed off**: 2026-11-11
 - **GIVEN** the user has chosen a species under commodity code 01061900 (for example, cats) alongside one under another code
 - **WHEN** they view the commodity details page
 - **THEN** the 01061900 species has its own row, with the commodity's code and the species' label
@@ -64,6 +70,7 @@ The system MUST list the chosen commodities in a table with the columns "Commodi
 
 #### Scenario: Each row's Species cell lists the labels chosen under it
 **ID**: SCN-COMMODITY-DETAILS-003-D
+**Signed off**: 2026-11-11
 - **GIVEN** the user has chosen two species under commodity code 0102
 - **WHEN** they view the commodity details page
 - **THEN** the table has the columns "Commodity code" and "Species"
@@ -75,6 +82,7 @@ The system MUST reject a number of animals or a number of packages that is not a
 
 #### Scenario: A non-whole-number animal count is rejected, preserving the other valid counts
 **ID**: SCN-COMMODITY-DETAILS-004-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user has entered a valid number of animals for one species
 - **WHEN** they enter a non-whole-number count for another species and save
 - **THEN** the save is blocked, an error links to and focuses the invalid field
@@ -82,6 +90,7 @@ The system MUST reject a number of animals or a number of packages that is not a
 
 #### Scenario: A non-whole-number package count is rejected the same way
 **ID**: SCN-COMMODITY-DETAILS-004-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user has entered a valid number of packages for one species
 - **WHEN** they enter a non-whole-number package count for another species and save
 - **THEN** the save is blocked, an error links to and focuses the invalid field
@@ -93,6 +102,7 @@ The system MUST refuse to save while any chosen species has no number of animals
 
 #### Scenario: Leaving every species' count blank names each one in the error
 **ID**: SCN-COMMODITY-DETAILS-005-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the commodity details page for more than one species
 - **WHEN** they save without entering any number of animals
 - **THEN** the save is blocked, with one error per species naming it
@@ -100,6 +110,7 @@ The system MUST refuse to save while any chosen species has no number of animals
 
 #### Scenario: Leaving one species' count blank names only that species
 **ID**: SCN-COMMODITY-DETAILS-005-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user has filled in the number of animals for one species but not another
 - **WHEN** they save
 - **THEN** the save is blocked, with an error naming only the species left blank
@@ -111,6 +122,7 @@ The system MUST persist each species' saved counts, so a reload of the page show
 
 #### Scenario: Reloading the page after saving shows the same counts
 **ID**: SCN-COMMODITY-DETAILS-006-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user has saved counts for more than one species
 - **WHEN** they reload the commodity details page
 - **THEN** every species still shows the counts they saved
@@ -121,6 +133,7 @@ The system MUST let the user add a further commodity from the commodity details 
 
 #### Scenario: Adding another commodity keeps the earlier species selected and their counts intact
 **ID**: SCN-COMMODITY-DETAILS-007-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user has saved a count for one species
 - **WHEN** they choose to add another commodity, select a further species and save
 - **THEN** the earlier species was still shown as selected on the selection page
@@ -128,6 +141,7 @@ The system MUST let the user add a further commodity from the commodity details 
 
 #### Scenario: After Save and continue, adding another commodity returns to commodity details
 **ID**: SCN-COMMODITY-DETAILS-007-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on commodity details
 - **WHEN** they choose to add another commodity, select a further species and save
 - **THEN** commodity details is shown, not the reason for import
@@ -138,6 +152,7 @@ The system MUST return the user to the commodity selection page once every chose
 
 #### Scenario: Removing the last two species returns to commodity selection
 **ID**: SCN-COMMODITY-DETAILS-008-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user has exactly two species chosen, from different commodities
 - **WHEN** they remove both
 - **THEN** the commodity selection page is shown
@@ -150,18 +165,21 @@ The system MUST return the user, when they follow the back link from the commodi
 
 #### Scenario: After Save and continue, the back link opens the page before
 **ID**: SCN-COMMODITY-DETAILS-009-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user reached the commodity details page by saving and continuing from Main import reason
 - **WHEN** they follow the back link
 - **THEN** that page is shown
 
 #### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-COMMODITY-DETAILS-009-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user opened the commodity details page from its task on Overview
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
 
 #### Scenario: The back link opens the review when the page was opened from a Change link
 **ID**: SCN-COMMODITY-DETAILS-009-C
+**Signed off**: 2026-11-11
 - **GIVEN** the review of a draft notification
 - **WHEN** the user follows the Change link that opens the commodity details page and then the back link
 - **THEN** the review is shown
@@ -172,6 +190,7 @@ The system MUST list every number of animals error in the error summary before a
 
 #### Scenario: Two species with blank counts and invalid package counts list both animals errors first
 **ID**: SCN-COMMODITY-DETAILS-010-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user has two species on the commodity details page, each missing its number of animals and each with a number of packages that is not a whole number
 - **WHEN** they save and continue
 - **THEN** the error summary lists the number of animals error for both species, then the number of packages error for both species
@@ -183,6 +202,7 @@ The system MUST end the commodity details page with "Save and continue", "Save a
 
 #### Scenario: A page reached by Save and continue offers all three controls
 **ID**: SCN-COMMODITY-DETAILS-011-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on commodity details
 - **WHEN** the page is shown
 - **THEN** it offers "Save and continue", "Save and return to overview" and "Cancel and return to overview"
@@ -193,6 +213,7 @@ The system MUST keep, after a removal, the numbers already typed into the rows t
 
 #### Scenario: Numbers typed into other rows survive a removal
 **ID**: SCN-COMMODITY-DETAILS-012-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user has typed numbers into more than one species' fields and has not yet saved
 - **WHEN** they remove one row
 - **THEN** that row is gone from the table and from the selection
@@ -200,6 +221,7 @@ The system MUST keep, after a removal, the numbers already typed into the rows t
 
 #### Scenario: A removal submitted again shows the page as it stands rather than removing another row
 **ID**: SCN-COMMODITY-DETAILS-012-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user has removed a row
 - **WHEN** the same removal is submitted again
 - **THEN** the commodity details page is shown holding the rows the first removal left, with nothing further removed
@@ -210,6 +232,7 @@ The system MUST refuse a number of animals, and a number of packages, above 2,14
 
 #### Scenario: A number of animals above the largest the service stores is refused on its own field
 **ID**: SCN-COMMODITY-DETAILS-013-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user is entering a number of animals for one species
 - **WHEN** they enter a number above 2,147,483,647 and save
 - **THEN** the save is blocked, with the error "Number of animals must be 2,147,483,647 or fewer" against that species' own field
@@ -217,6 +240,7 @@ The system MUST refuse a number of animals, and a number of packages, above 2,14
 
 #### Scenario: A number of animals at the largest the service stores is accepted
 **ID**: SCN-COMMODITY-DETAILS-013-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user is entering a number of animals for one species
 - **WHEN** they enter 2,147,483,647 and save
 - **THEN** the save is not blocked and the journey moves on
@@ -224,6 +248,7 @@ The system MUST refuse a number of animals, and a number of packages, above 2,14
 
 #### Scenario: A number of packages above the largest the service stores is refused on its own field
 **ID**: SCN-COMMODITY-DETAILS-013-C
+**Signed off**: 2026-11-11
 - **GIVEN** the user is entering a number of packages for one species
 - **WHEN** they enter a number above 2,147,483,647 and save
 - **THEN** the save is blocked, with the error "Number of packages must be 2,147,483,647 or fewer" against that species' own field
@@ -231,6 +256,7 @@ The system MUST refuse a number of animals, and a number of packages, above 2,14
 
 #### Scenario: A number of packages at the largest the service stores is accepted
 **ID**: SCN-COMMODITY-DETAILS-013-D
+**Signed off**: 2026-11-11
 - **GIVEN** the user is entering a number of packages for one species
 - **WHEN** they enter 2,147,483,647 and save
 - **THEN** the save is not blocked and the journey moves on

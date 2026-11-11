@@ -19,6 +19,7 @@ The system MUST give the journey one page order, the order Overview lists its ta
 
 #### Scenario: The transport pages are offered in order
 **ID**: SCN-FLOW-001-B
+**Signed off**: 2026-11-11
 - **GIVEN** a user working through the transport pages
 - **WHEN** they save each page in turn
 - **THEN** they are offered arrival details, transited countries and the combined transporter list, in that order, skipping any that is not in scope
@@ -77,6 +78,7 @@ The system MUST, on a valid Save and continue from a journey page, go to the nex
 
 #### Scenario: Main import reason goes on to Commodity details and additional details goes on to arrival details
 **ID**: SCN-FLOW-003-I
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on main import reason with a commodity chosen
 - **WHEN** they save the reason
 - **THEN** commodity details is shown
@@ -92,6 +94,7 @@ The system MUST, on a valid Save and continue from a journey page, go to the nex
 
 #### Scenario: Arrival details goes on to transit countries only for rail or road
 **ID**: SCN-FLOW-003-K
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on arrival details, reached from any start, with where it is coming from and what is being imported saved and the other answers left blank
 - **WHEN** they save it with Rail or Road chosen
 - **THEN** transit countries is shown
@@ -156,6 +159,7 @@ The system MUST let the user leave a hub-linked page other than the origin of th
 
 #### Scenario: Commodity details with the number of animals blank is refused on save and return
 **ID**: SCN-FLOW-004-E
+**Signed off**: 2026-11-11
 - **GIVEN** the Commodity details page with the number of animals left blank
 - **WHEN** the user selects "Save and return to overview"
 - **THEN** they stay on the page, which shows "Enter the number of animals"
@@ -291,6 +295,7 @@ The system MUST NOT offer a discard-and-exit or a save-and-exit route back to Ov
 
 #### Scenario: The private and commercial transporter details forms end with their primary action and Cancel and return to dashboard
 **ID**: SCN-FLOW-012-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the private or the commercial transporter details form
 - **WHEN** the page is shown
 - **THEN** it ends with its primary action and "Cancel and return to dashboard", and offers no overview return control
@@ -446,6 +451,7 @@ The system MUST send the user to the transporter type question, rather than show
 
 #### Scenario: Opening the private transporter form without the private type chosen lands on the type question
 **ID**: SCN-FLOW-019-A
+**Signed off**: 2026-11-11
 - **GIVEN** the notification's saved transporter type is not Private, or no type is saved
 - **WHEN** the user opens or posts to the private transporter form
 - **THEN** the transporter type question is shown instead
@@ -453,6 +459,7 @@ The system MUST send the user to the transporter type question, rather than show
 
 #### Scenario: Opening the commercial transporter form without the commercial type chosen lands on the type question
 **ID**: SCN-FLOW-019-B
+**Signed off**: 2026-11-11
 - **GIVEN** the notification's saved transporter type is not Commercial, or no type is saved
 - **WHEN** the user opens or posts to the commercial transporter form
 - **THEN** the transporter type question is shown instead

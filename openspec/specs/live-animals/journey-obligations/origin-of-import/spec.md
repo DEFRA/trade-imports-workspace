@@ -12,12 +12,14 @@ The system MUST ask for the region of origin code, as a mandatory answer, only w
 
 #### Scenario: Answering that a region code is required makes it mandatory
 **ID**: SCN-OB-ORIGIN-001-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user is answering the origin of the import
 - **WHEN** they answer that a region of origin code is required
 - **THEN** the region of origin code is asked for, and must be given before the notification can be submitted
 
 #### Scenario: Answering that no region code is required asks for no code
 **ID**: SCN-OB-ORIGIN-001-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user is answering the origin of the import
 - **WHEN** they answer that no region of origin code is required and save
 - **THEN** no region of origin code is asked for or saved
@@ -29,6 +31,7 @@ The system MUST clear a region of origin code the user has already given when th
 
 #### Scenario: The code is cleared when the answer changes to No
 **ID**: SCN-OB-ORIGIN-002-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user has chosen France, answered that a region code is required, given the code 75 and saved
 - **WHEN** they change the answer so that no region code is required and save
 - **THEN** the review page shows "Not applicable" for the region of origin code

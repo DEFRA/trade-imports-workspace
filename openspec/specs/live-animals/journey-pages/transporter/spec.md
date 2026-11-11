@@ -2,7 +2,7 @@
 
 ## Purpose
 
-**Maturity**: detailing
+**Maturity**: agreed
 
 **Page**: transporters
 
@@ -16,6 +16,7 @@ The system MUST list the organisation's own transporters, held in the address bo
 
 #### Scenario: The list shows every transporter's key facts under the right column
 **ID**: SCN-TRANSPORTER-001-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user has reached the transporter list
 - **WHEN** the page loads
 - **THEN** every known transporter is shown as a row under columns headed Name, Address, Approval number, Type and Status
@@ -23,6 +24,7 @@ The system MUST list the organisation's own transporters, held in the address bo
 
 #### Scenario: An approved transporter is tagged green, a newly added one magenta
 **ID**: SCN-TRANSPORTER-001-B
+**Signed off**: 2026-11-11
 - **GIVEN** the transporter list is shown
 - **WHEN** a row is for a transporter already approved
 - **THEN** it carries a green "Approved" tag
@@ -31,6 +33,7 @@ The system MUST list the organisation's own transporters, held in the address bo
 
 #### Scenario: A transporter the organisation added through the address book is on the list and can be picked
 **ID**: SCN-TRANSPORTER-001-C
+**Signed off**: 2026-11-11
 - **GIVEN** the organisation has added a transporter through the address book
 - **WHEN** the user opens the transporter list on their next notification
 - **THEN** that transporter is shown as a row, tagged "New"
@@ -42,6 +45,7 @@ The system MUST, after the user saves a complete transporter from either add for
 
 #### Scenario: The list returns with the added transporter first, checked, and names it in the banner
 **ID**: SCN-TRANSPORTER-007-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user has saved a complete private or commercial transporter from its add form
 - **WHEN** the save lands back on the transporter list
 - **THEN** the added transporter is the first row shown, with its radio checked
@@ -49,6 +53,7 @@ The system MUST, after the user saves a complete transporter from either add for
 
 #### Scenario: Reloading the list, or returning to it later, shows it with no banner
 **ID**: SCN-TRANSPORTER-007-B
+**Signed off**: 2026-11-11
 - **GIVEN** the transporter list has just shown the added-transporter banner
 - **WHEN** the user reloads the list, or leaves and comes back to it later
 - **THEN** the list is shown with no banner
@@ -59,18 +64,21 @@ The system MUST offer a labelled search over the transporter list, hinted with w
 
 #### Scenario: Searching narrows the list by name, address, approval number, type or status
 **ID**: SCN-TRANSPORTER-002-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the transporter list
 - **WHEN** they search by a transporter's name, its address, its approval number, its type or its status
 - **THEN** only the matching transporters are shown
 
 #### Scenario: A search matching nothing says so, rather than showing an empty table
 **ID**: SCN-TRANSPORTER-002-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user searches the transporter list for a term matching no transporter
 - **WHEN** the results are shown
 - **THEN** a message says nothing matched, not an empty table
 
 #### Scenario: Typing narrows the list in place with bold matches and an announced count
 **ID**: SCN-TRANSPORTER-002-C
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the transporter list with JavaScript on
 - **WHEN** they type the plain letters "garcia" into the search box
 - **THEN** only the transporter named "García Livestock Transport SL" is shown, with the letters "García" in bold
@@ -81,12 +89,14 @@ The system MUST offer a labelled search over the transporter list, hinted with w
 
 #### Scenario: A transporter chosen before filtering stays chosen when filtered out of view
 **ID**: SCN-TRANSPORTER-002-D
+**Signed off**: 2026-11-11
 - **GIVEN** the user has chosen a transporter on the list with JavaScript on
 - **WHEN** they type a term that filters that transporter out of view and save
 - **THEN** the transporter they chose is the one saved
 
 #### Scenario: Without JavaScript the button or Enter narrows the list on the server
 **ID**: SCN-TRANSPORTER-002-E
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the transporter list with JavaScript off
 - **WHEN** they enter a term and press the "Search" button or Enter
 - **THEN** the list comes back narrowed to the matching transporters
@@ -94,6 +104,7 @@ The system MUST offer a labelled search over the transporter list, hinted with w
 
 #### Scenario: Searching for the words shown where a transporter has no approval number leaves exactly those transporters
 **ID**: SCN-TRANSPORTER-002-F
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the transporter list
 - **WHEN** they search for the words the Approval number column shows for a transporter without one
 - **THEN** only the transporters with no approval number are shown
@@ -106,6 +117,7 @@ The system MUST tell the user that a transporter authorisation issued by DAERA o
 
 #### Scenario: The list carries the full authorisation guidance and a link to more detail
 **ID**: SCN-TRANSPORTER-003-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the transporter list
 - **WHEN** they read the guidance
 - **THEN** it states when a transporter authorisation is required, that DAERA authorisation is valid and EU authorisation is not
@@ -117,6 +129,7 @@ The system MUST offer "Add a transporter" on the same row as the search, above t
 
 #### Scenario: Add a transporter sits beside the search and opens the transporter type question
 **ID**: SCN-TRANSPORTER-004-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the transporter list
 - **WHEN** the page loads
 - **THEN** "Add a transporter" is shown on the search row, above the list of transporters
@@ -130,6 +143,7 @@ The system MUST show a heading "Select a transporter" above the search box and t
 
 #### Scenario: The heading and the group share the one name
 **ID**: SCN-TRANSPORTER-005-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the transporter list
 - **WHEN** the page loads
 - **THEN** "Select a transporter" is shown once as a heading above the search box and the table
@@ -141,6 +155,7 @@ The system MUST show the transporter list with no serious or critical accessibil
 
 #### Scenario: The list has no serious or critical accessibility violations, plain or with a refused pick
 **ID**: SCN-TRANSPORTER-006-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the transporter list with nothing chosen
 - **WHEN** the page loads
 - **THEN** the page has no serious or critical accessibility violations
@@ -153,12 +168,14 @@ The system MUST end every row of the transporter list with a "View details" link
 
 #### Scenario: Every row carries a named "View details" link
 **ID**: SCN-TRANSPORTER-008-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the transporter list
 - **WHEN** the page loads
 - **THEN** every row ends with a "View details" link whose visually hidden text names that row's own transporter
 
 #### Scenario: Following it shows the record; Back returns to this list
 **ID**: SCN-TRANSPORTER-008-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user has added a transporter through the address book
 - **WHEN** they follow its "View details" link
 - **THEN** a page headed with that transporter's name shows its record
@@ -170,12 +187,14 @@ The system MUST refuse either save control when no transporter is chosen, keepin
 
 #### Scenario: Continuing with nothing chosen is refused
 **ID**: SCN-TRANSPORTER-009-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the transporter list
 - **WHEN** they press "Save and continue" with nothing chosen
 - **THEN** they stay on the list with "Select a transporter from the list" in a "There is a problem" summary linking to the first transporter option and shown inline above the table
 
 #### Scenario: Returning to overview with nothing chosen is refused the same way
 **ID**: SCN-TRANSPORTER-009-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the transporter list
 - **WHEN** they press "Save and return to overview" with nothing chosen
 - **THEN** they stay on the list with the same summary and the same inline error
@@ -187,24 +206,28 @@ The system MUST return the user, when they follow the back link from the transpo
 
 #### Scenario: The back link opens the page before after Save and continue there
 **ID**: SCN-TRANSPORTER-010-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user reached the transporter list by saving and continuing from the page before it
 - **WHEN** they follow the back link
 - **THEN** that page is shown
 
 #### Scenario: The back link opens Overview when the list was opened from Overview
 **ID**: SCN-TRANSPORTER-010-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user opened the transporter list from its task on Overview
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
 
 #### Scenario: The back link opens the review when the list was opened from a Change link
 **ID**: SCN-TRANSPORTER-010-C
+**Signed off**: 2026-11-11
 - **GIVEN** the review of a draft notification
 - **WHEN** the user follows the Change link that opens the transporter list and then the back link
 - **THEN** the review is shown
 
 #### Scenario: Adding a transporter keeps the list's back link
 **ID**: SCN-TRANSPORTER-010-D
+**Signed off**: 2026-11-11
 - **GIVEN** the user opened the transporter list from a Change link on the review and chose "Add a transporter"
 - **WHEN** they follow the back link on the type question and then the back link on the list
 - **THEN** the review is shown

@@ -80,6 +80,14 @@
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/animal-identification.spec.ts", "test": "renders the page controls", "strength": "full", "notes": "ear tag, passport, no save-and-add-another, Save and continue visible" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "offers no in-card button on a line of one animal and saves it on Save and continue", "strength": "full", "notes": "" }
           ]
+        },
+        {
+          "id": "SCN-IDENT-002-C",
+          "name": "A card ends with the identifier fields and its save control, asking nothing else",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "offers no permanent address field or guidance, only the identifier fields and its save control", "strength": "full", "notes": "" }
+          ]
         }
       ]
     },
@@ -135,7 +143,7 @@
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/animal-identification.spec.ts", "test": "accepts a valid ear tag", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "saves a Mustela putorius furo identified only by its microchip and reads the number back", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "adds a complete record and reads it back as a row of the saved-animals table", "strength": "full", "notes": "cat with passport + permanent address" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "adds a complete record and reads it back as a row of the saved-animals table, once a permanent address is saved against it on its own page", "strength": "full", "notes": "cat with passport + permanent address, saved via the permanent address page" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should save one typed identifier with the rest blank and list it in the saved-animals table", "strength": "full", "notes": "one identifier given, the rest left blank, saves with no error and reads back with the blank field shown empty in the saved-animals table; red when identifierProvided requires every scoped field rather than any one" }
           ]
         }
@@ -151,9 +159,9 @@
           "name": "A commodity with typed identifiers shows only its own identifier fields",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a domestic cat's unit form asks for passport, tattoo and a permanent address, and refuses a partial address", "strength": "full", "notes": "cats: passport/tattoo/address on; ear tag/horse off; no Country" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a domestic cat's unit form asks for microchip, passport and tattoo, with no address field", "strength": "full", "notes": "cats: passport/tattoo on; ear tag/horse off; no address field; no Country" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "shows the identifier fields that apply to each commodity", "strength": "full", "notes": "cow/horse/ostrich matrix including permanent-address absent on cattle" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should show only the commodity-gated fields per card — typed for 01061900 Felis catus with the address, no fallbacks", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should show only the commodity-gated identifier fields per card — typed for 01061900 Felis catus, no fallbacks", "strength": "full", "notes": "" }
           ]
         },
         {
@@ -275,62 +283,6 @@
           "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should save a 58-character identifier typed with spaces around it without them", "strength": "full", "notes": "red when the trim is removed" }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "REQ-IDENT-011",
-      "name": "The permanent address asks for eight named fields, six mandatory and two optional",
-      "coverage": "full",
-      "scenarios": [
-        {
-          "id": "SCN-IDENT-011-A",
-          "name": "Every field is asked for, with two marked optional",
-          "coverage": "full",
-          "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a domestic cat's unit form asks for passport, tattoo and a permanent address, and refuses a partial address", "strength": "partial", "notes": "no Country; fills mandatory address fields — does not assert optional labels" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "permanent address asks for eight fields and never for a country", "strength": "full", "notes": "asserts all eight labels and that only address line 2 and county read as optional; red then green with each optional marker dropped (workareas/shared/eudpa-774/logs/inc-028-probe-address-line2-optional-fit, workareas/shared/eudpa-774/logs/inc-028-probe-county-optional-fit)" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "permanent address labels the postcode and phone fields and hints the country code", "strength": "partial", "notes": "asserts the phone hint on the phone field, read from the copy, so a changed hint wording stays green (workareas/shared/eudpa-774/logs/inc-028-probe-phone-hint-fit)" }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "REQ-IDENT-012",
-      "name": "The permanent address warns that a false address is fraud, and that it may be checked",
-      "coverage": "full",
-      "scenarios": [
-        {
-          "id": "SCN-IDENT-012-A",
-          "name": "The permanent-address form carries the fraud warning",
-          "coverage": "full",
-          "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "permanent address warns that a false address is fraud and says APHA can check it", "strength": "full", "notes": "" }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "REQ-IDENT-013",
-      "name": "A blank mandatory permanent-address field is refused, and an over-length one is rejected, without losing the rest of the record",
-      "coverage": "full",
-      "scenarios": [
-        {
-          "id": "SCN-IDENT-013-A",
-          "name": "A blank mandatory address field blocks the save without losing the identifier already entered",
-          "coverage": "full",
-          "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "permanent address validation: empty address line 1 links to and focuses the preserved field", "strength": "full", "notes": "passport preserved; same pattern for every mandatory address field in the suite" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a domestic cat's unit form asks for passport, tattoo and a permanent address, and refuses a partial address", "strength": "partial", "notes": "passport + name only → Enter address line 1; IDENT's own permanent-address mandate, not private-transporter address validation" }
-          ]
-        },
-        {
-          "id": "SCN-IDENT-013-B",
-          "name": "An over-length address field blocks the save with its value preserved",
-          "coverage": "full",
-          "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "permanent address validation: address line 1 over 255 characters links to and focuses the preserved value", "strength": "full", "notes": "passport preserved; same pattern for name, line 2, town, county and other format validations in the suite" }
           ]
         }
       ]

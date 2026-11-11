@@ -115,8 +115,43 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "does not ask a consignment of horses for a CPH number", "strength": "full", "notes": "commodity code 0101 is one of the two design release 1 lets off; asserts the five party headings and no other" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should list only the five party sections when no CPH-triggering commodity line exists", "strength": "full", "notes": "sections only" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should list the five party sections then the permanent address section, and no CPH section, for a cats-only consignment", "strength": "full", "notes": "sections only" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cph-scope.spec.ts", "test": "the CPH page and the CPH section of the addresses page show only when a CPH-triggering commodity line exists", "strength": "full", "notes": "asserts the CPH section is hidden for a cats-only consignment" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CONSIGN-ADDR-008",
+      "name": "The page also sets out a permanent address section when the notification carries a cat, dog or ferret",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CONSIGN-ADDR-008-A",
+          "name": "A consignment carrying a cat, dog or ferret brings the permanent address section into the page",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "shows its heading, lead-in, bullets and add link for a cat consignment", "strength": "full", "notes": "asserts the section's lead-in, both bullets and its single add link" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should list the five party sections then the permanent address section, and no CPH section, for a cats-only consignment", "strength": "full", "notes": "sections only" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should offer the permanent address section before any animal has one, with its add link carrying the return marker", "strength": "full", "notes": "the section's full view model, including the add link's href" }
+          ]
+        },
+        {
+          "id": "SCN-CONSIGN-ADDR-008-B",
+          "name": "A consignment with no cat, dog or ferret leaves the section off the page",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/fit/hub-picker.fit.spec.js", "test": "is not on the page for a cattle consignment", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should list no permanent address section for a cattle-only consignment", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CONSIGN-ADDR-008-C",
+          "name": "The section shows the saved addresses once every animal that needs one has one",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should show the saved addresses with a Change link once every animal that needs one has one", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/permanent-address.spec.ts", "test": "A cat consignment walked from the consignment addresses page through a hand-entered save, back to the consignment addresses page", "strength": "full", "notes": "the saved address shown on the consignment addresses page after saving" }
           ]
         }
       ]

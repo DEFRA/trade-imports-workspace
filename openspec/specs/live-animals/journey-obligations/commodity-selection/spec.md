@@ -102,23 +102,29 @@ The system MUST NOT ask for any identifier — typed or free-text — for an ani
 
 ### Requirement: A commodity that requires a permanent address asks for one per animal
 **ID**: REQ-OB-COMMODITY-006
-The system MUST ask for a permanent address for each animal on a line whose commodity requires one, as a mandatory answer, and MUST NOT ask for it otherwise. A line requires one only when its commodity code is 01061900 and its species is the domestic cat (Felis catus), the domestic dog (Canis familiaris) or the ferret (Mustela putorius furo). The other species sharing that code, the genus Felis among them, do not, and nor does a listed species under any other code.
+The system MUST ask for a permanent address for each animal on a line whose commodity and species pair is listed as needing one, as a mandatory answer, and MUST NOT ask for it otherwise. The answer MUST also record where the animal lives, leaving scope together with the permanent address itself.
 
 #### Scenario: A commodity requiring a permanent address asks for one for each animal
 **ID**: SCN-OB-COMMODITY-006-A
-- **GIVEN** the user is entering identification details for an animal on a commodity line
-- **WHEN** that line's commodity requires a permanent address
+- **GIVEN** the user is on the permanent address page for an animal on a commodity line of commodity code 01061900 and species the domestic cat (Felis catus), the domestic dog (Canis familiaris) or the ferret (Mustela putorius furo)
+- **WHEN** the permanent address page is shown
 - **THEN** a permanent address is asked for, as a mandatory answer for that animal
 
 #### Scenario: Another species under the same code is not asked for one
 **ID**: SCN-OB-COMMODITY-006-B
-- **GIVEN** the user is entering identification details for an animal on a line of the genus Felis
-- **WHEN** the identification details are shown
-- **THEN** no permanent address is asked for
+- **GIVEN** an animal on a line of the genus Felis
+- **WHEN** the permanent address page is shown
+- **THEN** no permanent address is asked for, and no card is shown for that animal
 
 #### Scenario: A listed species under another code is not asked for one
 **ID**: SCN-OB-COMMODITY-006-C
-- **GIVEN** the user is entering identification details for an animal on a line of Felis catus under a code other than 01061900
-- **WHEN** the identification details are shown
-- **THEN** no permanent address is asked for
+- **GIVEN** an animal on a line of Felis catus under a code other than 01061900
+- **WHEN** the permanent address page is shown
+- **THEN** no permanent address is asked for, and no card is shown for that animal
+
+#### Scenario: The choice of where the animal lives leaves scope together with the permanent address
+**ID**: SCN-OB-COMMODITY-006-D
+- **GIVEN** an animal on a line whose commodity requires a permanent address
+- **WHEN** the line's commodity or species changes to one that does not
+- **THEN** the permanent address and the choice of where the animal lives both leave scope
 

@@ -1,0 +1,203 @@
+{
+  "capability": "live-animals/journey-pages/permanent-address",
+  "areaCode": "PERM-ADDR",
+  "specFile": "openspec/specs/live-animals/journey-pages/permanent-address/spec.md",
+  "requirements": [
+    {
+      "id": "REQ-PERM-ADDR-001",
+      "name": "The page's chrome names the journey section and returns to the consignment addresses page",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-PERM-ADDR-001-A",
+          "name": "The page shows its caption, heading and browser title, and returns to the consignment addresses page",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "renders its chrome, the fraud warning, and a card per animal with its identifiers and both options", "strength": "partial", "notes": "asserts the caption, heading and browser-title text; back-link return is its own test; not probed red/restored green" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "back link returns to the consignment addresses page", "strength": "partial", "notes": "not probed red/restored green" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PERM-ADDR-002",
+      "name": "The page warns that a false address is fraud",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-PERM-ADDR-002-A",
+          "name": "The permanent address page carries the fraud warning",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "renders its chrome, the fraud warning, and a card per animal with its identifiers and both options", "strength": "partial", "notes": "asserts the warning text exactly; not probed red/restored green" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PERM-ADDR-003",
+      "name": "The page shows one card for each animal that needs a permanent address",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PERM-ADDR-003-A",
+          "name": "A cat line of two animals and a ferret line of one get three cards, and a non-pet line on the same consignment gets none",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "shows three cards for a cat line of two and a ferret line of one", "strength": "partial", "notes": "not probed red/restored green" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should give a cat line of two records and a ferret line of one three cards, in line and record order, titled by species and number, with a non-pet line on the same consignment carrying none", "strength": "full", "notes": "probed: forced cards.js's addressableUnits to return [] unconditionally, saw this test fail, restored, saw it pass" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PERM-ADDR-004",
+      "name": "Each card insets the identifiers already entered for that animal",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PERM-ADDR-004-A",
+          "name": "A card insets only the identifiers the animal carries",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "renders its chrome, the fraud warning, and a card per animal with its identifiers and both options", "strength": "partial", "notes": "each card insets exactly its own microchip; not probed red/restored green" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should inset each identifier the animal has as label and value, leaving out the ones it does not carry", "strength": "full", "notes": "probed: forced cards.js's addressableUnits to return [] unconditionally, saw this test fail, restored, saw it pass" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PERM-ADDR-005",
+      "name": "Each card asks whether the animal lives at the place of destination or at a new address",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PERM-ADDR-005-A",
+          "name": "Neither option is selected on first opening",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "renders its chrome, the fraud warning, and a card per animal with its identifiers and both options", "strength": "partial", "notes": "not probed red/restored green" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should select neither option on first opening", "strength": "full", "notes": "probed: forced cards.js's addressableUnits to return [] unconditionally, saw this test fail, restored, saw it pass" }
+          ]
+        },
+        {
+          "id": "SCN-PERM-ADDR-005-B",
+          "name": "The first option is hinted with the place of destination on one line once one is given",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should hint the first option with the place of destination on one line, name first, ending with the country, once one is chosen, and carry no such hint when none is", "strength": "full", "notes": "asserts the exact hint text; probed: forced cards.js's addressableUnits to return [] unconditionally, saw this test fail, restored, saw it pass" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PERM-ADDR-006",
+      "name": "Choosing a new address reveals that animal's own address fields",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-PERM-ADDR-006-A",
+          "name": "Choosing Enter a new address reveals that animal's fields alone, in order, with no country field",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "reveals only the chosen animal's address fields, in order, with no country field, when Enter a new address is chosen", "strength": "partial", "notes": "asserts the eight field labels in order, the phone hint, no select element and no leak onto the other card; not probed red/restored green" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PERM-ADDR-007",
+      "name": "Saving the permanent address page returns to the consignment addresses page",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PERM-ADDR-007-A",
+          "name": "Saving returns to the consignment addresses page",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "ends with the primary save control alone, returning to the consignment addresses page", "strength": "partial", "notes": "not probed red/restored green" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should go to the consignment addresses page whether opened from its link or not", "strength": "full", "notes": "probed: forced cards.js's addressableUnits to return [] unconditionally, saw this test fail, restored, saw it pass" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PERM-ADDR-008",
+      "name": "Each animal's choice and address are stored and read back when the page reopens",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PERM-ADDR-008-A",
+          "name": "An animal saved at the place of destination reopens with that option selected",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should store a copy of the place of destination, and the choice, when saved as living there", "strength": "full", "notes": "probed: forced cards.js's addressableUnits to return [] unconditionally, saw this test fail, restored, saw it pass" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should reopen with the place-of-destination option selected for an animal saved that way", "strength": "full", "notes": "probed: forced cards.js's addressableUnits to return [] unconditionally, saw this test fail, restored, saw it pass" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "hints the place-of-destination option with that address on one line, and reopens with it checked once chosen", "strength": "full", "notes": "replaces the e2e link previously held here, which witnessed submission, not the reopen-checked behaviour this scenario states; probed: forced cards.js's originOf to always return null, saw this test fail on the reopen-checked assertion, restored, saw it pass" }
+          ],
+          "notes": "no e2e test in trade-imports-ins-tests chooses the place-of-destination option yet — every e2e permanent-address walk hand-enters a new address"
+        },
+        {
+          "id": "SCN-PERM-ADDR-008-B",
+          "name": "A hand-entered address with a county and no second line reopens with each value in its own field and country United Kingdom",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "saves each animal with its own hand-entered address, and reopens with each one selected and its own values back", "strength": "full", "notes": "probed: forced cards.js's originOf to always return null, saw this test fail on the reopen-checked assertion, restored, saw it pass" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should store a hand-entered address with a county and no second line in its own fields and the United Kingdom as the country, and the choice", "strength": "full", "notes": "probed: forced cards.js's addressableUnits to return [] unconditionally, saw this test fail, restored, saw it pass" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should reopen with the new-address option selected and each stored value back in its own field for an animal saved with a hand-entered address", "strength": "full", "notes": "probed: forced cards.js's addressableUnits to return [] unconditionally, saw this test fail, restored, saw it pass" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/permanent-address.spec.ts", "test": "A cat consignment walked from the consignment addresses page through a hand-entered save, back to the consignment addresses page", "strength": "partial", "notes": "walks a hand-entered save and reopen with the value back in its own field, genuinely witnessing this scenario; e2e needs the workspace stack, which is down in this run, so not probed — proven on each repo's pull request instead" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PERM-ADDR-009",
+      "name": "An animal left with neither option chosen is saved with no permanent address",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-PERM-ADDR-009-A",
+          "name": "Leaving one animal unanswered saves the others and returns to the consignment addresses page",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "leaves one animal unanswered, saves the other and reopens with that animal's place-of-destination choice checked while the unanswered one has neither option checked", "strength": "full", "notes": "probed: forced cards.js's originOf to always return null, saw this test fail on the reopen-checked assertion, restored, saw it pass" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should save the answered animal and leave the other with no permanent address or choice when neither option is chosen for it, going to the consignment addresses page", "strength": "full", "notes": "probed: forced cards.js's addressableUnits to return [] unconditionally, saw this test fail, restored, saw it pass" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PERM-ADDR-010",
+      "name": "A consignment with no animal needing a permanent address sends the page to the consignment addresses page",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-PERM-ADDR-010-A",
+          "name": "A consignment with no cat, dog or ferret line is sent to the consignment addresses page",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "sends a cattle consignment straight to the consignment addresses page and offers no add link", "strength": "partial", "notes": "not probed red/restored green" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should send a consignment with no cat, dog or ferret line to the consignment addresses page, saving nothing, logging once", "strength": "partial", "notes": "unaffected by the addressableUnits=[] probe used elsewhere in this file (this is already the empty-list case), so not independently probed" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should send a cat line with no animal record entered the same way", "strength": "partial", "notes": "not probed red/restored green" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/permanent-address.spec.ts", "test": "A cattle consignment offers no permanent address link, and opening the page directly lands on the consignment addresses page", "strength": "partial", "notes": "e2e needs the workspace stack, which is down in this run, so not probed — proven on each repo's pull request instead" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PERM-ADDR-011",
+      "name": "The page has no serious or critical accessibility violations",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-PERM-ADDR-011-A",
+          "name": "The page and its revealed state have no serious or critical accessibility violations",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "has no serious or critical axe violations as first opened and with a reveal open", "strength": "partial", "notes": "not probed red/restored green" }
+          ]
+        }
+      ]
+    }
+  ]
+}

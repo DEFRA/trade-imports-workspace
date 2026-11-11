@@ -41,6 +41,7 @@ The `<AREA>` in every `REQ-<AREA>-NNN` / `SCN-<AREA>-NNN-<LETTER>` ID. Assigned 
 | live-animals/journey-pages/import-reason | IMPORT-REASON |
 | live-animals/journey-pages/origin-of-import | ORIGIN |
 | live-animals/journey-pages/overview | OVERVIEW |
+| live-animals/journey-pages/permanent-address | PERM-ADDR |
 | live-animals/journey-pages/private-transporter-details | PRIVATE-TRANS |
 | live-animals/journey-pages/transited-countries | TRANSIT-COUNTRIES |
 | live-animals/journey-pages/transporter | TRANSPORTER |

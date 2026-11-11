@@ -46,7 +46,7 @@ The system MUST show, above the identification sections, a summary table with on
 
 ### Requirement: The page asks for one animal's identifiers per species card, and the card's save button says what is left on the line
 **ID**: REQ-IDENT-002
-The system MUST ask the user for the identifiers of a single animal on a card scoped to one species within its commodity section, and MUST label the card's own save button for what the line still owes — a save-and-add-another action while more than one animal is outstanding, a save-and-finish action on the last outstanding animal, and no card button at all on a line of one animal, whose record the page's own Save and continue captures.
+The system MUST ask the user for the identifiers of a single animal on a card scoped to one species within its commodity section, with the card's own save button the last thing the card asks for, and MUST label that button for what the line still owes — a save-and-add-another action while more than one animal is outstanding, a save-and-finish action on the last outstanding animal, and no card button at all on a line of one animal, whose record the page's own Save and continue captures.
 
 #### Scenario: A line of several animals offers add-another, then finish on the last
 **ID**: SCN-IDENT-002-A
@@ -61,6 +61,13 @@ The system MUST ask the user for the identifiers of a single animal on a card sc
 - **WHEN** the page loads
 - **THEN** it asks for that animal's identifiers, with no save-and-add-another or save-and-finish action on the card
 - **AND** the page's own Save and continue is offered, and saves the record
+
+#### Scenario: A card ends with the identifier fields and its save control, asking nothing else
+**ID**: SCN-IDENT-002-C
+- **GIVEN** the user has reached the identification details page for a cat, dog or ferret line
+- **WHEN** the page loads
+- **THEN** the card asks only for that commodity's identifier fields, ending with its save control
+- **AND** it offers no permanent address field or guidance
 
 ### Requirement: Each card offers a way to change that species' declared animal count, and a way to add a further commodity
 **ID**: REQ-IDENT-003
@@ -196,45 +203,6 @@ The system MUST reject a typed identifier value of more than 58 characters in a 
 - **GIVEN** the user types an identifier of exactly 58 characters with spaces before and after it
 - **WHEN** they press the card's save button
 - **THEN** the record is saved with no error, and the saved identifier carries no surrounding spaces
-
-### Requirement: The permanent address asks for eight named fields, six mandatory and two optional
-**ID**: REQ-IDENT-011
-The system MUST ask for name or organisation name, address line 1, address line 2, town or city, county, postal or zip code, telephone number and email address, with only address line 2 and county optional, and MUST hint that an international telephone number should include its country code.
-
-#### Scenario: Every field is asked for, with two marked optional
-**ID**: SCN-IDENT-011-A
-- **GIVEN** the user is entering a permanent address for an animal identifier
-- **WHEN** the form is shown
-- **THEN** all eight fields are asked for, with address line 2 and county alone marked optional
-- **AND** the telephone number field hints that an international number should include its country code
-
-### Requirement: The permanent address warns that a false address is fraud, and that it may be checked
-**ID**: REQ-IDENT-012
-The system MUST warn the user, on the permanent-address form, that giving a false address is fraud, and that the Animal and Plant Health Agency may check it.
-
-#### Scenario: The permanent-address form carries the fraud warning
-**ID**: SCN-IDENT-012-A
-- **GIVEN** the user is entering a permanent address for an animal identifier
-- **WHEN** the form is shown
-- **THEN** it warns that a false address is fraud, and that the address may be checked
-
-### Requirement: A blank mandatory permanent-address field is refused, and an over-length one is rejected, without losing the rest of the record
-**ID**: REQ-IDENT-013
-The system MUST refuse a save that submits a permanent address with a mandatory field left blank, MUST reject a field whose value exceeds its maximum length, and in both cases MUST link the resulting error to and focus the field at fault while preserving every other field already entered on the record, including its identifiers.
-
-#### Scenario: A blank mandatory address field blocks the save without losing the identifier already entered
-**ID**: SCN-IDENT-013-A
-- **GIVEN** the user has entered a valid identifier and a permanent address with one mandatory field left blank
-- **WHEN** they try to save
-- **THEN** the save is blocked, an error links to and focuses the blank field
-- **AND** the identifier already entered is still shown
-
-#### Scenario: An over-length address field blocks the save with its value preserved
-**ID**: SCN-IDENT-013-B
-- **GIVEN** the user enters a value exceeding an address field's maximum length
-- **WHEN** they try to save
-- **THEN** the save is blocked, an error links to and focuses that field, with the over-length value still shown
-- **AND** the identifier already entered is still shown
 
 ### Requirement: The saved-animals table is headed by every identifier the commodity declares, whether or not a given record filled it in
 **ID**: REQ-IDENT-014

@@ -104,8 +104,8 @@ The progress page has three more hand-kept inputs of its own, each in `progress-
   questions and the page's standing notes. A blocker group whose rows have all moved on disappears by itself, and
   blocked rows no group claims are gathered under "Waiting on something else" rather than being dropped, so the
   page tells you when a group needs writing.
-- `prs.json` — written by `bash fetch-prs.sh`, because a backlog row records the pull request it was built in but
-  not what later became of it. Re-run it whenever the pull requests may have moved.
+- `prs.json` — written by `npm run prs` (which runs `fetch-prs.sh`), because a backlog row records the pull request
+  it was built in but not what later became of it. Re-run it whenever the pull requests may have moved.
 - `delivery.meta.json` — the extra branches a theme split into per-ticket pull requests was delivered on. Only the
   address book needs one today.
 

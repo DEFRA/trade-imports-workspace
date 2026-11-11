@@ -2,6 +2,8 @@
 
 ## Purpose
 
+**Maturity**: detailing
+
 Asks which commodities and species the consignment contains, found by searching rather than browsing, keeping a running tally of what has been chosen. The page is titled "What are you importing?".
 
 ## Requirements

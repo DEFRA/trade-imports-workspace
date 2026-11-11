@@ -2,6 +2,8 @@
 
 ## Purpose
 
+**Maturity**: detailing
+
 Asks how and when the consignment arrives at its port of entry, and confines the arrival date to the window the service accepts. The page is titled "Arrival details". The means of transport is the one answer the page needs before it goes on; the arrival date, port of entry, transport identification and document reference can all be left for later.
 
 ## Requirements

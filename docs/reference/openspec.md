@@ -83,7 +83,7 @@ spec.
 
 | Command | Group/flag | Contract |
 |---|---|---|
-| `lint` | `--specs` | Conventions: Purpose, Requirements, ≥1 scenario, stable IDs, a THEN, MUST not SHALL, live cross-refs |
+| `lint` | `--specs` | Conventions: Purpose, Requirements, ≥1 scenario, stable IDs, a THEN, MUST not SHALL, live cross-refs, a page spec's Maturity line, well-formed Signed off marks |
 | `lint` | `--coverage` | Shape, enums, scenario and requirement rollups, a `none` carries notes, `areaCode`, `specFile`, no id twice in one `coverage.json` |
 | `lint` | `--binding` | A `coverage.json` per `spec.md` and the reverse; ID parity; names verbatim; every link's file and test title present under `repos/` |
 | `gaps` | `--none` / `--partial` | Every non-full row (naming neither returns both; naming both unions them) |
@@ -103,6 +103,20 @@ title (`%s`, `$name`, `${…}`) that expands to it, or as a method name. A
 link into a repo that is not checked out is not checked, and its repo is
 listed under `skipped`. It proves the named test exists, not that it
 witnesses the scenario: that is still the red probe's job.
+
+### Page maturity and signed-off scenarios
+
+Two marks tie the spec to a page's maturity banner. The full rules are in
+[`openspec/config.yaml`](../../openspec/config.yaml).
+
+| Mark | Where | Lint checks |
+|---|---|---|
+| `**Maturity**: exploring` | First line under `## Purpose` in every `journey-pages` page spec | Present once, under Purpose, one of `exploring`, `detailing`, `agreed`, `readyForLive`. Admin page specs may leave it out. No other spec carries one. |
+| `**Signed off**: 2026-11-11` | The line directly after a scenario's ID line, in any spec | Once per scenario, directly after the ID line, a real `YYYY-MM-DD` date. Never on a requirement or outside a scenario. |
+
+A signed-off scenario is part of a signed-off page's contract, and the
+tests its coverage links are that contract's evidence. A change to
+either needs a person's decision.
 
 `tim spec gaps` is **not** the `spec-catchup` work list — a scenario can
 be `coverage: "full"` and still have drifted words. It's `spec-cover`'s

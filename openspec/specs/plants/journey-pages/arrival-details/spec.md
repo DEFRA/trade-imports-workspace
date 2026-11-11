@@ -2,6 +2,8 @@
 
 ## Purpose
 
+**Maturity**: exploring
+
 Asks when the consignment arrives — and for potatoes, what time and where it lands. The page is titled "Arrival details".
 
 ## Requirements

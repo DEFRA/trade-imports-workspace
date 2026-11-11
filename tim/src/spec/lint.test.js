@@ -175,6 +175,35 @@ describe('runSpecLint', () => {
     ])
   })
 
+  test('flags a journey-pages page spec with no Maturity line', async () => {
+    const pagePath = join(
+      root,
+      'openspec',
+      'specs',
+      'shop',
+      'journey-pages',
+      'widgets'
+    )
+    mkdirSync(pagePath, { recursive: true })
+    writeFileSync(join(pagePath, 'spec.md'), SPEC_TEXT)
+
+    const result = await runSpecLint({
+      workspaceRoot: root,
+      groups: ['specs'],
+      run: cleanOpenspecRun
+    })
+
+    expect(result.findings).toEqual(
+      expect.arrayContaining([
+        {
+          check: 'maturity',
+          capability: 'shop/journey-pages/widgets',
+          message: 'Page spec has no **Maturity** line under ## Purpose.'
+        }
+      ])
+    )
+  })
+
   test('flags a broken requirement rollup', async () => {
     const broken = validCoverage()
     broken.requirements[0].coverage = 'partial'

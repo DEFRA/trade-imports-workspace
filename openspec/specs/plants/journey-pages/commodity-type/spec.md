@@ -2,6 +2,8 @@
 
 ## Purpose
 
+**Maturity**: exploring
+
 The journey's entry page, asking what the consignment is. The page is titled "What are you importing?".
 
 ## Requirements

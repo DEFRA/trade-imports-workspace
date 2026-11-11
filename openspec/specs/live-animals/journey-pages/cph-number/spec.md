@@ -2,6 +2,8 @@
 
 ## Purpose
 
+**Maturity**: detailing
+
 Asks for the County Parish Holding number the consignment's commodities call for, entered as three separate boxes rather than one field. The page is titled "Add the county parish holding number (CPH)". Reached only from the 'Add a CPH number' link on Roles and addresses, it is not a step in the journey's order, and it ends with Save and continue alone on a draft and while the notification is being amended (`live-animals/journey-flow`'s REQ-FLOW-012 and REQ-FLOW-013). The page heading sits directly under the caption and the group of boxes carries a shorter legend, so the page has exactly one h1.
 
 ## Requirements

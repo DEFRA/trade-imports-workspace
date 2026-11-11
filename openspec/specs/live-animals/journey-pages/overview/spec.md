@@ -2,6 +2,8 @@
 
 ## Purpose
 
+**Maturity**: detailing
+
 The task list a user works a notification from, listing every task under numbered section headings and letting them be answered in any order. The page is titled "Overview".
 
 ## Requirements

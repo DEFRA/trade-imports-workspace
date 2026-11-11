@@ -25,6 +25,7 @@ import {
   checkNoShall,
   checkCrossReferences
 } from './checks/conventions.js'
+import { checkMaturityLine, checkSignedOffMarks } from './checks/maturity.js'
 import { TimError } from '../errors.js'
 
 const pairingFindings = (capability) => {
@@ -88,7 +89,9 @@ const CAPABILITY_CHECKS = [
     group: 'specs',
     run: (capability, { knownCapabilityPaths }) =>
       checkCrossReferences(capability, knownCapabilityPaths)
-  }
+  },
+  { group: 'specs', run: (capability) => checkMaturityLine(capability) },
+  { group: 'specs', run: (capability) => checkSignedOffMarks(capability) }
 ]
 
 const capabilityChecksFor = (groups) =>
@@ -106,9 +109,8 @@ const unselectedGroupSkips = (groups) =>
   }))
 
 /**
- * All ten checks: the two delegated to `openspec validate --specs --strict
- * --json` (openspec-cli.js), and the eight workspace-only ones
- * (checks/shape.js, checks/ids.js, checks/rollups.js, checks/conventions.js).
+ * Every check: those delegated to `openspec validate --specs --strict
+ * --json` (openspec-cli.js), and the workspace-only ones under checks/.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot

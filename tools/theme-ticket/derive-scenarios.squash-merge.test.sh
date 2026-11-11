@@ -7,7 +7,8 @@
 # whose row commits sit on a feature branch, and whose main holds them as one
 # squashed commit. Checks that derive-scenarios refuses main alone, reads every
 # row from the unthemed backlog, reads the row commits from --commits-from and
-# links each spec file to --branch.
+# links each spec file to --branch, and that an exclude override leaves a
+# scenario out and reports it.
 # Exits 0 when every check passes, 1 when any fails.
 
 set -u
@@ -87,6 +88,17 @@ check "the theme total counts both added scenarios" "$(jq '.totals.scenarios' <<
 check "the spec link points at main" \
     "$(jq -r '.domains.animals.files[0].url' <<< "$derived")" \
     "https://github.com/DEFRA/trade-imports-workspace/blob/main/$SPEC"
+
+echo "A scenario judged another ticket's is left out and reported"
+mkdir -p "$WORKSPACE/workareas/programme/tickets"
+cat > "$WORKSPACE/workareas/programme/tickets/footprint-overrides.json" <<EOF
+{ "exclude": { "programme-flow": { "live-animals/journey-flow/spec.md": ["Back goes to where the trader came from"] } } }
+EOF
+derived="$("$DERIVE" --workspace "$WORKSPACE" --workarea programme --theme programme-flow --branch main --commits-from feat/KEY-1-flow)"
+check "the theme total counts the one kept" "$(jq '.totals.scenarios' <<< "$derived")" "1"
+check "the kept scenario is the one not excluded" "$(jq -c '[.domains.animals.scenarios[].id]' <<< "$derived")" '["SCN-B"]'
+check "the excluded scenario is reported" \
+    "$(jq -c '[.excludedByOverride[].scenarios[]]' <<< "$derived")" '["Back goes to where the trader came from"]'
 
 if [[ $failures -gt 0 ]]; then
     echo "$failures check(s) failed"

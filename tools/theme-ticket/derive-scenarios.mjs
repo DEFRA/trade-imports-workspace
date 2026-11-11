@@ -366,8 +366,15 @@ const counted = new Set()
 // its footprint. Anything not listed stays excluded, so the default is
 // conservative and every inclusion is a recorded decision.
 const overridesFile = path.join(workareaDir, 'tickets', 'footprint-overrides.json')
-const included = fs.existsSync(overridesFile) ? readJson(overridesFile).include?.[theme] || {} : {}
+const overrides = fs.existsSync(overridesFile) ? readJson(overridesFile) : {}
+const included = overrides.include?.[theme] || {}
 const isIncluded = (relPath, heading) => (included[relPath] || []).includes(heading)
+
+// Scenarios a human judged not to be the theme's, though one of its own commits
+// added them: another ticket's behaviour carried in by merging main.
+const excluded = overrides.exclude?.[theme] || {}
+const isExcluded = (relPath, heading) => (excluded[relPath] || []).includes(heading)
+const excludedByOverride = []
 
 for (const commit of commits) {
   // The row a commit belongs to, by matching its subject against the row titles.
@@ -388,6 +395,13 @@ for (const commit of commits) {
       }
       if (!kept.length) continue
       headings = kept
+    }
+
+    const judgedOut = headings.filter((heading) => isExcluded(relPath, heading))
+    if (judgedOut.length) {
+      excludedByOverride.push({ commit: commit.sha.slice(0, 8), file: relPath, scenarios: judgedOut })
+      headings = headings.filter((heading) => !isExcluded(relPath, heading))
+      if (!headings.length) continue
     }
 
     const area = relPath.split('/')[0]
@@ -516,6 +530,7 @@ const output = {
   // Scenarios a review commit wrote outside the theme's footprint. Reported so
   // a sweep that touched other behaviour is visible rather than lost.
   outsideFootprint,
+  excludedByOverride,
   checks: {
     scenarioSum: 'ok',
     perDomainSum,

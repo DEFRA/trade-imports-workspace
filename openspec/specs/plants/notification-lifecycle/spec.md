@@ -50,21 +50,21 @@ The system MUST NOT offer any way to change a submitted notification's answers u
 - **AND** no "Change" links are shown against any answer
 - **AND** no option to cancel an amendment is shown
 
-### Requirement: Amending a submitted notification re-enters it at Overview
+### Requirement: Amending a submitted notification opens its check your answers
 **ID**: REQ-PLANTS-LIFECYCLE-005
-The system MUST let the user start an amendment on a submitted notification from the dashboard, re-entering the notification at Overview with editing enabled and marked "Amend". The amendment MUST be startable in any browser session, not only the one that submitted the notification. When an amendment cannot be started, the dashboard MUST say that the notification could not be amended.
+The system MUST let the user start an amendment on a submitted notification from the dashboard, opening its check your answers with editing enabled and marked "Amend". The amendment MUST be startable in any browser session, not only the one that submitted the notification. When an amendment cannot be started, the dashboard MUST say that the notification could not be amended.
 
-#### Scenario: Starting an amendment opens Overview with editing enabled
+#### Scenario: Starting an amendment opens check your answers with editing enabled
 **ID**: SCN-PLANTS-LIFECYCLE-005-A
 - **GIVEN** a submitted notification exists
 - **WHEN** the user starts an amendment on it from the dashboard
-- **THEN** they land on Overview, with the notification's status shown as "Amend"
+- **THEN** they land on check your answers, with the notification's status shown as "Amend"
 
 #### Scenario: An amendment can be started in a later browser session than the one that submitted the notification
 **ID**: SCN-PLANTS-LIFECYCLE-005-C
 - **GIVEN** a notification was submitted in an earlier browser session
 - **WHEN** the user signs in again and starts an amendment on it from the dashboard
-- **THEN** they land on Overview, with the notification's status shown as "Amend" and its reference number shown
+- **THEN** they land on check your answers, with the notification's status shown as "Amend" and its reference number shown
 
 #### Scenario: The dashboard says when a notification could not be amended
 **ID**: SCN-PLANTS-LIFECYCLE-005-D

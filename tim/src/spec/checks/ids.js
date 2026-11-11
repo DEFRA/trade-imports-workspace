@@ -138,3 +138,29 @@ export const checkGlobalIdUniqueness = (capabilities) => {
       })
     })
 }
+
+const repeatedIds = (entries) => {
+  const counts = Object.groupBy(entries, (entry) => entry.id)
+  return Object.entries(counts)
+    .filter(([, sameId]) => sameId.length > 1)
+    .map(([id, sameId]) => ({ id, times: sameId.length }))
+}
+
+/**
+ * Check 5 (coverage uniqueness) — no requirement or scenario id appears more
+ * than once in one coverage.json. A repeated entry leaves the scenario with
+ * two coverage rows, so which one gaps and rollups read is a matter of order.
+ *
+ * @param {object} capability
+ * @returns {object[]}
+ */
+export const checkCoverageIdsUnique = (capability) => {
+  const coverage = parsedCoverage(capability)
+  if (!coverage) return []
+  return repeatedIds(coverageIds(coverage)).map(({ id, times }) =>
+    finding(
+      capability.path,
+      `${id} has ${times} entries in coverage.json. Keep one.`
+    )
+  )
+}

@@ -275,7 +275,7 @@ The system MUST show an empty-state message in place of the results count when a
 
 ### Requirement: A listed address opens in the INS address book, whose Back returns to the same list
 **ID**: REQ-ADDR-009
-When the address book service is available, the system MUST end each listed address with a 'View' link, named for screen readers by the address's name, that opens that address in the INS address book. The address book's Back link MUST bring the user back to the same list of the same notification, with the same search, the same page and the same address chosen, and, when they opened the list to change an answer, saving MUST still return them where a change of answer does. When the address book service is not available (stub mode), the system MUST end each listed address at its country, with no 'View' link.
+When the address book service is available, the system MUST end each listed address with a 'View' link, named for screen readers by the address name, that opens it in the INS address book. Its Back link MUST return the user to the same list of the same notification, with its search, page and chosen address, and, when opened to change an answer, saving MUST still return them where a change of answer does. In stub mode, the system MUST end each listed address at its country, with no 'View' link.
 
 #### Scenario: View opens the address in the INS address book and Back returns to the list with its search
 **ID**: SCN-ADDR-009-A

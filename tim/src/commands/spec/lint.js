@@ -81,14 +81,14 @@ export const register = (program, { timVersion }) => {
     .option('--coverage', "Check coverage.json's internals only")
     .option(
       '--binding',
-      'Check the joins between spec.md and coverage.json only'
+      'Check the joins only: spec.md to coverage.json, and each coverage link to its test file'
     )
     .addHelpText(
       'after',
       '\nCheck groups, named for what each one reads:\n' +
         '  specs     spec.md conventions — stable IDs, MUST not SHALL, a THEN per scenario, live cross-references\n' +
-        '  coverage  coverage.json internals — shape, both rollups, notes on a none, areaCode, specFile\n' +
-        '  binding   the joins — a coverage.json per spec.md, ID parity, names verbatim\n' +
+        '  coverage  coverage.json internals — shape, both rollups, notes on a none, areaCode, specFile, no id twice\n' +
+        "  binding   the joins — a coverage.json per spec.md, ID parity, names verbatim, each link's test title in its file under repos/\n" +
         '\nNaming any group narrows to those. Naming none runs all three.\n' +
         'Whatever does not run is listed as not selected, so a narrow pass never reads like a full one.\n' +
         '\nExamples:\n' +

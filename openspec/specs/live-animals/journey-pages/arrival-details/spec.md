@@ -201,15 +201,27 @@ The system MUST reject a port of entry or means of transport that is not one of 
 - **THEN** an error is shown, the means-of-transport dropdown is focused with nothing chosen
 - **AND** the page's other answers, including the chosen port, are still held
 
-### Requirement: The back link returns to Overview
+### Requirement: The back link returns to where the user came from
 **ID**: REQ-ARRIVAL-010
-The system MUST return the user to Overview when they follow the back link from the arrival details page.
+The system MUST return the user, when they follow the back link from the arrival details page, to the page they saved and continued from, to Overview when they opened it from its Overview task, and to the review when they opened it from a Change link on the review, as `live-animals/journey-flow` describes. That page is Additional details.
 
-#### Scenario: The back link opens Overview
+#### Scenario: After Save and continue, the back link opens the page before
 **ID**: SCN-ARRIVAL-010-A
-- **GIVEN** the user is on the arrival details page
+- **GIVEN** the user reached the arrival details page by saving and continuing from Additional details
+- **WHEN** they follow the back link
+- **THEN** that page is shown
+
+#### Scenario: The back link opens Overview when the page was opened from Overview
+**ID**: SCN-ARRIVAL-010-B
+- **GIVEN** the user opened the arrival details page from its task on Overview
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
+
+#### Scenario: The back link opens the review when the page was opened from a Change link
+**ID**: SCN-ARRIVAL-010-C
+- **GIVEN** the review of a draft notification
+- **WHEN** the user follows the Change link that opens the arrival details page and then the back link
+- **THEN** the review is shown
 
 ### Requirement: Only the means of transport is needed to continue
 **ID**: REQ-ARRIVAL-011

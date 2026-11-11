@@ -122,18 +122,18 @@ The system MUST rewrite a saved line to the newly chosen category and return the
 - **WHEN** they change its category to trees for planting and save
 - **THEN** the page returns asking for the size of the trees as well
 
-### Requirement: The back link depends on whether the consignment already holds a line
+### Requirement: The back link follows where the list's back link would go while the consignment holds no line, and is the list once it holds one
 **ID**: REQ-PLANTS-COMMODITY-DETAILS-009
-The system MUST send the user to the commodity-type page when they follow the back link before any commodity line is held, and to the commodities list once at least one line is held.
+The system MUST send the user from commodity details to the commodities list once at least one commodity line is held, carrying where the user came from. While the consignment holds no line, the back link MUST go where the list's own back link would go, as `plants/journey-flow` describes.
 
-#### Scenario: The back link opens commodity type while the collection is empty
+#### Scenario: The back link opens the place the list would go back to while the collection is empty
 **ID**: SCN-PLANTS-COMMODITY-DETAILS-009-A
-- **GIVEN** the consignment holds no commodity line
+- **GIVEN** the user reached commodity details from commodity type by saving and continuing, with no commodity line held
 - **WHEN** the user follows the back link from commodity details
-- **THEN** the commodity-type page is shown
+- **THEN** the commodity type page is shown
 
 #### Scenario: The back link opens the commodities list once a line is held
 **ID**: SCN-PLANTS-COMMODITY-DETAILS-009-B
-- **GIVEN** the consignment already holds at least one commodity line
+- **GIVEN** a consignment holding at least one commodity line
 - **WHEN** the user follows the back link from commodity details
 - **THEN** the commodities list is shown

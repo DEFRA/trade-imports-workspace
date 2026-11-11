@@ -31,7 +31,7 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/contact-address.spec.ts", "test": "a chosen contact address is shown as the current contact on return, still chosen, and saving again keeps it", "strength": "full" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/contact-address.spec.ts", "test": "accepts a valid contact address", "strength": "partial", "notes": "proves the save only" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/contact-address.spec.ts", "test": "accepts a valid contact address and goes on to check your answers", "strength": "partial", "notes": "proves the save and the landing on check your answers" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/contact.fit.spec.js", "test": "selects a valid contact, redirects and shows it as the current contact, still selected, on return", "strength": "partial", "notes": "does not cover saving again" }
           ]
         }
@@ -40,15 +40,17 @@
     {
       "id": "REQ-CONTACT-003",
       "name": "The contact address is optional, and saving without one is never refused",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-CONTACT-003-A",
-          "name": "Saving with no address chosen is allowed and exits to Overview",
-          "coverage": "full",
+          "name": "Saving with no address chosen is allowed and goes to check your answers",
+          "coverage": "partial",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/contact-address.spec.ts", "test": "saving with no contact address selected is allowed and exits to the hub", "strength": "full", "notes": "not exercised by the fit suite — this path is E2E-only" }
-          ]
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should go on from Contact address to nothing, the review page being the fallback", "strength": "partial", "notes": "the next-page rule past the last step" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/save-and-continue.spec.ts", "test": "contact address saved with no address chosen goes to check your answers, naming what is outstanding", "strength": "partial", "notes": "the landing on the review is red then green with the review no longer the end of the journey (workareas/shared/eudpa-774/logs/inc-027-probe-kit-review-e2e); the review shows an error summary here" }
+          ],
+          "notes": "The Then 'no error summary is shown' cannot be witnessed: for the notification the test reaches the review is shown with an error summary naming what is outstanding, the contact address among it, as SCN-FLOW-003-B says. The landing on check your answers is proven."
         }
       ]
     },
@@ -69,15 +71,31 @@
     },
     {
       "id": "REQ-CONTACT-005",
-      "name": "The back link returns to Overview",
+      "name": "The back link returns to where the user came from",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-CONTACT-005-A",
-          "name": "The back link opens Overview",
+          "name": "After Save and continue, the back link opens the page before",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/contact.fit.spec.js", "test": "back link returns to the notification hub", "strength": "full", "notes": "this requirement was entirely absent from the spec until this pass" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.test.js", "test": "Should go to the page Save and continue was pressed on", "strength": "full", "notes": "Probed: the page's trail dropped from kit.trailBackLink turns this case red and restoring it turns it green" }
+          ]
+        },
+        {
+          "id": "SCN-CONTACT-005-B",
+          "name": "The back link opens Overview when the page was opened from Overview",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.test.js", "test": "Should go to Overview when opened from Overview", "strength": "full", "notes": "Probed: the Overview start entry resolved to the dashboard in trail.js turns this case red and restoring it turns it green" }
+          ]
+        },
+        {
+          "id": "SCN-CONTACT-005-C",
+          "name": "The back link opens the review when the page was opened from a Change link",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/contact/controller.test.js", "test": "Should go to the review when opened from a Change link", "strength": "full", "notes": "Probed: the page's trail dropped from kit.trailBackLink turns this case red and restoring it turns it green" }
           ]
         }
       ]

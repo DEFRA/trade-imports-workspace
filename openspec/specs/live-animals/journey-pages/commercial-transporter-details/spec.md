@@ -114,3 +114,13 @@ The system MUST remember the values a refused save entered, and MUST show them a
 - **GIVEN** the user's save of the commercial transporter details was refused for a missing or invalid field
 - **WHEN** they leave the page and later open it again
 - **THEN** the values they had entered are shown in the fields, not the previously saved answer
+
+### Requirement: The back link returns to the transporter type question
+**ID**: REQ-COMMERCIAL-TRANS-009
+The system MUST return the user to the transporter type question when they follow the back link from the commercial transporter details page.
+
+#### Scenario: The back link opens the transporter type question
+**ID**: SCN-COMMERCIAL-TRANS-009-A
+- **GIVEN** the user is on the commercial transporter details page
+- **WHEN** they follow the back link
+- **THEN** the transporter type question is shown

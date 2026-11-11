@@ -24,7 +24,7 @@ The system MUST show the notification dashboard as the service's landing page fo
 
 #### Scenario: A newly started notification is listed as a draft
 **ID**: SCN-DASH-001-C
-- **GIVEN** the user has started a new notification and been taken to its Overview
+- **GIVEN** the user has started a new notification and been taken to its first page
 - **WHEN** they return to the dashboard and search for its reference number
 - **THEN** its card is listed, showing a "Draft" status
 - **AND** resume, copy and delete actions are offered on it
@@ -51,7 +51,7 @@ The system MUST show, on each notification card, the notification's reference nu
 
 ### Requirement: The actions offered on a card depend on the notification's status
 **ID**: REQ-DASH-004
-The system MUST offer resume, copy and delete on a draft notification's card without offering amend, MUST offer view, amend, copy and delete on a submitted notification's card, and MUST offer resume and cancel-amendment, in place of view and amend, on a card being amended. Resume on a draft's card MUST open its Overview, not its review.
+The system MUST offer resume, copy and delete on a draft notification's card without offering amend, MUST offer view, amend, copy and delete on a submitted notification's card, and MUST offer resume and cancel-amendment, in place of view and amend, on a card being amended. Resume on a draft's card, and on a card being amended, MUST open its Overview, not its review.
 
 #### Scenario: A draft notification's card offers resume, copy and delete
 **ID**: SCN-DASH-004-A
@@ -75,6 +75,12 @@ The system MUST offer resume, copy and delete on a draft notification's card wit
 #### Scenario: Resuming a draft opens its Overview
 **ID**: SCN-DASH-004-E
 - **GIVEN** a draft notification is listed
+- **WHEN** the user chooses resume on its card
+- **THEN** its Overview opens
+
+#### Scenario: Resuming a notification being amended opens its Overview
+**ID**: SCN-DASH-004-F
+- **GIVEN** a notification being amended is listed
 - **WHEN** the user chooses resume on its card
 - **THEN** its Overview opens
 

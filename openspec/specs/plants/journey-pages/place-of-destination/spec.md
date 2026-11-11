@@ -104,7 +104,7 @@ Save-and-continue and save-and-return-to-overview MUST make the same checks. Wit
 
 #### Scenario: Saving with nothing chosen moves on and leaves the destination not yet started
 **ID**: SCN-PLANTS-PLACE-OF-DESTINATION-005-A
-- **GIVEN** the user is on the place of destination page in the opening sequence with nothing chosen and no destination held yet
+- **GIVEN** the user is on the place of destination page after Save and continue with nothing chosen and no destination held yet
 - **WHEN** they save and continue
 - **THEN** the consignor page is shown, with no error
 - **AND** Overview shows the destination task not yet started
@@ -135,13 +135,7 @@ The system MUST keep a place of destination whose address-book record has since 
 
 ### Requirement: The page offers a full set of save controls and is reachable from Overview
 **ID**: REQ-PLANTS-PLACE-OF-DESTINATION-007
-Outside an amendment, the system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page. While amending, `plants/journey-flow` REQ-PLANTS-FLOW-014 governs how the page ends instead. The system MUST send the back link to the arrival details during the opening sequence and on a draft opened from a Change link on the review (REQ-PLANTS-FLOW-017), and to Overview otherwise, and MUST reach the page from the Overview destination task row.
-
-#### Scenario: On a draft opened from a Change link, the back link opens the arrival details
-**ID**: SCN-PLANTS-PLACE-OF-DESTINATION-007-F
-- **GIVEN** the review of a draft notification
-- **WHEN** the user follows the Change link for the place of destination and then the back link
-- **THEN** the arrival details page is shown
+The system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview on this page, on a draft and while amending alike, and MUST reach the page from the Overview destination task row.
 
 #### Scenario: The page is reachable from the Overview destination row
 **ID**: SCN-PLANTS-PLACE-OF-DESTINATION-007-A
@@ -163,18 +157,6 @@ Outside an amendment, the system MUST offer save-and-continue, save-and-return-t
 - **THEN** they reach Overview
 - **AND** returning to the page shows no address chosen
 
-#### Scenario: The back link opens Overview when the page was opened from Overview
-**ID**: SCN-PLANTS-PLACE-OF-DESTINATION-007-D
-- **GIVEN** the opening sequence has ended and the user is on the place of destination page
-- **WHEN** they follow the back link
-- **THEN** Overview is shown
-
-#### Scenario: In the opening sequence, the back link opens the arrival details
-**ID**: SCN-PLANTS-PLACE-OF-DESTINATION-007-E
-- **GIVEN** the user is in the opening sequence and reached the place of destination page from the arrival details
-- **WHEN** they follow the back link
-- **THEN** the arrival details page is shown
-
 ### Requirement: Completing the destination completes the destination task row
 **ID**: REQ-PLANTS-PLACE-OF-DESTINATION-008
 The system MUST show the Overview destination task row as completed once a place of destination has been saved.
@@ -184,3 +166,25 @@ The system MUST show the Overview destination task row as completed once a place
 - **GIVEN** the user has chosen a place of destination and saved
 - **WHEN** they open Overview
 - **THEN** the destination task row reads completed
+
+### Requirement: The back link goes to the arrival details after Save and continue there
+**ID**: REQ-PLANTS-PLACE-OF-DESTINATION-009
+The system MUST send the back link of this page to the arrival details after Save and continue there, and to the places `plants/journey-flow` REQ-PLANTS-FLOW-017 names otherwise: the review from a Change link and Overview when the page was opened from Overview.
+
+#### Scenario: On a draft opened from a Change link, the back link opens the review
+**ID**: SCN-PLANTS-PLACE-OF-DESTINATION-009-A
+- **GIVEN** the review of a draft notification
+- **WHEN** the user follows the Change link for the place of destination and then the back link
+- **THEN** the review is shown
+
+#### Scenario: The back link opens Overview when the page was opened from Overview
+**ID**: SCN-PLANTS-PLACE-OF-DESTINATION-009-B
+- **GIVEN** the user opened the place of destination page from Overview
+- **WHEN** they follow the back link
+- **THEN** Overview is shown
+
+#### Scenario: After Save and continue, the back link opens the arrival details
+**ID**: SCN-PLANTS-PLACE-OF-DESTINATION-009-C
+- **GIVEN** the user reached the place of destination page from the arrival details by saving and continuing
+- **WHEN** they follow the back link
+- **THEN** the arrival details page is shown

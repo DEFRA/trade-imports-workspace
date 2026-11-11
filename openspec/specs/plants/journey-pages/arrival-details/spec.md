@@ -171,7 +171,7 @@ The system MUST refuse an expected time of arrival that is not on the 24-hour cl
 
 ### Requirement: The page offers a full set of save controls and is reachable from Overview
 **ID**: REQ-PLANTS-ARRIVAL-DETAILS-010
-The system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview, MUST send the back link to arrival status (origin for potatoes) in the opening sequence and from a review Change link on a draft (REQ-PLANTS-FLOW-017), and to Overview otherwise, MUST reach the page from the Overview arrival row when it opens on the details, and MUST return to Overview on save once the opening sequence has finished. While amending, REQ-PLANTS-FLOW-014 governs how it ends.
+The system MUST offer save-and-continue, save-and-return-to-overview and cancel-and-return-to-overview, MUST send the back link to the place the user came from (REQ-PLANTS-FLOW-017) — arrival status (origin for potatoes) after Save and continue there, the review from a Change link, Overview otherwise — MUST reach the page from the Overview arrival row, and MUST go on to the place of destination on save-and-continue from every start. It ends the same way on a draft and while amending.
 
 #### Scenario: The page is reachable from the Overview arrival row for potatoes
 **ID**: SCN-PLANTS-ARRIVAL-DETAILS-010-A
@@ -188,31 +188,29 @@ The system MUST offer save-and-continue, save-and-return-to-overview and cancel-
 
 #### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-PLANTS-ARRIVAL-DETAILS-010-C
-- **GIVEN** the opening sequence has ended and the user is on the arrival details
+- **GIVEN** the user opened the arrival details from Overview
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
 
-#### Scenario: Saving the arrival details opened from Overview returns to Overview
+#### Scenario: Save and continue on the arrival details opened from Overview goes to the place of destination
 **ID**: SCN-PLANTS-ARRIVAL-DETAILS-010-D
-- **GIVEN** the arrival task opened from Overview after the opening sequence
-- **WHEN** the user saves the arrival details
-- **THEN** Overview is shown, not the place of destination
+- **GIVEN** the arrival task opened from Overview
+- **WHEN** the user selects save-and-continue on the arrival details
+- **THEN** the place of destination is shown
 
-#### Scenario: In the opening sequence, the back link opens arrival status, or origin for potatoes
+#### Scenario: After Save and continue, the back link opens arrival status, or origin for potatoes
 **ID**: SCN-PLANTS-ARRIVAL-DETAILS-010-E
-- **GIVEN** the user is in the opening sequence and reached the arrival details from arrival status
+- **GIVEN** the user reached the arrival details from arrival status by saving and continuing
 - **WHEN** they follow the back link
 - **THEN** the arrival-status page is shown
 - **WHEN** instead they are on a potatoes notification, which is not asked arrival status, and reached the arrival details from origin
 - **THEN** the origin page is shown
 
-#### Scenario: On a draft opened from a Change link, the back link opens arrival status, or origin for potatoes
+#### Scenario: On a draft opened from a Change link, the back link opens the review
 **ID**: SCN-PLANTS-ARRIVAL-DETAILS-010-F
 - **GIVEN** the review of a draft notification
 - **WHEN** the user follows the Change link for the arrival details and then the back link
-- **THEN** the arrival-status page is shown
-- **WHEN** instead they are on a potatoes notification
-- **THEN** the origin page is shown
+- **THEN** the review is shown
 
 ### Requirement: Completing the arrival details completes the arrival task row
 **ID**: REQ-PLANTS-ARRIVAL-DETAILS-011

@@ -8,7 +8,7 @@ The journey's entry page, asking where the consignment is coming from. The page 
 
 ### Requirement: The page asks which country the consignment comes from and whether an origin code is needed
 **ID**: REQ-ORIGIN-001
-The system MUST ask the user which country the consignment is coming from, offering a country selector and a choice of whether an origin code is required, and MUST end the page with "Save and continue" alone, offering neither "Save and return to overview" nor "Cancel and return to overview". While the notification is being amended, REQ-FLOW-013 governs how the page ends instead.
+The system MUST ask the user which country the consignment is coming from, offering a country selector and a choice of whether an origin code is required, and MUST end the page with "Save and continue" alone, offering neither "Save and return to overview" nor "Cancel and return to overview". The page ends the same way on a draft and while amending.
 
 #### Scenario: The page presents its question and controls
 **ID**: SCN-ORIGIN-001-A
@@ -236,7 +236,7 @@ With JavaScript, the system MUST show the chosen country's code as a fixed prefi
 
 ### Requirement: On a notification, the back link follows where the origin page was opened from
 **ID**: REQ-ORIGIN-013
-For a notification, the system MUST return the user from the origin page to the Import Notification Service's "What are you importing?" question when it was started there, and to the dashboard when it was started from the dashboard's create button, including by going back along the opening sequence. It MUST return to Overview when the page was opened from Overview, with or without answers. A notification not opened in this session that holds no answers MUST return to the dashboard.
+On a notification, the origin page's Back link MUST open where the page was opened from: the Import Notification Service's "What are you importing?" question when started there, the dashboard when started from the create button (also after going back from What are you importing?), Overview when opened from Overview, and the review when opened from a Change link. A notification holding no answers MUST open the dashboard if not opened in this session, and show this page when asked for Overview.
 
 #### Scenario: The back link opens the dashboard when the page was opened from the dashboard
 **ID**: SCN-ORIGIN-013-A
@@ -250,13 +250,14 @@ For a notification, the system MUST return the user from the origin page to the 
 - **WHEN** they open the origin of the import page from Overview and follow the back link
 - **THEN** Overview is shown
 
-#### Scenario: The back link opens Overview when the page was opened from Overview before any answer is saved
+#### Scenario: Overview asked for with nothing saved shows the origin page, whose back link opens the dashboard
 **ID**: SCN-ORIGIN-013-C
-- **GIVEN** the user has started a notification, saved nothing and opened Overview
-- **WHEN** they open the origin of the import page from Overview and follow the back link
-- **THEN** Overview is shown
+- **GIVEN** the user has started a notification and saved nothing
+- **WHEN** they ask for Overview
+- **THEN** the origin of the import page is shown
+- **AND** its back link opens the notification dashboard
 
-#### Scenario: The back link opens the dashboard when the page is reached by going back along the opening sequence
+#### Scenario: The back link opens the dashboard when the page is reached by going back from What are you importing?
 **ID**: SCN-ORIGIN-013-D
 - **GIVEN** the user has started a notification from the live animals notifications list's own create button, saved the origin of the import page and followed the back link from "What are you importing?"
 - **WHEN** they follow the back link from the origin of the import page
@@ -275,12 +276,18 @@ For a notification, the system MUST return the user from the origin page to the 
 - **WHEN** they open the origin of the import page from Overview and follow the back link
 - **THEN** Overview is shown
 
-#### Scenario: The back link opens the Import Notification Service question when the origin page is reached by going back along the opening sequence
+#### Scenario: The back link opens the Import Notification Service question when the origin page is reached by going back from What are you importing?
 **ID**: SCN-ORIGIN-013-G
 - **GIVEN** a notification started from the Import Notification Service's "What are you importing?" question
-- **WHEN** the user goes back along the opening run to the origin of the import page and follows the back link
+- **WHEN** the user goes back from What are you importing? to the origin of the import page and follows the back link
 - **THEN** the Import Notification Service's "What are you importing?" question is shown
 - **AND** Live animals is selected
+
+#### Scenario: The back link opens the review when the page was opened from a Change link
+**ID**: SCN-ORIGIN-013-H
+- **GIVEN** the review of a draft notification
+- **WHEN** the user follows the Change link for the import details and then the back link
+- **THEN** the review is shown
 
 ### Requirement: A country not in the offered list is rejected
 **ID**: REQ-ORIGIN-014

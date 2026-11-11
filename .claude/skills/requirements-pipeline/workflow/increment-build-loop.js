@@ -835,14 +835,24 @@ const reportedCompletionLine = (label, notes) =>
 
 const COMPLETION_LABELS = ['Probes', 'Docs updated']
 
+const E2E_PROBE_LINE = E2E_IS_LOCAL
+  ? `
+  An end-to-end link is probed against the leased stack as it is: the stack runs in dev mode, serving each frontend
+  from its repo's src and restarting it on a change, so nothing is rebuilt. Give \`tim build probe\` the frontend's
+  \`--reload-url\` (http://localhost:3000/health for animals, http://localhost:3003/health for plants) and run the
+  spec after \`--\` with \`npm --prefix ${TILDE}/repos/trade-imports-ins-tests run test:docker-compose -- <spec file>
+  -g '<test name>'\`. Running a spec against the stack is using it, not rebuilding it. Never leave a link partial
+  because probing it "needs the stack rebuilt" or "only the gate may": probe it.`
+  : ''
+
 const COMPLETION_LINES_DUTY = `
 PROBES AND DOCS — two more lines in notes, each on a line of its own, whatever the row's repos:
 - \`Probes: <n> full links, <n> red then green\`, adding \`; partial: <ids and why>\` for any link left partial, or
   \`Probes: none — <reason>\` when this row writes or upgrades no coverage link to "full". A link is "full" only once
   you have inverted the production line its test depends on, seen the test fail, restored the line and seen it pass,
-  by ${SKILLS}/frontend-change/references/SPEC_SYNC.md "The red probe". The leased stack holds each frontend's
-  default port, so a FIT test runs as \`npm --prefix ${TILDE}/<repoPath> run test:fit:ci -- <spec file>\`, never
-  \`test:fit\`, with this machine's \`--workers\` count from GUARD RAILS after the spec file.
+  by ${SKILLS}/frontend-change/references/SPEC_SYNC.md "The red probe", with \`tim build probe\`. The leased stack holds
+  each frontend's default port, so a FIT test runs as \`npm --prefix ${TILDE}/<repoPath> run test:fit:ci -- <spec file>\`,
+  never \`test:fit\`, with this machine's \`--workers\` count from GUARD RAILS after the spec file.${E2E_PROBE_LINE}
 - \`Docs updated: <paths>\`, or \`Docs updated: none — searched <terms> in <dirs>\`. Search the changed repos' \`docs/\`,
   the recipes, the JSDoc and Javadoc of every function you changed, comments within ten lines of every hunk, and
   convention test names, for the behaviour you changed. Every one that now states the old way is part of this change:
@@ -1301,7 +1311,10 @@ const OTHER_COMPOSE_GUARD = `- A command that starts any other Docker Compose pr
 const STACK_GUARD = `- THE WORKSPACE STACK IS LEASED TO THIS RUN, with \`tim docker lease\`, as \`${RUN_HOLDER}\`. The run takes it
   once, before its first increment, and gives it back once, at the end. Never start, stop, restart or rebuild it — no
   \`tim docker up\`, \`dev\` or \`down\`, no \`tim docker lease acquire\` or \`release\`, no \`run-stack.sh\` or
-  \`stop-stack.sh\`, no \`docker compose\` against it. The gate is the only thing that rebuilds it.
+  \`stop-stack.sh\`, no \`docker compose\` against it. The gate is the only thing that rebuilds it. You need no
+  rebuild to test a change against it: it runs in dev mode, serving each frontend from its repo's src and restarting
+  it a few seconds after a file there changes. Running a tests-repo spec against it, or \`tim build probe\` with
+  \`--reload-url\`, is using it as it is.
 ${OTHER_COMPOSE_GUARD}`
 
 // Under `e2e: "ci"` the run takes no lease and the stack is deliberately down, so
@@ -1497,7 +1510,27 @@ d. BLOCK on that run, with the Bash tool's \`timeout\` set to 600000, at most ${
    \`gh run watch <run-id> --repo ${ghRepo} --exit-status > ${WORKAREA_TILDE}/logs/${id}-tests-image.log 2>&1\`
 e. Only then push the other repos. A publish that failed, never started or never finished does not stop you: push the
    others and name it in your summary. The tests pull request's own checks show it, and the CI stage deals with it.
-None of this applies when you push ${TESTS_KEY} alone, or do not push it.`
+${testsE2eAfterOthersStep('f', branch)}
+Steps a to e do not apply when you push ${TESTS_KEY} alone, or do not push it. Step f applies whenever you push any
+other repo while ${TESTS_KEY} has an open pull request on \`${branch}\`, whether or not you pushed ${TESTS_KEY}.`
+}
+
+const testsE2eAfterOthersStep = (step, branch) => {
+  if (!TESTS_KEY) return ''
+  const ghRepo = REPOS[TESTS_KEY].github
+  return `${step}. THEN MAKE ${TESTS_KEY}'S OWN E2E RUN AGAINST THE OTHER REPOS' NEW CODE. Its "E2E Tests" check starts as
+   soon as its own image is published, and runs every other repo's branch image as it is at that moment, so it tests the
+   images from before the push you just made. For each other repo you pushed:
+   - its pushed commit: \`git -C ${TILDE}/<repoPath> rev-parse HEAD\`
+   - \`gh run list --repo <ghRepo> --workflow "Publish Branch Image" --commit <sha> --json databaseId,status,conclusion,updatedAt --limit 5\`
+     (empty means not started yet: list again, at most 5 times in all)
+   - block on it as in step d: \`gh run watch <run-id> --repo <ghRepo> --exit-status > ${WORKAREA_TILDE}/logs/<id>-<repoKey>-image.log 2>&1\`
+   Then read ${TESTS_KEY}'s check: \`gh pr checks <its pull request on ${branch}> --repo ${ghRepo} --json name,state,startedAt,link\`,
+   the entry named "E2E Tests". When it started before the last of those publish runs finished, re-run it. Its run id is
+   in its check run's summary: \`gh api repos/${ghRepo}/check-runs/<id from its link> --jq .output.summary\` names
+   ".../actions/runs/<run-id>". A run still in progress is cancelled first, \`gh run cancel <run-id> --repo ${ghRepo}\`,
+   and watched until it reports cancelled. Then \`gh run rerun <run-id> --repo ${ghRepo}\`. This re-run does refresh the
+   check, because the run belongs to ${TESTS_KEY} itself. Name it in your summary.`
 }
 
 const attemptRecordStep = (id, { stage, outcome, planReviewed }, step, work) => {
@@ -1580,6 +1613,8 @@ TASK:
    Do NOT record a commit — the increment is not built.${attemptRecordStep(id, record, 7, '{"kind":"patches","files":[<every .staged.patch and .unstaged.patch you wrote in step 2, each as "logs/<its name>", comma separated>]}')}
    Name only the \`.staged.patch\` and \`.unstaged.patch\` files: step 0's \`.commits.patch\` is a mailbox that \`git apply\`
    cannot take, and step 0's \`reset --soft\` already left its changes staged, so the staged patch holds them.
+   Leave out any patch file that is empty (0 bytes, \`test -s <file>\` fails): there was no work of that kind, and
+   \`git apply\` refuses an empty patch, so naming one would make the restore fail over nothing.
 Do NOT commit, do NOT push, do NOT open or edit a pull request.
 Report the patch files, the stash refs and which merges you aborted.
 Return the structured output only.`
@@ -1668,10 +1703,17 @@ ${files.map((file) => `   - ${file}`).join('\n')}
       which repo it belongs to. For each repo, apply its staged patch first, then its unstaged one:
       \`git -C ${TILDE}/<repoPath> apply --index ${WORKAREA_TILDE}/<the .staged.patch>\`
       \`git -C ${TILDE}/<repoPath> apply ${WORKAREA_TILDE}/<the .unstaged.patch>\`
+      First check each named patch with \`test -s ${WORKAREA_TILDE}/<the patch>\`. One that is on disk but empty
+      (0 bytes) holds no work: skip it, and it still counts as put back. Never pass \`--allow-empty\`.
    c. A patch that is not on disk, or that git refuses, is restored:false naming it and quoting git. Never add
       \`--3way\`, \`--reject\` or \`--exclude\`, and never edit a patch to make it apply: a half-applied tree is a tree
       nobody wrote, and the gate would measure it as though somebody had.
-   Never \`checkout\`, \`reset\`, \`stash\` or commit anything.`
+   d. When restored is false and step 1 already applied a patch to a repo, leave that repo clean, because the loop
+      then builds the row from the top and its baseline refuses a dirty tree. For each such repo run
+      \`git -C ${TILDE}/<repoPath> stash push -u -m "restore-failed-${id}"\`, then confirm
+      \`git -C ${TILDE}/<repoPath> status --short\` prints nothing. Name each stash ref in your summary. The patches
+      stay on disk, so nothing is lost.
+   Apart from step d, never \`checkout\`, \`reset\`, \`stash\` or commit anything.`
 }
 
 const restoreWorkStep = (id, branch, work) => {
@@ -3415,7 +3457,7 @@ const CODE_TEXT_DIRECTIVES = [
     kind: 'a quoted log message',
     dictation: true,
     pattern: new RegExp(
-      `(\\blogger\\.\\w+\\([^"“\`')]{0,60}?|\\b(log|logs|logged|warn|warns)\\b[^"“\`'.;:()]{0,30}?\\s*(:|saying|reading|that (reads|says)|with (the )?(message|text|wording)|as)?\\s*)${QUOTED_TEXT}`,
+      `(\\blogger\\.\\w+\\([^"“\`')]{0,60}?|\\b(log|logs|logged|warn|warns)\\b(?!\\s+(shows?|showed|names?|named|lists?|listed|has|had|holds?|records?|recorded)\\b)[^"“\`'.;:()]{0,30}?\\s*(:|saying|reading|that (reads|says)|with (the )?(message|text|wording)|as)?\\s*)${QUOTED_TEXT}`,
       'i'
     )
   }

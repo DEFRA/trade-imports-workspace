@@ -453,7 +453,7 @@ The system MUST take the user to the address book list, with no 'Page not found'
 
 ### Requirement: The view and delete pages return the user to the page they opened the address from
 **ID**: REQ-INS-ADDR-024
-The system MUST honour a return given when the view or delete page is opened, if it is a page of this service or, outside stub mode, exactly that environment's animals frontend, and MUST ignore any other. A return that is a path under '/live-animals' MUST be taken as that page on the animals frontend, resolved against that environment's animals frontend URL, never as a page of this service. The view page's Back MUST go to it, and Edit and Delete MUST carry it on. The delete page's Back and 'No, cancel' MUST go to the view page still carrying it. 'Yes, delete' and a dead link MUST land on it, or on the list when it is one of that address's own pages.
+The system MUST honour a return given when the view or delete page is opened, if it is a page of this service or, outside stub mode, that environment's animals frontend (a '/live-animals' path being a page there), and MUST ignore any other. Back, Edit, Delete, 'No, cancel', 'Yes, delete' and a dead link MUST follow or carry it, landing on the list when it is one of that address's own pages.
 
 #### Scenario: Back from the view page follows a return to a page of this service
 **ID**: SCN-INS-ADDR-024-A

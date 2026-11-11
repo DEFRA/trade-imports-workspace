@@ -17,15 +17,15 @@ The system MUST ask the user what type of transporter is being added, offering P
 - **THEN** it asks the transporter type, offering Private then Commercial and a Continue action
 - **AND** no type is shown as chosen
 
-### Requirement: A chosen transporter type is accepted
+### Requirement: A chosen transporter type is accepted and opens its details form
 **ID**: REQ-TRANSPORTER-TYPE-002
-The system MUST accept a chosen transporter type, saving it without error.
+The system MUST accept a chosen transporter type without error and open that type's details form, storing nothing until that form is saved.
 
-#### Scenario: Choosing a transporter type saves without error
+#### Scenario: Choosing the commercial transporter type opens its details form without error
 **ID**: SCN-TRANSPORTER-TYPE-002-A
 - **GIVEN** the user is on the transporter type page
 - **WHEN** they choose the commercial transporter type and continue
-- **THEN** the answer is saved and no error summary is shown
+- **THEN** the commercial transporter details form opens and no error summary is shown
 
 ### Requirement: The commercial option warns it can only be a Northern Ireland transporter
 **ID**: REQ-TRANSPORTER-TYPE-003
@@ -65,3 +65,13 @@ The system MUST refuse to continue when no transporter type is chosen, or when t
 - **WHEN** the submitted transporter type is neither Private nor Commercial
 - **THEN** they stay on the page with "Select a transporter type" in a "There is a problem" summary linking to the first option and shown inline above the radios
 - **AND** the transporter type already saved on the notification, if any, is unchanged
+
+### Requirement: The back link returns to the transporter list, keeping where the user came from
+**ID**: REQ-TRANSPORTER-TYPE-006
+The system MUST return the user to the transporter list when they follow the back link from the transporter type question, carrying where the user came to the list from so that the list's own back link is unchanged.
+
+#### Scenario: The back link opens the transporter list
+**ID**: SCN-TRANSPORTER-TYPE-006-A
+- **GIVEN** the user opened the transporter list from a Change link on the review and chose "Add a transporter"
+- **WHEN** they follow the back link
+- **THEN** the transporter list is shown

@@ -1,0 +1,16 @@
+# Ruling: Sam, 6 November 2026 (second)
+
+Sam's answers after the first DISTIL run, which drafted 22 rows and asked one question. Each quote is verbatim; where Sam chose one of the options offered, the option is quoted with the question it answered.
+
+> Question: "DISTIL's one open question: Back on the review page. Should it follow the trader's trail, or keep its fixed destinations (Overview on a draft or amendment, the dashboard when submitted)?"
+> Answer (option chosen): "Follow the trail": "Back on the review page goes to the last journey page or wherever the trader came from. Adds work to the review page, which the brief put out of scope."
+
+> Question: "DISTIL drafted 22 rows, eleven of them cut by page group. How far should I merge them by hand before the build? I'd union each row's criteria, requirements and sources so coverage still passes."
+> Answer (option chosen): "3 rows (Recommended)": "1) Mechanism: one page order, Save and continue from every start, Change links and amendments, amend pages showing the draft controls. 2) Every page in both journeys: Back follows the trail, sub-page round trips, the INS exception, each page's endings. 3) Removal: the run record, docs, recipes and the plants ledger. Each row needs the one before it to be proven."
+
+1. Back on the review page, in both the live animals and the high-risk plants journeys, goes to wherever the trader came from: the last journey page when the review was reached by Save and continue from it, Overview when the review was opened from Overview, and the dashboard when it was opened from the dashboard. It no longer has fixed destinations. Answers the question "Back on the review page" (c-041), and overturns its default.
+2. Only the review page's Back link changes. Its buttons and Continue, the declaration and the confirmation page stay out of scope. Follows from claim 1 and the brief's out-of-scope list.
+3. The backlog has exactly three rows, each depending on the one before it, and no more. Refines claim 8 of ruling:sam-2026-11-06. New.
+4. Row 1, the mechanism, in both frontends, the tests repo and the behaviour spec: one page order per journey; Save and continue goes to the next page that applies from every start (a new notification, Overview, a reopened draft, a copy, a new session, a review page Change link, an amendment); a notification with nothing saved opens at its first page; Change links and amendments carry on through the journey to the review page; pages being amended show the same buttons and links as on a draft. New.
+5. Row 2, every page in both journeys, in both frontends, the tests repo and the behaviour spec: Back goes to wherever the trader came from on every journey page and on the review page; sub-page round trips (CPH number, permanent address, add transporter, the picker's View link) keep where the trader came from; the INS address-book exception; each page's own Save and continue, Back and amend endings. New.
+6. Row 3, the removal, in both frontends, the tests repo and the behaviour spec: the run record and everything that starts, ends or reads it, the run-only step fields, the run Back links and the second page orders are gone; both frontends' routing docs and add-a-* recipes describe the one rule; the high-risk plants rulings ledger records it. New.

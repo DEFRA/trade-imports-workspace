@@ -401,6 +401,7 @@ a thin navigation index only, no item rows:
 **Reviewer:** Claude Code Agent
 **Date:** [Date]
 **Verdict:** PASS / PASS WITH NOTES / CONCERNS / FAIL
+**Notes:** [What a reader of each PR needs beyond the verdict, such as a config change or a manual step before the change is live. One line; omit when there is none.]
 
 ## Summary
 [2-3 sentences]
@@ -449,8 +450,11 @@ set, not within one diff.
 ## Step 7: Post the review (FRESH only)
 
 Post the review to every PR in `.review-meta.json` as a PR comment.
-This runs after Step 6 because the comment carries the verdict from
-`review-index.md`. Who authored each PR decides the shape of the post.
+This runs after Step 6 because the comment carries the **Notes:** line
+from `review-index.md`. Each PR's verdict is not the index's: the script
+works it out from that repo's items and names any other PR in the ticket
+that is not APPROVED as a possible blocker. Who authored each PR decides
+the shape of the post.
 
 Look up the `gh` user once:
 
@@ -767,8 +771,9 @@ For a PR someone else authored, drop `--comment-only` only if they are
 walking the review from the handoff branch; otherwise keep it. The
 comment names the commit first reviewed, the commit re-reviewed and,
 when the head is past it, says the later commits have not been
-re-reviewed. Update the verdict in `review-index.md` (Step R6) before
-posting: the comment carries it.
+re-reviewed. Update the **Notes:** line in `review-index.md` (Step R6)
+before posting: the comment carries it. The verdict comes from the items,
+so record every item's status first.
 
 Capture each comment URL for the Completion Output.
 

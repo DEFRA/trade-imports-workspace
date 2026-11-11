@@ -68,7 +68,8 @@ mkdir -p "$REVIEW_DIR"
 cat > "$REVIEW_DIR/review-index.md" <<'EOF'
 # Code Review: EUDPA-99996
 
-**Verdict:** APPROVED — fixture verdict for the refresh test.
+**Verdict:** FAIL — the index's verdict, which share-review does not post.
+**Notes:** fixture notes for the refresh test.
 EOF
 
 cat > "$REVIEW_DIR/.review-meta.json" <<EOF
@@ -106,7 +107,10 @@ if [[ -z "$body" || ! -f "$body" ]]; then
     failures=$((failures + 1))
 else
     check_contains "has the re-review heading"          "$body" "# Code re-review — $TICKET"
-    check_contains "carries the verdict"                "$body" "fixture verdict for the refresh test"
+    check_contains "carries the notes"                  "$body" "**Notes:** fixture notes for the refresh test."
+    check_absent   "does not post the index's verdict"  "$body" "the index's verdict"
+    check_contains "gives its own verdict and names the other PR that is not approved" "$body" \
+        "**Verdict:** APPROVED WITH CHANGES, potentially blocked by DEFRA/$UNREVIEWED_REPO#2. Merge this PR with caution."
     check_contains "names the first reviewed commit"    "$body" '**First reviewed at:** `aaaaaaaa`'
     check_contains "names the latest re-review"         "$body" '**Re-reviewed at:** `cccccccc`'
     check_contains "counts the fixed items"             "$body" "| Done / Fix | 1 |"

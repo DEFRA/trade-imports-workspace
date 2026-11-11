@@ -17,7 +17,10 @@
 #   4. Commits the shared/ tree, pushes the branch.
 #   5. Renders one markdown comment body per PR in scope (verdict +
 #      that PR's repo items table + next steps) and posts each via
-#      tools/github/pr-comment.sh.
+#      tools/github/pr-comment.sh. Each PR's verdict comes from its own
+#      repo's items, and names any other PR in the ticket that is not
+#      APPROVED as a possible blocker. The **Notes:** line of
+#      review-index.md is posted as written; its **Verdict:** is not.
 #   6. Emits a summary block on stdout (or JSON with --json).
 #
 # --comment-only skips steps 2-4: no shared/ tree, no branch, no push, and
@@ -188,10 +191,62 @@ fi
 
 # ---------- Step 3: render the comment bodies (one per PR) ----------
 
-verdict=""
+notes=""
 if [[ -f "$artefact_dir/review-index.md" ]]; then
-    verdict=$(grep -m1 '^\*\*Verdict:\*\*' "$artefact_dir/review-index.md" | sed 's/^\*\*Verdict:\*\*[[:space:]]*//')
+    notes=$(grep -m1 '^\*\*Notes:\*\*' "$artefact_dir/review-index.md" | sed 's/^\*\*Notes:\*\*[[:space:]]*//')
 fi
+
+# A repo's verdict, from its own items: FAIL while a Critical or Major item
+# is open, APPROVED WITH CHANGES while only Minor ones are, else APPROVED.
+# An item is open when it is Not Done or nobody has walked it.
+repo_verdict() {
+    local items_file="$1"
+    jq -r '
+        [.items[] | select(.disposition == null or .status == "Not Done") | .severity] as $open
+        | if any($open[]; . == "Critical" or . == "Major") then "FAIL"
+          elif ($open | length) > 0 then "APPROVED WITH CHANGES"
+          else "APPROVED" end
+    ' "$items_file"
+}
+
+# The other PRs in the ticket whose own verdict is not APPROVED, as
+# GitHub references joined for a sentence: "A", "A and B", "A, B and C".
+blocking_prs() {
+    local this_repo="$1" this_pr="$2"
+    local refs=() other_repo other_pr other_items
+    while IFS=$'\t' read -r other_repo other_pr; do
+        [[ "$other_repo" == "$this_repo" && "$other_pr" == "$this_pr" ]] && continue
+        other_items="$artefact_dir/items.${other_repo}.json"
+        [[ -f "$other_items" ]] || continue
+        [[ "$(repo_verdict "$other_items")" == "APPROVED" ]] && continue
+        refs+=("DEFRA/$other_repo#$other_pr")
+    done < <(jq -r '.prs[] | "\(.repo)\t\(.pr)"' "$meta")
+    local count=${#refs[@]}
+    if (( count == 0 )); then
+        return
+    elif (( count == 1 )); then
+        echo "${refs[0]}"
+    else
+        local joined
+        joined=$(printf '%s, ' "${refs[@]:0:count-1}")
+        echo "${joined%, } and ${refs[count-1]}"
+    fi
+}
+
+verdict_line() {
+    local items_file="$1" repo="$2" pr="$3"
+    [[ -f "$items_file" ]] || return
+    local own blockers
+    own=$(repo_verdict "$items_file")
+    blockers=$(blocking_prs "$repo" "$pr")
+    if [[ -z "$blockers" ]]; then
+        echo "$own"
+    elif [[ "$own" == "FAIL" ]]; then
+        echo "FAIL. Also potentially blocked by $blockers."
+    else
+        echo "$own, potentially blocked by $blockers. Merge this PR with caution."
+    fi
+}
 
 reviewer=$("$WORKSPACE/tools/github/whoami.sh" 2>/dev/null || echo "(unknown)")
 
@@ -255,8 +310,13 @@ while IFS=$'\t' read -r repo pr; do
             echo "# Code review handoff — $TICKET"
         fi
         echo
+        items_file="$artefact_dir/items.${repo}.json"
+        verdict=$(verdict_line "$items_file" "$repo" "$pr")
         if [[ -n "$verdict" ]]; then
             echo "**Verdict:** $verdict"
+        fi
+        if [[ -n "$notes" ]]; then
+            echo "**Notes:** $notes"
         fi
         echo "**Reviewer:** @$reviewer"
         if [[ "$REFRESH" == "1" ]]; then
@@ -276,7 +336,6 @@ while IFS=$'\t' read -r repo pr; do
 
         # This PR's repo items table (only renders if items.{repo}.json
         # exists, which it should after FRESH Step 5).
-        items_file="$artefact_dir/items.${repo}.json"
         review_md="$artefact_dir/review.${repo}.md"
 
         echo "## Repository: \`$repo\`"
@@ -366,7 +425,7 @@ EOF
     if (( body_size > GITHUB_COMMENT_LIMIT )); then
         echo "Comment body for $repo#$pr is $body_size characters; GitHub accepts $GITHUB_COMMENT_LIMIT." >&2
         if [[ "$SUMMARY" == "1" ]]; then
-            echo "Already summarising. Shorten the verdict in review-index.md, or post the detail as an attachment on the ticket." >&2
+            echo "Already summarising. Shorten the notes in review-index.md, or post the detail as an attachment on the ticket." >&2
         else
             echo "Re-run with --summary to post counts instead of the full item table." >&2
         fi

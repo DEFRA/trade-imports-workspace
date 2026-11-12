@@ -104,6 +104,12 @@ The system MUST store, for each answered animal, which option was chosen and, fo
 - **AND** the county is shown in "County", the town in "Town or city" and the postcode in "Postcode or Zip code", each in its own field
 - **AND** the stored record's country is United Kingdom
 
+#### Scenario: An animal's stored address survives another animal on its line being saved and then removed on Identification details
+**ID**: SCN-PERM-ADDR-008-C
+- **GIVEN** an animal saved with a hand-entered permanent address, on a line with a second animal still outstanding
+- **WHEN** that second animal is saved on Identification details and then removed from its saved-animals table
+- **THEN** the permanent address page, reopened after either change, still shows the first animal's address with "Enter a new address" selected and every value back in its own field
+
 ### Requirement: An animal left with neither option chosen is saved with no permanent address
 **ID**: REQ-PERM-ADDR-009
 The system MUST save the other animals when one is left with neither option chosen, storing no permanent address and no choice for that animal, and MUST NOT refuse the save.

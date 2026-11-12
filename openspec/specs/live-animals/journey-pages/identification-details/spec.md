@@ -67,7 +67,6 @@ The system MUST ask the user for the identifiers of a single animal on a card sc
 - **GIVEN** the user has reached the identification details page for a cat, dog or ferret line
 - **WHEN** the page loads
 - **THEN** the card asks only for that commodity's identifier fields, ending with its save control
-- **AND** it offers no permanent address field or guidance
 
 ### Requirement: Each card offers a way to change that species' declared animal count, and a way to add a further commodity
 **ID**: REQ-IDENT-003
@@ -109,13 +108,13 @@ The system MUST accept an identifier record once a valid identifier has been ent
 
 ### Requirement: The identifier fields offered for an animal depend on its commodity and its species, and a commodity with none of its own gets no panel
 **ID**: REQ-IDENT-006
-The system MUST show only the identifier fields that a given commodity and species support, in the order that commodity asks for them, MUST offer a permanent-address field (with no country field, since it is assumed to be in Great Britain) for commodities that require one, and MUST show no identifier panel at all — no typed fields and no free-text fallback — for a commodity with none of its own.
+The system MUST show only the identifier fields that a given commodity and species support, in the order that commodity asks for them, and MUST show no identifier panel at all — no typed fields and no free-text fallback — for a commodity with none of its own.
 
 #### Scenario: A commodity with typed identifiers shows only its own identifier fields
 **ID**: SCN-IDENT-006-A
-- **GIVEN** the user is entering identifier details for a commodity with its own typed identifiers and a permanent-address requirement (for example, cats)
+- **GIVEN** the user is entering identifier details for a commodity with its own typed identifiers (for example, cats)
 - **WHEN** they view the entry form
-- **THEN** only that commodity's identifier fields are shown, along with a permanent-address field with no country field
+- **THEN** only that commodity's identifier fields are shown
 - **AND** identifier fields belonging to other commodities are not shown
 
 #### Scenario: A commodity with no identifier of its own earns no panel
@@ -219,7 +218,7 @@ The system MUST reject a typed identifier value of more than 58 characters in a 
 
 ### Requirement: The saved-animals table is headed by every identifier asked of that species, whether or not a given record filled it in
 **ID**: REQ-IDENT-014
-The system MUST head the saved-animals table with a column for every identifier asked of that species — the commodity's identifiers, narrowed to the ones its species is listed for where an identifier names species — not only the ones a particular record happens to hold, naming each row by its species and its number among that species' records, and MUST place it below the entry form and the card button while the species still has animals to enter.
+The system MUST head the saved-animals table with a column for every identifier asked of that species, not only the ones a particular record happens to hold, naming each row by its species and its number among that species' records, MUST place it below the entry form and the card button while the species still has animals to enter, and MUST limit its columns to the animal column, one column per identifier the species is asked for, and the remove action.
 
 #### Scenario: The table heads every identifier asked of that species
 **ID**: SCN-IDENT-014-A
@@ -238,6 +237,12 @@ The system MUST head the saved-animals table with a column for every identifier 
 - **GIVEN** a species is asked for one identifier only
 - **WHEN** the user saves a record for it
 - **THEN** its saved-animals table is headed with an Animal column, that one identifier's column and a Remove action, and no other identifier column
+
+#### Scenario: A species that needs a permanent address has a saved-animals table of its own identifiers alone
+**ID**: SCN-IDENT-014-D
+- **GIVEN** a species whose commodity and species pair needs a permanent address (for example, cats or ferrets)
+- **WHEN** the user saves a record for it
+- **THEN** its saved-animals table is headed by the animal column, each identifier the pair is asked for, and a Remove action
 
 ### Requirement: A record can be removed from the saved-animals table
 **ID**: REQ-IDENT-015

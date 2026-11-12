@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.njk",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "c36899ebe5efc0e516bf0c309231681bc28c7fcb",
+  "pr": 474,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-12T13:16:48Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Template correctly wraps the unchanged no-JS form in the shared multi-select-search macro and matches the prototype's search box, but duplicates the results-partial parameter mapping with search-results.njk.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 36,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The context-to-macro mapping for commoditySearchResults (copy, commodityGroups, noResults, carriedKeys, selectedSummary) is written out twice: search.njk:36-42 and search-results.njk:5-11, both mirroring the keys resultsContext() returns in search.controller.js:47-60. A key added to the results partial or to resultsContext must be threaded through both templates by hand, and missing one breaks only the JS path or only the no-JS path.",
+      "fix": "Must: one place owns which values the results partial receives; search.njk and search-results.njk both pass that one object through unchanged. One way: have resultsContext() return its values under a single key (e.g. results: { copy, commodityGroups, noResults, carriedKeys, selectedSummary }) and call commoditySearchResults(results) in both templates."
+    }
+  ],
+  "reconciled_at": "2026-11-12T13:23:06Z"
+}

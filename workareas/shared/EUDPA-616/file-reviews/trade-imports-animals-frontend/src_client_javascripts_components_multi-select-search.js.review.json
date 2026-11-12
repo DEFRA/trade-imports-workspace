@@ -1,0 +1,62 @@
+{
+  "file": "src/client/javascripts/components/multi-select-search.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "c36899ebe5efc0e516bf0c309231681bc28c7fcb",
+  "pr": 474,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-12T13:18:04Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Sound progressive-enhancement design and registered bundle, but focus can be stolen by a late tick refresh, the native-submit latch never resets after a bfcache Back, the failure fallback has two homes, and two names hide what their functions do.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 27,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "focusReplacementOf (27-33, called from showResults:61) moves focus whenever the trigger was swapped out, wherever focus is now. Scenario: the trader ticks Cattle, then clicks into the search box and starts typing while that refresh is in flight; when it lands the old checkbox is disconnected, so focus jumps to the new #cattle checkbox and the next Space keystroke toggles it. The same yank happens to the search box after a Remove if the trader has since tabbed to Save and continue. Untested: every focus test leaves focus on the trigger.",
+      "fix": "Must: after a swap, focus moves only when the swap removed the focused element (focus was inside the replaced results); a trader who has moved focus elsewhere keeps it, and a unit test proves focus stays in the search box when a tick refresh lands after the trader has focused it. One way: read document.activeElement before replaceChildren and restore only when it was inside results."
+    },
+    {
+      "id": 2,
+      "line": 52,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "submittingNatively (52, set at 55) latches true and is never reset. Hapi answers with Cache-Control: no-cache (server.js sets no no-store), so the page is bfcache-eligible. Scenario: the trader ticks a box and presses Save and continue while the refresh is in flight (submitOnceRefreshesLand -> submitNatively), or a results request fails once; then presses Back. The page is restored with its JS state, submittingNatively is still true, so fetchAndShowResults (68) returns early for every keystroke and tick, and the submit handler (136) lets nothing through the enhanced path. Ticks no longer refresh the chips, and the no-JS Update selected button stays hidden by app-multi-select-search--enhanced, so the chips cannot catch up at all. The latch also sticks if requestSubmit is refused (constraint validation) or another listener cancels the submit.",
+      "fix": "Must: a page restored from the back-forward cache, or a native submit that did not leave the page, refreshes in place again as on first load. One way: reset submittingNatively on window 'pageshow' when event.persisted, and only treat a submit as native-in-progress for the submit event it raised (e.g. clear the flag in the submit handler once it has let that event through)."
+    },
+    {
+      "id": 3,
+      "line": 18,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The rule 'a failed refresh submits the form natively' has two homes. fetchResults (18-25) catches a rejected fetch and returns null so fetchAndShowResults (75-79) calls submitNatively; refresh (89) also chains .catch(() => submitNatively(refreshRequest.submitter)). Delete the try/catch at 19-24 and a rejected fetch still reaches submitNatively through line 89, so the inner catch is a second copy of the same fallback.",
+      "fix": "Must: one place decides that a refresh which did not produce results submits the form with its submitter. One way: let fetchResults throw (or return null only for a non-ok response or a response with no results element) and keep the single .catch on the queue, or drop the queue's .catch and keep the null path; not both."
+    },
+    {
+      "id": 4,
+      "line": 104,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "refreshOnEachChange (104) predicts 'refresh the results when something changes'. Its body also intercepts every form submit (135-154): it cancels Search, Enter and any button inside the results and turns them into refreshes, holds a Save and continue outside the component until refreshes land (142-145), and drops a pending typed search on save (141). Holding and rewriting the page's submits is the most consequential thing it does and the name hides it.",
+      "fix": "Must: a name (or a split into named steps) that tells the reader this wires input, tick and submit handling, including holding an outside submit until refreshes land. One way: split into refreshOnTypingAndTicking and refreshInPlaceOfSubmitsAndHoldOutsideSubmits (or wireRefreshesAndSubmits), called from the constructor."
+    },
+    {
+      "id": 5,
+      "line": 27,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "focusReplacementOf(trigger, searchBox) (27-33) predicts 'focus the element that replaced trigger'. It also does nothing when the trigger is still on the page, and focuses the search box when the trigger had no id or no replacement exists (32). The searchBox parameter is the only hint of that fallback, and the README has to explain it ('If that element has gone... focus moves to the search box').",
+      "fix": "Must: the function's name says what it focuses in every case: the replacement, else the search box, and only when the trigger left the page. One way: restoreFocusAfterSwap(trigger, searchBox), folded into the fix for the focus-steal finding on the same lines."
+    },
+    {
+      "id": 6,
+      "line": 2,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "ENHANCED_CLASS (2) is a module-scope constant read by one function, the MultiSelectSearch constructor (201). The file's other single-use selectors ('[data-multi-select-search-status]' at 38, '[data-multi-select-search-dropdown]' at 158) sit beside their one use, so the module mixes both placements. RESULTS_SELECTOR (1) is shared by resultsIn and partsOf and correctly stays at module scope.",
+      "fix": "Must: a literal used by one function lives in that function; module scope holds only values the module shares. One way: move 'app-multi-select-search--enhanced' into the constructor as a local enhancedClass.",
+      "best_practice": "node/code-style.md"
+    }
+  ],
+  "reconciled_at": "2026-11-12T13:23:06Z"
+}

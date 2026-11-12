@@ -1,0 +1,57 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "c36899ebe5efc0e516bf0c309231681bc28c7fcb",
+  "pr": 474,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-12T13:17:51Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new type-ahead specs cover the AC with JS and keep no-JS coverage, but one assertion cannot fail, three titles over-claim, set-up is copied rather than shared, and a single-use literal sits at module scope.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 525,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "'lists the matching species without pressing Search or leaving the page' claims the page is not left, but expect(page.url()).toBe(pageUrl) (lines 525, 536) cannot fail: search.njk:19 posts the form to its own URL, so the component's native-submit fallback (multi-select-search.js:54-57) would land on the same URL and the assertion still passes.",
+      "fix": "Must: every clause of the title is proven by an assertion that turns red if the page navigates, or the clause leaves the title. One way: set a marker before typing (await page.evaluate(() => { window.stillHere = true })) and assert it survives with expect.poll(() => page.evaluate(() => window.stillHere)).toBe(true), then delete the URL comparison.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 2,
+      "line": 713,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Three results-list titles claim more than their assertions prove. Line 713 'rules each species row the full width of the list' asserts only row.x === heading.x (line 725): no border-bottom, no width. Line 728 'shades the first species row under each heading' runs on a CATTLE_CODE search with one heading only and checks the first three rows under it (lines 731-738), so 'each heading' is never exercised (the stripe is :nth-child(odd) per group, multi-select-search.scss:51). Line 741 'offers no Update selected button, as a tick updates what is chosen straight away' asserts only that the button is hidden (line 744); the 'tick updates straight away' clause is not asserted here.",
+      "fix": "Must: each title states only what its assertions prove, and a title that claims a per-heading rule is checked against a search with two or more headings. One way: assert border-bottom-width and the row's width against the dropdown's inner width (or drop 'rules ... full width'); run the shading check on a search such as 'gallus' that yields two groups and assert the first row of each is shaded; trim the Update selected title to 'offers no Update selected button with JavaScript on'.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 3,
+      "line": 51,
+      "severity": "Major",
+      "category": "structure",
+      "issue": "TRANSPARENT ('rgba(0, 0, 0, 0)', line 51) sits at module scope but is used by one test only, the shading check at line 736.",
+      "fix": "Must: the transparent-colour literal lives inside the one test that uses it. One way: move it into 'shades the first species row...' as a local const and delete the module-scope declaration."
+    },
+    {
+      "id": 4,
+      "line": 513,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Set-up is copied between tests instead of living in the shared helper. The typed-search pick (searchBox(page).fill(row.speciesLatinName) then tickSpecies(page, row)) is written out at lines 513-514, 554-555, 558-559, 587-588, 600-601, 618-621, the typed counterpart of selectSpecies in fit/live-animals-journey.js:614. The Clear all press (page.getByRole('button', { name: copy.search.selected.clearAll }).click()) is written out at lines 247-249, 394-396, 630-632, 642-644, 658-660 and 775-777, beside the shared pressSpeciesRemove (fit/live-animals-journey.js:682) that already owns the single-Remove press.",
+      "fix": "Must: one helper owns typing a species and ticking it, and one owns pressing Clear all, both in fit/live-animals-journey.js beside selectSpecies and pressSpeciesRemove, and every copy in this spec calls them. One way: add typeAndTickSpecies(page, row) and pressClearAll(page) to the shared helper and replace the inline copies.",
+      "best_practice": "node/testing/frontend.md"
+    },
+    {
+      "id": 5,
+      "line": 696,
+      "severity": "Minor",
+      "category": "test-readability",
+      "issue": "New locators reach the results list by CSS class, id and data attribute: speciesRows uses '.govuk-checkboxes__item' (line 697), searchResults uses '#commodity-search-results' (line 49) and resultsDropdown uses '[data-multi-select-search-dropdown]' (line 57). The Playwright guide flags CSS class selectors and generated ids.",
+      "fix": "Must: the results-list locators start from roles or labels wherever the element has one. One way: reach the rows from their checkboxes (page.getByRole('group', { name: CATTLE_CODE }).getByRole('checkbox').locator('..')) and the dropdown from the search box's aria-controls target, keeping a data attribute only where no role exists.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    }
+  ],
+  "reconciled_at": "2026-11-12T13:23:06Z"
+}

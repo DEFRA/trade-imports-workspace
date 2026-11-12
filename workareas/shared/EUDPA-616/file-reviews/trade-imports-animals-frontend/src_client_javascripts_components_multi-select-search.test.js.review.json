@@ -1,0 +1,37 @@
+{
+  "file": "src/client/javascripts/components/multi-select-search.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "c36899ebe5efc0e516bf0c309231681bc28c7fcb",
+  "pr": 474,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-12T13:16:55Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Solid behavioural suite through the real macro with only fetch mocked, but one title over-claims, set-up is copied across tests, and several new fallback/guard branches are unproven.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 165,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Title 'Should run the search when Search is pressed, without leaving the page' claims no native submission, but the test asserts only the posted q and the announcement (lines 171-176). Deleting event.preventDefault() at multi-select-search.js:148 leaves it green, because jsdom does not navigate on a native submit. The Remove test (line 147-163) proves the same claim with a navigated spy; this one does not.",
+      "fix": "Must: the test asserts that pressing Search causes no native form submission, or its title stops claiming it. One way: capture native submits with the same listener the Remove test uses and assert none happened."
+    },
+    {
+      "id": 2,
+      "line": 147,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Test set-up is copied between tests instead of living in a file-level helper beside mount(): the 'capture submits nobody prevented' listener is written four times (lines 147, 214, 239, 301), the dropdown() lookup twice (lines 261, 281), and the held-fetch deferred-promise pattern twice (lines 186, 234).",
+      "fix": "Must: each piece of set-up has one helper in the file that every test calls, with no local copies left. One way: add nativeSubmitsOf(form) returning the array it records, dropdownOf(results), and a heldResponse() returning { promise, answer }, then call them from each test."
+    },
+    {
+      "id": 3,
+      "line": 199,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "New fallback and guard branches in multi-select-search.js have no test that fails without them: an OK response with no [data-multi-select-search-results] region (resultsIn returns null, line 15/21) must fall back to a native submit; a rejected fetch (lines 22-23 / 89) must too; a click on the already-focused search box re-shows the dropdown after Escape (line 185); and the constructor must leave the page alone when a part is missing, e.g. no enclosing form (partsOf line 46). Deleting line 185 or the every(Boolean) guard leaves the suite green; without the guard a macro used outside a form throws on form.addEventListener.",
+      "fix": "Must: each of these branches has a test that turns red when the branch is removed. One way: add a test where fetch resolves ok with HTML lacking the results region and assert the native submitter; one where fetch rejects; one pressing Escape then clicking the box; and one mounting without a <form> and asserting no enhanced class and no error."
+    }
+  ],
+  "reconciled_at": "2026-11-12T13:23:06Z"
+}

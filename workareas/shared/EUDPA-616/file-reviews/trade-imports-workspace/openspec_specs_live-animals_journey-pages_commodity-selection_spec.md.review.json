@@ -1,0 +1,37 @@
+{
+  "file": "openspec/specs/live-animals/journey-pages/commodity-selection/spec.md",
+  "repo": "trade-imports-workspace",
+  "commit": "396e7c317f7d57650e00e01ec0cbb4f7fee5ccff",
+  "pr": 240,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-12T13:18:58Z",
+  "verdict": "RISKY",
+  "verdict_reason": "REQ-015's title and scenario still claim heading-order grouping after the PR changed headings to name (code) and the body to code order, so the spec states behaviour the code lacks; the no-JS Update selected addition also departs from the AC without a recorded ruling.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 308,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "REQ-COMMODITY-SELECT-015's body now orders groups by commodity code (line 310), but its title (line 308, 'commodity heading, then species label') and SCN-COMMODITY-SELECT-015-A (lines 312, 316: 'alphabetically', 'the commodity groups are in heading order') still claim heading order. This PR made the heading 'name (code)' (REQ-004), so the two now differ: result-order.js sorts by legendFor = code, so a search matching Horse (0101) and Cow (0102) lists 'Horse (0101)' first, while heading order puts 'Cow (0102)' first. The scenario states behaviour the code does not have.",
+      "fix": "Must: the requirement title, body and SCN-015-A all state one ordering, the one the code applies (groups by commodity code, species by label), and the scenario no longer says alphabetical or heading order for groups. One way: retitle to 'Search results are listed in order: commodity code, then species label', and reword the THEN to 'the commodity groups are in commodity code order'; re-check the SCN-015-A coverage link still witnesses that wording."
+    },
+    {
+      "id": 2,
+      "line": 153,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "REQ-COMMODITY-SELECT-008 (line 153) and new SCN-COMMODITY-SELECT-008-F (lines 188-193) add a no-JavaScript 'Update selected' control, and the tally entries change from the species label to its Latin name alone on both paths (lines 153, 160). The ticket AC says 'With JavaScript disabled, the page still works exactly as it does today', and ticket.md records no ruling allowing a no-JS change. The spec faithfully describes the frontend PR, but it encodes a rule the AC rules out, so a reader takes it as agreed behaviour.",
+      "fix": "Must: either the ticket records a person's ruling that the no-JS path gains Update selected and the Latin-name-only tally (and the spec stays), or the no-JS behaviour matches main and REQ-008/SCN-008-F are reverted with the code. One way: ask the ticket owner to rule on the AC deviation and add it as a ticket comment before merge."
+    },
+    {
+      "id": 3,
+      "line": 72,
+      "severity": "Minor",
+      "category": "correctness",
+      "issue": "REQ-COMMODITY-SELECT-004 now says a group's heading reads as the commodity's name with its code in brackets (line 66, SCN-004-D), but SCN-004-A (line 72, 'under a heading of that commodity code') and SCN-004-B (line 78, 'each headed by its own commodity code') still read as a code-only heading. Separately, REQ-008 (line 153) does not say the tally's bold commodity heading is the code alone (selected-summary.js uses legendFor, code only), while the results heading carries the name; config.yaml asks that two look-alike groupings have their difference specified.",
+      "fix": "Must: every scenario that describes a results group heading agrees with REQ-004's name-with-code wording, and REQ-008 states what the tally's commodity heading reads. One way: reword SCN-004-A/B to 'under a heading for that commodity' / 'each headed by its own commodity'; add to REQ-008 'each chosen commodity as a bold heading of its code'."
+    }
+  ],
+  "reconciled_at": "2026-11-12T13:23:07Z"
+}

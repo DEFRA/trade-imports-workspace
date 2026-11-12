@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/commodity-legend.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "c36899ebe5efc0e516bf0c309231681bc28c7fcb",
+  "pr": 474,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-12T13:17:07Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The new named-legend helper works and is tested through labels.test.js, but its name mispredicts the code-only fallback, it splits 'legend' into two meanings, and the label it produces differs from the prototype's wording and placement.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 5,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "commodity-legend.js:3,5 now exports two 'legend' functions for one commodity: legendFor (the code) and namedLegendFor (name and code, else the code alone). The value word 'named' mispredicts the fallback, which returns an unnamed code (line 7). The split also leaves 'legend' meaning two things to callers: search/view-model/result-order.js:4-7 names its sort byLegend/inLegendOrder but sorts by legendFor (the code), while the legend the results actually show is namedLegendFor (labels.js:6). A reader of inLegendOrder predicts the groups sort by the shown heading 'Cow (0102)'; they sort by '0102'.",
+      "fix": "Must: each function's name predicts every value it returns, and 'legend' names one thing across commodity-legend.js, labels.js and result-order.js. One way: rename namedLegendFor to commodityHeadingFor (or commodityLabelFor: the name with its code, else the code) and rename result-order's byLegend/inLegendOrder to byCode/inCodeOrder so the sort says it orders by code, as page-design.md states."
+    },
+    {
+      "id": 2,
+      "line": 5,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "namedLegendFor (line 5-8) makes the results heading read 'Cow (0102)' from COMMODITY_NAMES_BY_CODE (services/commodities/rules.js:100), but the design source names that commodity 'Cattle (0102)' (workareas/shared/dr21-parity/harness/capture/html/dr21-what-are-you-importing-germinal-mixed.html:521). The prototype also uses the same name-and-code label in the selected panel as in the results heading ('Cattle, Semen (05111000)' at germinal-mixed.html:462 and :537), whereas the code applies the named label only to results and keeps the code alone in the selected panel (search/view-model/selected-summary.js:18 calls legendFor). AC: 'grouped by commodity ... same as the prototype'.",
+      "fix": "Must: the commodity label shown in the results heading and in the selected-items panel matches the prototype's text for each code, including 0102 reading 'Cattle (0102)'. One way: correct the 0102 name in COMMODITY_NAMES_BY_CODE to the prototype's 'Cattle' and have selected-summary.js use the same named label function as labels.js, then update page-design.md's line saying the chips name a commodity by its code."
+    }
+  ],
+  "reconciled_at": "2026-11-12T13:23:06Z"
+}

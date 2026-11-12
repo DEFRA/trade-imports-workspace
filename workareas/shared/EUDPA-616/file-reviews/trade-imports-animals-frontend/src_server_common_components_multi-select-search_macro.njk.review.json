@@ -1,0 +1,29 @@
+{
+  "file": "src/server/common/components/multi-select-search/macro.njk",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "c36899ebe5efc0e516bf0c309231681bc28c7fcb",
+  "pr": 474,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-12T13:17:32Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Markup and ARIA wiring are sound and match the client script's hooks, but the comment block duplicates and misstates the stylesheet's class catalogue and the search param contract.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 30,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "The 'Classes for the caller body' block (lines 30-42) describes another module (multi-select-search.scss) and the client script ('so Escape and a click outside close it'), which the house rules forbid in a comment, and it is already stale: it omits app-multi-select-search__update and the app-multi-select-search--enhanced modifier (scss lines 69, 74) that the no-JS path needs, while README.md says 'the macro's comment block lists them'. Two homes for one class catalogue, one of them incomplete.",
+      "fix": "Must: the class catalogue has one home that lists every class the stylesheet styles (including __update and --enhanced), and the macro comment states only the macros' params and usage. One way: delete lines 30-42 from the macro comment, keep the list in README.md's Styles section, and change README's 'the macro's comment block lists them' to point at that section."
+    },
+    {
+      "id": 2,
+      "line": 8,
+      "severity": "Minor",
+      "category": "comments",
+      "issue": "The search param is documented as 'the appSubmittedSearch params for the box' (line 8), but the macro forwards only id, name, value, label, hint, errorMessage, button and wrapperClasses and overwrites type and attributes (lines 57, 61-64), so a caller's search.type or search.attributes is silently dropped despite appSubmittedSearch accepting both.",
+      "fix": "Must: the param doc for search says which appSubmittedSearch params it takes and that the macro sets type and attributes itself. One way: reword line 8 to 'the appSubmittedSearch params for the box, without type or attributes, which the macro sets'."
+    }
+  ],
+  "reconciled_at": "2026-11-12T13:23:06Z"
+}

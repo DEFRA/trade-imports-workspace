@@ -1,0 +1,64 @@
+{
+  "file": "src/server/common/components/multi-select-search/multi-select-search.scss",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "c36899ebe5efc0e516bf0c309231681bc28c7fcb",
+  "pr": 474,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-12T13:19:09Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Partial is registered in components/_index.scss and matches the prototype, but the chip remove X vanishes in forced-colours mode, a comment claims a row hover that does not exist, two variable names mispredict, and hover/chip styling needs designer rulings against GOV.UK and MoJ guidance.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 177,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "The chip remove button's only visible content is the X drawn by background-color on ::before/::after (line 177). In Windows High Contrast / forced-colors mode the browser replaces background-color with the Canvas system colour, so the X disappears and each remove button shows as an empty 20px box with only visually-hidden text. The sibling icon helper already handles this (helpers/_icon-button.scss: '@media (forced-colors: active) { background-color: ButtonText; }'); this partial has no forced-colors rule.",
+      "fix": "Must: the remove control's X stays visible in forced-colors mode. One way: add '@media (forced-colors: active) { background-color: ButtonText; }' to the ::before/::after rule, as %app-search-icon does, or draw the X with borders or a mask that forced colours keep.",
+      "best_practice": "gds/accessibility.md"
+    },
+    {
+      "id": 2,
+      "line": 55,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Lines 55-56: '// The rows are the hover feedback here, so drop the ring GOV.UK draws round a hovered small tick box, keeping only the focus ring.' The claim is untrue: no rule in this partial (or any stylesheet in src/) gives .app-multi-select-search__group rows a :hover state, so after this override a mouse user gets no hover feedback at all. The comment also describes a library (GOV.UK) and carries rationale, both of which the house rules keep out of code.",
+      "fix": "Must: no comment above the hover override; the override's purpose is carried by the selector/a named placeholder, and any rationale lives in the component README. One way: delete the comment and record the hover decision (see the design item on the hover ring) in multi-select-search/README.md."
+    },
+    {
+      "id": 3,
+      "line": 57,
+      "severity": "Major",
+      "category": "design",
+      "issue": "Lines 57-61 remove the GOV.UK small-checkbox hover ring (box-shadow and the forced-colours dashed outline). GOV.UK Frontend adds that ring because a small checkbox's 44px touch target is much larger than the visible box (node_modules/govuk-frontend/dist/govuk/components/checkboxes/_mixin.scss:270-282, 'we need to provide feedback to the user as to which checkbox they will select'). The design source (GB-notification-service app/assets/sass/application.scss:548-613, .app-commodity-search__checkbox-item) restyles the tick boxes and sets no hover state for rows or boxes, so the hover case is not shown. Guide: https://design-system.service.gov.uk/components/checkboxes/ (small checkboxes).",
+      "fix": "Must: the designer decides the hover feedback for result rows; the code then matches it. Question for the designer: keep GOV.UK's hover ring on the small tick box, or replace it with a row hover background (for example the stripe tint) across the whole row? Either way, keep a forced-colours hover indicator."
+    },
+    {
+      "id": 4,
+      "line": 156,
+      "severity": "Major",
+      "category": "design",
+      "issue": "The selected-item chip and its remove button (lines 144-191) are custom CSS copied from the design source (GB-notification-service app/assets/sass/application.scss:751-807, .app-commodity-search__selected-item / __selected-remove, including focus 'outline: 3px solid #ffdd00' at :803-806). Two guides disagree: (1) docs/best-practices/gds/components.md 'Stay in the GOV.UK toolbox' step 2 says use a tested component from another government design system first, and MoJ Frontend (already a dependency) ships a removable selected-filter tag, .moj-filter__tag (@ministryofjustice/frontend/moj/components/filter/_filter.scss:170), with hover and GOV.UK focus states; (2) GOV.UK focus states (https://design-system.service.gov.uk/get-started/focus-states/) use a yellow fill with a black indicator, whereas line 188-191 draws only a yellow outline on a near-white tint, and the chip remove has no hover state.",
+      "fix": "Must: the designer decides the selected-item control; the code then follows that ruling. Question for the designer: keep the prototype's chip with a 20px X and yellow-outline focus, adopt MoJ's filter tag (.moj-filter__tag) for selected items, or keep the chip but give the remove button the GOV.UK focus state (yellow fill plus black indicator) and a hover state?",
+      "best_practice": "gds/components.md"
+    },
+    {
+      "id": 5,
+      "line": 5,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "Two variable names mispredict their use in this reusable component: (a) $app-multi-select-search-species-indent (line 5, used at 42 and 48) names a live-animals domain word in a component the ticket requires to be reusable for any multi-select search field; it is the indent of every result row's tick box. (b) $app-multi-select-search-stripe (line 8) is used as the alternate-row stripe (line 52) and also as the chip background (line 153), so the name predicts only one of its two uses.",
+      "fix": "Must: each variable is named for what it holds in the generic component, with no domain word. One way: $app-multi-select-search-option-indent, and either a neutral name such as $app-multi-select-search-tint, or a separate $app-multi-select-search-chip-background that reuses the tint."
+    },
+    {
+      "id": 6,
+      "line": 141,
+      "severity": "Minor",
+      "category": "structure",
+      "issue": "Line 141 'gap: 10px' hard-codes a value the GOV.UK spacing scale already names (govuk-spacing(2) = 10px), while every other gap and margin in the partial (lines 72, 94-95, 101-102, 125, 132, 148) uses govuk-spacing().",
+      "fix": "Must: the chips gap comes from the GOV.UK spacing scale like the rest of the partial. One way: gap: govuk-spacing(2);",
+      "best_practice": "gds/styles.md"
+    }
+  ],
+  "reconciled_at": "2026-11-12T13:23:06Z"
+}

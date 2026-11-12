@@ -1,0 +1,37 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.cy.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "c36899ebe5efc0e516bf0c309231681bc28c7fcb",
+  "pr": 474,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-12T13:16:55Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The Welsh copy keys are correct and in step with English, but the plural helper's name does not match what it does, the new count branch has no test, and the Welsh result-count wording now exists in two places.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 5,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "The Welsh helper plural(count, noun) at line 5 does not pluralise: it returns `${count} ${noun}` unchanged, unlike the English plural in copy.en.js:3, which picks the singular or plural form. So the new resultsAvailable (lines 19-20) must pick the noun itself (count === 1 ? 'canlyniad' : 'o ganlyniadau') before calling 'plural', and countDrop (line 71) passes a fixed singular noun. The name says it chooses the plural form; it only puts the count before the noun.",
+      "fix": "Must: the Welsh helper's name says what it returns, or it really chooses the noun form for the count, so that resultsAvailable does not need its own count === 1 branch. One way: rename it to countedNoun(count, noun), or give it (count, singular, plural) and call it as plural(count, 'canlyniad', 'o ganlyniadau')."
+    },
+    {
+      "id": 2,
+      "line": 19,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "The new Welsh resultsAvailable (lines 19-20) branches on count === 1 ('1 canlyniad ar gael' against '3 o ganlyniadau ar gael'), and no test asserts either output. The English twin is pinned in search.controller.test.js:492 and :500. copy.test.js only runs the non-empty leaf sweep, which calls the function with 'sample', so if the branch were deleted or inverted every test would stay green. Sibling interpolations in this file, such as animalsAboveMax, have exact Welsh assertions in copy.test.js.",
+      "fix": "Must: a test fails if the Welsh singular or plural announcement changes. One way: in copy.test.js, add 'Should announce one Welsh result in the singular and several with o + plural', asserting copyCy.search.resultsAvailable(1) is '1 canlyniad ar gael' and copyCy.search.resultsAvailable(3) is '3 o ganlyniadau ar gael'."
+    },
+    {
+      "id": 3,
+      "line": 20,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "Line 20 picks the Welsh results noun as count === 1 ? 'canlyniad' : 'o ganlyniadau' and appends 'ar gael'. That copies the rule already at src/client/javascripts/components/accessible-autocomplete.js:48-49 (const resultOrResults = length === 1 ? 'canlyniad' : 'o ganlyniadau'; return `${length} ${resultOrResults} ar gael. ...`). The Welsh result-count announcement now lives in two places, and a translator correction to one will not reach the other.",
+      "fix": "Must: one function owns the Welsh 'N result(s) available' wording, and both the autocomplete status and the commodity announcement call it. One way: move it to a shared copy helper, for example a welshResultsAvailable(count) beside the shared copy, then import it in accessible-autocomplete.js's tStatusResults and here."
+    }
+  ],
+  "reconciled_at": "2026-11-12T13:23:06Z"
+}

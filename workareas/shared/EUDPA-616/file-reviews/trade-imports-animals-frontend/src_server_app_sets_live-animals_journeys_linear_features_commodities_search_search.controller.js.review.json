@@ -1,0 +1,37 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "c36899ebe5efc0e516bf0c309231681bc28c7fcb",
+  "pr": 474,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-12T13:17:13Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The results route and refactor behave correctly and are tested, but two new names hide side effects and the no-results rule is computed in two places.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 166,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "showSelectionWork (line 166) does more than show: it refuses an unknown removal with a 400 and logs it, runs the commodity search, and writes the commoditySearchRows flow-only answer to state (via searchAndStoreRows) before rendering. 'Show' predicts a read-only render and hides the refusal and the state write. Its companion predicate keepsWorkingOnSelection (line 147) uses the same 'selection work' metaphor for 'an action that refreshes the page without saving the selection' (search, clear, remove); the reader has to read both bodies to learn that.",
+      "fix": "Must: the handler-step name says it may refuse, stores the search rows and renders, and the predicate names the actions it is true for in plain words, with no 'selection work' metaphor left in the file. One way: rename showSelectionWork to searchStoreAndRenderSelection (or refreshSelection with the refusal hoisted into post/postResults), and keepsWorkingOnSelection to isRefreshAction / refreshesWithoutSaving."
+    },
+    {
+      "id": 2,
+      "line": 130,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "readPost (line 130) reads like a pure parse of the payload, but it also loads state (state.get) and, on every non-clear action, writes a warn log of dropped commodity keys through logDroppedKeys (line 138). The name hides both the state read and the log side effect, and is now shared by post and postResults, so the warn fires from the results route too without the name saying so.",
+      "fix": "Must: the function that turns a POST into { action, query, rowsByKey, selected } either does only that, or carries a name that says it also logs choices it drops. One way: return droppedKeys alongside selected and call logDroppedKeys from post and postResults, or rename to readPostLoggingDroppedChoices."
+    },
+    {
+      "id": 3,
+      "line": 82,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The 'a searchable query matched nothing' rule has two homes in this file: resultsContext computes noResults as isSearchable(query) && groups.length === 0 (line 56), and announcementFor recomputes it as !isSearchable(query) early-return plus speciesCountOf(groups) === 0 (lines 83-87). Every group has at least one item, so the two agree today, but a change to one (e.g. the minimum query length or what counts as a result) can leave the visible 'No results' message and the live-region announcement disagreeing.",
+      "fix": "Must: one expression decides 'no results' and both the visible message and the announcement read it. One way: have announcementFor take the context and branch on context.noResults (empty string when the query is not searchable, copy.noResults when noResults, else copy.resultsAvailable(speciesCountOf(groups)))."
+    }
+  ],
+  "reconciled_at": "2026-11-12T13:23:06Z"
+}

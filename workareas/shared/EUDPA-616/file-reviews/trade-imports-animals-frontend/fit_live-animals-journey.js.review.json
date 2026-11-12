@@ -1,0 +1,22 @@
+{
+  "file": "fit/live-animals-journey.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "c36899ebe5efc0e516bf0c309231681bc28c7fcb",
+  "pr": 474,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-12T13:16:36Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The driver changes correctly follow the new summary markup (grouped list items, chips labelled with the Latin name, Remove <Latin name>), but expectSpeciesSelected spells the commodity-line locator twice.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 673,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "expectSpeciesSelected builds the commodity-line locator twice: once as commodityLine (line 668, page.getByText(`${commodityCode}:`, { exact: true })) to filter the group, then again by hand at line 674 (group.getByText(`${commodityCode}:`, { exact: true })) for the visibility assertion. Two spellings of one locator can drift apart, and the reader has to compare them to see they are the same.",
+      "fix": "Must: the commodity line in the selected summary is located by one expression, used both to pick the group and to assert it is visible. One way: assert await expect(group.locator(commodityLine)).toBeVisible(), or drop the first assertion and assert expect(group).toBeVisible(), since the filter already requires the line.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    }
+  ],
+  "reconciled_at": "2026-11-12T13:23:06Z"
+}

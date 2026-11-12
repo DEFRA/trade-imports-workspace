@@ -1,0 +1,29 @@
+{
+  "file": "src/server/common/components/multi-select-search/README.md",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "c36899ebe5efc0e516bf0c309231681bc28c7fcb",
+  "pr": 474,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-12T13:17:44Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The README matches the script, macro and styles on behaviour, but it misstates the results-route contract (that route stores search rows) and duplicates the macro comment's class and param lists, which have already drifted (__update is missing from the macro).",
+  "todos": [
+    {
+      "id": 1,
+      "line": 22,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "README.md:22-23 tells the next page that reuses the component its results route 'saves nothing the page's save would save. It only works out what to show.' The only results route does write state: search.controller.js:204-205 postResults -> showSelectionWork -> searchAndStoreRows (:112) -> replaceStoredSearchRows, which is state.commit(... STORED_SEARCH_ROWS ...) in selection/rows.js:35-38. The README itself contradicts it at :89-90 ('neither can overwrite the search rows the other stored'). A second caller following the contract would build a stateless route, and the queued one-at-a-time refresh would then be guarding nothing it explains.",
+      "fix": "Must: the README's 'A results route' contract says what the route may and may not write, matching the commodities route (it may store the rows it needs to resolve later choices; it never commits the page's answer), and agrees with the 'Refreshes run one at a time' bullet. One way: replace 'It only works out what to show' with a sentence saying the route may store the search rows it shows but never saves the trader's choice."
+    },
+    {
+      "id": 2,
+      "line": 51,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The list of caller-body classes has two homes and they already disagree. README.md:51-53 says 'the macro's comment block lists them' and README.md:55-71 lists __dropdown, __group, __group-heading, __message, __selected and __update. The macro comment (macro.njk:30-42) lists the same classes again but has no __update, which multi-select-search.scss:69-76 styles and hides once enhanced. The macro's Params block (macro.njk:7-11, 27-28) is likewise restated as the README table at :37-43. A reader trusting the macro comment never learns the no-JS Update button exists.",
+      "fix": "Must: each class and each param of the component is documented in one place, and that place lists every class the scss styles for the caller body, including __update. One way: keep the class list and params in the README only and cut the macro comment to a one-line pointer to README.md (or the other way round), then drop README.md:51-53's claim that the macro comment lists them."
+    }
+  ],
+  "reconciled_at": "2026-11-12T13:23:06Z"
+}

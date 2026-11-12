@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/docs/architecture.md",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "c36899ebe5efc0e516bf0c309231681bc28c7fcb",
+  "pr": 474,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-12T13:16:29Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The added doc line is placed correctly but implies the JS results route saves nothing, when it commits the stored search rows on every refresh just as the full-page search post does.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 169,
+      "severity": "Major",
+      "category": "comments",
+      "issue": "architecture.md:169-170 says the results route 'renders only the results and saves no lines', which reads as a side-effect-free route. It is not: postResults (search.controller.js:228) runs showSelectionWork -> searchAndStoreRows -> replaceStoredSearchRows (selection/rows.js:35-38), which state.commit()s the stored search rows on every refresh, exactly as the no-JS search post does. Neither post saves commodity lines (only commitSelection on Continue does), so 'saves no lines' draws a contrast with the full-page post that does not exist and hides the write the route does make.",
+      "fix": "Must: the bullet says what the results route saves and what it does not, in the same terms as the full-page post, so a reader does not take it for a read-only route. One way: 'With JavaScript the same post goes to the page's results route, which saves the search rows as the full-page post does but renders only the results.'"
+    }
+  ],
+  "reconciled_at": "2026-11-12T13:23:06Z"
+}

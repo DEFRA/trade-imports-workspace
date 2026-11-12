@@ -1,0 +1,114 @@
+{
+  "ticket": "EUDPA-616",
+  "repo": "trade-imports-workspace",
+  "items": [
+    {
+      "id": 1,
+      "line": 555,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "Client unit tests are marked strength full for REQ-017 scenarios whose Thens they cannot witness. A mocked fetch in jsdom cannot show a server outcome: :555 (017-F) checks only that the form submits natively, not 'shows the results it lists without JavaScript'. :564 (017-G) checks the held submit carries chosen=[], not 'refused with Select a commodity'. :574 (017-H) checks the second post carries no chosen, not 'only the species ticked after clearing is chosen' after save. :593 (017-J) never checks 'the species is still chosen'. :602 (017-K) checks a class name (app-multi-select-search--enhanced), not that no Update selected control is shown, since the CSS hides it. The notes 'covered by the same probe as the fit test above' borrow the fit test's red probe, which proves the shared module line matters, not that the unit asserts cover every Then. Scenario-level coverage stays full through the fit links, so the derived values hold, but the per-link strength overstates.",
+      "fix": "Must: a link is strength full only when its own assertions prove every Then of the scenario, and its own probe went red. One way: set the five unit links at :555, :564, :574, :593 and :602 to partial, with notes saying which Then each checks (for example 'checks the native submit with the pressed button; not the rendered results').",
+      "file": "openspec/coverage/live-animals/journey-pages/commodity-selection/coverage.json",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 2,
+      "line": 128,
+      "severity": "Major",
+      "category": "coverage-gap",
+      "issue": "SCN-COMMODITY-SELECT-004-D is coverage full, but no single link proves both its clauses. :128 'Should name the commodity with its code in brackets' (full) asserts only legendHtmlFor('0102','') === 'Cow (0102)', which is the THEN. :130, the fit test 'heads each commodity with its name and code' (full, borrowing that probe), checks only CATTLE_HEADING, which is also the THEN. The AND clause, 'a group whose commodity has no known name is headed by its code alone', is witnessed only by :129 'Should show the code alone for a commodity with no name', marked partial and 'not separately inverted'. The fallback branch in legendHtmlFor has no red probe, so the full claim on the scenario rests on links that each cover half of it.",
+      "fix": "Must: SCN-COMMODITY-SELECT-004-D is full only when a probed full link covers the code-alone fallback, otherwise it reads partial. One way: invert the no-name fallback in labels.js, see 'Should show the code alone for a commodity with no name' go red, restore it, then mark that link full with the probe in its notes. Either that or mark the two name-and-code links partial ('checks the name with code; not the code-alone fallback').",
+      "file": "openspec/coverage/live-animals/journey-pages/commodity-selection/coverage.json",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 3,
+      "line": 308,
+      "severity": "Critical",
+      "category": "correctness",
+      "issue": "REQ-COMMODITY-SELECT-015's body now orders groups by commodity code (line 310), but its title (line 308, 'commodity heading, then species label') and SCN-COMMODITY-SELECT-015-A (lines 312, 316: 'alphabetically', 'the commodity groups are in heading order') still claim heading order. This PR made the heading 'name (code)' (REQ-004), so the two now differ: result-order.js sorts by legendFor = code, so a search matching Horse (0101) and Cow (0102) lists 'Horse (0101)' first, while heading order puts 'Cow (0102)' first. The scenario states behaviour the code does not have.",
+      "fix": "Must: the requirement title, body and SCN-015-A all state one ordering, the one the code applies (groups by commodity code, species by label), and the scenario no longer says alphabetical or heading order for groups. One way: retitle to 'Search results are listed in order: commodity code, then species label', and reword the THEN to 'the commodity groups are in commodity code order'; re-check the SCN-015-A coverage link still witnesses that wording.",
+      "file": "openspec/specs/live-animals/journey-pages/commodity-selection/spec.md",
+      "disposition": "Merged",
+      "status": "—",
+      "notes": "merged into #8"
+    },
+    {
+      "id": 4,
+      "line": 153,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "REQ-COMMODITY-SELECT-008 (line 153) and new SCN-COMMODITY-SELECT-008-F (lines 188-193) add a no-JavaScript 'Update selected' control, and the tally entries change from the species label to its Latin name alone on both paths (lines 153, 160). The ticket AC says 'With JavaScript disabled, the page still works exactly as it does today', and ticket.md records no ruling allowing a no-JS change. The spec faithfully describes the frontend PR, but it encodes a rule the AC rules out, so a reader takes it as agreed behaviour.",
+      "fix": "Must: either the ticket records a person's ruling that the no-JS path gains Update selected and the Latin-name-only tally (and the spec stays), or the no-JS behaviour matches main and REQ-008/SCN-008-F are reverted with the code. One way: ask the ticket owner to rule on the AC deviation and add it as a ticket comment before merge.",
+      "file": "openspec/specs/live-animals/journey-pages/commodity-selection/spec.md",
+      "disposition": "Merged",
+      "status": "—",
+      "notes": "merged into #9"
+    },
+    {
+      "id": 5,
+      "line": 72,
+      "severity": "Minor",
+      "category": "correctness",
+      "issue": "REQ-COMMODITY-SELECT-004 now says a group's heading reads as the commodity's name with its code in brackets (line 66, SCN-004-D), but SCN-004-A (line 72, 'under a heading of that commodity code') and SCN-004-B (line 78, 'each headed by its own commodity code') still read as a code-only heading. Separately, REQ-008 (line 153) does not say the tally's bold commodity heading is the code alone (selected-summary.js uses legendFor, code only), while the results heading carries the name; config.yaml asks that two look-alike groupings have their difference specified.",
+      "fix": "Must: every scenario that describes a results group heading agrees with REQ-004's name-with-code wording, and REQ-008 states what the tally's commodity heading reads. One way: reword SCN-004-A/B to 'under a heading for that commodity' / 'each headed by its own commodity'; add to REQ-008 'each chosen commodity as a bold heading of its code'.",
+      "file": "openspec/specs/live-animals/journey-pages/commodity-selection/spec.md",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 6,
+      "file": "openspec/specs/live-animals/journey-pages/commodity-selection/spec.md",
+      "line": "316",
+      "severity": "Major",
+      "category": "comments",
+      "issue": "SCN-015-A THEN says 'the commodity groups are in heading order'; groups are in code order, and heading order now differs from code order.",
+      "fix": "Must: the scenario states the code order. One way: '...in commodity-code order'.",
+      "disposition": "Merged",
+      "status": "—",
+      "notes": "merged into #8"
+    },
+    {
+      "id": 7,
+      "file": "openspec/coverage/live-animals/journey-pages/commodity-selection/coverage.json",
+      "line": "455",
+      "severity": "Major",
+      "category": "comments",
+      "issue": "Coverage notes say 'checks the page lists reference-data's groups in commodity-heading order' and the linked ins-tests title says 'by commodity heading' (also at lines 50, 68, 101, 111); line 458 links result-order.test.js '...commodity-heading order'. Both orders are now code order.",
+      "fix": "Must: the notes and linked test strings state code order, in step with the renamed titles. One way: update the notes and test strings when the ins-tests and frontend titles are renamed.",
+      "disposition": "Merged",
+      "status": "—",
+      "notes": "merged into #8"
+    },
+    {
+      "id": 8,
+      "file": "openspec/specs/live-animals/journey-pages/commodity-selection/spec.md",
+      "line": "308",
+      "severity": "Critical",
+      "category": "structure",
+      "issue": "One rule, 6 findings across 3 repos: workspace #3, #6, #7; animals-frontend #54, #56; ins-tests #8 — results groups are ordered by commodity code, but the REQ-015 title and SCN-015-A, coverage notes, services.md, result-order.test.js and the ins-tests title still say heading order, and the heading is now 'Name (code)'.",
+      "fix": "Must: the spec states code order and every title, doc and coverage link follows it. One way: retitle REQ-015 and SCN-015-A to code order, rename result-order.test.js and the ins-tests title to 'commodity code', and update the coverage test strings and notes in step.",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    },
+    {
+      "id": 9,
+      "file": "openspec/specs/live-animals/journey-pages/commodity-selection/spec.md",
+      "line": "153",
+      "severity": "Major",
+      "category": "structure",
+      "issue": "One rule, 2 findings across 2 repos: workspace #4, animals-frontend #30 — the no-JS path gains an 'Update selected' button and a Latin-name-only tally, against the AC 'with JavaScript disabled the page still works exactly as it does today', with no ruling on the ticket.",
+      "fix": "Must: a person rules on the no-JS change once, on the ticket, and spec and code follow it. One way: ask the ticket owner and designer to confirm Update selected and its copy in a ticket comment before merge, or revert both.",
+      "disposition": null,
+      "status": null,
+      "notes": null
+    }
+  ]
+}

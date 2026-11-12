@@ -1,0 +1,31 @@
+{
+  "file": "tests/animals/e2e/pages/commodities.spec.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "ac17fd0826ecb4455febfdb74b12edc4d0a5e93f",
+  "pr": 96,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-12T13:18:23Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The edits follow the frontend's new Latin-name chips and scoped no-results text correctly, but the commodity-heading assertion was loosened to a regex that cannot fail if the named heading regresses, and the helper it calls is misnamed.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 63,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The heading assertion was loosened, not updated. commodities.spec.ts:63 now checks each group against commodityHeading(code), the regex ^(.+ \\()?<code>\\)?$ (commodity-selection-page.ts:61-63). It passes for the old bare-code legend ('0102'), for any name at all ('Anything (0102)'), and for unbalanced text ('0102)', 'Cow (0102'). The frontend now heads groups 'Cow (0102)' via namedLegendFor (commodity-legend.js:5-8), so reverting that change leaves this test green, and the title's claim 'lists ... groups by commodity heading' is proven only for the code part.",
+      "fix": "Must: the test fails if a commodity group's heading is not exactly the heading the page is meant to show, the name and code in brackets for a named commodity and the code alone for an unnamed one. One way: add a test-data map of expected headings for the codes GROUPING_QUERIES returns (for example 0102 -> 'Cow (0102)', 01061900 -> '01061900') and assert toHaveAccessibleName(expectedHeading, exact); keep the regex only for locating groups, or have commodityGroup take the exact heading.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 2,
+      "line": 63,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "commodityHeading(code), called at commodities.spec.ts:63 and defined at commodity-selection-page.ts:61-63, does not return a heading. It returns a RegExp that matches any heading ending in the code. Its parameter 'code' also takes a regex fragment: commodityGroups passes '\\\\d+' (commodity-selection-page.ts:70), and a real code is put into the pattern without escaping. A reader of line 63 would expect an exact heading string.",
+      "fix": "Must: the page-object member the spec calls says it returns a pattern for matching headings, and its parameter says whether it takes a commodity code or a regex fragment. One way: rename it commodityHeadingPattern and split it so commodityGroups builds its own any-code pattern, or remove it if the first finding's exact expected headings replace it.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    }
+  ],
+  "reconciled_at": "2026-11-12T13:23:06Z"
+}

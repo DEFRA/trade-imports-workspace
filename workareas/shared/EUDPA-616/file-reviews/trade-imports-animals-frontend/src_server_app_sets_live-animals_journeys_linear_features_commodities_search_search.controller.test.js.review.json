@@ -1,0 +1,29 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "c36899ebe5efc0e516bf0c309231681bc28c7fcb",
+  "pr": 474,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-12T13:17:24Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "New results-route tests exercise real behaviour, but one title over-claims an unasserted tick and the shared selection-work cases are copied between the page and results handlers with drifting assertions.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 460,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Title 'Should render only the results for a search, ticking what is chosen and carrying the rest' over-claims: no assertion checks any item's checked flag (FELIS_CATUS_KEY is posted and on screen but its tick is never asserted), and 'only the results' rests on a loose view regex (/\\/search-results$/) plus an absence check (pageTitle toBeUndefined) rather than an exact positive assertion. Same loose regex at line 561.",
+      "fix": "Must: every claim in the title is proved by an exact positive assertion, and removing the checked flag or rendering the full page from postResults turns the test red. One way: assert the checked values (items.filter(i => i.checked).map(i => i.value) toEqual [FELIS_CATUS_KEY]), assert result.view.view toBe the exact results template path, and replace pageTitle toBeUndefined with an exact assertion on the context keys the results view receives."
+    },
+    {
+      "id": 2,
+      "line": 544,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The new 'results refreshed in place' block copies the set-up of existing page-POST tests for behaviour both handlers share through showSelectionWork: tampered-key refusal (544-555 copies 423-442, including the '0102|Not a species' literal declared twice), Clear all (531-542 copies 372-385), and stored-rows merge (476-485 mirrors 264-283). One rule is tested in two homes with copied set-up, and the two copies have already drifted (the results copy drops the after==before and error-view assertions).",
+      "fix": "Must: each shared selection-work behaviour (refuse unknown removal, clear, store rows beside earlier rows) has one test body run against both the page POST and the results POST, with its set-up (tampered key, starting rows) declared once. One way: it.each([['page', post], ['results', postResults]]) over the shared cases, keeping only results-specific assertions (announcement, results template, no commit) in the results block."
+    }
+  ],
+  "reconciled_at": "2026-11-12T13:23:06Z"
+}

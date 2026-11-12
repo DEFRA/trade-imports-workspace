@@ -1,0 +1,39 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/_results.njk",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "c36899ebe5efc0e516bf0c309231681bc28c7fcb",
+  "pr": 474,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-12T13:18:22Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Partial is well structured and shared correctly between the page and the results route, but chip remove buttons can share an accessible name when a Latin name sits under two commodity codes, and the custom chips/dropdown need a designer ruling against the GOV.UK toolbox guide.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 50,
+      "severity": "Major",
+      "category": "correctness",
+      "issue": "Chip remove buttons can share one accessible name. The button's only text is the visually hidden '{{ copy.selected.remove }} {{ item.label }}' (line 50), and item.label is speciesLatinName alone (view-model/selected-summary.js itemFor). The catalogue lists the same Latin name under more than one commodity code (services/_capture/fixtures/commodities.json: Gallus gallus, Anas, Aix, Anser, Meleagris gallopavo, Numida meleagris, Columba, Struthio, Rhea, Dromaius, Casuarius, Oryctolagus cuniculus, Equus zebra and more each appear twice). Choose Gallus gallus under both codes and a screen-reader user hears two identical 'Remove Gallus gallus' buttons with nothing to tell which line each removes (WCAG 2.4.6 Headings and Labels, 4.1.2 Name, Role, Value). The visual grouping under the legend is not part of the button's name. The FIT test at search.fit.spec.js:345 only uses species with unique Latin names, so it cannot catch this.",
+      "fix": "Must: every chip's remove button has an accessible name unique on the page, naming both the species and the commodity it sits under, and a test chooses one Latin name under two codes and finds each button by its own name. One way: give selectedSummary items an accessible label built from group.legend and the Latin name (e.g. 'Remove Gallus gallus from 0105 11'), and render that inside the govuk-visually-hidden span.",
+      "best_practice": "gds/components.md"
+    },
+    {
+      "id": 2,
+      "line": 10,
+      "severity": "Major",
+      "category": "design",
+      "issue": "The design source and the GOV.UK toolbox guide disagree on the selected-items panel and the results dropdown. The prototype draws custom chips and a custom panel (workareas/shared/dr21-parity/harness/capture/html/dr21-what-are-you-importing-results.html:511-518: 'app-commodity-search__selected', '__selected-header', '__selected-clear' button 'Clear all', '__selected-list'), and this partial builds them as custom markup on custom classes: the dropdown (line 10), the selected header with a link-styled Clear all button (lines 38-41), and the chip list with icon-only remove buttons (lines 42-55), replacing the GOV.UK markup main used (govuk-heading-s, govuk-list, a govukButton 'Clear all', a visible 'Remove' link). docs/best-practices/gds/components.md 'Stay in the GOV.UK toolbox' says 'If it is not in GOV.UK Frontend, do not build it' and, for a behaviour GOV.UK Frontend lacks, to use a tested component from another government design system first: the MoJ Filter component's selected-filter tags (https://design-patterns.service.justice.gov.uk/components/filter/) are such a component for removable chosen items, and the toolbox section's design-release exception covers only the plants prototype. live-animals/docs/page-design.md:291-293 records the chips as following the design but not why the service must have them over the toolbox.",
+      "fix": "Must: the designer rules on the panel and dropdown, and the ruling is recorded in the repo's docs. Question for the designer: keep the design's custom chips, link-style 'Clear all' and joined dropdown (recording why the service must have them, per the toolbox triage step 3), or move the selected panel to the MoJ Filter selected-tags pattern / GOV.UK markup (heading, govuk-list, a 'Remove <name>' link-button and a secondary 'Clear all' button) as main had?",
+      "best_practice": "gds/components.md"
+    },
+    {
+      "id": 3,
+      "line": 27,
+      "severity": "Minor",
+      "category": "design",
+      "issue": "The code chose a new button and its copy for a case the design source does not show. Without JavaScript the partial renders a secondary 'Update selected' button under the results (lines 27-34, copy.en.js:21 'Update selected', copy.cy.js:26 'Diweddaru’r dewis'). The prototype is JavaScript-only (ticket: 'the prototype's search is JS-only ... no server fallback to copy'), and the no-JS page on main had no such button: the trader re-pressed Search. The ticket's ruling asks the no-JS page to work 'exactly as it does today'; the rationale is recorded only in live-animals/docs/page-design.md:272-275.",
+      "fix": "Must: the designer confirms the no-JavaScript control and its copy, or names another. Question for the designer: keep a secondary 'Update selected' button under the results without JavaScript, rely on the Search button as main did, or use different copy (e.g. 'Update chosen species')?"
+    }
+  ],
+  "reconciled_at": "2026-11-12T13:23:06Z"
+}

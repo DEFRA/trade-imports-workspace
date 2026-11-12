@@ -1,0 +1,48 @@
+{
+  "file": "page-objects/animals/commodity-selection-page.ts",
+  "repo": "trade-imports-ins-tests",
+  "commit": "ac17fd0826ecb4455febfdb74b12edc4d0a5e93f",
+  "pr": 96,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-12T13:18:17Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Locators match the new frontend markup (latin-name chips, named legends, scoped no-results text), but commodityHeading mispredicts its return and its lenient pattern lets the legend assertion pass whether or not the commodity name shows.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 61,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "commodityHeading(code) builds /^(.+ \\()?CODE\\)?$/, which accepts any commodity name or none, and unbalanced brackets ('0102)', 'Cow (0102'). The frontend renders an exact heading (namedLegendFor: 'Cow (0102)' when the commodity has a name, else the bare code), yet commodities.spec.ts:63 asserts toHaveAccessibleName(commodityHeading(code)): if the page dropped or misspelt the commodity name, or showed the wrong one, that assertion stays green. The repo already holds the expected names in domain/animals/constants/commodity-names.ts ('0102': 'Cow').",
+      "fix": "Must: the heading assertion names the exact heading the page should show for each code, so a missing or wrong commodity name turns it red. One way: build the expected string from commodityNames ('${commodityNames[code]} (${code})', or the bare code when there is no name) and assert with toHaveAccessibleName(string); keep a loose pattern only for the commodityGroups locator.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 2,
+      "line": 61,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "commodityHeading(code) (line 61) returns a RegExp for a checkbox group's accessible name, not a heading: its value word mispredicts what it returns. Its parameter 'code' is also handed a regex fragment, not a code, at line 70 (commodityHeading('\\\\d+')). And AnimalIdentificationPage.commodityHeading(heading) in page-objects/animals/animal-identification-page.ts:61 returns a Locator under the same name, so one name means two different things in sibling page objects.",
+      "fix": "Must: the method's name says it returns a pattern for a commodity group's name, its parameter holds what callers pass, and it no longer shares a name with a Locator-returning method on a sibling page object. One way: rename to commodityGroupNamePattern(codePattern: string) and update commodityGroup, commodityGroups and commodities.spec.ts:63.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    },
+    {
+      "id": 3,
+      "line": 61,
+      "severity": "Major",
+      "category": "naming",
+      "issue": "commodityHeading(code) returns a RegExp, not a heading: in this file boldMatchInCommodityHeading and selectedCommodityHeading return Locators, and AnimalIdentificationPage.commodityHeading (animal-identification-page.ts:61) is a Locator too, so one name returns two kinds of value across sibling page objects. Its parameter 'code' is also handed a regex fragment, not a code: commodityGroups (line 70) calls commodityHeading('\\\\d+'), and the value is interpolated into the RegExp unescaped.",
+      "fix": "Must: the name of the member that builds the group's accessible-name matcher says it returns a name pattern (not a heading locator), and its parameter holds what callers pass. One way: rename to commodityGroupName(code) returning the exact expected name (see the companion finding), and give commodityGroups its own literal pattern rather than passing '\\\\d+' as a code."
+    },
+    {
+      "id": 4,
+      "line": 62,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "The pattern ^(.+ \\()?CODE\\)?$ at line 62 accepts either a bare code or 'Name (code)', with the two brackets optional independently, so it also matches 'Live bovine (0102' and '0102)'. commodities.spec.ts:63 asserts toHaveAccessibleName(commodityHeading(code)) through it, so that test passes whether a result group's legend is the named form the frontend builds (namedLegendFor -> 'Name (code)', pinned as 'Cow (0102)' in the frontend's labels.test.js:7) or a fallback to the bare code: deleting the name from namedLegendFor turns no ins-tests assertion red.",
+      "fix": "Must: the group-legend assertion pins the exact legend each group shows, so the test fails if a named group's legend loses its name, and the pattern never matches a half-bracketed name. One way: keep the expected names of the commodity codes the specs use in a domain constant copied from the frontend's commodity names, build the exact legend ('Name (code)' or the code alone) from it, and use getByRole('group', { name, exact: true }); if a pattern must stay for the commodityGroups count, write it as ^(?:.+ \\(\\d+\\)|\\d+)$.",
+      "best_practice": "playwright/BEST_PRACTICES.md"
+    }
+  ],
+  "reconciled_at": "2026-11-12T13:23:06Z"
+}

@@ -1,0 +1,21 @@
+{
+  "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search-results.njk",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "c36899ebe5efc0e516bf0c309231681bc28c7fcb",
+  "pr": 474,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-12T13:16:35Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "Correct thin fragment wrapping the shared results partial in appMultiSelectSearchResults, but it duplicates the page template's hand-built params block for that partial, giving the results mapping two homes.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 5,
+      "severity": "Major",
+      "category": "duplication",
+      "issue": "The commoditySearchResults params block (copy, commodityGroups, noResults, carriedKeys, selectedSummary) at search-results.njk:5-11 is a verbatim copy of search.njk:36-42. Both are fed by the same resultsContext() in search.controller.js, so a param added to _results.njk and to resultsContext must be threaded through two templates; missing one breaks only the JS path or only the no-JS path, and the controller tests (which assert view context only, never rendered HTML) would not catch it.",
+      "fix": "Must: the mapping from the controller's results context to the _results.njk partial has one home, shared by the full page and the results fragment. One way: have search.controller.js nest resultsContext under one key (e.g. results: resultsContext(current, shown)) in both render and renderResults, and have both templates call commoditySearchResults(results) — or have _results.njk read the context variables directly and be included rather than called with a hand-built params object."
+    }
+  ],
+  "reconciled_at": "2026-11-12T13:23:06Z"
+}

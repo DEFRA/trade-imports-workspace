@@ -576,7 +576,7 @@
         "inc-054"
       ],
       "theme": "identification-and-permanent-address",
-      "status": "todo",
+      "status": "done",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -695,7 +695,10 @@
         "req-729",
         "req-749"
       ],
-      "openQuestions": [],
+      "openQuestions": [
+        "For the designer: should the permanent address rows on the review sit under a \"Permanent address\" subsection title inside the Roles and addresses card, or stay as flat rows keyed by each animal (Domestic Cat 1, Domestic Cat 2)? Design source: prototype:dr2-1-source claim p11-111 (workareas/shared/design-release-2-1/distil/extract/prototype-dr2-1-source.part11.json, prototype ref app/routes.js:5141-5147 with app/views/partials/design-release-2.1/review-summary-card.html:52-61) states \"When the consignment has a permanent address role, the Addresses card adds a Permanent address subsection instead of a plain row\", quoting \"title: Permanent address, rows: buildPermanentAddressReviewRows(sessionData)\". Code: repos/trade-imports-animals-frontend/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses/roles-and-addresses.js:66-68 appends them as flat rows, and this increment also removed the Permanent address column heading from the species identifier table, so the words Permanent address no longer appear anywhere on the review. Options: (a) keep flat rows, as built; (b) add a Permanent address subsection title, which needs the titled sub-group mechanism now scoped to the documents card (check-answers/template.njk:84-87) generalised, and review card headings belong to the overview-and-review theme; (c) something else. Raised by review finding 2 on inc-056 (major, correctness against the design source), deferred because no acceptance criterion states the title and the fix reaches the review template and the documents card.",
+        "For the designer: acceptance criterion 4 is not built, because this service has no notification-level permanent address to fall back on. When a line needs a permanent address but nothing is saved to show, either because no animal is counted yet or because an animal still owes its address, should the review name that animal or line at all? Options: (a) show nothing, as built, so the only marking is the \"Complete species details\" entry in the error summary; (b) show a row per animal keyed by its common name and number with a visually-hidden \"Missing\" and no visible text, matching the blank-on-an-unfinished-card rule (repos/trade-imports-animals-frontend/src/server/app/sets/live-animals/docs/page-design.md:85-94); (c) something else. Design source: prototype:dr2-1-source claim p9-080 (workareas/shared/design-release-2-1/distil/extract/prototype-dr2-1-source.part9.json, prototype ref app/routes.js:2723-2728) states \"If no animals needing a permanent address are counted, the review shows a single permanent address row keyed Address\", quoting \"return [{ key: Address, value: formatAddressForReviewValue(sessionData.permanentAddress) }]\"; claim p9-079 (app/routes.js:2709-2739) falls back to the notification-level permanent address per animal. Code: repos/trade-imports-animals-frontend/src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/addresses/roles-and-addresses.js:67 filters to animals holding a saved address, so no row is built, and check-answers.test.js pins the absence. Both states are reachable (permanent-address.fit.spec.js:499-540 and :269-297). The prototype Address fallback row cannot be built here: there is no notification-level permanent address in this data model. Raised by review finding 3 on inc-056 (major, design)."
+      ],
       "notes": [
         "Carried over from the existing row inc-056, unchanged in substance. Criterion 2 now names the case it covers instead of opening with 'Otherwise'.",
         "Combines the two read-back views of the saved permanent addresses: same stored data, same reviewer check.",
@@ -708,6 +711,19 @@
         {
           "workarea": "shared/design-release-2-1/themes/design-snagging",
           "id": "inc-213"
+        }
+      ],
+      "commit": "1f4daad46ac02e97f898e1814ce022ea921b409f 5d74dc95817483cfebf4b7f5663d4feaaf3886eb",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/476",
+          "repo": "trade-imports-animals-frontend",
+          "number": 476
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/100",
+          "repo": "trade-imports-ins-tests",
+          "number": 100
         }
       ]
     },

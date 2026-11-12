@@ -305,15 +305,15 @@ The system MUST list no more than a hundred species for one search.
 - **WHEN** they search for a term matching more than a hundred species
 - **THEN** a hundred species are listed
 
-### Requirement: Search results are listed in order: commodity heading, then species label
+### Requirement: Search results are listed in order: commodity code, then species label
 **ID**: REQ-COMMODITY-SELECT-015
 The system MUST list a search's matching commodity groups in order of their commodity code, and MUST list each group's species in order of the label they are offered under.
 
-#### Scenario: A search lists its groups and species alphabetically
+#### Scenario: A search lists its groups by commodity code and its species by label
 **ID**: SCN-COMMODITY-SELECT-015-A
 - **GIVEN** a search whose commodity lists its species in another order
 - **WHEN** the results are shown
-- **THEN** the species are listed in label order under their commodity heading, and the commodity groups are in heading order
+- **THEN** the species are listed in label order under their commodity heading, and the commodity groups are in commodity code order
 
 ### Requirement: The part of a heading or label the search matched is shown in bold
 **ID**: REQ-COMMODITY-SELECT-016

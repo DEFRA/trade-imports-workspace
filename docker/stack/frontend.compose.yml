@@ -162,6 +162,36 @@ services:
     image: defradigital/trade-imports-ins-frontend:${TRADE_IMPORTS_INS_FRONTEND:-latest}
     ports:
       - '3002:3002'
+  trade-imports-routing-proxy:
+    profiles: [frontend]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      redis:
+        condition: service_healthy
+    env_file:
+      - ./shared.env
+    environment:
+      - PORT=3004
+      - NODE_ENV=development
+      - NUNJUCKS_NO_CACHE=${NUNJUCKS_NO_CACHE:-false}
+      - NUNJUCKS_WATCH=${NUNJUCKS_WATCH:-false}
+      - LOG_FORMAT=ecs
+      - REDIS_TLS=false
+      - SESSION_CACHE_ENGINE=redis
+      # localhost cookies are host-scoped (not port-scoped) — keep the name distinct from the other frontends.
+      - SESSION_CACHE_NAME=routing-proxy-session
+    healthcheck:
+      interval: 5s
+      retries: 5
+      start_period: 30s
+      timeout: 5s
+      test:
+        - CMD-SHELL
+        - wget -qO- http://127.0.0.1:3004/health
+    image: defradigital/trade-imports-routing-proxy:${TRADE_IMPORTS_ROUTING_PROXY:-latest}
+    ports:
+      - '3004:3004'
   trade-imports-plants-frontend:
     profiles: [frontend]
     extra_hosts:

@@ -73,9 +73,9 @@ The system MUST optionally ask a line for a number of packages when its code is 
 - **WHEN** its commodity is one the reference data serves but is not counted in packages
 - **THEN** that line is asked for a number of animals only, both on the commodity details page and on the review
 
-### Requirement: A line's commodity decides which identifiers its animals are asked for, and a commodity can call for more than one
+### Requirement: A line's commodity and species decide which identifiers its animals are asked for, and a commodity can call for more than one
 **ID**: REQ-OB-COMMODITY-004
-The system MUST ask each animal on a commodity line only for the identifiers its commodity calls for — a microchip, a passport, a tattoo, an ear tag or a horse name — each as an optional answer, MUST NOT ask for an identifier the commodity does not call for, and MUST ask for every identifier a commodity calls for where it calls for more than one.
+The system MUST ask each animal on a commodity line only for the identifiers its commodity and species call for — a microchip, a passport, a tattoo, an ear tag or a horse name — each as an optional answer, MUST NOT ask for an identifier the commodity and species do not call for, and MUST ask for every identifier a commodity calls for where it calls for more than one.
 
 #### Scenario: A commodity calling for particular identifiers asks only for those
 **ID**: SCN-OB-COMMODITY-004-A
@@ -84,11 +84,26 @@ The system MUST ask each animal on a commodity line only for the identifiers its
 - **THEN** the microchip, passport and tattoo are all asked for
 - **AND** the ear tag is not asked for
 
-#### Scenario: A commodity calling for two identifiers asks for both together
+#### Scenario: A commodity calling for two identifiers asks for both together, for the species both are listed for
 **ID**: SCN-OB-COMMODITY-004-B
 - **GIVEN** the user is entering identification details for an animal on a commodity line
-- **WHEN** that line's commodity calls for both a microchip and a horse name
-- **THEN** both are asked for together
+- **WHEN** that line's species is the one its commodity's horse name is listed for, and that commodity also calls for a microchip for every species it serves
+- **THEN** both the microchip and the horse name are asked for together
+
+#### Scenario: Two species under one commodity code are asked for different identifiers
+**ID**: SCN-OB-COMMODITY-004-C
+- **GIVEN** the user is entering identification details for animals on two lines sharing one commodity code, one of the species the commodity's horse name is listed for and one of a different species under that code
+- **WHEN** identification details are entered for each animal
+- **THEN** the animal of the listed species is asked for the horse name
+- **AND** the animal of the other species is not asked for the horse name
+- **AND** both animals are asked for every identifier their commodity code lists without naming a species
+
+#### Scenario: A commodity that lists one identifier asks for that one alone
+**ID**: SCN-OB-COMMODITY-004-D
+- **GIVEN** the user is entering identification details for an animal on a commodity line
+- **WHEN** that line's commodity calls for an ear tag and no other identifier
+- **THEN** the ear tag is asked for
+- **AND** no other identifier is asked for
 
 ### Requirement: A commodity with no identifier of its own is asked for no identifier at all
 **ID**: REQ-OB-COMMODITY-005
@@ -127,4 +142,20 @@ The system MUST ask for a permanent address for each animal on a line whose comm
 - **GIVEN** an animal on a line whose commodity requires a permanent address
 - **WHEN** the line's commodity or species changes to one that does not
 - **THEN** the permanent address and the choice of where the animal lives both leave scope
+
+### Requirement: The commodities asked for an ear tag are cattle, pigs, sheep and goats, and no other served code
+**ID**: REQ-OB-COMMODITY-007
+The system MUST ask each animal on a commodity line for an ear tag when that line's commodity code is 0102 (cattle), 0103 (pigs), 010410 (sheep) or 010420 (goats), as an optional answer, and MUST NOT ask for an ear tag on any other served code.
+
+#### Scenario: A pig, sheep or goat line is asked for an ear tag
+**ID**: SCN-OB-COMMODITY-007-A
+- **GIVEN** the user is entering identification details for an animal on a commodity line
+- **WHEN** that line's commodity is pigs (0103), sheep (010410) or goats (010420)
+- **THEN** the ear tag is asked for, as an optional answer
+
+#### Scenario: A line of a code not on the ear-tag list is not asked for an ear tag
+**ID**: SCN-OB-COMMODITY-007-B
+- **GIVEN** the user is entering identification details for an animal on a commodity line
+- **WHEN** that line's commodity code is not 0102, 0103, 010410 or 010420
+- **THEN** the ear tag is not asked for
 

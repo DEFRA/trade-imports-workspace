@@ -333,3 +333,14 @@ The system MUST show a private transporter's saved country on the Transport deta
 - **GIVEN** a private transporter has been saved with a country from the offered list
 - **WHEN** the user views the review
 - **THEN** the Transport details card's Country row shows that country
+
+### Requirement: A species card's identifier table heads only the identifiers asked of that line's species
+**ID**: REQ-CYA-016
+The system MUST head a species card's identifier table with an Animal column and a column for each identifier asked of that line's species that some saved animal on the line filled in, with one row per saved animal.
+
+#### Scenario: The identifier table heads only the columns a line's species was asked for and some animal filled in
+**ID**: SCN-CYA-016-A
+- **GIVEN** a line of a species asked for a microchip, a passport and a horse name, with all three filled in for its one saved animal
+- **WHEN** the user views that species' card on the review
+- **THEN** its identifier table is headed Animal, Microchip, Passport and Horse name, with that animal's values in its one row
+- **AND** a species under the same commodity code that is not asked for the horse name never heads a Horse name column on its own card

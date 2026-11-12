@@ -107,9 +107,9 @@ The system MUST accept an identifier record once a valid identifier has been ent
 - **WHEN** they enter a valid identifier and save, with Save and continue on a line of one animal or the card's save-and-finish on the last of several
 - **THEN** the record is saved and no error summary is shown
 
-### Requirement: The identifier fields offered for an animal depend on its commodity, and a commodity with none of its own gets no panel
+### Requirement: The identifier fields offered for an animal depend on its commodity and its species, and a commodity with none of its own gets no panel
 **ID**: REQ-IDENT-006
-The system MUST show only the identifier fields that a given commodity supports, MUST offer a permanent-address field (with no country field, since it is assumed to be in Great Britain) for commodities that require one, and MUST show no identifier panel at all — no typed fields and no free-text fallback — for a commodity with none of its own.
+The system MUST show only the identifier fields that a given commodity and species support, MUST offer a permanent-address field (with no country field, since it is assumed to be in Great Britain) for commodities that require one, and MUST show no identifier panel at all — no typed fields and no free-text fallback — for a commodity with none of its own.
 
 #### Scenario: A commodity with typed identifiers shows only its own identifier fields
 **ID**: SCN-IDENT-006-A
@@ -123,6 +123,13 @@ The system MUST show only the identifier fields that a given commodity supports,
 - **GIVEN** a commodity line whose commodity carries no identifier of its own (for example, ostriches)
 - **WHEN** the user views the identification details page
 - **THEN** that line has no identification card at all — no typed fields and no free-text fields
+
+#### Scenario: Two species under one commodity code are offered different identifier fields
+**ID**: SCN-IDENT-006-C
+- **GIVEN** the user is entering identifier details for two species that share one commodity code, one of them the species the commodity's horse name is listed for
+- **WHEN** they view each species' entry form
+- **THEN** the listed species' form offers the horse name field as well as the fields the code lists for every species
+- **AND** the other species' form offers only the fields the code lists for every species, with no horse name field
 
 ### Requirement: Identifier records for a species are capped at its declared animal count
 **ID**: REQ-IDENT-007
@@ -204,21 +211,27 @@ The system MUST reject a typed identifier value of more than 58 characters in a 
 - **WHEN** they press the card's save button
 - **THEN** the record is saved with no error, and the saved identifier carries no surrounding spaces
 
-### Requirement: The saved-animals table is headed by every identifier the commodity declares, whether or not a given record filled it in
+### Requirement: The saved-animals table is headed by every identifier asked of that species, whether or not a given record filled it in
 **ID**: REQ-IDENT-014
-The system MUST head the saved-animals table with a column for every identifier the commodity declares, not only the ones a particular record happens to hold, naming each row by its species and its number among that species' records, and MUST place it below the entry form and the card button while the species still has animals to enter.
+The system MUST head the saved-animals table with a column for every identifier asked of that species — the commodity's identifiers, narrowed to the ones its species is listed for where an identifier names species — not only the ones a particular record happens to hold, naming each row by its species and its number among that species' records, and MUST place it below the entry form and the card button while the species still has animals to enter.
 
-#### Scenario: The table heads every identifier the commodity declares
+#### Scenario: The table heads every identifier asked of that species
 **ID**: SCN-IDENT-014-A
-- **GIVEN** the user has saved one record for a commodity that declares more than one identifier
+- **GIVEN** the user has saved one record for a species asked for more than one identifier
 - **WHEN** they view the saved-animals table
-- **THEN** it is headed with a column for every identifier that commodity declares, not only the one the saved record used
+- **THEN** it is headed with a column for every identifier asked of that species, not only the one the saved record used
 
 #### Scenario: The saved-animals table sits below the entry form and the card button
 **ID**: SCN-IDENT-014-B
 - **GIVEN** a species has more animals to enter and one record saved
 - **WHEN** the user views its card
 - **THEN** the entry form and the card button come first and the saved-animals table follows below them
+
+#### Scenario: A species asked for one identifier has a saved-animals table of that one column
+**ID**: SCN-IDENT-014-C
+- **GIVEN** a species is asked for one identifier only
+- **WHEN** the user saves a record for it
+- **THEN** its saved-animals table is headed with an Animal column, that one identifier's column and a Remove action, and no other identifier column
 
 ### Requirement: A record can be removed from the saved-animals table
 **ID**: REQ-IDENT-015

@@ -126,7 +126,7 @@
     },
     {
       "id": "REQ-OB-COMMODITY-004",
-      "name": "A line's commodity decides which identifiers its animals are asked for, and a commodity can call for more than one",
+      "name": "A line's commodity and species decide which identifiers its animals are asked for, and a commodity can call for more than one",
       "coverage": "partial",
       "scenarios": [
         {
@@ -140,12 +140,31 @@
         },
         {
           "id": "SCN-OB-COMMODITY-004-B",
-          "name": "A commodity calling for two identifiers asks for both together",
+          "name": "A commodity calling for two identifiers asks for both together, for the species both are listed for",
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "shows the identifier fields that apply to each commodity", "strength": "full", "notes": "Horse line: microchip and horse name both visible" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/bridge/applicability.test.js", "test": "Should apply horseName and passport for commodity code 0101", "strength": "partial", "notes": "horseName + passport for 0101" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/bridge/applicability.test.js", "test": "Should apply horseName for the horse species under 0101, and passport for either species under 0101", "strength": "full", "notes": "horseName for the horse species, passport for either species, under 0101; probed by inverting rules.js's HORSE_NAME_SPECIES constant" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/horse-temporary-admission.spec.ts", "test": "walks a horse-by-sea notification under temporary admission from create to submitted, with every task complete", "strength": "full", "notes": "horse line asks microchip, passport and horse name together; all three filled for the one horse" }
+          ]
+        },
+        {
+          "id": "SCN-OB-COMMODITY-004-C",
+          "name": "Two species under one commodity code are asked for different identifiers",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should render $fieldIds and head $columnHeadings for $commodityCode $speciesLatinName", "strength": "full", "notes": "the 0101 Equus cabalus and 0101 Equus asinus rows of the MATRIX: the horse row carries horseName-0, the donkey row does not; probed by reverting fields.js's scopedFields to read the commodity code alone" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "asks the horse species on 0101 for a horse name and the donkey species on the same code for no horse name, while both are asked for a microchip and a passport", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a horse card is asked for a horse name and a donkey card on the same commodity code is not, while both are asked for a microchip and a passport", "strength": "partial", "notes": "not probed locally — the e2e rung runs on each repo's pull request" }
+          ]
+        },
+        {
+          "id": "SCN-OB-COMMODITY-004-D",
+          "name": "A commodity that lists one identifier asks for that one alone",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "asks a pig line for an ear tag and no other identifier, and heads its saved-animals table with Animal, Ear tag and a Remove action", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/services/commodities/index.test.js", "test": "Should give each code its identifiers in the order it asks for them", "strength": "full", "notes": "asserts identifiersFor(SWINE_CODE) is exactly ['animalIdentifierEarTag']; probed by removing the SWINE_CODE entry from COMMODITY_IDENTIFIERS" }
           ]
         }
       ]
@@ -205,6 +224,31 @@
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/allowlists.test.js", "test": "Should put permanentAddress in scope for a unit of Felis catus under 01061900", "strength": "full", "notes": "permanentAddress and permanentAddressOrigin each build their gate from the one shared permanentAddressPairGate predicate (obligations/sections/commodities/identifiers.js), so this case and its permanentAddressOrigin sibling prove the two leave and enter scope together" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/allowlists.test.js", "test": "Should put permanentAddressOrigin in scope for a unit of Felis catus under 01061900", "strength": "full", "notes": "asserts its own reasons carry the obligation.permanentAddressOrigin.applicable.becausePermanentAddressLine code and explanation" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-OB-COMMODITY-007",
+      "name": "The commodities asked for an ear tag are cattle, pigs, sheep and goats, and no other served code",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-OB-COMMODITY-007-A",
+          "name": "A pig, sheep or goat line is asked for an ear tag",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/bridge/applicability.test.js", "test": "Should apply the ear tag for pigs, sheep and goats as well as cattle", "strength": "full", "notes": "probed by removing the SWINE_CODE/SHEEP_CODE/GOAT_CODE entries from COMMODITY_IDENTIFIERS" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "asks a pig line for an ear tag and no other identifier, and heads its saved-animals table with Animal, Ear tag and a Remove action", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "asks a sheep line and a goat line each for an ear tag and no other identifier, and heads each saved-animals table with Animal, Ear tag and a Remove action", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-OB-COMMODITY-007-B",
+          "name": "A line of a code not on the ear-tag list is not asked for an ear tag",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/allowlists.test.js", "test": "Should have the ${name} contain exactly the expected values", "strength": "full", "notes": "the ear-tag list anti-drift pin: exactly 0102, 0103, 010410 and 010420" }
           ]
         }
       ]

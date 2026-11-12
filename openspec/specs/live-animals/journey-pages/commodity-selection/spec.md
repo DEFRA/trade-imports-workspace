@@ -69,13 +69,13 @@ The system MUST group the species a search matches under a heading of their comm
 **ID**: SCN-COMMODITY-SELECT-004-A
 - **GIVEN** the user is on the commodity selection page
 - **WHEN** they search for a term matching species under one commodity code
-- **THEN** the matching species are listed together under a heading of that commodity code
+- **THEN** the matching species are listed together under a heading for that commodity
 
 #### Scenario: A search matching more than one commodity renders a group for each
 **ID**: SCN-COMMODITY-SELECT-004-B
 - **GIVEN** the user is on the commodity selection page
 - **WHEN** they search for a term that matches species under two different commodity codes
-- **THEN** two separate groups are shown, each headed by its own commodity code
+- **THEN** two separate groups are shown, each headed by its own commodity
 
 #### Scenario: A search matching nothing says so
 **ID**: SCN-COMMODITY-SELECT-004-C
@@ -150,7 +150,7 @@ The system MUST return the user to the origin of the import page when they follo
 
 ### Requirement: The tally lists what has been chosen, offers a remove for each species, and can be cleared
 **ID**: REQ-COMMODITY-SELECT-008
-The system MUST report how many species have been chosen, showing each chosen commodity as a bold heading followed by one entry per chosen species showing its Latin name alone, MUST offer each entry a control whose accessible name is "Remove" followed by that species' Latin name, which removes it and leaves the rest chosen, MUST let the user clear the whole selection at once, and MUST refuse a removal naming a species the page never offered. Without JavaScript, the system MUST offer an "Update selected" control under the results that brings the tally up to date with the ticks on screen, keeping the search term and its results.
+The system MUST report how many species have been chosen, showing each chosen commodity as a bold heading of its code alone, followed by one entry per chosen species showing its Latin name alone, MUST offer each entry a control whose accessible name is "Remove" followed by that species' Latin name, which removes it and leaves the rest chosen, MUST let the user clear the whole selection at once, and MUST refuse a removal naming a species the page never offered. Without JavaScript, the system MUST offer an "Update selected" control under the results that brings the tally up to date with the ticks on screen, keeping the search term and its results.
 
 #### Scenario: The tally reports the choice as a bold commodity line and its species, and clearing empties it
 **ID**: SCN-COMMODITY-SELECT-008-A

@@ -93,7 +93,7 @@
       ],
       "dependsOn": [],
       "theme": "test-hygiene",
-      "status": "blocked",
+      "status": "todo",
       "kind": "test",
       "repos": [
         "frontend",
@@ -119,7 +119,8 @@
         "Covers inc-225 followUps[8]; inc-226 followUps[0] (animals half), [1], [2], [3], [4], [5] (all but cph-number), [10], [11], [13]; inc-228 followUps[1], [4]. Duplicate folded in: inc-228 followUps[8].",
         "Places found on main 27 Oct: hub.fit.spec.js:36, :348-354, :447-452; arrival-transit.fit.spec.js:210-211, :222, :833; upload.fit.spec.js:712-715; check-answers.fit.spec.js:47-48, :146-151; additional-details.fit.spec.js:74-77; origin.fit.spec.js:151-161; consignment-details.fit.spec.js:112-121; section-caption.fit.spec.js:51; import-reason.fit.spec.js:153; transporters.fit.spec.js:344-347, :498, :785; type-ahead.fit.spec.js:183, :229-253, :256, :377-379, :471; fit/live-animals-journey.js:102; docs/testing.md:74.",
         "Ownership: the Overview and review checks moved to overview-and-review inc-098 and inc-101; this row does not edit hub.fit.spec.js or check-answers.fit.spec.js. The transporters and arrival-and-transit themes have landed, so transporters.fit.spec.js and arrival-transit.fit.spec.js wait on nothing. No open row in backlog.json or any themes/*/backlog.json covers part of this row (checked 12 Nov).",
-        "Trimmed on 2026-11-10 by ruling:sam-2026-11-10b: the Overview and review checks (hub.fit.spec.js totals box, buttons and caption line height; check-answers.fit.spec.js visually-hidden and summary-card classes; the review's last-card screenshot) moved to overview-and-review inc-098 and inc-101. The Overview and transit countries screenshots are already on the tests repo's main (overview-totals.visual.spec.ts, transited-countries.visual.spec.ts); the arrival details labels and Upload documents actions screenshots are still missing (tests repo 8663749). Checked on main 12 Nov (animals-frontend f5ae00e9; EUDPA-774 b9ae05ed moved every line): the class and style checks are still there, at arrival-transit.fit:222-223/234/1047, upload.fit:777/780, origin.fit:165-166/172/175, consignment-details.fit:143/148/151/154, additional-details.fit:129/132, import-reason.fit:190, section-caption.fit:51, transporters.fit:295/374/377/548/859, type-ahead.fit:232-233/253/258/441/534. The search button class now sits in one constant, type-ahead.fit:27, used at :185 and :416, but the button is still found by class. New since 10 Nov: type-ahead.fit:413-426 hard-codes the search button colours rgb(29, 112, 184) and rgb(255, 255, 255), which contradicts docs/testing.md:76-78 and :94-96; saveMeansOfTransportAndContinueAt is exported from fit/live-animals-journey.js:1043 with one user (arrival-transit.fit:673); upload.fit:877/882/885 find the error summary, error message and error group by class. expectStyle is exported from fit/live-animals-journey.js:119 with one user (type-ahead.fit), while docs/testing.md:81 calls it shared. No animals type-ahead has an accented-search browser test; the transporter list filter has one (transporters.fit:541-550), which is not a type-ahead."
+        "Trimmed on 2026-11-10 by ruling:sam-2026-11-10b: the Overview and review checks (hub.fit.spec.js totals box, buttons and caption line height; check-answers.fit.spec.js visually-hidden and summary-card classes; the review's last-card screenshot) moved to overview-and-review inc-098 and inc-101. The Overview and transit countries screenshots are already on the tests repo's main (overview-totals.visual.spec.ts, transited-countries.visual.spec.ts); the arrival details labels and Upload documents actions screenshots are still missing (tests repo 8663749). Checked on main 12 Nov (animals-frontend f5ae00e9; EUDPA-774 b9ae05ed moved every line): the class and style checks are still there, at arrival-transit.fit:222-223/234/1047, upload.fit:777/780, origin.fit:165-166/172/175, consignment-details.fit:143/148/151/154, additional-details.fit:129/132, import-reason.fit:190, section-caption.fit:51, transporters.fit:295/374/377/548/859, type-ahead.fit:232-233/253/258/441/534. The search button class now sits in one constant, type-ahead.fit:27, used at :185 and :416, but the button is still found by class. New since 10 Nov: type-ahead.fit:413-426 hard-codes the search button colours rgb(29, 112, 184) and rgb(255, 255, 255), which contradicts docs/testing.md:76-78 and :94-96; saveMeansOfTransportAndContinueAt is exported from fit/live-animals-journey.js:1043 with one user (arrival-transit.fit:673); upload.fit:877/882/885 find the error summary, error message and error group by class. expectStyle is exported from fit/live-animals-journey.js:119 with one user (type-ahead.fit), while docs/testing.md:81 calls it shared. No animals type-ahead has an accented-search browser test; the transporter list filter has one (transporters.fit:541-550), which is not a type-ahead.",
+        "Sam approved the signed-off test edits on 12 November (244 scenarios, all linked-test edits, no scenario wording changed). Sam ruled the type-ahead focus shadow goes to GOV.UK input border colour: built as inc-266."
       ],
       "gate": null,
       "commit": "631aa8ef751336d689c095f1c4b54030b3fa1bd3 f8d9477fe740ecfd20e49349a8ff90df5848f7c4"
@@ -192,6 +193,33 @@
         "Nothing blocks the build: arrival-and-transit merged on 4 Nov without touching plants arrival details. Both page specs are Maturity exploring with no signed-off scenarios, so the signed-off pages check does not apply. Reword the coverage claim; do not move code (fit/ sits outside src/ anyway). Change only the README's plants visual cell: the a11y and security dashes are right, because those folders hold only .gitkeep."
       ],
       "gate": null
+    },
+    {
+      "id": "inc-266",
+      "title": "The type-ahead's focus shadow is GOV.UK's input border colour, as every other focused input's is",
+      "kind": "fix",
+      "theme": "test-hygiene",
+      "status": "todo",
+      "repos": [
+        "frontend",
+        "plantsfrontend"
+      ],
+      "dependsOn": [
+        "inc-234"
+      ],
+      "detail": "When a live animals type-ahead input has focus, its inset focus shadow is painted in currentColor, which resolves to rgb(0, 0, 0). GOV.UK paints a focused input's shadow in the input border colour, rgb(11, 12, 12) (govuk-frontend .govuk-input:focus). The black comes from accessible-autocomplete's own stylesheet, which neither frontend overrides. Sam ruled on 12 November that the type-ahead follows GOV.UK. inc-234's focus test in type-ahead.fit.spec.js currently pins the shadow to the input text colour as read; it now proves GOV.UK's colour instead. The plants frontend uses the same type-ahead, so its twin changes too.",
+      "acceptanceCriteria": [
+        "A focused live animals type-ahead input paints its focus shadow in the same colour a focused GOV.UK text input paints its own, read from the page at run time, not typed into the test.",
+        "A focused plants type-ahead input does the same.",
+        "The type-ahead focus browser tests in both frontends prove that colour, and fail when the override is removed.",
+        "The shadow's width and the yellow focus outline are unchanged."
+      ],
+      "notes": [
+        "Raised from inc-234's open question 'For a person: the live animals type-ahead paints its focused input inset shadow in currentColor'. Sam ruled 12 November: follow GOV.UK. The change is on signed-off pages and Sam has ruled it, so a signed-off check that trips on it is already approved."
+      ],
+      "sources": [],
+      "requirements": [],
+      "openQuestions": []
     }
   ]
 }

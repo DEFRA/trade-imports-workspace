@@ -193,6 +193,7 @@ http://localhost:3007/idphub/b2c/b2c_1a_cui_cpdev_signupsigninsfi/.well-known/op
 | Admin | 3001 |
 | INS frontend | 3002 |
 | Plants frontend | 3003 |
+| Routing proxy | 3004 |
 | Defra ID stub | 3007 |
 | Plants prototype | 3103 |
 | Animals backend | 8085 |

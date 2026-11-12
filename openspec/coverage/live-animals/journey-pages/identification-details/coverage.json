@@ -144,7 +144,8 @@
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/animal-identification.spec.ts", "test": "accepts a valid ear tag", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "saves a Mustela putorius furo identified only by its microchip and reads the number back", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "adds a complete record and reads it back as a row of the saved-animals table, once a permanent address is saved against it on its own page", "strength": "full", "notes": "cat with passport + permanent address, saved via the permanent address page" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should save one typed identifier with the rest blank and list it in the saved-animals table", "strength": "full", "notes": "one identifier given, the rest left blank, saves with no error and reads back with the blank field shown empty in the saved-animals table; red when identifierProvided requires every scoped field rather than any one" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should save one typed identifier with the rest blank and list it in the saved-animals table", "strength": "full", "notes": "one identifier given, the rest left blank, saves with no error and reads back with the blank field shown empty in the saved-animals table; red when identifierProvided requires every scoped field rather than any one" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "saves an animal by its tattoo alone on a cattle line and on a pig line, and reads the tattoo back under the tattoo column", "strength": "full", "notes": "a 58-character tattoo and nothing else saves with no error on both species" }
           ]
         }
       ]
@@ -169,7 +170,7 @@
           "name": "A commodity with no identifier of its own earns no panel",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a commodity with no identifier type of its own gets no card, while the lines that have one keep theirs", "strength": "full", "notes": "mixed cattle+ostrich consignment, the ostrich line has no card while the cattle line's still shows" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a commodity with no identifier type of its own gets no card, while a cattle line keeps its ear tag, passport and tattoo", "strength": "full", "notes": "mixed cattle+ostrich consignment, the ostrich line has no card while the cattle line's ear tag, passport and tattoo fields still show" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "shows the identifier fields that apply to each commodity", "strength": "full", "notes": "asserts #identification-card-2 (ostrich) has count 0 — no card at all, not a free-text one" }
           ]
         },
@@ -181,6 +182,15 @@
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should render $fieldIds and head $columnHeadings for $commodityCode $speciesLatinName", "strength": "full", "notes": "0101 Equus cabalus and 0101 Equus asinus rows; probed by reverting fields.js's scopedFields to read the commodity code alone" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "asks the horse species on 0101 for a horse name and the donkey species on the same code for no horse name, while both are asked for a microchip and a passport", "strength": "full", "notes": "" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a horse card is asked for a horse name and a donkey card on the same commodity code is not, while both are asked for a microchip and a passport", "strength": "partial", "notes": "not probed locally — the e2e rung runs on each repo's pull request" }
+          ]
+        },
+        {
+          "id": "SCN-IDENT-006-D",
+          "name": "A cattle card's identifier fields are shown in the order cattle asks for them",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "asks a Bos taurus line for its ear tag before its passport, and an Equus cabalus line for its microchip first", "strength": "full", "notes": "cattle card's label list reads Ear tag, Passport, Tattoo in that order" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should order each commodity's entry fields by that commodity's own identifier list", "strength": "full", "notes": "cattle field ids read animalIdentifierEarTag-0, animalIdentifierPassport-0, animalIdentifierTattoo-0 in that order; probed by removing the cattle entry's tattoo from COMMODITY_IDENTIFIERS" }
           ]
         }
       ]
@@ -282,7 +292,9 @@
           "name": "An over-length identifier value blocks the save with the value preserved",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "validation: Microchip over 58 characters for Felis catus (Domestic Cat) links to and focuses the preserved value", "strength": "full", "notes": "same pattern for Passport, Tattoo, Ear tag (now also proved for the pig) and Horse name" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "validation: Microchip over 58 characters for Felis catus (Domestic Cat) links to and focuses the preserved value", "strength": "full", "notes": "same pattern for Passport, Tattoo, Ear tag (proved for cattle and the pig too) and Horse name" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "validation: Tattoo over 58 characters for Bos taurus (Domestic Cattle) links to and focuses the preserved value", "strength": "full", "notes": "the cattle tattoo row of the length-refusal table" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "validation: Tattoo over 58 characters for Sus scrofa domesticus (Domestic Pig) links to and focuses the preserved value", "strength": "full", "notes": "the pig tattoo row of the length-refusal table" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "shows the length error text for an over-long microchip", "strength": "full", "notes": "message read through the copy object; red when the microchip field takes the Ear tag message, restored green" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should refuse a 59-character identifier with the field-named message", "strength": "partial", "notes": "exact Ear tag message on the field; not probed" }
           ]
@@ -307,7 +319,7 @@
           "name": "The table heads every identifier asked of that species",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "heads the table with every identifier asked of the species, not only the ones a saved record filled in", "strength": "full", "notes": "cattle ear-tag-only row still heads Passport and Ear tag" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "heads the table with every identifier asked of the species, not only the ones a saved record filled in", "strength": "full", "notes": "cattle ear-tag-only row still heads Ear tag, Passport and Tattoo" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-cap.spec.ts", "test": "the N-of-M counter caps identifier records at the declared count, the full card shows only its saved animals, Remove frees a slot, and a count drop is refused with an error naming the species that lands on its card under the 0102 section", "strength": "partial", "notes": "asserts Animal / Ear tag / Passport columns after one ear-tag save" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should head the table with every identifier asked of the species, not only the ones a saved record filled in", "strength": "full", "notes": "" }
           ]
@@ -325,9 +337,8 @@
           "name": "A species asked for one identifier has a saved-animals table of that one column",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "asks a pig line for an ear tag and no other identifier, and heads its saved-animals table with Animal, Ear tag and a Remove action", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "asks a sheep line and a goat line each for an ear tag and no other identifier, and heads each saved-animals table with Animal, Ear tag and a Remove action", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should render $fieldIds and head $columnHeadings for $commodityCode $speciesLatinName", "strength": "full", "notes": "the 0103, 010410 and 010420 rows each head ['Animal', 'Ear tag']" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should render $fieldIds and head $columnHeadings for $commodityCode $speciesLatinName", "strength": "full", "notes": "the 010410 and 010420 rows each head ['Animal', 'Ear tag']" }
           ]
         }
       ]
@@ -509,7 +520,7 @@
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "labels the identifier fields in regular weight with no hint", "strength": "full", "notes": "red when a hint is added to the fields" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/visual/identification-card.visual.spec.ts", "test": "shows the entry form for the second cat above the saved animals table", "strength": "partial", "notes": "the Felis catus entry form shows the Microchip, Passport and Tattoo labels" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "labels the passport and ear tag fields on a Bos taurus line with the words the saved-animals table heads them with", "strength": "partial", "notes": "labels read through the copy object; not probed" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "labels the passport, ear tag and tattoo fields on a Bos taurus line with the words the saved-animals table heads them with", "strength": "partial", "notes": "labels read through the copy object; not probed" }
           ]
         }
       ]

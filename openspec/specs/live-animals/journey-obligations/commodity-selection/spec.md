@@ -159,3 +159,19 @@ The system MUST ask each animal on a commodity line for an ear tag when that lin
 - **WHEN** that line's commodity code is not 0102, 0103, 010410 or 010420
 - **THEN** the ear tag is not asked for
 
+### Requirement: The commodities asked for a tattoo are cattle, pigs, and cats, dogs, ferrets and other live mammals, and no other served code
+**ID**: REQ-OB-COMMODITY-008
+The system MUST ask each animal on a commodity line for a tattoo when that line's commodity code is 0102 (cattle), 0103 (pigs) or 01061900 (cats, dogs, ferrets and other live mammals), as an optional answer, and MUST NOT ask for a tattoo on any other served code.
+
+#### Scenario: A cattle line and a pig line are each asked for a tattoo
+**ID**: SCN-OB-COMMODITY-008-A
+- **GIVEN** the user is entering identification details for an animal on a commodity line
+- **WHEN** that line's commodity is cattle (0102) or pigs (0103)
+- **THEN** the tattoo is asked for, as an optional answer
+
+#### Scenario: A line of a code not on the tattoo list is not asked for a tattoo
+**ID**: SCN-OB-COMMODITY-008-B
+- **GIVEN** the user is entering identification details for an animal on a commodity line
+- **WHEN** that line's commodity code is not 0102, 0103 or 01061900
+- **THEN** the tattoo is not asked for
+

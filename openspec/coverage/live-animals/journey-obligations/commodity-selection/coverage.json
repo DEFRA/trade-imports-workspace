@@ -136,7 +136,7 @@
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a domestic cat's unit form asks for microchip, passport and tattoo, with no address field", "strength": "partial", "notes": "for a domestic cat asserts microchip, passport and tattoo shown together, ear tag and horse name hidden — the spec's microchip + passport + tattoo example is now read in one place; not probed red/green, so held at partial rather than full (e2e needs the workspace stack, run on each repo's pull request)" }
           ],
-          "notes": "spec text changed to the microchip+passport+tattoo example (Cat/Dog) since no current commodity produces the old passport+tattoo+ear-tag combination (see spec-refresh-evidence-2026-09-10.md). identification.fit.spec.js's 'shows the identifier fields that apply to each commodity' test only exercises Cow/Horse/Fish, not Cat — no direct fit citation for the new example yet."
+          "notes": "spec text uses the microchip+passport+tattoo example (Cat/Dog) because that is the pet code's own identifier set, distinct from cattle's ear-tag+passport+tattoo set, which a sibling commodity (0102) now also produces — the scenario's example names the pet code specifically rather than any commodity calling for exactly three identifiers. identification.fit.spec.js's 'shows the identifier fields that apply to each commodity' test only exercises Cow/Horse/Fish, not Cat — no direct fit citation for the new example yet."
         },
         {
           "id": "SCN-OB-COMMODITY-004-B",
@@ -163,8 +163,33 @@
           "name": "A commodity that lists one identifier asks for that one alone",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "asks a pig line for an ear tag and no other identifier, and heads its saved-animals table with Animal, Ear tag and a Remove action", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/services/commodities/index.test.js", "test": "Should give each code its identifiers in the order it asks for them", "strength": "full", "notes": "asserts identifiersFor(SWINE_CODE) is exactly ['animalIdentifierEarTag']; probed by removing the SWINE_CODE entry from COMMODITY_IDENTIFIERS" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "asks a sheep line and a goat line each for an ear tag and no other identifier, and heads each saved-animals table with Animal, Ear tag and a Remove action", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/services/commodities/index.test.js", "test": "Should give each code its identifiers in the order it asks for them", "strength": "full", "notes": "asserts identifiersFor(SHEEP_CODE) and identifiersFor(GOAT_CODE) are each exactly ['animalIdentifierEarTag']; probed by removing the SHEEP_CODE or GOAT_CODE entry from COMMODITY_IDENTIFIERS" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-OB-COMMODITY-008",
+      "name": "The commodities asked for a tattoo are cattle, pigs, and cats, dogs, ferrets and other live mammals, and no other served code",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-OB-COMMODITY-008-A",
+          "name": "A cattle line and a pig line are each asked for a tattoo",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/bridge/applicability.test.js", "test": "Should apply the tattoo for cattle and pigs as well as cats, dogs and ferrets", "strength": "full", "notes": "probed by removing the CATTLE_CODE/SWINE_CODE entries from COMMODITY_IDENTIFIERS" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "asks a pig line for an ear tag and a tattoo, and heads its saved-animals table with Animal, Ear tag, Tattoo and a Remove action", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "saves an animal by its tattoo alone on a cattle line and on a pig line, and reads the tattoo back under the tattoo column", "strength": "full", "notes": "both species saved by tattoo alone, each read back under the tattoo column" }
+          ]
+        },
+        {
+          "id": "SCN-OB-COMMODITY-008-B",
+          "name": "A line of a code not on the tattoo list is not asked for a tattoo",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/allowlists.test.js", "test": "Should have the ${name} contain exactly the expected values", "strength": "full", "notes": "the tattoo list anti-drift pin: exactly 0102, 0103 and 01061900 — the horse code and every other served code are outside it" }
           ]
         }
       ]
@@ -179,7 +204,7 @@
           "name": "A commodity with no specific identifier is asked for nothing",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a commodity with no identifier type of its own gets no card, while the lines that have one keep theirs", "strength": "full", "notes": "corrected citation — old test asserted a free-text fallback that no longer exists; current source (obligations/sections/commodities/identifiers.js) states explicitly 'There is no free-text fallback'" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a commodity with no identifier type of its own gets no card, while a cattle line keeps its ear tag, passport and tattoo", "strength": "full", "notes": "corrected citation — old test asserted a free-text fallback that no longer exists; current source (obligations/sections/commodities/identifiers.js) states explicitly 'There is no free-text fallback'" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "shows the identifier fields that apply to each commodity", "strength": "full", "notes": "fish card asserted absent (#identification-card-2 count 0), not merely stripped of typed fields" }
           ]
         }
@@ -239,7 +264,7 @@
           "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/bridge/applicability.test.js", "test": "Should apply the ear tag for pigs, sheep and goats as well as cattle", "strength": "full", "notes": "probed by removing the SWINE_CODE/SHEEP_CODE/GOAT_CODE entries from COMMODITY_IDENTIFIERS" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "asks a pig line for an ear tag and no other identifier, and heads its saved-animals table with Animal, Ear tag and a Remove action", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "asks a pig line for an ear tag and a tattoo, and heads its saved-animals table with Animal, Ear tag, Tattoo and a Remove action", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "asks a sheep line and a goat line each for an ear tag and no other identifier, and heads each saved-animals table with Animal, Ear tag and a Remove action", "strength": "full", "notes": "" }
           ]
         },

@@ -109,7 +109,7 @@ The system MUST accept an identifier record once a valid identifier has been ent
 
 ### Requirement: The identifier fields offered for an animal depend on its commodity and its species, and a commodity with none of its own gets no panel
 **ID**: REQ-IDENT-006
-The system MUST show only the identifier fields that a given commodity and species support, MUST offer a permanent-address field (with no country field, since it is assumed to be in Great Britain) for commodities that require one, and MUST show no identifier panel at all — no typed fields and no free-text fallback — for a commodity with none of its own.
+The system MUST show only the identifier fields that a given commodity and species support, in the order that commodity asks for them, MUST offer a permanent-address field (with no country field, since it is assumed to be in Great Britain) for commodities that require one, and MUST show no identifier panel at all — no typed fields and no free-text fallback — for a commodity with none of its own.
 
 #### Scenario: A commodity with typed identifiers shows only its own identifier fields
 **ID**: SCN-IDENT-006-A
@@ -130,6 +130,12 @@ The system MUST show only the identifier fields that a given commodity and speci
 - **WHEN** they view each species' entry form
 - **THEN** the listed species' form offers the horse name field as well as the fields the code lists for every species
 - **AND** the other species' form offers only the fields the code lists for every species, with no horse name field
+
+#### Scenario: A cattle card's identifier fields are shown in the order cattle asks for them
+**ID**: SCN-IDENT-006-D
+- **GIVEN** the user is entering identifier details for a cattle line
+- **WHEN** they view the entry form
+- **THEN** the fields are shown in the order Ear tag, then Passport, then Tattoo
 
 ### Requirement: Identifier records for a species are capped at its declared animal count
 **ID**: REQ-IDENT-007

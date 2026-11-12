@@ -108,15 +108,15 @@
     {
       "id": "REQ-PERM-ADDR-007",
       "name": "Saving the permanent address page returns to the consignment addresses page",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-PERM-ADDR-007-A",
           "name": "Saving returns to the consignment addresses page",
-          "coverage": "full",
+          "coverage": "partial",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "ends with the primary save control alone, returning to the consignment addresses page", "strength": "partial", "notes": "not probed red/restored green" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should go to the consignment addresses page whether opened from its link or not", "strength": "full", "notes": "probed: forced cards.js's addressableUnits to return [] unconditionally, saw this test fail, restored, saw it pass" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should go to the consignment addresses page whether opened from its link or not", "strength": "partial", "notes": "now posts a complete new address for each post, since the page refuses an incomplete one (REQ-PERM-ADDR-012); not re-probed this pass" }
           ]
         }
       ]
@@ -143,7 +143,7 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "saves each animal with its own hand-entered address, and reopens with each one selected and its own values back", "strength": "full", "notes": "probed: forced cards.js's originOf to always return null, saw this test fail on the reopen-checked assertion, restored, saw it pass" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should store a hand-entered address with a county and no second line in its own fields and the United Kingdom as the country, and the choice", "strength": "full", "notes": "probed: forced cards.js's addressableUnits to return [] unconditionally, saw this test fail, restored, saw it pass" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should store a hand-entered address with a county and no second line in its own fields, a trimmed town or city, and the United Kingdom as the country, and the choice", "strength": "full", "notes": "probed: forced cards.js's addressableUnits to return [] unconditionally, saw this test fail, restored, saw it pass" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should reopen with the new-address option selected and each stored value back in its own field for an animal saved with a hand-entered address", "strength": "full", "notes": "probed: forced cards.js's addressableUnits to return [] unconditionally, saw this test fail, restored, saw it pass" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/permanent-address.spec.ts", "test": "A cat consignment walked from the consignment addresses page through a hand-entered save, back to the consignment addresses page", "strength": "partial", "notes": "walks a hand-entered save and reopen with the value back in its own field, genuinely witnessing this scenario; e2e needs the workspace stack, which is down in this run, so not probed — proven on each repo's pull request instead" }
           ]
@@ -161,7 +161,7 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "leaves one animal unanswered, saves the other and reopens with that animal's place-of-destination choice checked while the unanswered one has neither option checked", "strength": "full", "notes": "probed: forced cards.js's originOf to always return null, saw this test fail on the reopen-checked assertion, restored, saw it pass" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should save the answered animal and leave the other with no permanent address or choice when neither option is chosen for it, going to the consignment addresses page", "strength": "full", "notes": "probed: forced cards.js's addressableUnits to return [] unconditionally, saw this test fail, restored, saw it pass" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should save the answered animal and leave the other with no permanent address or choice when neither option is chosen for it, going to the consignment addresses page", "strength": "partial", "notes": "now posts a complete new address for the answered card, since the page refuses an incomplete one (REQ-PERM-ADDR-012); not re-probed this pass" }
           ]
         }
       ]
@@ -178,7 +178,6 @@
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "sends a cattle consignment straight to the consignment addresses page and offers no add link", "strength": "partial", "notes": "not probed red/restored green" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should send a consignment with no cat, dog or ferret line to the consignment addresses page, saving nothing, logging once", "strength": "partial", "notes": "unaffected by the addressableUnits=[] probe used elsewhere in this file (this is already the empty-list case), so not independently probed" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should send a cat line with no animal record entered the same way", "strength": "partial", "notes": "not probed red/restored green" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/permanent-address.spec.ts", "test": "A cattle consignment offers no permanent address link, and opening the page directly lands on the consignment addresses page", "strength": "partial", "notes": "e2e needs the workspace stack, which is down in this run, so not probed — proven on each repo's pull request instead" }
           ]
         }
@@ -195,6 +194,156 @@
           "coverage": "partial",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "has no serious or critical axe violations as first opened and with a reveal open", "strength": "partial", "notes": "not probed red/restored green" }
+          ]
+        },
+        {
+          "id": "SCN-PERM-ADDR-011-B",
+          "name": "The refused state has no serious or critical accessibility violations",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "has no serious or critical axe violations in the refused state", "strength": "partial", "notes": "not probed red/restored green" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PERM-ADDR-012",
+      "name": "Choosing a new address requires its own fields, with no format check and the shared over-long message",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-PERM-ADDR-012-A",
+          "name": "A blank new address shows the six required messages on their own fields",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should refuse a new address with every field blank, naming the six required fields on their own fields and, joined to the animal, in the summary, writing nothing", "strength": "partial", "notes": "not probed red/restored green — probing needs a commit, which this stage does not make" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "refuses a blank new address on one card, naming the animal in the summary, leaving the field message plain, with the error-prefixed title", "strength": "partial", "notes": "not probed red/restored green" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/permanent-address.spec.ts", "test": "refuses a blank new address with HTTP 400, names the animal in the summary while the field message stays plain, and the consignment addresses page still offers to add one afterwards", "strength": "partial", "notes": "e2e needs the workspace stack, which is down in this run, so not probed — proven on each repo's pull request instead" }
+          ]
+        },
+        {
+          "id": "SCN-PERM-ADDR-012-B",
+          "name": "A new address giving only address line 2 and county is still refused for the six required fields",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should leave address line 2 and county optional while still requiring the other six", "strength": "partial", "notes": "not probed red/restored green — probing needs a commit, which this stage does not make" }
+          ]
+        },
+        {
+          "id": "SCN-PERM-ADDR-012-C",
+          "name": "A value past a field's character limit is refused naming that field and its limit",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should refuse a value one character past county's cap with its own over-long message, naming the field and the limit", "strength": "partial", "notes": "not probed red/restored green — probing needs a commit, which this stage does not make" }
+          ]
+        },
+        {
+          "id": "SCN-PERM-ADDR-012-D",
+          "name": "A malformed email, phone or postcode is saved as typed",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should accept a present but malformed email, phone and postcode, checking those three fields only for being blank", "strength": "partial", "notes": "not probed red/restored green" }
+          ]
+        },
+        {
+          "id": "SCN-PERM-ADDR-012-E",
+          "name": "A value at a field's character limit is saved with no message",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should accept a value at the cap", "strength": "partial", "notes": "not probed red/restored green" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PERM-ADDR-013",
+      "name": "The error summary names the card's animal for an address field's refusal; the field itself does not",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-PERM-ADDR-013-A",
+          "name": "The summary names the animal while the field stays plain",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should refuse a new address with every field blank, naming the six required fields on their own fields and, joined to the animal, in the summary, writing nothing", "strength": "partial", "notes": "asserts the joined summary text and the plain field message; not probed red/restored green" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "refuses a blank new address on one card, naming the animal in the summary, leaving the field message plain, with the error-prefixed title", "strength": "partial", "notes": "not probed red/restored green" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/permanent-address.spec.ts", "test": "refuses a blank new address with HTTP 400, names the animal in the summary while the field message stays plain, and the consignment addresses page still offers to add one afterwards", "strength": "partial", "notes": "e2e needs the workspace stack, which is down in this run, so not probed — proven on each repo's pull request instead" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PERM-ADDR-014",
+      "name": "Choosing the place of destination before the notification has one is refused, naming no animal",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-PERM-ADDR-014-A",
+          "name": "The choice is refused before a place of destination exists",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should refuse the choice when the notification has no place of destination, naming no animal, writing nothing, logging exactly one warn", "strength": "partial", "notes": "not probed red/restored green — probing needs a commit, which this stage does not make" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "refuses the same-as-destination choice before one exists, and the summary link moves focus to the first radio", "strength": "partial", "notes": "not probed red/restored green" }
+          ]
+        },
+        {
+          "id": "SCN-PERM-ADDR-014-B",
+          "name": "The same choice saves once a place of destination is given",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should store a copy of the place of destination, and the choice, when saved as living there", "strength": "partial", "notes": "pre-existing test, unchanged; proves the save but its production line (the hasPlaceOfDestination check in validate.js) has not itself been probed under this requirement" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PERM-ADDR-015",
+      "name": "A refused save keeps every card's answers, changes nothing, and answers with a 400 error-state title",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-PERM-ADDR-015-A",
+          "name": "Every card keeps its chosen option and typed values",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should keep both cards’ chosen option and typed values, with the new-address fields still revealed, writing nothing for either", "strength": "partial", "notes": "not probed red/restored green — probing needs a commit, which this stage does not make" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "keeps the other card answered and revealed after a refusal on the first", "strength": "partial", "notes": "not probed red/restored green" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should refuse the choice when the notification has no place of destination, naming no animal, writing nothing, logging exactly one warn", "strength": "partial", "notes": "proves this scenario for a card refused on its place-of-destination choice, asserting that option stays selected after the refusal; not probed red/restored green" }
+          ]
+        },
+        {
+          "id": "SCN-PERM-ADDR-015-B",
+          "name": "The refused page answers with status 400 and an error-prefixed title",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should refuse a new address with every field blank, naming the six required fields on their own fields and, joined to the animal, in the summary, writing nothing", "strength": "partial", "notes": "asserts the 400 status; the title prefix is proved only in the fit and e2e links; not probed red/restored green" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "refuses a blank new address on one card, naming the animal in the summary, leaving the field message plain, with the error-prefixed title", "strength": "partial", "notes": "asserts the prefixed browser title; not probed red/restored green" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/permanent-address.spec.ts", "test": "refuses a blank new address with HTTP 400, names the animal in the summary while the field message stays plain, and the consignment addresses page still offers to add one afterwards", "strength": "partial", "notes": "reads the submit's own HTTP status and asserts the prefixed title; e2e needs the workspace stack, which is down in this run, so not probed — proven on each repo's pull request instead" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-PERM-ADDR-016",
+      "name": "A line that needs a permanent address with no animal identified yet shows a message in place of the cards",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-PERM-ADDR-016-A",
+          "name": "The page shows the message and link in place of the cards",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should render the page with no cards and the empty-state message carrying the consignment details address, logging once", "strength": "partial", "notes": "not probed red/restored green — probing needs a commit, which this stage does not make" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "shows the no-animals message in place of the cards, and a save from there changes nothing and returns to the consignment addresses page", "strength": "partial", "notes": "not probed red/restored green" }
+          ]
+        },
+        {
+          "id": "SCN-PERM-ADDR-016-B",
+          "name": "Saving from the message state changes nothing and returns to the consignment addresses page",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should leave the commodity lines as they were and redirect to the consignment addresses page on a save from there, logging once", "strength": "partial", "notes": "not probed red/restored green — probing needs a commit, which this stage does not make" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "shows the no-animals message in place of the cards, and a save from there changes nothing and returns to the consignment addresses page", "strength": "partial", "notes": "the same test walks the save step too; not probed red/restored green" }
           ]
         }
       ]

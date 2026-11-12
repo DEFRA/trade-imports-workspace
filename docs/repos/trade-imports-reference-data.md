@@ -47,24 +47,24 @@ MDM `/search` answers with `resultType` `species` or `commodity`, mixed on one p
 
 **What a search matches**
 
-- **Species common name** (`cattle`): species rows. The capture has eight: five cattle species under 0102, then Bos taurus again under 01061900 and two germinal codes.
+- **Species common name** (`cattle`): species rows. The capture has four: Bos taurus and Bos sp. under 0102, then Bos taurus under two germinal codes.
 - **Latin name** (`Bos taurus`, `tau`): species rows. One row per code that lists that species.
 - **Commodity code** (`0102`): one commodity row, species nested. A code is a prefix (`010` returns 45 commodity rows).
 - **Commodity description** (`ostrich`, `horse`): mixed. Species rows plus a commodity row, so the nested species of that commodity come back too.
 
 **Partial terms**
 
-- A term matches the start of a word: "cat" and "catt" find cattle; "tau" and "bos tau" find Bos taurus. "cat" also finds Felis, Catagonus and Catreus.
-- Two-character terms are not consistent: "ca" returns 14 rows (Caiques, Cockatoos, Equus cabalus and others) but not cattle, goats (Capra) or dogs (Canis). Reference-data needs at least two characters and the frontend asks for three, so this only affects other callers.
-- Punctuation must match exactly: "Bos spp." finds nothing, although "Bos sp." and "Bibos spp." exist.
+- A term matches the start of a word: "cat" and "catt" find cattle; "tau" and "bos tau" find Bos taurus. "cat" also finds Felis catus, Catagonus spp. and Panthera sp.
+- Two-character terms are not consistent: "ca" returns 6 rows (Equus cabalus, Rangifer spp. and others) but not cattle, goats (Capra) or dogs (Canis). Reference-data needs at least two characters and the frontend asks for three, so this only affects other callers.
+- Punctuation must match exactly: "Bos spp." does not find "Bos sp."; it matches only Boselaphus spp.
 
 **What comes back**
 
 - Germinal codes: the `gbnag` dataset lists species under germinal codes too, such as 05111000 (bovine semen) and 05119985. A search for "cattle" returns Bos taurus under both. Species rows carry no germinal flag, so reference-data asks `GET /mdm/trade/product/commodities` once, with every code on the page, and drops the codes it flags `isGerminal: true`. A page can then hold fewer species than `size`, and `total` is the non-germinal distinct species count from that MDM page.
-- MDM does not yet set `isGerminal` on these codes in TST, so 05111000, 05119985 and other germinal codes still show in search results until MDM populates the flag. `trade-imports-stub` flags them, so the stack shows the filter working.
+- MDM flags 05111000 and 05119985 `isGerminal: true` (GBNAG release), so reference-data leaves them out in TST and against the stub alike.
 - MDM has proposed replacing `isGerminal` with a `germinal` object, present only on germinal codes. Reference-data checks the flag in one method, `CommoditySearchService.isGerminal`, so that change touches only its body (`germinal != null`).
-- The same species under several live-animal codes: Bos taurus is under 0102 and 01061900. Each is a separate choice.
-- Some species have no common name (Catagonus, Equus cabalus*asinus) and some carry placeholder ones ("Animals" for Poephagus spp., "Pig-deer?" for Babyrousa).
+- The same species under several live-animal codes: Bison bison is under 0102 and germinal 05111000. Each is a separate choice, and the germinal one is filtered out.
+- The recaptured stub holds no species without a common name; MDM TST had some before the GBNAG release (EUDPA-617). Some carry placeholder common names ("Pig-deer?" for Babyrousa).
 - Results come back in MDM's order, with no sort option.
 
 The gaps found during EUDPA-617 are recorded as the MDM follow-ups on the EUDPA-617 ticket.

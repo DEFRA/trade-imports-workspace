@@ -18,7 +18,7 @@ forms exist on older tickets but should not be used on new work.
 | Label | Count | Use when |
 |-------|-------|----------|
 | `Skeleton` | 27 | Initial scaffolding story for a new capability slice — puts a feature in the codebase before behaviour is wired up. |
-| `technicalImprovement` | 8 | Tech debt — refactor, dependency upgrade, code-quality clean-up. Pairs with the tech-debt modifier (priority `Lowest`). |
+| `technicalImprovement` | 8 | Tech debt — refactor, dependency upgrade, code-quality clean-up. The tech-debt modifier adds it. |
 | `UCD` | 1 | User-centred design work — research, design artefact, prototype. |
 
 ### Capability-tracking family — `CAP-*` and `COMMON-CAP-*`

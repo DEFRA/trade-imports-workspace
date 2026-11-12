@@ -54,7 +54,7 @@ session:
 - `~/git/defra/trade-imports-workspace/docs/best-practices/gds/writing.md`
   — GDS plain-English rules for ticket prose.
 - `~/git/defra/trade-imports-workspace/docs/best-practices/jira/ticket-conventions.md`
-  — Type / priority / AC / named-conventions guidance for the EUDPA
+  — Type / AC / named-conventions guidance for the EUDPA
   project.
 - `~/git/defra/trade-imports-workspace/.claude/skills/ticket-creator/assets/known-labels.md`
   — accepted EUDPA-project Jira labels (camelCase canonical form).
@@ -122,9 +122,9 @@ codes is out of scope for this skill.
 If **Type == Task** and the user describes the work as tech debt,
 ask once:
 
-> Default this as tech debt — label `technicalImprovement`, priority `Lowest`? (Y/n)
+> Label this as tech debt (`technicalImprovement`)? (Y/n)
 
-If yes, apply both defaults without re-asking. Parent epic is still
+If yes, add the label without re-asking. Parent epic is still
 the user's choice (no specific key is suggested — tech-debt work in
 EUDPA lands under whichever feature epic owns the area).
 
@@ -175,7 +175,10 @@ Skip this step entirely when no parent epic was supplied.
 |-------|------------------|
 | Type | Bug=broken, Story=user-facing, Task=technical |
 | Summary | <80 chars, specific, action-oriented |
-| Priority | Highest/High=blocking; Medium=normal; Low/Lowest=nice-to-have |
+
+Never ask for or set priority. The team orders work by its position
+on the board, so the field carries nothing — see "Priority" in
+`ticket-conventions.md`.
 
 ### Labels
 
@@ -221,7 +224,6 @@ Write the draft to `~/git/defra/trade-imports-workspace/workareas/ticket-creatio
 
 **Type:** [Bug/Story/Task]
 **Summary:** [Summary]
-**Priority:** [Priority]
 **Parent:** [Epic or None]
 **Labels:** [labels or None]
 **Assignee:** [Self or None]
@@ -294,14 +296,13 @@ Write two files under
   "descriptionFile": "description.jira.txt",
   "parent": "<epic key>",
   "labels": ["<label>"],
-  "priority": "<priority>",
   "attachments": ["<filename, relative to this folder>"],
   "relates": []
 }
 ```
 
-`project` is always `EUDPA`. Omit `parent`, `priority`, `labels` or
-`attachments` entirely rather than writing `null` or `""` when the interview
+`project` is always `EUDPA`. Never include `priority`. Omit `parent`,
+`labels` or `attachments` entirely rather than writing `null` or `""` when the interview
 gave nothing for that field. Copy any screenshots or logs the user gave you
 (Bugs) into this same folder and list their filenames in `attachments`.
 
@@ -313,7 +314,7 @@ tim jira create --from ~/git/defra/trade-imports-workspace/workareas/ticket-crea
 
 This sends no request — `tim` only reads the manifest and the files next to
 it. Read the JSON result and show the user a plain-English plan: type,
-summary, parent, labels, priority, each attachment with its size, and every
+summary, parent, labels, each attachment with its size, and every
 `warnings[]` entry verbatim. A warning almost always means a template
 placeholder was left in (`[Who is this for?`, `[Welsh needed]`,
 `EUDPA-XXXX`, `TODO`) or the description is over Jira's 32,767-character
@@ -356,9 +357,11 @@ that where possible, so prefer that over falling back):
 |------|-------------|---------|
 | -t, --type | Bug/Story/Task | Task |
 | -p, --parent | Epic key | None |
-| -P, --priority | Lowest-Highest | Medium |
 | -l, --label | Add label (repeatable) | None |
 | -a | Self-assign | No |
+
+The script also takes `-P/--priority` and sends `Medium` when it is not
+given. Leave it at that default; do not pass `-P`.
 
 This creates immediately — there is no dry run — so only run it once the
 draft's **Status** is `APPROVED`.

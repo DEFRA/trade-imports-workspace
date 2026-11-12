@@ -1,0 +1,22 @@
+{
+  "file": "src/server/app/sets/live-animals/services/commodities/stub.test.js",
+  "repo": "trade-imports-animals-frontend",
+  "commit": "f3fa00869e616e4133770915f3221a0305773a7b",
+  "pr": 475,
+  "mode": "FRESH",
+  "reviewed_at": "2026-11-12T12:47:01Z",
+  "verdict": "NEEDS_ATTENTION",
+  "verdict_reason": "The re-baselined counts match the recaptured fixture's seven 0102 species, but the test asserts hand-copied counts rather than the species its title says it lists.",
+  "todos": [
+    {
+      "id": 1,
+      "line": 72,
+      "severity": "Major",
+      "category": "test-readability",
+      "issue": "Title 'Should list every species of a code found by its code, a page at a time' claims every species is listed, but lines 73-79 assert only counts (total 7, page lengths 5 and 2) copied by hand from fixtures/commodities.json's 0102 group. A search returning the wrong 7 species still passes, and every MDM recapture forces another hand re-count, which is why this PR had to edit the numbers.",
+      "fix": "Must: the test proves that the two pages together hold exactly the 0102 group's species, in data order, with the expectation taken from the fixture rather than a hand-copied count. One way: read the 0102 group from COMMODITY_GROUPS (exported by stub.js), assert firstPage.total equals its species length, and assert [...firstPage.groups[0].species, ...secondPage.groups[0].species] toEqual that group's species.",
+      "best_practice": "node/testing/frontend.md"
+    }
+  ],
+  "reconciled_at": "2026-11-12T12:52:54Z"
+}

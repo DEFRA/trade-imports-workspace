@@ -2,6 +2,8 @@
 
 ## Purpose
 
+**Maturity**: exploring
+
 Asks whether the consignment has already arrived in Great Britain. The page is titled "Has the consignment arrived in Great Britain?".
 
 ## Requirements

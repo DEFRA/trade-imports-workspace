@@ -12,6 +12,7 @@ The system MUST use the reason for importing to decide whether each of four furt
 
 #### Scenario: Internal market asks only for the purpose
 **ID**: SCN-OB-IMPORT-REASON-001-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user is answering the reason for importing
 - **WHEN** they choose "Internal market"
 - **THEN** the purpose in the internal market is asked for, as a mandatory answer
@@ -19,6 +20,7 @@ The system MUST use the reason for importing to decide whether each of four furt
 
 #### Scenario: Transit asks for the destination country and the port of exit
 **ID**: SCN-OB-IMPORT-REASON-001-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user is answering the reason for importing
 - **WHEN** they choose "Transit"
 - **THEN** the destination country and the port of exit are both asked for, as mandatory answers
@@ -26,6 +28,7 @@ The system MUST use the reason for importing to decide whether each of four furt
 
 #### Scenario: Transhipment or onward travel asks only for the destination country
 **ID**: SCN-OB-IMPORT-REASON-001-C
+**Signed off**: 2026-11-11
 - **GIVEN** the user is answering the reason for importing
 - **WHEN** they choose "Transhipment or onward travel"
 - **THEN** the destination country is asked for, as a mandatory answer
@@ -33,6 +36,7 @@ The system MUST use the reason for importing to decide whether each of four furt
 
 #### Scenario: Temporary admission horses asks for the port of exit and the exit date
 **ID**: SCN-OB-IMPORT-REASON-001-D
+**Signed off**: 2026-11-11
 - **GIVEN** the user is answering the reason for importing
 - **WHEN** they choose "Temporary admission horses"
 - **THEN** the port of exit and the exit date are both asked for, as mandatory answers
@@ -40,6 +44,7 @@ The system MUST use the reason for importing to decide whether each of four furt
 
 #### Scenario: Any other reason asks for none of the four
 **ID**: SCN-OB-IMPORT-REASON-001-E
+**Signed off**: 2026-11-11
 - **GIVEN** the user is answering the reason for importing
 - **WHEN** they choose a reason other than Internal market, Transit, Transhipment or onward travel, or Temporary admission horses
 - **THEN** none of the purpose, destination country, port of exit or exit date is asked for
@@ -50,6 +55,7 @@ The system MUST discard the stored answers to the purpose, destination country, 
 
 #### Scenario: Changing the reason away and back asks the question afresh
 **ID**: SCN-OB-IMPORT-REASON-002-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user has chosen "Internal market" and answered the purpose in the internal market
 - **WHEN** they change the reason to one that does not call for the purpose, and later change it back to "Internal market"
 - **THEN** the purpose is asked for again with nothing selected

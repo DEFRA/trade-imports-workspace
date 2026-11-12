@@ -12,6 +12,7 @@ The system MUST ask which countries the consignment travels through when the mea
 
 #### Scenario: An overland means of transport asks for the transited countries
 **ID**: SCN-OB-ARRIVAL-001-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user is answering how the consignment arrives
 - **WHEN** they choose Rail or Road as the means of transport
 - **THEN** the countries the consignment travels through are asked for, as an optional answer they may leave empty and still continue

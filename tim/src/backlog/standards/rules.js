@@ -11,6 +11,7 @@ const CONTINUATION_RE = /^\s+\S/
 const FENCE_RE = /^\s*```/
 const BACKTICK_RE = /`([^`]+)`/g
 const TOPIC_DIR_RE = /^Topic dir:\s*`([^`]+)`/
+const PLACEHOLDER_RE = /<[^>]+>/
 const CLAUDE_DIR_NAME = '.claude'
 const RULES_DIR_NAME = 'rules'
 const WORKTREES_DIR_NAME = 'worktrees'
@@ -127,7 +128,7 @@ export const extractPointers = (body, { scopeRootRelative, relRulePath }) => {
       const token = match[1]
       if (isTopicDirItem && token === topicDirRaw) continue
       for (const expanded of expandBraces(token)) {
-        if (!expanded.endsWith('.md')) continue
+        if (!expanded.endsWith('.md') || PLACEHOLDER_RE.test(expanded)) continue
         const resolved = resolveToken(expanded, {
           topicDirRelative,
           scopeRootRelative

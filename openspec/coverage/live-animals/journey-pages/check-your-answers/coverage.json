@@ -241,7 +241,7 @@
     {
       "id": "REQ-CYA-006",
       "name": "Continuing from a ready draft notification moves on to the declaration",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-CYA-006-A",
@@ -252,7 +252,7 @@
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should show the declaration once the notification is complete", "strength": "full", "notes": "drives the review's Continue as it posts to the declaration" }
           ]
         },
-        { "id": "SCN-CYA-006-B", "name": "Transit countries are not owed for submission", "coverage": "none", "tests": [], "notes": "The tests that prove this are only on an open Design Release 2.1 theme branch, not on main yet." }
+        { "id": "SCN-CYA-006-B", "name": "Transit countries are not owed for submission", "coverage": "full", "tests": [ { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "a draft by road with no transit country added continues to the declaration", "strength": "full", "notes": "red probe: blank the optional status on transitedCountries in obligations/sections/transport.js and the review names Complete transit countries" } ] }
       ]
     },
     {
@@ -293,7 +293,7 @@
     {
       "id": "REQ-CYA-008",
       "name": "A submitted notification offers copy-as-new and delete",
-      "coverage": "partial",
+      "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-CYA-008-A",
@@ -306,7 +306,7 @@
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "ends with the last card and offers no way to submit again", "strength": "full", "notes": "asserts no submit/continue action alongside the copy-as-new action" }
           ]
         },
-        { "id": "SCN-CYA-008-C", "name": "Delete opens the delete confirmation", "coverage": "none", "tests": [], "notes": "The tests that prove this are only on an open Design Release 2.1 theme branch, not on main yet." }
+        { "id": "SCN-CYA-008-C", "name": "Delete opens the delete confirmation", "coverage": "full", "tests": [ { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "Delete on the submitted view opens the delete confirmation", "strength": "full", "notes": "red probe: point deleteHref in check-answers/controller.js at the copy page and the confirmation heading is not shown" } ] }
       ]
     },
     {
@@ -519,6 +519,37 @@
               "strength": "partial",
               "notes": "no red probe run against this assertion"
             }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CYA-016",
+      "name": "The review shows only the exit answers the main import reason asked for",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-CYA-016-A",
+          "name": "A transit notification shows its destination country and port of exit, and no exit date",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "shows the destination country and port of exit a transit collected, with the one Change link in the card heading", "strength": "partial", "notes": "no red probe run against this assertion" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-016-B",
+          "name": "A temporary admission shows its exit date and port of exit, and no destination country",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "shows the exit date and port of exit a temporary admission collected", "strength": "partial", "notes": "no red probe run against this assertion" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-016-C",
+          "name": "A reason that asks none of the exit answers shows none of their rows",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "leaves all three rows off the review for a reason that asks none of them", "strength": "partial", "notes": "no red probe run against this assertion" }
           ]
         }
       ]

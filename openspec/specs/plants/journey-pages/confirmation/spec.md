@@ -2,6 +2,8 @@
 
 ## Purpose
 
+**Maturity**: exploring
+
 The page shown once a high-risk plants notification has been submitted, confirming it and offering routes back into the notification and the dashboard. The page is titled "Notification submitted".
 
 ## Requirements

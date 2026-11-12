@@ -237,11 +237,25 @@ const planCheckAnswer = (planAnswers, label) => {
   return / record$/.test(label) ? PLAN_REVIEW_RECORDED : PLAN_APPROVED
 }
 
+const SIGNED_OFF_CLEAN = {
+  ok: true,
+  exitCode: 0,
+  changes: 0,
+  summary: 'No signed-off scenario changes.'
+}
+const isSignedOffStage = (label) =>
+  / (signed off|signed-off ticket|park)$/.test(label ?? '')
+const signedOffAnswer = (signedOffAnswers, label) => {
+  if (label in signedOffAnswers) return signedOffAnswers[label]
+  return / signed off$/.test(label) ? SIGNED_OFF_CLEAN : null
+}
+
 const answeringRunLease = (
   answers,
   leaseAnswers = {},
   themeAnswers = {},
-  planAnswers = {}
+  planAnswers = {},
+  signedOffAnswers = {}
 ) => {
   let acquires = 0
   const acquireAnswer = () => {
@@ -256,10 +270,14 @@ const answeringRunLease = (
   const answerOwnStage = (label) => {
     if (isRunLease(label)) return leaseAnswer(label)
     if (isPlanCheck(label)) return planCheckAnswer(planAnswers, label)
+    if (isSignedOffStage(label)) return signedOffAnswer(signedOffAnswers, label)
     return themeAnswer(themeAnswers, label)
   }
   const isOwnStage = (label) =>
-    isRunLease(label) || isThemeCheck(label) || isPlanCheck(label)
+    isRunLease(label) ||
+    isThemeCheck(label) ||
+    isPlanCheck(label) ||
+    isSignedOffStage(label)
   if (typeof answers === 'function') {
     return (prompt, options) =>
       isOwnStage(options.label)
@@ -289,11 +307,11 @@ const promptOf = (run, label) =>
 
 const runLoop = (
   path,
-  { answers = [], lease, themes, plans, ...options } = {}
+  { answers = [], lease, themes, plans, signedOff, ...options } = {}
 ) =>
   runWorkflowScript(path, {
     ...options,
-    answers: answeringRunLease(answers, lease, themes, plans)
+    answers: answeringRunLease(answers, lease, themes, plans, signedOff)
   })
 
 const startAnswer = (result) => ({
@@ -4903,12 +4921,297 @@ describe('increment-build-loop', () => {
 
       const labels = (run) => stageLabels(run)
 
-      test('checks every repo is on the branch before land', async () => {
+      test('checks every repo is on the branch, then runs the signed-off check, before land', async () => {
         const run = await runToFailedLand()
+        const guardAt = labels(run).indexOf('inc-900 branch-guard:land')
 
-        expect(labels(run).indexOf('inc-900 branch-guard:land')).toBe(
-          labels(run).indexOf('inc-900 land') - 1
-        )
+        expect(labels(run).slice(guardAt, guardAt + 3)).toEqual([
+          'inc-900 branch-guard:land',
+          'inc-900 signed off',
+          'inc-900 land'
+        ])
+      })
+
+      describe('a change to a signed-off scenario', () => {
+        const TRIPPED = {
+          ok: true,
+          exitCode: 3,
+          changes: 2,
+          summary:
+            'changed SCN-ORIGIN-001-A plants/journey-pages/origin | test-edited SCN-ORIGIN-001-B plants/journey-pages/origin'
+        }
+        const RAISED = { ok: true, key: 'EUDPA-990', summary: 'raised' }
+        const PARKED = { ok: true, summary: 'parked' }
+        const LANDED = { landed: true, commit: 'abc1234', summary: 'committed' }
+        const DRAFT_PRS = {
+          ok: true,
+          prs: [
+            {
+              repo: 'frontend',
+              url: 'https://github.com/DEFRA/trade-imports-animals-frontend/pull/9',
+              number: 9,
+              raised: true
+            }
+          ],
+          summary: 'raised as a draft'
+        }
+
+        const runToTrip = (signedOff, ...afterGuard) =>
+          runLoop(scriptPath, {
+            args: BASE_ARGS,
+            signedOff,
+            answers: [
+              WORKSPACE_ANSWER,
+              PREFLIGHT_ANSWER,
+              START_ANSWER,
+              BASELINE_ANSWER,
+              PLANNED,
+              implementAnswer(['frontend:src/a.js']),
+              NO_FINDINGS,
+              NO_FINDINGS,
+              NO_FINDINGS,
+              GREEN_LADDER,
+              ON_BRANCH,
+              ...afterGuard
+            ]
+          })
+
+        const runTripped = () =>
+          runToTrip(
+            {
+              'inc-900 signed off': TRIPPED,
+              'inc-900 signed-off ticket': RAISED,
+              'inc-900 park': PARKED
+            },
+            LANDED,
+            DRAFT_PRS
+          )
+
+        test('compares the uncommitted spec, and each of the row’s repos with the base branch, before it lands', async () => {
+          const run = await runTripped()
+
+          expect(promptOf(run, 'inc-900 signed off')).toContain(
+            '`tim spec diff --signed-off --uncommitted --repo trade-imports-animals-backend --repo trade-imports-ins-tests --repo trade-imports-animals-frontend --base origin/main --workspace ~/ws --json > ~/ws/workareas/shared/args-fixture/logs/inc-900-signed-off.json 2> ~/ws/workareas/shared/args-fixture/logs/inc-900-signed-off.err`'
+          )
+        })
+
+        test('raises the drafted ticket under the epic, related to the row’s own ticket', async () => {
+          const run = await runTripped()
+
+          expect(promptOf(run, 'inc-900 signed-off ticket')).toContain(
+            '`{"schema":"tim-ticket/1","project":"EUDPA","type":"Task","summary":"<that summary, word for word>","descriptionFile":"description.txt","parent":"EUDPA-1","relates":["EUDPA-900"]}`'
+          )
+        })
+
+        test('reuses the ticket an earlier attempt raised, read from its receipt, before any create call', async () => {
+          const prompt = promptOf(
+            await runTripped(),
+            'inc-900 signed-off ticket'
+          )
+
+          const receiptCheck = prompt.indexOf(
+            '`test -f ~/ws/workareas/shared/args-fixture/logs/inc-900-signed-off-ticket/ticket.created.json`'
+          )
+          expect({
+            readsKey: prompt.includes(
+              "`jq -r '.key' ~/ws/workareas/shared/args-fixture/logs/inc-900-signed-off-ticket/ticket.created.json`"
+            ),
+            receiptCheckedFirst:
+              receiptCheck !== -1 &&
+              receiptCheck < prompt.indexOf('Dry run: `tim jira create')
+          }).toEqual({ readsKey: true, receiptCheckedFirst: true })
+        })
+
+        test('parks the row before it lands, then lands it and raises its pull requests as drafts, merging nothing', async () => {
+          const run = await runTripped()
+
+          expect({
+            stages: stageLabels(run).slice(
+              stageLabels(run).indexOf('inc-900 signed off')
+            ),
+            draft: promptOf(run, 'inc-900 pr').includes(
+              '--head feat/EUDPA-900-fixture --draft --title'
+            )
+          }).toEqual({
+            stages: [
+              'inc-900 signed off',
+              'inc-900 signed-off ticket',
+              'inc-900 park',
+              'inc-900 land',
+              'inc-900 pr'
+            ],
+            draft: true
+          })
+        })
+
+        test('makes a pull request already open for the branch a draft, and names the ticket on it', async () => {
+          const run = await runTripped()
+
+          expect(promptOf(run, 'inc-900 pr')).toContain(
+            'make it a draft: `gh pr ready <number> --repo <ghRepo> --undo`.\n     A PR that is already a draft stays one. Then `gh pr comment <number> --repo <ghRepo> --body "Waits on EUDPA-990, a ruling on a change to signed-off behaviour."`'
+          )
+        })
+
+        test('stops at a failed pull request stage with the row already parked as blocked', async () => {
+          const run = await runToTrip(
+            {
+              'inc-900 signed off': TRIPPED,
+              'inc-900 signed-off ticket': RAISED,
+              'inc-900 park': PARKED
+            },
+            LANDED,
+            { ok: false, prs: [], summary: 'gh pr create refused' }
+          )
+
+          expect({
+            stages: stageLabels(run).slice(
+              stageLabels(run).indexOf('inc-900 park')
+            ),
+            parkedAs: promptOf(run, 'inc-900 park').includes(
+              'inc-900 --status blocked --open-question'
+            ),
+            stopped: run.result.stopped.reason
+          }).toEqual({
+            stages: ['inc-900 park', 'inc-900 land', 'inc-900 pr'],
+            parkedAs: true,
+            stopped: 'pr-failed'
+          })
+        })
+
+        test('preserves the attempt and lands nothing when the row cannot be parked', async () => {
+          const run = await runToTrip(
+            {
+              'inc-900 signed off': TRIPPED,
+              'inc-900 signed-off ticket': RAISED,
+              'inc-900 park': { ok: false, summary: 'tim backlog set refused' }
+            },
+            PRESERVED
+          )
+
+          expect({
+            last: stageLabels(run).slice(-2),
+            stopped: run.result.stopped.reason
+          }).toEqual({
+            last: ['inc-900 park', 'inc-900 preserve'],
+            stopped: 'park-failed'
+          })
+        })
+
+        test('parks the row as blocked, with the ticket in its open question', async () => {
+          const run = await runTripped()
+
+          expect(promptOf(run, 'inc-900 park')).toContain(
+            '`tim backlog set shared/args-fixture inc-900 --status blocked --open-question "Awaiting a signed-off ruling on EUDPA-990: this row changes 2 signed-off scenario(s). Its pull requests stay drafts until a person approves or refuses the change." --workspace ~/ws --json`'
+          )
+        })
+
+        test('reports the row awaiting a ruling, not landed', async () => {
+          const run = await runTripped()
+
+          expect({
+            increment: run.result.increments[0],
+            stopped: run.result.stopped.reason
+          }).toEqual({
+            increment: expect.objectContaining({
+              id: 'inc-900',
+              outcome: 'awaiting-signed-off-ruling',
+              signedOffTicket: 'EUDPA-990',
+              commit: 'abc1234',
+              prs: [
+                'https://github.com/DEFRA/trade-imports-animals-frontend/pull/9'
+              ]
+            }),
+            stopped: 'no-buildable'
+          })
+        })
+
+        test('builds and merges the next row after parking one, counting only the merged row towards stopAfter', async () => {
+          const builtUpToLand = [
+            BASELINE_ANSWER,
+            PLANNED,
+            implementAnswer(['frontend:src/a.js']),
+            NO_FINDINGS,
+            NO_FINDINGS,
+            NO_FINDINGS,
+            GREEN_LADDER,
+            ON_BRANCH,
+            LANDED
+          ]
+          const run = await runLoop(scriptPath, {
+            args: { ...BASE_ARGS, increments: null, stopAfter: 1 },
+            signedOff: {
+              'inc-901 signed off': TRIPPED,
+              'inc-901 signed-off ticket': RAISED,
+              'inc-901 park': PARKED
+            },
+            answers: [
+              WORKSPACE_ANSWER,
+              PREFLIGHT_ANSWER,
+              startAnswer(startedResult({ id: 'inc-901' })),
+              ...builtUpToLand,
+              DRAFT_PRS,
+              startAnswer(startedResult({ id: 'inc-902' })),
+              ...builtUpToLand,
+              DRAFT_PRS,
+              { green: true, summary: 'every check green' },
+              {
+                green: true,
+                merged: [{ repo: 'frontend', sha: 'def5678' }],
+                summary: 'merged'
+              },
+              { ok: true, summary: 'ticket moved to Done' },
+              { ok: true, summary: 'no gate' }
+            ]
+          })
+
+          expect({
+            outcomes: run.result.increments.map(({ id, outcome }) => ({
+              id,
+              outcome
+            })),
+            secondRowMerged: stageLabels(run).includes('inc-902 merge'),
+            stopped: run.result.stopped.reason
+          }).toEqual({
+            outcomes: [
+              { id: 'inc-901', outcome: 'awaiting-signed-off-ruling' },
+              { id: 'inc-902', outcome: 'landed' }
+            ],
+            secondRowMerged: true,
+            stopped: 'count-reached'
+          })
+        })
+
+        test('raises no draft pull request and parks nothing when the check finds nothing', async () => {
+          const run = await runToTrip({}, LANDED, DRAFT_PRS)
+
+          expect({
+            draft: promptOf(run, 'inc-900 pr').includes('--draft'),
+            parked: stageLabels(run).includes('inc-900 park')
+          }).toEqual({ draft: false, parked: false })
+        })
+
+        test('preserves the attempt and stops before land when the check cannot run', async () => {
+          const run = await runToTrip(
+            {
+              'inc-900 signed off': {
+                ok: false,
+                exitCode: 2,
+                changes: 0,
+                summary:
+                  "Can't find origin/main in repos/trade-imports-ins-tests."
+              }
+            },
+            PRESERVED
+          )
+
+          expect({
+            last: stageLabels(run).slice(-2),
+            stopped: run.result.stopped.reason
+          }).toEqual({
+            last: ['inc-900 signed off', 'inc-900 preserve'],
+            stopped: 'signed-off-check-failed'
+          })
+        })
       })
 
       test('tells the branch guard which branch every repo must be on', async () => {
@@ -5236,9 +5539,9 @@ describe('increment-build-loop', () => {
             ]
           })
 
-          expect(run.result.increments.length).toBe(10)
+          expect(run.result.increments.length).toBe(9)
           expect(run.result.stopped.detail).toContain(
-            'at up to 97 agents per increment on claude'
+            'at up to 100 agents per increment on claude'
           )
         })
 
@@ -6696,6 +6999,7 @@ describe('increment-build-loop', () => {
           'inc-900 consistency',
           'inc-900 ladder',
           'inc-900 branch-guard:land',
+          'inc-900 signed off',
           'inc-900 land',
           'inc-900 pr',
           'inc-900 ci watch',
@@ -6714,6 +7018,59 @@ describe('increment-build-loop', () => {
           .map(({ options }) => options.label)
 
         expect(jiraCallers).toEqual([])
+      })
+
+      describe('a change to a signed-off scenario', () => {
+        const runTrippedRow = () =>
+          runLoop(scriptPath, {
+            args: BRANCH_ARGS,
+            signedOff: {
+              'inc-900 signed off': {
+                ok: true,
+                exitCode: 3,
+                changes: 1,
+                summary: 'test-edited SCN-AUTH-001-A ins/sign-in'
+              },
+              'inc-900 signed-off ticket': { ok: true, summary: 'drafted' },
+              'inc-900 park': { ok: true, summary: 'parked' }
+            },
+            answers: [
+              WORKSPACE_ANSWER,
+              { ok: true, summary: '1' },
+              MERGE_ROW,
+              BASELINE,
+              PLAN,
+              MERGE_STARTED,
+              ...reviewedAndLanded
+            ]
+          })
+
+        test('parks the row, then lands and pushes it without looking for its pull requests or watching CI', async () => {
+          const run = await runTrippedRow()
+
+          expect(
+            labelsOf(run).slice(labelsOf(run).indexOf('inc-900 signed off'))
+          ).toEqual([
+            'inc-900 signed off',
+            'inc-900 signed-off ticket',
+            'inc-900 park',
+            'inc-900 land'
+          ])
+        })
+
+        test('drafts the ticket in the workarea and makes no Jira call', async () => {
+          const run = await runTrippedRow()
+          const jiraCallers = run.agents
+            .filter(({ prompt }) => /tim jira/.test(prompt))
+            .map(({ options }) => options.label)
+
+          expect({
+            jiraCallers,
+            question: promptOf(run, 'inc-900 park').includes(
+              'Raise the ticket drafted in ~/ws/workareas/shared/args-fixture/logs/inc-900-signed-off-ticket for a person to approve or refuse the change.'
+            )
+          }).toEqual({ jiraCallers: [], question: true })
+        })
       })
 
       test('reports the row landed on the working branch with its commit and PR', async () => {
@@ -6905,6 +7262,7 @@ describe('increment-build-loop', () => {
           'inc-900 plan read',
           'inc-900 ladder',
           'inc-900 branch-guard:land',
+          'inc-900 signed off',
           'inc-900 land',
           'inc-900 pr',
           'inc-900 ci watch',
@@ -7911,7 +8269,7 @@ describe('increment-build-loop', () => {
             }
           })
 
-          expect(run.result.increments.length).toBe(13)
+          expect(run.result.increments.length).toBe(12)
           expect(run.result.stopped.detail).toContain(
             "keeping 21 for a theme's engineering review"
           )
@@ -8226,6 +8584,7 @@ describe('increment-build-loop', () => {
             'inc-900 consistency',
             'inc-900 ladder',
             'inc-900 branch-guard:land',
+            'inc-900 signed off',
             'inc-900 land',
             'inc-900 done',
             'inc-900 gate check',
@@ -8537,6 +8896,7 @@ describe('increment-build-loop', () => {
           'inc-014 implement',
           'inc-014 ladder',
           'inc-014 branch-guard:land',
+          'inc-014 signed off',
           'inc-014 land',
           'inc-014 pr',
           'inc-014 ci watch',
@@ -9075,6 +9435,49 @@ describe('increment-build-loop', () => {
         })
       )
 
+    test('checks the workspace’s commits on the branch for signed-off changes, so a resumed attempt’s spec change is seen', async () => {
+      const run = await runFactory()
+
+      expect(promptOf(run, 'inc-020 signed off')).toContain(
+        '`tim spec diff --signed-off --uncommitted --range origin/main...HEAD --repo trade-imports-performance-tests --base origin/main --workspace ~/ws --json'
+      )
+    })
+
+    test('checks the workspace’s commits on the branch when a row resumes from a preserved attempt', async () => {
+      const run = await runFactory(
+        {},
+        {
+          'inc-020 start': startedWith({
+            resumeAt: 'ladder',
+            attempt: {
+              stage: 'ladder',
+              reason: 'ladder-red',
+              at: '2026-10-30T11:00:00Z',
+              planReviewed: true,
+              work: { kind: 'wip', branch: WORK_BRANCH, sha: 'abc1234' }
+            }
+          }),
+          'inc-020 restore': {
+            restored: true,
+            green: true,
+            rungs: [],
+            changedFiles: CHANGED_FILES,
+            summary: 'the wip commit is at HEAD, unit and FIT green'
+          },
+          'inc-020 plan read': ANSWERS['inc-020 plan']
+        }
+      )
+
+      expect({
+        resumed:
+          labelsOf(run).includes('inc-020 restore') &&
+          !labelsOf(run).includes('inc-020 implement'),
+        range: promptOf(run, 'inc-020 signed off').includes(
+          '--range origin/main...HEAD'
+        )
+      }).toEqual({ resumed: true, range: true })
+    })
+
     describe('the spec diff comment on the ticket once a row lands', () => {
       const TICKETS = '~/ws/workareas/shared/args-fixture/tickets'
       const DRAFTED = {
@@ -9437,6 +9840,7 @@ describe('increment-build-loop', () => {
           'inc-020 implement',
           'inc-020 ladder',
           'inc-020 branch-guard:land',
+          'inc-020 signed off',
           'inc-020 land',
           'inc-020 workspace commit',
           'inc-020 pr',

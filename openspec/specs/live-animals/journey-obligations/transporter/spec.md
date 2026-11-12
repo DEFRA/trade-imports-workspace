@@ -12,6 +12,7 @@ The system MUST ask the notification for one transporter, chosen from a single l
 
 #### Scenario: The transporter list offers commercial and private transporters together
 **ID**: SCN-OB-TRANSPORTER-001-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user has reached the transporter step
 - **WHEN** the page loads
 - **THEN** a single list is shown holding both commercial and private transporters
@@ -23,12 +24,14 @@ The system MUST ask for the type of a transporter being added from the list — 
 
 #### Scenario: Adding a commercial transporter asks its type, then the commercial form
 **ID**: SCN-OB-TRANSPORTER-002-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user selects "Add a transporter" from the transporter list
 - **WHEN** they choose "Commercial"
 - **THEN** the commercial transporter form is shown, not the private one
 
 #### Scenario: Adding a private transporter asks its type, then the private form
 **ID**: SCN-OB-TRANSPORTER-002-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user selects "Add a transporter" from the transporter list
 - **WHEN** they choose "Private"
 - **THEN** the private transporter details form is shown, not the commercial one
@@ -53,6 +56,7 @@ The system MUST ask for the type of a transporter being added from the list — 
 
 #### Scenario: The type question returns to the list rather than forward
 **ID**: SCN-OB-TRANSPORTER-002-D
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the type question reached from "Add a transporter"
 - **WHEN** they use the back link
 - **THEN** they return to the transporter list
@@ -63,18 +67,21 @@ The system MUST discard a commercial transporter entered through the add route w
 
 #### Scenario: Returning to Commercial after adding as Private shows an empty commercial form
 **ID**: SCN-OB-TRANSPORTER-003-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user has added a commercial transporter through the add route
 - **WHEN** they add a transporter again, choose "Private" and save, then add again and choose "Commercial"
 - **THEN** the commercial transporter form is shown empty, not the previously entered details
 
 #### Scenario: Returning to Private after adding as Commercial shows the private form blank, Country select back on the United Kingdom
 **ID**: SCN-OB-TRANSPORTER-003-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user has added a private transporter through the add route
 - **WHEN** they add a transporter again, choose "Commercial" and save, then add again and choose "Private"
 - **THEN** the private transporter details form is shown with every field blank and the Country select back on the United Kingdom, not the previously entered details
 
 #### Scenario: Cancelling an add of the other type keeps the record the earlier type held
 **ID**: SCN-OB-TRANSPORTER-003-C
+**Signed off**: 2026-11-11
 - **GIVEN** the user has added a private transporter through the add route
 - **WHEN** they add a transporter again, choose "Commercial", and cancel that form without saving it
 - **THEN** adding again and choosing "Private" shows the private transporter details form holding the details they entered, because no change of type was saved

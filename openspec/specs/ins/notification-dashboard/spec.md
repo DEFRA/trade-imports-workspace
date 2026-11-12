@@ -8,7 +8,7 @@ The Import Notification Service's landing page: a single list of notifications, 
 
 ### Requirement: The dashboard lists notifications from every status, identifying each one
 **ID**: REQ-INS-DASH-001
-The system MUST show, as the signed-in landing page, a list of notifications spanning every status — including SUBMITTED, DRAFT and AMEND — each row showing its reference number and status, and MUST NOT show a notification that has been soft-deleted.
+The system MUST show, as the signed-in landing page, a list of notifications spanning every status — including SUBMITTED, DRAFT and AMEND — each row showing its reference number, status, origin country, commodity and arrival date and a 'View' link, and MUST NOT show a notification that has been soft-deleted.
 
 #### Scenario: Notifications of every status appear together, deleted ones excluded
 **ID**: SCN-INS-DASH-001-A
@@ -16,6 +16,13 @@ The system MUST show, as the signed-in landing page, a list of notifications spa
 - **WHEN** a signed-in user opens the dashboard
 - **THEN** the SUBMITTED, DRAFT and AMEND notifications are all shown, each with its reference number and status
 - **AND** the soft-deleted notification does not appear
+
+#### Scenario: A row shows the notification's origin country, commodity and arrival date
+**ID**: SCN-INS-DASH-001-B
+- **GIVEN** a notification has been submitted with an arrival date entered
+- **WHEN** a signed-in user opens the dashboard
+- **THEN** its row shows its reference number, status, origin country, commodity and the arrival date entered
+- **AND** its row offers a 'View' link
 
 ### Requirement: Opening a notification's link routes by its status
 **ID**: REQ-INS-DASH-002

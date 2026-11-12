@@ -655,15 +655,70 @@ started yet.
 ```bash
 tim spec diff --commit 575f5f3c --json
 tim spec diff --commit e310d0af --commit 72fb2eda
+tim spec diff --range main...HEAD
 ```
 
 Compares each commit with its first parent under `openspec/specs` and
 `openspec/coverage`, scenario by scenario: `added`, `changed` (its name or
 steps), `removed`, or `coverage` (only its `coverage.json` entry changed). Each
-scenario carries its coverage after the commit. A commit git cannot find is
-listed under `skipped`. `result.touched` is every scenario id the commits added,
-changed or re-proved. The build loop uses it to tell a theme's own unproven
-scenarios from older ones, and to write each row's spec-diff Jira comment.
+scenario carries its coverage after the commit. `--range base..head` compares
+base with head, and `base...head` compares their merge base with head; each
+range is reported under `result.ranges`. A commit or range git cannot find is
+listed under `skipped`. `result.touched` is every scenario id the commits and
+ranges added, changed or re-proved. The build loop uses it to tell a theme's own
+unproven scenarios from older ones, and to write each row's spec-diff Jira
+comment.
+
+#### `--signed-off` — changes that need a person's decision
+
+```bash
+tim spec diff --signed-off --range origin/main...HEAD
+tim spec diff --signed-off --repo trade-imports-plants-frontend --base origin/main --json
+tim spec diff --signed-off --uncommitted --repo trade-imports-plants-frontend --repo trade-imports-ins-tests --base origin/main --json
+```
+
+With `--signed-off`, the report holds only changes to signed-off scenarios (a
+scenario with a `**Signed off**: <date>` line). From `--commit` and `--range`
+it reports a scenario that is:
+
+| Change     | Why it counts                                    |
+| ---------- | ------------------------------------------------ |
+| `added`    | It is new and already marked signed off          |
+| `changed`  | It was signed off, and its name or steps changed |
+| `removed`  | It was signed off, and it is gone                |
+| `unmarked` | Its Signed off mark was taken away               |
+
+Marking an existing scenario signed off is a promotion, reviewed in its own
+pull request, so it does not count.
+
+`--uncommitted` makes the same comparison between HEAD and the workspace's
+working tree under `openspec/`, new files included. The build loop uses it on
+each row's spec sync before the row is committed.
+
+`--repo <name> --base <ref>` reads the files changed in `repos/<name>` against
+`<ref>`, committed and uncommitted. It reports `test-edited` or `test-deleted`
+for each signed-off scenario in the workspace's `openspec/` whose test, linked
+by `repo` and `file` in `coverage.json`, is among them. A new file does not
+count. Repeat `--repo` to check several repos against the same `--base` in one
+report. The scenario's links come from the workspace's working tree, so a
+scenario removed in the same change is caught by `--commit` or `--range`, not
+by `--repo`.
+
+`result.signedOff` lists each change with its scenario id, name, capability,
+`change`, `why`, `foundIn` (the commit, range, or repo and base), the test file
+and titles for a test change, and the scenario's name and steps `before` and
+`after`. `result.ticketDraft` is a plain-English Jira ticket, `summary` and
+`description`, saying which signed-off behaviour changes, from what to what, for
+a person to approve or refuse. It is `null` when nothing is found.
+
+| Exit code | Meaning                                         |
+| --------- | ----------------------------------------------- |
+| 0         | No signed-off scenario changes                  |
+| 3         | At least one signed-off scenario changes        |
+| 2         | A usage error, or a repo or base it cannot find |
+
+A missing `git` also exits 3. Read `ok` in the `--json` envelope to tell the
+two apart.
 
 ### `tim build run-jobs` — whether every job of a run has passed
 

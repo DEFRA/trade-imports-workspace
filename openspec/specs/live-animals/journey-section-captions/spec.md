@@ -24,6 +24,7 @@ The system MUST show, above the heading of a question page, the name of the part
 
 #### Scenario: Commodity details is captioned "Description of the goods"
 **ID**: SCN-CAPTIONS-001-C
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the commodity details page
 - **WHEN** the page is shown
 - **THEN** "Description of the goods" is shown immediately above its heading

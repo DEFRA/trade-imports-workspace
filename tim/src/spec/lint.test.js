@@ -175,6 +175,110 @@ describe('runSpecLint', () => {
     ])
   })
 
+  test('flags a journey-pages page spec with no Maturity line', async () => {
+    const pagePath = join(
+      root,
+      'openspec',
+      'specs',
+      'shop',
+      'journey-pages',
+      'widgets'
+    )
+    mkdirSync(pagePath, { recursive: true })
+    writeFileSync(join(pagePath, 'spec.md'), SPEC_TEXT)
+
+    const result = await runSpecLint({
+      workspaceRoot: root,
+      groups: ['specs'],
+      run: cleanOpenspecRun
+    })
+
+    expect(result.findings).toEqual(
+      expect.arrayContaining([
+        {
+          check: 'maturity',
+          capability: 'shop/journey-pages/widgets',
+          message: 'Page spec has no **Maturity** line under ## Purpose.'
+        }
+      ])
+    )
+  })
+
+  describe('a plants page spec', () => {
+    const PLANTS_FRONTEND = 'trade-imports-plants-frontend'
+
+    const writeOriginPageSpec = (maturity) => {
+      const pagePath = join(
+        root,
+        'openspec',
+        'specs',
+        'plants',
+        'journey-pages',
+        'origin'
+      )
+      mkdirSync(pagePath, { recursive: true })
+      writeFileSync(
+        join(pagePath, 'spec.md'),
+        SPEC_TEXT.replace('Widgets.', `**Maturity**: ${maturity}\n\nWidgets.`)
+      )
+    }
+
+    const pageMaturityFindings = (result) =>
+      result.findings.filter(({ check }) => check === 'page-maturity')
+
+    test('reports the plants frontend as not checked, and nothing wrong, when it is not under repos/', async () => {
+      writeOriginPageSpec('exploring')
+
+      const result = await runSpecLint({
+        workspaceRoot: root,
+        groups: ['binding'],
+        run: cleanOpenspecRun
+      })
+
+      expect(pageMaturityFindings(result)).toEqual([])
+      expect(result.skipped).toEqual(
+        expect.arrayContaining([
+          {
+            check: 'page-maturity',
+            repo: PLANTS_FRONTEND,
+            reason: 'not checked out under repos/'
+          }
+        ])
+      )
+    })
+
+    test('flags a Maturity line that differs from the page the plants frontend declares', async () => {
+      writeOriginPageSpec('exploring')
+      const featurePath = join(
+        root,
+        'repos',
+        PLANTS_FRONTEND,
+        'src',
+        'features',
+        'origin'
+      )
+      mkdirSync(featurePath, { recursive: true })
+      writeFileSync(
+        join(featurePath, 'page.js'),
+        "export const originPage = { id: 'origin', maturity: 'agreed' }\n"
+      )
+
+      const result = await runSpecLint({
+        workspaceRoot: root,
+        groups: ['binding'],
+        run: cleanOpenspecRun
+      })
+
+      expect(pageMaturityFindings(result)).toEqual([
+        {
+          check: 'page-maturity',
+          capability: 'plants/journey-pages/origin',
+          message: `Maturity is exploring, but page "origin" in ${PLANTS_FRONTEND}/src/features/origin/page.js is agreed. They must match.`
+        }
+      ])
+    })
+  })
+
   test('flags a broken requirement rollup', async () => {
     const broken = validCoverage()
     broken.requirements[0].coverage = 'partial'

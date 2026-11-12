@@ -2,6 +2,8 @@
 
 ## Purpose
 
+**Maturity**: exploring
+
 Collects the identification numbers a high-risk plants notification owes for its commodity type. The page is titled "Identification numbers".
 
 ## Requirements

@@ -1,5 +1,5 @@
 window.DATA = {
-  "builtAt": "2026-11-06",
+  "builtAt": "2026-11-10",
   "scope": {
     "id": "animals",
     "title": "Animals Journey Page Map",
@@ -14,33 +14,15 @@ window.DATA = {
   },
   "summary": {
     "themes": 22,
-    "rows": 203,
+    "rows": 214,
     "pages": 24,
     "arriving": 4,
-    "landed": 63,
-    "ahead": 94,
-    "held": 26,
-    "aside": 20
+    "landed": 86,
+    "ahead": 88,
+    "held": 12,
+    "aside": 28
   },
   "themes": {
-    "transporters": {
-      "id": "transporters",
-      "name": "Transporters",
-      "ticket": null,
-      "ticketUrl": null,
-      "wave": "4",
-      "rows": 11,
-      "counts": {
-        "landed": 0,
-        "ahead": 1,
-        "held": 10,
-        "deferred": 0,
-        "dropped": 0,
-        "folded in": 0
-      },
-      "state": "part",
-      "stands": "1 ahead, 10 held"
-    },
     "waiting-on-design": {
       "id": "waiting-on-design",
       "name": "Waiting on design",
@@ -51,13 +33,13 @@ window.DATA = {
       "counts": {
         "landed": 0,
         "ahead": 0,
-        "held": 10,
-        "deferred": 0,
-        "dropped": 0,
-        "folded in": 0
+        "held": 4,
+        "deferred": 1,
+        "dropped": 4,
+        "folded in": 1
       },
       "state": "waiting",
-      "stands": "10 of 10 held"
+      "stands": "4 held, 1 deferred, 4 dropped, 1 folded in"
     },
     "germinal-products": {
       "id": "germinal-products",
@@ -154,36 +136,36 @@ window.DATA = {
       "name": "Test hygiene",
       "ticket": null,
       "ticketUrl": null,
-      "wave": "—",
+      "wave": "6",
       "rows": 2,
       "counts": {
         "landed": 0,
-        "ahead": 2,
-        "held": 0,
+        "ahead": 1,
+        "held": 1,
         "deferred": 0,
         "dropped": 0,
         "folded in": 0
       },
-      "state": "ahead",
-      "stands": "2 of 2 ahead"
+      "state": "part",
+      "stands": "1 ahead, 1 held"
     },
     "obligation-model": {
       "id": "obligation-model",
       "name": "Obligation model",
       "ticket": null,
       "ticketUrl": null,
-      "wave": "—",
+      "wave": "1",
       "rows": 1,
       "counts": {
         "landed": 0,
-        "ahead": 1,
+        "ahead": 0,
         "held": 0,
         "deferred": 0,
-        "dropped": 0,
+        "dropped": 1,
         "folded in": 0
       },
-      "state": "ahead",
-      "stands": "1 of 1 ahead"
+      "state": "none",
+      "stands": "1 of 1 dropped"
     },
     "address-book": {
       "id": "address-book",
@@ -383,23 +365,41 @@ window.DATA = {
       "state": "landed",
       "stands": "3 of 3 landed"
     },
+    "transporters": {
+      "id": "transporters",
+      "name": "Transporters",
+      "ticket": null,
+      "ticketUrl": null,
+      "wave": "4",
+      "rows": 12,
+      "counts": {
+        "landed": 10,
+        "ahead": 0,
+        "held": 2,
+        "deferred": 0,
+        "dropped": 0,
+        "folded in": 0
+      },
+      "state": "part",
+      "stands": "10 landed, 2 held"
+    },
     "type-question": {
       "id": "type-question",
       "name": "Type question",
       "ticket": "EUDPA-690",
       "ticketUrl": "https://eaflood.atlassian.net/browse/EUDPA-690",
-      "wave": "3",
-      "rows": 3,
+      "wave": "4",
+      "rows": 13,
       "counts": {
-        "landed": 0,
-        "ahead": 3,
+        "landed": 13,
+        "ahead": 0,
         "held": 0,
         "deferred": 0,
         "dropped": 0,
         "folded in": 0
       },
-      "state": "ahead",
-      "stands": "3 of 3 ahead"
+      "state": "landed",
+      "stands": "13 of 13 landed"
     },
     "type-question-and-templates": {
       "id": "type-question-and-templates",
@@ -411,13 +411,13 @@ window.DATA = {
       "counts": {
         "landed": 0,
         "ahead": 11,
-        "held": 1,
+        "held": 0,
         "deferred": 3,
-        "dropped": 1,
+        "dropped": 2,
         "folded in": 0
       },
-      "state": "part",
-      "stands": "11 ahead, 1 held, 3 deferred, 1 dropped"
+      "state": "ahead",
+      "stands": "11 ahead, 3 deferred, 2 dropped"
     }
   },
   "bands": [
@@ -806,6 +806,7 @@ window.DATA = {
       "name": "What are you importing?, asked before a notification exists",
       "body": "A trader chooses live animals or germinal products before anything is created, so the service knows which journey to open. It is a page in the INS front door, not in the animals journey.",
       "themes": [
+        "germinal-products",
         "type-question-and-templates",
         "type-question"
       ],
@@ -887,6 +888,26 @@ window.DATA = {
       "stands": "6 of 6 landed",
       "pages": [],
       "instead": "The step order, where each save goes, Save and return to overview, and the Amend status bar — on every question page, the overview and the review."
+    },
+    {
+      "id": "obligation-model",
+      "name": "Obligation model",
+      "ticket": null,
+      "ticketUrl": null,
+      "wave": "1",
+      "rows": 1,
+      "counts": {
+        "landed": 0,
+        "ahead": 0,
+        "held": 0,
+        "deferred": 0,
+        "dropped": 1,
+        "folded in": 0
+      },
+      "state": "none",
+      "stands": "1 of 1 dropped",
+      "pages": [],
+      "instead": "The one folder that decides, for every page, whether an answer is required to go on and whether a section is complete. Changing it changes how every page judges its own answers, without changing what any page asks."
     },
     {
       "id": "origin-page",
@@ -1068,37 +1089,13 @@ window.DATA = {
       "counts": {
         "landed": 0,
         "ahead": 11,
-        "held": 1,
-        "deferred": 3,
-        "dropped": 1,
-        "folded in": 0
-      },
-      "state": "part",
-      "stands": "11 ahead, 1 held, 3 deferred, 1 dropped",
-      "pages": [
-        "Review your notification",
-        "What are you importing?, asked before a notification exists (new)",
-        "Manage templates, name a template, Review your template, view a saved template (new)"
-      ],
-      "instead": null
-    },
-    {
-      "id": "type-question",
-      "name": "Type question",
-      "ticket": "EUDPA-690",
-      "ticketUrl": "https://eaflood.atlassian.net/browse/EUDPA-690",
-      "wave": "3",
-      "rows": 3,
-      "counts": {
-        "landed": 0,
-        "ahead": 3,
         "held": 0,
-        "deferred": 0,
-        "dropped": 0,
+        "deferred": 3,
+        "dropped": 2,
         "folded in": 0
       },
       "state": "ahead",
-      "stands": "3 of 3 ahead",
+      "stands": "11 ahead, 3 deferred, 2 dropped",
       "pages": [
         "Review your notification",
         "What are you importing?, asked before a notification exists (new)",
@@ -1157,20 +1154,44 @@ window.DATA = {
       "ticket": null,
       "ticketUrl": null,
       "wave": "4",
-      "rows": 11,
+      "rows": 12,
       "counts": {
-        "landed": 0,
-        "ahead": 1,
-        "held": 10,
+        "landed": 10,
+        "ahead": 0,
+        "held": 2,
         "deferred": 0,
         "dropped": 0,
         "folded in": 0
       },
       "state": "part",
-      "stands": "1 ahead, 10 held",
+      "stands": "10 landed, 2 held",
       "pages": [
         "Transporter details",
         "Add a transporter — choose a type, private, commercial"
+      ],
+      "instead": null
+    },
+    {
+      "id": "type-question",
+      "name": "Type question",
+      "ticket": "EUDPA-690",
+      "ticketUrl": "https://eaflood.atlassian.net/browse/EUDPA-690",
+      "wave": "4",
+      "rows": 13,
+      "counts": {
+        "landed": 13,
+        "ahead": 0,
+        "held": 0,
+        "deferred": 0,
+        "dropped": 0,
+        "folded in": 0
+      },
+      "state": "landed",
+      "stands": "13 of 13 landed",
+      "pages": [
+        "Review your notification",
+        "What are you importing?, asked before a notification exists (new)",
+        "Manage templates, name a template, Review your template, view a saved template (new)"
       ],
       "instead": null
     },
@@ -1251,6 +1272,28 @@ window.DATA = {
       "instead": null
     },
     {
+      "id": "test-hygiene",
+      "name": "Test hygiene",
+      "ticket": null,
+      "ticketUrl": null,
+      "wave": "6",
+      "rows": 2,
+      "counts": {
+        "landed": 0,
+        "ahead": 1,
+        "held": 1,
+        "deferred": 0,
+        "dropped": 0,
+        "folded in": 0
+      },
+      "state": "part",
+      "stands": "1 ahead, 1 held",
+      "pages": [
+        "Party pickers — consignor, consignee, importer, place of origin, place of destination"
+      ],
+      "instead": null
+    },
+    {
       "id": "animals-dashboard",
       "name": "Animals dashboard",
       "ticket": null,
@@ -1290,6 +1333,7 @@ window.DATA = {
       "state": "part",
       "stands": "20 ahead, 1 held",
       "pages": [
+        "What are you importing?, asked before a notification exists (new)",
         "A whole germinal products journey (new)"
       ],
       "instead": null
@@ -1304,13 +1348,13 @@ window.DATA = {
       "counts": {
         "landed": 0,
         "ahead": 0,
-        "held": 10,
-        "deferred": 0,
-        "dropped": 0,
-        "folded in": 0
+        "held": 4,
+        "deferred": 1,
+        "dropped": 4,
+        "folded in": 1
       },
       "state": "waiting",
-      "stands": "10 of 10 held",
+      "stands": "4 held, 1 deferred, 4 dropped, 1 folded in",
       "pages": [],
       "instead": "The JavaScript enhancements held until a design question is answered: the commodity search, the CPH input, the confirmation dialog and live filtering. Each one only enhances a page that already works without it."
     },
@@ -1333,48 +1377,6 @@ window.DATA = {
       "stands": "7 landed, 1 dropped",
       "pages": [],
       "instead": "Save and return to overview makes the same checks as Save and continue on every page, and no page logs a trader's own typing mistakes."
-    },
-    {
-      "id": "obligation-model",
-      "name": "Obligation model",
-      "ticket": null,
-      "ticketUrl": null,
-      "wave": "—",
-      "rows": 1,
-      "counts": {
-        "landed": 0,
-        "ahead": 1,
-        "held": 0,
-        "deferred": 0,
-        "dropped": 0,
-        "folded in": 0
-      },
-      "state": "ahead",
-      "stands": "1 of 1 ahead",
-      "pages": [],
-      "instead": "The one folder that decides, for every page, whether an answer is required to go on and whether a section is complete. Changing it changes how every page judges its own answers, without changing what any page asks."
-    },
-    {
-      "id": "test-hygiene",
-      "name": "Test hygiene",
-      "ticket": null,
-      "ticketUrl": null,
-      "wave": "—",
-      "rows": 2,
-      "counts": {
-        "landed": 0,
-        "ahead": 2,
-        "held": 0,
-        "deferred": 0,
-        "dropped": 0,
-        "folded in": 0
-      },
-      "state": "ahead",
-      "stands": "2 of 2 ahead",
-      "pages": [
-        "Party pickers — consignor, consignee, importer, place of origin, place of destination"
-      ],
-      "instead": null
     }
   ],
   "runInCode": [

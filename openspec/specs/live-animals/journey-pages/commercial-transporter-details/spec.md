@@ -2,6 +2,8 @@
 
 ## Purpose
 
+**Maturity**: agreed
+
 Asks for the name, address and authorisation number of a commercial transporter that is not on the transporter list, keyed in by hand. A commercial transporter added this way can only be based in Northern Ireland, so the country is shown rather than asked. Reached only via "Add a transporter" from the transporter list, after choosing "Commercial" on the type question — not as a mandatory branch of the transport section itself. The page is titled "Add a commercial transporter".
 
 ## Requirements
@@ -12,6 +14,7 @@ The system MUST ask the user for the commercial transporter's transporter author
 
 #### Scenario: The page presents its questions with the country fixed
 **ID**: SCN-COMMERCIAL-TRANS-001-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user has chosen "Commercial" on the transporter type question reached from "Add a transporter"
 - **WHEN** the page loads
 - **THEN** it asks for a transporter authorisation number, a name or organisation name, address line 1, address line 2, a town or city, a county, a "Postcode or Zip code" field, an email address and a telephone number
@@ -23,12 +26,14 @@ The system MUST save the transporter's details together as a single record once 
 
 #### Scenario: Completing the details saves them and returns to the transporter list, chosen
 **ID**: SCN-COMMERCIAL-TRANS-002-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the commercial transporter details page with every mandatory field entered
 - **WHEN** they save and continue
 - **THEN** they return to the transporter list, with the saved transporter already chosen
 
 #### Scenario: Returning to the page shows the saved details in the form
 **ID**: SCN-COMMERCIAL-TRANS-002-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user has saved a complete set of commercial transporter details
 - **WHEN** they return to the page through the add route
 - **THEN** the name and authorisation number they saved are shown in the form
@@ -39,6 +44,7 @@ The system MUST show the same transporter-authorisation guidance on this page as
 
 #### Scenario: The page carries the same authorisation guidance as the list, in a banner titled "Important"
 **ID**: SCN-COMMERCIAL-TRANS-003-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user has reached the commercial transporter details page
 - **WHEN** the page loads
 - **THEN** it shows a notification banner titled "Important" whose content opens with the heading "Help with transporter authorisation"
@@ -50,18 +56,21 @@ The system MUST reject a save that leaves a mandatory field blank or gives a fie
 
 #### Scenario: A blank mandatory field blocks the save without losing the rest of the details
 **ID**: SCN-COMMERCIAL-TRANS-004-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user has left one mandatory field blank
 - **WHEN** they try to save
 - **THEN** the save is blocked, an error links to and focuses that field, and every other field still shows what was entered
 
 #### Scenario: An over-length field blocks the save with its value preserved
 **ID**: SCN-COMMERCIAL-TRANS-004-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user has entered a value longer than a field's maximum length
 - **WHEN** they try to save
 - **THEN** the save is blocked, an error links to and focuses that field, and the over-length value is still shown
 
 #### Scenario: An over-length Postcode or Zip code is refused with the message that names the field as the form labels it
 **ID**: SCN-COMMERCIAL-TRANS-004-C
+**Signed off**: 2026-11-11
 - **GIVEN** the user has entered a Postcode or Zip code longer than 12 characters
 - **WHEN** they try to save
 - **THEN** the save is blocked and the error reads "Postcode or Zip code must be 12 characters or less"
@@ -72,6 +81,7 @@ The system MUST require the commercial transporter's mandatory fields — author
 
 #### Scenario: Saving a wholly blank form is refused, naming every required field in order
 **ID**: SCN-COMMERCIAL-TRANS-005-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the commercial transporter details page with every field blank
 - **WHEN** they save and continue
 - **THEN** the save is refused, the trader stays on the form, and the error summary lists, in order: "Enter a transporter authorisation number", "Enter a name or organisation name", "Enter address line 1", "Enter a town or city", "Enter a postcode or Zip code", "Enter an email address", "Enter a phone number"
@@ -82,6 +92,7 @@ The system MUST land the user who saves a commercial transporter on the transpor
 
 #### Scenario: The save puts the trader straight on the list with the new transporter checked, surviving the list's own save
 **ID**: SCN-COMMERCIAL-TRANS-006-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user has just saved a complete set of commercial transporter details
 - **WHEN** the save lands
 - **THEN** the transporter list is shown with that transporter's row checked, with no need to open the list separately to find it so
@@ -94,12 +105,14 @@ The system MUST end the page with exactly two controls: a primary "Save and cont
 
 #### Scenario: The page offers exactly the primary and the cancel control
 **ID**: SCN-COMMERCIAL-TRANS-007-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the commercial transporter details page
 - **WHEN** the page loads
 - **THEN** it ends with exactly "Save and continue" and a secondary "Cancel and return to dashboard", and offers no link back to the overview
 
 #### Scenario: Cancelling with the stored type unchanged leaves the chosen transporter alone and shows no error
 **ID**: SCN-COMMERCIAL-TRANS-007-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user already has a commercial transporter chosen, and reaches the commercial transporter details page with some or all fields filled in
 - **WHEN** they choose "Cancel and return to dashboard"
 - **THEN** no error is shown, no transporter is added, and they are taken to the dashboard
@@ -111,6 +124,7 @@ The system MUST remember the values a refused save entered, and MUST show them a
 
 #### Scenario: Leaving a refused form and returning to it shows what was entered
 **ID**: SCN-COMMERCIAL-TRANS-008-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user's save of the commercial transporter details was refused for a missing or invalid field
 - **WHEN** they leave the page and later open it again
 - **THEN** the values they had entered are shown in the fields, not the previously saved answer
@@ -121,6 +135,7 @@ The system MUST return the user to the transporter type question when they follo
 
 #### Scenario: The back link opens the transporter type question
 **ID**: SCN-COMMERCIAL-TRANS-009-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the commercial transporter details page
 - **WHEN** they follow the back link
 - **THEN** the transporter type question is shown

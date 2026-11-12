@@ -730,6 +730,64 @@ scenarios under every prefix the theme touched. Report each `specChecks` entry i
 its theme, outcome and any problems, and its `preexisting` gaps, which predate the theme and
 did not stop it.
 
+<a id="the-signed-off-check"></a>**The signed-off check.** After the ladder is green, and before the
+row lands, a light agent runs one command:
+
+```bash
+tim spec diff --signed-off --uncommitted --repo <each of the row's repos> --base origin/<branch> --json
+```
+
+It checks the row's uncommitted `openspec/` change against HEAD, and each of the row's repos
+against the base branch. Under the full lifecycle, a row that builds the workspace also passes
+`--range origin/<branch>...HEAD`, so a resumed attempt whose spec change is already in a wip
+commit is checked too. It looks for a change to a signed-off scenario, or an edit to a test
+linked to one. The rule is in
+[`.claude/rules/signed-off-pages.md`](../../../rules/signed-off-pages.md).
+
+| What it finds | What the loop does |
+|---|---|
+| Nothing | Carries on as before. |
+| A change | Raises the ticket and parks the row, then lands it and keeps its pull requests as drafts. Then it builds the next row that does not wait for it. |
+| An error | Saves the attempt as a red ladder would, and stops at `signed-off-check-failed`. |
+
+When it finds a change:
+
+- **The ticket.** Under the full lifecycle, the loop raises `result.ticketDraft` as a Task under
+  the epic, related to the row's own ticket, through `tim jira create`. It is not moved onto
+  `jiraBoard`: it asks a person for a ruling, not for build work, so it stays in the backlog
+  until they pick it up. A relaunch reuses a ticket an earlier attempt raised, read from the
+  `ticket.created.json` receipt in `<workarea>/logs/<id>-signed-off-ticket/`, and makes no
+  create call. Under the branch lifecycle it makes no Jira call: it writes the draft to that
+  folder for a person to raise.
+- **The pull requests.** Under the full lifecycle they are raised with `--draft`, and their bodies
+  name the ticket. One already open for the branch is made a draft with `gh pr ready --undo`,
+  and a comment names the ticket. Under the branch lifecycle the row is pushed to the theme
+  branch, and its open pull requests stay as their owner left them: that pull request carries
+  the whole theme, and its owner already decides when it is ready. The parked row and its open
+  question are what stop it merging. The loop never takes a pull request out of draft.
+- **The row.** It is set to `blocked`, with an open question naming the ticket, before it lands.
+  Its `commit`, `branch` and `prs` are still recorded as it lands. No CI is watched and nothing
+  is merged. A run that stops after the park, at a failed land or pull request stage, leaves the
+  row withheld, so no later launch builds or merges it until a person sets it back to `todo`.
+
+The result entry has `outcome: "awaiting-signed-off-ruling"`, with `signedOffTicket` (or
+`signedOffDraft` under the branch lifecycle) and `detail` listing each change. A parked row does
+not count towards `stopAfter`. Rows that depend on it wait, because only `done` frees them.
+
+Report each parked row with its ticket. Once a person rules:
+
+- **Approved.** They take the pull requests out of draft first, because the merge stage cannot
+  merge a draft. Set the row back to `todo` with `tim backlog set`. The next launch resumes it
+  at CI when it has `prs` recorded, or at its pull requests when it has only a `commit`, then
+  merges it. A row with neither, because its run stopped before it landed, is built again from
+  its attempt and the check trips again: land and raise its pull requests by hand.
+- **Refused.** Take the spec change out, and the code behind it. For a linked test, fix the code,
+  not the test. Then set the row back to `todo` and launch again.
+
+Under the branch lifecycle, later rows build on top of a parked row's push. A row that merges
+another ref in (`merge`) counts that ref's edits to linked tests too. The person who rules sees
+which commit each change came from.
+
 **The spec diff comment.** Under the full lifecycle, each landed row's ticket gets a Jira
 comment saying what the spec now says because of it, written to
 `<workarea>/tickets/<id>-spec-diff.txt`. Each landed entry carries `specDiffComment`. Report
@@ -1044,6 +1102,7 @@ handover prompt.
 | `implement-failed` / `review-failed` / `fix-failed` | A stage died. The attempt is preserved as a pushed wip commit, and recorded, so a relaunch re-enters at `implement` (for the first) or `review` (for the other two) rather than planning the row again |
 | `off-branch` | A repo left the run's branch and could not be moved back |
 | `ladder-red` | The verification ladder went red. Preserved, not discarded, and recorded, so a relaunch re-enters at the ladder once somebody has fixed what went red. A failure that reads "denied form: <command>" is a plan check the workspace will not run, not broken code. A plan check that disagrees only with a stated departure by the implementor or fixer is a note in the ladder's summary, never a `ladder-red` on a green gate. An E2E spec that hit its test timeout is red even when its retry passed: only a transient 500 in `beforeEach` that recovers counts as a pass, so a journey that outgrows a spec's budget is repaired in the row that lengthened it, not by a later baseline. An e2e rung that went red or retried leaves each stack container's log beside it, as `gate-stack-after-<repo>-<rung>-<container>.log`, written before the stack goes: a 500 page, a dropped socket or a timeout is explained there, and is named, not called transient |
+| `signed-off-check-failed` / `signed-off-ticket-failed` / `park-failed` | The ladder was green, but `tim spec diff --signed-off` could not run, the ticket for the signed-off change it found could not be raised, or its row could not be set to `blocked`. Nothing landed. The attempt is preserved at the `ladder` stage, so a relaunch runs the ladder and the check again; a ticket an earlier attempt raised is reused from its `ticket.created.json` receipt. The detail quotes tim. See [the signed-off check](#the-signed-off-check) |
 | `land-failed` | The commit could not be made. Also a theme's engineering review whose fixes could not be committed: they are saved as patches |
 | `theme-review-red` | Branch lifecycle only. Every row of a theme landed, but its engineering review could not finish its fixes: the fixer died or its ladder went red. The fixes are saved as patches under `logs/` and nothing reached the branch. The detail quotes the failure. Rows already landed stand. Read the patches and the review checks, then launch again |
 | `land-leaked` | The workspace repo's commit holds a file the workspace carried in, or run state under `workareas/` no stage reported changing. Nothing is pushed: take it out of the commit on the increment branch by hand, then launch again |

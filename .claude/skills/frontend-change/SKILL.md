@@ -453,6 +453,12 @@ Once per capability written, rooted at the spec root from 5.0:
 The helper itself always lives in the workspace checkout — that path is
 literal. `--root` is what points it at the tree you actually wrote.
 
+Then lint the spec root as a whole:
+
+```bash
+tim spec lint --root <spec root>
+```
+
 Non-zero exit is a halt, not a warning — go to 5.7. `coverage.json` is
 not validated: the CLI does not resolve against `openspec/coverage/`.
 The self-check in 5.6 is its only gate, so read that write carefully.
@@ -535,6 +541,31 @@ the drift-by-omission this step exists to stop, because it validates
 green. A later edit that "tidies" the root back to a constant
 reintroduces exactly that bug.
 
+### 5.9 The signed-off check, before any pull request
+
+On the direct path, the caller runs it once both checkouts are
+committed, before raising a pull request for this work: the range reads
+commits only, so an uncommitted spec write is invisible to it. The
+Completion output's `Next:` line says so. `journey-builder`
+runs its own check after each row, so it skips this step.
+
+```bash
+tim spec diff --signed-off --range origin/main...HEAD --json
+```
+
+```bash
+tim spec diff --signed-off --repo <target repo name> --base origin/main --json
+```
+
+The first reads the workspace's `openspec/` commits in the range; the
+second reads the target repo's files, committed and uncommitted. Exit 0
+is clear. Exit 3 is a trip: the increment changed a
+signed-off scenario, or a test linked to one. Follow
+`~/git/defra/trade-imports-workspace/.claude/rules/signed-off-pages.md`
+→ "When it trips": the work stands, the ticket is raised, and every pull
+request for it stays a draft. A red linked test means the code is wrong:
+fix the code, not the test.
+
 ## Completion output
 
 ```
@@ -559,7 +590,7 @@ Uncommitted, in TWO checkouts:
   <spec root>:   <the spec files above>
 
 Next: review both diffs, then commit (conventional message, EUDPA ticket
-prefix).
+prefix), then run the signed-off check (5.9) before any pull request.
 ```
 
 Where 5.1a applied, the spec lines collapse to one and the rest of the

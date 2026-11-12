@@ -6,7 +6,7 @@
     {
       "id": "REQ-INS-DASH-001",
       "name": "The dashboard lists notifications from every status, identifying each one",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-INS-DASH-001-A",
@@ -14,6 +14,15 @@
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/dashboard/dashboard.fit.spec.js", "test": "shows the three visible notifications, in the default sort order, with enough to identify the consignment", "strength": "full", "notes": "SUBMITTED/DRAFT/AMEND stub rows all visible by reference and status; the reference cells are exactly the three visible stub references, in the order the stub's default sort gives, so the soft-deleted row is excluded" }
+          ]
+        },
+        {
+          "id": "SCN-INS-DASH-001-B",
+          "name": "A row shows the notification's origin country, commodity and arrival date",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-ins-frontend", "file": "src/server/app/features/dashboard/controller.test.js", "test": "renders notifications with reference, status, origin, commodity and arrival date, and a standard Create new button between the heading and the search and table", "strength": "partial", "notes": "run green; not red-probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/ins/e2e/features/notification-dashboard-navigation.spec.ts", "test": "the INS dashboard shows a submitted notification with the arrival day entered, and its View link opens it in the owning journey frontend", "strength": "partial", "notes": "run green; asserts the arrival date cell and the View link only; not red-probed" }
           ]
         }
       ]

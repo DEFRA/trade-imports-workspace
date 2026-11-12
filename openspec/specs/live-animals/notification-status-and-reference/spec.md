@@ -34,6 +34,7 @@ The system MUST show the notification's GBN-AG reference number on every page of
 
 #### Scenario: The transporter list and the commercial transporter form show the state and reference; the type question and the private transporter form show neither
 **ID**: SCN-STATUS-REF-002-C
+**Signed off**: 2026-11-11
 - **GIVEN** a notification being worked on
 - **WHEN** the user opens the transporter list or the commercial transporter form
 - **THEN** the notification's state and reference are shown

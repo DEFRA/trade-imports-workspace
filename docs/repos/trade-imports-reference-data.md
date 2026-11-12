@@ -39,32 +39,32 @@ No use of this service by `trade-imports-animals-backend` was found in its `appl
 
 ## MDM commodity search behaviour
 
-MDM's product search is an early-access API built on ITAHC data from TRACES. What follows was observed in TST in October 2026, from the responses saved in `trade-imports-stub` (`src/main/resources/responses/mdmProductSearchResponses.json`). Re-check it against TST before relying on it, as MDM may change it.
+MDM's product search is an early-access API built on ITAHC data from TRACES. This section states how it matches and what reference-data does with the answer. It gives no counts. What a given term returns today is in the responses saved in `trade-imports-stub` (`src/main/resources/responses/mdmProductSearchResponses.json`, one entry per search term), which the stack and the E2E suite run against. What TST returned when this was investigated, with counts and examples, is in [`docs/analysis/mdm-product-search.md`](../analysis/mdm-product-search.md).
 
 **Two kinds of row**
 
-MDM `/search` answers with `resultType` `species` or `commodity`, mixed on one page. A species row is one species under one code (`commodityCnCode`). A commodity row is one code, with its species nested as `scientificNames`, and counts as one result however many names it holds. The nested list on a commodity search row is not the full species catalogue: `01061900` nested 100 names on the search row when `GET /mdm/trade/product/commodities/01061900/species` holds 1,234. The captures that show this are the keys `cattle`, `Bos taurus`, `0102`, `01061900`, `010` and `ostrich` in `trade-imports-stub`'s `mdmProductSearchResponses.json`. Reference-data flattens both kinds of row into groups of Latin names, so the trader's page looks the same.
+MDM `/search` answers with `resultType` `species` or `commodity`, mixed on one page. A species row is one species under one code (`commodityCnCode`). A commodity row is one code, with its species nested as `scientificNames`, and counts as one result however many names it holds. Reference-data flattens both kinds of row into groups of Latin names, so the trader's page looks the same.
 
 **What a search matches**
 
-- **Species common name** (`cattle`): species rows. The capture has four: Bos taurus and Bos sp. under 0102, then Bos taurus under two germinal codes.
-- **Latin name** (`Bos taurus`, `tau`): species rows. One row per code that lists that species.
-- **Commodity code** (`0102`): one commodity row, species nested. A code is a prefix (`010` returns 45 commodity rows).
-- **Commodity description** (`ostrich`, `horse`): mixed. Species rows plus a commodity row, so the nested species of that commodity come back too.
+- **Species common name** (`cattle`): species rows, one per code that lists the species.
+- **Latin name** (`Bos taurus`): species rows, one per code that lists the species.
+- **Commodity code** (`0102`): one commodity row, species nested. A code is a prefix, so `010` returns every code under it.
+- **Commodity description** (`ostrich`): mixed. Species rows plus a commodity row, so the nested species of that commodity come back too.
 
 **Partial terms**
 
-- A term matches the start of a word: "cat" and "catt" find cattle; "tau" and "bos tau" find Bos taurus. "cat" also finds Felis catus, Catagonus spp. and Panthera sp.
-- Two-character terms are not consistent: "ca" returns 6 rows (Equus cabalus, Rangifer spp. and others) but not cattle, goats (Capra) or dogs (Canis). Reference-data needs at least two characters and the frontend asks for three, so this only affects other callers.
-- Punctuation must match exactly: "Bos spp." does not find "Bos sp."; it matches only Boselaphus spp.
+- A term matches the start of a word: "catt" finds cattle, and "bos tau" finds Bos taurus.
+- Two-character terms are not consistent: "ca" misses cattle, goats (Capra) and dogs (Canis). Reference-data needs at least two characters and the frontend asks for three, so this only affects other callers.
+- Punctuation must match exactly: "Bos spp." does not find "Bos sp.".
 
 **What comes back**
 
-- Germinal codes: the `gbnag` dataset lists species under germinal codes too, such as 05111000 (bovine semen) and 05119985. A search for "cattle" returns Bos taurus under both. Species rows carry no germinal flag, so reference-data asks `GET /mdm/trade/product/commodities` once, with every code on the page, and drops the codes it flags `isGerminal: true`. A page can then hold fewer species than `size`, and `total` is the non-germinal distinct species count from that MDM page.
-- MDM flags 05111000 and 05119985 `isGerminal: true` (GBNAG release), so reference-data leaves them out in TST and against the stub alike.
+- Germinal codes: the `gbnag` dataset lists species under germinal codes too, such as 05111000 (bovine semen). Species rows carry no germinal flag, so reference-data asks `GET /mdm/trade/product/commodities` once, with every code on the page, and drops the codes it flags `isGerminal: true`. A page can then hold fewer species than `size`, and `total` is the non-germinal distinct species count from that MDM page.
+- MDM flags the germinal codes `isGerminal: true` in TST. The stub's saved commodities responses hold TST's answers as returned, so reference-data leaves the germinal codes out in TST and against the stub alike.
 - MDM has proposed replacing `isGerminal` with a `germinal` object, present only on germinal codes. Reference-data checks the flag in one method, `CommoditySearchService.isGerminal`, so that change touches only its body (`germinal != null`).
-- The same species under several live-animal codes: Bison bison is under 0102 and germinal 05111000. Each is a separate choice, and the germinal one is filtered out.
-- The recaptured stub holds no species without a common name; MDM TST had some before the GBNAG release (EUDPA-617). Some carry placeholder common names ("Pig-deer?" for Babyrousa).
+- One species can sit under several codes, germinal ones included. Each is a separate choice, and the germinal ones are filtered out.
+- A species can come back with no common name. Reference-data passes it on as null, and the frontend offers it by its Latin name alone.
 - Results come back in MDM's order, with no sort option.
 
 The gaps found during EUDPA-617 are recorded as the MDM follow-ups on the EUDPA-617 ticket.

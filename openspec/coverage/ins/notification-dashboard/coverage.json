@@ -130,6 +130,52 @@
           ]
         }
       ]
+    },
+    {
+      "id": "REQ-INS-DASH-006",
+      "name": "The dashboard lists only notifications owned by the caller's organisation",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-INS-DASH-006-A",
+          "name": "Another organisation's submitted notification is absent from the list",
+          "coverage": "full",
+          "tests": [
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-backend",
+              "file": "src/test/java/uk/gov/defra/trade/imports/ins/backend/integration/AggregatedNotificationControllerIT.java",
+              "test": "findAll_otherOrganisation_doesNotSeeNotification",
+              "strength": "full",
+              "notes": "ins-backend integration test (recorded as unit, the nearest type); proves scoped repository reads for list and reference search"
+            },
+            {
+              "type": "unit",
+              "repo": "trade-imports-ins-frontend",
+              "file": "src/server/app/services/ins-backend/ins-backend.test.js",
+              "test": "Should send the Trade-Imports-Organisation-Id header from the session organisation",
+              "strength": "full",
+              "notes": ""
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/organisation-scoped-dashboard.spec.ts",
+              "test": "the owning organisation sees its submitted notification on the INS dashboard",
+              "strength": "partial",
+              "notes": "owner visibility after a live animals submit; cross-org absence covered by ins-backend IT"
+            },
+            {
+              "type": "e2e",
+              "repo": "trade-imports-ins-tests",
+              "file": "tests/ins/e2e/features/aggregated-notification.spec.ts",
+              "test": "creates and updates aggregated notification document through the submission lifecycle",
+              "strength": "partial",
+              "notes": "Mongo owner field after journey submit"
+            }
+          ]
+        }
+      ]
     }
   ]
 }

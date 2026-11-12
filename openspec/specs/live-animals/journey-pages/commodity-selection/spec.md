@@ -67,7 +67,7 @@ The system MUST search the commodity reference data against a commodity's code a
 
 ### Requirement: Matching species are grouped under the commodity they belong to, one group per matching commodity
 **ID**: REQ-COMMODITY-SELECT-004
-The system MUST group the species a search matches under a heading of their commodity code, MUST render a separate group for each commodity code a search matches, and MUST say so plainly when a search matches nothing. A species listed under two codes is two separate choices.
+The system MUST group the species a search matches under a heading of their commodity, reading as the commodity's name with its code in round brackets, or the code alone where no name is known, MUST render a separate group for each commodity code a search matches, and MUST say so plainly when a search matches nothing. A species listed under two codes is two separate choices.
 
 #### Scenario: A search groups its matching species under their commodity heading
 **ID**: SCN-COMMODITY-SELECT-004-A
@@ -86,6 +86,13 @@ The system MUST group the species a search matches under a heading of their comm
 - **GIVEN** the user is on the commodity selection page
 - **WHEN** they search for a term that matches no commodity or species
 - **THEN** the page says no results were found, and lists no species
+
+#### Scenario: A commodity heading names the commodity with its code in brackets
+**ID**: SCN-COMMODITY-SELECT-004-D
+- **GIVEN** a search matching species under a commodity whose name is known
+- **WHEN** the results are shown
+- **THEN** the group's heading reads as the commodity's name with its code in round brackets
+- **AND** a group whose commodity has no known name is headed by its code alone
 
 ### Requirement: The page explains what a commodity code is and links out to look one up
 **ID**: REQ-COMMODITY-SELECT-005
@@ -147,14 +154,14 @@ The system MUST return the user to the origin of the import page when they follo
 
 ### Requirement: The tally lists what has been chosen, offers a remove for each species, and can be cleared
 **ID**: REQ-COMMODITY-SELECT-008
-The system MUST report how many species have been chosen, showing each chosen commodity as a bold heading followed by one entry per chosen species' label, MUST offer each entry a control whose accessible name is "Remove" followed by that species' label, which removes it and leaves the rest chosen, MUST let the user clear the whole selection at once, and MUST refuse a removal naming a species the page never offered.
+The system MUST report how many species have been chosen, showing each chosen commodity as a bold heading followed by one entry per chosen species showing its Latin name alone, MUST offer each entry a control whose accessible name is "Remove" followed by that species' Latin name, which removes it and leaves the rest chosen, MUST let the user clear the whole selection at once, and MUST refuse a removal naming a species the page never offered. Without JavaScript, the system MUST offer an "Update selected" control under the results that brings the tally up to date with the ticks on screen, keeping the search term and its results.
 
 #### Scenario: The tally reports the choice as a bold commodity line and its species, and clearing empties it
 **ID**: SCN-COMMODITY-SELECT-008-A
 - **GIVEN** the user has chosen one species on the commodity selection page
 - **WHEN** the page next renders
 - **THEN** the tally reports one chosen, showing the commodity as a bold line with the species beneath it
-- **AND** each entry offers a control whose accessible name is "Remove" followed by that species' label
+- **AND** each entry shows the species' Latin name alone, and offers a control whose accessible name is "Remove" followed by that Latin name
 - **WHEN** the user clears the selection
 - **THEN** the tally is no longer shown
 
@@ -172,7 +179,7 @@ The system MUST report how many species have been chosen, showing each chosen co
 
 #### Scenario: Unticking a shown species and then removing it leaves it unchosen without an error
 **ID**: SCN-COMMODITY-SELECT-008-D
-- **GIVEN** a species whose tick box is on screen and ticked
+- **GIVEN** the user has JavaScript turned off, and a species whose tick box is on screen and ticked
 - **WHEN** the user clears that tick box and then uses that species' remove control
 - **THEN** the page is shown with that species not chosen and the other choices still chosen, not an error page
 
@@ -181,6 +188,13 @@ The system MUST report how many species have been chosen, showing each chosen co
 - **GIVEN** a removal naming a species the page's results and the saved commodity lines have never held, however it was submitted
 - **WHEN** the page responds
 - **THEN** the request is refused, no page is rendered back, and the selection is unchanged
+
+#### Scenario: With JavaScript off, Update selected brings the tally up to date with the ticks on screen
+**ID**: SCN-COMMODITY-SELECT-008-F
+- **GIVEN** the user has JavaScript turned off, has searched, and has ticked a species in the results
+- **WHEN** they use the Update selected control
+- **THEN** the tally shows that species as chosen
+- **AND** the search term and its results are still shown
 
 ### Requirement: Saving without choosing a commodity is rejected on either save control
 **ID**: REQ-COMMODITY-SELECT-009
@@ -297,7 +311,7 @@ The system MUST list no more than a hundred species for one search.
 
 ### Requirement: Search results are listed in order: commodity heading, then species label
 **ID**: REQ-COMMODITY-SELECT-015
-The system MUST list a search's matching commodity groups in order of their heading, and MUST list each group's species in order of the label they are offered under.
+The system MUST list a search's matching commodity groups in order of their commodity code, and MUST list each group's species in order of the label they are offered under.
 
 #### Scenario: A search lists its groups and species alphabetically
 **ID**: SCN-COMMODITY-SELECT-015-A
@@ -320,3 +334,75 @@ The system MUST show, in bold, the part of a commodity heading or a species labe
 - **GIVEN** a search for part of a commodity heading
 - **WHEN** the results are shown
 - **THEN** that part of the heading is in bold and the rest is not
+
+### Requirement: With JavaScript, the results and the tally refresh in place
+**ID**: REQ-COMMODITY-SELECT-017
+With JavaScript on, the system MUST refresh the results and the tally on the same page, without the page reloading, as the user types, ticks or unticks a result, removes a species or clears the selection. It MUST announce through a polite status message how many species a typed search lists, or that it lists none. It MUST keep focus on a tick box the user used, and move focus to the search box when the control the user pressed is gone. When the results cannot be fetched, it MUST post the page as it would without JavaScript. A save pressed while a refresh is on its way MUST wait for it, so the save holds what the refresh shows. Each refresh MUST start from what the one before it left, so a later search never brings back a choice an earlier Clear all or remove took away. Escape in the search box or a click outside the search MUST hide the results, keeping the term and every choice, and focusing or clicking the search box MUST show them again. It MUST NOT show the Update selected control, because a tick brings the tally up to date itself.
+
+#### Scenario: Typing lists the matching species without pressing Search
+**ID**: SCN-COMMODITY-SELECT-017-A
+- **GIVEN** the user has JavaScript turned on
+- **WHEN** they type a term of three or more characters into the search box
+- **THEN** the matching species are listed under their commodity, with the matched part in bold, and the page has not reloaded
+
+#### Scenario: A typed search announces how many species it lists
+**ID**: SCN-COMMODITY-SELECT-017-B
+- **GIVEN** the user has JavaScript turned on
+- **WHEN** they type a term that matches three species, then a term that matches none
+- **THEN** a polite status message says "3 results available", then "No results found"
+
+#### Scenario: Species ticked under two typed searches are both kept and saved
+**ID**: SCN-COMMODITY-SELECT-017-C
+- **GIVEN** the user has JavaScript turned on
+- **WHEN** they tick a species under one typed search, then another under a second typed search, and save
+- **THEN** the tally shows both before the save, and both are chosen when the page is opened again
+
+#### Scenario: Unticking a species drops it from the tally and keeps focus on its tick box
+**ID**: SCN-COMMODITY-SELECT-017-D
+- **GIVEN** the user has JavaScript turned on and has ticked one species
+- **WHEN** they untick it
+- **THEN** the tally is no longer shown, and focus is still on that species' tick box
+
+#### Scenario: Removing a species and clearing all work in place and return focus to the search box
+**ID**: SCN-COMMODITY-SELECT-017-E
+- **GIVEN** the user has JavaScript turned on and has chosen two species
+- **WHEN** they use the remove control for one of them, then clear the selection
+- **THEN** the tally first shows the other species alone, then is no longer shown, the search box keeps its term, and focus is on the search box after each
+
+#### Scenario: When the results cannot be fetched, the search posts the page instead
+**ID**: SCN-COMMODITY-SELECT-017-F
+- **GIVEN** the user has JavaScript turned on and the results cannot be fetched
+- **WHEN** they search
+- **THEN** the page is posted and shows the results it lists without JavaScript
+
+#### Scenario: A save pressed straight after Clear all holds nothing chosen
+**ID**: SCN-COMMODITY-SELECT-017-G
+- **GIVEN** the user has JavaScript turned on, has chosen one species, and the results are slow to arrive
+- **WHEN** they clear the selection and save before the results have refreshed
+- **THEN** the save is refused with "Select a commodity" and nothing is chosen
+
+#### Scenario: A search pressed straight after Clear all keeps the cleared species out
+**ID**: SCN-COMMODITY-SELECT-017-H
+- **GIVEN** the user has JavaScript turned on, has chosen one species, and the results are slow to arrive
+- **WHEN** they clear the selection, search for another species before the results have refreshed, tick it and save
+- **THEN** only the species they ticked after clearing is chosen
+
+#### Scenario: Escape hides the results and clicking the search box shows them again
+**ID**: SCN-COMMODITY-SELECT-017-I
+- **GIVEN** the user has JavaScript turned on and a typed search lists results
+- **WHEN** they press Escape in the search box
+- **THEN** the results are hidden and the search box keeps the term
+- **WHEN** they click the search box
+- **THEN** the results are shown again
+
+#### Scenario: A click outside the search hides the results and keeps what is chosen
+**ID**: SCN-COMMODITY-SELECT-017-J
+- **GIVEN** the user has JavaScript turned on and has ticked a species in the results
+- **WHEN** they click outside the search
+- **THEN** the results are hidden and the species is still chosen
+
+#### Scenario: With JavaScript on, no Update selected control is shown
+**ID**: SCN-COMMODITY-SELECT-017-K
+- **GIVEN** the user has JavaScript turned on and a search lists results
+- **WHEN** the results are shown
+- **THEN** there is no Update selected control

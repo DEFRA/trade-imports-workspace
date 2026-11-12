@@ -119,6 +119,16 @@
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "says so when nothing matches", "strength": "full", "notes": "" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "says so when nothing matches", "strength": "full", "notes": "" }
           ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-004-D",
+          "name": "A commodity heading names the commodity with its code in brackets",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/labels.test.js", "test": "Should name the commodity with its code in brackets", "strength": "full", "notes": "probed: legendHtmlFor reading the bare code went red, restored went green" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/labels.test.js", "test": "Should show the code alone for a commodity with no name", "strength": "partial", "notes": "checks the fallback to the code; not separately inverted" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "heads each commodity with its name and code, and rules each species row the full width of the list", "strength": "full", "notes": "covered by the same probe as the unit test above" }
+          ]
         }
       ]
     },
@@ -214,8 +224,8 @@
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "counts what has been chosen and clears it on request", "strength": "partial", "notes": "checks the panel counts the choice, shows the commodity as a bold line with its species beneath, and disappears when the selection is cleared; not probed" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "counts and lists what has been chosen, and clears it on request", "strength": "partial", "notes": "checks the panel's commodity line and per-species entries, and that Clear all empties it; not probed" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should summarise the stored selection, counted and grouped by code", "strength": "full", "notes": "probed: selectedSummary's shape inverted went red (search.controller.test.js:318, count/heading/groups mismatch), restored went green" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "shows a Remove control named for each chosen species", "strength": "partial", "notes": "checks the panel offers a button whose accessible name is Remove followed by the species' label, for every chosen species; not probed" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should summarise the stored selection, counted, grouped by code and each named by its Latin name", "strength": "full", "notes": "probed: selectedSummary's shape inverted went red (count/heading/groups mismatch), restored went green; the Latin-name chip label is checked by the same assertion" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "shows each chosen species as a chip of its Latin name with a Remove control named for it", "strength": "partial", "notes": "checks each chosen species shows as its Latin name alone under its commodity line, with a button named Remove followed by that Latin name; not probed" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "lists each chosen commodity with one entry per chosen species offering a Remove control", "strength": "partial", "notes": "checks one panel entry per chosen species under its commodity line, each with a Remove control named for that species; not probed" }
           ]
         },
@@ -253,6 +263,14 @@
           "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should refuse a remove naming a key the stored search rows never held, store nothing and log one refusal naming the journey and the key", "strength": "full", "notes": "checks a remove action naming a key outside the stored search rows answers bad request, stores nothing and logs one refusal carrying the journey and the key; probed: the refusal branch inverted went red (status 200 instead of 400), restored went green" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-008-F",
+          "name": "With JavaScript off, Update selected brings the tally up to date with the ticks on screen",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "updates what is chosen when Update selected is pressed, keeping the search and its results", "strength": "full", "notes": "red before the button existed (no Update selected to press), green once added" }
           ]
         }
       ]
@@ -462,6 +480,117 @@
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "bolds the matched text in the commodity heading and in a species label", "strength": "partial", "notes": "checks a search bolds the matched part of the commodity heading and of a species label on the page; not probed" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should bold the matched text in the commodity heading and in a species label", "strength": "full", "notes": "probed: labels.js's emphasis composition reverted to the plain label went red (3 tests across labels.test.js and search.controller.test.js), restored went green" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/labels.test.js", "test": "Should bold the part of the commodity heading the query matched", "strength": "full", "notes": "covered by the same probe as the controller test above" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-COMMODITY-SELECT-017",
+      "name": "With JavaScript, the results and the tally refresh in place",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-COMMODITY-SELECT-017-A",
+          "name": "Typing lists the matching species without pressing Search",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "lists the matching species without pressing Search or leaving the page", "strength": "full", "notes": "probed: the multi-select search left unregistered in application.js went red, restored went green" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/client/javascripts/components/multi-select-search.test.js", "test": "Should post the form with the search action once typing pauses, then show the results and announce them", "strength": "partial", "notes": "checks the typed post, the swap and the announcement against a mocked fetch; not probed" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should render only the results for a search, ticking what is chosen and carrying the rest", "strength": "partial", "notes": "checks the results route renders the results view with the groups and carried keys; not probed" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-017-B",
+          "name": "A typed search announces how many species it lists",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "announces how many species a typed search lists, and when it lists none", "strength": "full", "notes": "probed: the multi-select search left unregistered in application.js went red, restored went green" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should announce how many species a search lists", "strength": "partial", "notes": "checks the results route's announcement for three species; not probed" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should announce a long-enough search that matches nothing", "strength": "partial", "notes": "checks the no-results announcement; not probed" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-017-C",
+          "name": "Species ticked under two typed searches are both kept and saved",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "keeps species ticked under two typed searches and saves both", "strength": "full", "notes": "probed: the multi-select search left unregistered in application.js went red, restored went green" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-017-D",
+          "name": "Unticking a species drops it from the tally and keeps focus on its tick box",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "drops an unticked species from what is chosen, keeping focus on its tick box", "strength": "full", "notes": "probed: the multi-select search left unregistered in application.js went red, restored went green" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/client/javascripts/components/multi-select-search.test.js", "test": "Should refresh the results when a result is ticked, keep focus on the ticked box and announce nothing", "strength": "partial", "notes": "checks the tick post, the swap and focus on the replacement tick box; not probed" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-017-E",
+          "name": "Removing a species and clearing all work in place and return focus to the search box",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "removes one species and clears the rest in place, returning focus to the search box", "strength": "full", "notes": "probed: the multi-select search left unregistered in application.js went red, restored went green" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/client/javascripts/components/multi-select-search.test.js", "test": "Should post the pressed Remove as the action, refresh in place and move focus to the search box", "strength": "partial", "notes": "checks the pressed button's action is posted, the page does not submit and focus moves to the search box; not probed" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should honour a remove, leaving the other choice in the summary", "strength": "partial", "notes": "checks the results route honours a remove; not probed" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/search.controller.test.js", "test": "Should empty the summary on Clear all, keeping the results", "strength": "partial", "notes": "checks the results route clears the summary; not probed" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-017-F",
+          "name": "When the results cannot be fetched, the search posts the page instead",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "falls back to submitting the page when the results cannot be fetched", "strength": "full", "notes": "probed: the module's native submit made a no-op went red, restored went green" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/client/javascripts/components/multi-select-search.test.js", "test": "Should submit the form itself with the pressed action when the results request fails", "strength": "full", "notes": "covered by the same probe as the fit test above" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-017-G",
+          "name": "A save pressed straight after Clear all holds nothing chosen",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "a save pressed straight after Clear all saves nothing chosen and refuses", "strength": "full", "notes": "delays the results route; probed: the module's wait for a refresh in flight disabled went red, restored went green" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/client/javascripts/components/multi-select-search.test.js", "test": "Should hold a save pressed while results are refreshing until they land, then submit it with the refreshed form", "strength": "full", "notes": "covered by the same probe as the fit test above" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "refuses the save with \"Select a commodity\" and stays on the page", "strength": "partial", "notes": "presses Clear all then Save and return straight away; reaches the race only when the refresh is slower than the click, so it was flaky before the wait; not probed" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-017-H",
+          "name": "A search pressed straight after Clear all keeps the cleared species out",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "a search pressed straight after Clear all keeps the selection cleared", "strength": "full", "notes": "slows the results route; probed: refreshes sent at once rather than one after another went red, restored went green" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/client/javascripts/components/multi-select-search.test.js", "test": "Should send a search pressed while Clear all is refreshing only once it lands, from the form it left", "strength": "full", "notes": "covered by the same probe as the fit test above" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/additional-details-scope.spec.ts", "test": "a saved unweaned-animals answer is cleared when the commodities change to ones the question is not asked for", "strength": "partial", "notes": "clears a saved selection and searches again straight away; failed while refreshes could overlap; not probed" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-017-I",
+          "name": "Escape hides the results and clicking the search box shows them again",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "hides the results on Escape, keeping the term, and shows them again when the search box is clicked", "strength": "full", "notes": "probed: the module's dropdown wiring left out went red, restored went green" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/client/javascripts/components/multi-select-search.test.js", "test": "Should hide the results on Escape in the search box, keeping the term, and show them again when the box is focused", "strength": "full", "notes": "covered by the same probe as the fit test above" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-017-J",
+          "name": "A click outside the search hides the results and keeps what is chosen",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "hides the results on a click outside the search, keeping what is chosen", "strength": "full", "notes": "probed: the module's dropdown wiring left out went red, restored went green" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/client/javascripts/components/multi-select-search.test.js", "test": "Should hide the results only once a click outside the search has landed, and keep them for a click inside it", "strength": "full", "notes": "covered by the same probe as the fit test above" }
+          ]
+        },
+        {
+          "id": "SCN-COMMODITY-SELECT-017-K",
+          "name": "With JavaScript on, no Update selected control is shown",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "offers no Update selected button, as a tick updates what is chosen straight away", "strength": "full", "notes": "probed: the enhanced rule's display:none swapped for display:block went red, restored went green" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/client/javascripts/components/multi-select-search.test.js", "test": "Should mark the search as enhanced, so controls only needed without JavaScript can hide", "strength": "full", "notes": "probed: a misnamed class went red, restored went green" }
           ]
         }
       ]

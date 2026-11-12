@@ -113,7 +113,7 @@ The system MUST let the user add an address from the consignment addresses page 
 
 ### Requirement: The page also sets out a permanent address section when the notification carries a cat, dog or ferret
 **ID**: REQ-CONSIGN-ADDR-008
-The system MUST show an additional section for the permanent address, alongside the party-role sections, only when at least one commodity line on the notification is a commodity and species pair that needs a permanent address, and MUST NOT show this section otherwise. The section MUST explain what a permanent address is and offer to add one, until every such animal has one, after which it MUST show the saved addresses with a link to change them.
+The system MUST show an additional section for the permanent address, alongside the party-role sections, only when at least one commodity line on the notification is a commodity and species pair that needs a permanent address, and MUST NOT show this section otherwise. The section MUST explain what a permanent address is and offer to add one until every such animal has one, after which it MUST show the one address added, or a line counting the animals that have one, each with a link to change.
 
 #### Scenario: A consignment carrying a cat, dog or ferret brings the permanent address section into the page
 **ID**: SCN-CONSIGN-ADDR-008-A
@@ -128,8 +128,14 @@ The system MUST show an additional section for the permanent address, alongside 
 - **WHEN** the user views the consignment addresses page
 - **THEN** no permanent address section is shown
 
-#### Scenario: The section shows the saved addresses once every animal that needs one has one
+#### Scenario: The section shows that one address once every animal that needs one shares it
 **ID**: SCN-CONSIGN-ADDR-008-C
-- **GIVEN** every animal that needs a permanent address on the notification has been given one
+- **GIVEN** every animal that needs a permanent address on the notification is saved against the place of destination, or only one animal needs one
 - **WHEN** the user views the consignment addresses page
-- **THEN** the permanent address section shows those addresses' names in place of the add link, with a "Change" link to the permanent address page
+- **THEN** the permanent address section shows that one saved address in place of the add link, with a "Change" link to the permanent address page
+
+#### Scenario: Animals not all saved against the place of destination show the count of animals instead of an address
+**ID**: SCN-CONSIGN-ADDR-008-D
+- **GIVEN** every animal that needs a permanent address on the notification has one, and they are not all saved against the place of destination
+- **WHEN** the user views the consignment addresses page
+- **THEN** the permanent address section shows the one line "Permanent addresses added for N animals", N being the number of animals that need one, with a "Change" link to the permanent address page

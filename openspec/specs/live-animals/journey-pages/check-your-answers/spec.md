@@ -344,3 +344,26 @@ The system MUST head a species card's identifier table with an Animal column and
 - **WHEN** the user views that species' card on the review
 - **THEN** its identifier table is headed Animal, Microchip, Passport and Horse name, with that animal's values in its one row
 - **AND** a species under the same commodity code that is not asked for the horse name never heads a Horse name column on its own card
+
+### Requirement: The roles-and-addresses card lists one row per animal that has a saved permanent address
+**ID**: REQ-CYA-020
+The system MUST list on the roles-and-addresses card, after the county parish holding row, one row for each animal that has a saved permanent address, keyed by that animal's species common name and number and holding that animal's saved address as a party row reads it. An animal that needs a permanent address and has none MUST have no row, and a line that needs one with no animal counted MUST have none either.
+
+#### Scenario: The roles-and-addresses card lists a row for each animal that has a saved permanent address
+**ID**: SCN-CYA-020-A
+- **GIVEN** a cat line of two animals, one saved against the place of destination and one with a hand-entered address
+- **WHEN** the user views check-your-answers
+- **THEN** the roles-and-addresses card lists, after the party rows, a row for each animal keyed by its species' common name and number, each holding that animal's saved address
+
+#### Scenario: An animal that still owes a permanent address has no row, while the species card is still reported outstanding
+**ID**: SCN-CYA-020-B
+- **GIVEN** a cat line of two animals, with a permanent address saved for only one of them
+- **WHEN** the user views check-your-answers
+- **THEN** the roles-and-addresses card lists a row for the answered animal alone
+- **AND** the error summary still names the species card as needing to be completed
+
+#### Scenario: A line needing a permanent address with no animal counted has no permanent address row
+**ID**: SCN-CYA-020-C
+- **GIVEN** a cat line that needs a permanent address, with its animal count given and no animal identified
+- **WHEN** the user views check-your-answers
+- **THEN** the roles-and-addresses card lists no permanent address row

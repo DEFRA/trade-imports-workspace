@@ -12,8 +12,8 @@ Ask of each candidate metric: what would someone do differently on
 seeing it change? Drop it if the answer is nothing.
 
 The list agreed for `trade-imports-reference-data` is the worked
-example, with the names it takes once moved to the one way. It
-publishes the old names until then ("A service built the old way"):
+example. It published older PascalCase names until it moved to the one
+way below (EUDPA-674); "A service built the old way" maps them:
 
 | Metric | Unit | Dimension | Answers |
 |---|---|---|---|
@@ -147,22 +147,27 @@ address-book.
   are running totals and can be asserted.
 - **Values are timestamped when published,** up to a step after they
   were recorded.
-- **Caches** `[UNPROVEN]`, not yet done this way on a service: the
-  counters `cache.hit` and `cache.miss`, tagged `cache` with the cache's
-  name, as in the agreed table and the dashboard's "Cache hits and
-  misses" panel. Increment one on each lookup, from the code that reads
-  the cache, and add both names to the allowlist. Not Micrometer's cache
-  binder: it publishes `cache.gets` under other names and tags, and as
-  function counters, which `EmfMeterRegistry` does not publish.
+- **Caches:** the counters `cache.hit` and `cache.miss`, tagged `cache`
+  with the cache's name, as in the agreed table and the dashboard's
+  "Cache hits and misses" panel. For a Caffeine cache, count them in a
+  Caffeine `StatsCounter`, not in the code that reads the cache, so
+  every read is caught: reference-data's `CacheMetrics.statsCounterFor(name)`
+  returns one that increments the two counters and keeps Caffeine's own
+  statistics, and `CacheConfig` passes it to each cache with
+  `.recordStats(() -> cacheMetrics.statsCounterFor(name))`. Add both
+  names to the allowlist. Not Micrometer's cache binder: it publishes
+  `cache.gets` under other names and tags, and as function counters,
+  which `EmfMeterRegistry` does not publish.
 
 ### A service built the old way
 
 These services write EMF directly and publish the older PascalCase
-names, not the dot-case names above (their `main`, checked 2026-11-06):
+names, not the dot-case names above (their `main`, checked 2026-11-06).
+`trade-imports-reference-data` was one of them and has moved
+(EUDPA-674); the tables below record how, as the worked example:
 
 | Service | Where | Publishes |
 |---|---|---|
-| `trade-imports-reference-data` | `metrics` package: `EmfMetricWriter`, `ExternalCallMetrics`, scheduled `DependencyAvailabilityMetrics` and `CacheMetrics`, `LookupMetrics` | Every old name in the table below |
 | `trade-imports-dynamics-gateway` | `metrics/ExternalCallMetrics.java` and `metrics/ExternalCall.java`, measuring the Service Bus send in `QueueMessageSender` | `ExternalCallDuration`, `ExternalCallFailure`, dimensions `Dependency`, `Operation` |
 | `trade-imports-animals-frontend`, `-ins-frontend`, `-plants-frontend` | `src/server/common/helpers/external-call-metrics.js` | `ExternalCallDuration`, `ExternalCallFailure`, dimensions `Dependency`, `Operation` |
 
@@ -191,7 +196,7 @@ service has apply to that service.
 |---|---|
 | The service's own `ExternalCallMetrics` writing EMF (`recordCall(…, boolean)`) | Replaced by address-book's `ExternalCallRecorder` ("Copy as it is"). `ExternalCall` stays as the list of calls; pass its `dependency()` and `operation()` |
 | `ExternalCallMetrics.measure(…)` around the Service Bus send (dynamics-gateway) | `QueueMessageSender` times the send itself, then calls `recordSuccess`, or `recordFailure` with the exception thrown |
-| `ExternalCallMetrics.measure(…)` around each Feign call (reference-data) | Moves into `ExternalCallFeignCapability`, which stays as the place calls are measured. It times `client.execute` itself, then calls `recordSuccess`, or `recordFailure` with the exception thrown, or with no cause for a response of 400 or over |
+| `ExternalCallMetrics.measure(…)` around each Feign call (reference-data) | Moves into `ExternalCallFeignCapability`, which stays as the place calls are measured. It times `client.execute` itself, then calls `recordSuccess`, or `recordFailure` with the exception thrown, or with the response's status for a response of 400 or over, which the call's log line carries as `http.response.status_code` (reference-data's `ExternalCallRecorder` adds a `recordFailure` overload taking the status) |
 | `ExternalCallMetrics.lastCallSucceededByDependency()` | A small `LastCallOutcomes` component holding the last outcome per dependency. `ExternalCallFeignCapability` updates it on each success and failure, beside its `recordSuccess` or `recordFailure` call, so `ExternalCallRecorder` stays a copy |
 | The `Interface` property (the volumetrics `SYN-19` id) on each EMF document | No meter carries it: as a tag it would be a new dimension. Agree with the team before the move, and record the choice on the ticket: keep it as an `interface.id` key-value on the call's log line, in this service's copy of `ExternalCallRecorder`, or drop it |
 | `EmfMetricWriter` | Deleted; each metric becomes a meter |

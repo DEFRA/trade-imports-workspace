@@ -1569,3 +1569,83 @@ describe("runGate — this machine's own settings", () => {
     }).toEqual({ logged: false, workers: null, machine: null })
   })
 })
+
+describe('runGate — e2e left to CI', () => {
+  const writeMachineConfig = (config) =>
+    writeFileSync(machineConfigPath(), JSON.stringify(config))
+
+  const ciEvidence = {
+    where: 'ci',
+    leftToCi: [{ repo: 'tests', name: 'e2e-plants' }],
+    evidence: expect.stringContaining('e2e-tests.yml')
+  }
+
+  test('takes no lease, runs no stack command and runs no e2e rung, and lists the rung as left to CI', async () => {
+    const env = workspaceWith(withE2e({ 'test:docker-compose': 'exit 1' }))
+
+    const outcome = await gate(env, { e2e: 'ci' })
+
+    expect({
+      green: outcome.green,
+      rungs: outcomeOf(outcome.rungs),
+      calls: stackCalls(),
+      lease: leaseOnDisk(),
+      ranE2e: existsSync(
+        join(defaultLogsDir(root, WORKAREA), 'gate-tests-e2e-plants.log')
+      ),
+      stack: outcome.stack.wasUp,
+      e2e: outcome.e2e
+    }).toEqual({
+      green: true,
+      rungs: ['frontend:unit:pass'],
+      calls: [],
+      lease: null,
+      ranE2e: false,
+      stack: null,
+      e2e: ciEvidence
+    })
+  })
+
+  test('is green on the e2e phase alone, with every rung left to CI', async () => {
+    const env = workspaceWith(withE2e({ 'test:docker-compose': 'exit 1' }))
+
+    const outcome = await gate(env, { phase: 'e2e', e2e: 'ci' })
+
+    expect({
+      green: outcome.green,
+      rungs: outcome.rungs,
+      calls: stackCalls(),
+      e2e: outcome.e2e
+    }).toEqual({ green: true, rungs: [], calls: [], e2e: ciEvidence })
+  })
+
+  test('leaves e2e to CI when this machine sets e2e to ci', async () => {
+    const env = workspaceWith(withE2e({ 'test:docker-compose': 'exit 1' }))
+    writeMachineConfig({ e2e: 'ci' })
+
+    const outcome = await gate(env, { phase: 'e2e' })
+
+    expect({
+      calls: stackCalls(),
+      e2e: outcome.e2e,
+      machine: outcome.machine.e2e
+    }).toEqual({ calls: [], e2e: ciEvidence, machine: 'ci' })
+  })
+
+  test('runs e2e against the local stack when asked, over a machine set to ci', async () => {
+    const env = workspaceWith(withE2e({ 'test:docker-compose': 'echo e2e' }))
+    writeMachineConfig({ e2e: 'ci' })
+
+    const outcome = await gate(env, { phase: 'e2e', e2e: 'local' })
+
+    expect({
+      calls: stackCalls(),
+      rungs: outcomeOf(outcome.rungs),
+      e2e: outcome.e2e
+    }).toEqual({
+      calls: ['run-stack.sh -d', 'stop-stack.sh'],
+      rungs: ['tests:e2e-plants:pass'],
+      e2e: { where: 'local', leftToCi: [], evidence: null }
+    })
+  })
+})

@@ -238,6 +238,38 @@ describe('tim build gate', () => {
     expect(envelopeOf(run).result.serial).toBe(false)
   })
 
+  test('refuses an --e2e other than local or ci', async () => {
+    seedGateRepo({ test: 'echo tested' })
+
+    const run = await runTim(['build', 'gate', WORKAREA, '--e2e', 'cloud'])
+
+    expect({ exitCode: run.exitCode, stderr: run.stderr.trim() }).toEqual({
+      exitCode: 2,
+      stderr: '--e2e must be one of: local, ci.'
+    })
+  })
+
+  test('reports where e2e ran with --e2e ci', async () => {
+    seedGateRepo({ test: 'echo tested' })
+
+    const run = await runTim([
+      'build',
+      'gate',
+      WORKAREA,
+      '--phase',
+      'unit',
+      '--e2e',
+      'ci',
+      '--json'
+    ])
+
+    expect(envelopeOf(run).result.e2e).toEqual({
+      where: 'ci',
+      leftToCi: [],
+      evidence: expect.stringContaining('e2e-tests.yml')
+    })
+  })
+
   test('refuses an unknown phase', async () => {
     seedGateRepo({ test: 'echo tested' })
 
@@ -706,6 +738,27 @@ describe('renderGateText', () => {
         'Logs are in /logs.'
       ].join('\n')
     )
+  })
+
+  test('names the e2e rungs it left to CI and what proves them', () => {
+    expect(
+      renderGateText({
+        green: true,
+        logs: '/logs',
+        rungs: [],
+        stack: { wasUp: null, startedForE2e: false },
+        e2e: {
+          where: 'ci',
+          leftToCi: [{ repo: 'tests', name: 'e2e-plants' }],
+          evidence: 'the pull requests.'
+        }
+      })
+        .split('\n')
+        .slice(0, 2)
+    ).toEqual([
+      'Gate passed: 0 rungs.',
+      'Left to CI, not run here: tests e2e-plants. The evidence is the pull requests.'
+    ])
   })
 
   test('names the port a FIT rung moved to and who holds the one it planned', () => {

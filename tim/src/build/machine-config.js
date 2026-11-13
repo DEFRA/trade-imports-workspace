@@ -3,6 +3,12 @@ import { join } from 'node:path'
 import { z } from 'zod'
 import { TimError } from '../errors.js'
 
+/**
+ * Where a gate's E2E rungs run: against the local workspace stack, or left to
+ * each pull request's own E2E check in GitHub Actions.
+ */
+export const E2E_LOCATIONS = ['local', 'ci']
+
 const RUNG_KEY = /^[a-z0-9][a-z0-9-]*\/[a-z0-9][a-z0-9-]*$/
 
 const machineConfigSchema = z
@@ -10,6 +16,11 @@ const machineConfigSchema = z
     $comment: z.string().optional(),
     parallelRepos: z.number().int().positive().optional(),
     stackAfterLocal: z.boolean().optional(),
+    e2e: z
+      .enum(E2E_LOCATIONS, {
+        message: `e2e must be one of: ${E2E_LOCATIONS.join(', ')}.`
+      })
+      .optional(),
     workers: z
       .record(
         z
@@ -48,7 +59,7 @@ const parseJson = (path) => {
  * how the gate runs here, never which rungs it runs.
  *
  * @param {string} path
- * @returns {{path: string, parallelRepos?: number, stackAfterLocal?: boolean, workers: Record<string, number>}|null}
+ * @returns {{path: string, parallelRepos?: number, stackAfterLocal?: boolean, e2e?: 'local'|'ci', workers: Record<string, number>}|null}
  * @throws {TimError} PARSE when the file is there but wrong
  */
 export const readMachineConfig = (path) => {

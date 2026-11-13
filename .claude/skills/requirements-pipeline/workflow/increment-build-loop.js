@@ -1013,7 +1013,7 @@ const RUN_HOLDER = RUN_ID
 
 const gateResultFile = (phase, logs) => `${logs}/gate-result-${phase}.json`
 const gateCommand = (phase, logs) =>
-  `tim build gate ${WORKAREA_REL} --phase ${phase} --workspace ${TILDE} --json --logs ${logs} --holder "${RUN_HOLDER}" --result ${gateResultFile(phase, logs)} --detach`
+  `tim build gate ${WORKAREA_REL} --phase ${phase} --e2e ${E2E} --workspace ${TILDE} --json --logs ${logs} --holder "${RUN_HOLDER}" --result ${gateResultFile(phase, logs)} --detach`
 const MAX_GATE_WAITS = 20
 const GATE_WAIT_RULE = `WAITING FOR THE GATE. Every gate command carries \`--detach\`: it starts the gate in its own background
   process and returns at once, printing \`result.detached\` true and the gate's \`pid\`. The gate is now running: never

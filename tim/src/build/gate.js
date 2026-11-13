@@ -33,6 +33,17 @@ import {
 
 export const GATE_PHASES = ['unit', 'fit', 'e2e', 'all']
 
+export const CI_E2E_EVIDENCE =
+  'the E2E Tests check (e2e-tests.yml) on each pull request, which runs what config/e2e-tests-pr-scope.json scopes for its repo and may run less than these rungs.'
+
+const e2eLeftToCi = (rungs) => ({
+  where: 'ci',
+  leftToCi: rungs.map(({ repo, name }) => ({ repo, name })),
+  evidence: CI_E2E_EVIDENCE
+})
+
+const LOCAL_E2E = { where: 'local', leftToCi: [], evidence: null }
+
 /**
  * Who the gate takes the stack lease as when no holder is given: this gate
  * run, by its workarea and process.
@@ -74,6 +85,7 @@ const machineSummary = (machine) =>
         config: machine.path,
         parallelRepos: machine.parallelRepos ?? null,
         stackAfterLocal: machine.stackAfterLocal ?? null,
+        e2e: machine.e2e ?? null,
         workers: machine.workers
       }
     : null
@@ -648,6 +660,10 @@ const layerDurations = (startedAt, ran) => {
  * stack lease as it found it: a stack it started for a holder that held no
  * lease is stopped and the lease cleared; a stack it started again for a
  * holder whose lease outlived the stack is left up, still leased to them.
+ * With `e2e` 'ci' (or this machine's `e2e` setting, when no `e2e` is given)
+ * the gate runs no e2e rung, takes no lease and runs no stack command: it
+ * lists those rungs under `e2e.leftToCi`, and each pull request's E2E check
+ * is their evidence. A gate whose only rungs are left to CI is green.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
@@ -657,15 +673,17 @@ const layerDurations = (startedAt, ran) => {
  * @param {string} [args.logsDir]
  * @param {string} [args.holder] - Who the gate takes the stack lease as, for its E2E phase
  * @param {string} [args.leasePath] - The stack lease file
- * @param {string} [args.machineConfigPath] - This machine's gate settings: worker counts, parallelRepos and stackAfterLocal
+ * @param {string} [args.machineConfigPath] - This machine's gate settings: worker counts, parallelRepos, stackAfterLocal and e2e
+ * @param {'local'|'ci'} [args.e2e] - Where the e2e rungs run, over this machine's setting (default: local)
  * @param {object} [args.env] - Extra environment for every command the gate runs
- * @returns {Promise<{green: boolean, phase: string, serial: boolean, logs: string, durationMs: number, phases: object, layers: object, rungs: object[], dependencies: object[], stack: object}>}
+ * @returns {Promise<{green: boolean, phase: string, serial: boolean, logs: string, durationMs: number, phases: object, layers: object, rungs: object[], dependencies: object[], stack: object, e2e: {where: string, leftToCi: object[], evidence: string|null}}>}
  */
 export const runGate = async ({
   workspaceRoot,
   workarea,
   phase = 'all',
   serial = false,
+  e2e,
   logsDir,
   holder = defaultGateHolder(workarea),
   leasePath = defaultLeasePath(),
@@ -676,10 +694,15 @@ export const runGate = async ({
   const repos = readEnvelopeRepos(workspaceRoot, workarea)
   const gates = loadGates(workspaceRoot)
   const machine = readMachineConfig(machineConfigPath)
-  const planned = withMachineWorkers(
+  const wholePlan = withMachineWorkers(
     planRungs({ gates, repos, phase, workspaceRoot }),
     machine
   )
+  const e2eInCi = (e2e ?? machine?.e2e) === 'ci'
+  const planned = e2eInCi
+    ? wholePlan.filter((rung) => rung.phase !== 'e2e')
+    : wholePlan
+  const e2eReport = e2eInCi ? e2eLeftToCi(byPhase(wholePlan, 'e2e')) : LOCAL_E2E
   const logs = logsDir ?? defaultLogsDir(workspaceRoot, workarea)
   const context = {
     workspaceRoot,
@@ -696,15 +719,14 @@ export const runGate = async ({
   const dependencies = await installPlanDependencies(planned, context)
   const plan = refusingWhereInstallFailed(planned, dependencies)
   const ran = await (serial ? runSerially : runInLayers)(plan, context)
-  const { local, e2e } = ran
+  const { stack } = ran.e2e
 
-  const rungs = [...local.map(({ result }) => result), ...e2e.results]
+  const rungs = [...ran.local.map(({ result }) => result), ...ran.e2e.results]
   const stackClean =
-    e2e.stack.wasUp !== false ||
-    e2e.stack.stoppedAfter ||
-    e2e.stack.keptForHolder
+    stack.wasUp !== false || stack.stoppedAfter || stack.keptForHolder
+  const gatedSomething = rungs.length > 0 || e2eReport.leftToCi.length > 0
   return {
-    green: rungs.length > 0 && rungs.every(({ ok }) => ok) && stackClean,
+    green: gatedSomething && rungs.every(({ ok }) => ok) && stackClean,
     phase,
     serial,
     logs,
@@ -714,6 +736,7 @@ export const runGate = async ({
     rungs,
     machine: machineSummary(machine),
     dependencies: dependencies.filter(({ stale }) => stale),
-    stack: e2e.stack
+    stack,
+    e2e: e2eReport
   }
 }

@@ -263,6 +263,14 @@ describe('#machineFileAfterTune', () => {
     })
   })
 
+  test("Should keep the existing file's e2e setting", () => {
+    const file = machineFileAfterTune({ e2e: 'ci', workers: {} }, [
+      { key: 'trade-imports-animals-frontend/fit', workers: 3 }
+    ])
+
+    expect(file.e2e).toBe('ci')
+  })
+
   test('Should hold only worker counts when the machine had no file', () => {
     const file = machineFileAfterTune(null, [
       { key: 'trade-imports-animals-frontend/fit', workers: 3 }

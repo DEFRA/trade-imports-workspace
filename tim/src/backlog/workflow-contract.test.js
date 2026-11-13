@@ -1887,7 +1887,7 @@ describe('increment-build-loop', () => {
       const prompt = await baselinePrompt()
 
       expect(prompt).toContain(
-        `   1. \`tim build gate shared/args-fixture --phase all --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-result-all.json --detach\``
+        `   1. \`tim build gate shared/args-fixture --phase all --e2e local --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-result-all.json --detach\``
       )
       expect(prompt).not.toContain('--phase e2e')
     })
@@ -2427,7 +2427,7 @@ describe('increment-build-loop', () => {
         const prompt = ladderPrompt(await runThroughFixToLadder())
 
         expect(prompt).toContain(
-          `   1. \`tim build gate shared/args-fixture --phase all --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder/gate-result-all.json --detach\``
+          `   1. \`tim build gate shared/args-fixture --phase all --e2e local --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder/gate-result-all.json --detach\``
         )
         expect(prompt).not.toContain('--phase e2e')
       })
@@ -2509,10 +2509,10 @@ describe('increment-build-loop', () => {
         const run = await runThroughFixToLadder()
 
         expect(promptOf(run, 'inc-900 implement')).toContain(
-          `\`tim build gate shared/args-fixture --phase unit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-implement --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-implement/gate-result-unit.json --detach\``
+          `\`tim build gate shared/args-fixture --phase unit --e2e local --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-implement --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-implement/gate-result-unit.json --detach\``
         )
         expect(promptOf(run, 'inc-900 fix')).toContain(
-          `\`tim build gate shared/args-fixture --phase fit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-fix --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-fix/gate-result-fit.json --detach\``
+          `\`tim build gate shared/args-fixture --phase fit --e2e local --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-fix --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-fix/gate-result-fit.json --detach\``
         )
         expect(promptOf(run, 'inc-900 implement')).not.toContain('--phase e2e')
         expect(promptOf(run, 'inc-900 implement')).not.toContain('--phase all')
@@ -7194,8 +7194,8 @@ describe('increment-build-loop', () => {
 
         expect(prompt).toContain(
           [
-            `   1. \`tim build gate shared/args-fixture --phase unit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-result-unit.json --detach\``,
-            `   2. \`tim build gate shared/args-fixture --phase fit --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-result-fit.json --detach\``,
+            `   1. \`tim build gate shared/args-fixture --phase unit --e2e local --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-result-unit.json --detach\``,
+            `   2. \`tim build gate shared/args-fixture --phase fit --e2e local --workspace ~/ws --json --logs ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline --holder "${RUN_ID}" --result ~/ws/workareas/shared/args-fixture/logs/inc-900-baseline/gate-result-fit.json --detach\``,
             '   Stop after the first one that comes back red'
           ].join('\n')
         )
@@ -7208,6 +7208,14 @@ describe('increment-build-loop', () => {
 
         expect(promptOf(run, 'inc-900 baseline')).toContain(
           "THE E2E EVIDENCE IS THIS BRANCH'S LAST COMPLETED PULL REQUEST CHECK RUN"
+        )
+      })
+
+      test('tells the gate to leave e2e to CI when the pull requests prove it', async () => {
+        const run = await runBranch({ e2e: 'ci' }, MERGE_ROW)
+
+        expect(promptOf(run, 'inc-900 baseline')).toContain(
+          `\`tim build gate shared/args-fixture --phase unit --e2e ci --workspace ~/ws --json`
         )
       })
 

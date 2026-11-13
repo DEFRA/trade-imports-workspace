@@ -159,6 +159,17 @@ after deployment. The loop still stops at `ci-red`. A `local` run's gate takes t
 same scope and runs it the same way: the suites whole in its `e2e` rung, then the
 tagged specs from every domain in an `e2e-tagged` rung.
 
+The loop passes its `e2e` to every gate it runs as `tim build gate --e2e
+<local or ci>`. Under `ci` the gate runs no E2E rung, takes no stack lease and
+starts no stack; it lists the rungs it left out in its result's
+`e2e.leftToCi`, and the loop's wait for the pull requests' checks gates the
+merge. A clone with no stack at all can also set `"e2e": "ci"` in its own
+`config/machine.json`, so a gate run by hand there leaves E2E to CI too (see
+[`machine-tuning.md`](machine-tuning.md)). It is opt-in per machine: the
+pull request's E2E run follows `config/e2e-tests-pr-scope.json` and may run
+less than the local gate would, so say so in the row's evidence when a row
+lands with only CI E2E.
+
 Record the answer in the theme's `build-args.json` so a relaunch after a stop
 defaults to it and needs a confirm rather than the question again. A relaunch is
 the moment to change it: a stack failure, or a unit rung timing out in files

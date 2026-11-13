@@ -635,7 +635,7 @@ spec behind.
 | Implement | A row routed through `frontend-change` writes the spec by its Step 5. Every other row does the same work without the skill, reading `openspec/config.yaml` and `frontend-change/references/SPEC_SYNC.md`. Either way it validates with `tim spec lint --capability <prefix>`, leaves `openspec/` uncommitted, and reports one `Spec sync:` line naming each capability written and each one removed as `deleted: <path>`. A bullet or bold label is read too. A red validation means the row is not complete |
 | Review | The consistency reviewer judges the write and any `none` reason against the plan's behaviour changes. Its findings on the spec are written `workspace:openspec/<path>` and verified against the workspace |
 | Fix | A fix that changes behaviour updates the spec too, and reports its own line |
-| Ladder | Red when neither the implementor nor the fixer reported a `Spec sync:` line; a fixer with none is normal. Otherwise it validates every capability the lines name that still exists, confirms each `deleted:` one is gone, and lints each prefix again |
+| Ladder | Red when neither the implementor nor the fixer reported a `Spec sync:` line; a fixer with none is normal. Otherwise it confirms each `deleted:` one is gone, then runs `tim spec lint --capability <prefix>` once per prefix the lines write under, which validates every capability under it |
 | Land | Commits `openspec/` by the existing path-limited rule, with the same rollback: no second commit path |
 | Signed off | Full lifecycle: after CI and before the merge, `tim spec diff --signed-off` checks the row's committed work for a change to a signed-off scenario, and a change holds the row for a person's ruling. Branch lifecycle: once at theme end, against `origin/main` |
 

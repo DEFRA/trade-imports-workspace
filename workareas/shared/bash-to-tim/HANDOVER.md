@@ -113,44 +113,44 @@ Agents cannot do these two rows, so the loop skips them:
 
 ## State
 
-- Progress: 19 of 68 (28%), counted over rows that are not for Sam.
-- Landed this run: P19, P21, P22, P23 and P24.
+- Progress: 21 of 68 (31%), counted over rows that are not for Sam.
+- Landed this run: P20 and P25.
 - Blocked this run:
-  - **P20:** the no-checks watch tests in
-    `tim/src/backlog/workflow-contract.test.js` (`watchAgainstStubGh`) would
-    pass against a wrong implementation. The stub gh prints only the
-    capitalised "No checks reported on the 'feat/x' branch", but when the
-    watch is redirected into a log, as the prompt's command does, real gh
-    (2.104.0) prints it in lowercase and exits 1. Only a terminal gets the
-    capital N. So a case-sensitive `grep -q 'No checks reported'` passes both
-    new tests yet never matches the real log, which brings back the race
-    264e8578 closed. Fix: have the stub print gh's lowercase redirected form,
-    or run both cases in both forms, so dropping `-i` or matching the
-    capitalised text turns a test red.
-  - **P25:** with an unknown board, the deleted Bash printed Jira's
-    errorMessages to stderr and exited 1. `tim jira epics --board 999999999`
-    and `tim jira labels --board 999999999` now exit 2 and print only
-    "listBoardEpics(999999999): not found." (404 maps to NOT_FOUND, which
-    `envelope.js` turns into exit 2). The row's risk does not name this.
-    Fix either way: (a) exit 1 and pass Jira's errorMessages through, as P22's
-    fixer did, or (b) amend the row's risk and commit message to name the
-    change. Either way, add a golden for the Bash's 404 output and exit code
-    to `board-epics-labels-bash-goldens.json` (it holds only success cases)
-    and a CLI-level test that compares tim against it. Everything else
-    passed: tests, lint, format, no callers left, and live output for board
-    13780 matches the goldens.
-  - **P26:** ticket-creator's `SKILL.md` still asks for
-    `**Assignee:** [Self or None]` (line 227), but with the
-    `create-ticket.sh -a` fallback gone no step acts on Self, so such a
-    ticket is raised unassigned. Fix: in "After Creation", say that when the
-    draft's Assignee is Self, the next step is `tim jira assign EUDPA-XXXXX me`
-    (a dry run), then `--confirm`; and change "someone else" (line 369) to
-    cover self too, matching `tim/README.md`. Nothing else was found.
+  - **P26:** a behaviour change for existing callers is not in the commit
+    message. `buildPlan` in `plan.js` now strips trailing newlines from the
+    description file (`withoutTrailingNewlines`) for every `tim jira create`,
+    not only for the manifests that replace `create-ticket.sh`. Before
+    4ca31111, theme-ticket, the prototype hand-off and the build loop sent the
+    description file byte for byte. Now its trailing newlines are removed, and
+    the planId for an unchanged manifest changes too. The commit message
+    records the matching priority-default change for these callers but not
+    this one, and the builder's deviations leave it out as well. Fix: amend
+    4ca31111 so its message says that `tim jira create` now drops the
+    description file's trailing newlines, as `$(cat file)` did in
+    `create-ticket.sh`, and that this applies to the existing callers.
+    Everything else checked out: tim tests green, lint and format clean, no
+    callers of `create-ticket.sh` left, no new fixed path or `.sh` file, and
+    the goldens match the deleted script's payload. The row's canary (raising
+    a real govuk ticket) has not run and needs Sam's go-ahead.
+  - **P27:** an output changed without the row saying so, and no golden
+    covers it. `reviewItemsJsonText(items)` in `store.js` returns an empty
+    string for any empty array. `review-items.sh` prints nothing only when no
+    items file matches. When an items file exists but holds no items (for
+    example `items.<repo>.json` with `"items": []`), the Bash prints `[]` and
+    a newline, while the JS prints nothing. The function only sees the
+    flattened items, so it cannot tell the two cases apart. Fix: have
+    `readReviewItems` (or the text function) report whether any items file
+    matched, or drop the empty-to-nothing mapping and handle "no files"
+    separately. Add a golden for an items file with `"items": []`, recorded
+    from the unmodified Bash, and a store test that compares against it. The
+    verifier could not run the Bash probe (the sandbox refused it), so record
+    the golden by hand. Nothing else blocks the row: tests, lint and format
+    are green, and keeping `finding-categories.sh` until P56 is deliberate.
 - Why the loop stopped: two rows in a row were blocked, which points at
-  something systemic. Here all three are verification gaps the builder could
-  have closed: tests that do not pin real behaviour, and skill text left
-  behind by a deleted script.
-- Rows for Sam: P11 and P19B.
+  something systemic. Both are behaviour changes for existing callers that
+  the builder made without recording them or pinning them with a golden.
+- Rows for Sam: P11 and P19B. P26's canary also waits for Sam's go-ahead.
 - Landing result: none yet.
-- Next: fix P20, P25 and P26 as set out above, set each back to `todo`, and
-  run the loop again.
+- Next: fix P26 (amend the commit message) and P27 (empty-items output and
+  its golden) as set out above, set both back to `todo`, and run the loop
+  again.

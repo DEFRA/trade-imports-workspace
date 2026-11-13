@@ -954,7 +954,7 @@
       ],
       "risk": "Medium. The build loop is in active use and reads the script's exit codes 0/1/2/4/5. Record each code's meaning first, keep every outcome the loop acts on, and launch nothing mid-run.",
       "proof": "Before the change, a stub gh on PATH drives the script through each exit code and the loop's handling of each is recorded. After, the same stub cases give the same loop decisions. No caller names the script.",
-      "status": "blocked",
+      "status": "todo",
       "checks": [
         "tim-unit",
         "tim-lint",
@@ -962,7 +962,8 @@
         "no-callers"
       ],
       "evidence": {
-        "blockedReason": "The new no-checks watch tests stub gh with the capitalised \"No checks reported\" text, but real gh writes it in lowercase when redirected to a log, so the tests would still pass against a case-sensitive match that brings back the race; the stub must print the lowercase form, or both forms."
+        "recoverableCommits": "The blocked attempt is in the local reflog, unpushed: 6876ceaf then 264e8578. Cherry-pick them and fix only the reason below, rather than rebuilding.",
+        "previousBlockedReason": "The new no-checks watch tests stub gh with the capitalised \"No checks reported\" text, but real gh writes it in lowercase when redirected to a log, so the tests would still pass against a case-sensitive match that brings back the race; the stub must print the lowercase form, or both forms."
       }
     },
     {
@@ -1207,7 +1208,7 @@
       "dependsOn": [],
       "risk": "Low to medium. This must use the agile board endpoint, not the project JQL, or the epic set changes.",
       "proof": "`diff <(list-board-epics.sh 13780) <(tim jira epics --board 13780 --no-ui)` is empty. The labels JSON is equal.",
-      "status": "blocked",
+      "status": "todo",
       "checks": [
         "tim-unit",
         "tim-lint",
@@ -1215,7 +1216,8 @@
         "no-callers"
       ],
       "evidence": {
-        "blockedReason": "An unknown --board now exits 2 with only a not-found message, where the deleted Bash exited 1 with Jira's errorMessages, and neither the row's risk nor any golden or CLI test covers that error path."
+        "recoverableCommits": "The blocked attempt is in the local reflog, unpushed: 67dd4948 then d4415b52. Cherry-pick them and fix only the reason below, rather than rebuilding. Follow P22's precedent: Jira errors exit 1 and keep Jira's errorMessages.",
+        "previousBlockedReason": "An unknown --board now exits 2 with only a not-found message, where the deleted Bash exited 1 with Jira's errorMessages, and neither the row's risk nor any golden or CLI test covers that error path."
       }
     },
     {
@@ -1246,7 +1248,7 @@
       ],
       "risk": "Medium. Creating a ticket cannot be undone; tim's receipt file guards against a second create. The one-line create from arguments is lost.",
       "proof": "Manifest and plan tests for type Epic. Canary: raise the next govuk tracking ticket through a manifest and compare its fields with an older one.",
-      "status": "blocked",
+      "status": "todo",
       "checks": [
         "tim-unit",
         "tim-lint",
@@ -1254,7 +1256,8 @@
         "no-callers"
       ],
       "evidence": {
-        "blockedReason": "The ticket-creator skill still asks for an Assignee of Self in the draft, but with the create-ticket.sh -a fallback gone no step runs tim jira assign <key> me, so a Self draft is raised unassigned."
+        "recoverableCommits": "The blocked attempt is in the local reflog, unpushed: 0a7a54d8 then 55f3d3a2. Cherry-pick them and fix only the reason below, rather than rebuilding.",
+        "previousBlockedReason": "The ticket-creator skill still asks for an Assignee of Self in the draft, but with the create-ticket.sh -a fallback gone no step runs tim jira assign <key> me, so a Self draft is raised unassigned."
       }
     },
     {

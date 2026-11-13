@@ -1577,14 +1577,17 @@
       "dependsOn": [],
       "risk": "Low. The Perl regexes must carry over exactly; the output must be UTF-8 byte-identical.",
       "proof": "Golden files recorded from the Perl script for a canonical map and a map with one violation per rule; stdout, stderr and exit code are byte-equal.",
-      "status": "todo",
+      "status": "blocked",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "blockedReason": "The tim port changes two outputs its risk does not name and no test covers: with a missing file and an invalid --format it reports the format error (exit 2) where Bash reported the missing file (exit 1), and an empty file argument prints 'Error: file not found: ' (exit 2) where Bash printed usage (exit 1).",
+        "recoverableCommits": "The blocked attempt is in the local reflog, unpushed: trade-imports-workspace: 7415966e, 531700f2, f4e83207. Cherry-pick them and fix only the reason, rather than rebuilding."
+      }
     },
     {
       "id": "P33",

@@ -3,7 +3,10 @@
 # Usage:
 #   review-set-status.sh EUDPA-XXXXX --repo REPO --item N --status "Not Done"|"Done"|"Failed" [--note "..."]
 #
-# --note overwrites the Notes column when provided.
+# --note adds its text to the end of the Notes column, after "; ", and keeps what
+# is there: a walk's decision stays beside the fix's short SHA or failure reason.
+# A note the column already holds is not added again. --note "" changes nothing.
+# To replace or clear Notes, use review-mark.sh --note.
 
 set -e
 
@@ -53,20 +56,21 @@ exists=$(jq --argjson id "$ITEM" '[.items[] | select(.id == $id)] | length' "$ta
 stat_json='null'
 [[ -n "$STATUS" ]] && stat_json=$(jq -nc --arg v "$STATUS" '$v')
 
-if [[ "$SET_NOTE" == "1" ]]; then
-    note_json=$(jq -nc --arg v "$NOTE" 'if $v == "" then null else $v end')
-    jq \
-        --argjson id "$ITEM" \
-        --argjson stat "$stat_json" \
-        --argjson note "$note_json" \
-        '.items |= map(if .id == $id then .status = $stat | .notes = $note else . end)' \
-        "$target" > "$target.tmp" && mv "$target.tmp" "$target"
-else
-    jq \
-        --argjson id "$ITEM" \
-        --argjson stat "$stat_json" \
-        '.items |= map(if .id == $id then .status = $stat else . end)' \
-        "$target" > "$target.tmp" && mv "$target.tmp" "$target"
-fi
+jq \
+    --argjson id "$ITEM" \
+    --argjson stat "$stat_json" \
+    --arg note "$NOTE" \
+    '
+    def with_note($existing):
+        if $note == "" then $existing
+        elif ($existing // "") == "" then $note
+        elif any($existing | split("; ")[]; . == $note) then $existing
+        else $existing + "; " + $note
+        end;
+    .items |= map(if .id == $id then .status = $stat | .notes = with_note(.notes) else . end)
+    ' \
+    "$target" > "$target.tmp" && mv "$target.tmp" "$target"
 
-echo "Updated #$ITEM in $REPO: Status=${STATUS:-<null>}${SET_NOTE:+, Notes set}"
+note_message=""
+[[ "$SET_NOTE" == "1" && -n "$NOTE" ]] && note_message=", Note added"
+echo "Updated #$ITEM in $REPO: Status=${STATUS:-<null>}$note_message"

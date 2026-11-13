@@ -27,6 +27,7 @@ Review treats a breach as a defect to fix in the same change. "Taste", "pre-exis
 - When a comment is stale, delete it. Do not reword it.
 - A marker that a test or tool reads is not a comment to delete.
 - Doc comments (JSDoc, Javadoc) only state the contract of an exported public API. None on internal helpers.
+- Config files (`application*.yml`, `.env`, compose files) are the exception to keeping rationale in `docs/`: a short comment may say why a value is set, or warn against changing it, when the key cannot say so. It must be true of the lines below it, and the full reasoning still lives in `docs/`.
 - Bad: `// Hapi validates the full payload before route handlers run, so the token is guaranteed present.` Good: no comment. The route's `validate.payload` schema already says it.
 
 **Ids and history**

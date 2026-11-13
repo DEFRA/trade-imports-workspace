@@ -17,7 +17,10 @@
 #   4. Commits the shared/ tree, pushes the branch.
 #   5. Renders one markdown comment body per PR in scope (verdict +
 #      that PR's repo items table + next steps) and posts each via
-#      tools/github/pr-comment.sh.
+#      tools/github/pr-comment.sh. Each PR's verdict comes from its own
+#      repo's items, and names any other PR in the ticket that is not
+#      APPROVED as a possible blocker. The **Notes:** line of
+#      review-index.md is posted as written; its **Verdict:** is not.
 #   6. Emits a summary block on stdout (or JSON with --json).
 #
 # --comment-only skips steps 2-4: no shared/ tree, no branch, no push, and
@@ -32,6 +35,16 @@
 # handing over work. Every body is size-checked before it is posted either
 # way, so an over-long comment fails here with the figures rather than at
 # the API.
+#
+# --refresh posts the outcome of a refresh review: the --summary counts under
+# a re-review heading, naming the commit first reviewed and the commit the
+# latest re-review read (the last entry for that repo in re_reviews[] of
+# .review-meta.json). It refuses a repo with no re-review recorded.
+#
+# --head SHA, with --summary or --refresh and one PR, names the PR's head.
+# When it is not the commit last reviewed (the re-review's, with --refresh;
+# the first review's, without), the body says that the commits after it are
+# counted by what they closed but have not been reviewed.
 #
 # --dry-run skips git mutations and the comment POST; instead it renders
 # the comment bodies (one per PR) to /tmp and reports where they landed.
@@ -53,6 +66,8 @@ COMMENT_ONLY=0
 DRY_RUN=0
 JSON=0
 SUMMARY=0
+REFRESH=0
+HEAD_SHA=""
 
 # What GitHub accepts in one issue-comment body.
 GITHUB_COMMENT_LIMIT=65536
@@ -60,7 +75,7 @@ GITHUB_COMMENT_LIMIT=65536
 usage() {
     cat >&2 <<EOF
 Usage: $0 EUDPA-XXXXX [--repo R] [--pr N] [--comment-only] [--summary]
-                      [--branch B] [--dry-run] [--json]
+                      [--refresh] [--head SHA] [--branch B] [--dry-run] [--json]
 
   --repo R         Only PRs in this repo. PR numbers repeat across repos,
                    so pass --repo and --pr together to pin one PR.
@@ -75,7 +90,13 @@ Usage: $0 EUDPA-XXXXX [--repo R] [--pr N] [--comment-only] [--summary]
                    passes that at a few hundred items, so a large review
                    needs this. Also the readable choice for announcing an
                    outcome rather than handing over work.
-  --branch B       Handoff branch name (default chore/EUDPA-XXXXX).
+  --refresh        Post a refresh review's outcome: the --summary counts
+                   under a re-review heading, naming the commit first
+                   reviewed and the commit the latest re-review read.
+  --head SHA       With --summary or --refresh, --repo and --pr: the PR's
+                   head. When it is past the commit last reviewed, the body
+                   says the later commits have not been reviewed.
+  --branch B      Handoff branch name (default chore/EUDPA-XXXXX).
   --dry-run        Render the bodies to /tmp; no git mutations, no POST.
   --json           Emit a JSON summary on stdout.
 EOF
@@ -89,6 +110,8 @@ while [[ $# -gt 0 ]]; do
         --pr) PR_FILTER="$2"; shift 2 ;;
         --comment-only) COMMENT_ONLY=1; shift ;;
         --summary) SUMMARY=1; shift ;;
+        --refresh) REFRESH=1; SUMMARY=1; shift ;;
+        --head) HEAD_SHA="$2"; shift 2 ;;
         --branch) BRANCH_OVERRIDE="$2"; shift 2 ;;
         --dry-run) DRY_RUN=1; shift ;;
         --json) JSON=1; shift ;;
@@ -98,6 +121,10 @@ while [[ $# -gt 0 ]]; do
 done
 
 [[ -z "$TICKET" ]] && usage
+if [[ -n "$HEAD_SHA" ]] && [[ "$SUMMARY" == "0" || -z "$REPO_FILTER" || -z "$PR_FILTER" ]]; then
+    echo "--head needs --summary or --refresh, and --repo and --pr: a head belongs to one PR." >&2
+    exit 1
+fi
 
 review_dir="$WORKSPACE/workareas/reviews/$TICKET"
 meta="$review_dir/.review-meta.json"
@@ -165,10 +192,62 @@ fi
 
 # ---------- Step 3: render the comment bodies (one per PR) ----------
 
-verdict=""
+notes=""
 if [[ -f "$artefact_dir/review-index.md" ]]; then
-    verdict=$(grep -m1 '^\*\*Verdict:\*\*' "$artefact_dir/review-index.md" | sed 's/^\*\*Verdict:\*\*[[:space:]]*//')
+    notes=$(grep -m1 '^\*\*Notes:\*\*' "$artefact_dir/review-index.md" | sed 's/^\*\*Notes:\*\*[[:space:]]*//')
 fi
+
+# A repo's verdict, from its own items: FAIL while a Critical or Major item
+# is open, APPROVED WITH CHANGES while only Minor ones are, else APPROVED.
+# An item is open when it is Not Done or nobody has walked it.
+repo_verdict() {
+    local items_file="$1"
+    jq -r '
+        [.items[] | select(.disposition == null or .status == "Not Done") | .severity] as $open
+        | if any($open[]; . == "Critical" or . == "Major") then "FAIL"
+          elif ($open | length) > 0 then "APPROVED WITH CHANGES"
+          else "APPROVED" end
+    ' "$items_file"
+}
+
+# The other PRs in the ticket whose own verdict is not APPROVED, as
+# GitHub references joined for a sentence: "A", "A and B", "A, B and C".
+blocking_prs() {
+    local this_repo="$1" this_pr="$2"
+    local refs=() other_repo other_pr other_items
+    while IFS=$'\t' read -r other_repo other_pr; do
+        [[ "$other_repo" == "$this_repo" && "$other_pr" == "$this_pr" ]] && continue
+        other_items="$artefact_dir/items.${other_repo}.json"
+        [[ -f "$other_items" ]] || continue
+        [[ "$(repo_verdict "$other_items")" == "APPROVED" ]] && continue
+        refs+=("DEFRA/$other_repo#$other_pr")
+    done < <(jq -r '.prs[] | "\(.repo)\t\(.pr)"' "$meta")
+    local count=${#refs[@]}
+    if (( count == 0 )); then
+        return
+    elif (( count == 1 )); then
+        echo "${refs[0]}"
+    else
+        local joined
+        joined=$(printf '%s, ' "${refs[@]:0:count-1}")
+        echo "${joined%, } and ${refs[count-1]}"
+    fi
+}
+
+verdict_line() {
+    local items_file="$1" repo="$2" pr="$3"
+    [[ -f "$items_file" ]] || return
+    local own blockers
+    own=$(repo_verdict "$items_file")
+    blockers=$(blocking_prs "$repo" "$pr")
+    if [[ -z "$blockers" ]]; then
+        echo "$own"
+    elif [[ "$own" == "FAIL" ]]; then
+        echo "FAIL. Also potentially blocked by $blockers."
+    else
+        echo "$own, potentially blocked by $blockers. Merge this PR with caution."
+    fi
+}
 
 reviewer=$("$WORKSPACE/tools/github/whoami.sh" 2>/dev/null || echo "(unknown)")
 
@@ -182,7 +261,7 @@ render_item_counts() {
     echo "| Status | Items |"
     echo "|---|---|"
     jq -r '
-        [.items[] | (.status // "—") + " / " + (.disposition // "none")]
+        [.items[] | if .disposition == null then "Not walked" else (.status // "—") + " / " + .disposition end]
         | group_by(.) | map({k: .[0], n: length}) | sort_by(-.n)
         | .[] | "| \(.k) | \(.n) |"
     ' "$items_file"
@@ -194,13 +273,19 @@ render_item_counts() {
         | ["Critical", "Major", "Minor"]
         | map(. as $sev | {
             sev: $sev,
-            open: ([$all[] | select(.severity == $sev and .status == "Not Done")] | length),
+            open: ([$all[] | select(.severity == $sev and (.disposition == null or .status == "Not Done"))] | length),
             total: ([$all[] | select(.severity == $sev)] | length)
           })
         | .[] | select(.total > 0) | "| \(.sev) | \(.open) | \(.total) |"
     ' "$items_file"
     echo
-    echo "_$(jq -r '.items | length' "$items_file") items in this repo. Each one, with its issue, what it must satisfy and the commit that closed it, is in \`$(basename "$items_file")\`._"
+    local count
+    count=$(jq -r '.items | length' "$items_file")
+    if [[ "$count" == "1" ]]; then
+        echo "_1 item in this repo. Its issue, what it must satisfy and the commit that closed it are in \`$(basename "$items_file")\`._"
+    else
+        echo "_$count items in this repo. Each one, with its issue, what it must satisfy and the commit that closed it, is in \`$(basename "$items_file")\`._"
+    fi
 }
 
 pr_repos=()
@@ -210,23 +295,50 @@ pr_bodies=()
 while IFS=$'\t' read -r repo pr; do
     body_tmp=$(mktemp -t "share-review-$TICKET-pr$pr-XXXXXX.md")
 
+    reviewed_sha=$(echo "$prs_json" | jq -r --arg repo "$repo" \
+        'first(.[] | select(.repo == $repo) | .commit) // "" | .[0:8]')
+    re_reviewed_sha=""
+    if [[ "$REFRESH" == "1" ]]; then
+        re_reviewed_sha=$(jq -r --arg repo "$repo" '
+            [(.re_reviews // [])[] | .changes[] | select(.repo == $repo) | .current_commit]
+            | last // "" | .[0:8]' "$meta")
+        if [[ -z "$re_reviewed_sha" ]]; then
+            echo "No re-review recorded for $repo in $meta. Run a refresh review first." >&2
+            exit 1
+        fi
+    fi
+
     {
-        if [[ "$COMMENT_ONLY" == "1" ]]; then
+        if [[ "$REFRESH" == "1" ]]; then
+            echo "# Code re-review — $TICKET"
+        elif [[ "$COMMENT_ONLY" == "1" ]]; then
             echo "# Code review — $TICKET"
         else
             echo "# Code review handoff — $TICKET"
         fi
         echo
+        items_file="$artefact_dir/items.${repo}.json"
+        verdict=$(verdict_line "$items_file" "$repo" "$pr")
         if [[ -n "$verdict" ]]; then
             echo "**Verdict:** $verdict"
         fi
+        if [[ -n "$notes" ]]; then
+            echo "**Notes:** $notes"
+        fi
         echo "**Reviewer:** @$reviewer"
-        # Name the commit the findings were raised against, so a reader can
-        # tell what the verdict covers when the head has since moved.
-        reviewed_sha=$(echo "$prs_json" | jq -r --arg repo "$repo" \
-            'first(.[] | select(.repo == $repo) | .commit) // "" | .[0:8]')
-        if [[ -n "$reviewed_sha" ]]; then
+        if [[ "$REFRESH" == "1" ]]; then
+            [[ -n "$reviewed_sha" ]] && echo "**First reviewed at:** \`$reviewed_sha\`"
+            echo "**Re-reviewed at:** \`$re_reviewed_sha\`"
+            head_short="${HEAD_SHA:0:8}"
+            if [[ -n "$head_short" && "$head_short" != "$re_reviewed_sha" ]]; then
+                echo "**PR head:** \`$head_short\`. The commits after \`$re_reviewed_sha\` are counted below by the items they closed, but have not been re-reviewed."
+            fi
+        elif [[ -n "$reviewed_sha" ]]; then
             echo "**Reviewed at:** \`$reviewed_sha\`"
+            head_short="${HEAD_SHA:0:8}"
+            if [[ -n "$head_short" && "$head_short" != "$reviewed_sha" ]]; then
+                echo "**PR head:** \`$head_short\`. The commits after \`$reviewed_sha\` are counted below by the items they closed, but have not been reviewed."
+            fi
         fi
         if [[ "$COMMENT_ONLY" == "0" ]]; then
             echo "**Handoff branch:** \`$BRANCH\` (workspace repo)"
@@ -235,7 +347,6 @@ while IFS=$'\t' read -r repo pr; do
 
         # This PR's repo items table (only renders if items.{repo}.json
         # exists, which it should after FRESH Step 5).
-        items_file="$artefact_dir/items.${repo}.json"
         review_md="$artefact_dir/review.${repo}.md"
 
         echo "## Repository: \`$repo\`"
@@ -261,18 +372,25 @@ while IFS=$'\t' read -r repo pr; do
             # instructions aimed at someone else's workspace.
             open_count=""
             if [[ -f "$items_file" ]]; then
-                open_count=$(jq -r '[.items[] | select(.status == "Not Done")] | length' "$items_file")
+                open_count=$(jq -r '[.items[] | select(.disposition == null or .status == "Not Done")] | length' "$items_file")
             fi
 
             echo "## Status"
             echo
-            if [[ -f "$items_file" && "$open_count" == "0" ]]; then
+            if [[ -f "$items_file" && "$open_count" == "0" && "$SUMMARY" == "1" ]]; then
+                merged_count=$(jq -r '[.items[] | select(.disposition == "Merged")] | length' "$items_file")
+                if [[ "$merged_count" == "0" ]]; then
+                    echo "Every **Fix** item for this repo is **Done** on this branch."
+                else
+                    echo "Every **Fix** item for this repo is **Done** on this branch. **Merged** items are sub-findings folded into those Fix items."
+                fi
+            elif [[ -f "$items_file" && "$open_count" == "0" ]]; then
                 cat <<EOF
 All tracked **Fix** items for this repo are **Done** on this branch (see the Status and Notes columns above). **Merged** rows are sub-findings folded into those Fix items.
 EOF
             elif [[ -f "$items_file" && -n "$open_count" && "$open_count" != "0" ]]; then
                 cat <<EOF
-**$open_count** item(s) remain **Not Done** in the table above. The author applies them on this PR branch; local tracker: \`workareas/reviews/$TICKET/\`.
+**$open_count** item(s) remain open. The author applies them on this PR branch; local tracker: \`workareas/reviews/$TICKET/\`.
 EOF
             elif [[ -f "$items_file" ]]; then
                 echo "See the item table above."
@@ -325,7 +443,7 @@ EOF
     if (( body_size > GITHUB_COMMENT_LIMIT )); then
         echo "Comment body for $repo#$pr is $body_size characters; GitHub accepts $GITHUB_COMMENT_LIMIT." >&2
         if [[ "$SUMMARY" == "1" ]]; then
-            echo "Already summarising. Shorten the verdict in review-index.md, or post the detail as an attachment on the ticket." >&2
+            echo "Already summarising. Shorten the notes in review-index.md, or post the detail as an attachment on the ticket." >&2
         else
             echo "Re-run with --summary to post counts instead of the full item table." >&2
         fi

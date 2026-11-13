@@ -13,7 +13,7 @@ Owns:
 - Reference number generation (`ReferenceNumberGenerator`; the latest commit adds an agreed plants type-code prefix).
 - Notification lifecycle: save, replace content, copy, submit, amend, cancel-amend, soft-delete, hard-delete, list, fulfilment view.
 - An audit trail of bulk deletions (`audit` collection).
-- An optional scheduled sweep that deletes app-created notifications whose `expireAt` has passed (`notification.ttl.sweep.enabled`, off by default; ShedLock over Mongo).
+- Optional non-prod expiry: a Mongo TTL index removes app-created notifications whose `expireAt` has passed (`notification.ttl.expiry.enabled`, off by default).
 
 Does NOT own:
 - Journey UI, validation copy or flow: the plants frontend does.
@@ -39,7 +39,6 @@ OpenFeign is a dependency (with a logging config) but no Feign client was found 
 - **Build tool:** Maven
 - **API style:** REST (SpringDoc / OpenAPI)
 - **Database:** MongoDB (Spring Data, transactions with commit retry)
-- **Scheduling:** ShedLock (Mongo provider)
 - **Mapping:** MapStruct, Lombok
 - **Logging:** Logback, Elastic ECS; CDP request tracing (`x-cdp-request-id`)
 - **Tests:** JUnit 5, Testcontainers (real MongoDB); Failsafe integration tests (`mvn verify`)

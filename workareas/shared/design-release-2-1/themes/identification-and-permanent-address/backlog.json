@@ -923,7 +923,7 @@
       ],
       "dependsOn": [],
       "theme": "identification-and-permanent-address",
-      "status": "todo",
+      "status": "blocked",
       "kind": "feat",
       "repos": [
         "backend",
@@ -963,7 +963,11 @@
         "req-2150",
         "req-2151"
       ],
-      "openQuestions": [],
+      "openQuestions": [
+        "For the designer: a fallback identification panel that asks only for \"Identification details\" and \"Description\", saved with both blank, is refused with the shared typed-identifier message \"Enter at least one identifier for this animal\" (frontend src/server/app/sets/live-animals/journeys/linear/features/commodities/copy/copy.en.js:110, applied by animal-identification/form/forms.js:114), on a panel whose two fields the page never calls an identifier. The V4 data dictionary rows animal_identifier_identification_details and animal_identifier_description (confluence:6497338582, https://eaflood.atlassian.net/wiki/spaces/EUDP/pages/6497338582/Live+Animals+Germinals+Data+Fields+-+V4#animal_identifier_description) set both fields as \"string - max 58\", \"Optional\", \"Shown when given commodity does not have a specific identifier type\", and set no refusal message, so the code had to choose one. Keep the shared wording, or give this panel its own message, for example \"Enter identification details or a description for this animal\"? Raised by review finding 5 on inc-241 (plan decision D9).",
+        "Should the live-animals golden characterisation corpus gain a case that witnesses the two fallback identification obligations in scope? Review finding 7 on inc-241: frontend src/server/app/sets/live-animals/journeys/linear/fixtures/characterisation-oracles.json gives identificationDetails and description inScope false in all five corpus cases, the ostrich-line case gate-flipped included, because that case has its unitRecord gate flipped off for an unrelated reason (pinned by src/server/app/bridge/fulfilments.characterisation.test.js, which runs 102 green tests against the staged fixture). No corpus case therefore witnesses the new positive in-scope state, although section 4 test 12 of the inc-241 plan asked for one. The acceptance criteria are proven elsewhere (allowlists.test.js, applicability.test.js, flow-reachability.test.js and identification.fit.spec.js), and a new corpus case needs a hand-written golden oracle block because the repo carries no regeneration script, so the gap is recorded rather than built here.",
+        "Awaiting a signed-off ruling: this row changes 10 signed-off scenario(s). Raise the ticket drafted in ~/git/defra/trade-imports-workspace/workareas/shared/design-release-2-1/themes/identification-and-permanent-address/logs/inc-241-signed-off-ticket for a person to approve or refuse the change. The pull requests stay drafts until then."
+      ],
       "notes": [
         "New row this re-distil. Combines req-210 (every selected commodity listed, every selected species given a panel) with req-221 (the fallback panel) and the two free-text answers the notification data specification defines (req-2149, req-2150) and their length rule (req-2151): the same panel, the same two fields and one Atlantic salmon walk prove all of them, so building them apart would repeat the same set-up, review and ladder.",
         "c-333 ruled: the data specification outranks the prototype, its traces and today's frontend on which data a notification captures, so the two free-text answers are built and every selected species gets a panel. prototype-dr2-1-source-p5-013's 'otherwise there are none' half is set aside; its first half, that a species' identifier fields come from its commodity's own list, still stands.",
@@ -975,7 +979,8 @@
         "Verified against main 11 November: genuinely unbuilt. No identificationDetails or animalIdentifierDescription field exists anywhere under sets/live-animals; the 58-character pattern exists for the other identifiers (commodities/copy/copy.en.js:122-126) so the shape to follow is there. Its V4 basis is current: the page has moved from version 210 to 221 and been renamed 'Live Animals & Germinals Data Dictionary', but the Animal Identifier rows this row cites (p4-044 to p4-061, including Identification details and Description) are textually identical between the two versions, so every claim still holds. The fallback list is also unchanged: COMMODITY_IDENTIFIERS at services/commodities/rules.js carries only 0102, 0101 and 01061900, so everything else falls back as the row says."
       ],
       "gate": "Check that a species with no specific identifier reads well on the page and on the saved-animals table: the two free-text answers are the pattern every later fallback commodity copies, so look at the panel's wording, the field order and the table headings before the rest of the catalogue arrives from MDM.",
-      "rigour": "full"
+      "rigour": "full",
+      "commit": "9d94e52b b5d74db a5d4134"
     },
     {
       "id": "inc-242",
@@ -1032,7 +1037,20 @@
         "Verified against main 11 November: EUDPA-734 (f72a7a0e, 27 October) has already landed most of this. The per-field hidden submit is now one top-of-form button, <button type=submit name=action value=implicit-submit class=govuk-visually-hidden aria-hidden=true tabindex=-1> in animal-identification.njk, and identification.fit.spec.js carries a passing test that Enter in an ear tag field saves the card and keeps the trader on the page with the saved row listed. Criterion 4 is met too: 'has no serious or critical axe violations once an animal is saved' at identification.fit.spec.js:848. Criterion 3 is the real remaining work: the spec holds no Tab-order walk at all (no press('Tab') or keyboard.press anywhere in it), so which buttons a keyboard user reaches inside a panel is unproven. Plan this row as criteria-as-tests first, per its earlier note."
       ],
       "gate": null,
-      "rigour": "fast"
+      "rigour": "fast",
+      "commit": "032a2552a4c7e2646c7bc04a55124ad3053f98dc ff1b042548c53836d1a62c94a9eb4501c08c3c58",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/476",
+          "repo": "trade-imports-animals-frontend",
+          "number": 476
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/100",
+          "repo": "trade-imports-ins-tests",
+          "number": 100
+        }
+      ]
     }
   ]
 }

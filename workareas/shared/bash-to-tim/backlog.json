@@ -1374,14 +1374,35 @@
       ],
       "risk": "Low. Git config writes only.",
       "proof": "Fixture-clone vitest for each mode, including idempotence. A one-off diff of `git config --get-all remote.origin.fetch` and `for-each-ref` between bash and tim shows no difference. Delete the script once grep finds no caller.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "04ff76ba"
+          }
+        ],
+        "checks": [
+          "parity: green. tim/src/commands/workspace/light-remote.golden.test.js recorded light-remote.sh on fixture clones before the script was deleted, into __fixtures__/__golden__/light-remote.json. It covers 7 cases: exclude, exclude twice, pr-only, pr-only with --include-main, pr-only twice, pr-only on a full clone, and not-a-repo. It records stdout, stderr, the exit code, the `git config --get-all remote.origin.fetch` output and the `for-each-ref refs/remotes` output after a fetch. pin-fetch.test.js reproduces every case. A mutation probe (taking out the gh-pages ref drop) turned it red, and it went green again once the line was restored.",
+          "tim-unit: green. `npm --prefix tim test` ran 250 test files and 4329 tests with no failures. One file is skipped: the golden recorder, which skips now that the script is deleted.",
+          "tim-lint: green. `run lint` and `run format:check` are both clean.",
+          "no-callers: green. `git grep light-remote` across the workspace (excluding workareas) and across every repos/* checkout returns nothing.",
+          "No new `.sh` file. The diff adds no `~/git/defra` or `$HOME/git/defra` path; two `$HOME/git/defra/.../light-remote.sh` calls in prepare-review.sh were removed."
+        ],
+        "deviations": [
+          "A usage mistake or a folder that is not a git repo now exits 2, tim's USAGE code from cli-patterns.md, instead of 1. The 'Not a git repo: <dir>' message is unchanged. Both callers only send stdout to /dev/null, and prepare-review.sh also appends `|| true`, so neither depends on the exit code being 1.",
+          "Usage text and validation are tim's. `--pr` must be a positive integer. `--prune` is allowed only with `--exclude-gh-pages`, and `--include-main` only with `--pr`.",
+          "The `--prune` flag named in timCommand is new. It runs `git gc --prune=now`, and the docs/agent-onboarding.md snippet now uses it in place of a separate gc line.",
+          "Outside the row's caller list: tim/README.md gets a section for the new command. I also deleted the rationale comment above the refspec constants in tim/src/exec/git-exclude-gh-pages.js (house comment rules), and I pulled out an exported `dropGhPagesRemoteRef` so both modes share it.",
+          "tools/review/prepare-review.sh and tools/review/refresh/pull-repos.sh now need `tim` on PATH, as tools/theme-ticket/push-description.sh already does."
+        ]
+      }
     },
     {
       "id": "P29",

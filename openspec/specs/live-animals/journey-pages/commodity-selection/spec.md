@@ -370,7 +370,7 @@ The system MUST offer each tally entry a control whose accessible name is "Remov
 
 ### Requirement: Without JavaScript, an Update selected control brings the tally up to date
 **ID**: REQ-COMMODITY-SELECT-019
-Without JavaScript, the system MUST offer an "Update selected" control under the results that brings the tally up to date with the ticks on screen, keeping the search term and its results. With JavaScript on, it MUST NOT show the control, because a tick brings the tally up to date itself. The control and its copy are agreed for now, and will be revisited when the designers pick up their no-JavaScript ticket.
+Without JavaScript, the system MUST offer an "Update selected" control under the results that brings the tally up to date with the ticks on screen, keeping the search term and its results. With JavaScript on, it MUST NOT show the control, because a tick brings the tally up to date itself.
 
 #### Scenario: With JavaScript off, Update selected brings the tally up to date with the ticks on screen
 **ID**: SCN-COMMODITY-SELECT-019-A

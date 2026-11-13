@@ -146,6 +146,24 @@ TAGS="@ins-backend @gateway" tim ci tags
 - `tags` prints the tags joined by `|`, as one `--grep` pattern. It refuses
   a tag that is not `@` followed by letters, digits, `_` or `-`.
 
+### `tim refine` — the ticket-refiner skill's workarea
+
+```bash
+tim refine prepare EUDPA-1234
+tim refine finalize EUDPA-1234 --verdict READY --reason "Clear AC, repos identified"
+```
+
+- `prepare` writes `workareas/ticket-refinement/<ticket>/` in the workspace
+  it runs in: `ticket.md` (the rendered description, comments and the
+  Confluence pages the description links to), `.refinement-meta.json` with
+  `verdict: null`, and `review.md` from the skill's template. It keeps a
+  `review.md` that already has content. Running it again resets the
+  verdict. Comments or a page it cannot read are left out, and `--json`
+  lists them under `skipped`.
+- `finalize` records the verdict, which must be `READY`, `NEEDS WORK` or
+  `SPIKE REQUIRED`, its reason (null when empty) and `completed_at`,
+  keeping the meta's other keys in place.
+
 ### `tim capture` — photograph a running app
 
 Runs an app's own FIT suite with Playwright tracing on, keeps the traces under

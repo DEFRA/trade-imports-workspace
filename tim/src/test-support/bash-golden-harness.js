@@ -63,7 +63,15 @@ export const stageBashWorkspace = ({ scripts, files = {} }) => {
   }
 }
 
-const normalise = (text, home) =>
+/**
+ * Text as a recording holds it: `home` becomes `<HOME>` and ISO timestamps
+ * become `<TIMESTAMP>`.
+ *
+ * @param {string | undefined} text
+ * @param {string} home
+ * @returns {string}
+ */
+export const normaliseRecordedText = (text, home) =>
   (text ?? '').split(home).join('<HOME>').replace(ISO_TIMESTAMP, '<TIMESTAMP>')
 
 const filesUnder = (dir) =>
@@ -71,6 +79,25 @@ const filesUnder = (dir) =>
     .filter((entry) => entry.isFile())
     .map((entry) => join(entry.parentPath, entry.name))
     .sort()
+
+/**
+ * Every file under a folder, by its path inside the folder, with its text
+ * normalised as {@link normaliseRecordedText} does. Empty when the folder
+ * is missing.
+ *
+ * @param {string} folder
+ * @param {string} home
+ * @returns {Record<string, string>}
+ */
+export const recordFolderFiles = (folder, home) => {
+  const files = existsSync(folder) ? filesUnder(folder) : []
+  return Object.fromEntries(
+    files.map((path) => [
+      relative(folder, path),
+      normaliseRecordedText(readFileSync(path, 'utf8'), home)
+    ])
+  )
+}
 
 /**
  * Runs a staged script with HOME pointed at the staged workspace and
@@ -106,19 +133,14 @@ export const recordBashRun = async (
   )
   const recording = {
     exitCode: result.exitCode,
-    stdout: normalise(result.stdout, staged.home),
-    stderr: normalise(result.stderr, staged.home)
+    stdout: normaliseRecordedText(result.stdout, staged.home),
+    stderr: normaliseRecordedText(result.stderr, staged.home)
   }
   if (watch === undefined) return recording
-  const watched = join(staged.root, watch)
-  const files = existsSync(watched) ? filesUnder(watched) : []
-  recording.files = Object.fromEntries(
-    files.map((path) => [
-      relative(watched, path),
-      normalise(readFileSync(path, 'utf8'), staged.home)
-    ])
-  )
-  return recording
+  return {
+    ...recording,
+    files: recordFolderFiles(join(staged.root, watch), staged.home)
+  }
 }
 
 /**

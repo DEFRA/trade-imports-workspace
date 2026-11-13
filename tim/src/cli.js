@@ -31,6 +31,7 @@ import { register as registerCapture } from './commands/capture/index.js'
 import { register as registerSpec } from './commands/spec/index.js'
 import { register as registerPrototype } from './commands/prototype/index.js'
 import { register as registerCi } from './commands/ci/index.js'
+import { register as registerRefine } from './commands/refine/index.js'
 
 const SCHEMA_VERSION = 1
 
@@ -168,6 +169,7 @@ export const buildProgram = () => {
   registerSpec(program, { timVersion: pkg.version })
   registerPrototype(program, { timVersion: pkg.version })
   registerCi(program, { timVersion: pkg.version })
+  registerRefine(program, { timVersion: pkg.version })
 
   return program
 }

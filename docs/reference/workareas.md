@@ -16,7 +16,7 @@ workareas/code-style-reviews/local/{repo}/{branch}/ → same shape as EUDPA-X ab
 workareas/ticket-creation/.prereqs/                → epics.txt, capabilities.txt, meta.json (refreshed by prepare-ticket-creation.sh)
 workareas/ticket-creation/<slug>/                  → draft.md, ticket.json (tim-ticket/1 manifest: project, type, summary, descriptionFile, parent, labels, priority, attachments, relates), ticket.description.jira.txt, ticket.created.json (the `tim jira create` receipt, once confirmed)
 workareas/ticket-planning/EUDPA-X/                 → ticket.md, plan.md, .plan-meta.json, .implement-meta.json, best-practices/{repo}.md, .diffs/{repo}.diff
-workareas/ticket-refinement/EUDPA-X/               → ticket.md, review.md, .refinement-meta.json
+workareas/ticket-refinement/EUDPA-X/               → ticket.md, review.md, .refinement-meta.json (tim refine)
 workareas/npm-upgrades/EUDPA-X/{repo}/             → packages.{repo}.json, .upgrades-meta.json, best-practices.md, .context/{pkg}/
 workareas/govuk-upgrades/EUDPA-X/                  → .run-meta.json
 workareas/govuk-upgrades/EUDPA-X/{repo}/           → versions.{repo}.json, CHANGELOG.md, version__{v}.changelog.md, best-practices.md

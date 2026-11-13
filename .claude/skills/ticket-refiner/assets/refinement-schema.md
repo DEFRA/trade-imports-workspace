@@ -1,13 +1,13 @@
 # `.refinement-meta.json` schema
 
 Single flat JSON sidecar per refinement, written by
-`tools/refine/prepare-refinement.sh` and finalised by
-`tools/refine/refine-finalize.sh`. Lives at
+`tim refine prepare` and finalised by
+`tim refine finalize`. Lives at
 `workareas/ticket-refinement/EUDPA-X/.refinement-meta.json`.
 
 The prose narrative (questions, improvements, AC analysis, technical
 notes) stays in `review.md`. The sidecar exists to make the verdict
-typo-safe (enum-enforced by `refine-finalize.sh`) and machine-readable
+typo-safe (enum-enforced by `tim refine finalize`) and machine-readable
 so the verdict can be recalled later without re-parsing `review.md`.
 
 ## Fields
@@ -21,10 +21,10 @@ so the verdict can be recalled later without re-parsing `review.md`.
 | `parent` | string | Jira `.fields.parent.key` | `"None"` if absent |
 | `labels` | string[] | Jira `.fields.labels` | empty array if none |
 | `status` | string | Jira `.fields.status.name` | e.g. `To Do`, `Refining` |
-| `created` | string | dispatcher | ISO-8601 UTC timestamp of refinement run |
-| `verdict` | string \| null | `refine-finalize.sh` | starts `null`; one of `READY`, `NEEDS WORK`, `SPIKE REQUIRED` |
-| `verdict_reason` | string \| null | `refine-finalize.sh` | optional `--reason` |
-| `completed_at` | string \| null | `refine-finalize.sh` | ISO-8601 UTC timestamp when verdict was set |
+| `created` | string | `tim refine prepare` | ISO-8601 UTC timestamp of refinement run |
+| `verdict` | string \| null | `tim refine finalize` | starts `null`; one of `READY`, `NEEDS WORK`, `SPIKE REQUIRED` |
+| `verdict_reason` | string \| null | `tim refine finalize` | optional `--reason` |
+| `completed_at` | string \| null | `tim refine finalize` | ISO-8601 UTC timestamp when verdict was set |
 
 ## What is NOT in the schema
 
@@ -41,7 +41,7 @@ so the verdict can be recalled later without re-parsing `review.md`.
 
 ## Verdict enum
 
-`refine-finalize.sh` rejects anything other than:
+`tim refine finalize` rejects anything other than:
 
 - `READY`
 - `NEEDS WORK`
@@ -51,7 +51,7 @@ No new values.
 
 ## Writing the file
 
-Both `prepare-refinement.sh` (seed) and `refine-finalize.sh` (verdict
-update) write atomically: build the new JSON in a temp file with `jq`,
-then `mv` it over the destination so a partial write never leaves the
-file truncated.
+Both `tim refine prepare` (seed) and `tim refine finalize` (verdict
+update) write atomically: they write the new JSON to a temp file in the
+same folder, then rename it over the destination, so a partial write never
+leaves the file truncated.

@@ -250,7 +250,7 @@
       "dependsOn": [],
       "risk": "Medium. A false refusal blocks the one stack, so --force stays. Keep `name: trade-imports` (docker/stack/compose.yml:1). A per-clone project name would hide the stack from the lease and clash on host ports.",
       "proof": "Fake docker answering container labels from clone A while tim runs as clone B: down, up, dev and bounce refuse and name A; --force goes ahead; the same clone goes ahead as before. Lease tests: same holder name from another workspace is refused. Live: `tim docker dev` from clone A, then `tim docker down` from clone B is refused.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
@@ -258,7 +258,32 @@
         "no-callers",
         "stack-smoke"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "c187dbce"
+          }
+        ],
+        "checks": [
+          "Verifier issue 1 (forced acquire left another clone's lease) FIXED: in tim/src/exec/stack-lease.js, the reuse path now goes through reuseUnderLease. When the lease belongs to another clone (only reachable with --force), it rewrites the lease with workspace set to this workspaceRoot and returns heldBefore: false.",
+          "Verifier issue 2 (weak golden test) FIXED: 'acquire reuses that stack with force, taking the lease for this clone' now asserts the lease file's workspace and the returned lease's workspace are this clone, and heldBefore is false. Two new tests: after a forced acquire this clone records containers (updated: true, new ids), and it releases without --force (released, stack down, lease gone).",
+          "Verifier issue 3 (stale lease from another clone counted as held before) FIXED: startUnderLease works out heldBefore with isOwnLease (holder and workspace), and replaced names the previous holder whenever it is not this clone's own lease. restoreOrClearLease uses isOwnLease too, so a failed start clears another clone's lease instead of restoring it. The stale-lease test now asserts heldBefore false and replaced = holder. A new test checks that a failed start over another clone's stale lease clears it ('the lease cleared').",
+          "Verifier issue 4 (comment breach in index.test.js) FIXED: renamed writeFakeDocker to writeDockerListingStackWorkingDirs and workingDirsPath to stackWorkingDirsPath, and deleted the comment. grep shows no old names left.",
+          "Red-without-fix proof: with only stack-lease.js stashed, 5 of the 56 stack-lease tests fail (the 5 new or strengthened ones). With the fix restored, all pass.",
+          "tim-unit: PASS. npm --prefix tim test: 235 files and 3969 tests passed.",
+          "tim-lint: PASS. npm run lint and npm run format:check both exit 0.",
+          "parity: PASS. Existing tests are unchanged apart from the ones strengthened above. A lease with no workspace field still counts as this clone's (isOwnLease), so same-clone heldBefore, restore and reuse behave as before.",
+          "no-callers: PASS. heldBefore has one reader, gate.js:462, and the interface is unchanged. replaced has no reader outside tests.",
+          "fixed-path / new .sh: PASS. The amended diff adds no mention of git/defra and no .sh file.",
+          "stack-smoke: NOT RUN, for the builder's reason: an unleased stack somebody started by hand is up, and the lease rules forbid taking it down."
+        ],
+        "deviations": [
+          "I amended the fixes into the row's one commit, so 0bed4797 became c187dbce. Its message now also describes the forced takeover and how a lease from another clone counts as somebody else's.",
+          "A forced reuse returns heldBefore: false, because the lease was another clone's. The gate reads heldBefore only after a start, so this changes nothing there.",
+          "The builder's other deviations still hold: tim docker logs is not refused, STACK_HELD and NOT_HOLDER are reused for the lease, the perf holder and status text changed on purpose, and the scratch clone at /private/tmp/claude-501/-Users-samfarrington-git-defra-trade-imports-workspace/51c6e0f9-b7cd-4625-9a54-d8226c61b362/scratchpad/clone-b still needs a person to delete it."
+        ]
+      }
     },
     {
       "id": "P07",

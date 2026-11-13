@@ -876,14 +876,16 @@
       "dependsOn": [],
       "risk": "Low. Tests only. guard-edits.sh blocks agent edits to .claude/hooks/**, so the loop writes the corpus and P19B (Sam) does the port.",
       "proof": "One golden case per allow and deny branch, green against today's Bash hooks.",
-      "status": "todo",
+      "status": "blocked",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "blockedReason": "The golden corpus hard-coded the canonical clone path in the piped-test-run deny message, which breaks the fixed-path ban and stops P19B passing the corpus unchanged, so the case must build that path from CLAUDE_PROJECT_DIR and P19B's callersToUpdate must name guard-bash.sh:120."
+      }
     },
     {
       "id": "P20",

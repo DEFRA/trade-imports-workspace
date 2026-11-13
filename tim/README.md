@@ -917,6 +917,8 @@ tim jira assign EUDPA-200 <accountId> --confirm      # assigns it, then reads th
 tim jira comment EUDPA-200 --body "Fixed on main."  # dry run: shows the comment that would be added
 tim jira comment EUDPA-200 --file comment.txt --confirm  # posts it, then reads the comments back to check
 tim jira epics --project EUDPA --json              # read-only: open epics in a project, for a hand-off's default parent (no dry-run/confirm — nothing is written)
+tim jira epics --board 13780 [--include-done]      # read-only: the board's epics as 'KEY — summary' lines, open only unless --include-done (the board decides what is done)
+tim jira labels --board 13780 --json               # read-only: how often each label appears in the board's backlog, most used first
 tim jira search commodity MDM --open               # read-only: tickets in JIRA_PROJECT_KEY (or --project) whose text matches the words, newest change first; --open leaves out done tickets
 tim jira search --jql "parent = EUDPA-125" --limit 100 --json  # read-only: sends the JQL as written (--limit defaults to 50, up to 500)
 ```

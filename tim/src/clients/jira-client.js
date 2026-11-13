@@ -176,7 +176,10 @@ export const createJiraClient = ({
       throw new TimError('NETWORK', `${action}: ${error.message}`, error)
     }
     if (response.status === 400) {
-      throw mapBadRequest(action, await parseBody(response, action))
+      const payload = await parseBody(response, action)
+      const badRequest = mapBadRequest(action, payload)
+      badRequest.jiraMessages = payload?.errorMessages ?? []
+      throw badRequest
     }
     const mapped = mapStatus(response.status, action)
     if (mapped) {
@@ -753,6 +756,53 @@ export const createJiraClient = ({
     },
 
     /**
+     * The epics on an agile board. The board, not the issue's status
+     * category, decides whether an epic is done, so this set can differ
+     * from `listOpenEpics` for the board's project. Reads one page of up
+     * to 100 epics.
+     *
+     * @param {number|string} boardId
+     * @param {object} [options]
+     * @param {boolean} [options.includeDone=false] - Keep the epics the board marks done
+     * @returns {Promise<Array<{key: string, summary: string, done: boolean}>>}
+     */
+    listBoardEpics: async (boardId, { includeDone = false } = {}) => {
+      const data = await get(
+        `/rest/agile/1.0/board/${encodeURIComponent(boardId)}/epic?maxResults=100`,
+        `listBoardEpics(${boardId})`
+      )
+      return (data.values ?? [])
+        .filter((epic) => includeDone || epic.done === false)
+        .map(({ key, summary, done }) => ({ key, summary, done }))
+    },
+
+    /**
+     * How often each label appears on the issues in an agile board's
+     * backlog, most used first, ties in code point order. Reads one page
+     * of up to 1000 issues.
+     *
+     * @param {number|string} boardId
+     * @returns {Promise<Array<{label: string, count: number}>>}
+     */
+    listBoardLabels: async (boardId) => {
+      const data = await get(
+        `/rest/agile/1.0/board/${encodeURIComponent(boardId)}/backlog?maxResults=1000&fields=labels`,
+        `listBoardLabels(${boardId})`
+      )
+      const counts = new Map()
+      for (const issue of data.issues ?? []) {
+        for (const label of issue.fields?.labels ?? []) {
+          counts.set(label, (counts.get(label) ?? 0) + 1)
+        }
+      }
+      return [...counts]
+        .map(([label, count]) => ({ label, count }))
+        .sort(
+          (a, b) => b.count - a.count || compareCodePoints(a.label, b.label)
+        )
+    },
+
+    /**
      * Every open issue under a parent (an epic's children), with its summary,
      * reading every page the enhanced JQL search returns.
      *
@@ -823,3 +873,8 @@ export const createJiraClient = ({
 
 const MAX_CHILD_PAGES = 50
 const MAX_SEARCH_PAGE_SIZE = 100
+
+const compareCodePoints = (a, b) => {
+  if (a < b) return -1
+  return a > b ? 1 : 0
+}

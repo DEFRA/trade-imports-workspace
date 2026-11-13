@@ -46,7 +46,7 @@ mkdir -p "$OUTPUT_DIR"
 # ── 1. Active epics from the board ─────────────────────────────────────────────
 
 EPICS_FILE="$OUTPUT_DIR/epics.txt"
-"$WORKSPACE/tools/jira/list-board-epics.sh" "$BOARD_ID" > "$EPICS_FILE"
+tim jira epics --board "$BOARD_ID" --no-ui > "$EPICS_FILE"
 EPIC_COUNT=$(wc -l < "$EPICS_FILE" | tr -d ' ')
 
 # ── 2. Capability codes from the synced capability map ────────────────────────

@@ -17,8 +17,11 @@ text) and a `planId`, and only writes with a matching `--confirm <planId>`;
 `attach`, `link` and `assign` write with `--confirm`. `link` takes
 `relates <key>`, `--blocks <key>` or `--blocked-by <key>` and reads back the
 direction Jira stored. `assign` takes an account id or `me` and reads the
-assignee back. `tim jira epics` and `tim jira search` are read-only; `search`
-takes search words (a text search in the project) or `--jql <query>`. The `ticket-creator` skill and the
+assignee back. `tim jira epics`, `tim jira labels` and `tim jira search` are
+read-only; `search` takes search words (a text search in the project) or
+`--jql <query>`. `tim jira epics --board <id> [--include-done]` lists a
+board's epics as `KEY — summary` lines, and `tim jira labels --board <id>`
+counts the labels in a board's backlog. The `ticket-creator` skill and the
 `prototype` skill's hand-off both create through it rather than
 `tools/jira/create-ticket.sh` below, which stays as the plain-bash
 alternative and the one the build loop still calls directly.
@@ -31,8 +34,6 @@ alternative and the one the build loop still calls directly.
 | `tools/jira/create-ticket.sh` | [-t Type][-p Parent][-P Priority][-l Label][-a] "Summary" | Create ticket.<br>e.g. `tools/jira/create-ticket.sh -t Task -p EUDPA-215 "Add boundary notes"`<br>Boundary: performs the live Jira creation (vs `ticket-creator/prepare-ticket-creation.sh`, which only pre-caches epics/capabilities beforehand). |
 | `tools/jira/add-comment.sh` | EUDPA-X "Comment" | Add comment |
 | `tools/jira/transition-ticket.sh` | EUDPA-X "Status"\|--list | Change status. Takes a status or a transition name; `--list` prints `transition -> status`.<br>`tim jira transition EUDPA-X "Status" [--list] [--json]` now covers this, and is what the increment build loop calls; the script stays for use by hand. |
-| `tools/jira/list-board-epics.sh` | board-id [list\|json] [--include-done] | List epics on a board |
-| `tools/jira/list-board-labels.sh` | board-id [list\|json] | Aggregate label frequencies from a board's backlog |
 | `tools/jira/search.sh` | "JQL" [list\|summary\|json] [--fields ...] | Run JQL across the project (paginates via v3 endpoint) |
 | **github** | | |
 | `tools/github/prs.sh` | EUDPA-X [list\|json\|urls] | Find PRs |

@@ -6,6 +6,7 @@ import { register as registerLink } from './link.js'
 import { register as registerDetach } from './detach.js'
 import { register as registerUnlink } from './unlink.js'
 import { register as registerEpics } from './epics.js'
+import { register as registerLabels } from './labels.js'
 import { register as registerSearch } from './search.js'
 import { register as registerTransition } from './transition.js'
 import { register as registerAssign } from './assign.js'
@@ -74,7 +75,7 @@ export const register = (program, { timVersion }) => {
   const jira = program
     .command('jira')
     .description(
-      "Read and search Jira tickets and comments, raise a ticket from a manifest, rewrite a ticket's summary or description, comment on, link and assign tickets, delete attachments and links, and move a ticket's status (create, update, attach, detach, comment, link, unlink and assign are dry run by default; transition is not)"
+      "Read and search Jira tickets and comments, list a project's or board's epics and a board's labels, raise a ticket from a manifest, rewrite a ticket's summary or description, comment on, link and assign tickets, delete attachments and links, and move a ticket's status (create, update, attach, detach, comment, link, unlink and assign are dry run by default; transition is not)"
     )
 
   jira
@@ -118,6 +119,7 @@ export const register = (program, { timVersion }) => {
   registerDetach(jira, { timVersion })
   registerUnlink(jira, { timVersion })
   registerEpics(jira, { timVersion })
+  registerLabels(jira, { timVersion })
   registerSearch(jira, { timVersion })
   registerTransition(jira, { timVersion })
   registerAssign(jira, { timVersion })

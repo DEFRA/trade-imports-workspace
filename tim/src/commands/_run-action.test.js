@@ -72,6 +72,19 @@ describe('makeRunAction', () => {
     })
   })
 
+  test('prints nothing, not even a newline, when the text rendering is null', async () => {
+    const captured = captureProcessOutput()
+    const action = makeRunAction({
+      run: async () => [],
+      renderText: () => null,
+      timVersion: '1.0.0'
+    })
+
+    await invoke(action)
+
+    expect(captured).toEqual({ stdout: '', stderr: '', exitCode: 0 })
+  })
+
   test('exits with the code the command chooses for an error', async () => {
     const captured = captureProcessOutput()
     const action = makeRunAction({

@@ -264,15 +264,15 @@ via the recipe in [Listing active epics](#listing-active-epics).
 ### Listing active epics
 
 When the user needs help picking a parent epic, list the open epics
-on the EUDPA board via `tools/jira/list-board-epics.sh`:
+on the EUDPA board via `tim jira epics --board`:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/jira/list-board-epics.sh 13780
+tim jira epics --board 13780
 ```
 
-That prints `KEY — summary` lines for each open epic. Pass `json`
-as a second arg for `[{key, summary, done}]`, or `--include-done`
-to include closed epics.
+That prints `KEY — summary` lines for each open epic. Add `--json`
+for `{board, epics: [{key, summary, done}]}` in the envelope's
+`result`, or `--include-done` to include closed epics.
 
 Pair with `tools/jira/ticket.sh EUDPA-X summary` for verification
 (Step 1.5 of the skill does this automatically).

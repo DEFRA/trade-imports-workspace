@@ -835,6 +835,95 @@ describe('listOpenEpics', () => {
   })
 })
 
+describe('listBoardEpics', () => {
+  const boardGoldens = loadFixture('board-epics-labels-bash-goldens.json')
+
+  const servesBoardEpics = () =>
+    mockPool(BASE)
+      .get('/rest/agile/1.0/board/13780/epic?maxResults=100')
+      .reply(200, boardGoldens.boardEpicResponse)
+
+  test('returns the epics the board has not marked done', async () => {
+    servesBoardEpics()
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    const epics = await client.listBoardEpics(13780)
+
+    expect(epics).toEqual(boardGoldens['epics-json'].stdout)
+  })
+
+  test('keeps the done epics when asked', async () => {
+    servesBoardEpics()
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    const epics = await client.listBoardEpics(13780, { includeDone: true })
+
+    const openEpics = boardGoldens['epics-json'].stdout
+    const doneEpic = {
+      key: 'EUDPA-155',
+      summary: 'Integrate with Gov.Notify for SMS/EMAIL',
+      done: true
+    }
+    const doneEpicPosition = openEpics.findIndex(
+      ({ key }) => key === 'EUDPA-190'
+    )
+    expect(epics).toEqual(openEpics.toSpliced(doneEpicPosition, 0, doneEpic))
+  })
+
+  test('maps 404 to TimError(NOT_FOUND)', async () => {
+    mockPool(BASE)
+      .get('/rest/agile/1.0/board/99/epic?maxResults=100')
+      .reply(404, { errorMessages: ['The requested board cannot be viewed'] })
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+
+    await expect(client.listBoardEpics(99)).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+      jiraMessages: ['The requested board cannot be viewed']
+    })
+  })
+
+  test("keeps Jira's error messages on a 400", async () => {
+    mockPool(BASE)
+      .get('/rest/agile/1.0/board/99/epic?maxResults=100')
+      .reply(400, { errorMessages: ['The board does not support epics.'] })
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+
+    await expect(client.listBoardEpics(99)).rejects.toMatchObject({
+      code: 'USAGE',
+      jiraMessages: ['The board does not support epics.']
+    })
+  })
+})
+
+describe('listBoardLabels', () => {
+  const boardGoldens = loadFixture('board-epics-labels-bash-goldens.json')
+
+  test("counts each label in the board's backlog, most used first, ties in code point order", async () => {
+    mockPool(BASE)
+      .get('/rest/agile/1.0/board/13780/backlog?maxResults=1000&fields=labels')
+      .reply(200, boardGoldens.boardBacklogResponse)
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    const labels = await client.listBoardLabels(13780)
+
+    expect(labels).toEqual(boardGoldens['labels-json'].stdout)
+  })
+
+  test('maps 401 to TimError(AUTH)', async () => {
+    mockPool(BASE)
+      .get('/rest/agile/1.0/board/13780/backlog?maxResults=1000&fields=labels')
+      .reply(401, {})
+
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+
+    await expect(client.listBoardLabels(13780)).rejects.toMatchObject({
+      code: 'AUTH'
+    })
+  })
+})
+
 describe('listTransitions', () => {
   test('returns each transition with the status it leads to', async () => {
     mockPool(BASE)

@@ -14,7 +14,7 @@ const emitError = (text) => writeLine(process.stderr, text)
  *   commander options before any side-effect runs. Defaults to passing
  *   options through unchanged.
  * @param {(context: {args: any[]}, parsedOptions: object) => Promise<any>} args.run
- * @param {(result: any) => string} args.renderText
+ * @param {(result: any) => string|null} args.renderText - null prints nothing, not even a newline
  * @param {(result: any) => string} [args.renderTextError] - Text mode only: what a result that partly failed prints to stderr after its output. Defaults to nothing
  * @param {(result: any, parsedOptions: object) => number} [args.exitCodeForResult] - Defaults to always OK
  * @param {(error: Error) => number} [args.exitCodeForError] - Defaults to `exitCodeFor`
@@ -41,7 +41,8 @@ export const makeRunAction = ({
           JSON.stringify(jsonEnvelope({ ok: true, result, timVersion }))
         )
       } else {
-        await emit(renderText(result))
+        const text = renderText(result)
+        if (text !== null) await emit(text)
         const errorText = renderTextError(result)
         if (errorText) await emitError(errorText)
       }

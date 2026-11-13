@@ -1,5 +1,5 @@
 import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
-import { runStackScript } from '../../exec/stack.js'
+import { runStackScript, otherCloneOwningStack } from '../../exec/stack.js'
 import { OK, USAGE, ERROR } from '../../constants/exitCodes.js'
 import { isTimError } from '../../errors.js'
 import { registerLease, registerPerf } from './lease.js'
@@ -38,6 +38,27 @@ const refuseUnderLease = ({ lease, json, timVersion }) => {
   process.exit(ERROR)
 }
 
+const otherCloneRefusal = ({ owner, workspaceRoot }) =>
+  `The workspace stack running now was started from another clone, ${owner}, so tim docker leaves it alone. This clone is ${workspaceRoot}. Run tim docker from that clone, or take the stack down there first. To go ahead anyway, add ${FORCE}.`
+
+const refuseOtherClone = ({ owner, workspaceRoot, json, timVersion }) => {
+  const message = otherCloneRefusal({ owner, workspaceRoot })
+  if (json) {
+    emit(
+      JSON.stringify({
+        ok: false,
+        schema_version: SCHEMA_VERSION,
+        tim_version: timVersion,
+        result: { workspace: owner },
+        errors: [{ code: 'STACK_OTHER_CLONE', message }]
+      })
+    )
+  } else {
+    emitError(message)
+  }
+  process.exit(ERROR)
+}
+
 const makeStackAction = ({ script, extraArgs = [], timVersion }) =>
   async function stackAction() {
     const globalOpts = this.optsWithGlobals()
@@ -52,6 +73,18 @@ const makeStackAction = ({ script, extraArgs = [], timVersion }) =>
       const lease = readLease(defaultLeasePath())
       if (lease && !force) {
         refuseUnderLease({ lease, json: globalOpts.json, timVersion })
+        return
+      }
+      const owner = force
+        ? null
+        : await otherCloneOwningStack({ workspaceRoot })
+      if (owner) {
+        refuseOtherClone({
+          owner,
+          workspaceRoot,
+          json: globalOpts.json,
+          timVersion
+        })
         return
       }
       const result = await runStackScript({
@@ -154,7 +187,7 @@ export const register = (program, { timVersion }) => {
   const docker = program
     .command('docker')
     .description(
-      'Workspace Docker stack — wraps scripts/stack/ (run-stack.sh, stop-stack.sh, etc.). While a build holds the stack lease (tim docker lease status), up, dev, down, restart and bounce-backend refuse unless you add --force. perf starts it as a performance target under a lease (tim docker perf). logs follows service logs and never needs the lease.'
+      'Workspace Docker stack — wraps scripts/stack/ (run-stack.sh, stop-stack.sh, etc.). While a build holds the stack lease (tim docker lease status), or another clone of the workspace started the running stack, up, dev, down, restart and bounce-backend refuse unless you add --force. There is one stack per machine, and any clone may own it. perf starts it as a performance target under a lease (tim docker perf). logs follows service logs and never needs the lease.'
     )
 
   for (const command of STACK_COMMANDS) {

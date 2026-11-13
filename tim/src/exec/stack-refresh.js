@@ -77,7 +77,7 @@ const startAgain = async (
     logPath: logPaths.restack,
     env
   })
-  await recordLeaseContainers({ holder, leasePath, env })
+  await recordLeaseContainers({ holder, workspaceRoot, leasePath, env })
   const outcome = {
     restacked: true,
     restackLog: upRun.log,
@@ -98,6 +98,7 @@ const startAgain = async (
     lease.mode === 'dev' ? await serviceFingerprints(workspaceRoot) : {}
   recordLeaseFingerprints({
     holder,
+    workspaceRoot,
     leasePath,
     fingerprints: services,
     stackFiles
@@ -127,7 +128,7 @@ const refreshServices = async ({
     logPaths.rebuild
   )
   if (plan.rebuild.length > 0) {
-    await recordLeaseContainers({ holder, leasePath, env })
+    await recordLeaseContainers({ holder, workspaceRoot, leasePath, env })
   }
   const restart = await runDevService(
     context,
@@ -142,6 +143,7 @@ const refreshServices = async ({
   ]
   recordLeaseFingerprints({
     holder,
+    workspaceRoot,
     leasePath,
     fingerprints: fingerprintsOf(settled, current)
   })

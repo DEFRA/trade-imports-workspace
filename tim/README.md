@@ -461,6 +461,16 @@ tim docker lease status --json                                                  
   `bounce-backend` refuse with `STACK_HELD`, naming the holder. Add `--force`
   to go ahead anyway; the holder then refuses to reuse or take down what you
   start.
+- Any clone of the workspace may own the one stack. The lease records the
+  clone that took it (`workspace`). `acquire` and `release` refuse the same
+  holder name from another clone: `acquire` with `STACK_HELD` while that
+  stack is up or starting, `release` with `NOT_HOLDER`. Add `--force` to take
+  or give back the lease anyway.
+- `tim docker up`, `dev`, `down`, `restart` and `bounce-backend` read the
+  clone each running container was started from (its
+  `com.docker.compose.project.working_dir` label). When that is another clone
+  they refuse with `STACK_OTHER_CLONE`, naming it. Add `--force` to go ahead
+  anyway. `tim docker lease status --json` gives that clone as `workspace`.
 
 The lease is one file per machine, outside every repo: `TIM_STACK_LEASE`, or
 `tim/stack-lease.json` under `XDG_STATE_HOME` (default `~/.local/state`).
@@ -475,12 +485,14 @@ with `run-stack.sh --perf`, so both stubs answer at the latency profile in
 records the profile, and `tim docker lease status` says
 `perf mode, stubs on sla`. An unknown `STUB_PROFILE` exits 2 before anything
 starts. A stack leased to a build, or up with no lease, is refused with
-`STACK_HELD`. The holder defaults to `perf`. The build gate never uses perf mode.
+`STACK_HELD`. The holder defaults to `perf` followed by the clone's path,
+such as `perf /path/to/your-clone`, and `tim docker
+perf` prints the release command to run. The build gate never uses perf mode.
 
 ```bash
 tim docker perf
 STUB_PROFILE=zero-delay tim docker perf --json
-tim docker lease release --holder perf
+tim docker lease release --holder "perf <this clone’s path>"
 ```
 
 **Running the gate by hand.** `tim build gate --phase e2e` refuses a stack you

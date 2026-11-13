@@ -25,16 +25,40 @@ const writeStackScript = (name, body) => {
   return path
 }
 
+const stackWorkingDirsPath = () => join(workspace, 'stack-working-dirs')
+
+const writeDockerListingStackWorkingDirs = () => {
+  const path = join(workspace, 'fake-bin', 'docker')
+  mkdirSync(dirname(path), { recursive: true })
+  writeFileSync(
+    path,
+    [
+      '#!/usr/bin/env bash',
+      'if [ "$1" = info ]; then echo 29.1.0; exit 0; fi',
+      `if [ "$1" = ps ] && [ -f '${stackWorkingDirsPath()}' ]; then cat '${stackWorkingDirsPath()}'; fi`
+    ].join('\n')
+  )
+  chmodSync(path, 0o755)
+}
+
+const stackStartedFrom = (clone) =>
+  writeFileSync(stackWorkingDirsPath(), `${join(clone, 'docker', 'stack')}\n`)
+
+const originalPath = process.env.PATH
+
 beforeEach(() => {
   workspace = mkdtempSync(join(tmpdir(), 'tim-docker-'))
   markWorkspaceRoot(workspace)
   mkdirSync(join(workspace, 'repos'))
   mkdirSync(join(workspace, 'scripts', 'stack'), { recursive: true })
+  writeDockerListingStackWorkingDirs()
   process.env.TIM_STACK_LEASE = join(workspace, 'stack-lease.json')
+  process.env.PATH = `${join(workspace, 'fake-bin')}:${originalPath}`
 })
 
 afterEach(() => {
   delete process.env.TIM_STACK_LEASE
+  process.env.PATH = originalPath
   rmSync(workspace, { recursive: true, force: true })
 })
 
@@ -239,4 +263,105 @@ describe('tim docker under a stack lease', () => {
 
     expect(exitCode).toBe(0)
   })
+})
+
+describe('tim docker with a stack another clone started', () => {
+  const otherClone = '/clones/trade-imports-workspace-a'
+
+  const writeMarkingScripts = () => {
+    for (const script of [
+      'run-stack.sh',
+      'stop-stack.sh',
+      'restart-stack.sh',
+      'bounce-backend.sh'
+    ]) {
+      writeStackScript(script, `touch '${join(workspace, 'ran')}'`)
+    }
+  }
+
+  test.each(['up', 'dev', 'down', 'restart', 'bounce-backend'])(
+    '%s refuses with STACK_OTHER_CLONE, naming that clone',
+    async (command) => {
+      writeMarkingScripts()
+      stackStartedFrom(otherClone)
+
+      const { stdout, exitCode } = await execa(
+        'node',
+        [cliPath, 'docker', command, '--workspace', workspace, '--json'],
+        { reject: false }
+      )
+
+      const payload = JSON.parse(stdout.trim())
+      expect({
+        exitCode,
+        result: payload.result,
+        error: payload.errors[0],
+        ran: existsSync(join(workspace, 'ran'))
+      }).toEqual({
+        exitCode: 1,
+        result: { workspace: otherClone },
+        error: {
+          code: 'STACK_OTHER_CLONE',
+          message: `The workspace stack running now was started from another clone, ${otherClone}, so tim docker leaves it alone. This clone is ${workspace}. Run tim docker from that clone, or take the stack down there first. To go ahead anyway, add --force.`
+        },
+        ran: false
+      })
+    }
+  )
+
+  test('says why on stderr without --json', async () => {
+    writeMarkingScripts()
+    stackStartedFrom(otherClone)
+
+    const { stderr, exitCode } = await execa(
+      'node',
+      [cliPath, 'docker', 'down', '--workspace', workspace],
+      { reject: false }
+    )
+
+    expect({ exitCode, stderr: stderr.trim() }).toEqual({
+      exitCode: 1,
+      stderr: expect.stringContaining(
+        `was started from another clone, ${otherClone}`
+      )
+    })
+  })
+
+  test('goes ahead with --force, and does not pass --force to the script', async () => {
+    writeStackScript(
+      'stop-stack.sh',
+      `[ "$#" = 0 ] && touch '${join(workspace, 'ran')}'`
+    )
+    stackStartedFrom(otherClone)
+
+    const { exitCode } = await execa(
+      'node',
+      [cliPath, 'docker', 'down', '--workspace', workspace, '--force'],
+      { reject: false }
+    )
+
+    expect({ exitCode, ran: existsSync(join(workspace, 'ran')) }).toEqual({
+      exitCode: 0,
+      ran: true
+    })
+  })
+
+  test.each(['up', 'dev', 'down', 'restart', 'bounce-backend'])(
+    '%s goes ahead on a stack this clone started',
+    async (command) => {
+      writeMarkingScripts()
+      stackStartedFrom(workspace)
+
+      const { exitCode } = await execa(
+        'node',
+        [cliPath, 'docker', command, '--workspace', workspace],
+        { reject: false }
+      )
+
+      expect({ exitCode, ran: existsSync(join(workspace, 'ran')) }).toEqual({
+        exitCode: 0,
+        ran: true
+      })
+    }
+  )
 })

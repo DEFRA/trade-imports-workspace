@@ -11,6 +11,16 @@ the wrappers and is the surface to use.
   `tim docker restart`, `tim workspace status`. `tim` passes any other flag
   (`-b`, `-e`, `--profile`) to the wrapper. Below `tim`, use the
   `scripts/stack/` wrappers listed next.
+- **One stack per machine, and any clone may own it.** Every clone of the
+  workspace starts the same compose project, `trade-imports`
+  (`compose.yml`'s `name:`), on the same host ports, so only one stack runs
+  at a time. Whichever clone started it owns it. `tim docker up`, `dev`,
+  `down`, `restart` and `bounce-backend` refuse a stack another clone
+  started, naming that clone (`STACK_OTHER_CLONE`); work from that clone,
+  or add `--force`. The lease records its clone too, and `tim docker lease
+  acquire|release` refuse the same holder name from another clone unless
+  you add `--force`. `tim docker lease status` says which clone started the
+  running stack.
 - **Never hand-assemble `docker compose -f … -f …`.** The file list, the
   profiles and the init-script staging live in `scripts/stack/lib/`. A
   hand-built chain silently drops some of them.
@@ -270,9 +280,9 @@ profile instead of none. `perf.compose.yml` sets `STUB_LATENCY_PROFILE` from
 ```bash
 ./scripts/stack/run-stack.sh --perf                       # published images, stubs on sla
 STUB_PROFILE=zero-delay ./scripts/stack/run-stack.sh --perf
-tim docker perf                                           # the same, and takes the stack lease as "perf"
-tim docker lease status                                   # ... leased to "perf" (perf mode, stubs on sla, ...)
-tim docker lease release --holder perf                    # take it down
+tim docker perf                                           # the same, and takes the stack lease as "perf <this clone's path>"
+tim docker lease status                                   # ... leased to "perf <path>" (perf mode, stubs on sla, ...)
+tim docker lease release --holder "perf <this clone's path>"  # take it down
 curl -s http://localhost:8087/latency-profiles            # trade-imports-stub
 curl -s http://localhost:3007/latency-profiles            # defra-id-stub
 ```

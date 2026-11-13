@@ -14,6 +14,7 @@ import {
   STUB_PROFILES,
   perfStubProfile
 } from '../../exec/stack-lease.js'
+import { stackOwners } from '../../exec/stack.js'
 import { TimError } from '../../errors.js'
 
 const emit = (text) => process.stdout.write(`${text}\n`)
@@ -39,13 +40,17 @@ const acquireSchema = z.object({
   mode: z.enum(LEASE_MODES, {
     message: `--mode must be one of: ${LEASE_MODES.join(', ')}.`
   }),
-  logs: z.string().trim().min(1).optional()
+  logs: z.string().trim().min(1).optional(),
+  force: z.boolean().optional()
 })
 
 const releaseSchema = z.object({
   holder: holderSchema,
-  logs: z.string().trim().min(1).optional()
+  logs: z.string().trim().min(1).optional(),
+  force: z.boolean().optional()
 })
+
+const perfHolderFor = (workspaceRoot) => `perf ${workspaceRoot}`
 
 const stubProfileSchema = z.enum(STUB_PROFILES)
 
@@ -101,9 +106,12 @@ const releaseFailureCode = (outcome) => {
   return outcome.refused ? 'NOT_HOLDER' : 'STACK_STOP_FAILED'
 }
 
-const statusText = ({ up, containers, lease }) => {
+const startedFrom = (workspace) =>
+  workspace ? `, started from ${workspace}` : ''
+
+const statusText = ({ up, containers, lease, workspace }) => {
   const stack = up
-    ? `The workspace stack is up (${containers.length} ${containers.length === 1 ? 'container' : 'containers'}).`
+    ? `The workspace stack is up (${containers.length} ${containers.length === 1 ? 'container' : 'containers'}${startedFrom(workspace)}).`
     : 'The workspace stack is down.'
   if (lease) return `${stack} It is leased to ${describeLease(lease)}.`
   return up
@@ -161,7 +169,8 @@ const runAcquire = async ({ workspaceRoot, leasePath, opts }) => {
     holder: parsed.holder,
     mode: parsed.mode,
     leasePath,
-    logPath: join(logsDirFor(parsed.logs, leasePath), 'lease-acquire.log')
+    logPath: join(logsDirFor(parsed.logs, leasePath), 'lease-acquire.log'),
+    force: parsed.force
   })
   return {
     ok: outcome.acquired,
@@ -177,7 +186,8 @@ const runRelease = async ({ workspaceRoot, leasePath, opts }) => {
     workspaceRoot,
     holder: parsed.holder,
     leasePath,
-    logPath: join(logsDirFor(parsed.logs, leasePath), 'lease-release.log')
+    logPath: join(logsDirFor(parsed.logs, leasePath), 'lease-release.log'),
+    force: parsed.force
   })
   const code = releaseFailureCode(outcome)
   return {
@@ -190,15 +200,23 @@ const runRelease = async ({ workspaceRoot, leasePath, opts }) => {
 
 const runStatus = async ({ leasePath }) => {
   const status = await stackStatus({ leasePath })
+  const [workspace = null] = await stackOwners()
   return {
     ok: true,
-    result: { ...status, leasePath },
-    text: statusText(status)
+    result: { ...status, workspace, leasePath },
+    text: statusText({ ...status, workspace })
   }
 }
 
 const runPerf = (context) =>
-  runAcquire({ ...context, opts: { ...context.opts, mode: 'perf' } })
+  runAcquire({
+    ...context,
+    opts: {
+      ...context.opts,
+      holder: context.opts.holder ?? perfHolderFor(context.workspaceRoot),
+      mode: 'perf'
+    }
+  })
 
 /**
  * `tim docker perf`: take the stack lease in perf mode.
@@ -212,11 +230,14 @@ export const registerPerf = (docker, timVersion) =>
     .description(
       'Start the workspace stack as a performance target and lease it: published images, with both stubs answering at the latency profile in STUB_PROFILE (default sla). A stack somebody else holds, or one up with no lease, is refused and left alone. The build gate never uses this mode.'
     )
-    .option('--holder <text>', 'Who takes the lease', 'perf')
+    .option(
+      '--holder <text>',
+      'Who takes the lease (default "perf <this clone’s path>")'
+    )
     .option('--logs <dir>', 'Where run-stack.sh writes its log')
     .addHelpText(
       'after',
-      '\nExamples:\n  tim docker perf\n  STUB_PROFILE=zero-delay tim docker perf --json\n  tim docker lease release --holder perf'
+      '\nExamples:\n  tim docker perf\n  STUB_PROFILE=zero-delay tim docker perf --json\n  tim docker lease release --holder "perf <this clone’s path>"'
     )
     .action(leaseAction(runPerf, timVersion))
 
@@ -248,6 +269,10 @@ export const registerLease = (docker, timVersion) => {
       'dev'
     )
     .option('--logs <dir>', 'Where run-stack.sh writes its log')
+    .option(
+      '--force',
+      'Take a lease your holder name holds from another clone of the workspace'
+    )
     .addHelpText(
       'after',
       '\nExample:\n  tim docker lease acquire --holder "ibl-20261001T090000Z" --json'
@@ -261,6 +286,10 @@ export const registerLease = (docker, timVersion) => {
     )
     .option('--holder <text>', 'Who gives the lease back')
     .option('--logs <dir>', 'Where stop-stack.sh writes its log')
+    .option(
+      '--force',
+      'Release a lease your holder name holds from another clone of the workspace'
+    )
     .addHelpText(
       'after',
       '\nExample:\n  tim docker lease release --holder "ibl-20261001T090000Z" --json'

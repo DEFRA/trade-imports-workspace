@@ -27,6 +27,7 @@ const HOLDER = 'ibl-20261001T090000Z inc-003 consistency'
 // Above the highest pid macOS and Linux hand out by default.
 const DEAD_PID = 4_194_305
 const OTHER = 'ibl-20261001T080000Z inc-001 ladder'
+const OTHER_CLONE = '/clones/trade-imports-workspace-a'
 
 let root
 
@@ -860,5 +861,213 @@ describe('recordLeaseFingerprints', () => {
       updated,
       fingerprints: readLease(leasePath()).fingerprints
     }).toEqual({ updated: false, fingerprints: undefined })
+  })
+
+  test('leaves the same holder name’s lease from another clone alone', () => {
+    writeLease({ holder: HOLDER, workspace: OTHER_CLONE })
+
+    const updated = recordLeaseFingerprints({
+      holder: HOLDER,
+      workspaceRoot: root,
+      leasePath: leasePath(),
+      fingerprints
+    })
+
+    expect({
+      updated,
+      fingerprints: readLease(leasePath()).fingerprints
+    }).toEqual({ updated: false, fingerprints: undefined })
+  })
+})
+
+describe('the same holder name from another clone', () => {
+  test('acquire refuses a stack it leases while that stack is up, naming the clone', async () => {
+    const env = fakeStack()
+    markUp()
+    writeLease({ holder: HOLDER, workspace: OTHER_CLONE })
+
+    const outcome = await acquire(env)
+
+    expect({
+      acquired: outcome.acquired,
+      refused: outcome.refused,
+      reason: outcome.reason,
+      calls: calls(),
+      lease: readLease(leasePath()).workspace
+    }).toEqual({
+      acquired: false,
+      refused: true,
+      reason: `The workspace stack is leased to "${HOLDER}" (dev mode, since 2026-10-01T08:00:00.000Z) from another clone, ${OTHER_CLONE}. Leave it alone: release it from that clone, or add --force to take it from here.`,
+      calls: [],
+      lease: OTHER_CLONE
+    })
+  })
+
+  test('acquire reuses that stack with force, taking the lease for this clone', async () => {
+    const env = fakeStack()
+    markUp()
+    writeLease({ holder: HOLDER, workspace: OTHER_CLONE })
+
+    const outcome = await acquire(env, { force: true })
+
+    expect({
+      acquired: outcome.acquired,
+      reused: outcome.reused,
+      heldBefore: outcome.heldBefore,
+      calls: calls(),
+      workspace: readLease(leasePath()).workspace,
+      returnedWorkspace: outcome.lease.workspace
+    }).toEqual({
+      acquired: true,
+      reused: true,
+      heldBefore: false,
+      calls: [],
+      workspace: root,
+      returnedWorkspace: root
+    })
+  })
+
+  test('after a forced acquire, this clone records containers on the lease it took', async () => {
+    const env = fakeStack()
+    markUp()
+    writeLease({ holder: HOLDER, workspace: OTHER_CLONE })
+    await acquire(env, { force: true })
+    markUp('c9')
+
+    const updated = await recordLeaseContainers({
+      holder: HOLDER,
+      workspaceRoot: root,
+      leasePath: leasePath(),
+      env
+    })
+
+    expect({ updated, containers: readLease(leasePath()).containers }).toEqual({
+      updated: true,
+      containers: ['c9']
+    })
+  })
+
+  test('after a forced acquire, this clone releases the lease it took without force', async () => {
+    const env = fakeStack()
+    markUp()
+    writeLease({ holder: HOLDER, workspace: OTHER_CLONE })
+    await acquire(env, { force: true })
+
+    const outcome = await release(env)
+
+    expect({
+      released: outcome.released,
+      up: stackIsUp(),
+      lease: readLease(leasePath())
+    }).toEqual({ released: true, up: false, lease: null })
+  })
+
+  test('acquire replaces its stale lease once that stack has gone, recording this clone', async () => {
+    const env = fakeStack()
+    writeLease({ holder: HOLDER, workspace: OTHER_CLONE })
+
+    const outcome = await acquire(env)
+
+    expect({
+      acquired: outcome.acquired,
+      heldBefore: outcome.heldBefore,
+      replaced: outcome.replaced,
+      calls: calls(),
+      workspace: readLease(leasePath()).workspace
+    }).toEqual({
+      acquired: true,
+      heldBefore: false,
+      replaced: HOLDER,
+      calls: ['run-stack.sh -d'],
+      workspace: root
+    })
+  })
+
+  test('acquire clears its stale lease when the stack it starts does not come up', async () => {
+    const env = fakeStack({ upFails: true })
+    writeLease({ holder: HOLDER, workspace: OTHER_CLONE })
+
+    const outcome = await acquire(env)
+
+    expect({
+      acquired: outcome.acquired,
+      reason: outcome.reason,
+      lease: readLease(leasePath())
+    }).toEqual({
+      acquired: false,
+      reason: expect.stringMatching(
+        /It was taken down again and the lease cleared\.$/
+      ),
+      lease: null
+    })
+  })
+
+  test('acquire reuses a lease this clone took, as before', async () => {
+    const env = fakeStack()
+    markUp()
+    writeLease({ holder: HOLDER, workspace: root })
+
+    const outcome = await acquire(env)
+
+    expect({ reused: outcome.reused, calls: calls() }).toEqual({
+      reused: true,
+      calls: []
+    })
+  })
+
+  test('release refuses its lease and leaves the stack up', async () => {
+    const env = fakeStack()
+    markUp()
+    writeLease({ holder: HOLDER, workspace: OTHER_CLONE })
+
+    const outcome = await release(env)
+
+    expect({
+      released: outcome.released,
+      refused: outcome.refused,
+      reason: outcome.reason,
+      calls: calls(),
+      up: stackIsUp(),
+      lease: readLease(leasePath()).workspace
+    }).toEqual({
+      released: false,
+      refused: true,
+      reason: `The workspace stack is leased to "${HOLDER}" (dev mode, since 2026-10-01T08:00:00.000Z) from another clone, ${OTHER_CLONE}, not from this one. Nothing was released. Release it from that clone, or add --force.`,
+      calls: [],
+      up: true,
+      lease: OTHER_CLONE
+    })
+  })
+
+  test('release takes the stack down with force', async () => {
+    const env = fakeStack()
+    markUp()
+    writeLease({ holder: HOLDER, workspace: OTHER_CLONE })
+
+    const outcome = await release(env, { force: true })
+
+    expect({
+      released: outcome.released,
+      up: stackIsUp(),
+      lease: readLease(leasePath())
+    }).toEqual({ released: true, up: false, lease: null })
+  })
+
+  test('recording containers leaves its lease alone', async () => {
+    const env = fakeStack()
+    markUp('c9')
+    writeLease({ holder: HOLDER, workspace: OTHER_CLONE, containers: ['c1'] })
+
+    const updated = await recordLeaseContainers({
+      holder: HOLDER,
+      workspaceRoot: root,
+      leasePath: leasePath(),
+      env
+    })
+
+    expect({ updated, containers: readLease(leasePath()).containers }).toEqual({
+      updated: false,
+      containers: ['c1']
+    })
   })
 })

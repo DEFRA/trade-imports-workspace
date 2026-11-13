@@ -986,14 +986,40 @@
       "dependsOn": [],
       "risk": "Low. The fields are additive. This is the shared library for P26, P28, P34, P38 and P52.",
       "proof": "nock fixtures with renderedFields, inward and outward links, subtasks and a null parent. `tim jira ticket X --json` matches `tools/jira/ticket.sh X json` field for field on 3 real tickets.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "e9d78ab0df34be818c61827e2b231d00180985be"
+          },
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "5203f77f033574da268b08f9b64b42ae7d208767"
+          }
+        ],
+        "checks": [
+          "verifier finding fixed: tim/src/commands/jira/index.test.js gains a 'tim jira ticket' describe. It registers the real command on a commander program and runs parseAsync with Jira nock-mocked through mockJiraForEachTest and the issue-rendered-with-links.json fixture. stdout, stderr and process.exit are captured. It asserts four things. With --rendered --json the request query is exactly {expand: 'renderedFields'}, result.renderedDescription equals the fixture's rendered HTML, and the exit code is 0. With --rendered the text body shows the rendered HTML. With --json and no flag the query is {} and the result has no renderedDescription key. With no flag the text body shows the raw description",
+          "tim/src/commands/_client-action.test.js now drives the action. It checks that the positional args and the command's own options (positional.at(-2)) reach both call and renderText, that the text path exits 0, and that global --json prints the envelope",
+          "captureProcessOutput moved from _run-action.test.js to tim/src/test-support/process-output.js and both test files use it, so there is no local copy left",
+          "mutation probes, each run and then restored: (1) withRendered forced to false fails both --rendered tests; (2) options read from positional.at(-1) fails both makeClientAction tests and both --rendered tests; (3) withRendered forced to true fails the no-expand test; (4) renderText given {} instead of options fails the makeClientAction options test and the --rendered text-body test. git diff showed no source changes after the restores",
+          "tim-unit: npm --prefix tim test green (238 files, 4127 passed, 8 expected fail; was 4122)",
+          "tim-lint: npm --prefix tim run lint and format:check both clean",
+          "every-row: the fix commit adds no new mention of ~/git/defra or $HOME/git/defra and no new .sh file. It changes only test files and a test-support helper"
+        ],
+        "deviations": [
+          "The fix is a new commit (5203f77f) on top of the builder's e9d78ab0, not an amend.",
+          "The command test runs in-process: it registers the command on a commander program and stubs process.exit and stdout. It does not spawn node src/cli.js, because nock cannot intercept a child process's requests. Two existing tests already capture output this way: _run-action.test.js and, now, _client-action.test.js.",
+          "The plain (no --rendered) response is the same captured fixture with its renderedFields key filtered out, since Jira leaves that key out without expand.",
+          "Carried from the builder: tools/jira/ticket.sh parity was not repeated in this pass. The verifier also could not run ticket.sh."
+        ]
+      }
     },
     {
       "id": "P22",

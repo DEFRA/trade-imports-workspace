@@ -170,7 +170,7 @@ if [[ -f "$artefact_dir/review-index.md" ]]; then
     verdict=$(grep -m1 '^\*\*Verdict:\*\*' "$artefact_dir/review-index.md" | sed 's/^\*\*Verdict:\*\*[[:space:]]*//')
 fi
 
-reviewer=$("$WORKSPACE/tools/github/whoami.sh" 2>/dev/null || echo "(unknown)")
+reviewer=$(gh api user --jq '.login' 2>/dev/null || echo "(unknown)")
 
 # Counts for one repo's items, in place of the full table. Status and
 # severity are reported separately because an item's severity says how

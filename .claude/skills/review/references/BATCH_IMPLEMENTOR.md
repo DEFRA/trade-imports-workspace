@@ -235,5 +235,5 @@ Default is **No** — the reviewer may still want to refer back to it.
 On `y`:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/github/delete-remote-branch.sh trade-imports-workspace chore/EUDPA-XXXXX
+gh api -X DELETE repos/DEFRA/trade-imports-workspace/git/refs/heads/chore/EUDPA-XXXXX
 ```

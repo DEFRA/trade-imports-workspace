@@ -455,13 +455,13 @@ This runs after Step 6 because the comment carries the verdict from
 Look up the `gh` user once:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/github/whoami.sh
+gh api user --jq .login
 ```
 
 Then, for each PR in `.review-meta.json`, look up its author:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/github/pr-author.sh {repo} {pr}
+gh pr view {pr} --repo DEFRA/{repo} --json author --jq .author.login
 ```
 
 **Before every post, check the head again.** Run the `gh pr view …

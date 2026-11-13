@@ -71,6 +71,7 @@ flowchart LR
 | plants-frontend | High-risk plants UI, journey flow, validation, session | Persistence, reference data, addresses |
 | plants-backend | Plants notification aggregate and lifecycle, reference numbers, audit | Identity. No outbox or PIMS routing yet — planned, not yet built |
 | ins-frontend | Sign-in front door, notifications dashboard, address-book UI (a backend-for-frontend) | Any database |
+| routing-proxy | INS's public entry point, forwarding each request to the INS service its path addresses. A skeleton today: forwarding is not built yet | Sign-in, pages of its own beyond the template's, any database |
 | ins-backend | Cross-journey notification read model, built from events | Writes to notifications; it is read-only over REST |
 | address-book | Organisation-scoped address records (system of record) | Authentication; trusts the `Trade-Imports-Organisation-Id` header |
 | reference-data | Read API for countries, ports of entry and live-animal commodity search and species checks, MDM token handling, caching | Holding data itself; it fetches from MDM |

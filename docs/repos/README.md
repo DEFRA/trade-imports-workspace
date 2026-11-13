@@ -25,6 +25,7 @@ and its stack — lives in the root [`CLAUDE.md`](../../CLAUDE.md).
 | `trade-imports-dynamics-gateway` | [trade-imports-dynamics-gateway.md](trade-imports-dynamics-gateway.md) |
 | `trade-imports-address-book` | [trade-imports-address-book.md](trade-imports-address-book.md) |
 | `trade-imports-ins-frontend` | [trade-imports-ins-frontend.md](trade-imports-ins-frontend.md) |
+| `trade-imports-routing-proxy` | [trade-imports-routing-proxy.md](trade-imports-routing-proxy.md) |
 | `trade-imports-ins-backend` | [trade-imports-ins-backend.md](trade-imports-ins-backend.md) |
 | `trade-imports-plants-frontend` | [trade-imports-plants-frontend.md](trade-imports-plants-frontend.md) |
 | `trade-imports-plants-prototype` | [trade-imports-plants-prototype.md](trade-imports-plants-prototype.md) |

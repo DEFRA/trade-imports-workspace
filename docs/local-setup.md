@@ -56,6 +56,7 @@ Services started:
 | Animals backend | 8085 | `defradigital/trade-imports-animals-backend:latest` |
 | Admin | 3001 | `defradigital/trade-imports-animals-admin:latest` |
 | INS frontend | 3002 | `defradigital/trade-imports-ins-frontend:latest` |
+| Routing proxy | 3004 | `defradigital/trade-imports-routing-proxy:latest` |
 | INS backend | 8090 | `defradigital/trade-imports-ins-backend:latest` |
 | Plants frontend | 3003 | `defradigital/trade-imports-plants-frontend:latest` |
 | Plants prototype | 3103 | Not part of this stack — runs standalone with `npm start` |
@@ -127,7 +128,7 @@ The backend does **not** hot-reload — recreate the container after changing Ja
 
 Exclude the service you're developing from the stack and run it from source.
 Valid exclude labels: `frontend`, `backend`, `admin`, `ins-frontend`,
-`ins-backend`, `plants-frontend`, `plants-backend`, `stub`, `defra-id-stub`,
+`routing-proxy`, `ins-backend`, `plants-frontend`, `plants-backend`, `stub`, `defra-id-stub`,
 `reference-data`, `address-book`, `gateway` (the authoritative list is the
 `services` array at the top of `scripts/stack/run-stack.sh`).
 
@@ -192,6 +193,7 @@ http://localhost:3007/idphub/b2c/b2c_1a_cui_cpdev_signupsigninsfi/.well-known/op
 | Admin | 3001 |
 | INS frontend | 3002 |
 | Plants frontend | 3003 |
+| Routing proxy | 3004 |
 | Defra ID stub | 3007 |
 | Plants prototype | 3103 |
 | Animals backend | 8085 |

@@ -1,5 +1,92 @@
-import { describe, test, expect } from 'vitest'
-import { renderTicket, renderComments } from './index.js'
+import { describe, test, expect, vi, afterEach } from 'vitest'
+import { Command } from 'commander'
+import { renderTicket, renderComments, register } from './index.js'
+import {
+  mockJiraForEachTest,
+  loadJiraFixture
+} from '../../test-support/jira-mock.js'
+import { captureProcessOutput } from '../../test-support/process-output.js'
+
+describe('tim jira ticket', () => {
+  const jira = mockJiraForEachTest()
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  const renderedIssue = loadJiraFixture('issue-rendered-with-links.json')
+  const plainIssue = Object.fromEntries(
+    Object.entries(renderedIssue).filter(([key]) => key !== 'renderedFields')
+  )
+  const renderedHtml = renderedIssue.renderedFields.description
+
+  const servesTicketRecordingQuery = (issue) => {
+    const sent = { query: null }
+    jira()
+      .get('/rest/api/2/issue/EUDPA-713')
+      .query((query) => {
+        sent.query = query
+        return true
+      })
+      .reply(200, issue)
+    return sent
+  }
+
+  const runTim = async (...args) => {
+    const captured = captureProcessOutput()
+    const program = new Command().option('--json').exitOverride()
+    register(program, { timVersion: '1.0.0' })
+
+    await program.parseAsync(['node', 'tim', ...args])
+
+    return captured
+  }
+
+  test('asks Jira for rendered fields with --rendered and returns renderedDescription in --json', async () => {
+    const sent = servesTicketRecordingQuery(renderedIssue)
+
+    const { stdout, exitCode } = await runTim(
+      'jira',
+      'ticket',
+      'EUDPA-713',
+      '--rendered',
+      '--json'
+    )
+
+    expect(sent.query).toEqual({ expand: 'renderedFields' })
+    expect(JSON.parse(stdout).result.renderedDescription).toBe(renderedHtml)
+    expect(exitCode).toBe(0)
+  })
+
+  test('shows the rendered HTML description in the text body with --rendered', async () => {
+    servesTicketRecordingQuery(renderedIssue)
+
+    const { stdout } = await runTim('jira', 'ticket', 'EUDPA-713', '--rendered')
+
+    expect(stdout.split('\n')[9]).toBe(renderedHtml.split('\n')[0])
+  })
+
+  test('sends no expand query and returns no renderedDescription without --rendered', async () => {
+    const sent = servesTicketRecordingQuery(plainIssue)
+
+    const { stdout } = await runTim('jira', 'ticket', 'EUDPA-713', '--json')
+
+    expect(sent.query).toEqual({})
+    expect(Object.keys(JSON.parse(stdout).result)).not.toContain(
+      'renderedDescription'
+    )
+  })
+
+  test('shows the raw description in the text body without --rendered', async () => {
+    servesTicketRecordingQuery(plainIssue)
+
+    const { stdout } = await runTim('jira', 'ticket', 'EUDPA-713')
+
+    expect(stdout.split('\n')[9]).toBe(
+      '*As* a trader acting for an organisation,'
+    )
+  })
+})
 
 describe('renderTicket', () => {
   test('formats a ticket with all fields present', () => {

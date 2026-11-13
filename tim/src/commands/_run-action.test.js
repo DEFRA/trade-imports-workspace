@@ -1,26 +1,11 @@
 import { describe, test, expect, vi, afterEach } from 'vitest'
 import { TimError } from '../errors.js'
 import { makeRunAction } from './_run-action.js'
+import { captureProcessOutput } from '../test-support/process-output.js'
 
 afterEach(() => {
   vi.restoreAllMocks()
 })
-
-const captureProcessOutput = () => {
-  const captured = { stdout: '', stderr: '', exitCode: null }
-  vi.spyOn(process.stdout, 'write').mockImplementation((text) => {
-    captured.stdout += text
-    return true
-  })
-  vi.spyOn(process.stderr, 'write').mockImplementation((text) => {
-    captured.stderr += text
-    return true
-  })
-  vi.spyOn(process, 'exit').mockImplementation((code) => {
-    captured.exitCode = code
-  })
-  return captured
-}
 
 const invoke = (action, { positional = [], options = {} } = {}) =>
   action.call({ optsWithGlobals: () => options }, ...positional, options, {})

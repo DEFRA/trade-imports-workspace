@@ -1,10 +1,10 @@
 export const meta = {
   name: 'bash-to-tim-loop',
-  description: 'Work the bash-to-tim backlog one row at a time: build, adversarially verify, fix once, record and push. No E2E until the backlog has landed.',
+  description: 'Work the bash-to-tim backlog one row at a time: build, adversarially verify, fix up to twice, record and push. No E2E until the backlog has landed.',
   whenToUse: 'Launched from the bash-to-tim HANDOVER.md, by scriptPath, to remove the workspace Bash scripts row by row.',
   phases: [
     { title: 'Preflight', detail: 'branch, clean tree, own tim, green baseline, draft PR' },
-    { title: 'Build', detail: 'one row: build, verify, fix once, record and push' },
+    { title: 'Build', detail: 'one row: build, verify, fix up to twice, record and push' },
     { title: 'Land', detail: 'when every loop row is done: one CI E2E run, then hand back' },
   ],
 }
@@ -12,6 +12,7 @@ export const meta = {
 const WS = args?.workspace ?? '~/git/defra/trade-imports-workspace'
 const BRANCH = args?.branch ?? 'chore/NO_JIRA-bash-to-tim'
 const MAX_ROWS = args?.maxRows ?? 10
+const FIX_ATTEMPTS = 2
 const DIR = `${WS}/workareas/shared/bash-to-tim`
 const BRIEF = `${DIR}/BRIEF.md`
 const BACKLOG = `${DIR}/backlog.json`
@@ -129,15 +130,15 @@ while (landed.length < MAX_ROWS) {
       `You are the VERIFIER for row ${row.id} of ${BACKLOG}. Follow the Verifier section of ${BRIEF}. Workspace: ${WS}. Branch: ${BRANCH}.
 The builder reported: ${JSON.stringify(b)}`
     verdict = await agent(verifyPrompt(build), { label: `verify:${label}`, phase: 'Build', schema: VERDICT })
-    if (verdict && !verdict.pass) {
+    for (let attempt = 1; attempt <= FIX_ATTEMPTS && verdict && !verdict.pass; attempt += 1) {
       build = await agent(
         `You are the FIXER for row ${row.id} of ${BACKLOG}. Follow the Fixer section of ${BRIEF}. Workspace: ${WS}. Branch: ${BRANCH}.
 The builder reported: ${JSON.stringify(build)}
 The verifier found: ${JSON.stringify(verdict.problems)}`,
-        { label: `fix:${label}`, phase: 'Build', schema: BUILD },
+        { label: `fix${attempt}:${label}`, phase: 'Build', schema: BUILD },
       )
       verdict = build?.status === 'built'
-        ? await agent(verifyPrompt(build), { label: `reverify:${label}`, phase: 'Build', schema: VERDICT })
+        ? await agent(verifyPrompt(build), { label: `reverify${attempt}:${label}`, phase: 'Build', schema: VERDICT })
         : null
     }
   }
@@ -158,8 +159,8 @@ The verifier found: ${JSON.stringify(verdict.problems)}`,
 4. For a service repo with no pull request on ${BRANCH}, open a DRAFT one against main, linking the workspace pull request and ending with "🤖 Generated with [Claude Code](https://claude.com/claude-code)".
 Return pushed, and done and total counted over rows whose status is not "person".`
       : `Row ${row.id} of ${BACKLOG} did not land: ${reason}. Workspace: ${WS}. Branch: ${BRANCH}.
-1. Put every repo it touched back to its starting SHA: ${JSON.stringify(build?.startShas ?? [])}. These are local, unpushed commits on ${BRANCH}, so \`git reset --hard <sha>\` is safe. Check \`git log origin/${BRANCH}..\` first, and if a commit is already pushed, revert it instead.
-2. In ${BACKLOG}, set row ${row.id} to status "blocked" and evidence to {"blockedReason": <the reason in one plain sentence>}.
+1. In each repo it touched, list the row's commits, oldest first, with \`git log --reverse --format=%h <start>..HEAD\`. The starting SHAs: ${JSON.stringify(build?.startShas ?? [])}. Then put the repo back to its starting SHA. These are local, unpushed commits on ${BRANCH}, so \`git reset --hard <sha>\` is safe, and the reflog keeps them. Check \`git log origin/${BRANCH}..\` first, and if a commit is already pushed, revert it instead.
+2. In ${BACKLOG}, set row ${row.id} to status "blocked" and evidence to {"blockedReason": <the reason in one plain sentence>, "recoverableCommits": "The blocked attempt is in the local reflog, unpushed: <repo: SHAs oldest first>. Cherry-pick them and fix only the reason, rather than rebuilding."}.
 3. Commit ("chore(NO_JIRA): bash-to-tim: ${row.id} blocked", ending with "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>") and push ${BRANCH} in the workspace.
 Return pushed, and done and total counted over rows whose status is not "person".`,
     { label: `record:${label}`, phase: 'Build', schema: RECORD, effort: 'low' },

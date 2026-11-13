@@ -40,11 +40,11 @@ For each row:
 
 1. A builder makes the change and commits it.
 2. A verifier, who did not build it, tries to prove it wrong.
-3. If the verifier finds problems, a fixer has one attempt, and the
-   verifier checks again.
+3. If the verifier finds problems, a fixer has up to two attempts, and
+   the verifier checks again after each.
 4. If the row lands, its status becomes `done` and the branch is pushed.
    If not, its commits are undone and its status becomes `blocked`, with
-   a reason.
+   a reason and the SHAs of the undone commits, which stay in the reflog.
 
 The loop works rows one at a time, on one branch: `chore/NO_JIRA-bash-to-tim`.
 That branch name is used in every repo a row touches.
@@ -82,8 +82,10 @@ Launch it again to continue: it picks up from `backlog.json`.
 - `gh auth status` green
 - Docker, which only the 7 stack rows start
 
-To retry a `blocked` row, set it back to `todo` once its reason is dealt
-with.
+To retry a `blocked` row, set it back to `todo` and rename its
+`blockedReason` to `previousBlockedReason`. The builder cherry-picks the
+`recoverableCommits` and fixes only that reason. The reflog is local, so
+retry on the machine that ran the blocked attempt.
 
 ## Rows for Sam
 

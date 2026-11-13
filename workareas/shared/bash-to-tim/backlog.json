@@ -2744,9 +2744,11 @@
       "action": "port-to-node",
       "timCommand": "none: `node \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-bash.mjs\"` using only Node built-ins, so a missing tim/node_modules cannot open the guard",
       "callersToUpdate": [
-        ".claude/hooks/guard-bash.sh:120 (name ${CLAUDE_PROJECT_DIR/#$HOME/~}, not the canonical clone)",
+        ".claude/hooks/guard-bash.sh:120 (name the clone in use as '~' followed by CLAUDE_PROJECT_DIR with the HOME prefix removed, not the canonical clone; in Bash, ${CLAUDE_PROJECT_DIR/#$HOME/~} expands the ~ back to $HOME and prints the full path)",
         ".claude/settings.json hooks block",
-        "docs/adr/0002-no-bash-sandbox-deny-list-and-guard-hooks.md"
+        "tim/src/test-support/guard-hook.js (guardBashCommand and guardEditsCommand become ['node', '.../guard-bash.mjs'] and ['node', '.../guard-edits.mjs'])",
+        "tim/src/guard-hooks/guard-bash.test.js (the piped-test-run 'naming the clone in use under ~' case flips from test.fails.each to test.each)",
+        "docs/adr/0002-no-bash-sandbox-deny-list-and-guard-hooks.md (drop the test.fails sentence once the case is a plain test.each)"
       ],
       "tokens": [
         "CLAUDE_PROJECT_DIR",
@@ -2757,7 +2759,7 @@
         "P19"
       ],
       "risk": "Medium: these hooks are the safety net. Agents cannot edit .claude/hooks/**, so Sam makes this change.",
-      "proof": "The P19 corpus passes unchanged against the Node hooks, and the deny message names the clone in use.",
+      "proof": "The P19 corpus passes against the Node hooks with only the hook commands in guard-hook.js changed, and the piped-test-run case that names the clone in use (~/clones/second-clone) passes as a plain test.each.",
       "status": "person",
       "checks": [
         "tim-unit",

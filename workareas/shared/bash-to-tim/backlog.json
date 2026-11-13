@@ -426,14 +426,34 @@
       "dependsOn": [],
       "risk": "Very low. Debug history only.",
       "proof": "Test: two workspace roots give two log paths. The lease file itself stays per machine.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "244ade42"
+          }
+        ],
+        "checks": [
+          "parity: added golden tests in tim/src/commands/docker/lease.test.js that pin the full log text (the `$ <script> <args>` header, the `# in <root>` line, then the script output) for acquire (run-stack.sh -d) and release (stop-stack.sh), and for --logs. Against the unchanged code, the three default-location tests failed with ENOENT because the log was written beside the lease file. After the change they pass with the same log content, so only the folder moved, as the row intends.",
+          "proof: the test 'two clones write their logs in their own workspaces and share one lease file' gives two workspace roots two log paths, while both share one TIM_STACK_LEASE file.",
+          "tim-unit: npm --prefix tim test is green (236 files, 3994 tests).",
+          "tim-lint: npm --prefix tim run lint and run format:check are both clean.",
+          "no-callers: git grep across the workspace (workareas excluded) and every repos/* checkout finds no reference to the old default (dirname(leasePath)/logs, state/tim/logs). The build loop already passes --logs explicitly, so it is unaffected.",
+          "No new mention of ~/git/defra or $HOME/git/defra in the diff, and no new .sh file."
+        ],
+        "deviations": [
+          "The --logs help text on acquire, release and perf now names the default (workareas/stack-logs in this clone), and the lease description says its logs are per clone. tim docker perf shares runAcquire, so its default log folder moves too.",
+          "Added a workareas/stack-logs/ line to docs/reference/workareas.md. The folder is already gitignored by workareas/*.",
+          "The lease.test.js setup is refactored into makeWorkspace(), so a test can make a second clone. runDocker now takes { env, root } instead of a positional env, and its two perf callers are updated."
+        ]
+      }
     },
     {
       "id": "P10",

@@ -44,6 +44,15 @@
           ]
         },
         {
+          "id": "SCN-FLOW-003-P",
+          "name": "The permanent address page goes on to the consignment addresses page",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should go to the consignment addresses page whether opened from its link or not", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "ends with the primary save control alone, returning to the consignment addresses page", "strength": "full", "notes": "" }
+          ]
+        },
+        {
           "id": "SCN-FLOW-003-B",
           "name": "Contact address goes to check your answers whatever is owed",
           "coverage": "full",
@@ -89,7 +98,7 @@
         },
         {
           "id": "SCN-FLOW-003-H",
-          "name": "Commodity details goes on to identification details, or to additional details when nothing needs identifying",
+          "name": "Commodity details goes on to identification details whenever the notification holds a commodity line",
           "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should go through the journey in the order Overview lists its tasks", "strength": "full", "notes": "probed: advancing the step one page further turns it red, restored green" }
@@ -117,7 +126,7 @@
           "name": "Arrival details goes on to transit countries only for rail or road",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/poultry-rail-transit.spec.ts", "test": "walks a poultry-by-rail notification in transit from create to the review, with no identification task and every overview task complete", "strength": "partial", "notes": "no red probe run against this link; the walk takes the rail half, saving arrival details on to the transit-countries page" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/poultry-rail-transit.spec.ts", "test": "walks a poultry-by-rail notification in transit from create to the review, passing through Identification details with every overview task complete", "strength": "partial", "notes": "no red probe run against this link; the walk takes the rail half, saving arrival details on to the transit-countries page" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/dispatch.test.js", "test": "Should go from the arrival details to the transit countries by %s with every earlier answer saved", "strength": "full", "notes": "probed: advancing the step one page further turns it red, restored green" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/save-and-continue.spec.ts", "test": "arrival details opened from Overview goes to the transit countries by road and to the transporter list by air", "strength": "partial", "notes": "not red-probed" }
           ]
@@ -445,22 +454,25 @@
         },
         {
           "id": "SCN-FLOW-013-D",
-          "name": "The origin page and the CPH number page offer Save and continue alone while amending",
+          "name": "The origin page, the CPH number page and the permanent address page offer Save and continue alone while amending",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/amend-endings.test.js", "test": "Should end the $id page with Save and continue alone", "strength": "full", "notes": "origin and CPH; red then green with each page's return controls offered (workareas/shared/eudpa-774/logs/inc-028-probe-origin-ending-unit, workareas/shared/eudpa-774/logs/inc-028-probe-cph-ending-unit)" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "while amending, the origin page and the CPH number page end with Save and continue alone, and the contact address page ends as it does on a draft", "strength": "full", "notes": "red then green with each page's return controls offered, against the dev-mode stack (workareas/shared/eudpa-774/logs/inc-028-probe-origin-ending-e2e, workareas/shared/eudpa-774/logs/inc-028-probe-cph-ending-e2e)" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/amend-endings.test.js", "test": "Should end the $id page with Save and continue alone", "strength": "full", "notes": "origin and CPH; red then green with each page's return controls offered. The permanent address page is a sub-page with no amend-parity line to render against, and its template has no amend branch." },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/amend-endings.spec.ts", "test": "while amending, the origin page and the CPH number page end with Save and continue alone, and the contact address page ends as it does on a draft", "strength": "full", "notes": "red then green with each page's return controls offered, against the dev-mode stack (workareas/shared/eudpa-774/logs/inc-028-probe-origin-ending-e2e, workareas/shared/eudpa-774/logs/inc-028-probe-cph-ending-e2e)" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/controller.test.js", "test": "Should go to the consignment addresses page whether opened from its link or not", "strength": "partial", "notes": "proves the draft ending; the page's template carries no amend branch so the same render applies while amending" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "ends with the primary save control alone, returning to the consignment addresses page", "strength": "partial", "notes": "draft only; see note above" }
           ]
         },
         {
           "id": "SCN-FLOW-013-E",
-          "name": "On a draft the CPH number page and the origin page keep their primary action alone",
+          "name": "On a draft the CPH number page, the origin page and the permanent address page keep their primary action alone",
           "coverage": "full",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "ends with the primary alone, being reached from the addresses page", "strength": "full", "notes": "the CPH number page on a draft; red when the page renders a second action, green restored" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/origin.spec.ts", "test": "renders the page controls, with Save and continue as the form's only button and no link in the form", "strength": "partial", "notes": "the origin page only" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/origin/origin.fit.spec.js", "test": "ends with Save and continue alone", "strength": "full", "notes": "the origin page only" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/save-actions.test.js", "test": "Should end a page reached from another page with the primary alone", "strength": "partial", "notes": "the non-amend macro ending" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/shared/save-actions.test.js", "test": "Should end a page reached from another page with the primary alone", "strength": "partial", "notes": "the non-amend macro ending" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/permanent-address/permanent-address.fit.spec.js", "test": "ends with the primary save control alone, returning to the consignment addresses page", "strength": "partial", "notes": "the permanent address page on a draft; not probed red/restored green" }
           ]
         },
         {

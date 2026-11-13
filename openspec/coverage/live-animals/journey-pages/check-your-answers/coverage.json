@@ -24,7 +24,7 @@
           "name": "Every card is titled one heading level below its numbered section, with no subsection heading between",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "titles every card with a level 3 heading straight under its section heading", "strength": "full", "notes": "the level-3 headings are exactly the card titles in page order, and no level-4 heading stands" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "puts every card title straight under its section heading, with no other heading between them", "strength": "full", "notes": "every numbered section heading is level 2, every card title is level 3 and comes in order directly after its section heading, and it goes red when a card title changes level" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts", "test": "after completing every section the check-your-answers page renders the answered rows", "strength": "full", "notes": "asserts the card titles as level-3 headings, with no subsection heading among them" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should give every section exactly its heading, anchor and a list of titled cards", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should place each card in the numbered section that owns it", "strength": "full", "notes": "" }
@@ -39,7 +39,7 @@
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "renders entered and missing answers in their summary rows", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should resolve service-backed labels for coded answers", "strength": "full", "notes": "" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/horse-temporary-admission.spec.ts", "test": "walks a horse-by-sea notification under temporary admission from create to submitted, with every task complete", "strength": "partial", "notes": "review shows the horse's origin, species, reason with exit date and port, certification, sea arrival and transporter" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/poultry-rail-transit.spec.ts", "test": "walks a poultry-by-rail notification in transit from create to the review, with no identification task and every overview task complete", "strength": "partial", "notes": "no red probe run against this link; review shows the consignment's origin, species, reason with destination country and port of exit, transit countries and transporter" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/poultry-rail-transit.spec.ts", "test": "walks a poultry-by-rail notification in transit from create to the review, passing through Identification details with every overview task complete", "strength": "partial", "notes": "no red probe run against this link; review shows the consignment's origin, species, reason with destination country and port of exit, transit countries and transporter" }
           ]
         },
         {
@@ -574,6 +574,57 @@
           "coverage": "partial",
           "tests": [
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "leaves all three rows off the review for a reason that asks none of them", "strength": "partial", "notes": "no red probe run against this assertion" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CYA-017",
+      "name": "A species card's identifier table heads only the identifiers asked of that line's species",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CYA-017-A",
+          "name": "The identifier table heads only the columns a line's species was asked for and some animal filled in",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should head a horse line's identifier table with the horse name, and never with the ear tag it was not asked for", "strength": "full", "notes": "a horse line's microchip, passport and horse name head the table in order; probed by reverting identifier-table.js's identifierTable to pass only the commodity code to filledIdentifierColumns" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should head a cattle line's identifier table with the tattoo when a unit carries one", "strength": "full", "notes": "a cattle line's ear tag, passport and tattoo head the table in order, with that animal's values in its one row; probed by removing the cattle entry's tattoo from COMMODITY_IDENTIFIERS" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts", "test": "after completing every section the check-your-answers page renders the answered rows", "strength": "partial", "notes": "asserts the cattle species card's Tattoo columnheader and cell; not probed locally, the e2e rung runs on each repo's pull request" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should head a cat line’s identifier table with the identifiers the species was asked for alone, while its animals hold saved permanent addresses", "strength": "full", "notes": "pins the head list while the removed permanent address column's data (a saved address on every unit) is present but must not reappear as a column" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CYA-020",
+      "name": "The Addresses card lists one row per animal that has a saved permanent address",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CYA-020-A",
+          "name": "The Addresses card lists a row for each animal that has a saved permanent address",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should list one row per animal after the party rows, each keyed by the animal's label and valued by its saved permanent address", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "renders one review row per cat, keyed by its common name and number, and heads the species card with identifiers alone", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts", "test": "the Addresses card shows a cat’s saved permanent address, keyed by its common name and number", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-020-B",
+          "name": "An animal that still owes a permanent address has no row, while the species card is still reported outstanding",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should list a row for the answered animal alone, leave the unanswered one with no row, and still report the outstanding answer against the species card", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-020-C",
+          "name": "A line needing a permanent address with no animal counted has no permanent address row",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should list no permanent address row when a line needing one holds no animal identifier records", "strength": "full", "notes": "" }
           ]
         }
       ]

@@ -83,7 +83,7 @@
     },
     {
       "id": "REQ-OVERVIEW-005",
-      "name": "The Identification details task appears only once a chosen commodity requires it, and sits between Commodity details and Additional details",
+      "name": "The Identification details task appears once any commodity is chosen, and sits between Commodity details and Additional details",
       "coverage": "full",
       "scenarios": [
         {
@@ -113,10 +113,11 @@
         },
         {
           "id": "SCN-OVERVIEW-005-D",
-          "name": "Choosing a commodity that needs no identifiers leaves the row out",
+          "name": "Choosing a commodity that declares no identifier of its own still reveals the row",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/poultry-rail-transit.spec.ts", "test": "walks a poultry-by-rail notification in transit from create to the review, with no identification task and every overview task complete", "strength": "full", "notes": "red then green with the identification row applying whatever the commodity, against the dev-mode stack (workareas/shared/eudpa-774/logs/inc-028-probe-identification-row-e2e)" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should read Completed for a consignment whose only commodity declares no identifier of its own", "strength": "full", "notes": "Probe: red with the fallback identifier fields emptied, green restored." },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/poultry-rail-transit.spec.ts", "test": "walks a poultry-by-rail notification in transit from create to the review, passing through Identification details with every overview task complete", "strength": "partial", "notes": "not probed in this run — the e2e rung runs on each repo's pull request" }
           ]
         }
       ]
@@ -249,7 +250,7 @@
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/flow/task-rows.test.js", "test": "Should appear as Optional for each overland means and complete once countries are added", "strength": "full", "notes": "" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/transit-means-scope.spec.ts", "test": "the transit-countries page is routed only for rail or road; changing the means wipes saved countries", "strength": "partial", "notes": "not probed against a reverted line" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/poultry-rail-transit.spec.ts", "test": "walks a poultry-by-rail notification in transit from create to the review, with no identification task and every overview task complete", "strength": "partial", "notes": "no red probe run against this link; the walk saves two transit countries by rail and the whole-list task assertion then reads the row as Complete" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/poultry-rail-transit.spec.ts", "test": "walks a poultry-by-rail notification in transit from create to the review, passing through Identification details with every overview task complete", "strength": "partial", "notes": "no red probe run against this link; the walk saves two transit countries by rail and the whole-list task assertion then reads the row as Complete" }
           ]
         },
         {

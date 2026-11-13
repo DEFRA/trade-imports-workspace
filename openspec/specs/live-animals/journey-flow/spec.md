@@ -8,7 +8,7 @@ How the journey moves from one page to the next: the one order pages come in, wh
 
 ### Requirement: The journey has one page order, the order Overview lists its tasks in
 **ID**: REQ-FLOW-001
-The system MUST give the journey one page order, the order Overview lists its tasks in, and MUST offer pages in that order whatever way the user reached them. Overview, the dashboard, the address pickers, the CPH number page and the transporter add pages are not steps in it.
+The system MUST give the journey one page order, the order Overview lists its tasks in, and MUST offer pages in that order whatever way the user reached them. Overview, the dashboard, the address pickers, the CPH number page, the permanent address page and the transporter add pages are not steps in it.
 
 #### Scenario: The journey's pages run in a fixed order
 **ID**: SCN-FLOW-001-A
@@ -32,6 +32,12 @@ The system MUST, on a valid Save and continue from a journey page, go to the nex
 #### Scenario: The CPH number page goes on to Roles and addresses
 **ID**: SCN-FLOW-003-A
 - **GIVEN** the user is on the CPH number page
+- **WHEN** they save and continue
+- **THEN** they are taken to the consignment addresses page
+
+#### Scenario: The permanent address page goes on to the consignment addresses page
+**ID**: SCN-FLOW-003-P
+- **GIVEN** the user is on the permanent address page
 - **WHEN** they save and continue
 - **THEN** they are taken to the consignment addresses page
 
@@ -68,13 +74,11 @@ The system MUST, on a valid Save and continue from a journey page, go to the nex
 - **WHEN** they save and continue
 - **THEN** Roles and addresses is shown
 
-#### Scenario: Commodity details goes on to identification details, or to additional details when nothing needs identifying
+#### Scenario: Commodity details goes on to identification details whenever the notification holds a commodity line
 **ID**: SCN-FLOW-003-H
 - **GIVEN** the user is on commodity details
-- **WHEN** they save valid counts for a species that needs identifiers
+- **WHEN** they save valid counts for a commodity line
 - **THEN** identification details is shown
-- **WHEN** instead no chosen species needs identifiers
-- **THEN** additional details is shown
 
 #### Scenario: Main import reason goes on to Commodity details and additional details goes on to arrival details
 **ID**: SCN-FLOW-003-I
@@ -302,7 +306,7 @@ The system MUST NOT offer a discard-and-exit or a save-and-exit route back to Ov
 
 ### Requirement: While a notification is being amended, a page ends with exactly the controls it shows on a draft
 **ID**: REQ-FLOW-013
-While a notification is being amended, each journey page MUST end with exactly the controls the same page shows on a draft, in the same layout, and the status strip MUST still show the Amend status and its Cancel amend link. The origin of the import and CPH number pages end with Save and continue alone.
+While a notification is being amended, each journey page MUST end with exactly the controls the same page shows on a draft, in the same layout, and the status strip MUST still show the Amend status and its Cancel amend link. The origin of the import, CPH number and permanent address pages end with Save and continue alone.
 
 #### Scenario: A page opened from Overview while amending ends with the draft controls
 **ID**: SCN-FLOW-013-A
@@ -324,16 +328,16 @@ While a notification is being amended, each journey page MUST end with exactly t
 - **THEN** each goes on to the next page that applies
 - **AND** the last page that applies goes to check your answers
 
-#### Scenario: The origin page and the CPH number page offer Save and continue alone while amending
+#### Scenario: The origin page, the CPH number page and the permanent address page offer Save and continue alone while amending
 **ID**: SCN-FLOW-013-D
 - **GIVEN** a notification being amended
-- **WHEN** the user opens the origin of the import page or the CPH number page
+- **WHEN** the user opens the origin of the import page, the CPH number page or the permanent address page
 - **THEN** each ends with "Save and continue" alone
 
-#### Scenario: On a draft the CPH number page and the origin page keep their primary action alone
+#### Scenario: On a draft the CPH number page, the origin page and the permanent address page keep their primary action alone
 **ID**: SCN-FLOW-013-E
 - **GIVEN** a draft notification
-- **WHEN** the user opens the CPH number page or the origin of the import page
+- **WHEN** the user opens the CPH number page, the origin of the import page or the permanent address page
 - **THEN** only "Save and continue" is offered
 
 #### Scenario: Cancel and return to overview while amending opens Overview without saving

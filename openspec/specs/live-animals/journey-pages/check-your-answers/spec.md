@@ -10,27 +10,29 @@ The page on which a whole notification is read back before submission, and read 
 
 ## Requirements
 
-### Requirement: The review draws the same six numbered sections as Overview, in order, whatever the notification holds
+### Requirement: The review draws six numbered sections, in order, whatever the notification holds, with each card directly under its section heading
 **ID**: REQ-CYA-001
-The system MUST group the page under the same six numbered section headings the Overview task list uses, MUST draw all six in that order however little the notification holds, and MUST head every card with a subsection heading of its own. Which cards stand within a section MAY depend on the notification — the commodity group waits on a commodity line, the transit-countries group on an overland arrival — but the six numbered sections themselves MUST NOT be dropped.
+The system MUST group the page under six numbered section headings, in order, however little the notification holds, and MUST stand every card directly under its section heading with no subsection heading between, titled one heading level below it. Which cards stand MAY depend on the notification, but no numbered section MUST be dropped.
 
 #### Scenario: The review draws all six numbered sections in order
 **ID**: SCN-CYA-001-A
 - **GIVEN** the user has just started a notification and answered nothing beyond the entry page
 - **WHEN** they view the review
-- **THEN** the numbered section headings read "1. About the consignment", "2. Description of the goods", "3. Transport and arrival", "4. Documents", "5. Consignment parties" and "6. Contact address", in that order
+- **THEN** the numbered section headings read "1. About the consignment", "2. Description of the goods", "3. Transport and arrival", "4. Uploaded documents", "5. Consignment addresses" and "6. Contact address", in that order
 
-#### Scenario: Commodity and consignment detail appear within a section, not as numbered sections
+#### Scenario: Every card is titled one heading level below its numbered section, with no subsection heading between
 **ID**: SCN-CYA-001-B
 - **GIVEN** the user is viewing the review for a notification with commodities entered
 - **WHEN** they read down the page
-- **THEN** the sub-headings "Where is this consignment coming from?", "Commodity details" and "Additional details" appear inside numbered sections, with each species' card beneath "Commodity details", and none of them is a numbered section in its own right
+- **THEN** every card's title is a heading one level below its numbered section heading
+- **AND** no subsection heading stands above a card, none of "Where is this consignment coming from?", "Commodity details", "Upload documents", "Roles and addresses" or "Contact address for this consignment"
+- **AND** the first card in "1. About the consignment" is titled "Origin of import"
 
-#### Scenario: The Documents section stands even when nothing has been uploaded
+#### Scenario: The Uploaded documents section stands even when nothing has been uploaded
 **ID**: SCN-CYA-001-E
 - **GIVEN** a notification with no documents uploaded
 - **WHEN** the user views the review
-- **THEN** the Documents section and its card are still shown, saying no documents have been added yet
+- **THEN** the Uploaded documents section and its card are still shown, saying no documents have been added yet
 - **AND** a Change route to the upload documents page is still offered
 
 #### Scenario: A fully answered notification's check-your-answers reflects every entered value
@@ -43,7 +45,16 @@ The system MUST group the page under the same six numbered section headings the 
 **ID**: SCN-CYA-001-D
 - **GIVEN** the user has selected a party for each of the notification's address roles — place of origin, consignor, consignee, importer, and place of destination
 - **WHEN** they view check-your-answers
-- **THEN** the roles-and-addresses card lists all of them, each showing the selected party's name and country
+- **THEN** the Addresses card, the one card under "5. Consignment addresses", lists all of them, each showing the selected party's name and country
+- **AND** its one header Change link opens the roles and addresses page
+
+#### Scenario: The reason, additional details and contact address answers stand on their own titled cards
+**ID**: SCN-CYA-001-H
+- **GIVEN** the user has answered the reason for import, the additional details and the contact address
+- **WHEN** they view the review
+- **THEN** the reason answers stand on the card titled "Main import reason", its first row keyed "Main import reason"
+- **AND** the additional details answers stand on the card titled "Additional details"
+- **AND** "6. Contact address" holds one card titled "Contact address", with a "Contact address" row
 
 #### Scenario: The arrival details card names the means of transport as the arrival page offers it
 **ID**: SCN-CYA-001-G
@@ -189,6 +200,12 @@ The system MUST refuse to continue from the review of a draft while any card sti
 - **GIVEN** a new notification is open on the review with cards still outstanding
 - **WHEN** the user continues
 - **THEN** they remain on the review page, the error summary is shown, and focus moves to it
+
+#### Scenario: A new notification's unfinished messages name the origin, reason and additional details cards in their titles' words
+**ID**: SCN-CYA-007-C
+- **GIVEN** a new notification is open on the review with nothing answered beyond the entry page
+- **WHEN** the user views the page
+- **THEN** the unfinished messages, in the error summary and on the card, read "Complete origin of import", "Complete main import reason" and "Complete additional details"
 
 ### Requirement: A submitted notification offers copy-as-new and delete
 **ID**: REQ-CYA-008

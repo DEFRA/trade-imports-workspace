@@ -314,7 +314,7 @@ While a notification is being amended, each journey page MUST end with exactly t
 #### Scenario: A Change link opens the page that collects the answer
 **ID**: SCN-FLOW-013-B
 - **GIVEN** the review of a notification being amended
-- **WHEN** the user follows "Change import details", changes the internal reference and selects "Save and continue"
+- **WHEN** the user follows "Change origin of import", changes the internal reference and selects "Save and continue"
 - **THEN** What are you importing? is shown, the journey having gone on from the origin page
 
 #### Scenario: Save and continue while amending goes on through the rest of the journey to check your answers
@@ -402,7 +402,7 @@ The system MUST send Back on every journey page to where the trader came from: t
 #### Scenario: Back goes to the review when the page was opened from a Change link
 **ID**: SCN-FLOW-018-C
 - **GIVEN** the review of a draft notification
-- **WHEN** the user follows the Change link for the reason for import and then the Back link
+- **WHEN** the user follows the Change link for the main import reason and then the Back link
 - **THEN** the review is shown
 
 #### Scenario: Back steps through the visited pages in reverse

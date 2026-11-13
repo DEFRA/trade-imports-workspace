@@ -1043,14 +1043,37 @@
       "dependsOn": [],
       "risk": "Low to medium. The JSON envelope is additive, so DISTIL still reads result.body as storage. The text layout must use body.view, as page.sh does.",
       "proof": "`diff <(tools/confluence/page.sh $ID) <(tim confluence page $ID)` is empty for two real pages, and the --raw output matches under jq -S. nock tests for URL parsing, 401 and 404.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "6058ca15"
+          }
+        ],
+        "checks": [
+          "tim-unit: PASS. `npm --prefix tim test` passed: 239 files, 4150 tests, plus 8 expected-fail tests. A mutation probe (changing 'No content') turned the golden tests red, and they went green again once it was restored.",
+          "tim-lint: PASS. `run lint` and `run format:check` are both clean.",
+          "parity: PASS. I captured goldens by running tools/confluence/page.sh against three trimmed real responses served over file:// (labels, no labels, no view body). They are under tim/src/test-support/fixtures/confluence, with emails and the host replaced. The tim text output matches the *.text.txt goldens byte for byte, and --raw matches the response verbatim, which page.sh's json mode also does (checked with cmp).",
+          "parity live: PASS. For page 6619005520, which has a label, `diff <(page.sh ID) <(tim confluence page ID)` is byte-identical, for both the id and the URL input. Pages 6525093960 and 6497338582 match once Confluence's per-render random tokens (data-colorid, style order, expander-N) are normalised. page.sh against itself differs on those same tokens. --raw piped through jq -S matches `page.sh ID json` for all 3 pages under the same normalisation. Exit codes: 404 gives 1 in both; input with no page id gives 2 in tim.",
+          "no-callers: PASS. Nothing is retired. The DISTIL callers (`tim confluence page <id> --json`, which reads result.body) still get the storage body, and the TUI's getPage callers and tests are green.",
+          "no new fixed path or .sh: PASS. git diff adds no git/defra or /Users path, and no .sh file."
+        ],
+        "deviations": [
+          "The id parser is named pageIdFrom, not pageIdFromUrl, because it accepts a bare id as well as a URL. That follows the findings folderPlan wording.",
+          "getPageView returns Confluence's raw response with page.sh's exact expand (body.view,version,space,history,metadata.labels) and backs --raw. Text and --json use getPage with that expand plus body.storage, so --raw stays equal to page.sh json.",
+          "Extra fix outside the row: makeClientAction and makeRunAction exited before stdout drained, which truncated piped output at 81920 bytes on macOS (`tim confluence page <big id> --raw | jq` failed). I added tim/src/commands/_write-line.js (with a test) and used it in both actions. captureProcessOutput now calls the write callback.",
+          "Added src/test-support/fixtures/confluence/ to tim/.prettierignore so the raw-response fixtures stay byte-exact.",
+          "getChildren and getPageExport are client methods that no command calls yet. The row asked for them, for the later sync row. Each has its own nock tests.",
+          "Live byte-for-byte diffs are exact only for the labelled page. Confluence randomises some render tokens per request, so the other two pages match after normalisation. page.sh run against itself shows the same difference."
+        ]
+      }
     },
     {
       "id": "P23",

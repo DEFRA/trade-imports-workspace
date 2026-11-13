@@ -11,6 +11,7 @@ services=(
   "backend|trade-imports-animals-backend|TRADE_IMPORTS_ANIMALS_BACKEND"
   "admin|trade-imports-animals-admin|TRADE_IMPORTS_ANIMALS_ADMIN"
   "ins-frontend|trade-imports-ins-frontend|TRADE_IMPORTS_INS_FRONTEND"
+  "routing-proxy|trade-imports-routing-proxy|TRADE_IMPORTS_ROUTING_PROXY"
   "stub|trade-imports-stub|TRADE_IMPORTS_STUB"
   "defra-id-stub|trade-imports-defra-id-stub|TRADE_IMPORTS_DEFRA_ID_STUB"
   "reference-data|trade-imports-reference-data|TRADE_IMPORTS_REFERENCE_DATA"

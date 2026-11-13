@@ -27,8 +27,8 @@ later sessions are usage-focused tours of the skills.
 
 ## How we keep this from going stale
 
-The mechanics of this workspace change often — skills get added, Make
-targets get renamed. If these pages restated all of that, they would be
+The mechanics of this workspace change often — skills get added, `tim`
+commands get renamed. If these pages restated all of that, they would be
 wrong within a month.
 
 So they don't. Wherever a page would otherwise list "this command takes
@@ -38,21 +38,19 @@ look; the workspace itself stays the source of truth.
 
 The three live views you will use most:
 
-- `make help` — every Make target with a one-line description, generated
-  from the Makefile itself. The Makefile is the working command surface
-  for the workspace today.
+- `tim --help` — every `tim` command with a one-line description, and
+  `tim <command> --help` for one command in full. `tim` is the command
+  surface for the workspace.
 - The root [`CLAUDE.md`](../../CLAUDE.md) — the living index: repo map,
-  Make targets, skill table, and tools table, all kept current as part of
+  `tim` commands, skill table, and tools table, all kept current as part of
   normal work.
 - Ask Claude **"read the SKILL.md for `<skill>` and tell me what it does
   and how to drive it"** — the SKILL.md is what Claude actually executes,
   so it cannot drift from reality.
 
-A note on `tim`: it's an experimental Node CLI intended to eventually
-replace the Makefile, with stable `--json` output for the skills to lean
-on. It isn't fully wired up or in routine use yet, so treat the Makefile
-as the source of truth for now. If `tim` proves itself, it takes over and
-these pages move with it.
+A note on `tim`: it's the workspace's Node CLI, and the one way to run
+workspace commands. You run it plainly; skills run it with `--json`, whose
+output stays stable for them to lean on.
 
 ## Session map
 
@@ -120,7 +118,7 @@ place that the agent wires up for:
   all under `docs/`.
 - **Pipelines** — helpers for triggering and reading GitHub Actions runs,
   so CI is drivable without leaving the workspace.
-- **Dev scripts** — the Makefile and `scripts/` that clone, update, lint
+- **Dev scripts** — `tim` and the `scripts/` it drives, which clone, update, lint
   and test all repos at once.
 - **Docker** — one compose stack under `docker/` that stands up every
   service together, from published images or local source.
@@ -130,21 +128,21 @@ place that the agent wires up for:
 
 The session is partly a guided tour and partly hands-on. The tour covers
 what the workspace is and how it's laid out; the reference for that is
-`CLAUDE.md`, and `make help` is how you read the current command surface.
+`CLAUDE.md`, and `tim --help` is how you read the current command surface.
 The hands-on half is the day-one "can I actually build and run this" loop:
-`make setup` and `make install` once, then `scripts/stack/run-stack.sh
---dev` to build and run every service from your local `repos/`, tail
-the logs to watch them, and the E2E suite in the tests repo to exercise the
-running stack. The stack is driven by the scripts under `scripts/stack/`
-(the `make docker-*` targets are thin wrappers); the flags and profiles
-come from `scripts/stack/run-stack.sh --help`, not from the slides.
+`tim workspace setup` and `tim workspace install` once, then `tim docker
+dev` to build and run every service from your local `repos/`, `tim docker
+logs` to watch them, and the E2E suite in the tests repo to exercise the
+running stack. `tim docker` runs the scripts under `scripts/stack/` for
+you; the flags and profiles come from `tim docker dev --help`, not from
+the slides.
 
 ## The agent harness
 
 Each of these sessions follows the same beat for every skill: **what it's
 for → trigger it → watch it run → try it yourself**. They stay
 usage-focused. None of them restate a skill's arguments, because
-`make help` and the skill's own SKILL.md always have the current version.
+`tim --help` and the skill's own SKILL.md always have the current version.
 
 ### Session 2: `ticket`
 

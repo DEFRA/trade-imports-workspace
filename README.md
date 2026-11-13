@@ -17,6 +17,7 @@ Local workspace aggregating the independent GitHub repos of the DEFRA trade impo
 | `repos/trade-imports-dynamics-gateway` | [DEFRA/trade-imports-dynamics-gateway](https://github.com/DEFRA/trade-imports-dynamics-gateway) | Centralised gateway forwarding events to Azure Service Bus | Java / Spring Boot |
 | `repos/trade-imports-address-book` | [DEFRA/trade-imports-address-book](https://github.com/DEFRA/trade-imports-address-book) | Org-scoped address book API | Java / Spring Boot |
 | `repos/trade-imports-ins-frontend` | [DEFRA/trade-imports-ins-frontend](https://github.com/DEFRA/trade-imports-ins-frontend) | Import Notification Service front-door | Node.js |
+| `repos/trade-imports-routing-proxy` | [DEFRA/trade-imports-routing-proxy](https://github.com/DEFRA/trade-imports-routing-proxy) | INS public entry point: will forward each request to the INS service its path addresses (skeleton today) | Node.js |
 | `repos/trade-imports-ins-backend` | [DEFRA/trade-imports-ins-backend](https://github.com/DEFRA/trade-imports-ins-backend) | Cross-journey notification read model | Java / Spring Boot |
 | `repos/trade-imports-plants-frontend` | [DEFRA/trade-imports-plants-frontend](https://github.com/DEFRA/trade-imports-plants-frontend) | High-risk plants journey | Node.js |
 | `repos/trade-imports-plants-prototype` | [DEFRA/trade-imports-plants-prototype](https://github.com/DEFRA/trade-imports-plants-prototype) | Prototype copy of the plants frontend, synced from it | Node.js |
@@ -35,11 +36,12 @@ git clone git@github.com:DEFRA/trade-imports-workspace.git ~/git/defra/trade-imp
 Then:
 
 ```bash
-make setup    # clone all repos into repos/
-make install  # npm install in all Node repos
+cd ~/git/defra/trade-imports-workspace/tim && npm ci && npm link   # put tim on your PATH
+tim workspace setup     # clone all repos into repos/
+tim workspace install   # install dependencies in every repo
 ```
 
-Run `make help` for the full list of cross-repo commands.
+Run `tim --help` for the full list of cross-repo commands.
 
 ## Skills
 

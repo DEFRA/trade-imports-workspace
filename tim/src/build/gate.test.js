@@ -1,3 +1,4 @@
+import { markWorkspaceRoot } from '../test-support/workspace-marker.js'
 import { describe, test, expect, afterEach } from 'vitest'
 import { createServer } from 'node:net'
 import {
@@ -44,7 +45,7 @@ const stackCallsPath = () => join(root, 'stack-calls')
 
 const workspaceWith = ({ gates, repos, parallelRepos, stackAfterLocal }) => {
   root = mkdtempSync(join(tmpdir(), 'tim-build-gate-'))
-  writeFileSync(join(root, 'Makefile'), 'all:\n')
+  markWorkspaceRoot(root)
   mkdirSync(dirname(join(root, GATES_PATH)), { recursive: true })
   writeFileSync(
     join(root, GATES_PATH),

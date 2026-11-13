@@ -246,7 +246,7 @@ function heading(slide, label, title) {
     ["tools/", "shared shell scripts the skills call"],
     ["scripts/", "setup, update and the Docker stack runner"],
     ["docker/", "the full-stack compose setup"],
-    ["tim/", "experimental CLI — may replace the Makefile in time"],
+    ["tim/", "the workspace CLI — every workspace command"],
     [".claude/skills/", "the agent skills (from Session 3 on)"],
   ];
   let dy = 1.9;
@@ -268,8 +268,8 @@ function heading(slide, label, title) {
     x: M, y: 1.1, w: 11.8, h: 0.8, fontFace: FONT, fontSize: 29, bold: true, color: C.black, margin: 0,
   });
   const live = [
-    ["make help", "every Make target, with a one-line description"],
-    ["read CLAUDE.md", "the living index: repo map, targets, skills, tools"],
+    ["tim --help", "every tim command, with a one-line description"],
+    ["read CLAUDE.md", "the living index: repo map, commands, skills, tools"],
     ["read a SKILL.md", "ask Claude what a skill does — it can't drift from reality"],
   ];
   let ly = 2.35;
@@ -290,14 +290,14 @@ function heading(slide, label, title) {
   s.background = { color: C.white };
   band(s);
   heading(s, "Hands on", "Running it locally");
-  s.addText("Can you actually build and run the whole stack? The stack is driven by the scripts under scripts/stack/ — the make docker-* targets are just thin wrappers around them.", {
+  s.addText("Can you actually build and run the whole stack? tim docker drives the stack, running the scripts under scripts/stack/ for you.", {
     x: M, y: 1.7, w: 11.8, h: 0.55, fontFace: FONT, fontSize: 15, color: C.grey, margin: 0,
   });
   {
     const cardY = 2.6, hdH = 0.6, bodyH = 2.7, cW = 3.717, cGap = 0.4;
     const cards = [
-      { step: "1 · Set up (once)", cmds: [["make setup", "clone every repo"], ["make install", "npm deps across Node repos"]] },
-      { step: "2 · Run from source", cmds: [["scripts/stack/run-stack.sh --dev", "build & run all services"], ["scripts/stack/bounce-backend.sh", "pick up edited Java source"]] },
+      { step: "1 · Set up (once)", cmds: [["tim workspace setup", "clone every repo"], ["tim workspace install", "dependencies in every repo"]] },
+      { step: "2 · Run from source", cmds: [["tim docker dev", "build & run all services"], ["tim docker bounce-backend", "pick up edited Java source"]] },
       { step: "3 · Verify", cmds: [["cd …-tests", "the E2E suite lives here"], ["npm run test:docker-compose", "exercise the running stack"]] },
     ];
     cards.forEach((c, ci) => {
@@ -316,11 +316,11 @@ function heading(slide, label, title) {
     });
     s.addText([
       { text: "Logs: ", options: { bold: true } },
-      { text: "docker compose -p trade-imports logs -f", options: { fontFace: MONO } },
+      { text: "tim docker logs", options: { fontFace: MONO } },
       { text: "   ·   stop / restart: ", options: { bold: true } },
-      { text: "scripts/stack/{stop,restart}-stack.sh", options: { fontFace: MONO } },
+      { text: "tim docker down / restart", options: { fontFace: MONO } },
       { text: "   ·   flags & profiles: ", options: { bold: true } },
-      { text: "run-stack.sh --help", options: { fontFace: MONO } },
+      { text: "tim docker dev --help", options: { fontFace: MONO } },
     ], { x: M, y: cardY + hdH + bodyH + 0.22, w: 11.95, h: 0.4, fontFace: FONT, fontSize: 11.5, color: C.grey, margin: 0 });
   }
   footer(s, 7);
@@ -331,9 +331,9 @@ function heading(slide, label, title) {
   s.addShape("rect", { x: 0, y: 0, w: 0.45, h: H, fill: { color: C.green } });
   heading(s, "Try it", "Get the stack running, end to end");
   const steps = [
-    ["1", "Clone & set up", "Clone to ~/git/defra/trade-imports-workspace (symlink if elsewhere), then make setup && make install."],
-    ["2", "Bring the stack up", "scripts/stack/run-stack.sh --dev to build from source, then watch the logs."],
-    ["3", "Run the E2E suite", "npm run test:docker-compose in the tests repo. Skim make help and CLAUDE.md while it runs."],
+    ["1", "Clone & set up", "Clone to ~/git/defra/trade-imports-workspace (symlink if elsewhere), then tim workspace setup and tim workspace install."],
+    ["2", "Bring the stack up", "tim docker dev to build from source, then tim docker logs to watch it."],
+    ["3", "Run the E2E suite", "npm run test:docker-compose in the tests repo. Skim tim --help and CLAUDE.md while it runs."],
   ];
   let ty = 2.0;
   steps.forEach((st) => {

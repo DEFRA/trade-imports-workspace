@@ -1,3 +1,4 @@
+import { markWorkspaceRoot } from '../../test-support/workspace-marker.js'
 import { describe, test, expect, afterEach } from 'vitest'
 import { execa } from 'execa'
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
@@ -65,7 +66,7 @@ afterEach(() => {
 
 const seedWorkspace = (specText) => {
   root = mkdtempSync(join(tmpdir(), 'tim-spec-lint-cli-'))
-  writeFileSync(join(root, 'Makefile'), 'all:\n')
+  markWorkspaceRoot(root)
   mkdirSync(join(root, 'repos', 'trade-imports-x', 'src'), { recursive: true })
   writeFileSync(
     join(root, 'repos', 'trade-imports-x', 'src', 'a.test.js'),

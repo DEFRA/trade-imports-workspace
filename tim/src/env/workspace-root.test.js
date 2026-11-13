@@ -6,10 +6,11 @@ import {
   resolveWorkspaceRoot,
   CANONICAL_WORKSPACE_PATH
 } from './workspace-root.js'
+import { markWorkspaceRoot } from '../test-support/workspace-marker.js'
 
 const makeFakeWorkspace = () => {
   const root = mkdtempSync(join(tmpdir(), 'tim-ws-'))
-  writeFileSync(join(root, 'Makefile'), 'all:\n')
+  markWorkspaceRoot(root)
   mkdirSync(join(root, 'repos'))
   return root
 }
@@ -47,17 +48,31 @@ describe('resolveWorkspaceRoot', () => {
     expect(resolved).toBe(workspace)
   })
 
+  test('finds a fresh clone that has repos.json but no repos folder yet', () => {
+    const freshClone = mkdtempSync(join(tmpdir(), 'tim-fresh-'))
+    mkdirSync(join(freshClone, '.git'))
+    writeFileSync(join(freshClone, 'repos.json'), '{"repos":[]}\n')
+
+    try {
+      expect(
+        resolveWorkspaceRoot({ cwd: freshClone, env: '', canonical: '/' })
+      ).toBe(freshClone)
+    } finally {
+      rmSync(freshClone, { recursive: true, force: true })
+    }
+  })
+
   test('throws USAGE when the explicit path is not a directory', () => {
     expect(() =>
       resolveWorkspaceRoot({ explicit: join(workspace, 'no-such-dir') })
     ).toThrow(/not a directory/)
   })
 
-  test('throws USAGE when the explicit path lacks workspace markers', () => {
+  test('throws USAGE naming the markers when the explicit path lacks them', () => {
     const empty = mkdtempSync(join(tmpdir(), 'tim-empty-'))
     try {
       expect(() => resolveWorkspaceRoot({ explicit: empty })).toThrow(
-        /does not look like/
+        `Workspace path ${empty} does not look like a trade-imports workspace. It needs a .git or docs/best-practices folder, and a repos.json file or a repos folder.`
       )
     } finally {
       rmSync(empty, { recursive: true, force: true })

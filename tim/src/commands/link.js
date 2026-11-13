@@ -109,7 +109,7 @@ export const register = (program, { timVersion }) => {
   program
     .command('link')
     .description(
-      `Symlink ${CANONICAL_WORKSPACE_PATH} -> this checkout (required by tools/)`
+      `For a checkout cloned somewhere else: symlink ${CANONICAL_WORKSPACE_PATH} to this checkout, because tools/ scripts read that path. A clone at that path needs nothing.`
     )
     .action(async function linkAction() {
       const globalOpts = this.optsWithGlobals()

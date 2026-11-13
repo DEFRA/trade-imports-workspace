@@ -1,3 +1,4 @@
+import { markWorkspaceRoot } from '../../test-support/workspace-marker.js'
 import { describe, test, expect, afterEach } from 'vitest'
 import { execa } from 'execa'
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
@@ -33,7 +34,7 @@ afterEach(() => {
 
 const seedBacklog = (increments) => {
   root = mkdtempSync(join(tmpdir(), 'tim-build-start-cli-'))
-  writeFileSync(join(root, 'Makefile'), 'all:\n')
+  markWorkspaceRoot(root)
   mkdirSync(join(root, 'repos'))
   const workarea = join(root, 'workareas', 'shared', 'programme')
   mkdirSync(workarea, { recursive: true })

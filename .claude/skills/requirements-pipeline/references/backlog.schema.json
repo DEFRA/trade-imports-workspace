@@ -346,7 +346,7 @@
           "$ref": "#/$defs/text"
         },
         "status": {
-          "description": "`todo` is buildable. `done` is what a dependency waits for. `blocked`, `deferred`, `dropped`, `rejected` and `merged-into` are withheld: `tim backlog next` never picks them up. The build loop sets `blocked` on a row it landed that changes a signed-off scenario, with an open question naming the ticket a person rules on.",
+          "description": "`todo` is buildable. `done` is what a dependency waits for. `blocked`, `deferred`, `dropped`, `rejected` and `merged-into` are withheld: `tim backlog next` never picks them up. The full-lifecycle build loop sets `blocked` on a row it holds before the merge, because it changes a signed-off scenario or the check could not run, with an open question saying what a person rules on.",
           "enum": [
             "todo",
             "blocked",
@@ -436,7 +436,13 @@
           "items": {
             "type": "object",
             "required": ["url"],
-            "properties": { "url": { "$ref": "#/$defs/text" } }
+            "properties": {
+              "url": { "$ref": "#/$defs/text" },
+              "signedOffHold": {
+                "description": "true when the full-lifecycle merge gate held the row for a signed-off ruling and made this pull request a draft. On a later launch, a held row whose pull requests are all out of draft merges without the check: a person approved it.",
+                "type": "boolean"
+              }
+            }
           }
         },
         "attempt": {

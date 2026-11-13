@@ -93,7 +93,7 @@
       ],
       "dependsOn": [],
       "theme": "test-hygiene",
-      "status": "todo",
+      "status": "done",
       "kind": "test",
       "repos": [
         "frontend",
@@ -110,14 +110,32 @@
         }
       ],
       "requirements": [],
-      "openQuestions": [],
+      "openQuestions": [
+        "The two new tests-repo screenshot specs (tests/animals/e2e/visual/arrival-details.visual.spec.ts and upload-documents.visual.spec.ts) have no chromium-linux or chromium-darwin baseline PNGs, so toHaveScreenshot fails on first run and criteria 3 and 6 are unmet. Making them needs the workspace stack, which this build run does not hold: take the linux images from the tests repo PR CI artefact once a person has looked at them, make the darwin ones with test:visual:update:macos on a stack-held run, and commit both into the -snapshots directories before the row lands. Until then nothing proves the arrival details medium labels or the Upload documents actions column right-aligned. (Review findings: missing visual baselines for arrival-details and upload-documents.)",
+        "For a person: the live animals type-ahead paints its focused input inset shadow in currentColor, which resolves to rgb(0, 0, 0), while GOV.UK paints the focused input shadow in --govuk-input-border-colour, rgb(11, 12, 12) (govuk-frontend.min.css .govuk-input:focus; accessible-autocomplete.min.css). Should the type-ahead stylesheet paint the focus shadow in GOV.UK input-border colour (a production change on signed-off pages), or keep the current colour? Until ruled, the focus test in type-ahead.fit.spec.js pins the shadow to the input text colour and GOV.UK shadow geometry as read. (Review finding: type-ahead focus test strips the shadow colour.)",
+        "Awaiting a signed-off ruling: this row changes 253 signed-off scenario(s). Raise the ticket drafted in ~/git/defra/trade-imports-workspace/workareas/shared/design-release-2-1/themes/test-hygiene/logs/inc-234-signed-off-ticket for a person to approve or refuse the change. The pull requests stay drafts until then."
+      ],
       "notes": [
         "Covers inc-225 followUps[8]; inc-226 followUps[0] (animals half), [1], [2], [3], [4], [5] (all but cph-number), [10], [11], [13]; inc-228 followUps[1], [4]. Duplicate folded in: inc-228 followUps[8].",
         "Places found on main 27 Oct: hub.fit.spec.js:36, :348-354, :447-452; arrival-transit.fit.spec.js:210-211, :222, :833; upload.fit.spec.js:712-715; check-answers.fit.spec.js:47-48, :146-151; additional-details.fit.spec.js:74-77; origin.fit.spec.js:151-161; consignment-details.fit.spec.js:112-121; section-caption.fit.spec.js:51; import-reason.fit.spec.js:153; transporters.fit.spec.js:344-347, :498, :785; type-ahead.fit.spec.js:183, :229-253, :256, :377-379, :471; fit/live-animals-journey.js:102; docs/testing.md:74.",
         "Ownership: the Overview and review checks moved to overview-and-review inc-098 and inc-101; this row does not edit hub.fit.spec.js or check-answers.fit.spec.js. The transporters and arrival-and-transit themes have landed, so transporters.fit.spec.js and arrival-transit.fit.spec.js wait on nothing. No open row in backlog.json or any themes/*/backlog.json covers part of this row (checked 12 Nov).",
-        "Trimmed on 2026-11-10 by ruling:sam-2026-11-10b: the Overview and review checks (hub.fit.spec.js totals box, buttons and caption line height; check-answers.fit.spec.js visually-hidden and summary-card classes; the review's last-card screenshot) moved to overview-and-review inc-098 and inc-101. The Overview and transit countries screenshots are already on the tests repo's main (overview-totals.visual.spec.ts, transited-countries.visual.spec.ts); the arrival details labels and Upload documents actions screenshots are still missing (tests repo 8663749). Checked on main 12 Nov (animals-frontend f5ae00e9; EUDPA-774 b9ae05ed moved every line): the class and style checks are still there, at arrival-transit.fit:222-223/234/1047, upload.fit:777/780, origin.fit:165-166/172/175, consignment-details.fit:143/148/151/154, additional-details.fit:129/132, import-reason.fit:190, section-caption.fit:51, transporters.fit:295/374/377/548/859, type-ahead.fit:232-233/253/258/441/534. The search button class now sits in one constant, type-ahead.fit:27, used at :185 and :416, but the button is still found by class. New since 10 Nov: type-ahead.fit:413-426 hard-codes the search button colours rgb(29, 112, 184) and rgb(255, 255, 255), which contradicts docs/testing.md:76-78 and :94-96; saveMeansOfTransportAndContinueAt is exported from fit/live-animals-journey.js:1043 with one user (arrival-transit.fit:673); upload.fit:877/882/885 find the error summary, error message and error group by class. expectStyle is exported from fit/live-animals-journey.js:119 with one user (type-ahead.fit), while docs/testing.md:81 calls it shared. No animals type-ahead has an accented-search browser test; the transporter list filter has one (transporters.fit:541-550), which is not a type-ahead."
+        "Trimmed on 2026-11-10 by ruling:sam-2026-11-10b: the Overview and review checks (hub.fit.spec.js totals box, buttons and caption line height; check-answers.fit.spec.js visually-hidden and summary-card classes; the review's last-card screenshot) moved to overview-and-review inc-098 and inc-101. The Overview and transit countries screenshots are already on the tests repo's main (overview-totals.visual.spec.ts, transited-countries.visual.spec.ts); the arrival details labels and Upload documents actions screenshots are still missing (tests repo 8663749). Checked on main 12 Nov (animals-frontend f5ae00e9; EUDPA-774 b9ae05ed moved every line): the class and style checks are still there, at arrival-transit.fit:222-223/234/1047, upload.fit:777/780, origin.fit:165-166/172/175, consignment-details.fit:143/148/151/154, additional-details.fit:129/132, import-reason.fit:190, section-caption.fit:51, transporters.fit:295/374/377/548/859, type-ahead.fit:232-233/253/258/441/534. The search button class now sits in one constant, type-ahead.fit:27, used at :185 and :416, but the button is still found by class. New since 10 Nov: type-ahead.fit:413-426 hard-codes the search button colours rgb(29, 112, 184) and rgb(255, 255, 255), which contradicts docs/testing.md:76-78 and :94-96; saveMeansOfTransportAndContinueAt is exported from fit/live-animals-journey.js:1043 with one user (arrival-transit.fit:673); upload.fit:877/882/885 find the error summary, error message and error group by class. expectStyle is exported from fit/live-animals-journey.js:119 with one user (type-ahead.fit), while docs/testing.md:81 calls it shared. No animals type-ahead has an accented-search browser test; the transporter list filter has one (transporters.fit:541-550), which is not a type-ahead.",
+        "Sam approved the signed-off test edits on 12 November (244 scenarios, all linked-test edits, no scenario wording changed). Sam ruled the type-ahead focus shadow goes to GOV.UK input border colour: built as inc-266."
       ],
-      "gate": null
+      "gate": null,
+      "commit": "631aa8ef751336d689c095f1c4b54030b3fa1bd3 f8d9477fe740ecfd20e49349a8ff90df5848f7c4",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/481",
+          "repo": "trade-imports-animals-frontend",
+          "number": 481
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/108",
+          "repo": "trade-imports-ins-tests",
+          "number": 108
+        }
+      ]
     },
     {
       "id": "inc-235",
@@ -129,7 +147,7 @@
       ],
       "dependsOn": [],
       "theme": "test-hygiene",
-      "status": "todo",
+      "status": "done",
       "kind": "refactor",
       "repos": [
         "frontend"
@@ -145,7 +163,15 @@
       "notes": [
         "Re-checked on 2026-11-11 against animals-frontend origin/main b9ae05ed, after the save and continue work (EUDPA-774, PR #468) merged, and released from blocked. The return-link half is done, so its two criteria are dropped. EUDPA-774 moved the return-marker rule into shared/trail.js (RETURN_PARAMETER at :9, withReturnMarker at :83, readReturnMarker at :95, re-exported by kit.js). partyEditHref (addresses/party-edit/edit-href.js:4-8) now builds its link with withReturnMarker and withTrail. The Roles and addresses page's link to the CPH number page (addresses/controller.js:60-64) now uses kit.withReturnMarker inside kit.carryTrail. The commodities link (commodity-question-detour.js:18, 57e85889) and all three readers already used the shared rule. The only other hand-built 'return' is the INS address-book handshake's own return URL (ins-address-book-urls.js:30, :42; ins-handshake.js:17), which is a separate marker and not for this row. Left: src/client/common/helpers/bold-matches.js:3-9 HTML_ESCAPES (used only by escapeHtml at :11-12) and :14 MATCH_CLASS (used only by strongMatch at :16-17) stay at module level. Copy the plants-frontend version, which puts the escapes inside escapeHtml and writes the class inline. Delete src/client/common/helpers/.gitkeep. Keep bold-matches.test.js green."
       ],
-      "gate": null
+      "gate": null,
+      "commit": "ff4df45f8b56255cdef769f00d844cda9a197c45 797ce816e6d089f1654a4a8abe9da2fb7b62f25c",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/481",
+          "repo": "trade-imports-animals-frontend",
+          "number": 481
+        }
+      ]
     },
     {
       "id": "inc-236",
@@ -160,7 +186,7 @@
       ],
       "dependsOn": [],
       "theme": "test-hygiene",
-      "status": "todo",
+      "status": "done",
       "kind": "test",
       "repos": [
         "plantsfrontend",
@@ -173,12 +199,206 @@
         }
       ],
       "requirements": [],
-      "openQuestions": [],
+      "openQuestions": [
+        "Twin fix: trade-imports-animals-frontend fit/live-animals-journey.js:119 needs a JSDoc contract above the exported expectStyle (for example \"Fails unless the element has each computed style given.\" with @param element Locator and @param styles Record<string, string>), as the plants review finding that the exported assertion helper expectStyle carries no JSDoc while its neighbouring exported helpers (measureReferenceElement) do."
+      ],
       "notes": [
         "On main 12 Nov: plants src/server/app/sets/high-risk-plants/docs/testing.md:110-112 (coverage claim; the broken expectPickerResultsLayout sentence was fixed by 04502b6, EUDPA-774); fit/high-risk-plants-journey.js:92-96 (computedStyle), :105-113 (govukColourOf) and :953-962 (postUnknownAddressId, fieldName to name); journeys/linear/features/type-ahead.fit.spec.js:444-469 (govukReferenceStyleOf); journeys/linear/features/arrival-details/arrival-details.fit.spec.js:106-112 (selectPortMissingFromTheList, code to portCode), and :217-219 and :333-335 (the only plants toHaveClass checks); ins-tests package.json:41, :48, :61 and README.md:104 (plants visual dash; :433-434 already says plants has @visual specs); workspace openspec/specs/plants/journey-pages/arrival-details/spec.md:62-64 (REQ-PLANTS-ARRIVAL-DETAILS-003, no accent wording) and commodity-details/spec.md (no genus-search requirement yet, so add one); compare origin/spec.md:24 and :44-48. The tests already prove both at type-ahead.fit.spec.js:65-67, :81-83 and :178-189. The behaviour-spec edit lands in the workspace repo beside the build, as frontend-change syncs openspec.",
         "Nothing blocks the build: arrival-and-transit merged on 4 Nov without touching plants arrival details. Both page specs are Maturity exploring with no signed-off scenarios, so the signed-off pages check does not apply. Reword the coverage claim; do not move code (fit/ sits outside src/ anyway). Change only the README's plants visual cell: the a11y and security dashes are right, because those folders hold only .gitkeep."
       ],
-      "gate": null
+      "gate": null,
+      "commit": "dc2070190bfca818fdcd45128b5abf9b93c19c17 0168e879973739941dd607da162b694caf8f36a6",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/142",
+          "repo": "trade-imports-plants-frontend",
+          "number": 142
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/108",
+          "repo": "trade-imports-ins-tests",
+          "number": 108
+        }
+      ]
+    },
+    {
+      "id": "inc-266",
+      "title": "The type-ahead's focus shadow is GOV.UK's input border colour, as every other focused input's is",
+      "kind": "fix",
+      "theme": "test-hygiene",
+      "status": "done",
+      "repos": [
+        "frontend",
+        "plantsfrontend"
+      ],
+      "dependsOn": [
+        "inc-234"
+      ],
+      "detail": "When a live animals type-ahead input has focus, its inset focus shadow is painted in currentColor, which resolves to rgb(0, 0, 0). GOV.UK paints a focused input's shadow in the input border colour, rgb(11, 12, 12) (govuk-frontend .govuk-input:focus). The black comes from accessible-autocomplete's own stylesheet, which neither frontend overrides. Sam ruled on 12 November that the type-ahead follows GOV.UK. inc-234's focus test in type-ahead.fit.spec.js currently pins the shadow to the input text colour as read; it now proves GOV.UK's colour instead. The plants frontend uses the same type-ahead, so its twin changes too.",
+      "acceptanceCriteria": [
+        "A focused live animals type-ahead input paints its focus shadow in the same colour a focused GOV.UK text input paints its own, read from the page at run time, not typed into the test.",
+        "A focused plants type-ahead input does the same.",
+        "The type-ahead focus browser tests in both frontends prove that colour, and fail when the override is removed.",
+        "The shadow's width and the yellow focus outline are unchanged."
+      ],
+      "notes": [
+        "Raised from inc-234's open question 'For a person: the live animals type-ahead paints its focused input inset shadow in currentColor'. Sam ruled 12 November: follow GOV.UK. The change is on signed-off pages and Sam has ruled it, so a signed-off check that trips on it is already approved.",
+        "The signed-off check tripped on 13 scenarios across arrival details, import reason, origin and transited countries (linked tests edited, no scenario wording changed). Already approved: Sam ruled the type-ahead follows GOV.UK on 12 November."
+      ],
+      "sources": [],
+      "requirements": [],
+      "openQuestions": [
+        "Awaiting a signed-off ruling: this row changes 13 signed-off scenario(s). Raise the ticket drafted in ~/git/defra/trade-imports-workspace/workareas/shared/design-release-2-1/themes/test-hygiene/logs/inc-266-signed-off-ticket for a person to approve or refuse the change. The pull requests stay drafts until then."
+      ],
+      "commit": "2287c9c88410523f453676bbdd01c9135c7b1c77 7acfc2e06ae4564ba93899581effc8c8f94e5dd2",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/481",
+          "repo": "trade-imports-animals-frontend",
+          "number": 481
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/142",
+          "repo": "trade-imports-plants-frontend",
+          "number": 142
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/108",
+          "repo": "trade-imports-ins-tests",
+          "number": 108
+        }
+      ]
+    },
+    {
+      "id": "inc-267",
+      "title": "The plants address-book picker proves its legend is hidden from sight but names the fieldset, without reading a class list",
+      "kind": "fix",
+      "theme": "test-hygiene",
+      "status": "done",
+      "repos": [
+        "plantsfrontend"
+      ],
+      "dependsOn": [
+        "inc-236"
+      ],
+      "detail": "The plants address-book picker results unit test (src/server/app/sets/high-risk-plants/journeys/linear/features/address-book-picker/results.test.js, the visually hidden legend test) asserts the legend carries govuk-visually-hidden. The rest of the theme proves how a page looks by what a user or assistive technology gets, not by class list. Sam asked for this fix on 12 November.",
+      "acceptanceCriteria": [
+        "The test for the address-book picker results table proves the fieldset takes its accessible name, Select an address, from its legend.",
+        "A test proves the legend is not visible on screen by what the browser renders, not by its class list, in whichever test layer can measure it.",
+        "No test of the address-book picker asserts a class list.",
+        "Each changed test fails when the behaviour it names is broken."
+      ],
+      "notes": [
+        "Raised by inc-236 as a follow-up. Sam ruled on 12 November: fix it. If the signed-off check trips on this test edit, it is already approved."
+      ],
+      "sources": [],
+      "requirements": [],
+      "openQuestions": [],
+      "commit": "4933717",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/142",
+          "repo": "trade-imports-plants-frontend",
+          "number": 142
+        }
+      ]
+    },
+    {
+      "id": "inc-268",
+      "title": "The workspace testing guide lists the plants journey helpers as they are",
+      "kind": "fix",
+      "theme": "test-hygiene",
+      "status": "done",
+      "repos": [],
+      "gatePhases": [],
+      "dependsOn": [
+        "inc-236"
+      ],
+      "detail": "The FIT helper table in docs/best-practices/node/testing/frontend.md (section 3, Feature integration tests) lists a subset of the plants helpers in fit/high-risk-plants-journey.js and its neighbours that has fallen behind the code. The plants set keeps its own testing guide (src/server/app/sets/high-risk-plants/docs/testing.md in trade-imports-plants-frontend). Sam asked for this fix on 12 November.",
+      "acceptanceCriteria": [
+        "Every plants helper the workspace guide names exists in the plants frontend, under the name and file the guide gives.",
+        "The guide either lists every exported plants journey helper, or names the plants set testing guide as the full list and keeps only the ones a new reader reaches for first.",
+        "The animals row of the same table is checked the same way and corrected if it has fallen behind."
+      ],
+      "notes": [
+        "Raised by inc-236 as a follow-up. Sam ruled on 12 November: fix it. A workspace-only row: the change is in this repo docs, on the theme branch."
+      ],
+      "sources": [],
+      "requirements": [],
+      "openQuestions": [],
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/481",
+          "repo": "trade-imports-animals-frontend",
+          "number": 481
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/108",
+          "repo": "trade-imports-ins-tests",
+          "number": 108
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/142",
+          "repo": "trade-imports-plants-frontend",
+          "number": 142
+        }
+      ]
+    },
+    {
+      "id": "inc-269",
+      "title": "The test hygiene branch takes in what main has landed since it was cut, so the theme can merge",
+      "kind": "chore",
+      "theme": "test-hygiene",
+      "status": "done",
+      "repos": [
+        "frontend",
+        "plantsfrontend",
+        "tests"
+      ],
+      "dependsOn": [
+        "inc-267",
+        "inc-268"
+      ],
+      "merge": {
+        "frontend": "origin/main",
+        "plantsfrontend": "origin/main",
+        "tests": "origin/main"
+      },
+      "detail": "Animals frontend #481, plants frontend #142 and tests #108 are behind main, and each repo needs a branch up to date with main before it merges. Sam asked on 12 November for the theme to merge, so main comes in through the loop.",
+      "acceptanceCriteria": [
+        "origin/main is merged into feat/NO_JIRA-design-release-2-1-test-hygiene in the animals frontend, the plants frontend and the tests repo, as one two-parent merge commit each, with no conflict markers left.",
+        "Every change main has landed since the branch was cut is kept, and every change the theme made is kept. Where both touch the same lines, the result does what each meant: main's behaviour with the theme's way of proving it.",
+        "A test main added that checks a class list, a fixed colour or a fixed alignment is brought into line with the theme, proving the same thing by screenshot, accessible name or GOV.UK values read at run time.",
+        "Animals frontend #481, plants frontend #142 and tests #108 each report no conflict and are not behind main.",
+        "Every one of those pull requests is green, screenshot tests included."
+      ],
+      "notes": [
+        "Sam asked on 12 November to merge the theme. Linked-test edits on signed-off scenarios are already approved; no scenario wording changes.",
+        "The signed-off check flagged three linked tests (SCN-COMMODITY-DETAILS-007-B, SCN-DOCS-003-A, SCN-DOCS-004-A). Each is identical to origin/main after the merge: the edit is main's own, brought in, not the theme's. No scenario wording changes, so no ticket (Sam, 12 November). Cleared to carry on."
+      ],
+      "sources": [],
+      "requirements": [],
+      "openQuestions": [
+        "Awaiting a signed-off ruling: this row changes 3 signed-off scenario(s). Raise the ticket drafted in ~/git/defra/trade-imports-workspace/workareas/shared/design-release-2-1/themes/test-hygiene/logs/inc-269-signed-off-ticket for a person to approve or refuse the change. The pull requests stay drafts until then."
+      ],
+      "commit": "e57d0a0e2cac7d972d8b980f087521cdb3bec414 37b4012b2a00d79fbbcd6bd6f9c1ac30d3ab6aa0 21cf45b602fe69edec7c91ed49ae8aad92cd2aaf",
+      "prs": [
+        {
+          "url": "https://github.com/DEFRA/trade-imports-animals-frontend/pull/481",
+          "repo": "trade-imports-animals-frontend",
+          "number": 481
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-plants-frontend/pull/142",
+          "repo": "trade-imports-plants-frontend",
+          "number": 142
+        },
+        {
+          "url": "https://github.com/DEFRA/trade-imports-ins-tests/pull/108",
+          "repo": "trade-imports-ins-tests",
+          "number": 108
+        }
+      ]
     }
   ]
 }

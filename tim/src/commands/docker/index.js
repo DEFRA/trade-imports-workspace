@@ -3,6 +3,7 @@ import { runStackScript } from '../../exec/stack.js'
 import { OK, USAGE, ERROR } from '../../constants/exitCodes.js'
 import { isTimError } from '../../errors.js'
 import { registerLease, registerPerf } from './lease.js'
+import { registerLogs } from './logs.js'
 import {
   readLease,
   describeLease,
@@ -153,7 +154,7 @@ export const register = (program, { timVersion }) => {
   const docker = program
     .command('docker')
     .description(
-      'Workspace Docker stack — wraps scripts/stack/ (run-stack.sh, stop-stack.sh, etc.). While a build holds the stack lease (tim docker lease status), up, dev, down, restart and bounce-backend refuse unless you add --force. perf starts it as a performance target under a lease (tim docker perf).'
+      'Workspace Docker stack — wraps scripts/stack/ (run-stack.sh, stop-stack.sh, etc.). While a build holds the stack lease (tim docker lease status), up, dev, down, restart and bounce-backend refuse unless you add --force. perf starts it as a performance target under a lease (tim docker perf). logs follows service logs and never needs the lease.'
     )
 
   for (const command of STACK_COMMANDS) {
@@ -161,4 +162,5 @@ export const register = (program, { timVersion }) => {
   }
   registerLease(docker, timVersion)
   registerPerf(docker, timVersion)
+  registerLogs(docker, timVersion)
 }

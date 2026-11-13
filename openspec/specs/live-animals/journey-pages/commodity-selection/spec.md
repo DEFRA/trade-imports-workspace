@@ -161,7 +161,7 @@ The system MUST report how many species have been chosen, showing each chosen co
 - **GIVEN** the user has chosen one species on the commodity selection page
 - **WHEN** the page next renders
 - **THEN** the tally reports one chosen, showing the commodity as a bold line reading as its name with its code in round brackets, such as "Cattle (0102)", with the species beneath it
-- **AND** each entry shows the species' Latin name alone, and offers a control whose accessible name is "Remove", that Latin name, "from" and the commodity heading, such as "Remove Bos taurus from Cattle (0102)"
+- **AND** each entry shows the species' Latin name alone, with a remove control
 - **WHEN** the user clears the selection
 - **THEN** the tally is no longer shown
 
@@ -361,6 +361,12 @@ The system MUST offer each tally entry a control whose accessible name is "Remov
 - **THEN** each of the two entries offers a remove control whose name holds its own commodity heading, so the two names differ
 - **WHEN** they use the remove control for one of the two
 - **THEN** only that entry is gone from the tally and the other is still chosen
+
+#### Scenario: Each remove control is named for its species and its commodity heading
+**ID**: SCN-COMMODITY-SELECT-018-E
+- **GIVEN** the user has chosen a species
+- **WHEN** the page next renders
+- **THEN** that entry's remove control has the accessible name "Remove", the species' Latin name, "from" and its commodity heading, such as "Remove Bos taurus from Cattle (0102)"
 
 ### Requirement: Without JavaScript, an Update selected control brings the tally up to date
 **ID**: REQ-COMMODITY-SELECT-019

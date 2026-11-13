@@ -168,8 +168,4 @@ export const buildProgram = () => {
   return program
 }
 
-// cli.js IS the bin entry. Run unconditionally so the global `tim`
-// symlink (which makes process.argv[1] !== import.meta.url) works.
-// Tests spawn node src/cli.js as a subprocess; nothing imports this
-// file's exports at module load time.
 buildProgram().parse(process.argv)

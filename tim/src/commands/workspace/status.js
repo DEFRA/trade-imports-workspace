@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
-import { REPOS, repoPath } from '../../constants/repos.js'
+import { rosterOf, repoPath } from '../../constants/repos.js'
 import { run } from '../../exec/exec.js'
 import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
 import { OK, USAGE } from '../../constants/exitCodes.js'
@@ -53,7 +53,11 @@ const collectStatus = async (workspaceRoot, repo) => {
 }
 
 export const collectStatuses = (workspaceRoot) =>
-  Promise.all(REPOS.map((repo) => collectStatus(workspaceRoot, repo)))
+  Promise.all(
+    rosterOf(workspaceRoot).repos.map((repo) =>
+      collectStatus(workspaceRoot, repo)
+    )
+  )
 
 export const renderText = (statuses) =>
   statuses

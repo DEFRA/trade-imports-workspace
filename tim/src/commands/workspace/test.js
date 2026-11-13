@@ -1,12 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import {
-  NODE_REPOS,
-  JAVA_REPOS,
-  UNIT_TEST_EXEMPT_REPOS,
-  repoPath,
-  realRepoPath
-} from '../../constants/repos.js'
+import { rosterOf, repoPath, realRepoPath } from '../../constants/repos.js'
 import { run } from '../../exec/exec.js'
 import { runSerial } from '../../exec/parallel.js'
 import { makeTaskAction, toResultRecord } from './_task-output.js'
@@ -23,9 +17,10 @@ const hasTestScript = (dir) => {
 }
 
 export const buildTestTasks = (workspaceRoot) => {
+  const { nodeRepos, javaRepos, unitTestExemptRepos } = rosterOf(workspaceRoot)
   const tasks = []
-  for (const repo of NODE_REPOS) {
-    if (UNIT_TEST_EXEMPT_REPOS.includes(repo)) continue
+  for (const repo of nodeRepos) {
+    if (unitTestExemptRepos.includes(repo)) continue
     const dir = realRepoPath(workspaceRoot, repo)
     if (!hasTestScript(dir)) continue
     const task = { id: repo, repo, label: `${repo} — npm test` }
@@ -35,7 +30,7 @@ export const buildTestTasks = (workspaceRoot) => {
       })
     tasks.push(task)
   }
-  for (const repo of JAVA_REPOS) {
+  for (const repo of javaRepos) {
     const dir = repoPath(workspaceRoot, repo)
     const pom = join(dir, 'pom.xml')
     if (!existsSync(pom)) continue

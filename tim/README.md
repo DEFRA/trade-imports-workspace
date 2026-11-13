@@ -10,7 +10,15 @@ npm install
 npm i -g .
 ```
 
-`tim` is now on your PATH. To uninstall:
+`tim` is now on your PATH. The global `tim` is a launcher: it finds the
+workspace you address (`--workspace`, `TIM_WORKSPACE`, or the folders
+above the current one) and, when that clone holds its own `tim/src/cli.js`
+and `repos.json`, runs that clone's tim against that clone's repo roster.
+One install serves every clone on the machine. A clone whose
+`tim/node_modules` is missing is refused with exit code 2 and a message to
+run `npm ci` in its `tim` folder.
+
+To uninstall:
 
 ```bash
 npm un -g tim

@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { NODE_REPOS, realRepoPath } from '../../constants/repos.js'
+import { rosterOf, realRepoPath } from '../../constants/repos.js'
 import { run } from '../../exec/exec.js'
 import { runAcross } from '../../exec/parallel.js'
 import { makeTaskAction, toResultRecord } from './_task-output.js'
@@ -18,7 +18,7 @@ const hasLintScript = (dir) => {
 
 export const buildLintTasks = (workspaceRoot) => {
   const tasks = []
-  for (const repo of NODE_REPOS) {
+  for (const repo of rosterOf(workspaceRoot).nodeRepos) {
     const dir = realRepoPath(workspaceRoot, repo)
     if (!hasLintScript(dir)) continue
     const task = { id: repo, repo, label: `${repo} — npm run lint` }

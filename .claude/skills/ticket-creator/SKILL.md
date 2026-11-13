@@ -345,7 +345,7 @@ receipt, not `draft.md`, is the record of what got raised.
 ### Fallback: `tools/jira/create-ticket.sh`
 
 Reach for this only when `tim` is not on `PATH` (`which tim` finds
-nothing — `npm --prefix ~/git/defra/trade-imports-workspace/tim link` fixes
+nothing — `npm --prefix tim link`, run from the workspace root, fixes
 that where possible, so prefer that over falling back):
 
 ```bash

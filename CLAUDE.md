@@ -136,7 +136,7 @@ DEFRA`, `gh pr create|view|diff|checks|merge`, `gh run view|rerun|watch`,
 `gh auth status` (see rule 8).
 
 ```bash
-npm --prefix ~/git/defra/trade-imports-workspace/tim link   # tim on PATH
+npm --prefix tim link     # from any clone's root, once per machine: tim on PATH
 tim --help                # full surface
 tim workspace status      # git status for every repo, with jq-friendly --json
 tim docker dev            # start the stack from local source (run-stack.sh -d)
@@ -176,15 +176,17 @@ cd ~/git/defra/trade-imports-workspace/tim
 npm ci
 ```
 
-`tim` finds the workspace by walking up from the current directory, then
-falls back to the canonical path. Standing in another checkout — the old
+`tim` finds the workspace from `--workspace`, then `TIM_WORKSPACE`, then
+by walking up from the current directory, then falls back to the
+canonical path. The global `tim` is a launcher: once it has found a
+workspace clone that holds `tim/src/cli.js` and `repos.json`, it runs
+that clone's own tim, against that clone's roster. One `npm link` serves
+every clone on the machine, and each clone runs its own code. A clone
+whose `tim/node_modules` is missing is refused with a message to run
+`npm ci` in its `tim` folder. Standing in another checkout — the old
 `trade-imports-animals` clone, say — that walk-up wins and reads the
-wrong data, so pass `--workspace ~/git/defra/trade-imports-workspace`
-when you are not inside this one.
-
-If `tim` behaves as though it is looking at a different workspace, check
-`readlink -f "$(which tim)"` — a `tim` linked from an older clone resolves
-that clone's `tools/` and `workareas/`.
+wrong data, so pass `--workspace <path to this clone>` when you are not
+inside this one.
 
 See [`tim/CLAUDE.md`](tim/CLAUDE.md) for rails (test-on-input/output,
 library-first, GDS plain English, `__mocks__`-style network-boundary

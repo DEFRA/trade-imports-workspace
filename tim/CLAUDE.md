@@ -45,6 +45,7 @@ Use `/review`, `/code-style`, `/ticket`, `/understanding-check` from the workspa
 
 ## What lives where
 
+- `src/launcher.js` — the `bin` entry; hands over to the `cli.js` of the workspace clone the command addresses
 - `src/cli.js` — commander entry; auto-sets `--no-ui` when `!isTTY`
 - `src/clients/*.js` — external service clients (undici); each with sibling `*.test.js`
 - `src/components/features/<name>/` — Ink feature folders (one per command group)

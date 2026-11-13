@@ -1,9 +1,8 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import {
-  REPOS,
+  partitionSyncTargets,
   repoPath,
-  isWorkspaceBranchSynced,
   workspaceSyncSkipLine
 } from '../../constants/repos.js'
 import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
@@ -20,25 +19,6 @@ import { isTimError } from '../../errors.js'
 import { lastLines, renderTaskText, renderTaskJson } from './_task-output.js'
 
 const collect = (value, previous) => previous.concat([value])
-
-/**
- * Split the repo roster into the ones this run should touch and the ones
- * it should leave alone — a repo opts out via `workspaceBranchSync: false`
- * unless `include` names it explicitly.
- *
- * @param {string[]} [include]
- * @returns {{targets: string[], skipped: string[]}}
- */
-export const partitionSyncTargets = (include = []) => {
-  const included = new Set(include)
-  const targets = []
-  const skipped = []
-  for (const repo of REPOS) {
-    if (isWorkspaceBranchSynced(repo) || included.has(repo)) targets.push(repo)
-    else skipped.push(repo)
-  }
-  return { targets, skipped }
-}
 
 const failure = (repo, label, execResult, action) => ({
   repo,
@@ -110,12 +90,12 @@ const updateTask = (workspaceRoot, repo) => {
 }
 
 export const buildUpdateTasks = (workspaceRoot, { include = [] } = {}) =>
-  partitionSyncTargets(include).targets.map((repo) =>
+  partitionSyncTargets(workspaceRoot, include).targets.map((repo) =>
     updateTask(workspaceRoot, repo)
   )
 
 export const updateAll = async (workspaceRoot, { include = [] } = {}) => {
-  const { targets, skipped } = partitionSyncTargets(include)
+  const { targets, skipped } = partitionSyncTargets(workspaceRoot, include)
   const tasks = targets.map((repo) => updateTask(workspaceRoot, repo))
   const needs = await Promise.all(
     tasks.map((task) => task.needsNegativeRefspecs())

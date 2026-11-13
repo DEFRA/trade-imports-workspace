@@ -1,9 +1,8 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import {
-  REPOS,
+  partitionSyncTargets,
   repoPath,
-  isWorkspaceBranchSynced,
   workspaceSyncSkipLine
 } from '../../constants/repos.js'
 import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
@@ -19,25 +18,6 @@ const DEFAULT_BRANCH_FALLBACK = 'main'
 const REF_SEPARATOR = '\t'
 
 const collect = (value, previous) => previous.concat([value])
-
-/**
- * Split the repo roster into the ones this run should touch and the ones
- * it should leave alone — a repo opts out via `workspaceBranchSync: false`
- * unless `include` names it explicitly.
- *
- * @param {string[]} [include]
- * @returns {{targets: string[], skipped: string[]}}
- */
-export const partitionSyncTargets = (include = []) => {
-  const included = new Set(include)
-  const targets = []
-  const skipped = []
-  for (const repo of REPOS) {
-    if (isWorkspaceBranchSynced(repo) || included.has(repo)) targets.push(repo)
-    else skipped.push(repo)
-  }
-  return { targets, skipped }
-}
 
 const nonEmptyLines = (stdout = '') =>
   stdout.split('\n').filter((line) => line.trim().length > 0)
@@ -332,7 +312,7 @@ export const runBranch = async (
   workspaceRoot,
   { input, dryRun = false, include = [] } = {}
 ) => {
-  const { targets, skipped } = partitionSyncTargets(include)
+  const { targets, skipped } = partitionSyncTargets(workspaceRoot, include)
   const inspections = await inspectAll(workspaceRoot, {
     withFetch: Boolean(input),
     repoNames: targets

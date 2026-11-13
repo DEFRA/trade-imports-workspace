@@ -291,8 +291,9 @@ this workspace — there is no separate, prototype-only setup:
    raises a real Jira story from the prototype, so the same credentials
    apply.
 3. **Run `tim prototype setup`** (after
-   `npm --prefix ~/git/defra/trade-imports-workspace/tim link` if `tim` is
-   not already on your `PATH`). It writes a short note into a gitignored
+   `npm --prefix tim link`, run from the workspace root, if `tim` is not
+   already on your `PATH`; one link serves every clone, and each clone
+   runs its own tim). It writes a short note into a gitignored
    `CLAUDE.local.md` at the workspace root ("You are working with a
    designer…", so every request routes through the `prototype` skill
    without you ever having to name it), adds the prototype's fetch-only

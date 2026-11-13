@@ -26,10 +26,10 @@ You need:
 - Node.js 24
 - [Claude Code](https://claude.com/claude-code)
 
-Then run these 2 commands:
+Then, in the workspace folder, run these 2 commands:
 
 ```
-npm --prefix ~/git/defra/trade-imports-workspace/tim link
+npm --prefix tim link
 tim prototype setup
 ```
 

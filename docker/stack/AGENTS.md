@@ -463,6 +463,8 @@ hostname, `host.docker.internal` in the stack.
 | frontend / admin | `DEFRA_ID_SIGN_OUT_REDIRECT_URL` | `…/auth/sign-out-oidc` (browser) |
 | animals / plants frontend / admin | `DEFRA_ID_BROWSER_FACING_HOSTNAME_REWRITE_ENABLED` | `true` (flips h.d.i. → localhost for browser-visible sign-out URL) |
 | ins frontend | `DEFRA_ID_BROWSER_FACING_HOSTNAME_REWRITE_ENABLED` | `true` (flips h.d.i. → localhost for the browser-visible sign-out URL and the CSP form-action origin; keeps the server-side token and key endpoints on h.d.i., the discovery hostname) |
+| routing-proxy | `DEFRA_ID_OIDC_CONFIGURATION_URL` | `http://host.docker.internal:3007/…` (server-side; the token and key endpoints the stub returns are already on h.d.i., so the proxy needs no rewrite) |
+| routing-proxy | `DEFRA_ID_REDIRECT_URL` | `http://localhost:3004/auth/sign-in-oidc` (browser) |
 | defra-id-stub | `WELL_KNOWN_HOST_OVERRIDE` | `http://localhost:3007` (browser endpoints; token endpoint auto-rewrites to h.d.i.) |
 | animals / plants frontend | `TRADE_IMPORTS_INS_FRONTEND_URL` | `http://localhost:3002` (browser follows the Address book link) |
 | ins frontend | `TRADE_IMPORTS_{ANIMALS,PLANTS}_FRONTEND_URL` | `http://localhost:{3000,3003}` (browser follows the dashboard's journey links) |

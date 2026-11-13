@@ -564,8 +564,10 @@ files). Running it again is a no-op.
 
 `tim build gate` runs the rungs in
 `.claude/skills/requirements-pipeline/references/gates.json` for each backlog
-repo: the unit rungs, the FIT rungs (each after checking its ports are free —
-a held port fails the rung and names the holder) and the E2E rungs against
+repo: the unit rungs, the FIT rungs (each on the first free port at or above
+the one gates.json plans for it, passed to its script as `PORT`; a rung that
+moves records `{planned, used, heldBy}` in its `ports`, so two clones can run
+the same FIT suite at once) and the E2E rungs against
 the workspace stack built from local source (`run-stack.sh -d`, the path
 `tim docker dev` takes), under a stack lease held as `--holder` (default:
 this gate run). It runs in three layers, each starting only once the one
@@ -600,8 +602,8 @@ afterwards. If this holder already leases it, the gate does not start it
 again: it rebuilds only the services whose image inputs changed, restarts
 only those whose bind-mounted `src/` changed (waiting until each is healthy),
 and leaves the rest — see `docker/stack/AGENTS.md` for the fingerprints. A
-stack leased to anyone else, or up with no lease, is refused and left alone,
-and so is a FIT port such a stack holds: `stack.held` names the holder (null
+stack leased to anyone else, or up with no lease, is refused and left alone:
+`stack.held` names the holder (null
 for no lease) and the reason. Each rung writes to `gate-<repo>-<rung>.log`;
 nothing streams. A rung that cannot run fails with its reason.
 

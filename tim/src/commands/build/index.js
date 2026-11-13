@@ -127,6 +127,16 @@ const describeRung = ({
     ? `  pass  ${phase}  ${repo} ${name} (${Math.round(durationMs / 1000)}s${workersNote(workers)})`
     : `  FAIL  ${phase}  ${repo} ${name}${workers ? ` (${workers} workers)` : ''} — ${reason}`
 
+const isMovedPort = ({ planned, used }) => used !== null && used !== planned
+
+const describeMovedPort = ({ planned, used, heldBy }) =>
+  `        served on port ${used}, because ${heldBy} holds ${planned}`
+
+const describeRungAndPorts = (rung) => [
+  describeRung(rung),
+  ...(rung.ports ?? []).filter(isMovedPort).map(describeMovedPort)
+]
+
 const describeMachine = (machine) =>
   machine ? [`Ran with this machine’s settings from ${machine.config}.`] : []
 
@@ -216,7 +226,7 @@ export const renderGateText = ({
     green
       ? `Gate passed: ${rungs.length} rungs.`
       : `Gate failed: ${failures} of ${rungs.length} rungs failed.`,
-    ...rungs.map(describeRung),
+    ...rungs.flatMap(describeRungAndPorts),
     ...describeDependencies(dependencies),
     ...describeMachine(machine),
     describeStack(stack),

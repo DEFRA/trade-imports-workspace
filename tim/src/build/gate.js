@@ -6,7 +6,6 @@ import {
   acquireStack,
   releaseStack,
   readLease,
-  describeLease,
   defaultLeasePath,
   foreignStackOwner,
   foreignStackRefusal
@@ -134,7 +133,7 @@ export const cannotRunBecause = ({ repo, path, run }) => {
 /**
  * One rung's entry in the gate result.
  *
- * @returns {{repo: string, name: string, phase: string, ok: boolean, exitCode: number|null, log: string|null, durationMs: number, reason: string|null, workers: number|null}}
+ * @returns {{repo: string, name: string, phase: string, ok: boolean, exitCode: number|null, log: string|null, durationMs: number, reason: string|null, workers: number|null, ports: {planned: number, used: number|null, heldBy: string|null}[]}}
  */
 export const rungResult = ({
   rung,
@@ -152,7 +151,8 @@ export const rungResult = ({
   log,
   durationMs,
   reason,
-  workers: rung.workers ?? null
+  workers: rung.workers ?? null,
+  ports: rung.portClaims ?? []
 })
 
 const failed = (rung, reason, extra = {}) =>
@@ -184,55 +184,59 @@ const runRung = async (rung, { logsDir, env }) => {
   }
 }
 
-const UNLEASED_STACK =
-  'Nobody holds a lease on the workspace stack, so somebody started it by hand, outside any build.'
-
-const workspaceStackNote = (lease) =>
-  lease
-    ? `The workspace stack is leased to ${describeLease(lease)}.`
-    : UNLEASED_STACK
-
-const leaseOrUnreadable = (leasePath) => {
-  try {
-    return readLease(leasePath)
-  } catch (error) {
-    return {
-      holder: `nobody tim can name (${messageOf(error)})`,
-      mode: '?',
-      acquiredAt: '?'
+const claimFirstFreePortFrom = async (base, claimedPorts) => {
+  const highestPort = 65535
+  for (let port = base; port <= highestPort; port++) {
+    if (!claimedPorts.has(port)) {
+      claimedPorts.add(port)
+      if (!(await isPortHeld(port))) return port
+      claimedPorts.delete(port)
     }
   }
+  return null
 }
 
-const heldPortReason = (port, holder, lease) => {
-  const reason = `Port ${port} is in use by ${describeHolder(holder)}. The rung needs it free.`
-  return holder.workspaceStack
-    ? `${reason} ${workspaceStackNote(lease)}`
-    : reason
+const claimPort = async (planned, context) => {
+  const used = await claimFirstFreePortFrom(planned, context.claimedPorts)
+  if (used === planned || used === null) return { planned, used, heldBy: null }
+  const holder = await portHolder(planned, { env: context.env })
+  return { planned, used, heldBy: describeHolder(holder) }
 }
 
-const heldPortReasons = async (ports, context) => {
-  const reasons = []
-  for (const port of ports) {
-    if (await isPortHeld(port)) {
-      const holder = await portHolder(port, { env: context.env })
-      const lease = holder.workspaceStack
-        ? leaseOrUnreadable(context.leasePath)
-        : null
-      const reason = heldPortReason(port, holder, lease)
-      reasons.push(reason)
-      if (holder.workspaceStack && !context.held) {
-        context.held = { holder: lease?.holder ?? null, detail: reason }
-      }
-    }
+const claimPorts = async (plannedPorts, context) => {
+  const claims = []
+  for (const planned of plannedPorts) {
+    claims.push(await claimPort(planned, context))
   }
-  return reasons
+  return claims
 }
+
+const releasePorts = (claims, context) =>
+  claims.forEach(({ used }) => context.claimedPorts.delete(used))
+
+const servingPortEnv = (claims) =>
+  claims.length > 0 ? { PORT: String(claims[0].used) } : {}
+
+const noFreePortReason = (claims) =>
+  claims
+    .filter(({ used }) => used === null)
+    .map(({ planned }) => `No port from ${planned} upwards is free.`)
+    .join(' ')
 
 const runFitRung = async (rung, context) => {
   if (rung.refusal) return failed(rung, rung.refusal)
-  const held = await heldPortReasons(rung.ports, context)
-  return held.length > 0 ? failed(rung, held.join(' ')) : runRung(rung, context)
+  const claims = await claimPorts(rung.ports, context)
+  const servedRung = { ...rung, portClaims: claims }
+  try {
+    const exhausted = noFreePortReason(claims)
+    if (exhausted) return failed(servedRung, exhausted)
+    return await runRung(servedRung, {
+      ...context,
+      env: { ...context.env, ...servingPortEnv(claims) }
+    })
+  } finally {
+    releasePorts(claims, context)
+  }
 }
 
 const runLocalRung = (rung, context) =>
@@ -618,8 +622,9 @@ const layerDurations = (startedAt, ran) => {
 }
 
 /**
- * Run a backlog's gate: the unit and FIT rungs (each FIT rung after a check
- * that its ports are free) and the e2e rungs against the workspace stack.
+ * Run a backlog's gate: the unit and FIT rungs (each FIT rung serving on the
+ * first free port from its planned one, passed to it as PORT) and the e2e
+ * rungs against the workspace stack.
  * By default it runs in three layers, each once the one before has
  * finished: each repo's unit and FIT rungs, in order, with other repos' at
  * the same time; then every exclusive e2e rung (a performance test) alone;
@@ -676,7 +681,7 @@ export const runGate = async ({
     parallelRepos: machine?.parallelRepos ?? gates.parallelRepos,
     stackAfterLocal:
       (machine?.stackAfterLocal ?? gates.stackAfterLocal) === true,
-    held: null
+    claimedPorts: new Set()
   }
 
   const dependencies = await installPlanDependencies(planned, context)
@@ -700,6 +705,6 @@ export const runGate = async ({
     rungs,
     machine: machineSummary(machine),
     dependencies: dependencies.filter(({ stale }) => stale),
-    stack: { ...e2e.stack, held: e2e.stack.held ?? context.held }
+    stack: e2e.stack
   }
 }

@@ -417,8 +417,8 @@ base's. A merge that conflicts stops the row, naming the files. A failure names 
    freshly fetched base, in the increment's repos only.
 
    The loop's gate is `tim build gate <workarea> [--phase unit|fit|e2e|all]`: the
-   rungs in [`gates.json`](gates.json), per repo, in order — unit, then FIT with
-   a free-port check, then E2E against the workspace stack built from local
+   rungs in [`gates.json`](gates.json), per repo, in order — unit, then FIT on the
+   first free port from its planned one, then E2E against the workspace stack built from local
    source, under the run's stack lease. It refuses a stack anybody else holds.
    Every rung writes to its own log, a rung that cannot run fails with its
    reason, and the command exits 1 unless every rung passed. The baseline and the

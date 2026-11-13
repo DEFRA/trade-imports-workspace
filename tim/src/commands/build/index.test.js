@@ -707,4 +707,30 @@ describe('renderGateText', () => {
       ].join('\n')
     )
   })
+
+  test('names the port a FIT rung moved to and who holds the one it planned', () => {
+    expect(
+      renderGateText({
+        green: true,
+        logs: '/logs',
+        rungs: [
+          {
+            repo: 'frontend',
+            name: 'fit',
+            phase: 'fit',
+            ok: true,
+            durationMs: 3000,
+            ports: [{ planned: 3050, used: 3051, heldBy: 'node (pid 42)' }]
+          }
+        ],
+        stack: { wasUp: null, startedForE2e: false }
+      })
+        .split('\n')
+        .slice(0, 3)
+    ).toEqual([
+      'Gate passed: 1 rungs.',
+      '  pass  fit  frontend fit (3s)',
+      '        served on port 3051, because node (pid 42) holds 3050'
+    ])
+  })
 })

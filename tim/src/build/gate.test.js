@@ -25,6 +25,7 @@ import {
   testFileWithSetUp
 } from '../test-support/copied-set-up.js'
 import { runGate, cannotRunBecause, defaultLogsDir } from './gate.js'
+import { isPortHeld } from './ports.js'
 
 const WORKAREA = 'shared/programme'
 
@@ -377,93 +378,125 @@ describe('runGate — unit and FIT rungs', () => {
     })
   })
 
-  test('fails a FIT rung whose port is held, naming the holder, without running it', async () => {
+  const listenOnPortWithNextOneFree = async () => {
     const server = createServer()
     await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve))
     const { port } = server.address()
-    const env = workspaceWith({
+    if (!(await isPortHeld(port + 1))) return { server, port }
+    await closeServer(server)
+    return listenOnPortWithNextOneFree()
+  }
+
+  const closeServer = (server) =>
+    new Promise((resolve) => server.close(resolve))
+
+  const fitGateOn = (ports, script = 'echo "fit on port $PORT"') =>
+    workspaceWith({
       gates: {
         frontend: {
-          rungs: [
-            { name: 'fit', phase: 'fit', run: 'test:fit:ci', ports: [port] }
-          ]
+          rungs: [{ name: 'fit', phase: 'fit', run: 'test:fit:ci', ports }]
         }
       },
-      repos: { frontend: { 'test:fit:ci': 'echo fit' } }
+      repos: { frontend: { 'test:fit:ci': script } }
     })
+
+  test('serves a FIT rung on its planned port, passed as PORT, when the port is free', async () => {
+    const { server, port } = await listenOnPortWithNextOneFree()
+    await closeServer(server)
+    const env = fitGateOn([port])
 
     const outcome = await gate(env, { phase: 'fit' })
 
-    await new Promise((resolve) => server.close(resolve))
-    expect(outcome.rungs).toEqual([
-      expect.objectContaining({
-        ok: false,
-        log: null,
-        reason: expect.stringMatching(
-          new RegExp(
-            `^Port ${port} is in use by \\S+ \\(pid ${process.pid}\\)\\.`
-          )
-        )
-      })
-    ])
+    expect({
+      ok: outcome.rungs[0].ok,
+      ports: outcome.rungs[0].ports,
+      logged: readFileSync(outcome.rungs[0].log, 'utf8')
+    }).toEqual({
+      ok: true,
+      ports: [{ planned: port, used: port, heldBy: null }],
+      logged: expect.stringContaining(`fit on port ${port}\n`)
+    })
   })
 
-  const fitHeldByTheStack = async (lease) => {
-    const server = createServer()
-    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve))
-    const { port } = server.address()
-    const env = workspaceWith({
-      gates: {
-        frontend: {
-          rungs: [
-            { name: 'fit', phase: 'fit', run: 'test:fit:ci', ports: [port] }
-          ]
+  test('moves a FIT rung whose planned port is held to the next free one, passes it as PORT, and names the holder', async () => {
+    const { server, port } = await listenOnPortWithNextOneFree()
+    const env = fitGateOn([port])
+
+    const outcome = await gate(env, { phase: 'fit' })
+
+    await closeServer(server)
+    expect({
+      ok: outcome.rungs[0].ok,
+      ports: outcome.rungs[0].ports,
+      logged: readFileSync(outcome.rungs[0].log, 'utf8')
+    }).toEqual({
+      ok: true,
+      ports: [
+        {
+          planned: port,
+          used: port + 1,
+          heldBy: expect.stringMatching(
+            new RegExp(`^\\S+ \\(pid ${process.pid}\\)$`)
+          )
         }
-      },
-      repos: { frontend: { 'test:fit:ci': 'echo fit' } }
+      ],
+      logged: expect.stringContaining(`fit on port ${port + 1}\n`)
     })
+  })
+
+  test('moves a FIT rung off a port the workspace stack holds without reporting the stack held', async () => {
+    const { server, port } = await listenOnPortWithNextOneFree()
+    const env = fitGateOn([port])
     writeExecutable(
       join(root, 'fake-bin', 'docker'),
       `if [ "$1" = ps ]; then printf 'trade-imports-animals-frontend-1\\ttrade-imports\\n'; fi`
     )
-    if (lease) writeLease(lease)
 
     const outcome = await gate(env, { phase: 'fit' })
 
-    await new Promise((resolve) => server.close(resolve))
-    return { port, outcome }
-  }
+    await closeServer(server)
+    expect({
+      ok: outcome.rungs[0].ok,
+      ports: outcome.rungs[0].ports,
+      held: outcome.stack.held
+    }).toEqual({
+      ok: true,
+      ports: [
+        {
+          planned: port,
+          used: port + 1,
+          heldBy:
+            "the workspace stack's trade-imports-animals-frontend-1 container"
+        }
+      ],
+      held: null
+    })
+  })
 
-  test('says nobody leases the workspace stack when its container holds a FIT port and no lease exists', async () => {
-    const { port, outcome } = await fitHeldByTheStack(null)
-
-    expect(outcome.rungs.map(({ ok, reason }) => ({ ok, reason }))).toEqual([
-      {
-        ok: false,
-        reason: `Port ${port} is in use by the workspace stack's trade-imports-animals-frontend-1 container. The rung needs it free. Nobody holds a lease on the workspace stack, so somebody started it by hand, outside any build.`
+  test('gives two FIT rungs running at the same time on one planned port a port each', async () => {
+    const { server, port } = await listenOnPortWithNextOneFree()
+    await closeServer(server)
+    const fitRung = { name: 'fit', phase: 'fit', run: 'test:fit:ci' }
+    const script = 'sleep 0.5; echo "fit on port $PORT"'
+    const env = workspaceWith({
+      gates: {
+        alpha: { rungs: [{ ...fitRung, ports: [port] }] },
+        beta: { rungs: [{ ...fitRung, ports: [port] }] }
+      },
+      repos: {
+        alpha: { 'test:fit:ci': script },
+        beta: { 'test:fit:ci': script }
       }
-    ])
-  })
-
-  test('names the lease holder when a leased workspace stack holds a FIT port', async () => {
-    const { port, outcome } = await fitHeldByTheStack({
-      holder: 'ibl-20261001T090000Z inc-001 consistency'
     })
 
-    expect(outcome.rungs[0].reason).toBe(
-      `Port ${port} is in use by the workspace stack's trade-imports-animals-frontend-1 container. The rung needs it free. The workspace stack is leased to "ibl-20261001T090000Z inc-001 consistency" (dev mode, since 2026-10-01T09:00:00.000Z, repos on trade-imports-ins-frontend feat/EUDPA-1-x).`
-    )
-  })
+    const outcome = await gate(env, { phase: 'fit' })
 
-  test('reports the held stack and its lease holder in the result', async () => {
-    const { outcome } = await fitHeldByTheStack({
-      holder: 'ibl-20261001T090000Z inc-001 consistency'
-    })
-
-    expect(outcome.stack.held).toEqual({
-      holder: 'ibl-20261001T090000Z inc-001 consistency',
-      detail: expect.stringContaining('The workspace stack is leased to')
-    })
+    const used = outcome.rungs.map(({ ports }) => ports[0].used)
+    expect({
+      ok: outcome.rungs.map(({ ok }) => ok),
+      distinct: new Set(used).size,
+      lowest: Math.min(...used)
+    }).toEqual({ ok: [true, true], distinct: 2, lowest: port })
   })
 
   test('leaves the workspace stack alone for unit and FIT rungs', async () => {

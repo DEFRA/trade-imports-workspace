@@ -490,7 +490,7 @@ refuses to commit a spec change rather than put it on the base branch with no re
 **The gate owns the repos' own rungs.** `tim build gate` runs the
 rungs `references/gates.json` lists for each backlog repo — format check, lint, typecheck,
 unit, `mvn verify`, the duplication check on changed test files (`tim build duplication`), the new-code coverage check
-(`tim build coverage`), FIT after a free-port check,
+(`tim build coverage`), FIT on the first free port from its planned one,
 and the tests repo's local-stack E2E. A red duplication rung is repaired by moving the copied set-up into the shared
 test helper and deleting the copies. The coverage rung runs straight after the rung that writes the report it reads —
 `npm test` or `mvn verify` — and measures what a SonarCloud `new_coverage` condition measures: every line and condition

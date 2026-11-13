@@ -25,11 +25,6 @@ alternative and the one the build loop still calls directly.
 
 | Script | Args | Purpose |
 |---|---|---|
-| **auth** | | |
-| `tools/auth.sh` | | All services umbrella |
-| `tools/jira/auth.sh` | | Jira |
-| `tools/github/auth.sh` | | GitHub |
-| `tools/confluence/auth.sh` | | Confluence |
 | **jira** | | |
 | `tools/jira/ticket.sh` | EUDPA-X [full\|summary\|json] | Get ticket |
 | `tools/jira/comments.sh` | EUDPA-X | Get comments |

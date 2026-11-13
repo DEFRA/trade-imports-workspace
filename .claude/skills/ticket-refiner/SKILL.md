@@ -47,14 +47,13 @@ in this file.
 
 ## Prerequisites
 
-Authenticate to Jira before fetching tickets:
+Check your Jira and Confluence sign-in before fetching tickets:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/jira/auth.sh
+tim auth
 ```
 
-(Or the umbrella `~/git/defra/trade-imports-workspace/tools/auth.sh` covering Jira +
-Confluence + GitHub.)
+For GitHub, run `gh auth status`.
 
 ## Ready When Team Can
 

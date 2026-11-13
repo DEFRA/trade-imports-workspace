@@ -69,14 +69,14 @@ gh auth login
 
 ### 3. Check Authentication
 
-Run the auth script (from the workspace root) to verify all services
-are configured:
+Check that every service is set up:
 
 ```bash
-./tools/auth.sh
+tim auth
+gh auth status
 ```
 
-This checks Jira, Confluence, and GitHub authentication.
+`tim auth` checks Jira and Confluence. `gh auth status` checks GitHub.
 
 ### 4. SonarCloud (Claude Code integration)
 

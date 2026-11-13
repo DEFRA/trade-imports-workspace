@@ -22,8 +22,7 @@ const authHeader = (user, token) =>
 
 /**
  * Create a Confluence REST client. Uses the same Atlassian credentials as
- * the Jira client (Confluence sits under `${JIRA_BASE_URL}/wiki`). Matches
- * the contract in ../tools/confluence/auth.sh.
+ * the Jira client (Confluence sits under `${JIRA_BASE_URL}/wiki`).
  *
  * @param {object} [opts]
  * @param {string} [opts.user]

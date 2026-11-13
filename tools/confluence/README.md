@@ -7,14 +7,10 @@ Scripts mirror the `jira/` helpers and use the same `JIRA_USER`/`JIRA_TOKEN` cre
 - `JIRA_TOKEN` – required
 
 ## Scripts
-- `auth.sh` – verify Confluence auth
 - `page.sh` – fetch page details/content by page ID
 
 ## Examples
 ```bash
-# Check auth
-./confluence/auth.sh
-
 # Full page output (HTML body included)
 ./confluence/page.sh 12345678
 

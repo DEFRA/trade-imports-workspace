@@ -1112,7 +1112,7 @@ The menu only opens when stdout is a TTY and the user has not asked for plain te
 | `TIM_GITHUB_BASE_URL`                      | Clone URL prefix override for `workspace setup` (default `https://github.com/DEFRA`) — used by the behavioural tests to clone from local fixtures |
 | `TIM_NO_AUTO_PULL`                         | Set to any value to turn off the automatic workspace pull described below                                                                         |
 
-Run [`../tools/auth.sh`](../tools/auth.sh) to verify your setup against the bash side. `tim auth` checks Jira and Confluence through library clients. For GitHub, run `gh auth status`.
+Run `tim auth` to check your setup. It checks Jira and Confluence through library clients. For GitHub, run `gh auth status`.
 
 ## Staying up to date
 

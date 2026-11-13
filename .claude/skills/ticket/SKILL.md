@@ -140,8 +140,8 @@ All under `~/git/defra/trade-imports-workspace/tools/` per CC-3:
 | `tools/github-actions/` (`trigger-workflow.sh`, `wait-for-run.sh`, `get-failure.sh`, `run-status.sh`, `get-logs.sh`) | IMPLEMENTOR | CI verification |
 | `tools/review/detect-tech.sh` | called by `prepare-plan.sh` / `prepare-implement.sh` | Detect repo tech stack + emit best-practices paths under `docs/best-practices/` |
 
-Authenticate to Jira/GitHub before fetching (or run the umbrella
-`~/git/defra/trade-imports-workspace/tools/auth.sh`).
+Check your Jira and Confluence sign-in with `tim auth`, and your GitHub
+sign-in with `gh auth status`, before fetching.
 
 ## Best practices
 

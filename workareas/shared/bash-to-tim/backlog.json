@@ -1285,7 +1285,7 @@
       ],
       "risk": "Medium. Creating a ticket cannot be undone; tim's receipt file guards against a second create. The one-line create from arguments is lost.",
       "proof": "Manifest and plan tests for type Epic. Canary: raise the next govuk tracking ticket through a manifest and compare its fields with an older one.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
@@ -1293,8 +1293,23 @@
         "no-callers"
       ],
       "evidence": {
-        "recoverableCommits": "The blocked attempt is in the local reflog, unpushed: trade-imports-workspace 4ca31111. Cherry-pick it and fix only the reason below, rather than rebuilding.",
-        "previousBlockedReason": "Commit 4ca31111 (now only in the local reflog) did not say in its message that tim jira create now drops the description file's trailing newlines for every existing caller (theme-ticket, the prototype hand-off, the build loop), so it needs cherry-picking back with its message amended to record that behaviour change."
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "aa6e1d7a"
+          }
+        ],
+        "checks": [
+          "tim-unit: green, 244 files, 4285 passed plus 8 expected fail",
+          "tim-lint: eslint clean, and prettier format:check clean",
+          "parity: the recorded create-ticket.sh payloads (defaults, epic, task with parent and file) match what the manifest route sends, in create.test.js",
+          "no-callers: git grep finds create-ticket nowhere in the workspace or repos/*, apart from docs/analysis/parallel-backlog-split.md:391, which is a dated write-up",
+          "no new fixed workspace path and no new .sh file in the diff"
+        ],
+        "deviations": [
+          "Cherry-picked the blocked attempt 4ca31111 as the row's evidence said, then amended only its commit message. The message now records that tim jira create drops the description file's trailing newlines for every existing caller (theme-ticket, the prototype hand-off, the build loop), as create-ticket.sh did through $(cat). It also records that this changes the plan ID of a description file ending in newlines.",
+          "Canary not run (raising a real govuk tracking ticket). Creating a Jira ticket cannot be undone, and the row's checks do not list it."
+        ]
       }
     },
     {

@@ -1714,14 +1714,39 @@
       ],
       "risk": "Medium: the scaffold writes .claude/settings.json. Generated templates stay byte-identical; teaching new skills tim-first paths is a separate follow-up (see sharp edges).",
       "proof": "Golden tree diff across four decisions fixtures, cmp on settings.json, a second run proves no duplicate entries, and one throwaway CREATE end to end.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "539b3468"
+          }
+        ],
+        "checks": [
+          "parity: pass. Before any change, tim/src/skill/skill-creator-scripts.golden.test.js recorded the Bash into tim/src/skill/__fixtures__/__golden__/skill-creator-scripts.json. It covered 20 start triggers, a 19-call answer sequence, 5 render fixtures and an 11-call scaffold sequence across 4 decisions shapes (dry runs, a second run, missing answers, bad run ids). Each recording holds stdout, stderr, exit code, every file with its mode, and the settings.json SHA-256. tim/src/commands/skill/index.test.js reproduces all of it byte for byte. The only differences allowed are the renamed-script messages and jq's own diagnostic lines. A probe that changed one template character turned the test red. A throwaway CREATE (start, 10 answers, render, scaffold twice) ran with tim only on a scratch copy of the real .claude/settings.json; cmp against jq's single append was equal, so no entry was duplicated.",
+          "no-callers: pass. git grep across the workspace (excluding workareas history) finds no mention of start-skill-creator, interview-add-answer, render-interview, scaffold-skill or tools/skill-creator. A grep of repos/*, .claude, .github and scripts also finds none. The only hits are in tim's golden recording test, its fixtures and the tim test titles that name the recorded scripts.",
+          "tim-unit: pass. npm --prefix tim test gives 270 files passed and 5 skipped, 4621 tests passed; the Bash recording test now skips because the scripts are gone. The coverage thresholds held.",
+          "tim-lint: pass. npm --prefix tim run lint and run format:check are both clean.",
+          "no new .sh file in the repo: pass. tools/skill-creator/*.sh deleted; nothing added.",
+          "settings-followups.md: P35 section added; no allowlist entry names tools/skill-creator, so there is nothing for Sam to remove."
+        ],
+        "deviations": [
+          "New literal ~/git/defra/trade-imports-workspace mentions in tim/src/skill/templates.js, scaffold.js (the two allowlist entries), the test fixtures and the golden. The row's risk requires this: generated templates and allowlist entries stay byte-identical, and teaching new skills tim-first paths is the separate follow-up.",
+          "Error messages now name tim instead of the deleted scripts: 'run tim skill start first' and 'Run tim skill answer for each missing field'. These are the callers the row listed.",
+          "tim skill answer refuses the same values with exit 1 and the same 'jq failed — invalid JSON value? VALUE=...' line. It does not reproduce jq's own stderr prefix and help lines; it prints the reason, such as 'Cannot index boolean with string (\"deep\")'.",
+          "tim skill render now refuses a run id that is not kebab-case. The bash only checked it was non-empty. This is the tightening the folder plan named.",
+          "An empty trigger prints 'Usage: tim skill start \"<trigger phrase>\"' instead of the script path. --help and unknown options are commander's.",
+          "A list answer (helpers, fanout.workers, triggers.phrases) holding non-strings is refused with exit 1 before scaffold writes anything. The bash failed part way with jq's own error and exit code.",
+          "The settings.json fixture is held as a JS object written in jq's format, not as a .json file, because prettier reformats a .json fixture. The real settings.json is checked to round-trip byte for byte in scaffold.test.js.",
+          "Commit message lists every intentional change above."
+        ]
+      }
     },
     {
       "id": "P36",

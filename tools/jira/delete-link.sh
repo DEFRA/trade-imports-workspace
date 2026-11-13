@@ -8,7 +8,7 @@
 #   --id ID       Delete one issue link by its numeric id
 #   -h, --help    Show this help message
 #
-# link-tickets.sh creates links; this is the delete half. Jira's issueLink
+# tim jira link creates links; this is the delete half. Jira's issueLink
 # id isn't shown anywhere in the UI — get it from --list (or from
 # ticket.sh TICKET json | jq '.fields.issuelinks').
 

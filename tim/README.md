@@ -925,7 +925,7 @@ key it already created. `create` and `attach` also exit `PARTIAL_FAILURE`
 (not `ERROR`) when some but not all attachments fail, so the receipt still
 gets written for what did succeed. The `ticket-creator` skill and the
 `prototype` skill's hand-off both build a manifest and call this surface
-rather than `../tools/jira/create-ticket.sh` + `attach-file.sh`.
+rather than `../tools/jira/create-ticket.sh` and a separate attach step.
 
 `tim jira link` takes exactly one link: `relates <key>`, `--blocks <key>` or
 `--blocked-by <key>`. A positional `blocks` is refused, because the flags

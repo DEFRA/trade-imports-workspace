@@ -223,14 +223,14 @@ a dry run until you add `--confirm`.
 
 For "Blocks", use `tim jira link EUDPA-X --blocks <key>` or
 `tim jira link EUDPA-X --blocked-by <key>`. It reads the link back and
-reports the direction Jira stored. `tools/jira/link-tickets.sh` also
-works, and reads left to right:
+reports the direction Jira stored. It reads left to right:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/jira/link-tickets.sh EUDPA-181 Blocks EUDPA-183
+tim jira link EUDPA-181 --blocks EUDPA-183 --confirm
 ```
 
-That makes EUDPA-181 block EUDPA-183.
+That makes EUDPA-181 block EUDPA-183. For any other relationship, use
+`tim jira link EUDPA-X relates <key>`.
 
 If you call the REST API directly, the field names mislead. To record
 "EUDPA-183 is blocked by EUDPA-181", send the **blocked** ticket as

@@ -1097,14 +1097,35 @@
       "dependsOn": [],
       "risk": "Medium: these delete. Keep the refusal on an ambiguous filename unless --all.",
       "proof": "nock tests: a dry run sends no DELETE, an ambiguous name exits USAGE. Canary on a scratch ticket compares the --list output with the bash script.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "c1312960"
+          }
+        ],
+        "checks": [
+          "tim-unit: green. 242 files, 4202 tests passing, 8 expected to fail. Mutation probe: removing renderTextError from detach and exitCodeForError from unlink turned 5 tests red, and they went green again once restored.",
+          "tim-lint: npm run lint and format:check both exit 0.",
+          "parity: the detach and unlink tests now take every error's exit code from the Bash goldens (goldens[name].exitCode), so no test hard-codes it. All errors exit 1 again. The only exception is an ambiguous filename, which exits 2 (USAGE) as the row's risk allows; it is a separate AmbiguousFilenameError that exitCodeForDeletionError maps. When --all fails partway, the attachments already deleted go to stdout and the failed delete goes to stderr. There is no URL line and the exit code is 1, as in the Bash; PARTIAL_FAILURE is no longer used. --list on an unknown ticket is now checked against the detach-list-unknown-issue and unlink-list-unknown-issue goldens: 'Could not read attachments for KEY' followed by Jira's errorMessages. The client keeps those as jiraMessages on a failed GET. Live read-only check: tim jira detach EUDPA-9999999 --list printed 'Could not read attachments for EUDPA-9999999 / Issue does not exist or you do not have permission to see it.' and exited 1.",
+          "no-callers: unchanged from the build. The fix touched only tim/src, and no caller names delete-attachment.sh or delete-link.sh.",
+          "no new fixed paths and no new .sh files: the fix touched only tim/src JavaScript."
+        ],
+        "deviations": [
+          "The row's write canary is still not done: attach a file twice to a scratch ticket, compare --list, then delete with tim, and the same for a link. No scratch ticket is named, and no one has authorised writes to real Jira. A person must name a scratch ticket and authorise the writes, or accept the nock tests and Bash goldens in its place. The Bash scripts are deleted, so a live Bash-against-tim comparison now has to run them from git history (git show 9f97651d:tools/jira/delete-attachment.sh).",
+          "Exit codes now match the Bash. Every error exits 1, except an ambiguous filename, which exits 2 (USAGE) as the row's risk allows. In --json mode, a partway --all failure gives an ok:true envelope with result.failure and exit 1, the same shape attach uses for its partial failures. The JSON error codes are unchanged (NOT_FOUND, AUTH and so on); only the process exit code follows the Bash.",
+          "Unchanged from the build and not raised by the verifier: error messages drop the 'Error: ' prefix and end with a full stop. A non-numeric --id is refused before Jira is called, and still exits 1.",
+          "Shared code changed to make these fixes: makeRunAction (tim/src/commands/_run-action.js) has two new optional options, renderTextError and exitCodeForError, both tested in _run-action.test.js. The Jira client's GET now puts Jira's errorMessages on the error it throws, as jiraMessages, tested in jira-client.test.js. Error messages are unchanged for every other command.",
+          "I amended the row's single commit, so 7b5dbc48 became c1312960. The commit message now lists only the deliberate changes the row's risk allows."
+        ]
+      }
     },
     {
       "id": "P24",

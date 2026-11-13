@@ -141,7 +141,10 @@ const rangeEnds = async (cwd, range) => {
     shaOf(cwd, `${headRef}^{commit}`)
   ])
   if (!base || !to) {
-    return { skipped: `${range} names a commit that is not in this repo` }
+    return {
+      skipped: `${range} names a commit that is not in this repo`,
+      missing: base ? headRef : baseRef
+    }
   }
   if (dots === '..') return { from: base, to }
   const mergeBase = await git(cwd, ['merge-base', base, to])
@@ -159,11 +162,12 @@ const commitEnds = async (cwd, commit) => {
 /**
  * The two trees a commit or a range compares: a commit against its first
  * parent, or nothing for a first commit; `base..head` from base to head;
- * `base...head` from their merge base to head.
+ * `base...head` from their merge base to head. `skipped` says why it
+ * cannot, and `missing` names the end of a range git cannot find.
  *
  * @param {string} cwd
  * @param {{commit: string}|{range: string}} named
- * @returns {Promise<{from: string, to: string}|{skipped: string}>}
+ * @returns {Promise<{from: string, to: string}|{skipped: string, missing?: string}>}
  */
 export const endsOf = (cwd, named) =>
   named.range === undefined

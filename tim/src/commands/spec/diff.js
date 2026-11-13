@@ -142,7 +142,7 @@ export const register = (program, { timVersion }) => {
   program
     .command('diff')
     .description(
-      "Say what each commit or range changed in the Behaviour Spec, scenario by scenario: added, changed (name or steps), removed, or coverage (only its coverage.json entry changed), with each scenario's coverage after. A commit compares with its first parent, base..head from base to head, and base...head from their merge base. Reads the workspace repo's local git only: fetch first. A commit or range it cannot find is listed under skipped. result.touched is every scenario id they added, changed or re-proved. Exits 0 whatever it finds. With --signed-off it reports only changes to signed-off scenarios in result.signedOff, with result.ticketDraft for a person to approve or refuse them, and exits 3 when it finds any."
+      "Say what each commit or range changed in the Behaviour Spec, scenario by scenario: added, changed (name or steps), removed, or coverage (only its coverage.json entry changed), with each scenario's coverage after. A commit compares with its first parent, base..head from base to head, and base...head from their merge base. Reads the workspace repo's local git only: fetch first. A commit or range it cannot find is listed under skipped. result.touched is every scenario id they added, changed or re-proved. Exits 0 whatever it finds. With --signed-off it reports only changes to signed-off scenarios in result.signedOff, with result.ticketDraft for a person to approve or refuse them, and exits 3 when it finds any. With --signed-off, a range it cannot find is an error, not skipped."
     )
     .option(
       '--commit <sha>',
@@ -164,7 +164,7 @@ export const register = (program, { timVersion }) => {
     )
     .option(
       '--repo <name>',
-      "With --signed-off and --base: a repo under repos/. Reports each signed-off scenario in the workspace's openspec/ whose linked test in that repo is edited or deleted. Repeat for several",
+      "With --signed-off and --base: a repo under repos/. Reports each signed-off scenario in the workspace's openspec/ whose linked test in that repo is edited or deleted: the test's own block, or the whole file when the test cannot be found on its own. Repeat for several",
       collect
     )
     .option(
@@ -173,7 +173,7 @@ export const register = (program, { timVersion }) => {
     )
     .addHelpText(
       'after',
-      '\nExit codes with --signed-off: 0 nothing found, 3 a signed-off scenario changes, 2 a usage error.\n' +
+      '\nExit codes with --signed-off: 0 nothing found, 3 a signed-off scenario changes, 2 a usage error or a range, repo or base git cannot find.\n' +
         '\nExamples:\n' +
         '  tim spec diff --commit 575f5f3c --json\n' +
         '  tim spec diff --commit e310d0af --commit 72fb2eda\n' +

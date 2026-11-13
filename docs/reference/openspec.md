@@ -131,33 +131,21 @@ Admin page specs are not checked. A frontend that is not checked out is
 listed under `skipped`, as `page-maturity`.
 
 A signed-off scenario is part of a signed-off page's contract, and the
-tests its coverage links are that contract's evidence. A change to
-either needs a person's decision.
+tests its coverage links are that contract's evidence. Only the
+increment build loop checks for a change to either, before it merges:
+see [`.claude/rules/signed-off-pages.md`](../../.claude/rules/signed-off-pages.md).
 
 ### The spec check on pull requests
 
 [`.github/workflows/spec-check.yml`](../../.github/workflows/spec-check.yml)
-runs on every workspace pull request that touches `openspec/`,
-`tim/src/spec/` or the workflow itself. It is not a required check.
+runs `tim spec lint` on every workspace pull request that touches
+`openspec/`, `tim/src/spec/` or the workflow itself. It fails when lint
+finds anything, and writes its report to the job summary. It is not a
+required check.
 
-| Step | Runs | Fails when |
-|---|---|---|
-| Lint the Behaviour Spec | `tim spec lint` | Lint finds anything |
-| Check signed-off scenarios | `tim spec diff --signed-off --range 'HEAD^1..HEAD'` | A change touches a signed-off scenario (exit 3) |
-
-- Both steps run, and each writes its report to the job summary. A
-  signed-off change also prints the ticket draft for a person to raise.
-- The checkout is the pull request's merge commit at depth 2. Its first
-  parent is the base branch's tip, so `HEAD^1..HEAD` is what the pull
-  request's commits change on the base branch.
-- No service repo is checked out. The job creates an empty `repos/`,
-  which `tim` needs to recognise the workspace root, so lint lists every
-  repo's test-title check under `skipped`. The linked-test half of
-  `tim spec diff --signed-off` (`--repo`, `--base`) does not run here: it
-  belongs in each service repo's own pull request check.
-- A red check is a prompt, not a block. Raise the ticket from the draft
-  and keep the pull requests as drafts until a person approves or refuses
-  the change.
+No service repo is checked out. The job creates an empty `repos/`, which
+`tim` needs to recognise the workspace root, so lint lists every repo's
+test-title check under `skipped`.
 
 `tim spec gaps` is **not** the `spec-catchup` work list — a scenario can
 be `coverage: "full"` and still have drifted words. It's `spec-cover`'s

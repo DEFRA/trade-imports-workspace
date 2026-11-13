@@ -154,6 +154,36 @@ describe('tim spec diff --signed-off', () => {
       stdout: 'No signed-off scenario changes.'
     })
   })
+
+  test('Should fail, not report nothing, when git cannot find an end of the range', async () => {
+    const workspacePath = await workspaceWithSignedOffSpec()
+
+    const run = await runTimInWorkspace(workspacePath, [
+      'spec',
+      'diff',
+      '--signed-off',
+      '--range',
+      'origin/main...HEAD',
+      '--json'
+    ])
+
+    expect({
+      exitCode: run.exitCode,
+      envelope: JSON.parse(run.stdout)
+    }).toMatchObject({
+      exitCode: 2,
+      envelope: {
+        ok: false,
+        errors: [
+          {
+            code: 'NOT_FOUND',
+            message:
+              "Can't find origin/main. Fetch first, or name another --range."
+          }
+        ]
+      }
+    })
+  })
 })
 
 describe('#renderSpecDiffText', () => {

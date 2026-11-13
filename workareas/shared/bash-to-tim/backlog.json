@@ -954,7 +954,7 @@
       ],
       "risk": "Medium. The build loop is in active use and reads the script's exit codes 0/1/2/4/5. Record each code's meaning first, keep every outcome the loop acts on, and launch nothing mid-run.",
       "proof": "Before the change, a stub gh on PATH drives the script through each exit code and the loop's handling of each is recorded. After, the same stub cases give the same loop decisions. No caller names the script.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
@@ -962,8 +962,27 @@
         "no-callers"
       ],
       "evidence": {
-        "recoverableCommits": "The blocked attempt is in the local reflog, unpushed: 6876ceaf then 264e8578. Cherry-pick them and fix only the reason below, rather than rebuilding.",
-        "previousBlockedReason": "The new no-checks watch tests stub gh with the capitalised \"No checks reported\" text, but real gh writes it in lowercase when redirected to a log, so the tests would still pass against a case-sensitive match that brings back the race; the stub must print the lowercase form, or both forms."
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "673af1ed"
+          }
+        ],
+        "checks": [
+          "verifier finding fixed: a new WATCH_LOOP_EXCEPTION constant in increment-build-loop.js names the checks watch loop as the one exception to the single-command and no-sleep rules. Watchers must run it as one Bash call, exactly as written (`;`, `||` and `sleep 30` included), never split it, never drop its loop, and write no other sleep. The guard rails state it straight after the 'NEVER sleep-poll' rule, and step a of WAIT ON ITS CHECKS states it again right before the command.",
+          "exception test: one new contract test for the CI watcher prompt ('inc-900 ci watch') and one for the theme CI watcher prompt ('inc-900 theme ci watch'). Each asserts the exception follows the no-sleep rule, sits right before `for try in $(seq 5); do gh pr checks`, and appears exactly twice. Mutation probe: with the sentence removed from step a, both tests went red (2 failed, 730 passed). Restored, and the file went green again.",
+          "harness: in this session, a Bash call with this loop's shape (for/seq, `;`, `||`, with a `sleep` that actually ran) passed both the workspace guard-bash.sh hook and the harness. guard-bash.sh denies only `&&`, not `;`, `||` or sleep.",
+          "parity: unchanged from the build. The bash-goldens.json decision and byte-for-byte line tests and the stub-gh watch-loop tests (lowercase and capitalised no-checks messages) all still pass.",
+          "no-callers: pass. git grep finds no wait-for-pr-checks in .claude, tim, tools, scripts or .github.",
+          "tim-unit: pass. 242 files, 4246 passed and 8 expected fail (the build's 4244 plus the 2 new tests).",
+          "tim-lint: pass. npm run lint and npm run format:check both exit 0.",
+          "The diff adds no new ~/git/defra/trade-imports-workspace or $HOME/git/defra mention and no new .sh file. The only file it adds is tim/src/backlog/__fixtures__/pr-checks/bash-goldens.json."
+        ],
+        "deviations": [
+          "I put the fix into the row's single commit with an amend (5ecbec24 became 673af1ed), keeping one commit per row. The commit was not pushed, and its message gains a paragraph on the guard-rail exception.",
+          "Of the verifier's two options I took the narrow guard-rail exception. I did not move the retry out of the Bash call: the workflow script cannot run a shell or wait between agent calls, and the loop shape was shown to pass the harness's Bash checks.",
+          "The exception sits once in the guard rails, after the no-sleep rule, and not after the single-command line as well, so it is stated twice per watcher prompt and not three times. Every agent that reads the guard rails sees it, but it names only the loop a WAIT ON ITS CHECKS step hands over."
+        ]
       }
     },
     {

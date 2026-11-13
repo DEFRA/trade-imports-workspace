@@ -73,7 +73,7 @@ else
     # the skill cannot tell a short list from a complete one, so emit all of
     # it or none of it and say why.
     CAPS_TMP=$(mktemp)
-    if "$WORKSPACE/tools/ticket-creator/extract-capabilities.sh" "$SYNCED_MD" --format list 2>"$CAPS_TMP.err" | sort -u > "$CAPS_TMP"; then
+    if tim capabilities extract "$SYNCED_MD" --format list --no-ui 2>"$CAPS_TMP.err" | sort -u > "$CAPS_TMP"; then
         mv "$CAPS_TMP" "$CAPS_FILE"
     else
         PARSE_ERROR="Capability map is not canonical — see tools/ticket-creator/check-capabilities.sh. capabilities.txt left unchanged."

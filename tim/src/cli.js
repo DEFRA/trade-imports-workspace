@@ -33,6 +33,7 @@ import { register as registerPrototype } from './commands/prototype/index.js'
 import { register as registerCi } from './commands/ci/index.js'
 import { register as registerRefine } from './commands/refine/index.js'
 import { register as registerServiceTag } from './commands/service-tag/index.js'
+import { register as registerCapabilities } from './commands/capabilities/index.js'
 
 const SCHEMA_VERSION = 1
 
@@ -172,6 +173,7 @@ export const buildProgram = () => {
   registerCi(program, { timVersion: pkg.version })
   registerRefine(program, { timVersion: pkg.version })
   registerServiceTag(program, { timVersion: pkg.version })
+  registerCapabilities(program, { timVersion: pkg.version })
 
   return program
 }

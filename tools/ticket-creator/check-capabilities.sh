@@ -40,7 +40,6 @@ while [[ $# -gt 0 ]]; do
 done
 
 SYNCED_MD="$WORKSPACE/docs/confluence/import-notification-capability-map.md"
-EXTRACTOR="$WORKSPACE/tools/ticket-creator/extract-capabilities.sh"
 
 # Statuses the map's own "Guide to reading this document" defines.
 KNOWN_STATUSES="NOT STARTED|IN PROGRESS|SKELETON|COMPLETE|POST DAY ONE"
@@ -76,7 +75,7 @@ echo
 
 # ── 2. Parse ──────────────────────────────────────────────────────────────────
 
-ROWS=$("$EXTRACTOR" "$SYNCED_MD" --format tsv)
+ROWS=$(tim capabilities extract "$SYNCED_MD" --format tsv --no-ui)
 
 if [[ -z "$ROWS" ]]; then
     echo "No capability rows found at all — the table shape has changed." >&2

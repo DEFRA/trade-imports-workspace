@@ -187,6 +187,26 @@ tim service-tag specs --domain animals --type e2e --json
 - Both refuse, with exit 1, a workspace with no `repos/trade-imports-ins-tests`;
   `start` also refuses one with no scope file.
 
+### `tim capabilities extract` — read the capability map
+
+```bash
+tim capabilities extract docs/confluence/import-notification-capability-map.md
+tim capabilities extract docs/confluence/import-notification-capability-map.md --format tsv
+```
+
+- A row is any table line whose first cell starts with a capability code
+  (`CAP-0.4`, `CAP-H.3`, `COMMON-CAP-01.2`, `CORE-CAP-1.1`). A canonical
+  row has the code alone in its first cell, an empty or `STATUS: <value>`
+  second cell, and a name in its third.
+- `list` (the default) prints `CODE — Name [STATUS]` for each row. When any
+  row is not canonical it prints nothing on stdout, reports each broken row
+  on stderr and exits 1.
+- `tsv` prints `code`, `status`, `name`, `verdict` and `line` for every row,
+  canonical or not, and exits 0.
+- `--json` gives the rows, the violations, `total` and `canonical`. In
+  `list` format a map that is not canonical is an error naming each broken
+  row.
+
 ### `tim capture` — photograph a running app
 
 Runs an app's own FIT suite with Playwright tracing on, keeps the traces under

@@ -292,9 +292,10 @@ args: `backlog.json` carries the status, ticket, branch, PRs and the last failed
 the row picks up at the stage that attempt reached — see
 [Resuming a row part-way through](#resuming-a-row-part-way-through).
 
-The run returns `{increments, specChecks, reviewChecks, refutedFindings, stopped}`, where `specChecks` holds one
-entry per theme spec check it ran (see [The Behaviour Spec](#the-behaviour-spec)), `reviewChecks` the checks left
-for whoever reviews a finished theme, `refutedFindings` every finding verification refuted (see
+The run returns `{increments, specChecks, reviewChecks, signedOffChecks, refutedFindings, stopped}`, where
+`specChecks` holds one entry per theme spec check it ran (see [The Behaviour Spec](#the-behaviour-spec)),
+`reviewChecks` the checks left for whoever reviews a finished theme, `signedOffChecks` one entry per theme-end
+signed-off check (branch lifecycle), `refutedFindings` every finding verification refuted (see
 [Findings by kind](#findings-by-kind)), and `stopped` is `{reason, detail}`. It stops:
 
 - at **`count-reached`**, when `stopAfter` increments have landed — the ordinary ending;
@@ -303,11 +304,11 @@ for whoever reviews a finished theme, `refutedFindings` every finding verificati
 - at **`agent-budget`**, before starting an increment that would take the run past the
   `Workflow` tool's cap of 1000 agents. An increment is up to 76 agents on Claude and 84 on
   Codex with `ciFixAttempts: 3`, and 8 more for each attempt beyond three, so a run fits
-  roughly 13 or 11 of them. That worst case includes the signed-off check, and the ticket and
-  park agents a change to a signed-off scenario adds. A row parked for a signed-off ruling
+  roughly 13 or 11 of them. That worst case includes the signed-off merge gate, and the ticket
+  and hold agents a change to a signed-off scenario adds. A row held for a signed-off ruling
   counts towards the cap as a landed one does. Under the branch lifecycle the run also keeps
-  room for one theme's engineering review (twice the number of repos, plus 9) and counts each
-  one it runs. Nothing is wrong: launch again;
+  room for one theme's engineering review and its signed-off check (three times the number of
+  repos, plus 11) and counts each one it runs. Nothing is wrong: launch again;
 - at **`gate`** (full lifecycle only), when an increment carries a designed HALT-FOR-REVIEW
   gate. It lands first. A branch run carries on and returns the gate in `reviewChecks`;
 - at **`spec-check-red`**, when a theme's last row has landed and `tim spec lint` or
@@ -476,12 +477,13 @@ refuses to commit a spec change rather than put it on the base branch with no re
 | Judge | 1 | Replaces the skills' interactive `WALKER`. Rules each surviving finding fix-now / defer / reject **without asking a human**. Every code-quality finding is fix-now, in each twin |
 | Fix | 1–3 (Claude) | Applies only what the judge ruled fix-now, after recording each repo's staged tree. Checks itself with the gate's unit and FIT phases, like the implementor. A style re-reviewer then reads only the fixer's hunks for code quality, and sends any new finding back to a second fix once |
 | Ladder | 1 | Runs `tim build gate --phase all` once into `logs/<id>-ladder/` (a row that owes only some phases: each of those, every one even after a red), then the plan's sections 5 and 6 checks, then validates the spec write again. Given the implementor's and fixer's notes and every baseline rung with its log |
-| Signed off | 1, plus 2 when it finds a change | After the branch guard, runs `tim spec diff --signed-off --uncommitted` with `--repo` for each of the row's repos and `--base origin/<branch>`. Under the full lifecycle, a row that builds the workspace adds `--range origin/<branch>...HEAD`, so a resumed attempt's committed spec change is checked too. Nothing found: the row lands as before. A change to a signed-off scenario, or an edit to a test linked to one: a light agent raises the ticket `result.ticketDraft` drafts (full lifecycle; the branch lifecycle writes the draft to `logs/<id>-signed-off-ticket/` instead), and a light agent sets the row to `blocked` with an open question naming the ticket, before it lands. Then the row lands and its pull requests are raised as drafts, or made drafts when already open. No CI is watched and nothing merges, and the loop builds the next row. A run that dies after the park leaves the row withheld, so no later launch merges it. See [the signed-off check](../references/BUILD.md#the-signed-off-check) |
 | Land | 2–4, plus up to 4 a quality gate fix attempt | A branch guard first: every repo must be on the run's branch, and one on another branch at the same commit is moved back. Then commits on green and records the commit; when the increment builds the workspace repo, a light agent reads back what its commit holds, and a second looks up any path the start stage could not name. Under the branch lifecycle it pushes too, and says why a push did not go: a refusal from the workspace's pre-push quality gate goes to a quality gate fixer, a non-fast-forward rejection does not — see [The CI fixer, the quality gate fixer and a whole theme are reviewed too](#the-ci-fixer-the-quality-gate-fixer-and-a-whole-theme-are-reviewed-too). The increment is not done until its PRs are merged, so the merge stage is what marks it. A red ladder, a failed land, a repo that cannot be moved back, or any other stop after implement goes through the same preserve step — a pushed wip commit — so the tree is left clean and the attempt recoverable |
 | CI fix review | 0–2 per CI fix | A style reviewer reads each commit the CI fixer pushed, for code quality, and sends any finding to one style fix before the watcher looks again. See [The CI fixer, the quality gate fixer and a whole theme are reviewed too](#the-ci-fixer-the-quality-gate-fixer-and-a-whole-theme-are-reviewed-too) |
+| Signed off | 1, plus 2 when it finds a change | Full lifecycle only: the merge gate, once CI is green and just before the merge. A light agent reads whether the row's `prs` carry `"signedOffHold": true`. A held row whose pull requests are all out of draft merges without a check, because a person approved it; one with a draft left is blocked again and nothing is rebuilt. Otherwise it fetches `origin/<branch>`, checks each of the row's repos is on the row's branch, and runs `tim spec diff --signed-off` with `--repo` for each and `--base origin/<branch>`, adding `--range origin/<branch>...HEAD` when the row builds the workspace. Nothing found: the row merges. A change: a light agent raises the ticket `result.ticketDraft` drafts (the draft stays in `logs/<id>-signed-off-ticket/` if Jira refuses), and a light agent makes each pull request a draft, comments on it, blocks the row with an open question and marks each `prs` entry held. An error holds the row the same way, naming the error, with no ticket. Nothing merges and the loop builds the next row; nothing about the hold stops the run. See [the signed-off check](../references/BUILD.md#the-signed-off-check) |
 | Spec diff comment | 1–3, after the ticket closes | Full lifecycle only. A writer runs `tim spec diff` on the row's workspace merge commit and writes a Jira comment to `tickets/<id>-spec-diff.txt`: the scenarios added, changed and removed on `main`, one line on their coverage, and a link to every merged PR, in plain words with no backlog ids. A checker compares it with the diff and fixes it; a light agent posts it with `tim jira comment`, dry run then `--confirm`. The result carries `specDiffComment`. A failure at any step is recorded there and never stops the run |
 | Theme spec check | 1–3 light, after the gate check | Reads the landed row's theme. Once no row of it is `todo`, checks the spec under every prefix the theme touched, failing only on scenarios the theme's own commits added or re-proved. See [The Behaviour Spec](#the-behaviour-spec) |
-| Theme engineering review | up to twice the repos, plus 9 | Branch lifecycle only, once a theme's last row lands. One reviewer per repo reads `git diff origin/main...HEAD` for patterns and tests; its findings go through the same verify, judge, fix, re-review and ladder, then land on the branch and CI is watched. See [The CI fixer, the quality gate fixer and a whole theme are reviewed too](#the-ci-fixer-the-quality-gate-fixer-and-a-whole-theme-are-reviewed-too) |
+| Theme engineering review | up to three times the repos, plus 9 | Branch lifecycle only, once a theme's last row lands. One reviewer per repo reads `git diff origin/main...HEAD` for patterns and tests; its findings go through the same verify, judge, fix, re-review and ladder, then land on the branch and CI is watched. See [The CI fixer, the quality gate fixer and a whole theme are reviewed too](#the-ci-fixer-the-quality-gate-fixer-and-a-whole-theme-are-reviewed-too) |
+| Theme signed-off check | 1, plus 1 when it finds a change | Branch lifecycle only, straight after the theme's engineering review, even one that stopped the run. Runs `tim spec diff --signed-off --range origin/main...HEAD` with `--repo` for every repo and `--base origin/main`. A change: a light agent makes every open pull request on the branch a draft, the workspace one included, comments on each, and writes the ticket draft to `logs/theme-<theme>-signed-off-ticket/`. No Jira call. A change or an error is recorded in `signedOffChecks` and never stops the run. See [the signed-off check](../references/BUILD.md#the-signed-off-check) |
 
 **The gate owns the repos' own rungs.** `tim build gate` runs the
 rungs `references/gates.json` lists for each backlog repo — format check, lint, typecheck,
@@ -632,8 +634,8 @@ spec behind.
 | Review | The consistency reviewer judges the write and any `none` reason against the plan's behaviour changes. Its findings on the spec are written `workspace:openspec/<path>` and verified against the workspace |
 | Fix | A fix that changes behaviour updates the spec too, and reports its own line |
 | Ladder | Red when neither the implementor nor the fixer reported a `Spec sync:` line; a fixer with none is normal. Otherwise it validates every capability the lines name that still exists, confirms each `deleted:` one is gone, and lints each prefix again |
-| Signed off | Before land, `tim spec diff --signed-off --uncommitted` checks the uncommitted write for a change to a signed-off scenario. A change parks the row for a person's ruling |
 | Land | Commits `openspec/` by the existing path-limited rule, with the same rollback: no second commit path |
+| Signed off | Full lifecycle: after CI and before the merge, `tim spec diff --signed-off` checks the row's committed work for a change to a signed-off scenario, and a change holds the row for a person's ruling. Branch lifecycle: once at theme end, against `origin/main` |
 
 The prompts say what the spec records, from `openspec/config.yaml`: observable behaviour only. A wording change is
 spec'd where a title, Purpose, requirement or scenario states that wording; a content change when it changes what a

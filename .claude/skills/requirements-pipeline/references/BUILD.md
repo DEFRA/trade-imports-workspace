@@ -715,10 +715,11 @@ verification and judge stages already are the review.
 
 ### 3. Check what it landed
 
-The run returns `{increments, specChecks, reviewChecks, refutedFindings, stopped}`: one entry per
-increment it attempted, each with its `outcome`, one entry per theme whose spec it checked, the
-checks left for whoever reviews a finished theme, every review finding verification refuted, and
-one `stopped` saying which condition ended the run. Do not trust that report on its own.
+The run returns `{increments, specChecks, reviewChecks, signedOffChecks, refutedFindings, stopped}`:
+one entry per increment it attempted, each with its `outcome`, one entry per theme whose spec it
+checked, the checks left for whoever reviews a finished theme, one entry per theme checked for
+signed-off changes (branch lifecycle), every review finding verification refuted, and one
+`stopped` saying which condition ended the run. Do not trust that report on its own.
 
 **The Behaviour Spec.** Every row keeps `openspec/` current, whatever its repos: its plan's
 section 8 names the edits, the implementor makes and validates them (through `frontend-change`'s
@@ -730,63 +731,70 @@ scenarios under every prefix the theme touched. Report each `specChecks` entry i
 its theme, outcome and any problems, and its `preexisting` gaps, which predate the theme and
 did not stop it.
 
-<a id="the-signed-off-check"></a>**The signed-off check.** After the ladder is green, and before the
-row lands, a light agent runs one command:
+<a id="the-signed-off-check"></a>**The signed-off check.** It stops a change to a signed-off scenario,
+or to a test linked to one, from reaching `main` before a person approves it. It never stops a
+run. The rule is in [`.claude/rules/signed-off-pages.md`](../../../rules/signed-off-pages.md).
+
+*Full lifecycle: a merge gate on each row.* Once CI is green, just before the merge, a light agent
+fetches `origin/<branch>` in each of the row's repos, checks each is on the row's branch, and runs:
 
 ```bash
-tim spec diff --signed-off --uncommitted --repo <each of the row's repos> --base origin/<branch> --json
+tim spec diff --signed-off --repo <each of the row's repos> --base origin/<branch> --json
 ```
 
-It checks the row's uncommitted `openspec/` change against HEAD, and each of the row's repos
-against the base branch. Under the full lifecycle, a row that builds the workspace also passes
-`--range origin/<branch>...HEAD`, so a resumed attempt whose spec change is already in a wip
-commit is checked too. It looks for a change to a signed-off scenario, or an edit to a test
-linked to one. The rule is in
-[`.claude/rules/signed-off-pages.md`](../../../rules/signed-off-pages.md).
+A row that builds the workspace also passes `--range origin/<branch>...HEAD`.
 
 | What it finds | What the loop does |
 |---|---|
-| Nothing | Carries on as before. |
-| A change | Raises the ticket and parks the row, then lands it and keeps its pull requests as drafts. Then it builds the next row that does not wait for it. |
-| An error | Saves the attempt as a red ladder would, and stops at `signed-off-check-failed`. |
+| Nothing | Merges as before. |
+| A change | Holds the row. |
+| An error | Holds the row, with the error word for word in its open question. |
 
-When it finds a change:
+Holding a row:
 
-- **The ticket.** Under the full lifecycle, the loop raises `result.ticketDraft` as a Task under
-  the epic, related to the row's own ticket, through `tim jira create`. It is not moved onto
-  `jiraBoard`: it asks a person for a ruling, not for build work, so it stays in the backlog
-  until they pick it up. A relaunch reuses a ticket an earlier attempt raised, read from the
-  `ticket.created.json` receipt in `<workarea>/logs/<id>-signed-off-ticket/`, and makes no
-  create call. Under the branch lifecycle it makes no Jira call: it writes the draft to that
-  folder for a person to raise.
-- **The pull requests.** Under the full lifecycle they are raised with `--draft`, and their bodies
-  name the ticket. One already open for the branch is made a draft with `gh pr ready --undo`,
-  and a comment names the ticket. Under the branch lifecycle the row is pushed to the theme
-  branch, and its open pull requests stay as their owner left them: that pull request carries
-  the whole theme, and its owner already decides when it is ready. The parked row and its open
-  question are what stop it merging. The loop never takes a pull request out of draft.
-- **The row.** It is set to `blocked`, with an open question naming the ticket, before it lands.
-  Its `commit`, `branch` and `prs` are still recorded as it lands. No CI is watched and nothing
-  is merged. A run that stops after the park, at a failed land or pull request stage, leaves the
-  row withheld, so no later launch builds or merges it until a person sets it back to `todo`.
+- **The ticket.** The loop raises `result.ticketDraft` as a Task under the epic, related to the
+  row's own ticket. It reuses a ticket an earlier attempt raised, from the `ticket.created.json`
+  receipt in `<workarea>/logs/<id>-signed-off-ticket/`. If Jira refuses, the draft stays in that
+  folder and the open question says so. An error raises no ticket.
+- **The pull requests.** Each becomes a draft (`gh pr ready --undo`), with a comment saying why.
+- **The row.** It is set to `blocked` with an open question, and each of its `prs` entries gets
+  `"signedOffHold": true`. That marker is how a later launch knows the row was held.
+- **The run.** Nothing merges and the row's ticket stays open. The loop carries on with the next
+  row. Rows that depend on a held row wait, because its code is not on `main`.
 
-The result entry has `outcome: "awaiting-signed-off-ruling"`, with `signedOffTicket` (or
-`signedOffDraft` under the branch lifecycle) and `detail` listing each change. A parked row does
-not count towards `stopAfter`. Rows that depend on it wait, because only `done` frees them.
+A step that fails (a draft, a comment, the backlog write) is listed in the result's
+`holdProblems`. It never stops the run.
 
-Report each parked row with its ticket. Once a person rules:
+The result entry has `outcome: "awaiting-signed-off-ruling"`, with `signedOffTicket`,
+`ticketProblem` or `checkError`, `drafted` and `detail`. A held row does not count towards
+`stopAfter`. Report each one with its ticket.
 
-- **Approved.** They take the pull requests out of draft first, because the merge stage cannot
-  merge a draft. Set the row back to `todo` with `tim backlog set`. The next launch resumes it
-  at CI when it has `prs` recorded, or at its pull requests when it has only a `commit`, then
-  merges it. A row with neither, because its run stopped before it landed, is built again from
-  its attempt and the check trips again: land and raise its pull requests by hand.
-- **Refused.** Take the spec change out, and the code behind it. For a linked test, fix the code,
-  not the test. Then set the row back to `todo` and launch again.
+When a person rules:
 
-Under the branch lifecycle, later rows build on top of a parked row's push. A row that merges
-another ref in (`merge`) counts that ref's edits to linked tests too. The person who rules sees
-which commit each change came from.
+- **Approved.** They take every pull request out of draft and set the row back to `todo`. The
+  next launch resumes it at CI from its `prs`. The gate sees the hold marker, finds no draft,
+  skips the check and merges. If any pull request is still a draft, the row is blocked again and
+  nothing is rebuilt.
+- **Refused.** They close the pull requests. The spec change comes out, and the code behind it.
+
+*Branch lifecycle: one check at theme end.* No row is checked. Once a theme's last row lands,
+after its engineering review (even one that stopped the run), a light agent fetches `origin/main`
+in the workspace and every repo, checks each is on `<branch>`, and runs:
+
+```bash
+tim spec diff --signed-off --range origin/main...HEAD --repo <each repo> --base origin/main --json
+```
+
+| What it finds | What the loop does |
+|---|---|
+| Nothing | Records it and moves on. |
+| A change | Makes every open pull request on `<branch>` a draft, the workspace one included, comments on each, and writes the ticket draft to `<workarea>/logs/theme-<theme>-signed-off-ticket/`. No Jira call. |
+| An error | Records it. |
+
+This is the one stage of a branch run allowed to change a pull request's draft state, and only
+to make it a draft. Each theme's entry in `signedOffChecks` has its `outcome`
+(`signed-off-clean`, `signed-off-changes` or `signed-off-check-failed`), and for a change its
+`drafted` pull requests and `ticketDraft`. Report it with the theme's other checks.
 
 **The spec diff comment.** Under the full lifecycle, each landed row's ticket gets a Jira
 comment saying what the spec now says because of it, written to
@@ -856,8 +864,9 @@ watcher looks again. Sweep its words in step 3b as before.
 whole theme branch against `origin/main` for patterns and tests. Its findings go through the same verifier, judge,
 fix, re-review and ladder, and the fixes land on the branch as one commit per repo, with CI watched. It is a safety
 net behind each row's own review, never a replacement. Report each of its `reviewChecks` entries (the commit it
-landed, its refuted findings, any repo it could not review) with the theme's other review checks. The full lifecycle
-has no theme branch, so it runs no theme review. See
+landed, its refuted findings, any repo it could not review) with the theme's other review checks. The theme's
+[signed-off check](#the-signed-off-check) runs straight after it. The full lifecycle has no theme branch, so it runs
+no theme review. See
 [`../workflow/README.md`](../workflow/README.md#the-ci-fixer-the-quality-gate-fixer-and-a-whole-theme-are-reviewed-too).
 
 - Archive the run first (step 3c), then read its first `log()` line —
@@ -1102,7 +1111,6 @@ handover prompt.
 | `implement-failed` / `review-failed` / `fix-failed` | A stage died. The attempt is preserved as a pushed wip commit, and recorded, so a relaunch re-enters at `implement` (for the first) or `review` (for the other two) rather than planning the row again |
 | `off-branch` | A repo left the run's branch and could not be moved back |
 | `ladder-red` | The verification ladder went red. Preserved, not discarded, and recorded, so a relaunch re-enters at the ladder once somebody has fixed what went red. A failure that reads "denied form: <command>" is a plan check the workspace will not run, not broken code. A plan check that disagrees only with a stated departure by the implementor or fixer is a note in the ladder's summary, never a `ladder-red` on a green gate. An E2E spec that hit its test timeout is red even when its retry passed: only a transient 500 in `beforeEach` that recovers counts as a pass, so a journey that outgrows a spec's budget is repaired in the row that lengthened it, not by a later baseline. An e2e rung that went red or retried leaves each stack container's log beside it, as `gate-stack-after-<repo>-<rung>-<container>.log`, written before the stack goes: a 500 page, a dropped socket or a timeout is explained there, and is named, not called transient |
-| `signed-off-check-failed` / `signed-off-ticket-failed` / `park-failed` | The ladder was green, but `tim spec diff --signed-off` could not run, the ticket for the signed-off change it found could not be raised, or its row could not be set to `blocked`. Nothing landed. The attempt is preserved at the `ladder` stage, so a relaunch runs the ladder and the check again; a ticket an earlier attempt raised is reused from its `ticket.created.json` receipt. The detail quotes tim. See [the signed-off check](#the-signed-off-check) |
 | `land-failed` | The commit could not be made. Also a theme's engineering review whose fixes could not be committed: they are saved as patches |
 | `theme-review-red` | Branch lifecycle only. Every row of a theme landed, but its engineering review could not finish its fixes: the fixer died or its ladder went red. The fixes are saved as patches under `logs/` and nothing reached the branch. The detail quotes the failure. Rows already landed stand. Read the patches and the review checks, then launch again |
 | `land-leaked` | The workspace repo's commit holds a file the workspace carried in, or run state under `workareas/` no stage reported changing. Nothing is pushed: take it out of the commit on the increment branch by hand, then launch again |
@@ -1301,7 +1309,9 @@ across ins, animals, plants and tests. Everything else uses `lifecycle: 'full'`.
 - It never creates a branch, and refuses `main` and `master` as `branch`.
 - It never creates, edits, retitles, un-drafts, closes or merges a pull request. Titles, bodies and draft state are
   a human's. A row whose acceptance is PR text (rewriting a PR body, lifting a draft) is not one this loop can
-  build: give it a withheld status, or do it by hand.
+  build: give it a withheld status, or do it by hand. The one exception is the theme-end
+  [signed-off check](#the-signed-off-check): when the theme changes signed-off behaviour, it makes the branch's
+  open pull requests drafts and comments on them. It never takes one out of draft.
 - It never force-pushes. Every push is `git push origin refs/heads/<branch>:refs/heads/<branch>`.
 - It never commits a failed attempt to the branch. The preserve step saves patches under `logs/`, aborts any merge
   in progress and stashes the rest. A local commit a stage made against the rules (overview and review inc-107 left
@@ -1387,6 +1397,7 @@ rigour       <full, standard or fast>, and any row that sets its own
 Stopped: <reason>. Last landed <inc-NNN> (<PR url>, <ticket>).
 <N> todo remain, <M> blocked, <K> dropped.
 Parked: <none, or each id and the fix or access it needs>
+Held for a signed-off ruling: <none, or each id and its ticket; or each theme whose pull requests were made drafts>
 Owed to a human: <none, or each thing and who owes it>
 Review checks for the end of the theme: <none, or each gate's check, each theme's refuted findings, and each theme engineering review's commit and unreviewed repos>
 Refuted findings not yet reviewed: <none, or each id, file and reason from refutedFindings>

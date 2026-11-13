@@ -663,14 +663,34 @@
       "dependsOn": [],
       "risk": "Low: grep finds no live caller. What is lost: pr-ensure-draft's exit-3 rule, the Duplicates/Cloners link types, and a board-wide issue dump. All recoverable from git history.",
       "proof": "`grep -rnE` for the 11 basenames over .claude, tools, tim, docs, scripts and .github returns nothing. npm --prefix tim test green.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "971a4adf40176e9d34e2c654d693651f98c74801"
+          }
+        ],
+        "checks": [
+          "parity: this row only deletes. Before the change, git grep over the workspace (not counting workareas) and grep over repos/* found no live caller of any of the 11 scripts. The only hits were the doc rows the row lists and one test regex.",
+          "no-callers: after the change, git grep for the 11 basenames over the workspace (not counting workareas) and grep over repos/* both return nothing.",
+          "tim-unit: npm --prefix tim test passes, with 236 test files and 4010 tests green.",
+          "tim-lint: npm --prefix tim run lint is clean, and run format:check reports that all matched files use Prettier code style.",
+          "No new fixed path and no new .sh file. The diff only removes lines, edits docs and changes one test regex."
+        ],
+        "deviations": [
+          "tools-index.md: the 6 rows were removed by matching their content, as the brief says. Their line numbers were 32, 38, 45, 49, 58 and 67, not the 37/43/50/54/63/72 the row gives.",
+          ".claude/skills/ticket/SKILL.md: removed diff.sh from the tools/github row and named `gh pr diff <n> --repo DEFRA/<repo>` in its place (rule 8).",
+          "docs/analysis/frontend-alignment-workflow-run.md: the pr-ensure-draft.sh footnote now reads `gh pr create --draft`.",
+          "Not in callersToUpdate: tim/src/backlog/workflow-contract.test.js had `move-to-board` in its 'makes no Jira call' regex. I removed it because the `tools\\/jira` alternative already matches any path to that script, so the guard still covers it. The suite stays green."
+        ]
+      }
     },
     {
       "id": "P15",

@@ -19,6 +19,11 @@ import {
 } from '../test-support/workflow-runtime.js'
 import { ATTEMPT_STAGES } from '../build/start.js'
 import { loadBacklogSchema, rigoursOf } from './backlog-schema.js'
+import {
+  CODE_QUALITY_CATEGORIES,
+  DESIGN_CATEGORIES,
+  FUNCTIONAL_CATEGORIES
+} from '../review/finding-categories.js'
 
 const MISSING_KEYS_MESSAGE_PATTERN = /^[a-z-]+: args is missing required keys? /
 
@@ -83,15 +88,10 @@ const wordsInJsArray = (source, name) => {
   return [...items.matchAll(/'([^']+)'/g)].map(([, word]) => word)
 }
 
-const wordsInShellArray = (source, name) => {
-  const [, items] = source.match(new RegExp(`^${name}=\\(([^)]*)\\)`, 'm'))
-  return items.trim().split(/\s+/)
-}
-
-const findingCategoriesOf = (source, wordsInArray) => ({
-  functional: wordsInArray(source, 'FUNCTIONAL_CATEGORIES'),
-  codeQuality: wordsInArray(source, 'CODE_QUALITY_CATEGORIES'),
-  design: wordsInArray(source, 'DESIGN_CATEGORIES')
+const findingCategoriesIn = (loop) => ({
+  functional: wordsInJsArray(loop, 'FUNCTIONAL_CATEGORIES'),
+  codeQuality: wordsInJsArray(loop, 'CODE_QUALITY_CATEGORIES'),
+  design: wordsInJsArray(loop, 'DESIGN_CATEGORIES')
 })
 
 const parseArgsResultIdentifier = (source) => {
@@ -455,14 +455,12 @@ describe('every workflow script', () => {
       join(buildLoopDir, 'increment-build-loop.js'),
       'utf8'
     )
-    const tools = readFileSync(
-      join(workspaceRoot, 'tools', 'review', 'finding-categories.sh'),
-      'utf8'
-    )
 
-    expect(findingCategoriesOf(tools, wordsInShellArray)).toEqual(
-      findingCategoriesOf(loop, wordsInJsArray)
-    )
+    expect({
+      functional: FUNCTIONAL_CATEGORIES,
+      codeQuality: CODE_QUALITY_CATEGORIES,
+      design: DESIGN_CATEGORIES
+    }).toEqual(findingCategoriesIn(loop))
   })
 
   test('has no FALLBACK', () => {

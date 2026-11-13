@@ -19,7 +19,7 @@ export const CANONICAL_WORKSPACE_PATH = resolve(
 
 const looksLikeWorkspaceRoot = (path) =>
   MARKER_FILES.some((marker) => existsSync(join(path, marker))) &&
-  existsSync(join(path, 'repos'))
+  (existsSync(join(path, 'repos.json')) || existsSync(join(path, 'repos')))
 
 const walkUp = (start) => {
   let current = resolve(start)
@@ -72,7 +72,7 @@ export const resolveWorkspaceRoot = ({
     if (!looksLikeWorkspaceRoot(resolved)) {
       throw new TimError(
         'USAGE',
-        `Workspace path ${resolved} does not look like a trade-imports workspace (missing Makefile, .git or repos/).`
+        `Workspace path ${resolved} does not look like a trade-imports workspace (missing Makefile, .git, or both repos.json and repos/).`
       )
     }
     return resolved

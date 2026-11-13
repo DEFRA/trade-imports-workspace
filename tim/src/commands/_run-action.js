@@ -1,8 +1,9 @@
 import { OK } from '../constants/exitCodes.js'
 import { jsonEnvelope, exitCodeFor, errorPayloadFor } from './envelope.js'
+import { writeLine } from './_write-line.js'
 
-const emit = (text) => process.stdout.write(`${text}\n`)
-const emitError = (text) => process.stderr.write(`${text}\n`)
+const emit = (text) => writeLine(process.stdout, text)
+const emitError = (text) => writeLine(process.stderr, text)
 
 /**
  * A commander action that parses options, runs, prints the result as text
@@ -31,7 +32,7 @@ export const makeRunAction = ({
     try {
       const parsed = parseOptions(opts)
       const result = await run({ args }, parsed)
-      emit(
+      await emit(
         opts.json
           ? JSON.stringify(jsonEnvelope({ ok: true, result, timVersion }))
           : renderText(result)
@@ -39,7 +40,7 @@ export const makeRunAction = ({
       process.exit(exitCodeForResult(result, parsed))
     } catch (error) {
       if (opts.json) {
-        emit(
+        await emit(
           JSON.stringify(
             jsonEnvelope({
               ok: false,
@@ -49,7 +50,7 @@ export const makeRunAction = ({
           )
         )
       } else {
-        emitError(error.message ?? String(error))
+        await emitError(error.message ?? String(error))
       }
       process.exit(exitCodeFor(error))
     }

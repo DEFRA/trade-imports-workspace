@@ -45,30 +45,30 @@ Arrow keys navigate, Enter selects, Enter on an empty input goes back. Every top
 
 #### Menu quick reference
 
-| Menu path                                                    | CLI equivalent                |
-| ------------------------------------------------------------ | ----------------------------- |
-| Workspace → Status                                           | `tim workspace status`        |
-| Workspace → Branch                                           | `tim workspace branch [name]` |
-| Workspace → Install                                          | `tim workspace install`       |
-| Workspace → Lint                                             | `tim workspace lint`          |
-| Workspace → Test                                             | `tim workspace test`          |
-| Workspace → Clean                                            | `tim workspace clean`         |
-| Workspace → Setup                                            | `tim workspace setup`         |
-| Workspace → Update                                           | `tim workspace update`        |
-| Workspace → Reset                                            | `tim workspace reset`         |
-| Docker → Start the stack (run-stack.sh)                      | `tim docker up`               |
-| Docker → Start the stack from local source (run-stack.sh -d) | `tim docker dev`              |
-| Docker → Stop the stack (stop-stack.sh)                      | `tim docker down`             |
-| Docker → Restart the whole stack (restart-stack.sh)          | `tim docker restart`          |
-| Docker → Bounce backend (bounce-backend.sh)                  | `tim docker bounce-backend`   |
-| Start → Frontend (npm run dev)                               | `tim start frontend`          |
-| Start → Backend (mvn spring-boot:run)                        | `tim start backend`           |
-| Start → Admin (npm run dev)                                  | `tim start admin`             |
-| Auth                                                         | `tim auth`                    |
-| Jira → Look up a ticket                                      | `tim jira ticket <id>`        |
-| Jira → Read comments on a ticket                             | `tim jira comments <id>`      |
-| Confluence → Look up a page                                  | `tim confluence page <id>`    |
-| Quit                                                         | exits the menu                |
+| Menu path                                                    | CLI equivalent                    |
+| ------------------------------------------------------------ | --------------------------------- |
+| Workspace → Status                                           | `tim workspace status`            |
+| Workspace → Branch                                           | `tim workspace branch [name]`     |
+| Workspace → Install                                          | `tim workspace install`           |
+| Workspace → Lint                                             | `tim workspace lint`              |
+| Workspace → Test                                             | `tim workspace test`              |
+| Workspace → Clean                                            | `tim workspace clean`             |
+| Workspace → Setup                                            | `tim workspace setup`             |
+| Workspace → Update                                           | `tim workspace update`            |
+| Workspace → Reset                                            | `tim workspace reset`             |
+| Docker → Start the stack (run-stack.sh)                      | `tim docker up`                   |
+| Docker → Start the stack from local source (run-stack.sh -d) | `tim docker dev`                  |
+| Docker → Stop the stack (stop-stack.sh)                      | `tim docker down`                 |
+| Docker → Restart the whole stack (restart-stack.sh)          | `tim docker restart`              |
+| Docker → Bounce backend (bounce-backend.sh)                  | `tim docker bounce-backend`       |
+| Start → Frontend (npm run dev)                               | `tim start frontend`              |
+| Start → Backend (mvn spring-boot:run)                        | `tim start backend`               |
+| Start → Admin (npm run dev)                                  | `tim start admin`                 |
+| Auth                                                         | `tim auth`                        |
+| Jira → Look up a ticket                                      | `tim jira ticket <id>`            |
+| Jira → Read comments on a ticket                             | `tim jira comments <id>`          |
+| Confluence → Look up a page                                  | `tim confluence page <id-or-url>` |
+| Quit                                                         | exits the menu                    |
 
 ### Direct CLI
 

@@ -1,10 +1,11 @@
 import { OK, USAGE, ERROR } from '../constants/exitCodes.js'
 import { isTimError } from '../errors.js'
+import { writeLine } from './_write-line.js'
 
 const SCHEMA_VERSION = 1
 
-const emit = (text) => process.stdout.write(`${text}\n`)
-const emitError = (text) => process.stderr.write(`${text}\n`)
+const emit = (text) => writeLine(process.stdout, text)
+const emitError = (text) => writeLine(process.stderr, text)
 
 /**
  * Build a commander action handler that calls a client method, then
@@ -30,7 +31,7 @@ export const makeClientAction = ({ client, call, renderText, timVersion }) =>
       const c = client()
       const result = await call(c, args, options)
       if (globalOpts.json) {
-        emit(
+        await emit(
           JSON.stringify({
             ok: true,
             schema_version: SCHEMA_VERSION,
@@ -41,12 +42,12 @@ export const makeClientAction = ({ client, call, renderText, timVersion }) =>
           })
         )
       } else {
-        emit(renderText(result, options))
+        await emit(renderText(result, options))
       }
       process.exit(OK)
     } catch (error) {
       if (isTimError(error) && globalOpts.json) {
-        emit(
+        await emit(
           JSON.stringify({
             ok: false,
             schema_version: SCHEMA_VERSION,
@@ -56,7 +57,7 @@ export const makeClientAction = ({ client, call, renderText, timVersion }) =>
           })
         )
       } else {
-        emitError(error.message ?? String(error))
+        await emitError(error.message ?? String(error))
       }
       const exit =
         isTimError(error) && (error.code === 'USAGE' || error.code === 'AUTH')

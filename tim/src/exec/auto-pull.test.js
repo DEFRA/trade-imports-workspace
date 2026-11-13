@@ -42,7 +42,6 @@ beforeEach(async () => {
 
   await execa('git', ['init', '--quiet', '-b', 'main', upstream])
   mkdirSync(join(upstream, 'repos'), { recursive: true })
-  writeFileSync(join(upstream, 'Makefile'), 'all:\n')
   writeFileSync(join(upstream, 'repos', '.gitkeep'), '')
   await git(upstream, 'add', '.')
   await git(upstream, 'commit', '--quiet', '-m', 'initial commit')

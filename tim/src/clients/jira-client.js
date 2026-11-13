@@ -40,6 +40,15 @@ const parseBody = async (response, action) => {
   }
 }
 
+const jiraMessagesOf = async (response) => {
+  const text = await response.text()
+  try {
+    return JSON.parse(text)?.errorMessages ?? []
+  } catch {
+    return []
+  }
+}
+
 const authHeader = (user, token) =>
   `Basic ${Buffer.from(`${user}:${token}`).toString('base64')}`
 
@@ -170,7 +179,10 @@ export const createJiraClient = ({
       throw mapBadRequest(action, await parseBody(response, action))
     }
     const mapped = mapStatus(response.status, action)
-    if (mapped) throw mapped
+    if (mapped) {
+      mapped.jiraMessages = await jiraMessagesOf(response)
+      throw mapped
+    }
     try {
       return await response.json()
     } catch (error) {
@@ -246,6 +258,30 @@ export const createJiraClient = ({
       'UNKNOWN',
       `${action}: Jira answered ${response.status}, not 204${reasons.length ? `: ${reasons.join('; ')}` : '.'}`
     )
+  }
+
+  const deleteForNoContent = async (path, { action, missing }) => {
+    const url = `${normalisedBase}${path}`
+    let response
+    try {
+      response = await fetch(url, {
+        method: 'DELETE',
+        headers: { Authorization: authHeader(user, token) }
+      })
+    } catch (error) {
+      throw new TimError(
+        'NETWORK',
+        `Could not ${action}: ${error.message}`,
+        error
+      )
+    }
+    await response.arrayBuffer()
+    if (response.status === 204) return
+    if (response.status === 403) {
+      throw new TimError('AUTH', `Not permitted to ${action}.`)
+    }
+    if (response.status === 404) throw new TimError('NOT_FOUND', missing)
+    throw new TimError('NETWORK', `Delete failed with HTTP ${response.status}.`)
   }
 
   const postMultipart = async (path, form, action) => {
@@ -419,6 +455,12 @@ export const createJiraClient = ({
      */
     getTicket,
 
+    /**
+     * @param {string} key
+     * @returns {string} The issue's page in the Jira web app
+     */
+    browseUrl: (key) => `${normalisedBase}/browse/${key}`,
+
     getComments: async (id) => {
       const data = await get(
         `/rest/api/2/issue/${encodeURIComponent(id)}/comment`,
@@ -558,6 +600,34 @@ export const createJiraClient = ({
         created: a.created
       }))
     },
+
+    /**
+     * @param {string} attachmentId - Jira's numeric attachment id
+     * @returns {Promise<void>}
+     * @throws {TimError} AUTH when Jira forbids the delete; NOT_FOUND when no attachment has the id; NETWORK for any other answer than 204
+     */
+    deleteAttachment: (attachmentId) =>
+      deleteForNoContent(
+        `/rest/api/2/attachment/${encodeURIComponent(attachmentId)}`,
+        {
+          action: `delete attachment ${attachmentId}`,
+          missing: `No attachment with id ${attachmentId}.`
+        }
+      ),
+
+    /**
+     * @param {string} linkId - Jira's numeric issue link id
+     * @returns {Promise<void>}
+     * @throws {TimError} AUTH when Jira forbids the delete; NOT_FOUND when no issue link has the id; NETWORK for any other answer than 204
+     */
+    deleteIssueLink: (linkId) =>
+      deleteForNoContent(
+        `/rest/api/2/issueLink/${encodeURIComponent(linkId)}`,
+        {
+          action: `delete link ${linkId}`,
+          missing: `No issue link with id ${linkId}.`
+        }
+      ),
 
     /**
      * @param {string} key

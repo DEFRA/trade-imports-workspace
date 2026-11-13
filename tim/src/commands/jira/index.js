@@ -3,6 +3,8 @@ import { makeClientAction } from '../_client-action.js'
 import { register as registerCreate } from './create.js'
 import { register as registerAttach } from './attach.js'
 import { register as registerLink } from './link.js'
+import { register as registerDetach } from './detach.js'
+import { register as registerUnlink } from './unlink.js'
 import { register as registerEpics } from './epics.js'
 import { register as registerSearch } from './search.js'
 import { register as registerTransition } from './transition.js'
@@ -72,7 +74,7 @@ export const register = (program, { timVersion }) => {
   const jira = program
     .command('jira')
     .description(
-      "Read and search Jira tickets and comments, raise a ticket from a manifest, rewrite a ticket's summary or description, comment on, link and assign tickets, and move a ticket's status (create, update, attach, comment, link and assign are dry run by default; transition is not)"
+      "Read and search Jira tickets and comments, raise a ticket from a manifest, rewrite a ticket's summary or description, comment on, link and assign tickets, delete attachments and links, and move a ticket's status (create, update, attach, detach, comment, link, unlink and assign are dry run by default; transition is not)"
     )
 
   jira
@@ -113,6 +115,8 @@ export const register = (program, { timVersion }) => {
   registerCreate(jira, { timVersion })
   registerAttach(jira, { timVersion })
   registerLink(jira, { timVersion })
+  registerDetach(jira, { timVersion })
+  registerUnlink(jira, { timVersion })
   registerEpics(jira, { timVersion })
   registerSearch(jira, { timVersion })
   registerTransition(jira, { timVersion })

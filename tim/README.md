@@ -905,6 +905,12 @@ tim jira link EUDPA-200 relates EUDPA-100          # dry run
 tim jira link EUDPA-200 relates EUDPA-100 --confirm  # creates the link, then GETs the ticket back to verify it landed
 tim jira link EUDPA-200 --blocks EUDPA-300 --confirm # EUDPA-200 blocks EUDPA-300; reads the link back and reports the direction Jira stored
 tim jira link EUDPA-300 --blocked-by EUDPA-200       # dry run of the same link, from the other side
+tim jira detach EUDPA-333 --list                    # read-only: id, filename, size and created time of each attachment
+tim jira detach EUDPA-333 diagram.svg               # dry run: the attachment that would be deleted
+tim jira detach EUDPA-333 diagram.svg --all --confirm  # deletes every attachment with that filename; without --all a shared filename is refused
+tim jira detach --id 479899 --confirm               # deletes one attachment by its id
+tim jira unlink EUDPA-368 --list                    # read-only: id, type and other side of each issue link
+tim jira unlink --id 426407 --confirm               # deletes one issue link by its id (dry run without --confirm)
 tim jira assign EUDPA-200 me                        # dry run: resolves "me" to your account id and shows who has the ticket now
 tim jira assign EUDPA-200 <accountId> --confirm      # assigns it, then reads the assignee back to check
 tim jira comment EUDPA-200 --body "Fixed on main."  # dry run: shows the comment that would be added

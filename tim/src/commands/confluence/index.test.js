@@ -1,10 +1,9 @@
 import { describe, test, expect, vi, afterEach } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { Command } from 'commander'
 import { renderPage, register } from './index.js'
 import { mockJiraForEachTest } from '../../test-support/jira-mock.js'
-import { captureProcessOutput } from '../../test-support/process-output.js'
+import { runRegisteredCommand } from '../../test-support/process-output.js'
 
 const CONFLUENCE_FIXTURES = fileURLToPath(
   new URL('../../test-support/fixtures/confluence/', import.meta.url)
@@ -30,15 +29,7 @@ describe('tim confluence page', () => {
       .query({ expand })
       .reply(200, responseText, { 'content-type': 'application/json' })
 
-  const runTim = async (...args) => {
-    const captured = captureProcessOutput()
-    const program = new Command().option('--json').exitOverride()
-    register(program, { timVersion: '1.0.0' })
-
-    await program.parseAsync(['node', 'tim', ...args])
-
-    return captured
-  }
+  const runTim = (...args) => runRegisteredCommand(register, ...args)
 
   test.each([
     ['page-with-label', '6619005520'],

@@ -245,8 +245,8 @@ If you call the REST API directly, the field names mislead. To record
 ```
 
 Check the direction after every link with
-`~/git/defra/trade-imports-workspace/tools/jira/delete-link.sh EUDPA-183 --list`.
-Remove a wrong link with `delete-link.sh --id <id>` and create it again.
+`tim jira unlink EUDPA-183 --list`.
+Remove a wrong link with `tim jira unlink --id <id> --confirm` and create it again.
 Check other directional types (Duplicates, Causes) the same way.
 
 ## EUDPA project shape

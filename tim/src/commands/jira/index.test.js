@@ -1,11 +1,10 @@
 import { describe, test, expect, vi, afterEach } from 'vitest'
-import { Command } from 'commander'
 import { renderTicket, renderComments, register } from './index.js'
 import {
   mockJiraForEachTest,
   loadJiraFixture
 } from '../../test-support/jira-mock.js'
-import { captureProcessOutput } from '../../test-support/process-output.js'
+import { runRegisteredCommand } from '../../test-support/process-output.js'
 
 describe('tim jira ticket', () => {
   const jira = mockJiraForEachTest()
@@ -32,15 +31,7 @@ describe('tim jira ticket', () => {
     return sent
   }
 
-  const runTim = async (...args) => {
-    const captured = captureProcessOutput()
-    const program = new Command().option('--json').exitOverride()
-    register(program, { timVersion: '1.0.0' })
-
-    await program.parseAsync(['node', 'tim', ...args])
-
-    return captured
-  }
+  const runTim = (...args) => runRegisteredCommand(register, ...args)
 
   test('asks Jira for rendered fields with --rendered and returns renderedDescription in --json', async () => {
     const sent = servesTicketRecordingQuery(renderedIssue)

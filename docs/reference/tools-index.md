@@ -30,7 +30,6 @@ alternative and the one the build loop still calls directly.
 | `tools/jira/comments.sh` | EUDPA-X | Get comments |
 | `tools/jira/create-ticket.sh` | [-t Type][-p Parent][-P Priority][-l Label][-a] "Summary" | Create ticket.<br>e.g. `tools/jira/create-ticket.sh -t Task -p EUDPA-215 "Add boundary notes"`<br>Boundary: performs the live Jira creation (vs `ticket-creator/prepare-ticket-creation.sh`, which only pre-caches epics/capabilities beforehand). |
 | `tools/jira/add-comment.sh` | EUDPA-X "Comment" | Add comment |
-| `tools/jira/delete-attachment.sh` | EUDPA-X FILENAME [--all] \| --id ID \| EUDPA-X --list | Delete an attachment, or list what a ticket has.<br>e.g. `tools/jira/delete-attachment.sh EUDPA-333 diagram.svg`<br>Refuses to act when several attachments share the filename, listing them instead — pick with `--id` or take all with `--all`.<br>Boundary: the delete half of the regenerate loop (vs `tim jira attach`, which only adds). |
 | `tools/jira/update-ticket.sh` | EUDPA-X field=value | Update fields |
 | `tools/jira/transition-ticket.sh` | EUDPA-X "Status"\|--list | Change status. Takes a status or a transition name; `--list` prints `transition -> status`.<br>`tim jira transition EUDPA-X "Status" [--list] [--json]` now covers this, and is what the increment build loop calls; the script stays for use by hand. |
 | `tools/jira/list-board-epics.sh` | board-id [list\|json] [--include-done] | List epics on a board |

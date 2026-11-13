@@ -254,6 +254,26 @@ describe('error mapping', () => {
     })
   })
 
+  test("keeps Jira's error messages on a mapped failure", async () => {
+    mockPool(BASE)
+      .get('/rest/api/2/myself')
+      .reply(404, { errorMessages: ['Issue does not exist'] })
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    await expect(client.whoami()).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+      jiraMessages: ['Issue does not exist']
+    })
+  })
+
+  test('keeps no Jira error messages when the failure body is not JSON', async () => {
+    mockPool(BASE).get('/rest/api/2/myself').reply(500, 'Bad gateway')
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    await expect(client.whoami()).rejects.toMatchObject({
+      code: 'NETWORK',
+      jiraMessages: []
+    })
+  })
+
   test('maps a fetch failure (no response) to TimError(NETWORK)', async () => {
     mockPool(BASE)
       .get('/rest/api/2/myself')
@@ -540,6 +560,56 @@ describe('listAttachments', () => {
         created: '2026-09-28T10:00:00.000+0000'
       }
     ])
+  })
+})
+
+describe.each([
+  {
+    method: 'deleteAttachment',
+    path: '/rest/api/2/attachment/501',
+    forbidden: 'Not permitted to delete attachment 501.',
+    missing: 'No attachment with id 501.'
+  },
+  {
+    method: 'deleteIssueLink',
+    path: '/rest/api/2/issueLink/501',
+    forbidden: 'Not permitted to delete link 501.',
+    missing: 'No issue link with id 501.'
+  }
+])('$method', ({ method, path, forbidden, missing }) => {
+  const deleteAnswering = (status) => {
+    const deletion = mockPool(BASE).delete(path).reply(status)
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+    return { deletion, outcome: client[method]('501') }
+  }
+
+  test('sends the DELETE and resolves when Jira answers 204', async () => {
+    const { deletion, outcome } = deleteAnswering(204)
+
+    await expect(outcome).resolves.toBeUndefined()
+    expect(deletion.isDone()).toBe(true)
+  })
+
+  test.each([
+    [403, 'AUTH', forbidden],
+    [404, 'NOT_FOUND', missing],
+    [500, 'NETWORK', 'Delete failed with HTTP 500.']
+  ])('maps %i to TimError(%s)', async (status, code, message) => {
+    const { outcome } = deleteAnswering(status)
+
+    await expect(outcome).rejects.toMatchObject({ code, message })
+  })
+})
+
+describe('browseUrl', () => {
+  test("gives the issue's page under a base URL with its trailing slash removed", () => {
+    const client = createJiraClient({
+      user: 'u',
+      token: 't',
+      baseUrl: `${BASE}/`
+    })
+
+    expect(client.browseUrl('EUDPA-1')).toBe(`${BASE}/browse/EUDPA-1`)
   })
 })
 

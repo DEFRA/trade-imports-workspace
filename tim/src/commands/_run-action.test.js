@@ -52,4 +52,43 @@ describe('makeRunAction', () => {
     })
     expect(captured.exitCode).toBe(2)
   })
+
+  test('prints a result that partly failed to stdout and its failure to stderr', async () => {
+    const captured = captureProcessOutput()
+    const action = makeRunAction({
+      run: async () => ({ done: 'a', failed: 'b' }),
+      renderText: ({ done }) => `Done: ${done}`,
+      renderTextError: ({ failed }) => `Could not do ${failed}.`,
+      exitCodeForResult: () => 1,
+      timVersion: '1.0.0'
+    })
+
+    await invoke(action)
+
+    expect(captured).toEqual({
+      stdout: 'Done: a\n',
+      stderr: 'Could not do b.\n',
+      exitCode: 1
+    })
+  })
+
+  test('exits with the code the command chooses for an error', async () => {
+    const captured = captureProcessOutput()
+    const action = makeRunAction({
+      run: async () => {
+        throw new TimError('NOT_FOUND', 'No such thing.')
+      },
+      renderText: () => '',
+      exitCodeForError: () => 1,
+      timVersion: '1.0.0'
+    })
+
+    await invoke(action)
+
+    expect(captured).toEqual({
+      stdout: '',
+      stderr: 'No such thing.\n',
+      exitCode: 1
+    })
+  })
 })

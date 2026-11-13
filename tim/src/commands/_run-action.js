@@ -15,7 +15,9 @@ const emitError = (text) => writeLine(process.stderr, text)
  *   options through unchanged.
  * @param {(context: {args: any[]}, parsedOptions: object) => Promise<any>} args.run
  * @param {(result: any) => string} args.renderText
+ * @param {(result: any) => string} [args.renderTextError] - Text mode only: what a result that partly failed prints to stderr after its output. Defaults to nothing
  * @param {(result: any, parsedOptions: object) => number} [args.exitCodeForResult] - Defaults to always OK
+ * @param {(error: Error) => number} [args.exitCodeForError] - Defaults to `exitCodeFor`
  * @param {string} args.timVersion
  * @returns {Function} A commander action
  */
@@ -23,7 +25,9 @@ export const makeRunAction = ({
   parseOptions = (opts) => opts,
   run,
   renderText,
+  renderTextError = () => '',
   exitCodeForResult = () => OK,
+  exitCodeForError = exitCodeFor,
   timVersion
 }) =>
   async function runAction(...positional) {
@@ -32,11 +36,15 @@ export const makeRunAction = ({
     try {
       const parsed = parseOptions(opts)
       const result = await run({ args }, parsed)
-      await emit(
-        opts.json
-          ? JSON.stringify(jsonEnvelope({ ok: true, result, timVersion }))
-          : renderText(result)
-      )
+      if (opts.json) {
+        await emit(
+          JSON.stringify(jsonEnvelope({ ok: true, result, timVersion }))
+        )
+      } else {
+        await emit(renderText(result))
+        const errorText = renderTextError(result)
+        if (errorText) await emitError(errorText)
+      }
       process.exit(exitCodeForResult(result, parsed))
     } catch (error) {
       if (opts.json) {
@@ -52,6 +60,6 @@ export const makeRunAction = ({
       } else {
         await emitError(error.message ?? String(error))
       }
-      process.exit(exitCodeFor(error))
+      process.exit(exitCodeForError(error))
     }
   }

@@ -148,9 +148,9 @@ The system MUST return the user to the origin of the import page when they follo
 - **WHEN** they follow the back link
 - **THEN** commodity details is shown
 
-### Requirement: The tally lists what has been chosen, offers a remove for each species, and can be cleared
+### Requirement: The tally lists what has been chosen and can be cleared
 **ID**: REQ-COMMODITY-SELECT-008
-The system MUST report how many species have been chosen, showing each chosen commodity as a bold heading reading as its heading in the results does, followed by one entry per chosen species showing its Latin name alone, MUST offer each entry a control whose accessible name is "Remove", that species' Latin name, "from" and its commodity heading, such as "Remove Bos taurus from Cattle (0102)", so no two remove controls on the page share a name, which removes it and leaves the rest chosen, MUST let the user clear the whole selection at once, and MUST refuse a removal naming a species the page never offered. Without JavaScript, the system MUST offer an "Update selected" control under the results that brings the tally up to date with the ticks on screen, keeping the search term and its results. This no-JavaScript control and its copy are agreed for now, and will be revisited when the designers pick up their no-JavaScript ticket.
+The system MUST report how many species have been chosen, showing each chosen commodity as a bold heading reading as its heading in the results does, followed by one entry per chosen species showing its Latin name alone with its own remove control. The system MUST let the user clear the whole selection at once.
 
 #### Scenario: The tally reports the choice as a bold commodity line and its species, and clearing empties it
 **ID**: SCN-COMMODITY-SELECT-008-A
@@ -161,44 +161,11 @@ The system MUST report how many species have been chosen, showing each chosen co
 - **WHEN** the user clears the selection
 - **THEN** the tally is no longer shown
 
-#### Scenario: Removing one chosen species leaves the other chosen
-**ID**: SCN-COMMODITY-SELECT-008-B
-- **GIVEN** the user has chosen two species under different commodities
-- **WHEN** they use the remove control named for one of them
-- **THEN** that species is gone from the tally, the other is still chosen, and the results on screen are still listed
-
 #### Scenario: With JavaScript off, searching, removing a species and clearing all still work
-**ID**: SCN-COMMODITY-SELECT-008-C
+**ID**: SCN-COMMODITY-SELECT-008-B
 - **GIVEN** the user has JavaScript turned off
 - **WHEN** they search, remove one chosen species, and clear the selection
 - **THEN** each of the three works
-
-#### Scenario: Unticking a shown species and then removing it leaves it unchosen without an error
-**ID**: SCN-COMMODITY-SELECT-008-D
-- **GIVEN** the user has JavaScript turned off, and a species whose tick box is on screen and ticked
-- **WHEN** the user clears that tick box and then uses that species' remove control
-- **THEN** the page is shown with that species not chosen and the other choices still chosen, not an error page
-
-#### Scenario: A removal naming a species the page never offered is refused and changes nothing
-**ID**: SCN-COMMODITY-SELECT-008-E
-- **GIVEN** a removal naming a species the page's results and the saved commodity lines have never held, however it was submitted
-- **WHEN** the page responds
-- **THEN** the request is refused, no page is rendered back, and the selection is unchanged
-
-#### Scenario: With JavaScript off, Update selected brings the tally up to date with the ticks on screen
-**ID**: SCN-COMMODITY-SELECT-008-F
-- **GIVEN** the user has JavaScript turned off, has searched, and has ticked a species in the results
-- **WHEN** they use the Update selected control
-- **THEN** the tally shows that species as chosen
-- **AND** the search term and its results are still shown
-
-#### Scenario: One Latin name chosen under two commodities gets a remove control named for each commodity
-**ID**: SCN-COMMODITY-SELECT-008-G
-- **GIVEN** the user has chosen the same Latin name, such as Gallus gallus, under two commodity codes
-- **WHEN** the page next renders
-- **THEN** each of the two entries offers a remove control whose name holds its own commodity heading, so the two names differ
-- **WHEN** they use the remove control for one of the two
-- **THEN** only that entry is gone from the tally and the other is still chosen
 
 ### Requirement: Saving without choosing a commodity is rejected on either save control
 **ID**: REQ-COMMODITY-SELECT-009
@@ -341,7 +308,7 @@ The system MUST show, in bold, the part of a commodity heading or a species labe
 
 ### Requirement: With JavaScript, the results and the tally refresh in place
 **ID**: REQ-COMMODITY-SELECT-017
-With JavaScript on, the system MUST refresh the results and the tally on the same page, without the page reloading, as the user types, ticks or unticks a result, removes a species or clears the selection. It MUST announce through a polite status message how many species a typed search lists, or that it lists none. It MUST keep focus on a tick box the user used, and move focus to the search box when the control the user pressed is gone. When the results cannot be fetched, it MUST post the page as it would without JavaScript. A save pressed while a refresh is on its way MUST wait for it, so the save holds what the refresh shows. Each refresh MUST start from what the one before it left, so a later search never brings back a choice an earlier Clear all or remove took away. Escape in the search box or a click outside the search MUST hide the results, keeping the term and every choice, and focusing or clicking the search box MUST show them again. It MUST NOT show the Update selected control, because a tick brings the tally up to date itself.
+With JavaScript on, the system MUST refresh the results and the tally on the same page, without the page reloading, as the user types, ticks or unticks a result, removes a species or clears the selection. When the results cannot be fetched, it MUST post the page as it would without JavaScript.
 
 #### Scenario: Typing lists the matching species without pressing Search
 **ID**: SCN-COMMODITY-SELECT-017-A
@@ -349,50 +316,113 @@ With JavaScript on, the system MUST refresh the results and the tally on the sam
 - **WHEN** they type a term of three or more characters into the search box
 - **THEN** the matching species are listed under their commodity, with the matched part in bold, and the page has not reloaded
 
-#### Scenario: A typed search announces how many species it lists
-**ID**: SCN-COMMODITY-SELECT-017-B
-- **GIVEN** the user has JavaScript turned on
-- **WHEN** they type a term that matches three species, then a term that matches none
-- **THEN** a polite status message says "3 results available", then "No results found"
-
 #### Scenario: Species ticked under two typed searches are both kept and saved
-**ID**: SCN-COMMODITY-SELECT-017-C
+**ID**: SCN-COMMODITY-SELECT-017-B
 - **GIVEN** the user has JavaScript turned on
 - **WHEN** they tick a species under one typed search, then another under a second typed search, and save
 - **THEN** the tally shows both before the save, and both are chosen when the page is opened again
 
+#### Scenario: When the results cannot be fetched, the search posts the page instead
+**ID**: SCN-COMMODITY-SELECT-017-C
+- **GIVEN** the user has JavaScript turned on and the results cannot be fetched
+- **WHEN** they search
+- **THEN** the page is posted and shows the results it lists without JavaScript
+
+### Requirement: Each chosen species has a remove control named for it and its commodity, and a removal the page never offered is refused
+**ID**: REQ-COMMODITY-SELECT-018
+The system MUST offer each tally entry a control whose accessible name is "Remove", that species' Latin name, "from" and its commodity heading, such as "Remove Bos taurus from Cattle (0102)", so no two remove controls on the page share a name. Using it MUST remove that species and leave the rest chosen. The system MUST refuse a removal naming a species the page never offered.
+
+#### Scenario: Removing one chosen species leaves the other chosen
+**ID**: SCN-COMMODITY-SELECT-018-A
+- **GIVEN** the user has chosen two species under different commodities
+- **WHEN** they use the remove control named for one of them
+- **THEN** that species is gone from the tally, the other is still chosen, and the results on screen are still listed
+
+#### Scenario: Unticking a shown species and then removing it leaves it unchosen without an error
+**ID**: SCN-COMMODITY-SELECT-018-B
+- **GIVEN** the user has JavaScript turned off, and a species whose tick box is on screen and ticked
+- **WHEN** the user clears that tick box and then uses that species' remove control
+- **THEN** the page is shown with that species not chosen and the other choices still chosen, not an error page
+
+#### Scenario: A removal naming a species the page never offered is refused and changes nothing
+**ID**: SCN-COMMODITY-SELECT-018-C
+- **GIVEN** a removal naming a species the page's results and the saved commodity lines have never held, however it was submitted
+- **WHEN** the page responds
+- **THEN** the request is refused, no page is rendered back, and the selection is unchanged
+
+#### Scenario: One Latin name chosen under two commodities gets a remove control named for each commodity
+**ID**: SCN-COMMODITY-SELECT-018-D
+- **GIVEN** the user has chosen the same Latin name, such as Gallus gallus, under two commodity codes
+- **WHEN** the page next renders
+- **THEN** each of the two entries offers a remove control whose name holds its own commodity heading, so the two names differ
+- **WHEN** they use the remove control for one of the two
+- **THEN** only that entry is gone from the tally and the other is still chosen
+
+### Requirement: Without JavaScript, an Update selected control brings the tally up to date
+**ID**: REQ-COMMODITY-SELECT-019
+Without JavaScript, the system MUST offer an "Update selected" control under the results that brings the tally up to date with the ticks on screen, keeping the search term and its results. With JavaScript on, it MUST NOT show the control, because a tick brings the tally up to date itself. The control and its copy are agreed for now, and will be revisited when the designers pick up their no-JavaScript ticket.
+
+#### Scenario: With JavaScript off, Update selected brings the tally up to date with the ticks on screen
+**ID**: SCN-COMMODITY-SELECT-019-A
+- **GIVEN** the user has JavaScript turned off, has searched, and has ticked a species in the results
+- **WHEN** they use the Update selected control
+- **THEN** the tally shows that species as chosen
+- **AND** the search term and its results are still shown
+
+#### Scenario: With JavaScript on, no Update selected control is shown
+**ID**: SCN-COMMODITY-SELECT-019-B
+- **GIVEN** the user has JavaScript turned on and a search lists results
+- **WHEN** the results are shown
+- **THEN** there is no Update selected control
+
+### Requirement: With JavaScript, a typed search announces how many species it lists
+**ID**: REQ-COMMODITY-SELECT-020
+With JavaScript on, the system MUST announce through a polite status message how many species a typed search lists, or that it lists none.
+
+#### Scenario: A typed search announces how many species it lists
+**ID**: SCN-COMMODITY-SELECT-020-A
+- **GIVEN** the user has JavaScript turned on
+- **WHEN** they type a term that matches three species, then a term that matches none
+- **THEN** a polite status message says "3 results available", then "No results found"
+
+### Requirement: With JavaScript, focus stays on a used tick box and moves to the search box when the pressed control is gone
+**ID**: REQ-COMMODITY-SELECT-021
+With JavaScript on, the system MUST keep focus on a tick box the user used, and move focus to the search box when the control the user pressed is gone after a refresh.
+
 #### Scenario: Unticking a species drops it from the tally and keeps focus on its tick box
-**ID**: SCN-COMMODITY-SELECT-017-D
+**ID**: SCN-COMMODITY-SELECT-021-A
 - **GIVEN** the user has JavaScript turned on and has ticked one species
 - **WHEN** they untick it
 - **THEN** the tally is no longer shown, and focus is still on that species' tick box
 
 #### Scenario: Removing a species and clearing all work in place and return focus to the search box
-**ID**: SCN-COMMODITY-SELECT-017-E
+**ID**: SCN-COMMODITY-SELECT-021-B
 - **GIVEN** the user has JavaScript turned on and has chosen two species
 - **WHEN** they use the remove control for one of them, then clear the selection
 - **THEN** the tally first shows the other species alone, then is no longer shown, the search box keeps its term, and focus is on the search box after each
 
-#### Scenario: When the results cannot be fetched, the search posts the page instead
-**ID**: SCN-COMMODITY-SELECT-017-F
-- **GIVEN** the user has JavaScript turned on and the results cannot be fetched
-- **WHEN** they search
-- **THEN** the page is posted and shows the results it lists without JavaScript
+### Requirement: With JavaScript, a save waits for a refresh on its way, and each refresh starts from the one before
+**ID**: REQ-COMMODITY-SELECT-022
+With JavaScript on, a save pressed while a refresh is on its way MUST wait for it, so the save holds what the refresh shows. Each refresh MUST start from what the one before it left, so a later search never brings back a choice an earlier Clear all or remove took away.
 
 #### Scenario: A save pressed straight after Clear all holds nothing chosen
-**ID**: SCN-COMMODITY-SELECT-017-G
+**ID**: SCN-COMMODITY-SELECT-022-A
 - **GIVEN** the user has JavaScript turned on, has chosen one species, and the results are slow to arrive
 - **WHEN** they clear the selection and save before the results have refreshed
 - **THEN** the save is refused with "Select a commodity" and nothing is chosen
 
 #### Scenario: A search pressed straight after Clear all keeps the cleared species out
-**ID**: SCN-COMMODITY-SELECT-017-H
+**ID**: SCN-COMMODITY-SELECT-022-B
 - **GIVEN** the user has JavaScript turned on, has chosen one species, and the results are slow to arrive
 - **WHEN** they clear the selection, search for another species before the results have refreshed, tick it and save
 - **THEN** only the species they ticked after clearing is chosen
 
+### Requirement: With JavaScript, Escape or a click outside hides the results until the search box is used again
+**ID**: REQ-COMMODITY-SELECT-023
+With JavaScript on, Escape in the search box or a click outside the search MUST hide the results, keeping the term and every choice, and focusing or clicking the search box MUST show them again.
+
 #### Scenario: Escape hides the results and clicking the search box shows them again
-**ID**: SCN-COMMODITY-SELECT-017-I
+**ID**: SCN-COMMODITY-SELECT-023-A
 - **GIVEN** the user has JavaScript turned on and a typed search lists results
 - **WHEN** they press Escape in the search box
 - **THEN** the results are hidden and the search box keeps the term
@@ -400,13 +430,7 @@ With JavaScript on, the system MUST refresh the results and the tally on the sam
 - **THEN** the results are shown again
 
 #### Scenario: A click outside the search hides the results and keeps what is chosen
-**ID**: SCN-COMMODITY-SELECT-017-J
+**ID**: SCN-COMMODITY-SELECT-023-B
 - **GIVEN** the user has JavaScript turned on and has ticked a species in the results
 - **WHEN** they click outside the search
 - **THEN** the results are hidden and the species is still chosen
-
-#### Scenario: With JavaScript on, no Update selected control is shown
-**ID**: SCN-COMMODITY-SELECT-017-K
-- **GIVEN** the user has JavaScript turned on and a search lists results
-- **WHEN** the results are shown
-- **THEN** there is no Update selected control

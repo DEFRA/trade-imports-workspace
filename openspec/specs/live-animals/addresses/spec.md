@@ -275,7 +275,7 @@ The system MUST show an empty-state message in place of the results count when a
 
 ### Requirement: A listed address opens in the INS address book, whose Back returns to the same list
 **ID**: REQ-ADDR-009
-When the address book service is available, the system MUST end each listed address with a 'View' link, named for screen readers by the address's name, that opens that address in the INS address book. The address book's Back link MUST bring the user back to the same list of the same notification, with the same search, the same page and the same address chosen, and, when they opened the list to change an answer, saving MUST still return them where a change of answer does. When the address book service is not available (stub mode), the system MUST end each listed address at its country, with no 'View' link.
+When the address book service is available, the system MUST end each listed address with a 'View' link, named for screen readers by the address's name, that opens that address in the INS address book. The address book's Back link MUST bring the user back to the same list of the same notification, with the same search, the same page and the same address chosen, and, when they opened the list to change an answer, saving MUST still return them where a change of answer does.
 
 #### Scenario: View opens the address in the INS address book and Back returns to the list with its search
 **ID**: SCN-ADDR-009-A
@@ -296,12 +296,6 @@ When the address book service is available, the system MUST end each listed addr
 - **GIVEN** the user is choosing an address for a consignment role, and the address book service is available
 - **WHEN** the list is shown
 - **THEN** each address's last column holds a single 'View' link, announced with the address's name, and nothing else
-
-#### Scenario: Each address ends at its country, with no View link, in stub mode
-**ID**: SCN-ADDR-009-D
-- **GIVEN** the user is choosing an address for a consignment role, and the address book service is not available (stub mode)
-- **WHEN** the list is shown
-- **THEN** the list's columns end at Country, and each address's last column holds its country, with no 'View' link
 
 ### Requirement: Choosing a role's address is paged, and a choice made on any page is the one saved
 **ID**: REQ-ADDR-010
@@ -365,3 +359,13 @@ The system MUST lay the list of addresses for a consignment role across the full
 - **GIVEN** the user is choosing an address for a consignment role
 - **WHEN** the list is shown
 - **THEN** it spans the full width of the content column
+
+### Requirement: In stub mode a listed address ends at its country, with no View link
+**ID**: REQ-ADDR-016
+When the address book service is not available (stub mode), the system MUST end each listed address at its country, with no 'View' link.
+
+#### Scenario: Each address ends at its country, with no View link, in stub mode
+**ID**: SCN-ADDR-016-A
+- **GIVEN** the user is choosing an address for a consignment role, and the address book service is not available (stub mode)
+- **WHEN** the list is shown
+- **THEN** the list's columns end at Country, and each address's last column holds its country, with no 'View' link

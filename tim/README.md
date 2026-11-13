@@ -884,7 +884,10 @@ increment id sit under `(run)`.
 
 ### `tim jira create|update|attach|link|assign|epics` — the Jira write surface
 
-`tim jira ticket`/`comments` and `epics` are read-only. `create`, `update`,
+`tim jira ticket`/`comments` and `epics` are read-only. `tim jira ticket`
+gives the ticket's parent, labels, last update time, subtasks and links, each
+link read from this ticket's side; `--rendered` adds the description as Jira
+renders it to HTML (`renderedDescription` in `--json`). `create`, `update`,
 `attach`, `link` and `assign` write to Jira, so they follow one rule: **dry
 run by default, a real write needs an explicit `--confirm`** (or, for
 `create`, a matching `--confirm <planId>`). Nothing in the `.claude/settings.json`

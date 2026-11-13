@@ -140,7 +140,7 @@ npm --prefix tim link     # from any clone's root, once per machine: tim on PATH
 tim --help                # full surface
 tim workspace status      # git status for every repo, with jq-friendly --json
 tim docker dev            # start the stack from local source (run-stack.sh -d)
-tim jira ticket EUDPA-X   # equivalent of tools/jira/ticket.sh
+tim jira ticket EUDPA-X [--rendered]   # a ticket with its parent, labels, last update, subtasks and links; --rendered shows the HTML description
 tim auth                  # check Jira and Confluence sign-in (GitHub: gh auth status)
 tim capture <workarea> --app <name>  # photograph a running app from its own Playwright traces
 tim backlog registry list # every registered programme, its profile and workarea

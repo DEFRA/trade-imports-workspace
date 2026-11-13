@@ -106,8 +106,123 @@ describe('getTicket', () => {
       type: 'Story',
       assignee: 'Sam',
       priority: 'High',
-      description: 'do it'
+      parent: null,
+      labels: [],
+      updated: null,
+      description: 'do it',
+      subtasks: [],
+      links: []
     })
+  })
+
+  test('returns the rendered description, parent, labels, update time and links read from this side', async () => {
+    mockPool(BASE)
+      .get('/rest/api/2/issue/EUDPA-713')
+      .query({ expand: 'renderedFields' })
+      .reply(200, loadFixture('issue-rendered-with-links.json'))
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+
+    const ticket = await client.getTicket('EUDPA-713', { withRendered: true })
+
+    expect(ticket).toEqual({
+      id: 'EUDPA-713',
+      summary:
+        'Store and enforce the owning organisation on every live animals notification',
+      status: 'Done',
+      type: 'Story',
+      assignee: 'Martyn Nevers',
+      priority: 'Medium',
+      parent: 'EUDPA-133',
+      labels: ['COMMON-CAP-0.2'],
+      updated: '2026-11-13T15:43:59.072+0000',
+      description:
+        "*As* a trader acting for an organisation,\n*I want* to see and change only my organisation's import notifications,\n*So that* other organisations cannot see or change our consignments and party details",
+      renderedDescription:
+        "<p><b>As</b> a trader acting for an organisation,<br/>\n<b>I want</b> to see and change only my organisation's import notifications,<br/>\n<b>So that</b> other organisations cannot see or change our consignments and party details</p>",
+      subtasks: [],
+      links: [
+        {
+          id: '432588',
+          type: 'Relates',
+          direction: 'inward',
+          relation: 'relates to',
+          otherKey: 'EUDPA-715',
+          otherStatus: 'Done',
+          otherSummary:
+            'Store and enforce the owning organisation on every plants notification'
+        },
+        {
+          id: '432589',
+          type: 'Blocks',
+          direction: 'outward',
+          relation: 'blocks',
+          otherKey: 'EUDPA-714',
+          otherStatus: 'In Dev',
+          otherSummary:
+            'Store and enforce the owning organisation on INS dashboard notifications'
+        }
+      ]
+    })
+  })
+
+  test('returns no parent, no labels and no renderedDescription key for an epic read without rendering', async () => {
+    mockPool(BASE)
+      .get('/rest/api/2/issue/EUDPA-745')
+      .reply(200, loadFixture('issue-epic-no-parent.json'))
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+
+    const ticket = await client.getTicket('EUDPA-745')
+
+    expect(ticket).toEqual(
+      expect.objectContaining({
+        id: 'EUDPA-745',
+        type: 'Epic',
+        assignee: null,
+        parent: null,
+        labels: [],
+        updated: '2026-10-27T18:06:56.908+0000',
+        subtasks: [],
+        links: []
+      })
+    )
+    expect(Object.keys(ticket)).not.toContain('renderedDescription')
+  })
+
+  test('returns a null renderedDescription when the ticket has no description to render', async () => {
+    mockPool(BASE)
+      .get('/rest/api/2/issue/EUDPA-300')
+      .query({ expand: 'renderedFields' })
+      .reply(200, {
+        ...loadFixture('issue-in-dev.json'),
+        renderedFields: { description: null }
+      })
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+
+    const ticket = await client.getTicket('EUDPA-300', { withRendered: true })
+
+    expect(ticket.renderedDescription).toBeNull()
+  })
+
+  test('returns each subtask with its key, status and summary', async () => {
+    mockPool(BASE)
+      .get('/rest/api/2/issue/EUDPA-799')
+      .reply(200, loadFixture('issue-with-subtasks.json'))
+    const client = createJiraClient({ user: 'u', token: 't', baseUrl: BASE })
+
+    const ticket = await client.getTicket('EUDPA-799')
+
+    expect(ticket.subtasks).toEqual([
+      {
+        key: 'EUDPA-801',
+        status: 'In Dev',
+        summary: 'Turn on hot reload for the proxy in dev mode'
+      },
+      {
+        key: 'EUDPA-802',
+        status: 'To Do',
+        summary: 'Document the dev overlay'
+      }
+    ])
   })
 
   test('maps 404 to TimError(NOT_FOUND)', async () => {

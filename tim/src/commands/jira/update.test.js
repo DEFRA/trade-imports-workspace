@@ -21,7 +21,12 @@ const TICKET = {
   type: 'Story',
   assignee: null,
   priority: 'Medium',
-  description: 'The old description'
+  parent: null,
+  labels: [],
+  updated: null,
+  description: 'The old description',
+  subtasks: [],
+  links: []
 }
 
 const jira = mockJiraForEachTest()

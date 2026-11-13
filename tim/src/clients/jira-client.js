@@ -87,6 +87,21 @@ const readLinkFromIssueSide = (link) => {
   }
 }
 
+const readLinkWithOtherIssue = (link) => {
+  const otherIssue = link.outwardIssue ?? link.inwardIssue
+  return {
+    ...readLinkFromIssueSide(link),
+    otherStatus: otherIssue?.fields?.status?.name ?? null,
+    otherSummary: otherIssue?.fields?.summary ?? ''
+  }
+}
+
+const readSubtask = (subtask) => ({
+  key: subtask.key,
+  status: subtask.fields?.status?.name ?? null,
+  summary: subtask.fields?.summary ?? ''
+})
+
 const resolutionsOffered = (transition) => {
   const resolutionField = transition.fields?.resolution
   if (!resolutionField) return null
@@ -256,9 +271,10 @@ export const createJiraClient = ({
     return parseBody(response, action)
   }
 
-  const getTicket = async (id) => {
+  const getTicket = async (id, { withRendered = false } = {}) => {
+    const path = `/rest/api/2/issue/${encodeURIComponent(id)}`
     const data = await get(
-      `/rest/api/2/issue/${encodeURIComponent(id)}`,
+      withRendered ? `${path}?expand=renderedFields` : path,
       `getTicket(${id})`
     )
     return {
@@ -268,7 +284,15 @@ export const createJiraClient = ({
       type: data.fields?.issuetype?.name ?? null,
       assignee: data.fields?.assignee?.displayName ?? null,
       priority: data.fields?.priority?.name ?? null,
-      description: data.fields?.description ?? ''
+      parent: data.fields?.parent?.key ?? null,
+      labels: data.fields?.labels ?? [],
+      updated: data.fields?.updated ?? null,
+      description: data.fields?.description ?? '',
+      ...(withRendered
+        ? { renderedDescription: data.renderedFields?.description ?? null }
+        : {}),
+      subtasks: (data.fields?.subtasks ?? []).map(readSubtask),
+      links: (data.fields?.issuelinks ?? []).map(readLinkWithOtherIssue)
     }
   }
 
@@ -383,6 +407,16 @@ export const createJiraClient = ({
       return data.fields?.resolution?.name ?? null
     },
 
+    /**
+     * A ticket's fields, its subtasks and its links. Each link is read from
+     * this ticket's side, as `getIssueLinks` reads it, with the other
+     * issue's status and summary added.
+     *
+     * @param {string} id
+     * @param {object} [options]
+     * @param {boolean} [options.withRendered=false] - Also return `renderedDescription`: the description as Jira renders it to HTML, or null when the ticket has none
+     * @returns {Promise<{id: string, summary: string, status: string|null, type: string|null, assignee: string|null, priority: string|null, parent: string|null, labels: string[], updated: string|null, description: string, renderedDescription?: string|null, subtasks: Array<{key: string, status: string|null, summary: string}>, links: Array<{id: string|null, type: string|null, direction: 'outward'|'inward', relation: string|null, otherKey: string|null, otherStatus: string|null, otherSummary: string}>}>}
+     */
     getTicket,
 
     getComments: async (id) => {

@@ -1328,7 +1328,7 @@
       "dependsOn": [],
       "risk": "Low: no callers yet. The golden snapshots freeze the bash output so they outlive the scripts. The understanding-check, govuk, npm, style and journey ports reuse the harness.",
       "proof": "Unit tests for the path encoding ('/' becomes '_') and the categories. The harness reproduces one real items.json read.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
@@ -1336,8 +1336,23 @@
         "no-callers"
       ],
       "evidence": {
-        "recoverableCommits": "The blocked attempt is in the local reflog, unpushed: trade-imports-workspace 728e746c then 46f50323. Cherry-pick them and fix only the reason below, rather than rebuilding.",
-        "previousBlockedReason": "The tim review store prints nothing when items files exist but hold no items, where review-items.sh prints [], and no golden case covers that path."
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "b58a06e1"
+          }
+        ],
+        "checks": [
+          "tim-unit: green, 248 files, 4304 passed and 8 expected fail (npm --prefix tim test)",
+          "tim-lint: npm run lint and npm run format:check both exit 0",
+          "parity: review-items.sh golden now includes an items file that holds no items (bash prints []). readReviewItems returns null when no items file matches and [] when the files hold no items, and store.test.js checks every golden case: full review, one repo, a repo with no items file, a review with no items files, an itemless items file, a repo-keyless file, a missing review and a file in place of a review. The review-add-item.sh refused-category golden is unchanged",
+          "no-callers: finding-categories.sh is not deleted, as the row intends. tools/review/{review,file-review}-add-item.sh and tools/style/{file-style,style}-add-item.sh still source it, and a parity test pins the JS categories to its arrays until P56. workflow-contract.test.js now reads the JS categories",
+          "no new .sh file. The only new canonical-path text is the frozen bash stderr in the golden (bash's own output) and the harness staging a fixture HOME/git/defra/trade-imports-workspace, which it needs because the bash hardcodes that path"
+        ],
+        "deviations": [
+          "I cherry-picked the recoverable commits 728e746c and 46f50323 and squashed them, with the fix, into one row commit (b58a06e1) to follow the brief's one-commit-per-row rule",
+          "tools/review/finding-categories.sh is kept, not deleted. The row and the backlog put its deletion after P56, because the tools/review and tools/style scripts still source it"
+        ]
       }
     },
     {

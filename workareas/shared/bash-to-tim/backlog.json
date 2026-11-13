@@ -908,7 +908,7 @@
       "dependsOn": [],
       "risk": "Low. Tests only. guard-edits.sh blocks agent edits to .claude/hooks/**, so the loop writes the corpus and P19B (Sam) does the port.",
       "proof": "One golden case per allow and deny branch, green against today's Bash hooks.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
@@ -916,7 +916,25 @@
         "no-callers"
       ],
       "evidence": {
-        "previousBlockedReason": "The golden corpus hard-coded the canonical clone path in the piped-test-run deny message, which breaks the fixed-path ban and stops P19B passing the corpus unchanged, so the case must build that path from CLAUDE_PROJECT_DIR and P19B's callersToUpdate must name guard-bash.sh:120."
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "7c4ef0e8"
+          }
+        ],
+        "checks": [
+          "tim-unit: npm --prefix tim test green, 238 files, 4115 passed and 8 expected fail (the test.fails cases that name the clone in use)",
+          "tim-lint: npm run lint and npm run format:check both exit 0",
+          "parity: the corpus still spawns the real .claude/hooks/guard-bash.sh and guard-edits.sh and pins exit code plus decision JSON for every allow and deny branch. For the piped-test-run branch, CLAUDE_PROJECT_DIR is now <fixture HOME>/clones/second-clone, not the canonical path. test.each checks today's deny decision and its opening sentence. test.fails.each pins the exact message naming ~/clones/second-clone. Against today's hook, which prints the canonical clone, those cases fail as expected, so a hook that keeps the hard-coded path cannot pass them as plain tests.",
+          "no-callers: test-only row, so no script is retired. The hooks are still called only from .claude/settings.json and named in docs",
+          "fixed-path ban: the diff from 63930b55 adds no '~/git/defra/trade-imports-workspace' or '$HOME/git/defra' string, no fixture folder named after the canonical clone, and no new .sh file"
+        ],
+        "deviations": [
+          "Amended commit ebfe531b into 7c4ef0e8. It is still one commit for the row, and the message was rewritten to describe the second-clone fixture and the test.fails golden.",
+          "Verifier issue 1: the golden for the exact message is test.fails.each, because guard-bash.sh:120 cannot be edited by agents (guard-edits.sh blocks .claude/hooks/**). P19B's row now says to flip it to test.each, and its proof was reworded to match.",
+          "Verifier issue 2: the describe titles are now 'guard-bash: ...' and 'guard-edits', with no extension. ADR 0002 now says a port changes only the hook command in tim/src/test-support/guard-hook.js. P19B's callersToUpdate now names guard-hook.js (guardBashCommand and guardEditsCommand become node .../*.mjs), the test.fails flip, and dropping the ADR's test.fails sentence afterwards.",
+          "Extra finding written into P19B's row: in a scratchpad probe on this Mac, the row's suggested Bash expression ${CLAUDE_PROJECT_DIR/#$HOME/~} printed the full path, because the ~ in the replacement expands back to $HOME. The row now says to use '~' followed by CLAUDE_PROJECT_DIR with the HOME prefix removed. I did not run the corrected Bash form, because the probe command was denied."
+        ]
       }
     },
     {

@@ -199,14 +199,33 @@
       "dependsOn": [],
       "risk": "Medium. A wrong root means Codex (`codex exec -C ${TILDE}`, :3106) builds in the wrong tree. Launch between loop runs, because a running loop holds its prompt text.",
       "proof": "tim/src/backlog/workflow-contract.test.js: a launch with config.workspace set to a second-clone path gives TILDE equal to that path. A launch with no config resolves from the session folder. A dry resolver run from a scratch clone reports that clone.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "a1ce8de8"
+          }
+        ],
+        "checks": [
+          "tim-unit: pass. npm --prefix tim test after the fixes: 235 files and 3931 tests green.",
+          "tim-lint: pass. npm run lint and npm run format:check both exit clean.",
+          "parity: pass. This uses the verifier's clone at ~/git/defra/trade-imports-workspace/workareas/p05-verify-clone, which is under HOME, so step 1 of the resolver can find it. Run again by the fixer: `git -C <clone>/tim rev-parse --show-toplevel` printed the clone root. The ls check on the marker .claude/skills/requirements-pipeline/workflow/increment-build-loop.js passed. `tim build workers --workspace <clone> --json` returned ok:true. This replaces the builder's run from outside HOME, which did not prove the step.",
+          "no-callers: pass. Both worked-example args objects in .claude/skills/requirements-pipeline/workflow/README.md now pass `workspace: null`: the plant-products/CHED-PP one and the branch-lifecycle frontend-alignment one. The branch example also gained its missing required `resumeFrom: null` and `rigour: 'standard'`, so either example can be copied and launched as written. The fixes add no fixed path and no .sh file.",
+          "formatting: the doubled blank line between buildsWorkspace and workspaceCarriedFrom in increment-build-loop.js is now a single blank line."
+        ],
+        "deviations": [
+          "Fixes were amended into the row's single commit, so b850c21e is now a1ce8de8.",
+          "Two scratch clones are still on disk because rm -rf was denied for both: ~/git/defra/trade-imports-workspace/workareas/p05-verify-clone (gitignored workareas cache) and /private/tmp/claude-501/-Users-samfarrington-git-defra-trade-imports-workspace/51c6e0f9-b7cd-4625-9a54-d8226c61b362/scratchpad/second-clone. A person needs to delete them.",
+          "Builder deviations carried over unchanged: config.workspace is a required key that may be null; the resolver's 'from' enum replaces 'canonical'; the prototype workflows, designer-prototyping-suite and wording-sweep.js take a required 'workspace' key; launch examples outside the row's caller list were updated; prose docs naming the canonical path were left alone."
+        ]
+      }
     },
     {
       "id": "P06",

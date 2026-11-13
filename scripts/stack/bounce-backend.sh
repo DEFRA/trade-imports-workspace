@@ -11,6 +11,31 @@ source "$LIB_DIR/colour.sh"
 # shellcheck source=lib/compose.sh
 source "$LIB_DIR/compose.sh"
 
+usage() {
+  cat <<USAGE
+Usage: $(basename "$0")
+
+Recreates the trade-imports-animals-backend container on its own, without
+its dependencies, and waits until it is healthy. Use it after a pom.xml or
+dependency change, which hot reload does not pick up. Data is kept.
+
+  -h, --help    Show this help.
+USAGE
+}
+
+case "${1-}" in
+  -h | --help)
+    usage
+    exit 0
+    ;;
+  "") ;;
+  *)
+    print_error "error: unexpected argument: $1"
+    usage >&2
+    exit 2
+    ;;
+esac
+
 [ -f "$STACK_DIR/dev.compose.yml" ] && compose_files_add_dev
 profile_args=()
 for profile in "${ALL_PROFILES[@]}"; do

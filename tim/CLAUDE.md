@@ -36,7 +36,8 @@ See `.claude/rules/` — loaded by glob:
 
 ## Auth env vars (reuse the bash contract)
 
-- `JIRA_USER` + `JIRA_TOKEN` + `JIRA_BASE_URL` — used by `jira-client` AND `confluence-client`. Confluence sits at `${JIRA_BASE_URL}/wiki` with the same Atlassian token.- Anyone with the bash tools working should get seamless pickup with zero new env vars.
+- `JIRA_USER` + `JIRA_TOKEN` + `JIRA_BASE_URL` — used by `jira-client` AND `confluence-client`. Confluence sits at `${JIRA_BASE_URL}/wiki` with the same Atlassian token.
+- Anyone with the bash tools working should get seamless pickup with zero new env vars.
 
 ## When to use parent skills
 

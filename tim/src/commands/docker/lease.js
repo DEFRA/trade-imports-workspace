@@ -1,4 +1,4 @@
-import { dirname, join, resolve } from 'node:path'
+import { join, resolve } from 'node:path'
 import { z } from 'zod'
 import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
 import { OK, ERROR } from '../../constants/exitCodes.js'
@@ -64,8 +64,8 @@ const requireValidStubProfile = (env = process.env) => {
   }
 }
 
-const logsDirFor = (logs, leasePath) =>
-  logs ? resolve(logs) : join(dirname(leasePath), 'logs')
+const logsDirFor = (logs, workspaceRoot) =>
+  logs ? resolve(logs) : join(workspaceRoot, 'workareas', 'stack-logs')
 
 const envelopeOf = ({ ok, result, code, message, timVersion }) =>
   ok
@@ -169,7 +169,7 @@ const runAcquire = async ({ workspaceRoot, leasePath, opts }) => {
     holder: parsed.holder,
     mode: parsed.mode,
     leasePath,
-    logPath: join(logsDirFor(parsed.logs, leasePath), 'lease-acquire.log'),
+    logPath: join(logsDirFor(parsed.logs, workspaceRoot), 'lease-acquire.log'),
     force: parsed.force
   })
   return {
@@ -186,7 +186,7 @@ const runRelease = async ({ workspaceRoot, leasePath, opts }) => {
     workspaceRoot,
     holder: parsed.holder,
     leasePath,
-    logPath: join(logsDirFor(parsed.logs, leasePath), 'lease-release.log'),
+    logPath: join(logsDirFor(parsed.logs, workspaceRoot), 'lease-release.log'),
     force: parsed.force
   })
   const code = releaseFailureCode(outcome)
@@ -234,7 +234,10 @@ export const registerPerf = (docker, timVersion) =>
       '--holder <text>',
       'Who takes the lease (default "perf <this clone’s path>")'
     )
-    .option('--logs <dir>', 'Where run-stack.sh writes its log')
+    .option(
+      '--logs <dir>',
+      'Where run-stack.sh writes its log (default workareas/stack-logs in this clone)'
+    )
     .addHelpText(
       'after',
       '\nExamples:\n  tim docker perf\n  STUB_PROFILE=zero-delay tim docker perf --json\n  tim docker lease release --holder "perf <this clone’s path>"'
@@ -251,7 +254,7 @@ export const registerLease = (docker, timVersion) => {
   const lease = docker
     .command('lease')
     .description(
-      'Who holds the workspace stack. A build run takes the lease once, as its run id, when it starts, every stage and gate reuses it with that same holder, and the run gives it back when it ends, so a stack is never left up with nobody owning it. The lease file is per machine: TIM_STACK_LEASE, or tim/stack-lease.json under XDG_STATE_HOME (default ~/.local/state).'
+      'Who holds the workspace stack. A build run takes the lease once, as its run id, when it starts, every stage and gate reuses it with that same holder, and the run gives it back when it ends, so a stack is never left up with nobody owning it. The lease file is per machine: TIM_STACK_LEASE, or tim/stack-lease.json under XDG_STATE_HOME (default ~/.local/state). Its logs are per clone, in workareas/stack-logs.'
     )
 
   lease
@@ -268,7 +271,10 @@ export const registerLease = (docker, timVersion) => {
       'dev (build from local source), up (published images) or perf (published images, both stubs on the STUB_PROFILE latency profile, default sla)',
       'dev'
     )
-    .option('--logs <dir>', 'Where run-stack.sh writes its log')
+    .option(
+      '--logs <dir>',
+      'Where run-stack.sh writes its log (default workareas/stack-logs in this clone)'
+    )
     .option(
       '--force',
       'Take a lease your holder name holds from another clone of the workspace'
@@ -285,7 +291,10 @@ export const registerLease = (docker, timVersion) => {
       'Give the lease back: take down the stack you started, then clear the lease. Refuses a lease somebody else holds, and never takes down a stack nobody leases.'
     )
     .option('--holder <text>', 'Who gives the lease back')
-    .option('--logs <dir>', 'Where stop-stack.sh writes its log')
+    .option(
+      '--logs <dir>',
+      'Where stop-stack.sh writes its log (default workareas/stack-logs in this clone)'
+    )
     .option(
       '--force',
       'Release a lease your holder name holds from another clone of the workspace'

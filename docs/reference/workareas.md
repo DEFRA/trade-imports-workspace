@@ -27,6 +27,7 @@ workareas/understanding-checks/EUDPA-X/            → .interview-meta.json, tic
 workareas/journey-builder/EUDPA-X/                 → backlog.json + deferred.json (tracked; canonical build-loop state)
 workareas/journey-builder/EUDPA-X/                 → .corpus-meta.json + evidence.json (tracked; provenance — pins, captures, resolved citations)
 workareas/<programme>/traces/<app>/<sha>/          → Playwright traces, manifest.json and coverage.json (written by `tim capture`)
+workareas/stack-logs/                              → lease-acquire.log, lease-release.log (the stack script output `tim docker lease` and `tim docker perf` write when no --logs is given)
 ```
 
 ## What is tracked under `workareas/`, and why

@@ -26,48 +26,59 @@ const writeExecutable = (path, body) => {
   chmodSync(path, 0o755)
 }
 
-const statePath = () => join(workspace, 'stack-state')
+const statePath = (root = workspace) => join(root, 'stack-state')
 const leasePath = () => join(workspace, 'state', 'stack-lease.json')
-const callsPath = () => join(workspace, 'stack-calls')
+const callsPath = (root = workspace) => join(root, 'stack-calls')
+const stackLogsOf = (root) => join(root, 'workareas', 'stack-logs')
 
-beforeEach(() => {
-  workspace = mkdtempSync(join(tmpdir(), 'tim-docker-lease-'))
-  markWorkspaceRoot(workspace)
-  mkdirSync(join(workspace, 'repos'))
+const makeWorkspace = () => {
+  const root = mkdtempSync(join(tmpdir(), 'tim-docker-lease-'))
+  markWorkspaceRoot(root)
+  mkdirSync(join(root, 'repos'))
   writeExecutable(
-    join(workspace, 'scripts', 'stack', 'run-stack.sh'),
-    `echo "run-stack.sh $* STUB_PROFILE=$STUB_PROFILE" >> '${callsPath()}'\necho up > '${statePath()}'`
+    join(root, 'scripts', 'stack', 'run-stack.sh'),
+    `echo "run-stack.sh $* STUB_PROFILE=$STUB_PROFILE" >> '${callsPath(root)}'\necho "run-stack.sh in ${root}"\necho up > '${statePath(root)}'`
   )
   writeExecutable(
-    join(workspace, 'scripts', 'stack', 'stop-stack.sh'),
-    `rm -f '${statePath()}'`
+    join(root, 'scripts', 'stack', 'stop-stack.sh'),
+    `echo "stop-stack.sh in ${root}"\nrm -f '${statePath(root)}'`
   )
   writeExecutable(
-    join(workspace, 'fake-bin', 'docker'),
+    join(root, 'fake-bin', 'docker'),
     [
-      `if [ "$1" != ps ] || [ ! -f '${statePath()}' ]; then exit 0; fi`,
-      `case "$5" in *working_dir*) echo '${join(workspace, 'docker', 'stack')}' ;; *) echo trade-imports-frontend-1 ;; esac`
+      `if [ "$1" != ps ] || [ ! -f '${statePath(root)}' ]; then exit 0; fi`,
+      `case "$5" in *working_dir*) echo '${join(root, 'docker', 'stack')}' ;; *) echo trade-imports-frontend-1 ;; esac`
     ].join('\n')
   )
+  return root
+}
+
+const workspacesMade = []
+
+beforeEach(() => {
+  workspace = makeWorkspace()
+  workspacesMade.push(workspace)
 })
 
 afterEach(() => {
-  rmSync(workspace, { recursive: true, force: true })
+  workspacesMade
+    .splice(0)
+    .forEach((root) => rmSync(root, { recursive: true, force: true }))
 })
 
-const runDocker = (args, env = {}) =>
-  execa('node', [cliPath, 'docker', ...args, '--workspace', workspace], {
+const runDocker = (args, { env = {}, root = workspace } = {}) =>
+  execa('node', [cliPath, 'docker', ...args, '--workspace', root], {
     reject: false,
     env: {
       TIM_NO_AUTO_PULL: '1',
       TIM_STACK_LEASE: leasePath(),
       STUB_PROFILE: '',
-      PATH: `${join(workspace, 'fake-bin')}:${process.env.PATH}`,
+      PATH: `${join(root, 'fake-bin')}:${process.env.PATH}`,
       ...env
     }
   })
 
-const runTim = (args) => runDocker(['lease', ...args])
+const runTim = (args, options) => runDocker(['lease', ...args], options)
 
 const envelopeOf = (run) => JSON.parse(run.stdout.trim())
 
@@ -171,6 +182,71 @@ describe('tim docker lease release', () => {
       code: envelopeOf(run).errors[0].code,
       up: existsSync(statePath())
     }).toEqual({ exitCode: 1, code: 'NOT_HOLDER', up: true })
+  })
+})
+
+describe('tim docker lease logs', () => {
+  const logText = (path) => readFileSync(path, 'utf8')
+
+  const stackScriptLog = (root, commandLine) =>
+    [
+      `$ ${join(root, 'scripts', 'stack', commandLine)}`,
+      `# in ${root}`,
+      '',
+      `${commandLine.split(' ')[0]} in ${root}`,
+      ''
+    ].join('\n')
+
+  test('acquire writes the run-stack.sh output to workareas/stack-logs in the workspace', async () => {
+    await runTim(['acquire', '--holder', HOLDER])
+
+    expect(logText(join(stackLogsOf(workspace), 'lease-acquire.log'))).toBe(
+      stackScriptLog(workspace, 'run-stack.sh -d')
+    )
+  })
+
+  test('release writes the stop-stack.sh output to workareas/stack-logs in the workspace', async () => {
+    writeFileSync(statePath(), 'up\n')
+    writeLease(HOLDER)
+
+    await runTim(['release', '--holder', HOLDER])
+
+    expect(logText(join(stackLogsOf(workspace), 'lease-release.log'))).toBe(
+      stackScriptLog(workspace, 'stop-stack.sh')
+    )
+  })
+
+  test('two clones write their logs in their own workspaces and share one lease file', async () => {
+    const otherClone = makeWorkspace()
+    workspacesMade.push(otherClone)
+
+    await runTim(['acquire', '--holder', HOLDER])
+    await runTim(['release', '--holder', HOLDER])
+    await runTim(['acquire', '--holder', HOLDER], { root: otherClone })
+
+    expect({
+      firstClone: logText(join(stackLogsOf(workspace), 'lease-acquire.log')),
+      otherClone: logText(join(stackLogsOf(otherClone), 'lease-acquire.log')),
+      leaseHeldFrom: leaseOnDisk().workspace
+    }).toEqual({
+      firstClone: stackScriptLog(workspace, 'run-stack.sh -d'),
+      otherClone: stackScriptLog(otherClone, 'run-stack.sh -d'),
+      leaseHeldFrom: otherClone
+    })
+  })
+
+  test('--logs writes the log to the folder given and nothing to workareas/stack-logs', async () => {
+    const givenFolder = join(workspace, 'run-logs')
+
+    await runTim(['acquire', '--holder', HOLDER, '--logs', givenFolder])
+
+    expect({
+      given: logText(join(givenFolder, 'lease-acquire.log')),
+      stackLogsWritten: existsSync(stackLogsOf(workspace))
+    }).toEqual({
+      given: stackScriptLog(workspace, 'run-stack.sh -d'),
+      stackLogsWritten: false
+    })
   })
 })
 
@@ -327,7 +403,7 @@ describe('tim docker perf', () => {
   })
 
   test('passes STUB_PROFILE to the stack and records it', async () => {
-    await runDocker(['perf'], { STUB_PROFILE: 'zero-delay' })
+    await runDocker(['perf'], { env: { STUB_PROFILE: 'zero-delay' } })
 
     expect({
       calls: stackCalls(),
@@ -339,7 +415,7 @@ describe('tim docker perf', () => {
   })
 
   test('refuses an unknown STUB_PROFILE before starting anything', async () => {
-    const run = await runDocker(['perf'], { STUB_PROFILE: 'fast' })
+    const run = await runDocker(['perf'], { env: { STUB_PROFILE: 'fast' } })
 
     expect({
       exitCode: run.exitCode,

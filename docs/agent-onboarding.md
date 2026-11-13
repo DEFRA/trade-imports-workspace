@@ -188,16 +188,18 @@ workspace repo's own `gh-pages` is ~1 GiB. Any clone still on the
 default `+refs/heads/*` fetch refspec drags them in on a bare
 `git fetch` / `git pull`.
 
-Pin your workspace clone once:
+Pin your workspace clone once, from its root. `--prune` then runs
+`git gc --prune=now`, which reclaims about 1 GiB if gh-pages was ever
+fetched:
 
 ```bash
-bash tools/git/light-remote.sh --exclude-gh-pages ~/git/defra/trade-imports-workspace
-git -C ~/git/defra/trade-imports-workspace gc --prune=now   # reclaims ~1 GiB if gh-pages was ever fetched
+tim workspace pin-fetch . --exclude-gh-pages --prune
 ```
 
-Per-ticket review clones under `workareas/` are pinned automatically by
-`tools/review/prepare-review.sh` (and self-healed on refresh by
-`tools/review/refresh/pull-repos.sh`).
+Per-ticket review clones under `workareas/` are pinned automatically to
+their pull request (`tim workspace pin-fetch <dir> --pr <number>`) by
+`tools/review/prepare-review.sh`, and self-healed on refresh by
+`tools/review/refresh/pull-repos.sh`.
 
 The dev repos under `repos/` are handled for you: `tim workspace setup` clones with the exclusion in
 place (`--single-branch`, pin the refspec, then a widening fetch), and

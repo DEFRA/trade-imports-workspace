@@ -105,6 +105,22 @@ tim workspace repo-state --repos tests:repos/trade-imports-ins-tests --branch fe
 points locally. `--base` counts commits against `origin/<base>`. `--fetch`
 fetches origin first.
 
+### `tim workspace pin-fetch` — keep gh-pages out of a clone
+
+Pins one clone's fetch refspec so a bare `git fetch` or `git pull` cannot
+bring in gh-pages, and deletes the gh-pages remote-tracking ref. Safe to run
+again.
+
+```bash
+tim workspace pin-fetch . --exclude-gh-pages --prune
+tim workspace pin-fetch workareas/reviews/EUDPA-1/repos/trade-imports-stub --pr 42 --include-main
+```
+
+`--exclude-gh-pages` fetches every branch except gh-pages (git 2.29 or
+later); `--prune` then runs `git gc --prune=now`. `--pr <number>` fetches
+only that pull request's head, as `origin/pr-<number>`; `--include-main`
+adds main.
+
 ### `tim capture` — photograph a running app
 
 Runs an app's own FIT suite with Playwright tracing on, keeps the traces under

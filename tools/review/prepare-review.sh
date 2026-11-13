@@ -297,7 +297,7 @@ for ((i=0; i<pr_count; i++)); do
         # fetch --depth=1 <sha>` pulls a single commit with its trees +
         # blobs — no other branches, no history. GitHub serves this
         # because uploadpack.allowReachableSHA1InWant defaults on.
-        # The fetch refspec is then pinned to the PR ref (light-remote.sh)
+        # The fetch refspec is then pinned to the PR ref (tim workspace pin-fetch)
         # so a later bare `git fetch`/`pull` can't drag in gh-pages via
         # the default `+refs/heads/*` refspec.
         repo_dir="$REVIEW_DIR/repos/$repo_name"
@@ -325,9 +325,9 @@ for ((i=0; i<pr_count; i++)); do
         fi
 
         if [[ -n "$pr_merged_at" ]] && [[ "$pr_merged_at" != "null" ]]; then
-            bash "$HOME/git/defra/trade-imports-workspace/tools/git/light-remote.sh" --pr-only "$repo_dir" "$pr_number" --include-main > /dev/null || true
+            tim workspace pin-fetch "$repo_dir" --pr "$pr_number" --include-main > /dev/null || true
         else
-            bash "$HOME/git/defra/trade-imports-workspace/tools/git/light-remote.sh" --pr-only "$repo_dir" "$pr_number" > /dev/null || true
+            tim workspace pin-fetch "$repo_dir" --pr "$pr_number" > /dev/null || true
         fi
 
         # Cache the full PR diff at a known path so consumers

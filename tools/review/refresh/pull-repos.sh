@@ -68,11 +68,11 @@ for repo in $repos; do
 
     # Merged PRs: refs/pull/N/head is frozen; post-merge work lands on main.
     if [[ "$pr_state" == "merged" ]]; then
-        bash "$WORKSPACE/tools/git/light-remote.sh" --pr-only "$repo_dir" "$pr_number" --include-main > /dev/null
+        tim workspace pin-fetch "$repo_dir" --pr "$pr_number" --include-main > /dev/null
         target_ref="refs/remotes/origin/main"
         deepen_ref="main"
     else
-        bash "$WORKSPACE/tools/git/light-remote.sh" --pr-only "$repo_dir" "$pr_number" > /dev/null
+        tim workspace pin-fetch "$repo_dir" --pr "$pr_number" > /dev/null
         target_ref="refs/remotes/origin/pr-$pr_number"
         deepen_ref="refs/pull/$pr_number/head"
     fi

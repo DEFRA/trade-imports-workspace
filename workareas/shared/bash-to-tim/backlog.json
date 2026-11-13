@@ -306,7 +306,7 @@
       ],
       "risk": "Low to medium. Cross-repo: tests repo plus workspace, same branch name. CI has no lease and no foreign owner, so the guard must pass when nothing is found.",
       "proof": "Fixture lease with workspace = A, run from B: Playwright stops with the message before any test runs. Same from A: runs. A CI e2e-tests.yml run on the branch stays green.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
@@ -315,7 +315,33 @@
         "stack-smoke",
         "repo-tests"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "de8c9bdb"
+          },
+          {
+            "repo": "trade-imports-ins-tests",
+            "sha": "5f99389c5d1e4434ed904d1de6d6a0af74f71b2e"
+          }
+        ],
+        "checks": [
+          "Verifier finding fixed (held.holder): in tim/src/build/gate.js, refusalForOtherCloneOwner now reads the lease with readLease(context.leasePath) and returns holder: lease?.holder ?? null and the lease, the same way stack-lease.js refused() does. A lease file that is not valid JSON throws inside the try, so the result is the same 'Can't tell whether the workspace stack is free' reason as before.",
+          "Goldens tightened: the 'still starting under its lease' test now asserts held { holder: GATE_HOLDER, detail }. A new test, 'refuses a stack another clone started under a lease, naming the lease holder', asserts held.holder is the lease holder. The 'another clone started' test with no lease still asserts holder null, which matches the old acquire's unleased refusal.",
+          "Red without the fix: with holder set back to null, 2 gate tests fail (2 failed, 56 passed). With the fix, gate.test.js passes 58 of 58.",
+          "tim-unit: PASS. npm --prefix tim test: 236 files and 3989 tests passed.",
+          "tim-lint: PASS. npm run lint and npm run format:check both exit 0.",
+          "Commit message corrected: it no longer says 'only the reason changes'. It says the rung reason and stack.held.detail change on purpose, and that held.holder and the lease still come from the lease file.",
+          "fixed-path / new .sh: PASS. The diff from e942a7e3 to HEAD adds no git/defra or $HOME/git path and no .sh file.",
+          "repo-tests (trade-imports-ins-tests): not changed by this fix. The builder's lint, format:check and typecheck passes there still apply. The verifier re-ran them and they passed.",
+          "stack-smoke: NOT RUN. An unleased stack someone started by hand from this clone is still up, and the lease rules forbid taking it down. P06 has the same gap."
+        ],
+        "deviations": [
+          "I amended the workspace row commit dbfdaaaa, so it is now de8c9bdb. I did not add a separate commit. The ins-tests commit is unchanged.",
+          "Logs are in /private/tmp/claude-501/-Users-samfarrington-git-defra-trade-imports-workspace/51c6e0f9-b7cd-4625-9a54-d8226c61b362/scratchpad/p07/: gate-fix.log, gate-nofix.log and tim-full.log."
+        ]
+      }
     },
     {
       "id": "P08",

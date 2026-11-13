@@ -2,6 +2,10 @@
 
 ## Purpose
 
+**Maturity**: detailing
+
+**Page**: addresses
+
 Sets out each party role a notification needs an address for as its own headed section, under the introduction "Add all the addresses that are involved in the consignment.", each leading to where that role's address is chosen, under `live-animals/addresses`. The page is titled "Consignment addresses".
 
 ## Requirements

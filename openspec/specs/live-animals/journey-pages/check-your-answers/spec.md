@@ -2,6 +2,10 @@
 
 ## Purpose
 
+**Maturity**: detailing
+
+**Page**: notification-view
+
 The page on which a whole notification is read back before submission, and read again once submitted. The page is titled "Review your notification".
 
 ## Requirements
@@ -334,12 +338,36 @@ The system MUST show a private transporter's saved country on the Transport deta
 - **WHEN** the user views the review
 - **THEN** the Transport details card's Country row shows that country
 
-### Requirement: A species card's identifier table heads only the identifiers asked of that line's species
+### Requirement: The review shows only the exit answers the main import reason asked for
 **ID**: REQ-CYA-016
+The system MUST show the Destination country, Exit date and Port of exit rows on the review only for the import reasons that ask them: Destination country and Port of exit for transit, Exit date and Port of exit for temporary admission horses, and none of the three for a reason that asks none of them.
+
+#### Scenario: A transit notification shows its destination country and port of exit, and no exit date
+**ID**: SCN-CYA-016-A
+- **GIVEN** a notification whose main import reason is transit, with a port of exit and a destination country saved
+- **WHEN** the user views the review
+- **THEN** the Destination country and Port of exit rows show what was saved
+- **AND** no Exit date row is shown
+
+#### Scenario: A temporary admission shows its exit date and port of exit, and no destination country
+**ID**: SCN-CYA-016-B
+- **GIVEN** a notification whose main import reason is temporary admission horses, with an exit date and a port of exit saved
+- **WHEN** the user views the review
+- **THEN** the Exit date and Port of exit rows show what was saved
+- **AND** no Destination country row is shown
+
+#### Scenario: A reason that asks none of the exit answers shows none of their rows
+**ID**: SCN-CYA-016-C
+- **GIVEN** a notification whose main import reason is re-entry
+- **WHEN** the user views the review
+- **THEN** no Destination country, Exit date or Port of exit row is shown
+
+### Requirement: A species card's identifier table heads only the identifiers asked of that line's species
+**ID**: REQ-CYA-017
 The system MUST head a species card's identifier table with an Animal column and a column for each identifier asked of that line's species that some saved animal on the line filled in, with one row per saved animal.
 
 #### Scenario: The identifier table heads only the columns a line's species was asked for and some animal filled in
-**ID**: SCN-CYA-016-A
+**ID**: SCN-CYA-017-A
 - **GIVEN** a line of a species asked for a microchip, a passport and a horse name, with all three filled in for its one saved animal
 - **WHEN** the user views that species' card on the review
 - **THEN** its identifier table is headed Animal, Microchip, Passport and Horse name, with that animal's values in its one row

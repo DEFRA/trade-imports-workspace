@@ -294,30 +294,6 @@
       ]
     },
     {
-      "id": "test-hygiene",
-      "title": "Test and code tidy-ups left over from design snagging, in live animals and plants",
-      "why": "The design snagging follow-ups (inc-225, inc-226, inc-228, inc-233) that no remaining theme owns: live animals browser tests that prove looks by class (inc-234), the type-ahead bold-letters helper tidy (inc-235, its return-link half done by EUDPA-774) and the plants tests and guides (inc-236). Most of the specs inc-234 and inc-236 edit sit in folders split-off themes own, so its touches name only the files no theme owns, and it lands after the split-off themes whose specs it edits. It holds 3 rows, 3 of them ready to build once those themes land.",
-      "touches": [
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/type-ahead.fit.spec.js",
-        "frontend:src/server/app/sets/live-animals/journeys/linear/features/section-caption.fit.spec.js",
-        "frontend:src/client/common/helpers",
-        "plantsfrontend:fit/high-risk-plants-journey.js",
-        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/type-ahead.fit.spec.js",
-        "plantsfrontend:src/server/app/sets/high-risk-plants/docs/testing.md",
-        "tests:README.md",
-        "tests:package.json"
-      ],
-      "dependsOn": [
-        "arrival-and-transit",
-        "commodities-and-reason",
-        "design-snagging",
-        "documents",
-        "journey-foundation",
-        "origin-page",
-        "overview-and-review"
-      ]
-    },
-    {
       "id": "obligation-model",
       "title": "The journey's obligation model carries the data specification's own markings (dropped)",
       "why": "Dropped on 2026-11-10 by ruling:sam-2026-11-10b: its one row, inc-245, is dropped because main already does what it promised. req-2206 and req-2207 change how an answer's obligation is recorded and judged, in the journey platform's obligation model: frontend:src/server/app/model/obligations and its plants twin, which hold the manifest, the evaluator and the completeness rules. No other theme touches that folder. Every feature theme changes a set's own pages or its obligation sections, and the two split-off themes that own shared code own the journey flow, the shared layout and the reference services instead, so the model can be changed once here while the feature themes build in parallel.",
@@ -2241,6 +2217,39 @@
         "req-2158": "6f7e889caa4afd2cd68e85522907000a4aa2de491d79c814dc7656de640078d7"
       },
       "at": "2026-11-11T11:53:30.694Z"
+    },
+    {
+      "theme": "test-hygiene",
+      "title": "Test and code tidy-ups left over from design snagging, in live animals and plants",
+      "why": "The design snagging follow-ups (inc-225, inc-226, inc-228, inc-233) that no remaining theme owns: live animals browser tests that prove looks by class (inc-234), the type-ahead bold-letters helper tidy (inc-235, its return-link half done by EUDPA-774) and the plants tests and guides (inc-236). Most of the specs inc-234 and inc-236 edit sit in folders split-off themes own, so its touches name only the files no theme owns. Every theme whose specs it edits has landed; the Overview and review checks moved to overview-and-review on 10 November (ruling:sam-2026-11-10b), so it no longer waits on that theme. Rechecked against main on 12 November: all 3 rows are ready to build.",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/type-ahead.fit.spec.js",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/section-caption.fit.spec.js",
+        "frontend:src/client/common/helpers",
+        "plantsfrontend:fit/high-risk-plants-journey.js",
+        "plantsfrontend:src/server/app/sets/high-risk-plants/journeys/linear/features/type-ahead.fit.spec.js",
+        "plantsfrontend:src/server/app/sets/high-risk-plants/docs/testing.md",
+        "tests:README.md",
+        "tests:package.json"
+      ],
+      "dependsOn": [
+        "arrival-and-transit",
+        "commodities-and-reason",
+        "design-snagging",
+        "documents",
+        "journey-foundation",
+        "origin-page"
+      ],
+      "branch": "feat/NO_JIRA-design-release-2-1-test-hygiene",
+      "workarea": "shared/design-release-2-1/themes/test-hygiene",
+      "backlog": "themes/test-hygiene/backlog.json",
+      "increments": [
+        "inc-234",
+        "inc-235",
+        "inc-236"
+      ],
+      "requirements": [],
+      "at": "2026-11-12T10:11:19.880Z"
     }
   ],
   "increments": [
@@ -7775,107 +7784,6 @@
           "id": "inc-113"
         }
       ]
-    },
-    {
-      "id": "inc-234",
-      "title": "Live animals browser tests prove how pages look by screenshot, accessible name and GOV.UK values read at run time",
-      "detail": "Many live animals browser tests still prove looks by class list, fixed alignment, line height or a hard-coded colour, and find buttons and boxes by class. That breaks the programme rule that a browser test never writes a fixed style and compares only with GOV.UK values read at run time or a screenshot. The tests move to accessible names and roles, the looks they stop asserting move to the screenshot suite, the type-aheads gain accented searches, and shared test steps keep only what more than one spec uses.",
-      "acceptanceCriteria": [
-        "Every live animals browser test that checks how a page looks proves it by a screenshot, by position or size against another element, or by a value read from GOV.UK at run time. None writes a fixed colour, pixel size, line height, text alignment or class list. (loop:design-snagging-followups inc-225 followUps[8]; inc-226 followUps[0]-[5], [13]; inc-228 followUps[1])",
-        "The live animals browser tests find the arrival details labels, the Upload documents actions, the transporter tags and legends and the type-ahead buttons by role, accessible name or heading, not by class. (loop:design-snagging-followups inc-226 followUps[2], [4], [13]; ruling:sam-2026-11-10b)",
-        "The screenshot suite shows the looks those tests stop asserting: the arrival details medium labels and the Upload documents actions column right-aligned. (loop:design-snagging-followups inc-226 followUps[1], [3]; ruling:sam-2026-11-10b)",
-        "Each live animals type-ahead is proven in the browser to offer a matching name when the trader's search and the name differ only by accents, with the matching letters in bold. (loop:design-snagging-followups inc-228 followUps[4])",
-        "A browser-test step, reader or selector used by one spec lives in that spec, and one used by several has a single owner. The live animals testing guide lists as shared only the steps more than one spec uses. (loop:design-snagging-followups inc-225 followUps[8]; inc-226 followUps[10], [11])",
-        "Every live animals browser test and the animals screenshot suite pass, on both screenshot baselines. (loop:design-snagging-followups inc-226)"
-      ],
-      "dependsOn": [],
-      "theme": "test-hygiene",
-      "status": "todo",
-      "kind": "test",
-      "repos": [
-        "frontend",
-        "tests"
-      ],
-      "sources": [
-        {
-          "source": "loop:design-snagging-followups",
-          "ref": "inc-225 followUps[8]; inc-226 followUps[0]-[5], [10], [11], [13]; inc-228 followUps[1], [4]"
-        },
-        {
-          "source": "ruling:sam-2026-11-10b",
-          "ref": "Decided 2"
-        }
-      ],
-      "requirements": [],
-      "openQuestions": [],
-      "notes": [
-        "Covers inc-225 followUps[8]; inc-226 followUps[0] (animals half), [1], [2], [3], [4], [5] (all but cph-number), [10], [11], [13]; inc-228 followUps[1], [4]. Duplicate folded in: inc-228 followUps[8].",
-        "Places found on main 27 Oct: hub.fit.spec.js:36, :348-354, :447-452; arrival-transit.fit.spec.js:210-211, :222, :833; upload.fit.spec.js:712-715; check-answers.fit.spec.js:47-48, :146-151; additional-details.fit.spec.js:74-77; origin.fit.spec.js:151-161; consignment-details.fit.spec.js:112-121; section-caption.fit.spec.js:51; import-reason.fit.spec.js:153; transporters.fit.spec.js:344-347, :498, :785; type-ahead.fit.spec.js:183, :229-253, :256, :377-379, :471; fit/live-animals-journey.js:102; docs/testing.md:74.",
-        "Ownership: most of these specs sit in folders other themes own (hub, check-answers, documents, origin, additional-details, import-reason, consignment-details, fit/ and docs/ are split-off themes; transport/fit is the blocked transporters theme). The test-hygiene theme names only the unowned files in its touches and lands after the split-off themes whose specs it edits. transporters.fit.spec.js and arrival-transit.fit.spec.js stay in this row so they do not wait on the blocked transporters theme.",
-        "Trimmed on 2026-11-10 by ruling:sam-2026-11-10b. The Overview and review checks (hub.fit.spec.js totals box, buttons and caption line height; check-answers.fit.spec.js visually-hidden and summary-card classes; the review's last-card screenshot) moved to overview-and-review inc-098 and inc-101, the theme that rewrites those tests; this row does not edit hub.fit.spec.js or check-answers.fit.spec.js. The Overview and transit countries screenshots are already on the tests repo's main (overview-totals.visual.spec.ts, transited-countries.visual.spec.ts). The transporters theme has landed, so the ownership note about it being blocked no longer applies. Checked on main 10 Nov (animals-frontend 1dff7901): the class checks are still there, at arrival-transit.fit:216/227/1004, upload.fit:737/740, origin.fit:153/159/162, consignment-details.fit:133-144, additional-details.fit:129/132, import-reason.fit:180, section-caption.fit:51, transporters.fit:308/387/390/565/851, type-ahead.fit:183/230-231/256/378/471; expectStyle is exported from fit/live-animals-journey.js:116 with one user, while docs/testing.md:81 calls it shared."
-      ],
-      "gate": null
-    },
-    {
-      "id": "inc-235",
-      "title": "The live animals type-ahead bold-letters helper keeps its literals inside the functions that use them",
-      "detail": "The live animals type-ahead bold-letters helper keeps two single-use literals at module level, against the house rule, and its folder still holds a leftover placeholder file. The high-risk plants copy already has the fix. The return-link half of this row was done by the save and continue work (EUDPA-774).",
-      "acceptanceCriteria": [
-        "Type-ahead suggestions in live animals still show the matching letters in bold and anything the trader typed as plain text, never markup. (loop:design-snagging-followups inc-228 followUps[2], [6])",
-        "The bold-letters helper keeps each literal used by one function inside that function, as the high-risk plants copy already does, and the client helpers folder holds only real code. (loop:design-snagging-followups inc-228 followUps[2], [6], [7]; .claude/rules/code-quality.md:59)"
-      ],
-      "dependsOn": [],
-      "theme": "test-hygiene",
-      "status": "todo",
-      "kind": "refactor",
-      "repos": [
-        "frontend"
-      ],
-      "sources": [
-        {
-          "source": "loop:design-snagging-followups",
-          "ref": "inc-228 followUps[2], [6], [7]"
-        }
-      ],
-      "requirements": [],
-      "openQuestions": [],
-      "notes": [
-        "Re-checked on 2026-11-11 against animals-frontend origin/main b9ae05ed, after the save and continue work (EUDPA-774, PR #468) merged, and released from blocked. The return-link half is done, so its two criteria are dropped. EUDPA-774 moved the return-marker rule into shared/trail.js (RETURN_PARAMETER at :9, withReturnMarker at :83, readReturnMarker at :95, re-exported by kit.js). partyEditHref (addresses/party-edit/edit-href.js:4-8) now builds its link with withReturnMarker and withTrail. The Roles and addresses page's link to the CPH number page (addresses/controller.js:60-64) now uses kit.withReturnMarker inside kit.carryTrail. The commodities link (commodity-question-detour.js:18, 57e85889) and all three readers already used the shared rule. The only other hand-built 'return' is the INS address-book handshake's own return URL (ins-address-book-urls.js:30, :42; ins-handshake.js:17), which is a separate marker and not for this row. Left: src/client/common/helpers/bold-matches.js:3-9 HTML_ESCAPES (used only by escapeHtml at :11-12) and :14 MATCH_CLASS (used only by strongMatch at :16-17) stay at module level. Copy the plants-frontend version, which puts the escapes inside escapeHtml and writes the class inline. Delete src/client/common/helpers/.gitkeep. Keep bold-matches.test.js green."
-      ],
-      "gate": null
-    },
-    {
-      "id": "inc-236",
-      "title": "Plants tests and their guides say what is true and prove looks without class lists",
-      "detail": "The plants testing guide says spec-local readers keep code out of coverage, which is untrue, and has a broken sentence. Two browser readers hand values to the page under different names from the ones they take. The arrival details labels are still proven by class. The behaviour spec does not say the place of landing and genus searches ignore accents. The tests repository has plants screenshot specs but no command or guide entry to run them alone.",
-      "acceptanceCriteria": [
-        "The plants testing guide says the coverage report and the quality gate count only application source, never browser-test files, and every sentence in its shared-helpers section is whole. (loop:design-snagging-followups inc-225 followUps[7])",
-        "Each plants browser reader that runs code in the page hands its values over under the names it takes them by. (loop:design-snagging-followups inc-225 followUps[0], [1])",
-        "The plants arrival details labels are proven to be the medium size by comparison with a GOV.UK label read at run time, and no plants browser test asserts a class list. (loop:design-snagging-followups inc-228 followUps[9]; inc-226 followUps[0])",
-        "The plants arrival details and commodity details behaviour specs say the place of landing and genus searches match ignoring case and accents, with the matching letters in bold, and each statement links to the browser test that proves it. (loop:design-snagging-followups inc-228 followUps[0])",
-        "The tests repository's guide lists a plants screenshot command beside the animals one, and that command runs only the plants screenshot specs. (loop:design-snagging-followups inc-226 followUps[8])"
-      ],
-      "dependsOn": [],
-      "theme": "test-hygiene",
-      "status": "todo",
-      "kind": "test",
-      "repos": [
-        "plantsfrontend",
-        "tests"
-      ],
-      "sources": [
-        {
-          "source": "loop:design-snagging-followups",
-          "ref": "inc-225 followUps[0], [1], [7]; inc-226 followUps[0] (plants half), [8]; inc-228 followUps[0], [9]"
-        }
-      ],
-      "requirements": [],
-      "openQuestions": [],
-      "notes": [
-        "On main 27 Oct: plants docs/testing.md:93-99; fit/high-risk-plants-journey.js:76-84; type-ahead.fit.spec.js:375-401; arrival-details.fit.spec.js:182-183, :298-299; ins-tests README.md:98 and package.json:46; workspace openspec/specs/plants/journey-pages/arrival-details and commodity-details (the behaviour-spec edit lands in the workspace repo beside the build, as frontend-change syncs openspec).",
-        "Plants arrival-details is owned by the split-off arrival-and-transit theme, so this row lands after it."
-      ],
-      "gate": null
     },
     {
       "id": "inc-237",

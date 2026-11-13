@@ -64,7 +64,7 @@
           "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-reference-data", "file": "src/test/java/uk/gov/defra/trade/imports/integration/CommoditiesControllerIT.java", "test": "searchCommodities_listsAndCountsTheSpeciesOfACommodityFoundByCode", "strength": "partial", "notes": "reference-data integration test (recorded as unit, the nearest type); MDM answers one 0102 commodity row; reference-data lists its 15 species by Latin name and counts 15; never looks at the page" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "shows Bison bison among 15 species under a searched 0102 code", "strength": "full", "notes": "states the species label literally under its code's group; red then green with the label the Latin name alone and with rows not grouped under their code (workareas/shared/eudpa-774/logs/inc-028-probe-species-label-fit, workareas/shared/eudpa-774/logs/inc-028-probe-species-grouping-fit)" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "shows Bison bison among 7 species under a searched 0102 code", "strength": "full", "notes": "states the species label literally under its code's group; red then green with the label the Latin name alone and with rows not grouped under their code (workareas/shared/eudpa-774/logs/inc-028-probe-species-label-fit, workareas/shared/eudpa-774/logs/inc-028-probe-species-grouping-fit)" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/commodities.spec.ts", "test": "lists reference-data's groups by commodity heading and each group's species by label, in that order", "strength": "full", "notes": "red then green with the label the Latin name alone and with rows not grouped under their code, against the dev-mode stack (workareas/shared/eudpa-774/logs/inc-028-probe-species-label-e2e, workareas/shared/eudpa-774/logs/inc-028-probe-species-grouping-e2e)" }
           ]
         },
@@ -83,7 +83,7 @@
           "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/species-label.test.js", "test": "Should label a species with no common name as its Latin name alone, with no brackets", "strength": "full", "notes": "probed: speciesLabel's conditional bracket forced on unconditionally went red, restored went green" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/search.fit.spec.js", "test": "offers a species the reference data holds no common name for as its Latin name alone", "strength": "partial", "notes": "searches 'Catreus', a genus the frontend's own commodity fixture holds no common name for, and asserts the checkbox's accessible name is the Latin name alone; not separately probed — exercises the same speciesLabel path as the probed unit test above" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/search/view-model/commodity-groups.test.js", "test": "Should offer a species the search response gives a null common name as its Latin name alone", "strength": "full", "notes": "probed: speciesLabel's conditional bracket forced on unconditionally went red with 'Otra Testudinata (null)', restored went green" }
           ]
         }
       ]
@@ -305,9 +305,9 @@
     {
       "id": "REQ-COMMODITY-SELECT-010",
       "name": "A notification must carry at least one commodity line",
-      "coverage": "none",
+      "coverage": "full",
       "scenarios": [
-        { "id": "SCN-COMMODITY-SELECT-010-A", "name": "A notification with no commodity line cannot be submitted", "coverage": "none", "tests": [], "notes": "The tests that prove this are only on an open Design Release 2.1 theme branch, not on main yet." }
+        { "id": "SCN-COMMODITY-SELECT-010-A", "name": "A notification with no commodity line cannot be submitted", "coverage": "full", "tests": [ { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "refuses submit of a notification with no commodity line and names the missing species details", "strength": "full", "notes": "red probe: blank minEntries in obligations/sections/commodities/lines.js and the species card is no longer named" } ] }
       ]
     },
     {

@@ -2,6 +2,10 @@
 
 ## Purpose
 
+**Maturity**: exploring
+
+**Page**: notification-view
+
 The page on which a whole high-risk plants notification is read back before submission, and read again once submitted. The page is titled "Check your answers".
 
 ## Requirements

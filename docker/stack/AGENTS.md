@@ -101,7 +101,7 @@ name anchor. `run-stack.sh` `-f`-stacks all of them automatically.
 | `infrastructure.compose.yml` | `mssql`, `servicebus-emulator` (Azure Service Bus emulator the dynamics-gateway talks to), `toxiproxy` (sits in front of servicebus-emulator; lets you sever/restore the gateway's ASB connection for DLQ testing) | `servicebus` |
 | `stubs.compose.yml` | `trade-imports-defra-id-stub`, `trade-imports-stub` | `stubs` |
 | `backend.compose.yml` | `trade-imports-animals-backend`, `trade-imports-dynamics-gateway`, `trade-imports-reference-data`, `trade-imports-address-book`, `trade-imports-ins-backend`, `trade-imports-plants-backend` | `backend` |
-| `frontend.compose.yml` | `trade-imports-animals-frontend`, `trade-imports-animals-admin`, `trade-imports-ins-frontend`, `trade-imports-plants-frontend`, `animals-frontend-nginx` | `frontend` |
+| `frontend.compose.yml` | `trade-imports-animals-frontend`, `trade-imports-animals-admin`, `trade-imports-ins-frontend`, `trade-imports-routing-proxy`, `trade-imports-plants-frontend`, `animals-frontend-nginx` | `frontend` |
 | `security.compose.yml` | `zap` (OWASP ZAP daemon for the tests repo's `security`/`security:active` Playwright profiles) | `security` (opt-in, see below) |
 | `monitoring.compose.yml` | `prometheus` (:9090), `grafana` (:3030) — local view of Micrometer meters | `monitoring` (opt-in, see below) |
 | `dev.compose.yml` (--dev only) | build/target/volumes overlay for the locally-built services — every repo-backed service except `trade-imports-defra-id-stub`, which always runs from its published image | — |
@@ -145,7 +145,7 @@ compose freely, and `--perf` composes with every other flag.
 
 ## `--exclude` (`-e`) labels
 
-Repeatable. Valid: `frontend`, `backend`, `admin`, `ins-frontend`, `stub`, `defra-id-stub`, `reference-data`, `address-book`, `gateway`, `ins-backend`, `plants-frontend`, `plants-backend`
+Repeatable. Valid: `frontend`, `backend`, `admin`, `ins-frontend`, `routing-proxy`, `stub`, `defra-id-stub`, `reference-data`, `address-book`, `gateway`, `ins-backend`, `plants-frontend`, `plants-backend`
 — the labels in `run-stack.sh`'s `services` array.
 Excluded services skip the Dockerhub probe and stay out of the stack — start
 them yourself; the rest of the stack reaches them via
@@ -166,7 +166,7 @@ which serves `/stub-upload-and-scan/{uploadId}` from the app itself, or leave
 the frontend in the stack whenever the journey under test uploads a document.
 
 Ports for host-side runs: frontend 3000, admin 3001, ins-frontend 3002,
-plants-frontend 3003, defra-id-stub 3007, backend 8085, reference-data 8086,
+plants-frontend 3003, routing-proxy 3004, defra-id-stub 3007, backend 8085, reference-data 8086,
 stub 8087, gateway 8088, address-book 8089, ins-backend 8090, plants-backend 8091.
 
 EUDPA-390 (address lookup spike, dev/local only): the STS simulator in `trade-imports-stub`
@@ -368,7 +368,7 @@ directory, for the same reason).
 
 ## `--dev` caveats
 
-- Node services (frontend, admin, ins-frontend, plants-frontend): hot-reload via nodemon on the bind mount
+- Node services (frontend, admin, ins-frontend, routing-proxy, plants-frontend): hot-reload via nodemon on the bind mount
   of `src/`. Just save and refresh.
 - Java backend, stub, reference-data, address-book, ins-backend and plants-backend: hot-reload via Spring Boot DevTools.
   Each `dev-run` image runs `docker/dev-run.sh`, an mtime-poll loop that

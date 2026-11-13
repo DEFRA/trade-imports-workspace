@@ -25,6 +25,16 @@ import {
   checkNoShall,
   checkCrossReferences
 } from './checks/conventions.js'
+import {
+  checkMaturityLine,
+  checkSignedOffMarks,
+  checkSignedOffNeedsSignedOffPage
+} from './checks/maturity.js'
+import {
+  checkPageLine,
+  checkPageMaturityMatchesFrontend,
+  pageMaturityReader
+} from './checks/page-maturity.js'
 import { TimError } from '../errors.js'
 
 const pairingFindings = (capability) => {
@@ -88,7 +98,14 @@ const CAPABILITY_CHECKS = [
     group: 'specs',
     run: (capability, { knownCapabilityPaths }) =>
       checkCrossReferences(capability, knownCapabilityPaths)
-  }
+  },
+  { group: 'specs', run: (capability) => checkMaturityLine(capability) },
+  { group: 'specs', run: (capability) => checkSignedOffMarks(capability) },
+  {
+    group: 'specs',
+    run: (capability) => checkSignedOffNeedsSignedOffPage(capability)
+  },
+  { group: 'specs', run: (capability) => checkPageLine(capability) }
 ]
 
 const capabilityChecksFor = (groups) =>
@@ -106,9 +123,8 @@ const unselectedGroupSkips = (groups) =>
   }))
 
 /**
- * All ten checks: the two delegated to `openspec validate --specs --strict
- * --json` (openspec-cli.js), and the eight workspace-only ones
- * (checks/shape.js, checks/ids.js, checks/rollups.js, checks/conventions.js).
+ * Every check: those delegated to `openspec validate --specs --strict
+ * --json` (openspec-cli.js), and the workspace-only ones under checks/.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
@@ -178,14 +194,21 @@ export const runSpecLint = async ({
   const titleResults = wants('binding')
     ? scoped.map((entry) => checkTestTitlesExist(entry, testFiles))
     : []
-  const titleFindings = titleResults.flatMap((result) => result.findings)
-  const titleSkips = [
-    ...new Set(titleResults.flatMap((result) => result.uncheckedRepos))
-  ].map((repo) => ({
-    check: 'test-titles',
-    repo,
-    reason: 'not checked out under repos/'
-  }))
+  const pages = pageMaturityReader(workspaceRoot)
+  const pageResults = wants('binding')
+    ? scoped.map((entry) => checkPageMaturityMatchesFrontend(entry, pages))
+    : []
+  const repoFindings = [...titleResults, ...pageResults].flatMap(
+    (result) => result.findings
+  )
+  const uncheckedRepoSkips = (check, results) =>
+    [...new Set(results.flatMap((result) => result.uncheckedRepos))].map(
+      (repo) => ({ check, repo, reason: 'not checked out under repos/' })
+    )
+  const repoSkips = [
+    ...uncheckedRepoSkips('test-titles', titleResults),
+    ...uncheckedRepoSkips('page-maturity', pageResults)
+  ]
 
   const globalIdFindings = wants('specs')
     ? checkGlobalIdUniqueness(corpus.capabilities).filter((finding) =>
@@ -200,9 +223,9 @@ export const runSpecLint = async ({
     findings: [
       ...openspecFindings,
       ...localFindings,
-      ...titleFindings,
+      ...repoFindings,
       ...globalIdFindings
     ],
-    skipped: [...unselectedGroupSkips(groups), ...titleSkips]
+    skipped: [...unselectedGroupSkips(groups), ...repoSkips]
   }
 }

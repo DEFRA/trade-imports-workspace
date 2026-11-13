@@ -2,6 +2,8 @@
 
 ## Purpose
 
+**Maturity**: exploring
+
 Lists every commodity line the consignment holds, letting the user add, change or remove one. The page is titled "Commodities in the consignment".
 
 ## Requirements

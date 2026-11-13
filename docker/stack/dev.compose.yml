@@ -113,6 +113,22 @@ services:
       start_period: 30s
       retries: 10
 
+  trade-imports-routing-proxy:
+    build:
+      context: ../../repos/trade-imports-routing-proxy
+      target: development
+    platform: ${DEV_BUILD_PLATFORM:-linux/amd64}
+    image: ''
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ../../repos/trade-imports-routing-proxy/src:/home/node/src
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '--spider', 'http://127.0.0.1:3004/health']
+      interval: 5s
+      start_period: 30s
+      retries: 10
+
   trade-imports-ins-backend:
     build:
       context: ../../repos/trade-imports-ins-backend

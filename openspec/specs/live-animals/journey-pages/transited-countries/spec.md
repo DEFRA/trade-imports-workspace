@@ -2,6 +2,10 @@
 
 ## Purpose
 
+**Maturity**: agreed
+
+**Page**: transit-countries
+
 Asks which countries the consignment travels through on its way. The user searches for each country or territory the reference data service serves and adds them one at a time to a list, rather than ticking them in a set of checkboxes. The page is titled "Which countries will the consignment travel through?", its browser title is "Transit countries - Import notification service - GOV.UK", and it is asked only when the means of transport to the port of entry is rail or road and the country of origin and a commodity are saved.
 
 ## Requirements
@@ -12,6 +16,7 @@ The system MUST let the user search for and add one transited country at a time,
 
 #### Scenario: The page presents an empty list with a search field and no cap stated
 **ID**: SCN-TRANSIT-COUNTRIES-001-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user has reached the transited countries page for a fresh notification
 - **WHEN** the page loads
 - **THEN** it offers a labelled country search and an "Add country" action
@@ -23,6 +28,7 @@ The system MUST show every added country as a row in a table with its own Remove
 
 #### Scenario: Adding a country lists it with a Remove control and announces it
 **ID**: SCN-TRANSIT-COUNTRIES-002-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the transited countries page
 - **WHEN** they add a country
 - **THEN** it appears as a row in a table, with its own Remove control
@@ -30,6 +36,7 @@ The system MUST show every added country as a row in a table with its own Remove
 
 #### Scenario: Removing a country takes only that row away and announces it
 **ID**: SCN-TRANSIT-COUNTRIES-002-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user has added more than one country
 - **WHEN** they remove one of them
 - **THEN** only that country's row is taken away, leaving the others
@@ -37,6 +44,7 @@ The system MUST show every added country as a row in a table with its own Remove
 
 #### Scenario: Saved countries are shown again on return
 **ID**: SCN-TRANSIT-COUNTRIES-002-C
+**Signed off**: 2026-11-11
 - **GIVEN** the user has added countries and saved the page
 - **WHEN** they reopen the transited countries page
 - **THEN** every saved country is shown in the table
@@ -47,6 +55,7 @@ The system MUST accept the transited countries page being saved with none added,
 
 #### Scenario: Continuing with nothing added succeeds
 **ID**: SCN-TRANSIT-COUNTRIES-003-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the transited countries page with no countries added
 - **WHEN** they save and continue
 - **THEN** the page saves without an error summary, and the transporter list is shown
@@ -54,6 +63,7 @@ The system MUST accept the transited countries page being saved with none added,
 
 #### Scenario: Save and continue saves the countries in the order added and shows the transporter list
 **ID**: SCN-TRANSIT-COUNTRIES-003-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the transited countries page with countries added
 - **WHEN** they save and continue
 - **THEN** the countries are saved in the order they were added
@@ -65,12 +75,14 @@ The system MUST refuse to add a country when the search field is left blank, whe
 
 #### Scenario: Pressing Add with nothing chosen is refused
 **ID**: SCN-TRANSIT-COUNTRIES-004-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user presses "Add country" with the search field empty
 - **WHEN** the page responds
 - **THEN** an error tells them to enter a country to add, linking to and focusing the search field
 
 #### Scenario: A country already added is refused by name
 **ID**: SCN-TRANSIT-COUNTRIES-004-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user has already added a country
 - **WHEN** they try to add the same country again
 - **THEN** an error names that country as already added
@@ -78,12 +90,14 @@ The system MUST refuse to add a country when the search field is left blank, whe
 
 #### Scenario: A refused country stays in the search box
 **ID**: SCN-TRANSIT-COUNTRIES-004-D
+**Signed off**: 2026-11-11
 - **GIVEN** the user tries to add a country that has already been added
 - **WHEN** the page responds with the refusal
 - **THEN** that country is still in the search box
 
 #### Scenario: An out-of-list or tampered entry is refused and never rendered back
 **ID**: SCN-TRANSIT-COUNTRIES-004-C
+**Signed off**: 2026-11-11
 - **GIVEN** a country or territory code that is not one of the offered options, however it was submitted
 - **WHEN** the page responds
 - **THEN** an error tells the user to select a country from the list, linking to and focusing the search field
@@ -95,6 +109,7 @@ The system MUST refuse to add a thirteenth transited country, and once twelve ar
 
 #### Scenario: Reaching twelve removes the search and states the limit
 **ID**: SCN-TRANSIT-COUNTRIES-005-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user has added eleven countries
 - **WHEN** they add a twelfth
 - **THEN** the search field and "Add country" action are no longer shown
@@ -102,12 +117,14 @@ The system MUST refuse to add a thirteenth transited country, and once twelve ar
 
 #### Scenario: Removing a country at the limit brings the search back
 **ID**: SCN-TRANSIT-COUNTRIES-005-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user has reached the limit of twelve countries
 - **WHEN** they remove one
 - **THEN** the search field is offered again
 
 #### Scenario: A save carrying more than twelve countries is refused
 **ID**: SCN-TRANSIT-COUNTRIES-005-C
+**Signed off**: 2026-11-11
 - **GIVEN** a submission carrying more than twelve transited countries, however it arrived
 - **WHEN** the page responds
 - **THEN** an error names the limit of twelve, linking to and focusing the search field
@@ -118,12 +135,14 @@ The system MUST title the browser tab "Transit countries - Import notification s
 
 #### Scenario: The browser title is Transit countries when the page loads
 **ID**: SCN-TRANSIT-COUNTRIES-006-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user opens the transited countries page
 - **WHEN** the page loads
 - **THEN** the browser title is "Transit countries - Import notification service - GOV.UK"
 
 #### Scenario: The browser title starts with Error when the page shows an error
 **ID**: SCN-TRANSIT-COUNTRIES-006-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the transited countries page
 - **WHEN** they press "Add country" with nothing chosen
 - **THEN** the browser title is "Error: Transit countries - Import notification service - GOV.UK"
@@ -134,18 +153,21 @@ The system MUST return the user, when they follow the back link from the transit
 
 #### Scenario: After Save and continue, the back link opens the page before
 **ID**: SCN-TRANSIT-COUNTRIES-007-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user reached the transited countries page by saving and continuing from Arrival details
 - **WHEN** they follow the back link
 - **THEN** that page is shown
 
 #### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-TRANSIT-COUNTRIES-007-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user opened the transited countries page from its task on Overview
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
 
 #### Scenario: The back link opens the review when the page was opened from a Change link
 **ID**: SCN-TRANSIT-COUNTRIES-007-C
+**Signed off**: 2026-11-11
 - **GIVEN** the review of a draft notification
 - **WHEN** the user follows the Change link that opens the transited countries page and then the back link
 - **THEN** the review is shown
@@ -156,12 +178,14 @@ The system MUST show Overview when the transited countries page is opened and th
 
 #### Scenario: Opening the page with air, sea or no means saved shows Overview
 **ID**: SCN-TRANSIT-COUNTRIES-008-A
+**Signed off**: 2026-11-11
 - **GIVEN** the saved means of transport is Air or Sea, or none is saved
 - **WHEN** the user opens the transited countries page
 - **THEN** Overview is shown
 
 #### Scenario: Submitting the page after the means became air shows Overview and saves no countries
 **ID**: SCN-TRANSIT-COUNTRIES-008-B
+**Signed off**: 2026-11-11
 - **GIVEN** the transited countries page is open and the means of transport has since been saved as Air
 - **WHEN** the user submits the page with Add country, Remove, Save and continue or Save and return to overview
 - **THEN** Overview is shown
@@ -169,6 +193,7 @@ The system MUST show Overview when the transited countries page is opened and th
 
 #### Scenario: Opening or submitting the page by rail or road with a required earlier answer missing opens the page that asks for it
 **ID**: SCN-TRANSIT-COUNTRIES-008-C
+**Signed off**: 2026-11-11
 - **GIVEN** the saved means of transport is Rail or Road
 - **AND** no country of origin is saved
 - **WHEN** the user opens the transited countries page, or saves and continues from it
@@ -183,12 +208,14 @@ The system MUST offer in the transited country search the same countries and ter
 
 #### Scenario: The search offers the origin countries and their territories in alphabetical order
 **ID**: SCN-TRANSIT-COUNTRIES-009-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the transited countries page
 - **WHEN** the search list is read in full
 - **THEN** it holds exactly the countries and territories the country of origin page offers, by name, in alphabetical order
 
 #### Scenario: Each territory is named with its country, with or without JavaScript
 **ID**: SCN-TRANSIT-COUNTRIES-009-B
+**Signed off**: 2026-11-11
 - **GIVEN** the transited countries search, with or without JavaScript
 - **WHEN** a territory is read
 - **THEN** it reads "<territory> (<country>)", for example "Canary Islands (Spain)"
@@ -199,6 +226,7 @@ The system MUST list an added territory as "<territory> (<country>)", MUST save 
 
 #### Scenario: A territory is listed, saved and shown again under the same name
 **ID**: SCN-TRANSIT-COUNTRIES-010-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the transited countries page
 - **WHEN** they add a territory and save and continue
 - **THEN** no error is shown
@@ -210,18 +238,21 @@ The system MUST label the transited country search "Enter a country" in the medi
 
 #### Scenario: With JavaScript the empty search box reads "Search for a country"
 **ID**: SCN-TRANSIT-COUNTRIES-011-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the transited countries page with JavaScript on
 - **WHEN** the search box is empty
 - **THEN** it is labelled "Enter a country" and reads "Search for a country"
 
 #### Scenario: Without JavaScript the list's first entry reads "Select a country"
 **ID**: SCN-TRANSIT-COUNTRIES-011-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the transited countries page with JavaScript off
 - **WHEN** the country list is read in full
 - **THEN** its first entry reads "Select a country", followed by the countries the search offers
 
 #### Scenario: The "Enter a country" label is medium-size
 **ID**: SCN-TRANSIT-COUNTRIES-011-C
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the transited countries page
 - **WHEN** the country search label is read
 - **THEN** it reads "Enter a country" in the medium label size
@@ -232,6 +263,7 @@ The system MUST draw the Remove button of every added country in the last cell o
 
 #### Scenario: Remove is at the right-hand end of each row
 **ID**: SCN-TRANSIT-COUNTRIES-012-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user has added two countries
 - **WHEN** the list is read
 - **THEN** each row ends with its Remove button in a right-aligned cell

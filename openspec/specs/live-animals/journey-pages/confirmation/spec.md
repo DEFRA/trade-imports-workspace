@@ -2,6 +2,8 @@
 
 ## Purpose
 
+**Maturity**: detailing
+
 The page shown once a notification has been submitted, confirming it and telling the user what happens next. The page is titled "Import notification submitted".
 
 ## Requirements

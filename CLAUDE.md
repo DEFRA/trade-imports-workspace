@@ -75,6 +75,8 @@ The house rules on comments, names, structure, logging and tests live in [`.clau
 
 Fix it, whoever caused it. "Pre-existing", "flaky", "unrelated", "environmental" and "track it separately" never close a failure. A different test failing on each run points to a race: read `test-results/*/error-context.md` and find it. If you cannot fix it (it needs product input or credentials you lack), say so and ask.
 
+One exception: for a test linked to a signed-off scenario, fix the code, not the test, unless a person has ruled. See [`.claude/rules/signed-off-pages.md`](.claude/rules/signed-off-pages.md).
+
 ### 7. Canary first
 
 To make one change across several repos, services or environments, apply it to one target that needs the whole change, check it, then do the rest. Check every target afterwards, not a sample.
@@ -108,6 +110,7 @@ A correction about code, tests, tooling or process is an edit to its committed h
 | `repos/trade-imports-dynamics-gateway` | DEFRA/trade-imports-dynamics-gateway | Centralised gateway forwarding events to Azure Service Bus (ADR-EUDP-001 Option B) | Java / Spring Boot |
 | `repos/trade-imports-address-book` | DEFRA/trade-imports-address-book | Org-scoped address book API (system of record for Standard Address Block records) | Java / Spring Boot |
 | `repos/trade-imports-ins-frontend` | DEFRA/trade-imports-ins-frontend | Import Notification Service front-door (address-book UI, sign-in, dashboard shell) | Node.js |
+| `repos/trade-imports-routing-proxy` | DEFRA/trade-imports-routing-proxy | INS public entry point: forwards each request to the INS service its path addresses | Node.js |
 | `repos/trade-imports-ins-backend` | DEFRA/trade-imports-ins-backend | Aggregates notification events into a cross-journey read model | Java / Spring Boot |
 | `repos/trade-imports-plants-frontend` | DEFRA/trade-imports-plants-frontend | High-risk plants journey (implemented on the shared journey platform; requirements still being reconciled) | Node.js |
 | `repos/trade-imports-plants-prototype` | DEFRA/trade-imports-plants-prototype | Prototype copy of the plants frontend, for designers — its `upstream` remote is `trade-imports-plants-frontend`; sync with `npm --prefix ~/git/defra/trade-imports-workspace/repos/trade-imports-plants-prototype run sync:upstream` (overrides-aware, applies `overrides.json`'s `ours`/`deleted` rules — a plain upstream merge would not). Runs standalone on port 3103 (its real twin's plus 100), by design not part of the Docker stack (`dockerStack: null` in `repos.json`) and not covered by `workspaceBranchSync` — see [`docs/repos/trade-imports-plants-prototype.md`](docs/repos/trade-imports-plants-prototype.md). | Node.js |

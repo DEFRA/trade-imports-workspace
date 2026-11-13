@@ -2,6 +2,10 @@
 
 ## Purpose
 
+**Maturity**: exploring
+
+**Page**: hub
+
 The task list a user works a high-risk plants notification from, listing every task under numbered section headings and letting them be answered in any order. The page is titled "Overview".
 
 ## Requirements

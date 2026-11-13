@@ -2,6 +2,8 @@
 
 ## Purpose
 
+**Maturity**: agreed
+
 Asks the further questions a consignment's commodities call for — what the animals are certified for, and whether any are unweaned. The page is titled "Additional details".
 
 ## Requirements
@@ -12,6 +14,7 @@ The system MUST ask the user what the consignment's animals are certified for, o
 
 #### Scenario: The page presents its questions with nothing preselected
 **ID**: SCN-ADDL-DETAILS-001-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user has reached the additional details page without answering it before
 - **WHEN** the page loads
 - **THEN** it asks what the animals are certified for, offering the certification purposes the service currently holds, and whether the consignment contains unweaned animals, offering a save-and-continue action
@@ -23,12 +26,14 @@ The system MUST accept the additional details once both questions are answered, 
 
 #### Scenario: Answering both questions saves without error
 **ID**: SCN-ADDL-DETAILS-002-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the additional details page
 - **WHEN** they answer what the animals are certified for and that the consignment contains no unweaned animals, then save and continue
 - **THEN** the answers are saved and no error summary is shown
 
 #### Scenario: Saved answers are shown again on reopening
 **ID**: SCN-ADDL-DETAILS-002-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user has saved both answers on the additional details page
 - **WHEN** they reopen the page
 - **THEN** both answers are still shown as chosen
@@ -39,6 +44,7 @@ The system MUST refuse to save an invalid answer to either question, on save and
 
 #### Scenario: An invalid certification purpose is refused, keeping a valid unweaned answer
 **ID**: SCN-ADDL-DETAILS-003-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user has validly answered the unweaned question
 - **WHEN** they submit an invalid certification purpose and save
 - **THEN** the save is refused, an error links to and focuses the certification question, with nothing shown as chosen there
@@ -46,6 +52,7 @@ The system MUST refuse to save an invalid answer to either question, on save and
 
 #### Scenario: An invalid unweaned answer is refused, keeping a valid certification purpose
 **ID**: SCN-ADDL-DETAILS-003-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user has validly answered the certification question
 - **WHEN** they submit an invalid unweaned answer and save
 - **THEN** the save is refused, an error links to and focuses the unweaned question, with nothing shown as chosen there
@@ -53,6 +60,7 @@ The system MUST refuse to save an invalid answer to either question, on save and
 
 #### Scenario: Save and return to overview refuses the same invalid certification purpose, keeping a valid unweaned answer
 **ID**: SCN-ADDL-DETAILS-003-C
+**Signed off**: 2026-11-11
 - **GIVEN** the user has validly answered the unweaned question
 - **WHEN** they submit an invalid certification purpose and choose save and return to overview
 - **THEN** the save is refused, an error links to and focuses the certification question, with nothing shown as chosen there
@@ -60,6 +68,7 @@ The system MUST refuse to save an invalid answer to either question, on save and
 
 #### Scenario: Save and return to overview refuses the same invalid unweaned answer, keeping a valid certification purpose
 **ID**: SCN-ADDL-DETAILS-003-D
+**Signed off**: 2026-11-11
 - **GIVEN** the user has validly answered the certification question
 - **WHEN** they submit an invalid unweaned answer and choose save and return to overview
 - **THEN** the save is refused with "Select a valid option" for the unweaned question and nothing is saved
@@ -71,18 +80,21 @@ The system MUST return the user, when they follow the back link from the additio
 
 #### Scenario: After Save and continue, the back link opens the page before
 **ID**: SCN-ADDL-DETAILS-004-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user reached the additional details page by saving and continuing from Identification details, or Commodity details when nothing chosen needs identifiers
 - **WHEN** they follow the back link
 - **THEN** that page is shown
 
 #### Scenario: The back link opens Overview when the page was opened from Overview
 **ID**: SCN-ADDL-DETAILS-004-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user opened the additional details page from its task on Overview
 - **WHEN** they follow the back link
 - **THEN** Overview is shown
 
 #### Scenario: The back link opens the review when the page was opened from a Change link
 **ID**: SCN-ADDL-DETAILS-004-C
+**Signed off**: 2026-11-11
 - **GIVEN** the review of a draft notification
 - **WHEN** the user follows the Change link that opens the additional details page and then the back link
 - **THEN** the review is shown
@@ -93,6 +105,7 @@ The system MUST ask whether the consignment contains unweaned animals only when 
 
 #### Scenario: A consignment with no unweaned-eligible commodity is not asked about unweaned animals
 **ID**: SCN-ADDL-DETAILS-005-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user has reached the additional details page for a consignment whose commodity lines are not among those the service treats as capable of being unweaned
 - **WHEN** the page loads
 - **THEN** only the certification question is shown
@@ -100,6 +113,7 @@ The system MUST ask whether the consignment contains unweaned animals only when 
 
 #### Scenario: A consignment with an unweaned-eligible commodity is asked about unweaned animals
 **ID**: SCN-ADDL-DETAILS-005-B
+**Signed off**: 2026-11-11
 - **GIVEN** the user has reached the additional details page for a consignment at least one of whose commodity lines is among those the service treats as capable of being unweaned
 - **WHEN** the page loads
 - **THEN** it asks the unweaned question alongside the certification question, with the unweaned question's hint and both of its options
@@ -111,6 +125,7 @@ The system MUST hint the certification question "You can find this information o
 
 #### Scenario: The certification question carries the ITAHC hint
 **ID**: SCN-ADDL-DETAILS-006-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the additional details page
 - **WHEN** the page loads
 - **THEN** the question asking what the animals are certified for is hinted "You can find this information on the ITAHC."
@@ -121,6 +136,7 @@ The system MUST accept the additional details page, on save and continue and on 
 
 #### Scenario: Save and return to overview accepts the page with both questions left blank
 **ID**: SCN-ADDL-DETAILS-007-A
+**Signed off**: 2026-11-11
 - **GIVEN** the user is on the additional details page with neither question answered
 - **WHEN** they choose save and return to overview
 - **THEN** the blank answers are saved

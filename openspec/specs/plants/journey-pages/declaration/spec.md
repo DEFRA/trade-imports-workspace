@@ -2,6 +2,8 @@
 
 ## Purpose
 
+**Maturity**: exploring
+
 The last step before a high-risk plants notification is submitted, asking the user to confirm the declaration. The page is titled "Declaration".
 
 ## Requirements

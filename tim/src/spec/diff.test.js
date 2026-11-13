@@ -152,6 +152,7 @@ describe('#diffSpecCommits', () => {
           ]
         }
       ],
+      ranges: [],
       skipped: [],
       touched: expect.arrayContaining([
         'SCN-ORIGIN-001-A',
@@ -174,6 +175,7 @@ describe('#diffSpecCommits', () => {
 
     expect(result).toEqual({
       commits: [{ commit: sha, sha, files: [], scenarios: [] }],
+      ranges: [],
       skipped: [
         { commit: 'deadbeef', reason: 'deadbeef is not a commit in this repo' }
       ],
@@ -195,5 +197,74 @@ describe('#diffSpecCommits', () => {
       'added',
       'added'
     ])
+  })
+
+  test('Should compare a two-dot range from its base to its head, and skip a range git cannot read', async () => {
+    const repoPath = await repoWithSpec()
+    const base = await headOf(repoPath)
+    writeSpec(repoPath, [KEPT, REWORDED, DROPPED, ADDED])
+    await commitAll(repoPath, 'add')
+    writeSpec(repoPath, [
+      KEPT,
+      { ...REWORDED, then: 'the chosen country is saved' },
+      DROPPED,
+      ADDED
+    ])
+    await commitAll(repoPath, 'reword')
+    const head = await headOf(repoPath)
+
+    const result = await diffSpecCommits({
+      workspaceRoot: repoPath,
+      ranges: [`${base}..HEAD`, 'main', 'nope..HEAD']
+    })
+
+    expect({
+      ranges: result.ranges.map(({ range, from, to, scenarios }) => ({
+        range,
+        from,
+        to,
+        changes: scenarios.map(({ id, change }) => `${change} ${id}`).sort()
+      })),
+      skipped: result.skipped
+    }).toEqual({
+      ranges: [
+        {
+          range: `${base}..HEAD`,
+          from: base,
+          to: head,
+          changes: ['added SCN-ORIGIN-001-D', 'changed SCN-ORIGIN-001-B']
+        }
+      ],
+      skipped: [
+        { commit: 'main', reason: 'main is not a range such as main..HEAD' },
+        {
+          commit: 'nope..HEAD',
+          reason: 'nope..HEAD names a commit that is not in this repo'
+        }
+      ]
+    })
+  })
+
+  test('Should compare a three-dot range from the merge base of its two ends', async () => {
+    const repoPath = await repoWithSpec()
+    const forkPoint = await headOf(repoPath)
+    await git(repoPath, 'switch', '--quiet', '-c', 'feature')
+    writeSpec(repoPath, [KEPT, REWORDED, DROPPED, ADDED])
+    await commitAll(repoPath, 'add on feature')
+    await git(repoPath, 'switch', '--quiet', 'main')
+    writeSpec(repoPath, [KEPT, REWORDED])
+    await commitAll(repoPath, 'drop on main')
+
+    const result = await diffSpecCommits({
+      workspaceRoot: repoPath,
+      ranges: ['main...feature']
+    })
+
+    expect({
+      from: result.ranges[0].from,
+      changes: result.ranges[0].scenarios.map(
+        ({ id, change }) => `${change} ${id}`
+      )
+    }).toEqual({ from: forkPoint, changes: ['added SCN-ORIGIN-001-D'] })
   })
 })

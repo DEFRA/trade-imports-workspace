@@ -2,6 +2,8 @@
 
 ## Purpose
 
+**Maturity**: detailing
+
 The last step before a notification is submitted, asking the user to confirm the declaration. The page is titled "Declaration".
 
 ## Requirements

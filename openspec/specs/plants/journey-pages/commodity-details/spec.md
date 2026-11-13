@@ -2,6 +2,8 @@
 
 ## Purpose
 
+**Maturity**: exploring
+
 The entry sub-page for one commodity line: asks which category of goods it is, then reveals the fields that category calls for. The page is titled "Commodity details".
 
 ## Requirements
@@ -137,3 +139,19 @@ The system MUST send the user from commodity details to the commodities list onc
 - **GIVEN** a consignment holding at least one commodity line
 - **WHEN** the user follows the back link from commodity details
 - **THEN** the commodities list is shown
+
+### Requirement: The genus field is a searchable list
+**ID**: REQ-PLANTS-COMMODITY-DETAILS-010
+The system MUST offer the genus as a searchable field, with JavaScript. Matching MUST ignore case and accents, and the matched letters MUST show in bold.
+
+#### Scenario: A lower-case search finds a genus and shows the matched letters in bold
+**ID**: SCN-PLANTS-COMMODITY-DETAILS-010-A
+- **GIVEN** the user is on commodity details for a hardwood chips line with JavaScript
+- **WHEN** they type "cast" into the genus field
+- **THEN** "Castanea (sweet chestnut)" is offered, with "Cast" in bold
+
+#### Scenario: An accented search finds a genus listed without the accent
+**ID**: SCN-PLANTS-COMMODITY-DETAILS-010-B
+- **GIVEN** the user is on commodity details for a hardwood chips line with JavaScript
+- **WHEN** they type "Cást" into the genus field
+- **THEN** "Castanea (sweet chestnut)" is offered, with "Cast" in bold

@@ -154,6 +154,14 @@ The system MUST let a user search the notification dashboard by reference number
 - **AND** the results label reads "No notifications found"
 - **AND** no validation error is shown
 
+#### Scenario: Searching with an empty box clears the search and keeps the sort order
+**ID**: SCN-DASH-007-F
+- **GIVEN** the user has sorted the dashboard and then searched it by a reference number
+- **WHEN** they empty the search box and search again
+- **THEN** every notification is listed again
+- **AND** the search box is empty
+- **AND** the sort order they chose is kept
+
 ### Requirement: A reference-number search survives sorting and paging
 **ID**: REQ-DASH-008
 The system MUST keep an active reference-number search in the URL when the user changes the sort order or navigates by page.

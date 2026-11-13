@@ -17,15 +17,12 @@ For GDS writing style applied to summaries, descriptions, and AC, see
 If it could land as either Story or Task, prefer **Story** when there
 is observable behaviour for an end user, **Task** otherwise.
 
-## Priority guidance
+## Priority
 
-| Priority | Use when |
-|----------|----------|
-| **Highest** | Production-blocking or live-incident workstream. |
-| **High** | Blocks other work in flight or another team. |
-| **Medium** | Default. Normal planned work. |
-| **Low** | Nice-to-have; can drift without harm. |
-| **Lowest** | Backlog hygiene, opportunistic clean-up, tech debt (see [Field-default modifiers](#field-default-modifiers-opt-in)). |
+Do not ask for or set the priority field. The team orders work by its
+position on the board, so the field means nothing in practice. Leave
+it at Jira's default when you create a ticket. When you need to say
+how urgent something is, move it up the board.
 
 ## Labels
 
@@ -279,13 +276,9 @@ Pair with `tools/jira/ticket.sh EUDPA-X summary` for verification
 
 ## Field-default modifiers (opt-in)
 
-When the user describes their Task as tech-debt, the skill defaults
-two fields without re-asking:
-
-| Field | Default | Why |
-|-------|---------|-----|
-| Label | `technicalImprovement` | Canonical EUDPA tech-debt label (8 backlog issues on 2026-05-26 used it). |
-| Priority | `Lowest` | EUDPA convention for tech-debt — tracked but not urgent. |
+When the user describes their Task as tech-debt, the skill adds the
+label `technicalImprovement` without re-asking. It is the canonical
+EUDPA tech-debt label (8 backlog issues on 2026-05-26 used it).
 
 Parent epic is still asked for normally — the modifier does not
 suggest a specific key. The user picks the feature epic that owns

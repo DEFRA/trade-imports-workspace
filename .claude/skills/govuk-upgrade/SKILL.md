@@ -68,7 +68,7 @@ Ask the user which ticket this upgrade tracks. Three paths:
 2. **Create a new ticket** — call
    `~/git/defra/trade-imports-workspace/tools/jira/create-ticket.sh`
    with DevOps conventions: parent `EUDPA-144`, labels
-   `DevOps` + `tech-improvement`, priority Medium, type Task. See the
+   `DevOps` + `tech-improvement`, type Task. See the
    `ticket-creator` skill for the GDS question-gathering flow. Capture
    the new ticket key, then Branch is `chore/EUDPA-XXXXX`.
 3. **Custom branch name (no Jira ticket)** — accept the user-supplied

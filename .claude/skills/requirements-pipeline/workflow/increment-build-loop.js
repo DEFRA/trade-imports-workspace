@@ -6858,9 +6858,11 @@ ${ladderCompletionStep(impl.notes, fixResult ? fixResult.notes : null, rowRigour
   later baseline goes red. Read the trace's request timings first. If this increment made a request slow, fix the
   code. If the spec simply drives more of the journey than its budget holds, give it \`test.slow()\` as the tests
   repo's other full-journey specs do, and never cut a step or an assertion to make it fit.
-- A rung that cannot run fails with its reason — a held port names its holder. Never kill that holder and never
-  start or stop the stack to clear it: record the reason in failures[] and set green:false. Where the gate's
-  \`result.stack.held\` names the workspace stack as that holder, return \`stackHeld\` as THE GATE rule says.
+- A FIT rung whose planned port is held moves to the next free port, and the rung's \`ports\` name the holder. It
+  fails only when no port from its planned one upwards is free. A rung that cannot run fails with its reason. Never
+  kill a port's holder and never start or stop the stack to clear it: record the reason in failures[] and set
+  green:false. Where the gate's \`result.stack.held\` is not null (the e2e rungs' stack lease), return \`stackHeld\` as
+  THE GATE rule says.
 ${RUN_STACK_RULE}
 In ran[], list every gate rung as \`<repo> <name>\`, every plan check and every spec check you ran. In failures[], one
 line per red rung or check, with its reason and its log.

@@ -184,11 +184,11 @@ const runRung = async (rung, { logsDir, env }) => {
   }
 }
 
-const claimFirstFreePortFrom = async (base, claimedPorts) => {
+const claimFirstFreePortFrom = async (base, { claimedPorts, claimant }) => {
   const highestPort = 65535
   for (let port = base; port <= highestPort; port++) {
     if (!claimedPorts.has(port)) {
-      claimedPorts.add(port)
+      claimedPorts.set(port, claimant)
       if (!(await isPortHeld(port))) return port
       claimedPorts.delete(port)
     }
@@ -196,17 +196,26 @@ const claimFirstFreePortFrom = async (base, claimedPorts) => {
   return null
 }
 
-const claimPort = async (planned, context) => {
-  const used = await claimFirstFreePortFrom(planned, context.claimedPorts)
+const describePlannedPortHolder = async (planned, { siblingRung, env }) =>
+  siblingRung
+    ? `the ${siblingRung} rung of this gate`
+    : describeHolder(await portHolder(planned, { env }))
+
+const claimPort = async (planned, { rung, claimedPorts, env }) => {
+  const siblingRung = claimedPorts.get(planned)
+  const used = await claimFirstFreePortFrom(planned, {
+    claimedPorts,
+    claimant: `${rung.repo} ${rung.name}`
+  })
   if (used === planned || used === null) return { planned, used, heldBy: null }
-  const holder = await portHolder(planned, { env: context.env })
-  return { planned, used, heldBy: describeHolder(holder) }
+  const heldBy = await describePlannedPortHolder(planned, { siblingRung, env })
+  return { planned, used, heldBy }
 }
 
-const claimPorts = async (plannedPorts, context) => {
+const claimPorts = async (rung, context) => {
   const claims = []
-  for (const planned of plannedPorts) {
-    claims.push(await claimPort(planned, context))
+  for (const planned of rung.ports) {
+    claims.push(await claimPort(planned, { ...context, rung }))
   }
   return claims
 }
@@ -225,7 +234,7 @@ const noFreePortReason = (claims) =>
 
 const runFitRung = async (rung, context) => {
   if (rung.refusal) return failed(rung, rung.refusal)
-  const claims = await claimPorts(rung.ports, context)
+  const claims = await claimPorts(rung, context)
   const servedRung = { ...rung, portClaims: claims }
   try {
     const exhausted = noFreePortReason(claims)
@@ -681,7 +690,7 @@ export const runGate = async ({
     parallelRepos: machine?.parallelRepos ?? gates.parallelRepos,
     stackAfterLocal:
       (machine?.stackAfterLocal ?? gates.stackAfterLocal) === true,
-    claimedPorts: new Set()
+    claimedPorts: new Map()
   }
 
   const dependencies = await installPlanDependencies(planned, context)

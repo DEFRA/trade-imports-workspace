@@ -473,7 +473,7 @@ describe('runGate — unit and FIT rungs', () => {
     })
   })
 
-  test('gives two FIT rungs running at the same time on one planned port a port each', async () => {
+  test('gives two FIT rungs running at the same time on one planned port a port each, naming the rung that holds it', async () => {
     const { server, port } = await listenOnPortWithNextOneFree()
     await closeServer(server)
     const fitRung = { name: 'fit', phase: 'fit', run: 'test:fit:ci' }
@@ -492,11 +492,21 @@ describe('runGate — unit and FIT rungs', () => {
     const outcome = await gate(env, { phase: 'fit' })
 
     const used = outcome.rungs.map(({ ports }) => ports[0].used)
+    const servedOnPlanned = outcome.rungs.find(
+      ({ ports }) => ports[0].used === port
+    )
+    const moved = outcome.rungs.find(({ ports }) => ports[0].used !== port)
     expect({
       ok: outcome.rungs.map(({ ok }) => ok),
       distinct: new Set(used).size,
-      lowest: Math.min(...used)
-    }).toEqual({ ok: [true, true], distinct: 2, lowest: port })
+      lowest: Math.min(...used),
+      heldBy: moved.ports[0].heldBy
+    }).toEqual({
+      ok: [true, true],
+      distinct: 2,
+      lowest: port,
+      heldBy: `the ${servedOnPlanned.repo} fit rung of this gate`
+    })
   })
 
   test('leaves the workspace stack alone for unit and FIT rungs', async () => {

@@ -233,3 +233,26 @@ The system MUST mark the Additional details task To do while neither of its ques
 - **THEN** Additional details reads In progress
 - **WHEN** the unweaned question is also answered and the user views Overview
 - **THEN** Additional details reads Complete
+
+### Requirement: Overview marks its commodity totals, task list and numbered sections as named regions for assistive technology
+**ID**: REQ-OVERVIEW-015
+The system MUST mark the Your commodities block, the task list and each numbered section as regions named by their own heading, and each of the two commodity totals as a region named Animals summary or Packages summary, and MUST describe each task link by its status, and Roles and addresses by its hint then its status.
+
+#### Scenario: The two commodity totals are named regions inside the Your commodities region
+**ID**: SCN-OVERVIEW-015-A
+- **GIVEN** a fresh notification
+- **WHEN** the user views Overview
+- **THEN** the Your commodities region holds two regions, named Animals summary and Packages summary
+
+#### Scenario: The task list is a region holding the six numbered sections as named regions
+**ID**: SCN-OVERVIEW-015-B
+- **GIVEN** a fresh notification
+- **WHEN** the user views Overview
+- **THEN** a region named Notification tasklist holds six regions named 1. About the consignment, 2. Description of the goods, 3. Transport and arrival, 4. Documents, 5. Consignment parties and 6. Contact address
+- **AND** the 1. About the consignment region holds the Main import reason task
+
+#### Scenario: A task link is described by its status
+**ID**: SCN-OVERVIEW-015-C
+- **GIVEN** an Overview showing every task
+- **WHEN** a screen reader reads a task link's description
+- **THEN** it reads the task's status, and for Roles and addresses its hint then its status

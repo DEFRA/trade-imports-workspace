@@ -59,3 +59,20 @@ The system MUST NOT show running totals of animals, packages or similar commodit
 - **GIVEN** the user has started a notification
 - **WHEN** they view Overview
 - **THEN** no commodity totals panel is shown
+
+### Requirement: Overview marks its task groups as named regions for assistive technology
+**ID**: REQ-PLANTS-OVERVIEW-005
+The system MUST mark each numbered task group, with its heading and its task list, as a region named by that group's heading, and MUST gather the groups in one region named "Notification tasklist", without showing a "Notification tasklist" heading. With Welsh chosen, the system MUST give that region a Welsh name.
+
+#### Scenario: The four groups are named regions inside one Notification tasklist region
+**ID**: SCN-PLANTS-OVERVIEW-005-A
+- **GIVEN** the user has started a notification and saved the commodity type
+- **WHEN** they view Overview
+- **THEN** a region named "Notification tasklist" holds four regions, named by the four group headings
+- **AND** the only second-level headings on the page are the four group headings
+
+#### Scenario: The task list region has a Welsh name
+**ID**: SCN-PLANTS-OVERVIEW-005-B
+- **GIVEN** Welsh is chosen
+- **WHEN** the user views Overview
+- **THEN** the task list region is named "Rhestr dasgau’r hysbysiad"

@@ -1,0 +1,2459 @@
+{
+  "schema": "bash-to-tim-backlog/1",
+  "goal": "Remove every Bash script from this workspace repo (scripts/, tools/, .claude/hooks/) by porting it to tim, replacing it with plain gh, or deleting it, so the workspace no longer needs a fixed path and several clones can work at once while only one owns the Docker stack.",
+  "scope": {
+    "in": [
+      "Bash under scripts/, tools/ and .claude/hooks/",
+      "the 8 service repos' push hooks that call into this workspace",
+      "the tim and JS fixes that stop a second clone acting on the first (P01, P05-P10)",
+      "skill, rules and allowlist text that names the fixed path"
+    ],
+    "out": [
+      "JavaScript workflows and scripts stay JavaScript: only their fixed-path lookups change (P05)",
+      "Bash that lives in a service repo for its own purposes (for example the plants repos' .claude/sonar-analyze.sh)",
+      "running the E2E suite while the work is under way, locally or in CI: E2E runs once, in GitHub Actions, when the whole backlog has landed and the pull requests are marked ready"
+    ],
+    "dropped": [
+      {
+        "id": "P02",
+        "why": "Made 3 scripts find their own folder in Bash. Each script is ported or deleted instead."
+      },
+      {
+        "id": "P03",
+        "why": "Swept about 130 scripts to find their own folder in Bash. Same reason: the port removes the fixed path."
+      },
+      {
+        "id": "P04",
+        "why": "Pointed the 8 repo push hooks at the Bash check in their own clone. P57 points them straight at tim instead."
+      }
+    ]
+  },
+  "source": "workareas/shared/bash-to-tim/findings.json (the 64-agent investigation of 13 Nov 2026: script catalogue, per-folder plans, verified parallel-clone blockers)",
+  "report": {
+    "hypothesisVerdict": "Partly right: the script side was Bash, but the reason was Claude Code's permission system. The path was fixed in eb8f0f44 (27 May, \"migrate agent personas to agentskills.io format\"), and docs/agent-skills.md:14-44 records why. Allowlist rules compare literal command text. A `$VAR` in a command the model types always prompts (\"simple_expansion\", GH#51001). A subagent's working folder may be a sub-repo, so skill text spelt the full ~/git/defra/... path, and the scripts copied it as $HOME/git/defra/... \"for consistency\" (agent-skills.md:29-32). Bash never needed it: scripts/stack/run-stack.sh:4-5 finds its root from its own location. Later commits locked it in. 564e594b added the `make link` symlink. fcbadde9 denied `bash *`/`node *` and collapsed the allowlist onto the literal tools/** path. 7578ee29 made the canonical path a real clone. 4918fba0 gave tim a last-resort fallback to it. Moving the scripts into tim does remove the script half: `Bash(tim:*)` (.claude/settings.json:87) has no path, and tim walks up from the current folder (tim/src/env/workspace-root.js:57-85). It also reads the same JIRA_*/SONAR_TOKEN variables, so nobody changes their setup. But the path stays fixed unless the plan also rewrites the model-typed layer: 18 allowlist lines (settings.json:63-93), about 1,000 mentions in 114 skill files plus 7 rules files, the workflow scripts (increment-build-loop.js:407, designer-prototyping-suite.js:45) and the 8 repo hook lines.",
+    "realBlockers": [
+      {
+        "name": "Stack ownership not enforced across clones (shared compose project name, stack commands that ignore the lease, lease ignores workspace)",
+        "why": "Every clone drives the one `trade-imports` project (docker/stack/compose.yml:1). A plain `tim docker dev` writes no lease, and tim docker up/dev/down only refuse when a lease exists (tim/src/commands/docker/index.js:52-56). So clone B's up rebuilds clone A's containers from B's repos/ (dev.compose.yml ../../repos), and B's down runs `down --volumes` on A's data (stop-stack.sh:42). The lease records `workspace` (stack-lease.js:319) but nothing compares it, and the fixed holder 'perf' (lease.js:215) can be reused or released from another clone.",
+        "fix": "Keep the single project name. Refuse when the running containers' com.docker.compose.project.working_dir label, or lease.workspace, is another clone, with --force to override. Also compare workspace in acquire and release.",
+        "fixedBy": "P06 (and kept through P59-P61)"
+      },
+      {
+        "name": "tools/ bash scripts hardcode the canonical path (journey-builder worktrees and branches included)",
+        "why": "About 130 tools scripts set WORKSPACE=$HOME/git/defra/trade-imports-workspace (for example prepare-digest.sh:16, style-add-item.sh:75, start-service-tag.sh:34). Run from clone 2, they read and write clone 1's workareas/ and repos/. journey-builder makes worktrees and spike/ and spec/ branches in clone 1 (prepare-digest.sh:52-54, :75-77).",
+        "fix": "Find the root from BASH_SOURCE (with TIM_WORKSPACE as an override) right away, then port each folder to tim, which walks up from the current folder.",
+        "fixedBy": "P02, P03 (then the per-folder ports; P63 retires journey-builder)"
+      },
+      {
+        "name": "Globally linked tim runs one clone's code",
+        "why": "`which tim` resolves through npm link to ~/git/defra/trade-imports-workspace/tim/src/cli.js, so clone 2 runs clone 1's tim code, node_modules and branch. Its auto-pull updates clone 2, but the code that runs is still clone 1's.",
+        "fix": "The global tim becomes a launcher that hands over to the nearest clone's own tim/src/cli.js.",
+        "fixedBy": "P01"
+      },
+      {
+        "name": "repos.json roster read from beside tim's code",
+        "why": "tim/src/constants/repos.js:16-22,71 loads the first repos.json found (the one beside tim's code) once at module load, before --workspace is parsed, so clone 2 acts on its own folders with clone 1's repo list.",
+        "fix": "Load the roster lazily from the resolved workspace root.",
+        "fixedBy": "P01"
+      },
+      {
+        "name": "Build loop and prototype workflows resolve a fixed workspace",
+        "why": "increment-build-loop.js:407-411 takes the first of three fixed candidates (clone 1 always wins) and has no override, so a loop launched from clone 2 builds, commits, takes the lease and runs `codex exec -C` in clone 1 (:3106). prepare-handoff.js:94, port-kit-page.js:77 and designer-prototyping-suite.js:44-45 (a literal /Users/samfarrington path) are fixed too.",
+        "fix": "config.workspace as distil.js already does, otherwise resolve from the session folder or CLAUDE_PROJECT_DIR.",
+        "fixedBy": "P05"
+      },
+      {
+        "name": "Permission allowlist tied to the canonical path",
+        "why": "18 entries (.claude/settings.json:63-93) name ~/git/defra/trade-imports-workspace, so clone 2's own tools/ and repos/ commands prompt, while commands aimed at clone 1 are auto-allowed. The prefix rule at :84 also matches ...-workspace-2. Together with the skill text, this steers agents into clone 1.",
+        "fix": "Prove which relative patterns match (with Sam watching), move script calls to Bash(tim:*), drop the canonical entries, and rewrite the skill text.",
+        "fixedBy": "P11, P71, P72"
+      },
+      {
+        "name": "Local E2E from a clone that does not own the stack",
+        "why": "The tests repo hard-codes localhost frontends (playwright.docker-compose.config.ts:10-13) and defaults the backend and Mongo URLs to localhost (:19-27). An E2E run from clone 2 silently tests clone 1's code and data, and nothing checks ownership.",
+        "fix": "A Playwright globalSetup and the tim gate refuse unless this clone owns the stack (lease workspace or container label); ALLOW_FOREIGN_STACK=1 is the escape hatch.",
+        "fixedBy": "P07"
+      },
+      {
+        "name": "Fit-test host ports 3050/3052/3053",
+        "why": "Each frontend's test:fit:ci hard-codes PORT inline (package.json), and gates.json fixes the same ports. Two clones running the same frontend's fit rung at once: one is refused (gate.js:212-234). The rung needs no stack, so clones without one hit this.",
+        "fix": "Use `PORT=${PORT:-N}` in each frontend, and have the gate move to the next free port.",
+        "fixedBy": "P08"
+      },
+      {
+        "name": "Lease logs shared by every clone (minor)",
+        "why": "logsDirFor defaults to ~/.local/state/tim/logs (lease.js:62-63) and runToLog truncates the file on each run (exec.js:84-88), so the last acquire or release from any clone replaces the previous log. Debug history only.",
+        "fix": "Default the logs to <workspace>/workareas/stack-logs.",
+        "fixedBy": "P09"
+      },
+      {
+        "name": "Plants prototype port 3103 (minor, run-time)",
+        "why": "Two prototypes at once clash on 3103. The sign-in redirects, the session cookie and the Redis prefix also default to the same values (config.js:58-62, 224-235, 270-272, 302-306).",
+        "fix": "Run the second one with PORT, DEFRA_ID_REDIRECT_URL, DEFRA_ID_SIGN_OUT_REDIRECT_URL, AUTH_SESSION_COOKIE_NAME and REDIS_KEY_PREFIX set. The Defra ID stub accepts any redirect URI, so it needs no change.",
+        "fixedBy": "none (environment convention; no increment)"
+      }
+    ],
+    "refutedBlockers": [
+      {
+        "name": "Dev-built images share the tag trade-imports-trade-imports-<svc>:latest",
+        "why": "Every dev start passes --build (run-stack.sh:345) and dev-service restart never reads the tag again (dev-service.sh:66-70). Only a bounce by a clone that does not own the stack could pick up another clone's image, and that already breaks the one-owner rule. P59 adds --build to bounce anyway."
+      },
+      {
+        "name": "Visual-baselines node_modules volume trade-imports-ins-tests-container-nm",
+        "why": "Every run does `npm ci` into the volume first (update-visual-baselines-linux.sh:36-44), and the script needs the stack, so only the owning clone can usefully run it."
+      },
+      {
+        "name": "`tim link` refuses in a second clone",
+        "why": "Nothing calls it (the CLAUDE.md and onboarding hits are `npm link`), and tim finds clone 2 by walking up. It is an obsolete workaround, removed in P69."
+      }
+    ],
+    "sharpEdges": [
+      "Each extra clone needs its own `tim workspace setup` (a full repos/), `npm ci` inside tim/, and a copy of the gitignored config/machine.json (or TIM_MACHINE_CONFIG).",
+      "Two clones pushing the same branch name race at the remote. Keep one branch per clone; the same-name rule across repos still holds within a clone.",
+      "tim run from outside any clone (home folder, scratchpad, a workflow agent's folder) falls back to the canonical clone. Workflow briefs should pass --workspace or set TIM_WORKSPACE. P69 adds a warning.",
+      "Several ports change behaviour on purpose. theme-ticket push becomes a dry run until --confirm (P36 must add --confirm to SKILL.md:330 in the same commit). JSON output moves into tim's envelope, so skill jq paths read .result. The push check finds the PR from SonarCloud, so a brand-new PR's first push gets branch scope.",
+      "Rule 8 moves GitHub calls out of scripts into skill text (gh search prs, gh pr view, gh pr diff in review, style and understanding-check). A subagent that skips a gh step leaves a repo out; the tim side must refuse loudly when the fact files are missing.",
+      "Hooks that call node must fail closed safely: guard on tim/node_modules existing. The guard hooks stay Bash for exactly this reason (P19).",
+      "Relative Bash allowlist patterns are untested: P11 must be run with Sam watching, because a session cannot see its own prompts.",
+      "Each repo-rooted Claude session starts a sonar MCP container of about 0.5-0.8 GiB. More clones open at once means more memory, but no collision.",
+      "Claude project memory and transcripts are keyed by absolute path, so clone 2 gets a fresh project (auto memory is off anyway). ~/.codex/config.toml trusts paths, and the build loop already bypasses that.",
+      "Sam's user-level ~/.claude/settings.json:192-198 auto-mode notes name only the canonical path. P71 updates them.",
+      "Retiring journey-builder (P63) is a scope call, not a port. The fallback port rows exist in the folder plan if Sam wants to keep it.",
+      "govuk-upgrade's changelog fetch from raw.githubusercontent.com moves into a tim client. I read that as a static file fetch, not the GitHub API, so rule 8 does not forbid it."
+    ],
+    "ciOnlyColleague": "A colleague who never runs the stack needs only the path fixes, not the stack work. Once P01-P05 land, their clone can sit anywhere, run its own tim, and keep its own workareas/, branches and build-loop runs. They never take the stack lease, so P06 never refuses them. P07 stops them running local E2E against someone else's stack by accident. E2E comes from GitHub Actions: each service repo's PR calls the reusable e2e-tests.yml, which runs the suites and tags for that repo listed in config/e2e-tests-pr-scope.json. That is the evidence on their PR, and the build loop already waits on PR checks (wait-for-pr-checks.sh). The fit rungs and unit tests run natively with no stack. P08 lets their fit ports move if another clone on the same machine holds them. The one gap today: tim build gate's E2E rung needs the local stack, so a CI-only clone cannot pass the loop's gate. P10 adds an opt-in `--e2e ci` mode that leaves that rung to the PR's e2e check. What they lose: CI E2E follows the PR scope file, which can run less than the local gate, and each attempt waits a CI cycle. Their setup does not change otherwise: the same JIRA_USER, JIRA_TOKEN, JIRA_BASE_URL and SONAR_TOKEN in ~/.zshrc, and gh's own login."
+  },
+  "rows": [
+    {
+      "id": "P01",
+      "title": "Each clone runs its own tim, and reads its own repos.json",
+      "scripts": [
+        "tim/src/constants/repos.js",
+        "tim/src/cli.js"
+      ],
+      "action": "tim-fix",
+      "timCommand": "tim (any command). The global `tim` becomes a thin launcher: walk up from the current folder (or --workspace / TIM_WORKSPACE) to a root with tim/src/cli.js and repos.json, then hand over to that clone's cli.js. repos.js loads the roster lazily from the resolved root, with the copy beside tim's code as a fallback only.",
+      "callersToUpdate": [
+        "tim/src/constants/repos.js:16-22,59,71 (lazy loadManifest(workspaceRoot); the ~10 importers pass the root)",
+        "tim/package.json bin / a new launcher file",
+        "docs/agent-onboarding.md:294 and the CLAUDE.md `tim` section (the npm link instruction)",
+        "tim/src/env/workspace-root.js:9-12 (doc comment that cites tools/*.sh)"
+      ],
+      "tokens": [
+        "TIM_WORKSPACE (existing, optional)"
+      ],
+      "dependsOn": [],
+      "risk": "Medium. Every command starts through the launcher. A loop is possible if the launcher hands over to itself, so compare realpaths before handing over. Fixes two verified blockers: clone-2 running clone-1's tim code, and clone-1's roster against clone-2's folders.",
+      "proof": "Two fixture workspaces with different repos.json files. Spawn the global tim from inside each and assert that `tim workspace status --json` lists that workspace's repos, and that `process.argv[1]` resolves to that clone's cli.js. npm --prefix tim test green.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P05",
+      "title": "The build loop and other workflow scripts use the clone that launched them",
+      "scripts": [
+        ".claude/skills/requirements-pipeline/workflow/increment-build-loop.js",
+        ".claude/skills/prototype/workflow/prepare-handoff.js",
+        ".claude/skills/prototype/workflow/port-kit-page.js",
+        ".claude/skills/prototype/workflow/design-session.js",
+        ".claude/workflows/designer-prototyping-suite.js"
+      ],
+      "action": "tim-fix",
+      "timCommand": "",
+      "callersToUpdate": [
+        "increment-build-loop.js:407-470: optional config.workspace (validated as distil.js:80-85 does). Otherwise `git rev-parse --show-toplevel` from the session folder or CLAUDE_PROJECT_DIR; the fixed list only as a last resort. Drop the 'symlink it' advice at :458.",
+        "prepare-handoff.js:94, port-kit-page.js:77 (and :139,:459,:571-572,:606), design-session.js:70,140,387,482,535,626: build every path from a workspace config input",
+        "designer-prototyping-suite.js:44-45: remove the literal /Users/samfarrington WS_ABS",
+        ".claude/skills/requirements-pipeline/references/BUILD.md (the launch passes config.workspace)"
+      ],
+      "tokens": [],
+      "dependsOn": [],
+      "risk": "Medium. A wrong root means Codex (`codex exec -C ${TILDE}`, :3106) builds in the wrong tree. Launch between loop runs, because a running loop holds its prompt text.",
+      "proof": "tim/src/backlog/workflow-contract.test.js: a launch with config.workspace set to a second-clone path gives TILDE equal to that path. A launch with no config resolves from the session folder. A dry resolver run from a scratch clone reports that clone.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P06",
+      "title": "Stack ownership is checked across clones (up, dev, down, restart, bounce, lease)",
+      "scripts": [
+        "tim/src/commands/docker/index.js",
+        "tim/src/exec/stack-lease.js",
+        "tim/src/exec/stack.js"
+      ],
+      "action": "tim-fix",
+      "timCommand": "tim docker up|dev|down|restart|bounce-backend|logs and tim docker lease acquire|release refuse (unless --force) when the running `trade-imports` project's com.docker.compose.project.working_dir label, or lease.workspace, is another clone. tim docker lease status --json shows workspace.",
+      "callersToUpdate": [
+        "tim/src/commands/docker/index.js:52-56 (makeStackAction: the owner check)",
+        "tim/src/exec/stack.js (new stackOwner(), reading container labels)",
+        "tim/src/exec/stack-lease.js:140-149, :478, :537, :562 (also compare lease.workspace)",
+        "tim/src/commands/docker/lease.js:215 (default perf holder includes the workspace)",
+        "docker/stack/AGENTS.md (one stack per machine, any clone may own it)"
+      ],
+      "tokens": [
+        "TIM_STACK_LEASE, XDG_STATE_HOME (unchanged)"
+      ],
+      "dependsOn": [],
+      "risk": "Medium. A false refusal blocks the one stack, so --force stays. Keep `name: trade-imports` (docker/stack/compose.yml:1). A per-clone project name would hide the stack from the lease and clash on host ports.",
+      "proof": "Fake docker answering container labels from clone A while tim runs as clone B: down, up, dev and bounce refuse and name A; --force goes ahead; the same clone goes ahead as before. Lease tests: same holder name from another workspace is refused. Live: `tim docker dev` from clone A, then `tim docker down` from clone B is refused.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers",
+        "stack-smoke"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P07",
+      "title": "Local E2E refuses to run from a clone that does not own the stack",
+      "scripts": [
+        "repos/trade-imports-ins-tests/playwright.docker-compose.config.ts"
+      ],
+      "action": "tim-fix",
+      "timCommand": "tim docker owner [--json] (prints the owning clone, from the lease or container labels)",
+      "callersToUpdate": [
+        "repos/trade-imports-ins-tests: a globalSetup that reads the per-machine lease or the working_dir label and stops with 'The stack belongs to <clone>. Run E2E there, or push and let GitHub Actions run it.' ALLOW_FOREIGN_STACK=1 skips it",
+        "tim build gate E2E rung: call the same check",
+        "docs/reference/workflows.md (one line: only the owning clone runs local E2E)"
+      ],
+      "tokens": [
+        "ALLOW_FOREIGN_STACK (new, optional)"
+      ],
+      "dependsOn": [
+        "P06"
+      ],
+      "risk": "Low to medium. Cross-repo: tests repo plus workspace, same branch name. CI has no lease and no foreign owner, so the guard must pass when nothing is found.",
+      "proof": "Fixture lease with workspace = A, run from B: Playwright stops with the message before any test runs. Same from A: runs. A CI e2e-tests.yml run on the branch stays green.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers",
+        "stack-smoke",
+        "repo-tests"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P08",
+      "title": "Fit-test ports can be moved per clone",
+      "scripts": [
+        "tim/src/build/gate.js",
+        "repos/trade-imports-{animals,ins,plants}-frontend/package.json test:fit:ci"
+      ],
+      "action": "tim-fix",
+      "timCommand": "tim build gate: when the gates.json fit port (3050/3052/3053) is held, use the next free one, and pass it as PORT to the rung",
+      "callersToUpdate": [
+        "three frontend package.json files: `PORT=${PORT:-3050}` (and 3052, 3053)",
+        ".claude/skills/requirements-pipeline/references/gates.json:66-68,117-119,202-204 (keep as the default base)",
+        "tim/src/build/gate.js:212-234 (runFitRung)"
+      ],
+      "tokens": [
+        "PORT"
+      ],
+      "dependsOn": [],
+      "risk": "Low. CI keeps the same ports. Canary on one frontend first.",
+      "proof": "gate.test.js: a held base port moves to the next free one, and PORT reaches the command's env. One real fit run on animals-frontend with 3050 held by a dummy listener passes on 3051.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers",
+        "repo-tests"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P09",
+      "title": "Lease logs kept per clone",
+      "scripts": [
+        "tim/src/commands/docker/lease.js"
+      ],
+      "action": "tim-fix",
+      "timCommand": "tim docker lease acquire|release: the default log folder is <workspace>/workareas/stack-logs; --logs still overrides",
+      "callersToUpdate": [
+        "tim/src/commands/docker/lease.js:62-63 (logsDirFor), help text at :216, :250, :263"
+      ],
+      "tokens": [],
+      "dependsOn": [],
+      "risk": "Very low. Debug history only.",
+      "proof": "Test: two workspace roots give two log paths. The lease file itself stays per machine.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P10",
+      "title": "Build gate can leave E2E to GitHub Actions on a clone with no stack",
+      "scripts": [
+        "tim/src/build/gate.js"
+      ],
+      "action": "tim-fix",
+      "timCommand": "tim build gate --e2e ci (skips the local E2E rung and records that the PR's e2e-tests.yml run is the evidence; the loop's existing wait-for-pr-checks step gates the merge)",
+      "callersToUpdate": [
+        ".claude/skills/requirements-pipeline/references/BUILD.md and machine-tuning.md (a CI-only clone sets this in config/machine.json)",
+        "increment-build-loop.js (pass the mode through)"
+      ],
+      "tokens": [
+        "TIM_MACHINE_CONFIG (existing)"
+      ],
+      "dependsOn": [
+        "P05"
+      ],
+      "risk": "Medium. A row could merge with only CI E2E, which follows config/e2e-tests-pr-scope.json and may run less than the local gate. Make it opt-in per machine and say so in the row's evidence.",
+      "proof": "gate.test.js: in ci mode no lease is taken and no stack command runs. One build-loop row on a clone with no stack lands with its PR's e2e check green.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P11",
+      "title": "Find out which allowlist pattern forms match without a prompt",
+      "scripts": [
+        ".claude/settings.json"
+      ],
+      "action": "convention",
+      "timCommand": "",
+      "callersToUpdate": [
+        "docs/agent-skills.md:85-101,164-178 (record the result)"
+      ],
+      "tokens": [],
+      "dependsOn": [],
+      "risk": "Low, but it needs Sam watching: a session cannot see its own permission prompts (agent-skills.md:164-168). Test `Bash(./tools/**)`, `Bash(tools/**)`, `Bash(git -C repos/*:*)`, `Bash(npm --prefix repos/*:*)` in a scratch settings.local.json.",
+      "proof": "A table of pattern against typed command against prompt yes/no, recorded in docs/agent-skills.md. That table decides the form used in P72.",
+      "status": "person",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P12",
+      "title": "Delete scripts/setup.sh and scripts/update.sh (tim workspace setup/update already do it)",
+      "scripts": [
+        "scripts/setup.sh",
+        "scripts/update.sh"
+      ],
+      "action": "already-covered-delete",
+      "timCommand": "tim workspace setup; tim workspace update [--include <repo>]",
+      "callersToUpdate": [
+        "tim/src/constants/repos.test.js:107 (rename the test so it asserts repos.json githubOrg)",
+        "docs/repos/trade-imports-plants-prototype.md:27"
+      ],
+      "tokens": [],
+      "dependsOn": [],
+      "risk": "Low. tim skips workspaceBranchSync:false repos (the prototype) unless --include is given. That difference is deliberate, and no caller relies on the old behaviour.",
+      "proof": "Scratch workspace against bare fixtures: remote.origin.fetch, remote.upstream.* and HEADs match between the bash run (from origin/main) and tim. npm --prefix tim test green.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P13",
+      "title": "Sign-in checks: tim auth plus gh auth status replace four auth scripts",
+      "scripts": [
+        "tools/auth.sh",
+        "tools/jira/auth.sh",
+        "tools/confluence/auth.sh",
+        "tools/github/auth.sh"
+      ],
+      "action": "already-covered-delete",
+      "timCommand": "tim auth [--json]; gh auth status",
+      "callersToUpdate": [
+        ".claude/skills/ticket/SKILL.md:143-144",
+        ".claude/skills/ticket-refiner/SKILL.md:53-57",
+        "docs/agent-onboarding.md:71-79",
+        "docs/reference/tools-index.md:29-32",
+        "docs/onboarding/generator/skill-specs.js:41,348,392 (then regenerate 02, 09, 10)",
+        "tim/README.md:1085",
+        "tim/CLAUDE.md:39",
+        "tim/src/clients/confluence-client.js:26 (JSDoc)"
+      ],
+      "tokens": [
+        "JIRA_USER",
+        "JIRA_TOKEN",
+        "JIRA_BASE_URL"
+      ],
+      "dependsOn": [],
+      "risk": "Low. Same endpoints and variables. The output wording changes, and nothing parses it.",
+      "proof": "Run both with good credentials, with JIRA_TOKEN unset and with a wrong token: the exit codes agree. Add nock tests in tim/src/commands/auth.test.js. `git grep 'auth\\.sh'` is empty outside workareas/.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P14",
+      "title": "Delete the scripts nothing calls",
+      "scripts": [
+        "tools/github/diff.sh",
+        "tools/github/pr-ensure-draft.sh",
+        "tools/github-actions/list-runs.sh",
+        "tools/confluence/create-page.sh",
+        "tools/confluence/update-page.sh",
+        "tools/jira/add-subtask.sh",
+        "tools/jira/get-epic-issues.sh",
+        "tools/jira/get-issues-for-board.sh",
+        "tools/jira/move-to-board.sh",
+        "tools/review/review-set-severity.sh",
+        "tools/review/diff-since-review.sh"
+      ],
+      "action": "delete-dead",
+      "timCommand": "none (use gh run list, gh pr diff, tim jira search --jql 'parent = X' if ever needed)",
+      "callersToUpdate": [
+        "docs/reference/tools-index.md rows (37, 43, 50, 54, 63, 72)",
+        ".claude/skills/review/SKILL.md:777",
+        ".claude/skills/ticket/SKILL.md:139",
+        "tools/jira/search.sh:11-13 (header comment)",
+        "docs/analysis/frontend-alignment-workflow-run.md:56 (footnote only)"
+      ],
+      "tokens": [],
+      "dependsOn": [],
+      "risk": "Low: grep finds no live caller. What is lost: pr-ensure-draft's exit-3 rule, the Duplicates/Cloners link types, and a board-wide issue dump. All recoverable from git history.",
+      "proof": "`grep -rnE` for the 11 basenames over .claude, tools, tim, docs, scripts and .github returns nothing. npm --prefix tim test green.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P15",
+      "title": "GitHub Actions run scripts become plain gh commands in skill text",
+      "scripts": [
+        "tools/github-actions/get-failure.sh",
+        "tools/github-actions/get-logs.sh",
+        "tools/github-actions/run-status.sh",
+        "tools/github-actions/trigger-workflow.sh",
+        "tools/github-actions/wait-for-run.sh"
+      ],
+      "action": "already-covered-delete",
+      "timCommand": "none (rule 8): gh run view <id> --repo DEFRA/<r> [--log-failed|--log]; gh workflow run <file> --repo DEFRA/<r> --ref <branch>; gh run list ... --event workflow_dispatch --limit 1; gh run watch <id> --exit-status as a background task",
+      "callersToUpdate": [
+        ".claude/skills/ticket/SKILL.md:140",
+        ".claude/skills/ticket/references/IMPLEMENTOR.md:233-236",
+        "docs/best-practices/github-actions.md:155",
+        "docs/reference/tools-index.md:58-62"
+      ],
+      "tokens": [],
+      "dependsOn": [],
+      "risk": "Medium for trigger and wait. The new lookup filters by branch and event, which is stricter than before, and gh run watch has no 1800 s cap, so the skill says to run it in the background and re-run it on an API error.",
+      "proof": "Diff the old script output against the gh command on one real run: no difference. On a harmless dispatch workflow, gh run watch --exit-status gives 0 for a pass and non-zero for a fail.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P16",
+      "title": "Review skill calls gh directly for who-am-I, PR author and deleting a branch",
+      "scripts": [
+        "tools/github/whoami.sh",
+        "tools/github/pr-author.sh",
+        "tools/github/delete-remote-branch.sh"
+      ],
+      "action": "already-covered-delete",
+      "timCommand": "none: gh api user --jq .login; gh pr view <n> --repo DEFRA/<r> --json author --jq .author.login; gh api -X DELETE repos/DEFRA/<r>/git/refs/heads/<b>",
+      "callersToUpdate": [
+        ".claude/skills/review/SKILL.md:458,464",
+        ".claude/skills/review/references/BATCH_IMPLEMENTOR.md:238 (keep the y/N gate)",
+        "tools/review/share-review.sh:173",
+        ".claude/settings.json: add read-only Bash(gh api user:*) and Bash(gh pr view:*). The delete stays unallowed, so it still prompts"
+      ],
+      "tokens": [],
+      "dependsOn": [],
+      "risk": "Low. Each script was a one-line gh call.",
+      "proof": "Byte-compare the old and new outputs for one known PR. tools/review/share-review.summary.test.sh stays green.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P17",
+      "title": "Delete the attach and link scripts (tim jira attach/link cover them)",
+      "scripts": [
+        "tools/jira/attach-file.sh",
+        "tools/jira/link-tickets.sh"
+      ],
+      "action": "already-covered-delete",
+      "timCommand": "tim jira attach <key> <file...> --confirm; tim jira link <key> relates|--blocks|--blocked-by <key> --confirm",
+      "callersToUpdate": [
+        "docs/reference/tools-index.md:39",
+        "docs/best-practices/jira/ticket-conventions.md:226-230",
+        "tim/README.md:898"
+      ],
+      "tokens": [
+        "JIRA_USER",
+        "JIRA_TOKEN",
+        "JIRA_BASE_URL"
+      ],
+      "dependsOn": [],
+      "risk": "Low. The Duplicates and Cloners link types are lost, and nobody calls them.",
+      "proof": "Dry runs on a scratch ticket. The existing attach.test.js and link.test.js stay green.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P18",
+      "title": "Spec validation goes through tim spec lint only; delete openspec-validate.sh",
+      "scripts": [
+        "tools/frontend-change/openspec-validate.sh"
+      ],
+      "action": "already-covered-delete",
+      "timCommand": "tim spec lint [--root <path>] --capability <path> [--json]",
+      "callersToUpdate": [
+        "increment-build-loop.js:741,796-808,933,948,3194",
+        "requirements-pipeline/workflow/README.md:633",
+        "tim/src/backlog/workflow-contract.test.js:3170,3342",
+        ".claude/skills/frontend-change/SKILL.md:445-460, references/SPEC_SYNC.md:348-350, decisions.md:38-46",
+        ".claude/skills/ticket/SKILL.md:86",
+        "docs/reference/openspec.md:15",
+        ".claude/settings.json:88-89 (remove both entries)"
+      ],
+      "tokens": [],
+      "dependsOn": [],
+      "risk": "Low. OpenSpec is pinned at 1.13.2 instead of @latest. Land it between loop runs.",
+      "proof": "Parity: every capability that passes in bash has no openspec-validate finding in tim, and three deliberately broken copies fail in both. `grep -rn openspec-validate` returns nothing outside decisions.md history.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P19",
+      "title": "Freeze the guard hooks' behaviour in a golden test corpus, ready for Sam to port them to Node",
+      "scripts": [
+        ".claude/hooks/guard-bash.sh",
+        ".claude/hooks/guard-edits.sh"
+      ],
+      "action": "test-only",
+      "timCommand": "none: a vitest corpus that spawns .claude/hooks/guard-bash.sh and guard-edits.sh",
+      "callersToUpdate": [
+        ".claude/hooks/guard-bash.sh:120 (name ${CLAUDE_PROJECT_DIR/#$HOME/~}, not the canonical clone)",
+        "docs/adr/0002-no-bash-sandbox-deny-list-and-guard-hooks.md (add a consequence: the hooks stay shell, for self-protection, failing closed, the right clone and speed)"
+      ],
+      "tokens": [
+        "CLAUDE_PROJECT_DIR",
+        "HOME",
+        "PWD"
+      ],
+      "dependsOn": [],
+      "risk": "Low. Tests only. guard-edits.sh blocks agent edits to .claude/hooks/**, so the loop writes the corpus and P19B (Sam) does the port.",
+      "proof": "One golden case per allow and deny branch, green against today's Bash hooks.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P20",
+      "title": "The build loop waits on PR checks with gh directly; delete wait-for-pr-checks.sh",
+      "scripts": [
+        "tools/github-actions/wait-for-pr-checks.sh"
+      ],
+      "action": "already-covered-delete",
+      "timCommand": "none: increment-build-loop.js runs `gh pr checks <pr> --watch --fail-fast` (rule 8: GitHub stays on gh) and maps its outcome to the loop's existing green/fail/timeout/no-checks/stale handling",
+      "callersToUpdate": [
+        "none: increment-build-loop.js:4522,7178 already builds the path from ${TILDE}"
+      ],
+      "tokens": [],
+      "dependsOn": [
+        "P05"
+      ],
+      "risk": "Medium. The build loop is in active use and reads the script's exit codes 0/1/2/4/5. Record each code's meaning first, keep every outcome the loop acts on, and launch nothing mid-run.",
+      "proof": "Before the change, a stub gh on PATH drives the script through each exit code and the loop's handling of each is recorded. After, the same stub cases give the same loop decisions. No caller names the script.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P21",
+      "title": "Jira client: rendered description, parent, labels, links, subtasks, updated time",
+      "scripts": [
+        "tim/src/clients/jira-client.js"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim jira ticket <id> [--rendered] [--json] gains parent, labels, renderedDescription, subtasks[], links[], updated",
+      "callersToUpdate": [
+        "tim/src/clients/jira-client.js:259-273, :692",
+        "tim/src/commands/jira/ticket.js (text sections)",
+        "CLAUDE.md:143"
+      ],
+      "tokens": [
+        "JIRA_USER",
+        "JIRA_TOKEN",
+        "JIRA_BASE_URL"
+      ],
+      "dependsOn": [],
+      "risk": "Low. The fields are additive. This is the shared library for P26, P28, P34, P38 and P52.",
+      "proof": "nock fixtures with renderedFields, inward and outward links, subtasks and a null parent. `tim jira ticket X --json` matches `tools/jira/ticket.sh X json` field for field on 3 real tickets.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P22",
+      "title": "Confluence client: view body, page id from a URL, children, export; tim confluence page gets the full layout",
+      "scripts": [
+        "tim/src/clients/confluence-client.js",
+        "tim/src/commands/confluence/index.js"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim confluence page <id-or-url> [--raw] [--json] (text output byte-equal to page.sh 'full'; --raw replaces page.sh json)",
+      "callersToUpdate": [
+        "tim/src/clients/confluence-client.js:85-96 (getPageView, pageIdFromUrl, getChildren, getPageExport)",
+        "tim/src/commands/confluence/index.js:4-26",
+        "tim/README.md:62"
+      ],
+      "tokens": [
+        "JIRA_USER",
+        "JIRA_TOKEN",
+        "JIRA_BASE_URL"
+      ],
+      "dependsOn": [],
+      "risk": "Low to medium. The JSON envelope is additive, so DISTIL still reads result.body as storage. The text layout must use body.view, as page.sh does.",
+      "proof": "`diff <(tools/confluence/page.sh $ID) <(tim confluence page $ID)` is empty for two real pages, and the --raw output matches under jq -S. nock tests for URL parsing, 401 and 404.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P23",
+      "title": "tim jira detach and unlink (list and delete attachments and links)",
+      "scripts": [
+        "tools/jira/delete-attachment.sh",
+        "tools/jira/delete-link.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim jira detach <key> <filename> [--all] | --id <id> | --list; tim jira unlink --id <id> | <key> --list (dry run until --confirm)",
+      "callersToUpdate": [
+        "docs/best-practices/jira/ticket-conventions.md:248-249",
+        "docs/reference/tools-index.md:40",
+        "tim/README.md"
+      ],
+      "tokens": [
+        "JIRA_USER",
+        "JIRA_TOKEN",
+        "JIRA_BASE_URL"
+      ],
+      "dependsOn": [],
+      "risk": "Medium: these delete. Keep the refusal on an ambiguous filename unless --all.",
+      "proof": "nock tests: a dry run sends no DELETE, an ambiguous name exits USAGE. Canary on a scratch ticket compares the --list output with the bash script.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P24",
+      "title": "tim jira update gains priority, parent and labels; theme-ticket and ticket-creator move onto it",
+      "scripts": [
+        "tools/jira/update-ticket.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim jira update <key> [--summary] [--description-file] [--priority] [--parent <key>|none] [--labels a,b] [--add-label l]... --confirm",
+      "callersToUpdate": [
+        "tools/theme-ticket/push-description.sh:96-98 (until P39 ports it)",
+        ".claude/skills/theme-ticket/SKILL.md:95,336",
+        ".claude/skills/ticket-creator/SKILL.md:380",
+        "docs/best-practices/jira/ticket-conventions.md:145",
+        "docs/reference/tools-index.md:41"
+      ],
+      "tokens": [
+        "JIRA_USER",
+        "JIRA_TOKEN",
+        "JIRA_BASE_URL"
+      ],
+      "dependsOn": [
+        "P21"
+      ],
+      "risk": "Medium: business-facing tickets. The read-back compare of a long wiki description may not round-trip byte for byte, so prove it on a real theme ticket first.",
+      "proof": "nock tests assert the PUT payload for each flag. Canary: a dry run of one domain ticket with the old and new code gives the same plan, then a real push reports 'unchanged'.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P25",
+      "title": "tim jira epics --board and tim jira labels --board",
+      "scripts": [
+        "tools/jira/list-board-epics.sh",
+        "tools/jira/list-board-labels.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim jira epics --board <id> [--include-done] [--json] (text 'KEY — summary'); tim jira labels --board <id> [--json]",
+      "callersToUpdate": [
+        "tools/ticket-creator/prepare-ticket-creation.sh:49 (until P33)",
+        ".claude/skills/ticket-creator/assets/known-labels.md:9,58",
+        "docs/best-practices/jira/ticket-conventions.md:267-270",
+        "docs/reference/tools-index.md:44-45"
+      ],
+      "tokens": [
+        "JIRA_USER",
+        "JIRA_TOKEN",
+        "JIRA_BASE_URL"
+      ],
+      "dependsOn": [],
+      "risk": "Low to medium. This must use the agile board endpoint, not the project JQL, or the epic set changes.",
+      "proof": "`diff <(list-board-epics.sh 13780) <(tim jira epics --board 13780 --no-ui)` is empty. The labels JSON is equal.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P26",
+      "title": "Raise every ticket through tim jira create, epics included; delete create-ticket.sh",
+      "scripts": [
+        "tools/jira/create-ticket.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim jira create --from ticket.json [--confirm <planId>] (manifest type enum gains Epic); tim jira assign <key> me --confirm",
+      "callersToUpdate": [
+        ".claude/skills/ticket-creator/SKILL.md:345-366",
+        ".claude/skills/govuk-upgrade/SKILL.md:69",
+        ".claude/skills/requirements-pipeline/QUICKSTART.md:34",
+        "docs/reference/tools-index.md:22-24,36",
+        "docs/best-practices/jira/ticket-conventions.md:144,218",
+        "tim/src/commands/jira/epics.js:13",
+        "tim/README.md:898"
+      ],
+      "tokens": [
+        "JIRA_USER",
+        "JIRA_TOKEN",
+        "JIRA_BASE_URL",
+        "JIRA_PROJECT_KEY (writers fill the manifest from it)"
+      ],
+      "dependsOn": [
+        "P21"
+      ],
+      "risk": "Medium. Creating a ticket cannot be undone; tim's receipt file guards against a second create. The one-line create from arguments is lost.",
+      "proof": "Manifest and plan tests for type Epic. Canary: raise the next govuk tracking ticket through a manifest and compare its fields with an older one.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P27",
+      "title": "Shared review library in tim: workarea paths, atomic JSON store, finding categories, bash-vs-tim golden harness",
+      "scripts": [
+        "tools/review/finding-categories.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "none (library): tim/src/review/{paths,store,finding-categories}.js and a golden harness that records a script's output with HOME pointed at a fixture",
+      "callersToUpdate": [
+        "tim/src/backlog/workflow-contract.test.js:431-438 (read the JS categories)",
+        "a temporary parity test against the shell arrays while tools/style still sources the file"
+      ],
+      "tokens": [],
+      "dependsOn": [],
+      "risk": "Low: no callers yet. The golden snapshots freeze the bash output so they outlive the scripts. The understanding-check, govuk, npm, style and journey ports reuse the harness.",
+      "proof": "Unit tests for the path encoding ('/' becomes '_') and the categories. The harness reproduces one real items.json read.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P28",
+      "title": "tim workspace pin-fetch replaces light-remote.sh",
+      "scripts": [
+        "tools/git/light-remote.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim workspace pin-fetch <dir> (--exclude-gh-pages [--prune] | --pr <n> [--include-main]) [--json]",
+      "callersToUpdate": [
+        "tools/review/prepare-review.sh:300,328,330 and tools/review/refresh/pull-repos.sh:71,75 (until P53/P54 port them)",
+        "docs/agent-onboarding.md:194-199",
+        "tim/src/exec/git-exclude-gh-pages.js:7"
+      ],
+      "tokens": [],
+      "dependsOn": [
+        "P12"
+      ],
+      "risk": "Low. Git config writes only.",
+      "proof": "Fixture-clone vitest for each mode, including idempotence. A one-off diff of `git config --get-all remote.origin.fetch` and `for-each-ref` between bash and tim shows no difference. Delete the script once grep finds no caller.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P29",
+      "title": "tim ci scope, suites and tags replace scripts/ci in the e2e workflow",
+      "scripts": [
+        "scripts/ci/resolve-scope.sh",
+        "scripts/ci/normalise-suites.sh",
+        "scripts/ci/normalise-tags.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim ci scope | suites | tags [--json] --workspace \"$GITHUB_WORKSPACE\" (plain stdout byte-identical to the bash, '::error::' on stderr)",
+      "callersToUpdate": [
+        ".github/workflows/e2e-tests.yml:79-86,176-189 (add setup-node 24 and a cached npm ci of tim before the scope step)",
+        "tim/src/ci/e2e-scope.js (pure functions plus golden fixtures recorded from the bash)",
+        "tim/README.md"
+      ],
+      "tokens": [
+        "REPOSITORY",
+        "MANUAL",
+        "SUITES",
+        "TAGS",
+        "GITHUB_OUTPUT"
+      ],
+      "dependsOn": [],
+      "risk": "Medium: every service repo's PR e2e run goes through it. A looser regex is an injection risk. A stray stdout line corrupts GITHUB_OUTPUT. It adds an npm ci to each shard.",
+      "proof": "Golden fixtures for every scope key plus the rejected inputs; a local parity diff is empty. A workflow_dispatch run and one caller PR give scope and test counts identical to main.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P30",
+      "title": "tim refine finalize and tim refine prepare replace tools/refine",
+      "scripts": [
+        "tools/refine/refine-finalize.sh",
+        "tools/refine/prepare-refinement.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim refine prepare <ticket> [--json]; tim refine finalize <ticket> --verdict 'READY|NEEDS WORK|SPIKE REQUIRED' [--reason]",
+      "callersToUpdate": [
+        ".claude/skills/ticket-refiner/SKILL.md:25-29,85,87,122,172-189",
+        ".claude/skills/ticket-refiner/assets/refinement-schema.md",
+        "docs/reference/tools-index.md:139-140"
+      ],
+      "tokens": [
+        "JIRA_USER",
+        "JIRA_TOKEN",
+        "JIRA_BASE_URL"
+      ],
+      "dependsOn": [
+        "P21",
+        "P22"
+      ],
+      "risk": "Medium: ticket.md is what the LLM assesses. Keep the defaults, the comment heading and the Confluence block. Use a literal template replace (this fixes the awk '&' bug).",
+      "proof": "Golden ticket.md, meta and review.md from nock fixtures. Live: diff the bash and tim workareas for one real ticket (only `created` differs). A run from a second clone lands in that clone.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P31",
+      "title": "tim ticket branch, prepare-plan and prepare-implement replace tools/ticket",
+      "scripts": [
+        "tools/ticket/setup-branch.sh",
+        "tools/ticket/prepare-plan.sh",
+        "tools/ticket/prepare-implement.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim ticket branch <EUDPA-N|NO_JIRA> --repo R --slug S [--type] [--base]; tim ticket prepare-plan <id> [--repos]; tim ticket prepare-implement <id> [--repo] (prior-PR diffs move to gh lines in IMPLEMENTOR.md)",
+      "callersToUpdate": [
+        ".claude/skills/ticket/SKILL.md:134-163",
+        ".claude/skills/ticket/references/IMPLEMENTOR.md:15-31,61-73",
+        ".claude/skills/ticket/references/PLANNER.md:25-50",
+        "docs/onboarding/generator/build-ticket-walkthrough.js:217,220,346 (regenerate)",
+        "docs/reference/tools-index.md:142-144"
+      ],
+      "tokens": [
+        "JIRA_USER",
+        "JIRA_TOKEN",
+        "JIRA_BASE_URL"
+      ],
+      "dependsOn": [
+        "P21",
+        "P22",
+        "P46"
+      ],
+      "risk": "Medium. The branch step keeps track-the-remote behaviour, which differs from `tim build start`. .implement-meta.json loses `diffs`, which nothing reads.",
+      "proof": "Temp bare-origin fixtures for every branch path. Golden ticket.md, meta and bundles for prepare-plan. A live `diff -r` on one real ticket.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P32",
+      "title": "tim capabilities extract (strict capability-map parser)",
+      "scripts": [
+        "tools/ticket-creator/extract-capabilities.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim capabilities extract <file> [--format list|tsv] [--json]",
+      "callersToUpdate": [
+        "tim/src/cli.js (register the group)",
+        "docs/reference/tools-index.md:147"
+      ],
+      "tokens": [],
+      "dependsOn": [],
+      "risk": "Low. The Perl regexes must carry over exactly; the output must be UTF-8 byte-identical.",
+      "proof": "Golden files recorded from the Perl script for a canonical map and a map with one violation per rule; stdout, stderr and exit code are byte-equal.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P33",
+      "title": "tim capabilities check and tim jira prereqs replace the ticket-creator scripts",
+      "scripts": [
+        "tools/ticket-creator/check-capabilities.sh",
+        "tools/ticket-creator/prepare-ticket-creation.sh",
+        "tools/ticket-creator/extract-capabilities.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim capabilities check [--cap-page] [--no-sync] [--quiet]; tim jira prereqs [--board 13780] [--cap-page 6468764101]",
+      "callersToUpdate": [
+        ".claude/skills/ticket-creator/SKILL.md:17-18,30-42",
+        ".claude/skills/ticket-creator/assets/known-labels.md:34,41",
+        "docs/reference/tools-index.md:36,146-148",
+        "docs/reference/workareas.md:16",
+        "workareas/shared/designer-prototyping/workspace-adapt/assess-handoff-to-real.md:147"
+      ],
+      "tokens": [
+        "JIRA_USER",
+        "JIRA_TOKEN",
+        "JIRA_BASE_URL",
+        "MIN_CAPABILITIES (default 20)"
+      ],
+      "dependsOn": [
+        "P32",
+        "P25",
+        "P37"
+      ],
+      "risk": "Medium. epics.txt, capabilities.txt and the WARNING:/ERROR: lines are the contract the skill reads.",
+      "proof": "nock fixtures for each case: stale, non-canonical, below the floor, clean. Diff the .prereqs/ folder with a bash run made just before. Delete the folder.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P34",
+      "title": "tim service-tag specs and start replace tools/service-tag",
+      "scripts": [
+        "tools/service-tag/list-specs.sh",
+        "tools/service-tag/start-service-tag.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim service-tag specs [--domain] [--type] [--tag] [--json]; tim service-tag start [--service] [--json]",
+      "callersToUpdate": [
+        ".claude/skills/service-tag/SKILL.md:55-62,108,146,164,195,277-282",
+        ".claude/skills/service-tag/decisions.md:38-39",
+        ".claude/settings.json:92-93 (remove)",
+        "tim/README.md"
+      ],
+      "tokens": [],
+      "dependsOn": [
+        "P01"
+      ],
+      "risk": "Medium. The compose parse must keep ignoring map-form env keys (6 in security.compose.yml), and git status lines stay raw strings.",
+      "proof": "`jq -S` diffs of the old and new JSON for no flags, by domain, by type, by tag and for 3 --service values: all empty. Vitest on a fixture workspace.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P35",
+      "title": "tim skill start, answer, render and scaffold replace tools/skill-creator",
+      "scripts": [
+        "tools/skill-creator/start-skill-creator.sh",
+        "tools/skill-creator/interview-add-answer.sh",
+        "tools/skill-creator/render-interview.sh",
+        "tools/skill-creator/scaffold-skill.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim skill start \"<trigger>\"; tim skill answer --run-id --field --value; tim skill render --run-id; tim skill scaffold --run-id [--dry-run]",
+      "callersToUpdate": [
+        ".claude/skills/skill-creator/SKILL.md:67,88,110,113,149,204-211",
+        ".claude/skills/skill-creator/references/INTERVIEWER.md",
+        ".claude/skills/skill-creator/assets/interview-schema.md",
+        "docs/reference/tools-index.md:150-153"
+      ],
+      "tokens": [],
+      "dependsOn": [
+        "P27"
+      ],
+      "risk": "Medium: the scaffold writes .claude/settings.json. Generated templates stay byte-identical; teaching new skills tim-first paths is a separate follow-up (see sharp edges).",
+      "proof": "Golden tree diff across four decisions fixtures, cmp on settings.json, a second run proves no duplicate entries, and one throwaway CREATE end to end.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P36",
+      "title": "tim theme-ticket start, derive, stale and push replace tools/theme-ticket",
+      "scripts": [
+        "tools/theme-ticket/start-theme-ticket.sh",
+        "tools/theme-ticket/derive-scenarios.sh",
+        "tools/theme-ticket/derive-scenarios.mjs",
+        "tools/theme-ticket/derive-scenarios.removed-and-renamed.test.sh",
+        "tools/theme-ticket/derive-scenarios.row-scopes.test.sh",
+        "tools/theme-ticket/derive-scenarios.squash-merge.test.sh",
+        "tools/theme-ticket/check-stale.sh",
+        "tools/theme-ticket/push-description.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim theme-ticket start|derive|stale|push (push is a dry run until --confirm)",
+      "callersToUpdate": [
+        ".claude/skills/theme-ticket/SKILL.md:79,107,119,162,217,330 (add --confirm),390,408,436-443",
+        ".claude/skills/theme-ticket/decisions.md:38-41",
+        ".claude/settings.json:90-91 (remove)",
+        "workareas/shared/design-release-2-1/tickets/README.md:200-206",
+        "workareas/shared/eudpa-774/tickets/README.md:21",
+        "workareas/shared/design-release-2-1/deferred.md:108"
+      ],
+      "tokens": [
+        "JIRA_USER",
+        "JIRA_TOKEN",
+        "JIRA_BASE_URL"
+      ],
+      "dependsOn": [
+        "P21",
+        "P24"
+      ],
+      "risk": "Medium. Push becomes a dry run by default, so the skill must gain --confirm in the same commit or nothing posts. Stale-check now compares real dates, so a borderline verdict may change.",
+      "proof": "Port the three .test.sh files to vitest with invert-red/restore-green probes. A jq -S diff of derived.json against the tracked goldens. A dry-run diff of push on every tracked ticket folder. One --confirm canary that reports 'unchanged'.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P37",
+      "title": "tim confluence sync (and --clean) replaces sync-docs.sh, html_to_md.js and clean-docs.sh",
+      "scripts": [
+        "tools/confluence/sync-docs.sh",
+        "tools/confluence/html_to_md.js",
+        "tools/confluence/clean-docs.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim confluence sync [--root-id] [--page-id] [--dry-run] [--clean] (writes <resolved root>/docs/confluence)",
+      "callersToUpdate": [
+        "tools/ticket-creator/check-capabilities.sh:50,59 and prepare-ticket-creation.sh:59,69 (until P33)",
+        ".claude/skills/ticket-creator/SKILL.md:37",
+        "docs/reference/tools-index.md:55-56"
+      ],
+      "tokens": [
+        "JIRA_USER",
+        "JIRA_TOKEN",
+        "JIRA_BASE_URL"
+      ],
+      "dependsOn": [
+        "P22"
+      ],
+      "risk": "Medium. The file format is what other tools grep for (`^version:`, the confluence-page-id line). --clean deletes only <root>/docs/confluence.",
+      "proof": "Golden HTML-to-Markdown corpus. `diff -r` of a live sync tree from bash and from tim (ignoring the timestamp line). A second clone writes only under itself.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P38",
+      "title": "Point the last page.sh callers at tim and delete page.sh and tools/confluence",
+      "scripts": [
+        "tools/confluence/page.sh",
+        "tools/confluence/README.md"
+      ],
+      "action": "already-covered-delete",
+      "timCommand": "tim confluence page",
+      "callersToUpdate": [
+        "any caller left after P30, P31, P33, P53 and P63 (prepare-* scripts, journey-builder targets.json:25)",
+        "docs/reference/tools-index.md:53"
+      ],
+      "tokens": [
+        "JIRA_USER",
+        "JIRA_TOKEN",
+        "JIRA_BASE_URL"
+      ],
+      "dependsOn": [
+        "P30",
+        "P31",
+        "P33",
+        "P53",
+        "P63"
+      ],
+      "risk": "Low once its callers are ported.",
+      "proof": "`grep -rn 'tools/confluence'` is empty; tim test and lint green.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P39",
+      "title": "Delete the comment, transition and search scripts, then tools/jira",
+      "scripts": [
+        "tools/jira/add-comment.sh",
+        "tools/jira/transition-ticket.sh",
+        "tools/jira/search.sh",
+        "tools/jira/ticket.sh",
+        "tools/jira/comments.sh"
+      ],
+      "action": "already-covered-delete",
+      "timCommand": "tim jira comment|transition|search|ticket|comments",
+      "callersToUpdate": [
+        ".claude/skills/ticket/SKILL.md:137-138",
+        ".claude/skills/requirements-pipeline/references/BUILD.md:344",
+        ".claude/skills/understanding-check/SKILL.md:108",
+        "docs/best-practices/jira/ticket-conventions.md:145,171,188,202,209,277",
+        "docs/reference/tools-index.md (jira section)",
+        "tim/README.md:935"
+      ],
+      "tokens": [
+        "JIRA_USER",
+        "JIRA_TOKEN",
+        "JIRA_BASE_URL",
+        "JIRA_PROJECT_KEY"
+      ],
+      "dependsOn": [
+        "P30",
+        "P31",
+        "P36",
+        "P52",
+        "P53"
+      ],
+      "risk": "Low once the prepare scripts and check-stale are ported. tim search caps at 500 results, and nothing scripted depends on more.",
+      "proof": "Comparison on a scratch ticket. `grep -rn 'tools/jira'` is empty outside workareas/.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P40",
+      "title": "tim understanding-check: counts, finalize, verify and the analysis writers",
+      "scripts": [
+        "tools/understanding-check/counts.sh",
+        "tools/understanding-check/finalize-verdict.sh",
+        "tools/understanding-check/verify-coverage.sh",
+        "tools/understanding-check/analysis-add-finding.sh",
+        "tools/understanding-check/analysis-set-verdict.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim understanding-check counts|finalize (exit 0/1/2)|verify|analysis add-finding|analysis complete <ticket>",
+      "callersToUpdate": [
+        ".claude/skills/understanding-check/SKILL.md:247,259 and the cheat-sheet",
+        ".claude/skills/understanding-check/references/ANALYST.md:36,45,108,124",
+        ".claude/skills/understanding-check/assets/verdict-rule.md, analysis-schema.md",
+        "docs/reference/tools-index.md:158-159,165-167"
+      ],
+      "tokens": [],
+      "dependsOn": [
+        "P27"
+      ],
+      "risk": "Medium: the finalize exit code is the skill's contract, and its reason strings go into report.md byte for byte.",
+      "proof": "Golden fixtures for every rule branch, with exit code, stdout and meta compared against the recorded bash.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P41",
+      "title": "tim understanding-check: questions, answers, scores and the report",
+      "scripts": [
+        "tools/understanding-check/question-add.sh",
+        "tools/understanding-check/question-replace.sh",
+        "tools/understanding-check/question-remove.sh",
+        "tools/understanding-check/transcript-record-answer.sh",
+        "tools/understanding-check/transcript-add-score.sh",
+        "tools/understanding-check/render-report.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim understanding-check question add|replace|remove; answer; score; report [--preview]",
+      "callersToUpdate": [
+        ".claude/skills/understanding-check/references/QUESTION_GENERATOR.md, SCORER.md",
+        ".claude/skills/understanding-check/assets/question-schema.md, transcript-schema.md",
+        "SKILL.md:173,270",
+        "docs/reference/tools-index.md:160-164,168"
+      ],
+      "tokens": [],
+      "dependsOn": [
+        "P40"
+      ],
+      "risk": "High for score: the unscorable-overlap guard decides verdicts and must be ported line for line. The categorical-verb check must agree with BSD grep \\b.",
+      "proof": "A table of about 30 overlap pairs and about 20 verb strings, run through bash and tim with identical results. A byte diff of report.md.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P42",
+      "title": "tim understanding-check start and prepare (Jira and redaction in tim, gh in the skill); delete the folder",
+      "scripts": [
+        "tools/understanding-check/start-check.sh",
+        "tools/understanding-check/prepare-check.sh",
+        "tools/understanding-check/redact-diff.js"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim understanding-check start <ticket>; tim understanding-check prepare <ticket> [--select] [--max-diff-bytes] (reads .raw/prs.json, .sha and .diff files written by gh search prs / gh pr view / gh pr diff in the skill)",
+      "callersToUpdate": [
+        ".claude/skills/understanding-check/SKILL.md:20-22,61,88,106-115",
+        "docs/reference/tools-index.md:154-168",
+        "docs/reference/workareas.md:26",
+        "tools/github/prs.sh loses this caller"
+      ],
+      "tokens": [
+        "JIRA_USER",
+        "JIRA_TOKEN",
+        "JIRA_BASE_URL"
+      ],
+      "dependsOn": [
+        "P41",
+        "P21"
+      ],
+      "risk": "High: the only script that handles secrets. Redaction regexes are copied verbatim and their order kept. The gh half now lives in skill text.",
+      "proof": "A redaction corpus covering every pattern gives byte-equal output and the same count. A golden workarea tree from nock and staged .raw/. One live run from a second clone at a non-canonical path.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P43",
+      "title": "tim govuk plans, summaries and render-plan (read-only); delete upgrade-status.sh",
+      "scripts": [
+        "tools/govuk/list-plans.sh",
+        "tools/govuk/upgrade-status.sh",
+        "tools/govuk/list-plan-summaries.sh",
+        "tools/govuk/render-version-plan.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim govuk plans|summaries|render-plan --run-id <id> [--repo] [--filter] [--sort-semver] [--json]",
+      "callersToUpdate": [
+        ".claude/skills/govuk-upgrade/references/PHASE_1/2/3_MANAGER.md, PLAN_WALKER.md (read .result)",
+        ".claude/skills/govuk-upgrade/SKILL.md:40,167",
+        ".claude/skills/govuk-upgrade/assets/version-state-schema.md",
+        "docs/reference/tools-index.md:134-137"
+      ],
+      "tokens": [],
+      "dependsOn": [
+        "P27"
+      ],
+      "risk": "Low. Moving to the --json envelope means callers read `.result`. Also fixes the Bash 4 `${v,,}` crash on macOS bash 3.2.",
+      "proof": "Golden output from the EUDPA-264 run copied under a scratch HOME: text byte-identical, JSON deep-equal.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P44",
+      "title": "tim govuk classify, add-change, mark-done, mark-failed and apply",
+      "scripts": [
+        "tools/govuk/version-classify.sh",
+        "tools/govuk/version-add-change.sh",
+        "tools/govuk/version-mark-implemented.sh",
+        "tools/govuk/version-mark-failed.sh",
+        "tools/govuk/apply-version.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim govuk classify|add-change|mark-done|mark-failed|apply --run-id --repo --version [--final]",
+      "callersToUpdate": [
+        ".claude/skills/govuk-upgrade/references/VERSION_PLANNER.md, PLAN_WALKER.md, PHASE_3_MANAGER.md:12,55-78",
+        ".claude/skills/govuk-upgrade/SKILL.md:55,146,163-165",
+        "version-state-schema.md",
+        "docs/reference/tools-index.md:129-133"
+      ],
+      "tokens": [],
+      "dependsOn": [
+        "P43"
+      ],
+      "risk": "High for apply: it writes package.json, the lockfile and a commit. Run npm in the realpath of the repo. Keep the /tmp log paths the manager reads. The concurrent-writer race is kept as it is today and noted.",
+      "proof": "Byte diffs of the state file with timestamps normalised. apply against a temp git repo with a stub npm. One scratch-clone canary patch bump.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P45",
+      "title": "tim govuk start, then delete tools/govuk",
+      "scripts": [
+        "tools/govuk/start-upgrade.sh",
+        "tools/govuk/discover-repos.sh",
+        "tools/govuk/discover-versions.sh",
+        "tools/govuk/setup-branch.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim govuk start (--ticket | --branch) [--target X.Y.Z] [--force]",
+      "callersToUpdate": [
+        ".claude/skills/govuk-upgrade/SKILL.md (frontmatter, :36-90, :143-167)",
+        "PHASE_1_MANAGER.md:5,25,37 (keep the '=== SECURITY PRE-FLIGHT' heading)",
+        "version-state-schema.md:13-15,110,138",
+        "docs/reference/tools-index.md:125-128"
+      ],
+      "tokens": [
+        "JIRA_PROJECT_KEY (default EUDPA)",
+        "npm_config_registry (optional)"
+      ],
+      "dependsOn": [
+        "P44"
+      ],
+      "risk": "Medium to high: new npm-registry and changelog fetch clients (a plain raw-file GET, not gh: a call made under rule 8). Keep the filesystem scan of repos/*/package.json.",
+      "proof": "nock fixtures for the registry and changelog; diff every written file against bash with a curl stub. A scratch-copy canary. A final grep for tools/govuk returns nothing.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P46",
+      "title": "tim review detect-tech replaces detect-tech.sh",
+      "scripts": [
+        "tools/review/detect-tech.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim review detect-tech <repo-path> [--json]",
+      "callersToUpdate": [
+        "tools/ticket/prepare-plan.sh:150,175, prepare-implement.sh:95, tools/understanding-check/prepare-check.sh:154-156, tools/review/prepare-review*.sh (until ported)",
+        ".claude/skills/ticket/SKILL.md:141",
+        ".claude/skills/review/SKILL.md:112,772",
+        ".github/workflows/tim-ci.yml:16,30",
+        "tim/src/backlog/standards.routing-golden.test.js:24,49,167-178"
+      ],
+      "tokens": [],
+      "dependsOn": [
+        "P27"
+      ],
+      "risk": "Low. tim/src/backlog/standards/review-routing.js already matches it byte for byte (golden G-5).",
+      "proof": "The existing __golden__/detect-tech.json passes unchanged through `tim review detect-tech --no-ui`.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P47",
+      "title": "tim review file and tim review items (per-file helpers and the items ledger)",
+      "scripts": [
+        "tools/review/file-review-init.sh",
+        "tools/review/file-review-add-item.sh",
+        "tools/review/file-review-set-verdict.sh",
+        "tools/review/review-items.sh",
+        "tools/review/review-counts.sh",
+        "tools/review/review-add-item.sh",
+        "tools/review/review-mark.sh",
+        "tools/review/review-set-status.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim review file init|add|verdict; tim review items list|counts|add|mark|status",
+      "callersToUpdate": [
+        ".claude/skills/review/references/FILE_REVIEWER.md, WALKER.md, BATCH_IMPLEMENTOR.md",
+        ".claude/skills/review/SKILL.md (cheat-sheet and steps)",
+        ".claude/skills/review/assets/file-review-schema.md, items-table.md",
+        "docs/reference/tools-index.md"
+      ],
+      "tokens": [],
+      "dependsOn": [
+        "P27"
+      ],
+      "risk": "Medium: the walker's hot path. Keep the TSV column order, the line stored as a string (items) or a number (per-file), and the confirmation lines.",
+      "proof": "Harness goldens for every filter and every transition. One walker session on a throwaway copy, with items.json diffed.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P48",
+      "title": "tim review render, aggregate, verify and reconcile",
+      "scripts": [
+        "tools/review/render-items.sh",
+        "tools/review/items-table.jq",
+        "tools/review/render-items.write.test.sh",
+        "tools/review/aggregate-file-reviews.sh",
+        "tools/review/verify-consistency.sh",
+        "tools/review/verify-style-coverage.sh",
+        "tools/review/verify-coverage.sh",
+        "tools/review/refresh/reconcile.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim review items render [--write]; tim review aggregate; tim review verify consistency|style|files (files reads .prs/<repo>-<pr>.json written by gh pr view); tim review reconcile",
+      "callersToUpdate": [
+        ".claude/skills/review/SKILL.md (render, aggregate, verify, reconcile steps; add the gh fact step before verify files)",
+        ".claude/skills/code-style/SKILL.md:217-220,590-594",
+        ".claude/skills/review/references/CONSISTENCY_REVIEWER.md:170-172",
+        ".claude/skills/understanding-check/SKILL.md:247,323",
+        "docs/reference/tools-index.md"
+      ],
+      "tokens": [],
+      "dependsOn": [
+        "P47"
+      ],
+      "risk": "Medium. The rendered markdown is committed into hand-off branches, so it must match exactly. A stale gh fact file means the coverage gate is wrong.",
+      "proof": "The render-items.write.test.sh cases ported to vitest. Goldens for aggregate, verify and reconcile with timestamps normalised.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P49",
+      "title": "tim review refresh (pull, merge-resolved, gaps, scope) and file-diff",
+      "scripts": [
+        "tools/review/refresh/pull-repos.sh",
+        "tools/review/refresh/list-merge-resolved.sh",
+        "tools/review/refresh/list-coverage-gaps.sh",
+        "tools/review/refresh/scope.sh",
+        "tools/github/file-diff.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim review refresh pull|merge-resolved|gaps|scope [--write-snapshot] --json; tim review file-diff <file> (--ticket --repo | --stdin)",
+      "callersToUpdate": [
+        ".claude/skills/review/SKILL.md:179,573,787-791",
+        ".claude/skills/review/references/FILE_REVIEWER.md:136,149",
+        ".claude/skills/code-style/references/STYLE_FILE_REVIEWER.md:124",
+        "tools/style/refresh/scope.sh:29-31 (until P57)",
+        "docs/reference/tools-index.md"
+      ],
+      "tokens": [],
+      "dependsOn": [
+        "P48",
+        "P28"
+      ],
+      "risk": "High: this drives every refresh and detaches review clones. scope now prints human text by default, so callers pass --json.",
+      "proof": "A fixture repo with a '# Conflicts:' merge; goldens for merge-resolved and scope; a bare-remote fixture for pull. One real re-review on a copy of a workarea.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P50",
+      "title": "tim review prepare (ticket, branch and local) and start",
+      "scripts": [
+        "tools/review/prepare-review.sh",
+        "tools/review/prepare-review-local.sh",
+        "tools/review/start-review.sh",
+        "tools/github/prs.sh",
+        "tools/github/pr-details.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim review prepare <EUDPA-X> | --branch <name> | --local <repo> <branch> [--files]; tim review start (prints MODE: FRESH|REFRESH). PR facts come from gh search prs / gh pr view / gh pr diff run by the skill",
+      "callersToUpdate": [
+        ".claude/skills/review/SKILL.md:48,102-213,771-773 (add the gh fact block)",
+        ".claude/skills/prototype/references/conventions-pass.md:95,110",
+        "tools/style/prepare-style*.sh (until P57)",
+        "tools/ticket and understanding-check callers already ported",
+        "docs/agent-onboarding.md",
+        "docs/reference/tools-index.md"
+      ],
+      "tokens": [
+        "JIRA_USER",
+        "JIRA_TOKEN",
+        "JIRA_BASE_URL"
+      ],
+      "dependsOn": [
+        "P49",
+        "P21",
+        "P22",
+        "P46"
+      ],
+      "risk": "High: Jira, Confluence, GitHub and git in one script. Split it into clone-and-seed then ticket.md if the PR grows too big.",
+      "proof": "A golden comparison of the whole workarea from nock, PR-fact fixtures and a bare remote. One real merged ticket reviewed both ways and diffed.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P51",
+      "title": "tim review share; gh pr comment posts it; delete pr-comment.sh and tools/review",
+      "scripts": [
+        "tools/review/share-review.sh",
+        "tools/review/share-review.summary.test.sh",
+        "tools/github/pr-comment.sh",
+        "tools/review/finding-categories.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim review share <id> [--repo] [--pr] [--comment-only] [--summary] [--reviewer LOGIN] [--dry-run]",
+      "callersToUpdate": [
+        ".claude/skills/review/SKILL.md:469-506,765-792 (cheat-sheet becomes a tim table)",
+        ".claude/skills/review/references/BATCH_IMPLEMENTOR.md:155",
+        "docs/reference/tools-index.md",
+        "finding-categories.sh deleted only after P56 stops sourcing it"
+      ],
+      "tokens": [],
+      "dependsOn": [
+        "P50",
+        "P56"
+      ],
+      "risk": "High: it pushes from the workspace checkout. Keep the dirty-tree refusal, the non-forced push and the 65536-character limit.",
+      "proof": "The summary test ported. Body goldens against the bash --dry-run. Git cases against a temp bare origin. One real comment-only share. grep for tools/review and tools/github is empty.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P52",
+      "title": "tim style: the items ledger, per-file helpers, aggregate and reconcile",
+      "scripts": [
+        "tools/style/style-items.sh",
+        "tools/style/style-counts.sh",
+        "tools/style/render-items.sh",
+        "tools/style/style-add-item.sh",
+        "tools/style/style-mark.sh",
+        "tools/style/style-set-status.sh",
+        "tools/style/file-style-add-item.sh",
+        "tools/style/file-style-set-verdict.sh",
+        "tools/style/aggregate-file-reviews.sh",
+        "tools/style/refresh/reconcile.sh",
+        "tools/style/items-table.jq"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim style items|counts|render|add-item|mark|set-status|file add|file verdict|aggregate|reconcile",
+      "callersToUpdate": [
+        ".claude/skills/code-style/SKILL.md, references/STYLE_WALKER.md, STYLE_IMPLEMENTOR.md, STYLE_FILE_REVIEWER.md",
+        ".claude/skills/code-style/assets/items-table.md, file-style-schema.md",
+        "docs/reference/tools-index.md:93-104"
+      ],
+      "tokens": [],
+      "dependsOn": [
+        "P27"
+      ],
+      "risk": "Medium. Keep @tsv escaping and codepoint sort. Fixes the ', Notes set' bug on purpose (named in the commit).",
+      "proof": "Goldens over copies of the real workareas (EUDPA-211, EUDPA-35, local/) for every flag and transition; file diffs with timestamps normalised.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P53",
+      "title": "tim style scope and start (prepare, topics, bundle, file init); delete tools/style",
+      "scripts": [
+        "tools/style/refresh/scope.sh",
+        "tools/style/start-style.sh",
+        "tools/style/prepare-style.sh",
+        "tools/style/prepare-style-local.sh",
+        "tools/style/file-style-init.sh",
+        "tools/style/file-topics.sh",
+        "tools/style/bake-rules-bundle.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim style start <id> | --local <repo> <branch>; tim style scope [--pr-files REPO=FILE]; tim style topics; tim style bundle; tim style file init",
+      "callersToUpdate": [
+        ".claude/skills/code-style/SKILL.md:14,19,72,141,151,288,576-588",
+        ".claude/skills/prototype/references/conventions-pass.md:88",
+        ".claude/skills/understanding-check/SKILL.md:114",
+        ".github/workflows/tim-ci.yml:14-15,28-29",
+        "tim/src/backlog/standards.routing-golden.test.js:47-48",
+        "docs/reference/tools-index.md:89-103"
+      ],
+      "tokens": [],
+      "dependsOn": [
+        "P52",
+        "P50",
+        "P49"
+      ],
+      "risk": "Medium to high. GitHub file lists come from gh in the skill; it must refuse loudly on an empty diff for a non-empty PR. The existing routing goldens must stay green.",
+      "proof": "Routing goldens unchanged. A golden comparison of the prepared tree. Dispatch of MODE lines. One live run from a second clone.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P54",
+      "title": "Sonar hook foundation in tim: fail-open runner, pending store, token lookup, PR list",
+      "scripts": [
+        "scripts/sonar/sonar-check-pending.sh",
+        "scripts/sonar/sonar-record-push.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "(library) tim/src/sonar/{hook-runtime,pending-store,token}.js; sonar-client listPullRequests and listIssues with severities",
+      "callersToUpdate": [
+        "tim/src/clients/sonar-client.js and its tests"
+      ],
+      "tokens": [
+        "SONAR_TOKEN (env, then zsh -ic 'printenv SONAR_TOKEN', then anonymous)",
+        "CLAUDE_PROJECT_DIR",
+        "TIM_NO_AUTO_PULL=1 on every hook call"
+      ],
+      "dependsOn": [],
+      "risk": "Medium. A hook must never exit 2 on UserPromptSubmit, because that erases the prompt. The on-disk state format stays byte-identical so bash and tim interoperate during the switch.",
+      "proof": "`diff -r` of the pending-store against state dirs written by bash. Thrown, bad-flag and offline cases all exit 0 with empty stdout.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P55",
+      "title": "tim sonar pending check|record and mcp-tidy take over the three sonar hooks",
+      "scripts": [
+        "scripts/sonar/sonar-check-pending.sh",
+        "scripts/sonar/sonar-record-push.sh",
+        "scripts/sonar/sonar-remove-stale-mcp-containers.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "node \"$CLAUDE_PROJECT_DIR/tim/src/cli.js\" --workspace \"$CLAUDE_PROJECT_DIR\" sonar pending check --event <E> | sonar pending record | sonar mcp-tidy (|| true, TIM_NO_AUTO_PULL=1)",
+      "callersToUpdate": [
+        ".claude/settings.json:150,168,179,184",
+        "docs/agent-onboarding.md:114,150-174",
+        "tim/README.md"
+      ],
+      "tokens": [
+        "SONAR_TOKEN",
+        "CLAUDE_PROJECT_DIR",
+        "TIM_NO_AUTO_PULL"
+      ],
+      "dependsOn": [
+        "P54"
+      ],
+      "risk": "Medium. If the reader and writer disagree on the state dir, findings stop surfacing silently. mcp-tidy runs docker rm -f, so keep the end-anchored process match.",
+      "proof": "Golden stdout and state-dir diffs against bash with a stub sonar or docker on PATH. One manual SessionStart check on Sam's machine.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P56",
+      "title": "tim sonar push-check (build, test, scanner pipeline; PR from SonarCloud; --hook mode)",
+      "scripts": [
+        "tools/sonar/sonar-push-check.sh",
+        "scripts/sonar/sonar-push-gate.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim sonar push-check [dir] [--pull-request N --base B] [--hook] (exit 0 pass or skip, 2 blocked; non-push hook calls exit fast without loading Ink)",
+      "callersToUpdate": [
+        "tim/src/commands/sonar/index.js",
+        "tim/src/cli.js (no auto-pull for --hook)",
+        "tim/README.md"
+      ],
+      "tokens": [
+        "SONAR_TOKEN (env, then zsh -ic fallback in --hook mode)"
+      ],
+      "dependsOn": [
+        "P54"
+      ],
+      "risk": "Medium. The first push of a new PR uses branch scope until CI has analysed it once, which is deliberate. Hook start-up time must be measured.",
+      "proof": "Fake mvn, npm and sonar-scanner on PATH; a parity harness against both bash scripts over the fixture matrix with zero diffs. One real run on address-book (Java) and animals-frontend (Node).",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P57",
+      "title": "Workspace and repo push hooks call tim; the bash scripts become forwarders, then are deleted",
+      "scripts": [
+        "tools/sonar/sonar-push-check.sh",
+        "scripts/sonar/sonar-push-gate.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "if [ -f \"$W/tim/src/cli.js\" ] && [ -d \"$W/tim/node_modules\" ]; then node \"$W/tim/src/cli.js\" sonar push-check --hook; fi",
+      "callersToUpdate": [
+        ".claude/settings.json:118",
+        "repos/*/.claude/settings.json:19 (8 repos; canary animals-frontend)",
+        "CLAUDE.md:266,277",
+        "docs/agent-onboarding.md:113",
+        "docs/reference/tools-index.md:170"
+      ],
+      "tokens": [
+        "SONAR_TOKEN"
+      ],
+      "dependsOn": [
+        "P56"
+      ],
+      "risk": "Medium: 8 repos. Keep forwarders until no open branch in those repos still names the old path.",
+      "proof": "Canary: a format error is blocked and a clean push passes with the marker written, then every repo is checked. The forwarder's output matches direct tim. The deletion happens only after a git grep of remote branches is clean.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers",
+        "repo-tests"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P58",
+      "title": "Stack: golden docker call traces, then one stack definition and compose builder in tim",
+      "scripts": [
+        "scripts/stack/help.test.sh",
+        "scripts/stack/lib/compose.sh",
+        "scripts/stack/lib/colour.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "none (modules): tim/src/stack/{definition,compose,colour}.js; fake-docker test support",
+      "callersToUpdate": [
+        "tim/src/commands/docker/logs.js:28-47 (read SERVICES, not run-stack.sh)",
+        "tim/src/exec/stack.js:86 and stack-lease.js:26-29",
+        "tim/src/exec/stack-fingerprints.js:173 (add tim/src/stack)",
+        ".github/workflows/tim-ci.yml paths (add scripts/stack/** and docker/stack/**)"
+      ],
+      "tokens": [
+        "DEV_BUILD_PLATFORM",
+        "CI",
+        "NO_COLOR"
+      ],
+      "dependsOn": [],
+      "risk": "Low. Tests and dark modules. The fake must stand in for git too, so no test reaches GitHub.",
+      "proof": "Every help.test.sh assertion ported, plus golden argv traces for each run-stack, stop, bounce, dev-service and restart scenario. A parity test proves the module tables equal the bash tables.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers",
+        "stack-smoke"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P59",
+      "title": "tim docker bounce-backend, service and restart run natively",
+      "scripts": [
+        "scripts/stack/bounce-backend.sh",
+        "scripts/stack/dev-service.sh",
+        "scripts/stack/restart-stack.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim docker bounce-backend (adds --build); tim docker service rebuild|restart <svc...>; tim docker restart [up flags]",
+      "callersToUpdate": [
+        "tim/src/commands/docker/index.js:142-150",
+        "tim/src/exec/stack-refresh.js:15-46",
+        "tim/src/components/features/docker/useDockerFeature.js:21-25",
+        "docs/best-practices/docker-compose.md:195",
+        "docker/stack/AGENTS.md",
+        "CLAUDE.md (Workspace stack section)"
+      ],
+      "tokens": [
+        "DEV_BUILD_PLATFORM",
+        "CI",
+        "NO_COLOR"
+      ],
+      "dependsOn": [
+        "P58",
+        "P06"
+      ],
+      "risk": "Medium: tim build gate refreshes through dev-service every row. Adding --build to bounce closes the shared-image-tag sharp edge, and is the one intentional argv difference.",
+      "proof": "Golden argv diffs against the traces from P58. A live gate run touching one frontend file gives the same refresh log as before.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers",
+        "stack-smoke"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P60",
+      "title": "tim docker down runs natively",
+      "scripts": [
+        "scripts/stack/stop-stack.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim docker down [--force] [-- <compose down args>]",
+      "callersToUpdate": [
+        "tim/src/commands/docker/index.js:137-140",
+        "tim/src/exec/stack-lease.js:364-506",
+        "tim/src/commands/docker/lease.js:263",
+        "increment-build-loop.js:1316-1340,3336 (banned-command text)",
+        "docker/stack/AGENTS.md, tim/README.md"
+      ],
+      "tokens": [
+        "CI",
+        "NO_COLOR"
+      ],
+      "dependsOn": [
+        "P59"
+      ],
+      "risk": "Medium: it wipes volumes. Dropping an opt-in profile would leave ZAP running.",
+      "proof": "Golden argv diffs. Lease tests for release and for a half-started stack with a fake docker exiting 0 and 1.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers",
+        "stack-smoke"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P61",
+      "title": "Stack flags, init-script staging and native start for tim docker up, dev and perf",
+      "scripts": [
+        "scripts/stack/lib/flags.sh",
+        "scripts/stack/lib/init-scripts.sh",
+        "scripts/stack/run-stack.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim docker up [-b] [-e]... [--profile]... [--perf] [-- args]; tim docker dev; tim docker perf",
+      "callersToUpdate": [
+        "tim/src/commands/docker/index.js:106-135",
+        "tim/src/exec/stack.js:7-82",
+        "tim/src/exec/stack-lease.js:344",
+        "tim/src/exec/stack-refresh.js:17,73-79",
+        "tim/src/commands/docker/lease.js:216,250",
+        "docker/stack/*.compose.yml comments",
+        "docs: local-setup.md, best-practices/docker-compose.md, github-actions.md"
+      ],
+      "tokens": [
+        "MONGO_UP_ATTEMPTS",
+        "MONGO_RETRY_BACKOFF_SECONDS",
+        "STUB_PROFILE",
+        "DEV_BUILD_PLATFORM",
+        "TRADE_IMPORTS_* (unset for latest, excluded or dev services)",
+        "GIT_TERMINAL_PROMPT=0",
+        "CI",
+        "NO_COLOR"
+      ],
+      "dependsOn": [
+        "P60"
+      ],
+      "risk": "High: the most logic, and the build loop depends on it every row. Probes and pulls must stay concurrent, and signals must kill the early pulls.",
+      "proof": "Golden argv and env diffs for every run-stack scenario. Fixtures for mongo retry and post-healthy re-check. A staging tree diff and the zap inode test. A live canary of tim docker dev then tim build gate.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers",
+        "stack-smoke"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P62",
+      "title": "CI starts the stack with tim; delete run-stack.sh and the bash libs",
+      "scripts": [
+        "scripts/stack/run-stack.sh",
+        "scripts/stack/lib/flags.sh",
+        "scripts/stack/lib/init-scripts.sh",
+        "scripts/stack/lib/compose.sh",
+        "scripts/stack/lib/colour.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "node tim/src/cli.js docker up --branch \"$BRANCH\" [--profile security]",
+      "callersToUpdate": [
+        ".github/workflows/e2e-tests.yml:124-126",
+        ".github/workflows/security-active-scan.yml:31,48",
+        "tim/src/exec/stack-fingerprints.js:173",
+        "CLAUDE.md, tim/CLAUDE.md:3, tim/README.md, docker/stack/AGENTS.md, the docs/repos/*.md pages, skills govuk-upgrade PHASE_3_MANAGER.md:134 and requirements-pipeline BUILD.md:325, machine-tuning.md:144, workflow/README.md",
+        "docs/onboarding/01-workspace (regenerate)"
+      ],
+      "tokens": [
+        "CI"
+      ],
+      "dependsOn": [
+        "P61",
+        "P29"
+      ],
+      "risk": "Medium: adds a tim npm ci to every e2e run (cache it).",
+      "proof": "A branch PR's e2e run prints the same per-service resolution lines as a recent green main run, and passes. A security scan dispatch passes. `git grep scripts/stack` returns only history.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers",
+        "stack-smoke"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P63",
+      "title": "Move journey-builder's targets.json to frontend-change, then retire the journey-builder skill and its 28 scripts",
+      "scripts": [
+        "tools/journey-builder/targets.json",
+        "tools/journey-builder/*.sh (28)"
+      ],
+      "action": "delete-dead",
+      "timCommand": "none: tim backlog / tim distil / tim build (requirements-pipeline) is the live replacement",
+      "callersToUpdate": [
+        ".claude/skills/frontend-change/SKILL.md:3,32,39,188 (new targets.json path)",
+        "delete .claude/skills/journey-builder/",
+        "CLAUDE.md:21 (drop the journey-builder worktree exception)",
+        "docs/reference/worker-references.md:27-30, openspec.md:19,36, workareas.md:27-43",
+        ".claude/skills/frontend-change/SKILL.md:143,189,340,352 and references/SPEC_SYNC.md",
+        ".claude/skills/prototype/SKILL.md:87",
+        "tim/src/commands/spec/lint.js:78,98 (example path)",
+        ".claude/workflows/designer-prototyping-suite.js:172"
+      ],
+      "tokens": [],
+      "dependsOn": [
+        "P18"
+      ],
+      "risk": "Medium, and a scope call: it removes a dormant skill rather than porting it. It is not in CLAUDE.md's routing table, its last run was 10 Sep (EUDPA-409), and requirements-pipeline absorbed it (75105948). If Sam wants it kept, run the 13 fallback port rows from the tools/journey-builder folder plan instead. The EUDPA-409 worktree is left in place.",
+      "proof": "git grep for journey-builder scripts and the skill folder returns nothing outside workareas/ and docs/analysis. frontend-change still resolves its targets. tim test and spec lint green.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P64",
+      "title": "tim npm packages: run-state module, read queries and writers",
+      "scripts": [
+        "tools/npm/packages-list.sh",
+        "tools/npm/packages-counts.sh",
+        "tools/npm/packages-set-status.sh",
+        "tools/npm/packages-set-classification.sh",
+        "tools/npm/packages-aggregate-classifications.sh",
+        "tools/npm/verify-classification-coverage.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim npm packages list|counts|set-status|set-classification|aggregate|verify --run-id T [--repo]",
+      "callersToUpdate": [
+        "tools/npm/run-automated-upgrades.sh, start-upgrade.sh, upgrade-one-package.sh, run-manual-upgrade.sh (call tim with --workspace until they are ported)",
+        ".claude/skills/npm-upgrade/references/WALKER.md, AUTOMATED_EXECUTION.md, DISCOVERY_AND_PLANNING.md, PACKAGE_PLANNER.md, MANUAL_UPGRADE_IMPLEMENTOR.md (read .result)",
+        ".claude/skills/npm-upgrade/assets/packages-table.md",
+        "docs/reference/tools-index.md:112-120"
+      ],
+      "tokens": [],
+      "dependsOn": [
+        "P27"
+      ],
+      "risk": "Medium. Keep per-package classification fragments, because planners run in parallel.",
+      "proof": "Golden JSON from a fixture run directory. Directory diffs after each writer. A concurrency test with 20 parallel set-classification calls.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P65",
+      "title": "tim npm discover and context (ncu, best-practices bundle, changelog pre-bake)",
+      "scripts": [
+        "tools/npm/discover-upgrades.sh",
+        "tools/npm/packages-init.sh",
+        "tools/npm/bake-best-practices.sh",
+        "tools/npm/prebake-context.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim npm discover --repo R --run-id T [--strategy]; tim npm context best-practices|prebake",
+      "callersToUpdate": [
+        "tools/npm/start-upgrade.sh:237,246-263 (until P68)",
+        "docs/reference/tools-index.md:113-116",
+        "tools/npm/README.md (stale; delete in P68)"
+      ],
+      "tokens": [],
+      "dependsOn": [
+        "P64"
+      ],
+      "risk": "Medium. ncu becomes a pinned tim dependency, so users no longer need a global install; its version may differ from a user's global copy.",
+      "proof": "The same pinned ncu run both ways gives an equal packages.json (stamps stripped). nock fixtures for the changelog fetch.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P66",
+      "title": "tim npm audit (baseline, allow, forget) and tim npm exec",
+      "scripts": [
+        "tools/npm/audit-lib.sh",
+        "tools/npm/audit-fix-check.mjs",
+        "tools/npm/audit-baseline.sh",
+        "tools/npm/audit-allowlist-add.sh",
+        "tools/npm/audit-allowlist-forget.sh",
+        "tools/npm/npm-in-repo.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim npm audit baseline|allow|forget; tim npm exec (--repo|--clone) -- <npm args>",
+      "callersToUpdate": [
+        "remaining tools/npm callers (exit codes 0/1/2 kept)",
+        ".claude/skills/npm-upgrade/references/MANUAL_UPGRADE_IMPLEMENTOR.md",
+        "docs/reference/tools-index.md:107-111"
+      ],
+      "tokens": [],
+      "dependsOn": [
+        "P64"
+      ],
+      "risk": "High: the security gate. Severity ranking, expiry and the 'blocked upstream' rules must match jq exactly, and audit-ci.jsonc formatting must not drift.",
+      "proof": "Pure-function tables against recorded jq outputs. An end-to-end baseline on two repos gives the same summary and exit code. Month-end expiry cases. The lockfile path test for exec through a symlink.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P67",
+      "title": "tim npm upgrade-one, refresh-lockfile, run-auto, run-manual and reset-overrides",
+      "scripts": [
+        "tools/npm/upgrade-one-package.sh",
+        "tools/npm/refresh-lockfile.sh",
+        "tools/npm/run-automated-upgrades.sh",
+        "tools/npm/run-manual-upgrade.sh",
+        "tools/npm/reset-overrides.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim npm upgrade-one|refresh-lockfile|run-auto|run-manual|reset-overrides --run-id T --repo R",
+      "callersToUpdate": [
+        ".claude/skills/npm-upgrade/references/WALKER.md",
+        "tools/npm/start-upgrade.sh:326,478 (until P68)",
+        "docs/reference/tools-index.md:121-123"
+      ],
+      "tokens": [
+        "NVM_DIR (honour an exported value, else $HOME/.nvm)",
+        "HOME",
+        "PATH"
+      ],
+      "dependsOn": [
+        "P66"
+      ],
+      "risk": "High: it installs, commits and rolls back in real repos. Keep every rollback path and the runner exit codes 0/1/3.",
+      "proof": "Fixture git repo scenarios (green, failing tests, audit red, allowlisted, hook refusal) compared against bash on identical copies: git log, state and exit codes.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P68",
+      "title": "tim npm upgrade (phases 0 to 4) replaces start-upgrade.sh; delete tools/npm",
+      "scripts": [
+        "tools/npm/start-upgrade.sh"
+      ],
+      "action": "port-to-tim",
+      "timCommand": "tim npm upgrade EUDPA-X --phase 0|1|2|3|4 [--repo]... [--strategy] [--branch]",
+      "callersToUpdate": [
+        ".claude/skills/npm-upgrade/SKILL.md, references/DISCOVERY_AND_PLANNING.md, AUTOMATED_EXECUTION.md, MANUAL_HANDOFF.md, COMMON.md:5",
+        "docs/reference/tools-index.md:105-123",
+        "tools/npm/README.md (delete)"
+      ],
+      "tokens": [],
+      "dependsOn": [
+        "P65",
+        "P67"
+      ],
+      "risk": "Medium. Orchestration only by now. The manifests move into the envelope, so the skill reads .result.",
+      "proof": "A full fixture run diffed phase by phase against bash. One real phase 0+1 dry run from a second clone. `grep -rn tools/npm` is empty.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P69",
+      "title": "Remove tim link and the canonical-path fallback warning; tidy tim's own couplings",
+      "scripts": [
+        "tim/src/commands/link.js",
+        "tim/src/env/workspace-root.js",
+        "tim/src/backlog/standards/rules.js"
+      ],
+      "action": "tim-fix",
+      "timCommand": "tim (no link command); falling back to the canonical path prints one warning to stderr",
+      "callersToUpdate": [
+        "tim/src/cli.js:19, cli.test.js:50",
+        "tim/src/commands/link.js, link.test.js (delete)",
+        "tim/src/env/workspace-root.js:9-18 (comment and warning)",
+        "tim/src/backlog/standards/rules.js:7 (also accept the root-relative form)",
+        "tim/src/commands/build/probe.js:191"
+      ],
+      "tokens": [],
+      "dependsOn": [
+        "P70"
+      ],
+      "risk": "Low. Nothing calls `tim link`. The warning tells people (and workflow agents outside any clone) to set TIM_WORKSPACE.",
+      "proof": "cli.test.js shows no link command. A workspace-root test with no walk-up match warns. A rules.js test resolves both prefix forms.",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P70",
+      "title": "Delete the remaining folders that are now empty, and the tools-index sections",
+      "scripts": [
+        "tools/github/",
+        "tools/github-actions/ (wait-for-pr-checks.sh stays)",
+        "tools/git/",
+        "tools/refine/",
+        "tools/ticket/",
+        "tools/ticket-creator/",
+        "tools/service-tag/",
+        "tools/skill-creator/",
+        "tools/theme-ticket/",
+        "tools/understanding-check/",
+        "scripts/ci/"
+      ],
+      "action": "delete-dead",
+      "timCommand": "tim --help",
+      "callersToUpdate": [
+        "docs/reference/tools-index.md (points at tim --help; keeps the hooks and wait-for-pr-checks)",
+        "tim/README.md command list"
+      ],
+      "tokens": [],
+      "dependsOn": [
+        "P51",
+        "P53",
+        "P68",
+        "P62",
+        "P45",
+        "P42",
+        "P36",
+        "P35",
+        "P34",
+        "P33",
+        "P31",
+        "P30",
+        "P29",
+        "P39",
+        "P38"
+      ],
+      "risk": "Low.",
+      "proof": "`find tools scripts -name '*.sh'` lists only tools/github-actions/wait-for-pr-checks.sh (plus the two hook files under .claude/hooks).",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P71",
+      "title": "Allowlist: drop the canonical-path entries",
+      "scripts": [
+        ".claude/settings.json"
+      ],
+      "action": "convention",
+      "timCommand": "Bash(tim:*) (already at :87)",
+      "callersToUpdate": [
+        ".claude/settings.json:63-66,79-86,88-93 (18 entries): keep only forms P11 proved, for example ./tools/github-actions/wait-for-pr-checks.sh and git -C repos/*",
+        "~/.claude/settings.json:192-198 (Sam's user-level auto-mode notes)"
+      ],
+      "tokens": [],
+      "dependsOn": [
+        "P11",
+        "P70"
+      ],
+      "risk": "Medium. A missing pattern adds prompts mid-run. Also closes the prefix leak where `git -C ~/git/defra/trade-imports-workspace:*` matches -workspace-2.",
+      "proof": "A session in a second clone runs one review, one build-loop row and one npm phase 0 with no permission prompt that the canonical clone would not get (Sam watching).",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P72",
+      "title": "Skill, rules and docs text stop naming ~/git/defra/trade-imports-workspace",
+      "scripts": [
+        ".claude/skills/** (114 files)",
+        ".claude/rules/*.md (7 files)",
+        "docs/**",
+        "CLAUDE.md"
+      ],
+      "action": "convention",
+      "timCommand": "",
+      "callersToUpdate": [
+        "residual repos/ paths (about 470) become root-relative (git -C repos/<r>, npm --prefix repos/<r>) or tim commands",
+        "CLAUDE.md rule 1 and docs/agent-onboarding.md:22-31 become 'the default clone location'",
+        "docs/agent-skills.md:14-55,79-101,175-178 (new rationale: tim is path-free)",
+        "repos/trade-imports-plants-prototype/scripts/designer/handoff/brief.js:41, build.js:503, words/format.js:4, suite.test.js:76,368 (cross-repo, same branch name)",
+        "tools/skill-creator templates (already in tim after P35): new skills are taught tim-first, root-relative paths",
+        "a tim test (or lint) that fails on a new literal path outside docs/analysis and docs/adr"
+      ],
+      "tokens": [],
+      "dependsOn": [
+        "P71"
+      ],
+      "risk": "Medium: wide prose edit. Subagents may start in a sub-repo (agent-skills.md:16-21), so briefs must say 'paths are relative to the workspace root' or pass the root in.",
+      "proof": "`grep -rn 'git/defra/trade-imports-workspace' .claude CLAUDE.md docs` returns only history docs. One end-to-end run of review, ticket and the build loop from ~/git/defra/trade-imports-workspace-2 writes nothing under the canonical clone (checked with git status there).",
+      "status": "todo",
+      "checks": [
+        "tim-unit",
+        "tim-lint",
+        "parity",
+        "no-callers"
+      ],
+      "evidence": null
+    },
+    {
+      "id": "P19B",
+      "title": "Sam ports the two guard hooks to dependency-free Node and deletes the .sh files",
+      "scripts": [
+        ".claude/hooks/guard-bash.sh",
+        ".claude/hooks/guard-edits.sh"
+      ],
+      "action": "port-to-node",
+      "timCommand": "none: `node \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-bash.mjs\"` using only Node built-ins, so a missing tim/node_modules cannot open the guard",
+      "callersToUpdate": [
+        ".claude/settings.json hooks block",
+        "docs/adr/0002-no-bash-sandbox-deny-list-and-guard-hooks.md"
+      ],
+      "tokens": [
+        "CLAUDE_PROJECT_DIR",
+        "HOME",
+        "PWD"
+      ],
+      "dependsOn": [
+        "P19"
+      ],
+      "risk": "Medium: these hooks are the safety net. Agents cannot edit .claude/hooks/**, so Sam makes this change.",
+      "proof": "The P19 corpus passes unchanged against the Node hooks, and the deny message names the clone in use.",
+      "status": "person",
+      "checks": [
+        "tim-unit",
+        "parity"
+      ],
+      "evidence": null
+    }
+  ]
+}

@@ -1152,14 +1152,37 @@
       ],
       "risk": "Medium: business-facing tickets. The read-back compare of a long wiki description may not round-trip byte for byte, so prove it on a real theme ticket first.",
       "proof": "nock tests assert the PUT payload for each flag. Canary: a dry run of one domain ticket with the old and new code gives the same plan, then a real push reports 'unchanged'.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "f8efa8709f5d6b8878c5a19191df27438f3c9cc5"
+          }
+        ],
+        "checks": [
+          "parity: ran tools/jira/update-ticket.sh against a local fake Jira for 11 cases. The 8 write cases' PUT bodies are saved in tim/src/test-support/fixtures/jira/update-bash-payloads.json, and runUpdate reproduces each one exactly in update.test.js. Mutation probes were red, then restored: unsorted label merge, and parent none sent as {key}.",
+          "parity canary (read-only): `tim jira update --summary --description-file` dry runs on theme tickets EUDPA-794, EUDPA-691 and EUDPA-699 report 'unchanged', so long wiki descriptions round-trip. EUDPA-789 reports a description change, and its diff is real edits in the local file, not a round-trip fault. The new push-description.sh --dry-run prints the same plan as the old one for EUDPA-794.",
+          "tim-unit: npm --prefix tim test is green: 242 files, 4222 passed, 8 expected-fail.",
+          "tim-lint: `npm run lint` and `npm run format:check` are both clean.",
+          "no-callers: git grep 'update-ticket' across the workspace (excluding workareas/) and every repos/* finds no hits. The leftover test-title mention was renamed.",
+          "fixed paths and .sh: the diff adds no ~/git/defra/trade-imports-workspace or $HOME/git/defra path and no new .sh file. It removes push-description.sh's WS=$HOME/git/defra/... variable."
+        ],
+        "deviations": [
+          "The real (--confirm) theme-ticket push in the canary did not run: auto mode blocked it as an external Jira write. The dry run uses the same code and returned 'unchanged' before the confirm branch, so with --confirm tim would have sent no PUT. A person should run `tools/theme-ticket/push-description.sh workareas/shared/eudpa-774/tickets/plants` once to see 'EUDPA-794 already holds those values. Nothing changed.'",
+          "Behaviour changes inherited from the existing tim jira update, all listed in the commit message: dry run by default (push-description.sh passes --confirm), unchanged fields are not sent, the write is read back, output is tim text or JSON instead of 'Updated: KEY / URL:', bad options exit 2 (USAGE) not 1, and the description is trimmed.",
+          "Kept the Bash behaviour where --labels wins over --add-label when both are given (the golden 'labelsAndAddLabel' payload), and noted it in --help and the README rather than refusing the pair.",
+          "Labels compare as a set, so a different order alone is reported as 'unchanged' and not written. The Bash always wrote them.",
+          "Also updated CLAUDE.md's tim block line and tim/README.md (flags and an example), which the row did not list.",
+          "ticket-creator SKILL.md still has `tools/jira/ticket.sh ... full` on the line above. That is P21's area and was left alone."
+        ]
+      }
     },
     {
       "id": "P25",

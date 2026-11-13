@@ -3252,11 +3252,12 @@ describe('increment-build-loop', () => {
             'THE BEHAVIOUR SPEC — EVERY ROW KEEPS IT CURRENT, whatever its repos.'
           )
           expect(prompt).toContain(
-            '`~/ws/tools/frontend-change/openspec-validate.sh --root ~/ws <capability path> [<capability path> ...]`'
+            '3. Validate, in the FOREGROUND: run `tim spec lint --capability <prefix> --workspace ~/ws --json` once per\n   prefix you wrote under.'
           )
           expect(prompt).toContain(
-            'Either exiting non-zero means the row is NOT complete'
+            'A non-zero exit means the row is NOT complete'
           )
+          expect(prompt).not.toContain('openspec-validate.sh')
         })
 
         test('tells the implementor to report a spec sync line, none with its reason included', async () => {
@@ -3394,15 +3395,15 @@ describe('increment-build-loop', () => {
             'each one removed as `deleted: <capability path>`'
           )
           expect(prompt).toContain(
-            'A capability you deleted is not validated: confirm it is gone\n   with `ls ~/ws/openspec/specs/<capability path>`, which must fail.'
+            'A capability you deleted is not validated: confirm it is gone with\n   `ls ~/ws/openspec/specs/<capability path>`, which must fail.'
           )
         })
 
-        test('tells the ladder to validate only the capabilities that still exist', async () => {
+        test('tells the ladder to confirm a deleted capability is gone rather than validate it', async () => {
           const prompt = ladderPrompt(await runThroughFixToLadder())
 
           expect(prompt).toContain(
-            'A path marked `deleted:` is not validated: confirm it is gone with `ls ~/ws/openspec/specs/<capability path>`,\n   which must fail'
+            'A path the lines mark `deleted:` is not validated: confirm it is gone with\n   `ls ~/ws/openspec/specs/<capability path>`, which must fail'
           )
         })
 
@@ -3424,8 +3425,9 @@ describe('increment-build-loop', () => {
           const prompt = ladderPrompt(await runThroughFixToLadder())
 
           expect(prompt).toContain(
-            '`~/ws/tools/frontend-change/openspec-validate.sh --root ~/ws <capability path> [...] > ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder-spec-validate.log 2>&1`'
+            '`tim spec lint --capability <prefix> --workspace ~/ws --json > ~/ws/workareas/shared/args-fixture/logs/inc-900-ladder-spec-lint-<prefix>.log 2>&1`'
           )
+          expect(prompt).not.toContain('openspec-validate.sh')
         })
 
         test('tells the fixer to keep the spec in step with its fix', async () => {

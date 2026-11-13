@@ -83,7 +83,7 @@ before the first write. In short:
 5. **Validate**, once per capability written, then lint the whole spec:
 
    ```bash
-   ~/git/defra/trade-imports-workspace/tools/frontend-change/openspec-validate.sh --root ~/git/defra/trade-imports-workspace <capability-path> [<capability-path> ...]
+   tim spec lint --capability <capability-path>
    ```
 
    ```bash

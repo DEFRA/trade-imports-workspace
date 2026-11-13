@@ -759,8 +759,6 @@ const SPEC_PREFIXES_BY_REPO_PATH = {
   'repos/trade-imports-animals-admin': ['admin']
 }
 
-const SPEC_VALIDATE = `${TILDE}/tools/frontend-change/openspec-validate.sh`
-
 const SPEC_WHOLE_CAPABILITY = `Validation and lint judge the WHOLE capability, not only your lines, so a failure in a
    capability this row writes is this row's to fix even where it predates the row: an over-long requirement, a scenario
    missing, a lint finding. Fix it in place by ${ABS}/openspec/config.yaml's rules, keeping the behaviour it states:
@@ -814,19 +812,18 @@ ${SPEC_PREFIX_TABLE}
    shapes — then find each capability under \`${TILDE}/openspec/specs/<prefix>/\` with \`grep -rln\` and merge into its
    \`spec.md\` and \`${TILDE}/openspec/coverage/<path>/coverage.json\`. A genuinely new capability gets its row in
    \`${TILDE}/openspec/coverage/AREAS.md\` first. Link only tests this row wrote or changed, read from their bodies.
-3. Validate, in the FOREGROUND: \`${SPEC_VALIDATE} --root ${TILDE} <capability path> [<capability path> ...]\` once
-   for every capability you wrote that still exists. A capability you deleted is not validated: confirm it is gone
-   with \`ls ${TILDE}/openspec/specs/<capability path>\`, which must fail. Then run \`tim spec lint --capability <prefix> --workspace ${TILDE} --json\` once per
-   prefix you wrote under. Either exiting non-zero means the row is NOT complete: fix the write, or report ok:false
-   saying what failed. Never report ok:true over a red validation.
+3. Validate, in the FOREGROUND: run \`tim spec lint --capability <prefix> --workspace ${TILDE} --json\` once per
+   prefix you wrote under. A capability you deleted is not validated: confirm it is gone with
+   \`ls ${TILDE}/openspec/specs/<capability path>\`, which must fail. A non-zero exit means the row is NOT complete:
+   fix the write, or report ok:false saying what failed. Never report ok:true over a red validation.
    ${SPEC_WHOLE_CAPABILITY}
 4. Leave \`openspec/\` uncommitted: the land stage commits it.
 5. Put one line in notes, on a line of its own: ${SPEC_SYNC_LINE} when the row changes no behaviour the spec records.
    ${rulesOf(rigour).consistencyReview ? SPEC_SYNC_REASON_CHECKED_BY_REVIEWER : SPEC_SYNC_REASON_CHECKED_BY_LADDER}`
 
 const SPEC_SYNC_FIX_LINE = `THE BEHAVIOUR SPEC: a fix that changes observable behaviour keeps \`${TILDE}/openspec/\` in step, by the same
-duty the implementor followed — update what it wrote, validate it again with \`${SPEC_VALIDATE} --root ${TILDE} <capability path>\`
-and \`tim spec lint --capability <prefix> --workspace ${TILDE} --json\` (a capability it deletes is marked \`deleted:\` and
+duty the implementor followed — update what it wrote, validate it again with
+\`tim spec lint --capability <prefix> --workspace ${TILDE} --json\` (a capability it deletes is marked \`deleted:\` and
 confirmed gone with \`ls\`, not validated), and put your own \`Spec sync:\` line in notes.
 ${SPEC_WHOLE_CAPABILITY}`
 
@@ -951,9 +948,8 @@ const SPEC_SYNC_TO_JUDGE_HERE = `The write is yours to judge too.
 
 const restoredSpecStep = (id) => `2a. THE SPEC SYNC. ${RESTORED_LINES_RULE} Find the capabilities the plan's section 8 writes,
    and any \`git -C ${TILDE} status --short -- openspec/\` shows changed. Run
-   \`${SPEC_VALIDATE} --root ${TILDE} <capability path> [...] > ${WORKAREA_TILDE}/logs/${id}-ladder-spec-validate.log 2>&1\`
-   once for them, then \`tim spec lint --capability <prefix> --workspace ${TILDE} --json > ${WORKAREA_TILDE}/logs/${id}-ladder-spec-lint-<prefix>.log 2>&1\`
-   once per prefix, reading each log ONCE. Either exiting non-zero is a failure you repair. A capability section 8
+   \`tim spec lint --capability <prefix> --workspace ${TILDE} --json > ${WORKAREA_TILDE}/logs/${id}-ladder-spec-lint-<prefix>.log 2>&1\`
+   once per prefix they sit under, reading each log ONCE. A non-zero exit is a failure you repair. A capability section 8
    writes that holds none of the plan's behaviour is a failure you repair too. ${SPEC_SYNC_TO_JUDGE_HERE}
    ${SPEC_WHOLE_CAPABILITY}`
 
@@ -965,11 +961,10 @@ const ladderSpecStep = (id, implementorNotes, fixerNotes, rigour) =>
    The fixer's: ${fixerNotes === null ? '(no fix stage ran)' : reportedSpecSync(fixerNotes)}
    When NEITHER the implementor NOR the fixer reported a \`Spec sync:\` line, that is a failure: put "no spec sync
    reported" in failures[]. A fixer with no line is normal when the implementor reported one: a fixer reports a line
-   only when its fix changed behaviour. For the capability paths the lines name that still exist, run
-   \`${SPEC_VALIDATE} --root ${TILDE} <capability path> [...] > ${WORKAREA_TILDE}/logs/${id}-ladder-spec-validate.log 2>&1\`
-   once. A path marked \`deleted:\` is not validated: confirm it is gone with \`ls ${TILDE}/openspec/specs/<capability path>\`,
-   which must fail — one that still exists is a failure. Then \`tim spec lint --capability <prefix> --workspace ${TILDE} --json > ${WORKAREA_TILDE}/logs/${id}-ladder-spec-lint-<prefix>.log 2>&1\`
-   once per prefix they write under, reading each log ONCE. Either exiting non-zero is a failure, which you repair like
+   only when its fix changed behaviour. A path the lines mark \`deleted:\` is not validated: confirm it is gone with
+   \`ls ${TILDE}/openspec/specs/<capability path>\`, which must fail — one that still exists is a failure. Then run
+   \`tim spec lint --capability <prefix> --workspace ${TILDE} --json > ${WORKAREA_TILDE}/logs/${id}-ladder-spec-lint-<prefix>.log 2>&1\`
+   once per prefix the lines write under, reading each log ONCE. A non-zero exit is a failure, which you repair like
    any other: the spec write is this increment's, and a row whose spec does not validate is not complete. ${
      rulesOf(rigour).consistencyReview ? SPEC_SYNC_LEFT_TO_REVIEWERS : SPEC_SYNC_TO_JUDGE_HERE
    }
@@ -3212,7 +3207,7 @@ const FRONTEND_CHANGE_IMPLEMENT_LINE = FRONTEND_CHANGE_KEYS.length
 Where the plan follows ${SKILLS}/frontend-change/SKILL.md, substitute this programme's repo only for TARGET REPO
 paths and npm --prefix. **Paths under the WORKSPACE root \`${TILDE}\` are LITERAL — never substitute them.** The
 skill's Step 5 writes the workspace's own behaviour spec (\`${TILDE}/openspec/specs\`, \`${TILDE}/openspec/coverage\`)
-and calls \`${TILDE}/tools/frontend-change/openspec-validate.sh\`; those live in the workspace repo, and rewriting them
+and validates it with \`tim spec lint\`; the spec lives in the workspace repo, and rewriting its paths
 at the target repo would write the spec into the wrong tree. For Step 5's two roots: the TARGET REPO is
 ${frontendChangeTarget()}; the SPEC ROOT is \`${TILDE}\` (the skill's default — do NOT pass one). The SET, and so
 the spec namespace, is the one the plan names, read from where the change lives — never assumed from the repo:

@@ -345,9 +345,9 @@ reach instead for a link to a test that nearly covers it.
 
 ## What is validated, and what is not
 
-`spec.md` is validated: `tools/frontend-change/openspec-validate.sh`
-wraps `openspec validate <capability-path> --strict`, rooted at the spec
-root via `--root`. Non-zero is a halt.
+`spec.md` is validated: `tim spec lint --root <spec root> --capability
+<capability-path>` runs `openspec validate <capability-path> --strict` in
+its specs group, rooted at the spec root. Non-zero is a halt.
 
 `coverage.json` has **no** CLI validator — the OpenSpec root does not
 resolve against `openspec/coverage/`. Step 5's coverage self-check is its

@@ -447,11 +447,12 @@ proves nothing — rework it, or record the link as `partial`.
 Once per capability written, rooted at the spec root from 5.0:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/frontend-change/openspec-validate.sh --root <spec root> <capability-path> [<capability-path> ...]
+tim spec lint --root <spec root> --capability <capability-path>
 ```
 
-The helper itself always lives in the workspace checkout — that path is
-literal. `--root` is what points it at the tree you actually wrote.
+Give `--root` as an absolute path: it is what points the check at the tree
+you actually wrote. Its specs group runs `openspec validate --strict` on
+the capability.
 
 Then lint the spec root as a whole:
 

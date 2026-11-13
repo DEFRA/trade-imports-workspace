@@ -208,7 +208,7 @@ Serial by design — increments edit shared files (registry, flow, hub, CYA).
      rather than trusting its validate line:
 
      ```bash
-     ~/git/defra/trade-imports-workspace/tools/frontend-change/openspec-validate.sh --root <workspace worktree> <capability-path> ...
+     tim spec lint --root <workspace worktree> --capability <capability-path>
      ```
 
    On success `commit-increment.sh` commits both arms — the spec in the

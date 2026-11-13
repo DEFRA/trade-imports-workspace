@@ -1484,14 +1484,44 @@
       ],
       "risk": "Medium: ticket.md is what the LLM assesses. Keep the defaults, the comment heading and the Confluence block. Use a literal template replace (this fixes the awk '&' bug). Other changes on purpose: errors exit with tim's codes, so a bad verdict (USAGE), a missing .refinement-meta.json (NOT_FOUND), a ticket Jira does not have, a ticket fetch Jira refuses with a 400 (USAGE) and an unset JIRA_BASE_URL (USAGE) exit 2 instead of the scripts' 1, and other failures still exit 1; nothing checks for exit 1. A missing ticket or --verdict gives commander's usage error instead of the Bash usage text. --json prints tim's envelope: prepare's result holds the folder, the meta, reviewKept and a skipped list, instead of the bare meta on success and {\"error\": ...} on stdout on failure; finalize's holds the updated meta. No caller uses --json. Confluence links are de-duplicated in code point order instead of locale `sort -u`, and JIRA_BASE_URL is matched literally instead of as a grep -E regex.",
       "proof": "Golden ticket.md, meta and review.md from nock fixtures. Live: diff the bash and tim workareas for one real ticket (only `created` differs). A run from a second clone lands in that clone.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "423d1d3fb8a2439ef2068f6e6c3fcec4b84e3ff9"
+          },
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "49bdba3155ddabf3d6006956c774ae20b833da66"
+          },
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "8e4e32ee"
+          }
+        ],
+        "checks": [
+          "Fixer: I fixed the verifier's problem in a new commit, 8e4e32ee. It changes only P30's `risk` in workareas/shared/bash-to-tim/backlog.json. The code is unchanged.",
+          "Unset JIRA_BASE_URL: the risk now lists it among the cases that exit 2. createJiraClient throws USAGE for it (tim/src/clients/jira-client.js:157-161), fetchTicket passes the code on (prepare.js:27-37), and exitCodeFor maps USAGE to 2.",
+          "Same path, also missing before: the risk now lists a ticket fetch that Jira refuses with a 400. get() maps that to USAGE through mapBadRequest (jira-client.js:178-183), so it also exits 2. A missing JIRA_USER or JIRA_TOKEN is AUTH and still exits 1, as the risk says. Comment and Confluence fetch failures are recorded as skipped and do not change the exit code. The template error is MISSING_DEP, which exits 1.",
+          "backlog.json still parses: jq reads back the new P30 risk.",
+          "tim-unit: green. npm --prefix tim test gave 257 test files passed and 3 skipped; 4455 tests passed, 8 expected-fail and 4 skipped.",
+          "tim-lint: green. npm --prefix tim run lint passes.",
+          "parity: green. The golden parity tests in tim/src/commands/refine were part of the passing run. The tim code has not changed since the builder recorded them.",
+          "no-callers: no change since the earlier fix. Only the tim refine tests and their goldens refer to prepare-refinement, refine-finalize and tools/refine."
+        ],
+        "deviations": [
+          "I added the fix as a new commit (8e4e32ee) rather than amending 49bdba31.",
+          "Besides the case the verifier named, I added one more exit-2 case to the risk: a 400 from Jira on the ticket fetch. It comes through the same code path, so the risk's 'other failures still exit 1' would be wrong without it.",
+          "The earlier deviations still apply: the bash-golden-harness exports, the SKILL.md line 121 ticket.sh row left as it was, and the existing ~/git/defra mentions."
+        ]
+      }
     },
     {
       "id": "P31",

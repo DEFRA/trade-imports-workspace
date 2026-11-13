@@ -121,6 +121,31 @@ later); `--prune` then runs `git gc --prune=now`. `--pr <number>` fetches
 only that pull request's head, as `origin/pr-<number>`; `--include-main`
 adds main.
 
+### `tim ci` — the e2e workflow's test scope
+
+The E2E workflow (`.github/workflows/e2e-tests.yml`) runs these. Each
+reads environment variables, as the workflow sets them, and prints only
+what the step captures. A refusal prints `::error::<message>` on stderr and
+exits 1. `--json` gives the result as one envelope instead.
+
+```bash
+REPOSITORY=DEFRA/trade-imports-ins-backend tim ci scope >> "$GITHUB_OUTPUT"
+SUITES="tests/ins tests/animals" tim ci suites
+TAGS="@ins-backend @gateway" tim ci tags
+```
+
+- `scope` prints `suites=` and `tags=` lines from the repo's entry in
+  `config/e2e-tests-pr-scope.json` (`REPOSITORY` is owner/name; a repo with
+  no entry uses `default`). With `MANUAL=true` it takes `SUITES` and `TAGS`
+  instead. `all` runs every suite and stands alone. It notes where the
+  scope came from on stderr.
+- `suites` prints one Playwright path per line, giving a folder a trailing
+  slash so `tests/animals` cannot also select `tests/animals-admin/`. It
+  refuses a path outside `tests/`, with `..`, or with characters other than
+  letters, digits, `.`, `_`, `-` and `/`.
+- `tags` prints the tags joined by `|`, as one `--grep` pattern. It refuses
+  a tag that is not `@` followed by letters, digits, `_` or `-`.
+
 ### `tim capture` — photograph a running app
 
 Runs an app's own FIT suite with Playwright tracing on, keeps the traces under

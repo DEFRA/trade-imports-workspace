@@ -84,21 +84,24 @@ const filesUnder = (dir) =>
  * @param {string[]} args
  * @param {object} [opts]
  * @param {string} [opts.watch] - Workspace-relative folder whose files to record
+ * @param {Record<string, string | undefined>} [opts.env] - Variables to set; `undefined` unsets one
+ * @param {boolean} [opts.exactOutput=false] - Keep the final newline of stdout and stderr, for output that must match byte for byte
  * @returns {Promise<{exitCode: number, stdout: string, stderr: string, files?: Record<string, string>}>}
  */
 export const recordBashRun = async (
   staged,
   relScript,
   args,
-  { watch } = {}
+  { watch, env = {}, exactOutput = false } = {}
 ) => {
   const result = await execa(
     '/bin/bash',
     [join(staged.root, relScript), ...args],
     {
-      env: { HOME: staged.home },
+      env: { ...env, HOME: staged.home },
       extendEnv: true,
-      reject: false
+      reject: false,
+      stripFinalNewline: !exactOutput
     }
   )
   const recording = {

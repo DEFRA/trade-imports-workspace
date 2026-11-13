@@ -762,7 +762,7 @@
       "dependsOn": [],
       "risk": "Low. Each script was a one-line gh call.",
       "proof": "Byte-compare the old and new outputs for one known PR. tools/review/share-review.summary.test.sh stays green.",
-      "status": "blocked",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
@@ -770,7 +770,21 @@
         "no-callers"
       ],
       "evidence": {
-        "blockedReason": "A person must add the read-only allow entries Bash(gh api user:*) and Bash(gh pr view:*) to .claude/settings.json, because a workflow cannot change permission settings."
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "e5c79f94"
+          },
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "ff85cc079a5999201f253ee281f7e0a2ae959aad"
+          }
+        ],
+        "checks": [
+          "The verifier found the row clean apart from the missing allow entries",
+          "Sam added Bash(gh api user:*) and Bash(gh pr view:*) to .claude/settings.json in ff85cc07; gh api -X DELETE stays unallowed"
+        ],
+        "deviations": []
       }
     },
     {
@@ -844,7 +858,7 @@
       "dependsOn": [],
       "risk": "Low. OpenSpec is pinned at 1.13.2 instead of @latest. Land it between loop runs.",
       "proof": "Parity: every capability that passes in bash has no openspec-validate finding in tim, and three deliberately broken copies fail in both. `grep -rn openspec-validate` returns nothing outside decisions.md history.",
-      "status": "blocked",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
@@ -852,7 +866,25 @@
         "no-callers"
       ],
       "evidence": {
-        "blockedReason": "Removing the two dead tools/frontend-change allowlist entries at .claude/settings.json:88-89 is a permission-config change a hook blocks agents from making, so a person must delete those lines and commit them on this branch before P18 can pass."
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "be24a40e"
+          },
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "ff85cc079a5999201f253ee281f7e0a2ae959aad"
+          },
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "09684cee953ad2b476358d9545ce7f1409bdcc2e"
+          }
+        ],
+        "checks": [
+          "Sam removed the two dead tools/frontend-change allow entries from .claude/settings.json in ff85cc07",
+          "The fixer's README drift fix (ca8f9856), lost to the blocked-row reset, is restored as 09684cee"
+        ],
+        "deviations": []
       }
     },
     {
@@ -876,7 +908,7 @@
       "dependsOn": [],
       "risk": "Low. Tests only. guard-edits.sh blocks agent edits to .claude/hooks/**, so the loop writes the corpus and P19B (Sam) does the port.",
       "proof": "One golden case per allow and deny branch, green against today's Bash hooks.",
-      "status": "blocked",
+      "status": "todo",
       "checks": [
         "tim-unit",
         "tim-lint",
@@ -884,7 +916,7 @@
         "no-callers"
       ],
       "evidence": {
-        "blockedReason": "The golden corpus hard-coded the canonical clone path in the piped-test-run deny message, which breaks the fixed-path ban and stops P19B passing the corpus unchanged, so the case must build that path from CLAUDE_PROJECT_DIR and P19B's callersToUpdate must name guard-bash.sh:120."
+        "previousBlockedReason": "The golden corpus hard-coded the canonical clone path in the piped-test-run deny message, which breaks the fixed-path ban and stops P19B passing the corpus unchanged, so the case must build that path from CLAUDE_PROJECT_DIR and P19B's callersToUpdate must name guard-bash.sh:120."
       }
     },
     {
@@ -2712,6 +2744,7 @@
       "action": "port-to-node",
       "timCommand": "none: `node \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard-bash.mjs\"` using only Node built-ins, so a missing tim/node_modules cannot open the guard",
       "callersToUpdate": [
+        ".claude/hooks/guard-bash.sh:120 (name ${CLAUDE_PROJECT_DIR/#$HOME/~}, not the canonical clone)",
         ".claude/settings.json hooks block",
         "docs/adr/0002-no-bash-sandbox-deny-list-and-guard-hooks.md"
       ],

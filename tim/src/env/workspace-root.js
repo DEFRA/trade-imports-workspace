@@ -3,7 +3,7 @@ import { dirname, resolve, join } from 'node:path'
 import { homedir } from 'node:os'
 import { TimError } from '../errors.js'
 
-const MARKER_FILES = ['Makefile', '.git', 'docs/best-practices']
+const MARKER_FILES = ['.git', 'docs/best-practices']
 
 /**
  * Where CLAUDE.md rule 1 mandates the workspace lives. `tools/*.sh` hardcode
@@ -19,7 +19,7 @@ export const CANONICAL_WORKSPACE_PATH = resolve(
 
 const looksLikeWorkspaceRoot = (path) =>
   MARKER_FILES.some((marker) => existsSync(join(path, marker))) &&
-  existsSync(join(path, 'repos'))
+  (existsSync(join(path, 'repos.json')) || existsSync(join(path, 'repos')))
 
 const walkUp = (start) => {
   let current = resolve(start)
@@ -72,7 +72,7 @@ export const resolveWorkspaceRoot = ({
     if (!looksLikeWorkspaceRoot(resolved)) {
       throw new TimError(
         'USAGE',
-        `Workspace path ${resolved} does not look like a trade-imports workspace (missing Makefile, .git or repos/).`
+        `Workspace path ${resolved} does not look like a trade-imports workspace. It needs a .git or docs/best-practices folder, and a repos.json file or a repos folder.`
       )
     }
     return resolved

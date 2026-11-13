@@ -1,8 +1,8 @@
+import { markWorkspaceRoot } from '../test-support/workspace-marker.js'
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import {
   mkdtempSync,
   mkdirSync,
-  writeFileSync,
   symlinkSync,
   rmSync,
   existsSync,
@@ -21,7 +21,7 @@ beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), 'tim-link-'))
   workspace = join(dir, 'checkout')
   mkdirSync(workspace)
-  writeFileSync(join(workspace, 'Makefile'), 'all:\n')
+  markWorkspaceRoot(workspace)
   mkdirSync(join(workspace, 'repos'))
   canonical = join(dir, 'canonical')
   other = join(dir, 'other-checkout')
@@ -32,7 +32,7 @@ afterEach(() => {
   rmSync(dir, { recursive: true, force: true })
 })
 
-describe('planLink — 5 cases from Makefile lines 26-47', () => {
+describe('#planLink', () => {
   test('already-canonical: workspace IS canonical, no action needed', () => {
     const plan = planLink(workspace, workspace)
     expect(plan).toMatchObject({ ok: true, action: 'already-canonical' })

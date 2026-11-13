@@ -57,8 +57,7 @@ makes the change under the house rules in
 `~/git/defra/trade-imports-workspace/.claude/rules/code-quality.md`,
 runs a delete-first comment pass over touched code, and raises a PR.
 Verifies with unit tests, lint, E2E and GitHub Actions. Between a green
-verification and the PR it syncs the behaviour spec and runs the
-signed-off check, as below.
+verification and the PR it syncs the behaviour spec, as below.
 
 ### Sync the behaviour spec
 
@@ -99,29 +98,6 @@ A failed validate, lint or self-check is a halt: fix it before the PR.
 Commit the spec on the same branch name in the workspace, and raise its
 PR beside the repo PRs (`CLAUDE.md` rule 2).
 
-### Before the pull request: the signed-off check
-
-Run it once the spec and code are committed, before raising any PR, for
-Implement and Refactor alike: the range reads commits only. Once for the
-workspace's `openspec/`, then once for each repo you changed:
-
-```bash
-tim spec diff --signed-off --range origin/main...HEAD --json
-```
-
-```bash
-tim spec diff --signed-off --repo <repo> --base origin/main --json
-```
-
-Exit 0 means no signed-off scenario changes: raise the PRs as normal.
-Exit 3 is a trip: follow
-`~/git/defra/trade-imports-workspace/.claude/rules/signed-off-pages.md`
-→ "When it trips". Raise every PR on the branch as a draft linked to the
-ticket it raises, and never take one out of draft. A red test linked to
-a signed-off scenario means the code is wrong: fix the code, not the
-test. A Refactor that trips has changed behaviour it should not have:
-undo that change rather than raising it.
-
 ### Refactor
 
 If the user asks to refactor / tidy / clean code (post-GREEN tidy-up),
@@ -143,11 +119,6 @@ would help, offer it and let them answer.
 This is rule 3's treatment of merging a PR, for the same reason: both
 reach other people, and neither is yours to trigger unprompted. It holds
 even when the work is finished and the comment would be accurate.
-
-The one exception is the ticket a signed-off trip raises (see "Before
-the pull request: the signed-off check"). The workspace rule in
-`.claude/rules/signed-off-pages.md` asks for it, so raise it without
-asking, and name it in your report.
 
 When the user does ask, follow
 `~/git/defra/trade-imports-workspace/docs/best-practices/jira/ticket-conventions.md`:

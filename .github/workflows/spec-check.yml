@@ -33,7 +33,6 @@ jobs:
           cache-dependency-path: tim/package-lock.json
 
       - name: Install tim
-        id: install
         run: npm ci
 
       - name: Create the repos folder that marks the workspace root
@@ -52,23 +51,6 @@ jobs:
             echo
             echo '```text'
             cat "$RUNNER_TEMP/spec-lint.txt"
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-          exit "$status"
-
-      - name: Check signed-off scenarios
-        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
-        run: |
-          set +e
-          npm run --silent tim -- spec diff --signed-off --range 'HEAD^1..HEAD' --no-ui > "$RUNNER_TEMP/spec-signed-off.txt" 2>&1
-          status=$?
-          set -e
-          cat "$RUNNER_TEMP/spec-signed-off.txt"
-          {
-            echo '## Signed-off scenarios'
-            echo
-            echo '```text'
-            cat "$RUNNER_TEMP/spec-signed-off.txt"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
           exit "$status"

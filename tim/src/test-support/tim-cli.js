@@ -1,5 +1,6 @@
+import { markWorkspaceRoot } from './workspace-marker.js'
 import { execa } from 'execa'
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
@@ -8,7 +9,7 @@ export const TIM_CLI_PATH = fileURLToPath(new URL('../cli.js', import.meta.url))
 
 export const createCliWorkspace = (prefix) => {
   const root = mkdtempSync(join(tmpdir(), prefix))
-  writeFileSync(join(root, 'Makefile'), 'all:\n')
+  markWorkspaceRoot(root)
   mkdirSync(join(root, 'repos'))
   return root
 }

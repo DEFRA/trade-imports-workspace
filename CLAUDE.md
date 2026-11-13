@@ -2,7 +2,7 @@
 
 This is a local workspace aggregating the independent GitHub repos of the DEFRA trade imports services. It is **not** a monorepo — each repo has its own git history, remotes, and CI. This folder provides shared tooling and cross-repo context.
 
-The load-bearing rules that agents must always honour are kept **inline** below. The volatile reference catalogues (make targets, common workflows, the `tools/` index, worker references, the workareas map) live as topic files under [`docs/reference/`](docs/reference/) — see the [Reference catalogues](#reference-catalogues) pointer near the foot of this file.
+The load-bearing rules that agents must always honour are kept **inline** below. The volatile reference catalogues (common workflows, the `tools/` index, worker references, the workareas map) live as topic files under [`docs/reference/`](docs/reference/) — see the [Reference catalogues](#reference-catalogues) pointer near the foot of this file.
 
 ## Load-bearing rules
 
@@ -75,8 +75,6 @@ The house rules on comments, names, structure, logging and tests live in [`.clau
 
 Fix it, whoever caused it. "Pre-existing", "flaky", "unrelated", "environmental" and "track it separately" never close a failure. A different test failing on each run points to a race: read `test-results/*/error-context.md` and find it. If you cannot fix it (it needs product input or credentials you lack), say so and ask.
 
-One exception: for a test linked to a signed-off scenario, fix the code, not the test, unless a person has ruled. See [`.claude/rules/signed-off-pages.md`](.claude/rules/signed-off-pages.md).
-
 ### 7. Canary first
 
 To make one change across several repos, services or environments, apply it to one target that needs the whole change, check it, then do the rest. Check every target afterwards, not a sample.
@@ -123,14 +121,14 @@ Work on a specific repo by entering its directory:
 cd repos/trade-imports-animals-frontend   # then use claude, git, npm etc. as normal
 ```
 
-Run `make help` from this directory to see all cross-repo commands.
+Run `tim --help` to see all cross-repo commands.
 
-## `tim` CLI (alternative to Make + tools/)
+## `tim` CLI
 
-[`tim/`](tim/) is a Node.js CLI that mirrors the Makefile + read-only
-parts of `tools/`. Library-first integrations (REST clients —
-no shell-out to `gh`/`jq`), behaviourally tested, deterministic
-`--json` output for skill use. Dual-runs with the bash; pick whichever.
+[`tim/`](tim/) is the workspace's command line: every cross-repo command,
+the Docker stack and the read-only parts of `tools/` go through it.
+Library-first integrations (REST clients — no shell-out to `gh`/`jq`),
+behaviourally tested, deterministic `--json` output for skill use.
 
 tim has no GitHub commands. For pull requests, checks, Actions runs and
 GitHub auth, use the GitHub CLI directly: `gh search prs EUDPA-X --owner
@@ -140,8 +138,8 @@ DEFRA`, `gh pr create|view|diff|checks|merge`, `gh run view|rerun|watch`,
 ```bash
 npm --prefix ~/git/defra/trade-imports-workspace/tim link   # tim on PATH
 tim --help                # full surface
-tim workspace status      # equivalent of `make status` + jq-friendly --json
-tim docker dev            # equivalent of `scripts/stack/run-stack.sh -d`
+tim workspace status      # git status for every repo, with jq-friendly --json
+tim docker dev            # start the stack from local source (run-stack.sh -d)
 tim jira ticket EUDPA-X   # equivalent of tools/jira/ticket.sh
 tim auth                  # check Jira and Confluence sign-in (GitHub: gh auth status)
 tim capture <workarea> --app <name>  # photograph a running app from its own Playwright traces
@@ -157,8 +155,7 @@ tim prototype setup               # onboard a designer session: CLAUDE.local.md 
 
 `tim/` is a sub-project of this repo rather than one of the cloned
 repos, so the workspace-wide install, lint and test skip it. Run its own
-scripts against it directly — no `cd` needed, and nothing in the
-Makefile, which is deprecated:
+scripts against it directly, with no `cd` needed:
 
 ```bash
 npm --prefix ~/git/defra/trade-imports-workspace/tim test
@@ -198,16 +195,17 @@ the bash uses — seamless pickup).
 Skills should prefer `tim <cmd> --json` over bare bash once a surface
 is covered by tim — the JSON envelope is schema-versioned and stable.
 
-## Workspace stack (what `make docker-compose-*` delegates to)
+## Workspace stack (what `tim docker` runs)
 
-`scripts/stack/run-stack.sh` brings up the full stack from Dockerhub — the
+`tim docker up` (and `dev`, `restart`) runs `scripts/stack/run-stack.sh` and
+takes its flags. It brings up the full stack from Dockerhub — the
 only compose stack in the workspace and its repos. Supports `-b <branch>`
 (probe for branch-tagged images), `-d/--dev` (build the repo-backed
 services from local source under `repos/`), `-e <service>` (exclude one so
 you can run it natively), and `--profile <name>` (run only a subset of
 tiers), and `--perf` (both stubs answer at their SLA latency, on published
 images; `tim docker perf` takes the lease in perf mode). In `--dev` mode the Java backend, stub and reference-data hot-reload
-edited source via Spring Boot DevTools; `bounce-backend.sh` is a fallback that
+edited source via Spring Boot DevTools; `tim docker bounce-backend` is a fallback that
 recreates the backend container (e.g. after a `pom.xml`/dependency change).
 
 Init scripts are staged from their owning repos on every stack start
@@ -285,7 +283,7 @@ bash ~/git/defra/trade-imports-workspace/tools/sonar/sonar-push-check.sh <<< '{"
 
 The volatile catalogues live as topic files under [`docs/reference/`](docs/reference/) — read the relevant one on demand; edit the topic file, not this list:
 
-- [`docs/reference/make-targets.md`](docs/reference/make-targets.md) — every `make` target and what it does.
+- `tim --help`, and `tim <command> --help` for each command, with usage and the env-var contract in [`tim/README.md`](tim/README.md) — every cross-repo command and what it does.
 - [`docs/reference/workflows.md`](docs/reference/workflows.md) — common workflows (setup, daily update, running the stack, tests).
 - [`docs/reference/tools-index.md`](docs/reference/tools-index.md) — the full `tools/` script index (args + purpose).
 - [`docs/reference/worker-references.md`](docs/reference/worker-references.md) — per-skill fan-out worker personas.

@@ -1,6 +1,6 @@
 # tim — Trade Imports CLI
 
-Node.js Ink/React CLI for the [trade-imports workspace](../). Dual-runs alongside the bash tooling in [`../tools/`](../tools/) — start here when you want a tested, library-backed alternative to a `tools/*.sh` script or a `Makefile` target.
+Node.js Ink/React CLI for the [trade-imports workspace](../). It is the workspace's command line: setting up and updating the repos, running the Docker stack, starting a service from source, Jira, Confluence, the backlog and the build loop all go through it. `tim docker` runs the stack scripts in [`../scripts/stack/`](../scripts/stack/). The scripts in [`../tools/`](../tools/) still exist for the jobs `tim` does not cover yet, but start here.
 
 ## Install
 
@@ -392,6 +392,27 @@ newest a cloned repo has installed. The folder records the choice, so every
 later subcommand uses the same one. A trace newer than any of them is refused
 with `MISSING_DEP` and the command that updates tim's.
 
+### `tim docker` — run the workspace stack
+
+```bash
+tim docker up                        # start the stack from published Dockerhub images
+tim docker up -b feat/EUDPA-123-x    # run each service's branch-tagged image where one exists
+tim docker dev                       # build the repo-backed services from local source
+tim docker up -e backend             # leave the backend out, to run it with tim start backend
+tim docker restart -d                # stop the stack, wipe its volumes, start it from source
+tim docker bounce-backend            # recreate the backend container only
+tim docker logs [services...]        # follow service logs (Ctrl-C to stop)
+tim docker down                      # stop the stack and wipe its volumes
+```
+
+`up`, `dev` and `restart` take `scripts/stack/run-stack.sh`'s flags: `-b`,
+`-e`, `--profile`, `-d` and `--perf`. Run `tim docker up --help` for the full
+list.
+
+`tim start <service>` runs one service from source in the foreground:
+`frontend`, `backend`, `admin`, `gateway`, `address-book`, `ins-backend`,
+`plants-frontend` or `plants-backend`.
+
 ### `tim docker lease` — who holds the workspace stack
 
 The workspace stack is one compose project per machine. A build run takes
@@ -698,11 +719,37 @@ each row's spec sync before the row is committed.
 `--repo <name> --base <ref>` reads the files changed in `repos/<name>` against
 `<ref>`, committed and uncommitted. It reports `test-edited` or `test-deleted`
 for each signed-off scenario in the workspace's `openspec/` whose test, linked
-by `repo` and `file` in `coverage.json`, is among them. A new file does not
+by `repo`, `file` and `test` in `coverage.json`, changed. A new file does not
 count. Repeat `--repo` to check several repos against the same `--base` in one
-report. The scenario's links come from the workspace's working tree, so a
-scenario removed in the same change is caught by `--commit` or `--range`, not
-by `--repo`.
+report.
+
+It compares the linked test's own block, at the merge base and now, and
+ignores changes to other tests in the same file:
+
+| Linked test                                         | Reported                                 |
+| --------------------------------------------------- | ---------------------------------------- |
+| Its block is the same, bar trailing spaces          | Nothing                                  |
+| Its block changed                                   | `test-edited`                            |
+| Its title is gone, renamed included, or its file is | `test-deleted`                           |
+| It can't be found on its own                        | `test-edited` for any change to the file |
+
+A block is a JavaScript or TypeScript `test`, `it` or `describe` call titled
+with a plain string, or a Java test method by name or `@DisplayName`, with its
+annotations. A test can't be found on its own when its link names no test, its
+title names several tests, it wasn't in the file before the change, or the
+file can't be read; `why` then says so. `test.titles` lists only the linked
+tests that changed.
+
+A change to shared set-up, such as a `beforeEach` or a helper, that alters a
+linked test without touching its block is not reported.
+
+The scenario's links come from the workspace's working tree, so a scenario
+removed in the same change is caught by `--commit` or `--range`, not by
+`--repo`.
+
+With `--signed-off`, a `--range` whose base or head git cannot find, or that
+is not a range, is an error rather than `skipped`, so a missing fetch never
+reads as nothing changed.
 
 `result.signedOff` lists each change with its scenario id, name, capability,
 `change`, `why`, `foundIn` (the commit, range, or repo and base), the test file
@@ -711,11 +758,11 @@ and titles for a test change, and the scenario's name and steps `before` and
 `description`, saying which signed-off behaviour changes, from what to what, for
 a person to approve or refuse. It is `null` when nothing is found.
 
-| Exit code | Meaning                                         |
-| --------- | ----------------------------------------------- |
-| 0         | No signed-off scenario changes                  |
-| 3         | At least one signed-off scenario changes        |
-| 2         | A usage error, or a repo or base it cannot find |
+| Exit code | Meaning                                                |
+| --------- | ------------------------------------------------------ |
+| 0         | No signed-off scenario changes                         |
+| 3         | At least one signed-off scenario changes               |
+| 2         | A usage error, or a range, repo or base it cannot find |
 
 A missing `git` also exits 3. Read `ok` in the `--json` envelope to tell the
 two apart.

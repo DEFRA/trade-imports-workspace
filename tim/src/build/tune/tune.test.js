@@ -1,3 +1,4 @@
+import { markWorkspaceRoot } from '../../test-support/workspace-marker.js'
 import { describe, test, expect, afterEach } from 'vitest'
 import {
   chmodSync,
@@ -62,7 +63,7 @@ const GATES = {
 
 const workspaceWith = (cloned) => {
   root = mkdtempSync(join(tmpdir(), 'tim-build-tune-'))
-  writeFileSync(join(root, 'Makefile'), 'all:\n')
+  markWorkspaceRoot(root)
   mkdirSync(dirname(join(root, GATES_PATH)), { recursive: true })
   writeFileSync(join(root, GATES_PATH), JSON.stringify({ repos: GATES }))
   for (const [folder, scripts] of Object.entries(cloned)) {

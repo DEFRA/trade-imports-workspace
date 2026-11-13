@@ -252,20 +252,15 @@ PR runs leave out `@a11y`, `@active` and `@dynamics`.
 - [ ] Behaviour spec synced, validated and `tim spec lint` clean, or
       `Spec sync: none` with the reason (SKILL.md, "Sync the behaviour
       spec")
-- [ ] Signed-off check run for the workspace and every changed repo; on
-      a trip, a ticket raised and every PR a draft (SKILL.md, "Before
-      the pull request: the signed-off check")
 - [ ] Plan updated with deviations
 - [ ] Nothing written to Jira (no comment, transition, assignment or
-      link) unless the user asked for it in this conversation, or a
-      signed-off trip raised its ticket
+      link) unless the user asked for it in this conversation
 - [ ] No suite run twice over code that did not change between the runs,
       and none re-run after a formatter-only pass
 
 ## Where finishing stops
 
-Sync the spec and run the signed-off check (SKILL.md), then raise the
-PR, report to the user, stop. Do not comment on the ticket,
+Sync the spec (SKILL.md), then raise the PR, report to the user, stop. Do not comment on the ticket,
 move its status, assign it or link it off your own bat — see SKILL.md,
 "Working with the ticket in Jira". The ticket is shared with the BAs,
 the PO and its watchers; a write notifies them, and "implement

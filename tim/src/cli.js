@@ -107,7 +107,7 @@ export const buildProgram = () => {
     )
     .name('tim')
     .description(
-      'Trade Imports CLI — dual-runs alongside the bash tooling in ../tools/'
+      'Trade Imports CLI — the workspace command line: cross-repo commands, the Docker stack, Jira, specs and the build loop'
     )
     .version(pkg.version)
     .showHelpAfterError(true)

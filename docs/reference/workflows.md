@@ -2,8 +2,8 @@
 
 **First-time setup:**
 ```bash
-make setup    # clone all repos
-make install  # npm install in Node repos
+tim workspace setup     # clone all repos
+tim workspace install   # install dependencies in every repo
 ```
 
 Scripts under `tools/` reach the workspace at
@@ -15,8 +15,8 @@ still need.
 
 **Daily update:**
 ```bash
-make update   # pull latest on all repos
-make status   # check for anything uncommitted
+tim workspace update   # pull latest on all repos
+tim workspace status   # check for anything uncommitted
 ```
 
 `trade-imports-plants-prototype` has `workspaceBranchSync: false` in
@@ -41,11 +41,11 @@ multi-step requests, to a workflow under
 
 **Run the full stack from source (cross-service development):**
 ```bash
-make docker-compose-dev   # build + start all services from local source
-make docker-logs          # tail logs (Ctrl-C to stop)
+tim docker dev    # build + start all services from local source
+tim docker logs   # tail logs (Ctrl-C to stop)
 # Java source edits hot-reload via DevTools; only a pom.xml/dependency
 # change needs a rebuild:
-make docker-compose-dev
+tim docker dev
 ```
 
 **Run the E2E tests:**
@@ -58,7 +58,7 @@ To run what a repo's PR runs, look up its entry in [`config/e2e-tests-pr-scope.j
 
 **Run unit tests:**
 ```bash
-make test
+tim workspace test
 ```
 
 **Work on a single repo:**

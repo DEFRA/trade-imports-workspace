@@ -13,6 +13,7 @@ import {
   shaOf,
   specScenarios
 } from '../diff.js'
+import { linkedTestChange } from './test-blocks.js'
 import { draftSignedOffTicket } from './ticket-draft.js'
 
 const SIGNED_OFF_LINE = /^\*\*Signed off\*\*:/
@@ -121,8 +122,17 @@ const foundInOf = (named, ends) =>
     ? { commit: named.commit, sha: ends.to }
     : { range: named.range, from: ends.from, to: ends.to }
 
+const refusedRange = ({ skipped, missing }) =>
+  missing
+    ? new TimError(
+        'NOT_FOUND',
+        `Can't find ${missing}. Fetch first, or name another --range.`
+      )
+    : new TimError('USAGE', `${skipped}. Name another --range.`)
+
 const specSignedOffChanges = async (cwd, named) => {
   const ends = await endsOf(cwd, named)
+  if (ends.skipped && named.range !== undefined) throw refusedRange(ends)
   if (ends.skipped) {
     return {
       skipped: { commit: named.commit ?? named.range, reason: ends.skipped }
@@ -230,8 +240,7 @@ const mergeBaseOf = async (repoPath, repo, base) => {
   return result.stdout.trim()
 }
 
-const changedRepoFiles = async (repoPath, repo, base) => {
-  const mergeBase = await mergeBaseOf(repoPath, repo, base)
+const changedRepoFiles = async (repoPath, repo, base, mergeBase) => {
   const result = await run(
     'git',
     ['diff', '--name-status', '--no-renames', '-z', mergeBase],
@@ -244,12 +253,55 @@ const changedRepoFiles = async (repoPath, repo, base) => {
     )
   }
   const fields = result.stdout.split('\0').filter((field) => field !== '')
-  return new Map(
+  return new Set(
     statusPairs(fields)
       .filter(([status]) => status !== 'A')
-      .map(([status, path]) => [path, status === 'D' ? 'deleted' : 'edited'])
+      .map(([, path]) => path)
   )
 }
+
+const titlesOf = (links) => [
+  ...new Set(links.map((link) => link.test).filter(Boolean))
+]
+
+const hasUntitledLink = (links) => links.some((link) => !link.test)
+
+const fileLinkChanges = (file, links, versions) => {
+  const titled = titlesOf(links).map((title) => ({
+    title,
+    found: linkedTestChange({ title, file, ...versions })
+  }))
+  const untitled = hasUntitledLink(links)
+    ? [{ title: null, found: linkedTestChange({ file, ...versions }) }]
+    : []
+  return [...titled, ...untitled].filter(({ found }) => found !== null)
+}
+
+const changeWhy = ({ check, file, change, changed }) =>
+  [
+    `A test linked to it in coverage.json is ${change}: ${check.repo}/${file}.`,
+    ...new Set(changed.map(({ found }) => found.fileLevel).filter(Boolean))
+  ].join(' ')
+
+const fileTestEntries = ({ check, file, changes, scenarioOf }) =>
+  Object.entries(Object.groupBy(changes, ({ found }) => found.change)).map(
+    ([change, changed]) =>
+      scenarioEntry({
+        ...scenarioOf,
+        foundIn: { repo: check.repo, base: check.base },
+        found: {
+          ...verdict(
+            `test-${change}`,
+            changeWhy({ check, file, change, changed })
+          ),
+          test: {
+            repo: check.repo,
+            file,
+            titles: changed.map(({ title }) => title).filter(Boolean)
+          }
+        }
+      })
+  )
 
 const testEntriesFor = ({
   capability,
@@ -259,31 +311,22 @@ const testEntriesFor = ({
   check
 }) => {
   const changedLinks = links.filter(
-    (link) => link.repo === check.repo && check.changedFiles.has(link.file)
+    (link) => link.repo === check.repo && check.versions.has(link.file)
   )
-  return Object.entries(Object.groupBy(changedLinks, (link) => link.file)).map(
-    ([file, fileLinks]) => {
-      const fileChange = check.changedFiles.get(file)
-      return scenarioEntry({
-        capability,
-        before: { ...scenario, requirementId: requirement.id },
-        after: { ...scenario, requirementId: requirement.id },
-        foundIn: { repo: check.repo, base: check.base },
-        found: {
-          ...verdict(
-            `test-${fileChange}`,
-            `A test linked to it in coverage.json is ${fileChange}: ${check.repo}/${file}.`
-          ),
-          test: {
-            repo: check.repo,
-            file,
-            titles: [
-              ...new Set(fileLinks.map((link) => link.test).filter(Boolean))
-            ]
-          }
-        }
-      })
-    }
+  const scenarioOf = {
+    capability,
+    before: { ...scenario, requirementId: requirement.id },
+    after: { ...scenario, requirementId: requirement.id }
+  }
+  return Object.entries(
+    Object.groupBy(changedLinks, (link) => link.file)
+  ).flatMap(([file, fileLinks]) =>
+    fileTestEntries({
+      check,
+      file,
+      changes: fileLinkChanges(file, fileLinks, check.versions.get(file)),
+      scenarioOf
+    })
   )
 }
 
@@ -302,16 +345,49 @@ const capabilityTestChanges = (capability, check) => {
   )
 }
 
+const linkedFilesIn = (capabilities, repo) =>
+  new Set(
+    capabilities.flatMap((capability) =>
+      [...coverageEntries(capability.coverage).values()].flatMap((scenario) =>
+        (scenario.tests ?? [])
+          .filter((link) => link.repo === repo)
+          .map((link) => link.file)
+      )
+    )
+  )
+
+const fileVersions = async (repoPath, mergeBase, file) => ({
+  baseText: await fileAt(repoPath, mergeBase, file),
+  currentText: workingTreeText(repoPath, file)
+})
+
+const versionsOfFiles = async (repoPath, mergeBase, files) =>
+  new Map(
+    await Promise.all(
+      files.map(async (file) => [
+        file,
+        await fileVersions(repoPath, mergeBase, file)
+      ])
+    )
+  )
+
 const linkedTestChanges = async (workspaceRoot, repo, base) => {
   const repoPath = await checkedOutRepoPath(workspaceRoot, repo, base)
+  const mergeBase = await mergeBaseOf(repoPath, repo, base)
+  const changedFiles = await changedRepoFiles(repoPath, repo, base, mergeBase)
+  if (changedFiles.size === 0) return []
+  const capabilities = buildCorpus({
+    root: workspaceRoot
+  }).capabilities.filter((capability) => capability.hasSpec)
+  const changedLinkedFiles = [...linkedFilesIn(capabilities, repo)].filter(
+    (file) => changedFiles.has(file)
+  )
   const check = {
     repo,
     base,
-    changedFiles: await changedRepoFiles(repoPath, repo, base)
+    versions: await versionsOfFiles(repoPath, mergeBase, changedLinkedFiles)
   }
-  if (check.changedFiles.size === 0) return []
-  return buildCorpus({ root: workspaceRoot })
-    .capabilities.filter((capability) => capability.hasSpec)
+  return capabilities
     .flatMap((capability) => capabilityTestChanges(capability, check))
     .sort(byCapabilityThenId)
 }
@@ -323,9 +399,11 @@ const linkedTestChanges = async (workspaceRoot, repo, base) => {
  * `openspec/` against HEAD, new files included; and, for each of `repos`,
  * each signed-off scenario in the workspace's own `openspec/` whose linked
  * test in that repo is edited or deleted since HEAD left `base`, counting
- * uncommitted work. A test only `base` has changed since is left out.
- * `ticketDraft` is the Jira ticket for a person to approve or refuse them,
- * or null when there are none.
+ * uncommitted work. A linked test counts only when its own block changes,
+ * unless it cannot be told apart from the rest of its file; then any
+ * change to the file counts and `why` says so. A test only `base` has
+ * changed since is left out. `ticketDraft` is the Jira ticket for a person
+ * to approve or refuse them, or null when there are none.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
@@ -335,7 +413,8 @@ const linkedTestChanges = async (workspaceRoot, repo, base) => {
  * @param {string[]} [args.repos] - Folders under `repos/`
  * @param {string} [args.base] - A ref in each of `repos`; given with them
  * @returns {Promise<{signedOff: object[], skipped: {commit: string, reason: string}[], ticketDraft: {summary: string, description: string}|null}>}
- * @throws {TimError} NOT_FOUND when a repo or its base cannot be found
+ * @throws {TimError} NOT_FOUND when a repo, its base or an end of a range
+ * cannot be found; USAGE when a range is not one or has no merge base
  */
 export const diffSignedOff = async ({
   workspaceRoot,

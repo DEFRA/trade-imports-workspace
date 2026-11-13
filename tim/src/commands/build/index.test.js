@@ -1,3 +1,4 @@
+import { markWorkspaceRoot } from '../../test-support/workspace-marker.js'
 import { describe, test, expect, afterEach } from 'vitest'
 import { execa } from 'execa'
 import {
@@ -38,7 +39,7 @@ const envelopeOf = (run) => JSON.parse(run.stdout.trim())
 
 const seedWorkspace = (repoFolders) => {
   root = mkdtempSync(join(tmpdir(), 'tim-build-cli-'))
-  writeFileSync(join(root, 'Makefile'), 'all:\n')
+  markWorkspaceRoot(root)
   mkdirSync(join(root, 'repos'), { recursive: true })
   const workarea = join(root, 'workareas', 'shared', 'programme')
   mkdirSync(workarea, { recursive: true })

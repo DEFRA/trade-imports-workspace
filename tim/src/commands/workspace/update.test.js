@@ -1,3 +1,4 @@
+import { markWorkspaceRoot } from '../../test-support/workspace-marker.js'
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { execa } from 'execa'
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
@@ -38,7 +39,7 @@ const runUpdate = (extraArgs = []) =>
 beforeEach(() => {
   workspace = mkdtempSync(join(tmpdir(), 'tim-update-'))
   fixturesDir = mkdtempSync(join(tmpdir(), 'tim-update-fixtures-'))
-  writeFileSync(join(workspace, 'Makefile'), 'all:\n')
+  markWorkspaceRoot(workspace)
   mkdirSync(join(workspace, 'repos'))
 })
 

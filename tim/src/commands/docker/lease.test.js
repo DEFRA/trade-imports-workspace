@@ -1,3 +1,4 @@
+import { markWorkspaceRoot } from '../../test-support/workspace-marker.js'
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { execa } from 'execa'
 import {
@@ -31,7 +32,7 @@ const callsPath = () => join(workspace, 'stack-calls')
 
 beforeEach(() => {
   workspace = mkdtempSync(join(tmpdir(), 'tim-docker-lease-'))
-  writeFileSync(join(workspace, 'Makefile'), 'all:\n')
+  markWorkspaceRoot(workspace)
   mkdirSync(join(workspace, 'repos'))
   writeExecutable(
     join(workspace, 'scripts', 'stack', 'run-stack.sh'),

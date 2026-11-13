@@ -304,6 +304,22 @@
         "tests:tests/plants/e2e/features/obligation-markings"
       ],
       "dependsOn": []
+    },
+    {
+      "id": "identifiers-action-required",
+      "title": "Identifiers that need action: submitting with incomplete animal identifiers, and what the needs-action view says",
+      "why": "The 4 identifier requirements the overview-and-review pre-flight could not place (inc-270, inc-271). They read the identifier rule the identification-and-permanent-address theme changes (EUDPA-796, in flight and not to be changed mid-flight), and extend overview-and-review's Submitted action required status, so the theme builds on top of both once they merge (Sam, 13 November 2026).",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/header",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/confirmation",
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java",
+        "tests:tests/animals/e2e/pages/notification-view-states.spec.ts"
+      ],
+      "dependsOn": [
+        "identification-and-permanent-address",
+        "overview-and-review"
+      ]
     }
   ],
   "splitOff": [
@@ -1137,10 +1153,6 @@
         "req-900",
         "req-2004",
         "req-2002",
-        "req-905",
-        "req-906",
-        "req-908",
-        "req-931",
         "req-2138"
       ],
       "fingerprints": {
@@ -2623,7 +2635,7 @@
       ],
       "dependsOn": [],
       "theme": "waiting-on-design",
-      "status": "blocked",
+      "status": "dropped",
       "kind": "feat",
       "repos": [
         "frontend",
@@ -2673,16 +2685,15 @@
         "req-353",
         "req-354"
       ],
-      "openQuestions": [
-        "Design answers design question 4 (transit countries) of the 9 October afternoon ruling: are adding on pick, removing without a page load and the 'Added'/'Removed' wording strongly needed, and from which tested library? Built as design says, or dropped if design drops it. The EUDPA-719 spike is the open item (S25 in snagging/discussion.md)."
-      ],
+      "openQuestions": [],
       "notes": [
         "Every requirement here carries blockedBy design question 4 (ruling-sam-2026-10-09-pm-p1-061, p1-062), so the row stays blocked and sits in the waiting-on-design theme (ruling-sam-2026-10-09-pm-p1-046), apart from rows that build now.",
         "Combines req-348 (add on pick), req-349 (remove in place), req-353 ('Added' wording, with the cap message in the same announcement) and req-354 ('Removed' wording): one design question, one client behaviour, one page and one review.",
         "The no-JavaScript criterion and the Remove accessible-name, stored-code and list-check criteria carry c-006, c-045 and c-047 forward, so the enhancement cannot be built by replacing behaviour the rulings fixed. Animals only: transit is never mirrored to plants.",
         "Waits on the split-off arrival-and-transit theme's inc-029 (the same page's title and redirect) through externalDependsOn, as it did before this re-distil; that pointer is unchanged.",
         "Re-distil 2 November: req-348, req-349, req-353 and req-354 are unchanged in substance, so this row keeps its text. Rewritten for the wording rules: the title drops its 'Waiting on design:' prefix, the first criterion no longer quotes the 'Add country' button as absent but enumerates the controls the page has with JavaScript, and the conflict ids c-006, c-045 and c-047 have moved out of the provenance brackets into these notes. Checked against animals-frontend origin/main: the page is features/transport/transit-countries/ with _added-countries-table.njk, rows.js, remove-action.js and the #transit-countries-status live region; MAX_TRANSITED_COUNTRIES is 12 and the limit copy is 'Maximum of 12 countries reached. Remove a country to add another.'; today's announcements are '<country> added.' and '<country> removed.'.",
-        "No claim listed here is in any conflict's overruled set: the prototype's hidden array of country names, which c-047 overruled, is deliberately not cited, and nor are the traces of it."
+        "No claim listed here is in any conflict's overruled set: the prototype's hidden array of country names, which c-047 overruled, is deliberately not cited, and nor are the traces of it.",
+        "Dropped: ruling:design-2026-11-13 point 1 answers design question 4. Transit countries keep the 'Add country' button main already has: a country is added on the button, not on pick, and Remove reloads the page, so no 'Added' or 'Removed' announcement is needed."
       ],
       "gate": null,
       "externalDependsOn": [
@@ -7282,7 +7293,7 @@
         "inc-181"
       ],
       "theme": "waiting-on-design",
-      "status": "blocked",
+      "status": "dropped",
       "kind": "feat",
       "repos": [
         "insfrontend",
@@ -7337,15 +7348,12 @@
         "req-592",
         "req-1951"
       ],
-      "openQuestions": [
-        "Design, with the product owner, must answer the live-filtering question (ruling:sam-2026-10-09-pm, design question 5, ruling-sam-2026-10-09-pm-p1-052, p1-053, p1-063, p1-067) before this builds; if design drops the behaviour, this row is dropped. Until then the server search behind the submit button is the whole search.",
-        "Design, with the product owner, must answer the open question on filtering a list as the trader types before this builds; if design drops it, this row is dropped. Until then the server search behind each picker's submitting search button is the whole search (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-052, ruling-sam-2026-10-09-pm-p1-053, ruling-sam-2026-10-09-pm-p1-063, ruling-sam-2026-10-09-pm-p1-067).",
-        "Design must also answer the open question on the place of origin picker's filtering as the trader types, which goes to the product owner alongside the one above (ruling:sam-2026-10-09-pm ruling-sam-2026-10-09-pm-p1-070)."
-      ],
+      "openQuestions": [],
       "notes": [
         "Combines the drafts of the address-book-list, consignment-parties areas for this row: they change the same pages, record and journey, so building them apart would repeat the same set-up, review and ladder.",
         "This area's only share of the existing blocked row inc-193 (party pickers filter as the trader types), which already holds req-2039. Combiner: merge this into inc-193 with the consignment-parties area's draft, keeping inc-193's id, its waiting-on-design theme and its frontend, plantsfrontend and tests entries, because ruling-sam-2026-10-09-pm-p1-067 puts the address book list's live filter and the party pickers' live row filter in one design increment. Still blocked: the 26 October ruling says nothing about live filtering. The second criterion keeps the no-JavaScript search that the search row builds working, which is what makes this an enhancement rather than a replacement. The existing row's note observes that this criterion could reuse the server-rendered live-search pattern on the unmerged address book search branch if that branch merges first; that stays a plan matter. Waits on the address book split branch's search row (externalDependsOn on shared/design-release-2-1/themes/address-book inc-069), whose GET form it enhances.",
-        "Re-drafted on this re-distil from existing row inc-193. Both requirements still carry a blocker, so the row stays blocked. Combines the four party pickers' filter and the place of origin picker's country filter, because ruling sam-2026-10-09-pm puts them in one waiting-on-design increment and they are one client module on one results table. Client-side code is new: neither frontend's picker carries JavaScript today. Depends on the role-filtered pickers row (one page to filter, and the results count it updates) and on the germinal set's pickers, because req-592 names both animals sets. CARRY OVER: the existing row inc-193 also holds req-2039 (the INS address book list re-requesting itself as the trader types), the address-book-list area's, and the insfrontend repo key with it; this draft leaves both for the combiner to carry over with inc-193's id. Build note: the animals transporter list already filters as you type, with shared accent-folding and bold-match helpers under frontend:src/client/common/helpers; build the picker filter from those rather than a new one. In plants the three pickers share features/address-book-picker, so one change covers the consignor, place of destination and contact pickers. The transporter list's own in-page filter is not this row's. Theme: waiting-on-design."
+        "Re-drafted on this re-distil from existing row inc-193. Both requirements still carry a blocker, so the row stays blocked. Combines the four party pickers' filter and the place of origin picker's country filter, because ruling sam-2026-10-09-pm puts them in one waiting-on-design increment and they are one client module on one results table. Client-side code is new: neither frontend's picker carries JavaScript today. Depends on the role-filtered pickers row (one page to filter, and the results count it updates) and on the germinal set's pickers, because req-592 names both animals sets. CARRY OVER: the existing row inc-193 also holds req-2039 (the INS address book list re-requesting itself as the trader types), the address-book-list area's, and the insfrontend repo key with it; this draft leaves both for the combiner to carry over with inc-193's id. Build note: the animals transporter list already filters as you type, with shared accent-folding and bold-match helpers under frontend:src/client/common/helpers; build the picker filter from those rather than a new one. In plants the three pickers share features/address-book-picker, so one change covers the consignor, place of destination and contact pickers. The transporter list's own in-page filter is not this row's. Theme: waiting-on-design.",
+        "Dropped: ruling:design-2026-11-13 point 2 answers design question 5, and with it question 6. Party pickers, the place of origin picker and the address book list search when the trader presses Search or Enter, as main already does, and do not filter as the trader types. Design may return to this once people have used it; it would come back as a new question."
       ],
       "gate": null,
       "externalDependsOn": [
@@ -7658,15 +7666,14 @@
         "tests"
       ],
       "kind": "feat",
-      "status": "blocked",
+      "status": "dropped",
       "gate": null,
-      "openQuestions": [
-        "Design answers design question 8 (copy buttons): whether the Copy buttons are wanted at all and, if so, which accepted component they are built from, since MoJ's Copy button is not accepted (ruling:sam-2026-10-09-pm claims p1-040 and p1-074). Who: the design team. The row is dropped if design drops the buttons."
-      ],
+      "openQuestions": [],
       "notes": [
         "Rewrite of the existing row inc-198, keeping its id, its blocked status, its open question and its theme (waiting-on-design). Rewritten only to state the end state rather than hedge it inside the criterion ('If design keeps them...'), which the open question already carries, and to take the release name out of the detail.",
         "c-294 settles the split: the section, its warning and its rows are built now with each value as selectable text, and the Copy buttons become this increment, blocked until design answers. The same split applies to the high-risk plants section, so this row changes plants too.",
-        "req-1986 carries a blockedBy, so this row stays blocked and apart from the rows that can build now. Its code is the client-side enhancement folders the waiting-on-design theme owns; the section it enhances is built by the overview-and-review branch, which is why the dependency on that branch is external."
+        "req-1986 carries a blockedBy, so this row stays blocked and apart from the rows that can build now. Its code is the client-side enhancement folders the waiting-on-design theme owns; the section it enhances is built by the overview-and-review branch, which is why the dependency on that branch is external.",
+        "Dropped: ruling:design-2026-11-13 point 3 answers design question 8. No Copy buttons: the reference and customs code stay as selectable text, which overview-and-review inc-112 already builds."
       ],
       "theme": "waiting-on-design",
       "dependsOn": [],
@@ -8064,6 +8071,119 @@
         "Links must keep working in CDP, in the local docker stack and in the CI docker stack. Never write to cdp-app-config.",
         "The parked templates theme also changes the type question (inc-154, inc-155). This row waits for both and builds on what they leave."
       ]
+    },
+    {
+      "id": "inc-270",
+      "title": "Submitting with incomplete animal identifiers flags the notification as needing action",
+      "detail": "A notification that meets the submission minimum but whose animal identifiers are incomplete can still be submitted. It is recorded with an outstanding identifier item, listed on the confirmation page, and shows as 'Submitted action required' from then on, beside the health certificate case the overview-and-review theme builds.",
+      "acceptanceCriteria": [
+        "A notification that meets the submission minimum, but has a commodity line whose species asks for identifiers holding fewer identified animal records than the animals it declares, is submitted, and its confirmation page lists the outstanding item 'complete the animal identifier information in the notification'. An animal record counts as identified once one identifier is filled. (document:dr1-parity-backlog document-dr1-parity-backlog-p8-058-m1, p8-060, p8-062; prototype:dr2-1-source prototype-dr2-1-source-p11-147; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-188, p1-191, p1-193; c-133)",
+        "A single-species consignment with no identifier saved is submitted the same way, with the same outstanding item. (document:dr1-parity-backlog document-dr1-parity-backlog-p8-063-m1, p8-064-m1, p8-065)",
+        "A notification submitted with incomplete identifiers shows the status tag 'Submitted action required' on its view and on the set's own list, as one submitted without a health certificate does. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-188, p1-191; c-133)",
+        "A notification submitted with every identifier complete and its health certificate uploaded shows 'Submitted', and its confirmation page lists no identifier item. (repo:frontend repo-frontend-p14-045, p14-046)"
+      ],
+      "dependsOn": [],
+      "externalDependsOn": [
+        {
+          "workarea": "shared/design-release-2-1/themes/overview-and-review",
+          "id": "inc-113"
+        },
+        {
+          "workarea": "shared/design-release-2-1/themes/identification-and-permanent-address",
+          "id": "inc-241"
+        }
+      ],
+      "theme": "identifiers-action-required",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "backend",
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "document:dr1-parity-backlog",
+          "ref": "document-dr1-parity-backlog-p8-058-m1, p8-060, p8-062, p8-063-m1, p8-064-m1, p8-065, p8-065-m1"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p11-147"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "repo-frontend-p14-045, p14-046"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "ruling-sam-2026-10-09-p1-188, p1-191, p1-193"
+        }
+      ],
+      "requirements": [
+        "req-931"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "New theme, 13 November 2026 (Sam): the identifier requirements the overview-and-review pre-flight could not place go on top of the identification-and-permanent-address work, which is in flight on EUDPA-796 and must not change mid-flight.",
+        "Which species ask for identifiers, and what counts as filled, come from the identification theme as merged: it gives every selected species a panel, and asks a species with no specific identifier for identification details and a description (inc-241). Plan against main after EUDPA-796 merges, not against the rule as it stood when these requirements were written.",
+        "Extends overview-and-review inc-113, which records outstanding items at submit and adds 'Submitted action required' for a missing health certificate. Add the identifier item through the same record rather than a second status."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-271",
+      "title": "The needs-action view says which animal identifiers are missing",
+      "detail": "A 'Submitted action required' notification missing animal identifiers tells the trader so in its header, and marks each species that has none on its review, as the health certificate case already does for documents.",
+      "acceptanceCriteria": [
+        "An action-required notification missing only animal identifiers shows the header warning 'You need to complete animal identifiers'. (prototype:dr2-1-source prototype-dr2-1-source-p11-032, p11-034; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-188, p1-191, p1-193; c-133)",
+        "An action-required notification missing both animal identifiers and its health certificate shows the header warning 'You need to complete animal identifiers and upload a health certificate'. (prototype:dr2-1-source prototype-dr2-1-source-p11-031, p11-034; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-188; c-133)",
+        "An action-required notification missing only its health certificate still shows 'You need to upload a health certificate'. (prototype:dr2-1-source prototype-dr2-1-source-p11-034)",
+        "On an action-required notification, a species that needs identifiers but has none shows 'Identification details' with the inline error 'Enter a minimum of 1 identifier' in place of its content, with no error summary, as 'Upload a valid health certificate' shows on the documents section. (prototype:dr2-1-source prototype-dr2-1-source-p11-090; prototype:dr2-1-specs prototype-dr2-1-specs-p5-099; c-133)"
+      ],
+      "dependsOn": [
+        "inc-270"
+      ],
+      "externalDependsOn": [
+        {
+          "workarea": "shared/design-release-2-1/themes/overview-and-review",
+          "id": "inc-113"
+        },
+        {
+          "workarea": "shared/design-release-2-1/themes/overview-and-review",
+          "id": "inc-106"
+        }
+      ],
+      "theme": "identifiers-action-required",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p11-031, p11-032, p11-034, p11-090"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "prototype-dr2-1-specs-p5-099"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "ruling-sam-2026-10-09-p1-188, p1-191, p1-193"
+        }
+      ],
+      "requirements": [
+        "req-905",
+        "req-906",
+        "req-908"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "New theme, 13 November 2026 (Sam): see inc-270. Waits on overview-and-review inc-113 for the action-required view and its warning, and inc-106 for the identification card on the review that the inline error replaces."
+      ],
+      "gate": null
     }
   ]
 }

@@ -137,7 +137,7 @@ All under `~/git/defra/trade-imports-workspace/tools/` per CC-3:
 | `tools/jira/` (`ticket.sh`, `comments.sh`) | PLANNER, IMPLEMENTOR | Fetch ticket + comments — read freely |
 | `tools/jira/` (`add-comment.sh`, `transition-ticket.sh`) | PLANNER, IMPLEMENTOR | Comment, transition — **only when the user asks in that conversation** (see above) |
 | `tools/github/` (`prs.sh`, `pr-details.sh`), `gh pr diff <n> --repo DEFRA/<repo>` | IMPLEMENTOR | PR creation context + inspection |
-| `tools/github-actions/` (`trigger-workflow.sh`, `wait-for-run.sh`, `get-failure.sh`, `run-status.sh`, `get-logs.sh`) | IMPLEMENTOR | CI verification |
+| `gh workflow run`, `gh run list`, `gh run watch`, `gh run view [--log-failed\|--log]` | IMPLEMENTOR | CI verification |
 | `tools/review/detect-tech.sh` | called by `prepare-plan.sh` / `prepare-implement.sh` | Detect repo tech stack + emit best-practices paths under `docs/best-practices/` |
 
 Check your Jira and Confluence sign-in with `tim auth`, and your GitHub

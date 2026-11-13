@@ -714,14 +714,33 @@
       "dependsOn": [],
       "risk": "Medium for trigger and wait. The new lookup filters by branch and event, which is stricter than before, and gh run watch has no 1800 s cap, so the skill says to run it in the background and re-run it on an API error.",
       "proof": "Diff the old script output against the gh command on one real run: no difference. On a harmless dispatch workflow, gh run watch --exit-status gives 0 for a pass and non-zero for a fail.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "0c488b33"
+          }
+        ],
+        "checks": [
+          "parity: pass. Tested on real DEFRA/trade-imports-animals-frontend runs. run-status.sh (bare name and URL forms) matches `gh run view` byte for byte, exit 0. get-failure.sh (URL input) on failed run 43410746943 matches `gh run view --log-failed` (5586 lines) apart from its leading 'Fetching...' banner. get-logs.sh on run 43432717924 matches `gh run view --log` (5945 lines) apart from the same banner. wait-for-run.sh gave 0 on a passing run and 1 on a failing one, and `gh run watch --exit-status` gave the same 0 and 1. The stricter `gh run list --branch --event workflow_dispatch --limit 1` lookup was checked against DEFRA/trade-imports-ins-tests workspace-e2e-tests.yml and returned the dispatch run.",
+          "no-callers: pass. git grep for the five script names finds nothing across the workspace (workareas excluded) or any repos/*. wait-for-pr-checks.sh is not in this row and stays.",
+          "tim-unit: pass, 236 files and 4010 tests green",
+          "tim-lint: pass. `npm run lint` and `npm run format:check` are both clean.",
+          "fixed-path / no new .sh: pass. The diff adds no workspace path and no .sh file. It removes 5 .sh files and one fixed-path invocation in IMPLEMENTOR.md."
+        ],
+        "deviations": [
+          "I did not dispatch a new workflow run to prove that `gh run watch --exit-status` gives 0 or non-zero, because that would have a side effect on a DEFRA repo. I proved the same exit codes against one completed passing run (43446225955) and one completed failing run (43410746943).",
+          "The row lists docs/reference/tools-index.md:58-62. The rows were actually at lines 49-53. I removed the five rows and kept the wait-for-pr-checks.sh row.",
+          "The commit message names one more output change: get-failure.sh and get-logs.sh printed a 'Fetching ... logs' banner line, and plain gh does not."
+        ]
+      }
     },
     {
       "id": "P16",

@@ -475,14 +475,33 @@
       ],
       "risk": "Medium. A row could merge with only CI E2E, which follows config/e2e-tests-pr-scope.json and may run less than the local gate. Make it opt-in per machine and say so in the row's evidence.",
       "proof": "gate.test.js: in ci mode no lease is taken and no stack command runs. One build-loop row on a clone with no stack lands with its PR's e2e check green.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "aec140a68875835aff82e535612a20a9896e5c93"
+          }
+        ],
+        "checks": [
+          "tim-unit: green, npm --prefix tim test passed 236 files and 4005 tests (log at workareas/shared/bash-to-tim/logs/p10-tim-test.log)",
+          "tim-lint: green, npm run lint and npm run format:check are both clean",
+          "parity: green. The default is still local, and every existing runGate e2e test passes unchanged. The new gate.test.js tests prove that with e2e ci (by flag or by machine.json) there are no stack calls, no lease and no e2e rung log, that the rungs appear in e2e.leftToCi, that an e2e-only ci gate is green, and that --e2e local overrides a machine set to ci",
+          "no-callers: green. No script was retired. Every gate command the loop builds now passes --e2e ${E2E}, and the 6 pinned command strings in workflow-contract.test.js were updated, plus a new test for --e2e ci",
+          "fixed paths and .sh: the diff adds no mention of ~/git/defra/trade-imports-workspace or $HOME/git/defra, and no .sh file"
+        ],
+        "deviations": [
+          "The row's end-to-end proof (a real build-loop row on a clone with no stack landing with its PR's e2e check green) was not run. The brief bans E2E while the backlog is under way and says not to push. Only the gate.test.js half of the proof is covered",
+          "The result records the CI evidence as a new top-level `e2e` object ({where, leftToCi, evidence}) and leaves the left-to-CI rungs out of `rungs[]`. machine summary gains `e2e`, and the text report gains a 'Left to CI, not run here' line",
+          "Also changed: tim build tune's machineFileAfterTune keeps an existing `e2e` setting, so a re-tune does not drop a CI-only clone's opt-in. The loop's implementor/fixer unit-only gate command (increment-build-loop.js, about line 1098) was left without --e2e, because it runs only the unit phase"
+        ]
+      }
     },
     {
       "id": "P11",

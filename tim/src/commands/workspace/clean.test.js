@@ -1,3 +1,4 @@
+import { markWorkspaceRoot } from '../../test-support/workspace-marker.js'
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { execa } from 'execa'
 import {
@@ -20,7 +21,7 @@ let workspace
 
 beforeEach(() => {
   workspace = mkdtempSync(join(tmpdir(), 'tim-clean-'))
-  writeFileSync(join(workspace, 'Makefile'), 'all:\n')
+  markWorkspaceRoot(workspace)
   mkdirSync(join(workspace, 'repos'))
 })
 

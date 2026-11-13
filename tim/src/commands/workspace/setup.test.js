@@ -1,3 +1,4 @@
+import { markWorkspaceRoot } from '../../test-support/workspace-marker.js'
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { execa } from 'execa'
 import {
@@ -97,7 +98,7 @@ const remoteBranches = async (dir) => {
 beforeEach(() => {
   workspace = mkdtempSync(join(tmpdir(), 'tim-setup-'))
   fixturesDir = mkdtempSync(join(tmpdir(), 'tim-setup-fixtures-'))
-  writeFileSync(join(workspace, 'Makefile'), 'all:\n')
+  markWorkspaceRoot(workspace)
   mkdirSync(join(workspace, 'repos'))
 })
 

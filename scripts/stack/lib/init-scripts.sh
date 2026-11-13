@@ -52,7 +52,7 @@ fetch_repo_paths() {
     resolved_ref="$ref"
   else
     git clone --quiet --depth 1 --filter=blob:none --sparse "$url" "$tmp/clone" || {
-      print_error "error: cannot clone $url — offline? Run 'make setup' to clone repos/ instead."
+      print_error "error: cannot clone $url — offline? Run 'tim workspace setup' to clone repos/ instead."
       return 1
     }
     resolved_ref="the default branch"

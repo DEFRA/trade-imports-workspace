@@ -1,6 +1,6 @@
 # tim — Trade Imports CLI
 
-Node.js Ink/React CLI for the [trade-imports workspace](../). Dual-runs alongside the bash tooling in [`../tools/`](../tools/) — start here when you want a tested, library-backed alternative to a `tools/*.sh` script or a `Makefile` target.
+Node.js Ink/React CLI for the [trade-imports workspace](../). It is the workspace's command line: setting up and updating the repos, running the Docker stack, starting a service from source, Jira, Confluence, the backlog and the build loop all go through it. `tim docker` runs the stack scripts in [`../scripts/stack/`](../scripts/stack/). The scripts in [`../tools/`](../tools/) still exist for the jobs `tim` does not cover yet, but start here.
 
 ## Install
 
@@ -391,6 +391,27 @@ that new: tim's own (pinned to the newest the workspace repos use), else the
 newest a cloned repo has installed. The folder records the choice, so every
 later subcommand uses the same one. A trace newer than any of them is refused
 with `MISSING_DEP` and the command that updates tim's.
+
+### `tim docker` — run the workspace stack
+
+```bash
+tim docker up                        # start the stack from published Dockerhub images
+tim docker up -b feat/EUDPA-123-x    # run each service's branch-tagged image where one exists
+tim docker dev                       # build the repo-backed services from local source
+tim docker up -e backend             # leave the backend out, to run it with tim start backend
+tim docker restart -d                # stop the stack, wipe its volumes, start it from source
+tim docker bounce-backend            # recreate the backend container only
+tim docker logs [services...]        # follow service logs (Ctrl-C to stop)
+tim docker down                      # stop the stack and wipe its volumes
+```
+
+`up`, `dev` and `restart` take `scripts/stack/run-stack.sh`'s flags: `-b`,
+`-e`, `--profile`, `-d` and `--perf`. Run `tim docker up --help` for the full
+list.
+
+`tim start <service>` runs one service from source in the foreground:
+`frontend`, `backend`, `admin`, `gateway`, `address-book`, `ins-backend`,
+`plants-frontend` or `plants-backend`.
 
 ### `tim docker lease` — who holds the workspace stack
 

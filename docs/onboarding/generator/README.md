@@ -78,4 +78,4 @@ in `../README.md` by hand.
 Content comes from each skill's `SKILL.md` — the source of truth. If a
 skill changes, re-read its `SKILL.md` and update the spec. The decks
 deliberately avoid restating exact arguments; they point at the live views
-(`make help`, the `SKILL.md`) instead, so they don't rot between rebuilds.
+(`tim --help`, the `SKILL.md`) instead, so they don't rot between rebuilds.

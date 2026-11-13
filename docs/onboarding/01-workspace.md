@@ -96,49 +96,45 @@ running the agent from inside a sub-repo loses the workspace skills.
 - `tools/` — shared shell scripts the skills call.
 - `scripts/` — setup, update and the Docker stack runner.
 - `docker/` — the full-stack compose setup.
-- `tim/` — an experimental Node CLI that mirrors some Make targets and
-  read-only tools, with stable `--json` output. Intended to replace the
-  Makefile in time; not fully wired up or in routine use yet.
+- `tim/` — the workspace's Node CLI: every workspace command, with stable
+  `--json` output for the skills.
 - `.claude/skills/` — the agent skills (covered from Session 2 on).
 
 ## Live view
 
-Don't memorise the target list — it changes. Read the current version
+Don't memorise the command list — it changes. Read the current version
 instead:
 
-- **`make help`** — every Make target with a one-line description. The
-  Makefile is the working command surface today.
-- **[`CLAUDE.md`](../../CLAUDE.md)** — the living index: repo map, targets,
-  skills and tools, kept current as part of normal work.
-- Ask Claude **"read CLAUDE.md and give me the repo map and the main Make
-  targets"** for a guided version of the same.
-
-`tim` is an experimental CLI meant to replace the Makefile eventually, but
-it isn't there yet — reach for `make` for now.
+- **`tim --help`** — every `tim` command with a one-line description.
+  `tim <command> --help` gives one command in full.
+- **[`CLAUDE.md`](../../CLAUDE.md)** — the living index: repo map, `tim`
+  commands, skills and tools, kept current as part of normal work.
+- Ask Claude **"read CLAUDE.md and give me the repo map and the main `tim`
+  commands"** for a guided version of the same.
 
 ## Running it locally
 
-The day-one test: can you actually build and run all of this? The stack is
-driven by the scripts under `scripts/stack/`. The `make docker-*` targets
-are thin wrappers around those same scripts, so either works — but it's
-worth knowing the scripts are the real thing.
+The day-one test: can you actually build and run all of this? You drive
+the stack with `tim docker`, which runs the scripts under `scripts/stack/`
+for you.
 
 First-time setup, run once:
 
-- `make setup` — clone every repo into `repos/`. Idempotent, so it's
-  safe to re-run.
-- `make install` — `npm install` across the Node repos.
+- `tim workspace setup` — clone every repo into `repos/`. Idempotent, so
+  it's safe to re-run.
+- `tim workspace install` — install dependencies in every repo (`npm ci`
+  for Node, `mvn install` for Java).
 
-Then the run loop, driven by `scripts/stack/`:
+Then the run loop:
 
-- `scripts/stack/run-stack.sh --dev` — build and run every service
-  together from your local `repos/` (hot-reload for Node, volume mount for
-  Java). Drop `--dev` to run from published images instead.
-- `docker compose -p trade-imports logs -f …` — tail the frontend,
-  admin and backend logs. `Ctrl-C` stops watching, not the stack.
-- `scripts/stack/bounce-backend.sh` — recreate the backend to pick up
-  edited Java source. `scripts/stack/stop-stack.sh` tears the stack down
-  and wipes volumes for a clean slate.
+- `tim docker dev` — build and run every service together from your local
+  `repos/` (hot-reload for Node, volume mount for Java). Use `tim docker
+  up` to run from published images instead.
+- `tim docker logs` — follow the frontend, admin and backend logs, or name
+  the services you want. `Ctrl-C` stops watching, not the stack.
+- `tim docker bounce-backend` — recreate the backend to pick up edited
+  Java source. `tim docker down` tears the stack down and wipes volumes
+  for a clean slate.
 
 Finally, exercise the running stack with the end-to-end suite:
 
@@ -150,7 +146,7 @@ npm run test:docker-compose
 That's the whole inner loop — set up once, bring the stack up from source,
 watch it, change something, run the tests against it. The flags (run from a
 branch's images, exclude a service to run it natively, limit to a profile)
-live in `scripts/stack/run-stack.sh --help` and `docker/stack/AGENTS.md`.
+live in `tim docker dev --help` and `docker/stack/AGENTS.md`.
 
 ## Try it
 
@@ -159,11 +155,11 @@ Before the next session, get the stack running end to end:
 1. Clone the workspace to the canonical location
    (`~/git/defra/trade-imports-workspace`) — the tooling assumes
    this path. If yours is elsewhere, symlink it; see
-   [`agent-onboarding.md`](../agent-onboarding.md). Then run `make setup`
-   and `make install`.
-2. Bring the stack up from source with `scripts/stack/run-stack.sh --dev`,
-   and tail the logs to watch it come up.
+   [`agent-onboarding.md`](../agent-onboarding.md). Then run `tim workspace
+   setup` and `tim workspace install`.
+2. Bring the stack up from source with `tim docker dev`, and watch it come
+   up with `tim docker logs`.
 3. Run the E2E suite against it (`npm run test:docker-compose` in the tests
-   repo), and have a skim of `make help` and `CLAUDE.md` while it runs.
+   repo), and have a skim of `tim --help` and `CLAUDE.md` while it runs.
 
 Next: [Session 2 — the `ticket` skill](02-ticket.md).

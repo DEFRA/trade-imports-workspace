@@ -1,3 +1,4 @@
+import { markWorkspaceRoot } from '../../test-support/workspace-marker.js'
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { execa } from 'execa'
 import {
@@ -26,7 +27,7 @@ const writeStackScript = (name, body) => {
 
 beforeEach(() => {
   workspace = mkdtempSync(join(tmpdir(), 'tim-docker-'))
-  writeFileSync(join(workspace, 'Makefile'), 'all:\n')
+  markWorkspaceRoot(workspace)
   mkdirSync(join(workspace, 'repos'))
   mkdirSync(join(workspace, 'scripts', 'stack'), { recursive: true })
   process.env.TIM_STACK_LEASE = join(workspace, 'stack-lease.json')

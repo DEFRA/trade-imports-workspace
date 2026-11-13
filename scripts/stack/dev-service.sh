@@ -24,10 +24,28 @@ source "$LIB_DIR/colour.sh"
 source "$LIB_DIR/compose.sh"
 
 usage() {
-  print_error "usage: dev-service.sh rebuild|restart <service>..."
+  cat <<USAGE
+Usage: $(basename "$0") rebuild|restart <service>...
+
+Works on a running dev-mode stack (the one run-stack.sh -d starts). Touches
+only the named services, then waits until they are healthy. Data is kept.
+
+  rebuild <service>...   Rebuild the image from local source and recreate
+                         the container.
+  restart <service>...   Restart the container as it is, for source changes
+                         the bind mount already carries.
+  -h, --help             Show this help.
+USAGE
 }
 
-[ $# -ge 2 ] || { usage; exit 2; }
+case "${1-}" in
+  -h | --help)
+    usage
+    exit 0
+    ;;
+esac
+
+[ $# -ge 2 ] || { usage >&2; exit 2; }
 action="$1"
 shift
 
@@ -52,7 +70,7 @@ case "$action" in
       up --no-deps --no-recreate --wait --detach "$@"
     ;;
   *)
-    usage
+    usage >&2
     exit 2
     ;;
 esac

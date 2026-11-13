@@ -1,7 +1,8 @@
+import { markWorkspaceRoot } from '../test-support/workspace-marker.js'
 import { describe, test, expect, beforeAll, afterAll, vi } from 'vitest'
 import { createElement } from 'react'
 import { render } from 'ink-testing-library'
-import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises'
+import { mkdtemp, mkdir, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import MainMenu from './MainMenu.js'
@@ -9,7 +10,7 @@ import MainMenu from './MainMenu.js'
 const createFakeWorkspace = async () => {
   const root = await mkdtemp(join(tmpdir(), 'tim-mm-'))
   await mkdir(join(root, 'repos'))
-  await writeFile(join(root, 'Makefile'), '# fake workspace\n')
+  markWorkspaceRoot(root)
   return root
 }
 

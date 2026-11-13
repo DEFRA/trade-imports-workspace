@@ -31,7 +31,7 @@ var to set and no symlink to maintain — the canonical path is the checkout, an
 a checkout under any other name will not work.
 
 `repos/` is gitignored, so a fresh clone starts empty. Populate it with
-`make setup` (or `tim workspace setup`), which clones each repo named in
+`tim workspace setup`, which clones each repo named in
 `repos.json`.
 
 ### 2. Get Your Credentials
@@ -199,10 +199,9 @@ Per-ticket review clones under `workareas/` are pinned automatically by
 `tools/review/prepare-review.sh` (and self-healed on refresh by
 `tools/review/refresh/pull-repos.sh`).
 
-The dev repos under `repos/` are handled for you: `make setup` /
-`tim workspace setup` clone with the exclusion in place
-(`--single-branch`, pin the refspec, then a widening fetch), and
-`make update` / `tim workspace update` heal any clone still on the
+The dev repos under `repos/` are handled for you: `tim workspace setup` clones with the exclusion in
+place (`--single-branch`, pin the refspec, then a widening fetch), and
+`tim workspace update` heals any clone still on the
 default refspec exactly once — pin, refetch, then `git gc --prune=now`
 to reclaim the gh-pages packs already on disk. Expect that first update
 to take a few minutes per large clone; every later run skips the heal.
@@ -286,7 +285,7 @@ this workspace — there is no separate, prototype-only setup:
 1. **Clone the workspace to the canonical path** (step 1 above) — same
    command, same path. The prototype does not stand alone with its own
    copy of the workspace tooling; it is cloned under `repos/` like every
-   other repo (`make setup` / `tim workspace setup`).
+   other repo (`tim workspace setup`).
 2. **Set `JIRA_USER`, `JIRA_TOKEN`, `JIRA_BASE_URL`, `JIRA_PROJECT_KEY` and
    authenticate `gh`**, exactly as in step 2 and step 3 above. A hand-off
    raises a real Jira story from the prototype, so the same credentials

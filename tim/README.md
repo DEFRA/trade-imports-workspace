@@ -164,6 +164,29 @@ tim refine finalize EUDPA-1234 --verdict READY --reason "Clear AC, repos identif
   `SPIKE REQUIRED`, its reason (null when empty) and `completed_at`,
   keeping the meta's other keys in place.
 
+### `tim service-tag` — what the service-tag skill reads
+
+```bash
+tim service-tag start --service address-book --json
+tim service-tag specs --domain animals --type e2e --json
+```
+
+- `start` reads, and changes nothing: the workspace's and the ins-tests
+  clone's branch and `git status --porcelain` lines, each entry of
+  `config/e2e-tests-pr-scope.json` but `default` (or the one `--service`
+  names, short or full) with the services that call it directly, the
+  `SERVICE_TAG_DOMAINS` map the ins-tests lint reads, and the places where
+  the scope file and the map disagree. A direct call is a list-form
+  `- TRADE_IMPORTS_<NAME>_URL=` entry under a service in
+  `docker/stack/*.compose.yml`; `_BASE_URL` and map-form entries are not
+  calls. Without `--json` it prints `MODE: READY`, then the report.
+- `specs` lists the ins-tests clone's specs with their tags, each with one
+  leading `@`, by asking Playwright to list the tests (no stack needed).
+  `--domain` keeps specs under `tests/<domain>/`, `--type` those of one test
+  type, and `--tag` those carrying the tag.
+- Both refuse, with exit 1, a workspace with no `repos/trade-imports-ins-tests`;
+  `start` also refuses one with no scope file.
+
 ### `tim capture` — photograph a running app
 
 Runs an app's own FIT suite with Playwright tracing on, keeps the traces under

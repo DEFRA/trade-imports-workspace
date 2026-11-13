@@ -35,8 +35,8 @@ Tag the specs in other domains that each service's pull request should also run,
 
 ## 7. Helpers introduced
 
-- start-service-tag
-- list-specs
+- `tim service-tag start`
+- `tim service-tag specs`
 
 ## 8. Triggers
 

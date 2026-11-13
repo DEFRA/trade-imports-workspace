@@ -363,7 +363,7 @@
       "dependsOn": [],
       "risk": "Low. CI keeps the same ports. Canary on one frontend first.",
       "proof": "gate.test.js: a held base port moves to the next free one, and PORT reaches the command's env. One real fit run on animals-frontend with 3050 held by a dummy listener passes on 3051.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
@@ -371,7 +371,45 @@
         "no-callers",
         "repo-tests"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "087099b7"
+          },
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "c1174832"
+          },
+          {
+            "repo": "trade-imports-animals-frontend",
+            "sha": "d7cf87ef31461d549759443b9fa1b9bb5ae59deb"
+          },
+          {
+            "repo": "trade-imports-ins-frontend",
+            "sha": "ad90991b0409153d557767d1a066f4a2008d04df"
+          },
+          {
+            "repo": "trade-imports-plants-frontend",
+            "sha": "1b0229f947597729ea5e939fa31b596da2f26657"
+          }
+        ],
+        "checks": [
+          "Verifier finding 1 (stale ladder prompt) is fixed in .claude/skills/requirements-pipeline/workflow/increment-build-loop.js. The prompt now says a FIT rung whose planned port is held moves to the next free port and its `ports` name the holder. The rung fails only when no port from its planned one upwards is free. `result.stack.held` is described as coming from the e2e rungs' stack lease. The rule against killing the holder or touching the stack is kept.",
+          "Verifier finding 2 (wrong heldBy for a sibling rung) is fixed in tim/src/build/gate.js. claimedPorts is now a Map from port to the claiming rung ('<repo> <name>'). claimPort reads the sibling claimant of the planned port before it claims a port. When the rung moves off a port another rung of this gate claimed, heldBy is 'the <repo> <name> rung of this gate'. Otherwise it still uses portHolder/describeHolder.",
+          "The test 'gives two FIT rungs running at the same time on one planned port a port each, naming the rung that holds it' now asserts the moved rung's heldBy equals 'the <repo> fit rung of this gate' for the rung served on the planned port.",
+          "Mutation probe: with siblingRung forced to undefined, that test went red with heldBy 'a process tim cannot identify' (the exact bug the verifier described). After restoring the code it went green.",
+          "tim-unit: npm --prefix tim test green after the restore, 236 files and 3990 tests. This includes workflow-contract.test.js, which loads increment-build-loop.js.",
+          "tim-lint: npm --prefix tim run lint, format and format:check all exit 0.",
+          "Frontend repos are unchanged by this fix, so their earlier lint, format and test results still stand.",
+          "No new ~/git/defra fixed path and no new .sh file in the diff."
+        ],
+        "deviations": [
+          "The fix is a new commit (c1174832) on chore/NO_JIRA-bash-to-tim, added after 087099b7. 087099b7 was not amended.",
+          "A direct `node --check` of increment-build-loop.js was refused by permissions. Instead, the full tim suite checked that the script still loads: its workflow-contract test passed.",
+          "All of the builder's earlier deviations still apply, including the scratch workarea workareas/p08-canary/, which is gitignored and still on disk."
+        ]
+      }
     },
     {
       "id": "P09",

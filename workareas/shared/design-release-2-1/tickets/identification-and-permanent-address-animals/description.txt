@@ -1,0 +1,470 @@
+h3. Background
+
+Two parts of the live animals journey change together. The identification details page now asks each species only for the identifiers that species is actually identified by, and asks for free text where a commodity has no identifier type of its own. Separately, a new permanent address page asks, for each cat, dog or ferret on the notification, where that animal lives: at the place of destination, or at an address the trader types in. The permanent address used to be asked for on the identification details page; it now has a page of its own, reached from the consignment addresses page.
+
+This matters to a trader bringing pets or farm animals into Great Britain. A pig keeper is no longer asked for a microchip or a passport their animals do not carry; a cattle keeper is asked for a tattoo, which is what V4's tattoo commodity list says cattle carry; and a trader selecting a commodity with no identifier type of its own can now describe the animal in words instead of being unable to answer at all. A person moving three cats can give a different permanent address for each of them.
+
+Every row of this theme changed live animals alone, so there is no sibling ticket for this theme in high-risk plants, the Import notification service front door or animals admin.
+
+This work is not yet merged. It sits on the branch {{feat/EUDPA-796-design-release-2-1-identification-and-permanent-address}} across the live animals frontend, the live animals backend and the end-to-end test suite, each with its own open pull request. The acceptance criteria below are the behaviour specification as it stands on that branch.
+
+h3. What changes for the user
+
+h4. Each species is asked only for its own identifiers
+
+A commodity line is asked for the identifiers its species is actually identified by, rather than a fixed list. Pigs, sheep and goats are asked for an ear tag. Cattle and pigs are asked for a tattoo. Two species sharing one commodity code can be asked for different things: a horse is asked for a horse name and a donkey on the same code is not. The saved-animals table then heads only the columns that species was asked for.
+
+h4. A commodity with no identifier of its own can be described in words
+
+Where a commodity declares no identifier type at all, the trader is asked for "Identification details" and "Description" instead. Either one alone saves the animal, and the saved-animals table heads those two columns. Before this, a trader who selected such a commodity had nothing they could enter.
+
+h4. A blank species panel no longer blocks another species
+
+A species panel is refused on its own save rather than on another panel's, so one species' missing identifier does not stop a different species being saved. A page with every identifier still blank passes Save and continue, because nothing has been claimed yet. Pressing Enter inside a panel saves that panel's own animal and reaches no other panel's buttons.
+
+h4. A new permanent address page, with one card per animal
+
+A consignment carrying a cat, dog or ferret gains a permanent address section on the consignment addresses page, and from it a permanent address page holding one card per animal. Each card insets the identifiers that animal carries, so a trader can tell their animals apart, and offers either the place of destination or an address they type in. A consignment with none of those species never sees the section or the page.
+
+h4. Each address is checked, and every message names its animal
+
+A hand-entered address is checked field by field. The error summary names the animal the message belongs to while the message on the field itself stays plain, so a trader looking at three cards knows which card to fix. A refused page answers with an error-prefixed browser title and keeps every card's chosen option and typed values. Choosing the place of destination before the notification has one is refused, and saves once one is given.
+
+h4. Saved addresses are shown back on two pages
+
+The consignment addresses page shows the one address once every animal that needs one shares it, and otherwise shows the count of animals. The review page lists one row for each animal that has a saved permanent address. An animal that still owes one has no row, and its species card is still reported outstanding.
+
+h4. The permanent address leaves the identification page
+
+The identification details page no longer carries the permanent address question. A species that needs a permanent address now has a saved-animals table of its own identifiers alone. An animal's stored address survives another animal on its line being saved and then removed.
+
+h3. Acceptance criteria
+
+These are copied from the behaviour specification, which is where they are maintained. This theme added 69 scenarios across 7 specification files. 54 are written out below, and the 15 left out are each a mirror, pair or boundary twin of one that is, named in a line beneath it — so nothing is hidden, and Jira's size limit is what decides the number. Every file is linked in full at the foot of this ticket.
+
+h4. Which identifiers each species is asked for
+
+h5. A commodity with no specific identifier is asked for the two free-text answers
+
+* *GIVEN* the user is entering identification details for an animal on a commodity line
+* *WHEN* that line's commodity calls for none of the specific identifiers
+* *THEN* "Identification details" and "Description" are asked for that animal, each optional and at most 58 characters
+* *AND* no typed identifier is asked for that animal
+
+SCN-OB-COMMODITY-005-B is its mirror: a commodity declaring its own identifiers is not asked these two.
+
+h5. A cattle line and a pig line are each asked for a tattoo
+
+* *GIVEN* the user is entering identification details for an animal on a commodity line
+* *WHEN* that line's commodity is cattle (0102) or pigs (0103)
+* *THEN* the tattoo is asked for, as an optional answer
+
+SCN-OB-COMMODITY-008-B is its mirror: a code not on the tattoo list is not asked for one.
+
+h5. A commodity calling for two identifiers asks for both together, for the species both are listed for
+
+* *GIVEN* the user is entering identification details for an animal on a commodity line
+* *WHEN* that line's species is the one its commodity's horse name is listed for, and that commodity also calls for a microchip for every species it serves
+* *THEN* both the microchip and the horse name are asked for together
+
+SCN-OB-COMMODITY-004-D covers a commodity listing one identifier, which asks for that one alone.
+
+h5. Two species under one commodity code are asked for different identifiers
+
+* *GIVEN* the user is entering identification details for animals on two lines sharing one commodity code, one of the species the commodity's horse name is listed for and one of a different species under that code
+* *WHEN* identification details are entered for each animal
+* *THEN* the animal of the listed species is asked for the horse name
+* *AND* the animal of the other species is not asked for the horse name
+* *AND* both animals are asked for every identifier their commodity code lists without naming a species
+
+SCN-IDENT-006-C is its page-level pair: two species under one code are offered different identifier fields.
+
+h5. A pig, sheep or goat line is asked for an ear tag
+
+* *GIVEN* the user is entering identification details for an animal on a commodity line
+* *WHEN* that line's commodity is pigs (0103), sheep (010410) or goats (010420)
+* *THEN* the ear tag is asked for, as an optional answer
+
+SCN-OB-COMMODITY-007-B is its mirror: a code not on the ear-tag list is not asked for one.
+
+h5. The choice of where the animal lives leaves scope together with the permanent address
+
+* *GIVEN* an animal on a line whose commodity requires a permanent address
+* *WHEN* the line's commodity or species changes to one that does not
+* *THEN* the permanent address and the choice of where the animal lives both leave scope
+
+h4. Entering and saving an animal’s identifiers
+
+h5. Enter in a species that already has a saved animal leaves every other species' saved animals listed
+
+* *GIVEN* one species with more than one animal already has one animal saved, and a second such species also already has one animal saved
+* *WHEN* a valid identifier is typed into the first species' form and Enter is pressed in that field
+* *THEN* the first species' saved-animals table lists both its original animal and the new one
+* *AND* the second species' saved-animals table still lists only its own original animal, unchanged
+
+h5. Reopening the notification shows a saved record's free-text answers again
+
+* *GIVEN* a commodity line with no identifier of its own has a saved record holding both Identification details and Description
+* *WHEN* the user reopens the notification at the identification details page
+* *THEN* the saved-animals table shows both values for that record
+
+h5. A commodity with no identifier of its own is asked for identification details then description
+
+* *GIVEN* a commodity line whose commodity carries no identifier of its own (for example, ostriches)
+* *WHEN* the user views the identification details page
+* *THEN* that line has an identification card asking for "Identification details" then "Description"
+
+h5. A record on a commodity with no identifier of its own, carrying neither free-text answer, leaves the task To do
+
+* *GIVEN* a notification holds an animal record on a commodity with no identifier of its own, carrying neither Identification details nor Description
+* *WHEN* the user opens Overview
+* *THEN* the Identification details task reads "To do"
+
+h5. An over-length free-text fallback value blocks the save, and 58 characters saves
+
+* *GIVEN* a commodity line with no identifier of its own
+* *WHEN* the user types a value of more than 58 characters into Identification details or Description and tries to save
+* *THEN* the save is blocked and the error summary and the field read "Identification details must be 58 characters or less" or "Description must be 58 characters or less", linking to and focusing that field
+* *WHEN* they replace it with a value of 58 characters and save
+* *THEN* the record is saved with no error
+
+h5. A commodity with no identifier of its own has a saved-animals table of identification details and description
+
+* *GIVEN* a commodity line with no identifier of its own
+* *WHEN* the user saves a record for it
+* *THEN* its saved-animals table is headed by the animal column, Identification details, Description and a Remove action
+
+h5. A notification with no commodity line carries on past the page
+
+* *GIVEN* the notification holds no commodity line
+* *WHEN* the identification details page is requested directly
+* *THEN* commodity selection is shown instead, and the page itself is never rendered
+
+h5. The free-text fallback fields carry their names and no hint
+
+* *GIVEN* the user is entering identifier details for a commodity with no identifier of its own
+* *WHEN* they view the entry form
+* *THEN* the fields are labelled "Identification details" and "Description"
+* *AND* neither shows hint text
+
+h5. Filling Identification details alone saves the animal
+
+* *GIVEN* a commodity line with no identifier of its own
+* *WHEN* the user fills in Identification details, leaves Description blank, and saves
+* *THEN* the animal is saved
+
+SCN-IDENT-023-B says the same of Description alone: either answer on its own saves the animal.
+
+h5. A species that needs a permanent address has a saved-animals table of its own identifiers alone
+
+* *GIVEN* a species whose commodity and species pair needs a permanent address (for example, cats or ferrets)
+* *WHEN* the user saves a record for it
+* *THEN* its saved-animals table is headed by the animal column, each identifier the pair is asked for, and a Remove action
+
+h5. A cattle card's identifier fields are shown in the order cattle asks for them
+
+* *GIVEN* the user is entering identifier details for a cattle line
+* *WHEN* they view the entry form
+* *THEN* the fields are shown in the order Ear tag, then Passport, then Tattoo
+
+h5. The table heads every identifier asked of that species
+
+* *GIVEN* the user has saved one record for a species asked for more than one identifier
+* *WHEN* they view the saved-animals table
+* *THEN* it is headed with a column for every identifier asked of that species, not only the one the saved record used
+
+SCN-IDENT-014-C narrows it: a species asked for one identifier gets a table of that one column.
+
+h5. A card ends with the identifier fields and its save control, asking nothing else
+
+* *GIVEN* the user has reached the identification details page for a cat, dog or ferret line
+* *WHEN* the page loads
+* *THEN* the card asks only for that commodity's identifier fields, ending with its save control
+
+h5. A species' own refusal does not depend on another species' card holding a value
+
+* *GIVEN* one species' card holds a filled identifier field and another species' card holds none
+* *WHEN* the blank card's own save button is pressed
+* *THEN* that card's save is refused, with that species' first identifier field focused when the resulting error is followed
+* *AND* the filled card has no animal saved and its identifier field is shown empty again
+
+h5. A page with every identifier blank passes Save and continue and Save and return to overview
+
+* *GIVEN* every identifier field on the page is blank
+* *WHEN* the user presses Save and continue or Save and return to overview
+* *THEN* no refusal is shown and the user is taken on
+* *AND* no animal record is saved
+
+h5. A blank save on a species' last animal still to enter is refused and that animal stays to enter
+
+* *GIVEN* a species whose earlier animals are saved and whose card offers "Save and finish" for its last animal still to enter, with every identifier field on that card blank
+* *WHEN* the user presses "Save and finish"
+* *THEN* the save is refused, the species' first identifier field carries the error, and that animal is still to enter with its saved animals unchanged
+
+h4. The new permanent address page
+
+h5. An animal's stored address survives another animal on its line being saved and then removed on Identification details
+
+* *GIVEN* an animal saved with a hand-entered permanent address, on a line with a second animal still outstanding
+* *WHEN* that second animal is saved on Identification details and then removed from its saved-animals table
+* *THEN* the permanent address page, reopened after either change, still shows the first animal's address with "Enter a new address" selected and every value back in its own field
+
+h5. A blank new address shows the six required messages on their own fields
+
+* *GIVEN* a card with "Enter a new address" chosen and every field left blank
+* *WHEN* the user saves
+* *THEN* "Enter a name or organisation name", "Enter address line 1", "Enter a town or city", "Enter a postcode or Zip code", "Enter an email address" and "Enter a phone number" each show on their own field
+
+SCN-PERM-ADDR-012-B adds that giving only address line 2 and county is still refused for the same six fields.
+
+h5. A value past a field's character limit is refused naming that field and its limit
+
+* *GIVEN* a card's county field holding one character past its limit
+* *WHEN* the user saves
+* *THEN* the field shows "County must be 100 characters or fewer"
+
+SCN-PERM-ADDR-012-E is its boundary twin: a value at the limit saves with no message.
+
+h5. A malformed email, phone or postcode is saved as typed
+
+* *GIVEN* a card with "Enter a new address" chosen and a present but malformed email, phone and postcode
+* *WHEN* the user saves
+* *THEN* the address is saved as typed
+
+h5. The summary names the animal while the field stays plain
+
+* *GIVEN* a blank new address refused on the card titled "Felis catus 1"
+* *WHEN* the user views the error summary and the field
+* *THEN* the summary shows "Enter a name or organisation name for Felis catus 1" and "Enter address line 1 for Felis catus 1"
+* *AND* the field itself shows "Enter address line 1"
+
+h5. The choice is refused before a place of destination exists
+
+* *GIVEN* a card choosing "Same as the place of destination (POD)" on a notification with no place of destination
+* *WHEN* the user saves
+* *THEN* "Add a place of destination before you can continue" shows on that card's radio group and in the error summary, naming no animal
+
+SCN-PERM-ADDR-014-B is its pair: the same choice saves once a place of destination is given.
+
+h5. Every card keeps its chosen option and typed values
+
+* *GIVEN* one card refused and a second card answered on the same save
+* *WHEN* the page is shown again
+* *THEN* both cards keep their own chosen option selected and their own typed values in their own fields
+* *AND* nothing is written for either
+
+h5. The refused page answers with status 400 and an error-prefixed title
+
+* *GIVEN* a save that is refused
+* *WHEN* the page is shown again
+* *THEN* it answers with HTTP status 400
+* *AND* the browser title opens with "Error: "
+
+h5. The page shows the message and link in place of the cards
+
+* *GIVEN* a commodity line that needs a permanent address with no animal identified on it yet
+* *WHEN* the user opens the permanent address page
+* *THEN* no card is shown
+* *AND* "Add the number of animals on consignment details before you can continue." is shown, with "consignment details" linking to the consignment details page
+* *AND* the save control still renders
+
+SCN-PERM-ADDR-016-B adds that saving from that state changes nothing and returns to the consignment addresses page.
+
+h5. The page shows its caption, heading and browser title, and returns to the consignment addresses page
+
+* *GIVEN* the user has followed "Add a permanent address" from the consignment addresses page, and the page shows no errors
+* *WHEN* the permanent address page loads
+* *THEN* it is captioned "Consignment parties", headed "Permanent address" and titled "Permanent address - Import notification service - GOV.UK"
+* *AND* following the back link returns to the consignment addresses page
+
+h5. The permanent address page carries the fraud warning
+
+* *GIVEN* the user is on the permanent address page
+* *WHEN* the page loads
+* *THEN* the warning "Providing a false address is an act of fraud" is shown
+
+h5. A cat line of two animals and a ferret line of one get three cards, and a non-pet line on the same consignment gets none
+
+* *GIVEN* a notification with a cat line of two identified animals, a ferret line of one identified animal and a cattle line
+* *WHEN* the user opens the permanent address page
+* *THEN* three cards are shown, titled "Felis catus 1", "Felis catus 2" and "Mustela putorius furo 1"
+* *AND* no card is shown for the cattle line
+
+h5. A card insets only the identifiers the animal carries
+
+* *GIVEN* an animal with a microchip entered and no passport or tattoo
+* *WHEN* the user views its card
+* *THEN* the card insets "Microchip: MICROCHIP-1" alone
+
+h5. Neither option is selected on first opening
+
+* *GIVEN* an animal with no permanent address yet saved
+* *WHEN* the user opens its card
+* *THEN* neither "Same as the place of destination (POD)" nor "Enter a new address" is selected
+
+h5. The first option is hinted with the place of destination on one line once one is given
+
+* *GIVEN* a place of destination named "Riverside Holding Facility" at "East Farm Road, Leeds, LS25 3EB, United Kingdom"
+* *WHEN* the user views a card
+* *THEN* "Same as the place of destination (POD)" is hinted "Riverside Holding Facility, East Farm Road, Leeds, LS25 3EB, United Kingdom"
+
+h5. Choosing Enter a new address reveals that animal's fields alone, in order, with no country field
+
+* *GIVEN* a consignment with two animals needing a permanent address
+* *WHEN* the user chooses "Enter a new address" on the first animal's card
+* *THEN* that card alone reveals "Name or organisation name", "Address line 1", "Address line 2 (optional)", "Town or city", "County (optional)", "Postcode or Zip code", "Email address" then "Phone number", in that order
+* *AND* no country field is shown
+* *AND* the phone field is hinted "For international numbers include the country code"
+
+h5. Saving returns to the consignment addresses page
+
+* *GIVEN* the user is on the permanent address page, with every card's answer passing
+* *WHEN* they press the primary save control
+* *THEN* they return to the consignment addresses page
+
+h5. An animal saved at the place of destination reopens with that option selected
+
+* *GIVEN* an animal saved as living at the place of destination
+* *WHEN* the permanent address page reopens
+* *THEN* "Same as the place of destination (POD)" is selected for that animal
+
+SCN-PERM-ADDR-008-B says the same of a hand-entered address, which reopens with each value in its own field and country United Kingdom.
+
+h5. Leaving one animal unanswered saves the others and returns to the consignment addresses page
+
+* *GIVEN* a consignment with two animals needing a permanent address
+* *WHEN* the user answers one and leaves the other with neither option chosen, then saves
+* *THEN* the answered animal's choice and address are stored
+* *AND* the other animal has no permanent address and no choice stored
+* *AND* the user returns to the consignment addresses page, which still offers to add a permanent address
+
+h5. A consignment with no cat, dog or ferret line is sent to the consignment addresses page
+
+* *GIVEN* a notification with no cat, dog or ferret commodity line
+* *WHEN* the user opens the permanent address page's address directly
+* *THEN* they are sent to the consignment addresses page
+
+h5. The page and its revealed state have no serious or critical accessibility violations
+
+* *GIVEN* the user is on the permanent address page
+* *WHEN* it is checked as first opened, and again with a card's "Enter a new address" fields revealed
+* *THEN* neither state has a serious or critical accessibility violation
+
+SCN-PERM-ADDR-011-B says the same once an address on the page has been refused.
+
+h4. The consignment addresses page
+
+h5. The section shows that one address once every animal that needs one shares it
+
+* *GIVEN* every animal that needs a permanent address on the notification is saved against the place of destination, or only one animal needs one
+* *WHEN* the user views the consignment addresses page
+* *THEN* the permanent address section shows that one saved address in place of the add link, with a "Change" link to the permanent address page
+
+h5. Animals not all saved against the place of destination show the count of animals instead of an address
+
+* *GIVEN* every animal that needs a permanent address on the notification has one, and they are not all saved against the place of destination
+* *WHEN* the user views the consignment addresses page
+* *THEN* the permanent address section shows the one line "Permanent addresses added for N animals", N being the number of animals that need one, with a "Change" link to the permanent address page
+
+h5. A consignment carrying a cat, dog or ferret brings the permanent address section into the page
+
+* *GIVEN* the notification has a commodity line whose commodity and species pair needs a permanent address
+* *WHEN* the user views the consignment addresses page
+* *THEN* a section headed "Permanent address" is shown, explaining "A permanent address is where an animal:" with the bullets "will permanently reside" and "can be checked by the Animal and Plant Health Agency (APHA)", offering the link "Add a permanent address"
+* *AND* a consignment of cats alone shows the five party sections then the permanent address section, and no CPH number section
+
+SCN-CONSIGN-ADDR-008-B is its mirror: a consignment with none of those species leaves the section off.
+
+h4. The review page
+
+h5. The roles-and-addresses card lists a row for each animal that has a saved permanent address
+
+* *GIVEN* a cat line of two animals, one saved against the place of destination and one with a hand-entered address
+* *WHEN* the user views check-your-answers
+* *THEN* the roles-and-addresses card lists, after the party rows, a row for each animal keyed by its species' common name and number, each holding that animal's saved address
+
+h5. An animal that still owes a permanent address has no row, while the species card is still reported outstanding
+
+* *GIVEN* a cat line of two animals, with a permanent address saved for only one of them
+* *WHEN* the user views check-your-answers
+* *THEN* the roles-and-addresses card lists a row for the answered animal alone
+* *AND* the error summary still names the species card as needing to be completed
+
+h5. A line needing a permanent address with no animal counted has no permanent address row
+
+* *GIVEN* a cat line that needs a permanent address, with its animal count given and no animal identified
+* *WHEN* the user views check-your-answers
+* *THEN* the roles-and-addresses card lists no permanent address row
+
+h5. The identifier table heads only the columns a line's species was asked for and some animal filled in
+
+* *GIVEN* a line of a species asked for a microchip, a passport and a horse name, with all three filled in for its one saved animal
+* *WHEN* the user views that species' card on the review
+* *THEN* its identifier table is headed Animal, Microchip, Passport and Horse name, with that animal's values in its one row
+* *AND* a species under the same commodity code that is not asked for the horse name never heads a Horse name column on its own card
+
+h4. Moving through the journey
+
+h5. Commodity details goes on to identification details whenever the notification holds a commodity line
+
+* *GIVEN* the user is on commodity details
+* *WHEN* they save valid counts for a commodity line
+* *THEN* identification details is shown
+
+h5. The permanent address page goes on to the consignment addresses page
+
+* *GIVEN* the user is on the permanent address page
+* *WHEN* they save and continue
+* *THEN* they are taken to the consignment addresses page
+
+h5. The origin page, the CPH number page and the permanent address page offer Save and continue alone while amending
+
+* *GIVEN* a notification being amended
+* *WHEN* the user opens the origin of the import page, the CPH number page or the permanent address page
+* *THEN* each ends with "Save and continue" alone
+
+SCN-FLOW-013-E says the same of a draft.
+
+h4. The task list
+
+h5. Choosing a commodity that declares no identifier of its own still reveals the row
+
+* *GIVEN* the user has chosen a commodity that carries no identifier of its own
+* *AND* a country of origin is saved
+* *WHEN* they view Overview
+* *THEN* the second section lists Commodity details, then Identification details, then Additional details, in that order
+
+h3. The work behind this change
+
+Each row below was built and reviewed on its own, in the order shown. The table holds every row of the theme, including one that was not built and one that was dropped, so a reader can see what was decided as well as what shipped. One row changed only the end-to-end test suite and is marked as such, because it proves the journey rather than changing it.
+
+|| Row || What it changed || State ||
+| inc-045 | Identification details opened from template review returns to template review \\ _Blocked behind the templates theme, which is parked. Nothing else in this theme depends on it._ | Not built |
+| inc-048 | An empty species panel is refused on its own save, even beside a filled one | Built |
+| inc-049 | Identification counts as complete only when every animal is entered, and submit needs one entry per species when several are selected \\ _Dropped deliberately: the completeness rule it described is already covered by the per-species refusal inc-048 built._ | Dropped |
+| inc-051 | Pigs, sheep and goats are identified by ear tag only | Built |
+| inc-268 | Cattle and pigs are asked for a tattoo, as V4's tattoo commodity list says | Built |
+| inc-054 | A permanent address page for cats, dogs and ferrets, with one card per animal and a same-as-destination choice | Built |
+| inc-055 | The permanent address page checks each new address, names the animal in every error, and answers errors as an error page | Built |
+| inc-056 | Permanent addresses are summarised on the consignment addresses page and listed per animal on the review page | Built |
+| inc-057 | The permanent address leaves the identification page | Built |
+| inc-058 | End-to-end proof: pet cats by air with permanent addresses \\ _End-to-end proof only — a pet-cats-by-air journey walked from create to submitted. It changed the test suite, not the service._ | Built (test suite only) |
+| inc-238 | Identification details' browser tests read GOV.UK's green at run time and find the save buttons by role | Built |
+| inc-241 | Every selected species has an identification panel, and a species with no specific identifier is asked for identification details and a description | Built |
+| inc-242 | Pressing Enter in a species panel saves that panel's own animal and reaches no other panel's buttons | Built |
+
+h3. Where this is specified
+
+The behaviour specification is the contract this change is held to, and the tests linked to each scenario are the evidence. This theme added 69 scenarios across these 7 files, on the branch named above.
+
+|| Specification || Scenarios this theme added ||
+| [journey-obligations/commodity-selection|https://github.com/DEFRA/trade-imports-workspace/blob/feat/EUDPA-796-design-release-2-1-identification-and-permanent-address/openspec/specs/live-animals/journey-obligations/commodity-selection/spec.md] | 10 |
+| [journey-pages/identification-details|https://github.com/DEFRA/trade-imports-workspace/blob/feat/EUDPA-796-design-release-2-1-identification-and-permanent-address/openspec/specs/live-animals/journey-pages/identification-details/spec.md] | 19 |
+| [journey-pages/permanent-address|https://github.com/DEFRA/trade-imports-workspace/blob/feat/EUDPA-796-design-release-2-1-identification-and-permanent-address/openspec/specs/live-animals/journey-pages/permanent-address/spec.md] | 27 |
+| [journey-pages/consignment-addresses|https://github.com/DEFRA/trade-imports-workspace/blob/feat/EUDPA-796-design-release-2-1-identification-and-permanent-address/openspec/specs/live-animals/journey-pages/consignment-addresses/spec.md] | 4 |
+| [journey-pages/check-your-answers|https://github.com/DEFRA/trade-imports-workspace/blob/feat/EUDPA-796-design-release-2-1-identification-and-permanent-address/openspec/specs/live-animals/journey-pages/check-your-answers/spec.md] | 4 |
+| [journey-flow|https://github.com/DEFRA/trade-imports-workspace/blob/feat/EUDPA-796-design-release-2-1-identification-and-permanent-address/openspec/specs/live-animals/journey-flow/spec.md] | 4 |
+| [journey-pages/overview|https://github.com/DEFRA/trade-imports-workspace/blob/feat/EUDPA-796-design-release-2-1-identification-and-permanent-address/openspec/specs/live-animals/journey-pages/overview/spec.md] | 1 |
+| *Total* | *69* |
+
+This description is generated from the behaviour specification and is regenerated whenever that specification changes, so it does not go stale while the branch is open.

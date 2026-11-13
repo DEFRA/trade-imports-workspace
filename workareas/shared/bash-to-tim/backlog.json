@@ -1227,7 +1227,7 @@
       "dependsOn": [],
       "risk": "Low to medium. This must use the agile board endpoint, not the project JQL, or the epic set changes.",
       "proof": "`diff <(list-board-epics.sh 13780) <(tim jira epics --board 13780 --no-ui)` is empty. The labels JSON is equal.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
@@ -1235,8 +1235,26 @@
         "no-callers"
       ],
       "evidence": {
-        "recoverableCommits": "The blocked attempt is in the local reflog, unpushed: 67dd4948 then d4415b52. Cherry-pick them and fix only the reason below, rather than rebuilding. Follow P22's precedent: Jira errors exit 1 and keep Jira's errorMessages.",
-        "previousBlockedReason": "An unknown --board now exits 2 with only a not-found message, where the deleted Bash exited 1 with Jira's errorMessages, and neither the row's risk nor any golden or CLI test covers that error path."
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "e313d4cd"
+          }
+        ],
+        "checks": [
+          "tim-unit: PASS. `npm --prefix tim test` passed: 244 files, 4278 tests, plus 8 expected-fail tests. Two mutation probes turned the new error-path tests red (9 tests red when the exit-code mapping fell back to the default; 4 red when Jira's messages were dropped), then green again once restored.",
+          "tim-lint: PASS. `run lint` and `run format:check` are both clean.",
+          "parity: PASS for success output. The cherry-picked goldens (board 13780 epics list, --include-done, json; labels list and json) still match byte for byte. The live run of `tim jira epics --board 13780` and `tim jira labels --board 13780` exits 0. The error path now matches the Bash's contract: an unknown or rejected board exits 1 and prints Jira's errorMessages one per line on stderr, with nothing on stdout. CLI tests cover this for both commands, and so does a --json envelope test. Live, `tim jira epics|labels --board 99999999` exits 1.",
+          "no-callers: PASS. `git grep list-board-(epics|labels)` across the workspace (outside workareas) and every repos/* checkout finds nothing. The only hits are point-in-time workarea notes under workareas/shared/designer-prototyping and workspace-genericisation.",
+          "no new fixed path or .sh: PASS. The diff from 435c164b adds no git/defra or /Users path, and it deletes 2 .sh files without adding any."
+        ],
+        "deviations": [
+          "I squashed the recovered commits 67dd4948 and d4415b52, plus the error-path fix, into one commit (e313d4cd) to keep to one commit per row.",
+          "I could not capture a golden of the deleted Bash's own error output. A hook blocks running a script that is not committed, and permissions deny a raw curl and a probe test. So the error goldens come from the Bash's code (stderr is `jq -r '.errorMessages[]'`, then exit 1), not from a recorded run.",
+          "Live, Jira's 404 for unknown board 99999999 carries no errorMessages that tim can read. tim therefore prints its own message ('listBoardEpics(99999999): not found.') and exits 1. When Jira does send errorMessages, tim prints them exactly.",
+          "Change outside the row's files: the Jira client's get() now also keeps errorMessages on a 400 (`jiraMessages`), as it already did for 404 and other statuses. This lets a rejected board request print Jira's reasons. A client test covers it.",
+          "Rejected credentials (401/403) on a board read still exit 2 (AUTH), following P22's precedent. Usage errors also exit 2. The commit message names both as changes on purpose."
+        ]
       }
     },
     {

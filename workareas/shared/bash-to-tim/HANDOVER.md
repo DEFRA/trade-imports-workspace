@@ -113,6 +113,36 @@ Agents cannot do these two rows, so the loop skips them:
 
 ## State
 
-- Progress: 0 of 68 (0%). Rows for Sam: P11 and P19B.
-- Nothing has been built yet.
-- Next: run the loop.
+- Progress: 12 of 70 (17%), counted over rows that are not for Sam.
+- Landed this run: P01, P05, P06, P07, P08, P09, P10, P12, P13, P14, P15
+  and P17.
+- Blocked this run:
+  - **P16:** the verifier's one problem needs two read-only allow entries in
+    `.claude/settings.json`, `Bash(gh api user:*)` and `Bash(gh pr view:*)`,
+    next to `Bash(tim:*)` (line 87). Leave `gh api -X DELETE` unallowed. This
+    is a permission change, so an agent cannot make it. Everything else
+    passed. Until it is in, the review skill's who-am-I lookup
+    (`.claude/skills/review/SKILL.md:458`) and PR-author lookup (line 464)
+    ask for permission each time.
+  - **P18:** two dead allowlist entries at `.claude/settings.json:88-89`,
+    `Bash(~/git/defra/trade-imports-workspace/tools/frontend-change/*)` and
+    the same with `:*`, must be deleted. A hook blocks agent edits there. The
+    README drift the verifier also raised is fixed in ca8f9856. Once the two
+    lines are gone, `git grep tools/frontend-change` finds only history and
+    the row passes.
+  - **P19:** the golden at `tim/src/guard-hooks/guard-bash.test.js:36`
+    (PIPED_TEST_RUN) names `~/git/defra/trade-imports-workspace` literally,
+    which the brief bans. Build the expected message from
+    `CLAUDE_PROJECT_DIR` (with HOME replaced by `~`) instead, so the corpus
+    stays portable and P19B can pass it unchanged. Also add
+    `guard-bash.sh:120` to P19B's callersToUpdate, since the builder could
+    not edit `.claude/hooks/**`. The rest of the corpus was checked and is
+    sound.
+- Why the loop stopped: two rows in a row were blocked, which points at
+  something systemic. Here, agents cannot change permission settings or
+  hooks.
+- Rows for Sam: P11 and P19B.
+- Landing result: none yet.
+- Next: Sam edits `.claude/settings.json` on this branch (adds the two P16
+  entries, deletes the two P18 lines) and commits it. Then fix the P19
+  golden and run the loop again.

@@ -44,7 +44,7 @@ for repo in "${REPOS[@]}"; do
     echo "  $repo — pulling..."
     git -C "$dir" pull --rebase
   else
-    echo "  $repo — not cloned, skipping (run make setup first)"
+    echo "  $repo — not cloned, skipping (run tim workspace setup first)"
   fi
 done
 echo "Done."

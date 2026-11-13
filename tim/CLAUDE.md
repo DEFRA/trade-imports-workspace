@@ -1,6 +1,6 @@
 # tim/ — Trade Imports CLI
 
-Node.js Ink/React CLI for the trade-imports workspace. Dual-runs alongside the bash tooling in `../tools/`. See `README.md` for usage.
+Node.js Ink/React CLI for the trade-imports workspace. It is the workspace's command line: every cross-repo command and the Docker stack go through it. `tim docker` runs the stack scripts in `../scripts/stack/`. See `README.md` for usage.
 
 ## Inherited best-practices (always in context)
 

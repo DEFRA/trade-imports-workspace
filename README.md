@@ -36,11 +36,12 @@ git clone git@github.com:DEFRA/trade-imports-workspace.git ~/git/defra/trade-imp
 Then:
 
 ```bash
-make setup    # clone all repos into repos/
-make install  # npm install in all Node repos
+cd ~/git/defra/trade-imports-workspace/tim && npm ci && npm link   # put tim on your PATH
+tim workspace setup     # clone all repos into repos/
+tim workspace install   # install dependencies in every repo
 ```
 
-Run `make help` for the full list of cross-repo commands.
+Run `tim --help` for the full list of cross-repo commands.
 
 ## Skills
 

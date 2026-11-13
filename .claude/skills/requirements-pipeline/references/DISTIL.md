@@ -131,7 +131,7 @@ once, but a repo moves every time someone merges. So a repo extract records the 
 moved since it was extracted, so the extract describes code that has changed." The next launch extracts it again.
 
 The scope hash cannot see this on its own: it hashes the source's `kind`, `locator` and `scope`, none of which
-change when code lands, so a `git pull` or a `make reset` left a repo extract reading `verified` against code from
+change when code lands, so a `git pull` or a `tim workspace reset` left a repo extract reading `verified` against code from
 weeks before.
 
 Nothing is called stale for want of information. A source that is not a repo, an extract written before the commit

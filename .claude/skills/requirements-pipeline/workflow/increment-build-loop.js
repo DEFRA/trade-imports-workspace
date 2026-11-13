@@ -2071,6 +2071,16 @@ const CHANGE_MAKES_FALSE_RULE = `WHAT THE CHANGE MAKES FALSE is in scope. A comm
 change makes false is a \`comments\` finding, whether or not the diff touches its line. Its fix is to delete it.
 `
 
+const SPEC_IS_THE_CONTRACT = `THE BEHAVIOUR SPEC SETTLES WHAT THE CODE SHOWS. Before you raise a finding whose fix would change any
+user-visible string, label, copy, page title, row key, error message or behaviour — including one that unifies two
+spellings of what looks like the same thing — read the page's spec under ${TILDE}/openspec/specs/ and quote the line
+you are relying on. The spec sets different wording in different places on purpose: the same animal is titled by its
+scientific name on one page, keyed by its common name on another, and given its full species label on a third. Two
+spellings the spec sets are not duplication, and "one concept, one name" never overrides them. A finding that would
+make the code contradict its spec is not a finding; where you judge the spec itself wrong, say so as a finding
+against the spec, quoting it, and never as a code fix.
+`
+
 const OUTSIDE_THE_DIFF = `a rule the change alters that a doc, recipe, JSDoc or test name OUTSIDE the diff still states the old way. Grep the
 changed repos for the behaviour's own words, not only its identifiers. Each one is in scope: report it at its file:line,
 and its fix is to update it or delete it`
@@ -2152,6 +2162,11 @@ code in \`quote\`, with its file:line. A refutation with no quote leaves the fin
 "out of the increment's scope", "a comparable file does it", "feature folders are independent" and the like are never
 grounds to refute one. A tool call that failed is not evidence: when you could not read the code, the finding is real.
 A house-rule breach is never taste and never out of scope, whatever its kind.
+One more thing refutes a code-quality finding: the behaviour spec. When its fix would change a user-visible string,
+label, copy, page title, row key, error message or behaviour, read the page's spec under \`${TILDE}/openspec/specs/\`
+before you judge it. The spec sets different wording in different places on purpose, so two spellings it sets are not
+duplication and "one concept, one name" does not reach them. Quote the spec line in \`reasoning\` and set real:false.
+Not finding a spec for the page is not a refutation, and not a confirmation: say which you looked for.
 DESIGN (${quotedList(DESIGN_CATEGORIES)}): read the design source the finding cites, and the row's \`sources\` and the
 workarea's \`sources.json\` when it cites none. The finding is real when the source does set what it says and a guide
 rule does disagree, when the source sets two different things for one element, or when the source does not show the
@@ -5387,7 +5402,7 @@ ${REPO_DOCS_STEP}LOOK FOR, across every row of the theme:
 - TESTS: set-up repeated across test files instead of in the shared helper; a local copy of a shared helper's body;
   a removal proved by absence rather than by what shows now.
 ${CODE_REVIEW_LENS}- ${OUTSIDE_THE_DIFF}.
-${CHANGE_MAKES_FALSE_RULE}${CATEGORY_RULE}Write each finding's \`file\` as \`${key}:<repo-relative path>\`, and report findings in this repo only. Give each
+${CHANGE_MAKES_FALSE_RULE}${SPEC_IS_THE_CONTRACT}${CATEGORY_RULE}Write each finding's \`file\` as \`${key}:<repo-relative path>\`, and report findings in this repo only. Give each
 one a fix, and a concrete failure scenario or, for a code-quality finding, the house rule it breaks. If the theme changed nothing here, or its change is clean, return an empty
 findings array.
 Return the structured output only.`
@@ -5407,7 +5422,7 @@ you look for and the bundle to judge against. Also read ${SKILLS}/code-style/SKI
 language's bundle once.
 SCOPE: style only — formatting, naming, conventions, idiom, comment discipline, copy structure. Correctness and
 security belong to the theme's engineering reviewer; do not duplicate them.
-${HOUSE_RULES_TO_JUDGE}${CHANGE_MAKES_FALSE_RULE}${CATEGORY_RULE}Write each finding's \`file\` as \`${key}:<repo-relative path>\`, and report findings in this repo only. Report
+${HOUSE_RULES_TO_JUDGE}${CHANGE_MAKES_FALSE_RULE}${SPEC_IS_THE_CONTRACT}${CATEGORY_RULE}Write each finding's \`file\` as \`${key}:<repo-relative path>\`, and report findings in this repo only. Report
 ONLY real findings, each with a concrete fix and the rule it breaks. If the theme changed nothing here, or its change
 is clean, return an empty findings array.
 Return the structured output only.`

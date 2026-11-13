@@ -21,17 +21,14 @@ assignee back. `tim jira epics`, `tim jira labels` and `tim jira search` are
 read-only; `search` takes search words (a text search in the project) or
 `--jql <query>`. `tim jira epics --board <id> [--include-done]` lists a
 board's epics as `KEY — summary` lines, and `tim jira labels --board <id>`
-counts the labels in a board's backlog. The `ticket-creator` skill and the
-`prototype` skill's hand-off both create through it rather than
-`tools/jira/create-ticket.sh` below, which stays as the plain-bash
-alternative and the one the build loop still calls directly.
+counts the labels in a board's backlog. Every ticket the workspace raises,
+epics included, goes through `tim jira create`.
 
 | Script | Args | Purpose |
 |---|---|---|
 | **jira** | | |
 | `tools/jira/ticket.sh` | EUDPA-X [full\|summary\|json] | Get ticket |
 | `tools/jira/comments.sh` | EUDPA-X | Get comments |
-| `tools/jira/create-ticket.sh` | [-t Type][-p Parent][-P Priority][-l Label][-a] "Summary" | Create ticket.<br>e.g. `tools/jira/create-ticket.sh -t Task -p EUDPA-215 "Add boundary notes"`<br>Boundary: performs the live Jira creation (vs `ticket-creator/prepare-ticket-creation.sh`, which only pre-caches epics/capabilities beforehand). |
 | `tools/jira/add-comment.sh` | EUDPA-X "Comment" | Add comment |
 | `tools/jira/transition-ticket.sh` | EUDPA-X "Status"\|--list | Change status. Takes a status or a transition name; `--list` prints `transition -> status`.<br>`tim jira transition EUDPA-X "Status" [--list] [--json]` now covers this, and is what the increment build loop calls; the script stays for use by hand. |
 | `tools/jira/search.sh` | "JQL" [list\|summary\|json] [--fields ...] | Run JQL across the project (paginates via v3 endpoint) |
@@ -123,7 +120,7 @@ alternative and the one the build loop still calls directly.
 | `tools/ticket/prepare-implement.sh` | EUDPA-X [--repo R] [--json] | Assert plan, re-validate detect-tech, cache prior PR diff, emit `.implement-meta.json` |
 | `tools/ticket/setup-branch.sh` | EUDPA-X\|NO_JIRA --repo R --slug S [--type feat\|fix\|chore] [--base B] [--json] | Fetch → checkout base → pull → checkout -b `<type>/EUDPA-X-<slug>` in one dispatch. `--type` defaults to `feat`; any other value is refused |
 | **ticket-creator** | | |
-| `tools/ticket-creator/prepare-ticket-creation.sh` | [--board ID] [--cap-page ID] | Refresh `workareas/ticket-creation/.prereqs/` with active EUDPA epics + EUDP capability codes.<br>e.g. `tools/ticket-creator/prepare-ticket-creation.sh`<br>Boundary: only refreshes the prereqs cache for the interview; creates nothing (vs `jira/create-ticket.sh`, which actually creates the ticket in Jira). |
+| `tools/ticket-creator/prepare-ticket-creation.sh` | [--board ID] [--cap-page ID] | Refresh `workareas/ticket-creation/.prereqs/` with active EUDPA epics + EUDP capability codes.<br>e.g. `tools/ticket-creator/prepare-ticket-creation.sh`<br>Boundary: only refreshes the prereqs cache for the interview; creates nothing (vs `tim jira create`, which actually creates the ticket in Jira). |
 | `tools/ticket-creator/extract-capabilities.sh` | \<markdown-file\> [--format list\|tsv] | Strict parser for the capability map. `list` emits `CODE — Name [STATUS]` or refuses outright; `tsv` emits every anchored row with a verdict.<br>Boundary: parses only — the caller decides what to do with a violation. |
 | `tools/ticket-creator/check-capabilities.sh` | [--cap-page ID] [--quiet] | Diagnostic report on capability-map conformance: per-row verdicts, violations grouped by rule, unknown status values. Exits non-zero while any row is non-canonical.<br>Boundary: read-only reporting (vs `prepare-ticket-creation.sh`, which writes the prereqs cache). |
 | **skill-creator** | | |

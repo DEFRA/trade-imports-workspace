@@ -924,8 +924,8 @@ tim jira search --jql "parent = EUDPA-125" --limit 100 --json  # read-only: send
 ```
 
 `tim jira create --from <path>` reads a `tim-ticket/1` manifest (project,
-type, summary, `descriptionFile`, parent, labels, priority, attachments,
-relates) from the given JSON file, resolving `descriptionFile` and every
+type, summary, `descriptionFile`, parent, labels, priority (Medium when
+left out), attachments, relates) from the given JSON file, resolving `descriptionFile` and every
 attachment path relative to the manifest's own directory. The dry run's
 `planId` is a hash of the exact payload plus every attachment's own content
 hash, so `--confirm <planId>` only succeeds when the plan it names is still
@@ -935,9 +935,11 @@ different from what was shown. A manifest that already has a
 `ticket.created.json` receipt beside it refuses to create again, naming the
 key it already created. `create` and `attach` also exit `PARTIAL_FAILURE`
 (not `ERROR`) when some but not all attachments fail, so the receipt still
-gets written for what did succeed. The `ticket-creator` skill and the
-`prototype` skill's hand-off both build a manifest and call this surface
-rather than `../tools/jira/create-ticket.sh` and a separate attach step.
+gets written for what did succeed. `type` is one of `Story`, `Task`,
+`Bug` or `Epic`. The description file's trailing newlines are dropped
+before it is sent. Every ticket the workspace raises goes through this
+surface; to take the new ticket yourself, follow it with
+`tim jira assign <key> me --confirm`.
 
 `tim jira link` takes exactly one link: `relates <key>`, `--blocks <key>` or
 `--blocked-by <key>`. A positional `blocks` is refused, because the flags

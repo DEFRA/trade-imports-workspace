@@ -65,12 +65,15 @@ Ask the user which ticket this upgrade tracks. Three paths:
 
 1. **Existing ticket** — they give an `EUDPA-XXXXX`. Branch is
    `chore/EUDPA-XXXXX`. Proceed to Step 2.
-2. **Create a new ticket** — call
-   `~/git/defra/trade-imports-workspace/tools/jira/create-ticket.sh`
-   with DevOps conventions: parent `EUDPA-144`, labels
-   `DevOps` + `tech-improvement`, priority Medium, type Task. See the
-   `ticket-creator` skill for the GDS question-gathering flow. Capture
-   the new ticket key, then Branch is `chore/EUDPA-XXXXX`.
+2. **Create a new ticket** — write a `tim-ticket/1` manifest with
+   DevOps conventions (`project` from `JIRA_PROJECT_KEY`, type `Task`,
+   parent `EUDPA-144`, labels `DevOps` + `tech-improvement`, priority
+   `Medium`) and raise it with
+   `tim jira create --from ticket.json` (a dry run), then
+   `--confirm <planId>` once the user approves. See the
+   `ticket-creator` skill for the manifest and the GDS
+   question-gathering flow. Capture the new ticket key from
+   `ticket.created.json`, then Branch is `chore/EUDPA-XXXXX`.
 3. **Custom branch name (no Jira ticket)** — accept the user-supplied
    branch verbatim. Use this only when there's a deliberate reason not
    to track work in Jira.

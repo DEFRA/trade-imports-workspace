@@ -77,6 +77,24 @@ describe('runAssign', () => {
     })
   })
 
+  test('"me" with --confirm sends the recorded self-assignment body', async () => {
+    const golden = loadJiraFixture('create-bash-payloads.json').assignSelf
+    const bashAssignment = golden.requests.find(
+      (request) => request.method === 'PUT'
+    )
+    const signedInUser = {
+      accountId: bashAssignment.body.accountId,
+      displayName: 'Sam Example'
+    }
+    signedInAs(signedInUser)
+    assigneeReads(null, signedInUser)
+    const sent = acceptsAssignment()
+
+    await runAssign({ key: 'EUDPA-200', assignee: 'me', confirm: true })
+
+    expect(sent.body).toEqual(bashAssignment.body)
+  })
+
   test('leaves a ticket already assigned to that account alone, even with --confirm', async () => {
     assigneeReads(PAT)
 

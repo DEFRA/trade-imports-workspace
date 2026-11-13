@@ -141,8 +141,8 @@ any premise we now know is wrong rather than preserving it.
 ## Jira wiki markup
 
 Every workspace path that writes a description or comment
-(`tim jira create`, `tools/jira/create-ticket.sh`,
-`tim jira update`, `tools/jira/add-comment.sh`) sends the
+(`tim jira create`, `tim jira update`, `tools/jira/add-comment.sh`)
+sends the
 text raw to Jira's wiki renderer. Markdown does not work: `# Heading`
 renders as a numbered list, `**bold**` keeps its asterisks, and
 backticks print as backticks. Write wiki markup from the start.
@@ -215,9 +215,8 @@ To drop a ticket:
 
 ### Assigning a ticket
 
-`tools/jira/create-ticket.sh -a` assigns a new ticket to you.
-`tim jira assign EUDPA-X <accountId|me>` assigns an existing ticket. It is
-a dry run until you add `--confirm`.
+`tim jira assign EUDPA-X <accountId|me>` assigns a ticket, a new one
+included. It is a dry run until you add `--confirm`.
 
 ### Links
 

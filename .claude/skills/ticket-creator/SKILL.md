@@ -288,7 +288,7 @@ Write two files under
 ```json
 {
   "schema": "tim-ticket/1",
-  "project": "EUDPA",
+  "project": "<JIRA_PROJECT_KEY>",
   "type": "Story",
   "summary": "<Summary from Step 1>",
   "descriptionFile": "description.jira.txt",
@@ -300,9 +300,12 @@ Write two files under
 }
 ```
 
-`project` is always `EUDPA`. Omit `parent`, `priority`, `labels` or
+Set `project` from `JIRA_PROJECT_KEY`: `EUDPA` for real tickets, or the
+sandbox project the user has pointed it at. If it is unset, ask the user
+rather than guessing. Omit `parent`, `priority`, `labels` or
 `attachments` entirely rather than writing `null` or `""` when the interview
-gave nothing for that field. Copy any screenshots or logs the user gave you
+gave nothing for that field; a manifest with no `priority` is raised as
+Medium. Copy any screenshots or logs the user gave you
 (Bugs) into this same folder and list their filenames in `attachments`.
 
 ### 5.2 Dry run: show the plan
@@ -342,32 +345,24 @@ stale `planId`. On success `tim` writes `ticket.created.json` next to the
 manifest and refuses to create from that manifest a second time — that
 receipt, not `draft.md`, is the record of what got raised.
 
-### Fallback: `tools/jira/create-ticket.sh`
-
-Reach for this only when `tim` is not on `PATH` (`which tim` finds
-nothing — `npm --prefix tim link`, run from the workspace root, fixes
-that where possible, so prefer that over falling back):
-
-```bash
-~/git/defra/trade-imports-workspace/tools/jira/create-ticket.sh [options] "Summary" "Description"
-```
-
-| Flag | Description | Default |
-|------|-------------|---------|
-| -t, --type | Bug/Story/Task | Task |
-| -p, --parent | Epic key | None |
-| -P, --priority | Lowest-Highest | Medium |
-| -l, --label | Add label (repeatable) | None |
-| -a | Self-assign | No |
-
-This creates immediately — there is no dry run — so only run it once the
-draft's **Status** is `APPROVED`.
+If `which tim` finds nothing, run `npm --prefix tim link` from the
+workspace root. There is no other way to create a ticket.
 
 ### After Creation
 
-Read the created key and link from `ticket.created.json` (or from the
-fallback script's own output). Append them to the bottom of `draft.md` and
+Read the created key and link from `ticket.created.json`. Append them to the bottom of `draft.md` and
 update **Status** to `CREATED: EUDPA-XXXXX`.
+
+`tim jira create` does not set an assignee. When the approved draft says
+**Assignee:** Self, assign the new ticket straight away. The approval that
+raised the ticket covers this, so it needs no dry run:
+
+```bash
+tim jira assign EUDPA-XXXXX me --confirm
+```
+
+It reads the assignee back after writing. With **Assignee:** None, skip
+this step.
 
 Check the description rendered:
 
@@ -383,7 +378,7 @@ Dry run first, then add `--confirm` to write it:
 tim jira update EUDPA-XXXXX --description-file workareas/ticket-creation/<slug>/description.jira.txt
 ```
 
-To assign the ticket to someone else, or to link it as blocking or
+To assign the ticket to someone other than yourself, or to link it as blocking or
 blocked by another, follow "Workflow facts" in
 `ticket-conventions.md`. Both are dry runs until `--confirm`:
 

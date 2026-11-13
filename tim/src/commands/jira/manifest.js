@@ -8,7 +8,7 @@ const MAX_SUMMARY_LENGTH = 255
 
 /**
  * The `tim-ticket/1` manifest a hand-off writes: everything `tim jira
- * create` needs to raise a story, with the description and attachments
+ * create` needs to raise a ticket, with the description and attachments
  * held as files next to the manifest rather than inlined.
  */
 export const manifestSchema = z.object({
@@ -16,8 +16,8 @@ export const manifestSchema = z.object({
     message: `schema must be "${MANIFEST_SCHEMA}".`
   }),
   project: z.string().trim().min(1, 'Give a project key.'),
-  type: z.enum(['Story', 'Task', 'Bug'], {
-    message: 'type must be one of Story, Task, Bug.'
+  type: z.enum(['Story', 'Task', 'Bug', 'Epic'], {
+    message: 'type must be one of Story, Task, Bug, Epic.'
   }),
   summary: z
     .string()
@@ -30,7 +30,7 @@ export const manifestSchema = z.object({
   descriptionFile: z.string().trim().min(1, 'Give descriptionFile.'),
   parent: z.string().trim().min(1).optional(),
   labels: z.array(z.string()).default([]),
-  priority: z.string().trim().min(1).optional(),
+  priority: z.string().trim().min(1).default('Medium'),
   attachments: z.array(z.string()).default([]),
   relates: z.array(z.string()).default([])
 })

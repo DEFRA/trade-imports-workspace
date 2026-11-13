@@ -795,14 +795,33 @@
       "dependsOn": [],
       "risk": "Low. The Duplicates and Cloners link types are lost, and nobody calls them.",
       "proof": "Dry runs on a scratch ticket. The existing attach.test.js and link.test.js stay green.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "0fb9e00d11814fa5433759899ec802ec365a5126"
+          }
+        ],
+        "checks": [
+          "tim-unit: green, 236 files and 4010 tests passed (attach.test.js and link.test.js included)",
+          "tim-lint: eslint clean, and prettier format:check reports every file formatted",
+          "parity: dry runs gave exit 0 and the expected plan. 'tim jira attach EUDPA-181 <file>' planned the attach, 'tim jira link EUDPA-181 --blocks EUDPA-183' printed 'EUDPA-181 blocks EUDPA-183 (Blocks)' (the same left-to-right reading as 'link-tickets.sh EUDPA-181 Blocks EUDPA-183'), and 'relates' planned a Relates link",
+          "no-callers: git grep finds no attach-file or link-tickets outside workareas/, and a grep of repos/* and .claude finds none either. The only hits left are historical write-ups under workareas/shared",
+          "no new fixed path and no new .sh file: one ~/git/defra/trade-imports-workspace mention (the link-tickets example in ticket-conventions.md) was removed"
+        ],
+        "deviations": [
+          "Updated two callers the row did not list: tools/jira/delete-link.sh's header comment named link-tickets.sh, and the tools-index row for delete-attachment.sh named attach-file.sh. Both now point at tim jira link and tim jira attach",
+          "The row gives the tools-index line as 39, but the attach-file row was at line 33. Found by its content and removed. link-tickets.sh never had a row in tools-index",
+          "The commit message records the deliberate loss of the Duplicates and Cloners link types, as the row's risk describes"
+        ]
+      }
     },
     {
       "id": "P18",

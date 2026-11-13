@@ -8,9 +8,8 @@
 #   ./search.sh "project = EUDPA AND parent = EUDPA-215" json
 #   ./search.sh "key in (EUDPA-216, EUDPA-217)" summary
 #
-# Boundary: this is the general JQL surface. For board-shaped queries
-# prefer tools/jira/get-issues-for-board.sh; for epic children prefer
-# tools/jira/get-epic-issues.sh; for single tickets tools/jira/ticket.sh.
+# Boundary: this is the general JQL surface. For single tickets use
+# tools/jira/ticket.sh.
 
 set -e
 

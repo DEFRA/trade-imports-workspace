@@ -774,7 +774,6 @@ All under `~/git/defra/trade-imports-workspace/tools/review/`:
 | `verify-coverage.sh` | Fresh Step 3 coverage gate |
 | `verify-consistency.sh` | Fresh Step 4 consistency gate |
 | `verify-style-coverage.sh` | Cross-domain — style-review coverage check (also consumed by code-style) |
-| `diff-since-review.sh` | Refresh helper — per-file diff between snapshot SHA and HEAD |
 | `review-items.sh` | Walker / batch / refresh — list items with filters |
 | `review-mark.sh` | Set Disposition (auto-sets Status) |
 | `review-set-status.sh` | Set Status only (after fix attempt) |

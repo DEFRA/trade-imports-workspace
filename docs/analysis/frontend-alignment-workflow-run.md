@@ -53,7 +53,7 @@ state, notes, open questions.
 | Fix | Sonnet | 0 or 1 | Applies only what the judge ruled |
 | Ladder | Sonnet | 1 | Runs the stage's npm scripts in order to log files read once, three repairs at most, never weakens a test |
 | Land | Haiku | 1 | Proves the branch, commits with a conventional subject, pushes with the fully qualified refspec, records the SHA |
-| Pull request | Haiku | 1 | Reuses the programme's one draft PR per repo or creates it through `tools/github/pr-ensure-draft.sh` |
+| Pull request | Haiku | 1 | Reuses the programme's one draft PR per repo or creates it with `gh pr create --draft` |
 | CI | Haiku watching, Sonnet fixing | 1 to 5 | Blocks on `tools/github-actions/wait-for-pr-checks.sh`, fixes red at most twice, records the outcome |
 
 A red ladder or red CI stops the run, preserves the attempt as a pushed `wip`

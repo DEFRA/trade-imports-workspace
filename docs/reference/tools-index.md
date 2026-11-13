@@ -29,24 +29,20 @@ alternative and the one the build loop still calls directly.
 | `tools/jira/ticket.sh` | EUDPA-X [full\|summary\|json] | Get ticket |
 | `tools/jira/comments.sh` | EUDPA-X | Get comments |
 | `tools/jira/create-ticket.sh` | [-t Type][-p Parent][-P Priority][-l Label][-a] "Summary" | Create ticket.<br>e.g. `tools/jira/create-ticket.sh -t Task -p EUDPA-215 "Add boundary notes"`<br>Boundary: performs the live Jira creation (vs `ticket-creator/prepare-ticket-creation.sh`, which only pre-caches epics/capabilities beforehand). |
-| `tools/jira/add-subtask.sh` | EUDPA-X "Summary" ["Desc"] | Add subtask |
 | `tools/jira/add-comment.sh` | EUDPA-X "Comment" | Add comment |
 | `tools/jira/attach-file.sh` | EUDPA-X FILE | Attach a file to a ticket.<br>e.g. `tools/jira/attach-file.sh EUDPA-333 diagram.svg`<br>Reference it inline from the description with wiki markup — `!diagram.svg\|thumbnail!`.<br>Re-attaching the same filename ADDS a second attachment rather than replacing it, so pair it with `delete-attachment.sh` when refreshing a file. |
 | `tools/jira/delete-attachment.sh` | EUDPA-X FILENAME [--all] \| --id ID \| EUDPA-X --list | Delete an attachment, or list what a ticket has.<br>e.g. `tools/jira/delete-attachment.sh EUDPA-333 diagram.svg`<br>Refuses to act when several attachments share the filename, listing them instead — pick with `--id` or take all with `--all`.<br>Boundary: the delete half of the regenerate loop (vs `attach-file.sh`, which only adds). |
 | `tools/jira/update-ticket.sh` | EUDPA-X field=value | Update fields |
 | `tools/jira/transition-ticket.sh` | EUDPA-X "Status"\|--list | Change status. Takes a status or a transition name; `--list` prints `transition -> status`.<br>`tim jira transition EUDPA-X "Status" [--list] [--json]` now covers this, and is what the increment build loop calls; the script stays for use by hand. |
-| `tools/jira/get-issues-for-board.sh` | board-id [list\|summary\|json] | Board issues |
 | `tools/jira/list-board-epics.sh` | board-id [list\|json] [--include-done] | List epics on a board |
 | `tools/jira/list-board-labels.sh` | board-id [list\|json] | Aggregate label frequencies from a board's backlog |
 | `tools/jira/search.sh` | "JQL" [list\|summary\|json] [--fields ...] | Run JQL across the project (paginates via v3 endpoint) |
 | **github** | | |
 | `tools/github/prs.sh` | EUDPA-X [list\|json\|urls] | Find PRs |
 | `tools/github/pr-details.sh` | repo pr-num [full\|files\|json] | PR details |
-| `tools/github/diff.sh` | repo pr-num | PR diff |
 | `tools/github/file-diff.sh` | repo pr-num file-path | PR diff filtered to one file |
 | **confluence** | | |
 | `tools/confluence/page.sh` | page-id [summary\|json] | Get page |
-| `tools/confluence/update-page.sh` | page-id "Title" content-file | Update page |
 | `tools/confluence/sync-docs.sh` | [--dry-run] [--root-id ID] | Sync Confluence tree to docs/confluence/ |
 | `tools/confluence/clean-docs.sh` | [args forwarded] | Wipe + re-sync docs/confluence/ |
 | **github-actions** | | |
@@ -55,7 +51,6 @@ alternative and the one the build loop still calls directly.
 | `tools/github-actions/run-status.sh` | repo run-id-or-url | Run status |
 | `tools/github-actions/wait-for-run.sh` | repo run-id-or-url [timeout] | Wait for run |
 | `tools/github-actions/trigger-workflow.sh` | repo workflow-file [branch] [key=value...] | Trigger workflow |
-| `tools/github-actions/list-runs.sh` | repo [branch] [workflow] | List recent runs |
 | `tools/github-actions/wait-for-pr-checks.sh` | repo pr-number [timeout] | Wait for a pull request's checks, then report them. Exit 0 green, 1 red, 2 still pending, 4 no checks, 5 every failing check is a stale rollup (re-run them, do not fix code) |
 | **review** | | |
 | `tools/review/start-review.sh` | EUDPA-X | Step 0 — detect FRESH/REFRESH and exec the appropriate setup script |
@@ -64,7 +59,6 @@ alternative and the one the build loop still calls directly.
 | `tools/review/verify-coverage.sh` | EUDPA-X [--json] | Check coverage |
 | `tools/review/verify-consistency.sh` | EUDPA-X [--json] | Check consistency |
 | `tools/review/verify-style-coverage.sh` | EUDPA-X [--json] | Check JS style review coverage |
-| `tools/review/diff-since-review.sh` | EUDPA-X [--json] | Diff since last review |
 | `tools/review/file-review-init.sh` | EUDPA-X --repo R --file F --commit SHA --pr N --mode M | Initialise per-file `.review.json` placeholder |
 | `tools/review/file-review-add-item.sh` | EUDPA-X --repo R --file F --line L --severity S --category C --issue "..." --fix "..." [--best-practice PATH] | Append a finding to a per-file JSON. C is a category from `tools/review/finding-categories.sh`; any other is refused |
 | `tools/review/file-review-set-verdict.sh` | EUDPA-X --repo R --file F --verdict V [--reason "..."] | Set verdict (marks file as reviewed) |

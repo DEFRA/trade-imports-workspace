@@ -6809,7 +6809,7 @@ describe('increment-build-loop', () => {
         const run = await runMergeRow(FOUND, CI_GREEN, MARKED_DONE, NO_GATE)
         const jiraCallers = run.agents
           .filter(({ prompt }) =>
-            /tools\/jira|move-to-board|transition-ticket|tim jira/.test(prompt)
+            /tools\/jira|transition-ticket|tim jira/.test(prompt)
           )
           .map(({ options }) => options.label)
 

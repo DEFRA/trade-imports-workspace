@@ -17,8 +17,6 @@
 
 set -euo pipefail
 
-WS="$HOME/git/defra/trade-imports-workspace"
-
 FOLDER="${1:-}"
 shift || true
 
@@ -93,7 +91,7 @@ if [[ "$DRY_RUN" == "1" ]]; then
 fi
 
 if [[ -n "$SUMMARY" ]]; then
-    "$WS/tools/jira/update-ticket.sh" "$KEY" -s "$SUMMARY" -d - < "$DESCRIPTION"
+    tim jira update "$KEY" --summary "$SUMMARY" --description-file "$DESCRIPTION" --confirm
 else
-    "$WS/tools/jira/update-ticket.sh" "$KEY" -d - < "$DESCRIPTION"
+    tim jira update "$KEY" --description-file "$DESCRIPTION" --confirm
 fi

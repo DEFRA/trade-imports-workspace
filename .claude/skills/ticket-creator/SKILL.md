@@ -376,9 +376,12 @@ Check the description rendered:
 ```
 
 Search `rendered.txt` for `class="error"`. A match is an unescaped
-bracket: fix `description.jira.txt` and update the ticket with
-`tools/jira/update-ticket.sh EUDPA-XXXXX -d -`, reading the file on
-stdin.
+bracket: fix `description.jira.txt` and update the ticket from it.
+Dry run first, then add `--confirm` to write it:
+
+```bash
+tim jira update EUDPA-XXXXX --description-file workareas/ticket-creation/<slug>/description.jira.txt
+```
 
 To assign the ticket to someone else, or to link it as blocking or
 blocked by another, follow "Workflow facts" in

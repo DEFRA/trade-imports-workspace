@@ -899,6 +899,7 @@ tim jira create --from ticket.json --json          # dry run: prints the plan (f
 tim jira create --from ticket.json --confirm <planId> --json   # creates the issue, attaches every file, links every `relates`, writes ticket.created.json
 tim jira update EUDPA-200 --summary "A clearer title"   # dry run: the fields that would change, and their new values
 tim jira update EUDPA-200 --description-file description.txt --confirm  # writes only the fields that differ, then reads the ticket back to check
+tim jira update EUDPA-200 --priority High --parent EUDPA-215 --add-label urgent --confirm  # --parent none takes the parent away; --labels a,b replaces the labels
 tim jira attach EUDPA-200 diagram.svg notes.md     # dry run: what would be attached
 tim jira attach EUDPA-200 diagram.svg --confirm    # attaches for real; --replace re-attaches over an existing filename instead of adding a duplicate
 tim jira link EUDPA-200 relates EUDPA-100          # dry run
@@ -953,7 +954,12 @@ reports `unchanged`, even with `--confirm`. `--json` puts
 
 `tim jira update` rewrites a ticket that already exists: `--summary` for the
 title, and `--description` or `--description-file` (not both) for the
-description, as Jira wiki markup. It reads the ticket first and sends only
+description, as Jira wiki markup. `--priority` takes Lowest, Low, Medium,
+High or Highest. `--parent` takes the parent epic's key, or `none` to take
+the parent away. `--labels a,b` replaces the ticket's labels; `--add-label`,
+which can be repeated, adds to the labels it has and is not used with
+`--labels`. Labels compare as a set, so a new order is not a change. It
+reads the ticket first and sends only
 the fields whose value differs, so a field already holding that value is
 left out of the write and a re-run reports `unchanged` rather than stamping
 the ticket's history with a no-op. After the write it reads the ticket back

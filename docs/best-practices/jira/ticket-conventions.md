@@ -142,7 +142,7 @@ any premise we now know is wrong rather than preserving it.
 
 Every workspace path that writes a description or comment
 (`tim jira create`, `tools/jira/create-ticket.sh`,
-`tools/jira/update-ticket.sh`, `tools/jira/add-comment.sh`) sends the
+`tim jira update`, `tools/jira/add-comment.sh`) sends the
 text raw to Jira's wiki renderer. Markdown does not work: `# Heading`
 renders as a numbered list, `**bold**` keeps its asterisks, and
 backticks print as backticks. Write wiki markup from the start.

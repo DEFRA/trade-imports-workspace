@@ -92,7 +92,7 @@ ticket that told the business something untrue.
    paragraph is one unwrapped line. Scenario names are `h5.` headings, not bold
    lines — a line starting with `*` is one space from being parsed as a bullet.
    `[label|url]` links work inside table cells. `{expand}` does not work at all:
-   `update-ticket.sh` posts to `rest/api/2`, which Jira Cloud converts to its own
+   `tim jira update` posts to `rest/api/2`, which Jira Cloud converts to its own
    document format and drops macros, so it renders as literal text. There is no
    collapsing on this path; a genuinely collapsible section would need an
    Atlassian Document Format body posted to `rest/api/3`.
@@ -332,8 +332,9 @@ A domain whose ticket already exists is updated in place:
 
 This posts the description and the manifest's summary in one request, so the two
 cannot drift, and refuses a description that is hard-wrapped or uses `{expand}`.
-`tim` has no update command — this is why the helper wraps
-`tools/jira/update-ticket.sh`.
+It writes through `tim jira update --confirm`, which leaves a ticket that
+already holds that summary and description alone, and reads the ticket back to
+check a change landed.
 
 ## Step 4: Set the status
 

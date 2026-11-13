@@ -360,9 +360,10 @@ To check nothing has drifted: "which theme tickets are stale". Tickets and their
   inc-113). req-854's 'Air' labels are already on `main` (note on inc-102). inc-116 and inc-199 re-checked against
   `main` and still blocked. inc-100 and inc-103 waited on arrival-and-transit inc-028, which was merged into inc-241,
   so they now wait on inc-241 (see `deferred.md`).
-- **Waits on #476.** The review-page rows (inc-101 onward, and the view header rows inc-110 to inc-113) change the same
-  check-answers files as the identification work on animals frontend #476 (EUDPA-796). The first launch builds only
-  inc-098 and inc-100 (`stopAfter: 2`). Once #476 merges, add a merge row bringing `main` in, then launch the rest.
+- **Overlaps #476, does not wait on it.** The review-page rows (inc-101 onward, and the view header rows inc-110 to
+  inc-113) change the same check-answers files as the identification work on animals frontend #476 (EUDPA-796). They
+  build now. Once #476 merges, add a merge row bringing `main` in, with criteria saying which side wins in each
+  shared check-answers file.
 - **Rows:** 21: 17 to do, 2 blocked (inc-116, inc-199), 2 dropped. inc-108 waits on identification-and-permanent-address
   inc-054; inc-117, the tests row, waits on inc-108, so both build last. inc-114 was removed: design snagging inc-217
   ports it.

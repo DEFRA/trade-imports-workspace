@@ -544,14 +544,33 @@
       "dependsOn": [],
       "risk": "Low. tim skips workspaceBranchSync:false repos (the prototype) unless --include is given. That difference is deliberate, and no caller relies on the old behaviour.",
       "proof": "Scratch workspace against bare fixtures: remote.origin.fetch, remote.upstream.* and HEADs match between the bash run (from origin/main) and tim. npm --prefix tim test green.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "372edf6e452e67a0ee07a35bc098ac95b26692fa"
+          }
+        ],
+        "checks": [
+          "parity: pass. A temporary vitest run (deleted before the commit) ran origin/main's setup.sh and update.sh against bare fixtures and ran tim workspace setup and tim workspace update against the same fixtures. remote.origin.fetch, the upstream remote's url and fetch refspec, HEADs, remote refs, tags and every exit code (0) matched. The only differences are upstream tagOpt and pushurl (see deviations).",
+          "no-callers: pass. git grep for setup.sh, update.sh, scripts/setup and scripts/update across the workspace (outside workareas) and a grep across repos/* find nothing.",
+          "tim-unit: pass. npm --prefix tim test passed 236 files and 4005 tests.",
+          "tim-lint: pass. npm run lint and npm run format:check are both clean.",
+          "no new fixed path and no new .sh file: pass. The commit deletes 2 scripts and edits one line of one doc."
+        ],
+        "deviations": [
+          "The row's caller tim/src/constants/repos.test.js:107 was already done. Commit 580ea188 had already renamed that test, so this row left the file alone.",
+          "The parity run found a bug in setup.sh. On git 2.56, `git config --replace-all remote.upstream.tagOpt -- \"--no-tags\"` (and the same for pushurl) stores \"--\" as the value. tim stores the intended --no-tags and DISABLED, so tim is the correct one. The commit message records this.",
+          "tools/git/light-remote.sh was kept. tools/review/prepare-review.sh and tools/review/refresh/pull-repos.sh still call it, and docs/agent-onboarding.md still names it, so this row does not retire it."
+        ]
+      }
     },
     {
       "id": "P13",

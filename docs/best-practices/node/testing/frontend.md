@@ -162,11 +162,13 @@ Shared fixtures live in `test/fixtures/`.
 
 | Repo | Helper | What it gives you |
 |---|---|---|
-| animals | `fit/live-animals-journey.js` | `signIn`, `startNotification`, one `answer…` function per section, `completeAnswerSections`, `openReviewFromHub`, `chooseTypeAheadOption`, `chooseCountryOfOrigin`, `choosePortOfEntry`, `visitOverviewThenOpen`, `openNotificationView`, `expectThreeSaveControls`, `PHONE_VIEWPORT`, `journeyUrl`, `journeyIdFromPage` |
-| plants | `fit/high-risk-plants-journey.js` | `startNotification`, `chooseCommodityType`, `addCommodityLine`, `saveOrigin`, `chooseCountryOfOrigin`, `startPotatoNotification`, `completePotatoNotification`, `openDeclaration`, `saveAndContinue`, `chooseTypeAheadOption`, `visitOverviewThenOpen`, `expectThreeSaveControls`, `expectNoSeriousOrCriticalViolations` |
-| plants | `fit/set-base.js` | `BASE`, `setUrl`, `setPath`, `journeyIdFromPage` |
-| plants | `fit/seed-fields.js` | `seedFields(step)` |
+| animals | `fit/live-animals-journey.js` | `signIn`, `startNotification`, one `answer…` function per section, `completeAnswerSections`, `openReviewFromHub`, `chooseTypeAheadOption`, `chooseCountryOfOrigin`, `choosePortOfEntry`, `openOverview`, `openFromOverviewRow`, `openNotificationView`, `saveAndContinue`, `errorSummary`, `backLink`, `expectThreeSaveControls`, `expectNoSeriousOrCriticalViolations`, `PHONE_VIEWPORT`, `journeyUrl`, `journeyIdFromPage` |
+| plants | `fit/high-risk-plants-journey.js` | `startNotification`, `startNotificationAtOrigin`, `startNotificationAtOverview`, `startPotatoNotification`, `completePotatoNotification`, `chooseCommodityType`, `addCommodityLine`, `saveOrigin`, `openDeclaration`, `saveAndContinue`, `saveAndReturnToHub`, `errorSummary`, `errorSummaryLinks`, `backLink`, `journeyFormOf`, `chooseCountryOfOrigin`, `chooseTypeAheadOption`, `visitOverviewThenOpen`, `expectThreeSaveControls`, `expectNoSeriousOrCriticalViolations`, `withoutJavaScript`, `describeAddressPicker`, `describeDatePickerLook` |
+| plants | `fit/set-base.js` | `BASE`, `setUrl`, `setPath`, `journeyIdFromPage`, `pageUrlOnWalk`, `pageUrlWithTrail`, `pagePathWithTrail`, `notificationPageWithTrail` |
+| plants | `fit/seed-fields.js` | `seedFields(step, today)` |
 | both | `fit/sign-in.js` | `signIn(page, { organisationId })` |
+
+Each helper file is the full list of what it exports. Each set's testing guide describes the rest of its shared browser-test helpers: plants in `trade-imports-plants-frontend/src/server/app/sets/high-risk-plants/docs/testing.md` ("Shared browser-test helpers"), animals in `trade-imports-animals-frontend/src/server/app/sets/live-animals/docs/testing.md` ("Browser-test drivers").
 
 A sequence of page steps used by two specs becomes a function in the set's journey helper.
 

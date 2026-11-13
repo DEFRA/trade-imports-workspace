@@ -388,6 +388,13 @@ The system MUST, when a card's button is pressed, validate and save only its spe
 - **THEN** nothing is saved and the field shows its error
 - **AND** the over-length value stays in the field
 
+#### Scenario: Enter in a species that already has a saved animal leaves every other species' saved animals listed
+**ID**: SCN-IDENT-021-E
+- **GIVEN** one species with more than one animal already has one animal saved, and a second such species also already has one animal saved
+- **WHEN** a valid identifier is typed into the first species' form and Enter is pressed in that field
+- **THEN** the first species' saved-animals table lists both its original animal and the new one
+- **AND** the second species' saved-animals table still lists only its own original animal, unchanged
+
 ### Requirement: The identifier fields are labelled Microchip, Passport, Tattoo, Ear tag, Horse name, Identification details and Description, with no hint text
 **ID**: REQ-IDENT-022
 The system MUST label the identifier fields Microchip, Passport, Tattoo, Ear tag, Horse name, Identification details and Description, and MUST show no hint text under them.

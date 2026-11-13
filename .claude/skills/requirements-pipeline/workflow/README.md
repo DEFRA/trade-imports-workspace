@@ -244,6 +244,7 @@ missing key. The first log line is the resolved configuration.
 | `e2e` | Where a row's end-to-end proof comes from. `'local'` runs the gate's e2e phase against the workspace stack, scoped to the suites and tags the built services' pull requests run. `'ci'` runs no local e2e, takes no stack lease and builds no images: the baseline reads each repo's open pull request with `gh pr checks` instead, and the run still stops at `ci-red`. Settle it at the launch from what the machine can do — see [The workspace stack lease](#the-workspace-stack-lease) |
 | `resumeFrom` | The earliest stage the **first** row of this run may enter at: `null` to take it from the row's own attempt record, or `build`, `implement`, `review` or `ladder`. A ceiling, not a command — a row whose preserved work is missing or red still drops back. Later rows take their own stage from the backlog — see [Resuming a row part-way through](#resuming-a-row-part-way-through) |
 | `rigour` | How much of the pipeline every row of this run gets. `'full'`: a `think`-tier plan, reviewed in full once, and revised whenever that review sends it back, with a second pass that re-checks only its findings; a style reviewer for every (repo, language) group but a documentation one, and a code reviewer for every group; a consistency reviewer; a verifier per group of findings. `'standard'`: the same, with that second pass run only when a finding is structural, or when the review sends the plan back naming nothing — and no style reviewer on the row: on a theme branch, one style reviewer per repo reads the theme's whole change once its last row lands, and off one the row keeps its style reviewers. `'fast'`: a `code`-tier plan with no review, one `think`-tier code reviewer across the whole change, no consistency reviewer, and no verifier — the judge does the verifier's work on each finding before it rules. A row's own `rigour` wins for that row. The plan lint, the gate, the ladder, the style re-review of the fixer's hunks, the style review of a CI fixer's commits and a theme's engineering review, where the lifecycle runs one, all run at every preset — see [The rigour dial](#the-rigour-dial) |
+| `workspace` | The root of the workspace clone the run builds in, as a tilde path. The launch passes it, so a run builds in the clone that launched it. With `null`, the first stage resolves the root from the session folder, then from `CLAUDE_PROJECT_DIR`, then from a fixed list of paths as a last resort. Every Bash command the run gives an agent, and the Codex executor's `-C`, use it |
 
 A preflight `jq` against the resolved `backlog.json` runs before anything else: a workarea
 with no readable backlog throws, naming the path it tried, rather than proceeding against
@@ -376,7 +377,8 @@ ever.
   stopAfter: 'all',
   e2e: 'local',
   resumeFrom: null,
-  rigour: 'standard'
+  rigour: 'standard',
+  workspace: null
 }
 ```
 
@@ -1168,7 +1170,10 @@ The worked example for the frontend alignment sync:
   models: {},
   increments: null,
   stopAfter: 'all',
-  e2e: 'local'
+  e2e: 'local',
+  resumeFrom: null,
+  rigour: 'standard',
+  workspace: null
 }
 ```
 

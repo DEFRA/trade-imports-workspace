@@ -529,6 +529,7 @@ content designer's review).
    Workflow({
      scriptPath: ".claude/skills/prototype/workflow/wording-sweep.js",
      args: {
+       workspace: "<this clone's root, as a tilde path>",
        set: "<release>",
        sweeps: [{ find: "Consignment parties", replace: "Consignment addresses", scope: "all" }],
        welsh: "mark",

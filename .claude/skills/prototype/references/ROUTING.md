@@ -158,9 +158,14 @@ launch can run an older copy of the script):
 ```text
 Workflow({
   scriptPath: ".claude/skills/prototype/workflow/design-session.js",
-  args: { set: "plants-working", requests: ["…", "…"] }
+  args: { workspace: "<workspace>", set: "plants-working", requests: ["…", "…"] }
 })
 ```
+
+`workspace` is the root of the workspace clone this session runs in, as a
+tilde path: what `git rev-parse --show-toplevel` prints, with your home
+folder written as `~`. Every workflow takes it, so its agents work in this
+clone and not in another one.
 
 When the designer has given permission for custom patterns in their own
 words, record it first (`references/custom-pattern.md`, "Record their
@@ -170,6 +175,7 @@ words"), then pass the id it prints:
 Workflow({
   scriptPath: ".claude/skills/prototype/workflow/design-session.js",
   args: {
+    workspace: "<workspace>",
     set: "plants-working",
     requests: ["Give me 3 options for the commodity page"],
     designerMandate: { id: "m-2026-10-27-1" }

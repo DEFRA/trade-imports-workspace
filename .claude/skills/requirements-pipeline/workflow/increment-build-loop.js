@@ -73,7 +73,8 @@ const ALWAYS_REQUIRED = [
   'approvalWaitMinutes',
   'e2e',
   'resumeFrom',
-  'rigour'
+  'rigour',
+  'workspace'
 ]
 const CFG = parseArgs(WORKFLOW_NAME, args)
 requireKeys(WORKFLOW_NAME, CFG, ALWAYS_REQUIRED)
@@ -85,6 +86,13 @@ if (typeof CFG.workarea !== 'string') {
   )
 }
 const WORKAREA_REL = CFG.workarea.replace(/^\/+|\/+$/g, '')
+const CONFIGURED_WORKSPACE = CFG.workspace
+if (CONFIGURED_WORKSPACE !== null && (typeof CONFIGURED_WORKSPACE !== 'string' || !CONFIGURED_WORKSPACE.startsWith('~/'))) {
+  throw new Error(
+    `${WORKFLOW_NAME}: config.workspace must be the workspace root as a tilde path: the clone this session runs in, written with a leading ~/. A /Users/... path is denied in Bash. Pass null to resolve the root from the session folder. Got ${JSON.stringify(CONFIGURED_WORKSPACE)}`
+  )
+}
+const CONFIGURED_ROOT = CONFIGURED_WORKSPACE === null ? null : CONFIGURED_WORKSPACE.replace(/\/+$/, '')
 const SCOPE = CFG.scope
 if (typeof SCOPE !== 'string' || !SCOPE.trim()) {
   throw new Error(
@@ -404,22 +412,42 @@ log(`${WORKFLOW_NAME}: rigour ${RIGOUR} — ${rigourSummary(RIGOUR)}`)
 const RUN_WITH_BASH = `- The Bash tool is loaded in every stage. Run each command your task names with it. Never report the result of a
   command you have not run, and never report Bash or any tool as missing without first calling it.`
 
-const WORKSPACE_CANDIDATES = [
+const FALLBACK_WORKSPACES = [
   '~/git/defra/trade-imports-workspace',
   '~/git/defra/trade-imports-animals-workspace',
   '~/git/defra/trade-imports-animals'
 ]
+const WORKSPACE_SOURCES = ['config', 'session', 'project', 'fallback']
+const LOOP_SCRIPT = '.claude/skills/requirements-pipeline/workflow/increment-build-loop.js'
+
+const workspaceCheckStep = (root) =>
+  `then \`ls ${root}/${LOOP_SCRIPT}\`, which must exit zero, or that folder is not the workspace`
+
+const configuredWorkspaceSteps = (root) =>
+  `config.workspace names the workspace, so use that and nothing else:
+1. \`git -C ${root} rev-parse --show-toplevel\`, ${workspaceCheckStep(root)}.
+Report \`abs\` as exactly what git printed, \`tilde\` as \`${root}\` and \`from\` as "config".
+If either command fails, report ok:false. Do NOT try any other folder.`
+
+const resolvedWorkspaceSteps = () =>
+  `Try each of these in order and stop at the first that works:
+1. From the folder this session started in, with no -C: \`git rev-parse --show-toplevel\`, ${workspaceCheckStep('<the ~/ form of what it printed>')}. \`from\` is "session".
+2. \`printenv CLAUDE_PROJECT_DIR\`; when it prints a folder, \`git -C "$CLAUDE_PROJECT_DIR" rev-parse --show-toplevel\`, ${workspaceCheckStep('<the ~/ form of what it printed>')}. \`from\` is "project".
+${FALLBACK_WORKSPACES.map((c, i) => `${i + 3}. \`git -C ${c} rev-parse --show-toplevel\`, ${workspaceCheckStep(c)}. \`from\` is "fallback".`).join('\n')}
+For steps 1 and 2, run \`printenv HOME\` once: the ~/ form is what git printed with that home folder replaced by \`~\`.
+A folder outside the home folder has no ~/ form, so that step does not work: go on to the next.
+Report \`abs\` as exactly what git printed and \`tilde\` as the ~/ form (for steps 3 onward, the path you passed to -C).`
 
 const STARTED_AT_FORMAT = /^\d{8}T\d{6}Z$/
 
 const WORKSPACE_SCHEMA = {
   type: 'object',
-  required: ['ok', 'abs', 'tilde', 'startedAt', 'machineConfig', 'workers', 'summary'],
+  required: ['ok', 'abs', 'tilde', 'from', 'startedAt', 'machineConfig', 'workers', 'summary'],
   properties: {
     ok: { type: 'boolean' },
     abs: { type: 'string', description: 'Absolute path of the workspace checkout, starting with /' },
     tilde: { type: 'string', description: 'The SAME root written with a leading ~/ — this one goes in Bash commands' },
-    canonical: { type: 'boolean', description: 'true if the canonical -workspace path resolved' },
+    from: { type: 'string', enum: WORKSPACE_SOURCES, description: 'Which step found the workspace' },
     startedAt: { type: 'string', description: 'Exactly what `date -u +%Y%m%dT%H%M%SZ` printed, such as 20261001T091500Z' },
     machineConfig: {
       type: ['string', 'null'],
@@ -437,14 +465,11 @@ const WORKSPACE_SCHEMA = {
 
 const workspace = await agent(
   `Resolve THIS machine's workspace root and report it, with the time. That is your whole job.
-Try each of these in order, ONE Bash call each, and stop at the first that exits zero:
-${WORKSPACE_CANDIDATES.map((c, i) => `${i + 1}. \`git -C ${c} rev-parse --show-toplevel\``).join('\n')}
-Report \`abs\` as exactly what that command printed, and \`tilde\` as the candidate path you used —
-tilde MUST still begin with \`~/\`, because a literal /Users/... path in a Bash command is DENIED.
-Set canonical:true only if candidate 1 worked; if it did not, say so in your summary, because CLAUDE.md
-rule 1 wants ${WORKSPACE_CANDIDATES[0]} to resolve to the workspace and it is a symlink away.
+ONE Bash call per command.
+${CONFIGURED_ROOT === null ? resolvedWorkspaceSteps() : configuredWorkspaceSteps(CONFIGURED_ROOT)}
+tilde MUST begin with \`~/\`, because a literal /Users/... path in a Bash command is DENIED.
 Then run \`date -u +%Y%m%dT%H%M%SZ\` and report exactly what it printed as \`startedAt\`.
-Then run \`tim build workers --workspace <the candidate path you used> --json\` and copy its \`result.config\` as
+Then run \`tim build workers --workspace <tilde> --json\` and copy its \`result.config\` as
 \`machineConfig\` and its \`result.workers\` as \`workers\`, every key and number exactly as printed. If it exits
 non-zero, report ok:false and quote its error message in your summary.
 If none of them works, report ok:false. Do NOT guess a path and do NOT invent a home directory.
@@ -455,7 +480,7 @@ ${RUN_WITH_BASH}`,
 
 if (!workspace || !workspace.ok || !workspace.abs?.startsWith('/') || !workspace.tilde?.startsWith('~/')) {
   throw new Error(
-    `increment-build-loop: could not resolve the workspace root. CLAUDE.md rule 1 wants ${WORKSPACE_CANDIDATES[0]} to resolve to the workspace checkout — symlink it if your clone is elsewhere. ${workspace ? workspace.summary : 'the resolver agent failed'}`
+    `${WORKFLOW_NAME}: could not resolve the workspace root. Launch from the workspace clone, or pass config.workspace as its tilde path. ${workspace ? workspace.summary : 'the resolver agent failed'}`
   )
 }
 if (!STARTED_AT_FORMAT.test(workspace.startedAt ?? '')) {
@@ -465,10 +490,8 @@ if (!STARTED_AT_FORMAT.test(workspace.startedAt ?? '')) {
 }
 
 const ABS = workspace.abs.replace(/\/+$/, '')
-const TILDE = workspace.tilde.replace(/\/+$/, '')
-if (!workspace.canonical) {
-  log(`workspace resolved at ${TILDE} — the canonical ${WORKSPACE_CANDIDATES[0]} symlink is missing (CLAUDE.md rule 1)`)
-}
+const TILDE = CONFIGURED_ROOT ?? workspace.tilde.replace(/\/+$/, '')
+log(`${WORKFLOW_NAME}: workspace ${TILDE}, from ${CONFIGURED_ROOT === null ? workspace.from : 'config'}`)
 
 const RUNG_KEY = /^[a-z0-9][a-z0-9-]*\/[a-z0-9][a-z0-9-]*$/
 const badWorkerEntries = Object.entries(workspace.workers ?? {}).filter(
@@ -537,8 +560,6 @@ const REPO_RULE = IS_BRANCH ? BRANCH_REPO_RULE : FULL_REPO_RULE
 
 let workspaceInIncrement = null
 const buildsWorkspace = () => workspaceInIncrement !== null
-
-const LOOP_SCRIPT = '.claude/skills/requirements-pipeline/workflow/increment-build-loop.js'
 
 const workspaceCarriedFrom = (started) => {
   const named = started.preexistingDirty ?? []

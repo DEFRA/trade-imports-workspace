@@ -20,6 +20,7 @@ copy of the script.
 Workflow({
   scriptPath: '.claude/skills/prototype/workflow/design-session.js',
   args: {
+    workspace: '<this clone’s root, as a tilde path>',
     set: 'plants-working',
     requests: [
       "Change the hint on origin to 'The country the plants were grown in'",
@@ -28,6 +29,10 @@ Workflow({
   }
 })
 ```
+
+Every workflow here takes `workspace`: the root of the workspace clone the
+session runs in, as a tilde path. Every path its agents use is built from it,
+so a run works in the clone that launched it.
 
 Pass `args` as a real object, not as a string of JSON. A string still works
 (the script parses it), but an object is clearer.

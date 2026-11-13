@@ -31,6 +31,10 @@ The user gives the workarea and the epic. Everything else is worked out or
 defaulted. Never ask for a value the list below says how to derive.
 
 ```
+workspace     the root of the workspace clone this session runs in, as a tilde
+              path: the folder `git rev-parse --show-toplevel` prints, with
+              your home folder written as ~. The run builds in that clone.
+              null makes the run resolve it from the session folder
 workarea      path under workareas/ holding backlog.json, e.g. shared/my-programme
 lifecycle     full (default) | branch. branch builds onto one existing
               long-lived branch with no Jira and no merge: see "Branch
@@ -637,6 +641,7 @@ Build the args object with every key below:
 
 ```js
 {
+  workspace: '<workspace>', // this clone's root as a tilde path, so the run builds here and not in another clone
   workarea: '<workarea>',
   branch: '<branch>',
   lifecycle: 'full', // 'branch' only for a run onto an existing branch: see "Branch lifecycle"
@@ -1377,6 +1382,7 @@ state the next machine cannot see.
 ````
 Resume the <programme> build with the requirements-pipeline skill's BUILD phase.
 
+workspace    <the clone's root as a tilde path>
 workarea     <workarea>
 branch       <branch>
 lifecycle    <full or branch>

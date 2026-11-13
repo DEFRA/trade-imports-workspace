@@ -124,7 +124,8 @@ const REQUIRED_KEYS_BY_SCRIPT = {
     'approvalWaitMinutes',
     'e2e',
     'resumeFrom',
-    'rigour'
+    'rigour',
+    'workspace'
   ],
   'args-canary.js': ['list', 'n'],
   'distil.js': ['workspace', 'workarea', 'only', 'tim', 'models', 'verifyChunk']
@@ -177,14 +178,15 @@ const BASE_ARGS = {
   approvalWaitMinutes: 20,
   e2e: 'local',
   resumeFrom: null,
-  rigour: 'full'
+  rigour: 'full',
+  workspace: null
 }
 
 const WORKSPACE_ANSWER = {
   ok: true,
   abs: '/ws',
   tilde: '~/ws',
-  canonical: true,
+  from: 'session',
   startedAt: '20261001T090000Z',
   machineConfig: null,
   workers: {},
@@ -460,6 +462,14 @@ describe('every workflow script', () => {
     expect(withDefault).toEqual([])
   })
 
+  test('names no absolute home folder', () => {
+    const withHomePath = workflowScripts()
+      .filter((script) => /\/Users\/[a-z]/.test(script.source))
+      .map((script) => script.name)
+
+    expect(withHomePath).toEqual([])
+  })
+
   test('stops before any agent and names its required keys when args is empty', async () => {
     for (const script of workflowScripts()) {
       const run = await runWorkflowScript(script.path, { args: {} })
@@ -629,6 +639,81 @@ describe('increment-build-loop', () => {
     expect(run.error.message).toContain(
       'no readable backlog at /ws/workareas/shared/args-fixture/backlog.json'
     )
+  })
+
+  describe('the workspace root', () => {
+    const SECOND_CLONE = '~/clones/second-workspace'
+
+    const runWithWorkspace = (workspace) =>
+      runLoop(scriptPath, {
+        args: { ...BASE_ARGS, workspace },
+        answers: [
+          {
+            ...WORKSPACE_ANSWER,
+            abs: '/home/second-workspace',
+            from: 'config'
+          },
+          null
+        ]
+      })
+
+    test('builds every command in the clone config.workspace names, whatever the resolver reports', async () => {
+      const run = await runWithWorkspace(`${SECOND_CLONE}/`)
+
+      expect(run.agents[1].prompt).toContain(
+        `${SECOND_CLONE}/workareas/shared/args-fixture/backlog.json`
+      )
+      expect(run.agents[1].prompt).not.toContain('~/ws/')
+      expect(run.logs).toContain(
+        `increment-build-loop: workspace ${SECOND_CLONE}, from config`
+      )
+    })
+
+    test('tells the resolver to check config.workspace alone', async () => {
+      const run = await runWithWorkspace(SECOND_CLONE)
+
+      expect(promptOf(run, 'workspace')).toContain(
+        `\`git -C ${SECOND_CLONE} rev-parse --show-toplevel\``
+      )
+      expect(promptOf(run, 'workspace')).toContain(
+        `\`ls ${SECOND_CLONE}/.claude/skills/requirements-pipeline/workflow/increment-build-loop.js\``
+      )
+      expect(promptOf(run, 'workspace')).not.toContain('CLAUDE_PROJECT_DIR')
+      expect(promptOf(run, 'workspace')).not.toContain('is "fallback"')
+    })
+
+    test('resolves from the session folder first when config.workspace is null', async () => {
+      const run = await runJsonStringArgs()
+      const prompt = promptOf(run, 'workspace')
+
+      expect(prompt.indexOf('`git rev-parse --show-toplevel`')).toBeGreaterThan(
+        -1
+      )
+      expect(prompt.indexOf('`git rev-parse --show-toplevel`')).toBeLessThan(
+        prompt.indexOf('CLAUDE_PROJECT_DIR')
+      )
+      expect(prompt.indexOf('CLAUDE_PROJECT_DIR')).toBeLessThan(
+        prompt.indexOf('is "fallback"')
+      )
+      expect(run.logs).toContain(
+        'increment-build-loop: workspace ~/ws, from session'
+      )
+    })
+
+    test.each([
+      ['an absolute path', '/Users/someone/ws'],
+      ['an empty string', ''],
+      ['a number', 7]
+    ])('refuses %s before any agent', async (_, workspace) => {
+      const run = await runLoop(scriptPath, {
+        args: { ...BASE_ARGS, workspace }
+      })
+
+      expect(run.error.message).toContain(
+        'config.workspace must be the workspace root as a tilde path'
+      )
+      expect(run.agents).toEqual([])
+    })
   })
 
   test('resolves object args to the same configuration as the string', async () => {
@@ -1251,7 +1336,7 @@ describe('increment-build-loop', () => {
     const run = await runJsonStringArgs()
 
     expect(run.agents[0].prompt).toContain(
-      'Then run `tim build workers --workspace <the candidate path you used> --json` and copy its `result.config` as\n`machineConfig` and its `result.workers` as `workers`, every key and number exactly as printed.'
+      'Then run `tim build workers --workspace <tilde> --json` and copy its `result.config` as\n`machineConfig` and its `result.workers` as `workers`, every key and number exactly as printed.'
     )
   })
 

@@ -121,10 +121,10 @@ epics included, goes through `tim jira create`.
 | `tim capabilities extract` | \<markdown-file\> [--format list\|tsv] [--json] | Strict parser for the capability map. `list` emits `CODE — Name [STATUS]` or refuses outright; `tsv` emits every anchored row with a verdict.<br>Boundary: parses only — the caller decides what to do with a violation. |
 | `tools/ticket-creator/check-capabilities.sh` | [--cap-page ID] [--quiet] | Diagnostic report on capability-map conformance: per-row verdicts, violations grouped by rule, unknown status values. Exits non-zero while any row is non-canonical.<br>Boundary: read-only reporting (vs `prepare-ticket-creation.sh`, which writes the prereqs cache). |
 | **skill-creator** | | |
-| `tools/skill-creator/start-skill-creator.sh` | "<trigger phrase>" | Step 0 dispatcher — parses trigger, emits `MODE: CREATE` / `MODE: AUDIT_ONE` / `MODE: AUDIT_ALL` + JSON payload |
-| `tools/skill-creator/interview-add-answer.sh` | --run-id NAME --field PATH --value JSON | CREATE — atomic mutation of `decisions.json` (one shape question per call) |
-| `tools/skill-creator/render-interview.sh` | --run-id NAME | CREATE — markdown view of `decisions.json` (recap + `decisions.md` sidecar) |
-| `tools/skill-creator/scaffold-skill.sh` | --run-id NAME [--dry-run] | CREATE — materialise SKILL.md + references/ + assets/ + tools/<name>/ stubs from `decisions.json`; append allowlist entries |
+| `tim skill start` | "<trigger phrase>" [--json] | Step 0 dispatcher — parses trigger, emits `MODE: CREATE` / `MODE: AUDIT_ONE` / `MODE: AUDIT_ALL` + JSON payload (`--json`: the mode is `result.mode`) |
+| `tim skill answer` | --run-id NAME --field PATH --value JSON [--json] | CREATE — atomic mutation of `decisions.json` (one shape question per call) |
+| `tim skill render` | --run-id NAME [--json] | CREATE — markdown view of `decisions.json` (mid-interview recap) |
+| `tim skill scaffold` | --run-id NAME [--dry-run] [--json] | CREATE — materialise SKILL.md + references/ + assets/ + tools/<name>/ stubs + `decisions.md` from `decisions.json`; append allowlist entries |
 | **understanding-check** | | |
 | `tools/understanding-check/start-check.sh` | EUDPA-X | Step 0 dispatcher — emits `MODE: FRESH` or `MODE: RESUME` |
 | `tools/understanding-check/prepare-check.sh` | EUDPA-X [--json] [--max-diff-bytes N] | Step 1 — fetch ticket + PRs, cache redacted diffs, bake best-practices, seed meta + per-repo analysis placeholders |

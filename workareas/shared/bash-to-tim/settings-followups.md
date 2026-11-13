@@ -9,3 +9,8 @@ node <scratchpad>/settings-remove-allow.mjs '<entry>' '<entry>'
 ```
 
 then delete the row's section from this file and commit both.
+
+## P35
+
+None. No allowlist entry names `tools/skill-creator/`; the generic
+`tools/**` entries and `Bash(tim:*)` cover what remains.

@@ -207,6 +207,35 @@ tim capabilities extract docs/confluence/import-notification-capability-map.md -
   `list` format a map that is not canonical is an error naming each broken
   row.
 
+### `tim skill` — the skill-creator skill's steps
+
+```bash
+tim skill start "scaffold skill ticket-notes" --json
+tim skill answer --run-id ticket-notes --field fanout.enabled --value 'true'
+tim skill render --run-id ticket-notes
+tim skill scaffold --run-id ticket-notes --dry-run
+```
+
+- `start` reads a trigger phrase. CREATE (`scaffold skill <name>`,
+  `skill-create <name>`, `new workspace skill <name>`) refuses a skill
+  folder that exists and seeds `workareas/skill-creator/<name>/decisions.json`
+  unless it is there already. AUDIT_ONE (`audit skill <name>`,
+  `review skill <name>`) names the skill's SKILL.md and audit file.
+  AUDIT_ALL (`audit skills`, `audit all skills`) lists every skill with a
+  SKILL.md except skill-creator. Plain output is `MODE: <mode>` then one
+  line of JSON; `--json` puts the mode in `result.mode`.
+- `answer` sets one answer under `answers`, splitting `--field` on dots and
+  reading `--value` as JSON. It refuses a value that is not JSON and a
+  field under a value that is not an object, and prints nothing.
+- `render` prints the answers as markdown, with `(not answered)` where one
+  is missing.
+- `scaffold` refuses while an answer is missing, then writes SKILL.md, a
+  reference per worker, a state schema for JSON state, a stub script per
+  helper (executable), `decisions.md`, appends the skill's two
+  `tools/<name>/` entries to `.claude/settings.json` (never twice) and
+  stamps `scaffolded_at`. `--dry-run` only says what it would write.
+- Every refusal exits 1. Paths come from the workspace tim runs in.
+
 ### `tim capture` — photograph a running app
 
 Runs an app's own FIT suite with Playwright tracing on, keeps the traces under

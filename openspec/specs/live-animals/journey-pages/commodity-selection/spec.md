@@ -150,14 +150,14 @@ The system MUST return the user to the origin of the import page when they follo
 
 ### Requirement: The tally lists what has been chosen, offers a remove for each species, and can be cleared
 **ID**: REQ-COMMODITY-SELECT-008
-The system MUST report how many species have been chosen, showing each chosen commodity as a bold heading reading as its heading in the results does, followed by one entry per chosen species showing its Latin name alone, MUST offer each entry a control whose accessible name is "Remove" followed by that species' Latin name, which removes it and leaves the rest chosen, MUST let the user clear the whole selection at once, and MUST refuse a removal naming a species the page never offered. Without JavaScript, the system MUST offer an "Update selected" control under the results that brings the tally up to date with the ticks on screen, keeping the search term and its results. This no-JavaScript control and its copy are agreed for now, and will be revisited when the designers pick up their no-JavaScript ticket.
+The system MUST report how many species have been chosen, showing each chosen commodity as a bold heading reading as its heading in the results does, followed by one entry per chosen species showing its Latin name alone, MUST offer each entry a control whose accessible name is "Remove", that species' Latin name, "from" and its commodity heading, such as "Remove Bos taurus from Cattle (0102)", so no two remove controls on the page share a name, which removes it and leaves the rest chosen, MUST let the user clear the whole selection at once, and MUST refuse a removal naming a species the page never offered. Without JavaScript, the system MUST offer an "Update selected" control under the results that brings the tally up to date with the ticks on screen, keeping the search term and its results. This no-JavaScript control and its copy are agreed for now, and will be revisited when the designers pick up their no-JavaScript ticket.
 
 #### Scenario: The tally reports the choice as a bold commodity line and its species, and clearing empties it
 **ID**: SCN-COMMODITY-SELECT-008-A
 - **GIVEN** the user has chosen one species on the commodity selection page
 - **WHEN** the page next renders
 - **THEN** the tally reports one chosen, showing the commodity as a bold line reading as its name with its code in round brackets, such as "Cattle (0102)", with the species beneath it
-- **AND** each entry shows the species' Latin name alone, and offers a control whose accessible name is "Remove" followed by that Latin name
+- **AND** each entry shows the species' Latin name alone, and offers a control whose accessible name is "Remove", that Latin name, "from" and the commodity heading, such as "Remove Bos taurus from Cattle (0102)"
 - **WHEN** the user clears the selection
 - **THEN** the tally is no longer shown
 
@@ -191,6 +191,14 @@ The system MUST report how many species have been chosen, showing each chosen co
 - **WHEN** they use the Update selected control
 - **THEN** the tally shows that species as chosen
 - **AND** the search term and its results are still shown
+
+#### Scenario: One Latin name chosen under two commodities gets a remove control named for each commodity
+**ID**: SCN-COMMODITY-SELECT-008-G
+- **GIVEN** the user has chosen the same Latin name, such as Gallus gallus, under two commodity codes
+- **WHEN** the page next renders
+- **THEN** each of the two entries offers a remove control whose name holds its own commodity heading, so the two names differ
+- **WHEN** they use the remove control for one of the two
+- **THEN** only that entry is gone from the tally and the other is still chosen
 
 ### Requirement: Saving without choosing a commodity is rejected on either save control
 **ID**: REQ-COMMODITY-SELECT-009

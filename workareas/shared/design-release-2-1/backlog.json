@@ -327,6 +327,22 @@
         "tests:tests/plants/e2e/features/obligation-markings"
       ],
       "dependsOn": []
+    },
+    {
+      "id": "identifiers-action-required",
+      "title": "Identifiers that need action: submitting with incomplete animal identifiers, and what the needs-action view says",
+      "why": "The 4 identifier requirements the overview-and-review pre-flight could not place (inc-270, inc-271). They read the identifier rule the identification-and-permanent-address theme changes (EUDPA-796, in flight and not to be changed mid-flight), and extend overview-and-review's Submitted action required status, so the theme builds on top of both once they merge (Sam, 13 November 2026).",
+      "touches": [
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/header",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/check-answers/view-model/cards/consignment",
+        "frontend:src/server/app/sets/live-animals/journeys/linear/features/confirmation",
+        "backend:src/main/java/uk/gov/defra/trade/imports/animals/notification/NotificationService.java",
+        "tests:tests/animals/e2e/pages/notification-view-states.spec.ts"
+      ],
+      "dependsOn": [
+        "identification-and-permanent-address",
+        "overview-and-review"
+      ]
     }
   ],
   "splitOff": [
@@ -1159,7 +1175,8 @@
         "req-950",
         "req-900",
         "req-2004",
-        "req-2002"
+        "req-2002",
+        "req-2138"
       ],
       "fingerprints": {
         "req-791": "ce7c03edf4d3534599ab472c38f52b180e78b5ff3c2827623bc823fca2157767",
@@ -1252,13 +1269,7 @@
         "req-2002": "6b29afa6101d88726f4c01b25e1e7c986261ab2e665e2cb9095b14b21a9e2feb"
       },
       "at": "2026-10-11T07:11:45.078Z",
-      "pickUp": [
-        "req-905",
-        "req-906",
-        "req-908",
-        "req-931",
-        "req-2138"
-      ]
+      "pickUp": []
     },
     {
       "theme": "design-snagging",
@@ -8684,6 +8695,117 @@
         "Links must keep working in CDP, in the local docker stack and in the CI docker stack. Never write to cdp-app-config.",
         "The parked templates theme also changes the type question (inc-154, inc-155). This row waits for both and builds on what they leave."
       ]
+    },
+    {
+      "id": "inc-270",
+      "title": "Submitting with incomplete animal identifiers flags the notification as needing action",
+      "detail": "A notification that meets the submission minimum but whose animal identifiers are incomplete can still be submitted. It is recorded with an outstanding identifier item, listed on the confirmation page, and shows as 'Submitted action required' from then on, beside the health certificate case the overview-and-review theme builds.",
+      "acceptanceCriteria": [
+        "A notification that meets the submission minimum, but has a commodity line whose species asks for identifiers holding fewer identified animal records than the animals it declares, is submitted, and its confirmation page lists the outstanding item 'complete the animal identifier information in the notification'. An animal record counts as identified once one identifier is filled. (document:dr1-parity-backlog document-dr1-parity-backlog-p8-058-m1, p8-060, p8-062; prototype:dr2-1-source prototype-dr2-1-source-p11-147; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-188, p1-191, p1-193; c-133)",
+        "A single-species consignment with no identifier saved is submitted the same way, with the same outstanding item. (document:dr1-parity-backlog document-dr1-parity-backlog-p8-063-m1, p8-064-m1, p8-065)",
+        "A notification submitted with incomplete identifiers shows the status tag 'Submitted action required' on its view and on the set's own list, as one submitted without a health certificate does. (ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-188, p1-191; c-133)",
+        "A notification submitted with every identifier complete and its health certificate uploaded shows 'Submitted', and its confirmation page lists no identifier item. (repo:frontend repo-frontend-p14-045, p14-046)"
+      ],
+      "dependsOn": [
+        "inc-241"
+      ],
+      "externalDependsOn": [
+        {
+          "workarea": "shared/design-release-2-1/themes/overview-and-review",
+          "id": "inc-113"
+        }
+      ],
+      "theme": "identifiers-action-required",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "backend",
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "document:dr1-parity-backlog",
+          "ref": "document-dr1-parity-backlog-p8-058-m1, p8-060, p8-062, p8-063-m1, p8-064-m1, p8-065, p8-065-m1"
+        },
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p11-147"
+        },
+        {
+          "source": "repo:frontend",
+          "ref": "repo-frontend-p14-045, p14-046"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "ruling-sam-2026-10-09-p1-188, p1-191, p1-193"
+        }
+      ],
+      "requirements": [
+        "req-931"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "New theme, 13 November 2026 (Sam): the identifier requirements the overview-and-review pre-flight could not place go on top of the identification-and-permanent-address work, which is in flight on EUDPA-796 and must not change mid-flight.",
+        "Which species ask for identifiers, and what counts as filled, come from the identification theme as merged: it gives every selected species a panel, and asks a species with no specific identifier for identification details and a description (inc-241). Plan against main after EUDPA-796 merges, not against the rule as it stood when these requirements were written.",
+        "Extends overview-and-review inc-113, which records outstanding items at submit and adds 'Submitted action required' for a missing health certificate. Add the identifier item through the same record rather than a second status."
+      ],
+      "gate": null
+    },
+    {
+      "id": "inc-271",
+      "title": "The needs-action view says which animal identifiers are missing",
+      "detail": "A 'Submitted action required' notification missing animal identifiers tells the trader so in its header, and marks each species that has none on its review, as the health certificate case already does for documents.",
+      "acceptanceCriteria": [
+        "An action-required notification missing only animal identifiers shows the header warning 'You need to complete animal identifiers'. (prototype:dr2-1-source prototype-dr2-1-source-p11-032, p11-034; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-188, p1-191, p1-193; c-133)",
+        "An action-required notification missing both animal identifiers and its health certificate shows the header warning 'You need to complete animal identifiers and upload a health certificate'. (prototype:dr2-1-source prototype-dr2-1-source-p11-031, p11-034; ruling:sam-2026-10-09 ruling-sam-2026-10-09-p1-188; c-133)",
+        "An action-required notification missing only its health certificate still shows 'You need to upload a health certificate'. (prototype:dr2-1-source prototype-dr2-1-source-p11-034)",
+        "On an action-required notification, a species that needs identifiers but has none shows 'Identification details' with the inline error 'Enter a minimum of 1 identifier' in place of its content, with no error summary, as 'Upload a valid health certificate' shows on the documents section. (prototype:dr2-1-source prototype-dr2-1-source-p11-090; prototype:dr2-1-specs prototype-dr2-1-specs-p5-099; c-133)"
+      ],
+      "dependsOn": [
+        "inc-270"
+      ],
+      "externalDependsOn": [
+        {
+          "workarea": "shared/design-release-2-1/themes/overview-and-review",
+          "id": "inc-113"
+        },
+        {
+          "workarea": "shared/design-release-2-1/themes/overview-and-review",
+          "id": "inc-106"
+        }
+      ],
+      "theme": "identifiers-action-required",
+      "status": "todo",
+      "kind": "feat",
+      "repos": [
+        "frontend",
+        "tests"
+      ],
+      "sources": [
+        {
+          "source": "prototype:dr2-1-source",
+          "ref": "prototype-dr2-1-source-p11-031, p11-032, p11-034, p11-090"
+        },
+        {
+          "source": "prototype:dr2-1-specs",
+          "ref": "prototype-dr2-1-specs-p5-099"
+        },
+        {
+          "source": "ruling:sam-2026-10-09",
+          "ref": "ruling-sam-2026-10-09-p1-188, p1-191, p1-193"
+        }
+      ],
+      "requirements": [
+        "req-905",
+        "req-906",
+        "req-908"
+      ],
+      "openQuestions": [],
+      "notes": [
+        "New theme, 13 November 2026 (Sam): see inc-270. Waits on overview-and-review inc-113 for the action-required view and its warning, and inc-106 for the identification card on the review that the inline error replaces."
+      ],
+      "gate": null
     }
   ]
 }

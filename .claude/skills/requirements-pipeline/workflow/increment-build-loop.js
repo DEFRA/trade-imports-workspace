@@ -3432,7 +3432,7 @@ const CHECK_COMMAND_SPAN =
 const CHECK_COMMAND_LINE = /^([-*]|\d+\.|\|)?\s*(\$\s*)?(grep|rg|jq|tim|npm|npx|node|git|mvn|curl|docker|bash)\s/
 
 const EXISTING_TEST_REFERENCE =
-  /\b(existing|already|current|currently|today|they name)\b|\bon this branch\b|\b(is|are|was|were)( still| now)? (titled|named|called)\b|\b(test|spec)s? at (line )?\d+|\.(test|spec|fit\.spec)\.[a-z]+:\d+|\bcoverage\b|`(partial|full|none)`/i
+  /\b(existing|already|current|currently|today|they name)\b|\bon this branch\b|\b(is|are|was|were)( still| now)? (titled|named|called)\b|\b(test|spec)s? at (line )?[`:]*\d+|\.(test|spec|fit\.spec)\.[a-z]+:\d+|\bcoverage\b|`(partial|full|none)`/i
 
 const DICTATED_TITLE = new RegExp(
   `\\b(rename|renames|renamed|renaming|retitle|retitles|retitled|retitling)\\b[^.;"“]{0,80}?\\s*:?\\s*${OPEN_QUOTE}|\\b(new|added)\\b[^.;"“]{0,40}?\\b(titled|named|called)\\b|\\b(should|must|will|to) be (titled|named|called)\\b`,

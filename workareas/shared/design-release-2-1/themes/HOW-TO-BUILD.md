@@ -338,17 +338,39 @@ To check nothing has drifted: "which theme tickets are stale". Tickets and their
 - **Rows:** 0. All 3 rows were removed; inc-203 now holds their criteria and requirement ids. Nothing is left to play.
 - **Old PRs to close once design snagging lands:** animals frontend #403, plants frontend #96, tests #25.
 
-## Overview and review: EUDPA-696 (stale branch)
+## Overview and review: EUDPA-696 (played 13 November)
 
-- **Ticket:** [EUDPA-696](https://eaflood.atlassian.net/browse/EUDPA-696)
-- **Stale branch:** `feat/EUDPA-696-design-release-2-1-overview-and-review`, in five repos. It also carries merges of the
-  other stale branches, so take only the commits each salvage note names.
-- **When played:** a fresh branch from `main` after design snagging, for example
-  `feat/EUDPA-696-overview-and-review`.
-- **Rows:** 21: 15 to rebuild with salvage notes, 2 never built (inc-108, which waits on permanent addresses, and the
-  inc-117 tests), 2 blocked and 2 dropped. inc-114 was removed: design snagging inc-217 ports it.
-- **Old PRs to close when played:** animals frontend #404, animals backend #107, INS frontend #51, plants frontend #98,
-  tests #26.
+- **Ticket:** [EUDPA-696](https://eaflood.atlassian.net/browse/EUDPA-696) — **In Dev** since the loop started.
+- **Branch:** `feat/EUDPA-696-overview-and-review`, cut fresh from `main` on 13 November in the animals frontend,
+  animals backend, INS frontend, plants frontend, tests repo and this workspace.
+- **Pull requests** (draft, opened empty before the launch):
+  - [animals frontend #484](https://github.com/DEFRA/trade-imports-animals-frontend/pull/484)
+  - [animals backend #130](https://github.com/DEFRA/trade-imports-animals-backend/pull/130)
+  - [INS frontend #85](https://github.com/DEFRA/trade-imports-ins-frontend/pull/85)
+  - [plants frontend #145](https://github.com/DEFRA/trade-imports-plants-frontend/pull/145)
+  - [tests #112](https://github.com/DEFRA/trade-imports-ins-tests/pull/112)
+  - the workspace pull request on the same branch, which carries the spec
+- **Stale branch:** `feat/EUDPA-696-design-release-2-1-overview-and-review`, in five repos — the salvage quarry. It
+  also carries merges of the other stale branches, so take only the commits each salvage note names. Delete it only
+  after salvage is done. Its pull requests (animals frontend #404, animals backend #107, INS frontend #51, plants
+  frontend #98, tests #26, carry-only stub #22, performance tests #18, reference data #29, workspace spec #155) were
+  closed on 13 November.
+- **Pre-flight walked 13 November:** all 12 requirements changed since the split were judged and applied. Ten already
+  matched their rows. req-898 adds the import reference numbers to the 'Submitted action required' view (note on
+  inc-113). req-854's 'Air' labels are already on `main` (note on inc-102). inc-116 and inc-199 re-checked against
+  `main` and still blocked. inc-100 and inc-103 waited on arrival-and-transit inc-028, which was merged into inc-241,
+  so they now wait on inc-241 (see `deferred.md`).
+- **Overlaps #476, does not wait on it.** The review-page rows (inc-101 onward, and the view header rows inc-110 to
+  inc-113) change the same check-answers files as the identification work on animals frontend #476 (EUDPA-796). They
+  build now. Once #476 merges, add a merge row bringing `main` in, with criteria saying which side wins in each
+  shared check-answers file.
+- **Rows:** 21: 17 to do, 2 blocked (inc-116, inc-199), 2 dropped. inc-108 waits on identification-and-permanent-address
+  inc-054; inc-117, the tests row, waits on inc-108, so both build last. inc-114 was removed: design snagging inc-217
+  ports it.
+- **Loop args:** [`overview-and-review/build-args.json`](overview-and-review/build-args.json): `rigour: standard`,
+  `e2e: local`.
+- **Say:** "run the increment build loop on shared/design-release-2-1/themes/overview-and-review, branch lifecycle on
+  feat/EUDPA-696-overview-and-review"
 
 ## Design snagging: EUDPA-720
 

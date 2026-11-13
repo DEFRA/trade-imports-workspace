@@ -62,7 +62,7 @@
     }
   },
   "theme": "overview-and-review",
-  "branch": "feat/EUDPA-696-design-release-2-1-overview-and-review",
+  "branch": "feat/EUDPA-696-overview-and-review",
   "parent": {
     "workarea": "shared/design-release-2-1",
     "wave": 5,
@@ -236,7 +236,7 @@
       "externalDependsOn": [
         {
           "workarea": "shared/design-release-2-1/themes/arrival-and-transit",
-          "id": "inc-028"
+          "id": "inc-241"
         }
       ]
     },
@@ -396,7 +396,8 @@
         "Depends on the row 'Review sections and cards take Design Release 2.1's headings, titles and unfinished-card messages' (card titles and heading levels). Pass 2 combines the About the consignment row slices (origin, import reason, additional details) with the Transport and arrival slices (arrival, transit, transporter): each is a row-level read-back change on review cards with the same set-up and review, and none carries an open question. Transit countries becoming optional for submission (req-880) changes what the review counts as unfinished; if the arrival obligations mark transit countries as required for submit, that one line is a shared change with the theme owning the arrival obligations. The transit countries page's own validation is the arrival-and-transit area's. c-130 settles the transporter Country as the stored country.",
         "Salvage: frontend 59040f14 (its check-answers.test.js transport-label assertions are inc-208's, already on main), tests 4e14ce5 on stale branch feat/EUDPA-696-design-release-2-1-overview-and-review; rebuild on a fresh branch from main.",
         "Swept from design-snagging inc-207's followUps (run wf_789ac1b5-ab1, 21 Oct): (1) reconcile check-your-answers coverage for SCN-CYA-001-F when this row lands; (2) give this row an explicit acceptance criterion for the import reason card's title, first-row key, hidden Change-link text and incomplete message.",
-        "Design snagging merged to main 23 Oct: means of transport already read back with the question's labels (Airplane, Railway, Road Vehicle, Vessel), through transport/means-of-transport-label.js in cards/movement/arrival-details.js; copy.means is gone from check-answers copy. Do not rebuild that part. An unanswered row in an unfinished card is now only a visually hidden 'Missing' (rows/value-text.js missingCell, no red bar), and escapeHtml lives in shared/escape-html.js (transport-details.js and party-row.js import it there). Builder: rebuild 59040f14's arrival-details.js, transport-details.js and transit-countries.js hunks on main's versions. The tests repo's notification view page object now has a regionOfOriginCode accessor: use it for the 'Region of origin code' row that always shows."
+        "Design snagging merged to main 23 Oct: means of transport already read back with the question's labels (Airplane, Railway, Road Vehicle, Vessel), through transport/means-of-transport-label.js in cards/movement/arrival-details.js; copy.means is gone from check-answers copy. Do not rebuild that part. An unanswered row in an unfinished card is now only a visually hidden 'Missing' (rows/value-text.js missingCell, no red bar), and escapeHtml lives in shared/escape-html.js (transport-details.js and party-row.js import it there). Builder: rebuild 59040f14's arrival-details.js, transport-details.js and transit-countries.js hunks on main's versions. The tests repo's notification view page object now has a regionOfOriginCode accessor: use it for the 'Region of origin code' row that always shows.",
+        "Pre-flight 13 Nov (req-854 changed since the split): main now reads the means of transport back with the transport page's own labels — 'Air', 'Rail', 'Sea' (transport copy.en.js, check-answers.test.js:558-561) — so the earlier note's 'Airplane, Railway, Road Vehicle, Vessel' is out of date. Nothing to build for means of transport."
       ],
       "gate": null
     },
@@ -454,7 +455,7 @@
       "externalDependsOn": [
         {
           "workarea": "shared/design-release-2-1/themes/arrival-and-transit",
-          "id": "inc-028"
+          "id": "inc-241"
         }
       ]
     },
@@ -1124,7 +1125,8 @@
         "Re-distil: req-902 now carries the afternoon ruling's add-only status rule itself (claims p2-070 to p2-076), so the status-mapping, INS-link and animals-only criteria cite it. req-1987 (the general add-only status rule) is not in this area's requirements; the existing row inc-113 held it, and the combiner keeps it there. The INS dashboard's links live in its dashboard view-model, outside the type-question-and-templates theme's split-off dashboard controller and template, so the INS part stays here. The animals backend, animals frontend and INS frontend share one branch name.",
         "req-1987 is observable only once a notification can be in 'Submitted action required', which inc-113's submit records, so it stays in inc-113 with the submit and the action-required view, merged with the overview-and-review area's draft. The animals backend, animals frontend and INS frontend share one branch name, and the frontend and INS mappings land before the backend first sends the status. The INS link logic is in the dashboard's view-model folder, which the overview-and-review theme already touches, not in the dashboard controller, template or copy the split-off type-question-and-templates theme owns, so req-1987 is not that branch's to build. The 'Completed' half of req-1987 waits on a real source of completion: it is built by the blocked row inc-116 (req-910) under the same add-only, map-first rule, and whether plants takes 'Completed' is decided when that row unblocks.",
         "Salvage: backend 6dbcfcf, frontend df59fbde, insfrontend b64c5ae, tests ce36c8f on stale branch feat/EUDPA-696-design-release-2-1-overview-and-review; rebuild on a fresh branch from main.",
-        "Design snagging merged to main 23 Oct: the declaration controller was restructured. Submission now runs in submitDeclaration through kit.recoverableSave(request, work, fallback), which returns { value, failure }, and render takes { errors, recoverableError }. Rebuild the stale declaration hunk (frontend df59fbde) on that shape. The confirmation outstanding bullet now reads 'upload the ITAHC and any other required documents', and confirmation and declaration show no status strip (showJourneyStrip: false). The review's documentScanCardErrors takes the request first."
+        "Design snagging merged to main 23 Oct: the declaration controller was restructured. Submission now runs in submitDeclaration through kit.recoverableSave(request, work, fallback), which returns { value, failure }, and render takes { errors, recoverableError }. Rebuild the stale declaration hunk (frontend df59fbde) on that shape. The confirmation outstanding bullet now reads 'upload the ITAHC and any other required documents', and confirmation and declaration show no status strip (showJourneyStrip: false). The review's documentScanCardErrors takes the request first.",
+        "Pre-flight 13 Nov (req-898 changed since the split): the 'Import reference numbers' section — the warning, 'Notification reference' and 'Customs document code' C640 as selectable text, no Copy buttons — shows on a 'Submitted action required' view too, exactly as inc-112 builds it for Submitted. Build and prove that here, since this row creates the action-required view. The Completed half waits with inc-116."
       ],
       "gate": null
     },
@@ -1274,7 +1276,8 @@
       ],
       "notes": [
         "Blocked: req-910 carries blockedBy on a real source of completion (9 October ruling, claim 99). Once unblocked, it lands after the rows 'A submitted notification's view has a header…' and 'View header offers Amend, Copy as new and Delete…', and alongside whatever row builds that source. 'Completed' is a new status added beside the others, never replacing one; whether plants follows is decided when it unblocks (afternoon ruling, claims p2-070, p2-071, p3-065 and p3-066).",
-        "req-2114 (cross-area pass) adds what a Completed notification can do: copy and delete, never amend. It waits on the same completion source as req-910, so it joins this blocked row rather than holding up the manage-notifications rows."
+        "req-2114 (cross-area pass) adds what a Completed notification can do: copy and delete, never amend. It waits on the same completion source as req-910, so it joins this blocked row rather than holding up the manage-notifications rows.",
+        "Pre-flight 13 Nov: still blocked. The animals backend on main has no completed notification status; its only COMPLETE values are document scan states."
       ],
       "gate": null
     },
@@ -1520,7 +1523,8 @@
         "The plants policy or customs owner confirms plants' own customs document code (C640 is the animals code); the programme owner names who confirms it. Until then plants' section shows the notification reference only."
       ],
       "notes": [
-        "Blocked: req-2002 carries blockedBy on plants' own customs document code. Kept apart from the header-actions row so the rest of plants' view header is not held up."
+        "Blocked: req-2002 carries blockedBy on plants' own customs document code. Kept apart from the header-actions row so the rest of plants' view header is not held up.",
+        "Pre-flight 13 Nov: still blocked. The plants frontend on main has no customs document code anywhere, and no ruling has confirmed one."
       ],
       "theme": "overview-and-review",
       "dependsOn": []

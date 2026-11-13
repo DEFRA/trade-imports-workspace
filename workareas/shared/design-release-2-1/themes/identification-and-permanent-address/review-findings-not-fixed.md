@@ -354,3 +354,37 @@ the old one. The judge deferred it because the remedy rewrites a template and
 controller this theme does not otherwise touch, across eight live inputs. It is
 a real duplication that a later change should unify, not a defect this theme
 introduced.
+
+---
+
+## What this review got wrong
+
+Finding n27 was judged fix-now, applied, and was wrong. It read three callers
+of `animalLabelOf` passing three different species strings as duplication, and
+unified them. The behaviour spec sets those three spellings on purpose:
+
+- `openspec/specs/live-animals/journey-pages/permanent-address/spec.md` — the
+  card is "titled by its scientific name and a running number such as
+  'Felis catus 1'", and its error summary names the animal the same way.
+- `openspec/specs/live-animals/journey-pages/check-your-answers/spec.md` — the
+  roles-and-addresses row is "keyed by that animal's species common name and
+  number", so "Domestic Cat 1".
+- The identification card alone uses the full species label.
+
+Six reviewers raised it, an adversarial verifier confirmed it and the judge
+ruled it fix-now. None of them read openspec. The verifier could not have
+refuted it: a `structure` finding is code quality, which defaults to real and
+is refutable only by code showing the finding factually wrong — and the code
+did show three different strings, which that rule reads as confirmation.
+
+It broke nine E2E tests across all three pull requests, and only two of them
+named a label. The rest timed out at the declaration page, because
+`answerPermanentAddresses` counted cards and looped over the count, so a line
+whose renamed cards it could not find was skipped in silence.
+
+Both causes are fixed: the code is reverted to the spec, the loop's reviewer
+and verifier briefs now treat the spec as the contract, and the journey helper
+waits for a card rather than counting zero of them.
+
+Read a finding that changes what a page shows against the spec before
+applying it. This review is a safety net, not an authority on behaviour.

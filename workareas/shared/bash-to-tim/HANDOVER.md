@@ -115,44 +115,45 @@ Agents cannot do these two rows, so the loop skips them:
 
 ## State
 
-- Progress: 21 of 68 (31%), counted over rows that are not for Sam.
-- Landed this run: P20 and P25.
+- Progress: 26 of 68 (38%), counted over rows that are not for Sam.
+- Landed this run: P26, P27, P28, P29 and P30.
 - Blocked this run:
-  - **P26:** a behaviour change for existing callers is not in the commit
-    message. `buildPlan` in `plan.js` now strips trailing newlines from the
-    description file (`withoutTrailingNewlines`) for every `tim jira create`,
-    not only for the manifests that replace `create-ticket.sh`. Before
-    4ca31111, theme-ticket, the prototype hand-off and the build loop sent the
-    description file byte for byte. Now its trailing newlines are removed, and
-    the planId for an unchanged manifest changes too. The commit message
-    records the matching priority-default change for these callers but not
-    this one, and the builder's deviations leave it out as well. Fix: amend
-    4ca31111 so its message says that `tim jira create` now drops the
-    description file's trailing newlines, as `$(cat file)` did in
-    `create-ticket.sh`, and that this applies to the existing callers.
-    Everything else checked out: tim tests green, lint and format clean, no
-    callers of `create-ticket.sh` left, no new fixed path or `.sh` file, and
-    the goldens match the deleted script's payload. The row's canary (raising
-    a real govuk ticket) has not run and needs Sam's go-ahead.
-  - **P27:** an output changed without the row saying so, and no golden
-    covers it. `reviewItemsJsonText(items)` in `store.js` returns an empty
-    string for any empty array. `review-items.sh` prints nothing only when no
-    items file matches. When an items file exists but holds no items (for
-    example `items.<repo>.json` with `"items": []`), the Bash prints `[]` and
-    a newline, while the JS prints nothing. The function only sees the
-    flattened items, so it cannot tell the two cases apart. Fix: have
-    `readReviewItems` (or the text function) report whether any items file
-    matched, or drop the empty-to-nothing mapping and handle "no files"
-    separately. Add a golden for an items file with `"items": []`, recorded
-    from the unmodified Bash, and a store test that compares against it. The
-    verifier could not run the Bash probe (the sandbox refused it), so record
-    the golden by hand. Nothing else blocks the row: tests, lint and format
-    are green, and keeping `finding-categories.sh` until P56 is deliberate.
+  - **P32 (`tim capabilities extract`):** two output changes that the row's
+    risk does not name.
+    1. File missing and `--format` invalid together (for example
+       `tim capabilities extract no-such.md --format csv`). The Bash checked
+       the file first: `Error: file not found: no-such.md`, exit 1. tim checks
+       `--format` in `parseOptions` (`checkedFormat`, in
+       `tim/src/commands/capabilities/index.js`) before `run()` reads the
+       file, so it prints `Error: --format must be 'list' or 'tsv', got: csv`,
+       exit 2.
+    2. An empty file argument (`tim capabilities extract ''`). The Bash
+       printed its usage line and exited 1. Commander accepts `''`, so tim
+       prints `Error: file not found: ` and exits 2. The risk only covers the
+       missing argument that commander catches.
+    Fix: for each, either match the Bash (check the file before the format;
+    refuse an empty path as usage) or name the change in P32's risk, and add
+    a test for each case. Nothing else blocks it: tim tests (259 files, 4483
+    tests), lint and format are green, nothing outside `workareas/` still
+    names `extract-capabilities`, and the two hand-derived violations rows
+    (CAP-04.1, CAP-04.2) match the Perl source. Neither builder nor verifier
+    could re-run the Perl for parity, because the permission classifier
+    refused it.
+  - **P34 (`tim service-tag`):** the only problem is two allowlist entries
+    for the deleted `tools/service-tag` scripts, at `.claude/settings.json`
+    lines 92 and 93. A hook stops agents editing permission config, so Sam
+    has to make this change: delete lines 92 and 93 and the trailing comma
+    at the end of line 91
+    (`"Bash(~/git/defra/trade-imports-workspace/tools/theme-ticket/*:*)",`),
+    then commit it as a follow-up `chore(NO_JIRA)` commit on
+    `chore/NO_JIRA-bash-to-tim`, or amend it into 12827163. No other commits
+    were made for this.
 - Why the loop stopped: two rows in a row were blocked, which points at
-  something systemic. Both are behaviour changes for existing callers that
-  the builder made without recording them or pinning them with a golden.
-- Rows for Sam: P11 and P19B. P26's canary also waits for Sam's go-ahead.
+  something systemic. P32 is again an output change for existing callers
+  that the risk does not name. P34 needs a change only Sam can make.
+- Rows for Sam: P11 and P19B. P26's canary (raising a real govuk ticket)
+  still waits for Sam's go-ahead.
 - Landing result: none yet.
-- Next: fix P26 (amend the commit message) and P27 (empty-items output and
-  its golden) as set out above, set both back to `todo`, and run the loop
-  again.
+- Next: Sam removes the two `tools/service-tag` allowlist entries from
+  `.claude/settings.json` and commits it, so P34 can be set to `done`; then
+  fix P32 as set out above, set it back to `todo`, and run the loop again.

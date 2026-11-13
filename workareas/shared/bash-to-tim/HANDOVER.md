@@ -113,36 +113,44 @@ Agents cannot do these two rows, so the loop skips them:
 
 ## State
 
-- Progress: 12 of 70 (17%), counted over rows that are not for Sam.
-- Landed this run: P01, P05, P06, P07, P08, P09, P10, P12, P13, P14, P15
-  and P17.
+- Progress: 19 of 68 (28%), counted over rows that are not for Sam.
+- Landed this run: P19, P21, P22, P23 and P24.
 - Blocked this run:
-  - **P16:** the verifier's one problem needs two read-only allow entries in
-    `.claude/settings.json`, `Bash(gh api user:*)` and `Bash(gh pr view:*)`,
-    next to `Bash(tim:*)` (line 87). Leave `gh api -X DELETE` unallowed. This
-    is a permission change, so an agent cannot make it. Everything else
-    passed. Until it is in, the review skill's who-am-I lookup
-    (`.claude/skills/review/SKILL.md:458`) and PR-author lookup (line 464)
-    ask for permission each time.
-  - **P18:** two dead allowlist entries at `.claude/settings.json:88-89`,
-    `Bash(~/git/defra/trade-imports-workspace/tools/frontend-change/*)` and
-    the same with `:*`, must be deleted. A hook blocks agent edits there. The
-    README drift the verifier also raised is fixed in ca8f9856. Once the two
-    lines are gone, `git grep tools/frontend-change` finds only history and
-    the row passes.
-  - **P19:** the golden at `tim/src/guard-hooks/guard-bash.test.js:36`
-    (PIPED_TEST_RUN) names `~/git/defra/trade-imports-workspace` literally,
-    which the brief bans. Build the expected message from
-    `CLAUDE_PROJECT_DIR` (with HOME replaced by `~`) instead, so the corpus
-    stays portable and P19B can pass it unchanged. Also add
-    `guard-bash.sh:120` to P19B's callersToUpdate, since the builder could
-    not edit `.claude/hooks/**`. The rest of the corpus was checked and is
-    sound.
+  - **P20:** the no-checks watch tests in
+    `tim/src/backlog/workflow-contract.test.js` (`watchAgainstStubGh`) would
+    pass against a wrong implementation. The stub gh prints only the
+    capitalised "No checks reported on the 'feat/x' branch", but when the
+    watch is redirected into a log, as the prompt's command does, real gh
+    (2.104.0) prints it in lowercase and exits 1. Only a terminal gets the
+    capital N. So a case-sensitive `grep -q 'No checks reported'` passes both
+    new tests yet never matches the real log, which brings back the race
+    264e8578 closed. Fix: have the stub print gh's lowercase redirected form,
+    or run both cases in both forms, so dropping `-i` or matching the
+    capitalised text turns a test red.
+  - **P25:** with an unknown board, the deleted Bash printed Jira's
+    errorMessages to stderr and exited 1. `tim jira epics --board 999999999`
+    and `tim jira labels --board 999999999` now exit 2 and print only
+    "listBoardEpics(999999999): not found." (404 maps to NOT_FOUND, which
+    `envelope.js` turns into exit 2). The row's risk does not name this.
+    Fix either way: (a) exit 1 and pass Jira's errorMessages through, as P22's
+    fixer did, or (b) amend the row's risk and commit message to name the
+    change. Either way, add a golden for the Bash's 404 output and exit code
+    to `board-epics-labels-bash-goldens.json` (it holds only success cases)
+    and a CLI-level test that compares tim against it. Everything else
+    passed: tests, lint, format, no callers left, and live output for board
+    13780 matches the goldens.
+  - **P26:** ticket-creator's `SKILL.md` still asks for
+    `**Assignee:** [Self or None]` (line 227), but with the
+    `create-ticket.sh -a` fallback gone no step acts on Self, so such a
+    ticket is raised unassigned. Fix: in "After Creation", say that when the
+    draft's Assignee is Self, the next step is `tim jira assign EUDPA-XXXXX me`
+    (a dry run), then `--confirm`; and change "someone else" (line 369) to
+    cover self too, matching `tim/README.md`. Nothing else was found.
 - Why the loop stopped: two rows in a row were blocked, which points at
-  something systemic. Here, agents cannot change permission settings or
-  hooks.
+  something systemic. Here all three are verification gaps the builder could
+  have closed: tests that do not pin real behaviour, and skill text left
+  behind by a deleted script.
 - Rows for Sam: P11 and P19B.
 - Landing result: none yet.
-- Next: Sam edits `.claude/settings.json` on this branch (adds the two P16
-  entries, deletes the two P18 lines) and commits it. Then fix the P19
-  golden and run the loop again.
+- Next: fix P20, P25 and P26 as set out above, set each back to `todo`, and
+  run the loop again.

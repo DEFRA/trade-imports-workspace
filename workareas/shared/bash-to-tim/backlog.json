@@ -1577,7 +1577,7 @@
       "dependsOn": [],
       "risk": "Low. The Perl regexes must carry over exactly; the output must be UTF-8 byte-identical.",
       "proof": "Golden files recorded from the Perl script for a canonical map and a map with one violation per rule; stdout, stderr and exit code are byte-equal.",
-      "status": "blocked",
+      "status": "todo",
       "checks": [
         "tim-unit",
         "tim-lint",
@@ -1585,8 +1585,8 @@
         "no-callers"
       ],
       "evidence": {
-        "blockedReason": "The tim port changes two outputs its risk does not name and no test covers: with a missing file and an invalid --format it reports the format error (exit 2) where Bash reported the missing file (exit 1), and an empty file argument prints 'Error: file not found: ' (exit 2) where Bash printed usage (exit 1).",
-        "recoverableCommits": "The blocked attempt is in the local reflog, unpushed: trade-imports-workspace: 7415966e, 531700f2, f4e83207. Cherry-pick them and fix only the reason, rather than rebuilding."
+        "recoverableCommits": "The blocked attempt is in the local reflog, unpushed: trade-imports-workspace: 7415966e, 531700f2, f4e83207. Cherry-pick them and fix only the reason, rather than rebuilding.",
+        "previousBlockedReason": "The tim port changes two outputs its risk does not name and no test covers: with a missing file and an invalid --format it reports the format error (exit 2) where Bash reported the missing file (exit 1), and an empty file argument prints 'Error: file not found: ' (exit 2) where Bash printed usage (exit 1)."
       }
     },
     {
@@ -1649,7 +1649,7 @@
       ],
       "risk": "Medium. The compose parse must keep ignoring map-form env keys (6 in security.compose.yml), and git status lines stay raw strings.",
       "proof": "`jq -S` diffs of the old and new JSON for no flags, by domain, by type, by tag and for 3 --service values: all empty. Vitest on a fixture workspace.",
-      "status": "blocked",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
@@ -1657,8 +1657,21 @@
         "no-callers"
       ],
       "evidence": {
-        "blockedReason": "The two allowlist entries for the deleted tools/service-tag scripts at .claude/settings.json lines 92-93 must be removed by the user, because a PreToolUse hook stops agents editing permission config.",
-        "recoverableCommits": "The blocked attempt is in the local reflog, unpushed: trade-imports-workspace: none (no commits were made after 12827163, which is already on the branch). Cherry-pick them and fix only the reason, rather than rebuilding."
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "12827163"
+          },
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "6d478ec9c3fcdfa4901a1fc098072419ba9ef080"
+          }
+        ],
+        "checks": [
+          "The verifier found the row clean apart from the dead allow entries",
+          "Sam removed the two tools/service-tag allow entries from .claude/settings.json in 6d478ec9"
+        ],
+        "deviations": []
       }
     },
     {

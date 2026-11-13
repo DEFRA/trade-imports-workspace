@@ -88,7 +88,9 @@ Your job is to implement your one row. Do not push.
 2. Capture the parity goldens.
 3. Make the change. Update every caller the row lists, and any others you
    find.
-4. Delete the Bash the row retires.
+4. Delete the Bash the row retires. Do not edit any `.claude/settings.json`
+   allowlist: append the entries for deleted scripts to
+   `settings-followups.md` in this folder, under the row's id.
 5. Run every check the row lists, and fix anything that turns red.
 6. Commit.
 
@@ -115,6 +117,12 @@ Then hunt for these problems:
 - Bash that was added rather than removed
 
 Pass the row only if you found nothing.
+
+An allowlist entry in a `.claude/settings.json` that names a script this
+row deletes is not a problem to block on. Agents cannot edit permission
+config. Append the exact entries to `settings-followups.md` in this folder,
+under the row's id, and Sam removes them. A hook command that still calls
+a deleted script is a problem: it breaks the hook.
 
 ## Fixer
 

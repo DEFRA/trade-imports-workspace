@@ -410,6 +410,7 @@ tim docker up -e backend             # leave the backend out, to run it with tim
 tim docker restart -d                # stop the stack, wipe its volumes, start it from source
 tim docker bounce-backend            # recreate the backend container only
 tim docker logs [services...]        # follow service logs (Ctrl-C to stop)
+tim docker owner                     # print the clone that owns the stack
 tim docker down                      # stop the stack and wipe its volumes
 ```
 
@@ -471,6 +472,13 @@ tim docker lease status --json                                                  
   `com.docker.compose.project.working_dir` label). When that is another clone
   they refuse with `STACK_OTHER_CLONE`, naming it. Add `--force` to go ahead
   anyway. `tim docker lease status --json` gives that clone as `workspace`.
+- `tim docker owner` prints the clone that owns the stack: the clone its
+  running containers were started from or, while it is still starting, the
+  clone on its lease. It prints nothing on stdout when the stack is down.
+  `--json` gives `{workspace, source, thisClone, ownedHere}`. Only the owner
+  runs local E2E: the tests repo's docker-compose Playwright config, and
+  `tim build gate`'s E2E phase, stop with "The stack belongs to <clone>"
+  from any other clone. `ALLOW_FOREIGN_STACK=1` skips the Playwright check.
 
 The lease is one file per machine, outside every repo: `TIM_STACK_LEASE`, or
 `tim/stack-lease.json` under `XDG_STATE_HOME` (default `~/.local/state`).

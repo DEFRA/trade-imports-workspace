@@ -20,7 +20,9 @@ the wrappers and is the surface to use.
   or add `--force`. The lease records its clone too, and `tim docker lease
   acquire|release` refuse the same holder name from another clone unless
   you add `--force`. `tim docker lease status` says which clone started the
-  running stack.
+  running stack, and `tim docker owner` prints it. Only that clone runs
+  local E2E: the tests repo's docker-compose config and `tim build gate`
+  stop from any other clone.
 - **Never hand-assemble `docker compose -f … -f …`.** The file list, the
   profiles and the init-script staging live in `scripts/stack/lib/`. A
   hand-built chain silently drops some of them.

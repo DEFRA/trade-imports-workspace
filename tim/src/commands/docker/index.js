@@ -4,6 +4,7 @@ import { OK, USAGE, ERROR } from '../../constants/exitCodes.js'
 import { isTimError } from '../../errors.js'
 import { registerLease, registerPerf } from './lease.js'
 import { registerLogs } from './logs.js'
+import { registerOwner } from './owner.js'
 import {
   readLease,
   describeLease,
@@ -187,7 +188,7 @@ export const register = (program, { timVersion }) => {
   const docker = program
     .command('docker')
     .description(
-      'Workspace Docker stack — wraps scripts/stack/ (run-stack.sh, stop-stack.sh, etc.). While a build holds the stack lease (tim docker lease status), or another clone of the workspace started the running stack, up, dev, down, restart and bounce-backend refuse unless you add --force. There is one stack per machine, and any clone may own it. perf starts it as a performance target under a lease (tim docker perf). logs follows service logs and never needs the lease.'
+      'Workspace Docker stack — wraps scripts/stack/ (run-stack.sh, stop-stack.sh, etc.). While a build holds the stack lease (tim docker lease status), or another clone of the workspace started the running stack, up, dev, down, restart and bounce-backend refuse unless you add --force. There is one stack per machine, and any clone may own it. perf starts it as a performance target under a lease (tim docker perf). logs follows service logs and never needs the lease. owner prints the clone that owns the stack, the only clone that runs local E2E.'
     )
 
   for (const command of STACK_COMMANDS) {
@@ -196,4 +197,5 @@ export const register = (program, { timVersion }) => {
   registerLease(docker, timVersion)
   registerPerf(docker, timVersion)
   registerLogs(docker, timVersion)
+  registerOwner(docker, timVersion)
 }

@@ -42,6 +42,7 @@ const writeExecutable = (path, body) => {
 
 const stackStatePath = () => join(root, 'stack-state')
 const stackCallsPath = () => join(root, 'stack-calls')
+const stackWorkingDirPath = () => join(root, 'stack-working-dir')
 
 const workspaceWith = ({ gates, repos, parallelRepos, stackAfterLocal }) => {
   root = mkdtempSync(join(tmpdir(), 'tim-build-gate-'))
@@ -84,7 +85,10 @@ const workspaceWith = ({ gates, repos, parallelRepos, stackAfterLocal }) => {
   )
   writeExecutable(
     join(root, 'fake-bin', 'docker'),
-    `if [ "$1" = ps ] && [ -f '${state}' ]; then echo trade-imports-frontend-1; fi`
+    [
+      `if [ "$1" != ps ] || [ ! -f '${state}' ]; then exit 0; fi`,
+      `case "$5" in *working_dir*) cat '${stackWorkingDirPath()}' 2>/dev/null || echo '${join(root, 'docker', 'stack')}' ;; *) echo trade-imports-frontend-1 ;; esac`
+    ].join('\n')
   )
   return { PATH: `${join(root, 'fake-bin')}:${process.env.PATH}` }
 }
@@ -753,6 +757,134 @@ describe('runGate — e2e rungs', () => {
         detail:
           'The workspace stack is leased to "ibl-20261001T080000Z inc-007 consistency" (dev mode, since 2026-10-01T09:00:00.000Z, repos on trade-imports-ins-frontend feat/EUDPA-1-x). Leave it alone: it is theirs to release.'
       }
+    })
+  })
+
+  test('refuses a stack another clone started, naming that clone, and leaves it alone', async () => {
+    const env = workspaceWith(withE2e({ 'test:docker-compose': 'echo e2e' }))
+    const otherClone = '/clones/trade-imports-workspace-a'
+    writeFileSync(stackStatePath(), 'up\n')
+    writeFileSync(
+      stackWorkingDirPath(),
+      `${join(otherClone, 'docker', 'stack')}\n`
+    )
+
+    const outcome = await gate(env, { phase: 'e2e' })
+
+    expect({
+      calls: stackCalls(),
+      up: stackIsUp(),
+      lease: existsSync(leasePath()),
+      rungs: outcome.rungs.map(({ ok, reason }) => ({ ok, reason })),
+      held: outcome.stack.held
+    }).toEqual({
+      calls: [],
+      up: true,
+      lease: false,
+      rungs: [
+        {
+          ok: false,
+          reason: `The stack belongs to ${otherClone}. Run E2E there, or push and let GitHub Actions run it.`
+        }
+      ],
+      held: {
+        holder: null,
+        detail: `The stack belongs to ${otherClone}. Run E2E there, or push and let GitHub Actions run it.`
+      }
+    })
+  })
+
+  test('refuses while another clone is still starting the stack under its lease', async () => {
+    const env = workspaceWith(withE2e({ 'test:docker-compose': 'echo e2e' }))
+    const otherClone = '/clones/trade-imports-workspace-a'
+    writeLease({
+      holder: GATE_HOLDER,
+      workspace: otherClone,
+      state: 'starting',
+      pid: process.pid
+    })
+
+    const outcome = await gate(env, { phase: 'e2e' })
+
+    expect({
+      calls: stackCalls(),
+      reasons: outcome.rungs.map(({ reason }) => reason),
+      held: outcome.stack.held
+    }).toEqual({
+      calls: [],
+      reasons: [
+        `The stack belongs to ${otherClone}. Run E2E there, or push and let GitHub Actions run it.`
+      ],
+      held: {
+        holder: GATE_HOLDER,
+        detail: `The stack belongs to ${otherClone}. Run E2E there, or push and let GitHub Actions run it.`
+      }
+    })
+  })
+
+  test('refuses a stack another clone started under a lease, naming the lease holder', async () => {
+    const env = workspaceWith(withE2e({ 'test:docker-compose': 'echo e2e' }))
+    const otherClone = '/clones/trade-imports-workspace-a'
+    writeFileSync(stackStatePath(), 'up\n')
+    writeFileSync(
+      stackWorkingDirPath(),
+      `${join(otherClone, 'docker', 'stack')}\n`
+    )
+    writeLease({
+      holder: 'ibl-20261001T080000Z inc-007 consistency',
+      workspace: otherClone
+    })
+
+    const outcome = await gate(env, { phase: 'e2e' })
+
+    expect({
+      calls: stackCalls(),
+      up: stackIsUp(),
+      held: outcome.stack.held
+    }).toEqual({
+      calls: [],
+      up: true,
+      held: {
+        holder: 'ibl-20261001T080000Z inc-007 consistency',
+        detail: `The stack belongs to ${otherClone}. Run E2E there, or push and let GitHub Actions run it.`
+      }
+    })
+  })
+
+  test('fails the e2e rungs without starting the stack when the lease is not valid JSON', async () => {
+    const env = workspaceWith(withE2e({ 'test:docker-compose': 'echo e2e' }))
+    mkdirSync(dirname(leasePath()), { recursive: true })
+    writeFileSync(leasePath(), '{not json')
+
+    const outcome = await gate(env, { phase: 'e2e' })
+
+    expect({
+      calls: stackCalls(),
+      reasons: outcome.rungs.map(({ reason }) => reason)
+    }).toEqual({
+      calls: [],
+      reasons: [
+        expect.stringMatching(
+          /^Can't tell whether the workspace stack is free: The stack lease at .* is not valid JSON/
+        )
+      ]
+    })
+  })
+
+  test('starts the stack over a lease another clone left behind when its stack has gone', async () => {
+    const env = workspaceWith(withE2e({ 'test:docker-compose': 'echo e2e' }))
+    writeLease({
+      holder: 'ibl-20261001T080000Z inc-007 consistency',
+      workspace: '/clones/trade-imports-workspace-a',
+      state: 'up',
+      pid: null
+    })
+
+    const outcome = await gate(env, { phase: 'e2e' })
+
+    expect({ green: outcome.green, calls: stackCalls() }).toEqual({
+      green: true,
+      calls: ['run-stack.sh -d', 'stop-stack.sh']
     })
   })
 

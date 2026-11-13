@@ -13,7 +13,8 @@ import { run } from './exec.js'
 import {
   isSameWorkspace,
   runStackScriptToLog,
-  stackContainerIds
+  stackContainerIds,
+  stackOwners
 } from './stack.js'
 import {
   serviceFingerprints,
@@ -127,6 +128,64 @@ const isOwnLease = (lease, { holder, workspaceRoot }) =>
   Boolean(lease) &&
   lease.holder === holder &&
   !isLeasedFromOtherClone(lease, workspaceRoot)
+
+/**
+ * The clone that owns the workspace stack. While the stack is up, its
+ * containers' compose working folder labels say which clone started it; when
+ * they name several, one other than `workspaceRoot` wins. While it is down,
+ * only a lease whose start is still running names an owner. A lease left
+ * over from a stack that has gone names nobody.
+ *
+ * @param {object} args
+ * @param {string} [args.workspaceRoot] - The clone asking
+ * @param {string} args.leasePath
+ * @param {object} [args.env] - Extra environment for docker
+ * @returns {Promise<{workspace: string|null, source: 'containers'|'lease'|null}>}
+ * @throws {TimError} as stackOwners does, and PARSE as readLease does
+ */
+export const stackOwner = async ({ workspaceRoot, leasePath, env }) => {
+  const owners = await stackOwners({ env })
+  if (owners.length > 0) {
+    const workspace =
+      owners.find(
+        (owner) => !workspaceRoot || !isSameWorkspace(owner, workspaceRoot)
+      ) ?? owners[0]
+    return { workspace, source: 'containers' }
+  }
+  const lease = readLease(leasePath)
+  if (lease?.workspace && isStarting(lease)) {
+    return { workspace: lease.workspace, source: 'lease' }
+  }
+  return { workspace: null, source: null }
+}
+
+/**
+ * Why local E2E stops when another clone owns the workspace stack.
+ *
+ * @param {string} owner - The owning clone
+ * @returns {string}
+ */
+export const foreignStackRefusal = (owner) =>
+  `The stack belongs to ${owner}. Run E2E there, or push and let GitHub Actions run it.`
+
+/**
+ * The owner of the workspace stack, as stackOwner gives it, when that is a
+ * clone other than `workspaceRoot`. Null when this clone owns it or nobody
+ * does.
+ *
+ * @param {object} args
+ * @param {string} args.workspaceRoot
+ * @param {string} args.leasePath
+ * @param {object} [args.env] - Extra environment for docker
+ * @returns {Promise<{workspace: string, source: 'containers'|'lease'}|null>}
+ * @throws {TimError} as stackOwner does
+ */
+export const foreignStackOwner = async ({ workspaceRoot, leasePath, env }) => {
+  const owner = await stackOwner({ workspaceRoot, leasePath, env })
+  return owner.workspace && !isSameWorkspace(owner.workspace, workspaceRoot)
+    ? owner
+    : null
+}
 
 const sameContainers = (recorded, running) =>
   Array.isArray(recorded) &&

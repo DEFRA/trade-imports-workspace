@@ -20,7 +20,10 @@ import {
   defaultLeasePath,
   describeLease,
   recordLeaseContainers,
-  recordLeaseFingerprints
+  recordLeaseFingerprints,
+  stackOwner,
+  foreignStackOwner,
+  foreignStackRefusal
 } from './stack-lease.js'
 
 const HOLDER = 'ibl-20261001T090000Z inc-003 consistency'
@@ -1069,5 +1072,111 @@ describe('the same holder name from another clone', () => {
       updated: false,
       containers: ['c1']
     })
+  })
+})
+
+describe('stackOwner', () => {
+  const stackStartedFrom = (...clones) =>
+    markUp(clones.map((clone) => join(clone, 'docker', 'stack')).join('\n'))
+
+  const ownerOf = (env) =>
+    stackOwner({ workspaceRoot: root, leasePath: leasePath(), env })
+
+  test('names the clone the running containers were started from', async () => {
+    const env = fakeStack()
+    stackStartedFrom(OTHER_CLONE)
+
+    const owner = await ownerOf(env)
+
+    expect(owner).toEqual({ workspace: OTHER_CLONE, source: 'containers' })
+  })
+
+  test('names another clone over this one when the containers name both', async () => {
+    const env = fakeStack()
+    stackStartedFrom(root, OTHER_CLONE)
+
+    const owner = await ownerOf(env)
+
+    expect(owner).toEqual({ workspace: OTHER_CLONE, source: 'containers' })
+  })
+
+  test('names the clone the containers name over the clone on the lease', async () => {
+    const env = fakeStack()
+    stackStartedFrom(root)
+    writeLease({ holder: OTHER, workspace: OTHER_CLONE })
+
+    const owner = await ownerOf(env)
+
+    expect(owner).toEqual({ workspace: root, source: 'containers' })
+  })
+
+  test('names the clone whose lease is still starting a stack that is down', async () => {
+    const env = fakeStack()
+    writeLease({
+      holder: OTHER,
+      workspace: OTHER_CLONE,
+      state: 'starting',
+      pid: process.pid
+    })
+
+    const owner = await ownerOf(env)
+
+    expect(owner).toEqual({ workspace: OTHER_CLONE, source: 'lease' })
+  })
+
+  test.each([
+    ['a lease left from a stack that has gone', { state: 'up', pid: null }],
+    ['a lease whose start died', { state: 'starting', pid: DEAD_PID }]
+  ])('names nobody for %s', async (_case, lease) => {
+    const env = fakeStack()
+    writeLease({ holder: OTHER, workspace: OTHER_CLONE, ...lease })
+
+    const owner = await ownerOf(env)
+
+    expect(owner).toEqual({ workspace: null, source: null })
+  })
+
+  test('names nobody when the stack is down and nobody holds a lease', async () => {
+    const env = fakeStack()
+
+    const owner = await ownerOf(env)
+
+    expect(owner).toEqual({ workspace: null, source: null })
+  })
+})
+
+describe('foreignStackOwner', () => {
+  test('gives the owner when it is another clone', async () => {
+    const env = fakeStack()
+    markUp(join(OTHER_CLONE, 'docker', 'stack'))
+
+    const owner = await foreignStackOwner({
+      workspaceRoot: root,
+      leasePath: leasePath(),
+      env
+    })
+
+    expect(owner).toEqual({ workspace: OTHER_CLONE, source: 'containers' })
+  })
+
+  test('gives null when this clone started the stack', async () => {
+    const env = fakeStack()
+    markUp(join(root, 'docker', 'stack'))
+
+    const owner = await foreignStackOwner({
+      workspaceRoot: root,
+      leasePath: leasePath(),
+      env
+    })
+
+    expect(owner).toBeNull()
+  })
+})
+
+describe('foreignStackRefusal', () => {
+  test('tells the person where to run E2E instead', () => {
+    expect(foreignStackRefusal(OTHER_CLONE)).toBe(
+      `The stack belongs to ${OTHER_CLONE}. Run E2E there, or push and let GitHub Actions run it.`
+    )
   })
 })

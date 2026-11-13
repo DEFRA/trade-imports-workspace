@@ -7,7 +7,9 @@ import {
   releaseStack,
   readLease,
   describeLease,
-  defaultLeasePath
+  defaultLeasePath,
+  foreignStackOwner,
+  foreignStackRefusal
 } from '../exec/stack-lease.js'
 import { refreshLeasedStack } from '../exec/stack-refresh.js'
 import { writeStackLogs } from '../exec/stack.js'
@@ -337,6 +339,33 @@ const takeLease = async (context) => {
   }
 }
 
+const refusalForOtherCloneOwner = async (context) => {
+  try {
+    const owner = await foreignStackOwner({
+      workspaceRoot: context.workspaceRoot,
+      leasePath: context.leasePath,
+      env: context.env
+    })
+    if (!owner) return null
+    const lease = readLease(context.leasePath)
+    return {
+      acquired: false,
+      refused: true,
+      up: owner.source === 'containers',
+      holder: lease?.holder ?? null,
+      lease,
+      reason: foreignStackRefusal(owner.workspace)
+    }
+  } catch (error) {
+    return {
+      acquired: false,
+      refused: false,
+      up: null,
+      reason: `Can't tell whether the workspace stack is free: ${messageOf(error)}`
+    }
+  }
+}
+
 const refresh = async (context, lease) => {
   try {
     return await refreshLeasedStack({
@@ -457,6 +486,8 @@ const runE2e = async (rungs, context) => {
     }
   }
   if (context.stackAfterLocal) await context.localDone
+  const ownerRefusal = await refusalForOtherCloneOwner(context)
+  if (ownerRefusal) return refusedE2e(rungs, ownerRefusal)
   const lease = await takeLease(context)
   if (!lease.acquired) return refusedE2e(rungs, lease)
   const keptForHolder = lease.started && lease.heldBefore === true

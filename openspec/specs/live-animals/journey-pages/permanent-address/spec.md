@@ -2,6 +2,10 @@
 
 ## Purpose
 
+**Maturity**: detailing
+
+**Page**: permanentAddress
+
 Asks, for each animal on the notification that needs one, whether it lives at the place of destination or at a new address, one card per animal. Reached only from the consignment addresses page's permanent address section, for a consignment carrying a cat, dog or ferret. The page is titled "Permanent address", and it ends with Save and continue alone on a draft and while the notification is being amended (`live-animals/journey-flow`'s REQ-FLOW-012 and REQ-FLOW-013). The page refuses an invalid new address and an unready place-of-destination choice, answering with the shared error-state title prefix (`live-animals/page-titles`).
 
 ## Requirements

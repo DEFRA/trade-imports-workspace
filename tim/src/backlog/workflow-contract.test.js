@@ -1,5 +1,15 @@
 import { describe, test, expect } from 'vitest'
-import { existsSync, readdirSync, readFileSync } from 'node:fs'
+import { spawnSync } from 'node:child_process'
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync
+} from 'node:fs'
+import { tmpdir } from 'node:os'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parse } from 'acorn'
@@ -369,6 +379,22 @@ const withoutKeys = (object, keys) =>
   )
 
 const withoutKey = (object, key) => withoutKeys(object, [key])
+
+const WATCH_LOOP_EXCEPTION =
+  'The ONE exception to the single-command and no-sleep rules is the `for try in ...; done` checks watch loop that a WAIT ON ITS CHECKS step gives you: run it as one Bash call, exactly as written, `;`, `||` and `sleep 30` included. Never split it into separate calls, never drop its loop, and never write a sleep of your own anywhere else.'
+
+const watchLoopExceptionPlacesIn = (prompt) => {
+  const flatPrompt = prompt.replace(/\s+/g, ' ')
+  return {
+    afterTheNoSleepRule: flatPrompt.includes(
+      `treat it as unresolved, never as a pass. ${WATCH_LOOP_EXCEPTION}`
+    ),
+    rightBeforeTheWatchLoop: flatPrompt.includes(
+      `${WATCH_LOOP_EXCEPTION} Block on it by running this exactly: \`for try in $(seq 5); do gh pr checks`
+    ),
+    timesStated: countOccurrences(flatPrompt, WATCH_LOOP_EXCEPTION)
+  }
+}
 
 describe('every workflow script', () => {
   test('finds at least the build loop, the distil workflow and the canary', () => {
@@ -7380,7 +7406,7 @@ describe('increment-build-loop', () => {
         expect(
           prompt.indexOf('gh pr view <url> --json mergeable,mergeStateStatus')
         ).toBeLessThan(
-          prompt.indexOf('tools/github-actions/wait-for-pr-checks.sh')
+          prompt.indexOf('gh pr checks <number> --repo <owner/name> --watch')
         )
       })
 
@@ -7400,7 +7426,7 @@ describe('increment-build-loop', () => {
           ),
           capped: prompt.includes('at most 2 times per pr'),
           mixedIsStillRed: prompt.includes(
-            'Exit 1 with some lines marked stale is a real red'
+            '`SUMMARY: red` with some lines marked stale is a real red'
           ),
           keepsStaleOutOfFailures: prompt.includes(
             'Put only the checks NOT marked stale in failures[]'
@@ -7412,6 +7438,204 @@ describe('increment-build-loop', () => {
           capped: true,
           mixedIsStillRed: true,
           keepsStaleOutOfFailures: true
+        })
+      })
+
+      describe('the checks verdict the watcher reads', () => {
+        const recordedVerdicts = JSON.parse(
+          readFileSync(
+            join(
+              dirname(fileURLToPath(import.meta.url)),
+              '__fixtures__/pr-checks/bash-goldens.json'
+            ),
+            'utf8'
+          )
+        )
+        const verdictWordOfExit = {
+          0: 'green',
+          1: 'red',
+          2: 'pending',
+          5: 'stale'
+        }
+        const listedChecksCases = Object.entries(recordedVerdicts).filter(
+          ([, recorded]) => recorded.checks
+        )
+
+        const verdictFilterIn = (prompt) =>
+          textBetween(
+            prompt,
+            "--json name,bucket,link,startedAt --jq '",
+            "' > "
+          )
+
+        const verdictOf = (filter, { checks, headCommittedAt }) =>
+          spawnSync(
+            'jq',
+            ['-r', filter.replace('HEAD_COMMITTED_AT', headCommittedAt)],
+            { input: JSON.stringify(checks), encoding: 'utf8' }
+          ).stdout
+
+        const summaryWordOf = (output) => output.match(/^SUMMARY: (\w+)/m)?.[1]
+
+        test.each(listedChecksCases)(
+          'gives the recorded decision for %s',
+          async (_, recorded) => {
+            const prompt = promptOf(
+              await runMergeRow(FOUND, null),
+              'inc-900 ci watch'
+            )
+
+            expect(
+              summaryWordOf(verdictOf(verdictFilterIn(prompt), recorded))
+            ).toBe(verdictWordOfExit[recorded.bash.exit])
+          }
+        )
+
+        test.each(
+          listedChecksCases.filter(([, recorded]) => recorded.bash.exit !== 2)
+        )('prints the recorded lines for %s', async (_, recorded) => {
+          const prompt = promptOf(
+            await runMergeRow(FOUND, null),
+            'inc-900 ci watch'
+          )
+
+          expect(verdictOf(verdictFilterIn(prompt), recorded)).toBe(
+            recorded.bash.stdout
+          )
+        })
+
+        test('says it is red while a check on the current head failed and others still run', async () => {
+          const prompt = promptOf(
+            await runMergeRow(FOUND, null),
+            'inc-900 ci watch'
+          )
+          const { red } = recordedVerdicts
+          const stillRunning = {
+            ...red,
+            checks: [...red.checks, { ...red.checks[0], bucket: 'pending' }]
+          }
+
+          expect(
+            summaryWordOf(verdictOf(verdictFilterIn(prompt), stillRunning))
+          ).toBe('red')
+        })
+
+        const watchCommandIn = (prompt) =>
+          textBetween(prompt, 'running this exactly:', 'Its exit code')
+            .trim()
+            .replace(/^`|`$/g, '')
+
+        const watchAgainstStubGh = (
+          prompt,
+          { reportsNoChecksFor, noChecksMessage }
+        ) => {
+          const dir = mkdtempSync(join(tmpdir(), 'pr-checks-watch-'))
+          const stubs = join(dir, 'bin')
+          mkdirSync(stubs)
+          mkdirSync(join(dir, 'logs'))
+          writeFileSync(
+            join(stubs, 'gh'),
+            [
+              '#!/bin/bash',
+              `calls=$(( $(cat "${dir}/calls" 2>/dev/null || echo 0) + 1 ))`,
+              `echo "$calls" > "${dir}/calls"`,
+              `if [ "$calls" -le ${reportsNoChecksFor} ]; then`,
+              `  echo "${noChecksMessage}" >&2`,
+              '  exit 1',
+              'fi',
+              'echo "build pass 1m https://github.com/DEFRA/x/actions/runs/1"'
+            ].join('\n')
+          )
+          writeFileSync(join(stubs, 'sleep'), '#!/bin/bash\n')
+          chmodSync(join(stubs, 'gh'), 0o755)
+          chmodSync(join(stubs, 'sleep'), 0o755)
+          const command = watchCommandIn(prompt)
+            .replaceAll('<number>', '42')
+            .replaceAll('<owner/name>', 'DEFRA/x')
+            .replaceAll('<repo>', 'x')
+            .replace(/\S*\/logs\//g, `${dir}/logs/`)
+          spawnSync('bash', ['-c', command], {
+            env: { ...process.env, PATH: `${stubs}:${process.env.PATH}` },
+            encoding: 'utf8'
+          })
+          return {
+            ghCalls: Number(readFileSync(join(dir, 'calls'), 'utf8')),
+            log: readFileSync(join(dir, 'logs', 'inc-900-ci-x.log'), 'utf8')
+          }
+        }
+
+        const noChecksMessages = [
+          "no checks reported on the 'feat/x' branch",
+          "No checks reported on the 'feat/x' branch"
+        ]
+
+        test.each(noChecksMessages)(
+          'watches again while gh reports "%s", then logs the checks that registered',
+          async (noChecksMessage) => {
+            const prompt = promptOf(
+              await runMergeRow(FOUND, null),
+              'inc-900 ci watch'
+            )
+
+            expect(
+              watchAgainstStubGh(prompt, {
+                reportsNoChecksFor: 2,
+                noChecksMessage
+              })
+            ).toEqual({
+              ghCalls: 3,
+              log: 'build pass 1m https://github.com/DEFRA/x/actions/runs/1\n'
+            })
+          }
+        )
+
+        test.each(noChecksMessages)(
+          'leaves "%s" in the log after five watches of a PR with no checks',
+          async (noChecksMessage) => {
+            const prompt = promptOf(
+              await runMergeRow(FOUND, null),
+              'inc-900 ci watch'
+            )
+
+            expect(
+              watchAgainstStubGh(prompt, {
+                reportsNoChecksFor: 99,
+                noChecksMessage
+              })
+            ).toEqual({
+              ghCalls: 5,
+              log: `${noChecksMessage}\n`
+            })
+          }
+        )
+
+        test('stops on a PR gh still reports no checks for, as no-checks', async () => {
+          const prompt = promptOf(
+            await runMergeRow(FOUND, null),
+            'inc-900 ci watch'
+          ).replace(/\s+/g, ' ')
+
+          expect({
+            readsTheWatchLog: prompt.includes(
+              'a log that STILL says "No checks reported" (in any case) after that loop means the PR has NO CHECKS'
+            ),
+            stopsAsNoChecks: prompt.includes(
+              'NO CHECKS at all: state "unresolved", blocked "no checks on <repo>", stopReason "no-checks"'
+            )
+          }).toEqual({ readsTheWatchLog: true, stopsAsNoChecks: true })
+        })
+
+        test('lets the watcher run the watch loop’s sleep in one call, in its guard rails and beside the loop', async () => {
+          const prompt = promptOf(
+            await runMergeRow(FOUND, null),
+            'inc-900 ci watch'
+          )
+
+          expect(watchLoopExceptionPlacesIn(prompt)).toEqual({
+            afterTheNoSleepRule: true,
+            rightBeforeTheWatchLoop: true,
+            timesStated: 2
+          })
         })
       })
 
@@ -7721,6 +7945,16 @@ describe('increment-build-loop', () => {
           expect(run.logs).toContain(
             'inc-900: theme origin-pages gets no style review of its whole change — a style reviewer read every row'
           )
+        })
+
+        test('lets the theme CI watcher run the watch loop’s sleep in one call, in its guard rails and beside the loop', async () => {
+          const prompt = promptOf(await runTheme(), 'inc-900 theme ci watch')
+
+          expect(watchLoopExceptionPlacesIn(prompt)).toEqual({
+            afterTheNoSleepRule: true,
+            rightBeforeTheWatchLoop: true,
+            timesStated: 2
+          })
         })
 
         const THEME_STYLE_LABELS = [
@@ -9560,7 +9794,8 @@ describe('increment-build-loop', () => {
           mergeabilityBeforeChecks:
             prompt.indexOf(
               'gh pr view <url> --json mergeable,mergeStateStatus'
-            ) < prompt.indexOf('tools/github-actions/wait-for-pr-checks.sh'),
+            ) <
+            prompt.indexOf('gh pr checks <number> --repo <owner/name> --watch'),
           stopReason: prompt.includes('stopReason "pr-conflict"')
         }).toEqual({
           everyFirst: true,

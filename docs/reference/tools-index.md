@@ -42,8 +42,6 @@ alternative and the one the build loop still calls directly.
 | `tools/confluence/page.sh` | page-id [summary\|json] | Get page |
 | `tools/confluence/sync-docs.sh` | [--dry-run] [--root-id ID] | Sync Confluence tree to docs/confluence/ |
 | `tools/confluence/clean-docs.sh` | [args forwarded] | Wipe + re-sync docs/confluence/ |
-| **github-actions** | | |
-| `tools/github-actions/wait-for-pr-checks.sh` | repo pr-number [timeout] | Wait for a pull request's checks, then report them. Exit 0 green, 1 red, 2 still pending, 4 no checks, 5 every failing check is a stale rollup (re-run them, do not fix code) |
 | **review** | | |
 | `tools/review/start-review.sh` | EUDPA-X | Step 0 — detect FRESH/REFRESH and exec the appropriate setup script |
 | `tools/review/prepare-review.sh` | EUDPA-X [--json] | Setup workspace |

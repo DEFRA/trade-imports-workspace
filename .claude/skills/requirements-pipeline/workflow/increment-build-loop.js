@@ -1459,6 +1459,10 @@ ${workerCountLines.join('\n')}
   script's own count. Run one FIT or E2E command at a time: never two repos' suites at once.
 `
 
+const WATCH_LOOP_EXCEPTION = `The ONE exception to the single-command and no-sleep rules is the \`for try in ...; done\` checks watch loop that a
+  WAIT ON ITS CHECKS step gives you: run it as one Bash call, exactly as written, \`;\`, \`||\` and \`sleep 30\` included. Never
+  split it into separate calls, never drop its loop, and never write a sleep of your own anywhere else.`
+
 const baseGuardrails = (stackGuard) => `
 GUARD RAILS (mandatory, every step):
 ${RUN_WITH_BASH}
@@ -1474,6 +1478,7 @@ ${DENIED_FORMS_LINE}
 - NEVER sleep-poll. Foreground \`sleep\` is denied. Wait on CI by BLOCKING on \`gh pr checks --watch\` or
   \`gh run watch --exit-status\`, with the Bash tool's \`timeout\` parameter set to 600000 (its ceiling).
   A watch that hits that timeout has NOT gone green — treat it as unresolved, never as a pass.
+  ${WATCH_LOOP_EXCEPTION}
 - NEVER background a command: no trailing \`&\`, no run_in_background. Every command is a foreground call that
   returns by itself — a backgrounded one is one whose result you never read.
 ${stackGuard}
@@ -2890,17 +2895,56 @@ For each pr: \`gh pr view <url> --json mergeable,mergeStateStatus\`
 
 const STALE_RERUNS = 2
 
+const PR_CHECKS_VERDICT_JQ = [
+  String.raw`"HEAD_COMMITTED_AT" as $head`,
+  String.raw`| def failing: .bucket == "fail" or .bucket == "cancel";`,
+  String.raw`def stale: failing and ((.startedAt // "") as $at | $head != "" and $at != "" and ($at | startswith("0001") | not) and $at < $head);`,
+  String.raw`def line: "\(.bucket) \(.name) \(.link)" + (if stale then " (stale: started \(.startedAt), head committed \($head))" else "" end);`,
+  String.raw`length as $total`,
+  String.raw`| (map(select(.bucket == "pending")) | length) as $pending`,
+  String.raw`| (map(select(failing)) | length) as $failed`,
+  String.raw`| (map(select(failing and (stale | not))) | length) as $current`,
+  String.raw`| (map(select(.bucket == "pass" or .bucket == "skipping")) | length) as $passed`,
+  String.raw`| (.[] | line),`,
+  String.raw`if $total == 0 then "SUMMARY: pending — no checks reported yet"`,
+  String.raw`elif $current > 0 then "SUMMARY: red — \($current) of \($total) checks failed on the current head (\($failed - $current) stale)"`,
+  String.raw`elif $failed > 0 then "SUMMARY: stale — all \($failed) failing checks started before the head commit (\($head)). Re-run them; this is not a code failure"`,
+  String.raw`elif $pending > 0 then "SUMMARY: pending — \($pending) of \($total) checks still running"`,
+  String.raw`else "SUMMARY: green — \($passed) of \($total) checks passed" end`
+].join(' ')
+
+const NO_CHECKS_TRIES = 5
+
+const prChecksWatchCommand = (id) =>
+  `for try in $(seq ${NO_CHECKS_TRIES}); do gh pr checks <number> --repo <owner/name> --watch --fail-fast --interval 30 > ${WORKAREA_TILDE}/logs/${id}-ci-<repo>.log 2>&1; grep -qi 'no checks reported' ${WORKAREA_TILDE}/logs/${id}-ci-<repo>.log || break; sleep 30; done`
+
+const prChecksWaitStep = (id) => `WAIT ON ITS CHECKS, then read their verdict. Three Bash calls:
+   a. Block until the checks finish, in ONE Bash call with the Bash tool's \`timeout\` parameter set to 600000.
+      ${WATCH_LOOP_EXCEPTION} Block on it by running this exactly:
+      \`${prChecksWatchCommand(id)}\`
+      Its exit code, or the Bash call timing out, decides nothing: step c does. A PR's checks can take a few seconds
+      to register after a push, and until then \`gh\` prints "no checks reported on the '<branch>' branch" and exits
+      at once, so the loop watches again every 30s, ${NO_CHECKS_TRIES} times in all. The one exception: a log that
+      STILL says "No checks reported" (in any case) after that loop means the PR has NO CHECKS (see below). Skip b and c for it.
+   b. When the PR's head commit was committed: \`gh pr view <number> --repo <owner/name> --json headRefOid --jq .headRefOid\`,
+      then \`gh api repos/<owner/name>/commits/<sha> --jq .commit.committer.date\`. Either call failing leaves the time empty.
+   c. The verdict, with that time (or nothing, when it is empty) in place of HEAD_COMMITTED_AT:
+      \`gh pr checks <number> --repo <owner/name> --json name,bucket,link,startedAt --jq '${PR_CHECKS_VERDICT_JQ}' > ${WORKAREA_TILDE}/logs/${id}-ci-<repo>-verdict.log 2>&1\`
+      Read that log ONCE. It lists every check as \`<bucket> <name> <link>\`, then one \`SUMMARY:\` line. A log
+      with no \`SUMMARY:\` line means \`gh\` failed: treat it as \`SUMMARY: pending\`.`
+
 const STALE_ROLLUP_STEP = `A STALE ROLLUP IS NOT A FAILURE, and it never reaches a fixer. GitHub does not re-run a pull request's checks when
-its base moves, so a PR can go on showing a failure from before its last merge. The wait script works this out for
-you: it compares every failing check's start time with the PR head commit's own commit time, marks each stale line
-\`(stale: started ..., head committed ...)\`, and exits 5 only when EVERY failing check started before that commit.
-A check that ran before the commit under test is no evidence about that commit, so exit 5 means unknown, never red:
+its base moves, so a PR can go on showing a failure from before its last merge. The verdict works this out for you:
+it compares every failing check's start time with the PR head commit's own commit time, marks each stale line
+\`(stale: started ..., head committed ...)\`, and says \`SUMMARY: stale\` only when EVERY failing check started before
+that commit. A check that ran before the commit under test is no evidence about that commit, so \`SUMMARY: stale\`
+means unknown, never red:
 1. Re-run the runs the stale lines name: \`gh run rerun <run-id> --failed --repo <ghRepo>\`, one Bash call each.
 2. Wait on that pr's checks again from the top of this step. A re-run spends a watch window, NEVER a fix attempt,
    and you may do it at most ${STALE_RERUNS} times per pr.
-3. Exit 5 still, after ${STALE_RERUNS} re-runs → state "unresolved" for that pr, which counts as RED.
-Exit 1 with some lines marked stale is a real red: at least one failing check did run on this head. Put only the
-checks NOT marked stale in failures[] — a fixer sent after a stale check rewrites correct code to match an old image.`
+3. \`SUMMARY: stale\` still, after ${STALE_RERUNS} re-runs → state "unresolved" for that pr, which counts as RED.
+\`SUMMARY: red\` with some lines marked stale is a real red: at least one failing check did run on this head. Put only
+the checks NOT marked stale in failures[] — a fixer sent after a stale check rewrites correct code to match an old image.`
 
 const CI_FIXER_STALE_RULE = `CHECK THE FAILURE IS ABOUT THIS HEAD BEFORE YOU CHANGE A LINE. The watcher should have caught a stale rollup, but
    confirm it yourself, because changing correct code to match an old image is the most expensive thing you can do
@@ -4534,12 +4578,11 @@ ${PR_CONFLICT_STEP} A PR whose \`mergeable\` stays UNKNOWN after 10 reads: state
 failures[], stopReason "mergeability-unknown", and do not watch its checks.
 
 Then, for EACH pr, in the order listed:
-1. BLOCK on its checks. One Bash call, with the tool's \`timeout\` parameter set to 600000:
-   \`${TILDE}/tools/github-actions/wait-for-pr-checks.sh <owner/name> <number> 570 > ${WORKAREA_TILDE}/logs/${id}-ci-<repo>.log 2>&1\`
-   Read that log ONCE. Exit 0 → green. Exit 1 → RED: one line per failing check in failures[], naming the check and
-   what it said. Exit 2 → not resolved yet: run it again, at most ${CI_WATCH_WINDOWS} times per PR in all, then state
-   "unresolved", which counts as RED. Exit 4 → no checks at all: state "unresolved", blocked "no checks on <repo>",
-   stopReason "no-checks". An absence of evidence is not green. Exit 5 → by step 2 below.
+1. ${prChecksWaitStep(id)}
+   \`SUMMARY: green\` → green. \`SUMMARY: red\` → RED: one line per failing check in failures[], naming the check and
+   what it said. \`SUMMARY: pending\` → not resolved yet: wait again from a, at most ${CI_WATCH_WINDOWS} times per PR in
+   all, then state "unresolved", which counts as RED. NO CHECKS at all: state "unresolved", blocked "no checks on
+   <repo>", stopReason "no-checks". An absence of evidence is not green. \`SUMMARY: stale\` → by step 2 below.
 2. ${STALE_ROLLUP_STEP}
 3. For a RED check, name the failing job precisely enough for a fixer to act. Get the detail with
    \`gh run view <run-id> --repo <ghRepo> --log-failed\`, redirected to a log you read once. Where the failing
@@ -7192,17 +7235,16 @@ ${prList(prs)}
 ${PR_CONFLICT_STEP} A PR whose \`mergeable\` stays UNKNOWN after 10 reads: go on and watch its checks.
 
 Then, for EACH pr, in the order listed:
-1. BLOCK on its checks. One Bash call, with the tool's \`timeout\` parameter set to 600000:
-   \`${TILDE}/tools/github-actions/wait-for-pr-checks.sh <owner/name> <number> 570 > ${WORKAREA_TILDE}/logs/${id}-ci-<repo>.log 2>&1\`
-2. Read that log ONCE.
-   - Exit 0 → that PR is green.
-   - Exit 1 → that PR is RED. Put one line per failing check in failures\[\], naming the check and what it
+1. ${prChecksWaitStep(id)}
+2. Act on the verdict.
+   - \`SUMMARY: green\` → that PR is green.
+   - \`SUMMARY: red\` → that PR is RED. Put one line per failing check in failures\[\], naming the check and what it
      actually said.
-   - Exit 2 → the checks have NOT resolved. Repeat step 1. You may do this at most ${CI_WATCH_WINDOWS} times per
-     PR in total. Still unresolved after that → state "unresolved", and it counts as RED, never as green.
-   - Exit 4 → the PR has NO checks: state "unresolved", green:false, and put "no checks configured on <repo>" in
-     blocked. Merging on an absence of evidence is not merging on green.
-   - Exit 5 → by step 3 below.
+   - \`SUMMARY: pending\` → the checks have NOT resolved. Repeat step 1. You may do this at most ${CI_WATCH_WINDOWS}
+     times per PR in total. Still unresolved after that → state "unresolved", and it counts as RED, never as green.
+   - NO CHECKS → state "unresolved", green:false, and put "no checks configured on <repo>" in blocked. Merging on an
+     absence of evidence is not merging on green.
+   - \`SUMMARY: stale\` → by step 3 below.
 3. ${STALE_ROLLUP_STEP}
 4. For a RED check, name the failing job precisely enough for a fixer to act. Get the detail with
    \`gh run view <run-id> --repo <ghRepo> --log-failed\`, redirected to a log you read once. Where the failing

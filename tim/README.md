@@ -1959,6 +1959,77 @@ Jira and Confluence auth readiness via the same probes `tim auth` uses — witho
 failing the command when Jira isn't configured yet. It never touches Jira
 and never pushes.
 
+### `tim deps dependabot` — Dependabot config from the coupled package sets
+
+`config/dependency-sets.json` records the packages that must move together
+and who moves them. Each repo's `.github/dependabot.yml` is generated from
+it, never edited by hand.
+
+```bash
+tim deps dependabot trade-imports-animals-frontend                 # print the file the sets generate
+tim deps dependabot trade-imports-animals-frontend --write         # write it into the repo
+tim deps dependabot trade-imports-animals-frontend --check --json  # exit 1 if the file differs or is missing
+```
+
+The repo must be in scope for the sets and cloned under `repos/`. A repo
+outside the scope exits 2. `--write` and `--check` together exit 2.
+
+The generated file has:
+
+- an npm group for each set with `"scope": "repo"`, listed before the
+  `patch-and-minor` catch-all, because Dependabot puts a dependency in the
+  first group it matches. A set's group takes every update type, so a major
+  arrives as one PR for the whole set
+- an npm `ignore` entry for every member of each set with
+  `"scope": "cross-repo"`, because the nightly job moves those in every repo
+  at once on one branch name
+- `cooldown.default-days` from `defaults.cooldownDays`, on npm and GitHub
+  Actions
+- the schedule, pull request limit and versioning strategy from
+  `defaults.dependabot`, direct dependencies only, and the GitHub Actions
+  update with its own `patch-and-minor` group
+
+Each set's `reason` is written as a comment above its group or ignore
+entries.
+
+#### The shape of `config/dependency-sets.json`
+
+| Field                   | What it holds                                                                                                                                             |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `defaults.cooldownDays` | Days Dependabot waits after a release before proposing it                                                                                                 |
+| `defaults.majorPolicy`  | The policy every major follows, whatever its set says                                                                                                     |
+| `defaults.repos`        | The repos in scope: each repo in `repos.json` whose flag named by `fromReposJson` is true, plus `include`, less `exclude`                                 |
+| `defaults.dependabot`   | `schedule` (`interval`, `time`, `timezone`), `openPullRequestsLimit` and `versioningStrategy` for the npm update                                          |
+| `sets[].name`           | Lower-case words joined by `-`; the Dependabot group name for a repo set                                                                                  |
+| `sets[].members`        | npm package names, with `*` as a wildcard. Empty for a set npm does not manage                                                                            |
+| `sets[].pins`           | Optional. What a set with no npm members pins instead, such as `.nvmrc` for `node`                                                                        |
+| `sets[].scope`          | `repo`: Dependabot moves it in each repo as one group. `cross-repo`: the nightly job moves it in every repo on one branch name, and Dependabot ignores it |
+| `sets[].policy`         | `ci-is-enough`: green CI is enough to merge. `changelog-driven`: every changelog item needs evidence it was applied, as well as green CI                  |
+| `sets[].reason`         | Why the members must move together, in a sentence or two                                                                                                  |
+
+After changing the file, run `--write` for each repo whose Dependabot config
+is generated, then `--check` to confirm.
+
+### `tim nightly check|stopped` — the nightly jobs' deterministic checks
+
+The `/nightly-start` skill and every nightly job use these. What the jobs may
+do is in `.claude/rules/nightly.md`.
+
+```bash
+tim nightly check --fetch --json  # is this session ready to run the jobs unattended
+tim nightly stopped --json        # is the kill switch on
+```
+
+`check` passes when `SONAR_TOKEN` is set, `ANTHROPIC_API_KEY` is not,
+`workareas/nightly/STOP` is absent, `config/nightly-jobs.json` is valid and the
+workspace and every cloned repo are clean. `--fetch` fetches origin in each
+first. It lists every job with the `cronPrompt` to register, which starts
+`[nightly:<name>]`. It exits 0 when ready and 3 when not. It checks nothing on
+GitHub: run `gh auth status` for that.
+
+`stopped` reports whether `workareas/nightly/STOP` exists, with the text inside
+it as the reason. It exits 0 either way.
+
 ### Bypassing the interactive menu
 
 The menu only opens when stdout is a TTY and the user has not asked for plain text. In any of the following situations tim falls back to printing `--help` to stdout, so pipes, CI and skill scripts keep working unchanged:

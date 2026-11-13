@@ -954,14 +954,16 @@
       ],
       "risk": "Medium. The build loop is in active use and reads the script's exit codes 0/1/2/4/5. Record each code's meaning first, keep every outcome the loop acts on, and launch nothing mid-run.",
       "proof": "Before the change, a stub gh on PATH drives the script through each exit code and the loop's handling of each is recorded. After, the same stub cases give the same loop decisions. No caller names the script.",
-      "status": "todo",
+      "status": "blocked",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "blockedReason": "The new no-checks watch tests stub gh with the capitalised \"No checks reported\" text, but real gh writes it in lowercase when redirected to a log, so the tests would still pass against a case-sensitive match that brings back the race; the stub must print the lowercase form, or both forms."
+      }
     },
     {
       "id": "P21",

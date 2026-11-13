@@ -47,6 +47,20 @@ describe('resolveWorkspaceRoot', () => {
     expect(resolved).toBe(workspace)
   })
 
+  test('finds a fresh clone that has repos.json but no repos folder yet', () => {
+    const freshClone = mkdtempSync(join(tmpdir(), 'tim-fresh-'))
+    writeFileSync(join(freshClone, 'Makefile'), 'all:\n')
+    writeFileSync(join(freshClone, 'repos.json'), '{"repos":[]}\n')
+
+    try {
+      expect(
+        resolveWorkspaceRoot({ cwd: freshClone, env: '', canonical: '/' })
+      ).toBe(freshClone)
+    } finally {
+      rmSync(freshClone, { recursive: true, force: true })
+    }
+  })
+
   test('throws USAGE when the explicit path is not a directory', () => {
     expect(() =>
       resolveWorkspaceRoot({ explicit: join(workspace, 'no-such-dir') })

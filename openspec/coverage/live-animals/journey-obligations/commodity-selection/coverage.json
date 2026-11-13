@@ -196,16 +196,26 @@
     },
     {
       "id": "REQ-OB-COMMODITY-005",
-      "name": "A commodity with no identifier of its own is asked for no identifier at all",
+      "name": "A commodity with no identifier of its own is asked for identification details and a description instead",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-OB-COMMODITY-005-A",
-          "name": "A commodity with no specific identifier is asked for nothing",
+          "name": "A commodity with no specific identifier is asked for the two free-text answers",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a commodity with no identifier type of its own gets no card, while a cattle line keeps its ear tag, passport and tattoo", "strength": "full", "notes": "corrected citation — old test asserted a free-text fallback that no longer exists; current source (obligations/sections/commodities/identifiers.js) states explicitly 'There is no free-text fallback'" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "shows the identifier fields that apply to each commodity", "strength": "full", "notes": "fish card asserted absent (#identification-card-2 count 0), not merely stripped of typed fields" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a commodity with no identifier type of its own asks for identification details then description, refuses an over-long identification details value, and shows both saved values when the notification is reopened, while a cattle line keeps its ear tag, passport and tattoo", "strength": "partial", "notes": "not probed locally — the e2e rung runs on each repo's pull request" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "asks an unidentified commodity for identification details then description, each a labelled text input the same width as a typed identifier field with no hint", "strength": "full", "notes": "red when identifier/fields.js's fallbackIdentifierFields is emptied, restored green" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/allowlists.test.js", "test": "Should put identificationDetails in scope for a unit under commodityCode = '01063300'", "strength": "full", "notes": "and the sibling description case; both pinned by the identified-code list → identificationDetails, description describe block" }
+          ]
+        },
+        {
+          "id": "SCN-OB-COMMODITY-005-B",
+          "name": "A commodity declaring its own identifiers is not asked for the two free-text answers",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/obligations/allowlists.test.js", "test": "Should not put identificationDetails in scope for a unit under commodityCode = '0102'", "strength": "full", "notes": "run for every identified code in the describe block's loop" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "shows the identifier fields that apply to each commodity", "strength": "partial", "notes": "not probed" }
           ]
         }
       ]

@@ -105,15 +105,22 @@ The system MUST ask each animal on a commodity line only for the identifiers its
 - **THEN** the ear tag is asked for
 - **AND** no other identifier is asked for
 
-### Requirement: A commodity with no identifier of its own is asked for no identifier at all
+### Requirement: A commodity with no identifier of its own is asked for identification details and a description instead
 **ID**: REQ-OB-COMMODITY-005
-The system MUST NOT ask for any identifier — typed or free-text — for an animal whose commodity calls for none of the microchip, passport, tattoo, ear tag or horse name. There is no free-text fallback.
+The system MUST ask for two free-text answers, "Identification details" and "Description", each optional and at most 58 characters, for an animal whose commodity calls for none of the microchip, passport, tattoo, ear tag or horse name, and MUST NOT ask for them of an animal whose commodity declares one of those typed identifiers.
 
-#### Scenario: A commodity with no specific identifier is asked for nothing
+#### Scenario: A commodity with no specific identifier is asked for the two free-text answers
 **ID**: SCN-OB-COMMODITY-005-A
 - **GIVEN** the user is entering identification details for an animal on a commodity line
 - **WHEN** that line's commodity calls for none of the specific identifiers
-- **THEN** no identifier of any kind is asked for that animal
+- **THEN** "Identification details" and "Description" are asked for that animal, each optional and at most 58 characters
+- **AND** no typed identifier is asked for that animal
+
+#### Scenario: A commodity declaring its own identifiers is not asked for the two free-text answers
+**ID**: SCN-OB-COMMODITY-005-B
+- **GIVEN** the user is entering identification details for an animal on a commodity line
+- **WHEN** that line's commodity declares one of the specific identifiers
+- **THEN** neither "Identification details" nor "Description" is asked for that animal
 
 ### Requirement: A commodity that requires a permanent address asks for one per animal
 **ID**: REQ-OB-COMMODITY-006

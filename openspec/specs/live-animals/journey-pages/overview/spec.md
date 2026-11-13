@@ -67,9 +67,9 @@ The system MUST show, from the first time a notification's Overview is viewed, a
 - **WHEN** they view Overview
 - **THEN** it shows the total number of animals and the total number of packages, each labelled and captioned
 
-### Requirement: The Identification details task appears only once a chosen commodity requires it, and sits between Commodity details and Additional details
+### Requirement: The Identification details task appears once any commodity is chosen, and sits between Commodity details and Additional details
 **ID**: REQ-OVERVIEW-005
-The system MUST omit the Identification details task row from the "Description of the goods" section until a chosen commodity requires identifiers and a country of origin is saved, MUST show it, linked, once one does, and MUST list it after Commodity details and before Additional details.
+The system MUST omit the Identification details task row from the "Description of the goods" section until any commodity is chosen and a country of origin is saved, MUST show it, linked, once one does, and MUST list it after Commodity details and before Additional details.
 
 #### Scenario: No commodity chosen means no identification row
 **ID**: SCN-OVERVIEW-005-A
@@ -91,12 +91,12 @@ The system MUST omit the Identification details task row from the "Description o
 - **THEN** no Identification details row is shown
 - **AND** "What are you importing?" is still shown
 
-#### Scenario: Choosing a commodity that needs no identifiers leaves the row out
+#### Scenario: Choosing a commodity that declares no identifier of its own still reveals the row
 **ID**: SCN-OVERVIEW-005-D
-- **GIVEN** the user has chosen a commodity that carries no identifiers
+- **GIVEN** the user has chosen a commodity that carries no identifier of its own
+- **AND** a country of origin is saved
 - **WHEN** they view Overview
-- **THEN** no Identification details row is shown
-- **AND** the second section lists Commodity details, then Additional details, in that order
+- **THEN** the second section lists Commodity details, then Identification details, then Additional details, in that order
 
 ### Requirement: Commodity details is its own task, completing only once its numbers are saved
 **ID**: REQ-OVERVIEW-006

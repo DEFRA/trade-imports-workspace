@@ -118,8 +118,8 @@
     },
     {
       "id": "REQ-IDENT-004",
-      "name": "The identifier fields start empty for each new record",
-      "coverage": "full",
+      "name": "The identifier fields start empty for each new record, and a saved record's answers show again when the notification is reopened",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-IDENT-004-A",
@@ -127,6 +127,15 @@
           "coverage": "full",
           "tests": [
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/animal-identification.spec.ts", "test": "leaves the ear tag and the passport number empty on load", "strength": "full", "notes": "red then green with a new record's identifier values pre-filled, against the dev-mode stack (workareas/shared/eudpa-774/logs/inc-028-probe-ident-blank-form-e2e)" }
+          ]
+        },
+        {
+          "id": "SCN-IDENT-004-B",
+          "name": "Reopening the notification shows a saved record's free-text answers again",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "reopening the page shows both saved values on the fallback card", "strength": "partial", "notes": "not probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a commodity with no identifier type of its own asks for identification details then description, refuses an over-long identification details value, and shows both saved values when the notification is reopened, while a cattle line keeps its ear tag, passport and tattoo", "strength": "partial", "notes": "not probed locally — the e2e rung runs on each repo's pull request" }
           ]
         }
       ]
@@ -152,7 +161,7 @@
     },
     {
       "id": "REQ-IDENT-006",
-      "name": "The identifier fields offered for an animal depend on its commodity and its species, and a commodity with none of its own gets no panel",
+      "name": "The identifier fields offered for an animal depend on its commodity and its species, and a commodity with none of its own is asked for identification details and a description",
       "coverage": "full",
       "scenarios": [
         {
@@ -167,11 +176,12 @@
         },
         {
           "id": "SCN-IDENT-006-B",
-          "name": "A commodity with no identifier of its own earns no panel",
+          "name": "A commodity with no identifier of its own is asked for identification details then description",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a commodity with no identifier type of its own gets no card, while a cattle line keeps its ear tag, passport and tattoo", "strength": "full", "notes": "mixed cattle+ostrich consignment, the ostrich line has no card while the cattle line's ear tag, passport and tattoo fields still show" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "shows the identifier fields that apply to each commodity", "strength": "full", "notes": "asserts #identification-card-2 (ostrich) has count 0 — no card at all, not a free-text one" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a commodity with no identifier type of its own asks for identification details then description, refuses an over-long identification details value, and shows both saved values when the notification is reopened, while a cattle line keeps its ear tag, passport and tattoo", "strength": "partial", "notes": "not probed locally — the e2e rung runs on each repo's pull request" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "asks an unidentified commodity for identification details then description, each a labelled text input the same width as a typed identifier field with no hint", "strength": "full", "notes": "red when identifier/fields.js's fallbackIdentifierFields is emptied, restored green" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "shows the identifier fields that apply to each commodity", "strength": "full", "notes": "asserts #identificationDetails-2 and #description-2 (ostrich) are visible, in that order" }
           ]
         },
         {
@@ -233,6 +243,14 @@
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/hub/controller.test.js", "test": "Should read Identification details To do for a stored animal record carrying no identifier, and Complete for one carrying an ear tag", "strength": "full", "notes": "the Overview handler reads Complete for one ear-tagged record and To do for a record with a blank ear tag; red then green with the any-of identifier rule blanked" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/model/obligations/instance-complete.test.js", "test": "reads a unit with no identifier stored as incomplete via anyOfIds", "strength": "partial", "notes": "proves the obligation model reads the record incomplete, not what Overview shows" }
+          ]
+        },
+        {
+          "id": "SCN-IDENT-008-B",
+          "name": "A record on a commodity with no identifier of its own, carrying neither free-text answer, leaves the task To do",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/model/obligations/evaluator.test.js", "test": "reads a record on an ostrich line as incomplete when it holds neither fallback answer", "strength": "full", "notes": "red without the two new ids in unitRecord.requires.anyOfIds" }
           ]
         }
       ]
@@ -306,13 +324,24 @@
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should save a 58-character identifier typed with spaces around it without them", "strength": "full", "notes": "red when the trim is removed" }
           ]
+        },
+        {
+          "id": "SCN-IDENT-010-C",
+          "name": "An over-length free-text fallback value blocks the save, and 58 characters saves",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "validation: Identification details over 58 characters for Struthio spp. (Ostriches) links to and focuses the preserved value", "strength": "full", "notes": "red when identifier/fields.js's IDENTIFIER_MAX_MESSAGES lookup is forced to always read horseName's message, restored green" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "validation: Description over 58 characters for Struthio spp. (Ostriches) links to and focuses the preserved value", "strength": "partial", "notes": "not probed; same table-driven test as the probed Identification details row" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "saves an identification details value of 58 characters", "strength": "partial", "notes": "not probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a commodity with no identifier type of its own asks for identification details then description, refuses an over-long identification details value, and shows both saved values when the notification is reopened, while a cattle line keeps its ear tag, passport and tattoo", "strength": "partial", "notes": "not probed locally — the e2e rung runs on each repo's pull request" }
+          ]
         }
       ]
     },
     {
       "id": "REQ-IDENT-014",
       "name": "The saved-animals table is headed by every identifier asked of that species, whether or not a given record filled it in",
-      "coverage": "full",
+      "coverage": "partial",
       "scenarios": [
         {
           "id": "SCN-IDENT-014-A",
@@ -350,6 +379,15 @@
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "saves a Mustela putorius furo identified only by its microchip, heads its table with the animal column, its three identifiers and the remove action, moves the card on to the line's second animal and reads the number back", "strength": "full", "notes": "" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should render $fieldIds and head $columnHeadings for $commodityCode $speciesLatinName", "strength": "full", "notes": "the two 01061900 rows (Felis catus, Canis familiaris) head ['Animal', 'Microchip', 'Passport', 'Tattoo'] with no permanent-address column" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a domestic cat's unit form asks for microchip, passport and tattoo, and its saved-animals table heads only those identifiers", "strength": "partial", "notes": "not probed locally — the e2e rung runs on each repo's pull request" }
+          ]
+        },
+        {
+          "id": "SCN-IDENT-014-E",
+          "name": "A commodity with no identifier of its own has a saved-animals table of identification details and description",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "saves identification details alone, or description alone, and heads the saved-animals table with Animal, Identification details, Description and a Remove action", "strength": "partial", "notes": "not probed" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a commodity with no identifier type of its own asks for identification details then description, refuses an over-long identification details value, and shows both saved values when the notification is reopened, while a cattle line keeps its ear tag, passport and tattoo", "strength": "partial", "notes": "not probed locally — the e2e rung runs on each repo's pull request" }
           ]
         }
       ]
@@ -436,17 +474,17 @@
     },
     {
       "id": "REQ-IDENT-019",
-      "name": "A consignment with nothing to identify never shows the page",
+      "name": "A notification with no commodity line never shows the page",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-IDENT-019-A",
-          "name": "A consignment of ostriches alone carries on past the page",
+          "name": "A notification with no commodity line carries on past the page",
           "coverage": "full",
           "tests": [
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "carries a consignment with nothing to identify past the page", "strength": "full", "notes": "direct request returns Overview, identification heading absent" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a consignment where no commodity has an identifier type never reaches the identification page", "strength": "full", "notes": "" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should carry a request for the page on when no line carries an identifier", "strength": "full", "notes": "asserts the redirect to additionalDetailsPath with no view rendered" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "reaches a consignment of a commodity that declares no identifier rather than skipping past the page", "strength": "partial", "notes": "proves the opposite case is now reachable; the zero-commodity-line skip itself is not probed here" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/animal-identifiers-conditional.spec.ts", "test": "a notification with no commodity line that asks for the identification page is sent to commodity selection", "strength": "partial", "notes": "not probed locally — the e2e rung runs on each repo's pull request" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/animal-identification/animal-identification.controller.test.js", "test": "Should carry a stale add post on without writing a record, logging the skip and the missing commodity code", "strength": "full", "notes": "red when the skip guard's line-count check is removed, restored green" }
           ]
         }
       ]
@@ -521,7 +559,7 @@
     },
     {
       "id": "REQ-IDENT-022",
-      "name": "The identifier fields are labelled Microchip, Passport, Tattoo, Ear tag and Horse name, with no hint text",
+      "name": "The identifier fields are labelled Microchip, Passport, Tattoo, Ear tag, Horse name, Identification details and Description, with no hint text",
       "coverage": "full",
       "scenarios": [
         {
@@ -532,6 +570,38 @@
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "labels the identifier fields in regular weight with no hint", "strength": "full", "notes": "red when a hint is added to the fields" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/visual/identification-card.visual.spec.ts", "test": "shows the entry form for the second cat above the saved animals table", "strength": "partial", "notes": "the Felis catus entry form shows the Microchip, Passport and Tattoo labels" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "labels the passport, ear tag and tattoo fields on a Bos taurus line with the words the saved-animals table heads them with", "strength": "partial", "notes": "labels read through the copy object; not probed" }
+          ]
+        },
+        {
+          "id": "SCN-IDENT-022-B",
+          "name": "The free-text fallback fields carry their names and no hint",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "asks an unidentified commodity for identification details then description, each a labelled text input the same width as a typed identifier field with no hint", "strength": "full", "notes": "red when identifier/fields.js's fallbackIdentifierFields is emptied, restored green" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-IDENT-023",
+      "name": "Identification details and Description are each optional",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-IDENT-023-A",
+          "name": "Filling Identification details alone saves the animal",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "saves identification details alone, or description alone, and heads the saved-animals table with Animal, Identification details, Description and a Remove action", "strength": "partial", "notes": "not probed" }
+          ]
+        },
+        {
+          "id": "SCN-IDENT-023-B",
+          "name": "Filling Description alone saves the animal",
+          "coverage": "partial",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "saves identification details alone, or description alone, and heads the saved-animals table with Animal, Identification details, Description and a Remove action", "strength": "partial", "notes": "not probed" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/commodities/fit/identification.fit.spec.js", "test": "reopening the page shows both saved values on the fallback card", "strength": "partial", "notes": "not probed" }
           ]
         }
       ]

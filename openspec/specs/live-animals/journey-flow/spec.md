@@ -74,13 +74,11 @@ The system MUST, on a valid Save and continue from a journey page, go to the nex
 - **WHEN** they save and continue
 - **THEN** Roles and addresses is shown
 
-#### Scenario: Commodity details goes on to identification details, or to additional details when nothing needs identifying
+#### Scenario: Commodity details goes on to identification details whenever the notification holds a commodity line
 **ID**: SCN-FLOW-003-H
 - **GIVEN** the user is on commodity details
-- **WHEN** they save valid counts for a species that needs identifiers
+- **WHEN** they save valid counts for a commodity line
 - **THEN** identification details is shown
-- **WHEN** instead no chosen species needs identifiers
-- **THEN** additional details is shown
 
 #### Scenario: Main import reason goes on to Commodity details and additional details goes on to arrival details
 **ID**: SCN-FLOW-003-I

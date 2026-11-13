@@ -1577,7 +1577,7 @@
       "dependsOn": [],
       "risk": "Low. The Perl regexes must carry over exactly; the output must be UTF-8 byte-identical.",
       "proof": "Golden files recorded from the Perl script for a canonical map and a map with one violation per rule; stdout, stderr and exit code are byte-equal.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
@@ -1585,8 +1585,25 @@
         "no-callers"
       ],
       "evidence": {
-        "recoverableCommits": "The blocked attempt is in the local reflog, unpushed: trade-imports-workspace: 7415966e, 531700f2, f4e83207. Cherry-pick them and fix only the reason, rather than rebuilding.",
-        "previousBlockedReason": "The tim port changes two outputs its risk does not name and no test covers: with a missing file and an invalid --format it reports the format error (exit 2) where Bash reported the missing file (exit 1), and an empty file argument prints 'Error: file not found: ' (exit 2) where Bash printed usage (exit 1)."
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "9e115e44"
+          }
+        ],
+        "checks": [
+          "tim-unit: PASS - npm --prefix tim test: 262 files passed, 4534 tests passed (8 expected fail, 5 skipped). The capabilities command test now has 25 tests.",
+          "tim-lint: PASS - npm run lint and npm run format:check both exit 0",
+          "parity: PASS for the parser. The 8 byte-equal goldens are unchanged and still pass. Argument handling now follows the Bash loop, left to right (readTokens in tim/src/commands/capabilities/index.js): --format takes the next argument, and an empty or missing value gives '--format requires a value'. Another argument fills the file only while the file is empty, and any argument after that is 'Unknown argument: X'. --format is no longer a commander option, and the command allows unknown options and extra arguments, so --format=tsv and --bogus are taken as the file, as in Bash.",
+          "verifier findings: (1) '' map.md now parses map.md and matches the canonical golden, pinned by a test. (2) --format '' map map now says '--format requires a value' first, pinned by a test. (3) --format=tsv map is now taken as the file, then 'Unknown argument: map', exit 1, as in Bash, pinned by a test. (4) A leading -- is dropped by commander before tim can see it, so -- map.md parses map.md and exits 0. The commit message names this and a test pins it.",
+          "Bash side not re-run in this fix: running the restored script and node from the scratchpad was refused by permissions. Expected Bash outputs for the new cases come from reading the script's while/case loop.",
+          "no-callers: unchanged from the builder's check; this fix touches only tim/src/commands/capabilities/index.js and index.test.js",
+          "extra: no new ~/git/defra path, no new .sh file, no workareas files committed (the test logs were deleted)"
+        ],
+        "deviations": [
+          "I amended the unpushed commit f991ffcb, which is now 9e115e44, so the commit message could be corrected. It no longer says an empty file argument always prints usage, or that commander errors on a missing --format value. It describes reading arguments left to right and names the remaining differences: a leading '--', tim's global options being taken anywhere ('--format --json'), commander's -h/--help, --json and U+FFFD.",
+          "The help usage line is now set by hand ('<markdown-file> [--format list|tsv]'). The positional argument is shown as [arguments...], and its description covers --format, because --format is no longer a declared commander option."
+        ]
       }
     },
     {

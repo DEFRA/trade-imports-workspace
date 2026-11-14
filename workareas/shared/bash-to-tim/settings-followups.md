@@ -247,6 +247,17 @@ hooks already run tim. Make these changes, keeping each `matcher` and
   `bash .../sonar-push-check.sh <<< ...` line still works through the
   forwarder.
 
+The canary on the real animals-frontend is still to run, because this
+session had no SONAR_TOKEN or sonar-scanner and was refused the commands
+that stage stand-ins. With a token, from the workspace root: break the
+formatting of one file in animals-frontend and run
+`printf '{"tool_input":{"command":"git push"},"cwd":"%s"}' "$PWD/repos/trade-imports-animals-frontend" | bash scripts/sonar/sonar-push-gate.sh; echo $?`.
+It should say "Formatting check failed — push blocked" and print 2.
+Restore the file and run it again: it should print 0, with
+`.cache/prepush-verified` in the repo holding HEAD.
+`tim/src/sonar/push-check-forwarders.test.js` already drives every check
+and gate case through both forwarders, blocks and the marker included.
+
 Delete the forwarders, and `tim/src/sonar/push-check-forwarders.test.js`
 with them, only once `git grep sonar-push-check.sh` over every
 `refs/remotes/origin/*` in the eight repos is clean. On 14 Nov 2026 every

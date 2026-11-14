@@ -1,5 +1,5 @@
 import { execa } from 'execa'
-import { existsSync } from 'node:fs'
+import { existsSync, writeFileSync } from 'node:fs'
 import { delimiter, dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
@@ -16,22 +16,47 @@ import {
 import {
   bashRecordingOf,
   comparable,
+  pullRequestList,
   recordTimCase
 } from './__fixtures__/push-check-runs.js'
 
 const workspaceRoot = fileURLToPath(new URL('../../../', import.meta.url))
+
+const sonarCloudStandIn = new URL(
+  './__fixtures__/sonarcloud-stand-in.js',
+  import.meta.url
+).href
 
 const folderHolding = (tool) =>
   (process.env.PATH ?? '')
     .split(delimiter)
     .find((folder) => folder && existsSync(join(folder, tool)))
 
+const servedPullRequestsIn = (home, testCase) => {
+  const servedPath = join(home, 'sonarcloud-pull-requests.json')
+  writeFileSync(
+    servedPath,
+    JSON.stringify(
+      pullRequestList({ withBranch: Boolean(testCase.pullRequest) })
+    )
+  )
+  return servedPath
+}
+
 const forwardingEnv = (paths, testCase) => {
   const env = caseEnv(paths, testCase)
   const nodeAndJq = [dirname(process.execPath), folderHolding('jq')].filter(
     Boolean
   )
-  return { ...env, PATH: [paths.bin, ...nodeAndJq, env.PATH].join(delimiter) }
+  return {
+    ...env,
+    PATH: [paths.bin, ...nodeAndJq, env.PATH].join(delimiter),
+    NODE_OPTIONS: `--import=${sonarCloudStandIn}`,
+    SONARCLOUD_STAND_IN_PULL_REQUESTS: servedPullRequestsIn(
+      paths.home,
+      testCase
+    )
+  }
 }
 
 const runForwarder = (script, { input, cwd, env }) =>
@@ -54,106 +79,119 @@ const runTimHook = ({ input, cwd, env }) =>
     stripFinalNewline: false
   })
 
-const recordRun = (testCase, run, inputOf) =>
+const recordRun = (testCase, run, { inputOf, cwdOf }) =>
   recordTimCase(testCase, (paths) =>
     run({
       input: inputOf(paths),
-      cwd: paths.repo,
+      cwd: cwdOf(paths),
       env: forwardingEnv(paths, testCase)
     })
   )
 
-const casesNamed = (cases, names) =>
-  cases
-    .filter(({ name }) => names.includes(name))
-    .map((testCase) => [testCase.name, testCase])
+const recordForwardedAndDirect = async (script, testCase, how) => ({
+  forwarded: await recordRun(testCase, (run) => runForwarder(script, run), how),
+  direct: await recordRun(testCase, runTimHook, how)
+})
 
-const checkCasesSonarCloudIsNotAskedFor = casesNamed(checkCases, [
-  'not a push',
-  'no token',
-  'no sonar-project.properties',
-  'no project key',
-  'detached HEAD with no pull request'
-])
+const namedCases = (cases) => cases.map((testCase) => [testCase.name, testCase])
 
-const gateCasesSonarCloudIsNotAskedFor = casesNamed(gateCases, [
-  'not a push',
-  'gitpush is not a push',
-  'no cwd',
-  'cwd that does not exist',
-  'no token anywhere'
-])
+const fromTheRepo = ({ repo }) => repo
+
+const checkRun = (testCase) => ({
+  inputOf: (paths) => hookInput(testCase.command ?? 'git push', paths.repo),
+  cwdOf: fromTheRepo
+})
+
+const gateRun = (testCase) => ({
+  inputOf: (paths) =>
+    hookInput(testCase.command?.(paths) ?? 'git push', testCase.cwd(paths)),
+  cwdOf: ({ home }) => home
+})
+
+const bothMatch = (recording) => ({
+  forwarded: comparable(recording),
+  direct: comparable(recording)
+})
+
+const FORWARDED_RUN_TIMEOUT_MS = 30_000
 
 describe.skipIf(!workspaceScriptExists(checkScript))(
   'tools/sonar/sonar-push-check.sh forwards to tim sonar push-check --hook',
   () => {
-    const checkInput = (testCase) => (paths) =>
-      hookInput(testCase.command ?? 'git push', paths.repo)
-
-    test.each(checkCasesSonarCloudIsNotAskedFor)(
+    test.each(namedCases(checkCases))(
       'Should answer "%s" as tim and the Bash check did',
       async (name, testCase) => {
+        const recordings = await recordForwardedAndDirect(
+          checkScript,
+          testCase,
+          checkRun(testCase)
+        )
+
+        expect(recordings).toEqual(bothMatch(bashRecordingOf('check', name)))
+      },
+      FORWARDED_RUN_TIMEOUT_MS
+    )
+
+    test(
+      'Should check the folder it runs in when the hook input has no cwd',
+      async () => {
+        const testCase = checkCases.find(({ name }) => name === 'no token')
+
         const forwarded = await recordRun(
           testCase,
           (run) => runForwarder(checkScript, run),
-          checkInput(testCase)
-        )
-        const direct = await recordRun(
-          testCase,
-          runTimHook,
-          checkInput(testCase)
+          {
+            inputOf: () =>
+              JSON.stringify({ tool_input: { command: 'git push' } }),
+            cwdOf: fromTheRepo
+          }
         )
 
-        expect({ forwarded, direct }).toEqual({
-          forwarded: comparable(bashRecordingOf('check', name)),
-          direct: comparable(bashRecordingOf('check', name))
-        })
+        expect(forwarded).toEqual(
+          comparable(bashRecordingOf('check', 'no token'))
+        )
       },
-      30_000
+      FORWARDED_RUN_TIMEOUT_MS
     )
-
-    test('Should check the folder it runs in when the hook input has no cwd', async () => {
-      const [, testCase] = casesNamed(checkCases, ['no token'])[0]
-
-      const forwarded = await recordRun(
-        testCase,
-        (run) => runForwarder(checkScript, run),
-        () => JSON.stringify({ tool_input: { command: 'git push' } })
-      )
-
-      expect(forwarded).toEqual(
-        comparable(bashRecordingOf('check', 'no token'))
-      )
-    }, 30_000)
   }
 )
 
 describe.skipIf(!workspaceScriptExists(gateScript))(
   'scripts/sonar/sonar-push-gate.sh forwards to tim sonar push-check --hook',
   () => {
-    const gateInput = (testCase) => (paths) =>
-      hookInput(testCase.command?.(paths) ?? 'git push', testCase.cwd(paths))
-
-    test.each(gateCasesSonarCloudIsNotAskedFor)(
+    test.each(namedCases(gateCases))(
       'Should answer "%s" as tim and the Bash gate did',
       async (name, testCase) => {
-        const forwarded = await recordRun(
+        const recordings = await recordForwardedAndDirect(
+          gateScript,
           testCase,
-          (run) => runForwarder(gateScript, run),
-          gateInput(testCase)
-        )
-        const direct = await recordRun(
-          testCase,
-          runTimHook,
-          gateInput(testCase)
+          gateRun(testCase)
         )
 
-        expect({ forwarded, direct }).toEqual({
-          forwarded: comparable(bashRecordingOf('gate', name)),
-          direct: comparable(bashRecordingOf('gate', name))
-        })
+        expect(recordings).toEqual(bothMatch(bashRecordingOf('gate', name)))
       },
-      30_000
+      FORWARDED_RUN_TIMEOUT_MS
+    )
+
+    test(
+      'Should block a push from a repo whose format check fails, as the Bash check did',
+      async () => {
+        const testCase = {
+          ...checkCases.find(({ name }) => name === 'format check fails'),
+          cwd: fromTheRepo
+        }
+
+        const recordings = await recordForwardedAndDirect(
+          gateScript,
+          testCase,
+          gateRun(testCase)
+        )
+
+        expect(recordings).toEqual(
+          bothMatch(bashRecordingOf('check', 'format check fails'))
+        )
+      },
+      FORWARDED_RUN_TIMEOUT_MS
     )
   }
 )

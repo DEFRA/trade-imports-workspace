@@ -543,7 +543,7 @@ gh pr view {pr} --repo DEFRA/{repo} --json author --jq .author.login
 
 **Before every post, check the head again.** Run the `gh pr view …
 --json headRefOid` call from Step 0 for that PR, immediately before its
-`share-review.sh` call. If the head has moved since the SHA you pinned:
+`tim review share` call. If the head has moved since the SHA you pinned:
 
 - run a refresh review (Step 0 again) and post that instead, or
 - post with a first line that names the SHA reviewed and says newer
@@ -554,11 +554,20 @@ against a head that has moved. An author can push several commits
 during one long review. Every posted comment names the commit it
 reviewed.
 
+`tim review share` renders the comment body to a file and prints the
+`gh pr comment {pr} --repo DEFRA/{repo} --body-file {file}` command that
+posts it. Pass the login you looked up as `--reviewer`. Run the printed
+`gh pr comment` command; its output is the comment URL. When a body
+passes GitHub's 65536-character limit, `tim review share` stops and says
+so: run it again with `--summary` to post counts in place of the item
+table.
+
 **PRs authored by you** — post the review as a comment. No prompt, no
 handoff branch: the review state is already in your workspace.
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/review/share-review.sh EUDPA-XXXXX --repo {repo} --pr {pr} --comment-only
+tim review share EUDPA-XXXXX --repo {repo} --pr {pr} --comment-only --reviewer {login}
+gh pr comment {pr} --repo DEFRA/{repo} --body-file {file}
 ```
 
 **PRs authored by someone else** — show the user a per-PR table and
@@ -574,14 +583,16 @@ On `Y`, post the comment and push the handoff branch they walk the
 review from:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/review/share-review.sh EUDPA-XXXXX --repo {repo} --pr {pr}
+tim review share EUDPA-XXXXX --repo {repo} --pr {pr} --reviewer {login}
+gh pr comment {pr} --repo DEFRA/{repo} --body-file {file}
 ```
 
 On `n`, skip that PR.
 
 Always pass both `--repo` and `--pr` — PR numbers repeat across repos.
-Run one `share-review.sh` call per PR, sequentially: handoff runs
-switch the workspace branch and must not overlap.
+Run one `tim review share` call per PR, sequentially: handoff runs
+switch the workspace branch and must not overlap. A handoff refuses to
+run while the workspace has changes outside `workareas/shared/`.
 
 Capture every PR comment URL, and the handoff branch if one was pushed,
 for the Completion Output.
@@ -851,7 +862,7 @@ Updated: ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/revie
 | `tim review start EUDPA-XXXXX` | Step 0 — say MODE: FRESH (raw folder ready) or MODE: REFRESH (refresh scope built); `--local REPO BRANCH [--files ...]` for Local mode |
 | `tim review prepare EUDPA-XXXXX [--select]` | Fresh Step 1 — `--select` lists the PR per repo to save with gh; then it builds the workspace from what gh saved, seeding best-practices from `assets/routing.json`. `--branch B [--desc D]` for a branch with no ticket |
 | `tim review prepare --local REPO BRANCH [--files F1,F2]` | Local mode setup — no Jira/GitHub; changed-file list from git, or the caller's `--files` |
-| `tools/review/share-review.sh` | Fresh Step 7 — post the review as a PR comment; `--comment-only` for PRs you authored, otherwise also push handoff branch `chore/EUDPA-X` to the workspace remote |
+| `tim review share EUDPA-XXXXX --repo R --pr N --reviewer LOGIN` | Fresh Step 7 — render the PR comment body for `gh pr comment` to post; `--comment-only` for PRs you authored, otherwise also push handoff branch `chore/EUDPA-X` to the workspace remote; `--summary` for counts in place of the item table |
 
 The refresh helpers go through `tim review refresh` (`--json` puts the
 output in the envelope's `result`):

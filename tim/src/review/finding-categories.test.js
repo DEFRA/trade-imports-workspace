@@ -18,11 +18,6 @@ const refusedCategoryGolden = JSON.parse(
   )
 )[0]
 
-const wordsInShellArray = (source, name) => {
-  const [, words] = source.match(new RegExp(`^${name}=\\(([^)]*)\\)`, 'm'))
-  return words.trim().split(/\s+/)
-}
-
 const everyCategory = [
   ...FUNCTIONAL_CATEGORIES,
   ...CODE_QUALITY_CATEGORIES,
@@ -51,20 +46,23 @@ describe('#refuseCategoryOutside', () => {
 })
 
 describe('finding categories', () => {
-  test('Should match the arrays tools/review/finding-categories.sh still holds for the style scripts', () => {
-    const shell = readFileSync(
-      join(here, '..', '..', '..', 'tools', 'review', 'finding-categories.sh'),
-      'utf8'
-    )
-
+  test('Should hold the functional, code-quality and design categories in order', () => {
     expect({
       functional: FUNCTIONAL_CATEGORIES,
       codeQuality: CODE_QUALITY_CATEGORIES,
       design: DESIGN_CATEGORIES
     }).toEqual({
-      functional: wordsInShellArray(shell, 'FUNCTIONAL_CATEGORIES'),
-      codeQuality: wordsInShellArray(shell, 'CODE_QUALITY_CATEGORIES'),
-      design: wordsInShellArray(shell, 'DESIGN_CATEGORIES')
+      functional: ['correctness', 'security', 'error-handling', 'coverage-gap'],
+      codeQuality: [
+        'naming',
+        'comments',
+        'structure',
+        'duplication',
+        'logging',
+        'test-readability',
+        'history'
+      ],
+      design: ['design']
     })
   })
 })

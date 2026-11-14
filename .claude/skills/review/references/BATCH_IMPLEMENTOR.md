@@ -154,7 +154,7 @@ within the same repo may affect shared files or tests).
 ## Step 4.5: Handoff branch detection
 
 Before the final report, check whether this implementor session is
-running on a review-handoff branch (set up by `share-review.sh` during
+running on a review-handoff branch (set up by `tim review share` during
 the reviewer's FRESH Step 7 for a PR the reviewer didn't author):
 
 ```bash

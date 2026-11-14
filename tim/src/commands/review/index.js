@@ -10,6 +10,7 @@ import { registerItems } from './items.js'
 import { registerFileDiff } from './file-diff.js'
 import { registerPrepareAndStart } from './prepare.js'
 import { registerRefresh } from './refresh.js'
+import { registerShare } from './share.js'
 import { registerReviewTools } from './tools.js'
 
 const registerDetectTech = (review, { timVersion }) =>
@@ -53,4 +54,5 @@ export const register = (program, { timVersion }) => {
   registerRefresh(review, { timVersion })
   registerFileDiff(review, { timVersion })
   registerPrepareAndStart(review, { timVersion })
+  registerShare(review, { timVersion })
 }

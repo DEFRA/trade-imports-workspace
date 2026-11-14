@@ -597,6 +597,28 @@ tim review start --local trade-imports-stub feat/tidy-logs
   or takes `--files`, and writes the same workspace under
   `workareas/reviews/local/<repo>/<branch>`.
 
+```bash
+tim review share EUDPA-1234 --repo trade-imports-stub --pr 42 --comment-only --reviewer "$(gh api user --jq .login)"
+tim review share EUDPA-1234 --repo trade-imports-stub --pr 42 --reviewer "$(gh api user --jq .login)"
+gh pr comment 42 --repo DEFRA/trade-imports-stub --body-file <the file share printed>
+```
+
+- `share` writes one comment body per pull request in scope to the
+  system temp folder and prints the `gh pr comment` command that posts
+  each. tim posts nothing itself. `--reviewer` is the login the body
+  names; without it the body says `(unknown)`.
+- Without `--comment-only` it is a handoff. It copies the review to
+  `workareas/shared/<ticket>` without `repos/` and `.diffs/`, deleting
+  files the review no longer has. It refuses when the workspace has
+  changes outside `workareas/shared/`. It checks out the handoff branch
+  (`chore/<ticket>` unless `--branch`): the local one, else origin's,
+  tracked, else a new one. It commits the copy when it changed, pushes
+  without forcing, and goes back to the branch you were on, even when
+  the push fails.
+- A body over GitHub's 65536-character limit stops it and names the
+  file it left. `--summary` posts status and severity counts in place of
+  the item table. `--dry-run` renders and copies only.
+
 ### `tim style` — the code-style skill's helpers
 
 ```bash

@@ -48,7 +48,7 @@ field".
 
 `category` is one word from a fixed list, and its kind sets how triage
 treats the finding. The build loop's verifier uses the same list, and
-`tools/review/finding-categories.sh` holds it: `tim review file add`
+`tim/src/review/finding-categories.js` holds it: `tim review file add`
 and `tim review items add` refuse any other word.
 
 | Kind | Category | Use for |

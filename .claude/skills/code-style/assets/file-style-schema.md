@@ -46,7 +46,7 @@ FAIL / WARN counts derive from `todos` — not stored.
 
 A style finding is a code-quality or design finding, so `category` is
 one of the code-quality or design categories the review skill and the
-build loop's verifier use (`tools/review/finding-categories.sh`).
+build loop's verifier use (`tim/src/review/finding-categories.js`).
 `tim style file add` refuses any other word, including the
 functional ones.
 

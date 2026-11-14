@@ -6,7 +6,7 @@ Shared shell scripts called by skills via
 
 **`tools/` is bash only.** Each script here is bash, and its tests are bash
 scripts beside it named `<script>.<aspect>.test.sh`, each with a `check()`
-helper (for example `tools/review/share-review.summary.test.sh`). New
+helper. New
 JavaScript goes in `tim` as a command, tested with tim's own tests, not in
 `tools/`.
 
@@ -60,6 +60,7 @@ epics included, goes through `tim jira create`.
 | `tim review refresh pull` | EUDPA-X [--repo R] [--json] | Refresh helper: pin each review clone to its PR, fetch and detach |
 | `tim review refresh merge-resolved` | REPO_DIR PRIOR_SHA HEAD_SHA [--json] | Refresh helper: hand-resolved merge files |
 | `tim review refresh gaps` | EUDPA-X --repo R --pr N [--json] | Refresh helper: PR files with no `.review.json`, from `.prs/{repo}-{pr}.json` written by `gh api repos/DEFRA/{repo}/pulls/{pr}/files --paginate --slurp` |
+| `tim review share` | EUDPA-X [--repo R] [--pr N] [--comment-only] [--summary] [--branch B] [--reviewer LOGIN] [--dry-run] [--json] | Fresh Step 7 — render one PR comment body per PR for `gh pr comment N --repo DEFRA/R --body-file F` to post. Without `--comment-only` it also commits the review's `workareas/shared/` copy to handoff branch `chore/EUDPA-X` and pushes it. `--reviewer` takes `gh api user --jq .login`. `--summary` posts counts when the item table passes GitHub's 65536-character limit |
 | **style** | | |
 | `tim style start` | EUDPA-X [--no-pull] [--repo R] \| --local REPO BRANCH [--files F1,F2] [--json] | Step 0 — detect FRESH/REFRESH and run `tim style prepare`, or `tim style scope --write-snapshot` after a `MODE: REFRESH` line |
 | `tim style prepare` | EUDPA-X \| --local REPO BRANCH [--files F1,F2] [--json] | Fresh Step 1 — init `.style.json` placeholders + per-(repo,topic) rules bundles, from the PR files in `.prs/{repo}-{pr}.json` (refuses a missing or empty one) |

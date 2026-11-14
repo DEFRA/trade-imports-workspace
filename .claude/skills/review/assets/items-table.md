@@ -82,9 +82,7 @@ share one root (review `SKILL.md` Step 5a). Its members are `Merged` with the no
 
 ## Helpers
 
-The `.sh` scripts are under the workspace's `tools/review/`.
-
-| Script or command | Purpose |
+| Command | Purpose |
 |---|---|
 | `tim review aggregate --write-items` | Initial population — write `items.{repo}.json` from per-file `.review.json` files |
 | `tim review items list` | Query items (filter by disposition / status; TSV, or the items as `result` with `--json`) |

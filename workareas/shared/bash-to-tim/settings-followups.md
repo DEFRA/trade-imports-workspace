@@ -206,3 +206,13 @@ and `tim jira prereqs`.
 None to remove. P56 adds `tim sonar push-check` and deletes no script;
 `tools/sonar/sonar-push-check.sh` and `scripts/sonar/sonar-push-gate.sh`
 stay, and the hooks keep calling them, until P57 cuts them over.
+
+## P51
+
+Nothing to remove. No allowlist entry names `tools/review/share-review.sh`,
+`share-review.summary.test.sh`, `finding-categories.sh` or
+`tools/github/pr-comment.sh`; `Bash(tim:*)` covers `tim review share` and
+`Bash(gh api user:*)` already allows the reviewer lookup. Suggested
+addition, for Sam to decide: `Bash(gh pr comment:*)`, which the review
+skill now runs itself to post each body (it posts to GitHub, so it may be
+better left prompting).

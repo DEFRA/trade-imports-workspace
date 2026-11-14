@@ -17,15 +17,17 @@ Pull every item with Disposition=`Fix` and Status=`Not Done` (or
 `Failed` from a prior run that should be retried):
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/review/review-items.sh EUDPA-XXXXX --filter fix --status not-done --json
+tim review items list EUDPA-XXXXX --filter fix --status not-done --json
 ```
+
+The items are the envelope's `result`.
 
 Apply any filters from the trigger:
 - `{repo}` — add `--repo {repo}`
 
 If the fix list is empty:
 ```
-No Fix-disposition items pending for EUDPA-XXXXX [{repo filter}]. Run `walk review EUDPA-XXXXX` first, or call `review-mark.sh --disposition Fix` directly for items you've already triaged.
+No Fix-disposition items pending for EUDPA-XXXXX [{repo filter}]. Run `walk review EUDPA-XXXXX` first, or call `tim review items mark --disposition Fix` directly for items you've already triaged.
 ```
 And stop.
 
@@ -141,11 +143,11 @@ within the same repo may affect shared files or tests).
 
 | Result | Action |
 |--------|--------|
-| `DONE` | `~/git/defra/trade-imports-workspace/tools/review/review-set-status.sh EUDPA-XXXXX --repo {repo} --item {N} --status Done --note "{short-sha}"` |
-| `SKIPPED` | `~/git/defra/trade-imports-workspace/tools/review/review-mark.sh EUDPA-XXXXX --repo {repo} --item {N} --disposition "Auto-Resolved" --note "{what was found}"` |
-| `FAILED` | `~/git/defra/trade-imports-workspace/tools/review/review-set-status.sh EUDPA-XXXXX --repo {repo} --item {N} --status Failed --note "{reason}"` |
-| `RED` | `review-set-status.sh ... --status Done --note "{short-sha}"` for the item, then fix the failing test as in Step 3 (fix first, then continue) before spawning the next fixer. |
-| `WON'T FIX` | `~/git/defra/trade-imports-workspace/tools/review/review-mark.sh EUDPA-XXXXX --repo {repo} --item {N} --disposition "Won't Fix" --note "{reason}"` |
+| `DONE` | `tim review items status EUDPA-XXXXX --repo {repo} --item {N} --status Done --note "{short-sha}"` |
+| `SKIPPED` | `tim review items mark EUDPA-XXXXX --repo {repo} --item {N} --disposition "Auto-Resolved" --note "{what was found}"` |
+| `FAILED` | `tim review items status EUDPA-XXXXX --repo {repo} --item {N} --status Failed --note "{reason}"` |
+| `RED` | `tim review items status ... --status Done --note "{short-sha}"` for the item, then fix the failing test as in Step 3 (fix first, then continue) before spawning the next fixer. |
+| `WON'T FIX` | `tim review items mark EUDPA-XXXXX --repo {repo} --item {N} --disposition "Won't Fix" --note "{reason}"` |
 
 ---
 
@@ -192,7 +194,7 @@ Red tests fixed:
   [{repo}] {spec or test class} — {cause} ({short-sha})
   ...
 
-Run `~/git/defra/trade-imports-workspace/tools/review/review-counts.sh EUDPA-XXXXX` for the updated breakdown.
+Run `tim review items counts EUDPA-XXXXX` for the updated breakdown.
 ```
 
 ---

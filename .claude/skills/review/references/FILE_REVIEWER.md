@@ -15,7 +15,7 @@ You will **not** write markdown. You will call three commands:
 
 ```bash
 # For each finding (run as many times as you have findings):
-~/git/defra/trade-imports-workspace/tools/review/file-review-add-item.sh EUDPA-XXXXX \
+tim review file add EUDPA-XXXXX \
     --repo <repo> --file <file-path> \
     --line <line> --severity <Critical|Major|Minor> \
     --category <category> \
@@ -24,18 +24,18 @@ You will **not** write markdown. You will call three commands:
     [--best-practice <relative/path.md>]
 
 # Exactly once, at the end:
-~/git/defra/trade-imports-workspace/tools/review/file-review-set-verdict.sh EUDPA-XXXXX \
+tim review file verdict EUDPA-XXXXX \
     --repo <repo> --file <file-path> \
     --verdict <SAFE|NEEDS_ATTENTION|RISKY> \
     --reason "<one sentence>"
 ```
 
 The placeholder JSON file is already initialised — don't run
-`file-review-init.sh`. Setting the verdict is what marks the file as
+`tim review file init`. Setting the verdict is what marks the file as
 reviewed for the coverage gate.
 
-If you have **no findings**, skip the add-item calls and go straight to
-`set-verdict --verdict SAFE --reason "..."`.
+If you have **no findings**, skip the `file add` calls and go straight to
+`tim review file verdict ... --verdict SAFE --reason "..."`.
 
 ### The `--fix` text has two parts
 
@@ -92,7 +92,7 @@ In every mode:
    `docs/best-practices/*.md` files — the bundle is the single source for
    those. (Reading `.review-meta.json` for the PR set is a different
    thing, and the behaviour-spec check in step 5 needs it.) When citing a rule on
-   `file-review-add-item.sh --best-practice <path>`, use the relative
+   `tim review file add --best-practice <path>`, use the relative
    path shown in the bundle's `## Source: docs/best-practices/...`
    headings (e.g. `node/pino-logging.md`).
 2. **House rules.** Read
@@ -105,7 +105,7 @@ In REFRESH / MERGE_RESOLVED only, additionally:
 4. **Prior consolidated items for this file** — this is the most
    important context:
    ```bash
-   ~/git/defra/trade-imports-workspace/tools/review/review-items.sh EUDPA-XXXXX --repo {repo} --file {file-path}
+   tim review items list EUDPA-XXXXX --repo {repo} --file {file-path}
    ```
    Columns: `repo  id  file  line  severity  category  issue  fix  disposition  status  notes`.
 
@@ -444,10 +444,10 @@ PR" is not a reason to skip the check.
 
 ### 7. Write findings + verdict
 
-For each finding that survives filtering, run `file-review-add-item.sh`
+For each finding that survives filtering, run `tim review file add`
 with the appropriate flags.
 
-Then run `file-review-set-verdict.sh` once:
+Then run `tim review file verdict` once:
 
 | Verdict | When |
 |---|---|
@@ -469,7 +469,7 @@ Then run `file-review-set-verdict.sh` once:
 
 Give every finding exactly one `--category` from the fixed list in
 `~/git/defra/trade-imports-workspace/.claude/skills/review/assets/file-review-schema.md`
-→ "Category values". `file-review-add-item.sh` refuses any other word.
+→ "Category values". `tim review file add` refuses any other word.
 
 - Functional: `correctness`, `security`, `error-handling`,
   `coverage-gap`.

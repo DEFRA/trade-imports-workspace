@@ -429,7 +429,7 @@ done
 # Create file review placeholders (JSON-canonical, schema in
 # .claude/skills/review/assets/file-review-schema.md). Each placeholder
 # starts with verdict=null and an empty todos array; the file-reviewer
-# fills it via file-review-add-item.sh + file-review-set-verdict.sh.
+# fills it via tim review file add + tim review file verdict.
 log ""
 log "Creating file review placeholders..."
 total_files=0
@@ -459,7 +459,7 @@ while IFS= read -r pr_meta; do
             continue
         fi
 
-        "$SCRIPT_DIR/file-review-init.sh" "$REVIEW_ID" \
+        tim --workspace "$SCRIPT_DIR/../.." review file init "$REVIEW_ID" \
             --repo "$repo" --file "$filepath" --commit "$commit" \
             --pr "$pr_number" --mode FRESH > /dev/null
         ((created_files++))

@@ -26,7 +26,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PULL_SH="$SCRIPT_DIR/pull-repos.sh"
 MERGE_SH="$SCRIPT_DIR/list-merge-resolved.sh"
 GAPS_SH="$SCRIPT_DIR/list-coverage-gaps.sh"
-ITEMS_SH="$HOME/git/defra/trade-imports-workspace/tools/review/review-items.sh"
 
 TICKET=""
 REPO_FILTER=""
@@ -75,7 +74,7 @@ fi
 # ---- Step 2: per-repo: prior_sha, current_sha, changed files -----------
 
 # Read items table once (TSV)
-items_tsv=$("$ITEMS_SH" "$TICKET")
+items_tsv=$(tim --workspace "$SCRIPT_DIR/../../.." review items list "$TICKET")
 
 # Iterate repos from prs[]
 repos=()

@@ -195,7 +195,7 @@ while IFS= read -r filepath; do
         continue
     fi
 
-    "$SCRIPT_DIR/file-review-init.sh" "$REVIEW_ID" \
+    tim --workspace "$ROOT" review file init "$REVIEW_ID" \
         --repo "$REPO" --file "$filepath" --commit "$head_sha" --mode FRESH > /dev/null
     created_files=$((created_files + 1))
     log "  Created: $REPO/$filepath"

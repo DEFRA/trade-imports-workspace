@@ -5,6 +5,8 @@ import {
   renderDetectedTechText
 } from '../../review/detect-tech.js'
 import { makeRunAction } from '../_run-action.js'
+import { registerFile } from './file.js'
+import { registerItems } from './items.js'
 
 const registerDetectTech = (review, { timVersion }) =>
   review
@@ -41,4 +43,6 @@ export const register = (program, { timVersion }) => {
     .command('review')
     .description("The review skill's helpers")
   registerDetectTech(review, { timVersion })
+  registerFile(review, { timVersion })
+  registerItems(review, { timVersion })
 }

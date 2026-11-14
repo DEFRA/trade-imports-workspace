@@ -431,6 +431,31 @@ tim review detect-tech repos/trade-imports-animals-frontend --json
 - A missing, empty or non-folder path prints empty arrays and exits 0.
   Routing it cannot read exits 1.
 
+```bash
+tim review file init EUDPA-1234 --repo trade-imports-stub --file src/Main.java --commit abc1234 --pr 42 --mode FRESH
+tim review file add EUDPA-1234 --repo trade-imports-stub --file src/Main.java --line 41 --severity Major --category correctness --issue "Returns 200 for a missing id" --fix "Must: return 404."
+tim review file verdict EUDPA-1234 --repo trade-imports-stub --file src/Main.java --verdict RISKY --reason "Logs a token"
+tim review items list EUDPA-1234 --filter pending --json
+tim review items add EUDPA-1234 --repo trade-imports-stub --file src/Main.java --line 41 --severity Major --category correctness --issue "..." --fix "..."
+tim review items mark EUDPA-1234 --repo trade-imports-stub --item 3 --disposition Fix
+tim review items status EUDPA-1234 --repo trade-imports-stub --item 3 --status Done --note abc1234
+tim review items counts EUDPA-1234
+```
+
+- `file init|add|verdict` write one file's review under
+  `workareas/reviews/<review-id>/file-reviews/<repo>/`, in the workspace
+  tim runs in. `init` prints the file's path, `add` the new todo's id and
+  `verdict` nothing. A todo's line is stored as a number.
+- `items list|counts|add|mark|status` read and change
+  `workareas/reviews/<review-id>/items.<repo>.json`. `list` prints one
+  tab-separated line per item (repo, id, file, line, severity, category,
+  issue, fix, disposition, status, notes); `add` prints the new id, with
+  the line stored as text; `mark` and `status` print one confirmation
+  line.
+- `--json` gives the envelope: the items for `list`, the review id, repo,
+  breakdown and total for `counts`, and the item written for the others.
+- Every refusal exits 1, as the scripts they replace did.
+
 ### `tim ticket` — the ticket skill's helpers
 
 ```bash

@@ -72,7 +72,7 @@ export const readReviewItems = (reviewFolder, { repo } = {}) => {
 }
 
 /**
- * The text `review-items.sh --json` prints for these items: nothing at all
+ * These items as the review's items JSON text: nothing at all
  * when no items file matched, else the JSON array and a newline, which is
  * `[]` when the items files hold no items.
  *

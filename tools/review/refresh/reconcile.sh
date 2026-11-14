@@ -8,7 +8,7 @@
 # .review.json. The persona instructs them to NOT re-report items
 # already in items.{repo}.json — only new findings and regressions of
 # Fix+Done items. This script trusts that contract and appends every
-# todo as a new consolidated item via review-add-item.sh.
+# todo as a new consolidated item via tim review items add.
 #
 # Idempotent: each processed .review.json gets a `reconciled_at`
 # timestamp; re-runs skip files already reconciled. Pass --force to
@@ -20,7 +20,6 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ADD_ITEM="$SCRIPT_DIR/../review-add-item.sh"
 
 TICKET=""
 REPO=""
@@ -110,7 +109,7 @@ for f in "${to_process[@]}"; do
                --issue "$issue" --fix "$fix" )
         [[ -n "$bp" ]] && args+=( --best-practice "$bp" )
 
-        new_id=$("$ADD_ITEM" "${args[@]}")
+        new_id=$(tim --workspace "$SCRIPT_DIR/../../.." review items add "${args[@]}")
         added_ids+=("$new_id")
         added_descriptions+=("$file_path:$line [$severity] $issue")
     done

@@ -48,8 +48,8 @@ field".
 
 `category` is one word from a fixed list, and its kind sets how triage
 treats the finding. The build loop's verifier uses the same list, and
-`tools/review/finding-categories.sh` holds it: `file-review-add-item.sh`
-and `review-add-item.sh` refuse any other word.
+`tools/review/finding-categories.sh` holds it: `tim review file add`
+and `tim review items add` refuse any other word.
 
 | Kind | Category | Use for |
 |---|---|---|
@@ -75,13 +75,13 @@ is marked Discuss, for the designer.
 
 1. **Init** — `prepare-review.sh` (Fresh) or the refresh tooling
    (List D coverage gap) seeds an empty placeholder via
-   `file-review-init.sh`. `verdict: null`, `todos: []`,
+   `tim review file init`. `verdict: null`, `todos: []`,
    `reviewed_at: null`.
 2. **Reviewer adds todos** — each finding goes in via
-   `file-review-add-item.sh` (auto-assigns next `id`, handles
+   `tim review file add` (auto-assigns next `id`, handles
    escaping).
 3. **Reviewer sets verdict** — final call via
-   `file-review-set-verdict.sh` (stamps `reviewed_at`).
+   `tim review file verdict` (stamps `reviewed_at`).
 4. **Coverage gate** — `verify-coverage.sh` looks for
    `.verdict != null` per file.
 5. **Aggregation** — `aggregate-file-reviews.sh` reads all JSONs

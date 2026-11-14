@@ -56,7 +56,7 @@ A `fix` with no labels, from an older review, is read as the Must.
 
 An owner item, whose issue starts `One rule,`, merges findings that
 share one root (review `SKILL.md` Step 5a). Its members are `Merged` with the note
-`merged into #N`, naming the owner item. `review-mark.sh` refuses
+`merged into #N`, naming the owner item. `tim review items mark` refuses
 `Merged` without that note.
 
 ## Disposition values
@@ -64,32 +64,34 @@ share one root (review `SKILL.md` Step 5a). Its members are `Merged` with the no
 | Value | Meaning | How set |
 |---|---|---|
 | `null` | Pending — walker has not yet seen, user has not hand-marked. | Default for new rows. |
-| `Fix` | Apply the fix. | Walker on `F`; user hand-mark via `review-mark.sh`. |
+| `Fix` | Apply the fix. | Walker on `F`; user hand-mark via `tim review items mark`. |
 | `Won't Fix` | Decided not to fix. A functional item with no evidence (note `no evidence`), or a code-quality item whose note quotes the code, with its file:line, that shows the finding is factually wrong. | Walker (`references/WALKER.md` → "Defaults by kind"); user hand-mark; fixer's `WON'T FIX` outcome. |
 | `Discuss` | Defer to a wider conversation. | Walker on `D`. |
 | `Auto-Resolved` | Violation no longer present. | Walker auto-check; refresh reconciler; fixer's `SKIPPED` outcome. |
-| `Merged` | Folded into an `owner` item; the owner's fix covers it. Notes hold `merged into #N`. | `review-mark.sh --disposition Merged --note "merged into #N"` (`SKILL.md` Step 5a). |
+| `Merged` | Folded into an `owner` item; the owner's fix covers it. Notes hold `merged into #N`. | `tim review items mark --disposition Merged --note "merged into #N"` (`SKILL.md` Step 5a). |
 
 ## Status values
 
 | Value | Meaning | How set |
 |---|---|---|
 | `null` | No fix attempt yet. | Default before walker / hand-marking. |
-| `Not Done` | Queued for the implementor. | `review-mark.sh --disposition Fix` auto-sets this. |
-| `Done` | Fix landed (short SHA in `notes`). | `review-set-status.sh --status Done`. |
-| `Failed` | Implementor tried and failed. | `review-set-status.sh --status Failed`. |
-| `—` | Status doesn't apply (Won't Fix / Auto-Resolved / Merged). | Auto-set by `review-mark.sh` for non-Fix dispositions. |
+| `Not Done` | Queued for the implementor. | `tim review items mark --disposition Fix` auto-sets this. |
+| `Done` | Fix landed (short SHA in `notes`). | `tim review items status --status Done`. |
+| `Failed` | Implementor tried and failed. | `tim review items status --status Failed`. |
+| `—` | Status doesn't apply (Won't Fix / Auto-Resolved / Merged). | Auto-set by `tim review items mark` for non-Fix dispositions. |
 
-## Helper scripts (all under `~/git/defra/trade-imports-workspace/tools/review/`)
+## Helpers
 
-| Script | Purpose |
+The `.sh` scripts are under the workspace's `tools/review/`.
+
+| Script or command | Purpose |
 |---|---|
 | `aggregate-file-reviews.sh` | Initial population — write `items.{repo}.json` from per-file `.review.json` files |
-| `review-items.sh` | Query items (filter by disposition / status; TSV or `--json` output) |
-| `review-add-item.sh` | Append a new item; auto-assigns `id`; returns the new ID |
-| `review-mark.sh` | Set `disposition` (auto-sets `status` per the table above) |
-| `review-set-status.sh` | Set `status` only |
-| `review-counts.sh` | Breakdown by disposition + status |
+| `tim review items list` | Query items (filter by disposition / status; TSV, or the items as `result` with `--json`) |
+| `tim review items add` | Append a new item; auto-assigns `id`; returns the new ID |
+| `tim review items mark` | Set `disposition` (auto-sets `status` per the table above) |
+| `tim review items status` | Set `status` only |
+| `tim review items counts` | Breakdown by disposition + status |
 | `render-items.sh` | Emit the markdown `## Items` table view of `items.{repo}.json` |
 
 ## Refresh interaction

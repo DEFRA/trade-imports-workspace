@@ -80,7 +80,7 @@ module.exports = [
     liveView: [
       ["review · re-review · walk review", "fresh pass, refresh, or interactive triage"],
       [".claude/skills/review/SKILL.md", "the trigger table and scripts cheat-sheet"],
-      ["review-items.sh EUDPA-X --json", "the live findings mid-review"],
+      ["tim review items list EUDPA-X --json", "the live findings mid-review"],
     ],
     tryIt: "Pick a ticket whose PR you have already merged, run \"review EUDPA-XXXX\", open review-index.md, then \"walk review EUDPA-XXXX\" and rattle through a few findings with F / W / D to feel the triage loop.",
     next: "Next: Session 4 — the code-style skill",

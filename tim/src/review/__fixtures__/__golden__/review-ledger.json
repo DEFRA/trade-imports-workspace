@@ -1,0 +1,1720 @@
+[
+  {
+    "case": "file init with a PR",
+    "steps": [
+      {
+        "command": "file init",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--file",
+          "src/main/java/New.java",
+          "--commit",
+          "bbbb222",
+          "--pr",
+          "42",
+          "--mode",
+          "FRESH"
+        ],
+        "exitCode": 0,
+        "stdout": "<HOME>/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-9001/file-reviews/trade-imports-animals-backend/src_main_java_New.java.review.json\n",
+        "stderr": "",
+        "filesWritten": {
+          "EUDPA-9001/file-reviews/trade-imports-animals-backend/src_main_java_New.java.review.json": "{\n  \"file\": \"src/main/java/New.java\",\n  \"repo\": \"trade-imports-animals-backend\",\n  \"commit\": \"bbbb222\",\n  \"pr\": 42,\n  \"mode\": \"FRESH\",\n  \"reviewed_at\": null,\n  \"verdict\": null,\n  \"verdict_reason\": null,\n  \"todos\": []\n}\n"
+        }
+      }
+    ]
+  },
+  {
+    "case": "file init for a local review, with no PR",
+    "steps": [
+      {
+        "command": "file init",
+        "input": [
+          "local/trade-imports-stub/feat/NO_JIRA-ledger",
+          "--repo",
+          "trade-imports-stub",
+          "--file",
+          "src/main/java/uk/gov/defra/Stub.java",
+          "--commit",
+          "cccc333",
+          "--mode",
+          "REFRESH"
+        ],
+        "exitCode": 0,
+        "stdout": "<HOME>/git/defra/trade-imports-workspace/workareas/reviews/local/trade-imports-stub/feat/NO_JIRA-ledger/file-reviews/trade-imports-stub/src_main_java_uk_gov_defra_Stub.java.review.json\n",
+        "stderr": "",
+        "filesWritten": {
+          "local/trade-imports-stub/feat/NO_JIRA-ledger/file-reviews/trade-imports-stub/src_main_java_uk_gov_defra_Stub.java.review.json": "{\n  \"file\": \"src/main/java/uk/gov/defra/Stub.java\",\n  \"repo\": \"trade-imports-stub\",\n  \"commit\": \"cccc333\",\n  \"pr\": null,\n  \"mode\": \"REFRESH\",\n  \"reviewed_at\": null,\n  \"verdict\": null,\n  \"verdict_reason\": null,\n  \"todos\": []\n}\n"
+        }
+      }
+    ]
+  },
+  {
+    "case": "file init over a review that has todos",
+    "steps": [
+      {
+        "command": "file init",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--file",
+          "src/main/java/Notification.java",
+          "--commit",
+          "dddd444",
+          "--pr",
+          "12",
+          "--mode",
+          "MERGE_RESOLVED"
+        ],
+        "exitCode": 0,
+        "stdout": "<HOME>/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-9001/file-reviews/trade-imports-animals-backend/src_main_java_Notification.java.review.json\n",
+        "stderr": "",
+        "filesWritten": {
+          "EUDPA-9001/file-reviews/trade-imports-animals-backend/src_main_java_Notification.java.review.json": "{\n  \"file\": \"src/main/java/Notification.java\",\n  \"repo\": \"trade-imports-animals-backend\",\n  \"commit\": \"dddd444\",\n  \"pr\": 12,\n  \"mode\": \"MERGE_RESOLVED\",\n  \"reviewed_at\": null,\n  \"verdict\": null,\n  \"verdict_reason\": null,\n  \"todos\": []\n}\n"
+        }
+      }
+    ]
+  },
+  {
+    "case": "file init with no commit",
+    "steps": [
+      {
+        "command": "file init",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--file",
+          "src/main/java/Notification.java",
+          "--mode",
+          "FRESH"
+        ],
+        "exitCode": 1,
+        "stdout": "",
+        "stderr": "Missing COMMIT\n",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "file init with no review id",
+    "steps": [
+      {
+        "command": "file init",
+        "input": [
+          "--repo",
+          "trade-imports-animals-backend",
+          "--file",
+          "src/main/java/Notification.java",
+          "--commit",
+          "x",
+          "--mode",
+          "FRESH"
+        ],
+        "exitCode": 1,
+        "stdout": "",
+        "stderr": "Missing TICKET\n",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "file init with a mode it does not know",
+    "steps": [
+      {
+        "command": "file init",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--file",
+          "src/main/java/Notification.java",
+          "--commit",
+          "x",
+          "--mode",
+          "fresh"
+        ],
+        "exitCode": 1,
+        "stdout": "",
+        "stderr": "Invalid mode: fresh (must be FRESH|REFRESH|MERGE_RESOLVED)\n",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "file add after the highest todo id, with a best practice",
+    "steps": [
+      {
+        "command": "file add",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--file",
+          "src/main/java/Notification.java",
+          "--line",
+          "41",
+          "--severity",
+          "Major",
+          "--category",
+          "correctness",
+          "--issue",
+          "Returns 200 for a missing id",
+          "--fix",
+          "Must: return 404. One way: throw NotFound",
+          "--best-practice",
+          "docs/best-practices/java/modern-java.md"
+        ],
+        "exitCode": 0,
+        "stdout": "5\n",
+        "stderr": "",
+        "filesWritten": {
+          "EUDPA-9001/file-reviews/trade-imports-animals-backend/src_main_java_Notification.java.review.json": "{\n  \"file\": \"src/main/java/Notification.java\",\n  \"repo\": \"trade-imports-animals-backend\",\n  \"commit\": \"aaaa111\",\n  \"pr\": 12,\n  \"mode\": \"FRESH\",\n  \"reviewed_at\": null,\n  \"verdict\": null,\n  \"verdict_reason\": null,\n  \"todos\": [\n    {\n      \"id\": 1,\n      \"line\": 12,\n      \"severity\": \"Critical\",\n      \"category\": \"security\",\n      \"issue\": \"Logs the token\",\n      \"fix\": \"Drop it\"\n    },\n    {\n      \"id\": 4,\n      \"line\": 30,\n      \"severity\": \"Major\",\n      \"category\": \"correctness\",\n      \"issue\": \"Wrong status\",\n      \"fix\": \"Return 404\"\n    },\n    {\n      \"id\": 5,\n      \"line\": 41,\n      \"severity\": \"Major\",\n      \"category\": \"correctness\",\n      \"issue\": \"Returns 200 for a missing id\",\n      \"fix\": \"Must: return 404. One way: throw NotFound\",\n      \"best_practice\": \"docs/best-practices/java/modern-java.md\"\n    }\n  ]\n}\n"
+        }
+      }
+    ]
+  },
+  {
+    "case": "file init, then two file adds",
+    "steps": [
+      {
+        "command": "file init",
+        "input": [
+          "local/trade-imports-stub/feat/NO_JIRA-ledger",
+          "--repo",
+          "trade-imports-stub",
+          "--file",
+          "README.md",
+          "--commit",
+          "eeee555",
+          "--mode",
+          "FRESH"
+        ],
+        "exitCode": 0,
+        "stdout": "<HOME>/git/defra/trade-imports-workspace/workareas/reviews/local/trade-imports-stub/feat/NO_JIRA-ledger/file-reviews/trade-imports-stub/README.md.review.json\n",
+        "stderr": "",
+        "filesWritten": {
+          "local/trade-imports-stub/feat/NO_JIRA-ledger/file-reviews/trade-imports-stub/README.md.review.json": "{\n  \"file\": \"README.md\",\n  \"repo\": \"trade-imports-stub\",\n  \"commit\": \"eeee555\",\n  \"pr\": null,\n  \"mode\": \"FRESH\",\n  \"reviewed_at\": null,\n  \"verdict\": null,\n  \"verdict_reason\": null,\n  \"todos\": []\n}\n"
+        }
+      },
+      {
+        "command": "file add",
+        "input": [
+          "local/trade-imports-stub/feat/NO_JIRA-ledger",
+          "--repo",
+          "trade-imports-stub",
+          "--file",
+          "README.md",
+          "--line",
+          "41",
+          "--severity",
+          "Major",
+          "--category",
+          "correctness",
+          "--issue",
+          "Returns 200 for a missing id",
+          "--fix",
+          "Must: return 404. One way: throw NotFound"
+        ],
+        "exitCode": 0,
+        "stdout": "1\n",
+        "stderr": "",
+        "filesWritten": {
+          "local/trade-imports-stub/feat/NO_JIRA-ledger/file-reviews/trade-imports-stub/README.md.review.json": "{\n  \"file\": \"README.md\",\n  \"repo\": \"trade-imports-stub\",\n  \"commit\": \"eeee555\",\n  \"pr\": null,\n  \"mode\": \"FRESH\",\n  \"reviewed_at\": null,\n  \"verdict\": null,\n  \"verdict_reason\": null,\n  \"todos\": [\n    {\n      \"id\": 1,\n      \"line\": 41,\n      \"severity\": \"Major\",\n      \"category\": \"correctness\",\n      \"issue\": \"Returns 200 for a missing id\",\n      \"fix\": \"Must: return 404. One way: throw NotFound\"\n    }\n  ]\n}\n"
+        }
+      },
+      {
+        "command": "file add",
+        "input": [
+          "local/trade-imports-stub/feat/NO_JIRA-ledger",
+          "--repo",
+          "trade-imports-stub",
+          "--file",
+          "README.md",
+          "--line",
+          "3",
+          "--severity",
+          "Minor",
+          "--category",
+          "history",
+          "--issue",
+          "Names the old ticket",
+          "--fix",
+          "Drop it"
+        ],
+        "exitCode": 0,
+        "stdout": "2\n",
+        "stderr": "",
+        "filesWritten": {
+          "local/trade-imports-stub/feat/NO_JIRA-ledger/file-reviews/trade-imports-stub/README.md.review.json": "{\n  \"file\": \"README.md\",\n  \"repo\": \"trade-imports-stub\",\n  \"commit\": \"eeee555\",\n  \"pr\": null,\n  \"mode\": \"FRESH\",\n  \"reviewed_at\": null,\n  \"verdict\": null,\n  \"verdict_reason\": null,\n  \"todos\": [\n    {\n      \"id\": 1,\n      \"line\": 41,\n      \"severity\": \"Major\",\n      \"category\": \"correctness\",\n      \"issue\": \"Returns 200 for a missing id\",\n      \"fix\": \"Must: return 404. One way: throw NotFound\"\n    },\n    {\n      \"id\": 2,\n      \"line\": 3,\n      \"severity\": \"Minor\",\n      \"category\": \"history\",\n      \"issue\": \"Names the old ticket\",\n      \"fix\": \"Drop it\"\n    }\n  ]\n}\n"
+        }
+      }
+    ]
+  },
+  {
+    "case": "file add with a severity it does not know",
+    "steps": [
+      {
+        "command": "file add",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--file",
+          "src/main/java/Notification.java",
+          "--line",
+          "1",
+          "--severity",
+          "Blocker",
+          "--category",
+          "correctness",
+          "--issue",
+          "x",
+          "--fix",
+          "y"
+        ],
+        "exitCode": 1,
+        "stdout": "",
+        "stderr": "Invalid severity: Blocker (must be Critical|Major|Minor)\n",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "file add with a category outside the finding categories",
+    "steps": [
+      {
+        "command": "file add",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--file",
+          "src/main/java/Notification.java",
+          "--line",
+          "1",
+          "--severity",
+          "Minor",
+          "--category",
+          "style",
+          "--issue",
+          "x",
+          "--fix",
+          "y"
+        ],
+        "exitCode": 1,
+        "stdout": "",
+        "stderr": "--category must be one of: correctness security error-handling coverage-gap naming comments structure duplication logging test-readability history design. Got \"style\".\n",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "file add with no review file",
+    "steps": [
+      {
+        "command": "file add",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--file",
+          "src/Missing.java",
+          "--line",
+          "41",
+          "--severity",
+          "Major",
+          "--category",
+          "correctness",
+          "--issue",
+          "Returns 200 for a missing id",
+          "--fix",
+          "Must: return 404. One way: throw NotFound"
+        ],
+        "exitCode": 1,
+        "stdout": "",
+        "stderr": "No review file at <HOME>/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-9001/file-reviews/trade-imports-animals-backend/src_Missing.java.review.json — call file-review-init.sh first\n",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "file add with no fix",
+    "steps": [
+      {
+        "command": "file add",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--file",
+          "src/main/java/Notification.java",
+          "--line",
+          "1",
+          "--severity",
+          "Minor",
+          "--category",
+          "naming",
+          "--issue",
+          "x"
+        ],
+        "exitCode": 1,
+        "stdout": "",
+        "stderr": "Missing FIX\n",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "file verdict with a reason",
+    "steps": [
+      {
+        "command": "file verdict",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--file",
+          "src/main/java/Notification.java",
+          "--verdict",
+          "RISKY",
+          "--reason",
+          "Logs a token"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "",
+        "filesWritten": {
+          "EUDPA-9001/file-reviews/trade-imports-animals-backend/src_main_java_Notification.java.review.json": "{\n  \"file\": \"src/main/java/Notification.java\",\n  \"repo\": \"trade-imports-animals-backend\",\n  \"commit\": \"aaaa111\",\n  \"pr\": 12,\n  \"mode\": \"FRESH\",\n  \"reviewed_at\": \"<TIMESTAMP>\",\n  \"verdict\": \"RISKY\",\n  \"verdict_reason\": \"Logs a token\",\n  \"todos\": [\n    {\n      \"id\": 1,\n      \"line\": 12,\n      \"severity\": \"Critical\",\n      \"category\": \"security\",\n      \"issue\": \"Logs the token\",\n      \"fix\": \"Drop it\"\n    },\n    {\n      \"id\": 4,\n      \"line\": 30,\n      \"severity\": \"Major\",\n      \"category\": \"correctness\",\n      \"issue\": \"Wrong status\",\n      \"fix\": \"Return 404\"\n    }\n  ]\n}\n"
+        }
+      }
+    ]
+  },
+  {
+    "case": "file verdict with no reason",
+    "steps": [
+      {
+        "command": "file verdict",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--file",
+          "src/main/java/Notification.java",
+          "--verdict",
+          "SAFE"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "",
+        "filesWritten": {
+          "EUDPA-9001/file-reviews/trade-imports-animals-backend/src_main_java_Notification.java.review.json": "{\n  \"file\": \"src/main/java/Notification.java\",\n  \"repo\": \"trade-imports-animals-backend\",\n  \"commit\": \"aaaa111\",\n  \"pr\": 12,\n  \"mode\": \"FRESH\",\n  \"reviewed_at\": \"<TIMESTAMP>\",\n  \"verdict\": \"SAFE\",\n  \"verdict_reason\": \"\",\n  \"todos\": [\n    {\n      \"id\": 1,\n      \"line\": 12,\n      \"severity\": \"Critical\",\n      \"category\": \"security\",\n      \"issue\": \"Logs the token\",\n      \"fix\": \"Drop it\"\n    },\n    {\n      \"id\": 4,\n      \"line\": 30,\n      \"severity\": \"Major\",\n      \"category\": \"correctness\",\n      \"issue\": \"Wrong status\",\n      \"fix\": \"Return 404\"\n    }\n  ]\n}\n"
+        }
+      }
+    ]
+  },
+  {
+    "case": "file verdict it does not know",
+    "steps": [
+      {
+        "command": "file verdict",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--file",
+          "src/main/java/Notification.java",
+          "--verdict",
+          "OK"
+        ],
+        "exitCode": 1,
+        "stdout": "",
+        "stderr": "Invalid verdict: OK (must be SAFE|NEEDS_ATTENTION|RISKY)\n",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "file verdict with no review file",
+    "steps": [
+      {
+        "command": "file verdict",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--file",
+          "src/Missing.java",
+          "--verdict",
+          "NEEDS_ATTENTION"
+        ],
+        "exitCode": 1,
+        "stdout": "",
+        "stderr": "No review file at <HOME>/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-9001/file-reviews/trade-imports-animals-backend/src_Missing.java.review.json — call file-review-init.sh first\n",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "file verdict with no verdict",
+    "steps": [
+      {
+        "command": "file verdict",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--file",
+          "src/main/java/Notification.java"
+        ],
+        "exitCode": 1,
+        "stdout": "",
+        "stderr": "Missing VERDICT\n",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items list as TSV",
+    "steps": [
+      {
+        "command": "items list",
+        "input": [
+          "EUDPA-9001"
+        ],
+        "exitCode": 0,
+        "stdout": "trade-imports-animals-backend\t1\tsrc/main/java/Notification.java\t12\tCritical\tsecurity\tLogs the token\tMust: drop it. One way: redact it\t\t\t\ntrade-imports-animals-backend\t2\tsrc/main/java/Notification.java\t30\tMajor\tcorrectness\tTab\\there, a newline\\nthere and a back\\\\slash\tSplit it\tFix\tNot Done\t\ntrade-imports-animals-backend\t3\tsrc/main/java/Store.java\t7\tMinor\tnaming\tVague name\tRename it\tFix\tDone\tabc1234\ntrade-imports-animals-backend\t4\tsrc/main/java/Store.java\t\tMinor\tcomments\tStale comment\tDelete it\tFix\tFailed\tTests went red\ntrade-imports-animals-backend\t5\tpom.xml\t\tMajor\tdesign\tPins an old plugin\tBump it\tDiscuss\tNot Done\tAsk the platform team\ntrade-imports-animals-backend\t7\tpom.xml\t3\tMinor\tduplication\tSame version twice\tUse a property\tMerged\t—\tmerged into #5\ntrade-imports-animals-frontend\t1\tsrc/server/app/index.js\t4\tMinor\tnaming\tAbbreviated name\tSpell it out\tWon't Fix\t—\tHouse style allows it\ntrade-imports-animals-frontend\t2\tsrc/server/app/index.js\t9\tMajor\terror-handling\tSwallows the error\tRethrow\tAuto-Resolved\t—\tFile deleted\ntrade-imports-animals-frontend\t3\tREADME.md\t1\tMinor\tcomments\tTypo\tFix the typo\t\t\t\n",
+        "stderr": "",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items list for one repo",
+    "steps": [
+      {
+        "command": "items list",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-frontend"
+        ],
+        "exitCode": 0,
+        "stdout": "trade-imports-animals-frontend\t1\tsrc/server/app/index.js\t4\tMinor\tnaming\tAbbreviated name\tSpell it out\tWon't Fix\t—\tHouse style allows it\ntrade-imports-animals-frontend\t2\tsrc/server/app/index.js\t9\tMajor\terror-handling\tSwallows the error\tRethrow\tAuto-Resolved\t—\tFile deleted\ntrade-imports-animals-frontend\t3\tREADME.md\t1\tMinor\tcomments\tTypo\tFix the typo\t\t\t\n",
+        "stderr": "",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items list for a repo with no items file",
+    "steps": [
+      {
+        "command": "items list",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-stub"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items list for a review with no items files",
+    "steps": [
+      {
+        "command": "items list",
+        "input": [
+          "EUDPA-9002"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items list --filter pending",
+    "steps": [
+      {
+        "command": "items list",
+        "input": [
+          "EUDPA-9001",
+          "--filter",
+          "pending"
+        ],
+        "exitCode": 0,
+        "stdout": "trade-imports-animals-backend\t1\tsrc/main/java/Notification.java\t12\tCritical\tsecurity\tLogs the token\tMust: drop it. One way: redact it\t\t\t\ntrade-imports-animals-frontend\t3\tREADME.md\t1\tMinor\tcomments\tTypo\tFix the typo\t\t\t\n",
+        "stderr": "",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items list --filter fix",
+    "steps": [
+      {
+        "command": "items list",
+        "input": [
+          "EUDPA-9001",
+          "--filter",
+          "fix"
+        ],
+        "exitCode": 0,
+        "stdout": "trade-imports-animals-backend\t2\tsrc/main/java/Notification.java\t30\tMajor\tcorrectness\tTab\\there, a newline\\nthere and a back\\\\slash\tSplit it\tFix\tNot Done\t\ntrade-imports-animals-backend\t3\tsrc/main/java/Store.java\t7\tMinor\tnaming\tVague name\tRename it\tFix\tDone\tabc1234\ntrade-imports-animals-backend\t4\tsrc/main/java/Store.java\t\tMinor\tcomments\tStale comment\tDelete it\tFix\tFailed\tTests went red\n",
+        "stderr": "",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items list --filter wont-fix",
+    "steps": [
+      {
+        "command": "items list",
+        "input": [
+          "EUDPA-9001",
+          "--filter",
+          "wont-fix"
+        ],
+        "exitCode": 0,
+        "stdout": "trade-imports-animals-frontend\t1\tsrc/server/app/index.js\t4\tMinor\tnaming\tAbbreviated name\tSpell it out\tWon't Fix\t—\tHouse style allows it\n",
+        "stderr": "",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items list --filter discuss",
+    "steps": [
+      {
+        "command": "items list",
+        "input": [
+          "EUDPA-9001",
+          "--filter",
+          "discuss"
+        ],
+        "exitCode": 0,
+        "stdout": "trade-imports-animals-backend\t5\tpom.xml\t\tMajor\tdesign\tPins an old plugin\tBump it\tDiscuss\tNot Done\tAsk the platform team\n",
+        "stderr": "",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items list --filter auto-resolved",
+    "steps": [
+      {
+        "command": "items list",
+        "input": [
+          "EUDPA-9001",
+          "--filter",
+          "auto-resolved"
+        ],
+        "exitCode": 0,
+        "stdout": "trade-imports-animals-frontend\t2\tsrc/server/app/index.js\t9\tMajor\terror-handling\tSwallows the error\tRethrow\tAuto-Resolved\t—\tFile deleted\n",
+        "stderr": "",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items list --filter merged",
+    "steps": [
+      {
+        "command": "items list",
+        "input": [
+          "EUDPA-9001",
+          "--filter",
+          "merged"
+        ],
+        "exitCode": 0,
+        "stdout": "trade-imports-animals-backend\t7\tpom.xml\t3\tMinor\tduplication\tSame version twice\tUse a property\tMerged\t—\tmerged into #5\n",
+        "stderr": "",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items list --status not-done",
+    "steps": [
+      {
+        "command": "items list",
+        "input": [
+          "EUDPA-9001",
+          "--status",
+          "not-done"
+        ],
+        "exitCode": 0,
+        "stdout": "trade-imports-animals-backend\t2\tsrc/main/java/Notification.java\t30\tMajor\tcorrectness\tTab\\there, a newline\\nthere and a back\\\\slash\tSplit it\tFix\tNot Done\t\ntrade-imports-animals-backend\t5\tpom.xml\t\tMajor\tdesign\tPins an old plugin\tBump it\tDiscuss\tNot Done\tAsk the platform team\n",
+        "stderr": "",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items list --status done",
+    "steps": [
+      {
+        "command": "items list",
+        "input": [
+          "EUDPA-9001",
+          "--status",
+          "done"
+        ],
+        "exitCode": 0,
+        "stdout": "trade-imports-animals-backend\t3\tsrc/main/java/Store.java\t7\tMinor\tnaming\tVague name\tRename it\tFix\tDone\tabc1234\n",
+        "stderr": "",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items list --status failed",
+    "steps": [
+      {
+        "command": "items list",
+        "input": [
+          "EUDPA-9001",
+          "--status",
+          "failed"
+        ],
+        "exitCode": 0,
+        "stdout": "trade-imports-animals-backend\t4\tsrc/main/java/Store.java\t\tMinor\tcomments\tStale comment\tDelete it\tFix\tFailed\tTests went red\n",
+        "stderr": "",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items list for one file",
+    "steps": [
+      {
+        "command": "items list",
+        "input": [
+          "EUDPA-9001",
+          "--file",
+          "src/main/java/Store.java"
+        ],
+        "exitCode": 0,
+        "stdout": "trade-imports-animals-backend\t3\tsrc/main/java/Store.java\t7\tMinor\tnaming\tVague name\tRename it\tFix\tDone\tabc1234\ntrade-imports-animals-backend\t4\tsrc/main/java/Store.java\t\tMinor\tcomments\tStale comment\tDelete it\tFix\tFailed\tTests went red\n",
+        "stderr": "",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items list with a filter, a status and a repo together",
+    "steps": [
+      {
+        "command": "items list",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--filter",
+          "fix",
+          "--status",
+          "not-done"
+        ],
+        "exitCode": 0,
+        "stdout": "trade-imports-animals-backend\t2\tsrc/main/java/Notification.java\t30\tMajor\tcorrectness\tTab\\there, a newline\\nthere and a back\\\\slash\tSplit it\tFix\tNot Done\t\n",
+        "stderr": "",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items list with a filter it does not know",
+    "steps": [
+      {
+        "command": "items list",
+        "input": [
+          "EUDPA-9001",
+          "--filter",
+          "open"
+        ],
+        "exitCode": 1,
+        "stdout": "",
+        "stderr": "Invalid --filter: open\n",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items list with a status it does not know",
+    "steps": [
+      {
+        "command": "items list",
+        "input": [
+          "EUDPA-9001",
+          "--status",
+          "open"
+        ],
+        "exitCode": 1,
+        "stdout": "",
+        "stderr": "Invalid --status: open\n",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items list for a missing review",
+    "steps": [
+      {
+        "command": "items list",
+        "input": [
+          "EUDPA-404"
+        ],
+        "exitCode": 1,
+        "stdout": "",
+        "stderr": "Review workspace not found: <HOME>/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-404\n",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items list with no review id",
+    "steps": [
+      {
+        "command": "items list",
+        "input": [],
+        "exitCode": 1,
+        "stdout": "Usage: <HOME>/git/defra/trade-imports-workspace/tools/review/review-items.sh EUDPA-XXXXX [--repo REPO] [--file PATH] [--filter DISPOSITION] [--status STATUS] [--json]\n\n  --repo R         Limit to one repo\n  --file P         Limit to items for one file (exact path match)\n  --filter F       Filter by Disposition: pending|fix|wont-fix|discuss|auto-resolved|merged\n  --status S       Filter by Status: not-done|done|failed\n  --json           Output JSON array instead of TSV\n",
+        "stderr": "",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items counts as text",
+    "steps": [
+      {
+        "command": "items counts",
+        "input": [
+          "EUDPA-9001"
+        ],
+        "exitCode": 0,
+        "stdout": "Counts for EUDPA-9001:\n     1  —              \n     1  Auto-Resolved    —\n     1  Discuss          Not Done\n     1  Fix              Done\n     1  Fix              Failed\n     1  Fix              Not Done\n     1  Merged           —\n     1  Pending          —\n     1  Won't Fix        —\n  ----\n     9  TOTAL\n",
+        "stderr": "",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items counts for one repo",
+    "steps": [
+      {
+        "command": "items counts",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-frontend"
+        ],
+        "exitCode": 0,
+        "stdout": "Counts for EUDPA-9001 (repo: trade-imports-animals-frontend):\n     1  —              \n     1  Auto-Resolved    —\n     1  Won't Fix        —\n  ----\n     3  TOTAL\n",
+        "stderr": "",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items counts for a review with no items files",
+    "steps": [
+      {
+        "command": "items counts",
+        "input": [
+          "EUDPA-9002"
+        ],
+        "exitCode": 0,
+        "stdout": "Counts for EUDPA-9002:\n  ----\n     0  TOTAL\n",
+        "stderr": "",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items counts for a repo with no items file",
+    "steps": [
+      {
+        "command": "items counts",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-stub"
+        ],
+        "exitCode": 0,
+        "stdout": "Counts for EUDPA-9001 (repo: trade-imports-stub):\n  ----\n     0  TOTAL\n",
+        "stderr": "",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items counts for a missing review",
+    "steps": [
+      {
+        "command": "items counts",
+        "input": [
+          "EUDPA-404"
+        ],
+        "exitCode": 1,
+        "stdout": "",
+        "stderr": "Review workspace not found: <HOME>/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-404\n",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items add after the highest id, with a best practice",
+    "steps": [
+      {
+        "command": "items add",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--file",
+          "src/main/java/Notification.java",
+          "--line",
+          "41",
+          "--severity",
+          "Major",
+          "--category",
+          "correctness",
+          "--issue",
+          "Returns 200 for a missing id",
+          "--fix",
+          "Must: return 404. One way: throw NotFound",
+          "--best-practice",
+          "docs/best-practices/java/modern-java.md"
+        ],
+        "exitCode": 0,
+        "stdout": "8\n",
+        "stderr": "",
+        "filesWritten": {
+          "EUDPA-9001/items.trade-imports-animals-backend.json": "{\n  \"ticket\": \"EUDPA-9001\",\n  \"repo\": \"trade-imports-animals-backend\",\n  \"items\": [\n    {\n      \"id\": 1,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"12\",\n      \"severity\": \"Critical\",\n      \"category\": \"security\",\n      \"issue\": \"Logs the token\",\n      \"fix\": \"Must: drop it. One way: redact it\",\n      \"disposition\": null,\n      \"status\": null,\n      \"notes\": null\n    },\n    {\n      \"id\": 2,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"30\",\n      \"severity\": \"Major\",\n      \"category\": \"correctness\",\n      \"issue\": \"Tab\\there, a newline\\nthere and a back\\\\slash\",\n      \"fix\": \"Split it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Not Done\",\n      \"notes\": null\n    },\n    {\n      \"id\": 3,\n      \"file\": \"src/main/java/Store.java\",\n      \"line\": 7,\n      \"severity\": \"Minor\",\n      \"category\": \"naming\",\n      \"issue\": \"Vague name\",\n      \"fix\": \"Rename it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Done\",\n      \"notes\": \"abc1234\"\n    },\n    {\n      \"id\": 4,\n      \"file\": \"src/main/java/Store.java\",\n      \"severity\": \"Minor\",\n      \"category\": \"comments\",\n      \"issue\": \"Stale comment\",\n      \"fix\": \"Delete it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Failed\",\n      \"notes\": \"Tests went red\"\n    },\n    {\n      \"id\": 5,\n      \"file\": \"pom.xml\",\n      \"line\": \"\",\n      \"severity\": \"Major\",\n      \"category\": \"design\",\n      \"issue\": \"Pins an old plugin\",\n      \"fix\": \"Bump it\",\n      \"disposition\": \"Discuss\",\n      \"status\": \"Not Done\",\n      \"notes\": \"Ask the platform team\"\n    },\n    {\n      \"id\": 7,\n      \"file\": \"pom.xml\",\n      \"line\": \"3\",\n      \"severity\": \"Minor\",\n      \"category\": \"duplication\",\n      \"issue\": \"Same version twice\",\n      \"fix\": \"Use a property\",\n      \"disposition\": \"Merged\",\n      \"status\": \"—\",\n      \"notes\": \"merged into #5\",\n      \"best_practice\": \"docs/best-practices/java/maven.md\"\n    },\n    {\n      \"id\": 8,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"41\",\n      \"severity\": \"Major\",\n      \"category\": \"correctness\",\n      \"issue\": \"Returns 200 for a missing id\",\n      \"fix\": \"Must: return 404. One way: throw NotFound\",\n      \"disposition\": null,\n      \"status\": null,\n      \"notes\": null,\n      \"best_practice\": \"docs/best-practices/java/modern-java.md\"\n    }\n  ]\n}\n"
+        }
+      }
+    ]
+  },
+  {
+    "case": "items add starting a repo items file",
+    "steps": [
+      {
+        "command": "items add",
+        "input": [
+          "local/trade-imports-stub/feat/NO_JIRA-ledger",
+          "--repo",
+          "trade-imports-stub",
+          "--file",
+          "README.md",
+          "--line",
+          "41",
+          "--severity",
+          "Major",
+          "--category",
+          "correctness",
+          "--issue",
+          "Returns 200 for a missing id",
+          "--fix",
+          "Must: return 404. One way: throw NotFound"
+        ],
+        "exitCode": 0,
+        "stdout": "1\n",
+        "stderr": "",
+        "filesWritten": {
+          "local/trade-imports-stub/feat/NO_JIRA-ledger/items.trade-imports-stub.json": "{\n  \"ticket\": \"local/trade-imports-stub/feat/NO_JIRA-ledger\",\n  \"repo\": \"trade-imports-stub\",\n  \"items\": [\n    {\n      \"id\": 1,\n      \"file\": \"README.md\",\n      \"line\": \"41\",\n      \"severity\": \"Major\",\n      \"category\": \"correctness\",\n      \"issue\": \"Returns 200 for a missing id\",\n      \"fix\": \"Must: return 404. One way: throw NotFound\",\n      \"disposition\": null,\n      \"status\": null,\n      \"notes\": null\n    }\n  ]\n}\n"
+        }
+      }
+    ]
+  },
+  {
+    "case": "items add with no fix",
+    "steps": [
+      {
+        "command": "items add",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--file",
+          "src/main/java/Notification.java",
+          "--line",
+          "1",
+          "--severity",
+          "Minor",
+          "--category",
+          "naming",
+          "--issue",
+          "x"
+        ],
+        "exitCode": 1,
+        "stdout": "Usage: <HOME>/git/defra/trade-imports-workspace/tools/review/review-add-item.sh EUDPA-XXXXX --repo REPO --file PATH --line N --severity S \\\n    --category C --issue \"...\" --fix \"...\" [--best-practice PATH]\n",
+        "stderr": "--fix required\n",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items add with a severity it does not know",
+    "steps": [
+      {
+        "command": "items add",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--file",
+          "src/main/java/Notification.java",
+          "--line",
+          "1",
+          "--severity",
+          "Low",
+          "--category",
+          "naming",
+          "--issue",
+          "x",
+          "--fix",
+          "y"
+        ],
+        "exitCode": 1,
+        "stdout": "",
+        "stderr": "Invalid --severity: Low (must be Critical|Major|Minor)\n",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items add with a category outside the finding categories",
+    "steps": [
+      {
+        "command": "items add",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--file",
+          "src/main/java/Notification.java",
+          "--line",
+          "1",
+          "--severity",
+          "Minor",
+          "--category",
+          "style",
+          "--issue",
+          "x",
+          "--fix",
+          "y"
+        ],
+        "exitCode": 1,
+        "stdout": "",
+        "stderr": "--category must be one of: correctness security error-handling coverage-gap naming comments structure duplication logging test-readability history design. Got \"style\".\n",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items mark --disposition \"Fix\"",
+    "steps": [
+      {
+        "command": "items mark",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--item",
+          "1",
+          "--disposition",
+          "Fix"
+        ],
+        "exitCode": 0,
+        "stdout": "Marked #1 in trade-imports-animals-backend: Disposition=Fix, Status=Not Done, Notes set\n",
+        "stderr": "",
+        "filesWritten": {
+          "EUDPA-9001/items.trade-imports-animals-backend.json": "{\n  \"ticket\": \"EUDPA-9001\",\n  \"repo\": \"trade-imports-animals-backend\",\n  \"items\": [\n    {\n      \"id\": 1,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"12\",\n      \"severity\": \"Critical\",\n      \"category\": \"security\",\n      \"issue\": \"Logs the token\",\n      \"fix\": \"Must: drop it. One way: redact it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Not Done\",\n      \"notes\": null\n    },\n    {\n      \"id\": 2,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"30\",\n      \"severity\": \"Major\",\n      \"category\": \"correctness\",\n      \"issue\": \"Tab\\there, a newline\\nthere and a back\\\\slash\",\n      \"fix\": \"Split it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Not Done\",\n      \"notes\": null\n    },\n    {\n      \"id\": 3,\n      \"file\": \"src/main/java/Store.java\",\n      \"line\": 7,\n      \"severity\": \"Minor\",\n      \"category\": \"naming\",\n      \"issue\": \"Vague name\",\n      \"fix\": \"Rename it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Done\",\n      \"notes\": \"abc1234\"\n    },\n    {\n      \"id\": 4,\n      \"file\": \"src/main/java/Store.java\",\n      \"severity\": \"Minor\",\n      \"category\": \"comments\",\n      \"issue\": \"Stale comment\",\n      \"fix\": \"Delete it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Failed\",\n      \"notes\": \"Tests went red\"\n    },\n    {\n      \"id\": 5,\n      \"file\": \"pom.xml\",\n      \"line\": \"\",\n      \"severity\": \"Major\",\n      \"category\": \"design\",\n      \"issue\": \"Pins an old plugin\",\n      \"fix\": \"Bump it\",\n      \"disposition\": \"Discuss\",\n      \"status\": \"Not Done\",\n      \"notes\": \"Ask the platform team\"\n    },\n    {\n      \"id\": 7,\n      \"file\": \"pom.xml\",\n      \"line\": \"3\",\n      \"severity\": \"Minor\",\n      \"category\": \"duplication\",\n      \"issue\": \"Same version twice\",\n      \"fix\": \"Use a property\",\n      \"disposition\": \"Merged\",\n      \"status\": \"—\",\n      \"notes\": \"merged into #5\",\n      \"best_practice\": \"docs/best-practices/java/maven.md\"\n    }\n  ]\n}\n"
+        }
+      }
+    ]
+  },
+  {
+    "case": "items mark --disposition \"Won't Fix\"",
+    "steps": [
+      {
+        "command": "items mark",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--item",
+          "1",
+          "--disposition",
+          "Won't Fix"
+        ],
+        "exitCode": 0,
+        "stdout": "Marked #1 in trade-imports-animals-backend: Disposition=Won't Fix, Status=—, Notes set\n",
+        "stderr": "",
+        "filesWritten": {
+          "EUDPA-9001/items.trade-imports-animals-backend.json": "{\n  \"ticket\": \"EUDPA-9001\",\n  \"repo\": \"trade-imports-animals-backend\",\n  \"items\": [\n    {\n      \"id\": 1,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"12\",\n      \"severity\": \"Critical\",\n      \"category\": \"security\",\n      \"issue\": \"Logs the token\",\n      \"fix\": \"Must: drop it. One way: redact it\",\n      \"disposition\": \"Won't Fix\",\n      \"status\": \"—\",\n      \"notes\": null\n    },\n    {\n      \"id\": 2,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"30\",\n      \"severity\": \"Major\",\n      \"category\": \"correctness\",\n      \"issue\": \"Tab\\there, a newline\\nthere and a back\\\\slash\",\n      \"fix\": \"Split it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Not Done\",\n      \"notes\": null\n    },\n    {\n      \"id\": 3,\n      \"file\": \"src/main/java/Store.java\",\n      \"line\": 7,\n      \"severity\": \"Minor\",\n      \"category\": \"naming\",\n      \"issue\": \"Vague name\",\n      \"fix\": \"Rename it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Done\",\n      \"notes\": \"abc1234\"\n    },\n    {\n      \"id\": 4,\n      \"file\": \"src/main/java/Store.java\",\n      \"severity\": \"Minor\",\n      \"category\": \"comments\",\n      \"issue\": \"Stale comment\",\n      \"fix\": \"Delete it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Failed\",\n      \"notes\": \"Tests went red\"\n    },\n    {\n      \"id\": 5,\n      \"file\": \"pom.xml\",\n      \"line\": \"\",\n      \"severity\": \"Major\",\n      \"category\": \"design\",\n      \"issue\": \"Pins an old plugin\",\n      \"fix\": \"Bump it\",\n      \"disposition\": \"Discuss\",\n      \"status\": \"Not Done\",\n      \"notes\": \"Ask the platform team\"\n    },\n    {\n      \"id\": 7,\n      \"file\": \"pom.xml\",\n      \"line\": \"3\",\n      \"severity\": \"Minor\",\n      \"category\": \"duplication\",\n      \"issue\": \"Same version twice\",\n      \"fix\": \"Use a property\",\n      \"disposition\": \"Merged\",\n      \"status\": \"—\",\n      \"notes\": \"merged into #5\",\n      \"best_practice\": \"docs/best-practices/java/maven.md\"\n    }\n  ]\n}\n"
+        }
+      }
+    ]
+  },
+  {
+    "case": "items mark --disposition \"Discuss\"",
+    "steps": [
+      {
+        "command": "items mark",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--item",
+          "1",
+          "--disposition",
+          "Discuss"
+        ],
+        "exitCode": 0,
+        "stdout": "Marked #1 in trade-imports-animals-backend: Disposition=Discuss, Status=Not Done, Notes set\n",
+        "stderr": "",
+        "filesWritten": {
+          "EUDPA-9001/items.trade-imports-animals-backend.json": "{\n  \"ticket\": \"EUDPA-9001\",\n  \"repo\": \"trade-imports-animals-backend\",\n  \"items\": [\n    {\n      \"id\": 1,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"12\",\n      \"severity\": \"Critical\",\n      \"category\": \"security\",\n      \"issue\": \"Logs the token\",\n      \"fix\": \"Must: drop it. One way: redact it\",\n      \"disposition\": \"Discuss\",\n      \"status\": \"Not Done\",\n      \"notes\": null\n    },\n    {\n      \"id\": 2,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"30\",\n      \"severity\": \"Major\",\n      \"category\": \"correctness\",\n      \"issue\": \"Tab\\there, a newline\\nthere and a back\\\\slash\",\n      \"fix\": \"Split it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Not Done\",\n      \"notes\": null\n    },\n    {\n      \"id\": 3,\n      \"file\": \"src/main/java/Store.java\",\n      \"line\": 7,\n      \"severity\": \"Minor\",\n      \"category\": \"naming\",\n      \"issue\": \"Vague name\",\n      \"fix\": \"Rename it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Done\",\n      \"notes\": \"abc1234\"\n    },\n    {\n      \"id\": 4,\n      \"file\": \"src/main/java/Store.java\",\n      \"severity\": \"Minor\",\n      \"category\": \"comments\",\n      \"issue\": \"Stale comment\",\n      \"fix\": \"Delete it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Failed\",\n      \"notes\": \"Tests went red\"\n    },\n    {\n      \"id\": 5,\n      \"file\": \"pom.xml\",\n      \"line\": \"\",\n      \"severity\": \"Major\",\n      \"category\": \"design\",\n      \"issue\": \"Pins an old plugin\",\n      \"fix\": \"Bump it\",\n      \"disposition\": \"Discuss\",\n      \"status\": \"Not Done\",\n      \"notes\": \"Ask the platform team\"\n    },\n    {\n      \"id\": 7,\n      \"file\": \"pom.xml\",\n      \"line\": \"3\",\n      \"severity\": \"Minor\",\n      \"category\": \"duplication\",\n      \"issue\": \"Same version twice\",\n      \"fix\": \"Use a property\",\n      \"disposition\": \"Merged\",\n      \"status\": \"—\",\n      \"notes\": \"merged into #5\",\n      \"best_practice\": \"docs/best-practices/java/maven.md\"\n    }\n  ]\n}\n"
+        }
+      }
+    ]
+  },
+  {
+    "case": "items mark --disposition \"Auto-Resolved\"",
+    "steps": [
+      {
+        "command": "items mark",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--item",
+          "1",
+          "--disposition",
+          "Auto-Resolved"
+        ],
+        "exitCode": 0,
+        "stdout": "Marked #1 in trade-imports-animals-backend: Disposition=Auto-Resolved, Status=—, Notes set\n",
+        "stderr": "",
+        "filesWritten": {
+          "EUDPA-9001/items.trade-imports-animals-backend.json": "{\n  \"ticket\": \"EUDPA-9001\",\n  \"repo\": \"trade-imports-animals-backend\",\n  \"items\": [\n    {\n      \"id\": 1,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"12\",\n      \"severity\": \"Critical\",\n      \"category\": \"security\",\n      \"issue\": \"Logs the token\",\n      \"fix\": \"Must: drop it. One way: redact it\",\n      \"disposition\": \"Auto-Resolved\",\n      \"status\": \"—\",\n      \"notes\": null\n    },\n    {\n      \"id\": 2,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"30\",\n      \"severity\": \"Major\",\n      \"category\": \"correctness\",\n      \"issue\": \"Tab\\there, a newline\\nthere and a back\\\\slash\",\n      \"fix\": \"Split it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Not Done\",\n      \"notes\": null\n    },\n    {\n      \"id\": 3,\n      \"file\": \"src/main/java/Store.java\",\n      \"line\": 7,\n      \"severity\": \"Minor\",\n      \"category\": \"naming\",\n      \"issue\": \"Vague name\",\n      \"fix\": \"Rename it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Done\",\n      \"notes\": \"abc1234\"\n    },\n    {\n      \"id\": 4,\n      \"file\": \"src/main/java/Store.java\",\n      \"severity\": \"Minor\",\n      \"category\": \"comments\",\n      \"issue\": \"Stale comment\",\n      \"fix\": \"Delete it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Failed\",\n      \"notes\": \"Tests went red\"\n    },\n    {\n      \"id\": 5,\n      \"file\": \"pom.xml\",\n      \"line\": \"\",\n      \"severity\": \"Major\",\n      \"category\": \"design\",\n      \"issue\": \"Pins an old plugin\",\n      \"fix\": \"Bump it\",\n      \"disposition\": \"Discuss\",\n      \"status\": \"Not Done\",\n      \"notes\": \"Ask the platform team\"\n    },\n    {\n      \"id\": 7,\n      \"file\": \"pom.xml\",\n      \"line\": \"3\",\n      \"severity\": \"Minor\",\n      \"category\": \"duplication\",\n      \"issue\": \"Same version twice\",\n      \"fix\": \"Use a property\",\n      \"disposition\": \"Merged\",\n      \"status\": \"—\",\n      \"notes\": \"merged into #5\",\n      \"best_practice\": \"docs/best-practices/java/maven.md\"\n    }\n  ]\n}\n"
+        }
+      }
+    ]
+  },
+  {
+    "case": "items mark --disposition \"\"",
+    "steps": [
+      {
+        "command": "items mark",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--item",
+          "1",
+          "--disposition",
+          ""
+        ],
+        "exitCode": 0,
+        "stdout": "Marked #1 in trade-imports-animals-backend: Disposition=<null>, Status=<null>, Notes set\n",
+        "stderr": "",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items mark Merged naming the owner",
+    "steps": [
+      {
+        "command": "items mark",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--item",
+          "1",
+          "--disposition",
+          "Merged",
+          "--note",
+          "merged into #5"
+        ],
+        "exitCode": 0,
+        "stdout": "Marked #1 in trade-imports-animals-backend: Disposition=Merged, Status=—, Notes set\n",
+        "stderr": "",
+        "filesWritten": {
+          "EUDPA-9001/items.trade-imports-animals-backend.json": "{\n  \"ticket\": \"EUDPA-9001\",\n  \"repo\": \"trade-imports-animals-backend\",\n  \"items\": [\n    {\n      \"id\": 1,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"12\",\n      \"severity\": \"Critical\",\n      \"category\": \"security\",\n      \"issue\": \"Logs the token\",\n      \"fix\": \"Must: drop it. One way: redact it\",\n      \"disposition\": \"Merged\",\n      \"status\": \"—\",\n      \"notes\": \"merged into #5\"\n    },\n    {\n      \"id\": 2,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"30\",\n      \"severity\": \"Major\",\n      \"category\": \"correctness\",\n      \"issue\": \"Tab\\there, a newline\\nthere and a back\\\\slash\",\n      \"fix\": \"Split it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Not Done\",\n      \"notes\": null\n    },\n    {\n      \"id\": 3,\n      \"file\": \"src/main/java/Store.java\",\n      \"line\": 7,\n      \"severity\": \"Minor\",\n      \"category\": \"naming\",\n      \"issue\": \"Vague name\",\n      \"fix\": \"Rename it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Done\",\n      \"notes\": \"abc1234\"\n    },\n    {\n      \"id\": 4,\n      \"file\": \"src/main/java/Store.java\",\n      \"severity\": \"Minor\",\n      \"category\": \"comments\",\n      \"issue\": \"Stale comment\",\n      \"fix\": \"Delete it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Failed\",\n      \"notes\": \"Tests went red\"\n    },\n    {\n      \"id\": 5,\n      \"file\": \"pom.xml\",\n      \"line\": \"\",\n      \"severity\": \"Major\",\n      \"category\": \"design\",\n      \"issue\": \"Pins an old plugin\",\n      \"fix\": \"Bump it\",\n      \"disposition\": \"Discuss\",\n      \"status\": \"Not Done\",\n      \"notes\": \"Ask the platform team\"\n    },\n    {\n      \"id\": 7,\n      \"file\": \"pom.xml\",\n      \"line\": \"3\",\n      \"severity\": \"Minor\",\n      \"category\": \"duplication\",\n      \"issue\": \"Same version twice\",\n      \"fix\": \"Use a property\",\n      \"disposition\": \"Merged\",\n      \"status\": \"—\",\n      \"notes\": \"merged into #5\",\n      \"best_practice\": \"docs/best-practices/java/maven.md\"\n    }\n  ]\n}\n"
+        }
+      }
+    ]
+  },
+  {
+    "case": "items mark Merged with no note",
+    "steps": [
+      {
+        "command": "items mark",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--item",
+          "1",
+          "--disposition",
+          "Merged"
+        ],
+        "exitCode": 1,
+        "stdout": "",
+        "stderr": "Merged needs --note \"merged into #N\", naming the owner item.\n",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items mark Merged with a note that names no owner",
+    "steps": [
+      {
+        "command": "items mark",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--item",
+          "1",
+          "--disposition",
+          "Merged",
+          "--note",
+          "merged into the token one"
+        ],
+        "exitCode": 1,
+        "stdout": "",
+        "stderr": "Merged needs --note \"merged into #N\", naming the owner item.\n",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items mark with a note",
+    "steps": [
+      {
+        "command": "items mark",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--item",
+          "3",
+          "--disposition",
+          "Won't Fix",
+          "--note",
+          "Out of scope"
+        ],
+        "exitCode": 0,
+        "stdout": "Marked #3 in trade-imports-animals-backend: Disposition=Won't Fix, Status=—, Notes set\n",
+        "stderr": "",
+        "filesWritten": {
+          "EUDPA-9001/items.trade-imports-animals-backend.json": "{\n  \"ticket\": \"EUDPA-9001\",\n  \"repo\": \"trade-imports-animals-backend\",\n  \"items\": [\n    {\n      \"id\": 1,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"12\",\n      \"severity\": \"Critical\",\n      \"category\": \"security\",\n      \"issue\": \"Logs the token\",\n      \"fix\": \"Must: drop it. One way: redact it\",\n      \"disposition\": null,\n      \"status\": null,\n      \"notes\": null\n    },\n    {\n      \"id\": 2,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"30\",\n      \"severity\": \"Major\",\n      \"category\": \"correctness\",\n      \"issue\": \"Tab\\there, a newline\\nthere and a back\\\\slash\",\n      \"fix\": \"Split it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Not Done\",\n      \"notes\": null\n    },\n    {\n      \"id\": 3,\n      \"file\": \"src/main/java/Store.java\",\n      \"line\": 7,\n      \"severity\": \"Minor\",\n      \"category\": \"naming\",\n      \"issue\": \"Vague name\",\n      \"fix\": \"Rename it\",\n      \"disposition\": \"Won't Fix\",\n      \"status\": \"—\",\n      \"notes\": \"Out of scope\"\n    },\n    {\n      \"id\": 4,\n      \"file\": \"src/main/java/Store.java\",\n      \"severity\": \"Minor\",\n      \"category\": \"comments\",\n      \"issue\": \"Stale comment\",\n      \"fix\": \"Delete it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Failed\",\n      \"notes\": \"Tests went red\"\n    },\n    {\n      \"id\": 5,\n      \"file\": \"pom.xml\",\n      \"line\": \"\",\n      \"severity\": \"Major\",\n      \"category\": \"design\",\n      \"issue\": \"Pins an old plugin\",\n      \"fix\": \"Bump it\",\n      \"disposition\": \"Discuss\",\n      \"status\": \"Not Done\",\n      \"notes\": \"Ask the platform team\"\n    },\n    {\n      \"id\": 7,\n      \"file\": \"pom.xml\",\n      \"line\": \"3\",\n      \"severity\": \"Minor\",\n      \"category\": \"duplication\",\n      \"issue\": \"Same version twice\",\n      \"fix\": \"Use a property\",\n      \"disposition\": \"Merged\",\n      \"status\": \"—\",\n      \"notes\": \"merged into #5\",\n      \"best_practice\": \"docs/best-practices/java/maven.md\"\n    }\n  ]\n}\n"
+        }
+      }
+    ]
+  },
+  {
+    "case": "items mark with an empty note",
+    "steps": [
+      {
+        "command": "items mark",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--item",
+          "3",
+          "--disposition",
+          "Discuss",
+          "--note",
+          ""
+        ],
+        "exitCode": 0,
+        "stdout": "Marked #3 in trade-imports-animals-backend: Disposition=Discuss, Status=Not Done, Notes set\n",
+        "stderr": "",
+        "filesWritten": {
+          "EUDPA-9001/items.trade-imports-animals-backend.json": "{\n  \"ticket\": \"EUDPA-9001\",\n  \"repo\": \"trade-imports-animals-backend\",\n  \"items\": [\n    {\n      \"id\": 1,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"12\",\n      \"severity\": \"Critical\",\n      \"category\": \"security\",\n      \"issue\": \"Logs the token\",\n      \"fix\": \"Must: drop it. One way: redact it\",\n      \"disposition\": null,\n      \"status\": null,\n      \"notes\": null\n    },\n    {\n      \"id\": 2,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"30\",\n      \"severity\": \"Major\",\n      \"category\": \"correctness\",\n      \"issue\": \"Tab\\there, a newline\\nthere and a back\\\\slash\",\n      \"fix\": \"Split it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Not Done\",\n      \"notes\": null\n    },\n    {\n      \"id\": 3,\n      \"file\": \"src/main/java/Store.java\",\n      \"line\": 7,\n      \"severity\": \"Minor\",\n      \"category\": \"naming\",\n      \"issue\": \"Vague name\",\n      \"fix\": \"Rename it\",\n      \"disposition\": \"Discuss\",\n      \"status\": \"Not Done\",\n      \"notes\": null\n    },\n    {\n      \"id\": 4,\n      \"file\": \"src/main/java/Store.java\",\n      \"severity\": \"Minor\",\n      \"category\": \"comments\",\n      \"issue\": \"Stale comment\",\n      \"fix\": \"Delete it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Failed\",\n      \"notes\": \"Tests went red\"\n    },\n    {\n      \"id\": 5,\n      \"file\": \"pom.xml\",\n      \"line\": \"\",\n      \"severity\": \"Major\",\n      \"category\": \"design\",\n      \"issue\": \"Pins an old plugin\",\n      \"fix\": \"Bump it\",\n      \"disposition\": \"Discuss\",\n      \"status\": \"Not Done\",\n      \"notes\": \"Ask the platform team\"\n    },\n    {\n      \"id\": 7,\n      \"file\": \"pom.xml\",\n      \"line\": \"3\",\n      \"severity\": \"Minor\",\n      \"category\": \"duplication\",\n      \"issue\": \"Same version twice\",\n      \"fix\": \"Use a property\",\n      \"disposition\": \"Merged\",\n      \"status\": \"—\",\n      \"notes\": \"merged into #5\",\n      \"best_practice\": \"docs/best-practices/java/maven.md\"\n    }\n  ]\n}\n"
+        }
+      }
+    ]
+  },
+  {
+    "case": "items mark with a disposition it does not know",
+    "steps": [
+      {
+        "command": "items mark",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--item",
+          "1",
+          "--disposition",
+          "Ignore"
+        ],
+        "exitCode": 1,
+        "stdout": "",
+        "stderr": "Invalid --disposition: Ignore\n",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items mark an item that is not there",
+    "steps": [
+      {
+        "command": "items mark",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--item",
+          "6",
+          "--disposition",
+          "Fix"
+        ],
+        "exitCode": 1,
+        "stdout": "",
+        "stderr": "Item #6 not found in <HOME>/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-9001/items.trade-imports-animals-backend.json\n",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items mark in a repo with no items file",
+    "steps": [
+      {
+        "command": "items mark",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-stub",
+          "--item",
+          "1",
+          "--disposition",
+          "Fix"
+        ],
+        "exitCode": 1,
+        "stdout": "",
+        "stderr": "Items file not found: <HOME>/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-9001/items.trade-imports-stub.json\n",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items mark with no repo",
+    "steps": [
+      {
+        "command": "items mark",
+        "input": [
+          "EUDPA-9001",
+          "--item",
+          "1",
+          "--disposition",
+          "Fix"
+        ],
+        "exitCode": 1,
+        "stdout": "Usage: <HOME>/git/defra/trade-imports-workspace/tools/review/review-mark.sh EUDPA-XXXXX --repo REPO --item N --disposition VALUE [--note \"...\"]\n\n  --disposition V   One of: Fix, \"Won't Fix\", Discuss, Auto-Resolved, Merged, \"\" (clear)\n  --note \"...\"      Required with Merged: \"merged into #N\"\n",
+        "stderr": "--repo required\n",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items mark with no item",
+    "steps": [
+      {
+        "command": "items mark",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--disposition",
+          "Fix"
+        ],
+        "exitCode": 1,
+        "stdout": "Usage: <HOME>/git/defra/trade-imports-workspace/tools/review/review-mark.sh EUDPA-XXXXX --repo REPO --item N --disposition VALUE [--note \"...\"]\n\n  --disposition V   One of: Fix, \"Won't Fix\", Discuss, Auto-Resolved, Merged, \"\" (clear)\n  --note \"...\"      Required with Merged: \"merged into #N\"\n",
+        "stderr": "--item required\n",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items status --status \"Not Done\"",
+    "steps": [
+      {
+        "command": "items status",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--item",
+          "2",
+          "--status",
+          "Not Done"
+        ],
+        "exitCode": 0,
+        "stdout": "Updated #2 in trade-imports-animals-backend: Status=Not Done, Notes set\n",
+        "stderr": "",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items status --status \"Done\"",
+    "steps": [
+      {
+        "command": "items status",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--item",
+          "2",
+          "--status",
+          "Done"
+        ],
+        "exitCode": 0,
+        "stdout": "Updated #2 in trade-imports-animals-backend: Status=Done, Notes set\n",
+        "stderr": "",
+        "filesWritten": {
+          "EUDPA-9001/items.trade-imports-animals-backend.json": "{\n  \"ticket\": \"EUDPA-9001\",\n  \"repo\": \"trade-imports-animals-backend\",\n  \"items\": [\n    {\n      \"id\": 1,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"12\",\n      \"severity\": \"Critical\",\n      \"category\": \"security\",\n      \"issue\": \"Logs the token\",\n      \"fix\": \"Must: drop it. One way: redact it\",\n      \"disposition\": null,\n      \"status\": null,\n      \"notes\": null\n    },\n    {\n      \"id\": 2,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"30\",\n      \"severity\": \"Major\",\n      \"category\": \"correctness\",\n      \"issue\": \"Tab\\there, a newline\\nthere and a back\\\\slash\",\n      \"fix\": \"Split it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Done\",\n      \"notes\": null\n    },\n    {\n      \"id\": 3,\n      \"file\": \"src/main/java/Store.java\",\n      \"line\": 7,\n      \"severity\": \"Minor\",\n      \"category\": \"naming\",\n      \"issue\": \"Vague name\",\n      \"fix\": \"Rename it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Done\",\n      \"notes\": \"abc1234\"\n    },\n    {\n      \"id\": 4,\n      \"file\": \"src/main/java/Store.java\",\n      \"severity\": \"Minor\",\n      \"category\": \"comments\",\n      \"issue\": \"Stale comment\",\n      \"fix\": \"Delete it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Failed\",\n      \"notes\": \"Tests went red\"\n    },\n    {\n      \"id\": 5,\n      \"file\": \"pom.xml\",\n      \"line\": \"\",\n      \"severity\": \"Major\",\n      \"category\": \"design\",\n      \"issue\": \"Pins an old plugin\",\n      \"fix\": \"Bump it\",\n      \"disposition\": \"Discuss\",\n      \"status\": \"Not Done\",\n      \"notes\": \"Ask the platform team\"\n    },\n    {\n      \"id\": 7,\n      \"file\": \"pom.xml\",\n      \"line\": \"3\",\n      \"severity\": \"Minor\",\n      \"category\": \"duplication\",\n      \"issue\": \"Same version twice\",\n      \"fix\": \"Use a property\",\n      \"disposition\": \"Merged\",\n      \"status\": \"—\",\n      \"notes\": \"merged into #5\",\n      \"best_practice\": \"docs/best-practices/java/maven.md\"\n    }\n  ]\n}\n"
+        }
+      }
+    ]
+  },
+  {
+    "case": "items status --status \"Failed\"",
+    "steps": [
+      {
+        "command": "items status",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--item",
+          "2",
+          "--status",
+          "Failed"
+        ],
+        "exitCode": 0,
+        "stdout": "Updated #2 in trade-imports-animals-backend: Status=Failed, Notes set\n",
+        "stderr": "",
+        "filesWritten": {
+          "EUDPA-9001/items.trade-imports-animals-backend.json": "{\n  \"ticket\": \"EUDPA-9001\",\n  \"repo\": \"trade-imports-animals-backend\",\n  \"items\": [\n    {\n      \"id\": 1,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"12\",\n      \"severity\": \"Critical\",\n      \"category\": \"security\",\n      \"issue\": \"Logs the token\",\n      \"fix\": \"Must: drop it. One way: redact it\",\n      \"disposition\": null,\n      \"status\": null,\n      \"notes\": null\n    },\n    {\n      \"id\": 2,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"30\",\n      \"severity\": \"Major\",\n      \"category\": \"correctness\",\n      \"issue\": \"Tab\\there, a newline\\nthere and a back\\\\slash\",\n      \"fix\": \"Split it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Failed\",\n      \"notes\": null\n    },\n    {\n      \"id\": 3,\n      \"file\": \"src/main/java/Store.java\",\n      \"line\": 7,\n      \"severity\": \"Minor\",\n      \"category\": \"naming\",\n      \"issue\": \"Vague name\",\n      \"fix\": \"Rename it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Done\",\n      \"notes\": \"abc1234\"\n    },\n    {\n      \"id\": 4,\n      \"file\": \"src/main/java/Store.java\",\n      \"severity\": \"Minor\",\n      \"category\": \"comments\",\n      \"issue\": \"Stale comment\",\n      \"fix\": \"Delete it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Failed\",\n      \"notes\": \"Tests went red\"\n    },\n    {\n      \"id\": 5,\n      \"file\": \"pom.xml\",\n      \"line\": \"\",\n      \"severity\": \"Major\",\n      \"category\": \"design\",\n      \"issue\": \"Pins an old plugin\",\n      \"fix\": \"Bump it\",\n      \"disposition\": \"Discuss\",\n      \"status\": \"Not Done\",\n      \"notes\": \"Ask the platform team\"\n    },\n    {\n      \"id\": 7,\n      \"file\": \"pom.xml\",\n      \"line\": \"3\",\n      \"severity\": \"Minor\",\n      \"category\": \"duplication\",\n      \"issue\": \"Same version twice\",\n      \"fix\": \"Use a property\",\n      \"disposition\": \"Merged\",\n      \"status\": \"—\",\n      \"notes\": \"merged into #5\",\n      \"best_practice\": \"docs/best-practices/java/maven.md\"\n    }\n  ]\n}\n"
+        }
+      }
+    ]
+  },
+  {
+    "case": "items status --status \"—\"",
+    "steps": [
+      {
+        "command": "items status",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--item",
+          "2",
+          "--status",
+          "—"
+        ],
+        "exitCode": 0,
+        "stdout": "Updated #2 in trade-imports-animals-backend: Status=—, Notes set\n",
+        "stderr": "",
+        "filesWritten": {
+          "EUDPA-9001/items.trade-imports-animals-backend.json": "{\n  \"ticket\": \"EUDPA-9001\",\n  \"repo\": \"trade-imports-animals-backend\",\n  \"items\": [\n    {\n      \"id\": 1,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"12\",\n      \"severity\": \"Critical\",\n      \"category\": \"security\",\n      \"issue\": \"Logs the token\",\n      \"fix\": \"Must: drop it. One way: redact it\",\n      \"disposition\": null,\n      \"status\": null,\n      \"notes\": null\n    },\n    {\n      \"id\": 2,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"30\",\n      \"severity\": \"Major\",\n      \"category\": \"correctness\",\n      \"issue\": \"Tab\\there, a newline\\nthere and a back\\\\slash\",\n      \"fix\": \"Split it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"—\",\n      \"notes\": null\n    },\n    {\n      \"id\": 3,\n      \"file\": \"src/main/java/Store.java\",\n      \"line\": 7,\n      \"severity\": \"Minor\",\n      \"category\": \"naming\",\n      \"issue\": \"Vague name\",\n      \"fix\": \"Rename it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Done\",\n      \"notes\": \"abc1234\"\n    },\n    {\n      \"id\": 4,\n      \"file\": \"src/main/java/Store.java\",\n      \"severity\": \"Minor\",\n      \"category\": \"comments\",\n      \"issue\": \"Stale comment\",\n      \"fix\": \"Delete it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Failed\",\n      \"notes\": \"Tests went red\"\n    },\n    {\n      \"id\": 5,\n      \"file\": \"pom.xml\",\n      \"line\": \"\",\n      \"severity\": \"Major\",\n      \"category\": \"design\",\n      \"issue\": \"Pins an old plugin\",\n      \"fix\": \"Bump it\",\n      \"disposition\": \"Discuss\",\n      \"status\": \"Not Done\",\n      \"notes\": \"Ask the platform team\"\n    },\n    {\n      \"id\": 7,\n      \"file\": \"pom.xml\",\n      \"line\": \"3\",\n      \"severity\": \"Minor\",\n      \"category\": \"duplication\",\n      \"issue\": \"Same version twice\",\n      \"fix\": \"Use a property\",\n      \"disposition\": \"Merged\",\n      \"status\": \"—\",\n      \"notes\": \"merged into #5\",\n      \"best_practice\": \"docs/best-practices/java/maven.md\"\n    }\n  ]\n}\n"
+        }
+      }
+    ]
+  },
+  {
+    "case": "items status --status \"\"",
+    "steps": [
+      {
+        "command": "items status",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--item",
+          "2",
+          "--status",
+          ""
+        ],
+        "exitCode": 0,
+        "stdout": "Updated #2 in trade-imports-animals-backend: Status=<null>, Notes set\n",
+        "stderr": "",
+        "filesWritten": {
+          "EUDPA-9001/items.trade-imports-animals-backend.json": "{\n  \"ticket\": \"EUDPA-9001\",\n  \"repo\": \"trade-imports-animals-backend\",\n  \"items\": [\n    {\n      \"id\": 1,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"12\",\n      \"severity\": \"Critical\",\n      \"category\": \"security\",\n      \"issue\": \"Logs the token\",\n      \"fix\": \"Must: drop it. One way: redact it\",\n      \"disposition\": null,\n      \"status\": null,\n      \"notes\": null\n    },\n    {\n      \"id\": 2,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"30\",\n      \"severity\": \"Major\",\n      \"category\": \"correctness\",\n      \"issue\": \"Tab\\there, a newline\\nthere and a back\\\\slash\",\n      \"fix\": \"Split it\",\n      \"disposition\": \"Fix\",\n      \"status\": null,\n      \"notes\": null\n    },\n    {\n      \"id\": 3,\n      \"file\": \"src/main/java/Store.java\",\n      \"line\": 7,\n      \"severity\": \"Minor\",\n      \"category\": \"naming\",\n      \"issue\": \"Vague name\",\n      \"fix\": \"Rename it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Done\",\n      \"notes\": \"abc1234\"\n    },\n    {\n      \"id\": 4,\n      \"file\": \"src/main/java/Store.java\",\n      \"severity\": \"Minor\",\n      \"category\": \"comments\",\n      \"issue\": \"Stale comment\",\n      \"fix\": \"Delete it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Failed\",\n      \"notes\": \"Tests went red\"\n    },\n    {\n      \"id\": 5,\n      \"file\": \"pom.xml\",\n      \"line\": \"\",\n      \"severity\": \"Major\",\n      \"category\": \"design\",\n      \"issue\": \"Pins an old plugin\",\n      \"fix\": \"Bump it\",\n      \"disposition\": \"Discuss\",\n      \"status\": \"Not Done\",\n      \"notes\": \"Ask the platform team\"\n    },\n    {\n      \"id\": 7,\n      \"file\": \"pom.xml\",\n      \"line\": \"3\",\n      \"severity\": \"Minor\",\n      \"category\": \"duplication\",\n      \"issue\": \"Same version twice\",\n      \"fix\": \"Use a property\",\n      \"disposition\": \"Merged\",\n      \"status\": \"—\",\n      \"notes\": \"merged into #5\",\n      \"best_practice\": \"docs/best-practices/java/maven.md\"\n    }\n  ]\n}\n"
+        }
+      }
+    ]
+  },
+  {
+    "case": "items status with a note",
+    "steps": [
+      {
+        "command": "items status",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--item",
+          "2",
+          "--status",
+          "Done",
+          "--note",
+          "f00d123"
+        ],
+        "exitCode": 0,
+        "stdout": "Updated #2 in trade-imports-animals-backend: Status=Done, Notes set\n",
+        "stderr": "",
+        "filesWritten": {
+          "EUDPA-9001/items.trade-imports-animals-backend.json": "{\n  \"ticket\": \"EUDPA-9001\",\n  \"repo\": \"trade-imports-animals-backend\",\n  \"items\": [\n    {\n      \"id\": 1,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"12\",\n      \"severity\": \"Critical\",\n      \"category\": \"security\",\n      \"issue\": \"Logs the token\",\n      \"fix\": \"Must: drop it. One way: redact it\",\n      \"disposition\": null,\n      \"status\": null,\n      \"notes\": null\n    },\n    {\n      \"id\": 2,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"30\",\n      \"severity\": \"Major\",\n      \"category\": \"correctness\",\n      \"issue\": \"Tab\\there, a newline\\nthere and a back\\\\slash\",\n      \"fix\": \"Split it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Done\",\n      \"notes\": \"f00d123\"\n    },\n    {\n      \"id\": 3,\n      \"file\": \"src/main/java/Store.java\",\n      \"line\": 7,\n      \"severity\": \"Minor\",\n      \"category\": \"naming\",\n      \"issue\": \"Vague name\",\n      \"fix\": \"Rename it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Done\",\n      \"notes\": \"abc1234\"\n    },\n    {\n      \"id\": 4,\n      \"file\": \"src/main/java/Store.java\",\n      \"severity\": \"Minor\",\n      \"category\": \"comments\",\n      \"issue\": \"Stale comment\",\n      \"fix\": \"Delete it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Failed\",\n      \"notes\": \"Tests went red\"\n    },\n    {\n      \"id\": 5,\n      \"file\": \"pom.xml\",\n      \"line\": \"\",\n      \"severity\": \"Major\",\n      \"category\": \"design\",\n      \"issue\": \"Pins an old plugin\",\n      \"fix\": \"Bump it\",\n      \"disposition\": \"Discuss\",\n      \"status\": \"Not Done\",\n      \"notes\": \"Ask the platform team\"\n    },\n    {\n      \"id\": 7,\n      \"file\": \"pom.xml\",\n      \"line\": \"3\",\n      \"severity\": \"Minor\",\n      \"category\": \"duplication\",\n      \"issue\": \"Same version twice\",\n      \"fix\": \"Use a property\",\n      \"disposition\": \"Merged\",\n      \"status\": \"—\",\n      \"notes\": \"merged into #5\",\n      \"best_practice\": \"docs/best-practices/java/maven.md\"\n    }\n  ]\n}\n"
+        }
+      }
+    ]
+  },
+  {
+    "case": "items status with an empty note",
+    "steps": [
+      {
+        "command": "items status",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--item",
+          "3",
+          "--status",
+          "Failed",
+          "--note",
+          ""
+        ],
+        "exitCode": 0,
+        "stdout": "Updated #3 in trade-imports-animals-backend: Status=Failed, Notes set\n",
+        "stderr": "",
+        "filesWritten": {
+          "EUDPA-9001/items.trade-imports-animals-backend.json": "{\n  \"ticket\": \"EUDPA-9001\",\n  \"repo\": \"trade-imports-animals-backend\",\n  \"items\": [\n    {\n      \"id\": 1,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"12\",\n      \"severity\": \"Critical\",\n      \"category\": \"security\",\n      \"issue\": \"Logs the token\",\n      \"fix\": \"Must: drop it. One way: redact it\",\n      \"disposition\": null,\n      \"status\": null,\n      \"notes\": null\n    },\n    {\n      \"id\": 2,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"30\",\n      \"severity\": \"Major\",\n      \"category\": \"correctness\",\n      \"issue\": \"Tab\\there, a newline\\nthere and a back\\\\slash\",\n      \"fix\": \"Split it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Not Done\",\n      \"notes\": null\n    },\n    {\n      \"id\": 3,\n      \"file\": \"src/main/java/Store.java\",\n      \"line\": 7,\n      \"severity\": \"Minor\",\n      \"category\": \"naming\",\n      \"issue\": \"Vague name\",\n      \"fix\": \"Rename it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Failed\",\n      \"notes\": null\n    },\n    {\n      \"id\": 4,\n      \"file\": \"src/main/java/Store.java\",\n      \"severity\": \"Minor\",\n      \"category\": \"comments\",\n      \"issue\": \"Stale comment\",\n      \"fix\": \"Delete it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Failed\",\n      \"notes\": \"Tests went red\"\n    },\n    {\n      \"id\": 5,\n      \"file\": \"pom.xml\",\n      \"line\": \"\",\n      \"severity\": \"Major\",\n      \"category\": \"design\",\n      \"issue\": \"Pins an old plugin\",\n      \"fix\": \"Bump it\",\n      \"disposition\": \"Discuss\",\n      \"status\": \"Not Done\",\n      \"notes\": \"Ask the platform team\"\n    },\n    {\n      \"id\": 7,\n      \"file\": \"pom.xml\",\n      \"line\": \"3\",\n      \"severity\": \"Minor\",\n      \"category\": \"duplication\",\n      \"issue\": \"Same version twice\",\n      \"fix\": \"Use a property\",\n      \"disposition\": \"Merged\",\n      \"status\": \"—\",\n      \"notes\": \"merged into #5\",\n      \"best_practice\": \"docs/best-practices/java/maven.md\"\n    }\n  ]\n}\n"
+        }
+      }
+    ]
+  },
+  {
+    "case": "items status it does not know",
+    "steps": [
+      {
+        "command": "items status",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--item",
+          "2",
+          "--status",
+          "Skipped"
+        ],
+        "exitCode": 1,
+        "stdout": "",
+        "stderr": "Invalid --status: Skipped\n",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items status for an item that is not there",
+    "steps": [
+      {
+        "command": "items status",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--item",
+          "6",
+          "--status",
+          "Done"
+        ],
+        "exitCode": 1,
+        "stdout": "",
+        "stderr": "Item #6 not found in <HOME>/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-9001/items.trade-imports-animals-backend.json\n",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "items status in a repo with no items file",
+    "steps": [
+      {
+        "command": "items status",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-stub",
+          "--item",
+          "1",
+          "--status",
+          "Done"
+        ],
+        "exitCode": 1,
+        "stdout": "",
+        "stderr": "Items file not found: <HOME>/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-9001/items.trade-imports-stub.json\n",
+        "filesWritten": {}
+      }
+    ]
+  },
+  {
+    "case": "a walker session: add, mark, fix, then report",
+    "steps": [
+      {
+        "command": "items add",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-frontend",
+          "--file",
+          "src/server/app/page.js",
+          "--line",
+          "18",
+          "--severity",
+          "Major",
+          "--category",
+          "coverage-gap",
+          "--issue",
+          "No test for the error page",
+          "--fix",
+          "Add one"
+        ],
+        "exitCode": 0,
+        "stdout": "4\n",
+        "stderr": "",
+        "filesWritten": {
+          "EUDPA-9001/items.trade-imports-animals-frontend.json": "{\n  \"ticket\": \"EUDPA-9001\",\n  \"repo\": \"trade-imports-animals-frontend\",\n  \"items\": [\n    {\n      \"id\": 1,\n      \"file\": \"src/server/app/index.js\",\n      \"line\": \"4\",\n      \"severity\": \"Minor\",\n      \"category\": \"naming\",\n      \"issue\": \"Abbreviated name\",\n      \"fix\": \"Spell it out\",\n      \"disposition\": \"Won't Fix\",\n      \"status\": \"—\",\n      \"notes\": \"House style allows it\"\n    },\n    {\n      \"id\": 2,\n      \"file\": \"src/server/app/index.js\",\n      \"line\": \"9\",\n      \"severity\": \"Major\",\n      \"category\": \"error-handling\",\n      \"issue\": \"Swallows the error\",\n      \"fix\": \"Rethrow\",\n      \"disposition\": \"Auto-Resolved\",\n      \"status\": \"—\",\n      \"notes\": \"File deleted\"\n    },\n    {\n      \"id\": 3,\n      \"file\": \"README.md\",\n      \"line\": \"1\",\n      \"severity\": \"Minor\",\n      \"category\": \"comments\",\n      \"issue\": \"Typo\",\n      \"fix\": \"Fix the typo\",\n      \"disposition\": \"\",\n      \"status\": \"\",\n      \"notes\": \"\"\n    },\n    {\n      \"id\": 4,\n      \"file\": \"src/server/app/page.js\",\n      \"line\": \"18\",\n      \"severity\": \"Major\",\n      \"category\": \"coverage-gap\",\n      \"issue\": \"No test for the error page\",\n      \"fix\": \"Add one\",\n      \"disposition\": null,\n      \"status\": null,\n      \"notes\": null\n    }\n  ]\n}\n"
+        }
+      },
+      {
+        "command": "items mark",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-frontend",
+          "--item",
+          "4",
+          "--disposition",
+          "Fix"
+        ],
+        "exitCode": 0,
+        "stdout": "Marked #4 in trade-imports-animals-frontend: Disposition=Fix, Status=Not Done, Notes set\n",
+        "stderr": "",
+        "filesWritten": {
+          "EUDPA-9001/items.trade-imports-animals-frontend.json": "{\n  \"ticket\": \"EUDPA-9001\",\n  \"repo\": \"trade-imports-animals-frontend\",\n  \"items\": [\n    {\n      \"id\": 1,\n      \"file\": \"src/server/app/index.js\",\n      \"line\": \"4\",\n      \"severity\": \"Minor\",\n      \"category\": \"naming\",\n      \"issue\": \"Abbreviated name\",\n      \"fix\": \"Spell it out\",\n      \"disposition\": \"Won't Fix\",\n      \"status\": \"—\",\n      \"notes\": \"House style allows it\"\n    },\n    {\n      \"id\": 2,\n      \"file\": \"src/server/app/index.js\",\n      \"line\": \"9\",\n      \"severity\": \"Major\",\n      \"category\": \"error-handling\",\n      \"issue\": \"Swallows the error\",\n      \"fix\": \"Rethrow\",\n      \"disposition\": \"Auto-Resolved\",\n      \"status\": \"—\",\n      \"notes\": \"File deleted\"\n    },\n    {\n      \"id\": 3,\n      \"file\": \"README.md\",\n      \"line\": \"1\",\n      \"severity\": \"Minor\",\n      \"category\": \"comments\",\n      \"issue\": \"Typo\",\n      \"fix\": \"Fix the typo\",\n      \"disposition\": \"\",\n      \"status\": \"\",\n      \"notes\": \"\"\n    },\n    {\n      \"id\": 4,\n      \"file\": \"src/server/app/page.js\",\n      \"line\": \"18\",\n      \"severity\": \"Major\",\n      \"category\": \"coverage-gap\",\n      \"issue\": \"No test for the error page\",\n      \"fix\": \"Add one\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Not Done\",\n      \"notes\": null\n    }\n  ]\n}\n"
+        }
+      },
+      {
+        "command": "items mark",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-backend",
+          "--item",
+          "1",
+          "--disposition",
+          "Won't Fix",
+          "--note",
+          "Token is a test value"
+        ],
+        "exitCode": 0,
+        "stdout": "Marked #1 in trade-imports-animals-backend: Disposition=Won't Fix, Status=—, Notes set\n",
+        "stderr": "",
+        "filesWritten": {
+          "EUDPA-9001/items.trade-imports-animals-backend.json": "{\n  \"ticket\": \"EUDPA-9001\",\n  \"repo\": \"trade-imports-animals-backend\",\n  \"items\": [\n    {\n      \"id\": 1,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"12\",\n      \"severity\": \"Critical\",\n      \"category\": \"security\",\n      \"issue\": \"Logs the token\",\n      \"fix\": \"Must: drop it. One way: redact it\",\n      \"disposition\": \"Won't Fix\",\n      \"status\": \"—\",\n      \"notes\": \"Token is a test value\"\n    },\n    {\n      \"id\": 2,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"30\",\n      \"severity\": \"Major\",\n      \"category\": \"correctness\",\n      \"issue\": \"Tab\\there, a newline\\nthere and a back\\\\slash\",\n      \"fix\": \"Split it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Not Done\",\n      \"notes\": null\n    },\n    {\n      \"id\": 3,\n      \"file\": \"src/main/java/Store.java\",\n      \"line\": 7,\n      \"severity\": \"Minor\",\n      \"category\": \"naming\",\n      \"issue\": \"Vague name\",\n      \"fix\": \"Rename it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Done\",\n      \"notes\": \"abc1234\"\n    },\n    {\n      \"id\": 4,\n      \"file\": \"src/main/java/Store.java\",\n      \"severity\": \"Minor\",\n      \"category\": \"comments\",\n      \"issue\": \"Stale comment\",\n      \"fix\": \"Delete it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Failed\",\n      \"notes\": \"Tests went red\"\n    },\n    {\n      \"id\": 5,\n      \"file\": \"pom.xml\",\n      \"line\": \"\",\n      \"severity\": \"Major\",\n      \"category\": \"design\",\n      \"issue\": \"Pins an old plugin\",\n      \"fix\": \"Bump it\",\n      \"disposition\": \"Discuss\",\n      \"status\": \"Not Done\",\n      \"notes\": \"Ask the platform team\"\n    },\n    {\n      \"id\": 7,\n      \"file\": \"pom.xml\",\n      \"line\": \"3\",\n      \"severity\": \"Minor\",\n      \"category\": \"duplication\",\n      \"issue\": \"Same version twice\",\n      \"fix\": \"Use a property\",\n      \"disposition\": \"Merged\",\n      \"status\": \"—\",\n      \"notes\": \"merged into #5\",\n      \"best_practice\": \"docs/best-practices/java/maven.md\"\n    }\n  ]\n}\n",
+          "EUDPA-9001/items.trade-imports-animals-frontend.json": "{\n  \"ticket\": \"EUDPA-9001\",\n  \"repo\": \"trade-imports-animals-frontend\",\n  \"items\": [\n    {\n      \"id\": 1,\n      \"file\": \"src/server/app/index.js\",\n      \"line\": \"4\",\n      \"severity\": \"Minor\",\n      \"category\": \"naming\",\n      \"issue\": \"Abbreviated name\",\n      \"fix\": \"Spell it out\",\n      \"disposition\": \"Won't Fix\",\n      \"status\": \"—\",\n      \"notes\": \"House style allows it\"\n    },\n    {\n      \"id\": 2,\n      \"file\": \"src/server/app/index.js\",\n      \"line\": \"9\",\n      \"severity\": \"Major\",\n      \"category\": \"error-handling\",\n      \"issue\": \"Swallows the error\",\n      \"fix\": \"Rethrow\",\n      \"disposition\": \"Auto-Resolved\",\n      \"status\": \"—\",\n      \"notes\": \"File deleted\"\n    },\n    {\n      \"id\": 3,\n      \"file\": \"README.md\",\n      \"line\": \"1\",\n      \"severity\": \"Minor\",\n      \"category\": \"comments\",\n      \"issue\": \"Typo\",\n      \"fix\": \"Fix the typo\",\n      \"disposition\": \"\",\n      \"status\": \"\",\n      \"notes\": \"\"\n    },\n    {\n      \"id\": 4,\n      \"file\": \"src/server/app/page.js\",\n      \"line\": \"18\",\n      \"severity\": \"Major\",\n      \"category\": \"coverage-gap\",\n      \"issue\": \"No test for the error page\",\n      \"fix\": \"Add one\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Not Done\",\n      \"notes\": null\n    }\n  ]\n}\n"
+        }
+      },
+      {
+        "command": "items list",
+        "input": [
+          "EUDPA-9001",
+          "--filter",
+          "fix",
+          "--status",
+          "not-done"
+        ],
+        "exitCode": 0,
+        "stdout": "trade-imports-animals-backend\t2\tsrc/main/java/Notification.java\t30\tMajor\tcorrectness\tTab\\there, a newline\\nthere and a back\\\\slash\tSplit it\tFix\tNot Done\t\ntrade-imports-animals-frontend\t4\tsrc/server/app/page.js\t18\tMajor\tcoverage-gap\tNo test for the error page\tAdd one\tFix\tNot Done\t\n",
+        "stderr": "",
+        "filesWritten": {
+          "EUDPA-9001/items.trade-imports-animals-backend.json": "{\n  \"ticket\": \"EUDPA-9001\",\n  \"repo\": \"trade-imports-animals-backend\",\n  \"items\": [\n    {\n      \"id\": 1,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"12\",\n      \"severity\": \"Critical\",\n      \"category\": \"security\",\n      \"issue\": \"Logs the token\",\n      \"fix\": \"Must: drop it. One way: redact it\",\n      \"disposition\": \"Won't Fix\",\n      \"status\": \"—\",\n      \"notes\": \"Token is a test value\"\n    },\n    {\n      \"id\": 2,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"30\",\n      \"severity\": \"Major\",\n      \"category\": \"correctness\",\n      \"issue\": \"Tab\\there, a newline\\nthere and a back\\\\slash\",\n      \"fix\": \"Split it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Not Done\",\n      \"notes\": null\n    },\n    {\n      \"id\": 3,\n      \"file\": \"src/main/java/Store.java\",\n      \"line\": 7,\n      \"severity\": \"Minor\",\n      \"category\": \"naming\",\n      \"issue\": \"Vague name\",\n      \"fix\": \"Rename it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Done\",\n      \"notes\": \"abc1234\"\n    },\n    {\n      \"id\": 4,\n      \"file\": \"src/main/java/Store.java\",\n      \"severity\": \"Minor\",\n      \"category\": \"comments\",\n      \"issue\": \"Stale comment\",\n      \"fix\": \"Delete it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Failed\",\n      \"notes\": \"Tests went red\"\n    },\n    {\n      \"id\": 5,\n      \"file\": \"pom.xml\",\n      \"line\": \"\",\n      \"severity\": \"Major\",\n      \"category\": \"design\",\n      \"issue\": \"Pins an old plugin\",\n      \"fix\": \"Bump it\",\n      \"disposition\": \"Discuss\",\n      \"status\": \"Not Done\",\n      \"notes\": \"Ask the platform team\"\n    },\n    {\n      \"id\": 7,\n      \"file\": \"pom.xml\",\n      \"line\": \"3\",\n      \"severity\": \"Minor\",\n      \"category\": \"duplication\",\n      \"issue\": \"Same version twice\",\n      \"fix\": \"Use a property\",\n      \"disposition\": \"Merged\",\n      \"status\": \"—\",\n      \"notes\": \"merged into #5\",\n      \"best_practice\": \"docs/best-practices/java/maven.md\"\n    }\n  ]\n}\n",
+          "EUDPA-9001/items.trade-imports-animals-frontend.json": "{\n  \"ticket\": \"EUDPA-9001\",\n  \"repo\": \"trade-imports-animals-frontend\",\n  \"items\": [\n    {\n      \"id\": 1,\n      \"file\": \"src/server/app/index.js\",\n      \"line\": \"4\",\n      \"severity\": \"Minor\",\n      \"category\": \"naming\",\n      \"issue\": \"Abbreviated name\",\n      \"fix\": \"Spell it out\",\n      \"disposition\": \"Won't Fix\",\n      \"status\": \"—\",\n      \"notes\": \"House style allows it\"\n    },\n    {\n      \"id\": 2,\n      \"file\": \"src/server/app/index.js\",\n      \"line\": \"9\",\n      \"severity\": \"Major\",\n      \"category\": \"error-handling\",\n      \"issue\": \"Swallows the error\",\n      \"fix\": \"Rethrow\",\n      \"disposition\": \"Auto-Resolved\",\n      \"status\": \"—\",\n      \"notes\": \"File deleted\"\n    },\n    {\n      \"id\": 3,\n      \"file\": \"README.md\",\n      \"line\": \"1\",\n      \"severity\": \"Minor\",\n      \"category\": \"comments\",\n      \"issue\": \"Typo\",\n      \"fix\": \"Fix the typo\",\n      \"disposition\": \"\",\n      \"status\": \"\",\n      \"notes\": \"\"\n    },\n    {\n      \"id\": 4,\n      \"file\": \"src/server/app/page.js\",\n      \"line\": \"18\",\n      \"severity\": \"Major\",\n      \"category\": \"coverage-gap\",\n      \"issue\": \"No test for the error page\",\n      \"fix\": \"Add one\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Not Done\",\n      \"notes\": null\n    }\n  ]\n}\n"
+        }
+      },
+      {
+        "command": "items status",
+        "input": [
+          "EUDPA-9001",
+          "--repo",
+          "trade-imports-animals-frontend",
+          "--item",
+          "4",
+          "--status",
+          "Done",
+          "--note",
+          "1a2b3c4"
+        ],
+        "exitCode": 0,
+        "stdout": "Updated #4 in trade-imports-animals-frontend: Status=Done, Notes set\n",
+        "stderr": "",
+        "filesWritten": {
+          "EUDPA-9001/items.trade-imports-animals-backend.json": "{\n  \"ticket\": \"EUDPA-9001\",\n  \"repo\": \"trade-imports-animals-backend\",\n  \"items\": [\n    {\n      \"id\": 1,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"12\",\n      \"severity\": \"Critical\",\n      \"category\": \"security\",\n      \"issue\": \"Logs the token\",\n      \"fix\": \"Must: drop it. One way: redact it\",\n      \"disposition\": \"Won't Fix\",\n      \"status\": \"—\",\n      \"notes\": \"Token is a test value\"\n    },\n    {\n      \"id\": 2,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"30\",\n      \"severity\": \"Major\",\n      \"category\": \"correctness\",\n      \"issue\": \"Tab\\there, a newline\\nthere and a back\\\\slash\",\n      \"fix\": \"Split it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Not Done\",\n      \"notes\": null\n    },\n    {\n      \"id\": 3,\n      \"file\": \"src/main/java/Store.java\",\n      \"line\": 7,\n      \"severity\": \"Minor\",\n      \"category\": \"naming\",\n      \"issue\": \"Vague name\",\n      \"fix\": \"Rename it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Done\",\n      \"notes\": \"abc1234\"\n    },\n    {\n      \"id\": 4,\n      \"file\": \"src/main/java/Store.java\",\n      \"severity\": \"Minor\",\n      \"category\": \"comments\",\n      \"issue\": \"Stale comment\",\n      \"fix\": \"Delete it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Failed\",\n      \"notes\": \"Tests went red\"\n    },\n    {\n      \"id\": 5,\n      \"file\": \"pom.xml\",\n      \"line\": \"\",\n      \"severity\": \"Major\",\n      \"category\": \"design\",\n      \"issue\": \"Pins an old plugin\",\n      \"fix\": \"Bump it\",\n      \"disposition\": \"Discuss\",\n      \"status\": \"Not Done\",\n      \"notes\": \"Ask the platform team\"\n    },\n    {\n      \"id\": 7,\n      \"file\": \"pom.xml\",\n      \"line\": \"3\",\n      \"severity\": \"Minor\",\n      \"category\": \"duplication\",\n      \"issue\": \"Same version twice\",\n      \"fix\": \"Use a property\",\n      \"disposition\": \"Merged\",\n      \"status\": \"—\",\n      \"notes\": \"merged into #5\",\n      \"best_practice\": \"docs/best-practices/java/maven.md\"\n    }\n  ]\n}\n",
+          "EUDPA-9001/items.trade-imports-animals-frontend.json": "{\n  \"ticket\": \"EUDPA-9001\",\n  \"repo\": \"trade-imports-animals-frontend\",\n  \"items\": [\n    {\n      \"id\": 1,\n      \"file\": \"src/server/app/index.js\",\n      \"line\": \"4\",\n      \"severity\": \"Minor\",\n      \"category\": \"naming\",\n      \"issue\": \"Abbreviated name\",\n      \"fix\": \"Spell it out\",\n      \"disposition\": \"Won't Fix\",\n      \"status\": \"—\",\n      \"notes\": \"House style allows it\"\n    },\n    {\n      \"id\": 2,\n      \"file\": \"src/server/app/index.js\",\n      \"line\": \"9\",\n      \"severity\": \"Major\",\n      \"category\": \"error-handling\",\n      \"issue\": \"Swallows the error\",\n      \"fix\": \"Rethrow\",\n      \"disposition\": \"Auto-Resolved\",\n      \"status\": \"—\",\n      \"notes\": \"File deleted\"\n    },\n    {\n      \"id\": 3,\n      \"file\": \"README.md\",\n      \"line\": \"1\",\n      \"severity\": \"Minor\",\n      \"category\": \"comments\",\n      \"issue\": \"Typo\",\n      \"fix\": \"Fix the typo\",\n      \"disposition\": \"\",\n      \"status\": \"\",\n      \"notes\": \"\"\n    },\n    {\n      \"id\": 4,\n      \"file\": \"src/server/app/page.js\",\n      \"line\": \"18\",\n      \"severity\": \"Major\",\n      \"category\": \"coverage-gap\",\n      \"issue\": \"No test for the error page\",\n      \"fix\": \"Add one\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Done\",\n      \"notes\": \"1a2b3c4\"\n    }\n  ]\n}\n"
+        }
+      },
+      {
+        "command": "items list",
+        "input": [
+          "EUDPA-9001",
+          "--filter",
+          "pending"
+        ],
+        "exitCode": 0,
+        "stdout": "trade-imports-animals-frontend\t3\tREADME.md\t1\tMinor\tcomments\tTypo\tFix the typo\t\t\t\n",
+        "stderr": "",
+        "filesWritten": {
+          "EUDPA-9001/items.trade-imports-animals-backend.json": "{\n  \"ticket\": \"EUDPA-9001\",\n  \"repo\": \"trade-imports-animals-backend\",\n  \"items\": [\n    {\n      \"id\": 1,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"12\",\n      \"severity\": \"Critical\",\n      \"category\": \"security\",\n      \"issue\": \"Logs the token\",\n      \"fix\": \"Must: drop it. One way: redact it\",\n      \"disposition\": \"Won't Fix\",\n      \"status\": \"—\",\n      \"notes\": \"Token is a test value\"\n    },\n    {\n      \"id\": 2,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"30\",\n      \"severity\": \"Major\",\n      \"category\": \"correctness\",\n      \"issue\": \"Tab\\there, a newline\\nthere and a back\\\\slash\",\n      \"fix\": \"Split it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Not Done\",\n      \"notes\": null\n    },\n    {\n      \"id\": 3,\n      \"file\": \"src/main/java/Store.java\",\n      \"line\": 7,\n      \"severity\": \"Minor\",\n      \"category\": \"naming\",\n      \"issue\": \"Vague name\",\n      \"fix\": \"Rename it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Done\",\n      \"notes\": \"abc1234\"\n    },\n    {\n      \"id\": 4,\n      \"file\": \"src/main/java/Store.java\",\n      \"severity\": \"Minor\",\n      \"category\": \"comments\",\n      \"issue\": \"Stale comment\",\n      \"fix\": \"Delete it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Failed\",\n      \"notes\": \"Tests went red\"\n    },\n    {\n      \"id\": 5,\n      \"file\": \"pom.xml\",\n      \"line\": \"\",\n      \"severity\": \"Major\",\n      \"category\": \"design\",\n      \"issue\": \"Pins an old plugin\",\n      \"fix\": \"Bump it\",\n      \"disposition\": \"Discuss\",\n      \"status\": \"Not Done\",\n      \"notes\": \"Ask the platform team\"\n    },\n    {\n      \"id\": 7,\n      \"file\": \"pom.xml\",\n      \"line\": \"3\",\n      \"severity\": \"Minor\",\n      \"category\": \"duplication\",\n      \"issue\": \"Same version twice\",\n      \"fix\": \"Use a property\",\n      \"disposition\": \"Merged\",\n      \"status\": \"—\",\n      \"notes\": \"merged into #5\",\n      \"best_practice\": \"docs/best-practices/java/maven.md\"\n    }\n  ]\n}\n",
+          "EUDPA-9001/items.trade-imports-animals-frontend.json": "{\n  \"ticket\": \"EUDPA-9001\",\n  \"repo\": \"trade-imports-animals-frontend\",\n  \"items\": [\n    {\n      \"id\": 1,\n      \"file\": \"src/server/app/index.js\",\n      \"line\": \"4\",\n      \"severity\": \"Minor\",\n      \"category\": \"naming\",\n      \"issue\": \"Abbreviated name\",\n      \"fix\": \"Spell it out\",\n      \"disposition\": \"Won't Fix\",\n      \"status\": \"—\",\n      \"notes\": \"House style allows it\"\n    },\n    {\n      \"id\": 2,\n      \"file\": \"src/server/app/index.js\",\n      \"line\": \"9\",\n      \"severity\": \"Major\",\n      \"category\": \"error-handling\",\n      \"issue\": \"Swallows the error\",\n      \"fix\": \"Rethrow\",\n      \"disposition\": \"Auto-Resolved\",\n      \"status\": \"—\",\n      \"notes\": \"File deleted\"\n    },\n    {\n      \"id\": 3,\n      \"file\": \"README.md\",\n      \"line\": \"1\",\n      \"severity\": \"Minor\",\n      \"category\": \"comments\",\n      \"issue\": \"Typo\",\n      \"fix\": \"Fix the typo\",\n      \"disposition\": \"\",\n      \"status\": \"\",\n      \"notes\": \"\"\n    },\n    {\n      \"id\": 4,\n      \"file\": \"src/server/app/page.js\",\n      \"line\": \"18\",\n      \"severity\": \"Major\",\n      \"category\": \"coverage-gap\",\n      \"issue\": \"No test for the error page\",\n      \"fix\": \"Add one\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Done\",\n      \"notes\": \"1a2b3c4\"\n    }\n  ]\n}\n"
+        }
+      },
+      {
+        "command": "items counts",
+        "input": [
+          "EUDPA-9001"
+        ],
+        "exitCode": 0,
+        "stdout": "Counts for EUDPA-9001:\n     1  —              \n     1  Auto-Resolved    —\n     1  Discuss          Not Done\n     2  Fix              Done\n     1  Fix              Failed\n     1  Fix              Not Done\n     1  Merged           —\n     2  Won't Fix        —\n  ----\n    10  TOTAL\n",
+        "stderr": "",
+        "filesWritten": {
+          "EUDPA-9001/items.trade-imports-animals-backend.json": "{\n  \"ticket\": \"EUDPA-9001\",\n  \"repo\": \"trade-imports-animals-backend\",\n  \"items\": [\n    {\n      \"id\": 1,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"12\",\n      \"severity\": \"Critical\",\n      \"category\": \"security\",\n      \"issue\": \"Logs the token\",\n      \"fix\": \"Must: drop it. One way: redact it\",\n      \"disposition\": \"Won't Fix\",\n      \"status\": \"—\",\n      \"notes\": \"Token is a test value\"\n    },\n    {\n      \"id\": 2,\n      \"file\": \"src/main/java/Notification.java\",\n      \"line\": \"30\",\n      \"severity\": \"Major\",\n      \"category\": \"correctness\",\n      \"issue\": \"Tab\\there, a newline\\nthere and a back\\\\slash\",\n      \"fix\": \"Split it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Not Done\",\n      \"notes\": null\n    },\n    {\n      \"id\": 3,\n      \"file\": \"src/main/java/Store.java\",\n      \"line\": 7,\n      \"severity\": \"Minor\",\n      \"category\": \"naming\",\n      \"issue\": \"Vague name\",\n      \"fix\": \"Rename it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Done\",\n      \"notes\": \"abc1234\"\n    },\n    {\n      \"id\": 4,\n      \"file\": \"src/main/java/Store.java\",\n      \"severity\": \"Minor\",\n      \"category\": \"comments\",\n      \"issue\": \"Stale comment\",\n      \"fix\": \"Delete it\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Failed\",\n      \"notes\": \"Tests went red\"\n    },\n    {\n      \"id\": 5,\n      \"file\": \"pom.xml\",\n      \"line\": \"\",\n      \"severity\": \"Major\",\n      \"category\": \"design\",\n      \"issue\": \"Pins an old plugin\",\n      \"fix\": \"Bump it\",\n      \"disposition\": \"Discuss\",\n      \"status\": \"Not Done\",\n      \"notes\": \"Ask the platform team\"\n    },\n    {\n      \"id\": 7,\n      \"file\": \"pom.xml\",\n      \"line\": \"3\",\n      \"severity\": \"Minor\",\n      \"category\": \"duplication\",\n      \"issue\": \"Same version twice\",\n      \"fix\": \"Use a property\",\n      \"disposition\": \"Merged\",\n      \"status\": \"—\",\n      \"notes\": \"merged into #5\",\n      \"best_practice\": \"docs/best-practices/java/maven.md\"\n    }\n  ]\n}\n",
+          "EUDPA-9001/items.trade-imports-animals-frontend.json": "{\n  \"ticket\": \"EUDPA-9001\",\n  \"repo\": \"trade-imports-animals-frontend\",\n  \"items\": [\n    {\n      \"id\": 1,\n      \"file\": \"src/server/app/index.js\",\n      \"line\": \"4\",\n      \"severity\": \"Minor\",\n      \"category\": \"naming\",\n      \"issue\": \"Abbreviated name\",\n      \"fix\": \"Spell it out\",\n      \"disposition\": \"Won't Fix\",\n      \"status\": \"—\",\n      \"notes\": \"House style allows it\"\n    },\n    {\n      \"id\": 2,\n      \"file\": \"src/server/app/index.js\",\n      \"line\": \"9\",\n      \"severity\": \"Major\",\n      \"category\": \"error-handling\",\n      \"issue\": \"Swallows the error\",\n      \"fix\": \"Rethrow\",\n      \"disposition\": \"Auto-Resolved\",\n      \"status\": \"—\",\n      \"notes\": \"File deleted\"\n    },\n    {\n      \"id\": 3,\n      \"file\": \"README.md\",\n      \"line\": \"1\",\n      \"severity\": \"Minor\",\n      \"category\": \"comments\",\n      \"issue\": \"Typo\",\n      \"fix\": \"Fix the typo\",\n      \"disposition\": \"\",\n      \"status\": \"\",\n      \"notes\": \"\"\n    },\n    {\n      \"id\": 4,\n      \"file\": \"src/server/app/page.js\",\n      \"line\": \"18\",\n      \"severity\": \"Major\",\n      \"category\": \"coverage-gap\",\n      \"issue\": \"No test for the error page\",\n      \"fix\": \"Add one\",\n      \"disposition\": \"Fix\",\n      \"status\": \"Done\",\n      \"notes\": \"1a2b3c4\"\n    }\n  ]\n}\n"
+        }
+      }
+    ]
+  }
+]

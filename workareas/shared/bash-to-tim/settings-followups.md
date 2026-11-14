@@ -76,3 +76,11 @@ None. No allowlist entry names `tools/ticket/setup-branch.sh`,
 `Bash(tim:*)` covers `tim ticket branch`, `prepare-plan` and
 `prepare-implement`; IMPLEMENTOR's `gh search prs` and `gh pr diff` calls
 need whatever `gh` permission the session already has.
+
+## P47
+
+None. No allowlist entry names `file-review-init.sh`,
+`file-review-add-item.sh`, `file-review-set-verdict.sh`, `review-items.sh`,
+`review-counts.sh`, `review-add-item.sh`, `review-mark.sh` or
+`review-set-status.sh`. `Bash(tim:*)` covers `tim review file` and
+`tim review items`.

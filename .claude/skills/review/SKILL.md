@@ -246,7 +246,7 @@ Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/re
 ```
 
 The reviewer writes findings to the per-file JSON placeholder via the
-`file-review-add-item.sh` / `file-review-set-verdict.sh` helpers — no
+`tim review file add` / `tim review file verdict` commands — no
 markdown, no placeholder path needed in the spawn prompt.
 
 ## Step 3: Verify Coverage
@@ -310,14 +310,15 @@ and Reuse" and "Statements Made Untrue" in each repo's
 `_consistency-check.md`, add an item:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/review/review-add-item.sh EUDPA-XXXXX --repo {repo} --file {file} --line {line} --severity Major --category {naming|duplication|comments} --issue "{finding}" --fix "Must: {must}. One way: {one way}"
+tim review items add EUDPA-XXXXX --repo {repo} --file {file} --line {line} --severity Major --category {naming|duplication|comments} --issue "{finding}" --fix "Must: {must}. One way: {one way}"
 ```
 
 A "Naming and Reuse" row is `naming`, or `duplication` when it names a
 second copy of something. A "Statements Made Untrue" row is `comments`.
 
 **2. Merge findings that share one root.** Read
-`review-items.sh EUDPA-XXXXX --repo {repo} --json` across every repo.
+`tim review items list EUDPA-XXXXX --repo {repo} --json` (the items
+are `result`) across every repo.
 Group items whose Musts would each add or change the same rule, guard,
 format or name in a different place. Signs of one root:
 
@@ -333,7 +334,7 @@ different ways.
 For each group of two or more, add one "decide the owner" item:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/review/review-add-item.sh EUDPA-XXXXX --repo {repo of the likely owner} --file {likely owner file} --line {line} --severity {highest in the group} --category {duplication|structure} --issue "One rule, {N} findings: #{a}, #{b}, #{c} — {the rule in one line}" --fix "Must: one owner holds {the rule}; every other place calls it or is deleted. One way: {the owner you would pick, and why}"
+tim review items add EUDPA-XXXXX --repo {repo of the likely owner} --file {likely owner file} --line {line} --severity {highest in the group} --category {duplication|structure} --issue "One rule, {N} findings: #{a}, #{b}, #{c} — {the rule in one line}" --fix "Must: one owner holds {the rule}; every other place calls it or is deleted. One way: {the owner you would pick, and why}"
 ```
 
 The owner item is `duplication` when its members are copies of one
@@ -342,7 +343,7 @@ rule, and `structure` otherwise. Its issue always starts `One rule,`.
 Then close each member with a pointer to it:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/review/review-mark.sh EUDPA-XXXXX --repo {repo} --item {member id} --disposition "Merged" --note "merged into #{owner item id}"
+tim review items mark EUDPA-XXXXX --repo {repo} --item {member id} --disposition "Merged" --note "merged into #{owner item id}"
 ```
 
 Run each call as its own Bash call. A finding with no partner stays as
@@ -554,7 +555,7 @@ render-items.sh and gets overwritten.)
 **Bulk-marking shortcut:** the markdown `## Items` table in
 `review.{repo}.md` is a rendered view of `items.{repo}.json` —
 hand-edits there get overwritten by the next `render-items.sh`.
-To pre-decide items before walking, call `review-mark.sh` directly
+To pre-decide items before walking, call `tim review items mark` directly
 for each (or run `walk review EUDPA-XXXXX` and rattle through with
 F / W / D keystrokes — that's normally faster). The walker only
 shows items with `disposition: null`, so pre-marked items are
@@ -599,8 +600,10 @@ SHA for the refresh summary.
 ## Step R3.5: Load Full Item Inventory
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/review/review-items.sh EUDPA-XXXXX --json
+tim review items list EUDPA-XXXXX --json
 ```
+
+The items are the envelope's `result`.
 
 Use this when reconciling agent results in R6:
 
@@ -609,7 +612,7 @@ Use this when reconciling agent results in R6:
 - `Fix` + `Not Done` (and `Discuss`) → still open.
 - Blank disposition → pending (walker will pick up; should appear in List B).
 
-Deleted files: mark their items as `Auto-Resolved` via `review-mark.sh`.
+Deleted files: mark their items as `Auto-Resolved` via `tim review items mark`.
 
 ## Step R4: Re-review Files
 
@@ -774,17 +777,23 @@ All under `~/git/defra/trade-imports-workspace/tools/review/`:
 | `verify-coverage.sh` | Fresh Step 3 coverage gate |
 | `verify-consistency.sh` | Fresh Step 4 consistency gate |
 | `verify-style-coverage.sh` | Cross-domain — style-review coverage check (also consumed by code-style) |
-| `review-items.sh` | Walker / batch / refresh — list items with filters |
-| `review-mark.sh` | Set Disposition (auto-sets Status) |
-| `review-set-status.sh` | Set Status only (after fix attempt) |
-| `review-add-item.sh` | Append a newly-found violation; returns the new ID |
-| `review-counts.sh` | Final reports (walker + batch implementor) — breakdown by Disposition+Status |
 | `aggregate-file-reviews.sh` | Fresh Step 5 — write `items.{repo}.json` from per-file `.review.json` files; emit File Analysis Summary / Items markdown |
 | `share-review.sh` | Fresh Step 7 — post the review as a PR comment; `--comment-only` for PRs you authored, otherwise also push handoff branch `chore/EUDPA-X` to the workspace remote |
 | `render-items.sh` | Render `items.{repo}.json` as the `## Items` markdown view; `--write` puts it into `review.{repo}.md` |
-| `file-review-init.sh` / `file-review-add-item.sh` / `file-review-set-verdict.sh` | Per-file JSON helpers used by the FILE_REVIEWER persona |
 | `refresh/scope.sh` | Refresh Steps R1-R3 orchestrator |
 | `refresh/reconcile.sh` | Refresh Step R5 — fold per-file `.review.json` findings into `items.{repo}.json`; emit Fix+Done spot-check advisory |
 | `refresh/pull-repos.sh` | Refresh helper — pin PR-ref refspec, fetch + detach per repo (origin/main for merged PRs) |
 | `refresh/list-merge-resolved.sh` | Refresh helper — hand-resolved merge files (List C) |
 | `refresh/list-coverage-gaps.sh` | Refresh helper — PR files lacking a `.review.md` (List D) |
+
+The items ledger and the per-file review JSON go through `tim review`
+(`--json` puts the output in the envelope's `result`):
+
+| Command | Purpose |
+|---|---|
+| `tim review items list` | Walker / batch / refresh — list items with filters (`--json`: the items are `result`) |
+| `tim review items mark` | Set Disposition (auto-sets Status) |
+| `tim review items status` | Set Status only (after fix attempt) |
+| `tim review items add` | Append a newly-found violation; returns the new ID |
+| `tim review items counts` | Final reports (walker + batch implementor) — breakdown by Disposition+Status |
+| `tim review file init` / `add` / `verdict` | Per-file JSON helpers used by the FILE_REVIEWER persona |

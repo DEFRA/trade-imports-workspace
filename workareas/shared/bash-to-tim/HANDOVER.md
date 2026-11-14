@@ -119,46 +119,34 @@ Agents cannot do these two rows, so the loop skips them:
 
 ## State
 
-- Progress: 46 of 68 (68%), counted over rows that are not for Sam.
-- Landed this run: P31, P32, P35, P36, P39, P40, P41, P42, P43, P44, P45,
-  P46, P47, P48, P49, P50, P52, P53 and P54.
+- Progress: 61 of 67 (91%), counted over rows whose status is not "person".
+- Landed this run: P37, P33, P56, P51, P57, P58, P59, P60, P63, P38, P64,
+  P65, P66, P67 and P68.
 - Blocked this run:
-  - **P37 (`tim confluence sync`):** an exit code changed that the row's
-    risk does not name. A non-numeric `--page-id` or `--root-id` (for
-    example `tim confluence sync --page-id abc`) is now refused by
-    `pageIdFrom` with a usage error, exit 2: `Cannot find a page id in
-    "abc". Give a page id, or a page URL with /pages/<id> in it.` The Bash
-    `sync-docs.sh` found no synced file and exited 1; for `--root-id` it
-    failed on the API call. The risk also does not say that both options
-    now accept a page URL, or that this refusal comes before `--clean`
-    removes anything. Fix: name these changes in P37's risk, or map the
-    usage error back to exit 1, and add a test either way. The options are
-    parsed in `tim/src/commands/confluence/index.js`; `pageIdFrom` is in
-    `tim/src/clients/confluence-client.js`.
-  - **P55 (Sonar session hooks):** needs Sam. Four hook commands in
-    `.claude/settings.json` still run the Bash scripts: line 146
-    (PostToolUse `sonar-record-push.sh`), line 164 (UserPromptSubmit
-    `sonar-check-pending.sh`), line 175 (SessionStart
-    `sonar-check-pending.sh`) and line 180 (SessionStart
-    `sonar-remove-stale-mcp-containers.sh`). Agents cannot edit that file.
-    Until they switch, the three scripts under `scripts/sonar/` cannot be
-    deleted, and the hook section of `docs/agent-onboarding.md` and the
-    comment on line 26 of `scripts/sonar/sonar-push-gate.sh` cannot be
-    rewritten. The replacement commands and follow-up steps are under
-    `## P55` in `settings-followups.md`. They have only run in tests; the
-    permission system refused a smoke run. After the switch, one follow-up
-    commit deletes the scripts and rewrites the docs and the comment, then
-    Sam runs a SessionStart check by hand.
-  - **P56 (`tim sonar push-check`):** its proof needs one real run in
-    `trade-imports-address-book` and one in
-    `trade-imports-animals-frontend`, and a live check that SonarCloud's PR
-    list agrees with `gh pr view`. `SONAR_TOKEN` is not set in the session
-    or in Sam's shell profile, so someone with a token must run both.
-- Why the loop stopped: two rows in a row were blocked (P55 and P56), which
-  points at something systemic. Both need Sam: one a settings change agents
-  cannot make, the other a SonarCloud token.
-- Rows for Sam: P11 and P19B. P26's canary (raising a real govuk ticket)
-  still waits for Sam's go-ahead.
+  - **P61:** the code is done and the verifier found it clean, apart from
+    one thing: stack-smoke and the live canary have not run (`tim docker
+    dev`, wait for healthy, `tim build gate`, then `tim docker down`, all
+    under a lease). The workspace stack is still up with no lease: 21
+    `trade-imports-*` containers, all healthy, up for over a day. `tim
+    docker lease acquire` refuses a stack that is up with no lease, and
+    taking the stack down would wipe volumes someone may be using. The
+    session also could not run tim: the global launcher gave "permission
+    denied", and the permission system refused `node tim/src/cli.js`. No
+    code change is needed. Once the stack is free, run the canary and
+    stack-smoke and record the result under `## P61` in
+    `settings-followups.md`.
+- Why the loop stopped: no buildable row was left. P11, P55 and P19B are
+  for Sam, P61 is blocked, and P62, P69, P70, P71 and P72 are waiting on
+  those.
+- Rows for Sam:
+  - **P11:** test which allowlist patterns match without a prompt. P71 and
+    P72 wait on it.
+  - **P55:** switch the four Sonar hook commands in
+    `.claude/settings.json`, as set out under `## P55` in
+    `settings-followups.md`.
+  - **P19B:** port the two guard hooks to Node with no dependencies.
+  - P26's canary (raising a real govuk ticket) still waits for Sam's
+    go-ahead.
 - Landing result: none yet.
-- Next: Sam switches the four hook commands in `.claude/settings.json` as
-  set out under `## P55` in `settings-followups.md`.
+- Next: Sam says whether the running stack can be taken down, or frees it
+  under a lease, so P61's canary and stack-smoke can run.

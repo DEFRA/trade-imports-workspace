@@ -56,7 +56,7 @@ STALE_WARNING=""
 PARSE_ERROR=""
 
 if [[ ! -f "$SYNCED_MD" ]]; then
-    STALE_WARNING="No synced capability map found at $SYNCED_MD — run tools/confluence/sync-docs.sh to populate docs/confluence/."
+    STALE_WARNING="No synced capability map found at $SYNCED_MD — run tim confluence sync to populate docs/confluence/."
     : > "$CAPS_FILE"
 else
     # Compare Confluence live version against the synced frontmatter. This
@@ -66,7 +66,7 @@ else
     SYNCED_VERSION=$(grep -m1 '^version:' "$SYNCED_MD" | awk '{print $2}' || true)
 
     if [[ -n "$LIVE_VERSION" && -n "$SYNCED_VERSION" && "$LIVE_VERSION" != "$SYNCED_VERSION" ]]; then
-        STALE_WARNING="Synced capability map is at version $SYNCED_VERSION; live page is at version $LIVE_VERSION. Re-run tools/confluence/sync-docs.sh to refresh."
+        STALE_WARNING="Synced capability map is at version $SYNCED_VERSION; live page is at version $LIVE_VERSION. Re-run tim confluence sync to refresh."
     fi
 
     # Fail closed. A partial list is the exact bug this script had for months —

@@ -188,3 +188,9 @@ Then, in one follow-up commit: delete the three scripts under
 rewrite `docs/agent-onboarding.md`'s "Workspace-level hooks" section and its
 line about the hooks under `scripts/sonar/` calling the `sonar` CLI to name
 the tim commands and the hook JSON above.
+
+## P37
+
+None. No allowlist entry names `tools/confluence/sync-docs.sh`,
+`html_to_md.js` or `clean-docs.sh`; `Bash(tim:*)` covers
+`tim confluence sync`.

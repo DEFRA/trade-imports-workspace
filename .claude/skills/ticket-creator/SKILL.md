@@ -34,7 +34,7 @@ rules.
 That writes the current set of active EUDPA-board epics and EUDP
 capability codes under `workareas/ticket-creation/.prereqs/`. Surface
 any `WARNING:` line from the output to the user (e.g. stale capability
-map suggests running `tools/confluence/sync-docs.sh`).
+map suggests running `tim confluence sync`).
 
 If it exits non-zero with an `ERROR:` line, the capability map has
 drifted from its canonical row shape and `capabilities.txt` was

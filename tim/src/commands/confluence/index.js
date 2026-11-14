@@ -1,5 +1,15 @@
-import { createConfluenceClient } from '../../clients/confluence-client.js'
+import {
+  createConfluenceClient,
+  pageIdFrom
+} from '../../clients/confluence-client.js'
+import { DEFAULT_ROOT_ID, syncConfluence } from '../../confluence/sync.js'
+import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
 import { makeClientAction } from '../_client-action.js'
+import { ERROR } from '../../constants/exitCodes.js'
+import { isTimError } from '../../errors.js'
+import { exitCodeFor } from '../envelope.js'
+import { makeRunAction } from '../_run-action.js'
+import { writeLine } from '../_write-line.js'
 
 const shown = (value) => String(value ?? null)
 
@@ -51,4 +61,62 @@ export const register = (program, { timVersion }) => {
         timVersion
       })
     )
+
+  registerSync(conf, { timVersion })
 }
+
+const progressWriter = ({ json }) =>
+  json ? async () => {} : (line) => writeLine(process.stdout, line)
+
+const registerSync = (conf, { timVersion }) =>
+  conf
+    .command('sync')
+    .description(
+      'Mirror a Confluence folder tree as Markdown under docs/confluence in this workspace. Running it again overwrites the files it wrote.'
+    )
+    .option(
+      '--root-id <id>',
+      'the Confluence folder or page the tree starts at',
+      DEFAULT_ROOT_ID
+    )
+    .option(
+      '--page-id <id>',
+      'refresh only this page, in place, and stop. The page must have been synced once so its file is known'
+    )
+    .option('--dry-run', 'say what would be synced without writing files')
+    .option(
+      '--clean',
+      'remove docs/confluence first, so pages deleted in Confluence go too'
+    )
+    .addHelpText(
+      'after',
+      [
+        '',
+        'Examples:',
+        '  tim confluence sync',
+        '  tim confluence sync --clean',
+        '  tim confluence sync --page-id 6468764101',
+        '  tim confluence sync --root-id 6447269328 --dry-run'
+      ].join('\n')
+    )
+    .action(
+      makeRunAction({
+        parseOptions: (opts) => ({
+          client: createConfluenceClient(),
+          baseUrl: process.env.JIRA_BASE_URL,
+          workspaceRoot: resolveWorkspaceRoot({ explicit: opts.workspace }),
+          rootId: pageIdFrom(opts.rootId),
+          pageId: opts.pageId === undefined ? null : pageIdFrom(opts.pageId),
+          dryRun: opts.dryRun === true,
+          clean: opts.clean === true,
+          log: progressWriter(opts)
+        }),
+        run: (_, parsed) => syncConfluence(parsed),
+        renderText: () => null,
+        exitCodeForError: (error) =>
+          isTimError(error) && error.code === 'NOT_FOUND'
+            ? ERROR
+            : exitCodeFor(error),
+        timVersion
+      })
+    )

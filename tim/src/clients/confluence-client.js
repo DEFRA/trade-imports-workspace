@@ -55,7 +55,7 @@ const labelNamesOf = (page) =>
  * @param {string} [opts.token]
  * @param {string} [opts.baseUrl] - Atlassian instance base (NOT including `/wiki`)
  * @returns {object} client with whoami / getPage / getPageView / getChildren /
- *   getPageExport. The page methods take a page id or page URL and throw
+ *   getContent / getPageExport. The page methods take a page id or page URL and throw
  *   TimError(USAGE) when it holds no page id.
  * @throws {TimError} AUTH / USAGE when credentials or base URL are missing
  */
@@ -161,6 +161,15 @@ export const createConfluenceClient = ({
       const pages = await getAllChildren(parentId, 'page')
       const folders = await getAllChildren(parentId, 'folder')
       return [...pages, ...folders]
+    },
+
+    getContent: async (input) => {
+      const contentId = pageIdFrom(input)
+      const data = await get(
+        `/rest/api/content/${contentId}`,
+        `getContent(${contentId})`
+      )
+      return { id: data.id, type: data.type, title: data.title }
     },
 
     getPageExport: async (input) => {

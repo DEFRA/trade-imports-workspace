@@ -46,7 +46,7 @@ KNOWN_STATUSES="NOT STARTED|IN PROGRESS|SKELETON|COMPLETE|POST DAY ONE"
 
 if [[ ! -f "$SYNCED_MD" ]]; then
     echo "No synced capability map at $SYNCED_MD" >&2
-    echo "Run tools/confluence/sync-docs.sh first." >&2
+    echo "Run tim confluence sync first." >&2
     exit 1
 fi
 
@@ -55,7 +55,7 @@ fi
 BEFORE_VERSION=$(grep -m1 '^version:' "$SYNCED_MD" | awk '{print $2}' || true)
 
 if [[ "$SYNC" == "true" ]]; then
-    if ! "$WORKSPACE/tools/confluence/sync-docs.sh" --page-id "$CAP_PAGE_ID" >/dev/null 2>&1; then
+    if ! tim confluence sync --workspace "$WORKSPACE" --page-id "$CAP_PAGE_ID" --no-ui >/dev/null 2>&1; then
         echo "⚠ Could not refresh from Confluence — reporting on the local copy," >&2
         echo "  which may not include your latest edit." >&2
         echo >&2

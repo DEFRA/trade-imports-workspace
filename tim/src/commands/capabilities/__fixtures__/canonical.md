@@ -28,7 +28,7 @@ A line that mentions CAP-0.1 in prose is not a row.
 | CAP-03.1 | status: complete | **Café and crème brûlée imports** | Lower-case status, non-ASCII name |
 | CAP-03.2 | STATUS : IN PROGRESS | **Documents ,  certificates ; and permits .** | Space before the colon and before punctuation |
 | CAP-04.1 | STATUS: COMPLETE | **Health
-certificate** | A cell sync-docs broke across lines |
+certificate** | A cell the sync broke across lines |
 | CAP-05.1 | STATUS: COMPLETE | Plain name with no bold | |
 
 ## High risk

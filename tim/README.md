@@ -187,6 +187,25 @@ tim service-tag specs --domain animals --type e2e --json
 - Both refuse, with exit 1, a workspace with no `repos/trade-imports-ins-tests`;
   `start` also refuses one with no scope file.
 
+### `tim confluence sync` — mirror Confluence as Markdown
+
+```bash
+tim confluence sync                        # the whole tree under folder 6447269328
+tim confluence sync --clean                # remove docs/confluence first, then sync
+tim confluence sync --page-id 6468764101   # refresh one already-synced page in place
+tim confluence sync --root-id <id> --dry-run
+```
+
+- Writes under `<workspace>/docs/confluence` of the workspace tim resolves,
+  never anywhere else. A page with children becomes `<slug>/index.md`, a
+  page without becomes `<slug>.md`, a folder becomes `<slug>/`, and a full
+  sync writes `_index.md`.
+- Each file starts with front matter: `confluence-page-id`, `title`,
+  `version`, `space`, `last-updated` and `url`.
+- `--clean` removes only `docs/confluence`, so pages deleted in Confluence
+  go too.
+- `--page-id` exits 1 when the page has no synced file yet.
+
 ### `tim capabilities extract` — read the capability map
 
 ```bash

@@ -203,6 +203,29 @@ describe('getChildren', () => {
   })
 })
 
+describe('getContent', () => {
+  test('returns the id, type and title of a folder', async () => {
+    mockPool(BASE)
+      .get('/wiki/rest/api/content/302')
+      .reply(200, { id: '302', type: 'folder', title: 'Sub Folder', extra: 1 })
+
+    expect(await signedInClient().getContent('302')).toEqual({
+      id: '302',
+      type: 'folder',
+      title: 'Sub Folder'
+    })
+  })
+
+  test('maps 404 to TimError(NOT_FOUND) naming the content id', async () => {
+    mockPool(BASE).get('/wiki/rest/api/content/999').reply(404, {})
+
+    await expect(signedInClient().getContent('999')).rejects.toMatchObject({
+      code: 'NOT_FOUND',
+      message: 'getContent(999): not found.'
+    })
+  })
+})
+
 describe('getPageExport', () => {
   test('returns the export body and page details', async () => {
     mockPool(BASE)

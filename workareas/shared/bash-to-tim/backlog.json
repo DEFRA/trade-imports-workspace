@@ -3672,14 +3672,38 @@
       ],
       "risk": "Medium. Orchestration only by now. The manifests move into the envelope, so the skill reads .result.",
       "proof": "A full fixture run diffed phase by phase against bash. One real phase 0+1 dry run from a second clone. `grep -rn tools/npm` is empty.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "741d813d"
+          }
+        ],
+        "checks": [
+          "parity: PASS. Before any change, tim/src/npm-upgrade/npm-start-upgrade-script.golden.test.js ran tools/npm/start-upgrade.sh on 21 fixture cases and saved the result as __fixtures__/__golden__/npm-start-upgrade-script.json. The cases cover a full run through phase 0, 1, classify, verify, 2, 3 and 4 on a two-repo roster plus a Java repo and a missing one; phase 1 refusals (no phase 0, red, HEAD moved, repo not covered); a strategy discovery refuses; the minor strategy; a missing audit-ci; --branch refusing and passing; no npm repos left; a phase 2 cascade, a stop and an undiscovered repo; the phase 3 handoff with allowlist notes, held packages and audits; phase 4 kept overrides, a stop and no overrides; and usage errors. A local registry serves ncu, and a preload stubs public fetch so the run is deterministic. phases/index.test.js replays every case through tim npm upgrade and gets 21/21 identical: steps' exit codes, stdout and stderr, every run-folder file, and each repo's git log and package files. The only differences are the usage name and the WALKER path. Mutation probes: changing the phase 0 green message turned a case red, and dropping the trailing-dot trim in the allowlist reason turned the phase 3 case red.",
+          "second clone: PASS. A real phase 0 and phase 1 (--json) ran from a second workspace clone in the scratchpad, against the real trade-imports-schemas on main. Phase 0 was green and wrote phase0.json in that clone. Phase 1 returned ok:true with 1 PACKAGE_PLANNER task (fast-xml-parser 5.11.2 to 5.12.1). Nothing was written to the main workspace's workareas, and the repo stayed clean.",
+          "no-callers: PASS. git grep for start-upgrade.sh and tools/npm across skills, rules, docs, settings, hooks, CI and tim, and across repos/*, finds no hits outside golden fixtures and recording tests. tools/ now holds only backlog and sonar. No .claude/settings*.json names either deleted file; P68 is noted in settings-followups.md.",
+          "tim-unit: PASS. npm --prefix tim test gave 428 files passed and 29 skipped, and 6361 tests passed, with 8 expected failures.",
+          "tim-lint: PASS. npm run lint is clean. npm run format:check is clean after prettier reformatted tim/README.md.",
+          "fixed paths and .sh: no new .sh file; two .sh files deleted. The only new ~/git/defra strings are in phases/index.test.js, where they map the Bash golden's recorded usage name and WALKER hint to tim's. The SKILL.md hit is an existing line, rewrapped."
+        ],
+        "deviations": [
+          "The proof's `grep -rn tools/npm is empty` holds everywhere except recorded history. The earlier rows' golden fixtures and recording tests (P64 to P67) still name tools/npm. So do this row's new golden, its skip-guarded recording test and the replay test's expected-path mapping. This is the same convention the govuk goldens keep for the deleted tools/govuk.",
+          "Usage errors still exit 1, as the Bash did, and an unknown argument still prints `Unknown option: X` plus usage. The usage text names `tim npm upgrade` instead of the script path.",
+          "Phase 3's WALKER hint names <workspace>/.claude/skills/npm-upgrade/references/WALKER.md for the workspace tim runs in, not a fixed ~/git/defra path.",
+          "With --json, a refusal also writes its message to stderr, as in text mode, besides the error envelope on stdout.",
+          "Phase 1 runs best-practices and prebake as library calls without the Bash's `|| true` swallow. Neither can fail on rows phase 1 itself just wrote, and prebake already skips failed downloads.",
+          "Exported GIT_ENV, advisory, FIXABLE_RED, OVERRIDES, OVERRIDE_RULES and writeFakeBin from the P67 upgrade fixture so the new fixture can reuse them. Added npmUpgradeDefaultRepos to the roster in constants/repos.js.",
+          "Skill phases 1, 2 and 3 now call with --json and read .result. Phases 0 and 4 keep text mode, which prints the same JSON the Bash did."
+        ]
+      }
     },
     {
       "id": "P69",

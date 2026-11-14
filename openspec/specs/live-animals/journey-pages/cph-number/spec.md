@@ -182,7 +182,7 @@ The system MUST return the user to the consignment addresses page after they sav
 - **GIVEN** the user opened the CPH number page from the CPH section's 'Add a CPH number' link on the consignment addresses page
 - **WHEN** they save a valid CPH number
 - **THEN** the consignment addresses page is shown
-- **AND** the CPH section shows the nine digits
+- **AND** the CPH section shows the number with its parts separated by slashes, such as "12/345/6789"
 
 #### Scenario: Saving without the add link's context also returns to the consignment addresses page
 **ID**: SCN-CPH-007-B

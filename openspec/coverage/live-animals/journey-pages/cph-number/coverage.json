@@ -146,7 +146,7 @@
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/validate.test.js", "test": "Should split the whole number %s typed into the county box into its three parts", "strength": "full", "notes": "bare, slashed and spaced forms; red with the split disabled" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.test.js", "test": "Should save a whole number with slashes typed into the county box as nine digits", "strength": "full", "notes": "red with the split disabled" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/cph-number.spec.ts", "test": "saves a whole number with slashes inserted into the county box as nine digits", "strength": "partial", "notes": "asserts the addresses page shows 123456789; not probed" }
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/pages/cph-number.spec.ts", "test": "accepts a whole number with slashes typed into the county box and shows it with slashes on the consignment addresses page", "strength": "partial", "notes": "asserts the addresses page shows 12/345/6789; not probed" }
           ]
         },
         {
@@ -242,9 +242,10 @@
           "name": "Saving from the CPH section's add link returns to the consignment addresses page, showing the number",
           "coverage": "full",
           "tests": [
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cph-scope.spec.ts", "test": "a saved CPH number shows as 123456789 on the addresses page, Change pre-fills county, parish and holding, and Back returns to the addresses page, whose Continue reaches the contact address", "strength": "full", "notes": "Add from the CPH section, save, back on the addresses page with the section reading 123456789" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/cph-scope.spec.ts", "test": "a saved CPH number shows as 12/345/6789 on the addresses page, Change pre-fills county, parish and holding, and Back returns to the addresses page, whose Continue reaches the contact address", "strength": "full", "notes": "Add from the CPH section, save, back on the addresses page with the section reading 12/345/6789" },
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.fit.spec.js", "test": "joins the parts, saves the nine digits, returns to the consignment addresses page and comes back split", "strength": "partial", "notes": "proves the return to the addresses page; the section's displayed digits are asserted in the e2e link" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.test.js", "test": "Should save and return to the addresses page carrying the trail when entered from its CPH section add link", "strength": "partial", "notes": "not seen failing" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/controller.test.js", "test": "Should save and return to the addresses page carrying the trail when entered from its CPH section add link", "strength": "partial", "notes": "not seen failing" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/addresses/controller.test.js", "test": "Should show the stored CPH number with its parts separated by slashes on one line with a Change link when answered", "strength": "full", "notes": "probe: passed the stored value through unformatted; this test went red, restored green" }
           ]
         },
         {

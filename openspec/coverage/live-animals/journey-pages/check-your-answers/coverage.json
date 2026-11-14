@@ -363,6 +363,15 @@
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should name no species when a single identified species has a count and no identifier", "strength": "full", "notes": "" }
           ]
+        },
+        {
+          "id": "SCN-CYA-007-I",
+          "name": "A role never answered gives one error summary entry for the Addresses card and none for the role",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should not raise a role error for a role that has never been answered", "strength": "partial", "notes": "not probed red; asserts the full error list is the single Complete roles and addresses entry" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should anchor each entry to the card it names", "strength": "full", "notes": "asserts the whole list is the one Addresses entry with href #addresses; not probed red" }
+          ]
         }
       ]
     },
@@ -651,7 +660,7 @@
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should head a cattle line's identification details table with the tattoo when a unit carries one", "strength": "full", "notes": "a cattle line's ear tag, passport and tattoo head the table in order, with that animal's values in its one row; probed by removing the cattle entry's tattoo from COMMODITY_IDENTIFIERS" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts", "test": "after completing every section the check-your-answers page renders the answered rows", "strength": "partial", "notes": "asserts the cattle species card's Tattoo columnheader and cell; not probed locally, the e2e rung runs on each repo's pull request" },
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should head a cat line’s identification details table with the identifiers the species was asked for alone, while its animals hold saved permanent addresses", "strength": "full", "notes": "pins the head list while the removed permanent address column's data (a saved address on every unit) is present but must not reappear as a column" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "renders one review row per cat, keyed by its common name and number, and heads its identification details with the identifiers alone", "strength": "partial", "notes": "not probed red" }
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "renders one entry per cat in the Addresses card Permanent address subsection, keyed by its common name and number, and heads its identification details with the identifiers alone", "strength": "partial", "notes": "not probed red" }
           ]
         },
         {
@@ -677,33 +686,33 @@
     },
     {
       "id": "REQ-CYA-020",
-      "name": "The Addresses card lists one row per animal that has a saved permanent address",
+      "name": "The Addresses card has a Permanent address subsection with one entry per animal that has a saved permanent address",
       "coverage": "full",
       "scenarios": [
         {
           "id": "SCN-CYA-020-A",
-          "name": "The Addresses card lists a row for each animal that has a saved permanent address",
+          "name": "The Permanent address subsection lists an entry for each animal that has a saved permanent address",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should list one row per animal after the party rows, each keyed by the animal's label and valued by its saved permanent address", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "renders one review row per cat, keyed by its common name and number, and heads its identification details with the identifiers alone", "strength": "full", "notes": "" },
-            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts", "test": "the Addresses card shows a cat’s saved permanent address, keyed by its common name and number", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should list one entry per animal in the subsection, keyed by the animal's label and valued by its name, address lines and country alone", "strength": "full", "notes": "probe: gave the entry the party read-back with contact lines; this test went red, restored green" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "renders one entry per cat in the Addresses card Permanent address subsection, keyed by its common name and number, and heads its identification details with the identifiers alone", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts", "test": "the Addresses card’s Permanent address subsection shows a cat’s saved address, keyed by its common name and number, with no telephone or email", "strength": "full", "notes": "" }
           ]
         },
         {
           "id": "SCN-CYA-020-B",
-          "name": "An animal that still owes a permanent address has no row, while commodity details are still reported outstanding",
+          "name": "An animal that still owes a permanent address has no entry, while commodity details are still reported outstanding",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should list a row for the answered animal alone, leave the unanswered one with no row, and still name commodity details as outstanding", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should list the answered animal alone in the subsection and still name commodity details as outstanding", "strength": "full", "notes": "" }
           ]
         },
         {
           "id": "SCN-CYA-020-C",
-          "name": "A line needing a permanent address with no animal counted has no permanent address row",
+          "name": "A line needing a permanent address with no animal counted gives no Permanent address subsection",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should list no permanent address row when a line needing one holds no animal identifier records", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should show no Permanent address subsection when a line needing one holds no animal identifier records", "strength": "full", "notes": "" }
           ]
         }
       ]
@@ -867,6 +876,60 @@
           "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should give a submitted notification no Change action on the commodity cards, species blocks or identification details", "strength": "full", "notes": "probes: made the species block first-row action, then the commodity card header action, render on a submitted review; this test went red each time, restored green" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CYA-025",
+      "name": "The review reads the county parish holding number back as its three parts separated by slashes",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CYA-025-A",
+          "name": "A stored county parish holding number reads with slashes",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should include the CPH row in the Addresses card, read with slashes, when a line is a CPH-eligible commodity", "strength": "full", "notes": "probe: showed the stored value unformatted; this test went red, restored green" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/save-and-continue.spec.ts", "test": "walks a cattle-by-air notification through every task with Save and continue, from create to submitted", "strength": "partial", "notes": "not probed red" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/all-operators.spec.ts", "test": "check your answers lists all six operators with the picked name and country", "strength": "partial", "notes": "not probed red" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-025-B",
+          "name": "A stored CPH number that is not nine digits reads exactly as stored",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.test.js", "test": "Should read a stored value of fewer than nine digits exactly as stored", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/cph-number/cph-number.test.js", "test": "Should read a stored value of more than nine digits exactly as stored", "strength": "full", "notes": "" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CYA-026",
+      "name": "The Addresses and Contact address cards offer only their heading Change link",
+      "coverage": "partial",
+      "scenarios": [
+        {
+          "id": "SCN-CYA-026-A",
+          "name": "The address cards carry no link but their heading Change links",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should give no copied role and no contact address row any action on a draft", "strength": "partial", "notes": "not probed red" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should offer the Addresses card only its heading Change link, to the addresses page carrying the review on the trail", "strength": "partial", "notes": "not probed red" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should offer the Contact address card only its heading Change link, to the contact page carrying the review on the trail", "strength": "partial", "notes": "not probed red" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/address-book/addresses-edit.spec.ts", "test": "a copied address offers both Change and Edit details on the hub and the contact page, the review cards offer only their Change links, and an unanswered role offers only its named add link", "strength": "partial", "notes": "not probed red" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-026-B",
+          "name": "A role whose copied address breaks the address-book rules is named in the error summary",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should list every role in error in the error summary", "strength": "partial", "notes": "asserts the entry text only; not probed red" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should link each summary entry to the page that edits that address", "strength": "partial", "notes": "asserts the href only; not probed red" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should show the error above a copy that breaks the rules, keeping its details visible", "strength": "partial", "notes": "asserts the row only; not probed red" }
           ]
         }
       ]

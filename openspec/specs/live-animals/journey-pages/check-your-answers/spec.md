@@ -243,6 +243,13 @@ The system MUST refuse to continue from the review of a draft while any card sti
 - **WHEN** the user views the review
 - **THEN** the error summary names no species
 
+#### Scenario: A role never answered gives one error summary entry for the Addresses card and none for the role
+**ID**: SCN-CYA-007-I
+- **GIVEN** a draft notification complete except that one role was never answered
+- **WHEN** the user views the review
+- **THEN** the error summary holds the single entry "Complete roles and addresses", linking to the Addresses card
+- **AND** no entry names the role
+
 ### Requirement: A submitted notification offers copy-as-new and delete
 **ID**: REQ-CYA-008
 The system MUST offer copy-as-new and delete actions on the read-only view of a submitted notification, and MUST NOT offer cancel-amendment while no amendment is in progress, or a submit/continue action to submit it again.
@@ -454,28 +461,29 @@ The system MUST head a species block's identifier table "Identification details"
 - **THEN** the species block's Identification details has a Change link opening the animal identification page
 - **AND** a submitted notification's Identification details has none
 
-### Requirement: The Addresses card lists one row per animal that has a saved permanent address
+### Requirement: The Addresses card has a Permanent address subsection with one entry per animal that has a saved permanent address
 **ID**: REQ-CYA-020
-The system MUST list on the Addresses card, after the county parish holding row, one row for each animal that has a saved permanent address, keyed by that animal's species common name and number and holding that animal's saved address as a party row reads it. An animal that needs a permanent address and has none MUST have no row, and a line that needs one with no animal counted MUST have none either.
+The system MUST show on the Addresses card, after the county parish holding row, a subsection headed "Permanent address" with one entry for each animal that has a saved permanent address. Each entry MUST be keyed by the animal's species common name and number and hold its name, address lines and country, with no telephone number or email address. An animal with no saved address MUST have no entry, and the subsection MUST be absent when no animal has one.
 
-#### Scenario: The Addresses card lists a row for each animal that has a saved permanent address
+#### Scenario: The Permanent address subsection lists an entry for each animal that has a saved permanent address
 **ID**: SCN-CYA-020-A
 - **GIVEN** a cat line of two animals, one saved against the place of destination and one with a hand-entered address
 - **WHEN** the user views check-your-answers
-- **THEN** the Addresses card lists, after the party rows, a row for each animal keyed by its species' common name and number, each holding that animal's saved address
+- **THEN** the Addresses card's "Permanent address" subsection lists an entry for each animal keyed by its species' common name and number
+- **AND** each entry holds that animal's name, address lines and country, with no telephone number or email address
 
-#### Scenario: An animal that still owes a permanent address has no row, while commodity details are still reported outstanding
+#### Scenario: An animal that still owes a permanent address has no entry, while commodity details are still reported outstanding
 **ID**: SCN-CYA-020-B
 - **GIVEN** a cat line of two animals, with a permanent address saved for only one of them
 - **WHEN** the user views check-your-answers
-- **THEN** the Addresses card lists a row for the answered animal alone
+- **THEN** the "Permanent address" subsection lists an entry for the answered animal alone
 - **AND** the error summary still names commodity details as needing to be completed
 
-#### Scenario: A line needing a permanent address with no animal counted has no permanent address row
+#### Scenario: A line needing a permanent address with no animal counted gives no Permanent address subsection
 **ID**: SCN-CYA-020-C
 - **GIVEN** a cat line that needs a permanent address, with its animal count given and no animal identified
 - **WHEN** the user views check-your-answers
-- **THEN** the Addresses card lists no permanent address row
+- **THEN** the Addresses card has no "Permanent address" subsection
 
 ### Requirement: The Origin of import card always shows its three rows
 **ID**: REQ-CYA-021
@@ -595,3 +603,37 @@ The system MUST show one card per selected commodity in "2. Description of the g
 - **GIVEN** a submitted notification
 - **WHEN** the user views it
 - **THEN** the commodity card and its species blocks have no Change link
+
+### Requirement: The review reads the county parish holding number back as its three parts separated by slashes
+**ID**: REQ-CYA-025
+The system MUST show the county parish holding number on the Addresses card as its county, parish and holding parts separated by slashes, such as "12/345/6789". A stored value that is not nine digits MUST be shown as it is stored.
+
+#### Scenario: A stored county parish holding number reads with slashes
+**ID**: SCN-CYA-025-A
+- **GIVEN** a notification whose commodity asks for a county parish holding number, stored as nine digits
+- **WHEN** the user views the review
+- **THEN** the Addresses card's county parish holding row reads "12/345/6789"
+
+#### Scenario: A stored CPH number that is not nine digits reads exactly as stored
+**ID**: SCN-CYA-025-B
+- **GIVEN** a stored CPH number with fewer or more than nine digits
+- **WHEN** the trader views the review
+- **THEN** the CPH row reads the value exactly as stored
+
+### Requirement: The Addresses and Contact address cards offer only their heading Change link
+**ID**: REQ-CYA-026
+The system MUST give the Addresses card and the Contact address card no link but the Change link in each card's heading: no party row and no contact address row carries a link. A role whose copied address breaks the address-book rules MUST still be named in the error summary, with an entry linking to that role's edit page (REQ-ADDR-005).
+
+#### Scenario: The address cards carry no link but their heading Change links
+**ID**: SCN-CYA-026-A
+- **GIVEN** a draft notification with every role answered
+- **WHEN** the user views the review
+- **THEN** the Addresses card's only link is its heading Change link
+- **AND** the Contact address card's only link is its heading Change link
+
+#### Scenario: A role whose copied address breaks the address-book rules is named in the error summary
+**ID**: SCN-CYA-026-B
+- **GIVEN** a role whose copied address breaks the address-book rules, such as a consignor copied with only a country code
+- **WHEN** the trader views the review
+- **THEN** the error summary has an entry naming that role that links to the role's edit page
+- **AND** the role's row shows its address under the error

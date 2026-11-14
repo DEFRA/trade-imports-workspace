@@ -2190,14 +2190,38 @@
       ],
       "risk": "High for apply: it writes package.json, the lockfile and a commit. Run npm in the realpath of the repo. Keep the /tmp log paths the manager reads. The concurrent-writer race is kept as it is today and noted.",
       "proof": "Byte diffs of the state file with timestamps normalised. apply against a temp git repo with a stub npm. One scratch-clone canary patch bump.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "f7ac31e6"
+          },
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "095eb57a"
+          }
+        ],
+        "checks": [
+          "Fix 1, realpath: a new test in tim/src/commands/govuk/state-writes.test.js moves repos/<admin> to <HOME>/clones/<admin> and puts a symlink in its place. It then runs tim govuk apply and asserts both stub npm logs read `npm --prefix <HOME>/clones/<admin> install|test`. Mutation probe: changing `npmPrefix: realRepoPath(...)` to `repoPath(...)` in tim/src/govuk/apply.js turned that test red (1 failed, 14 passed). The line was restored afterwards.",
+          "Fix 2, git failures: commitAll in tim/src/govuk/apply.js now throws TimError UNKNOWN (exit 1) when `git add -A` or `git rev-parse HEAD` exits non-zero, as it already did for `git commit`. The git stderr goes out as a warning. A new test makes `git add -A` fail on an unreadable file. It asserts exit 1, 'Cannot stage the changes in <repo>' on stderr, a git log that still holds only the initial commit, and a state file byte-identical to the one before the run. Mutation probe: removing the stage check turned that test red. The check was restored afterwards.",
+          "Fix 3, doc: the applyVersion JSDoc @throws now says NOT_FOUND for an unplanned version and USAGE only for a missing option. It also says UNKNOWN when git cannot stage, commit or read the new commit.",
+          "tim-unit: npm --prefix tim test is green (307 files passed, 11 skipped; 4983 tests passed, 8 expected fail, 13 skipped). The two new tests are included, and the existing Bash-parity golden test is still green.",
+          "tim-lint: npm --prefix tim run lint and run format:check are both clean.",
+          "No /tmp/govuk-* logs are left behind. The working tree is clean after commit 095eb57a."
+        ],
+        "deviations": [
+          "The fixes went in as a new commit (095eb57a) on top of f7ac31e6, not as an amend.",
+          "The rev-parse failure path has no test of its own. It cannot be reached in a staged repo once a commit has succeeded. It uses the same check as the stage and commit steps, and the stage-failure test covers that check.",
+          "Every other deviation from the builder's report still applies (--govuk-version, the exit-code changes, the shared harness and exec changes, the canary scope, no settings-followups entry)."
+        ]
+      }
     },
     {
       "id": "P45",

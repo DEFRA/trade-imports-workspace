@@ -57,7 +57,9 @@ describe('tim npm exec', () => {
       })
 
       expect(timRun.exitCode).toBe(recorded.exitCode)
-      expect(timRun.stdout).toBe(recorded.stdout)
+      expect(
+        timRun.stdout.replaceAll(realpathSync(process.cwd()), '<CALLER>')
+      ).toBe(recorded.stdout)
       if (isUsageCase(recorded)) {
         expect(timRun.stderr).toContain('Usage: tim npm exec')
       } else {

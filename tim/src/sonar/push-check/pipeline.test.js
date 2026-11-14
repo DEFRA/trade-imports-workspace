@@ -1,6 +1,13 @@
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync
+} from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { delimiter, join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import {
   closeHttpMocks,
@@ -49,6 +56,16 @@ const runCase = (testCase, extra = {}) =>
   })
 
 const pushCases = checkCases.filter(({ command }) => command === undefined)
+
+const pathHoldingOnlyGitAnd = (bin, home) => {
+  const gitFolder = join(home, 'git-only')
+  mkdirSync(gitFolder)
+  const realGitFolder = (process.env.PATH ?? '')
+    .split(delimiter)
+    .find((folder) => folder && existsSync(join(folder, 'git')))
+  symlinkSync(join(realGitFolder, 'git'), join(gitFolder, 'git'))
+  return [bin, gitFolder].join(delimiter)
+}
 
 describe('#runPushCheck matches the Bash check', () => {
   test.each(pushCases.map((testCase) => [testCase.name, testCase]))(
@@ -107,7 +124,11 @@ describe('#runPushCheck', () => {
 
     const result = await runPushCheck({
       dir: repo,
-      env: { ...caseEnv({ home, bin }, {}), FAKE_PR: undefined },
+      env: {
+        ...caseEnv({ home, bin }, {}),
+        PATH: pathHoldingOnlyGitAnd(bin, home),
+        FAKE_PR: undefined
+      },
       token: FAKE_TOKEN,
       pullRequest: '1',
       base: 'main',

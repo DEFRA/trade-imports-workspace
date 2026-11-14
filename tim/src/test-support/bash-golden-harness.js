@@ -36,6 +36,17 @@ const ISO_TIMESTAMP =
 export const workspaceScriptExists = (relScript) =>
   existsSync(join(realWorkspaceRoot, relScript))
 
+const homePrefixAtRecordedLength = () => {
+  const recordedHomeLength = 79
+  const mkdtempSuffixLength = 6
+  const prefix = join(realpathSync(tmpdir()), 'tim-bash-golden-')
+  const padding = Math.max(
+    0,
+    recordedHomeLength - mkdtempSuffixLength - prefix.length
+  )
+  return `${prefix}${'x'.repeat(padding)}`
+}
+
 /**
  * A temporary HOME holding a workspace at the path the Bash scripts write
  * into themselves, with the named scripts copied from the real workspace
@@ -47,7 +58,7 @@ export const workspaceScriptExists = (relScript) =>
  * @returns {{home: string, root: string, remove: () => void}}
  */
 export const stageBashWorkspace = ({ scripts, files = {} }) => {
-  const home = mkdtempSync(join(tmpdir(), 'tim-bash-golden-'))
+  const home = mkdtempSync(homePrefixAtRecordedLength())
   const root = join(home, 'git', 'defra', 'trade-imports-workspace')
   for (const relScript of scripts) {
     const dest = join(root, relScript)

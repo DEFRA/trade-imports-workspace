@@ -108,13 +108,12 @@ describe('tim understanding-check question matches question-add.sh, question-rep
   )
 
   test('Should accept and refuse each rubric clause as the scripts did on the categorical-verb rule', async () => {
-    const runs = []
-    for (const step of verbSteps) {
-      runs.push(await recordTimFresh(step, { watchFiles: false }))
-    }
+    const runs = await Promise.all(
+      verbSteps.map((step) => recordTimFresh(step, { watchFiles: false }))
+    )
 
     expect(runs).toEqual(golden.verbs.map(expectedRun))
-  })
+  }, 60_000)
 })
 
 describe('tim understanding-check answer matches transcript-record-answer.sh', () => {

@@ -2456,14 +2456,39 @@
       ],
       "risk": "Medium. The rendered markdown is committed into hand-off branches, so it must match exactly. A stale gh fact file means the coverage gate is wrong.",
       "proof": "The render-items.write.test.sh cases ported to vitest. Goldens for aggregate, verify and reconcile with timestamps normalised.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "b1f4bfc1"
+          }
+        ],
+        "checks": [
+          "parity: pass. Before any change, tim/src/review/review-tools-scripts.golden.test.js ran the 8 Bash scripts on 44 fixture cases and saved the results to tim/src/review/__fixtures__/__golden__/review-tools.json (stdout, stderr, exit code and files written, with timestamps normalised). tim/src/commands/review/tools.test.js shows tim matches every case byte for byte. A test probe that broke the cell escaping turned it red. The cases from render-items.write.test.sh are in the goldens, and its pure checks are also in items-table.test.js.",
+          "tim-unit: pass. npm test gave 333 files passed and 16 skipped, 5262 tests passed. The recording test now skips because the scripts are deleted.",
+          "tim-lint: pass. npm run lint and npm run format:check are both clean.",
+          "no-callers: pass. git grep across the workspace (skills, docs, tim, tools, .github, settings) and across repos/* finds no caller of the deleted scripts. The only hits are tools/style's own separate copies (tools/style/render-items.sh, aggregate-file-reviews.sh and their items-table.jq), which this row does not cover.",
+          "no new fixed path: pass. The new files and lines do not mention ~/git/defra or $HOME/git/defra. The golden JSON and one expected message only show the staged <HOME> layout. No new .sh file.",
+          "settings: no allowlist entry names a deleted script. The P48 note in settings-followups.md suggests allowing gh api repos/DEFRA/*/pulls/*/files, which the new review step needs.",
+          "not run: tools/review/share-review.summary.test.sh. It is not executable and running bash is not allowed here. share-review.sh's render line now calls tim review items render against the same workspace."
+        ],
+        "deviations": [
+          "The PR facts file is written with `gh api repos/DEFRA/<repo>/pulls/<pr>/files --paginate --slurp`, not `gh pr view --json files`. gh pr view drops the old path of a renamed file and stops at 100 files. pr-details.sh (which the Bash used) and prepare-review.sh's placeholder seeding both include those old paths, so using gh pr view would loosen the gate. tim reads either a slurped array of pages or a flat array.",
+          "A local review, or any review with no PRs, still passes verify files with 0/0 files (100%), as the Bash did. The findings plan suggested refusing it, but that would break Local mode, which runs this gate.",
+          "verify files refuses a PR whose .prs file is missing and names the gh command to run. The Bash silently skipped a PR whose fetch failed. This is the R9 plan's intended change and is noted in the commit.",
+          "In reconcile's --json output, a multi-line issue stays as one entry in `added`. The Bash split it into one entry per line. Reconcile's added_ids stay strings, as the Bash gave them. The skill's documented shape now says the summary is tim's envelope with `.result`.",
+          "File reviews are read in code-point (byte) order, not the locale order of `sort`.",
+          "The caller references in understanding-check/SKILL.md:247,323 no longer name the review gate, so there was nothing to change there.",
+          "The commit also touches Bash that later rows will retire: share-review.sh now calls tim to render the items table, and the 'Next:' lines in prepare-review.sh and prepare-review-local.sh name tim review verify files."
+        ]
+      }
     },
     {
       "id": "P49",

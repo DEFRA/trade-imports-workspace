@@ -101,7 +101,7 @@ const landed = []
 const blocked = []
 let blockedInARow = 0
 let stopReason = `reached maxRows (${MAX_ROWS})`
-let onlyPersonRowsLeft = false
+let onlyPersonWorkLeft = false
 
 phase('Build')
 while (landed.length < MAX_ROWS) {
@@ -112,7 +112,7 @@ while (landed.length < MAX_ROWS) {
   const row = state && nextRow(state.rows)
   if (!row) {
     const left = (state?.rows ?? []).filter((r) => r.status !== 'done')
-    onlyPersonRowsLeft = Boolean(state) && left.every((r) => r.status === 'person')
+    onlyPersonWorkLeft = Boolean(state) && left.every((r) => r.status === 'person' || r.status === 'todo')
     stopReason = left.length
       ? `no buildable row left: ${left.map((r) => `${r.id} ${r.status}`).join(', ')}`
       : 'every row is done'
@@ -185,9 +185,9 @@ Return pushed, and done and total counted over rows whose status is not "person"
 
 phase('Land')
 let landing = null
-if (onlyPersonRowsLeft) {
+if (onlyPersonWorkLeft) {
   landing = await agent(
-    `Every row of ${BACKLOG} that the loop can build is done. Only rows with status "person" are left. Workspace: ${WS}. Branch: ${BRANCH}.
+    `Every row of ${BACKLOG} that the loop can build is done. Only rows with status "person", and rows waiting on them, are left. Workspace: ${WS}. Branch: ${BRANCH}.
 1. Mark the workspace pull request for ${BRANCH} and every service repo pull request on ${BRANCH} ready for review (\`gh pr ready\`). This is the one point where E2E runs, in GitHub Actions.
 2. Watch the checks in the background with \`gh pr checks <pr> --watch\` until each finishes. A red check is the branch's to fix (rule 6). Fix it on ${BRANCH}, push, and watch again.
 3. Do not merge. Report each pull request's URL and final check state.`,

@@ -28,9 +28,11 @@ Agents cannot edit `.claude/settings.json`.
    P72 wait on it.
 5. **P19B: port the two guard hooks to Node.** P19's corpus is on the
    branch. Add `guard-bash.sh:120` naming the clone in use.
-6. **P57, when the loop reaches it:** the push gate hook in this
-   workspace's `.claude/settings.json` and in 8 repos' settings switches to
-   `tim sonar push-check --hook`.
+6. **P57 follow-up: switch the push gate hooks.** P57 landed with the two
+   push gate scripts reduced to forwarders into `tim sonar push-check`.
+   The hooks in this workspace's `.claude/settings.json` and in 8 repos'
+   settings still name the scripts, so the scripts stay until those hooks
+   switch. The canary steps are under `## P57` in `settings-followups.md`.
 
 ## Checks that need you
 
@@ -42,6 +44,15 @@ Agents cannot edit `.claude/settings.json`.
    `repos/trade-imports-address-book` and
    `repos/trade-imports-animals-frontend`, and check that the PR it analyses
    matches `gh pr view` for that branch.
+9. **P61 and P62 stack canary.** The workspace stack was started by hand
+   and nobody holds a lease, so no agent took it down. Once it is free,
+   run `tim docker dev`, wait for healthy, then `tim build gate`, then
+   `tim docker down`, all under a lease, on this branch. P61 and P62 land
+   without it; CI's E2E at landing starts the stack through the same code.
+10. **Optional: refresh your global tim link.** It still points at
+    `tim/src/cli.js`, from before the launcher. It works again now that
+    `cli.js` has its execute bit back, but `npm --prefix tim link` did not
+    move it. `npm rm -g tim` then `npm --prefix tim link` does.
 
 ## Done
 

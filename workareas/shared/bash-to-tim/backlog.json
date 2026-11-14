@@ -3130,8 +3130,7 @@
         "parity",
         "no-callers",
         "stack-smoke"
-      ],
-      "evidence": null
+      ]
     },
     {
       "id": "P59",
@@ -3315,7 +3314,7 @@
       ],
       "risk": "High: the most logic, and the build loop depends on it every row. Probes and pulls must stay concurrent, and signals must kill the early pulls.",
       "proof": "Golden argv and env diffs for every run-stack scenario. Fixtures for mongo retry and post-healthy re-check. A staging tree diff and the zap inode test. A live canary of tim docker dev then tim build gate.",
-      "status": "blocked",
+      "status": "todo",
       "checks": [
         "tim-unit",
         "tim-lint",
@@ -3324,7 +3323,7 @@
         "stack-smoke"
       ],
       "evidence": {
-        "blockedReason": "The live canary and stack-smoke could not run because the workspace stack is up with no lease, so a person must agree to take it down or free it under a lease.",
+        "previousBlockedReason": "The live canary and stack-smoke could not run: the workspace stack was started by hand and nobody holds a lease, so it must not be taken down without Sam. Do not block on them. Cherry-pick the recoverable commits, check parity, unit and lint are still green, and record the canary (tim docker dev, then tim build gate, under a lease) as not run, pointing at item 9 in NEEDS-SAM.md. The landing phase CI E2E run starts the stack through this code once P62 lands. The earlier session also could not run the global tim: that was a stale link to src/cli.js, which had lost its execute bit, and is fixed.",
         "recoverableCommits": "The blocked attempt is in the local reflog, unpushed: trade-imports-workspace: d33f2d7f; trade-imports-address-book: d0c5f16; trade-imports-animals-admin: facbdf8; trade-imports-animals-backend: aeb5454; trade-imports-animals-frontend: 7e83590b; trade-imports-defra-id-stub: 6ab32c7; trade-imports-dynamics-gateway: 27421cd; trade-imports-ins-frontend: 35d96ef; trade-imports-ins-tests: bf5cab4; trade-imports-plants-frontend: 5c2adbf; trade-imports-reference-data: b7a63cb. Cherry-pick them and fix only the reason, rather than rebuilding."
       }
     },
@@ -3364,7 +3363,9 @@
         "no-callers",
         "stack-smoke"
       ],
-      "evidence": null
+      "evidence": {
+        "note": "The draft PR does not run E2E, and the security scan dispatch is a GitHub Actions run. Do not block on either: record them as not run, for the landing phase, which marks the PRs ready, runs E2E in CI and fixes anything red. A local stack-smoke needs a lease on a stack Sam started by hand, so it is item 9 in NEEDS-SAM.md."
+      }
     },
     {
       "id": "P63",

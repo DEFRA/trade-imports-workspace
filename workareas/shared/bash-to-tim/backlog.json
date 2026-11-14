@@ -1667,14 +1667,38 @@
       ],
       "risk": "Medium. epics.txt, capabilities.txt and the WARNING:/ERROR: lines are the contract the skill reads.",
       "proof": "nock fixtures for each case: stale, non-canonical, below the floor, clean. Diff the .prereqs/ folder with a bash run made just before. Delete the folder.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "9ee24d38"
+          },
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "4b077954"
+          }
+        ],
+        "checks": [
+          "tim-unit: PASS. npm --prefix tim test: 374 files passed, 22 skipped; 5687 tests passed. Mutation probe: I moved createJiraClient() back inside readBoard and both new credential parity cases in prereqs.test.js went red (2 failed, 12 passed). Restoring the fix turned them green again.",
+          "tim-lint: PASS. npm --prefix tim run lint and run format:check are both clean.",
+          "parity: PASS. I restored prepare-ticket-creation.sh and check-capabilities.sh from 13529347 for a while and recorded 2 new Bash cases with a temporary recorder, then deleted the scripts and the recorder again. In both cases the stand-in passes jira epics to the real tim CLI. The cases are 'JIRA_USER and JIRA_TOKEN not set' (exit 1, stderr 'Set JIRA_USER and JIRA_TOKEN to authenticate with Jira.', epics.txt empty) and 'JIRA_BASE_URL not set' (exit 2, stderr 'Set JIRA_BASE_URL to point at the Atlassian instance.', epics.txt empty). I merged them into ticket-creator-scripts.json and left the existing cases untouched. tim jira prereqs now reproduces both cases byte for byte. A live run on this workspace agrees: blank JIRA_USER/JIRA_TOKEN exits 1 and blank JIRA_BASE_URL exits 2, the same as tim jira epics.",
+          "no-callers: PASS. The fix adds no new caller. tools/ticket-creator/ is gone again and git status is clean after the commit.",
+          "Test hygiene: prereqs.test.js and check.test.js now set TIM_WORKSPACE, MIN_CAPABILITIES and each case's env with vi.stubEnv. vi.unstubAllEnvs() runs in afterEach, so later tests get the environment back.",
+          "no new .sh file. No new fixed workspace path."
+        ],
+        "deviations": [
+          "The fix went in as a new commit (4b077954) on top of the builder's 9ee24d38. I did not amend that commit.",
+          "To record the new goldens I re-ran only the two new cases. A full re-record would have used today's tim extract wording and rewritten the existing frozen Bash output. The permanent recorder (ticket-creator-scripts.golden.test.js) now passes STAND_IN_EPICS_FROM_TIM for cases marked epicsFromTim. It still skips because the scripts are gone.",
+          "The live check with blank credentials emptied the real workareas/ticket-creation/.prereqs/epics.txt. I restored it with a normal `tim jira prereqs` run (29 epics). capabilities.txt stays empty because this workspace has no synced capability map. That is the same result as before."
+        ]
+      }
     },
     {
       "id": "P34",

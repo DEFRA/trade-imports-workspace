@@ -26,6 +26,14 @@ the wrappers and is the surface to use.
 - **Never hand-assemble `docker compose -f … -f …`.** The file list, the
   profiles and the init-script staging live in `scripts/stack/lib/`. A
   hand-built chain silently drops some of them.
+- **Change the stack definition in two places while tim takes over.** The
+  services, sidecars, compose files and profiles are also in
+  `tim/src/stack/definition.js`, and a tim test fails when it and the
+  scripts differ. tim's tests also hold the Docker and git calls each
+  script makes, under `tim/src/test-support/fixtures/stack/`: a change to
+  what a script calls fails them until you record it again with
+  `npm --prefix tim test -- src/stack --update=all`. Run `npm --prefix tim test`
+  after any change to `scripts/stack/`.
 - **Never `docker start` one container to revive it.** Its dependencies may
   be dead too, and its health wait then never passes. Check the whole stack
   with `tim workspace status`, then recover it with `tim docker dev` or

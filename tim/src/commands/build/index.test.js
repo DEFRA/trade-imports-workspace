@@ -637,7 +637,7 @@ describe('renderGateText for a stack its holder already leased', () => {
         }
       }).split('\n')[1]
     ).toBe(
-      'The workspace stack was already up under this holder’s lease. The gate brought each service up to date with local source and left the stack up. Rebuilt: none. Restarted: none. Left as they were: trade-imports-stub. The workspace is not a git checkout, so the gate cannot tell whether its stack files (docker/stack, scripts/stack) changed, and did not start the whole stack again.'
+      'The workspace stack was already up under this holder’s lease. The gate brought each service up to date with local source and left the stack up. Rebuilt: none. Restarted: none. Left as they were: trade-imports-stub. The workspace is not a git checkout, so the gate cannot tell whether its stack files (docker/stack, scripts/stack, tim/src/stack) changed, and did not start the whole stack again.'
     )
   })
 

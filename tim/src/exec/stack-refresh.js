@@ -170,7 +170,7 @@ const refreshServices = async ({
  * stackFilesKnown is false when the workspace is not a git checkout, so tim
  * cannot tell whether its stack files changed and never starts it again.
  *
- * When the workspace's own stack files (docker/stack, scripts/stack) changed
+ * When the workspace's own stack files (docker/stack, scripts/stack, tim/src/stack) changed
  * since the lease recorded them, the whole stack is started again with
  * run-stack.sh, in the lease's mode, and the lease records its new
  * containers, what every service serves and the stack files it was started

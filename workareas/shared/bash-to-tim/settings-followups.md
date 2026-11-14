@@ -265,3 +265,14 @@ remote branch still named it, `main` included (address-book 2,
 animals-frontend 19, animals-admin 9, dynamics-gateway 2,
 animals-backend 8, ins-backend 2, reference-data 7, ins-frontend 13
 branches).
+
+## P58
+
+No allowlist entry names `scripts/stack/help.test.sh`; nothing to remove.
+
+The stack-smoke check did not run. On 14 Nov 2026 the workspace stack had
+been up for 24 hours with no lease, and `tim docker lease acquire` refuses
+an unleased stack. Taking it down would wipe a stack someone may be using.
+The row changes nothing the stack runs (the Bash scripts are untouched and
+the tim modules are not yet called), so run the smoke on P59, which is the
+first row to swap a script for tim.

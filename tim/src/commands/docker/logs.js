@@ -1,9 +1,7 @@
-import { existsSync, readFileSync } from 'node:fs'
-import { join } from 'node:path'
 import { z } from 'zod'
 import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
 import { runStreamed } from '../../exec/exec.js'
-import { STACK_PROJECT } from '../../exec/stack.js'
+import { SERVICES, STACK_PROJECT } from '../../stack/definition.js'
 import { OK, ERROR } from '../../constants/exitCodes.js'
 import { jsonEnvelope, exitCodeFor, errorPayloadFor } from '../envelope.js'
 import { parseOptions } from '../backlog/shared.js'
@@ -25,26 +23,13 @@ const optionsSchema = z.object({
     .optional()
 })
 
-const serviceEntryPattern = /^\s*"([a-z-]+)\|([a-z-]+)\|[A-Z_]+"\s*$/gm
-
 /**
- * The short labels `run-stack.sh -e` takes, mapped to their compose service
- * names, read from the script's own `services` table.
+ * The short labels `-e` takes, mapped to their compose service names.
  *
- * @param {string} workspaceRoot
- * @returns {Map<string, string>} Empty when the workspace has no run-stack.sh
+ * @returns {Map<string, string>}
  */
-export const serviceLabels = (workspaceRoot) => {
-  const scriptPath = join(workspaceRoot, 'scripts', 'stack', 'run-stack.sh')
-  if (!existsSync(scriptPath)) return new Map()
-  const script = readFileSync(scriptPath, 'utf8')
-  return new Map(
-    [...script.matchAll(serviceEntryPattern)].map(([, label, service]) => [
-      label,
-      service
-    ])
-  )
-}
+export const serviceLabels = () =>
+  new Map(SERVICES.map(({ label, composeName }) => [label, composeName]))
 
 const composeServicesFor = (requested, labels) =>
   requested.length === 0
@@ -102,10 +87,7 @@ const logsAction = (timVersion) =>
       const workspaceRoot = resolveWorkspaceRoot({
         explicit: globalOpts.workspace
       })
-      const services = composeServicesFor(
-        requested,
-        serviceLabels(workspaceRoot)
-      )
+      const services = composeServicesFor(requested, serviceLabels())
       const args = composeLogsArgs({ services, follow, tail })
       const { exitCode } = await runStreamed('docker', args, {
         cwd: workspaceRoot

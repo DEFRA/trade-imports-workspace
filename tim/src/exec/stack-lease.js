@@ -22,6 +22,7 @@ import {
 } from './stack-fingerprints.js'
 import { writeJsonAtomic } from '../backlog/io.js'
 import { TimError } from '../errors.js'
+import { STUB_LATENCY_PROFILES } from '../stack/definition.js'
 
 export const LEASE_MODES = ['dev', 'up', 'perf']
 
@@ -30,7 +31,7 @@ export const LEASE_MODES = ['dev', 'up', 'perf']
 // published images and adds the stub-latency overlay.
 export const RUN_STACK_ARGS = { dev: ['-d'], up: [], perf: ['--perf'] }
 
-export const STUB_PROFILES = ['zero-delay', 'sla']
+export const STUB_PROFILES = STUB_LATENCY_PROFILES
 export const DEFAULT_PERF_STUB_PROFILE = 'sla'
 
 /**

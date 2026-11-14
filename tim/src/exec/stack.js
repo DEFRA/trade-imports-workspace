@@ -3,6 +3,7 @@ import { join, resolve } from 'node:path'
 import { run, runStreamed, runToLog } from './exec.js'
 import { ensureDockerRunning, isDaemonUnreachable } from './docker-daemon.js'
 import { TimError } from '../errors.js'
+import { STACK_PROJECT } from '../stack/definition.js'
 
 const START_SCRIPT = 'run-stack.sh'
 
@@ -81,9 +82,7 @@ export const runStackScriptToLog = async ({
   return runToLog(path, args, { cwd: workspaceRoot, logPath, env })
 }
 
-// docker/stack/compose.yml's `name:`. Every container the stack starts
-// carries it as its compose project label.
-export const STACK_PROJECT = 'trade-imports'
+export { STACK_PROJECT }
 
 const nonEmptyLines = (text) =>
   text.split('\n').filter((line) => line.trim().length > 0)

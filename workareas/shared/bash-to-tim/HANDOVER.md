@@ -119,25 +119,28 @@ Agents cannot do these two rows, so the loop skips them:
 
 ## State
 
-- Progress: 61 of 67 (91%), counted over rows whose status is not "person".
-- Landed this run: P37, P33, P56, P51, P57, P58, P59, P60, P63, P38, P64,
-  P65, P66, P67 and P68.
+- Progress: 62 of 67 (93%), counted over rows whose status is not "person".
+- Landed this run: P61.
 - Blocked this run:
-  - **P61:** the code is done and the verifier found it clean, apart from
-    one thing: stack-smoke and the live canary have not run (`tim docker
-    dev`, wait for healthy, `tim build gate`, then `tim docker down`, all
-    under a lease). The workspace stack is still up with no lease: 21
-    `trade-imports-*` containers, all healthy, up for over a day. `tim
-    docker lease acquire` refuses a stack that is up with no lease, and
-    taking the stack down would wipe volumes someone may be using. The
-    session also could not run tim: the global launcher gave "permission
-    denied", and the permission system refused `node tim/src/cli.js`. No
-    code change is needed. Once the stack is free, run the canary and
-    stack-smoke and record the result under `## P61` in
-    `settings-followups.md`.
+  - **P62:** it can't be finished until Sam decides how to fix a failing
+    test in the plants prototype. The verifier's only problem is the
+    `run-stack.sh` mention at
+    `repos/trade-imports-plants-prototype/README.md:300`. Changing that
+    line means a commit in the prototype, and the prototype's pre-commit
+    hook runs format:check, lint and the full test suite. One test in that
+    suite fails today: in
+    `src/server/app/services/ins-address-book/ins-address-book.test.js`,
+    the check against the sibling repo fails because
+    `trade-imports-ins-frontend`'s barrel exports `addressTypeOfRole` and
+    `keepRolesOfferedBy`, and the prototype has neither. Fixing it means
+    either porting the ins-frontend typed address-book model
+    (`address-types.js`) into the repo designers own, or changing the test
+    so it no longer tracks the sibling. That is a product and ownership
+    decision under rule 6. Skipping the hook with `--no-verify` would get
+    round it without that decision, so it was not done.
 - Why the loop stopped: no buildable row was left. P11, P55 and P19B are
-  for Sam, P61 is blocked, and P62, P69, P70, P71 and P72 are waiting on
-  those.
+  for Sam, P62 is blocked, and P69, P70, P71 and P72 are still to do but
+  wait on those.
 - Rows for Sam:
   - **P11:** test which allowlist patterns match without a prompt. P71 and
     P72 wait on it.
@@ -148,5 +151,6 @@ Agents cannot do these two rows, so the loop skips them:
   - P26's canary (raising a real govuk ticket) still waits for Sam's
     go-ahead.
 - Landing result: none yet.
-- Next: Sam says whether the running stack can be taken down, or frees it
-  under a lease, so P61's canary and stack-smoke can run.
+- Next: Sam decides how to fix the failing prototype test for P62 (port
+  `address-types.js` from ins-frontend into the prototype, or stop the
+  test tracking the sibling), then relaunch the loop to finish P62.

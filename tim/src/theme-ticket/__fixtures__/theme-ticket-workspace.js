@@ -1,5 +1,5 @@
 import { execa } from 'execa'
-import { chmodSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { stageBashWorkspace } from '../../test-support/bash-golden-harness.js'
 
@@ -15,8 +15,6 @@ export const BASH_SCRIPTS = [
   'tools/theme-ticket/derive-scenarios.mjs'
 ]
 
-const FAKE_JIRA_SEARCH = 'tools/jira/search.sh'
-
 const DEFAULT_COMMIT_DATE = '2026-03-01T10:00:00+00:00'
 
 /**
@@ -30,19 +28,6 @@ export const JIRA_UPDATED = {
   'EUDPA-5': '2026-04-01T09:30:00.000+0000',
   'EUDPA-6': '2026-03-02T09:00:00.000+0000'
 }
-
-const fakeJiraSearch = () =>
-  [
-    '#!/bin/bash',
-    'case "$1" in',
-    ...Object.entries(JIRA_UPDATED).map(
-      ([key, updated]) =>
-        `  "key = ${key}") echo '{"issues":[{"fields":{"updated":"${updated}"}}]}' ;;`
-    ),
-    `  *) echo '{"issues":[]}' ;;`,
-    'esac',
-    ''
-  ].join('\n')
 
 const scenarioText = ({ heading, id, then }) =>
   [
@@ -681,8 +666,7 @@ export { specText }
 export const playThemeTicketSteps = async ({ scripts = [], runCommand }) => {
   const staged = stageBashWorkspace({ scripts })
   try {
-    writeFiles(staged.root, { [FAKE_JIRA_SEARCH]: fakeJiraSearch() })
-    chmodSync(join(staged.root, FAKE_JIRA_SEARCH), 0o755)
+    mkdirSync(staged.root, { recursive: true })
     await gitIn(staged.root, ['init', '-q', '-b', 'main'])
     const recordings = []
     for (const step of THEME_TICKET_STEPS) {

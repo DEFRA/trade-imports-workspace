@@ -25,8 +25,6 @@ export const prepareScripts = [
 export const helperScripts = [
   'tools/github/prs.sh',
   'tools/github/pr-details.sh',
-  'tools/jira/ticket.sh',
-  'tools/jira/comments.sh',
   'tools/confluence/page.sh'
 ]
 

@@ -264,10 +264,6 @@ const WORKSPACE_FILES = {
 
 const STUB_DIR = 'stub'
 
-const TICKET_STUB = `#!/bin/bash
-cat "$HOME/${STUB_DIR}/jira-$1.json" 2>/dev/null || exit 1
-`
-
 const GH_STUB = `#!/bin/bash
 stub="$HOME/${STUB_DIR}"
 case "$1 $2" in
@@ -308,8 +304,8 @@ const writeStubs = (home) => {
 
 /**
  * A staged workspace holding the fixture routing, best-practice files and
- * repos. With `bash`, it also holds the scripts and stand-ins for
- * `tools/jira/ticket.sh` and `gh`, and `binDir` is the folder to put
+ * repos. With `bash`, it also holds the scripts and a stand-in for
+ * `gh`, and `binDir` is the folder to put
  * first on PATH.
  *
  * @param {{bash?: boolean}} [options]
@@ -321,7 +317,6 @@ export const stagePrepareWorkspace = ({ bash = false } = {}) => {
     files: WORKSPACE_FILES
   })
   if (!bash) return staged
-  writeExecutable(join(staged.root, 'tools/jira/ticket.sh'), TICKET_STUB)
   return { ...staged, binDir: writeStubs(staged.home) }
 }
 

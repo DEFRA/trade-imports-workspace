@@ -117,7 +117,7 @@ description structure, AC quality, parent/epic, label conformance
 | Scope | In/out of scope clear? |
 | Specificity | Concrete details? |
 | No history | Is it free of timelines, commit hashes and audit dumps, with evidence linked instead? |
-| Markup | Does it render? No literal Markdown, no `class="error"` in `ticket.sh EUDPA-X full`. |
+| Markup | Does it render? No literal Markdown, no `class="error"` in `tim jira ticket EUDPA-X --rendered`. |
 
 ### Acceptance Criteria
 | Check | Question |

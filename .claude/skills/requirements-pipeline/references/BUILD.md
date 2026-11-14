@@ -356,8 +356,7 @@ tim jira transition <ANY-EXISTING-KEY> --list --workspace ~/git/defra/trade-impo
 On EUDPA the working status is `In Dev` and the finished status is `Done`; the
 args use those names. The done stage closes each ticket with
 `tim jira transition <KEY> "<jiraDoneStatus>" --workspace ~/git/defra/trade-imports-workspace --json`,
-which `Bash(tim:*)` allows; `tools/jira/transition-ticket.sh` still works by hand
-but the loop no longer calls it.
+which `Bash(tim:*)` allows.
 
 Do not take a status name from a command's `--help` text — that is example
 wording, not this board's workflow.

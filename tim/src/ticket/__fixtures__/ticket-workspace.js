@@ -8,8 +8,6 @@ import { markWorkspaceRoot } from '../../test-support/workspace-marker.js'
 export const BRANCH_SCRIPT = 'tools/ticket/setup-branch.sh'
 export const PLAN_SCRIPTS = [
   'tools/ticket/prepare-plan.sh',
-  'tools/jira/ticket.sh',
-  'tools/jira/comments.sh',
   'tools/confluence/page.sh'
 ]
 export const IMPLEMENT_SCRIPTS = [

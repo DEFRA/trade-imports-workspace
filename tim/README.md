@@ -1491,8 +1491,7 @@ retry never posts a duplicate. `--json` puts `{mode, key, body, comment}` in
 ### `tim jira transition` — move a ticket's status
 
 Moving a ticket is the whole job of this command, so it is **not** a dry run:
-it changes the ticket straight away. It replaces
-`../tools/jira/transition-ticket.sh`, which stays for use by hand.
+it changes the ticket straight away.
 
 ```bash
 tim jira transition EUDPA-200 "Done" --json   # moves the ticket to the status named exactly "Done", then reads it back to confirm

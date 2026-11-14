@@ -27,11 +27,11 @@ epics included, goes through `tim jira create`.
 | Script | Args | Purpose |
 |---|---|---|
 | **jira** | | |
-| `tools/jira/ticket.sh` | EUDPA-X [full\|summary\|json] | Get ticket |
-| `tools/jira/comments.sh` | EUDPA-X | Get comments |
-| `tools/jira/add-comment.sh` | EUDPA-X "Comment" | Add comment |
-| `tools/jira/transition-ticket.sh` | EUDPA-X "Status"\|--list | Change status. Takes a status or a transition name; `--list` prints `transition -> status`.<br>`tim jira transition EUDPA-X "Status" [--list] [--json]` now covers this, and is what the increment build loop calls; the script stays for use by hand. |
-| `tools/jira/search.sh` | "JQL" [list\|summary\|json] [--fields ...] | Run JQL across the project (paginates via v3 endpoint) |
+| `tim jira ticket` | EUDPA-X [--rendered] [--json] | Get ticket |
+| `tim jira comments` | EUDPA-X [--json] | Get comments |
+| `tim jira comment` | EUDPA-X (--body "Comment" \| --file F) [--confirm] | Add comment (dry run without `--confirm`) |
+| `tim jira transition` | EUDPA-X "Status" [--list] [--resolution R] [--json] | Change status. Takes a status or a transition name; `--list` prints `transition -> status` |
+| `tim jira search` | (words \| --jql "JQL") [--limit N, up to 500] [--json] | Search the project by words or JQL |
 | **github** | | |
 | `gh search prs`, `gh pr view`, `gh pr diff` | EUDPA-X --owner DEFRA; N --repo DEFRA/R | Find a ticket's PRs and read their details and diffs with the GitHub CLI directly |
 | `tim review file-diff` | file (--ticket EUDPA-X --repo R \| --stdin) [--json] | PR diff filtered to one file, from the review's cached `.diffs/{repo}.diff`, or a `gh pr diff` piped in with `--stdin` |

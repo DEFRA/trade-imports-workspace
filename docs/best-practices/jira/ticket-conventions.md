@@ -141,7 +141,7 @@ any premise we now know is wrong rather than preserving it.
 ## Jira wiki markup
 
 Every workspace path that writes a description or comment
-(`tim jira create`, `tim jira update`, `tools/jira/add-comment.sh`)
+(`tim jira create`, `tim jira update`, `tim jira comment`)
 sends the
 text raw to Jira's wiki renderer. Markdown does not work: `# Heading`
 renders as a numbered list, `**bold**` keeps its asterisks, and
@@ -168,7 +168,7 @@ Escape these, or Jira renders an error span or a broken table:
   `{noformat}` block.
 
 Check every write. Run
-`~/git/defra/trade-imports-workspace/tools/jira/ticket.sh EUDPA-X full > <file>`,
+`tim jira ticket EUDPA-X --rendered > <file>`,
 then search the file for `class="error"`. Any match is an unescaped
 bracket.
 
@@ -185,7 +185,7 @@ project = EUDPA AND status changed TO Done DURING ("<from>", "<to + 1 day>")
 ```
 
 The upper bound is exclusive, so add a day. Run it with
-`~/git/defra/trade-imports-workspace/tools/jira/search.sh "<jql>"`.
+`tim jira search --jql "<jql>" --limit 500`.
 
 ### Statuses and transitions
 
@@ -199,14 +199,14 @@ There is no "In Dev" transition; "In Progress" is the nearest.
 
 There is no "Won't Do" transition. `CLOSED` is not a substitute: every
 `CLOSED` ticket on EUDPA carries resolution `Done`, so it reads as
-delivered. `tools/jira/transition-ticket.sh` sends no fields, so it
-cannot set a resolution. `tim jira transition EUDPA-X "<status>"
---resolution "<name>"` can, where the transition's screen accepts one.
+delivered. `tim jira transition EUDPA-X "<status>"
+--resolution "<name>"` can set a resolution, where the transition's
+screen accepts one.
 
 To drop a ticket:
 
 1. Post the reasoning as a comment with
-   `~/git/defra/trade-imports-workspace/tools/jira/add-comment.sh EUDPA-X -f <file>`.
+   `tim jira comment EUDPA-X --file <file> --confirm`.
 2. Set resolution "Won't Do" in the Jira UI, or through the Atlassian
    MCP's `transitionJiraIssue` with a `fields` payload where the
    organisation has authorised it.
@@ -273,7 +273,7 @@ That prints `KEY — summary` lines for each open epic. Add `--json`
 for `{board, epics: [{key, summary, done}]}` in the envelope's
 `result`, or `--include-done` to include closed epics.
 
-Pair with `tools/jira/ticket.sh EUDPA-X summary` for verification
+Pair with `tim jira ticket EUDPA-X` for verification
 (Step 1.5 of the skill does this automatically).
 
 ## Field-default modifiers (opt-in)

@@ -18,11 +18,7 @@ import { normaliseRecording } from './__fixtures__/normalise.js'
 
 const PREPARE_SCRIPT = 'tools/refine/prepare-refinement.sh'
 const FINALIZE_SCRIPT = 'tools/refine/refine-finalize.sh'
-const SCRIPTS_PREPARE_CALLS = [
-  'tools/jira/ticket.sh',
-  'tools/jira/comments.sh',
-  'tools/confluence/page.sh'
-]
+const SCRIPTS_PREPARE_CALLS = ['tools/confluence/page.sh']
 
 let staged
 let atlassian

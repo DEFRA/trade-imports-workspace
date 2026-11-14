@@ -145,3 +145,11 @@ None to remove. No allowlist entry names `start-style.sh`,
 skill's refresh now writes each PR's changed files with
 `gh api repos/DEFRA/<repo>/pulls/<n>/files --paginate --slurp > ...`
 first, as the review skill does.
+
+## P39
+
+None to remove. No allowlist entry names `ticket.sh`, `comments.sh`,
+`add-comment.sh`, `transition-ticket.sh` or `search.sh` under
+`tools/jira/`, which is now gone; the generic `tools/**` rules (lines
+63-64) still serve other folders. `Bash(tim:*)` covers `tim jira ticket`,
+`comments`, `comment`, `transition` and `search`.

@@ -6834,9 +6834,7 @@ describe('increment-build-loop', () => {
       test('makes no Jira call in any stage', async () => {
         const run = await runMergeRow(FOUND, CI_GREEN, MARKED_DONE, NO_GATE)
         const jiraCallers = run.agents
-          .filter(({ prompt }) =>
-            /tools\/jira|transition-ticket|tim jira/.test(prompt)
-          )
+          .filter(({ prompt }) => /tim jira/.test(prompt))
           .map(({ options }) => options.label)
 
         expect(jiraCallers).toEqual([])
@@ -9136,13 +9134,11 @@ describe('increment-build-loop', () => {
           ),
           confirm: prompt.includes(
             '`tim jira ticket EUDPA-914 --workspace ~/ws --json`'
-          ),
-          shellScript: prompt.includes('tools/jira')
+          )
         }).toEqual({
           move: true,
           list: true,
-          confirm: true,
-          shellScript: false
+          confirm: true
         })
       })
 

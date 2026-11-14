@@ -157,12 +157,12 @@ drafting — typo'd keys are easier to catch now than after the user has
 spent a turn answering the rest of the interview.
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/jira/ticket.sh "$PARENT" summary
+tim jira ticket "$PARENT"
 ```
 
 - Exit 0: confirm the epic summary back to the user ("Parent: $PARENT
   — $SUMMARY"), then continue.
-- Non-zero or `Issue does not exist...` in the output: surface the
+- Non-zero, with `not found` in the output: surface the
   error verbatim and ask for a corrected key, or for the user to
   remove the parent. Do not proceed to drafting until the lookup
   succeeds or the user removes the parent.
@@ -367,7 +367,7 @@ this step.
 Check the description rendered:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/jira/ticket.sh EUDPA-XXXXX full > ~/git/defra/trade-imports-workspace/workareas/ticket-creation/<slug>/rendered.txt
+tim jira ticket EUDPA-XXXXX --rendered > workareas/ticket-creation/<slug>/rendered.txt
 ```
 
 Search `rendered.txt` for `class="error"`. A match is an unescaped

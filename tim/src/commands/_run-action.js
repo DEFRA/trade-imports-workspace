@@ -16,6 +16,7 @@ const emitError = (text) => writeLine(process.stderr, text)
  * @param {(context: {args: any[]}, parsedOptions: object) => Promise<any>} args.run
  * @param {(result: any) => string|null} args.renderText - null prints nothing, not even a newline
  * @param {(result: any) => string} [args.renderTextError] - Text mode only: what a result that partly failed prints to stderr after its output. Defaults to nothing
+ * @param {(error: Error) => string} [args.renderErrorText] - Text mode only: what a thrown error prints to stderr. Defaults to its message
  * @param {(result: any, parsedOptions: object) => number} [args.exitCodeForResult] - Defaults to always OK
  * @param {(error: Error) => number} [args.exitCodeForError] - Defaults to `exitCodeFor`
  * @param {string} args.timVersion
@@ -26,6 +27,7 @@ export const makeRunAction = ({
   run,
   renderText,
   renderTextError = () => '',
+  renderErrorText = (error) => error.message ?? String(error),
   exitCodeForResult = () => OK,
   exitCodeForError = exitCodeFor,
   timVersion
@@ -59,7 +61,7 @@ export const makeRunAction = ({
           )
         )
       } else {
-        await emitError(error.message ?? String(error))
+        await emitError(renderErrorText(error))
       }
       process.exit(exitCodeForError(error))
     }

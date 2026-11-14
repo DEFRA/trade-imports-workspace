@@ -15,7 +15,8 @@ import { reviewDir } from './paths.js'
 import {
   readReviewItems,
   reviewItemsJsonText,
-  writeJsonAtomic
+  writeJsonAtomic,
+  writeTextAtomic
 } from './store.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -141,5 +142,16 @@ describe('#writeJsonAtomic', () => {
       '{\n  "file": "a/b.js",\n  "todos": [],\n  "verdict": null\n}\n'
     )
     expect(readdirSync(dirname(path))).toEqual(['a_b.js.review.json'])
+  })
+})
+
+describe('#writeTextAtomic', () => {
+  test('Should write the text as given into a folder it creates, leaving no temp file', () => {
+    const path = join(staged.root, 'workareas', 'notes', 'n', 'bundle.md')
+
+    writeTextAtomic(path, '# Bundle\n\nNo trailing newline')
+
+    expect(readFileSync(path, 'utf8')).toBe('# Bundle\n\nNo trailing newline')
+    expect(readdirSync(dirname(path))).toEqual(['bundle.md'])
   })
 })

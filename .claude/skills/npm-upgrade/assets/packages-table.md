@@ -11,8 +11,8 @@ demand from the JSON.
 ~/git/defra/trade-imports-workspace/workareas/npm-upgrades/{run-id}/{repo}/packages.{repo}.json
 ```
 
-One file per repo. Initial population: `packages-init.sh` (called by
-`discover-upgrades.sh`). Subsequent mutations: walker, runners,
+One file per repo. Initial population: `tim npm discover`.
+Subsequent mutations: walker, runners,
 PACKAGE_PLANNER workers — all via the `packages-*.sh` helpers under
 `tools/npm/`. Never hand-edit.
 
@@ -20,7 +20,7 @@ Sister files in the same directory:
 
 - `.context/{normalized-pkg}/{changelog.md,migration.md,usages.txt,package-meta.json}`
   — per-package pre-baked context (best-effort), populated by
-  `prebake-context.sh`.
+  `tim npm context prebake`.
 - `best-practices.md` — concatenated dependency-relevant best
   practices for this repo.
 
@@ -63,7 +63,7 @@ state lives in `packages.{repo}.json`.
       "completed_at": null,                   // ISO-8601 on success/failure
       "demoted_from_auto": false,             // true if auto upgrade demoted to manual
 
-      // Set by prebake-context.sh.
+      // Set by tim npm context prebake.
       "context_baked": null,                  // null | true | false | "partial"
       "context_missing": []                   // fields prebake couldn't resolve
     }
@@ -93,7 +93,7 @@ state lives in `packages.{repo}.json`.
 
 | Script | Purpose |
 |---|---|
-| `packages-init.sh` | Initial population from ncu output (called by `discover-upgrades.sh`) |
+| `tim npm discover` | Initial population from npm-check-updates; a re-run keeps each package's work |
 | `tim npm packages set-classification` | Set classification + risk + rationale (+ file list, change summary, urls) for one package |
 | `tim npm packages set-status` | Set implementation_status + failure_reason / commit_sha / completed_at |
 | `tim npm packages list` | Query packages with filters (`--classification`, `--status`, `--risk`, `--repo`, `--json`) |

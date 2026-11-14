@@ -22,10 +22,10 @@ invoke them by absolute path.
 | `audit-allowlist-forget.sh` | 2–3 | Drop entries from `allowlist.{repo}.json` after a hand rollback (the implementor's; scripts do it themselves). Run with `bash` |
 | `refresh-lockfile.sh` | 2 | End-of-batch `npm update` of transitive dependencies, checked and committed |
 | `reset-overrides.sh` | 4 | Remove overrides in a throwaway worktree, keep only the proven ones, commit |
-| `discover-upgrades.sh` | 1 | Find outdated packages + seed `packages.{repo}.json` |
-| `prebake-context.sh` | 1 | Per-package context bundle (best-effort) |
-| `bake-best-practices.sh` | 1 | Per-repo best-practices bundle |
-| `packages-init.sh` / `tim npm packages set-classification` / `tim npm packages set-status` | All | JSON state writers (atomic) |
+| `tim npm discover` | 1 | Find outdated packages + seed `packages.{repo}.json` |
+| `tim npm context prebake` | 1 | Per-package context bundle (best-effort) |
+| `tim npm context best-practices` | 1 | Per-repo best-practices bundle |
+| `tim npm packages set-classification` / `tim npm packages set-status` | All | JSON state writers (atomic) |
 | `tim npm packages list` / `tim npm packages counts` | All | JSON state queries |
 | `tim npm packages verify` | 1 | Phase 1 gate |
 | `run-automated-upgrades.sh` | 2 | Per-repo automated runner |

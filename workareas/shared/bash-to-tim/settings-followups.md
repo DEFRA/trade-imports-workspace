@@ -320,3 +320,9 @@ names `tools/npm/packages-list.sh`, `packages-counts.sh`,
 `packages-set-status.sh`, `packages-set-classification.sh`,
 `packages-aggregate-classifications.sh` or
 `verify-classification-coverage.sh`; nothing to remove.
+
+## P65
+
+No allowlist entry in any `.claude/settings*.json` (workspace or `repos/*`)
+names `tools/npm/discover-upgrades.sh`, `packages-init.sh`,
+`bake-best-practices.sh` or `prebake-context.sh`; nothing to remove.

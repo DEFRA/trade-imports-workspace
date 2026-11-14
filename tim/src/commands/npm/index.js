@@ -16,6 +16,8 @@ import {
   verifyClassificationCoverage
 } from '../../npm-upgrade/writers.js'
 import { makeRunAction } from '../_run-action.js'
+import { registerContext } from './context.js'
+import { registerDiscover } from './discover.js'
 import { writeLine } from '../_write-line.js'
 
 const workspaceRootOf = (opts) =>
@@ -262,7 +264,8 @@ const registerVerify = (packages, { timVersion }) =>
     })
 
 /**
- * `tim npm`: read and change the state of an npm upgrade run.
+ * `tim npm`: discover an npm upgrade run's packages, prepare its planners
+ * and read and change its state.
  *
  * @param {import('commander').Command} program
  * @param {{timVersion: string}} options
@@ -270,7 +273,9 @@ const registerVerify = (packages, { timVersion }) =>
 export const register = (program, { timVersion }) => {
   const npm = program
     .command('npm')
-    .description('Read and change the state of an npm upgrade run')
+    .description(
+      'Discover the outdated packages of an npm upgrade run, prepare its planners and read and change its state'
+    )
   const packages = npm
     .command('packages')
     .description(
@@ -282,4 +287,6 @@ export const register = (program, { timVersion }) => {
   registerSetClassification(packages, { timVersion })
   registerAggregate(packages, { timVersion })
   registerVerify(packages, { timVersion })
+  registerDiscover(npm, { timVersion })
+  registerContext(npm, { timVersion })
 }

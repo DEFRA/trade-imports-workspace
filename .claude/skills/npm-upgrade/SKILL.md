@@ -253,10 +253,10 @@ Scripts (`~/git/defra/trade-imports-workspace/tools/npm/`):
 - `audit-allowlist-add.sh` — write or renew one `audit-ci.jsonc` allowlist entry.
 - `refresh-lockfile.sh` — Phase 2 end-of-batch transitive refresh.
 - `reset-overrides.sh` — Phase 4 per-repo override reset.
-- `discover-upgrades.sh` — discovery + seed `packages.{repo}.json`.
-- `prebake-context.sh` — per-package context pre-bake (best-effort).
-- `bake-best-practices.sh` — per-repo best-practices bundle.
-- `packages-init.sh` / `tim npm packages set-classification` / `tim npm packages set-status` — JSON state writers.
+- `tim npm discover` — discovery + seed `packages.{repo}.json`.
+- `tim npm context prebake` — per-package context pre-bake (best-effort).
+- `tim npm context best-practices` — per-repo best-practices bundle.
+- `tim npm packages set-classification` / `tim npm packages set-status` — JSON state writers.
 - `tim npm packages list` / `tim npm packages counts` — JSON state queries.
 - `tim npm packages verify` — Phase 1 gate.
 - `run-automated-upgrades.sh` — Phase 2 per-repo runner.

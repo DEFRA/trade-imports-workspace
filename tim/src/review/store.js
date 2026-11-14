@@ -13,18 +13,28 @@ import { uniqueTempPathFor } from '../backlog/tmp-path.js'
 import { itemsFilePath } from './paths.js'
 
 /**
+ * Writes text through a sibling temp file and a rename, creating the
+ * folder first.
+ *
+ * @param {string} path
+ * @param {string} text
+ */
+export const writeTextAtomic = (path, text) => {
+  mkdirSync(dirname(path), { recursive: true })
+  const tempPath = uniqueTempPathFor(path)
+  writeFileSync(tempPath, text, 'utf8')
+  renameSync(tempPath, path)
+}
+
+/**
  * Writes JSON as `jq` prints it, through a sibling temp file and a rename,
  * creating the folder first.
  *
  * @param {string} path
  * @param {any} value
  */
-export const writeJsonAtomic = (path, value) => {
-  mkdirSync(dirname(path), { recursive: true })
-  const tempPath = uniqueTempPathFor(path)
-  writeFileSync(tempPath, `${JSON.stringify(value, null, 2)}\n`, 'utf8')
-  renameSync(tempPath, path)
-}
+export const writeJsonAtomic = (path, value) =>
+  writeTextAtomic(path, `${JSON.stringify(value, null, 2)}\n`)
 
 const isItemsFileName = (name) =>
   name.startsWith('items.') && name.endsWith('.json')

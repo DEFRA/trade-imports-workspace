@@ -21,7 +21,7 @@
 #
 #   --phase 1  Refuses to start unless the last phase 0 run covered
 #              every requested repo, at its current HEAD, and was
-#              green. Then runs `discover-upgrades.sh` for every requested repo,
+#              green. Then runs `tim npm discover` for every requested repo,
 #              then emit a JSON manifest on stdout listing every
 #              package that still has classification=null. The caller
 #              fans out one PACKAGE_PLANNER subagent per manifest
@@ -236,7 +236,7 @@ phase1() {
     for repo in "${REPOS[@]}"; do
         local repo_path="$REPO_BASE/$repo"
         echo "Discovering $repo..." >&2
-        "$SCRIPT_DIR/discover-upgrades.sh" \
+        tim --workspace "$WORKSPACE" npm discover \
             "$repo_path" \
             --run-id "$TICKET" \
             --strategy "$STRATEGY" \
@@ -245,31 +245,28 @@ phase1() {
 
     # Per-repo best-practices bundle (one file per repo). Cheap and
     # depends only on local files.
-    if [[ -x "$SCRIPT_DIR/bake-best-practices.sh" ]]; then
-        for repo in "${REPOS[@]}"; do
-            "$SCRIPT_DIR/bake-best-practices.sh" --run-id "$TICKET" --repo "$repo" \
-                >/dev/null 2>&1 || true
-        done
-    fi
+    for repo in "${REPOS[@]}"; do
+        tim --workspace "$WORKSPACE" npm context best-practices \
+            --run-id "$TICKET" --repo "$repo" \
+            >/dev/null 2>&1 || true
+    done
 
     # Per-package pre-bake (best-effort; sets context_baked +
     # context_missing on each package row). Worker hydrates missing
     # pieces via WebFetch / Grep at spawn time.
-    if [[ -x "$SCRIPT_DIR/prebake-context.sh" ]]; then
-        echo "Pre-baking per-package context..." >&2
-        for repo in "${REPOS[@]}"; do
-            local pkgs_file="$WORKSPACE_BASE/$repo/packages.${repo}.json"
-            [[ -f "$pkgs_file" ]] || continue
-            while IFS= read -r pkg; do
-                [[ -z "$pkg" ]] && continue
-                "$SCRIPT_DIR/prebake-context.sh" \
-                    --run-id "$TICKET" \
-                    --repo "$repo" \
-                    --package "$pkg" \
-                    >/dev/null 2>&1 || true
-            done < <(jq -r '.packages[] | select(.classification == null) | .package' "$pkgs_file")
-        done
-    fi
+    echo "Pre-baking per-package context..." >&2
+    for repo in "${REPOS[@]}"; do
+        local pkgs_file="$WORKSPACE_BASE/$repo/packages.${repo}.json"
+        [[ -f "$pkgs_file" ]] || continue
+        while IFS= read -r pkg; do
+            [[ -z "$pkg" ]] && continue
+            tim --workspace "$WORKSPACE" npm context prebake \
+                --run-id "$TICKET" \
+                --repo "$repo" \
+                --package "$pkg" \
+                >/dev/null 2>&1 || true
+        done < <(jq -r '.packages[] | select(.classification == null) | .package' "$pkgs_file")
+    done
 
     # Emit the spawn manifest. One JSON object per line: each is a
     # complete PACKAGE_PLANNER spawn task.

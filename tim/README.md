@@ -502,6 +502,32 @@ tim npm packages verify --run-id EUDPA-500 --json
   `--json` gives `{pending_count, pending}`.
 - Every refusal, a usage error included, exits 1.
 
+### `tim npm discover` and `tim npm context` — seed a run and prepare its planners
+
+```bash
+tim npm discover --repo trade-imports-animals-frontend --run-id EUDPA-500 --strategy minor
+tim npm discover repos/trade-imports-animals-frontend --run-id EUDPA-500 --json
+tim npm context best-practices --run-id EUDPA-500 --repo trade-imports-animals-frontend
+tim npm context prebake --run-id EUDPA-500 --repo trade-imports-animals-frontend --package @hapi/hapi
+```
+
+- `discover` runs npm-check-updates, a pinned tim dependency, so you do
+  not need `ncu` installed. It takes a repository path or `--repo`, writes
+  `packages.<repo>.json` and `.upgrades-meta.json`, and keeps the
+  classification, status and context of every package still outdated.
+  `--json` gives the packages file. A `service`, `app` or `src` folder is
+  named for its parent.
+- `context best-practices` writes the repo's `best-practices.md` (the
+  Hapi, GOV.UK Frontend, testing and Playwright guides) and prints its
+  path.
+- `context prebake` writes `.context/<package>/` (`/` becomes `__`):
+  `package-meta.json`, `usages.txt` (the repo's `src` lines that import
+  the package, in path order) and, when the package's public npm registry
+  record names a GitHub repository, `changelog.md` from main or master. A
+  failed download is skipped. It sets the row's `context_baked` and
+  `context_missing`.
+- Every refusal exits 1.
+
 ### `tim review` — the review skill's helpers
 
 ```bash

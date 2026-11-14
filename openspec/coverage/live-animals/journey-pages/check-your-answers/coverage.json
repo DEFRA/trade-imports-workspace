@@ -267,7 +267,14 @@
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should show the declaration once the notification is complete", "strength": "full", "notes": "drives the review's Continue as it posts to the declaration" }
           ]
         },
-        { "id": "SCN-CYA-006-B", "name": "Transit countries are not owed for submission", "coverage": "full", "tests": [ { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "a draft by road with no transit country added continues to the declaration", "strength": "full", "notes": "red probe: blank the optional status on transitedCountries in obligations/sections/transport.js and the review names Complete transit countries" } ] }
+        {
+          "id": "SCN-CYA-006-B",
+          "name": "Transit countries are not owed for submission",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "a draft by road with no transit country added continues to the declaration", "strength": "full", "notes": "red probe: blank the optional status on transitedCountries in obligations/sections/transport.js and the review names Complete transit countries" }
+          ]
+        }
       ]
     },
     {
@@ -312,6 +319,50 @@
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "names the unfinished main import reason and additional details cards in the error summary and on each card", "strength": "partial", "notes": "no red probe run against this link; two of the three messages in a browser, linked to their cards" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/journeys/save-and-continue.spec.ts", "test": "ends on the review page after Save and continue, naming what is outstanding, when the notification is incomplete", "strength": "partial", "notes": "no red probe run against this link; the main import reason message through the stack" }
           ]
+        },
+        {
+          "id": "SCN-CYA-007-D",
+          "name": "With no commodity selected the What are you importing? card is marked unfinished",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should name What are you importing? with no commodity selected, link it to that card and mark the card", "strength": "partial", "notes": "not probed red" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "refuses submit of a notification with no commodity line and names what is missing from the commodity selection and the commodity details", "strength": "partial", "notes": "not probed red" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-007-E",
+          "name": "Incomplete consignment details name commodity details and link to the first commodity card",
+          "coverage": "partial",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should link commodity details to the first commodity card and mark no commodity card", "strength": "partial", "notes": "not probed red; the section-heading fallback is probed in a separate test" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-007-F",
+          "name": "A species with no count is named and linked to its block",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should name a species with no count and link it to its block, which carries that anchor and heading", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should show no message inside a named species block", "strength": "full", "notes": "probe: rendered an error message inside the species block in the template; this test went red, restored green" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-007-G",
+          "name": "A species with a count and no identifier is named and linked to its block",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should name a species with a count and no identifier and link it to its block", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "groups two cattle species under one commodity card and names each one short of an identifier, linking to its block", "strength": "full", "notes": "probe: removed tabindex from the species block in the template; this test went red on the focus assertion, restored green" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts", "test": "the review names each of two cattle species short of an identifier and links to its species block", "strength": "full", "notes": "probe: removed tabindex from the species block in the template; this test went red on toBeFocused, restored green" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-007-H",
+          "name": "A single identified species with no identifier is not named",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should name no species when a single identified species has a count and no identifier", "strength": "full", "notes": "" }
+          ]
         }
       ]
     },
@@ -331,7 +382,14 @@
             { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "ends with the last card and offers no way to submit again", "strength": "full", "notes": "asserts no submit/continue action alongside the copy-as-new action" }
           ]
         },
-        { "id": "SCN-CYA-008-C", "name": "Delete opens the delete confirmation", "coverage": "full", "tests": [ { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "Delete on the submitted view opens the delete confirmation", "strength": "full", "notes": "red probe: point deleteHref in check-answers/controller.js at the copy page and the confirmation heading is not shown" } ] }
+        {
+          "id": "SCN-CYA-008-C",
+          "name": "Delete opens the delete confirmation",
+          "coverage": "full",
+          "tests": [
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "Delete on the submitted view opens the delete confirmation", "strength": "full", "notes": "red probe: point deleteHref in check-answers/controller.js at the copy page and the confirmation heading is not shown" }
+          ]
+        }
       ]
     },
     {
@@ -505,7 +563,7 @@
           "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should show the declaration on Continue of an amendment holding a species not listed under its code", "strength": "full", "notes": "red then green with every status species-checked (workareas/shared/eudpa-774/logs/inc-028-probe-species-check-amend)" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/refusal.test.js", "test": "Should return no species error for an amendment holding an unlisted species", "strength": "full", "notes": "red then green with every status species-checked (workareas/shared/eudpa-774/logs/inc-028-probe-species-check-amend)" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/refusal.test.js", "test": "Should return no unlisted-species error for an amendment holding an unlisted species", "strength": "full", "notes": "red then green with every status species-checked (workareas/shared/eudpa-774/logs/inc-028-probe-species-check-amend)" }
           ]
         }
       ]
@@ -520,30 +578,9 @@
           "name": "A private transporter's saved country shows on the review",
           "coverage": "full",
           "tests": [
-            {
-              "type": "unit",
-              "repo": "trade-imports-animals-frontend",
-              "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js",
-              "test": "Should show a private transporter's saved country on the transport-details card's Country row",
-              "strength": "full",
-              "notes": ""
-            },
-            {
-              "type": "fit",
-              "repo": "trade-imports-animals-frontend",
-              "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js",
-              "test": "saves and persists a complete private transporter record",
-              "strength": "full",
-              "notes": "asserts the review's Country row after saving"
-            },
-            {
-              "type": "e2e",
-              "repo": "trade-imports-ins-tests",
-              "file": "tests/animals/e2e/features/private-transporter-scope.spec.ts",
-              "test": "the saved country shows on the review's Transport details card, and a saved private transporter survives an add of the other type that the trader cancels",
-              "strength": "partial",
-              "notes": "no red probe run against this assertion"
-            }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should show a private transporter's saved country on the transport-details card's Country row", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/transport/fit/transporters.fit.spec.js", "test": "saves and persists a complete private transporter record", "strength": "full", "notes": "asserts the review's Country row after saving" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/private-transporter-scope.spec.ts", "test": "the saved country shows on the review's Transport details card, and a saved private transporter survives an add of the other type that the trader cancels", "strength": "partial", "notes": "no red probe run against this assertion" }
           ]
         },
         {
@@ -602,7 +639,7 @@
     },
     {
       "id": "REQ-CYA-017",
-      "name": "A species card's identifier table heads only the identifiers asked of that line's species",
+      "name": "A species block's Identification details table heads only the identifiers asked of that line's species",
       "coverage": "full",
       "scenarios": [
         {
@@ -610,10 +647,30 @@
           "name": "The identifier table heads only the columns a line's species was asked for and some animal filled in",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should head a horse line's identifier table with the horse name, and never with the ear tag it was not asked for", "strength": "full", "notes": "a horse line's microchip, passport and horse name head the table in order; probed by reverting identifier-table.js's identifierTable to pass only the commodity code to filledIdentifierColumns" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should head a cattle line's identifier table with the tattoo when a unit carries one", "strength": "full", "notes": "a cattle line's ear tag, passport and tattoo head the table in order, with that animal's values in its one row; probed by removing the cattle entry's tattoo from COMMODITY_IDENTIFIERS" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should head a horse line's identification details table with the horse name, and never with the ear tag it was not asked for", "strength": "full", "notes": "a horse line's microchip, passport and horse name head the table in order; probed by reverting identifier-table.js's identifierTable to pass only the commodity code to filledIdentifierColumns" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should head a cattle line's identification details table with the tattoo when a unit carries one", "strength": "full", "notes": "a cattle line's ear tag, passport and tattoo head the table in order, with that animal's values in its one row; probed by removing the cattle entry's tattoo from COMMODITY_IDENTIFIERS" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts", "test": "after completing every section the check-your-answers page renders the answered rows", "strength": "partial", "notes": "asserts the cattle species card's Tattoo columnheader and cell; not probed locally, the e2e rung runs on each repo's pull request" },
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should head a cat line’s identifier table with the identifiers the species was asked for alone, while its animals hold saved permanent addresses", "strength": "full", "notes": "pins the head list while the removed permanent address column's data (a saved address on every unit) is present but must not reappear as a column" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should head a cat line’s identification details table with the identifiers the species was asked for alone, while its animals hold saved permanent addresses", "strength": "full", "notes": "pins the head list while the removed permanent address column's data (a saved address on every unit) is present but must not reappear as a column" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "renders one review row per cat, keyed by its common name and number, and heads its identification details with the identifiers alone", "strength": "partial", "notes": "not probed red" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-017-B",
+          "name": "Each animal's row is labelled with its species name and number",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should head a cat line’s identification details table with the identifiers the species was asked for alone, while its animals hold saved permanent addresses", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should render a read-only identification details table inside the species block", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-017-C",
+          "name": "Identification details has its own Change link on an editable review",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should give the first row of a species block its own Change action to consignment details, and identification details its own to animal identification", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should give a submitted notification no Change action on the commodity cards, species blocks or identification details", "strength": "full", "notes": "probe: made the Identification details Change action render on a submitted review; this test went red, restored green" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts", "test": "after completing every section the check-your-answers page renders the answered rows", "strength": "partial", "notes": "not probed red" }
           ]
         }
       ]
@@ -629,16 +686,16 @@
           "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should list one row per animal after the party rows, each keyed by the animal's label and valued by its saved permanent address", "strength": "full", "notes": "" },
-            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "renders one review row per cat, keyed by its common name and number, and heads the species card with identifiers alone", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "renders one review row per cat, keyed by its common name and number, and heads its identification details with the identifiers alone", "strength": "full", "notes": "" },
             { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts", "test": "the Addresses card shows a cat’s saved permanent address, keyed by its common name and number", "strength": "full", "notes": "" }
           ]
         },
         {
           "id": "SCN-CYA-020-B",
-          "name": "An animal that still owes a permanent address has no row, while the species card is still reported outstanding",
+          "name": "An animal that still owes a permanent address has no row, while commodity details are still reported outstanding",
           "coverage": "full",
           "tests": [
-            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should list a row for the answered animal alone, leave the unanswered one with no row, and still report the outstanding answer against the species card", "strength": "full", "notes": "" }
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should list a row for the answered animal alone, leave the unanswered one with no row, and still name commodity details as outstanding", "strength": "full", "notes": "" }
           ]
         },
         {
@@ -718,6 +775,98 @@
           "coverage": "full",
           "tests": [
             { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should give a submitted notification a transit countries row with no action", "strength": "full", "notes": "the submitted notification's row holds no actions" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CYA-023",
+      "name": "The What are you importing? card reads the commodity selection back once, with each species named in capitals",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CYA-023-A",
+          "name": "The card reads the selection back in three rows with a Change link",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should read the commodity selection back once, with each species name capitalised", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should point the What are you importing? Change action at the commodity selection page carrying the review on the trail", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/hub-groups-and-cya-rows.spec.ts", "test": "after completing every section the check-your-answers page renders the answered rows", "strength": "partial", "notes": "not probed red" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-023-B",
+          "name": "Two species of one commodity share one code",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should list each species of a commodity once in the selection read-back, and the code once", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-023-C",
+          "name": "Each species under other live mammals adds its own code and common name",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should add each species its own code and common name under other live mammals", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-023-D",
+          "name": "A submitted notification's card has no Change link",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should give a submitted notification no Change action on the commodity cards, species blocks or identification details", "strength": "full", "notes": "probes: made the commodity card header action, then the What are you importing? card action, render on a submitted review; this test went red each time, restored green" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "REQ-CYA-024",
+      "name": "\"2. Description of the goods\" holds one card per commodity with one block per species",
+      "coverage": "full",
+      "scenarios": [
+        {
+          "id": "SCN-CYA-024-A",
+          "name": "Two species of one commodity stand as two blocks in one card",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should hold one commodity card, titled by its code, with one block per species", "strength": "full", "notes": "" },
+            { "type": "fit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.fit.spec.js", "test": "groups two cattle species under one commodity card and names each one short of an identifier, linking to its block", "strength": "partial", "notes": "not probed red" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-024-B",
+          "name": "A block shows its counts and no commodity or species rows",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should show Number of animals then Number of packages (when required) in a cattle block, and no commodity or species rows", "strength": "full", "notes": "" },
+            { "type": "e2e", "repo": "trade-imports-ins-tests", "file": "tests/animals/e2e/features/package-count-scope.spec.ts", "test": "the review shows a number of packages row only for the commodity that requires one", "strength": "partial", "notes": "not probed red" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-024-C",
+          "name": "A blank package count reads Not applicable and a species with no packaging shows no package row",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should read a blank package count as Not applicable", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should omit the packages row when the commodity is off the package-count list", "strength": "full", "notes": "" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-024-D",
+          "name": "The card and the first row of each block carry their own Change links to consignment details",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should give the first row of a species block its own Change action to consignment details, and identification details its own to animal identification", "strength": "full", "notes": "" },
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should point the commodity card Change action at the consignment-details page carrying the review on the trail", "strength": "partial", "notes": "not probed red" }
+          ]
+        },
+        {
+          "id": "SCN-CYA-024-E",
+          "name": "A submitted notification's commodity cards and blocks have no Change links",
+          "coverage": "full",
+          "tests": [
+            { "type": "unit", "repo": "trade-imports-animals-frontend", "file": "src/server/app/sets/live-animals/journeys/linear/features/check-answers/check-answers.test.js", "test": "Should give a submitted notification no Change action on the commodity cards, species blocks or identification details", "strength": "full", "notes": "probes: made the species block first-row action, then the commodity card header action, render on a submitted review; this test went red each time, restored green" }
           ]
         }
       ]

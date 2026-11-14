@@ -26,7 +26,7 @@ The system MUST group the page under six numbered section headings, in order, ho
 - **WHEN** they read down the page
 - **THEN** every card's title is a heading one level below its numbered section heading
 - **AND** no subsection heading stands above a card, none of "Where is this consignment coming from?", "Commodity details", "Upload documents", "Roles and addresses" or "Contact address for this consignment"
-- **AND** the first card in "1. About the consignment" is titled "Origin of import"
+- **AND** "1. About the consignment" holds the cards "Origin of import", "What are you importing?" and "Main import reason", in that order
 
 #### Scenario: The Uploaded documents section stands even when nothing has been uploaded
 **ID**: SCN-CYA-001-E
@@ -187,14 +187,14 @@ The system MUST take the user from a draft notification's check-your-answers to 
 
 ### Requirement: A draft notification that is not yet ready is refused on the review page, named card by card
 **ID**: REQ-CYA-007
-The system MUST refuse to continue from the review of a draft while any card still holds outstanding answers, MUST keep the user on the review page, and MUST show an error summary titled "There is a problem" naming every unfinished card, each entry linking to its card, which MUST itself be marked with the same words. The summary MUST stand as soon as the page is opened, and MUST take focus after a refused attempt.
+The system MUST refuse to continue from the review of a draft while any card still holds outstanding answers, MUST keep the user on the review page, and MUST show an error summary titled "There is a problem" naming every unfinished card and every species short of a count or an identifier, linking each entry to where the answer is shown: the card, or that species' block. The summary MUST stand as soon as the page is opened, and MUST take focus after a refused attempt.
 
 #### Scenario: An unfinished review names every outstanding card and links to it
 **ID**: SCN-CYA-007-A
 - **GIVEN** a new notification is open on the review with cards still outstanding
 - **WHEN** the user views the page
 - **THEN** an error summary titled "There is a problem" names every unfinished card
-- **AND** each entry links to the card it names, which is itself marked with the same words
+- **AND** each entry for a card links to the card it names, which is itself marked with the same words
 
 #### Scenario: Continuing from an unfinished review is refused, keeping the user on the page
 **ID**: SCN-CYA-007-B
@@ -207,6 +207,41 @@ The system MUST refuse to continue from the review of a draft while any card sti
 - **GIVEN** a new notification is open on the review with nothing answered beyond the entry page
 - **WHEN** the user views the page
 - **THEN** the unfinished messages, in the error summary and on the card, read "Complete origin of import", "Complete main import reason" and "Complete additional details"
+
+#### Scenario: With no commodity selected the What are you importing? card is marked unfinished
+**ID**: SCN-CYA-007-D
+- **GIVEN** a new notification with no commodity selected
+- **WHEN** the user views the review
+- **THEN** the "What are you importing?" card is marked "Complete what are you importing?"
+- **AND** the error summary entry with those words links to that card
+
+#### Scenario: Incomplete consignment details name commodity details and link to the first commodity card
+**ID**: SCN-CYA-007-E
+- **GIVEN** a notification with a commodity selected and its consignment details incomplete
+- **WHEN** the user views the review
+- **THEN** the error summary reads "Complete commodity details" and links to the first commodity card
+- **AND** no commodity card is marked as unfinished
+
+#### Scenario: A species with no count is named and linked to its block
+**ID**: SCN-CYA-007-F
+- **GIVEN** a notification with two species selected under identified commodities, one with no number of animals
+- **WHEN** the user views the review
+- **THEN** the error summary reads "Enter the number of animals for <species>", the species name in lower case
+- **AND** the entry links to that species' block, which shows no message of its own
+
+#### Scenario: A species with a count and no identifier is named and linked to its block
+**ID**: SCN-CYA-007-G
+- **GIVEN** a notification with two species selected under identified commodities, each with a count and no animal identified
+- **WHEN** the user views the review
+- **THEN** the error summary reads "Enter at least 1 animal identifier for <species>" for each, the species name in lower case
+- **AND** each entry links to that species' block
+- **AND** following the entry for bos taurus moves focus to that species' block, whose heading reads "Bos Taurus"
+
+#### Scenario: A single identified species with no identifier is not named
+**ID**: SCN-CYA-007-H
+- **GIVEN** a notification with one species selected under an identified commodity, with a count and no animal identified
+- **WHEN** the user views the review
+- **THEN** the error summary names no species
 
 ### Requirement: A submitted notification offers copy-as-new and delete
 **ID**: REQ-CYA-008
@@ -332,6 +367,7 @@ The system MUST check a draft's chosen species against the commodity reference d
 - **GIVEN** a complete draft holding a species the reference data no longer lists under its code
 - **WHEN** the user continues from the review
 - **THEN** the review is shown again with an error summary naming that species and its code, telling the user to select a species from the list
+- **AND** the entry links to the "What are you importing?" card
 
 #### Scenario: The species is not named before the user continues
 **ID**: SCN-CYA-014-B
@@ -394,16 +430,29 @@ The system MUST show the exit rows on the review only for the import reasons tha
 - **WHEN** the user views the review
 - **THEN** no Destination country, Exit date, Port of exit or Exit border control post row is shown
 
-### Requirement: A species card's identifier table heads only the identifiers asked of that line's species
+### Requirement: A species block's Identification details table heads only the identifiers asked of that line's species
 **ID**: REQ-CYA-017
-The system MUST head a species card's identifier table with an Animal column and a column for each identifier asked of that line's species that some saved animal on the line filled in, with one row per saved animal.
+The system MUST head a species block's identifier table "Identification details", with an Animal column and a column for each identifier asked of that line's species that some saved animal on the line filled in, and one row per saved animal labelled with the species name and the animal's number. On an editable review the table MUST have its own Change link to the animal identification page.
 
 #### Scenario: The identifier table heads only the columns a line's species was asked for and some animal filled in
 **ID**: SCN-CYA-017-A
 - **GIVEN** a line of a species asked for a microchip, a passport and a horse name, with all three filled in for its one saved animal
-- **WHEN** the user views that species' card on the review
-- **THEN** its identifier table is headed Animal, Microchip, Passport and Horse name, with that animal's values in its one row
-- **AND** a species under the same commodity code that is not asked for the horse name never heads a Horse name column on its own card
+- **WHEN** the user views that species' block on the review
+- **THEN** its table, headed "Identification details", has columns Animal, Microchip, Passport and Horse name, with that animal's values in its one row
+- **AND** a species under the same commodity code that is not asked for the horse name never heads a Horse name column in its own block
+
+#### Scenario: Each animal's row is labelled with its species name and number
+**ID**: SCN-CYA-017-B
+- **GIVEN** a cat line of two saved animals
+- **WHEN** the user views the cat's block on the review
+- **THEN** the first cells of the table's rows read "Felis catus 1" and "Felis catus 2"
+
+#### Scenario: Identification details has its own Change link on an editable review
+**ID**: SCN-CYA-017-C
+- **GIVEN** a draft with a saved animal on a species
+- **WHEN** the user views the review
+- **THEN** the species block's Identification details has a Change link opening the animal identification page
+- **AND** a submitted notification's Identification details has none
 
 ### Requirement: The Addresses card lists one row per animal that has a saved permanent address
 **ID**: REQ-CYA-020
@@ -415,12 +464,12 @@ The system MUST list on the Addresses card, after the county parish holding row,
 - **WHEN** the user views check-your-answers
 - **THEN** the Addresses card lists, after the party rows, a row for each animal keyed by its species' common name and number, each holding that animal's saved address
 
-#### Scenario: An animal that still owes a permanent address has no row, while the species card is still reported outstanding
+#### Scenario: An animal that still owes a permanent address has no row, while commodity details are still reported outstanding
 **ID**: SCN-CYA-020-B
 - **GIVEN** a cat line of two animals, with a permanent address saved for only one of them
 - **WHEN** the user views check-your-answers
 - **THEN** the Addresses card lists a row for the answered animal alone
-- **AND** the error summary still names the species card as needing to be completed
+- **AND** the error summary still names commodity details as needing to be completed
 
 #### Scenario: A line needing a permanent address with no animal counted has no permanent address row
 **ID**: SCN-CYA-020-C
@@ -476,3 +525,73 @@ The system MUST key the arrival date row on the Arrival details card "Arrival da
 - **WHEN** the user views it
 - **THEN** the "Countries that the consignment will travel through" row reads "France, Belgium"
 - **AND** that row has no Change link
+
+### Requirement: The What are you importing? card reads the commodity selection back once, with each species named in capitals
+**ID**: REQ-CYA-023
+The system MUST show a card titled "What are you importing?" between "Origin of import" and "Main import reason" in "1. About the consignment", with rows "Commodity code", "Common name" and "Species" and a Change link to the commodity selection page. It MUST list each selected commodity's code once, and each selected species' common name and Latin name, comma-separated, with every word of a Latin name capitalised. Under "other live mammals" it MUST add each species' own code.
+
+#### Scenario: The card reads the selection back in three rows with a Change link
+**ID**: SCN-CYA-023-A
+- **GIVEN** a notification with Bos taurus selected under commodity code 0102
+- **WHEN** the user views the review
+- **THEN** the "What are you importing?" card has rows "Commodity code", "Common name" and "Species", reading "0102", "Domestic Cattle" and "Bos Taurus"
+- **AND** its Change link opens the commodity selection page
+
+#### Scenario: Two species of one commodity share one code
+**ID**: SCN-CYA-023-B
+- **GIVEN** a notification with Bos taurus and Bison bison selected under commodity code 0102
+- **WHEN** the user views the review
+- **THEN** the "Commodity code" row reads "0102" once
+- **AND** the "Common name" row reads "Domestic Cattle, American Bison" and the "Species" row reads "Bos Taurus, Bison Bison"
+
+#### Scenario: Each species under other live mammals adds its own code and common name
+**ID**: SCN-CYA-023-C
+- **GIVEN** a notification with Felis catus and Mustela putorius furo selected under other live mammals
+- **WHEN** the user views the review
+- **THEN** the "Commodity code" row reads "01061900, 01061900"
+- **AND** the "Common name" row reads "Domestic Cat, Ferret"
+- **AND** the "Species" row reads "Felis Catus, Mustela Putorius Furo"
+
+#### Scenario: A submitted notification's card has no Change link
+**ID**: SCN-CYA-023-D
+- **GIVEN** a submitted notification
+- **WHEN** the user views it
+- **THEN** the "What are you importing?" card has no Change link
+
+### Requirement: "2. Description of the goods" holds one card per commodity with one block per species
+**ID**: REQ-CYA-024
+The system MUST show one card per selected commodity in "2. Description of the goods", titled by the commodity's code, holding one block per species headed with its Latin name, every word capitalised. A block MUST show the species' counts and no "Commodity code", "Common name" or "Species" row. On an editable review the card and the first row of each block MUST each carry a Change link to the consignment details page.
+
+#### Scenario: Two species of one commodity stand as two blocks in one card
+**ID**: SCN-CYA-024-A
+- **GIVEN** a notification with Bos taurus and Bison bison selected under commodity code 0102
+- **WHEN** the user views the review
+- **THEN** "2. Description of the goods" holds one card titled "0102"
+- **AND** the card holds a block headed "Bos Taurus" and a block headed "Bison Bison"
+
+#### Scenario: A block shows its counts and no commodity or species rows
+**ID**: SCN-CYA-024-B
+- **GIVEN** a notification with 25 Bos taurus and 5 packages
+- **WHEN** the user views the review
+- **THEN** the "Bos Taurus" block shows "Number of animals" reading "25" and then "Number of packages (when required)" reading "5"
+- **AND** it shows no "Commodity code", "Common name" or "Species" row
+
+#### Scenario: A blank package count reads Not applicable and a species with no packaging shows no package row
+**ID**: SCN-CYA-024-C
+- **GIVEN** a notification with Bos taurus counted and no package count given, and an ostrich counted
+- **WHEN** the user views the review
+- **THEN** the "Bos Taurus" block's "Number of packages (when required)" row reads "Not applicable"
+- **AND** the ostrich block shows "Number of animals" alone
+
+#### Scenario: The card and the first row of each block carry their own Change links to consignment details
+**ID**: SCN-CYA-024-D
+- **GIVEN** a draft notification with a species counted
+- **WHEN** the user views the review
+- **THEN** the commodity card's heading has a Change link opening the consignment details page
+- **AND** the first row of the species block has its own Change link opening the same page
+
+#### Scenario: A submitted notification's commodity cards and blocks have no Change links
+**ID**: SCN-CYA-024-E
+- **GIVEN** a submitted notification
+- **WHEN** the user views it
+- **THEN** the commodity card and its species blocks have no Change link

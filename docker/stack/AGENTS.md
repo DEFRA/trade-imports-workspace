@@ -1,16 +1,15 @@
 # Workspace docker stack — agent index
 
-The wrapper-managed stack (this folder + `scripts/stack/`) is the **only**
-compose stack in the workspace and its repos. `tim docker` sits on top of
-the wrappers and is the surface to use.
+The stack in this folder is the **only** compose stack in the workspace
+and its repos. `tim docker` runs it, and is the surface to use.
 
 ## Rules for agents
 
 - **Run the stack through `tim`.** `tim docker dev` (built from local
   source), `tim docker up` (published images), `tim docker down`,
-  `tim docker restart`, `tim workspace status`. `tim` passes any other flag
-  (`-b`, `-e`, `--profile`) to the wrapper. Below `tim`, use the
-  `scripts/stack/` wrappers listed next.
+  `tim docker restart`, `tim workspace status`. `tim docker up`, `dev` and
+  `restart` take the stack flags (`-b`, `-e`, `--profile`, `--perf`)
+  themselves. Do not run `scripts/stack/run-stack.sh`: only CI uses it.
 - **One stack per machine, and any clone may own it.** Every clone of the
   workspace starts the same compose project, `trade-imports`
   (`compose.yml`'s `name:`), on the same host ports, so only one stack runs

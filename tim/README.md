@@ -1,6 +1,6 @@
 # tim — Trade Imports CLI
 
-Node.js Ink/React CLI for the [trade-imports workspace](../). It is the workspace's command line: setting up and updating the repos, running the Docker stack, starting a service from source, Jira, Confluence, the backlog and the build loop all go through it. `tim docker` runs the stack scripts in [`../scripts/stack/`](../scripts/stack/). The scripts in [`../tools/`](../tools/) still exist for the jobs `tim` does not cover yet, but start here.
+Node.js Ink/React CLI for the [trade-imports workspace](../). It is the workspace's command line: setting up and updating the repos, running the Docker stack, starting a service from source, Jira, Confluence, the backlog and the build loop all go through it. `tim docker` runs the Docker stack in [`../docker/stack/`](../docker/stack/) itself. The scripts in [`../tools/`](../tools/) still exist for the jobs `tim` does not cover yet, but start here.
 
 ## Install
 

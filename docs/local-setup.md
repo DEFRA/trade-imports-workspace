@@ -35,9 +35,8 @@ Playwright tests (no port) ──▶ Animals frontend + Admin
 | `REDIS_HOST` | `host.docker.internal` | Session cache |
 | `MONGO_URI` | `mongodb://host.docker.internal:27017` | Backend → MongoDB |
 
-All compose definitions live in the workspace stack (`docker/stack/`), driven
-by the wrappers in `scripts/stack/`. Run them through `tim docker`, which
-takes the same flags. See `docker/stack/AGENTS.md` for the full flag
+All compose definitions live in the workspace stack (`docker/stack/`). Run
+it through `tim docker`. See `docker/stack/AGENTS.md` for the full flag
 reference and file layout.
 
 ---

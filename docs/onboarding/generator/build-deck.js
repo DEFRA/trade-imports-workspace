@@ -290,7 +290,7 @@ function heading(slide, label, title) {
   s.background = { color: C.white };
   band(s);
   heading(s, "Hands on", "Running it locally");
-  s.addText("Can you actually build and run the whole stack? tim docker drives the stack, running the scripts under scripts/stack/ for you.", {
+  s.addText("Can you actually build and run the whole stack? tim docker drives the stack for you.", {
     x: M, y: 1.7, w: 11.8, h: 0.55, fontFace: FONT, fontSize: 15, color: C.grey, margin: 0,
   });
   {

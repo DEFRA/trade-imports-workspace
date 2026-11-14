@@ -115,8 +115,7 @@ instead:
 ## Running it locally
 
 The day-one test: can you actually build and run all of this? You drive
-the stack with `tim docker`, which runs the scripts under `scripts/stack/`
-for you.
+the stack with `tim docker`.
 
 First-time setup, run once:
 

@@ -1,8 +1,8 @@
 # Docker Compose — Best Practices
 
 All compose definitions live in the workspace stack — `docker/stack/` at the
-workspace root, driven by `tim docker` (`up`, `dev`, `down`, `restart`) and
-the `scripts/stack/` wrappers it calls. No repo carries its own
+workspace root, driven by `tim docker` (`up`, `dev`, `down`, `restart`).
+Only CI still starts it with `scripts/stack/run-stack.sh`. No repo carries its own
 `compose.yml`. The rules for running it are in
 [`docker/stack/AGENTS.md`](../../docker/stack/AGENTS.md#rules-for-agents).
 
@@ -173,11 +173,11 @@ depends_on:
     condition: service_healthy
 ```
 
-**2. Bypassing the wrappers with hand-assembled `-f` chains**
-The stack is split across overlay files under `docker/stack/` and the wrappers
-compose them (plus profile flags and the staged init scripts) in one place.
+**2. Bypassing `tim docker` with hand-assembled `-f` chains**
+The stack is split across overlay files under `docker/stack/`, and `tim docker`
+composes them (plus profile flags and the staged init scripts) in one place.
 A hand-built `docker compose -f docker/stack/compose.yml ...` chain silently
-drops overlays or staging. Always go through `tim docker` or `scripts/stack/`.
+drops overlays or staging. Always go through `tim docker`.
 
 **3. Using `latest` and `:1.2` versions side-by-side**
 A mix produces unpredictable startup ordering on first pull. Pick one strategy per stack tier (see §4).

@@ -127,7 +127,7 @@ tim review file-diff {file} --ticket EUDPA-XXXXX --repo {repo}
 If it refuses with `No cached diff`, filter the PR diff instead:
 `gh pr diff {pr-number} --repo DEFRA/{repo} | tim review file-diff {file} --stdin`.
 
-`--ticket` reads from the diff cache populated by `prepare-review.sh`
+`--ticket` reads from the diff cache the review skill's Step 1 saves
 (`workareas/reviews/EUDPA-XXXXX/.diffs/{repo}.diff`), filtered to your
 file's hunks. Review **changed lines** against the bundle rules — do
 not flag other bundle-rule violations unless they are inside functions

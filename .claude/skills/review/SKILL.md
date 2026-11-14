@@ -45,7 +45,7 @@ schema and allowed Disposition/Status values.
 | Trigger | What to follow |
 |---------|----------------|
 | "review EUDPA-X" / "re-review EUDPA-X" / "refresh review" / "check fixes" | this SKILL.md — Fresh + Refresh sections |
-| "review this branch" / `REPO:BRANCH` | this SKILL.md — Local mode (below); start-review.sh dispatches on `--local` |
+| "review this branch" / `REPO:BRANCH` | this SKILL.md — Local mode (below); `tim review start --local` |
 | "walk review EUDPA-X" / "triage review" | `Follow references/WALKER.md` |
 | "implement review EUDPA-X" / "apply review fixes" | `Follow references/BATCH_IMPLEMENTOR.md` |
 
@@ -99,10 +99,10 @@ repo checkout under `repos/<repo>/` directly — no Jira ticket, no GitHub
 PR, no `gh` call of any kind.
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/review/start-review.sh --local REPO BRANCH
+tim review start --local REPO BRANCH
 ```
 
-This always runs `prepare-review-local.sh` (there is no separate refresh
+This always runs `tim review prepare --local` (there is no separate refresh
 pipeline for local mode — re-running IS the refresh: the changed-file
 list is recomputed from git every call, and files with a verdict already
 set are left alone). State lands under
@@ -136,7 +136,7 @@ local-mode review without a human ever saying "review":
   whole branch's git diff), `fix` (`true` — also run
   `BATCH_IMPLEMENTOR.md` on any Fix-disposition items found; `false` —
   report only).
-- **Call shape**: run Local mode above (`start-review.sh --local REPO
+- **Call shape**: run Local mode above (`tim review start --local REPO
   BRANCH [--files ...]`) through the Fresh Review steps; when `fix:
   true`, continue into `BATCH_IMPLEMENTOR.md` for the items just found.
 - **One-line return** to the calling skill:
@@ -177,20 +177,19 @@ gh api repos/DEFRA/{repo}/pulls/{pr}/files --paginate --slurp > workareas/review
 Then start the review:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/review/start-review.sh EUDPA-XXXXX
+tim review start EUDPA-XXXXX
 ```
-
-Single dispatch — detects mode and runs the appropriate first-step
-setup script.
 
 First line of output is `MODE: FRESH` or `MODE: REFRESH`. Branch on it:
 
-- `MODE: FRESH` → setup ran `prepare-review.sh`; go to Fresh Review,
-  Step 2.
-- `MODE: REFRESH` → setup ran `tim review refresh scope --write-snapshot --json`;
-  go to Refresh Review, Step R3.5.
+- `MODE: FRESH` → nothing is prepared yet. The output names the review
+  folder and its raw folder; go to Fresh Review, Step 1.
+- `MODE: REFRESH` → start ran the equivalent of
+  `tim review refresh scope --write-snapshot --json`; go to Refresh
+  Review, Step R3.5.
 
-**Pin the head you review.** For each PR in `.review-meta.json`, read
+**Pin the head you review.** Once the review is prepared, for each PR in
+`.review-meta.json`, read
 its current head:
 
 ```bash
@@ -203,14 +202,15 @@ Then read the review clone's head:
 git -C ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/repos/{repo} rev-parse HEAD
 ```
 
-If they differ, the clone is stale: run Step 0 again (it refetches)
-before any reviewer starts. Record the SHA you reviewed for each repo;
+If they differ, the clone is stale: on a fresh review run Step 1 again
+(prepare fetches the new head into the clone); on a refresh run Step 0
+again. Do this before any reviewer starts. Record the SHA you reviewed for each repo;
 Step 7 and the Completion Output state it. Local mode has no PR: record
 `git -C ~/git/defra/trade-imports-workspace/repos/{repo} rev-parse HEAD`
 instead.
 
-**On Claude Code auto-backgrounding:** for fresh reviews the setup
-clones repos in parallel but can still take 30–90s. If the Bash tool
+**On Claude Code auto-backgrounding:** for fresh reviews
+`tim review prepare` clones repos in parallel but can still take 30–90s. If the Bash tool
 auto-backgrounds it, **wait for the harness's `task-notification`
 (status: completed) — do NOT poll the PID file or `tail` the output**.
 The notification arrives automatically.
@@ -219,14 +219,66 @@ The notification arrives automatically.
 
 # FRESH REVIEW
 
-## Step 1: Workspace prepared (by Step 0)
+## Step 1: Prepare the workspace
 
-`start-review.sh` already ran `prepare-review.sh` and produced:
+GitHub stays on `gh`; tim reads what `gh` saves. Write the review folder
+`start` printed as `<review>` and its raw folder as `<raw>`. Run each
+command in its own Bash call.
 
-- `~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/` with
-  ticket.md, repos/, file-reviews/ placeholders, and
-  `.review-meta.json` (detected tech + best-practices paths under
-  `~/git/defra/trade-imports-workspace/docs/best-practices/`).
+1. Save the ticket's pull requests:
+
+   ```bash
+   gh search prs EUDPA-XXXXX --owner DEFRA --json number,title,repository,url,state,createdAt > <raw>/prs.json
+   ```
+
+   For a branch with no ticket, skip `tim review start`: the review
+   folder is `workareas/reviews/<branch>`, with a leading `feature/`
+   dropped and each `/` as `-`, so make its `.raw` folder yourself.
+   Search by the branch head instead (no `createdAt`), and pass `--branch <branch> --desc "<what it does>"` in
+   place of the ticket in the two `tim review prepare` calls below:
+
+   ```bash
+   gh search prs head:<branch> --owner DEFRA --json number,title,repository,url,state > <raw>/prs.json
+   ```
+
+2. List the pull request to review in each repo. Each line is
+   `<repo> <number>`:
+
+   ```bash
+   tim review prepare EUDPA-XXXXX --select
+   ```
+
+3. For each line, save its state, its changed files and its diff. Do not
+   skip a line: a repo with no saved state is left out of the review.
+
+   ```bash
+   gh pr view <number> --repo DEFRA/<repo> --json files,mergedAt,mergeCommit,headRefOid > <raw>/<repo>.json
+   ```
+
+   ```bash
+   gh api repos/DEFRA/<repo>/pulls/<number>/files --paginate --slurp > <review>/.prs/<repo>-<number>.json
+   ```
+
+   ```bash
+   gh pr diff <number> --repo DEFRA/<repo> > <review>/.diffs/<repo>.diff
+   ```
+
+   Make the `.prs/` and `.diffs/` folders first if they are missing.
+
+4. Prepare the workspace:
+
+   ```bash
+   tim review prepare EUDPA-XXXXX
+   ```
+
+   It reads `JIRA_USER`, `JIRA_TOKEN` and `JIRA_BASE_URL`, and writes
+   `ticket.md` (the ticket, its comments and the Confluence pages it
+   links), clones each pull request's merge commit (or head, when open)
+   into `repos/`, writes `best-practices/{repo}.md`, `.review-meta.json`
+   (detected tech and best-practices paths under
+   `~/git/defra/trade-imports-workspace/docs/best-practices/`), a
+   `file-reviews/` placeholder for each changed file and the per-repo
+   stubs, then removes the raw folder.
 
 Proceed to Step 2.
 
@@ -595,7 +647,7 @@ after further work or merge conflicts.
 
 ## Step R1-R3: Refresh scope built (by Step 0)
 
-`start-review.sh` already ran
+`tim review start` already ran the equivalent of
 `tim review refresh scope EUDPA-XXXXX --write-snapshot --json` and printed
 its JSON envelope after the `MODE:` line. The scope is the envelope's
 `result`. A warning on stderr names any PR whose `.prs/` file is missing:
@@ -794,14 +846,12 @@ Updated: ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/revie
 
 ## Scripts cheat-sheet
 
-All under `~/git/defra/trade-imports-workspace/tools/review/`:
-
-| Script | Purpose |
+| Command | Purpose |
 |---|---|
-| `start-review.sh` | Step 0 — detect FRESH/REFRESH and exec the appropriate setup script; `--local REPO BRANCH` for Local mode |
-| `prepare-review.sh` | Fresh Step 1 workspace setup; transitively seeds best-practices via `tim review detect-tech`, which reads `assets/routing.json` |
-| `prepare-review-local.sh` | Local mode setup — no Jira/GitHub; changed-file list from git, or the caller's `--files` |
-| `share-review.sh` | Fresh Step 7 — post the review as a PR comment; `--comment-only` for PRs you authored, otherwise also push handoff branch `chore/EUDPA-X` to the workspace remote |
+| `tim review start EUDPA-XXXXX` | Step 0 — say MODE: FRESH (raw folder ready) or MODE: REFRESH (refresh scope built); `--local REPO BRANCH [--files ...]` for Local mode |
+| `tim review prepare EUDPA-XXXXX [--select]` | Fresh Step 1 — `--select` lists the PR per repo to save with gh; then it builds the workspace from what gh saved, seeding best-practices from `assets/routing.json`. `--branch B [--desc D]` for a branch with no ticket |
+| `tim review prepare --local REPO BRANCH [--files F1,F2]` | Local mode setup — no Jira/GitHub; changed-file list from git, or the caller's `--files` |
+| `tools/review/share-review.sh` | Fresh Step 7 — post the review as a PR comment; `--comment-only` for PRs you authored, otherwise also push handoff branch `chore/EUDPA-X` to the workspace remote |
 
 The refresh helpers go through `tim review refresh` (`--json` puts the
 output in the envelope's `result`):

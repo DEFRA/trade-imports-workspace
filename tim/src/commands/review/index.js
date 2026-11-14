@@ -8,6 +8,7 @@ import { makeRunAction } from '../_run-action.js'
 import { registerFile } from './file.js'
 import { registerItems } from './items.js'
 import { registerFileDiff } from './file-diff.js'
+import { registerPrepareAndStart } from './prepare.js'
 import { registerRefresh } from './refresh.js'
 import { registerReviewTools } from './tools.js'
 
@@ -51,4 +52,5 @@ export const register = (program, { timVersion }) => {
   registerReviewTools(review, { timVersion })
   registerRefresh(review, { timVersion })
   registerFileDiff(review, { timVersion })
+  registerPrepareAndStart(review, { timVersion })
 }

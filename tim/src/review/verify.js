@@ -148,11 +148,11 @@ const DEFAULT_THEMES = ['code']
 const openPrReview = (workspaceRoot, reviewId) => {
   const folder = reviewDir(workspaceRoot, reviewId)
   if (!isFolder(folder)) {
-    throw refuse('Review directory not found. Run prepare-review.sh first.')
+    throw refuse('Review directory not found. Run tim review prepare first.')
   }
   const meta = readMeta(
     join(folder, '.review-meta.json'),
-    'Meta file not found. Run prepare-review.sh first.'
+    'Meta file not found. Run tim review prepare first.'
   )
   return { folder, meta, fileReviewsFolder: join(folder, 'file-reviews') }
 }
@@ -179,7 +179,7 @@ export const verifyConsistency = ({
   const { meta, fileReviewsFolder } = openPrReview(workspaceRoot, reviewId)
   if (!isFolder(fileReviewsFolder)) {
     throw refuse(
-      'File reviews directory not found. Run prepare-review.sh first.'
+      'File reviews directory not found. Run tim review prepare first.'
     )
   }
   const themes = (meta.themes ?? DEFAULT_THEMES).join(',')
@@ -261,7 +261,7 @@ export const renderConsistencyText = (verified) => {
   if (verified.skipped) {
     return [
       `Consistency theme not enabled for ${verified.ticket} (themes: ${verified.themes})`,
-      'Re-run prepare-review.sh to add consistency stubs.'
+      'Re-run tim review prepare to add consistency stubs.'
     ].join('\n')
   }
   return [

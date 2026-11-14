@@ -19,10 +19,12 @@ import {
 const backend = 'trade-imports-animals-backend'
 
 const asTimWouldSay = (text) =>
-  text.replace(
-    'run aggregate-file-reviews.sh --write-items first',
-    'run tim review aggregate --write-items first'
-  )
+  text
+    .replace(
+      'run aggregate-file-reviews.sh --write-items first',
+      'run tim review aggregate --write-items first'
+    )
+    .replaceAll('prepare-review.sh', 'tim review prepare')
 
 const reviewFile = (staged, ...parts) =>
   join(staged.root, 'workareas', 'reviews', ...parts)

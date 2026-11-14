@@ -144,6 +144,12 @@ beginning `Follow the instructions in ~/git/defra/trade-imports-workspace/.claud
 Single dispatch — detects FRESH vs REFRESH from workspace state and
 runs the appropriate first-step setup script.
 
+A fresh style review reads the review workspace at
+`workareas/reviews/EUDPA-XXXXX/`. When it is missing, `prepare-style.sh`
+stops and says so: prepare it with the `review` skill's Step 0 and
+Step 1 (`tim review start`, the `gh` saves, then `tim review prepare`),
+then run `start-style.sh` again.
+
 First line of output is `MODE: FRESH` or `MODE: REFRESH`. Branch on it:
 
 - `MODE: FRESH` → setup ran `prepare-style.sh`; go to Fresh Review,
@@ -155,7 +161,7 @@ IMPLEMENT and WALK are separate top-level triggers (Decision 3) — they
 do NOT route through start-style.sh.
 
 **On Claude Code auto-backgrounding:** for fresh reviews the setup may
-shallow-clone repos via `prepare-review.sh`, which takes 30–90s. If the
+shallow-clone repos via `tim review prepare`, which takes 30–90s. If the
 Bash tool auto-backgrounds it, **wait for the harness's
 `task-notification` (status: completed) — do NOT poll the PID file or
 `tail` the output**.
@@ -572,7 +578,7 @@ All under `~/git/defra/trade-imports-workspace/tools/style/`:
 |---|---|
 | `start-style.sh` | Step 0 — detect FRESH/REFRESH and exec the appropriate setup script; `--local REPO BRANCH` for Local mode |
 | `prepare-style.sh` | Fresh Step 1 workspace setup; init `.style.json` placeholders; bake per-(repo,topic) rules bundles |
-| `prepare-style-local.sh` | Local mode setup — no Jira/GitHub; reuses `prepare-review-local.sh` for changed-file discovery |
+| `prepare-style-local.sh` | Local mode setup — no Jira/GitHub; reuses `tim review prepare --local` for changed-file discovery |
 | `file-topics.sh` | Reads `assets/routing.json`'s path→topic map (java/node/gds/playwright/k6, additive) |
 | `bake-rules-bundle.sh` | Bundles a topic's files from `assets/routing.json` into per-(repo,topic) `style-rules.{repo}.{topic}.md` |
 | `aggregate-file-reviews.sh` | Fresh Step 4 — write `items.{repo}.json` from per-file `.style.json` files; emit File Analysis Summary / Items markdown |

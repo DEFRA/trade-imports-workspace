@@ -30,7 +30,7 @@ cat ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/ticket.md
 
 ### 2. Read all diffs (from the workspace cache)
 
-`prepare-review.sh` already cached the full PR diff for every repo
+The review skill's Step 1 already cached the full PR diff for every repo
 at:
 
 ```

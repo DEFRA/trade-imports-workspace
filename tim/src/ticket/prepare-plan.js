@@ -27,7 +27,14 @@ const fetchTicket = async (ticket) => {
   }
 }
 
-const planFieldsOf = (ticket) => ({
+/**
+ * The fields a ticket's `ticket.md` shows, with the stand-ins used when
+ * Jira gives none; a missing priority shows as `null`.
+ *
+ * @param {object} ticket - From the Jira client's `getTicket(id, {withRendered: true})`
+ * @returns {ReturnType<typeof refinementFieldsOf>}
+ */
+export const planFieldsOf = (ticket) => ({
   ...refinementFieldsOf(ticket),
   priority: String(ticket.priority ?? null)
 })

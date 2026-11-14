@@ -33,16 +33,15 @@ epics included, goes through `tim jira create`.
 | `tools/jira/transition-ticket.sh` | EUDPA-X "Status"\|--list | Change status. Takes a status or a transition name; `--list` prints `transition -> status`.<br>`tim jira transition EUDPA-X "Status" [--list] [--json]` now covers this, and is what the increment build loop calls; the script stays for use by hand. |
 | `tools/jira/search.sh` | "JQL" [list\|summary\|json] [--fields ...] | Run JQL across the project (paginates via v3 endpoint) |
 | **github** | | |
-| `tools/github/prs.sh` | EUDPA-X [list\|json\|urls] | Find PRs |
-| `tools/github/pr-details.sh` | repo pr-num [full\|files\|json] | PR details |
+| `gh search prs`, `gh pr view`, `gh pr diff` | EUDPA-X --owner DEFRA; N --repo DEFRA/R | Find a ticket's PRs and read their details and diffs with the GitHub CLI directly |
 | `tim review file-diff` | file (--ticket EUDPA-X --repo R \| --stdin) [--json] | PR diff filtered to one file, from the review's cached `.diffs/{repo}.diff`, or a `gh pr diff` piped in with `--stdin` |
 | **confluence** | | |
 | `tools/confluence/page.sh` | page-id [summary\|json] | Get page |
 | `tools/confluence/sync-docs.sh` | [--dry-run] [--root-id ID] | Sync Confluence tree to docs/confluence/ |
 | `tools/confluence/clean-docs.sh` | [args forwarded] | Wipe + re-sync docs/confluence/ |
 | **review** | | |
-| `tools/review/start-review.sh` | EUDPA-X | Step 0 — detect FRESH/REFRESH and exec the appropriate setup script |
-| `tools/review/prepare-review.sh` | EUDPA-X [--json] | Setup workspace |
+| `tim review start` | EUDPA-X \| --local R B [--files F1,F2] | Step 0 — say MODE: FRESH (raw folder ready for gh) or MODE: REFRESH (refresh scope built) |
+| `tim review prepare` | EUDPA-X \| --branch B [--desc D] \| --local R B [--files F1,F2] [--select] [--json] | Build the review workspace from what `gh search prs`, `gh pr view`, `gh api .../files` and `gh pr diff` saved (see the review skill, Step 1). `--select` lists the PR per repo to save |
 | `tim review verify files` | EUDPA-X [--json] | Check every file each PR changes has a reviewed `.review.json`. Reads `.prs/{repo}-{pr}.json`, written first by `gh api repos/DEFRA/{repo}/pulls/{pr}/files --paginate --slurp` |
 | `tim review verify consistency` | EUDPA-X [--json] | Check consistency |
 | `tim review verify style` | EUDPA-X [--json] | Check code style review coverage |

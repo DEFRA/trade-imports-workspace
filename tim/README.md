@@ -509,6 +509,34 @@ gh pr diff 42 --repo DEFRA/trade-imports-stub | tim review file-diff src/Main.ja
   request diff, `.diffs/<repo>.diff`, or from a diff piped in with
   `--stdin`. It refuses when there is no cached diff.
 
+```bash
+tim review start EUDPA-1234
+tim review prepare EUDPA-1234 --select
+tim review prepare EUDPA-1234
+tim review prepare --branch feat/tidy-logs --desc "Tidy the logs"
+tim review prepare --local trade-imports-stub feat/tidy-logs --files src/Main.java
+tim review start --local trade-imports-stub feat/tidy-logs
+```
+
+- `start` prints `MODE: REFRESH` and the `refresh scope --write-snapshot`
+  envelope when the review has a `review-index.md`. Otherwise it prints
+  `MODE: FRESH`, makes the review's `.raw` folder and names the
+  `gh search prs` command that fills it. With `--local` it prints
+  `MODE: FRESH` and runs `prepare --local`.
+- `prepare` reads what `gh` saved: `.raw/prs.json` from `gh search prs`,
+  `.raw/<repo>.json` from `gh pr view`, `.prs/<repo>-<pr>.json` from
+  `gh api .../files` and `.diffs/<repo>.diff` from `gh pr diff`. `--select`
+  prints the pull request to save for each repo, as `<repo> <number>`.
+  Without it, prepare writes `ticket.md` from Jira and Confluence (or from
+  `--branch` and `--desc`), clones each pull request's merge commit (or
+  head) into `repos/`, writes `.review-meta.json`, the best-practices
+  bundles, the file review placeholders and the per-repo stubs, then
+  removes `.raw`. `--json` gives the meta.
+- `prepare --local` needs no Jira or GitHub. It lists the files the branch
+  changes since its merge-base with main, plus staged and unstaged files,
+  or takes `--files`, and writes the same workspace under
+  `workareas/reviews/local/<repo>/<branch>`.
+
 ### `tim ticket` — the ticket skill's helpers
 
 ```bash

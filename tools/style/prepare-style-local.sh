@@ -11,17 +11,15 @@
 #
 # Piggybacks on the matching local review workspace at
 # workareas/reviews/local/REPO/BRANCH/ for the changed-file list — runs
-# prepare-review-local.sh first if that workspace is missing. The file
-# list is never a PR diff: it's `git diff --name-only <merge-base>...HEAD`
-# plus staged/unstaged files (see prepare-review-local.sh), or the
-# caller's own --files list when given.
+# tim review prepare --local first. The file list is never a PR diff:
+# it's `git diff --name-only <merge-base>...HEAD` plus staged/unstaged
+# files, or the caller's own --files list when given.
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 ROOT="$HOME/git/defra/trade-imports-workspace"
-PREPARE_REVIEW_LOCAL="$ROOT/tools/review/prepare-review-local.sh"
 FILE_STYLE_INIT="$SCRIPT_DIR/file-style-init.sh"
 BAKE_BUNDLE="$SCRIPT_DIR/bake-rules-bundle.sh"
 FILE_TOPICS="$SCRIPT_DIR/file-topics.sh"
@@ -78,9 +76,9 @@ log() {
 log "Preparing local review workspace (changed-file discovery)..."
 review_local_args=("$REPO" "$BRANCH")
 [[ -n "$FILES_OVERRIDE" ]] && review_local_args+=(--files "$FILES_OVERRIDE")
-"$PREPARE_REVIEW_LOCAL" "${review_local_args[@]}" >&2
+tim --workspace "$ROOT" review prepare --local "${review_local_args[@]}" >&2
 
-[[ -f "$REVIEW_META" ]] || { echo "prepare-review-local.sh did not produce $REVIEW_META" >&2; exit 1; }
+[[ -f "$REVIEW_META" ]] || { echo "tim review prepare --local did not produce $REVIEW_META" >&2; exit 1; }
 
 # ---- Step 2: create style workspace --------------------------------------
 

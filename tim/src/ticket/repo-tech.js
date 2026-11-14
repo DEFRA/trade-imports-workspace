@@ -8,7 +8,14 @@ const NO_TECH = { technologies: [], best_practices: [] }
 const isDirectory = (path) =>
   statSync(path, { throwIfNoEntry: false })?.isDirectory() ?? false
 
-const detectedOrNone = ({ workspaceRoot, repoDir }) => {
+/**
+ * The technologies and best-practice files the review routing finds in a
+ * repo folder; none when the routing cannot be read.
+ *
+ * @param {{workspaceRoot: string, repoDir: string}} args
+ * @returns {{technologies: string[], best_practices: string[]}}
+ */
+export const detectedTechOf = ({ workspaceRoot, repoDir }) => {
   try {
     return detectRepoTech({ workspaceRoot, repoPath: repoDir })
   } catch {
@@ -35,7 +42,7 @@ export const detectTechPerRepo = async ({ workspaceRoot, repos, log }) => {
       await log(`  ! ${repo}: repo not found at ${repoDir} — skipping`)
       continue
     }
-    const tech = detectedOrNone({ workspaceRoot, repoDir })
+    const tech = detectedTechOf({ workspaceRoot, repoDir })
     await log(`  ✓ ${repo} [${tech.technologies.join(', ')}]`)
     entries.push({ repo, tech })
   }
@@ -51,6 +58,21 @@ const bundleSection = (workspaceRoot, practicePath) => {
   }
   return `${heading}\n\n${readFileSync(sourcePath, 'utf8')}`
 }
+
+/**
+ * Each best-practice file in full under its own heading, or a marker where
+ * the file is missing, one after another.
+ *
+ * @param {object} args
+ * @param {string} args.workspaceRoot
+ * @param {string[]} args.bestPractices - Paths from the workspace root
+ * @returns {string}
+ */
+export const bestPracticeSections = ({ workspaceRoot, bestPractices }) =>
+  bestPractices
+    .filter((practicePath) => practicePath !== '')
+    .map((practicePath) => bundleSection(workspaceRoot, practicePath))
+    .join('')
 
 /**
  * One repo's best-practices bundle: a heading, then each best-practice
@@ -70,7 +92,5 @@ export const bestPracticesBundle = ({ workspaceRoot, repo, bestPractices }) =>
     'Concatenated from `docs/best-practices/` at prepare-plan time.\n',
     'Apply these standards when planning changes in this repo.\n',
     '\n',
-    ...bestPractices
-      .filter((practicePath) => practicePath !== '')
-      .map((practicePath) => bundleSection(workspaceRoot, practicePath))
+    bestPracticeSections({ workspaceRoot, bestPractices })
   ].join('')

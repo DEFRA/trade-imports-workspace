@@ -9,15 +9,14 @@
 #
 # Piggybacks on the standard review workspace at
 # workareas/reviews/EUDPA-XXXXX/ for cloned repos and PR diff cache —
-# runs prepare-review.sh first if that workspace is missing.
+# stops if that workspace is missing: prepare it first with the review
+# skill's Step 1 (gh, then tim review prepare).
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 ROOT="$HOME/git/defra/trade-imports-workspace"
-PREPARE_REVIEW="$ROOT/tools/review/prepare-review.sh"
-PR_DETAILS="$ROOT/tools/github/pr-details.sh"
 FILE_STYLE_INIT="$SCRIPT_DIR/file-style-init.sh"
 BAKE_BUNDLE="$SCRIPT_DIR/bake-rules-bundle.sh"
 FILE_TOPICS="$SCRIPT_DIR/file-topics.sh"
@@ -56,11 +55,10 @@ log() {
 # ---- Step 1: ensure review workspace exists ---------------------------
 
 if [[ ! -f "$REVIEW_META" ]]; then
-    log "Review workspace missing — running prepare-review.sh..."
-    "$PREPARE_REVIEW" "$TICKET" >&2
+    echo "Review workspace missing: $REVIEW_META" >&2
+    echo "Prepare it first with the review skill's Step 1: save the pull requests with gh, then run tim review prepare $TICKET" >&2
+    exit 1
 fi
-
-[[ -f "$REVIEW_META" ]] || { echo "prepare-review.sh did not produce $REVIEW_META" >&2; exit 1; }
 
 # ---- Step 2: create style workspace ----------------------------------
 
@@ -82,7 +80,8 @@ while IFS= read -r pr_meta; do
     pr_number=$(echo "$pr_meta" | jq -r '.pr')
     commit=$(echo "$pr_meta" | jq -r '.commit')
 
-    files=$("$PR_DETAILS" "$repo" "$pr_number" files 2>/dev/null) || continue
+    files=$(gh api "repos/DEFRA/$repo/pulls/$pr_number/files" --paginate \
+        --jq '.[] | .filename, (.previous_filename // empty)' 2>/dev/null) || continue
 
     while IFS= read -r filepath; do
         [[ -z "$filepath" ]] && continue

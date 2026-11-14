@@ -86,7 +86,7 @@ In every mode:
    ```
    ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/best-practices/{repo}.md
    ```
-   `prepare-review.sh` already concatenated every best-practice file
+   `tim review prepare` already concatenated every best-practice file
    applicable to your repo there. Don't walk `.review-meta.json` **for
    best-practice paths**, and don't read individual
    `docs/best-practices/*.md` files — the bundle is the single source for
@@ -411,7 +411,7 @@ does not cover the scenario. Links routinely name tests in
 `trade-imports-ins-tests`, which often has no PR in the set — "not in
 this PR's diff" is not on its own a finding.
 
-**Which checkout to read.** `prepare-review.sh` clones every repo in the
+**Which checkout to read.** `tim review prepare` clones every repo in the
 PR set pinned at its merge commit under
 `~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/repos/{repo}/`
 — the same pinned path step 4 uses. Go there first. Only fall back to the

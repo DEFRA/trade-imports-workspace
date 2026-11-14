@@ -99,7 +99,8 @@ describe('#verifyConsistency', () => {
 
     expect(refusal).toMatchObject({
       code: 'NOT_FOUND',
-      message: 'Error: Review directory not found. Run prepare-review.sh first.'
+      message:
+        'Error: Review directory not found. Run tim review prepare first.'
     })
   })
 })

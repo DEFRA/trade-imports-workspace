@@ -73,7 +73,7 @@ is marked Discuss, for the designer.
 
 ## Lifecycle
 
-1. **Init** — `prepare-review.sh` (Fresh) or the refresh tooling
+1. **Init** — `tim review prepare` (Fresh) or the refresh tooling
    (List D coverage gap) seeds an empty placeholder via
    `tim review file init`. `verdict: null`, `todos: []`,
    `reviewed_at: null`.

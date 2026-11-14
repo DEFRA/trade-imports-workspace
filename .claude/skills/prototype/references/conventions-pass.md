@@ -92,7 +92,7 @@ copied into this skill.
 3. Re-run layer 1 (`designer:check`) once, so a style fix that changed
    behaviour is caught before it reaches the designer.
 4. Run the `review` skill's local mode
-   (`~/git/defra/trade-imports-workspace/tools/review/start-review.sh --local trade-imports-plants-prototype <branch>`)
+   (`tim review start --local trade-imports-plants-prototype <branch>`)
    over the changed service and controller files only (never templates or
    copy: the review skill judges code, not markup or wording).
 5. For every finding either skill returns:
@@ -107,7 +107,7 @@ copied into this skill.
 ### When the local modes cannot run
 
 The local modes fan out to Task subagents. When this session has no Task
-tool, or `start-style.sh`/`start-review.sh` fails to start (for example
+tool, or `start-style.sh`/`tim review start` fails to start (for example
 "Permission denied" on a prepare script), do the same judgement inline, file
 by file, with no subagent. Never fall back to `bash <script>`, and never skip
 layer 2 silently. Read the bundle from step 1, then check each changed `.js`

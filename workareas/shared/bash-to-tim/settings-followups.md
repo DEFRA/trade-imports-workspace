@@ -108,3 +108,18 @@ refresh, and FILE_REVIEWER/STYLE_FILE_REVIEWER fall back to
 `gh pr diff {pr} --repo DEFRA/{repo} | tim review file-diff {file} --stdin`
 when there is no cached diff: consider allowing
 `Bash(gh api repos/DEFRA/*/pulls/*/files:*)` and `Bash(gh pr diff:*)`.
+
+## P50
+
+None to remove. No allowlist entry names `prepare-review.sh`,
+`prepare-review-local.sh`, `start-review.sh`, `prs.sh` or
+`pr-details.sh`; the generic `tools/**` rules (lines 63-64) still serve
+other folders. `Bash(tim:*)` covers `tim review start` and
+`tim review prepare`. The review skill's Step 1 now runs `gh` itself:
+`gh search prs ... > .raw/prs.json`, `gh pr view ... > .raw/<repo>.json`
+(already allowed by `Bash(gh pr view:*)`),
+`gh api repos/DEFRA/<repo>/pulls/<n>/files --paginate --slurp > ...` and
+`gh pr diff <n> --repo DEFRA/<repo> > .diffs/<repo>.diff`; the style
+skill's fresh prepare script now calls `gh api .../files --paginate`.
+Consider allowing `Bash(gh search prs:*)`, `Bash(gh pr diff:*)` and
+`Bash(gh api repos/DEFRA/*/pulls/*/files:*)`.

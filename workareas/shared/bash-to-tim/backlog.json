@@ -2807,14 +2807,35 @@
       "dependsOn": [],
       "risk": "Medium. A hook must never exit 2 on UserPromptSubmit, because that erases the prompt. The on-disk state format stays byte-identical so bash and tim interoperate during the switch.",
       "proof": "`diff -r` of the pending-store against state dirs written by bash. Thrown, bad-flag and offline cases all exit 0 with empty stdout.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "53545e5a"
+          }
+        ],
+        "checks": [
+          "tim-unit: PASS. Full suite green (364 files passed, 20 skipped; 5591 tests passed). Mutation probes on the exit override and the pending file's trailing newline turned 4 tests red, and both were restored.",
+          "tim-lint: PASS. `npm run lint` and `npm run format:check` are both clean.",
+          "parity: PASS. tim/src/sonar/sonar-hooks.golden.test.js recorded both Bash hooks (record-push, and check-pending for UserPromptSubmit and SessionStart) with stand-in date and sonar commands into tim/src/sonar/__fixtures__/__golden__/sonar-hooks.json. pending-store.test.js matches the .sonar-checks files from both recordings exactly: record-push gives the same file name and content, and a check sweep marks analysed checks seen, drops the one that is exactly 45 minutes old, and keeps the fresh, the different-sha and the no-push-time checks. hook-runtime.test.js runs a fail-open command for 7 failure cases: throws, stray rejection, hang/timeout, unreachable SonarCloud, unknown flag, missing option and empty output. Each exits 0 with empty stdout.",
+          "no-callers: N/A for deletions. The row deletes no script. .claude/settings.json:148,166,177 and docs/agent-onboarding.md still call the two Bash hooks, as planned until P55 swaps them.",
+          "No new ~/git/defra path or $HOME/git/defra mention, and no new .sh file. The stand-in commands are written to a temp dir at test time."
+        ],
+        "deviations": [
+          "The hook-runtime spawn proof runs a small commander fixture program (tim/src/sonar/__fixtures__/fail-open-program.js), not tim's cli.js. The row adds no command, so the CLI has nothing to spawn yet. P55 should cover its real hook commands with the same spawn tests.",
+          "The golden test also records the Bash check hook's stdout for both events, ready for P55's stdout parity. P54 itself only checks the files on disk against it.",
+          "listIssues now takes line from textRange.startLine before line, as the Bash jq does. This changes `tim sonar issues` output only for an issue whose two values differ.",
+          "The fixture PR list and issue search come from real SonarCloud responses fetched with the sonar CLI (DEFRA_trade-imports-animals-frontend). They are trimmed and the author names are removed. The issue's severity is changed to CRITICAL and its startLine to 12, so the severity filter and the textRange line are exercised.",
+          "settings-followups.md has a P54 entry saying there is nothing to remove."
+        ]
+      }
     },
     {
       "id": "P55",

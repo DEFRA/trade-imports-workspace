@@ -68,6 +68,40 @@ describe('#countVerdicts', () => {
     expect(counts.coverage_gaps).toBe(0)
   })
 
+  test.each([
+    [12, 12],
+    [-3, 3],
+    ['héllo', 5],
+    [{ first: 'a', second: 'b' }, 2]
+  ])(
+    'Should count coverage gaps of %j as %i, as jq length does',
+    (coverageGaps, expected) => {
+      const counts = countVerdicts({
+        questions,
+        transcript: { entries: [] },
+        meta: { coverage_gaps: coverageGaps }
+      })
+
+      expect(counts.coverage_gaps).toBe(expected)
+    }
+  )
+
+  test('Should refuse coverage gaps that are true or false', () => {
+    expect(() =>
+      countVerdicts({
+        questions,
+        transcript: { entries: [] },
+        meta: { coverage_gaps: true }
+      })
+    ).toThrow(
+      expect.objectContaining({
+        code: 'PARSE',
+        message:
+          'Error: .interview-meta.json coverage_gaps is true, which has no length'
+      })
+    )
+  })
+
   test('Should refuse an answer to a question questions.json does not hold', () => {
     const transcript = { entries: [entry('Q9', { verdict: 'PASS' })] }
 

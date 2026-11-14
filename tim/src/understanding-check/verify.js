@@ -31,8 +31,13 @@ const analysisErrors = (folder, repo) => {
   ]
 }
 
+const repoText = (repo) =>
+  typeof repo === 'string' ? repo : JSON.stringify(repo ?? null)
+
 const reposOf = (meta) =>
-  (meta.prs ?? []).map(({ repo }) => repo).filter((repo) => !isBlank(repo))
+  (meta.prs ?? [])
+    .map(({ repo }) => repoText(repo))
+    .filter((repo) => repo !== '')
 
 const answerErrors = (questions, transcript) => {
   const answeredIds = new Set(

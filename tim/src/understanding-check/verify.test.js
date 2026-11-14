@@ -71,6 +71,25 @@ describe('#verifyCoverage', () => {
     })
   })
 
+  test('Should look for the repo null when a PR has no repo or a null one, and skip a blank repo', () => {
+    seedCheck({
+      '.interview-meta.json': {
+        prs: [{ number: 1 }, { repo: null }, { repo: '' }, { repo: 7 }]
+      },
+      'questions.json': { questions: [{ id: 'Q1' }] },
+      'transcript.json': { entries: [scoredEntry('Q1')] }
+    })
+
+    expect(verifyCoverage({ workspaceRoot: root, ticket: 'EUDPA-5' })).toEqual({
+      ok: false,
+      errors: [
+        'analysis missing for repo: null',
+        'analysis missing for repo: null',
+        'analysis missing for repo: 7'
+      ]
+    })
+  })
+
   test('Should list unanswered questions, then answers with no score', () => {
     seedCheck({
       '.interview-meta.json': { prs: [] },

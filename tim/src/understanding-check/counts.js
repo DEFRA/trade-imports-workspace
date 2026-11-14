@@ -22,8 +22,14 @@ const tally = (verdicts) =>
 
 const sizeOf = (value) => {
   if (value === null || value === undefined) return 0
+  if (Array.isArray(value)) return value.length
   if (typeof value === 'object') return Object.keys(value).length
-  return String(value).length
+  if (typeof value === 'number') return Math.abs(value)
+  if (typeof value === 'string') return [...value].length
+  throw new TimError(
+    'PARSE',
+    `Error: .interview-meta.json coverage_gaps is ${JSON.stringify(value)}, which has no length`
+  )
 }
 
 const categoryLookup = (questions) =>
@@ -60,9 +66,9 @@ const countByCategory = (entries, categories) => {
  * @param {object} state
  * @param {{questions: {id: string, category: string}[]}} state.questions
  * @param {{entries: object[]}} state.transcript
- * @param {{coverage_gaps?: any[]}} state.meta
+ * @param {{coverage_gaps?: any[] | object | number | string | null}} state.meta - coverage_gaps counts as jq's `length` does: a number counts as its absolute value, a string as its characters
  * @returns {{total: number, PASS: number, PARTIAL: number, FAIL: number, PENDING: number, security_fails: number, coverage_gaps: number, by_category: Record<string, Record<string, number>>}}
- * @throws {TimError} PARSE when an entry answers a question with no category
+ * @throws {TimError} PARSE when an entry answers a question with no category, or coverage_gaps is true or false
  */
 export const countVerdicts = ({ questions, transcript, meta }) => {
   const categories = categoryLookup(questions.questions)

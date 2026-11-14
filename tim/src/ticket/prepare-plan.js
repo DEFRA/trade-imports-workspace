@@ -20,7 +20,7 @@ const fetchTicket = async (ticket) => {
     return await createJiraClient().getTicket(ticket, { withRendered: true })
   } catch (error) {
     throw new TimError(
-      isTimError(error) ? error.code : 'UNKNOWN',
+      isTimError(error) && error.code !== 'USAGE' ? error.code : 'UNKNOWN',
       `Error: failed to fetch ticket ${ticket}`,
       error
     )

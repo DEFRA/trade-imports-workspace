@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeAll, describe, expect, test } from 'vitest'
-import { OK, USAGE } from '../../constants/exitCodes.js'
+import { ERROR, OK, USAGE } from '../../constants/exitCodes.js'
 import { recordTimRun } from '../../test-support/bash-golden-harness.js'
 import {
   atlassianEnv,
@@ -221,6 +221,41 @@ describe('tim ticket prepare-plan matches prepare-plan.sh', () => {
     expect({ ok, meta: result.meta }).toEqual({
       ok: true,
       meta: JSON.parse(golden.files['.plan-meta.json'])
+    })
+  })
+
+  test('Should report a failed fetch and exit 1 where Jira refuses the request as bad', async () => {
+    const record = await runPlan(['EUDPA-400'], 'EUDPA-400')
+
+    expect(record).toEqual({
+      exitCode: ERROR,
+      stdout: 'Fetching ticket details...\n',
+      stderr: 'Error: failed to fetch ticket EUDPA-400\n',
+      files: {}
+    })
+  })
+
+  test('Should report a failed fetch and exit 1 where JIRA_BASE_URL is not set', async () => {
+    staged = stagePlanWorkspace()
+
+    const record = await recordTimRun(
+      staged,
+      ['ticket', 'prepare-plan', 'EUDPA-101'],
+      {
+        env: {
+          ...fixtureEnv(staged),
+          ...atlassianEnv(atlassian.base),
+          JIRA_BASE_URL: ''
+        },
+        watch: planWatch('EUDPA-101')
+      }
+    )
+
+    expect(record).toEqual({
+      exitCode: ERROR,
+      stdout: 'Fetching ticket details...\n',
+      stderr: 'Error: failed to fetch ticket EUDPA-101\n',
+      files: {}
     })
   })
 

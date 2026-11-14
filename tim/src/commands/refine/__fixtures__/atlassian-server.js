@@ -135,8 +135,11 @@ const commentsResponse = (key, { bashShape }) => {
   ]
 }
 
-const issueResponse = (key) =>
-  tickets[key] === undefined
+const issueResponse = (key) => {
+  if (key === 'EUDPA-400') {
+    return [400, { errorMessages: ['The issue key is not valid.'] }]
+  }
+  return tickets[key] === undefined
     ? [
         404,
         {
@@ -146,6 +149,7 @@ const issueResponse = (key) =>
         }
       ]
     : [200, tickets[key]]
+}
 
 const pageResponse = (id) =>
   pages[id] === undefined
@@ -178,7 +182,8 @@ const route = (url) => {
  * no page id, one to a missing page). EUDPA-102 has no priority, assignee,
  * parent, labels, description or comments. EUDPA-103's comments cannot be
  * read. EUDPA-104 has an empty labels list and no priority, assignee,
- * parent, description or comments. Any other ticket is missing.
+ * parent, description or comments. Jira refuses EUDPA-400 as a bad
+ * request. Any other ticket is missing.
  *
  * @returns {Promise<{base: string, close: () => Promise<void>}>}
  */

@@ -23,7 +23,7 @@
 #   - branch.md          (what's being reviewed — no ticket, no PR)
 #   - .review-meta.json  (`"local": true`; state for other scripts)
 #   - best-practices/{repo}.md (detected technologies' best-practice bundle,
-#                               via the same detect-tech.sh ticket mode uses)
+#                               via the same tim review detect-tech ticket mode uses)
 #   - file-reviews/{repo}/{safe_path}.review.json placeholders
 #
 # Idempotent — local mode has no ticket/PR boundary to refresh against, so
@@ -35,7 +35,6 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$HOME/git/defra/trade-imports-workspace"
-DETECT_TECH="$SCRIPT_DIR/detect-tech.sh"
 
 REPO=""
 BRANCH=""
@@ -139,7 +138,7 @@ EOF
 
 log ""
 log "Detecting technologies..."
-tech_json=$("$DETECT_TECH" "$REPO_DIR" 2>/dev/null) || tech_json='{"technologies":[],"best_practices":[]}'
+tech_json=$(tim --workspace "$ROOT" review detect-tech "$REPO_DIR" --no-ui 2>/dev/null) || tech_json='{"technologies":[],"best_practices":[]}'
 
 mkdir -p "$REVIEW_DIR/best-practices"
 out="$REVIEW_DIR/best-practices/$REPO.md"
@@ -162,7 +161,7 @@ out="$REVIEW_DIR/best-practices/$REPO.md"
             echo
             echo "---"
             echo
-            echo "## Source: \`$path\` (missing — check detect-tech.sh)"
+            echo "## Source: \`$path\` (missing — check tim review detect-tech)"
         fi
     done
 } > "$out"

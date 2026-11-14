@@ -92,7 +92,7 @@ if [[ ${#repo_list[@]} -gt 0 ]]; then
             log "  ! $repo: repo not found at $repo_dir — skipping"
             continue
         fi
-        tech_json=$("$WORKSPACE/tools/review/detect-tech.sh" "$repo_dir" 2>/dev/null) || tech_json='{"technologies":[],"best_practices":[]}'
+        tech_json=$(tim --workspace "$WORKSPACE" review detect-tech "$repo_dir" --no-ui 2>/dev/null) || tech_json='{"technologies":[],"best_practices":[]}'
         tech_list=$(echo "$tech_json" | jq -r '.technologies | join(", ")')
         log "  ✓ $repo [$tech_list]"
         revalidated_arr+=("$(jq -n --arg repo "$repo" --argjson tech "$tech_json" '{repo: $repo, tech: $tech}')")

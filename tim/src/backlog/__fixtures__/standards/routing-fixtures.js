@@ -43,7 +43,7 @@ export const bakeCases = [
 ]
 
 /**
- * `detect-tech.sh` fixture repos: `{relativePath: content}` per repo, per
+ * `tim review detect-tech` fixture repos: `{relativePath: content}` per repo, per
  * the table in inc-012's plan section 3. `empty` is materialised with no
  * files at all — its directory still exists because the golden test creates
  * every repo's root folder before calling `materialise`.

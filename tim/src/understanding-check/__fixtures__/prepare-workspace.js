@@ -8,7 +8,7 @@ export const PREPARE_SCRIPTS = {
   redact: 'tools/understanding-check/redact-diff.js'
 }
 
-const HELPER_SCRIPTS = ['tools/github/prs.sh', 'tools/review/detect-tech.sh']
+const HELPER_SCRIPTS = ['tools/github/prs.sh']
 
 /**
  * What the Bash scripts did on every case, as the golden test recorded it.

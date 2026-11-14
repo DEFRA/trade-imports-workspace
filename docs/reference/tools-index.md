@@ -43,7 +43,6 @@ epics included, goes through `tim jira create`.
 | **review** | | |
 | `tools/review/start-review.sh` | EUDPA-X | Step 0 — detect FRESH/REFRESH and exec the appropriate setup script |
 | `tools/review/prepare-review.sh` | EUDPA-X [--json] | Setup workspace |
-| `tools/review/detect-tech.sh` | REPO_PATH | Detects technologies + best-practice paths for a repo; reads `.claude/skills/review/assets/routing.json` |
 | `tools/review/verify-coverage.sh` | EUDPA-X [--json] | Check coverage |
 | `tools/review/verify-consistency.sh` | EUDPA-X [--json] | Check consistency |
 | `tools/review/verify-style-coverage.sh` | EUDPA-X [--json] | Check JS style review coverage |

@@ -478,7 +478,7 @@ describe('tim agrees with the routing data the bash goldens were captured agains
     expect(ruby.stderr).toContain(routing.unknownTopicHint)
   })
 
-  describe('detectTechnologies matches the live detect-tech.sh goldens', () => {
+  describe('detectTechnologies matches the frozen detect-tech goldens', () => {
     let reviewRouting
     let fixturesRoot
 

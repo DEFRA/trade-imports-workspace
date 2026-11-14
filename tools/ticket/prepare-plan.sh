@@ -1,6 +1,6 @@
 #!/bin/bash
 # Pre-bake plan context for a ticket — one allowlisted dispatch in place of
-# PLANNER hand-typing ticket.sh + comments.sh + N × detect-tech.sh.
+# PLANNER hand-typing ticket.sh + comments.sh + N × tim review detect-tech.
 #
 # Usage: prepare-plan.sh EUDPA-XXXXX [--repos repo1,repo2] [--json]
 #
@@ -147,7 +147,7 @@ if [[ -n "$REPOS" ]]; then
             log "  ! $repo: repo not found at $repo_dir — skipping"
             continue
         fi
-        tech_json=$("$WORKSPACE/tools/review/detect-tech.sh" "$repo_dir" 2>/dev/null) || tech_json='{"technologies":[],"best_practices":[]}'
+        tech_json=$(tim --workspace "$WORKSPACE" review detect-tech "$repo_dir" --no-ui 2>/dev/null) || tech_json='{"technologies":[],"best_practices":[]}'
         tech_list=$(echo "$tech_json" | jq -r '.technologies | join(", ")')
         log "  ✓ $repo [$tech_list]"
 
@@ -172,7 +172,7 @@ if [[ -n "$REPOS" ]]; then
                     echo
                     echo "---"
                     echo
-                    echo "## Source: \`$path\` (missing — check detect-tech.sh)"
+                    echo "## Source: \`$path\` (missing — check tim review detect-tech)"
                 fi
             done
         } > "$out"

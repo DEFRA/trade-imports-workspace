@@ -63,3 +63,8 @@ entries cover the scripts left in `tools/govuk/`, and `Bash(tim:*)` covers
 None. No allowlist entry names `tools/govuk/start-upgrade.sh`,
 `discover-repos.sh`, `discover-versions.sh` or `setup-branch.sh`, and the
 folder is now gone. `Bash(tim:*)` covers `tim govuk start`.
+
+## P46
+
+None. No allowlist entry names `tools/review/detect-tech.sh`, and
+`Bash(tim:*)` covers `tim review detect-tech`.

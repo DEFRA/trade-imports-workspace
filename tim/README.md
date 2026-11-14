@@ -416,6 +416,21 @@ tim govuk apply --run-id EUDPA-264 --repo trade-imports-animals-frontend --govuk
 - A missing option, or a classification other than todo or noop, exits
   2; every other refusal exits 1.
 
+### `tim review` — the review skill's helpers
+
+```bash
+tim review detect-tech repos/trade-imports-stub --no-ui
+tim review detect-tech repos/trade-imports-animals-frontend --json
+```
+
+- `detect-tech` reads `.claude/skills/review/assets/routing.json` from the
+  workspace tim runs in and prints the technologies it detects in the
+  repo, with each one's best-practice files in routing order, as
+  `{"technologies":[...],"best_practices":[...]}`. `--json` gives the same
+  object as the result.
+- A missing, empty or non-folder path prints empty arrays and exits 0.
+  Routing it cannot read exits 1.
+
 ### `tim capture` — photograph a running app
 
 Runs an app's own FIT suite with Playwright tracing on, keeps the traces under

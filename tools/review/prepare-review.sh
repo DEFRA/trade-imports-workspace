@@ -336,7 +336,7 @@ for ((i=0; i<pr_count; i++)); do
         mkdir -p "$REVIEW_DIR/.diffs"
         gh pr diff "$pr_number" --repo "DEFRA/$repo_name" > "$REVIEW_DIR/.diffs/$repo_name.diff" 2>/dev/null || true
 
-        tech_json=$("$SCRIPT_DIR/detect-tech.sh" "$repo_dir" 2>/dev/null) || tech_json='{"technologies":[],"best_practices":[]}'
+        tech_json=$(tim --workspace "$SCRIPT_DIR/../.." review detect-tech "$repo_dir" --no-ui 2>/dev/null) || tech_json='{"technologies":[],"best_practices":[]}'
         tech_list=$(echo "$tech_json" | jq -r '.technologies | join(", ")')
 
         printf '%s' "{\"repo\": \"$repo_name\", \"pr\": $pr_number, \"commit\": \"$target_commit\", \"state\": \"$pr_state\", \"files\": $files_changed, \"tech\": $tech_json}" > "$prep_tmpdir/$i.meta"
@@ -419,7 +419,7 @@ echo "$meta_prs_json" | jq -c '.[] | {repo, bps: (.tech.best_practices // [])}' 
                 echo
                 echo "---"
                 echo
-                echo "## Source: \`$path\` (missing — check detect-tech.sh)"
+                echo "## Source: \`$path\` (missing — check tim review detect-tech)"
             fi
         done
     } > "$out"

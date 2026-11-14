@@ -11,6 +11,7 @@ import {
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { tmpdir } from 'node:os'
+import { TIM_CLI_PATH } from '../test-support/tim-cli.js'
 import {
   fixturePaths,
   bakeCases,
@@ -20,10 +21,10 @@ import {
 } from './__fixtures__/standards/routing-fixtures.js'
 
 /**
- * Captures the three bash routers' (`file-topics.sh`, `bake-rules-bundle.sh`,
- * `detect-tech.sh`) output against a fixed fixture set, in a temporary HOME
- * so the routers' hardcoded `$HOME/git/defra/trade-imports-workspace` path
- * resolves into an isolated tree.
+ * Captures the two bash routers' (`file-topics.sh`, `bake-rules-bundle.sh`)
+ * output, and `tim review detect-tech`'s, against a fixed fixture set, in a
+ * temporary HOME so the routers' hardcoded workspace path resolves into an
+ * isolated tree.
  *
  * Run once with `--update` on the UNMODIFIED scripts (inc-012 plan step
  * S1) — that snapshot is req-122 ac-1's "before". After the routing moves
@@ -46,17 +47,12 @@ const workspaceRoot = join(here, '..', '..', '..')
 
 const FILE_TOPICS_SCRIPT = 'tools/style/file-topics.sh'
 const BAKE_RULES_BUNDLE_SCRIPT = 'tools/style/bake-rules-bundle.sh'
-const DETECT_TECH_SCRIPT = 'tools/review/detect-tech.sh'
 
 let tmpHome
 let root
 
 const stageRouterScripts = () => {
-  for (const rel of [
-    FILE_TOPICS_SCRIPT,
-    BAKE_RULES_BUNDLE_SCRIPT,
-    DETECT_TECH_SCRIPT
-  ]) {
+  for (const rel of [FILE_TOPICS_SCRIPT, BAKE_RULES_BUNDLE_SCRIPT]) {
     const dest = join(root, rel)
     mkdirSync(dirname(dest), { recursive: true })
     cpSync(join(workspaceRoot, rel), dest)
@@ -95,7 +91,7 @@ const materialiseFixtureRepos = () => {
 beforeAll(() => {
   tmpHome = mkdtempSync(join(tmpdir(), 'tim-standards-golden-'))
   root = join(tmpHome, 'git', 'defra', 'trade-imports-workspace')
-  mkdirSync(root, { recursive: true })
+  mkdirSync(join(root, 'repos'), { recursive: true })
 
   stageRouterScripts()
   stageSkillAssets()
@@ -158,21 +154,44 @@ test('bake-rules-bundle.sh over every topic, unmodified', async () => {
   )
 })
 
+const runTimDetectTech = (args) =>
+  execa(
+    'node',
+    [
+      TIM_CLI_PATH,
+      '--workspace',
+      root,
+      'review',
+      'detect-tech',
+      ...args,
+      '--no-ui'
+    ],
+    {
+      env: { TIM_NO_AUTO_PULL: '1', TIM_WORKSPACE: undefined },
+      extendEnv: true,
+      reject: false
+    }
+  )
+
 const detectTechCase = async (input) => {
   const args = input === null ? [] : [join(tmpHome, 'fixture-repos', input)]
-  const { recorded } = await runScript(DETECT_TECH_SCRIPT, args)
-  return { input, ...recorded }
+  const result = await runTimDetectTech(args)
+  return {
+    input,
+    exitCode: result.exitCode,
+    stdout: redactHome(result.stdout),
+    stderr: redactHome(result.stderr)
+  }
 }
 
-// detect-tech.sh spawns dozens of `jq` processes per repo, so run the cases
-// at once rather than one after another. Promise.all keeps input order, so
-// the snapshot is unchanged.
-test('detect-tech.sh over every fixture repo, unmodified', async () => {
+test('tim review detect-tech prints the frozen detect-tech golden for every fixture repo, a missing path and no path', async () => {
   const inputs = [...Object.keys(fixtureRepos), 'does-not-exist', null]
+  const golden = readFileSync(
+    join(here, '__fixtures__', 'standards', '__golden__', 'detect-tech.json'),
+    'utf8'
+  )
 
   const cases = await Promise.all(inputs.map(detectTechCase))
 
-  await expect(JSON.stringify(cases, null, 2) + '\n').toMatchFileSnapshot(
-    '__fixtures__/standards/__golden__/detect-tech.json'
-  )
+  expect(JSON.stringify(cases, null, 2) + '\n').toBe(golden)
 })

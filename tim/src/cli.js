@@ -38,6 +38,7 @@ import { register as registerSkill } from './commands/skill/index.js'
 import { register as registerThemeTicket } from './commands/theme-ticket/index.js'
 import { register as registerUnderstandingCheck } from './commands/understanding-check/index.js'
 import { register as registerGovuk } from './commands/govuk/index.js'
+import { register as registerReview } from './commands/review/index.js'
 
 const SCHEMA_VERSION = 1
 
@@ -182,6 +183,7 @@ export const buildProgram = () => {
   registerThemeTicket(program, { timVersion: pkg.version })
   registerUnderstandingCheck(program, { timVersion: pkg.version })
   registerGovuk(program, { timVersion: pkg.version })
+  registerReview(program, { timVersion: pkg.version })
 
   return program
 }

@@ -109,7 +109,7 @@ set are left alone). State lands under
 `~/git/defra/trade-imports-workspace/workareas/reviews/local/REPO/BRANCH/`
 — same shape as the ticket flow: `branch.md` in place of `ticket.md`,
 `.review-meta.json` (`"local": true`), `best-practices/{repo}.md` (via
-the same `detect-tech.sh` the ticket flow uses), and per-file
+the same `tim review detect-tech` the ticket flow uses), and per-file
 `file-reviews/{repo}/{safe_path}.review.json` placeholders.
 
 The changed-file list is `git -C <repo> diff --name-only <merge-base with
@@ -769,7 +769,7 @@ All under `~/git/defra/trade-imports-workspace/tools/review/`:
 | Script | Purpose |
 |---|---|
 | `start-review.sh` | Step 0 — detect FRESH/REFRESH and exec the appropriate setup script; `--local REPO BRANCH` for Local mode |
-| `prepare-review.sh` | Fresh Step 1 workspace setup; transitively seeds best-practices via `detect-tech.sh`, which reads `assets/routing.json` |
+| `prepare-review.sh` | Fresh Step 1 workspace setup; transitively seeds best-practices via `tim review detect-tech`, which reads `assets/routing.json` |
 | `prepare-review-local.sh` | Local mode setup — no Jira/GitHub; changed-file list from git, or the caller's `--files` |
 | `verify-coverage.sh` | Fresh Step 3 coverage gate |
 | `verify-consistency.sh` | Fresh Step 4 consistency gate |

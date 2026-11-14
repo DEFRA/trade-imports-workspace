@@ -1,6 +1,13 @@
 import { createSonarClient } from '../../clients/sonar-client.js'
 import { makeClientAction } from '../_client-action.js'
 import { TimError } from '../../errors.js'
+import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
+import { failOpenAction, failOpenCommand } from '../../sonar/hook-runtime.js'
+import { removeStaleMcpContainers } from '../../sonar/mcp-tidy.js'
+import { settlePendingChecks } from '../../sonar/pending-check.js'
+import { recordPushedCommits } from '../../sonar/pending-record.js'
+import { sonarChecksFolder } from '../../sonar/pending-store.js'
+import { resolveSonarToken } from '../../sonar/token.js'
 
 const scopeOf = ({ pullRequest, branch }) => {
   if (pullRequest !== undefined && branch !== undefined) {
@@ -79,10 +86,98 @@ export const renderGate = ({
   ].join('\n')
 }
 
+const nowInEpochSeconds = () => Math.floor(Date.now() / 1000)
+
+const workspaceRootOf = (command) =>
+  resolveWorkspaceRoot({ explicit: command.optsWithGlobals().workspace })
+
+const HOOK_HELP =
+  '\nIt is a Claude Code hook: it always exits 0, and prints nothing to stdout when something goes wrong. Set TIM_NO_AUTO_PULL=1 when running it as one.'
+
+const registerPendingCheck = (pending) =>
+  failOpenCommand(
+    pending
+      .command('check')
+      .description(
+        'Look once at SonarCloud for each pending check. When SonarCloud has analysed the pushed commit on its pull request, report its open BLOCKER and CRITICAL issues as hook context and mark the commit seen. Drop a check still not analysed after 45 minutes.'
+      )
+      .option(
+        '--event <name>',
+        'The hook event the context is for: UserPromptSubmit or SessionStart',
+        'UserPromptSubmit'
+      )
+      .addHelpText(
+        'after',
+        `\nExample:\n  tim sonar pending check --event SessionStart\n\nA public project needs no token. SONAR_TOKEN is read from the environment, else from an interactive zsh.${HOOK_HELP}`
+      )
+      .action(
+        failOpenAction(
+          async ({ event }, command) =>
+            settlePendingChecks({
+              folder: sonarChecksFolder(workspaceRootOf(command)),
+              event,
+              client: createSonarClient({ token: await resolveSonarToken() }),
+              nowSeconds: nowInEpochSeconds()
+            }),
+          { timeoutMs: 14_000 }
+        )
+      )
+  )
+
+const registerPendingRecord = (pending) =>
+  failOpenCommand(
+    pending
+      .command('record')
+      .description(
+        'Record a pending SonarCloud check for each sonar repo whose feature branch has its HEAD pushed, for `tim sonar pending check` to settle later.'
+      )
+      .addHelpText(
+        'after',
+        `\nExample:\n  tim sonar pending record${HOOK_HELP}`
+      )
+      .action(
+        failOpenAction(
+          async (_options, command) => {
+            await recordPushedCommits({
+              workspaceRoot: workspaceRootOf(command),
+              nowSeconds: nowInEpochSeconds()
+            })
+            return ''
+          },
+          { timeoutMs: 9_000 }
+        )
+      )
+  )
+
+const registerMcpTidy = (sonar) =>
+  failOpenCommand(
+    sonar
+      .command('mcp-tidy')
+      .description(
+        'Remove the sonar MCP docker containers that no live `sonar run mcp --project <key>` process owns, keeping the newest container for each live process.'
+      )
+      .addHelpText('after', `\nExample:\n  tim sonar mcp-tidy${HOOK_HELP}`)
+      .action(failOpenAction(removeStaleMcpContainers, { timeoutMs: 28_000 }))
+  )
+
+const registerHooks = (sonar) => {
+  const pending = sonar
+    .command('pending')
+    .description(
+      'Record pushed commits, then report the SonarCloud issues found on them'
+    )
+  registerPendingCheck(pending)
+  registerPendingRecord(pending)
+  registerMcpTidy(sonar)
+}
+
 export const register = (program, { timVersion }) => {
   const sonar = program
     .command('sonar')
-    .description('Read SonarCloud issues for a DEFRA project')
+    .description(
+      'Read SonarCloud issues for a DEFRA project, and run the SonarCloud Claude Code hooks'
+    )
+  registerHooks(sonar)
 
   sonar
     .command('issues <project>')

@@ -158,3 +158,33 @@ None to remove. No allowlist entry names `ticket.sh`, `comments.sh`,
 
 None to remove. P54 adds tim library code only and deletes no script;
 `sonar-check-pending.sh` and `sonar-record-push.sh` stay until P55.
+
+## P55
+
+No allowlist entry names the three scripts. The row could not finish:
+`.claude/settings.json` is protected from agent edits, and its hooks still
+call the Bash, so the scripts stay until the hooks switch. Change these
+hook commands, keeping each `if`, `matcher` and `timeout`:
+
+- PostToolUse (`if: Bash(git push*)`, timeout 10):
+  `bash "$CLAUDE_PROJECT_DIR/scripts/sonar/sonar-record-push.sh"`
+  becomes
+  `TIM_NO_AUTO_PULL=1 node "$CLAUDE_PROJECT_DIR/tim/src/cli.js" --workspace "$CLAUDE_PROJECT_DIR" sonar pending record 2>/dev/null || true`
+- UserPromptSubmit (timeout 15):
+  `bash "$CLAUDE_PROJECT_DIR/scripts/sonar/sonar-check-pending.sh" UserPromptSubmit`
+  becomes
+  `TIM_NO_AUTO_PULL=1 node "$CLAUDE_PROJECT_DIR/tim/src/cli.js" --workspace "$CLAUDE_PROJECT_DIR" sonar pending check --event UserPromptSubmit 2>/dev/null || true`
+- SessionStart (timeout 15):
+  `bash "$CLAUDE_PROJECT_DIR/scripts/sonar/sonar-check-pending.sh" SessionStart`
+  becomes
+  `TIM_NO_AUTO_PULL=1 node "$CLAUDE_PROJECT_DIR/tim/src/cli.js" --workspace "$CLAUDE_PROJECT_DIR" sonar pending check --event SessionStart 2>/dev/null || true`
+- SessionStart (timeout 30):
+  `bash "$CLAUDE_PROJECT_DIR/scripts/sonar/sonar-remove-stale-mcp-containers.sh"`
+  becomes
+  `TIM_NO_AUTO_PULL=1 node "$CLAUDE_PROJECT_DIR/tim/src/cli.js" --workspace "$CLAUDE_PROJECT_DIR" sonar mcp-tidy 2>/dev/null || true`
+
+Then, in one follow-up commit: delete the three scripts under
+`scripts/sonar/` (the golden recording tests skip once they are gone), and
+rewrite `docs/agent-onboarding.md`'s "Workspace-level hooks" section and its
+line about the hooks under `scripts/sonar/` calling the `sonar` CLI to name
+the tim commands and the hook JSON above.

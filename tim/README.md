@@ -1584,6 +1584,57 @@ tim sonar issues trade-imports-plants-frontend --branch main [--json]
 - Giving both `--pull-request` and `--branch`, or a PR that is not a number,
   fails with `USAGE` before any request is sent.
 
+### `tim sonar pending record|check` — SonarCloud findings after a push
+
+Two Claude Code hooks that report the BLOCKER and CRITICAL issues SonarCloud
+finds on a pushed pull request, the next time you interact after CI's scan
+lands.
+
+```bash
+tim sonar pending record                          # PostToolUse on git push
+tim sonar pending check --event UserPromptSubmit  # UserPromptSubmit
+tim sonar pending check --event SessionStart      # SessionStart
+```
+
+- `record` writes `pending__<project>__<sha>` under `.sonar-checks/` in the
+  workspace, holding the branch then the push time in epoch seconds, for each
+  of `trade-imports-animals-frontend`, `-admin`, `-backend` and
+  `trade-imports-dynamics-gateway` whose feature branch has its HEAD pushed.
+  It skips main, master, a detached HEAD, unpushed commits and a commit
+  already marked `seen__<project>__<sha>`.
+- `check` looks once at SonarCloud for each pending check. When SonarCloud
+  has analysed the commit on its pull request, it prints the issues as
+  `{hookSpecificOutput: {hookEventName, additionalContext}}` and marks the
+  commit seen. A check still not analysed after 45 minutes is dropped.
+- `check` reads `SONAR_TOKEN` from the environment, else from an interactive
+  zsh, and works without one for a public project. It needs no `sonar` CLI.
+- Both always exit 0 and print nothing to stdout on any failure, so a hook
+  never blocks a prompt or a push. Run them as hooks from the session's own
+  clone, with `TIM_NO_AUTO_PULL=1`:
+
+```bash
+TIM_NO_AUTO_PULL=1 node "$CLAUDE_PROJECT_DIR/tim/src/cli.js" --workspace "$CLAUDE_PROJECT_DIR" sonar pending check --event SessionStart 2>/dev/null || true
+```
+
+### `tim sonar mcp-tidy` — remove stale sonar MCP containers
+
+A `SessionStart` hook. The `sonar` CLI's MCP server runs in a docker
+container that keeps running after its `sonar run mcp` process dies. For
+each project key, `mcp-tidy` keeps as many of the newest containers as there
+are live processes whose command line ends `sonar run mcp --project <key>`,
+and force-removes the rest.
+
+```bash
+tim sonar mcp-tidy
+```
+
+- It prints `Removed N stale sonar MCP container(s).` when it removed any,
+  and nothing otherwise.
+- It only touches containers labelled
+  `io.modelcontextprotocol.server.name=io.github.SonarSource/sonarqube-mcp-server`,
+  and leaves one with no `SONARQUBE_PROJECT_KEY` alone.
+- It always exits 0, and does nothing when docker is not running.
+
 ### Workspace safety for repos outside the branch-parity contract
 
 Not every repo under `repos/` follows the workspace's cross-repo

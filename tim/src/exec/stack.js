@@ -1,86 +1,9 @@
 import { existsSync, realpathSync } from 'node:fs'
 import { join, resolve } from 'node:path'
-import { run, runStreamed, runToLog } from './exec.js'
+import { run, runToLog } from './exec.js'
 import { ensureDockerRunning, isDaemonUnreachable } from './docker-daemon.js'
 import { TimError } from '../errors.js'
 import { STACK_PROJECT } from '../stack/definition.js'
-
-const START_SCRIPT = 'run-stack.sh'
-
-// Starting the stack needs the Docker daemon, so Docker Desktop is brought
-// back first when it has quit.
-const readyForScript = async (script, env) => {
-  if (script === START_SCRIPT) await ensureDockerRunning({ env })
-}
-
-/**
- * Resolve the path to a script in scripts/stack/ under the workspace root.
- *
- * @param {string} workspaceRoot
- * @param {string} scriptName - File name (e.g. "run-stack.sh")
- * @returns {string} Absolute path
- * @throws {TimError} USAGE when the script does not exist
- */
-export const stackScriptPath = (workspaceRoot, scriptName) => {
-  const path = join(workspaceRoot, 'scripts', 'stack', scriptName)
-  if (!existsSync(path)) {
-    throw new TimError(
-      'USAGE',
-      `Cannot find ${scriptName} at ${path}. Is this a trade-imports workspace?`
-    )
-  }
-  return path
-}
-
-/**
- * Run a script under scripts/stack/ with its stdio inherited so the child
- * controls the terminal (handy for `up` progress, `restart` output etc.).
- * Starting the stack brings Docker Desktop back first when it has quit.
- *
- * @param {object} args
- * @param {string} args.workspaceRoot
- * @param {string} args.script
- * @param {string[]} [args.args]
- * @param {object} [args.env] - Extra environment for docker and the script
- * @returns {Promise<{exitCode: number, durationMs: number}>}
- * @throws {TimError} as ensureDockerRunning does, when Docker cannot be brought back to start the stack
- */
-export const runStackScript = async ({
-  workspaceRoot,
-  script,
-  args = [],
-  env
-}) => {
-  const path = stackScriptPath(workspaceRoot, script)
-  await readyForScript(script, env)
-  return runStreamed(path, args, { cwd: workspaceRoot, env })
-}
-
-/**
- * Run a script under scripts/stack/ with its output written to a log file
- * instead of the terminal — the same scripts `tim docker dev|down` run.
- * Starting the stack brings Docker Desktop back first when it has quit.
- *
- * @param {object} args
- * @param {string} args.workspaceRoot
- * @param {string} args.script
- * @param {string[]} [args.args]
- * @param {string} args.logPath
- * @param {object} [args.env] - Extra environment for docker and the script
- * @returns {Promise<{exitCode: number, durationMs: number, log: string}>}
- * @throws {TimError} as ensureDockerRunning does, when Docker cannot be brought back to start the stack
- */
-export const runStackScriptToLog = async ({
-  workspaceRoot,
-  script,
-  args = [],
-  logPath,
-  env
-}) => {
-  const path = stackScriptPath(workspaceRoot, script)
-  await readyForScript(script, env)
-  return runToLog(path, args, { cwd: workspaceRoot, logPath, env })
-}
 
 export { STACK_PROJECT }
 

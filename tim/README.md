@@ -45,30 +45,30 @@ Arrow keys navigate, Enter selects, Enter on an empty input goes back. Every top
 
 #### Menu quick reference
 
-| Menu path                                                    | CLI equivalent                    |
-| ------------------------------------------------------------ | --------------------------------- |
-| Workspace → Status                                           | `tim workspace status`            |
-| Workspace → Branch                                           | `tim workspace branch [name]`     |
-| Workspace → Install                                          | `tim workspace install`           |
-| Workspace → Lint                                             | `tim workspace lint`              |
-| Workspace → Test                                             | `tim workspace test`              |
-| Workspace → Clean                                            | `tim workspace clean`             |
-| Workspace → Setup                                            | `tim workspace setup`             |
-| Workspace → Update                                           | `tim workspace update`            |
-| Workspace → Reset                                            | `tim workspace reset`             |
-| Docker → Start the stack (run-stack.sh)                      | `tim docker up`                   |
-| Docker → Start the stack from local source (run-stack.sh -d) | `tim docker dev`                  |
-| Docker → Stop the stack (tim docker down)                    | `tim docker down`                 |
-| Docker → Restart the whole stack (tim docker restart)        | `tim docker restart`              |
-| Docker → Bounce backend (tim docker bounce-backend)          | `tim docker bounce-backend`       |
-| Start → Frontend (npm run dev)                               | `tim start frontend`              |
-| Start → Backend (mvn spring-boot:run)                        | `tim start backend`               |
-| Start → Admin (npm run dev)                                  | `tim start admin`                 |
-| Auth                                                         | `tim auth`                        |
-| Jira → Look up a ticket                                      | `tim jira ticket <id>`            |
-| Jira → Read comments on a ticket                             | `tim jira comments <id>`          |
-| Confluence → Look up a page                                  | `tim confluence page <id-or-url>` |
-| Quit                                                         | exits the menu                    |
+| Menu path                                                   | CLI equivalent                    |
+| ----------------------------------------------------------- | --------------------------------- |
+| Workspace → Status                                          | `tim workspace status`            |
+| Workspace → Branch                                          | `tim workspace branch [name]`     |
+| Workspace → Install                                         | `tim workspace install`           |
+| Workspace → Lint                                            | `tim workspace lint`              |
+| Workspace → Test                                            | `tim workspace test`              |
+| Workspace → Clean                                           | `tim workspace clean`             |
+| Workspace → Setup                                           | `tim workspace setup`             |
+| Workspace → Update                                          | `tim workspace update`            |
+| Workspace → Reset                                           | `tim workspace reset`             |
+| Docker → Start the stack (tim docker up)                    | `tim docker up`                   |
+| Docker → Start the stack from local source (tim docker dev) | `tim docker dev`                  |
+| Docker → Stop the stack (tim docker down)                   | `tim docker down`                 |
+| Docker → Restart the whole stack (tim docker restart)       | `tim docker restart`              |
+| Docker → Bounce backend (tim docker bounce-backend)         | `tim docker bounce-backend`       |
+| Start → Frontend (npm run dev)                              | `tim start frontend`              |
+| Start → Backend (mvn spring-boot:run)                       | `tim start backend`               |
+| Start → Admin (npm run dev)                                 | `tim start admin`                 |
+| Auth                                                        | `tim auth`                        |
+| Jira → Look up a ticket                                     | `tim jira ticket <id>`            |
+| Jira → Read comments on a ticket                            | `tim jira comments <id>`          |
+| Confluence → Look up a page                                 | `tim confluence page <id-or-url>` |
+| Quit                                                        | exits the menu                    |
 
 ### Direct CLI
 
@@ -1143,7 +1143,7 @@ tim docker owner                     # print the clone that owns the stack
 tim docker down                      # stop the stack and wipe its volumes
 ```
 
-`up`, `dev` and `restart` take `scripts/stack/run-stack.sh`'s flags: `-b`,
+`up`, `dev` and `restart` take the stack's start flags: `-b`,
 `-e`, `--profile`, `-d` and `--perf`. Run `tim docker up --help` for the full
 list.
 
@@ -1166,7 +1166,7 @@ tim docker lease status --json                                                  
 ```
 
 - `acquire` on a stack that is down records the lease, then starts it
-  (`run-stack.sh -d`; `--mode up` for the published images; `--mode perf` for
+  (`tim docker dev`; `--mode up` for the published images; `--mode perf` for
   the published images with both stubs on a latency profile) and records its
   container ids and, in dev mode, each locally built service's build and
   source fingerprints (what `tim build gate` compares on reuse). On a stack the same holder already leases it reuses it as it
@@ -1217,7 +1217,7 @@ The lease is one file per machine, outside every repo: `TIM_STACK_LEASE`, or
 
 `tim docker perf` takes the stack lease in perf mode (`--mode perf` on
 `tim docker lease acquire` does the same). It starts the published images
-with `run-stack.sh --perf`, so both stubs answer at the latency profile in
+with `tim docker up --perf`, so both stubs answer at the latency profile in
 `STUB_PROFILE` (default `sla`; the other value is `zero-delay`). The lease
 records the profile, and `tim docker lease status` says
 `perf mode, stubs on sla`. An unknown `STUB_PROFILE` exits 2 before anything
@@ -1297,7 +1297,7 @@ repo: the unit rungs, the FIT rungs (each on the first free port at or above
 the one gates.json plans for it, passed to its script as `PORT`; a rung that
 moves records `{planned, used, heldBy}` in its `ports`, so two clones can run
 the same FIT suite at once) and the E2E rungs against
-the workspace stack built from local source (`run-stack.sh -d`, the path
+the workspace stack built from local source (the path
 `tim docker dev` takes), under a stack lease held as `--holder` (default:
 this gate run). It runs in three layers, each starting only once the one
 before has finished — passed or not. Layer one is every unit and FIT rung:

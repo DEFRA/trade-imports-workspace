@@ -1032,7 +1032,7 @@ run's lease, and the next stage stopped the run at `stack-held` "held by nobody"
 reads the stack (`tim docker lease acquire|release|status`, and the gate through them) starts
 Docker Desktop with `open -a Docker` when the daemon does not answer. It waits up to five
 minutes for `docker info` (`TIM_DOCKER_START_WAIT_MS`), logs that it did so on stderr, then
-carries on. Starting the stack (`run-stack.sh`) does the same first. A stage whose check
+carries on. Starting the stack (`tim docker up`) does the same first. A stage whose check
 cannot reach the stack, and whose lease check finds the lease still the run's but the stack
 down, returns `stackDown`. The script then takes the run's lease again, which starts the
 stack under it, and runs that stage once more, once only. A Homebrew autoupdate is why: its

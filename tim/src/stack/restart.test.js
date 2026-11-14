@@ -56,7 +56,7 @@ describe('tim docker restart', () => {
         printsRestartUsage: run.stdout.includes(
           'Usage: tim docker restart [tim docker up flags]'
         ),
-        printsStartUsage: run.stdout.includes('Usage: run-stack.sh'),
+        printsStartUsage: run.stdout.includes('Usage: tim docker up'),
         sequence: run.sequence
       }).toEqual({
         exitCode: 0,

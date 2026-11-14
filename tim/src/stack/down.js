@@ -38,7 +38,7 @@ export const DOWN_USAGE = [
  *
  * @param {object} opts
  * @param {string} opts.workspaceRoot
- * @param {{heading: (heading: string) => void, docker: (args: string[], env: object) => Promise<{exitCode: number, durationMs: number}>}} opts.output - From terminalOutput or logOutput
+ * @param {import('./services.js').StackOutput} opts.output
  * @param {string[]} [opts.args] - Passed on to `docker compose ... down`
  * @param {object} [opts.env] - Extra environment for docker
  * @returns {Promise<{exitCode: number, durationMs: number}>} docker compose's own

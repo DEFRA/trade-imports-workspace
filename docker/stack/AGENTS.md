@@ -24,8 +24,8 @@ the wrappers and is the surface to use.
   local E2E: the tests repo's docker-compose config and `tim build gate`
   stop from any other clone.
 - **Never hand-assemble `docker compose -f … -f …`.** The file list, the
-  profiles and the init-script staging live in `scripts/stack/lib/`. A
-  hand-built chain silently drops some of them.
+  profiles and the init-script staging live in `tim/src/stack/` (and in
+  `scripts/stack/lib/` for CI). A hand-built chain silently drops some of them.
 - **Change the stack definition in two places while tim takes over.** The
   services, sidecars, compose files and profiles are also in
   `tim/src/stack/definition.js`, and a tim test fails when it and the
@@ -91,16 +91,17 @@ the wrappers and is the surface to use.
 ## Stand up / tear down
 
 ```bash
-./scripts/stack/run-stack.sh                                # all services on :latest
-./scripts/stack/run-stack.sh -b feat/EUDPA-123              # branch tag where published, latest elsewhere
-./scripts/stack/run-stack.sh -d                             # build the repo-backed services from local source
-./scripts/stack/run-stack.sh --perf                         # published images, both stubs on STUB_PROFILE (default sla)
-./scripts/stack/run-stack.sh -e backend                     # run backend in IntelliJ / npm; rest in docker
-./scripts/stack/run-stack.sh --profile frontend --profile infrastructure --profile database
-                                                            # only those profiles; intended for "running other tiers natively"
+tim docker up                                # all services on :latest
+tim docker up -b feat/EUDPA-123              # branch tag where published, latest elsewhere
+tim docker dev                               # build the repo-backed services from local source
+tim docker up --perf                         # published images, both stubs on STUB_PROFILE (default sla)
+tim docker up -e backend                     # run backend in IntelliJ / npm; rest in docker
+tim docker up --profile frontend --profile infrastructure --profile database
+                                             # only those profiles; intended for "running other tiers natively"
+tim docker up --help                         # every flag
 
 tim docker down                       # down --volumes --remove-orphans, every profile included
-tim docker restart ...                # stop then run-stack (forwards -b / -e / -d / --profile)
+tim docker restart ...                # stop, then start as tim docker up does (takes -b / -e / -d / --profile)
 tim docker bounce-backend             # rebuild the backend image and recreate its container — picks up a pom.xml/dependency change
 tim docker service rebuild <service>...  # --dev stack: rebuild these images from local source, recreate them, wait for healthy
 tim docker service restart <service>...  # --dev stack: restart these containers (same ids), wait for healthy
@@ -111,7 +112,7 @@ Images are pulled fresh on every run (`--pull always`).
 ## Compose file layout
 
 Services live in overlay files; `compose.yml` is just the project
-name anchor. `run-stack.sh` `-f`-stacks all of them automatically.
+name anchor. `tim docker up` `-f`-stacks all of them automatically.
 
 | File | Services | Profile |
 |---|---|---|
@@ -152,13 +153,13 @@ the bypass — see [`--exclude` (`-e`) labels](#--exclude--e-labels).
 
 | Want to… | Use |
 |---|---|
-| Run the full stack from published Dockerhub images | `run-stack.sh` (no flags) |
-| Pull a published branch tag for one or more repos | `run-stack.sh -b feat/X` |
-| Edit source and see changes (Node + Java backend/stub/reference-data hot-reload) | `run-stack.sh -d` |
-| Run the stack as a performance target (stubs at their SLA latency) | `run-stack.sh --perf`, or `tim docker perf` to also take the lease |
-| Run one repo-backed service natively from your IDE, rest in docker | `run-stack.sh -e backend` |
-| Run a whole tier natively (e.g. backend on the host, mongo + frontend in docker) | `run-stack.sh --profile frontend --profile infrastructure --profile database` |
-| Pick up a Java `pom.xml`/dependency change under `--dev` (source edits hot-reload automatically) | `tim docker bounce-backend` for the backend, `tim docker service rebuild <service>` for any other service, or `run-stack.sh -d` for all of them |
+| Run the full stack from published Dockerhub images | `tim docker up` (no flags) |
+| Pull a published branch tag for one or more repos | `tim docker up -b feat/X` |
+| Edit source and see changes (Node + Java backend/stub/reference-data hot-reload) | `tim docker dev` |
+| Run the stack as a performance target (stubs at their SLA latency) | `tim docker up --perf`, or `tim docker perf` to also take the lease |
+| Run one repo-backed service natively from your IDE, rest in docker | `tim docker up -e backend` |
+| Run a whole tier natively (e.g. backend on the host, mongo + frontend in docker) | `tim docker up --profile frontend --profile infrastructure --profile database` |
+| Pick up a Java `pom.xml`/dependency change under `--dev` (source edits hot-reload automatically) | `tim docker bounce-backend` for the backend, `tim docker service rebuild <service>` for any other service, or `tim docker dev` for all of them |
 
 `--branch` and `--dev` are mutually exclusive (hard error). The other flags
 compose freely, and `--perf` composes with every other flag.
@@ -166,13 +167,13 @@ compose freely, and `--perf` composes with every other flag.
 ## `--exclude` (`-e`) labels
 
 Repeatable. Valid: `frontend`, `backend`, `admin`, `ins-frontend`, `routing-proxy`, `stub`, `defra-id-stub`, `reference-data`, `address-book`, `gateway`, `ins-backend`, `plants-frontend`, `plants-backend`
-— the labels in `run-stack.sh`'s `services` array.
+— the labels in `SERVICES` in `tim/src/stack/definition.js`.
 Excluded services skip the Dockerhub probe and stay out of the stack — start
 them yourself; the rest of the stack reaches them via
 `host.docker.internal:<port>`.
 
 **Excluding a service also removes its sidecar**, so one label can take two
-services out. `run-stack.sh`'s `sidecars` array holds the pairings and the run
+services out. `SIDECARS` in `tim/src/stack/definition.js` holds the pairings and the run
 prints each removal in its startup summary.
 
 | Service label | Sidecar removed with it | What a host-side run loses |
@@ -204,9 +205,9 @@ redis (which in turn depends on `infrastructure` services). Spell out the depend
 chain you need.
 
 `security` is opt-in only — deliberately excluded from the default six, unlike every
-other profile. Nothing in the default stack depends on ZAP, so a plain `run-stack.sh`
+other profile. Nothing in the default stack depends on ZAP, so a plain `tim docker up`
 never starts it; request it explicitly with `--profile security`. Bring-up is additive:
-`run-stack.sh` always calls `up` with an explicit, resolved service list and never runs
+`tim docker up` always calls `up` with an explicit, resolved service list and never runs
 `down`, so running `--profile security` against an already-running default stack starts
 only the `zap` container and leaves everything else untouched.
 
@@ -214,7 +215,7 @@ Intended use: running a tier natively. Example — backend in IntelliJ, rest
 in docker:
 
 ```bash
-./scripts/stack/run-stack.sh --profile frontend --profile infrastructure --profile database --profile stubs
+tim docker up --profile frontend --profile infrastructure --profile database --profile stubs
 # ... then in IntelliJ: run trade-imports-animals-backend with SPRING_PROFILES_ACTIVE=local
 ```
 
@@ -247,8 +248,8 @@ queue once ASB is reachable again.
 ## Running the local ZAP security profile
 
 ```bash
-./scripts/stack/run-stack.sh                     # default stack first, as normal
-./scripts/stack/run-stack.sh --profile security   # additive: brings up just zap
+tim docker up                     # default stack first, as normal
+tim docker up --profile security   # additive: brings up just zap
 cd repos/trade-imports-ins-tests
 npm run test:docker-compose:security              # passive scan
 npm run test:docker-compose:ins:security          # passive scan, one domain
@@ -258,15 +259,15 @@ npm run test:docker-compose:security:active       # passive + active scan, every
 See `repos/trade-imports-ins-tests/docs/security.md` for the full local
 workflow, what is scanned and how the run is gated. It's opt-in unlike
 `toxiproxy` because it's a heavy scanner nobody wants brought up by a plain
-`run-stack.sh`, and it needs `network_mode: host` because the app frontends'
+`tim docker up`, and it needs `network_mode: host` because the app frontends'
 OIDC redirect URLs are hardcoded to `localhost` — same constraint as the
 hostname rules below.
 
 ## Looking at service meters locally (monitoring profile)
 
 ```bash
-./scripts/stack/run-stack.sh -d                    # ins-backend built from source (it carries the Prometheus endpoint)
-./scripts/stack/run-stack.sh --profile monitoring  # additive: brings up prometheus + grafana
+tim docker dev                    # ins-backend built from source (it carries the Prometheus endpoint)
+tim docker up --profile monitoring  # additive: brings up prometheus + grafana
 open http://localhost:3030                         # anonymous admin; opens on the address lookup dashboard
 ```
 
@@ -281,15 +282,15 @@ meters, not for promoting. Config lives in `docker/stack/monitoring/`.
 
 ## Performance mode
 
-`run-stack.sh --perf` starts the stack as a performance target: both stubs
+`tim docker up --perf` starts the stack as a performance target: both stubs
 (`trade-imports-stub` and `trade-imports-defra-id-stub`) answer with a latency
 profile instead of none. `perf.compose.yml` sets `STUB_LATENCY_PROFILE` from
 `STUB_PROFILE`, which defaults to `sla`. The other allowed value is
 `zero-delay`; anything else exits 2 before anything starts.
 
 ```bash
-./scripts/stack/run-stack.sh --perf                       # published images, stubs on sla
-STUB_PROFILE=zero-delay ./scripts/stack/run-stack.sh --perf
+tim docker up --perf                       # published images, stubs on sla
+STUB_PROFILE=zero-delay tim docker up --perf
 tim docker perf                                           # the same, and takes the stack lease as "perf <this clone's path>"
 tim docker lease status                                   # ... leased to "perf <path>" (perf mode, stubs on sla, ...)
 tim docker lease release --holder "perf <this clone's path>"  # take it down
@@ -313,20 +314,26 @@ npm run test:docker-compose:plants      # one domain: animals, animals-admin, in
 ```
 To run what a repo's PR runs, look up its entry in [`config/e2e-tests-pr-scope.json`](../../config/e2e-tests-pr-scope.json). How the suites and tags are applied: [`docs/testing/e2e-tests-gh-actions.md`](../../docs/testing/e2e-tests-gh-actions.md).
 
-## Lifecycle scripts live in `scripts/stack/`
+## Lifecycle commands live in `tim/src/stack/`
 
-- `run-stack.sh` — flag parsing in `lib/flags.sh`; colour output in
-  `lib/colour.sh`; compose `-f` list in `lib/compose.sh`; init-script
-  staging in `lib/init-scripts.sh`.
+- `tim docker up` and `tim docker dev` (`tim/src/stack/start.js`) read their
+  flags in `flags.js`, stage the init scripts in `stage-init-scripts.js`,
+  look for branch images on Dockerhub, download images early and side by
+  side, start mongo first (retrying it, `MONGO_UP_ATTEMPTS` times,
+  `MONGO_RETRY_BACKOFF_SECONDS` apart), then start the rest and wait until
+  healthy. With `-b`, they look once more after the stack is healthy and
+  recreate any service whose branch image appeared or changed meanwhile.
 - `tim docker down`, `tim docker restart`, `tim docker bounce-backend` and
-  `tim docker service` run from tim (`tim/src/stack/`), with the compose files
-  and profiles in `tim/src/stack/definition.js`. `down` names every profile,
-  the opt-in `security` and `monitoring` ones too, so nothing is left running.
-  `restart` takes the stack down the way `down` does, then runs
-  `run-stack.sh` with its flags, even when the stop fails.
+  `tim docker service` run from tim too, with the compose files and profiles
+  in `tim/src/stack/definition.js`. `down` names every profile, the opt-in
+  `security` and `monitoring` ones too, so nothing is left running.
+  `restart` takes the stack down the way `down` does, then starts it the
+  way `tim docker up` does with its flags, even when the stop fails.
+- CI still starts the stack with `scripts/stack/run-stack.sh` and its
+  `lib/` files, which do the same as `tim docker up`.
 - `tim docker service rebuild|restart <service>...` touches only the named
   services of a running `--dev` stack (`--no-deps`), with the same compose
-  files and profiles `run-stack.sh -d` uses, and blocks until they report
+  files and profiles `tim docker dev` uses, and blocks until they report
   healthy. It does not re-stage init scripts.
 
 ### How `tim build gate` uses the stack
@@ -344,7 +351,7 @@ lease and starting or refreshing the stack overlaps layer one, so the stack
 is usually ready by the time layer two starts.
 
 When the gate's holder already leases the stack, the gate does not rerun
-`run-stack.sh -d`. The lease (`tim docker lease`) records two fingerprints
+`tim docker dev`. The lease (`tim docker lease`) records two fingerprints
 for each service in `dev.compose.yml` that has a `build.context`:
 
 - **build** — every file git tracks or sees as untracked in the service's
@@ -375,8 +382,8 @@ stack invokes the repo-owned script rather than keeping its own copy:
 | ASB emulator entity config (`servicebus-config.json`) | dynamics-gateway | `servicebus/servicebus-config.json` |
 | ZAP Automation Framework plans (`automation-*.yaml`) | tests repo | `zap/automation-*.yaml` |
 
-`run-stack.sh` calls `stage_init_scripts`
-(`lib/init-scripts.sh`), which refreshes `docker/stack/.staged/` — generated,
+Starting the stack (`tim/src/stack/stage-init-scripts.js`, and
+`scripts/stack/lib/init-scripts.sh` in CI) refreshes `docker/stack/.staged/` — generated,
 gitignored, never edit it — from `repos/<repo>/` when present, sparse-fetching
 the paths from GitHub when not (CI checks out only the workspace repo; the
 fetch tries the `--branch` ref first, then the default branch). One
@@ -510,7 +517,7 @@ hostname, `host.docker.internal` in the stack.
 - `toxiproxy/` — the proxy definition that sits in front of the ASB emulator
   (`toxiproxy.json`).
 - `scripts/mongodb/` — workspace-owned mongo replica-set init (`10-database-setup.js`).
-- `.staged/` — generated by `scripts/stack/lib/init-scripts.sh` on every
+- `.staged/` — generated by `tim/src/stack/stage-init-scripts.js` on every
   stack start / mongo bounce; gitignored. Contains staged mongo seed fixtures,
   Floci provisioning script (staged from the backend repo), the servicebus
   emulator config, and the ZAP automation plans (staged from the tests repo).

@@ -128,8 +128,7 @@ tim docker dev
 ```
 
 `tim docker dev` is a multi-minute build — run it in the background and
-wait for completion before 4b. (`tim docker dev` runs
-`scripts/stack/run-stack.sh -d`.)
+wait for completion before 4b.
 
 ### 4b. Run E2E
 

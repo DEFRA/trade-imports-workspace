@@ -10,12 +10,7 @@ import {
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { run } from './exec.js'
-import {
-  isSameWorkspace,
-  runStackScriptToLog,
-  stackContainerIds,
-  stackOwners
-} from './stack.js'
+import { isSameWorkspace, stackContainerIds, stackOwners } from './stack.js'
 import {
   serviceFingerprints,
   stackFilesFingerprint
@@ -25,19 +20,55 @@ import { TimError } from '../errors.js'
 import { STUB_LATENCY_PROFILES } from '../stack/definition.js'
 import { stopStack } from '../stack/down.js'
 import { logOutput } from '../stack/services.js'
+import { startStack } from '../stack/start.js'
 
 export const LEASE_MODES = ['dev', 'up', 'perf']
 
-// run-stack.sh -d builds the repo-backed services from local source under
-// repos/; with no flag it pulls the published images; --perf pulls the
-// published images and adds the stub-latency overlay.
-export const RUN_STACK_ARGS = { dev: ['-d'], up: [], perf: ['--perf'] }
+const START_ARGS = { dev: ['-d'], up: [], perf: ['--perf'] }
+
+/** The command each lease mode starts the stack the way of. */
+export const START_COMMAND_LINES = {
+  dev: 'tim docker dev',
+  up: 'tim docker up',
+  perf: 'tim docker up --perf'
+}
+
+/**
+ * Start the stack the way a lease mode does, with every line of output
+ * written to a log that starts with the command line it matches.
+ *
+ * @param {object} opts
+ * @param {string} opts.workspaceRoot
+ * @param {'dev'|'up'|'perf'} opts.mode
+ * @param {string} opts.logPath
+ * @param {object} [opts.env] - Extra environment for docker and git
+ * @returns {Promise<{exitCode: number, durationMs: number, log: string}>}
+ * @throws {TimError} as startStack does
+ */
+export const startStackToLog = async ({
+  workspaceRoot,
+  mode,
+  logPath,
+  env
+}) => {
+  const result = await startStack({
+    workspaceRoot,
+    args: START_ARGS[mode],
+    env,
+    output: logOutput({
+      logPath,
+      commandLine: START_COMMAND_LINES[mode],
+      cwd: workspaceRoot
+    })
+  })
+  return { ...result, log: logPath }
+}
 
 export const STUB_PROFILES = STUB_LATENCY_PROFILES
 export const DEFAULT_PERF_STUB_PROFILE = 'sla'
 
 /**
- * The latency profile run-stack.sh --perf puts both stubs on.
+ * The latency profile tim docker up --perf puts both stubs on.
  *
  * @param {object} [env]
  * @returns {string}
@@ -364,15 +395,6 @@ const claimLease = async (leasePath, lease, previous) => {
   }
 }
 
-const startStack = ({ workspaceRoot, env }, args, logPath) =>
-  runStackScriptToLog({
-    workspaceRoot,
-    script: 'run-stack.sh',
-    args,
-    env,
-    logPath
-  })
-
 const STOP_STEP = 'docker compose down'
 
 const takeStackDown = ({ workspaceRoot, env }, logPath) =>
@@ -453,7 +475,7 @@ const startUnderLease = async (context, previous) => {
         : 'Another acquire is taking the workspace stack lease over right now. Try again once it has finished.'
     })
   }
-  const upRun = await startStack(context, RUN_STACK_ARGS[mode], logPath)
+  const upRun = await startStackToLog({ workspaceRoot, mode, logPath, env })
   if (upRun.exitCode === 0) {
     const containers = await stackContainerIds({ env })
     const held = { ...lease, state: UP, pid: null, containers }
@@ -480,7 +502,7 @@ const startUnderLease = async (context, previous) => {
       : `Taking it down again failed too: ${scriptFailure(STOP_STEP, downRun)} ${capitalise(leaseNow)}.`
   return startFailed({
     log: upRun.log,
-    reason: `The workspace stack did not come up (run-stack.sh exited ${upRun.exitCode}). Read ${upRun.log}. ${takenDown}`
+    reason: `The workspace stack did not come up (${START_COMMAND_LINES[mode]} exited ${upRun.exitCode}). Read ${upRun.log}. ${takenDown}`
   })
 }
 
@@ -536,8 +558,8 @@ const restartUnderLease = async (context, lease) => {
  * @param {string} args.holder - Who takes the lease, such as a build run's id, "ibl-20261001T150000Z"
  * @param {'dev'|'up'|'perf'} [args.mode]
  * @param {string} args.leasePath
- * @param {string} args.logPath - Where run-stack.sh writes its output
- * @param {object} [args.env] - Extra environment for docker and the stack scripts
+ * @param {string} args.logPath - Where the stack's start writes its output
+ * @param {object} [args.env] - Extra environment for docker and git
  * @param {boolean} [args.force] - Take a lease the same holder name holds from another clone
  * @returns {Promise<object>} acquired, and either reused/started with the lease, or refused with the holder and the reason
  */

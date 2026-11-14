@@ -2,7 +2,7 @@ import { Argument } from 'commander'
 import { resolveWorkspaceRoot } from '../../env/workspace-root.js'
 import { otherCloneOwningStack } from '../../exec/stack.js'
 import { OK, USAGE, ERROR } from '../../constants/exitCodes.js'
-import { isTimError } from '../../errors.js'
+import { isTimError, TimError } from '../../errors.js'
 import { registerLease, registerPerf } from './lease.js'
 import { registerLogs } from './logs.js'
 import { registerOwner } from './owner.js'
@@ -13,7 +13,12 @@ import {
 } from '../../exec/stack-lease.js'
 import { runStackCommand } from '../../stack/commands.js'
 import { asksForHelp, DOWN_USAGE } from '../../stack/down.js'
-import { printRestartHelp } from '../../stack/restart.js'
+import {
+  START_USAGE,
+  parseStartFlags,
+  StartFlagError
+} from '../../stack/flags.js'
+import { RESTART_USAGE } from '../../stack/restart.js'
 import {
   SERVICE_ACTION_NAMES,
   runServiceAction,
@@ -147,26 +152,70 @@ const runGuarded = async ({
   }
 }
 
-const answerRestartHelp = async (globalOpts, timVersion) => {
+const STARTS = { up: [], dev: ['-d'] }
+
+const answerStartFlags = ({ name, args, globalOpts, timVersion }) => {
   try {
-    const workspaceRoot = resolveWorkspaceRoot({
-      explicit: globalOpts.workspace
-    })
-    const result = await printRestartHelp({ workspaceRoot })
-    process.exit(result.exitCode === 0 ? OK : ERROR)
+    if (!parseStartFlags([...STARTS[name], ...args]).help) return
+    process.stdout.write(START_USAGE)
+    process.exit(OK)
   } catch (error) {
-    reportError({ error, json: globalOpts.json, timVersion })
+    if (!(error instanceof StartFlagError)) throw error
+    if (error.showUsage && !globalOpts.json) {
+      emitError(error.message)
+      process.stderr.write(START_USAGE)
+      process.exit(USAGE)
+    }
+    reportError({
+      error: new TimError('USAGE', error.message),
+      json: globalOpts.json,
+      timVersion
+    })
+  }
+}
+
+const SEPARATOR = '--'
+
+const rootOf = (command) => (command.parent ? rootOf(command.parent) : command)
+
+// commander drops a `--` that comes before any flag it does not know, so
+// the separator is put back from the command line as typed.
+const argsAsTyped = (command) => {
+  const given = command.args ?? []
+  const typed = rootOf(command).rawArgs ?? []
+  const separator = typed.indexOf(SEPARATOR)
+  if (separator === -1 || given.includes(SEPARATOR)) return given
+  const passedOn = typed.slice(separator + 1)
+  return [
+    ...given.slice(0, given.length - passedOn.length),
+    SEPARATOR,
+    ...passedOn
+  ]
+}
+
+const withoutForce = (args) => {
+  const separator = args.indexOf(SEPARATOR)
+  const own = separator === -1 ? args : args.slice(0, separator)
+  const passedOn = separator === -1 ? [] : args.slice(separator)
+  return {
+    forced: own.includes(FORCE),
+    args: [...own.filter((arg) => arg !== FORCE), ...passedOn]
   }
 }
 
 const forwardingAction = ({ name, timVersion }) =>
   async function stackAction() {
     const globalOpts = this.optsWithGlobals()
-    const given = this.args ?? []
-    const args = given.filter((arg) => arg !== FORCE)
+    const takesStartFlags = name in STARTS || name === 'restart'
+    const { forced, args } = withoutForce(
+      takesStartFlags ? argsAsTyped(this) : (this.args ?? [])
+    )
+    if (name in STARTS) {
+      answerStartFlags({ name, args, globalOpts, timVersion })
+    }
     if (name === 'restart' && asksForHelp(args)) {
-      await answerRestartHelp(globalOpts, timVersion)
-      return
+      process.stdout.write(RESTART_USAGE)
+      process.exit(OK)
     }
     if (name === 'down' && asksForHelp(args)) {
       process.stdout.write(DOWN_USAGE)
@@ -175,7 +224,7 @@ const forwardingAction = ({ name, timVersion }) =>
     await runGuarded({
       command: name,
       args,
-      force: given.includes(FORCE),
+      force: forced,
       globalOpts,
       timVersion,
       run: ({ workspaceRoot }) =>
@@ -186,11 +235,13 @@ const forwardingAction = ({ name, timVersion }) =>
 const FORWARDING_COMMANDS = [
   {
     name: 'up',
-    description: 'Start the workspace stack from Dockerhub images'
+    description:
+      'Start the workspace stack from Dockerhub images and wait until it is healthy (tim docker up --help lists its flags)'
   },
   {
     name: 'dev',
-    description: 'Start the stack built from local source (run-stack.sh -d)'
+    description:
+      'Start the stack with the repo-backed services built from local source (tim docker up -d)'
   },
   {
     name: 'down',
@@ -204,12 +255,8 @@ const FORWARDING_COMMANDS = [
   }
 ]
 
-// The stack scripts own their flag surface (-b, -e, --profile). tim forwards
-// whatever it does not recognise instead of mirroring those flags, so the
-// scripts stay the single source of truth for them and for their `--help`,
-// which helpOption(false) leaves to the action. allowUnknownOption covers
-// the flags; allowExcessArguments covers their values, which arrive as
-// positional operands.
+// parseStartFlags reads the start flags in order, and each command answers
+// its own --help, so commander passes every argument through untouched.
 const registerForwardingCommand = (docker, { name, description, timVersion }) =>
   docker
     .command(name)
@@ -284,7 +331,7 @@ export const register = (program, { timVersion }) => {
   const docker = program
     .command('docker')
     .description(
-      'Workspace Docker stack. up and dev run scripts/stack/run-stack.sh; down, restart, bounce-backend and service run docker compose from tim. While a build holds the stack lease (tim docker lease status), or another clone of the workspace started the running stack, up, dev, down, restart, bounce-backend and service refuse unless you add --force. There is one stack per machine, and any clone may own it. perf starts it as a performance target under a lease (tim docker perf). logs follows service logs and never needs the lease. owner prints the clone that owns the stack, the only clone that runs local E2E.'
+      'Workspace Docker stack. up, dev, down, restart, bounce-backend and service run docker compose from tim. While a build holds the stack lease (tim docker lease status), or another clone of the workspace started the running stack, up, dev, down, restart, bounce-backend and service refuse unless you add --force. There is one stack per machine, and any clone may own it. perf starts it as a performance target under a lease (tim docker perf). logs follows service logs and never needs the lease. owner prints the clone that owns the stack, the only clone that runs local E2E.'
     )
 
   for (const command of FORWARDING_COMMANDS) {

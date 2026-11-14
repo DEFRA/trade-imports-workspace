@@ -236,7 +236,7 @@ export const registerPerf = (docker, timVersion) =>
     )
     .option(
       '--logs <dir>',
-      'Where run-stack.sh writes its log (default workareas/stack-logs in this clone)'
+      'Where starting the stack writes its log (default workareas/stack-logs in this clone)'
     )
     .addHelpText(
       'after',
@@ -273,7 +273,7 @@ export const registerLease = (docker, timVersion) => {
     )
     .option(
       '--logs <dir>',
-      'Where run-stack.sh writes its log (default workareas/stack-logs in this clone)'
+      'Where starting the stack writes its log (default workareas/stack-logs in this clone)'
     )
     .option(
       '--force',

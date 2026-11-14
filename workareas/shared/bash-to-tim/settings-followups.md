@@ -346,3 +346,17 @@ names `tools/npm/upgrade-one-package.sh`, `refresh-lockfile.sh`,
 No allowlist entry in any `.claude/settings*.json` (workspace or `repos/*`)
 names `tools/npm/start-upgrade.sh` or `tools/npm/README.md`; nothing to
 remove. `tools/npm/` is gone.
+
+## P61
+
+Nothing deleted: `scripts/stack/run-stack.sh`, `lib/flags.sh` and
+`lib/init-scripts.sh` stay for CI until P62, so no allowlist entry changes.
+
+The stack-smoke check and the live canary (`tim docker dev`, then
+`tim build gate`, under a lease) did not run. The workspace stack was
+started by hand and nobody holds a lease, `tim docker lease acquire`
+refuses an unleased stack, and taking it down would wipe a stack someone
+may be using. It is item 9 in `NEEDS-SAM.md`. The landing phase's CI E2E
+run starts the stack through this code once P62 lands, and is the first
+live run of the native start (staging, Dockerhub probes, early pulls,
+mongo first, stack up and the branch re-check).

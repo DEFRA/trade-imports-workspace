@@ -1,7 +1,7 @@
-import { runStackScriptToLog } from './stack.js'
 import {
-  RUN_STACK_ARGS,
+  START_COMMAND_LINES,
   recordLeaseContainers,
+  startStackToLog,
   recordLeaseFingerprints
 } from './stack-lease.js'
 import {
@@ -11,8 +11,6 @@ import {
   stackFilesFingerprint
 } from './stack-fingerprints.js'
 import { logOutput, runServiceAction } from '../stack/services.js'
-
-const RUN_STACK_SCRIPT = 'run-stack.sh'
 
 const NOT_RUN = { exitCode: 0, log: null }
 
@@ -69,10 +67,10 @@ const startAgain = async (
   { workspaceRoot, holder, leasePath, lease, logPaths, env },
   stackFiles
 ) => {
-  const upRun = await runStackScriptToLog({
+  const mode = START_COMMAND_LINES[lease.mode] ? lease.mode : 'dev'
+  const upRun = await startStackToLog({
     workspaceRoot,
-    script: RUN_STACK_SCRIPT,
-    args: RUN_STACK_ARGS[lease.mode] ?? RUN_STACK_ARGS.dev,
+    mode,
     logPath: logPaths.restack,
     env
   })
@@ -90,7 +88,7 @@ const startAgain = async (
     return {
       ...outcome,
       ok: false,
-      reason: `The workspace's stack files changed since the stack was started, and starting it again failed (${RUN_STACK_SCRIPT} exited ${upRun.exitCode}). Read ${upRun.log}.`
+      reason: `The workspace's stack files changed since the stack was started, and starting it again failed (${START_COMMAND_LINES[mode]} exited ${upRun.exitCode}). Read ${upRun.log}.`
     }
   }
   const services =
@@ -171,7 +169,7 @@ const refreshServices = async ({
  *
  * When the workspace's own stack files (docker/stack, scripts/stack, tim/src/stack) changed
  * since the lease recorded them, the whole stack is started again with
- * run-stack.sh, in the lease's mode, and the lease records its new
+ * tim docker up, in the lease's mode, and the lease records its new
  * containers, what every service serves and the stack files it was started
  * from. A start that fails records the containers but not the stack files,
  * so the next refresh starts it again.

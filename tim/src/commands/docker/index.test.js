@@ -1,4 +1,5 @@
 import { markWorkspaceRoot } from '../../test-support/workspace-marker.js'
+import { writeStackInitSources } from '../../test-support/fake-docker.js'
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { execa } from 'execa'
 import {
@@ -19,16 +20,11 @@ const cliPath = join(here, '..', '..', 'cli.js')
 
 let workspace
 
-const writeStackScript = (name, body) => {
-  const path = join(workspace, 'scripts', 'stack', name)
-  writeFileSync(path, `#!/usr/bin/env bash\n${body}\n`)
-  chmodSync(path, 0o755)
-  return path
-}
-
 const stackWorkingDirsPath = () => join(workspace, 'stack-working-dirs')
 
 const ranPath = () => join(workspace, 'ran')
+
+const upFailsPath = () => join(workspace, 'up-fails')
 
 const GUARDED_COMMANDS = [
   'up',
@@ -39,32 +35,47 @@ const GUARDED_COMMANDS = [
   'service restart trade-imports-stub'
 ]
 
-const writeDockerListingStackWorkingDirs = () => {
-  const path = join(workspace, 'fake-bin', 'docker')
+const writeFakeTool = (name, lines) => {
+  const path = join(workspace, 'fake-bin', name)
   mkdirSync(dirname(path), { recursive: true })
-  writeFileSync(
-    path,
-    [
-      '#!/usr/bin/env bash',
-      'if [ "$1" = info ]; then echo 29.1.0; exit 0; fi',
-      `if [ "$1" = compose ]; then echo "$*" >> '${ranPath()}'; fi`,
-      `if [ "$1" = ps ] && [ -f '${stackWorkingDirsPath()}' ]; then cat '${stackWorkingDirsPath()}'; fi`
-    ].join('\n')
-  )
+  writeFileSync(path, ['#!/usr/bin/env bash', ...lines].join('\n'))
   chmodSync(path, 0o755)
 }
 
+// A docker that records every compose call, names two services, fails the
+// stack up when up-fails exists, and lists the clones the running stack was
+// started from; and a git that finds no branch on GitHub.
+const writeFakeTools = () => {
+  writeFakeTool('docker', [
+    'if [ "$1" = info ]; then echo 29.1.0; exit 0; fi',
+    `if [ "$1" = compose ]; then echo "$*" >> '${ranPath()}'; fi`,
+    `case " $* " in *" config --services "*) printf 'mongodb\\ntrade-imports-stub\\n'; exit 0 ;; esac`,
+    `case " $* " in *" up "*" trade-imports-stub ") [ -f '${upFailsPath()}' ] && exit 5 ;; esac`,
+    `if [ "$1" = ps ] && [ -f '${stackWorkingDirsPath()}' ]; then cat '${stackWorkingDirsPath()}'; fi`
+  ])
+  writeFakeTool('git', ['exit 2'])
+}
+
+const composeCalls = () =>
+  existsSync(ranPath())
+    ? readFileSync(ranPath(), 'utf8').trim().split('\n')
+    : []
+
 const stackStartedFrom = (clone) =>
   writeFileSync(stackWorkingDirsPath(), `${join(clone, 'docker', 'stack')}\n`)
+
+const runDocker = (args) =>
+  execa('node', [cliPath, 'docker', ...args, '--workspace', workspace], {
+    reject: false
+  })
 
 const originalPath = process.env.PATH
 
 beforeEach(() => {
   workspace = mkdtempSync(join(tmpdir(), 'tim-docker-'))
   markWorkspaceRoot(workspace)
-  mkdirSync(join(workspace, 'repos'))
-  mkdirSync(join(workspace, 'scripts', 'stack'), { recursive: true })
-  writeDockerListingStackWorkingDirs()
+  writeStackInitSources(workspace)
+  writeFakeTools()
   process.env.TIM_STACK_LEASE = join(workspace, 'stack-lease.json')
   process.env.PATH = `${join(workspace, 'fake-bin')}:${originalPath}`
 })
@@ -76,37 +87,42 @@ afterEach(() => {
 })
 
 describe('tim docker subcommands', () => {
-  test('up runs scripts/stack/run-stack.sh and exits 0 on success', async () => {
-    writeStackScript('run-stack.sh', 'exit 0')
-    const { exitCode } = await execa(
-      'node',
-      [cliPath, 'docker', 'up', '--workspace', workspace],
-      { reject: false }
-    )
-    expect(exitCode).toBe(0)
-  })
-
-  test('dev passes -d to run-stack.sh', async () => {
-    // Script exits with non-zero unless it receives "-d" as the first arg
-    writeStackScript('run-stack.sh', '[ "$1" = "-d" ] && exit 0 || exit 1')
-    const { exitCode } = await execa(
-      'node',
-      [cliPath, 'docker', 'dev', '--workspace', workspace],
-      { reject: false }
-    )
-    expect(exitCode).toBe(0)
-  })
-
-  test('down runs docker compose down, wiping volumes, and exits 0 on success', async () => {
-    const { exitCode } = await execa(
-      'node',
-      [cliPath, 'docker', 'down', '--workspace', workspace],
-      { reject: false }
-    )
+  test('up starts every service compose names and exits 0 on success', async () => {
+    const { exitCode } = await runDocker(['up'])
 
     expect({
       exitCode,
-      composeCall: readFileSync(ranPath(), 'utf8').trim().split(' ').slice(-3)
+      stackUp: composeCalls().at(-1).split(' ').slice(-7)
+    }).toEqual({
+      exitCode: 0,
+      stackUp: [
+        'up',
+        '--wait',
+        '--detach',
+        '--pull',
+        'always',
+        'mongodb',
+        'trade-imports-stub'
+      ]
+    })
+  })
+
+  test('dev builds the repo-backed services from local source', async () => {
+    const { exitCode, stdout } = await runDocker(['dev'])
+
+    expect({
+      exitCode,
+      builds: composeCalls().at(-1).includes(' --build '),
+      summary: stdout.includes('stub:            built (source)')
+    }).toEqual({ exitCode: 0, builds: true, summary: true })
+  })
+
+  test('down runs docker compose down, wiping volumes, and exits 0 on success', async () => {
+    const { exitCode } = await runDocker(['down'])
+
+    expect({
+      exitCode,
+      composeCall: composeCalls().at(-1).split(' ').slice(-3)
     }).toEqual({
       exitCode: 0,
       composeCall: ['down', '--volumes', '--remove-orphans']
@@ -114,11 +130,7 @@ describe('tim docker subcommands', () => {
   })
 
   test('Should report a bounce-backend that docker compose finished in the --json envelope', async () => {
-    const { stdout, exitCode } = await execa(
-      'node',
-      [cliPath, 'docker', 'bounce-backend', '--workspace', workspace, '--json'],
-      { reject: false }
-    )
+    const { stdout, exitCode } = await runDocker(['bounce-backend', '--json'])
 
     const payload = JSON.parse(stdout.trim().split('\n').at(-1))
     expect({ exitCode, ok: payload.ok, result: payload.result }).toEqual({
@@ -134,25 +146,14 @@ describe('tim docker subcommands', () => {
   })
 
   test('Should exit 1 with docker compose named when a service restart fails', async () => {
-    writeFileSync(
-      join(workspace, 'fake-bin', 'docker'),
-      '#!/usr/bin/env bash\nif [ "$1" = compose ]; then exit 6; fi\n'
-    )
+    writeFakeTool('docker', ['if [ "$1" = compose ]; then exit 6; fi'])
 
-    const { stdout, exitCode } = await execa(
-      'node',
-      [
-        cliPath,
-        'docker',
-        'service',
-        'restart',
-        'trade-imports-stub',
-        '--workspace',
-        workspace,
-        '--json'
-      ],
-      { reject: false }
-    )
+    const { stdout, exitCode } = await runDocker([
+      'service',
+      'restart',
+      'trade-imports-stub',
+      '--json'
+    ])
 
     const payload = JSON.parse(stdout.trim().split('\n').at(-1))
     expect({ exitCode, errors: payload.errors }).toEqual({
@@ -164,15 +165,14 @@ describe('tim docker subcommands', () => {
   test.each([
     ['bounce-backend', '--bogus'],
     ['service', 'restart'],
-    ['service', 'bogus', 'trade-imports-stub']
+    ['service', 'bogus', 'trade-imports-stub'],
+    ['up', '--bogus'],
+    ['up', '-e', 'nope'],
+    ['dev', '-b', 'feat/x']
   ])(
     'Should exit 2 from %s %s without calling docker compose',
     async (...args) => {
-      const { exitCode } = await execa(
-        'node',
-        [cliPath, 'docker', ...args, '--workspace', workspace],
-        { reject: false }
-      )
+      const { exitCode } = await runDocker(args)
 
       expect({ exitCode, ran: existsSync(ranPath()) }).toEqual({
         exitCode: 2,
@@ -181,104 +181,91 @@ describe('tim docker subcommands', () => {
     }
   )
 
-  test('up forwards a branch flag and its value to run-stack.sh', async () => {
-    writeStackScript(
-      'run-stack.sh',
-      '[ "$1" = "-b" ] && [ "$2" = "spike/my-branch" ] && exit 0 || exit 1'
-    )
-    const { exitCode } = await execa(
+  test('up looks for the branch given, as Dockerhub tags it', async () => {
+    const { exitCode, stdout } = await runDocker([
+      'up',
+      '-b',
+      'spike/My-Branch'
+    ])
+
+    expect({
+      exitCode,
+      probes: stdout.includes(
+        'Probing Dockerhub for branch tag: spike-my-branch'
+      )
+    }).toEqual({ exitCode: 0, probes: true })
+  })
+
+  test('dev takes extra flags after its own -d', async () => {
+    const { exitCode, stdout } = await runDocker(['dev', '-e', 'stub'])
+
+    expect({
+      exitCode,
+      excluded: stdout.includes('stub:            excluded'),
+      stackUpEnd: composeCalls().at(-1).split(' ').at(-1)
+    }).toEqual({ exitCode: 0, excluded: true, stackUpEnd: 'mongodb' })
+  })
+
+  test('up takes repeated flags in the order given', async () => {
+    await runDocker(['up', '--profile', 'frontend', '--profile', 'database'])
+
+    expect(
+      composeCalls()[0].endsWith(
+        '--profile frontend --profile database config --services'
+      )
+    ).toBe(true)
+  })
+
+  test('up passes everything after -- to docker compose up', async () => {
+    await execa(
       'node',
       [
         cliPath,
-        'docker',
-        'up',
         '--workspace',
         workspace,
-        '-b',
-        'spike/my-branch'
+        'docker',
+        'up',
+        '--',
+        '--timeout',
+        '5'
       ],
       { reject: false }
     )
-    expect(exitCode).toBe(0)
+
+    expect(composeCalls().at(-1).includes('always --timeout 5 mongodb')).toBe(
+      true
+    )
   })
 
-  test('dev forwards extra flags after its own -d', async () => {
-    writeStackScript(
-      'run-stack.sh',
-      '[ "$1" = "-d" ] && [ "$2" = "-e" ] && [ "$3" = "frontend" ] && exit 0 || exit 1'
-    )
-    const { exitCode } = await execa(
-      'node',
-      [cliPath, 'docker', 'dev', '--workspace', workspace, '-e', 'frontend'],
-      { reject: false }
-    )
-    expect(exitCode).toBe(0)
-  })
+  test('reports the flags given in the --json envelope', async () => {
+    const { stdout } = await runDocker([
+      'up',
+      '--json',
+      '-b',
+      'spike/my-branch'
+    ])
 
-  test('up forwards repeated flags in the order given', async () => {
-    writeStackScript(
-      'run-stack.sh',
-      '[ "$*" = "--profile database --profile frontend" ] && exit 0 || exit 1'
-    )
-    const { exitCode } = await execa(
-      'node',
-      [
-        cliPath,
-        'docker',
-        'up',
-        '--workspace',
-        workspace,
-        '--profile',
-        'database',
-        '--profile',
-        'frontend'
-      ],
-      { reject: false }
-    )
-    expect(exitCode).toBe(0)
-  })
-
-  test('reports the forwarded args in the --json envelope', async () => {
-    writeStackScript('run-stack.sh', 'exit 0')
-    const { stdout } = await execa(
-      'node',
-      [
-        cliPath,
-        'docker',
-        'up',
-        '--workspace',
-        workspace,
-        '--json',
-        '-b',
-        'spike/my-branch'
-      ],
-      { reject: false }
-    )
-    const payload = JSON.parse(stdout.trim())
+    const payload = JSON.parse(stdout.trim().split('\n').at(-1))
     expect(payload.result.args).toEqual(['-b', 'spike/my-branch'])
   })
 
-  test('propagates a non-zero exit code from the script', async () => {
-    writeStackScript('run-stack.sh', 'exit 5')
-    const { exitCode } = await execa(
-      'node',
-      [cliPath, 'docker', 'up', '--workspace', workspace, '--json'],
-      { reject: false }
-    )
+  test('exits 1 when the stack does not come up', async () => {
+    writeFileSync(upFailsPath(), '')
+
+    const { exitCode } = await runDocker(['up', '--json'])
+
     expect(exitCode).toBe(1)
   })
 
-  test('exits 2 with USAGE when scripts/stack/ is missing the script', async () => {
-    // No script written
-    const { stdout, exitCode } = await execa(
-      'node',
-      [cliPath, 'docker', 'restart', '--workspace', workspace, '--json'],
-      { reject: false }
-    )
-    expect(exitCode).toBe(2)
+  test('up refuses an unknown exclude label with USAGE in --json', async () => {
+    const { stdout, exitCode } = await runDocker(['up', '-e', 'nope', '--json'])
+
     const payload = JSON.parse(stdout.trim())
-    expect(payload.ok).toBe(false)
-    expect(payload.errors[0].code).toBe('USAGE')
+    expect({ exitCode, ok: payload.ok, code: payload.errors[0].code }).toEqual({
+      exitCode: 2,
+      ok: false,
+      code: 'USAGE'
+    })
   })
 })
 
@@ -299,21 +286,12 @@ describe('tim docker under a stack lease', () => {
   test.each(GUARDED_COMMANDS)(
     '%s refuses while a build holds the lease, naming the holder',
     async (command) => {
-      writeStackScript('run-stack.sh', `touch '${ranPath()}'`)
       writeLease()
 
-      const { stdout, exitCode } = await execa(
-        'node',
-        [
-          cliPath,
-          'docker',
-          ...command.split(' '),
-          '--workspace',
-          workspace,
-          '--json'
-        ],
-        { reject: false }
-      )
+      const { stdout, exitCode } = await runDocker([
+        ...command.split(' '),
+        '--json'
+      ])
 
       expect({
         exitCode,
@@ -332,44 +310,30 @@ describe('tim docker under a stack lease', () => {
     }
   )
 
-  test('runs under a lease with --force, and does not pass --force to the script', async () => {
-    writeStackScript('run-stack.sh', '[ "$*" = "-d" ] && exit 0 || exit 1')
+  test('runs under a lease with --force, and does not pass --force to docker compose', async () => {
     writeLease()
 
-    const { exitCode } = await execa(
-      'node',
-      [cliPath, 'docker', 'dev', '--workspace', workspace, '--force'],
-      { reject: false }
-    )
+    const { exitCode } = await runDocker(['dev', '--force'])
 
-    expect(exitCode).toBe(0)
+    expect({
+      exitCode,
+      forcePassedOn: composeCalls().some((call) => call.includes('--force'))
+    }).toEqual({ exitCode: 0, forcePassedOn: false })
   })
 })
 
 describe('tim docker with a stack another clone started', () => {
   const otherClone = '/clones/trade-imports-workspace-a'
 
-  const writeMarkingScripts = () =>
-    writeStackScript('run-stack.sh', `touch '${ranPath()}'`)
-
   test.each(GUARDED_COMMANDS)(
     '%s refuses with STACK_OTHER_CLONE, naming that clone',
     async (command) => {
-      writeMarkingScripts()
       stackStartedFrom(otherClone)
 
-      const { stdout, exitCode } = await execa(
-        'node',
-        [
-          cliPath,
-          'docker',
-          ...command.split(' '),
-          '--workspace',
-          workspace,
-          '--json'
-        ],
-        { reject: false }
-      )
+      const { stdout, exitCode } = await runDocker([
+        ...command.split(' '),
+        '--json'
+      ])
 
       const payload = JSON.parse(stdout.trim())
       expect({
@@ -390,14 +354,9 @@ describe('tim docker with a stack another clone started', () => {
   )
 
   test('says why on stderr without --json', async () => {
-    writeMarkingScripts()
     stackStartedFrom(otherClone)
 
-    const { stderr, exitCode } = await execa(
-      'node',
-      [cliPath, 'docker', 'down', '--workspace', workspace],
-      { reject: false }
-    )
+    const { stderr, exitCode } = await runDocker(['down'])
 
     expect({ exitCode, stderr: stderr.trim() }).toEqual({
       exitCode: 1,
@@ -410,15 +369,11 @@ describe('tim docker with a stack another clone started', () => {
   test('goes ahead with --force, and does not pass --force to docker compose', async () => {
     stackStartedFrom(otherClone)
 
-    const { exitCode } = await execa(
-      'node',
-      [cliPath, 'docker', 'down', '--workspace', workspace, '--force'],
-      { reject: false }
-    )
+    const { exitCode } = await runDocker(['down', '--force'])
 
     expect({
       exitCode,
-      composeCallEnd: readFileSync(ranPath(), 'utf8').trim().split(' ').at(-1)
+      composeCallEnd: composeCalls().at(-1).split(' ').at(-1)
     }).toEqual({
       exitCode: 0,
       composeCallEnd: '--remove-orphans'
@@ -428,14 +383,9 @@ describe('tim docker with a stack another clone started', () => {
   test.each(GUARDED_COMMANDS)(
     '%s goes ahead on a stack this clone started',
     async (command) => {
-      writeMarkingScripts()
       stackStartedFrom(workspace)
 
-      const { exitCode } = await execa(
-        'node',
-        [cliPath, 'docker', ...command.split(' '), '--workspace', workspace],
-        { reject: false }
-      )
+      const { exitCode } = await runDocker(command.split(' '))
 
       expect({ exitCode, ran: existsSync(ranPath()) }).toEqual({
         exitCode: 0,

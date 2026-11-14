@@ -142,7 +142,7 @@ so the scripts keep it.
   leave the Java services short.
 - To give the Mac more memory, start a smaller stack rather than shrinking the
   VM. `mssql` is the biggest container (1.1 GiB) and the dev-mode Java services
-  about 0.5 GiB each; `run-stack.sh --profile` and `-e <service>` drop the ones
+  about 0.5 GiB each; `tim docker up --profile` and `-e <service>` drop the ones
   a run does not need.
 
 ### What happened on 21 October

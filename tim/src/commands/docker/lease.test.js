@@ -1,4 +1,8 @@
-import { fakeComposeDownLine } from '../../test-support/fake-docker.js'
+import {
+  fakeComposeDownLine,
+  fakeComposeStartLines,
+  writeStackInitSources
+} from '../../test-support/fake-docker.js'
 import { markWorkspaceRoot } from '../../test-support/workspace-marker.js'
 import { describe, test, expect, beforeEach, afterEach } from 'vitest'
 import { execa } from 'execa'
@@ -36,13 +40,15 @@ const makeWorkspace = () => {
   const root = mkdtempSync(join(tmpdir(), 'tim-docker-lease-'))
   markWorkspaceRoot(root)
   mkdirSync(join(root, 'repos'))
-  writeExecutable(
-    join(root, 'scripts', 'stack', 'run-stack.sh'),
-    `echo "run-stack.sh $* STUB_PROFILE=$STUB_PROFILE" >> '${callsPath(root)}'\necho "run-stack.sh in ${root}"\necho up > '${statePath(root)}'`
-  )
+  writeStackInitSources(root)
   writeExecutable(
     join(root, 'fake-bin', 'docker'),
     [
+      fakeComposeStartLines({
+        callsPath: callsPath(root),
+        recordAlso: ' STUB_PROFILE=$STUB_PROFILE',
+        onUp: `echo "started in ${root}"; echo up > '${statePath(root)}'`
+      }),
       fakeComposeDownLine({ statePath: statePath(root) }),
       `if [ "$1" != ps ] || [ ! -f '${statePath(root)}' ]; then exit 0; fi`,
       `case "$5" in *working_dir*) echo '${join(root, 'docker', 'stack')}' ;; *) echo trade-imports-frontend-1 ;; esac`
@@ -186,20 +192,22 @@ describe('tim docker lease release', () => {
 describe('tim docker lease logs', () => {
   const logText = (path) => readFileSync(path, 'utf8')
 
-  const stackScriptLog = (root, commandLine) =>
+  const devStartLog = (root) =>
     [
-      `$ ${join(root, 'scripts', 'stack', commandLine)}`,
+      '$ tim docker dev',
       `# in ${root}`,
       '',
-      `${commandLine.split(' ')[0]} in ${root}`,
+      'Profiles: database infrastructure servicebus stubs backend frontend',
+      '  stub:            built (source)',
+      `started in ${root}`,
       ''
     ].join('\n')
 
-  test('acquire writes the run-stack.sh output to workareas/stack-logs in the workspace', async () => {
+  test('acquire writes the output of starting the stack to workareas/stack-logs in the workspace', async () => {
     await runTim(['acquire', '--holder', HOLDER])
 
     expect(logText(join(stackLogsOf(workspace), 'lease-acquire.log'))).toBe(
-      stackScriptLog(workspace, 'run-stack.sh -d')
+      devStartLog(workspace)
     )
   })
 
@@ -233,8 +241,8 @@ describe('tim docker lease logs', () => {
       otherClone: logText(join(stackLogsOf(otherClone), 'lease-acquire.log')),
       leaseHeldFrom: leaseOnDisk().workspace
     }).toEqual({
-      firstClone: stackScriptLog(workspace, 'run-stack.sh -d'),
-      otherClone: stackScriptLog(otherClone, 'run-stack.sh -d'),
+      firstClone: devStartLog(workspace),
+      otherClone: devStartLog(otherClone),
       leaseHeldFrom: otherClone
     })
   })
@@ -248,7 +256,7 @@ describe('tim docker lease logs', () => {
       given: logText(join(givenFolder, 'lease-acquire.log')),
       stackLogsWritten: existsSync(stackLogsOf(workspace))
     }).toEqual({
-      given: stackScriptLog(workspace, 'run-stack.sh -d'),
+      given: devStartLog(workspace),
       stackLogsWritten: false
     })
   })
@@ -391,7 +399,7 @@ describe('tim docker perf', () => {
     }).toEqual({
       exitCode: 0,
       stdout: `Started the workspace stack in perf mode, with both stubs on the sla latency profile, and leased it to "perf ${workspace}". Release it with tim docker lease release --holder "perf ${workspace}".`,
-      calls: ['run-stack.sh --perf STUB_PROFILE='],
+      calls: ['tim docker up --perf STUB_PROFILE='],
       lease: expect.objectContaining({
         holder: `perf ${workspace}`,
         mode: 'perf',
@@ -413,7 +421,7 @@ describe('tim docker perf', () => {
       calls: stackCalls(),
       stubProfile: leaseOnDisk().stubProfile
     }).toEqual({
-      calls: ['run-stack.sh --perf STUB_PROFILE=zero-delay'],
+      calls: ['tim docker up --perf STUB_PROFILE=zero-delay'],
       stubProfile: 'zero-delay'
     })
   })

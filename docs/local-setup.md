@@ -130,7 +130,7 @@ Exclude the service you're developing from the stack and run it from source.
 Valid exclude labels: `frontend`, `backend`, `admin`, `ins-frontend`,
 `routing-proxy`, `ins-backend`, `plants-frontend`, `plants-backend`, `stub`, `defra-id-stub`,
 `reference-data`, `address-book`, `gateway` (the authoritative list is the
-`services` array at the top of `scripts/stack/run-stack.sh`).
+`SERVICES` in `tim/src/stack/definition.js`).
 
 ```bash
 # Terminal 1 — everything except the backend
@@ -162,7 +162,7 @@ tim docker up --profile database --profile infrastructure --profile stubs
 
 ## The database
 
-The mongo init scripts are staged by `run-stack.sh` from their owning repos:
+The mongo init scripts are staged by `tim docker up` from their owning repos:
 the workspace owns the replica-set init and the backend owns the Floci
 provisioning (`compose/start-floci.sh`).
 

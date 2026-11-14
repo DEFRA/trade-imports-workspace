@@ -139,7 +139,7 @@ DEFRA`, `gh pr create|view|diff|checks|merge`, `gh run view|rerun|watch`,
 npm --prefix tim link     # from any clone's root, once per machine: tim on PATH
 tim --help                # full surface
 tim workspace status      # git status for every repo, with jq-friendly --json
-tim docker dev            # start the stack from local source (run-stack.sh -d)
+tim docker dev            # start the stack from local source
 tim jira ticket EUDPA-X [--rendered]   # a ticket with its parent, labels, last update, subtasks and links; --rendered shows the HTML description
 tim auth                  # check Jira and Confluence sign-in (GitHub: gh auth status)
 tim capture <workarea> --app <name>  # photograph a running app from its own Playwright traces
@@ -200,8 +200,8 @@ is covered by tim — the JSON envelope is schema-versioned and stable.
 
 ## Workspace stack (what `tim docker` runs)
 
-`tim docker up` (and `dev`, `restart`) runs `scripts/stack/run-stack.sh` and
-takes its flags. It brings up the full stack from Dockerhub — the
+`tim docker up` (and `dev`, `restart`) starts the stack from `tim/src/stack/` and
+takes the flags `tim docker up --help` lists (CI still uses `scripts/stack/run-stack.sh`). It brings up the full stack from Dockerhub — the
 only compose stack in the workspace and its repos. Supports `-b <branch>`
 (probe for branch-tagged images), `-d/--dev` (build the repo-backed
 services from local source under `repos/`), `-e <service>` (exclude one so

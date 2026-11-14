@@ -140,7 +140,7 @@ describe('MainMenu', () => {
     await new Promise((resolve) => setTimeout(resolve, 30))
     stdin.write('\r')
 
-    await vi.waitFor(() => expect(lastFrame()).toMatch(/run-stack\.sh/))
+    await vi.waitFor(() => expect(lastFrame()).toMatch(/tim docker dev/))
 
     // Docker submenu: Up (0), Dev (1) — one down
     stdin.write(ARROW_DOWN)

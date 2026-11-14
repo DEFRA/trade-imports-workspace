@@ -110,7 +110,7 @@ export const registerLogs = (docker, timVersion) =>
   docker
     .command('logs')
     .description(
-      'Follow the logs of services in the workspace stack. Press Ctrl-C to stop. With no services, follows the animals frontend, admin and backend. Name a service by its compose name, such as trade-imports-ins-backend, or by the short label run-stack.sh -e takes, such as frontend, backend or gateway. It only reads, so it works while a build holds the stack lease.'
+      'Follow the logs of services in the workspace stack. Press Ctrl-C to stop. With no services, follows the animals frontend, admin and backend. Name a service by its compose name, such as trade-imports-ins-backend, or by the short label tim docker up -e takes, such as frontend, backend or gateway. It only reads, so it works while a build holds the stack lease.'
     )
     .argument('[services...]', 'Services to show logs for')
     .option('--no-follow', 'Print the logs so far and stop')

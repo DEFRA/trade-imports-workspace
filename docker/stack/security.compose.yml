@@ -15,13 +15,13 @@ services:
       ZAP_TRADE_IMPORTS_PLANTS_BACKEND_URL: ${ZAP_TRADE_IMPORTS_PLANTS_BACKEND_URL:-http://localhost:8091}
       ZAP_TRADE_IMPORTS_ADDRESS_BOOK_URL: ${ZAP_TRADE_IMPORTS_ADDRESS_BOOK_URL:-http://localhost:8089}
     volumes:
-      # Staged from trade-imports-ins-tests by scripts/stack/lib/init-scripts.sh.
+      # Staged from trade-imports-ins-tests by tim/src/stack/stage-init-scripts.js.
       # A directory mount, not one per file: ZAP is designed to be left running
-      # across multiple run-stack.sh invocations, each of which
+      # across multiple stack starts, each of which
       # restages this directory's *contents*. A file-level bind mount breaks
       # (ENOENT inside the container) when its host file is deleted and
       # recreated under it; a directory-level mount survives that as long as
-      # the directory node itself isn't also replaced (see init-scripts.sh).
+      # the directory node itself isn't also replaced (see stage-init-scripts.js).
       - ./.staged/zap:/zap/plan:ro
       # Report/log are live output, not staged input — the tests repo's own
       # npm scripts read them straight from its zap-report/ directory.

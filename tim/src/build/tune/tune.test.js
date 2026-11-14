@@ -1,4 +1,8 @@
-import { fakeComposeDownLine } from '../../test-support/fake-docker.js'
+import {
+  fakeComposeDownLine,
+  fakeComposeStartLines,
+  writeStackInitSources
+} from '../../test-support/fake-docker.js'
 import { markWorkspaceRoot } from '../../test-support/workspace-marker.js'
 import { describe, test, expect, afterEach } from 'vitest'
 import {
@@ -79,13 +83,14 @@ const workspaceWith = (cloned) => {
 
 const fakeStack = () => {
   const state = join(root, 'stack-state')
-  writeExecutable(
-    join(root, 'scripts', 'stack', 'run-stack.sh'),
-    `echo up > '${state}'`
-  )
+  writeStackInitSources(root)
   writeExecutable(
     join(root, 'fake-bin', 'docker'),
     [
+      fakeComposeStartLines({
+        callsPath: join(root, 'stack-calls'),
+        onUp: `echo up > '${state}'`
+      }),
       fakeComposeDownLine({ statePath: state }),
       `if [ "$1" = ps ] && [ -f '${state}' ]; then echo trade-imports-frontend-1; fi`
     ].join('\n')

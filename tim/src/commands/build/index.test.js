@@ -511,7 +511,7 @@ describe('renderGateText for a stack started again under its holder’s lease', 
 describe('renderGateText for a stack that did not start', () => {
   test('says the gate could not start the stack and why, not that the stack was left up', () => {
     const startError =
-      'The workspace stack did not come up (run-stack.sh exited 9). Read /logs/gate-stack-up.log. It was taken down again and the lease cleared.'
+      'The workspace stack did not come up (tim docker dev exited 9). Read /logs/gate-stack-up.log. It was taken down again and the lease cleared.'
 
     const text = renderGateText({
       green: false,

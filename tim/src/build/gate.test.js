@@ -1,4 +1,8 @@
-import { fakeComposeDownLine } from '../test-support/fake-docker.js'
+import {
+  fakeComposeDownLine,
+  fakeComposeStartLines,
+  writeStackInitSources
+} from '../test-support/fake-docker.js'
 import { markWorkspaceRoot } from '../test-support/workspace-marker.js'
 import { describe, test, expect, afterEach } from 'vitest'
 import { createServer } from 'node:net'
@@ -77,13 +81,14 @@ const workspaceWith = ({ gates, repos, parallelRepos, stackAfterLocal }) => {
   )
   const state = stackStatePath()
   const calls = stackCallsPath()
-  writeExecutable(
-    join(root, 'scripts', 'stack', 'run-stack.sh'),
-    `echo "run-stack.sh $*" >> '${calls}'\nif [ -f '${root}/up-fails' ]; then echo boom; exit 9; fi\necho up > '${state}'`
-  )
+  writeStackInitSources(root)
   writeExecutable(
     join(root, 'fake-bin', 'docker'),
     [
+      fakeComposeStartLines({
+        callsPath: calls,
+        onUp: `if [ -f '${root}/up-fails' ]; then echo boom; exit 9; fi; echo up > '${state}'`
+      }),
       fakeComposeDownLine({ statePath: state, callsPath: calls }),
       `if [ "$1" != ps ] || [ ! -f '${state}' ]; then exit 0; fi`,
       `case "$5" in *working_dir*) cat '${stackWorkingDirPath()}' 2>/dev/null || echo '${join(root, 'docker', 'stack')}' ;; *) echo trade-imports-frontend-1 ;; esac`
@@ -538,7 +543,7 @@ describe('runGate — e2e rungs', () => {
       stack: outcome.stack
     }).toEqual({
       green: true,
-      calls: ['run-stack.sh -d', 'docker compose down'],
+      calls: ['tim docker dev', 'docker compose down'],
       up: false,
       stack: expect.objectContaining({
         wasUp: false,
@@ -623,7 +628,7 @@ describe('runGate — e2e rungs', () => {
       green: outcome.green,
       stack: outcome.stack
     }).toEqual({
-      calls: ['run-stack.sh -d'],
+      calls: ['tim docker dev'],
       up: true,
       lease: expect.objectContaining({ holder: GATE_HOLDER, state: 'up' }),
       green: true,
@@ -935,7 +940,7 @@ describe('runGate — e2e rungs', () => {
 
     expect({ green: outcome.green, calls: stackCalls() }).toEqual({
       green: true,
-      calls: ['run-stack.sh -d', 'docker compose down']
+      calls: ['tim docker dev', 'docker compose down']
     })
   })
 
@@ -1014,15 +1019,15 @@ describe('runGate — e2e rungs', () => {
         expect.objectContaining({
           ok: false,
           reason: expect.stringContaining(
-            'The workspace stack did not come up (run-stack.sh exited 9).'
+            'The workspace stack did not come up (tim docker dev exited 9).'
           )
         })
       ],
-      calls: ['run-stack.sh -d', 'docker compose down'],
+      calls: ['tim docker dev', 'docker compose down'],
       lease: null,
       held: null,
       startError: expect.stringMatching(
-        /^The workspace stack did not come up \(run-stack\.sh exited 9\)\. .* It was taken down again and the lease cleared\.$/
+        /^The workspace stack did not come up \(tim docker dev exited 9\)\. .* It was taken down again and the lease cleared\.$/
       )
     })
   })
@@ -1154,7 +1159,7 @@ describe('runGate — running repos at the same time', () => {
 
       expect(stackCalls()).toEqual([
         'unit-done',
-        'run-stack.sh -d',
+        'tim docker dev',
         'docker compose down'
       ])
     },
@@ -1229,7 +1234,7 @@ describe('runGate — running repos at the same time', () => {
         calls: stackCalls()
       }).toEqual({
         rungs: ['frontend:unit:pass', 'tests:e2e-plants:pass'],
-        calls: ['run-stack.sh -d', 'docker compose down']
+        calls: ['tim docker dev', 'docker compose down']
       })
     },
     CONCURRENCY_TIMEOUT_MS
@@ -1651,7 +1656,7 @@ describe('runGate — e2e left to CI', () => {
       rungs: outcomeOf(outcome.rungs),
       e2e: outcome.e2e
     }).toEqual({
-      calls: ['run-stack.sh -d', 'docker compose down'],
+      calls: ['tim docker dev', 'docker compose down'],
       rungs: ['tests:e2e-plants:pass'],
       e2e: { where: 'local', leftToCi: [], evidence: null }
     })

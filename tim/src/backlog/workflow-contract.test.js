@@ -3500,7 +3500,7 @@ describe('increment-build-loop', () => {
       describe('the command forms a plan check may take', () => {
         const PREFIX_CHECK =
           'STUB_PROFILE=fast npm --prefix ~/ws/repos/trade-imports-stub run start'
-        const SCRIPT_CHECK = 'bash scripts/stack/run-stack.sh --help'
+        const SCRIPT_CHECK = 'bash tools/example/check.sh --help'
         const NPM_CHECK =
           'npm --prefix ~/ws/repos/trade-imports-animals-frontend test -- src/a.test.js'
 
@@ -4902,7 +4902,7 @@ describe('increment-build-loop', () => {
               refused: false,
               holder: null,
               summary:
-                'The workspace stack did not come up (run-stack.sh exited 1).'
+                'The workspace stack did not come up (tim docker dev exited 1).'
             }
           })
 
@@ -4913,7 +4913,7 @@ describe('increment-build-loop', () => {
             stopped: {
               reason: 'stack-failed',
               detail:
-                'the run could not take the workspace stack, so it built nothing. The workspace stack did not come up (run-stack.sh exited 1).'
+                'the run could not take the workspace stack, so it built nothing. The workspace stack did not come up (tim docker dev exited 1).'
             },
             labels: ['workspace', 'preflight', ACQUIRE_LABEL, RELEASE_LABEL]
           })

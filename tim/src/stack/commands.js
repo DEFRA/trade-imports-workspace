@@ -1,26 +1,30 @@
-import { runStackScript } from '../exec/stack.js'
 import { stopStack } from './down.js'
 import { restartStack } from './restart.js'
 import { bounceBackend, terminalOutput } from './services.js'
+import { startStack } from './start.js'
 
 const COMPOSE = 'docker compose'
 
-const scriptCommand = (script, leadingArgs) => ({
-  ran: script,
+const startCommand = (leadingArgs) => ({
+  ran: COMPOSE,
   run: ({ workspaceRoot, args }) =>
-    runStackScript({ workspaceRoot, script, args: [...leadingArgs, ...args] })
+    startStack({
+      workspaceRoot,
+      args: [...leadingArgs, ...args],
+      output: terminalOutput()
+    })
 })
 
 const STACK_COMMANDS = {
-  up: scriptCommand('run-stack.sh', []),
-  dev: scriptCommand('run-stack.sh', ['-d']),
+  up: startCommand([]),
+  dev: startCommand(['-d']),
   down: {
     ran: COMPOSE,
     run: ({ workspaceRoot, args }) =>
       stopStack({ workspaceRoot, args, output: terminalOutput() })
   },
   restart: {
-    ran: 'run-stack.sh',
+    ran: COMPOSE,
     run: ({ workspaceRoot, args }) => restartStack({ workspaceRoot, args })
   },
   'bounce-backend': {
@@ -40,9 +44,9 @@ export const STACK_COMMAND_NAMES = Object.keys(STACK_COMMANDS)
  * @param {object} opts
  * @param {string} opts.workspaceRoot
  * @param {string} opts.command - One of {@link STACK_COMMAND_NAMES}
- * @param {string[]} [opts.args] - Flags passed on to the stack scripts
+ * @param {string[]} [opts.args] - The command's own flags
  * @returns {Promise<{exitCode: number, durationMs: number, ran: string}>} ran names the step whose exit code this is
- * @throws {TimError} USAGE when the workspace has no run-stack.sh; others as the command's own steps throw
+ * @throws {TimError} as the command's own steps throw
  */
 export const runStackCommand = async ({
   workspaceRoot,

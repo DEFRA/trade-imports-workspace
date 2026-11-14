@@ -63,6 +63,6 @@ No other repo in the workspace was found calling this service.
 mvn spring-boot:run          # port 8087; needs MongoDB reachable at MONGO_URI
 ```
 
-Workspace stack (published image, `stubs` profile): `./scripts/stack/run-stack.sh` from the workspace root. Use `-d` to build from local source with hot reload (DevTools). The compose service is `trade-imports-stub` in `docker/stack/stubs.compose.yml`, with `SPRING_PROFILES_ACTIVE=local` (Mongo SSL off).
+Workspace stack (published image, `stubs` profile): `tim docker up` from the workspace root. Use `-d` to build from local source with hot reload (DevTools). The compose service is `trade-imports-stub` in `docker/stack/stubs.compose.yml`, with `SPRING_PROFILES_ACTIVE=local` (Mongo SSL off).
 
 Port: **8087**

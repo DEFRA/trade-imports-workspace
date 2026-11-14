@@ -147,7 +147,7 @@ describe('useDockerFeature', () => {
 
   test('a launch failure surfaces on the error screen', async () => {
     const launchStackCommand = async () => {
-      throw new Error('Cannot find run-stack.sh.')
+      throw new Error('Cannot find docker.')
     }
     const { lastFrame } = render(
       createElement(RunActionHarness, {
@@ -158,7 +158,7 @@ describe('useDockerFeature', () => {
     )
 
     await vi.waitFor(
-      () => expect(lastFrame()).toMatch(/error:.*run-stack\.sh/),
+      () => expect(lastFrame()).toMatch(/error:.*Cannot find docker/),
       { timeout: 5000 }
     )
   })

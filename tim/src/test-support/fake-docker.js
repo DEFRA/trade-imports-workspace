@@ -27,6 +27,7 @@ const realWorkspaceRoot = join(
 const FAKE_TOOL = `#!/usr/bin/env node
 const fs = require('node:fs')
 const path = require('node:path')
+const crypto = require('node:crypto')
 
 const dir = __dirname
 const tool = path.basename(__filename)
@@ -41,7 +42,7 @@ const env = Object.fromEntries(
 fs.appendFileSync(path.join(dir, 'calls.jsonl'), JSON.stringify({ tool, args, env }) + '\\n')
 
 const takeCount = (key) => {
-  const file = path.join(dir, 'counters', encodeURIComponent(key))
+  const file = path.join(dir, 'counters', crypto.createHash('sha256').update(key).digest('hex'))
   const count = fs.existsSync(file) ? Number(fs.readFileSync(file, 'utf8')) : 0
   fs.writeFileSync(file, String(count + 1))
   return count
@@ -221,6 +222,70 @@ const INIT_SCRIPT_SOURCES = [
 
 const isGeneratedStackFolder = (source) => source.split('/').includes('.staged')
 
+const writeRepoInitScripts = (root) => {
+  for (const source of INIT_SCRIPT_SOURCES) {
+    const path = join(root, 'repos', source)
+    mkdirSync(dirname(path), { recursive: true })
+    writeFileSync(path, `${source}\n`)
+  }
+}
+
+/**
+ * Write every file starting the stack stages into a workspace: each init
+ * script under repos/, and the workspace's own mongo set-up script, so
+ * staging copies and never clones.
+ *
+ * @param {string} root
+ */
+export const writeStackInitSources = (root) => {
+  writeRepoInitScripts(root)
+  const mongoSetUp = join(
+    root,
+    'docker',
+    'stack',
+    'scripts',
+    'mongodb',
+    '10-database-setup.js'
+  )
+  mkdirSync(dirname(mongoSetUp), { recursive: true })
+  writeFileSync(mongoSetUp, 'mongo set-up\n')
+}
+
+/**
+ * Lines for a hand-written fake `docker` script that answer a start of the
+ * stack: compose names mongodb and trade-imports-stub, downloads and
+ * mongo's own start succeed, and the stack up appends the command it
+ * matches ("tim docker dev", "tim docker up" or "tim docker up --perf"),
+ * then `recordAlso`, to the calls file. It then fails with exit 9 when
+ * `fails` is set, else runs `onUp`.
+ *
+ * @param {object} opts
+ * @param {string} opts.callsPath
+ * @param {string} [opts.onUp] - Shell run when the stack comes up
+ * @param {boolean} [opts.fails=false]
+ * @param {string} [opts.recordAlso] - Shell words added to the recorded line, such as ' STUB_PROFILE=$STUB_PROFILE'
+ * @returns {string}
+ */
+export const fakeComposeStartLines = ({
+  callsPath,
+  onUp = '',
+  fails = false,
+  recordAlso = ''
+}) =>
+  [
+    'case " $* " in',
+    `  *" compose "*" config --services "*) printf 'mongodb\\ntrade-imports-stub\\n'; exit 0 ;;`,
+    '  *" compose "*" pull "*) exit 0 ;;',
+    '  *" compose "*" up "*" always mongodb ") exit 0 ;;',
+    '  *" compose "*" up "*)',
+    '    started="tim docker up"',
+    '    case " $* " in *" --build "*) started="tim docker dev" ;; esac',
+    '    case " $* " in *"/perf.compose.yml "*) started="$started --perf" ;; esac',
+    `    echo "$started${recordAlso}" >> '${callsPath}'`,
+    fails ? '    echo boom; exit 9 ;;' : `    ${onUp || ':'}; exit 0 ;;`,
+    'esac'
+  ].join('\n')
+
 /**
  * A temporary workspace holding copies of scripts/stack and docker/stack
  * (less docker/stack/.staged), with every init script the stack stages
@@ -236,11 +301,7 @@ export const stageStackWorkspace = () => {
       filter: (source) => !isGeneratedStackFolder(source)
     })
   }
-  for (const source of INIT_SCRIPT_SOURCES) {
-    const path = join(root, 'repos', source)
-    mkdirSync(dirname(path), { recursive: true })
-    writeFileSync(path, `${source}\n`)
-  }
+  writeRepoInitScripts(root)
   return {
     root,
     remove: () => rmSync(root, { recursive: true, force: true })
@@ -328,14 +389,15 @@ export const recordedStackScenario = (script, name) =>
     (scenario) => scenario.name === name
   )
 
-const isOwnershipCheck = ({ tool, args }) =>
-  tool === 'docker' && args[0] === 'ps'
+const isCheckBeforeStart = ({ tool, args }) =>
+  tool === 'docker' && (args[0] === 'ps' || args[0] === 'info')
 
 /**
  * Runs `tim docker <args>` against a staged stack workspace with the fake
  * tools first on PATH and no stack lease, and records it in the shape the
- * stack scripts were recorded in. The `docker ps` calls tim makes to find
- * the clone that owns the stack are left out.
+ * stack scripts were recorded in. The checks tim makes before it starts are
+ * left out: `docker ps` to find the clone that owns the stack, and
+ * `docker info` to see that Docker Desktop is running.
  *
  * @param {string[]} args - tim's arguments after `docker`
  * @param {object} [opts]
@@ -370,7 +432,7 @@ export const recordTimStackRun = async (
       stdout: withWorkspacePlaceholder(result.stdout, workspace.root),
       stderr: withWorkspacePlaceholder(result.stderr, workspace.root),
       ...traceOf(
-        fake.calls().filter((call) => !isOwnershipCheck(call)),
+        fake.calls().filter((call) => !isCheckBeforeStart(call)),
         workspace.root
       ),
       stagedInitFiles: stagedInitFiles(workspace.root)

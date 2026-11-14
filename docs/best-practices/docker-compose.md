@@ -7,7 +7,7 @@ the `scripts/stack/` wrappers it calls. No repo carries its own
 [`docker/stack/AGENTS.md`](../../docker/stack/AGENTS.md#rules-for-agents).
 
 Init scripts are owned by the service that needs them and staged into the
-stack by `scripts/stack/lib/init-scripts.sh`: the backend owns the Floci
+stack by `tim docker up`: the backend owns the Floci
 provisioning (`compose/start-floci.sh`) and the workspace owns the mongo
 replica-set init.
 

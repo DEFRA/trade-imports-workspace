@@ -4,9 +4,9 @@ import { unmount } from '../../inkControl.js'
 import MenuScreen from '../../common/screens/MenuScreen.js'
 
 const DOCKER_ITEMS = [
-  { label: 'Start the stack (run-stack.sh)', value: 'up' },
+  { label: 'Start the stack (tim docker up)', value: 'up' },
   {
-    label: 'Start the stack from local source (run-stack.sh -d)',
+    label: 'Start the stack from local source (tim docker dev)',
     value: 'dev'
   },
   { label: 'Stop the stack (tim docker down)', value: 'down' },

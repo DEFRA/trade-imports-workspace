@@ -12,7 +12,11 @@ import {
 } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { tmpdir } from 'node:os'
-import { fakeComposeDownLine } from '../test-support/fake-docker.js'
+import {
+  fakeComposeDownLine,
+  fakeComposeStartLines,
+  writeStackInitSources
+} from '../test-support/fake-docker.js'
 import { stackFilesFingerprint } from './stack-fingerprints.js'
 import {
   acquireStack,
@@ -54,14 +58,20 @@ const callsPath = () => join(root, 'stack-calls')
 const leasePath = () => join(root, 'state', 'stack-lease.json')
 const logPath = () => join(root, 'logs', 'lease.log')
 
-const fakeStack = ({ upFails = false, downFails = false } = {}) => {
-  writeExecutable(
-    join(root, 'scripts', 'stack', 'run-stack.sh'),
-    `echo "run-stack.sh $*" >> '${callsPath()}'\n${upFails ? 'exit 9' : `echo c1 > '${statePath()}'`}`
-  )
+const startLines = ({ upFails = false, recordAlso = '' } = {}) =>
+  fakeComposeStartLines({
+    callsPath: callsPath(),
+    fails: upFails,
+    onUp: `echo c1 > '${statePath()}'`,
+    recordAlso
+  })
+
+const fakeStack = ({ upFails = false, downFails = false, recordAlso } = {}) => {
+  writeStackInitSources(root)
   writeExecutable(
     join(root, 'fake-bin', 'docker'),
     [
+      startLines({ upFails, recordAlso }),
       fakeComposeDownLine({
         statePath: statePath(),
         callsPath: callsPath(),
@@ -83,6 +93,7 @@ const dockerQuitUnderStack = () => {
     [
       `if [ ! -f '${running}' ]; then echo "Cannot connect to the Docker daemon. Is the docker daemon running?" >&2; exit 1; fi`,
       'if [ "$1" = info ]; then echo 29.1.0; exit 0; fi',
+      startLines(),
       fakeComposeDownLine({ statePath: statePath(), callsPath: callsPath() }),
       `if [ "$1" = ps ] && [ -f '${statePath()}' ]; then cat '${statePath()}'; fi`
     ].join('\n')
@@ -157,7 +168,7 @@ describe('acquireStack', () => {
     }).toEqual({
       acquired: true,
       started: true,
-      calls: ['run-stack.sh -d'],
+      calls: ['tim docker dev'],
       up: true,
       lease: expect.objectContaining({
         holder: HOLDER,
@@ -173,7 +184,7 @@ describe('acquireStack', () => {
 
     await acquire(env, { mode: 'up' })
 
-    expect(calls()).toEqual(['run-stack.sh'])
+    expect(calls()).toEqual(['tim docker up'])
   })
 
   test('starts the published images with --perf in perf mode', async () => {
@@ -181,7 +192,7 @@ describe('acquireStack', () => {
 
     await acquire(env, { mode: 'perf' })
 
-    expect(calls()).toEqual(['run-stack.sh --perf'])
+    expect(calls()).toEqual(['tim docker up --perf'])
   })
 
   test('records the stub profile a perf lease started with, sla by default', async () => {
@@ -194,12 +205,8 @@ describe('acquireStack', () => {
     )
   })
 
-  test('records STUB_PROFILE as the perf lease’s stub profile, and the script sees it', async () => {
-    const env = fakeStack()
-    writeExecutable(
-      join(root, 'scripts', 'stack', 'run-stack.sh'),
-      `echo "run-stack.sh $* STUB_PROFILE=$STUB_PROFILE" >> '${callsPath()}'\necho c1 > '${statePath()}'`
-    )
+  test('records STUB_PROFILE as the perf lease’s stub profile, and docker compose sees it', async () => {
+    const env = fakeStack({ recordAlso: ' STUB_PROFILE=$STUB_PROFILE' })
 
     await acquire({ ...env, STUB_PROFILE: 'zero-delay' }, { mode: 'perf' })
 
@@ -208,7 +215,7 @@ describe('acquireStack', () => {
       calls: calls()
     }).toEqual({
       stubProfile: 'zero-delay',
-      calls: ['run-stack.sh --perf STUB_PROFILE=zero-delay']
+      calls: ['tim docker up --perf STUB_PROFILE=zero-delay']
     })
   })
 
@@ -382,7 +389,7 @@ describe('acquireStack', () => {
       acquired: true,
       replaced: OTHER,
       holder: HOLDER,
-      calls: ['run-stack.sh -d']
+      calls: ['tim docker dev']
     })
   })
 
@@ -431,7 +438,7 @@ describe('acquireStack', () => {
     }).toEqual({
       acquired: true,
       started: true,
-      calls: ['docker compose down', 'run-stack.sh -d'],
+      calls: ['docker compose down', 'tim docker dev'],
       state: 'up'
     })
   })
@@ -522,7 +529,7 @@ describe('acquireStack', () => {
       }).toEqual({
         acquired: true,
         started: true,
-        calls: ['run-stack.sh -d'],
+        calls: ['tim docker dev'],
         up: true,
         holder: HOLDER
       })
@@ -544,9 +551,9 @@ describe('acquireStack', () => {
       acquired: false,
       refused: false,
       reason: expect.stringMatching(
-        /^The workspace stack did not come up \(run-stack.sh exited 9\)\. Read .*lease\.log\. It was taken down again and the lease cleared\.$/
+        /^The workspace stack did not come up \(tim docker dev exited 9\)\. Read .*lease\.log\. It was taken down again and the lease cleared\.$/
       ),
-      calls: ['run-stack.sh -d', 'docker compose down'],
+      calls: ['tim docker dev', 'docker compose down'],
       lease: null
     })
   })
@@ -591,7 +598,7 @@ describe('acquireStack', () => {
       reason: expect.stringMatching(
         /It was taken down again and the lease kept for "ibl-20261001T090000Z inc-003 consistency", who held it before\.$/
       ),
-      calls: ['run-stack.sh -d', 'docker compose down'],
+      calls: ['tim docker dev', 'docker compose down'],
       lease: expect.objectContaining({ holder: HOLDER, containers: ['c1'] })
     })
   })
@@ -983,7 +990,7 @@ describe('the same holder name from another clone', () => {
       acquired: true,
       heldBefore: false,
       replaced: HOLDER,
-      calls: ['run-stack.sh -d'],
+      calls: ['tim docker dev'],
       workspace: root
     })
   })

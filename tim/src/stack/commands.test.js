@@ -1,28 +1,41 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import {
+  chmodSync,
   mkdirSync,
   mkdtempSync,
   rmSync,
-  writeFileSync,
-  chmodSync
+  writeFileSync
 } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import {
+  fakeComposeStartLines,
+  writeStackInitSources
+} from '../test-support/fake-docker.js'
 import { runStackCommand, STACK_COMMAND_NAMES } from './commands.js'
 
 let workspace
+const originalPath = process.env.PATH
 
 beforeEach(() => {
   workspace = mkdtempSync(join(tmpdir(), 'tim-stack-commands-'))
 })
 
-afterEach(() => rmSync(workspace, { recursive: true, force: true }))
+afterEach(() => {
+  process.env.PATH = originalPath
+  rmSync(workspace, { recursive: true, force: true })
+})
 
-const writeStackScript = (name, exitCode) => {
-  const path = join(workspace, 'scripts', 'stack', name)
-  mkdirSync(join(workspace, 'scripts', 'stack'), { recursive: true })
-  writeFileSync(path, `#!/usr/bin/env bash\nexit ${exitCode}\n`)
-  chmodSync(path, 0o755)
+const dockerWhoseStackUpFails = () => {
+  writeStackInitSources(workspace)
+  const bin = join(workspace, 'fake-bin')
+  mkdirSync(bin)
+  writeFileSync(
+    join(bin, 'docker'),
+    `#!/usr/bin/env bash\n${fakeComposeStartLines({ callsPath: join(workspace, 'calls'), fails: true })}\n`
+  )
+  chmodSync(join(bin, 'docker'), 0o755)
+  process.env.PATH = `${bin}:${originalPath}`
 }
 
 describe('#runStackCommand', () => {
@@ -36,8 +49,8 @@ describe('#runStackCommand', () => {
     ])
   })
 
-  test('Should give the exit code of the script up runs, naming it', async () => {
-    writeStackScript('run-stack.sh', 5)
+  test("Should give docker compose up's exit code when up fails, naming docker compose", async () => {
+    dockerWhoseStackUpFails()
 
     const result = await runStackCommand({
       workspaceRoot: workspace,
@@ -45,15 +58,9 @@ describe('#runStackCommand', () => {
     })
 
     expect(result).toEqual({
-      exitCode: 5,
+      exitCode: 9,
       durationMs: expect.any(Number),
-      ran: 'run-stack.sh'
+      ran: 'docker compose'
     })
-  })
-
-  test('Should refuse with USAGE a restart in a workspace with no run-stack.sh', async () => {
-    await expect(
-      runStackCommand({ workspaceRoot: workspace, command: 'restart' })
-    ).rejects.toMatchObject({ name: 'TimError', code: 'USAGE' })
   })
 })

@@ -59,15 +59,21 @@ const npmStep = async ({ step, repo, version, stamp, npmPrefix }) => {
   return { ok: exitCode === 0, logPath }
 }
 
+const failUnlessExited0 = ({ exitCode }, message) => {
+  if (exitCode !== 0) throw new TimError('UNKNOWN', message)
+}
+
 const commitAll = async (repoDir, message, { say, warn }) => {
-  await run('git', ['-C', repoDir, 'add', '-A'])
+  const stage = await run('git', ['-C', repoDir, 'add', '-A'])
+  if (stage.stderr) await warn(stage.stderr)
+  failUnlessExited0(stage, `Cannot stage the changes in ${repoDir}`)
   const commit = await run('git', ['-C', repoDir, 'commit', '-m', message])
   if (commit.stdout) await say(commit.stdout)
   if (commit.stderr) await warn(commit.stderr)
-  if (commit.exitCode !== 0) {
-    throw new TimError('UNKNOWN', `Cannot commit in ${repoDir}`)
-  }
+  failUnlessExited0(commit, `Cannot commit in ${repoDir}`)
   const head = await run('git', ['-C', repoDir, 'rev-parse', 'HEAD'])
+  if (head.stderr) await warn(head.stderr)
+  failUnlessExited0(head, `Cannot read the new commit in ${repoDir}`)
   return head.stdout.trim()
 }
 
@@ -99,7 +105,7 @@ const silent = () => undefined
  * @param {(line: string) => void | Promise<void>} [args.say] - Takes each progress line as it happens
  * @param {(line: string) => void | Promise<void>} [args.warn] - Takes each warning line as it happens
  * @returns {Promise<{outcome: 'applied'|'noop'|'already-done'|'failed', repo: string, version: string, commit?: string, constraint?: string, final?: boolean, installLog?: string, testLog?: string, reason?: string}>}
- * @throws {TimError} USAGE for a missing option or an unplanned version, NOT_FOUND when the repo, the state file, the version or package.json is missing, UNKNOWN when git cannot commit
+ * @throws {TimError} USAGE for a missing option, NOT_FOUND for an unplanned version or when the repo, the state file, the version or package.json is missing, UNKNOWN when git cannot stage, commit or read the new commit
  */
 export const applyVersion = async ({
   workspaceRoot,

@@ -1,4 +1,12 @@
-import { existsSync, readFileSync } from 'node:fs'
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  renameSync,
+  symlinkSync,
+  writeFileSync
+} from 'node:fs'
 import { join } from 'node:path'
 import { afterEach, describe, expect, test } from 'vitest'
 import { ERROR, OK, USAGE } from '../../constants/exitCodes.js'
@@ -216,5 +224,49 @@ describe('tim govuk apply matches apply-version.sh', () => {
       testLog
     })
     expect(Object.keys(record.logs).sort()).toEqual([installLog, testLog])
+  })
+
+  const applyIntermediateTodo = () =>
+    recordApplyCase(
+      staged,
+      applyCases.find(({ name }) => name === 'intermediate todo'),
+      (args, env) =>
+        recordTimRun(staged, ['govuk', 'apply', ...asTimArgs(args)], { env })
+    )
+
+  test('Should run npm in the resolved repo folder when the repo is reached through a symlink', async () => {
+    staged = stageGovukWorkspace()
+    stageApplyRepos(staged)
+    const linkedRepo = join(staged.root, 'repos', ADMIN)
+    const clone = join(staged.home, 'clones', ADMIN)
+    mkdirSync(join(staged.home, 'clones'))
+    renameSync(linkedRepo, clone)
+    symlinkSync(clone, linkedRepo)
+
+    const record = await applyIntermediateTodo()
+
+    expect(record.exitCode).toBe(OK)
+    expect(record.logs).toEqual({
+      [`/tmp/govuk-install-${ADMIN}-5.9.1-<STAMP>.txt`]: `npm --prefix <HOME>/clones/${ADMIN} install\n`,
+      [`/tmp/govuk-test-${ADMIN}-5.9.1-<STAMP>.txt`]: `npm --prefix <HOME>/clones/${ADMIN} test\n`
+    })
+  })
+
+  test('Should exit 1 without committing or changing the state file when git cannot stage the changes', async () => {
+    staged = stageGovukWorkspace()
+    stageApplyRepos(staged)
+    const unreadable = join(staged.root, 'repos', ADMIN, 'unreadable.txt')
+    writeFileSync(unreadable, 'git cannot read this\n')
+    chmodSync(unreadable, 0o000)
+    const stateBefore = stateFileText(staged.root, ADMIN)
+
+    const record = await applyIntermediateTodo()
+
+    expect(record.exitCode).toBe(ERROR)
+    expect(record.stderr).toContain(
+      `Cannot stage the changes in <HOME>/git/defra/trade-imports-workspace/repos/${ADMIN}`
+    )
+    expect(record.repo.log).toMatch(/^[0-9a-f]{40} Initial commit\n$/)
+    expect(stateFileText(staged.root, ADMIN)).toBe(stateBefore)
   })
 })

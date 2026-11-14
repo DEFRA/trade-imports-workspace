@@ -1,5 +1,7 @@
+import { mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { afterEach, describe, expect, test } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import {
   normaliseRecordedText,
   recordFolderFiles
@@ -13,6 +15,13 @@ import {
   RUN_FOLDER,
   stageDiscoverWorkspace
 } from './__fixtures__/npm-discover-workspace.js'
+import {
+  blockRealNetwork,
+  restoreRealNetwork,
+  serveRegistryPackage,
+  writeRegistryRepo
+} from './__fixtures__/ncu-registry.js'
+import { runNcu } from './ncu.js'
 import {
   checkDiscoverOptions,
   discoverUpgrades,
@@ -130,6 +139,53 @@ describe('#discoverUpgrades', () => {
     ).rejects.toMatchObject({
       message: 'Failed to run npm-check-updates: registry unreachable'
     })
+  })
+
+  describe('With npm-check-updates asking a served registry', () => {
+    let workspaceRoot
+
+    beforeEach(() => {
+      blockRealNetwork()
+      serveRegistryPackage('widget', ['1.2.3', '1.2.9', '1.5.0', '2.1.0'])
+      workspaceRoot = mkdtempSync(join(tmpdir(), 'tim-discover-'))
+    })
+
+    afterEach(() => {
+      restoreRealNetwork()
+      rmSync(workspaceRoot, { recursive: true, force: true })
+    })
+
+    test.each([
+      ['latest', '2.1.0', 'major'],
+      ['minor', '1.5.0', 'minor'],
+      ['patch', '1.2.9', 'patch']
+    ])(
+      'Should record the %s strategy’s target for the repo at the given path',
+      async (strategy, target, upgradeType) => {
+        const repoPath = writeRegistryRepo(
+          join(workspaceRoot, 'repos', 'widget-repo'),
+          { widget: '^1.2.3' }
+        )
+
+        const discovery = await discoverUpgrades({
+          workspaceRoot,
+          runId: 'EUDPA-600',
+          repoPath,
+          strategy,
+          runNcu,
+          ncuVersion: NCU_VERSION,
+          log: () => undefined
+        })
+
+        expect(discovery.state.packages).toHaveLength(1)
+        expect(discovery.state.packages[0]).toMatchObject({
+          package: 'widget',
+          current: '1.2.3',
+          target,
+          upgrade_type: upgradeType
+        })
+      }
+    )
   })
 })
 

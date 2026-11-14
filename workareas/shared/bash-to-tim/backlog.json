@@ -1782,14 +1782,39 @@
       ],
       "risk": "Medium. Push becomes a dry run by default, so the skill must gain --confirm in the same commit or nothing posts. Stale-check now compares real dates, so a borderline verdict may change.",
       "proof": "Port the three .test.sh files to vitest with invert-red/restore-green probes. A jq -S diff of derived.json against the tracked goldens. A dry-run diff of push on every tracked ticket folder. One --confirm canary that reports 'unchanged'.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "d82320ae"
+          }
+        ],
+        "checks": [
+          "tim-unit: npm --prefix tim test green, 278 files passed, 6 skipped, 4680 tests passed. The Bash-recording golden test skips now that the scripts are gone.",
+          "tim-lint: npm run lint and npm run format:check both clean.",
+          "parity (fixture): tim/src/theme-ticket/theme-ticket-scripts.golden.test.js recorded the Bash on 58 fixture cases (start, derive, push dry-run and stale against a fake tools/jira/search.sh) into __fixtures__/__golden__/theme-ticket-scripts.json. tim/src/commands/theme-ticket/index.test.js spawns tim against a local Jira server and reproduces every recording; the only differences are the deliberate ones in the commit message. Changing one column width in the stale table turns it red.",
+          "parity (real data): derive gave byte-identical output to the Bash for all 15 design-release-2-1 themes (7 successes, 8 matching refusals), journey-foundation --branch main, design-snagging from origin/feat/NO_JIRA-design-release-2-1, and --out. start matched every mode and phrase. push dry runs matched on all 22 tracked folders under design-release-2-1 and eudpa-774, and on 8 guard fixtures. stale against live Jira (read-only) gave identical tables for design-release-2-1 (also on --branch main) and eudpa-774.",
+          "parity (tracked goldens): a jq -S diff against the tracked tickets/derived*.json does not reproduce. Those files were made on branches that are now gone or have moved (feat/EUDPA-693-commodities-and-reason, feat/EUDPA-774-save-and-continue-through-journey), and the Bash itself no longer reproduces them either. Old and new were compared on the same inputs instead.",
+          "ported tests: the three .test.sh files are now vitest tests in tim/src/theme-ticket/derive.test.js. Invert-red probes (no rename lookup, no row scopes, commits-from ignored, exclude override ignored, the count-once filter removed, offset dropped from stale dates) each turned the matching tests red, and restoring the code turned them green.",
+          "push canary: tim jira update with no --confirm (read-only) reported 'already holds those values' for EUDPA-793, EUDPA-794 and EUDPA-690. The live `tim theme-ticket push workareas/shared/eudpa-774/tickets/animals --confirm` run was refused by the permission classifier, so it did not run.",
+          "no-callers: git grep across the workspace and every repos/* finds no start-theme-ticket, derive-scenarios, check-stale, push-description or tools/theme-ticket outside workareas/shared/bash-to-tim. The exceptions are the two .claude/settings.json allow entries, which are listed in settings-followups.md under P36 for Sam. No hook calls the scripts.",
+          "fixed paths and .sh files: no new ~/git/defra or $HOME/git/defra paths outside the settings-followups list and the <HOME>-normalised golden recording; no .sh file added; eight scripts deleted."
+        ],
+        "deviations": [
+          "The live --confirm canary did not run because the auto-mode permission classifier refused the Jira write. The read-only `tim jira update` dry run on the same folders reports 'unchanged'. Sam can run `tim theme-ticket push workareas/shared/eudpa-774/tickets/animals --confirm` and should expect 'EUDPA-793 already holds those values. Nothing changed.'",
+          ".claude/settings.json lines 90-91 were not removed, as BRIEF.md says. The exact entries are appended to workareas/shared/bash-to-tim/settings-followups.md under P36.",
+          "Deliberate behaviour changes, all listed in the commit message: push is a dry run until --confirm, and its dry-run line now adds 'Add --confirm to send it.'; stale compares instants with their offsets, which flips a borderline verdict (no tracked ticket changed verdict); error prefixes and derive's usage line name the tim command; a git failure prints git's reason, not a node stack trace; commander's own errors (exit 1) handle unknown options and options with no value, where the Bash exited 2 or failed on an unbound variable.",
+          "Two more files outside the row's caller list were updated because they named derive-scenarios in prose: workareas/shared/design-release-2-1/tickets/footprint-overrides.json and tickets.json. Only the comment fields changed, so derive's output is unchanged. tim/README.md also gained a tim theme-ticket section.",
+          "The eudpa-774 README's regenerate command now uses a workspace-relative --out path. Its --commits-from branch feat/EUDPA-774-save-and-continue-through-journey no longer exists locally or on origin, so that command fails with exit 1 under both old and new code."
+        ]
+      }
     },
     {
       "id": "P37",

@@ -2249,14 +2249,39 @@
       ],
       "risk": "Medium to high: new npm-registry and changelog fetch clients (a plain raw-file GET, not gh: a call made under rule 8). Keep the filesystem scan of repos/*/package.json.",
       "proof": "nock fixtures for the registry and changelog; diff every written file against bash with a curl stub. A scratch-copy canary. A final grep for tools/govuk returns nothing.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "7212f68a"
+          }
+        ],
+        "checks": [
+          "parity: before deleting anything, tim/src/govuk/govuk-start.golden.test.js recorded start-upgrade.sh (which calls discover-repos, setup-branch and discover-versions) on 10 cases into tim/src/govuk/__fixtures__/__golden__/govuk-start.json. The Bash ran with stub npm, curl and tim on PATH in a staged HOME with four real git repos: one created branch, one local branch, one origin-only branch and one repo without govuk. The cases were ticket with latest, re-run with a lower target (keeps the plan, prunes 5.10.0), a branch with no ticket (slug run id and warnings), a cached changelog missing the target (refresh), every repo up to date (exit 1 from plans), JIRA_PROJECT_KEY=ABC, a repo that is not a git repo, and 3 usage refusals. tim/src/govuk/start.test.js runs startUpgrade with nock on the registry and the raw CHANGELOG and matches stdout, stderr, exit code, every file under workareas/govuk-upgrades byte for byte (timestamps normalised) and each repo's branch, on all 10 cases. The only mapping is usage exit 1 to 2. tim/src/commands/govuk/start.test.js spawns the CLI and matches the golden for the up-to-date case and the 3 refusals, plus the --json error envelope. Mutation probes: dropping the trailing-newline trim of a section failed 4 tests; auditing one repo fewer failed 5. Both lines were restored.",
+          "Canary: real network, in a scratch workspace holding a copy of trade-imports-defra-id-stub on govuk 6.5.1. `tim govuk start --branch chore/NO_JIRA-govuk-canary` created the branch, read latest 6.6.0 from registry.npmjs.org, downloaded the real CHANGELOG, wrote version__6.6.0.changelog.md and the state file, and gave the pre-flight [WARN] with 0 critical and 4 high. With --target 6.5.2 (not published) it printed 'No stable versions' and exited 1 from plans, as the Bash would.",
+          "no-callers: git grep for tools/govuk, start-upgrade.sh (govuk), discover-repos, discover-versions and govuk/setup-branch across .claude, docs, tim, tools, settings and .github, and in all 17 repos/*. The only hits left are tim's golden recorder fixtures and recordings for retired scripts (the same pattern as earlier rows), plus asTimStartHint, which maps a recorded message. tools/govuk/ no longer exists.",
+          "tim-unit: npm --prefix tim test is green: 316 files passed, 12 skipped; 5042 tests passed, 8 expected fail, 14 skipped.",
+          "tim-lint: npm --prefix tim run lint and run format:check are both clean.",
+          "No new fixed path in the tim sources. The workspace root comes from resolveWorkspaceRoot, and the best-practices bundle reads <root>/docs/best-practices. No new .sh file. settings-followups.md has a P45 entry: none needed."
+        ],
+        "deviations": [
+          "Library modules are tim/src/govuk/run-id.js, discover-repos.js, ensure-branch.js, discover-versions.js, audit-preflight.js and start.js, plus tim/src/clients/npm-registry-client.js and govuk-changelog-client.js, each with a sibling test.",
+          "The parity test runs startUpgrade in process (nock cannot reach a spawned CLI), mirroring the CLI's stdout/stderr/exit mapping; CLI-level spawn tests cover only network-free cases.",
+          "Intended behaviour changes, all in the commit message: usage refusals exit 2 instead of 1. --force is new on start. With no govuk repo, tim writes repos: [] and exits 0 with 'nothing to do'; the Bash wrote [\"\"] and then failed in setup-branch. A registry failure appends the client's cause to the Bash message. The changelog heading match escapes the dots in the version. The hints in tim govuk plans and in the state writes now say 'run tim govuk start first' where they named discover-versions.sh; the older golden comparisons map that one string.",
+          "The final grep for tools/govuk still finds tim's golden recorder tests and fixtures for retired scripts (skipIf once a script is gone). Earlier rows kept these the same way, so I kept them as history.",
+          "The canary covers tim only. The Bash was deleted after its golden was recorded, so the Bash-against-tim comparison comes from the fixture goldens, not a second real-network Bash run.",
+          "Added src/test-support/fixtures/govuk-changelog/ to tim/.prettierignore, because prettier was collapsing the double blank line that tests section trimming.",
+          "Also updated tim/README.md and fixed a stale 'version-* helpers' mention in SKILL.md, a file this row already edits.",
+          "The canary scratch folder already held an earlier session's clone of defra-id-stub, and I committed into it. It is scratchpad only, not repos/."
+        ]
+      }
     },
     {
       "id": "P46",

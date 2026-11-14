@@ -2516,14 +2516,33 @@
       ],
       "risk": "High: this drives every refresh and detaches review clones. scope now prints human text by default, so callers pass --json.",
       "proof": "A fixture repo with a '# Conflicts:' merge; goldens for merge-resolved and scope; a bare-remote fixture for pull. One real re-review on a copy of a workarea.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "fe0f3f51"
+          }
+        ],
+        "checks": [
+          "tim-unit: npm --prefix tim test green (341 files passed, 17 skipped; 5315 tests passed), with the new refresh/file-diff parity suites included",
+          "tim-lint: npm --prefix tim run lint and run format:check both clean",
+          "parity: tim/src/review/__fixtures__/__golden__/review-refresh.json recorded from the five Bash scripts before deletion over 28 cases (fixture git repos with fixed SHAs, '# Conflicts:' merge, bare remotes serving refs/pull/N/head, gh stand-in). tim reproduces exit code, stderr, .review-meta.json, file reviews, clone HEAD/branch/fetch refspecs, and stdout byte for byte (JSON cases: envelope result equals the Bash JSON). A mutation probe (rename match on one side only) turned the file-diff parity red",
+          "no-callers: git grep across the workspace (excluding workareas/ and goldens) and repos/* finds no reference to pull-repos.sh, list-merge-resolved.sh, list-coverage-gaps.sh, review/refresh/scope.sh or file-diff.sh. The remaining 'refresh/scope.sh' hits are code-style's own tools/style/refresh/scope.sh",
+          "no new fixed path outside normalised test fixtures, and no new .sh file. tools/style/refresh/scope.sh lost its $HOME tools path and runs (syntax checked by invocation)"
+        ],
+        "deviations": [
+          "The proof's 'one real re-review on a copy of a workarea' was not run because this machine has no workareas/reviews/* with a meta file or clones. The fixture suite covers pull from bare remotes, scope with pull, and --write-snapshot instead.",
+          "Changes on purpose, named in the commit: (1) scope prints the human summary by default and --json gives the envelope. start-review.sh now passes --json, and SKILL.md says to read .result. (2) gaps takes <review-id> --repo --pr and reads .prs/<repo>-<pr>.json (current paths only), not gh. A missing facts file is refused with the gh command to run. (3) scope leaves a PR with no facts file out of List D and prints a stderr warning, where the Bash dropped it silently. The review skill's Step 0 now writes the facts before a refresh. (4) file-diff never calls gh: a missing or empty cache exits 1 with 'No cached diff at <path>; pipe gh pr diff in with --stdin', and the reviewer docs give the gh pr diff | --stdin fallback. (5) A spaced path in a diff header matches literally, not as an awk regex. (6) Repos and paths are sorted in code-point order, not locale order. (7) Usage text is tim's own, and still exits 1. (8) merge-resolved has no --tsv flag because TSV is the default text.",
+          "Callers updated beyond the row list: tools/review/start-review.sh:46 (exec tim ... --json), tools/review/prepare-review.sh comment, docs/agent-onboarding.md, tim/README.md. pr-facts.js gained readPrCurrentPaths. settings-followups.md has a P49 entry: nothing to remove, plus suggested gh allow rules."
+        ]
+      }
     },
     {
       "id": "P50",

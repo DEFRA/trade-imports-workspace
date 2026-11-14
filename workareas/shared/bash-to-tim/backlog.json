@@ -1552,14 +1552,44 @@
       ],
       "risk": "Medium. The branch step keeps track-the-remote behaviour, which differs from `tim build start`. .implement-meta.json loses `diffs`, which nothing reads. Other changes on purpose: prepare-implement no longer looks for prior pull requests, so its stdout loses the 'Checking for prior PRs...' and '  No prior PRs found' lines and the '.diffs/{repo}.diff (N PR(s))' Created line; IMPLEMENTOR.md caches each diff with gh search prs and gh pr diff instead. A ticket that is not EUDPA-* (or NO_JIRA for branch) and an unknown --type are tim USAGE errors and exit 2 instead of the scripts' 1, with tim's wording for the ticket refusal; a failed ticket fetch, a missing plan and a missing required option still exit 1. --json prints tim's {ok, result} envelope instead of the bare object: branch's result holds {ticket, repo, branch, base, head} plus repoDir, and prepare-plan's and prepare-implement's hold the meta under result.meta. A ticket whose Jira response has no labels field writes empty labels, where prepare-plan.sh stopped with a jq error and exit 5. Nothing checks for exit 1 and no caller passes --json: the only callers are PLANNER.md, IMPLEMENTOR.md and the onboarding deck, which run the commands plainly, and SKILL.md and docs/reference/tools-index.md only list the flag.",
       "proof": "Temp bare-origin fixtures for every branch path. Golden ticket.md, meta and bundles for prepare-plan. A live `diff -r` on one real ticket.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "fd8324ebfadddf0f5eb50e7cec297877072708b2"
+          },
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "c00653e68fdf2e6543db4258b2082db0397d8ad4"
+          },
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "1008b1e6bca49c3f172b6f3e87bf35489e7bb9cc"
+          }
+        ],
+        "checks": [
+          "Fixer: both of the verifier's problems are fixed by naming the changes in P31's `risk` in workareas/shared/bash-to-tim/backlog.json, as P30 did. This is in the new commit 1008b1e6. The code is unchanged.",
+          "Problem 1 (exit codes): the risk now says that a ticket that is not EUDPA-* (or NO_JIRA for branch) and an unknown --type are USAGE errors and exit 2, not the scripts' 1, with tim's wording for the ticket refusal. A failed ticket fetch, a missing plan (NOT_FOUND) and a missing required option still exit 1. I checked this against tim/src/commands/ticket/index.js:18, where only USAGE maps to 2.",
+          "Problem 2 (--json and other output): the risk now names three more changes. --json gives tim's {ok, result} envelope: branch adds repoDir, and the plan and implement metas sit under result.meta. A ticket with no labels field writes empty labels, where prepare-plan.sh stopped with a jq error and exit 5. prepare-implement's stdout loses 'Checking for prior PRs...', '  No prior PRs found' and the '.diffs/{repo}.diff (N PR(s))' Created line.",
+          "Evidence that nothing depends on these: git grep at 24a45726 and at HEAD finds the only callers in PLANNER.md, IMPLEMENTOR.md and the onboarding deck generator. All of them run the commands with no --json and do not check the exit code. SKILL.md and tools-index.md only list the flag. No JS workflow or JSON config outside tim/src and workareas calls them.",
+          "backlog.json still parses: jq reads back P31's new risk.",
+          "tim-unit: green. npm --prefix tim test gave 324 test files passed and 13 skipped; 5096 tests passed, 8 expected fail and 17 skipped.",
+          "tim-lint: npm --prefix tim run lint and run format:check both exit 0.",
+          "parity and no-callers: the code has not changed since c00653e6, and the golden parity tests are part of the green run."
+        ],
+        "deviations": [
+          "I added the fix as a new commit (1008b1e6) rather than amending the earlier commits. Following the P30 precedent, I fixed both problems by naming the changes in the row's risk, not by restoring the Bash exit codes or the bare --json output.",
+          "Besides what the verifier named, I added the dropped '.diffs/{repo}.diff (N PR(s))' Created line to the risk. It is part of the same removed prior-PR step.",
+          "Carried over from earlier: a missing required option is commander's message, still exit 1. fetchComments and fetchPages are reused from refine. The live parity run left gitignored files under workareas/ticket-planning/EUDPA-213/, which I could not remove."
+        ]
+      }
     },
     {
       "id": "P32",

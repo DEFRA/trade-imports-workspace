@@ -483,6 +483,32 @@ tim review reconcile EUDPA-1234 --repo trade-imports-stub --dry-run
   spot-check. `--json` gives the counts, the items added and the
   spot-check.
 
+```bash
+tim review refresh pull EUDPA-1234
+tim review refresh merge-resolved workareas/reviews/EUDPA-1234/repos/trade-imports-stub 1a2b3c4 5d6e7f8
+tim review refresh gaps EUDPA-1234 --repo trade-imports-stub --pr 42
+tim review refresh scope EUDPA-1234 --write-snapshot --json
+tim review file-diff src/Main.java --ticket EUDPA-1234 --repo trade-imports-stub
+gh pr diff 42 --repo DEFRA/trade-imports-stub | tim review file-diff src/Main.java --stdin
+```
+
+- `refresh pull` pins each review clone's fetch refspec to its pull
+  request (and main for a merged one), fetches, and detaches at
+  `origin/pr-<n>`, or `origin/main` for a merged pull request. It exits 1
+  when any repo fails.
+- `refresh merge-resolved` lists the files a merge commit in the window
+  lists under `# Conflicts:`, leaving out one the window leaves unchanged.
+- `refresh gaps` lists the files a pull request changes with no
+  `.review.json`, from `.prs/<repo>-<pr>.json`, which `gh` writes.
+- `refresh scope` pulls, then sorts the refresh into lists A (changed), B
+  (open items in unchanged files), C (merge-resolved) and D (gaps) per
+  repo. It prints a summary; `--json` gives the lists. `--write-snapshot`
+  records the window in `.review-meta.json` and clears the findings of
+  the files in lists A and C.
+- `file-diff` prints one file's blocks from the review's cached pull
+  request diff, `.diffs/<repo>.diff`, or from a diff piped in with
+  `--stdin`. It refuses when there is no cached diff.
+
 ### `tim ticket` — the ticket skill's helpers
 
 ```bash

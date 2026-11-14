@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, test } from 'vitest'
-import { prFactsPath, readPrFiles } from './pr-facts.js'
+import { prFactsPath, readPrCurrentPaths, readPrFiles } from './pr-facts.js'
 
 const folders = []
 
@@ -58,5 +58,20 @@ describe('#readPrFiles', () => {
     expect(() => readPrFiles({ reviewFolder, repo: 'repo', pr: 7 })).toThrow(
       expect.objectContaining({ code: 'PARSE' })
     )
+  })
+})
+
+describe('#readPrCurrentPaths', () => {
+  test('Should list each file by the path it has now, across every page', () => {
+    const reviewFolder = reviewFolderHolding([
+      [{ filename: 'b.js', previous_filename: 'a.js' }, { filename: 'c.js' }],
+      [{ filename: 'd.js' }]
+    ])
+
+    expect(readPrCurrentPaths({ reviewFolder, repo: 'repo', pr: 7 })).toEqual([
+      'b.js',
+      'c.js',
+      'd.js'
+    ])
   })
 })

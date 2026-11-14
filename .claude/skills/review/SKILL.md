@@ -165,6 +165,17 @@ beginning `Follow the instructions in ~/git/defra/trade-imports-workspace/.claud
 
 ## Step 0: Start the review
 
+On a refresh (`review-index.md` already exists), first write each PR's
+changed files again, so List D sees files added since the last run. Run
+one `gh api` per entry in `.review-meta.json`'s `prs`, from the
+workspace root:
+
+```bash
+gh api repos/DEFRA/{repo}/pulls/{pr}/files --paginate --slurp > workareas/reviews/EUDPA-XXXXX/.prs/{repo}-{pr}.json
+```
+
+Then start the review:
+
 ```bash
 ~/git/defra/trade-imports-workspace/tools/review/start-review.sh EUDPA-XXXXX
 ```
@@ -176,8 +187,8 @@ First line of output is `MODE: FRESH` or `MODE: REFRESH`. Branch on it:
 
 - `MODE: FRESH` → setup ran `prepare-review.sh`; go to Fresh Review,
   Step 2.
-- `MODE: REFRESH` → setup ran `refresh/scope.sh --write-snapshot`; go to
-  Refresh Review, Step R3.5.
+- `MODE: REFRESH` → setup ran `tim review refresh scope --write-snapshot --json`;
+  go to Refresh Review, Step R3.5.
 
 **Pin the head you review.** For each PR in `.review-meta.json`, read
 its current head:
@@ -584,8 +595,11 @@ after further work or merge conflicts.
 
 ## Step R1-R3: Refresh scope built (by Step 0)
 
-`start-review.sh` already ran `refresh/scope.sh --write-snapshot` and
-emitted a JSON object on stdout. Read it from there.
+`start-review.sh` already ran
+`tim review refresh scope EUDPA-XXXXX --write-snapshot --json` and printed
+its JSON envelope after the `MODE:` line. The scope is the envelope's
+`result`. A warning on stderr names any PR whose `.prs/` file is missing:
+List D leaves that PR out, so write it (Step 0) and run Step 0 again.
 
 Each `repos[]` entry has `prior_sha`, `current_sha`, `no_changes`,
 and `lists.{A,B,C,D}`:
@@ -593,7 +607,7 @@ and `lists.{A,B,C,D}`:
 - **List A** — `[{ file, old_sha, new_sha }]` — file changed in window, not merge-resolved
 - **List B** — `[{ id, file, line, issue, fix, disposition, status, ... }]` — open items whose file did *not* change
 - **List C** — `[{ file, merge_sha, old_sha, new_sha }]` — hand-resolved merge files (non-trivial resolution)
-- **List D** — `[{ file }]` — PR files lacking a `.review.md`
+- **List D** — `[{ file }]` — PR files lacking a `.review.json`
 
 `prior_sha` is the most recent re_review snapshot's `current_commit` that
 differs from today's HEAD; falls back to `prs[].commit` on the first
@@ -788,10 +802,17 @@ All under `~/git/defra/trade-imports-workspace/tools/review/`:
 | `prepare-review.sh` | Fresh Step 1 workspace setup; transitively seeds best-practices via `tim review detect-tech`, which reads `assets/routing.json` |
 | `prepare-review-local.sh` | Local mode setup — no Jira/GitHub; changed-file list from git, or the caller's `--files` |
 | `share-review.sh` | Fresh Step 7 — post the review as a PR comment; `--comment-only` for PRs you authored, otherwise also push handoff branch `chore/EUDPA-X` to the workspace remote |
-| `refresh/scope.sh` | Refresh Steps R1-R3 orchestrator |
-| `refresh/pull-repos.sh` | Refresh helper — pin PR-ref refspec, fetch + detach per repo (origin/main for merged PRs) |
-| `refresh/list-merge-resolved.sh` | Refresh helper — hand-resolved merge files (List C) |
-| `refresh/list-coverage-gaps.sh` | Refresh helper — PR files lacking a `.review.md` (List D) |
+
+The refresh helpers go through `tim review refresh` (`--json` puts the
+output in the envelope's `result`):
+
+| Command | Purpose |
+|---|---|
+| `tim review refresh scope EUDPA-XXXXX [--repo R] [--no-pull] [--write-snapshot]` | Refresh Steps R1-R3 — pull, then Lists A/B/C/D. Prints a summary; pass `--json` for the lists |
+| `tim review refresh pull EUDPA-XXXXX [--repo R]` | Pin PR-ref refspec, fetch + detach per repo (origin/main for merged PRs) |
+| `tim review refresh merge-resolved {repo-dir} {prior} {head}` | Hand-resolved merge files (List C) |
+| `tim review refresh gaps EUDPA-XXXXX --repo R --pr N` | PR files lacking a `.review.json` (List D), from `.prs/{repo}-{pr}.json` |
+| `tim review file-diff {file} --ticket EUDPA-XXXXX --repo R` | One file's hunks from the cached PR diff; `--stdin` filters a piped `gh pr diff` |
 
 The items ledger and the per-file review JSON go through `tim review`
 (`--json` puts the output in the envelope's `result`):

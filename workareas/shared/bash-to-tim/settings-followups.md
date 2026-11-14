@@ -95,3 +95,16 @@ skill's Step 3 now runs
 `gh api repos/DEFRA/{repo}/pulls/{pr}/files --paginate --slurp > ...`, which
 only `Bash(gh api user:*)` is allowed today, so it prompts: consider
 allowing `Bash(gh api repos/DEFRA/*/pulls/*/files:*)`.
+
+## P49
+
+None to remove. No allowlist entry names `pull-repos.sh`,
+`list-merge-resolved.sh`, `list-coverage-gaps.sh`, `refresh/scope.sh` or
+`file-diff.sh`; the generic `tools/**` rules (lines 63-64) still serve
+other folders. `Bash(tim:*)` covers `tim review refresh` and
+`tim review file-diff`. The review skill's Step 0 now also runs
+`gh api repos/DEFRA/{repo}/pulls/{pr}/files --paginate --slurp > ...` on a
+refresh, and FILE_REVIEWER/STYLE_FILE_REVIEWER fall back to
+`gh pr diff {pr} --repo DEFRA/{repo} | tim review file-diff {file} --stdin`
+when there is no cached diff: consider allowing
+`Bash(gh api repos/DEFRA/*/pulls/*/files:*)` and `Bash(gh pr diff:*)`.

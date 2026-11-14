@@ -35,7 +35,7 @@ epics included, goes through `tim jira create`.
 | **github** | | |
 | `tools/github/prs.sh` | EUDPA-X [list\|json\|urls] | Find PRs |
 | `tools/github/pr-details.sh` | repo pr-num [full\|files\|json] | PR details |
-| `tools/github/file-diff.sh` | repo pr-num file-path | PR diff filtered to one file |
+| `tim review file-diff` | file (--ticket EUDPA-X --repo R \| --stdin) [--json] | PR diff filtered to one file, from the review's cached `.diffs/{repo}.diff`, or a `gh pr diff` piped in with `--stdin` |
 | **confluence** | | |
 | `tools/confluence/page.sh` | page-id [summary\|json] | Get page |
 | `tools/confluence/sync-docs.sh` | [--dry-run] [--root-id ID] | Sync Confluence tree to docs/confluence/ |
@@ -56,11 +56,11 @@ epics included, goes through `tim jira create`.
 | `tim review items add` | EUDPA-X --repo R --file F --line L --severity S --category C --issue "..." --fix "..." [--best-practice PATH] [--json] | Append new item; prints new ID. C is a finding category |
 | `tim review items counts` | EUDPA-X [--repo R] [--json] | Summary by Disposition+Status |
 | `tim review items render` | EUDPA-X --repo R [--write] [--json] | Render `items.{repo}.json` as the `## Items` markdown view; `--write` puts it into `review.{repo}.md` in place of the old table; a fix's "Must:" and "One way:" parts get a column each |
-| `tools/review/refresh/scope.sh` | EUDPA-X [--repo R] [--no-pull] [--write-snapshot] [--human] | Refresh: pull + diff + lists A/B/C/D.<br>e.g. `tools/review/refresh/scope.sh EUDPA-1 --write-snapshot`<br>Boundary: read-only — classifies files into the refresh work-lists (vs `tim review reconcile`, which mutates `items.{repo}.json`). |
-| `tim review reconcile` | EUDPA-X --repo R [--dry-run] [--json] [--force] | Refresh Step R5 — fold `.review.json` findings into items.json + emit Fix+Done spot-check advisory.<br>e.g. `tim review reconcile EUDPA-1 --repo backend`<br>Boundary: runs after `scope.sh` and appends new findings into `items.{repo}.json` (vs `scope.sh`, which only lists them). |
-| `tools/review/refresh/pull-repos.sh` | EUDPA-X [--repo R] [--json] | Refresh helper |
-| `tools/review/refresh/list-merge-resolved.sh` | REPO_DIR PRIOR_SHA HEAD_SHA [--tsv\|--json] | Refresh helper |
-| `tools/review/refresh/list-coverage-gaps.sh` | REVIEW_DIR REPO PR_NUM [--tsv\|--json] | Refresh helper |
+| `tim review refresh scope` | EUDPA-X [--repo R] [--no-pull] [--write-snapshot] [--json] | Refresh: pull + diff + lists A/B/C/D. Prints a summary; `--json` gives the lists.<br>e.g. `tim review refresh scope EUDPA-1 --write-snapshot --json`<br>Boundary: classifies files into the refresh work-lists; `--write-snapshot` records the window and clears the findings of files to review again (vs `tim review reconcile`, which mutates `items.{repo}.json`). |
+| `tim review reconcile` | EUDPA-X --repo R [--dry-run] [--json] [--force] | Refresh Step R5 — fold `.review.json` findings into items.json + emit Fix+Done spot-check advisory.<br>e.g. `tim review reconcile EUDPA-1 --repo backend`<br>Boundary: runs after `tim review refresh scope` and appends new findings into `items.{repo}.json` (vs `tim review refresh scope`, which only lists them). |
+| `tim review refresh pull` | EUDPA-X [--repo R] [--json] | Refresh helper: pin each review clone to its PR, fetch and detach |
+| `tim review refresh merge-resolved` | REPO_DIR PRIOR_SHA HEAD_SHA [--json] | Refresh helper: hand-resolved merge files |
+| `tim review refresh gaps` | EUDPA-X --repo R --pr N [--json] | Refresh helper: PR files with no `.review.json`, from `.prs/{repo}-{pr}.json` written by `gh api repos/DEFRA/{repo}/pulls/{pr}/files --paginate --slurp` |
 | **style** | | |
 | `tools/style/start-style.sh` | EUDPA-X | Step 0 — detect FRESH/REFRESH and exec the appropriate setup script |
 | `tools/style/prepare-style.sh` | EUDPA-X [--json] | Fresh Step 1 — init `.style.json` placeholders + per-repo rules bundle |

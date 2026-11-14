@@ -1,8 +1,8 @@
 #!/bin/bash
 # Build the four refresh work-lists (A/B/C/D) for a code-style review
 # in one shot, filtered to reviewable source files (any path that file-topics.sh
-# maps to >= 1 topic). Mirrors review-side scope.sh but writes snapshots to
-# .style-meta.json#re_reviews[] and reuses review-side helpers for git plumbing
+# maps to >= 1 topic). Mirrors `tim review refresh scope` but writes snapshots to
+# .style-meta.json#re_reviews[] and reuses `tim review refresh` for git plumbing
 # (the cloned repos live under workareas/reviews/$TICKET/repos regardless of
 # which review surface is being refreshed).
 #
@@ -26,9 +26,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-REVIEW_REFRESH_DIR="$HOME/git/defra/trade-imports-workspace/tools/review/refresh"
-PULL_SH="$REVIEW_REFRESH_DIR/pull-repos.sh"
-MERGE_SH="$REVIEW_REFRESH_DIR/list-merge-resolved.sh"
+WORKSPACE_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 FILE_TOPICS="$SCRIPT_DIR/../file-topics.sh"
 
 TICKET=""
@@ -80,7 +78,7 @@ STYLE_META="$STYLE_DIR/.style-meta.json"
 if [[ "$DO_PULL" == "true" ]]; then
     pull_args=( "$TICKET" )
     [[ -n "$REPO_FILTER" ]] && pull_args+=( --repo "$REPO_FILTER" )
-    "$PULL_SH" "${pull_args[@]}" >&2 || { echo "Pull failed" >&2; exit 1; }
+    tim --workspace "$WORKSPACE_ROOT" review refresh pull "${pull_args[@]}" >&2 || { echo "Pull failed" >&2; exit 1; }
 fi
 
 # ---- Step 2: per-repo scope --------------------------------------------
@@ -149,7 +147,7 @@ for repo in "${repos[@]}"; do
     if [[ "$no_changes" == "true" ]]; then
         merge_resolved_source=""
     else
-        merge_resolved_full=$("$MERGE_SH" "$repo_dir" "$prior_sha" "$current_sha" --tsv || true)
+        merge_resolved_full=$(tim --workspace "$WORKSPACE_ROOT" review refresh merge-resolved "$repo_dir" "$prior_sha" "$current_sha" || true)
         merge_resolved_source=""
         while IFS= read -r mrow; do
             [[ -z "$mrow" ]] && continue
@@ -161,7 +159,7 @@ for repo in "${repos[@]}"; do
     fi
 
     # Coverage gaps: PR source files lacking a `.style.json`. Inline check (no
-    # equivalent of list-coverage-gaps.sh — review uses .review.json, style uses
+    # equivalent of `tim review refresh gaps` — review uses .review.json, style uses
     # .style.json under file-reviews/{repo}/).
     coverage_gaps=""
     if pr_files=$(gh pr view "$pr_number" --repo "DEFRA/$repo" --json files --jq '.files[].path' 2>/dev/null); then

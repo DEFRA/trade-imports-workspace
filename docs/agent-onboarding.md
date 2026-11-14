@@ -199,7 +199,7 @@ tim workspace pin-fetch . --exclude-gh-pages --prune
 Per-ticket review clones under `workareas/` are pinned automatically to
 their pull request (`tim workspace pin-fetch <dir> --pr <number>`) by
 `tools/review/prepare-review.sh`, and self-healed on refresh by
-`tools/review/refresh/pull-repos.sh`.
+`tim review refresh pull`.
 
 The dev repos under `repos/` are handled for you: `tim workspace setup` clones with the exclusion in
 place (`--single-branch`, pin the refspec, then a widening fetch), and

@@ -6,7 +6,7 @@
 #        start-review.sh --local REPO BRANCH [--files F1,F2,...] [--json]
 #
 # FRESH (no prior review): runs prepare-review.sh.
-# REFRESH (review-index.md exists): runs refresh/scope.sh --write-snapshot.
+# REFRESH (review-index.md exists): runs tim review refresh scope --write-snapshot --json.
 #
 # --local (a branch key instead of a ticket — "review this branch", or the
 # programmatic `REPO:BRANCH` form) skips Jira and GitHub entirely: it always
@@ -43,7 +43,7 @@ REVIEW_DIR="$ROOT/workareas/reviews/$TICKET"
 if [[ -f "$REVIEW_DIR/review-index.md" ]]; then
     echo "MODE: REFRESH"
     echo
-    exec "$ROOT/tools/review/refresh/scope.sh" "$TICKET" --write-snapshot "$@"
+    exec tim --workspace "$ROOT" review refresh scope "$TICKET" --write-snapshot --json "$@"
 else
     echo "MODE: FRESH"
     echo

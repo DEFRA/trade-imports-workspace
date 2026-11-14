@@ -133,7 +133,7 @@ In REFRESH / MERGE_RESOLVED only, additionally:
 
    Net: in REFRESH, your `.review.json` should contain only deltas —
    regressions and net-new findings. Often it's empty (verdict SAFE,
-   no findings), and that's correct. `refresh/scope.sh --write-snapshot`
+   no findings), and that's correct. `tim review refresh scope --write-snapshot`
    already clears the prior `todos` array for files in Lists A and C
    before you run, so any todos in your `.review.json` at the end are
    genuinely new.
@@ -146,14 +146,19 @@ In REFRESH / MERGE_RESOLVED only, additionally:
 ### 3. Get the file-scoped diff
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/github/file-diff.sh {repo} {pr-number} {file-path} --ticket EUDPA-XXXXX
+tim review file-diff {file-path} --ticket EUDPA-XXXXX --repo {repo}
 ```
 
 Returns only the hunks for your file — don't fetch the whole PR diff.
 `--ticket` makes it read from the workspace's cached PR diff
 (`workareas/reviews/EUDPA-XXXXX/.diffs/{repo}.diff`) instead of
 hitting the GitHub API, which matters when 100 reviewers run in
-parallel.
+parallel. If it refuses with `No cached diff`, filter the PR diff
+instead:
+
+```bash
+gh pr diff {pr-number} --repo DEFRA/{repo} | tim review file-diff {file-path} --stdin
+```
 
 In MERGE_RESOLVED mode the prompt also gives you `old_sha` / `new_sha`;
 the resolution delta is:

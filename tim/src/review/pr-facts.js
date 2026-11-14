@@ -50,7 +50,27 @@ const pagesOf = (facts) =>
  * @returns {string[]}
  * @throws {TimError} NOT_FOUND when the facts file is missing; PARSE when it does not hold the pull request's files
  */
-export const readPrFiles = ({ reviewFolder, repo, pr }) => {
+export const readPrFiles = ({ reviewFolder, repo, pr }) =>
+  readChangedFiles({ reviewFolder, repo, pr }).flatMap(
+    ({ filename, previous_filename: previousFilename }) =>
+      previousFilename ? [filename, previousFilename] : [filename]
+  )
+
+/**
+ * The path each file a pull request changes has now, from the same facts
+ * file as {@link readPrFiles}, in the order it lists them.
+ *
+ * @param {object} args
+ * @param {string} args.reviewFolder - From `reviewDir`
+ * @param {string} args.repo
+ * @param {number | string} args.pr
+ * @returns {string[]}
+ * @throws {TimError} NOT_FOUND when the facts file is missing; PARSE when it does not hold the pull request's files
+ */
+export const readPrCurrentPaths = ({ reviewFolder, repo, pr }) =>
+  readChangedFiles({ reviewFolder, repo, pr }).map(({ filename }) => filename)
+
+const readChangedFiles = ({ reviewFolder, repo, pr }) => {
   const path = prFactsPath(reviewFolder, repo, pr)
   if (!existsSync(path)) {
     throw new TimError(
@@ -65,9 +85,5 @@ export const readPrFiles = ({ reviewFolder, repo, pr }) => {
       `${path} does not hold the changed files of ${repo}#${pr}. Write it again with:\n  ${prFactsCommand(reviewFolder, repo, pr)}`
     )
   }
-  return pagesOf(parsed.data)
-    .flat()
-    .flatMap(({ filename, previous_filename: previousFilename }) =>
-      previousFilename ? [filename, previousFilename] : [filename]
-    )
+  return pagesOf(parsed.data).flat()
 }

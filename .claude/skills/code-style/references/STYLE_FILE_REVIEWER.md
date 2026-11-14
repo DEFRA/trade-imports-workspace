@@ -121,8 +121,11 @@ win.
 ### 3a. FRESH mode — get the file diff (cached)
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/github/file-diff.sh {repo} {pr-number} {file} --ticket EUDPA-XXXXX
+tim review file-diff {file} --ticket EUDPA-XXXXX --repo {repo}
 ```
+
+If it refuses with `No cached diff`, filter the PR diff instead:
+`gh pr diff {pr-number} --repo DEFRA/{repo} | tim review file-diff {file} --stdin`.
 
 `--ticket` reads from the diff cache populated by `prepare-review.sh`
 (`workareas/reviews/EUDPA-XXXXX/.diffs/{repo}.diff`), filtered to your

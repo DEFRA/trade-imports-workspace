@@ -331,7 +331,7 @@ for ((i=0; i<pr_count; i++)); do
         fi
 
         # Cache the full PR diff at a known path so consumers
-        # (file-diff.sh, consistency review, orchestrator) read from
+        # (tim review file-diff, consistency review, orchestrator) read from
         # disk instead of each calling `gh pr diff` again.
         mkdir -p "$REVIEW_DIR/.diffs"
         gh pr diff "$pr_number" --repo "DEFRA/$repo_name" > "$REVIEW_DIR/.diffs/$repo_name.diff" 2>/dev/null || true

@@ -28,7 +28,7 @@ first. Stop.
 ## Step 2: Present a status snapshot
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/govuk/list-plans.sh --run-id {run-id}
+tim govuk plans --run-id {run-id}
 ```
 
 Report verbatim, then ask: "Phase 1 complete. Proceed to Phase 2

@@ -42,3 +42,10 @@ None. No allowlist entry names `tools/understanding-check/`, and the
 folder is now gone. `Bash(tim:*)` covers `tim understanding-check start`
 and `prepare`; the skill's `gh search prs`, `gh pr view` and `gh pr diff`
 calls need whatever `gh` permission the session already has.
+
+## P43
+
+None. No allowlist entry names `tools/govuk/list-plans.sh`,
+`upgrade-status.sh`, `list-plan-summaries.sh` or
+`render-version-plan.sh`; the generic `tools/**` entries cover the
+scripts left in `tools/govuk/`, and `Bash(tim:*)` covers `tim govuk`.

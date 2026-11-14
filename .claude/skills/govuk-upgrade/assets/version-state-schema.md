@@ -1,8 +1,8 @@
 # Per-repo govuk-upgrade version state — schema
 
 The canonical state for a govuk-frontend upgrade run is one JSON file
-per in-scope repo. Progress is read out via `upgrade-status.sh` /
-`list-plans.sh`, both of which query this JSON.
+per in-scope repo. Progress is read out via `tim govuk plans`, which
+queries this JSON.
 
 ## Location
 
@@ -82,16 +82,21 @@ with no commit SHA so the version disappears from the pending list.
 | `version-add-change.sh` | Append a `{file, why, change}` entry to `changes[]` for a `todo`-classified version. |
 | `version-mark-implemented.sh` | Set `implementation_status = "done"`, stamp `implemented_at`, record `commit_sha`. |
 | `version-mark-failed.sh` | Set `implementation_status = "failed"`, stamp `implemented_at`, record `failure_reason`. |
-| `render-version-plan.sh` | Render one version's plan as markdown from the JSON (read-only view). |
-| `list-plans.sh` | Filterable status view of `versions[]` (Phase 1/2 lens). |
-| `upgrade-status.sh` | Combined Phase 1/2/3 status view of `versions[]`. |
+
+The read-only views are in tim:
+
+| Command | Purpose |
+|---|---|
+| `tim govuk render-plan` | Render one version's plan as markdown from the JSON. |
+| `tim govuk plans` | Filterable status view of `versions[]`: classification and implementation. |
+| `tim govuk summaries` | One row per version still to apply that is not a noop (the walker's work list). |
 
 All mutating helpers use `> tmp && mv` for atomicity. Single
 mutation surface — never `jq -i` or hand-edit the JSON.
 
 ## Filtering vocabulary
 
-`list-plans.sh` and `upgrade-status.sh` accept `--filter` with the
+`tim govuk plans` accepts `--filter` with the
 following values, derived from the two columns:
 
 | `--filter` | Predicate over a `versions[]` entry |

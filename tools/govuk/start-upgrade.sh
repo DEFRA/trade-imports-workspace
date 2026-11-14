@@ -115,7 +115,7 @@ done
 
 echo
 echo "=== START COMPLETE ==="
-"$HOME/git/defra/trade-imports-workspace/tools/govuk/list-plans.sh" --run-id "$RUN_ID"
+tim govuk plans --run-id "$RUN_ID"
 
 # Step 4: security pre-flight. Surface HIGH/CRITICAL npm advisories per
 # repo before any upgrade work. Report-and-warn only — `npm audit fix`

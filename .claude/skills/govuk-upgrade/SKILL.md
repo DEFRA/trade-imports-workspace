@@ -37,7 +37,7 @@ use the `npm-upgrade` skill.
 | "continue govuk EUDPA-XXX" | Resume mid-run | Re-enter at the next gate (Phase 2 / walker / Phase 3) |
 | "walk govuk EUDPA-XXX" | Batch-triage pending plans | `references/PLAN_WALKER.md` |
 | "implement govuk EUDPA-XXX" / "apply govuk EUDPA-XXX" | Run Phase 3 | `references/PHASE_3_MANAGER.md` |
-| "govuk status EUDPA-XXX" | Status snapshot | `tools/govuk/upgrade-status.sh --run-id EUDPA-XXX` |
+| "govuk status EUDPA-XXX" | Status snapshot | `tim govuk plans --run-id EUDPA-XXX` |
 
 ## Repos in scope
 
@@ -166,5 +166,9 @@ Scripts (`~/git/defra/trade-imports-workspace/tools/govuk/`):
 - `version-classify.sh` / `version-add-change.sh` — VERSION_PLANNER's mutation surface for `versions.{repo}.json`.
 - `apply-version.sh` — Phase 3 per-version: update package.json, `npm install`, `npm test`, commit, mark implemented (last action).
 - `version-mark-implemented.sh` / `version-mark-failed.sh` — state transitions used by `apply-version.sh`.
-- `render-version-plan.sh` — read-only markdown view of one version's plan.
-- `list-plans.sh` / `upgrade-status.sh` — filterable status views of the canonical JSON.
+
+Read-only views of the canonical JSON, in tim:
+
+- `tim govuk plans` — filterable status view: each repo's counts and versions (`--filter`, `--sort-semver`, `--json`).
+- `tim govuk summaries` — the walker's work list: one row per version still to apply that is not a noop.
+- `tim govuk render-plan` — markdown view of one version's plan.

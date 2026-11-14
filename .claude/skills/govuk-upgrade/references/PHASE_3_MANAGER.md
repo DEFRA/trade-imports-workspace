@@ -19,7 +19,7 @@ package.json / install / test / commit / state-transition cycle to
 ## Step 1: Snapshot work
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/govuk/upgrade-status.sh --run-id {run-id}
+tim govuk plans --run-id {run-id}
 ```
 
 If `Todo: 0 Failed: 0`: report "Nothing to implement. Phase 3 complete."
@@ -35,19 +35,18 @@ jq -r '.repos[]' ~/git/defra/trade-imports-workspace/workareas/govuk-upgrades/{r
 For each repo, list pending versions in semver order:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/govuk/upgrade-status.sh \
-  --run-id {run-id} --repo {repo-name} --filter pending --sort-semver --json
+tim govuk plans --run-id {run-id} --repo {repo-name} --filter pending --sort-semver --json
 ```
 
-For each pending entry in that order:
+For each entry of the envelope's `result.repos[0].versions`, in that
+order:
 
 ### 2a. Make source-file changes
 
 Read the plan (renders the JSON entry as markdown):
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/govuk/render-version-plan.sh \
-  --run-id {run-id} --repo {repo-name} --version {version}
+tim govuk render-plan --run-id {run-id} --repo {repo-name} --govuk-version {version}
 ```
 
 Apply every change listed under `## Changes Required` to the files
@@ -82,7 +81,7 @@ repo**. Do not proceed to its next pending version.
 ## Step 3: Report
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/govuk/upgrade-status.sh --run-id {run-id}
+tim govuk plans --run-id {run-id}
 ```
 
 ```

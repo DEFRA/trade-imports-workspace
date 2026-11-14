@@ -355,6 +355,33 @@ tim understanding-check report EUDPA-123
 - Every refusal, a usage error included, exits 1, so it never reads as
   high-risk.
 
+### `tim govuk` — read a govuk-frontend upgrade run
+
+```bash
+tim govuk plans --run-id EUDPA-264
+tim govuk plans --run-id EUDPA-264 --repo trade-imports-animals-frontend --filter pending --sort-semver --json
+tim govuk summaries --run-id EUDPA-264 --json
+tim govuk render-plan --run-id EUDPA-264 --repo trade-imports-animals-frontend --govuk-version 5.9.1
+```
+
+- State lives in `workareas/govuk-upgrades/<run>/<repo>/versions.<repo>.json`
+  of the workspace tim runs in. Every command only reads.
+- `plans` prints each repo's counts (unplanned, todo, noop, done, failed)
+  and its versions, then the totals. `--filter` lists only the versions
+  that are `unplanned` (not classified), `todo` (classified todo, not
+  applied), `noop`, `done`, `failed` or `pending` (not applied); the
+  counts always cover every version. `--sort-semver` orders versions by
+  their first three numeric parts. `--json` gives `run_id`, `repos` and
+  `summary` as the result.
+- `summaries` prints one tab-separated line per version that is not
+  applied and is not a noop: repo, version, classification (`unplanned`
+  when not classified), number of changes and summary, sorted by repo and
+  then version. A run with no state files prints nothing.
+- `render-plan` prints one version's plan as markdown, ending with its
+  pre-baked changelog section. `--json` gives `{markdown}`. It takes
+  `--govuk-version`, because `--version` prints tim's own version.
+- A missing `render-plan` option exits 2; every other refusal exits 1.
+
 ### `tim capture` — photograph a running app
 
 Runs an app's own FIT suite with Playwright tracing on, keeps the traces under

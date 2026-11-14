@@ -108,10 +108,9 @@ epics included, goes through `tim jira create`.
 | `tools/govuk/apply-version.sh` | --run-id TICKET --repo R --version V [--final] | Phase 3 per-version: package.json + install + test + commit + mark-implemented |
 | `tools/govuk/version-mark-implemented.sh` | --run-id TICKET --repo R --version V [--commit SHA] | Phase 3: mark version applied |
 | `tools/govuk/version-mark-failed.sh` | --run-id TICKET --repo R --version V --reason "..." | Phase 3: mark version failed |
-| `tools/govuk/render-version-plan.sh` | --run-id TICKET --repo R --version V | Markdown view of one version's plan |
-| `tools/govuk/list-plan-summaries.sh` | --run-id TICKET [--repo R] [--json] | PLAN_WALKER: one summary row per pending version |
-| `tools/govuk/list-plans.sh` | --run-id TICKET [--repo R] [--filter F] [--sort-semver] [--json] | Filterable Phase 1/2 status.<br>e.g. `tools/govuk/list-plans.sh --run-id EUDPA-1 --filter todo`<br>Boundary: Phase 1/2 planning/classification view only (vs `upgrade-status.sh`, which also folds in the Phase 3 implementation view). |
-| `tools/govuk/upgrade-status.sh` | --run-id TICKET [--repo R] [--filter F] [--sort-semver] [--json] | Combined Phase 1/2/3 status (delegates to list-plans.sh).<br>e.g. `tools/govuk/upgrade-status.sh --run-id EUDPA-1 --filter done`<br>Boundary: combined planning + Phase 3 implementation view (vs `list-plans.sh`, which stops at Phase 1/2 classification). |
+| `tim govuk render-plan` | --run-id TICKET --repo R --govuk-version V [--json] | Markdown view of one version's plan (`--json`: `result.markdown`) |
+| `tim govuk summaries` | --run-id TICKET [--repo R] [--json] | PLAN_WALKER: one summary row per version still to apply that is not a noop (`--json`: the rows are `result`) |
+| `tim govuk plans` | --run-id TICKET [--repo R] [--filter F] [--sort-semver] [--json] | Filterable status of every version, classification and implementation.<br>e.g. `tim govuk plans --run-id EUDPA-1 --filter pending --sort-semver --json` (the object is `result`) |
 | **ticket** | | |
 | `tools/ticket/prepare-plan.sh` | EUDPA-X [--repos r1,r2] [--json] | Pre-bake `ticket.md` + `.plan-meta.json` + per-repo `best-practices/<repo>.md` for PLANNER |
 | `tools/ticket/prepare-implement.sh` | EUDPA-X [--repo R] [--json] | Assert plan, re-validate detect-tech, cache prior PR diff, emit `.implement-meta.json` |

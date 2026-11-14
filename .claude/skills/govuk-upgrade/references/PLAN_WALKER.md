@@ -17,10 +17,11 @@ underlying JSON: `assets/version-state-schema.md`.
 ## Step 1: Load the work list
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/govuk/list-plan-summaries.sh --run-id EUDPA-XXXXX --json
+tim govuk summaries --run-id EUDPA-XXXXX --json
 ```
 
-Apply `--repo {repo}` from the trigger if the user filtered.
+Apply `--repo {repo}` from the trigger if the user filtered. The rows
+are the envelope's `result` array.
 
 The list excludes `noop` (already handled) and `done`/`failed`
 (already terminal). It includes:
@@ -131,8 +132,7 @@ For each row marked `D`, in input order:
 
 1. **Render the plan:**
    ```bash
-   ~/git/defra/trade-imports-workspace/tools/govuk/render-version-plan.sh \
-     --run-id EUDPA-XXXXX --repo {repo} --version {version}
+   tim govuk render-plan --run-id EUDPA-XXXXX --repo {repo} --govuk-version {version}
    ```
    This prints the JSON plan as markdown including the pre-baked
    changelog section.
@@ -159,7 +159,7 @@ Move to the next Discuss row.
 Re-print the work list so the user can see what changed:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/govuk/list-plans.sh --run-id EUDPA-XXXXX
+tim govuk plans --run-id EUDPA-XXXXX
 ```
 
 Then the summary:

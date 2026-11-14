@@ -19,7 +19,14 @@ const orEmpty = (value) => (isAbsent(value) ? '' : value)
 export const textOf = (value) =>
   typeof value === 'string' ? value : (JSON.stringify(value) ?? 'null')
 
-const escapeCell = (value) =>
+/**
+ * A value as a markdown table cell: as {@link textOf} shows it, with each
+ * pipe as `\|` and each newline as a space.
+ *
+ * @param {any} value
+ * @returns {string}
+ */
+export const escapeCell = (value) =>
   textOf(value).replaceAll('|', '\\|').replaceAll('\n', ' ')
 
 const trimWhitespace = (text) => text.replace(/^\s+/, '').replace(/\s+$/, '')

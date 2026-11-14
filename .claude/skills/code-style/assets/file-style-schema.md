@@ -47,7 +47,7 @@ FAIL / WARN counts derive from `todos` — not stored.
 A style finding is a code-quality or design finding, so `category` is
 one of the code-quality or design categories the review skill and the
 build loop's verifier use (`tools/review/finding-categories.sh`).
-`file-style-add-item.sh` refuses any other word, including the
+`tim style file add` refuses any other word, including the
 functional ones.
 
 | Category | Use for |
@@ -71,15 +71,16 @@ wrong. A design finding is marked Discuss, for the designer.
    `file-style-init.sh`. `verdict: null`, `todos: []`,
    `reviewed_at: null`.
 2. **Reviewer adds todos** — each finding goes in via
-   `file-style-add-item.sh` (auto-assigns next `id`, handles
+   `tim style file add` (auto-assigns next `id`, handles
    escaping).
 3. **Reviewer sets verdict** — final call via
-   `file-style-set-verdict.sh` (stamps `reviewed_at`).
+   `tim style file verdict` (stamps `reviewed_at`).
 4. **Coverage gate** — `tim review verify style` looks for
    `.verdict != null` per file.
-5. **Aggregation** — `aggregate-file-reviews.sh` reads all JSONs
+5. **Aggregation** — `tim style aggregate` reads all JSONs
    for a repo and writes `items.{repo}.json` (canonical consolidated
-   store) plus emits the markdown table view via `render-items.sh`.
+   store) plus emits the markdown table view, which
+   `tim style items render` also prints.
 6. **Refresh** — overwrites the JSON in place with the latest mode's
    findings. The reconciler folds new findings into the consolidated
    items file and uses `reconciled_at` as an idempotency marker.

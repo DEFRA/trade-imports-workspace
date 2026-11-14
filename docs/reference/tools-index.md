@@ -65,18 +65,18 @@ epics included, goes through `tim jira create`.
 | `tools/style/prepare-style.sh` | EUDPA-X [--json] | Fresh Step 1 — init `.style.json` placeholders + per-repo rules bundle |
 | `tools/style/file-topics.sh` | PATH | Pure path→topic router; reads `.claude/skills/code-style/assets/routing.json` |
 | `tools/style/bake-rules-bundle.sh` | EUDPA-X REPO TOPIC | Bundles TOPIC's files (from `.claude/skills/code-style/assets/routing.json`) into `style-rules.{repo}.{topic}.md` |
-| `tools/style/aggregate-file-reviews.sh` | EUDPA-X --repo R [--write-items] [--section ...] [--json] | Write `items.{repo}.json` from per-file `.style.json` + emit markdown sections |
-| `tools/style/render-items.sh` | EUDPA-X --repo R | Render `items.{repo}.json` as the `## Items` markdown view, through `items-table.jq` (the table `aggregate-file-reviews.sh` also writes) |
-| `tools/style/style-items.sh` | EUDPA-X [--repo R] [--file F] [--filter ...] [--status ...] [--by-file] [--json] | List items |
-| `tools/style/style-mark.sh` | EUDPA-X --repo R --item N --disposition V [--note "..."] | Set Disposition |
-| `tools/style/style-set-status.sh` | EUDPA-X --repo R --item N --status V [--note "..."] | Set Status only |
-| `tools/style/style-add-item.sh` | EUDPA-X --repo R --file F --line L --rule R --severity S --issue "..." --fix "..." [--category C] [--best-practice PATH] | Append new item. C, when given, is a code-quality category |
-| `tools/style/style-counts.sh` | EUDPA-X [--repo R] [--json] | Summary by Disposition+Status |
+| `tim style aggregate` | EUDPA-X --repo R [--write-items] [--section ...] [--json] | Write `items.{repo}.json` from per-file `.style.json` + emit markdown sections |
+| `tim style items render` | EUDPA-X --repo R | Render `items.{repo}.json` as the `## Items` markdown view (the table `tim style aggregate` also writes) |
+| `tim style items list` | EUDPA-X [--repo R] [--file F] [--filter ...] [--status ...] [--by-file] [--json] | List items |
+| `tim style items mark` | EUDPA-X --repo R --item N --disposition V [--note "..."] | Set Disposition |
+| `tim style items status` | EUDPA-X --repo R --item N --status V [--note "..."] | Set Status only |
+| `tim style items add` | EUDPA-X --repo R --file F --line L --rule R --severity S --issue "..." --fix "..." [--category C] [--best-practice PATH] | Append new item. C, when given, is a code-quality or design category |
+| `tim style items counts` | EUDPA-X [--repo R] [--json] | Summary by Disposition+Status |
 | `tools/style/file-style-init.sh` | EUDPA-X --repo R --file F --commit SHA --pr N --mode M | Initialise per-file `.style.json` placeholder |
-| `tools/style/file-style-add-item.sh` | EUDPA-X --repo R --file F --line L --rule R --category C --severity S --issue "..." --fix "..." [--best-practice PATH] | Append a finding to a per-file `.style.json`. C is a code-quality category from `tools/review/finding-categories.sh`; any other is refused |
-| `tools/style/file-style-set-verdict.sh` | EUDPA-X --repo R --file F --verdict V [--reason "..."] | Set per-file verdict (marks file as reviewed) |
+| `tim style file add` | EUDPA-X --repo R --file F --line L --rule R --category C --severity S --issue "..." --fix "..." [--best-practice PATH] | Append a finding to a per-file `.style.json`. C is a code-quality or design category; any other is refused |
+| `tim style file verdict` | EUDPA-X --repo R --file F --verdict V [--reason "..."] | Set per-file verdict (marks file as reviewed) |
 | `tools/style/refresh/scope.sh` | EUDPA-X [--repo R] [--no-pull] [--write-snapshot] [--human] | Refresh, filtered to `.js` |
-| `tools/style/refresh/reconcile.sh` | EUDPA-X --repo R [--dry-run] [--json] [--force] | Refresh Step R5 — fold `.style.json` findings into items.json + emit Fix+Done spot-check advisory |
+| `tim style reconcile` | EUDPA-X --repo R [--dry-run] [--force] [--json] | Refresh Step R5 — fold `.style.json` findings into items.json + emit Fix+Done spot-check advisory |
 | **npm** | | |
 | `tools/npm/start-upgrade.sh` | EUDPA-X --phase 0\|1\|2\|3\|4 [--repo R ...] [--strategy LEVEL] [--branch NAME] [--allowlist-owner NAME --expiry-days N] | Single dispatcher — phase 0 audits every repo (gates phase 1), phase 1 discovers + emits PACKAGE_PLANNER spawn manifest, phase 2 fans out per-repo runners, phase 3 emits WALKER handoff (with allowlist, audits and held packages), phase 4 resets overrides per repo. `--branch` refuses to run if any repo is on another branch; a repo with no `package.json` is skipped |
 | `tools/npm/audit-baseline.sh` | --run-id TICKET --repo R [--label L] [--repo-path PATH] | Run the repo's audit-ci check; save the npm audit report; print failing / allowlisted / stale / fixable_allowlisted advisories and which have a fixed version. Exit 1 if red or an allowlisted advisory now has a fix |

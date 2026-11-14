@@ -5,6 +5,7 @@ import { TimError } from '../errors.js'
 import { utcSeconds } from './aggregate.js'
 import { encodeFilePath, reviewDir } from './paths.js'
 import { readPrFiles } from './pr-facts.js'
+import { fileStylePath, styleDir } from '../style/paths.js'
 
 const PERCENT = 100
 
@@ -357,12 +358,7 @@ export const verifyStyleCoverage = ({
   now = () => new Date()
 }) => {
   refuseMissingReviewId(reviewId, 'style')
-  const folder = join(
-    workspaceRoot,
-    'workareas',
-    'code-style-reviews',
-    reviewId
-  )
+  const folder = styleDir(workspaceRoot, reviewId)
   if (!isFolder(folder)) {
     throw refuse(
       `Code style review directory not found: ${folder}. Run CODE_STYLE_REVIEWER step 1-3 first.`
@@ -379,9 +375,7 @@ export const verifyStyleCoverage = ({
   const entries = (meta.source_files ?? []).map(({ repo, path }) => ({
     repo,
     path,
-    status: verdictStatusOf(
-      join(fileReviewsFolder, repo, `${encodeFilePath(path)}.style.json`)
-    )
+    status: verdictStatusOf(fileStylePath(folder, repo, path))
   }))
   const verificationPath = join(fileReviewsFolder, '_STYLE_VERIFICATION.md')
   const verified = fileProgressResult({

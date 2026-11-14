@@ -5,21 +5,36 @@ import { TimError } from '../errors.js'
 import {
   fileReviewPathsIn,
   hasBeenReviewed,
+  refuseMissingTicketOrRepo,
   stampReconciled,
   utcSeconds
 } from './aggregate.js'
 import { textOf } from './items-table.js'
-import { addReviewItem } from './items-ledger.js'
+import { addReviewItem, isAbsent } from './items-ledger.js'
 import { itemsFilePath, reviewDir } from './paths.js'
 
 const DRY_RUN_ID = '(dry-run)'
 
-const usage = (message) => new TimError('USAGE', message)
+/**
+ * A value as `$(jq -r ...)` captures it: text as it is, anything else as
+ * JSON, without trailing newlines.
+ *
+ * @param {any} value
+ * @returns {string}
+ */
+export const shownAsShell = (value) => textOf(value).replace(/\n+$/, '')
 
-const shownAsShell = (value) => textOf(value).replace(/\n+$/, '')
+/**
+ * A value as `$(jq -r '.x // empty')` captures it: empty when jq's `//`
+ * passes over it.
+ *
+ * @param {any} value
+ * @returns {string}
+ */
+export const shownAsShellOrEmpty = (value) =>
+  isAbsent(value) ? '' : shownAsShell(value)
 
-const timestampOf = (value) =>
-  value === null || value === undefined || value === false ? '' : textOf(value)
+const timestampOf = (value) => (isAbsent(value) ? '' : textOf(value))
 
 const needsReconciling = (review, { force }) => {
   const reconciledAt = timestampOf(review.reconciled_at)
@@ -44,24 +59,6 @@ const partitionReviews = (paths, { force }) =>
     { toProcess: [], alreadyDone: [], unreviewed: [] }
   )
 
-const findingOf = (filePath, todo) => {
-  const bestPractice = todo.best_practice
-  return {
-    file: filePath,
-    line: shownAsShell(todo.line),
-    severity: shownAsShell(todo.severity),
-    category: shownAsShell(todo.category),
-    issue: shownAsShell(todo.issue),
-    fix: shownAsShell(todo.fix),
-    bestPractice:
-      bestPractice === null ||
-      bestPractice === undefined ||
-      bestPractice === false
-        ? ''
-        : shownAsShell(bestPractice)
-  }
-}
-
 const descriptionOf = ({ file, line, severity, issue }) =>
   `${file}:${line} [${severity}] ${issue}`
 
@@ -81,25 +78,33 @@ const spotCheckOf = (itemsPath, refreshedFiles) =>
       notes: notes ?? null
     }))
 
-const existingPaths = ({ fileReviewsFolder, itemsPath }) => {
+const existingPaths = ({ fileReviewsFolder, itemsPath, kind }) => {
   if (!statSync(fileReviewsFolder, { throwIfNoEntry: false })?.isDirectory()) {
     throw new TimError('NOT_FOUND', `No file-reviews dir: ${fileReviewsFolder}`)
   }
   if (!existsSync(itemsPath)) {
     throw new TimError(
       'NOT_FOUND',
-      `No items file: ${itemsPath} (run tim review aggregate --write-items first)`
+      `No items file: ${itemsPath} (run ${kind.aggregateCommand} --write-items first)`
     )
   }
-  const paths = fileReviewPathsIn(fileReviewsFolder)
+  const paths = fileReviewPathsIn(fileReviewsFolder, kind.suffix)
   if (paths.length === 0) {
     throw new TimError(
       'NOT_FOUND',
-      `No .review.json files in ${fileReviewsFolder}`
+      `No ${kind.suffix} files in ${fileReviewsFolder}`
     )
   }
   return paths
 }
+
+/**
+ * @typedef {object} ReconcileKind
+ * @property {string} suffix - The per-file review file name ending
+ * @property {string} aggregateCommand - The command that writes the items file
+ * @property {(filePath: string, todo: object) => object} findingOf - The item fields a todo adds, as text
+ * @property {(finding: object) => number} addItem - Appends the finding to the items file and gives its id
+ */
 
 /**
  * Folds a refresh's findings into a repo's items.<repo>.json. Each file
@@ -109,41 +114,36 @@ const existingPaths = ({ fileReviewsFolder, itemsPath }) => {
  * items already fixed and done in the files refreshed.
  *
  * @param {object} args
- * @param {string} args.workspaceRoot
- * @param {string} [args.reviewId]
- * @param {string} [args.repo]
+ * @param {string} args.folder - The review's folder
+ * @param {string} args.reviewId
+ * @param {string} args.repo
  * @param {boolean} [args.dryRun]
  * @param {boolean} [args.force]
  * @param {() => Date} [args.now]
+ * @param {ReconcileKind} args.kind
  * @returns {{reviewId: string, repo: string, dryRun: boolean, refreshed: number, added_count: number, added: string[], added_ids: string[], skipped_already_reconciled: number, skipped_unreviewed: number, spot_check: object[]}}
- * @throws {TimError} USAGE with no review id or repo, or a finding the items file refuses; NOT_FOUND when the repo has no file reviews or no items file
+ * @throws {TimError} USAGE for a finding the items file refuses; NOT_FOUND when the repo has no file reviews or no items file
  */
-export const reconcileFileReviews = ({
-  workspaceRoot,
+export const reconcilePerFileReviews = ({
+  folder,
   reviewId,
   repo,
   dryRun = false,
   force = false,
-  now = () => new Date()
+  now = () => new Date(),
+  kind
 }) => {
-  if (!reviewId) throw usage('Missing ticket')
-  if (!repo) throw usage('Missing --repo')
-  const folder = reviewDir(workspaceRoot, reviewId)
   const fileReviewsFolder = join(folder, 'file-reviews', repo)
   const itemsPath = itemsFilePath(folder, repo)
-  const paths = existingPaths({ fileReviewsFolder, itemsPath })
+  const paths = existingPaths({ fileReviewsFolder, itemsPath, kind })
   const { toProcess, alreadyDone, unreviewed } = partitionReviews(paths, {
     force
   })
   const added = []
   for (const { path, review } of toProcess) {
     for (const todo of review.todos ?? []) {
-      const finding = findingOf(shownAsShell(review.file), todo)
-      const id = dryRun
-        ? DRY_RUN_ID
-        : String(
-            addReviewItem({ workspaceRoot, reviewId, repo, ...finding }).id
-          )
+      const finding = kind.findingOf(shownAsShell(review.file), todo)
+      const id = dryRun ? DRY_RUN_ID : String(kind.addItem(finding))
       added.push({ id, description: descriptionOf(finding) })
     }
     if (!dryRun) stampReconciled(path, utcSeconds(now()))
@@ -166,10 +166,56 @@ export const reconcileFileReviews = ({
   }
 }
 
+const reviewFindingOf = (filePath, todo) => ({
+  file: filePath,
+  line: shownAsShell(todo.line),
+  severity: shownAsShell(todo.severity),
+  category: shownAsShell(todo.category),
+  issue: shownAsShell(todo.issue),
+  fix: shownAsShell(todo.fix),
+  bestPractice: shownAsShellOrEmpty(todo.best_practice)
+})
+
+/**
+ * Folds a refresh's code review findings into a repo's items.<repo>.json,
+ * as {@link reconcilePerFileReviews} folds them.
+ *
+ * @param {object} args
+ * @param {string} args.workspaceRoot
+ * @param {string} [args.reviewId]
+ * @param {string} [args.repo]
+ * @param {boolean} [args.dryRun]
+ * @param {boolean} [args.force]
+ * @param {() => Date} [args.now]
+ * @returns {ReturnType<typeof reconcilePerFileReviews>}
+ * @throws {TimError} USAGE with no review id or repo, or a finding the items file refuses; NOT_FOUND when the repo has no file reviews or no items file
+ */
+export const reconcileFileReviews = ({
+  workspaceRoot,
+  reviewId,
+  repo,
+  ...rest
+}) => {
+  refuseMissingTicketOrRepo(reviewId, repo)
+  return reconcilePerFileReviews({
+    ...rest,
+    folder: reviewDir(workspaceRoot, reviewId),
+    reviewId,
+    repo,
+    kind: {
+      suffix: '.review.json',
+      aggregateCommand: 'tim review aggregate',
+      findingOf: reviewFindingOf,
+      addItem: (finding) =>
+        addReviewItem({ workspaceRoot, reviewId, repo, ...finding }).id
+    }
+  })
+}
+
 /**
  * The reconcile result as --json gives it.
  *
- * @param {ReturnType<typeof reconcileFileReviews>} reconciled
+ * @param {ReturnType<typeof reconcilePerFileReviews>} reconciled
  * @returns {object}
  */
 export const reconciledJson = ({
@@ -187,7 +233,7 @@ const spotCheckLine = ({ id, file, line, issue, notes }) => {
 }
 
 /**
- * @param {ReturnType<typeof reconcileFileReviews>} reconciled
+ * @param {ReturnType<typeof reconcilePerFileReviews>} reconciled
  * @returns {string}
  */
 export const renderReconciledText = (reconciled) => {

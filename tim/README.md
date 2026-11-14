@@ -537,6 +537,38 @@ tim review start --local trade-imports-stub feat/tidy-logs
   or takes `--files`, and writes the same workspace under
   `workareas/reviews/local/<repo>/<branch>`.
 
+### `tim style` — the code-style skill's helpers
+
+```bash
+tim style file add EUDPA-1234 --repo trade-imports-stub --file src/a.js --line 4 --rule 6 --category naming --severity WARN --issue "Abbreviated name" --fix "Spell it out"
+tim style file verdict EUDPA-1234 --repo trade-imports-stub --file src/a.js --verdict MINOR_ISSUES --reason "One long line"
+tim style aggregate EUDPA-1234 --repo trade-imports-stub --write-items --section file-summary
+tim style items list EUDPA-1234 --filter fix --status not-done --by-file --json
+tim style items mark EUDPA-1234 --repo trade-imports-stub --item 3 --disposition Fix
+tim style items status EUDPA-1234 --repo trade-imports-stub --item 3 --status Done --note abc1234
+tim style items counts EUDPA-1234
+tim style items render EUDPA-1234 --repo trade-imports-stub
+tim style reconcile EUDPA-1234 --repo trade-imports-stub --dry-run
+```
+
+- They read and write `workareas/code-style-reviews/<review-id>/` in the
+  workspace tim runs in, as `tim review`'s same-named commands do under
+  `workareas/reviews/`.
+- Style findings have a rule, a FAIL or WARN severity and, on items, an
+  optional category; the line is stored as text and may be empty. The
+  dispositions are Fix, Won't Fix, Discuss and Auto-Resolved.
+- `items list` prints one tab-separated line per item (repo, id, file,
+  line, rule, severity, issue, fix, disposition, status, notes).
+  `--by-file` prints the items grouped by repo and file as JSON instead.
+- `items mark` and `items status` end their line with `, Notes set` only
+  when `--note` is given.
+- `file verdict` takes COMPLIANT, MINOR_ISSUES or NEEDS_WORK.
+  `aggregate`'s File Analysis Summary counts FAIL and WARN.
+- `--json` gives the envelope: the items, or the groups, for `items list`,
+  the review id, repo, breakdown and total for `items counts`, each file's
+  rollup for `aggregate`, the summary for `reconcile`, and what was written
+  for the others. Every refusal exits 1.
+
 ### `tim ticket` — the ticket skill's helpers
 
 ```bash

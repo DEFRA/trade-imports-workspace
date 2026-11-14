@@ -176,18 +176,54 @@ export const addFileReviewTodo = ({
   )
   refuseCategoryOutside(category, FINDING_CATEGORIES)
   const path = existingFileReviewPath({ workspaceRoot, reviewId, repo, file })
-  const review = readJsonFile(path)
-  const todo = {
-    id: nextIdAfter(review.todos),
-    line: parseJsonOption('--line', line),
+  const storedLine = parseJsonOption('--line', line)
+  return appendPerFileTodo(path, (id) => ({
+    id,
+    line: storedLine,
     severity,
     category,
     issue,
     fix,
     ...(bestPractice === '' ? {} : { best_practice: bestPractice })
-  }
+  }))
+}
+
+/**
+ * Appends a todo to a per-file review after its highest todo id.
+ *
+ * @param {string} path - The per-file review
+ * @param {(id: number) => object} todoWithId - The todo to append, given its id
+ * @returns {{id: number, path: string, todo: object}}
+ */
+export const appendPerFileTodo = (path, todoWithId) => {
+  const review = readJsonFile(path)
+  const todo = todoWithId(nextIdAfter(review.todos))
   writeJsonAtomic(path, { ...review, todos: [...review.todos, todo] })
   return { id: todo.id, path, todo }
+}
+
+/**
+ * Sets a per-file review's verdict and reason, and stamps `reviewed_at`
+ * to the second in UTC.
+ *
+ * @param {object} args
+ * @param {string} args.path - The per-file review
+ * @param {string} args.verdict
+ * @param {string} args.reason
+ * @param {() => Date} args.now
+ * @returns {{path: string, review: object}}
+ */
+export const writePerFileVerdict = ({ path, verdict, reason, now }) => {
+  const review = {
+    ...readJsonFile(path),
+    verdict,
+    verdict_reason: reason,
+    reviewed_at: now()
+      .toISOString()
+      .replace(/\.\d+Z$/, 'Z')
+  }
+  writeJsonAtomic(path, review)
+  return { path, review }
 }
 
 /**
@@ -225,14 +261,5 @@ export const setFileReviewVerdict = ({
     `Invalid verdict: ${verdict} (must be ${VERDICTS.join('|')})`
   )
   const path = existingFileReviewPath({ workspaceRoot, reviewId, repo, file })
-  const review = {
-    ...readJsonFile(path),
-    verdict,
-    verdict_reason: reason,
-    reviewed_at: now()
-      .toISOString()
-      .replace(/\.\d+Z$/, 'Z')
-  }
-  writeJsonAtomic(path, review)
-  return { path, review }
+  return writePerFileVerdict({ path, verdict, reason, now })
 }

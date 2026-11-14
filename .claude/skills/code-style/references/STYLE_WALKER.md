@@ -36,15 +36,15 @@ folders are independent", the plan, or an earlier decision.
 ## Step 1: Load the work list
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/style/style-items.sh EUDPA-XXXXX --filter pending --json
+tim style items list EUDPA-XXXXX --filter pending --json
 ```
 
-Apply trigger filters:
+The items are the envelope's `result`. Apply trigger filters:
 - `{repo}` → add `--repo {repo}`
-- `--fail` / `--warn` → filter the JSON output for matching severities
+- `--fail` / `--warn` → filter the items for matching severities
 
 Hand-marked rows (where the disposition was set directly via
-`style-mark.sh`) are already excluded by `--filter pending`.
+`tim style items mark`) are already excluded by `--filter pending`.
 
 If empty:
 ```
@@ -111,8 +111,8 @@ Map each character to the item at the same index. Apply:
 
 | Char | Action | Helper call |
 |---|---|---|
-| `F` | Mark Fix | `style-mark.sh ... --disposition "Fix"` |
-| `W` | Mark Won't Fix | `style-mark.sh ... --disposition "Won't Fix"` |
+| `F` | Mark Fix | `tim style items mark ... --disposition "Fix"` |
+| `W` | Mark Won't Fix | `tim style items mark ... --disposition "Won't Fix"` |
 | `D` | Defer to Step 4 slow-track (don't mutate yet) | — |
 | `S` | Skip — leave pending | — |
 
@@ -121,7 +121,7 @@ slow-track, where Won't Fix needs the quoted code that shows the
 finding is factually wrong (see "Default: fix"). Without it, mark Fix.
 Count these under Discuss in the batch summary.
 
-Each `style-mark.sh` invocation is a separate Bash call (no
+Each `tim style items mark` invocation is a separate Bash call (no
 chaining). Run them as the user expects feedback — you can fan them
 out in parallel, but each is its own Bash tool call.
 
@@ -158,13 +158,13 @@ For each item marked `D`, in input order:
    items in the same file, read whatever neighbouring files help.
 
 4. **Conclude with a disposition** — call the matching helper:
-   - "fix it" → `style-mark.sh ... --disposition "Fix" --note "{agreed approach}"`
-   - "leave it" → `style-mark.sh ... --disposition "Won't Fix" --note "{reason}"`.
+   - "fix it" → `tim style items mark ... --disposition "Fix" --note "{agreed approach}"`
+   - "leave it" → `tim style items mark ... --disposition "Won't Fix" --note "{reason}"`.
      The reason is the quoted code, with its file:line, that shows the
      finding is factually wrong; any other reason leaves it Fix.
    - "defer to PR thread / standup / wider conversation":
      ```bash
-     ~/git/defra/trade-imports-workspace/tools/style/style-mark.sh EUDPA-XXXXX --repo {repo} --item {N} --disposition "Discuss" --note "{open question / who to ask}"
+     tim style items mark EUDPA-XXXXX --repo {repo} --item {N} --disposition "Discuss" --note "{open question / who to ask}"
      ```
 
 Move to the next Discuss item.
@@ -177,7 +177,7 @@ Re-render the markdown items view so the user can see the dispositions
 they just set:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/style/render-items.sh EUDPA-XXXXX --repo {repo}
+tim style items render EUDPA-XXXXX --repo {repo}
 ```
 
 Print the summary:
@@ -201,7 +201,7 @@ Omit the last line if no Fix dispositions were recorded.
 
 If the work list spans multiple repos, present them in one combined
 table — the `#` column refers to a single ordering across the whole
-list. Each `style-mark.sh` call still gets `--repo` with the right
+list. Each `tim style items mark` call still gets `--repo` with the right
 value (it's a column of the item record), so the helpers stay
 unambiguous.
 

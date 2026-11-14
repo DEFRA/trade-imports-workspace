@@ -21,13 +21,13 @@ const DISPOSITION_BY_FILTER = {
   merged: 'Merged'
 }
 
-const STATUS_BY_FILTER = {
+export const STATUS_BY_FILTER = {
   'not-done': 'Not Done',
   done: 'Done',
   failed: 'Failed'
 }
 
-const NO_STATUS = '—'
+export const NO_STATUS = '—'
 
 export const DISPOSITIONS = [
   'Fix',
@@ -46,23 +46,53 @@ const STATUS_FOR_DISPOSITION = {
   Merged: NO_STATUS
 }
 
-const isAbsent = (value) =>
+/**
+ * Whether jq's `//` would pass over the value: null, missing or false.
+ *
+ * @param {any} value
+ * @returns {boolean}
+ */
+export const isAbsent = (value) =>
   value === null || value === undefined || value === false
 
-const orEmpty = (value) => (isAbsent(value) ? '' : value)
+/**
+ * The value, or an empty string where jq's `// ""` would give one.
+ *
+ * @param {any} value
+ * @returns {any}
+ */
+export const orEmpty = (value) => (isAbsent(value) ? '' : value)
 
 const usage = (message) => new TimError('USAGE', message)
 
-const refuseFirstMissingOption = (namedValues) => {
+/**
+ * @param {[string, string | undefined][]} namedValues - Each option's name and value, in the order to check them
+ * @throws {TimError} USAGE `--<name> required` for the first one missing or empty
+ */
+export const refuseFirstMissingOption = (namedValues) => {
   const missing = namedValues.find(([, value]) => !value)
   if (missing) throw usage(`--${missing[0]} required`)
 }
 
-const refuseMissingReviewId = (reviewId, usageLine) => {
+/**
+ * @param {string | undefined} reviewId
+ * @param {string} usageLine - The command's usage, without `Usage: `
+ * @throws {TimError} USAGE naming the usage line when there is no review id
+ */
+export const refuseMissingReviewId = (reviewId, usageLine) => {
   if (!reviewId) throw usage(`Usage: ${usageLine}`)
 }
 
-const labelFor = (labels, option, value) => {
+/**
+ * The label a filter option's value stands for.
+ *
+ * @param {Record<string, string>} labels - Each value the option takes, with its label
+ * @param {string} option - The option's name, for the refusal
+ * @param {string | undefined} value
+ * @returns {string | undefined} Undefined when the option was not given
+ * @throws {TimError} USAGE when the value is not one of the labels' keys
+ */
+export const labelFor = (labels, option, value) => {
   if (value === undefined) return undefined
   if (!Object.hasOwn(labels, value)) {
     throw usage(`Invalid ${option}: ${value}`)
@@ -73,23 +103,28 @@ const labelFor = (labels, option, value) => {
 const isFolder = (path) =>
   statSync(path, { throwIfNoEntry: false })?.isDirectory() ?? false
 
-const existingReviewFolder = (workspaceRoot, reviewId) => {
-  const folder = reviewDir(workspaceRoot, reviewId)
+/**
+ * @param {string} folder
+ * @param {string} workspaceName - What the folder holds, such as `Review workspace`
+ * @returns {string} The folder
+ * @throws {TimError} NOT_FOUND `<workspaceName> not found: <folder>` when it is missing or is not a folder
+ */
+export const existingLedgerFolder = (folder, workspaceName) => {
   if (!isFolder(folder)) {
-    throw new TimError('NOT_FOUND', `Review workspace not found: ${folder}`)
+    throw new TimError('NOT_FOUND', `${workspaceName} not found: ${folder}`)
   }
   return folder
 }
 
-const existingItemsFilePath = ({ workspaceRoot, reviewId, repo }) => {
-  const path = itemsFilePath(reviewDir(workspaceRoot, reviewId), repo)
-  if (!existsSync(path)) {
-    throw new TimError('NOT_FOUND', `Items file not found: ${path}`)
-  }
-  return path
-}
-
-const matchesFilters =
+/**
+ * A filter that keeps the items with this disposition, status and file,
+ * ignoring each one left undefined. A missing disposition or status
+ * matches the empty label.
+ *
+ * @param {{disposition?: string, status?: string, file?: string}} filters
+ * @returns {(item: object) => boolean}
+ */
+export const matchesFilters =
   ({ disposition, status, file }) =>
   (item) =>
     (disposition === undefined || orEmpty(item.disposition) === disposition) &&
@@ -121,7 +156,10 @@ export const listReviewItems = ({
     reviewId,
     'tim review items list <review-id> [--repo REPO] [--file PATH] [--filter DISPOSITION] [--status STATUS]'
   )
-  const folder = existingReviewFolder(workspaceRoot, reviewId)
+  const folder = existingLedgerFolder(
+    reviewDir(workspaceRoot, reviewId),
+    'Review workspace'
+  )
   const matches = matchesFilters({
     disposition: labelFor(DISPOSITION_BY_FILTER, '--filter', filter),
     status: labelFor(STATUS_BY_FILTER, '--status', status),
@@ -136,6 +174,25 @@ const tsvCell = (value) =>
     .replaceAll('\t', '\\t')
     .replaceAll('\n', '\\n')
     .replaceAll('\r', '\\r')
+
+/**
+ * Items as tab-separated lines, one per item, in the columns given. Tabs,
+ * newlines, carriage returns and backslashes in a value are escaped as jq's
+ * `@tsv` escapes them, and a missing value is empty. Null when there are
+ * no items.
+ *
+ * @param {object[]} items
+ * @param {string[]} columns - The item fields to print, in order
+ * @returns {string | null}
+ */
+export const renderLedgerTsv = (items, columns) =>
+  items.length === 0
+    ? null
+    : items
+        .map((item) =>
+          columns.map((column) => tsvCell(item[column])).join('\t')
+        )
+        .join('\n')
 
 const ITEM_COLUMNS = [
   'repo',
@@ -154,22 +211,21 @@ const ITEM_COLUMNS = [
 /**
  * Items as tab-separated lines, one per item, in the columns repo, id,
  * file, line, severity, category, issue, fix, disposition, status and
- * notes. Tabs, newlines, carriage returns and backslashes in a value are
- * escaped. Null when there are no items.
+ * notes. Null when there are no items.
  *
  * @param {object[]} items - From {@link listReviewItems}
  * @returns {string | null}
  */
-export const renderItemsTsv = (items) =>
-  items.length === 0
-    ? null
-    : items
-        .map((item) =>
-          ITEM_COLUMNS.map((column) => tsvCell(item[column])).join('\t')
-        )
-        .join('\n')
+export const renderItemsTsv = (items) => renderLedgerTsv(items, ITEM_COLUMNS)
 
-const compareText = (left, right) => {
+/**
+ * Orders text by code point, as jq's `sort` does.
+ *
+ * @param {string} left
+ * @param {string} right
+ * @returns {number}
+ */
+export const compareCodePoints = (left, right) => {
   if (left < right) return -1
   return left > right ? 1 : 0
 }
@@ -187,15 +243,29 @@ const breakdownOf = (items) => {
   }
   return [...counts.values()].sort(
     (left, right) =>
-      compareText(left.disposition, right.disposition) ||
-      compareText(left.status, right.status)
+      compareCodePoints(left.disposition, right.disposition) ||
+      compareCodePoints(left.status, right.status)
   )
 }
 
 /**
- * How many of a review's items have each disposition and status. An item
- * with no disposition counts as `Pending`, and one with no status as an
- * empty status.
+ * How many items have each disposition and status, with the total. An
+ * item with no disposition counts as `Pending`, and one with no status as
+ * an empty status.
+ *
+ * @param {object[]} items
+ * @returns {{breakdown: {disposition: string, status: string, count: number}[], total: number}}
+ */
+export const countItems = (items) => {
+  const breakdown = breakdownOf(items)
+  return {
+    breakdown,
+    total: breakdown.reduce((total, { count }) => total + count, 0)
+  }
+}
+
+/**
+ * How many of a review's items have each disposition and status.
  *
  * @param {object} args
  * @param {string} args.workspaceRoot
@@ -209,13 +279,14 @@ export const countReviewItems = ({ workspaceRoot, reviewId, repo }) => {
     reviewId,
     'tim review items counts <review-id> [--repo REPO]'
   )
-  const folder = existingReviewFolder(workspaceRoot, reviewId)
-  const breakdown = breakdownOf(readReviewItems(folder, { repo }) ?? [])
+  const folder = existingLedgerFolder(
+    reviewDir(workspaceRoot, reviewId),
+    'Review workspace'
+  )
   return {
     reviewId,
     ...(repo === undefined ? {} : { repo }),
-    breakdown,
-    total: breakdown.reduce((total, { count }) => total + count, 0)
+    ...countItems(readReviewItems(folder, { repo }) ?? [])
   }
 }
 
@@ -243,7 +314,7 @@ const breakdownLine = ({ count, disposition, status }) => {
  * The counts as a table: a heading, a line per disposition and status, then
  * the total.
  *
- * @param {ReturnType<typeof countReviewItems>} counts
+ * @param {{reviewId: string, repo?: string, breakdown: object[], total: number}} counts
  * @returns {string}
  */
 export const renderCountsText = ({ reviewId, repo, breakdown, total }) =>
@@ -253,6 +324,26 @@ export const renderCountsText = ({ reviewId, repo, breakdown, total }) =>
     '  ----',
     `  ${String(total).padStart(4)}  TOTAL`
   ].join('\n')
+
+/**
+ * Appends an item to an items file after its highest id, starting the
+ * file as `{ticket, repo, items: []}` when there is none.
+ *
+ * @param {object} args
+ * @param {string} args.path - The items file
+ * @param {string} args.reviewId - Stored as the ticket of a new file
+ * @param {string} args.repo - Stored as the repo of a new file
+ * @param {(id: number) => object} args.itemWithId - The item to append, given its id
+ * @returns {{id: number, path: string, item: object}}
+ */
+export const appendLedgerItem = ({ path, reviewId, repo, itemWithId }) => {
+  const ledger = existsSync(path)
+    ? readJsonFile(path)
+    : { ticket: reviewId, repo, items: [] }
+  const item = itemWithId(nextIdAfter(ledger.items))
+  writeJsonAtomic(path, { ...ledger, items: [...ledger.items, item] })
+  return { id: item.id, path, item }
+}
 
 /**
  * Appends an item to a repo's items file, after its highest id, starting
@@ -304,50 +395,92 @@ export const addReviewItem = ({
     `Invalid --severity: ${severity} (must be ${SEVERITIES.join('|')})`
   )
   refuseCategoryOutside(category, FINDING_CATEGORIES)
-  const path = itemsFilePath(
-    existingReviewFolder(workspaceRoot, reviewId),
-    repo
+  const folder = existingLedgerFolder(
+    reviewDir(workspaceRoot, reviewId),
+    'Review workspace'
   )
-  const ledger = existsSync(path)
-    ? readJsonFile(path)
-    : { ticket: reviewId, repo, items: [] }
-  const item = {
-    id: nextIdAfter(ledger.items),
-    file,
-    line,
-    severity,
-    category,
-    issue,
-    fix,
-    disposition: null,
-    status: null,
-    notes: null,
-    ...(bestPractice === '' ? {} : { best_practice: bestPractice })
-  }
-  writeJsonAtomic(path, { ...ledger, items: [...ledger.items, item] })
-  return { id: item.id, path, item }
+  return appendLedgerItem({
+    path: itemsFilePath(folder, repo),
+    reviewId,
+    repo,
+    itemWithId: (id) => ({
+      id,
+      file,
+      line,
+      severity,
+      category,
+      issue,
+      fix,
+      disposition: null,
+      status: null,
+      notes: null,
+      ...(bestPractice === '' ? {} : { best_practice: bestPractice })
+    })
+  })
 }
 
 const MERGED_NOTE = /^merged into #\d+$/
 
 const nullWhenEmpty = (text) => (text === '' ? null : text)
 
-const updateItem = ({ workspaceRoot, reviewId, repo, item, changes }) => {
-  const path = existingItemsFilePath({ workspaceRoot, reviewId, repo })
+/**
+ * Changes one item of an items file and writes it back.
+ *
+ * @param {object} args
+ * @param {string} args.itemsPath
+ * @param {string} args.item - The item's id, as JSON text
+ * @param {object} args.changes - Fields to set on the item
+ * @returns {{path: string, item: object}} The item as written
+ * @throws {TimError} NOT_FOUND when the items file or the item is missing; USAGE when the id is not JSON
+ */
+export const updateLedgerItem = ({ itemsPath, item, changes }) => {
+  if (!existsSync(itemsPath)) {
+    throw new TimError('NOT_FOUND', `Items file not found: ${itemsPath}`)
+  }
   const id = parseJsonOption('--item', item)
-  const ledger = readJsonFile(path)
+  const ledger = readJsonFile(itemsPath)
   if (!ledger.items.some((entry) => entry.id === id)) {
-    throw new TimError('NOT_FOUND', `Item #${item} not found in ${path}`)
+    throw new TimError('NOT_FOUND', `Item #${item} not found in ${itemsPath}`)
   }
   const items = ledger.items.map((entry) =>
     entry.id === id ? { ...entry, ...changes } : entry
   )
-  writeJsonAtomic(path, { ...ledger, items })
-  return { path, item: items.find((entry) => entry.id === id) }
+  writeJsonAtomic(itemsPath, { ...ledger, items })
+  return { path: itemsPath, item: items.find((entry) => entry.id === id) }
 }
 
-const noteChange = (note) =>
+/**
+ * The fields a disposition sets: the disposition and the status it
+ * implies, both null when the disposition is empty.
+ *
+ * @param {string} disposition
+ * @returns {{disposition: string | null, status: string | null}}
+ */
+export const dispositionChange = (disposition) => ({
+  disposition: nullWhenEmpty(disposition),
+  status: STATUS_FOR_DISPOSITION[disposition] ?? null
+})
+
+/**
+ * The notes change a `--note` makes: none when it was not given, else the
+ * note, with an empty one stored as null.
+ *
+ * @param {string | undefined} note
+ * @returns {{notes?: string | null}}
+ */
+export const noteChange = (note) =>
   note === undefined ? {} : { notes: nullWhenEmpty(note) }
+
+/**
+ * The fields a status sets: the status, null when it is empty.
+ *
+ * @param {string} status
+ * @returns {{status: string | null}}
+ */
+export const statusChange = (status) => ({ status: nullWhenEmpty(status) })
+
+const reviewItemsPath = ({ workspaceRoot, reviewId, repo }) =>
+  itemsFilePath(reviewDir(workspaceRoot, reviewId), repo)
 
 /**
  * Sets an item's disposition and the status it implies: `Not Done` for Fix
@@ -391,16 +524,10 @@ export const markReviewItem = ({
   if (disposition === 'Merged' && !MERGED_NOTE.test(note ?? '')) {
     throw usage('Merged needs --note "merged into #N", naming the owner item.')
   }
-  const updated = updateItem({
-    workspaceRoot,
-    reviewId,
-    repo,
+  const updated = updateLedgerItem({
+    itemsPath: reviewItemsPath({ workspaceRoot, reviewId, repo }),
     item,
-    changes: {
-      disposition: nullWhenEmpty(disposition),
-      status: STATUS_FOR_DISPOSITION[disposition] ?? null,
-      ...noteChange(note)
-    }
+    changes: { ...dispositionChange(disposition), ...noteChange(note) }
   })
   return { repo, ...updated }
 }
@@ -438,17 +565,21 @@ export const setReviewItemStatus = ({
   if (status !== '') {
     refuseOutside(STATUSES, status, `Invalid --status: ${status}`)
   }
-  const updated = updateItem({
-    workspaceRoot,
-    reviewId,
-    repo,
+  const updated = updateLedgerItem({
+    itemsPath: reviewItemsPath({ workspaceRoot, reviewId, repo }),
     item,
-    changes: { status: nullWhenEmpty(status), ...noteChange(note) }
+    changes: { ...statusChange(status), ...noteChange(note) }
   })
   return { repo, ...updated }
 }
 
-const shownOrNull = (value) => (isAbsent(value) ? '<null>' : value)
+/**
+ * A field as the confirmation line shows it: `<null>` when absent.
+ *
+ * @param {any} value
+ * @returns {any}
+ */
+export const shownOrNull = (value) => (isAbsent(value) ? '<null>' : value)
 
 /**
  * @param {ReturnType<typeof markReviewItem>} marked

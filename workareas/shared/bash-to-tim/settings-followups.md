@@ -123,3 +123,13 @@ other folders. `Bash(tim:*)` covers `tim review start` and
 skill's fresh prepare script now calls `gh api .../files --paginate`.
 Consider allowing `Bash(gh search prs:*)`, `Bash(gh pr diff:*)` and
 `Bash(gh api repos/DEFRA/*/pulls/*/files:*)`.
+
+## P52
+
+None to remove. No allowlist entry names `style-items.sh`,
+`style-counts.sh`, `render-items.sh`, `style-add-item.sh`, `style-mark.sh`,
+`style-set-status.sh`, `file-style-add-item.sh`,
+`file-style-set-verdict.sh`, `aggregate-file-reviews.sh`,
+`refresh/reconcile.sh` or `items-table.jq` under `tools/style/`; the
+generic `tools/**` rules still serve the style scripts left for P53.
+`Bash(tim:*)` covers `tim style`.

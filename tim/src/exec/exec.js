@@ -71,20 +71,28 @@ const commandLine = (command, args) => [command, ...args].join(' ')
 /**
  * Run a subprocess with its stdout and stderr written to a log file, so
  * nothing streams to the terminal. The log starts with the command line and
- * the folder it ran in, and is replaced on every run.
+ * the folder it ran in, unless `commandHeader` is false, and is replaced on
+ * every run.
  *
  * @param {string} command
  * @param {string[]} [args]
- * @param {object} opts - Passed to execa (cwd, env, ...), plus `logPath`
+ * @param {object} opts - Passed to execa (cwd, env, ...), plus `logPath` and `commandHeader`
  * @param {string} opts.logPath
+ * @param {boolean} [opts.commandHeader=true] - false starts the log with the command's own output
  * @returns {Promise<{exitCode: number, durationMs: number, log: string}>}
  * @throws {TimError} MISSING_DEP when the executable is not found
  */
-export const runToLog = async (command, args = [], { logPath, ...opts }) => {
+export const runToLog = async (
+  command,
+  args = [],
+  { logPath, commandHeader = true, ...opts }
+) => {
   mkdirSync(dirname(logPath), { recursive: true })
   writeFileSync(
     logPath,
-    `$ ${commandLine(command, args)}\n# in ${opts.cwd ?? process.cwd()}\n\n`
+    commandHeader
+      ? `$ ${commandLine(command, args)}\n# in ${opts.cwd ?? process.cwd()}\n\n`
+      : ''
   )
   const logFd = openSync(logPath, 'a')
   const start = performance.now()

@@ -103,11 +103,11 @@ epics included, goes through `tim jira create`.
 | `tools/govuk/discover-repos.sh` | --run-id TICKET [--branch B] [--target V] [--json] | Phase 1: write run-level `.run-meta.json` (in-scope repos) |
 | `tools/govuk/setup-branch.sh` | --branch B --repo R | Phase 1: idempotent `git checkout` for one repo |
 | `tools/govuk/discover-versions.sh` | repo-path --run-id TICKET [--target V] [--json] [--force] | Phase 1: seed `versions.{repo}.json` + cache CHANGELOG + pre-bake per-version sections + best-practices bundle |
-| `tools/govuk/version-classify.sh` | --run-id TICKET --repo R --version V --classification todo\|noop [--summary "..."] | VERSION_PLANNER: set classification |
-| `tools/govuk/version-add-change.sh` | --run-id TICKET --repo R --version V --file F --why "..." --change "..." | VERSION_PLANNER: append change entry |
-| `tools/govuk/apply-version.sh` | --run-id TICKET --repo R --version V [--final] | Phase 3 per-version: package.json + install + test + commit + mark-implemented |
-| `tools/govuk/version-mark-implemented.sh` | --run-id TICKET --repo R --version V [--commit SHA] | Phase 3: mark version applied |
-| `tools/govuk/version-mark-failed.sh` | --run-id TICKET --repo R --version V --reason "..." | Phase 3: mark version failed |
+| `tim govuk classify` | --run-id TICKET --repo R --govuk-version V --classification todo\|noop [--summary "..."] [--json] | VERSION_PLANNER: set classification |
+| `tim govuk add-change` | --run-id TICKET --repo R --govuk-version V --file F --why "..." --change "..." [--json] | VERSION_PLANNER: append change entry |
+| `tim govuk apply` | --run-id TICKET --repo R --govuk-version V [--final] [--json] | Phase 3 per-version: package.json + install + test + commit + mark-done |
+| `tim govuk mark-done` | --run-id TICKET --repo R --govuk-version V [--commit SHA] [--json] | Phase 3: mark version applied |
+| `tim govuk mark-failed` | --run-id TICKET --repo R --govuk-version V --reason "..." [--json] | Phase 3: mark version failed |
 | `tim govuk render-plan` | --run-id TICKET --repo R --govuk-version V [--json] | Markdown view of one version's plan (`--json`: `result.markdown`) |
 | `tim govuk summaries` | --run-id TICKET [--repo R] [--json] | PLAN_WALKER: one summary row per version still to apply that is not a noop (`--json`: the rows are `result`) |
 | `tim govuk plans` | --run-id TICKET [--repo R] [--filter F] [--sort-semver] [--json] | Filterable status of every version, classification and implementation.<br>e.g. `tim govuk plans --run-id EUDPA-1 --filter pending --sort-semver --json` (the object is `result`) |

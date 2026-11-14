@@ -6,6 +6,7 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
+  realpathSync,
   rmSync,
   writeFileSync
 } from 'node:fs'
@@ -66,15 +67,21 @@ export const stageBashWorkspace = ({ scripts, files = {} }) => {
 }
 
 /**
- * Text as a recording holds it: `home` becomes `<HOME>` and ISO timestamps
- * become `<TIMESTAMP>`.
+ * Text as a recording holds it: `home`, by its own path or with every
+ * symlink resolved, becomes `<HOME>` and ISO timestamps become
+ * `<TIMESTAMP>`.
  *
  * @param {string | undefined} text
  * @param {string} home
  * @returns {string}
  */
 export const normaliseRecordedText = (text, home) =>
-  (text ?? '').split(home).join('<HOME>').replace(ISO_TIMESTAMP, '<TIMESTAMP>')
+  (text ?? '')
+    .split(existsSync(home) ? realpathSync(home) : home)
+    .join('<HOME>')
+    .split(home)
+    .join('<HOME>')
+    .replace(ISO_TIMESTAMP, '<TIMESTAMP>')
 
 const filesUnder = (dir) =>
   readdirSync(dir, { recursive: true, withFileTypes: true })
@@ -155,16 +162,17 @@ export const recordBashRun = async (
  * @param {string[]} args - tim's arguments after `--workspace <root>`
  * @param {object} [opts]
  * @param {string} [opts.watch] - Workspace-relative folder whose files to record
+ * @param {Record<string, string | undefined>} [opts.env] - Variables to set; `undefined` unsets one
  * @returns {Promise<{exitCode: number, stdout: string, stderr: string, files?: Record<string, string>}>}
  */
-export const recordTimRun = async (staged, args, { watch } = {}) => {
+export const recordTimRun = async (staged, args, { watch, env = {} } = {}) => {
   const result = await execa(
     'node',
     [timCliPath, '--workspace', staged.root, ...args],
     {
       reject: false,
       stripFinalNewline: false,
-      env: { TIM_NO_AUTO_PULL: '1', TIM_WORKSPACE: undefined },
+      env: { ...env, TIM_NO_AUTO_PULL: '1', TIM_WORKSPACE: undefined },
       extendEnv: true
     }
   )

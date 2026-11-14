@@ -1,5 +1,6 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
+import { TimError } from '../errors.js'
 
 const STATE_FILE_NAME = /^versions\..*\.json$/
 
@@ -74,6 +75,51 @@ export const stateFilesOfRun = ({ folder, repo }) => {
 }
 
 export const readState = (path) => JSON.parse(readFileSync(path, 'utf8'))
+
+/**
+ * @param {Record<string, string | undefined>} options - Option name to value
+ * @throws {TimError} USAGE naming the first option that is missing or empty
+ */
+export const requireOptions = (options) => {
+  const missing = Object.entries(options).find(([, value]) => !value)
+  if (missing) throw new TimError('USAGE', `Missing --${missing[0]}`)
+}
+
+/**
+ * Reads a repo's state file and finds one version in it.
+ *
+ * @param {object} args
+ * @param {string} args.workspaceRoot
+ * @param {string} args.runId
+ * @param {string} args.repo
+ * @param {string} args.version
+ * @param {string} [args.missingFileHint] - Added to the message when the state file is missing
+ * @returns {{path: string, state: object, entry: object}}
+ * @throws {TimError} NOT_FOUND when the state file or the version is missing
+ */
+export const findVersion = ({
+  workspaceRoot,
+  runId,
+  repo,
+  version,
+  missingFileHint = ''
+}) => {
+  const path = versionsPath(workspaceRoot, runId, repo)
+  if (!existsSync(path)) {
+    throw new TimError(
+      'NOT_FOUND',
+      `Versions file not found: ${path}${missingFileHint}`
+    )
+  }
+  const state = readState(path)
+  const entry = (state.versions ?? []).find(
+    (candidate) => candidate.version === version
+  )
+  if (!entry) {
+    throw new TimError('NOT_FOUND', `Version ${version} not found in ${path}`)
+  }
+  return { path, state, entry }
+}
 
 /**
  * A value as `jq -r` prints it: a string bare, null as `null`, anything

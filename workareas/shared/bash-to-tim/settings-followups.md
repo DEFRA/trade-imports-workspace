@@ -49,3 +49,11 @@ None. No allowlist entry names `tools/govuk/list-plans.sh`,
 `upgrade-status.sh`, `list-plan-summaries.sh` or
 `render-version-plan.sh`; the generic `tools/**` entries cover the
 scripts left in `tools/govuk/`, and `Bash(tim:*)` covers `tim govuk`.
+
+## P44
+
+None. No allowlist entry names `tools/govuk/version-classify.sh`,
+`version-add-change.sh`, `version-mark-implemented.sh`,
+`version-mark-failed.sh` or `apply-version.sh`; the generic `tools/**`
+entries cover the scripts left in `tools/govuk/`, and `Bash(tim:*)` covers
+`tim govuk classify`, `add-change`, `mark-done`, `mark-failed` and `apply`.

@@ -355,17 +355,38 @@ tim understanding-check report EUDPA-123
 - Every refusal, a usage error included, exits 1, so it never reads as
   high-risk.
 
-### `tim govuk` — read a govuk-frontend upgrade run
+### `tim govuk` — read and change a govuk-frontend upgrade run
 
 ```bash
 tim govuk plans --run-id EUDPA-264
 tim govuk plans --run-id EUDPA-264 --repo trade-imports-animals-frontend --filter pending --sort-semver --json
 tim govuk summaries --run-id EUDPA-264 --json
 tim govuk render-plan --run-id EUDPA-264 --repo trade-imports-animals-frontend --govuk-version 5.9.1
+tim govuk classify --run-id EUDPA-264 --repo trade-imports-animals-frontend --govuk-version 5.9.1 --classification todo --summary "Rename the header macro"
+tim govuk add-change --run-id EUDPA-264 --repo trade-imports-animals-frontend --govuk-version 5.9.1 --file src/a.njk --why "..." --change "..."
+tim govuk mark-done --run-id EUDPA-264 --repo trade-imports-animals-frontend --govuk-version 5.9.1 --commit 0123abc
+tim govuk mark-failed --run-id EUDPA-264 --repo trade-imports-animals-frontend --govuk-version 5.9.1 --reason "npm test failed"
+tim govuk apply --run-id EUDPA-264 --repo trade-imports-animals-frontend --govuk-version 5.9.1
 ```
 
 - State lives in `workareas/govuk-upgrades/<run>/<repo>/versions.<repo>.json`
-  of the workspace tim runs in. Every command only reads.
+  of the workspace tim runs in. `plans`, `summaries` and `render-plan`
+  only read.
+- `classify`, `add-change`, `mark-done` and `mark-failed` each change one
+  version in the state file, through a temporary file and a rename, and
+  print one line saying what they did. `--json` gives `{message, entry}`.
+  `classify --classification noop` empties the version's changes;
+  `--summary ""` clears the summary and leaving `--summary` out keeps it.
+  Two writes to one file at the same moment can still lose one.
+- `apply` sets the govuk-frontend constraint in the repo's `package.json`
+  (the exact version, or the run's original prefix plus the version for
+  the target or with `--final`), runs `npm install` and `npm test` in the
+  repo's real path with their output in
+  `/tmp/govuk-{install,test}-<repo>-<version>-<stamp>.txt`, commits
+  everything in the repo and marks the version done. A failed npm step
+  marks the version failed, prints the reason to stderr and exits 1. An
+  intermediate noop version is only marked done, and a version already
+  done is left alone. `--json` gives the outcome.
 - `plans` prints each repo's counts (unplanned, todo, noop, done, failed)
   and its versions, then the totals. `--filter` lists only the versions
   that are `unplanned` (not classified), `todo` (classified todo, not
@@ -378,9 +399,11 @@ tim govuk render-plan --run-id EUDPA-264 --repo trade-imports-animals-frontend -
   when not classified), number of changes and summary, sorted by repo and
   then version. A run with no state files prints nothing.
 - `render-plan` prints one version's plan as markdown, ending with its
-  pre-baked changelog section. `--json` gives `{markdown}`. It takes
-  `--govuk-version`, because `--version` prints tim's own version.
-- A missing `render-plan` option exits 2; every other refusal exits 1.
+  pre-baked changelog section. `--json` gives `{markdown}`.
+- Every command that names one version takes `--govuk-version`, because
+  `--version` prints tim's own version.
+- A missing option, or a classification other than todo or noop, exits
+  2; every other refusal exits 1.
 
 ### `tim capture` — photograph a running app
 

@@ -1,15 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs'
-import { TimError } from '../errors.js'
-import { changelogPath, rawText, readState, versionsPath } from './state.js'
-
-const checkRenderOptions = ({ runId, repo, version }) => {
-  const missing = Object.entries({
-    'run-id': runId,
-    repo,
-    'govuk-version': version
-  }).find(([, value]) => !value)
-  if (missing) throw new TimError('USAGE', `Missing --${missing[0]}`)
-}
+import { changelogPath, findVersion, rawText, requireOptions } from './state.js'
 
 const textOrBlank = (value) =>
   value === null || value === undefined ? '' : rawText(value)
@@ -77,19 +67,6 @@ const changelogText = (path) =>
     ? readFileSync(path, 'utf8')
     : `_Pre-baked changelog section not found: ${path}_\n`
 
-const findVersionEntry = (path, version) => {
-  if (!existsSync(path)) {
-    throw new TimError('NOT_FOUND', `Versions file not found: ${path}`)
-  }
-  const entry = (readState(path).versions ?? []).find(
-    (candidate) => candidate.version === version
-  )
-  if (!entry) {
-    throw new TimError('NOT_FOUND', `Version ${version} not found in ${path}`)
-  }
-  return entry
-}
-
 /**
  * One version's upgrade plan for one repo as markdown: its state, the
  * changes it needs and its pre-baked changelog section.
@@ -103,11 +80,8 @@ const findVersionEntry = (path, version) => {
  * @throws {TimError} USAGE for a missing option, NOT_FOUND when the versions file or the version is missing
  */
 export const renderVersionPlan = ({ workspaceRoot, runId, repo, version }) => {
-  checkRenderOptions({ runId, repo, version })
-  const entry = findVersionEntry(
-    versionsPath(workspaceRoot, runId, repo),
-    version
-  )
+  requireOptions({ 'run-id': runId, repo, 'govuk-version': version })
+  const { entry } = findVersion({ workspaceRoot, runId, repo, version })
   const classification = rawText(entry.classification ?? 'unplanned')
   const lines = [
     ...headerLines(entry, { repo, version, classification }),

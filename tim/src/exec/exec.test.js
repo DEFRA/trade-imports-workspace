@@ -102,6 +102,18 @@ describe('runToLog', () => {
     expect(body).toMatch(/^\$ node -e .*\n# in .*\n\nout\nerr\n$/s)
   })
 
+  test('writes only the output to the log when the command header is off', async () => {
+    const logPath = tempLogPath()
+
+    await runToLog(
+      'node',
+      ['-e', "process.stdout.write('out\\n'); process.stderr.write('err\\n')"],
+      { logPath, commandHeader: false }
+    )
+
+    expect(readFileSync(logPath, 'utf8')).toBe('out\nerr\n')
+  })
+
   test('returns the exit code and the log path', async () => {
     const logPath = tempLogPath()
 

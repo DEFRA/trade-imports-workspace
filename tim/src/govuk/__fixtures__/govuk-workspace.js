@@ -51,8 +51,8 @@ const stateFile = (repo, current, target, versions) => ({
   versions
 })
 
-const ADMIN = 'trade-imports-animals-admin'
-const FRONTEND = 'trade-imports-animals-frontend'
+export const ADMIN = 'trade-imports-animals-admin'
+export const FRONTEND = 'trade-imports-animals-frontend'
 const INS = 'trade-imports-ins-frontend'
 
 const states = {
@@ -175,7 +175,8 @@ export const stageGovukWorkspace = ({ scripts = [] } = {}) =>
   stageBashWorkspace({
     scripts,
     files: {
-      'repos.json': '{}\n',
+      'repos.json':
+        '{ "reposDir": "repos", "githubOrg": "DEFRA", "repos": [] }\n',
       'docs/best-practices/README.md': '# Best practices\n',
       ...stateFiles,
       ...changelogFiles,

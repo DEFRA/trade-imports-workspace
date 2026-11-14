@@ -1,6 +1,6 @@
 ---
 name: govuk-upgrade
-description: 'Upgrade the govuk-frontend package across every EUDP trade-imports Node.js repo that consumes it. A four-stage workflow driven by canonical per-repo JSON state (`versions.{repo}.json`): Phase 1 = `start-upgrade.sh` (ticket → branch → discover repos → seed state + pre-bake CHANGELOG sections + best-practices bundle), Phase 2 = fan-out one `general-purpose` Task subagent per pending version following `references/VERSION_PLANNER.md` (uses `version-classify.sh` + `version-add-change.sh`), optional Walker = batch triage of pending plans following `references/PLAN_WALKER.md`, Phase 3 = strict-semver-order `apply-version.sh` per `todo` version (package.json + npm install + npm test + commit + state transition), then E2E once at the end. Stays inside the govuk-frontend toolbox — Nunjucks macros, govuk-* utility classes, no custom CSS or hand-rolled components. Triggers: "upgrade govuk-frontend", "govuk upgrade", "govuk-frontend upgrade", "bump govuk-frontend", "walk govuk EUDPA-XXX", "start-upgrade.sh". NOT for non-govuk-frontend npm bumps — use `npm-upgrade`. NOT for raising the tracking ticket itself — use `ticket-creator`.'
+description: 'Upgrade the govuk-frontend package across every EUDP trade-imports Node.js repo that consumes it. A four-stage workflow driven by canonical per-repo JSON state (`versions.{repo}.json`): Phase 1 = `start-upgrade.sh` (ticket → branch → discover repos → seed state + pre-bake CHANGELOG sections + best-practices bundle), Phase 2 = fan-out one `general-purpose` Task subagent per pending version following `references/VERSION_PLANNER.md` (uses `tim govuk classify` + `tim govuk add-change`), optional Walker = batch triage of pending plans following `references/PLAN_WALKER.md`, Phase 3 = strict-semver-order `tim govuk apply` per `todo` version (package.json + npm install + npm test + commit + state transition), then E2E once at the end. Stays inside the govuk-frontend toolbox — Nunjucks macros, govuk-* utility classes, no custom CSS or hand-rolled components. Triggers: "upgrade govuk-frontend", "govuk upgrade", "govuk-frontend upgrade", "bump govuk-frontend", "walk govuk EUDPA-XXX", "start-upgrade.sh". NOT for non-govuk-frontend npm bumps — use `npm-upgrade`. NOT for raising the tracking ticket itself — use `ticket-creator`.'
 context: fork
 allowed-tools: [Bash, Read, Glob, Grep, Task]
 argument-hint: 'EUDPA-XXXXX [--target X.Y.Z]'
@@ -52,7 +52,7 @@ membership.
 
 | Persona | Used in | Mutation surface |
 |---|---|---|
-| `references/VERSION_PLANNER.md` | `references/PHASE_2_MANAGER.md` Step 2 — one per unplanned version, parallel fan-out | `version-classify.sh` + `version-add-change.sh` against `versions.{repo}.json` |
+| `references/VERSION_PLANNER.md` | `references/PHASE_2_MANAGER.md` Step 2 — one per unplanned version, parallel fan-out | `tim govuk classify` + `tim govuk add-change` against `versions.{repo}.json` |
 
 Spawn idiom inside Phase 2: Task tool with `subagent_type: general-purpose`
 and a prompt beginning `Follow the instructions in ~/git/defra/trade-imports-workspace/.claude/skills/govuk-upgrade/references/VERSION_PLANNER.md.`
@@ -146,7 +146,7 @@ problem-solve. Wait for instruction.
 - `references/PHASE_1_MANAGER.md` — Phase 1 gate (start-upgrade.sh wrapper).
 - `references/PHASE_2_MANAGER.md` — fan-out to `VERSION_PLANNER.md` workers.
 - `references/PLAN_WALKER.md` — batch triage of Phase 2 output before Phase 3.
-- `references/PHASE_3_MANAGER.md` — implementation in strict semver order (delegates to `apply-version.sh`).
+- `references/PHASE_3_MANAGER.md` — implementation in strict semver order (delegates to `tim govuk apply`).
 - `references/VERSION_PLANNER.md` — single-version CHANGELOG analysis + per-repo plan classification (spawned per version as `general-purpose`).
 
 Best-practices (load when the changelog warrants):
@@ -163,12 +163,17 @@ Scripts (`~/git/defra/trade-imports-workspace/tools/govuk/`):
 - `discover-repos.sh` — write run-level `.run-meta.json` (in-scope repos).
 - `discover-versions.sh` — seed `versions.{repo}.json` + cache CHANGELOG + pre-bake per-version sections + best-practices bundle.
 - `setup-branch.sh` — idempotent `git checkout` for one repo + branch.
-- `version-classify.sh` / `version-add-change.sh` — VERSION_PLANNER's mutation surface for `versions.{repo}.json`.
-- `apply-version.sh` — Phase 3 per-version: update package.json, `npm install`, `npm test`, commit, mark implemented (last action).
-- `version-mark-implemented.sh` / `version-mark-failed.sh` — state transitions used by `apply-version.sh`.
 
 Read-only views of the canonical JSON, in tim:
 
 - `tim govuk plans` — filterable status view: each repo's counts and versions (`--filter`, `--sort-semver`, `--json`).
 - `tim govuk summaries` — the walker's work list: one row per version still to apply that is not a noop.
 - `tim govuk render-plan` — markdown view of one version's plan.
+
+Writes to the canonical JSON and the repos, in tim:
+
+- `tim govuk classify` / `tim govuk add-change` — VERSION_PLANNER's mutation surface for `versions.{repo}.json`.
+- `tim govuk apply` — Phase 3 per-version: update package.json, `npm install`, `npm test`, commit, mark done (last action).
+- `tim govuk mark-done` / `tim govuk mark-failed` — state transitions, used by `tim govuk apply` and the walker.
+
+Each takes the version as `--govuk-version`, since `--version` prints tim's own version.

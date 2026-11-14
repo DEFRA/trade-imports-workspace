@@ -95,16 +95,16 @@ Implementation:
   without a plan).
 - `S` for any row → call
   ```bash
-  ~/git/defra/trade-imports-workspace/tools/govuk/version-classify.sh \
-    --run-id EUDPA-XXXXX --repo {repo} --version {version} \
+  tim govuk classify \
+    --run-id EUDPA-XXXXX --repo {repo} --govuk-version {version} \
     --classification noop --summary "walker-skipped"
   ```
   (Promote to noop so Phase 3 short-circuits it.)
 - `D` → defer to Step 4 (don't mutate yet).
 - `Q` → call
   ```bash
-  ~/git/defra/trade-imports-workspace/tools/govuk/version-mark-failed.sh \
-    --run-id EUDPA-XXXXX --repo {repo} --version {version} \
+  tim govuk mark-failed \
+    --run-id EUDPA-XXXXX --repo {repo} --govuk-version {version} \
     --reason "walker-quarantined"
   ```
 
@@ -144,11 +144,11 @@ For each row marked `D`, in input order:
 
 3. **Conclude with one of:**
    - "apply it" → leave as `todo`, no helper call needed.
-   - "skip it" → `version-classify.sh --classification noop --summary "discuss-skipped: <reason>"`.
+   - "skip it" → `tim govuk classify --classification noop --summary "discuss-skipped: <reason>"`.
    - "re-plan" (for `unplanned` or wrong plans) → spawn a single
      VERSION_PLANNER worker for this `{repo, version}` per
      `PHASE_2_MANAGER.md` Step 2.
-   - "quarantine" → `version-mark-failed.sh --reason "<reason>"`.
+   - "quarantine" → `tim govuk mark-failed --reason "<reason>"`.
 
 Move to the next Discuss row.
 
@@ -185,5 +185,5 @@ Omit the last line if `Apply` count is zero.
   the slow-track (Step 4). The Step 2 batch is summary-only.
 - Don't re-Grep the repo. Phase 2 already did that; the changes[]
   list is authoritative.
-- Don't open package.json — `apply-version.sh` is the only thing that
+- Don't open package.json — `tim govuk apply` is the only thing that
   should ever mutate it.

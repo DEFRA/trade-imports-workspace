@@ -16,7 +16,6 @@ import { register as registerWorkspaceReset } from './commands/workspace/reset.j
 import { register as registerWorkspaceBranch } from './commands/workspace/branch.js'
 import { register as registerWorkspaceRepoState } from './commands/workspace/repo-state.js'
 import { register as registerWorkspacePinFetch } from './commands/workspace/pin-fetch.js'
-import { register as registerLink } from './commands/link.js'
 import { register as registerDocker } from './commands/docker/index.js'
 import { register as registerStart } from './commands/start.js'
 import { register as registerAuth } from './commands/auth.js'
@@ -167,7 +166,6 @@ export const buildProgram = () => {
   registerWorkspaceRepoState(workspace, { timVersion: pkg.version })
   registerWorkspacePinFetch(workspace, { timVersion: pkg.version })
 
-  registerLink(program, { timVersion: pkg.version })
   registerDocker(program, { timVersion: pkg.version })
   registerStart(program, { timVersion: pkg.version })
   registerAuth(program, { timVersion: pkg.version })

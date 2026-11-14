@@ -179,7 +179,8 @@ npm ci
 
 `tim` finds the workspace from `--workspace`, then `TIM_WORKSPACE`, then
 by walking up from the current directory, then falls back to the
-canonical path. The global `tim` is a launcher: once it has found a
+canonical path, printing one warning to stderr that names `TIM_WORKSPACE`.
+The global `tim` is a launcher: once it has found a
 workspace clone that holds `tim/src/cli.js` and `repos.json`, it runs
 that clone's own tim, against that clone's roster. One `npm link` serves
 every clone on the machine, and each clone runs its own code. A clone

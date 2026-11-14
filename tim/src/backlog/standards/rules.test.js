@@ -308,6 +308,40 @@ describe('#extractPointers', () => {
     expect(pointsTo).toEqual(['docs/best-practices/node/code-style.md'])
   })
 
+  test('a root-relative pointer in a nested scope resolves from the workspace root', () => {
+    const body = '- See `/docs/best-practices/node/code-style.md`.'
+
+    const { pointsTo } = extractPointers(body, {
+      scopeRootRelative: 'repos/trade-imports-plants-prototype'
+    })
+
+    expect(pointsTo).toEqual(['docs/best-practices/node/code-style.md'])
+  })
+
+  test('a root-relative Topic dir in a nested scope resolves from the workspace root', () => {
+    const body =
+      '- Topic dir: `/docs/best-practices/gds/`\n- Key files: `components.md`.'
+
+    const { pointsTo, topicDirRelative } = extractPointers(body, {
+      scopeRootRelative: 'repos/trade-imports-plants-prototype'
+    })
+
+    expect(topicDirRelative).toBe('docs/best-practices/gds/')
+    expect(pointsTo).toEqual(['docs/best-practices/gds/components.md'])
+  })
+
+  test('a full-workspace Topic dir in a nested scope resolves from the workspace root', () => {
+    const body =
+      '- Topic dir: `~/git/defra/trade-imports-workspace/docs/best-practices/gds/`\n- Key files: `components.md`.'
+
+    const { pointsTo, topicDirRelative } = extractPointers(body, {
+      scopeRootRelative: 'repos/trade-imports-plants-prototype'
+    })
+
+    expect(topicDirRelative).toBe('docs/best-practices/gds/')
+    expect(pointsTo).toEqual(['docs/best-practices/gds/components.md'])
+  })
+
   test('a backticked .md token in a paragraph is ignored', () => {
     const body =
       'A spec is still JS/TS, so `node.md` applies additively — not a list item.\n'

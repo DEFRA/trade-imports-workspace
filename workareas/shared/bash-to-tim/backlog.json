@@ -3885,14 +3885,34 @@
       ],
       "risk": "Low.",
       "proof": "`find tools scripts -name '*.sh'` lists only tools/github-actions/wait-for-pr-checks.sh (plus the two hook files under .claude/hooks).",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "532052509aa296eb21c9873d43e7ae7fbb37b0e6"
+          }
+        ],
+        "checks": [
+          "tim-unit: green (432 files passed, 29 skipped; 6421 tests passed, 8 expected fail, 36 skipped)",
+          "tim-lint: eslint clean and prettier format:check clean",
+          "parity: delete-only row. The 11 listed folders hold no tracked files and are not on disk, so the only change is to docs. Nothing calls them (see no-callers)",
+          "no-callers: git grep finds the retired folder paths only in tim golden fixtures and their recording sources (these are history), plus a docs/analysis note that already says the script was removed. No allowlist entries in .claude/settings.json or repos/*/.claude/settings.json, so settings-followups.md needs nothing for P70",
+          "fixed-path: the diff adds no mention of ~/git/defra or $HOME/git/defra, and no new .sh file"
+        ],
+        "deviations": [
+          "Nothing to delete on disk. Earlier rows had already emptied and removed all 11 folders, including scripts/ci/ and tools/github-actions/.",
+          "tools/github-actions/wait-for-pr-checks.sh no longer exists. Commit 673af1ed deleted it and replaced it with `gh pr checks --watch`, so the index points at that gh command and has no entry for the script.",
+          "The proof's `find tools scripts -name '*.sh'` lists 5 sonar hook scripts, not wait-for-pr-checks.sh. Two are forwarders kept by P56/P57: tools/sonar/sonar-push-check.sh and scripts/sonar/sonar-push-gate.sh. The other three are still Bash because P55 is waiting on a person: scripts/sonar/sonar-record-push.sh, sonar-check-pending.sh and sonar-remove-stale-mcp-containers.sh. The index lists all five with what calls them. The two .claude/hooks files are listed separately.",
+          "Also updated the CLAUDE.md pointer to tools-index.md so it no longer calls the file 'the full tools/ script index'."
+        ]
+      }
     },
     {
       "id": "P71",

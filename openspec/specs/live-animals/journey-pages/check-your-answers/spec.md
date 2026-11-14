@@ -6,7 +6,7 @@
 
 **Page**: notification-view
 
-The page on which a whole notification is read back before submission, and read again once submitted. The page is titled "Review your notification", and "Review before re-submitting" while an amendment's answers differ from the submitted version.
+The page on which a whole notification is read back before submission, and read again once submitted. The page is titled "Review your notification", and "Review before re-submitting" while an amendment's answers differ from the submitted version. A submitted notification's view is titled and headed by its reference number.
 
 ## Requirements
 
@@ -274,22 +274,36 @@ The system MUST refuse to continue from the review of a draft while any card sti
 - **THEN** the error summary holds the single entry "Complete roles and addresses", linking to the Addresses card
 - **AND** no entry names the role
 
-### Requirement: A submitted notification offers copy-as-new and delete
+### Requirement: A submitted notification's view offers Amend this notification, Copy as new and Delete in its header
 **ID**: REQ-CYA-008
-The system MUST offer copy-as-new and delete actions on the read-only view of a submitted notification, and MUST NOT offer cancel-amendment while no amendment is in progress, or a submit/continue action to submit it again.
+The system MUST offer, in the header of a submitted notification's view, a primary "Amend this notification" button that starts an amendment, a secondary "Copy as new" button beside it, and a red "Delete" button that opens the delete confirmation. "Amend this notification" and "Copy as new" MUST each submit a form. The view MUST NOT offer cancel-amendment, or a submit or continue action to submit it again. A draft's review MUST NOT offer "Amend this notification".
 
 #### Scenario: The submitted view offers the actions open to a submitted notification
 **ID**: SCN-CYA-008-A
 - **GIVEN** a submitted notification is open on check-your-answers
 - **WHEN** the user views it
-- **THEN** copy-as-new and delete actions are offered, and no cancel-amendment action is shown
+- **THEN** the header offers "Amend this notification", then "Copy as new", then "Delete", in that order
+- **AND** "Copy as new" is a secondary button and "Delete" is a red button
+- **AND** no cancel-amendment action is shown
 - **AND** no submit or continue action is shown
+
+#### Scenario: Amend this notification starts an amendment
+**ID**: SCN-CYA-008-B
+- **GIVEN** a submitted notification's view
+- **WHEN** the user presses "Amend this notification"
+- **THEN** the notification is opened for amendment and its status bar reads "Amend"
 
 #### Scenario: Delete opens the delete confirmation
 **ID**: SCN-CYA-008-C
 - **GIVEN** a submitted notification's view
 - **WHEN** the user chooses "Delete"
 - **THEN** the delete confirmation opens
+
+#### Scenario: A draft's review offers no Amend this notification
+**ID**: SCN-CYA-008-D
+- **GIVEN** a draft notification is open on check-your-answers
+- **WHEN** the user views it
+- **THEN** the review ends with "Continue" then "Delete", and offers no "Amend this notification"
 
 ### Requirement: Copying a submitted notification from this page opens a new draft under its own reference
 **ID**: REQ-CYA-009
@@ -712,3 +726,63 @@ The system MUST give the Addresses card and the Contact address card no link but
 - **WHEN** the trader views the review
 - **THEN** the error summary has an entry naming that role that links to the role's edit page
 - **AND** the role's row shows its address under the error
+
+### Requirement: A submitted notification's view is headed by its reference and status, and dated
+**ID**: REQ-CYA-029
+The system MUST head a submitted notification's view with its reference number and a "Submitted" tag, with no status bar, and title the page with the reference before the service name. It MUST show "Date submitted: " and the UK day of submission under the header. A draft's or an amendment's review MUST keep its own heading, title and status bar.
+
+#### Scenario: The submitted view is headed by its reference with a Submitted tag and no status bar
+**ID**: SCN-CYA-029-A
+- **GIVEN** a submitted notification
+- **WHEN** the user views it
+- **THEN** the level-1 heading is the notification's reference number
+- **AND** a green "Submitted" tag stands beside the heading
+- **AND** no status bar is shown above it
+
+#### Scenario: The submitted view is titled by its reference, and a draft keeps its review title
+**ID**: SCN-CYA-029-B
+- **GIVEN** a submitted notification, and a draft notification
+- **WHEN** the user views each
+- **THEN** the submitted view's browser title reads "<reference> - Import notification service - GOV.UK"
+- **AND** the draft's review is headed "Review your notification" with a "Draft" status bar
+
+#### Scenario: The date submitted is the UK day of the submission
+**ID**: SCN-CYA-029-C
+- **GIVEN** a notification submitted at 23:30 UTC on 21 July 2026
+- **WHEN** the user views it
+- **THEN** the header reads "Date submitted: 22 July 2026"
+
+### Requirement: A submitted notification's view shows its import reference numbers as text to copy
+**ID**: REQ-CYA-030
+The system MUST show, on a submitted notification's view, an "Import reference numbers" section with the warning "You must use the correct reference and code on the customs declaration or your consignment will be delayed.", a "Notification reference" row reading the reference number and a "Customs document code" row reading "C640". The values MUST be plain text the user can select with JavaScript on or off, and the section MUST NOT show a Copy button.
+
+#### Scenario: The section shows the warning and both rows
+**ID**: SCN-CYA-030-A
+- **GIVEN** a submitted notification
+- **WHEN** the user views it
+- **THEN** an "Import reference numbers" section shows the warning
+- **AND** its "Notification reference" row reads the notification's reference number
+- **AND** its "Customs document code" row reads "C640"
+
+#### Scenario: The values read as text and no button shows without JavaScript
+**ID**: SCN-CYA-030-B
+- **GIVEN** a submitted notification and a browser with JavaScript off
+- **WHEN** the user views it
+- **THEN** the section shows the warning and both values as text
+- **AND** the section shows no button
+
+#### Scenario: A draft's review shows no import reference numbers
+**ID**: SCN-CYA-030-C
+- **GIVEN** a draft notification
+- **WHEN** the user views its review
+- **THEN** no "Import reference numbers" section is shown
+
+### Requirement: Opening the view of a notification that does not exist goes to the notification list
+**ID**: REQ-CYA-031
+The system MUST send the user to the notification list when they open the view of a notification that does not exist.
+
+#### Scenario: An unknown notification goes to the list
+**ID**: SCN-CYA-031-A
+- **GIVEN** a signed-in user
+- **WHEN** they open the view of a notification that does not exist
+- **THEN** the notification list is shown

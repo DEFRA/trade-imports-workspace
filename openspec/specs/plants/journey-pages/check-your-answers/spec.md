@@ -6,7 +6,7 @@
 
 **Page**: notification-view
 
-The page on which a whole high-risk plants notification is read back before submission, and read again once submitted. The page is titled "Check your answers".
+The page on which a whole high-risk plants notification is read back before submission, and read again once submitted. The page is titled "Check your answers". A submitted notification's read-only view is titled and headed by its reference number.
 
 ## Requirements
 
@@ -110,17 +110,25 @@ The system MUST take the user from a draft notification's check-your-answers to 
 - **WHEN** the user continues
 - **THEN** the declaration page opens
 
-### Requirement: A submitted notification is read-only and offers delete
+### Requirement: A submitted notification is read-only and offers Amend this notification and Delete notification in its header
 **ID**: REQ-PLANTS-CYA-008
-The system MUST show a submitted notification read-only — with no Change or Edit details links and no continue action — and MUST offer a delete action. What delete does is owned by `plants/notification-lifecycle`. Cancel-amendment MUST NOT be offered while no amendment is in progress.
+The system MUST show a submitted notification read-only, with no Change or Edit details links and no continue action. Its header MUST offer a primary "Amend this notification" button that starts an amendment and a red "Delete notification" button that leads to the delete page, and the foot MUST NOT offer Delete notification again. The view MUST NOT offer "Copy as new" or cancel-amendment. What delete does is owned by `plants/notification-lifecycle`.
 
-#### Scenario: The submitted view is read-only and offers delete
+#### Scenario: The submitted view is read-only and offers Amend this notification and Delete notification
 **ID**: SCN-PLANTS-CYA-008-A
 - **GIVEN** a submitted notification is open on check-your-answers
 - **WHEN** the user views it
-- **THEN** the status shown is "Submitted"
+- **THEN** the status tag in the header reads "Submitted"
 - **AND** no Change or Edit details links and no continue action are offered
-- **AND** a delete action is offered, and no cancel-amendment action is shown
+- **AND** the header offers "Amend this notification" and a red "Delete notification"
+- **AND** no "Copy as new" or cancel-amendment action is shown
+- **AND** Delete notification is offered only in the header, and not at the foot of the view
+
+#### Scenario: Amend this notification starts an amendment
+**ID**: SCN-PLANTS-CYA-008-C
+- **GIVEN** a submitted notification is open on check-your-answers
+- **WHEN** the user presses "Amend this notification"
+- **THEN** the notification is opened for amendment and its status bar reads "Amend"
 
 #### Scenario: A submitted notification can be deleted from check-your-answers
 **ID**: SCN-PLANTS-CYA-008-B
@@ -282,3 +290,56 @@ The system MUST show the proposed place of landing exactly as the port was offer
 - **GIVEN** a notification whose country of origin is the Canary Islands
 - **WHEN** the user views check-your-answers
 - **THEN** the country of origin row reads "Canary Islands (Spain)"
+
+### Requirement: A submitted notification's read-only view is headed by its reference and status, and dated
+**ID**: REQ-PLANTS-CYA-016
+The system MUST head a submitted notification's read-only view with its reference number and a "Submitted" tag, with no status bar, and start the browser title with the reference before the service name. It MUST show "Date submitted: " and the UK day of submission under the header. A draft's or an amendment's review MUST keep its own heading, title and status bar.
+
+#### Scenario: The submitted view is headed by its reference with a Submitted tag and no status bar
+**ID**: SCN-PLANTS-CYA-016-A
+- **GIVEN** a submitted notification
+- **WHEN** the user views it
+- **THEN** the level-1 heading is the notification's reference number
+- **AND** a green "Submitted" tag stands beside the heading
+- **AND** no status bar is shown above it
+
+#### Scenario: The submitted view is titled by its reference, and a draft keeps its title
+**ID**: SCN-PLANTS-CYA-016-B
+- **GIVEN** a submitted notification, and a draft notification
+- **WHEN** the user views each
+- **THEN** the submitted view's browser title reads "<reference> - Import notification service - GOV.UK"
+- **AND** the draft's review is headed "Check your answers" with a "Draft" status bar
+
+#### Scenario: The date submitted is the UK day of the submission
+**ID**: SCN-PLANTS-CYA-016-C
+- **GIVEN** a notification submitted at 23:30 UTC on 21 July 2026
+- **WHEN** the user views it
+- **THEN** the header reads "Date submitted: 22 July 2026"
+
+### Requirement: A submitted notification's read-only view shows its notification reference as text to copy
+**ID**: REQ-PLANTS-CYA-017
+The system MUST show, on a submitted notification's read-only view, an "Import reference numbers" section with the warning "You must use the correct reference and code on the customs declaration or your consignment will be delayed." and a "Notification reference" row reading the reference number, with no "Customs document code" row. The value MUST be plain text the user can select with JavaScript on or off, and the section MUST NOT show a Copy button.
+
+#### Scenario: The section shows the warning and the reference row
+**ID**: SCN-PLANTS-CYA-017-A
+- **GIVEN** a submitted notification
+- **WHEN** the user views it
+- **THEN** an "Import reference numbers" section shows the warning
+- **AND** its only row is "Notification reference", reading the notification's reference number
+
+#### Scenario: The value reads as text and no button shows without JavaScript
+**ID**: SCN-PLANTS-CYA-017-B
+- **GIVEN** a submitted notification and a browser with JavaScript off
+- **WHEN** the user views it
+- **THEN** the section shows the warning and the reference as text
+- **AND** the section shows no button
+
+### Requirement: Opening the view of a notification that does not exist goes to the notification list
+**ID**: REQ-PLANTS-CYA-018
+The system MUST send the user to the notification list when they open the view of a notification that does not exist.
+
+#### Scenario: An unknown notification goes to the list
+**ID**: SCN-PLANTS-CYA-018-A
+- **GIVEN** a signed-in user
+- **WHEN** they open the view of a notification that does not exist
+- **THEN** the notification list is shown

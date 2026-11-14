@@ -526,5 +526,5 @@ else
     echo "  ✓ review.{repo}.md stubs (${#consistency_repos[@]} repos)"
     echo "  ✓ _consistency-check.md stubs (${#consistency_repos[@]} repos)"
     echo ""
-    echo "Next: Review each file, then run ./verify-coverage.sh $REVIEW_ID"
+    echo "Next: Review each file, write each PR's changed files to .prs/ with gh api, then run tim review verify files $REVIEW_ID"
 fi

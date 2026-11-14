@@ -10,10 +10,10 @@ is a *rendered view* — never the source of truth.
 ~/git/defra/trade-imports-workspace/workareas/reviews/EUDPA-XXXXX/items.{repo}.json
 ```
 
-One file per repo. Initial population: `aggregate-file-reviews.sh`
+One file per repo. Initial population: `tim review aggregate --write-items`
 (from per-file `.review.json` files). Subsequent mutations: walker,
-batch implementor, refresh reconciler — all via the `review-*.sh`
-helpers under `tools/review/`. Never hand-edit.
+batch implementor, refresh reconciler — all via `tim review`
+commands. Never hand-edit.
 
 ## Shape
 
@@ -86,13 +86,13 @@ The `.sh` scripts are under the workspace's `tools/review/`.
 
 | Script or command | Purpose |
 |---|---|
-| `aggregate-file-reviews.sh` | Initial population — write `items.{repo}.json` from per-file `.review.json` files |
+| `tim review aggregate --write-items` | Initial population — write `items.{repo}.json` from per-file `.review.json` files |
 | `tim review items list` | Query items (filter by disposition / status; TSV, or the items as `result` with `--json`) |
 | `tim review items add` | Append a new item; auto-assigns `id`; returns the new ID |
 | `tim review items mark` | Set `disposition` (auto-sets `status` per the table above) |
 | `tim review items status` | Set `status` only |
 | `tim review items counts` | Breakdown by disposition + status |
-| `render-items.sh` | Emit the markdown `## Items` table view of `items.{repo}.json` |
+| `tim review items render` | Emit the markdown `## Items` table view of `items.{repo}.json` |
 
 ## Refresh interaction
 
@@ -111,7 +111,7 @@ reconciler.
 ## Markdown view
 
 The `## Items` section in `review.{repo}.md` is rendered from this JSON
-by `render-items.sh --write`, through `tools/review/items-table.jq`. Re-render
+by `tim review items render --write`. Re-render
 whenever items change. Column order:
 
 ```

@@ -228,6 +228,6 @@ else
     if [[ "$total_files" -eq 0 ]]; then
         echo "Note: no changed files found — nothing to review."
     else
-        echo "Next: review each file, then run tools/review/verify-coverage.sh $REVIEW_ID"
+        echo "Next: review each file, then run tim review verify files $REVIEW_ID"
     fi
 fi

@@ -7,6 +7,7 @@ import {
 import { makeRunAction } from '../_run-action.js'
 import { registerFile } from './file.js'
 import { registerItems } from './items.js'
+import { registerReviewTools } from './tools.js'
 
 const registerDetectTech = (review, { timVersion }) =>
   review
@@ -45,4 +46,5 @@ export const register = (program, { timVersion }) => {
   registerDetectTech(review, { timVersion })
   registerFile(review, { timVersion })
   registerItems(review, { timVersion })
+  registerReviewTools(review, { timVersion })
 }

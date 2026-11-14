@@ -269,7 +269,7 @@ file-diff cache is empty, or a `file-style-*` helper rejects every call —
 do **not** return an empty or silent result. A silently-empty return (no
 findings, no verdict, zero resolved) is indistinguishable from a clean
 `COMPLIANT` pass, and the downstream style coverage gate
-(`verify-style-coverage.sh`) will block the parent with no clue why.
+(`tim review verify style`) will block the parent with no clue why.
 
 Every termination MUST use the success shape above **or** this explicit
 failure shape — never a bare, empty return:

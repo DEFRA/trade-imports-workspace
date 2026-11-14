@@ -11,6 +11,10 @@ import {
   renderStatusText,
   setReviewItemStatus
 } from '../../review/items-ledger.js'
+import {
+  renderRenderedItemsText,
+  renderReviewItems
+} from '../../review/items-table.js'
 import { makeRunAction } from '../_run-action.js'
 
 const itemsAction = ({ run, renderText, timVersion }) =>
@@ -119,6 +123,25 @@ const registerMark = (items, { timVersion }) =>
       })
     )
 
+const registerRender = (items, { timVersion }) =>
+  withReviewId(items.command('render'))
+    .description(
+      "Print a repo's items as the ## Items markdown table. A fix's Must: and One way: parts get a column each. --write puts the table into review.<repo>.md instead: over the items table there, else over the comment that names the renderer, else before the ## Repository Verdict heading."
+    )
+    .option('--repo <repo>', 'The repo whose items to render')
+    .option('--write', 'Put the table into review.<repo>.md')
+    .addHelpText(
+      'after',
+      '\nExamples:\n  tim review items render EUDPA-1234 --repo trade-imports-stub\n  tim review items render EUDPA-1234 --repo trade-imports-stub --write'
+    )
+    .action(
+      itemsAction({
+        run: renderReviewItems,
+        renderText: renderRenderedItemsText,
+        timVersion
+      })
+    )
+
 const registerStatus = (items, { timVersion }) =>
   withReviewId(items.command('status'))
     .description(
@@ -156,4 +179,5 @@ export const registerItems = (review, { timVersion }) => {
   registerAdd(items, { timVersion })
   registerMark(items, { timVersion })
   registerStatus(items, { timVersion })
+  registerRender(items, { timVersion })
 }

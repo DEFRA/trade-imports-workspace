@@ -214,11 +214,10 @@ markdown, no placeholder path needed in the spawn prompt.
 ## Step 3: Verify Coverage
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/review/verify-style-coverage.sh EUDPA-XXXXX
+tim review verify style EUDPA-XXXXX
 ```
 
-(The script lives under `tools/review/` for cross-skill reasons but
-checks the JSON `.verdict != null` field.) **Do not proceed until 100%
+It checks the JSON `.verdict != null` field. **Do not proceed until 100%
 coverage.**
 
 ## Step 4: Aggregate to items.{repo}.json + render
@@ -587,8 +586,8 @@ All under `~/git/defra/trade-imports-workspace/tools/style/`:
 | `refresh/scope.sh` | Refresh Steps R1-R3 orchestrator |
 | `refresh/reconcile.sh` | Refresh Step R5 — fold per-file `.style.json` findings into `items.{repo}.json`; emit Fix+Done spot-check advisory |
 
-Cross-domain script under `tools/review/`:
+Coverage gate, in tim:
 
-| Script | Purpose |
+| Command | Purpose |
 |---|---|
-| `verify-style-coverage.sh` | Fresh Step 3 coverage gate — checks `.verdict != null` on each per-file `.style.json` |
+| `tim review verify style` | Fresh Step 3 coverage gate — checks `.verdict != null` on each per-file `.style.json` |

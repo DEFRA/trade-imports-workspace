@@ -82,9 +82,9 @@ is marked Discuss, for the designer.
    escaping).
 3. **Reviewer sets verdict** — final call via
    `tim review file verdict` (stamps `reviewed_at`).
-4. **Coverage gate** — `verify-coverage.sh` looks for
+4. **Coverage gate** — `tim review verify files` looks for
    `.verdict != null` per file.
-5. **Aggregation** — `aggregate-file-reviews.sh` reads all JSONs
+5. **Aggregation** — `tim review aggregate` reads all JSONs
    for a repo and emits the markdown table rows used in
    `review.{repo}.md` (File Analysis Summary + consolidated `## Items`).
 6. **Refresh** — overwrites the JSON in place with the latest mode's

@@ -511,6 +511,6 @@ When you're done, your placeholder JSON file should have:
   `severity`, `category`, `issue`, `fix`, and optionally
   `best_practice`).
 
-The parent skill runs `verify-coverage.sh` afterwards — it checks
+The parent skill runs `tim review verify files` afterwards — it checks
 `.verdict != null`. If your file still has `verdict: null`, coverage
 fails and you'll be re-spawned.

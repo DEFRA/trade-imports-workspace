@@ -6,7 +6,7 @@ Shared shell scripts called by skills via
 
 **`tools/` is bash only.** Each script here is bash, and its tests are bash
 scripts beside it named `<script>.<aspect>.test.sh`, each with a `check()`
-helper (for example `tools/review/render-items.write.test.sh`). New
+helper (for example `tools/review/share-review.summary.test.sh`). New
 JavaScript goes in `tim` as a command, tested with tim's own tests, not in
 `tools/`.
 
@@ -43,21 +43,21 @@ epics included, goes through `tim jira create`.
 | **review** | | |
 | `tools/review/start-review.sh` | EUDPA-X | Step 0 — detect FRESH/REFRESH and exec the appropriate setup script |
 | `tools/review/prepare-review.sh` | EUDPA-X [--json] | Setup workspace |
-| `tools/review/verify-coverage.sh` | EUDPA-X [--json] | Check coverage |
-| `tools/review/verify-consistency.sh` | EUDPA-X [--json] | Check consistency |
-| `tools/review/verify-style-coverage.sh` | EUDPA-X [--json] | Check JS style review coverage |
+| `tim review verify files` | EUDPA-X [--json] | Check every file each PR changes has a reviewed `.review.json`. Reads `.prs/{repo}-{pr}.json`, written first by `gh api repos/DEFRA/{repo}/pulls/{pr}/files --paginate --slurp` |
+| `tim review verify consistency` | EUDPA-X [--json] | Check consistency |
+| `tim review verify style` | EUDPA-X [--json] | Check code style review coverage |
 | `tim review file init` | EUDPA-X --repo R --file F --commit SHA [--pr N] --mode M [--json] | Initialise per-file `.review.json` placeholder; prints its path |
 | `tim review file add` | EUDPA-X --repo R --file F --line L --severity S --category C --issue "..." --fix "..." [--best-practice PATH] [--json] | Append a finding to a per-file JSON; prints its id. C is a finding category; any other is refused |
 | `tim review file verdict` | EUDPA-X --repo R --file F --verdict V [--reason "..."] [--json] | Set verdict (marks file as reviewed) |
-| `tools/review/aggregate-file-reviews.sh` | EUDPA-X --repo R [--write-items] [--section ...] [--json] | Populate `items.{repo}.json` + emit File Analysis Summary / Items markdown.<br>e.g. `tools/review/aggregate-file-reviews.sh EUDPA-1 --repo backend --write-items`<br>Boundary: without `--write-items` it only emits markdown to stdout; `--write-items` (re)writes `items.{repo}.json` and renumbers IDs — FRESH population only, prior dispositions/status not preserved. |
+| `tim review aggregate` | EUDPA-X --repo R [--write-items] [--section ...] [--json] | Populate `items.{repo}.json` + emit File Analysis Summary / Items markdown.<br>e.g. `tim review aggregate EUDPA-1 --repo backend --write-items`<br>Boundary: without `--write-items` it only emits markdown to stdout; `--write-items` (re)writes `items.{repo}.json` and renumbers IDs — FRESH population only, prior dispositions/status not preserved. |
 | `tim review items list` | EUDPA-X [--repo R] [--file F] [--filter ...] [--status ...] [--json] | List items from `items.{repo}.json` as TSV (`--json`: the items are `result`) |
 | `tim review items mark` | EUDPA-X --repo R --item N --disposition V [--note "..."] [--json] | Set Disposition (auto-sets Status).<br>e.g. `tim review items mark EUDPA-1 --repo backend --item 3 --disposition Fix`<br>`Merged` needs `--note "merged into #N"`, naming the owner item.<br>Boundary: sets Disposition and lets it drive Status (vs `tim review items status`, which sets Status alone). |
 | `tim review items status` | EUDPA-X --repo R --item N --status V [--note "..."] [--json] | Set Status only.<br>e.g. `tim review items status EUDPA-1 --repo backend --item 3 --status Done`<br>Boundary: sets Status directly and leaves Disposition untouched (vs `tim review items mark`, which sets Disposition and derives Status). |
 | `tim review items add` | EUDPA-X --repo R --file F --line L --severity S --category C --issue "..." --fix "..." [--best-practice PATH] [--json] | Append new item; prints new ID. C is a finding category |
 | `tim review items counts` | EUDPA-X [--repo R] [--json] | Summary by Disposition+Status |
-| `tools/review/render-items.sh` | EUDPA-X --repo R [--write] | Render `items.{repo}.json` as the `## Items` markdown view, through `items-table.jq`; `--write` puts it into `review.{repo}.md` in place of the old table; a fix's "Must:" and "One way:" parts get a column each |
-| `tools/review/refresh/scope.sh` | EUDPA-X [--repo R] [--no-pull] [--write-snapshot] [--human] | Refresh: pull + diff + lists A/B/C/D.<br>e.g. `tools/review/refresh/scope.sh EUDPA-1 --write-snapshot`<br>Boundary: read-only — classifies files into the refresh work-lists (vs `reconcile.sh`, which mutates `items.{repo}.json`). |
-| `tools/review/refresh/reconcile.sh` | EUDPA-X --repo R [--dry-run] [--json] [--force] | Refresh Step R5 — fold `.review.json` findings into items.json + emit Fix+Done spot-check advisory.<br>e.g. `tools/review/refresh/reconcile.sh EUDPA-1 --repo backend`<br>Boundary: runs after `scope.sh` and appends new findings into `items.{repo}.json` (vs `scope.sh`, which only lists them). |
+| `tim review items render` | EUDPA-X --repo R [--write] [--json] | Render `items.{repo}.json` as the `## Items` markdown view; `--write` puts it into `review.{repo}.md` in place of the old table; a fix's "Must:" and "One way:" parts get a column each |
+| `tools/review/refresh/scope.sh` | EUDPA-X [--repo R] [--no-pull] [--write-snapshot] [--human] | Refresh: pull + diff + lists A/B/C/D.<br>e.g. `tools/review/refresh/scope.sh EUDPA-1 --write-snapshot`<br>Boundary: read-only — classifies files into the refresh work-lists (vs `tim review reconcile`, which mutates `items.{repo}.json`). |
+| `tim review reconcile` | EUDPA-X --repo R [--dry-run] [--json] [--force] | Refresh Step R5 — fold `.review.json` findings into items.json + emit Fix+Done spot-check advisory.<br>e.g. `tim review reconcile EUDPA-1 --repo backend`<br>Boundary: runs after `scope.sh` and appends new findings into `items.{repo}.json` (vs `scope.sh`, which only lists them). |
 | `tools/review/refresh/pull-repos.sh` | EUDPA-X [--repo R] [--json] | Refresh helper |
 | `tools/review/refresh/list-merge-resolved.sh` | REPO_DIR PRIOR_SHA HEAD_SHA [--tsv\|--json] | Refresh helper |
 | `tools/review/refresh/list-coverage-gaps.sh` | REVIEW_DIR REPO PR_NUM [--tsv\|--json] | Refresh helper |

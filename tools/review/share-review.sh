@@ -245,7 +245,7 @@ while IFS=$'\t' read -r repo pr; do
             render_item_counts "$items_file"
             echo
         elif [[ -f "$items_file" ]]; then
-            "$SCRIPT_DIR/render-items.sh" "$TICKET" --repo "$repo" 2>/dev/null || true
+            tim --workspace "$SCRIPT_DIR/../.." review items render "$TICKET" --repo "$repo" 2>/dev/null || true
             echo
         elif [[ -f "$review_md" && "$COMMENT_ONLY" == "1" ]]; then
             echo "_See \`workareas/reviews/$TICKET/$(basename "$review_md")\` in the reviewer's workspace._"

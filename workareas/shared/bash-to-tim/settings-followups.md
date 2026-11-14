@@ -84,3 +84,14 @@ None. No allowlist entry names `file-review-init.sh`,
 `review-counts.sh`, `review-add-item.sh`, `review-mark.sh` or
 `review-set-status.sh`. `Bash(tim:*)` covers `tim review file` and
 `tim review items`.
+
+## P48
+
+None to remove. No allowlist entry names `render-items.sh`,
+`items-table.jq`, `aggregate-file-reviews.sh`, `verify-consistency.sh`,
+`verify-style-coverage.sh`, `verify-coverage.sh` or
+`refresh/reconcile.sh`. `Bash(tim:*)` covers the tim commands. The review
+skill's Step 3 now runs
+`gh api repos/DEFRA/{repo}/pulls/{pr}/files --paginate --slurp > ...`, which
+only `Bash(gh api user:*)` is allowed today, so it prompts: consider
+allowing `Bash(gh api repos/DEFRA/*/pulls/*/files:*)`.

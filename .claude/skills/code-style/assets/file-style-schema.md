@@ -75,7 +75,7 @@ wrong. A design finding is marked Discuss, for the designer.
    escaping).
 3. **Reviewer sets verdict** — final call via
    `file-style-set-verdict.sh` (stamps `reviewed_at`).
-4. **Coverage gate** — `verify-style-coverage.sh` looks for
+4. **Coverage gate** — `tim review verify style` looks for
    `.verdict != null` per file.
 5. **Aggregation** — `aggregate-file-reviews.sh` reads all JSONs
    for a repo and writes `items.{repo}.json` (canonical consolidated

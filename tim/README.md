@@ -456,6 +456,33 @@ tim review items counts EUDPA-1234
   breakdown and total for `counts`, and the item written for the others.
 - Every refusal exits 1, as the scripts they replace did.
 
+```bash
+tim review items render EUDPA-1234 --repo trade-imports-stub --write
+tim review aggregate EUDPA-1234 --repo trade-imports-stub --write-items --section file-summary
+gh api repos/DEFRA/trade-imports-stub/pulls/42/files --paginate --slurp > workareas/reviews/EUDPA-1234/.prs/trade-imports-stub-42.json
+tim review verify files EUDPA-1234
+tim review verify consistency EUDPA-1234
+tim review verify style EUDPA-1234
+tim review reconcile EUDPA-1234 --repo trade-imports-stub --dry-run
+```
+
+- `items render` prints a repo's `## Items` markdown table. `--write` puts
+  it into `review.<repo>.md`: over the table there, else over a comment
+  naming `tim review items render` or `render-items.sh`, else before
+  `## Repository Verdict`.
+- `aggregate` prints the File Analysis Summary, the items table or both.
+  `--write-items` starts `items.<repo>.json` afresh from the file reviews
+  and stamps `reconciled_at` on each reviewed one. `--json` gives each
+  file's rollup.
+- `verify files|consistency|style` write the checklist beside the file
+  reviews and print the coverage. `files` reads each pull request's changed
+  files from `.prs/<repo>-<pr>.json`, which `gh` writes, and refuses a pull
+  request with none; tim never calls GitHub.
+- `reconcile` appends each finding from the file reviews refreshed since
+  they were last reconciled, and lists the fixed items in those files to
+  spot-check. `--json` gives the counts, the items added and the
+  spot-check.
+
 ### `tim ticket` — the ticket skill's helpers
 
 ```bash

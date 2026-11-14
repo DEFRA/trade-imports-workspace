@@ -3212,7 +3212,7 @@
       ],
       "risk": "Medium: it wipes volumes. Dropping an opt-in profile would leave ZAP running.",
       "proof": "Golden argv diffs. Lease tests for release and for a half-started stack with a fake docker exiting 0 and 1.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
@@ -3220,7 +3220,48 @@
         "no-callers",
         "stack-smoke"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "e68441d44da79279812f97bd0394eb2877204efa"
+          },
+          {
+            "repo": "trade-imports-address-book",
+            "sha": "243eae40cc05bc10348ffb313298fe4166f4a7af"
+          },
+          {
+            "repo": "trade-imports-animals-backend",
+            "sha": "3d8892be12b68f78d1e2f5366605b2b757f7a6fb"
+          },
+          {
+            "repo": "trade-imports-dynamics-gateway",
+            "sha": "b90d99b2407bc8a7e2ead6f523e1fccea5a90aa7"
+          },
+          {
+            "repo": "trade-imports-ins-tests",
+            "sha": "29e681e26720af06501bb8a8a562159ec99a3f7b"
+          },
+          {
+            "repo": "trade-imports-reference-data",
+            "sha": "ba010eee8a3f233d6494921835fb3ddbbf92257f"
+          }
+        ],
+        "checks": [
+          "tim-unit: green. npm --prefix tim test passed 398 files and 5983 tests; 24 files and 35 tests skipped, all of them existing skips of bash goldens whose script is gone.",
+          "tim-lint: green. tim run lint and run format:check are both clean.",
+          "parity: green. tim/src/stack/down.test.js runs `tim docker down` with no args and with `--timeout 1` against the fake docker, and the stdout, exit code and docker call sequence match the P58 stop-stack.json goldens exactly. A mutation probe that left the monitoring profile out turned 3 tests red, then was restored. restart.test.js still matches the restart-stack golden, including a down that fails. Lease tests cover release, a failed start and a half-started stack, with a fake docker whose compose down exits 0 or 5.",
+          "no-callers: green. `git grep stop-stack` now hits only history-type material: the golden fixture, the bash-trace and bash-help tests that skip once the script is gone, compose.test.js reading the golden, and workareas. Five service repo READMEs named the script; they now say `tim docker down`.",
+          "stack-smoke: not run. The workspace stack has been up for 24 hours with no lease, and taking it down would wipe a stack someone may be using. This is recorded under P60 in settings-followups.md.",
+          "extra: the diff adds no mention of ~/git/defra or $HOME/git/defra and no new .sh file. No settings.json allowlist entry names stop-stack.sh."
+        ],
+        "deviations": [
+          "stack-smoke was not run, for the same reason as P58 and P59: the workspace stack is up and nobody holds its lease.",
+          "The row did not list any service repos, but five of them (address-book, animals-backend, dynamics-gateway, ins-tests, reference-data) had README lines naming ./scripts/stack/stop-stack.sh. Each now says `tim docker down`, in its own commit on chore/NO_JIRA-bash-to-tim. That branch was created from origin/main in address-book, dynamics-gateway and reference-data; animals-backend and ins-tests already had it. ins-tests' branch is 2 commits behind origin/main, as it was before this row.",
+          "Intentional behaviour changes, also listed in the commit message: down's --json result and error name 'docker compose'. Lease logs for a take-down start with '$ tim docker down' instead of the script path. Lease failure reasons say 'docker compose down exited N'. A missing docker gives MISSING_DEP instead of exit 127. `tim docker down --help` prints tim's own usage instead of the script's.",
+          "asksForRestartHelp moved to tim/src/stack/down.js as asksForHelp, and restart and down now share it. commands.test.js lost the restart-whose-stop-failed case, which would have run the real docker; restart.test.js already covers that case with the fake docker. Its USAGE case now checks a workspace with no run-stack.sh."
+        ]
+      }
     },
     {
       "id": "P61",

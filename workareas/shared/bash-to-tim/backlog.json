@@ -3834,14 +3834,38 @@
       ],
       "risk": "Low. Nothing calls `tim link`. The warning tells people (and workflow agents outside any clone) to set TIM_WORKSPACE.",
       "proof": "cli.test.js shows no link command. A workspace-root test with no walk-up match warns. A rules.js test resolves both prefix forms.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "eb378620597c8bef93f28a1b5f47150394e460da"
+          },
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "48eccf189d2807e09d3e0e27883b1041c9566daf"
+          }
+        ],
+        "checks": [
+          "verifier-fix: tim/src/launcher.js addressedWorkspaceRoot now passes `warn: leaveFallbackWarningToCli` (a no-op) to resolveWorkspaceRoot. The cli it hands over to still prints the fallback warning once, so a run through a second clone's launcher prints one line, not two.",
+          "new-test: launcher.test.js 'global tim falling back on the canonical clone > Should hand over to the canonical clone without printing a warning of its own'. It sets HOME to a temp folder holding a stub canonical clone at git/defra/trade-imports-workspace, runs launcher.js from a folder outside any clone with TIM_WORKSPACE empty, and asserts exit 0, stdout is the canonical clone's cli.js, and stderr is ''.",
+          "red-green probe: with the warn option removed, the new test fails (stderr held 'Warning: you are not inside a workspace clone, so tim is using ...'). With the fix restored, it passes.",
+          "tim-unit: PASS. npm --prefix tim test: 431 files passed (29 skipped), 6419 tests passed, 0 failed.",
+          "tim-lint: PASS. npm --prefix tim run lint exited 0.",
+          "tim-format: PASS. npm --prefix tim run format:check exited 0.",
+          "parity, no-callers, fixed-path, settings-followups: unchanged from the builder's report. This fix touches only launcher.js and its test, adds no .sh file and no fixed path."
+        ],
+        "deviations": [
+          "I added the fix as a new commit (48eccf18) and did not amend eb378620, so a commit that may already be pushed is not rewritten.",
+          "The builder's deviations still stand: the link registration was removed in tim/src/program.js, not cli.js. 'Root-relative' was taken to mean a leading '/'. The warning goes through an injectable `warn` option. CLAUDE.md gained one sentence about the fallback warning."
+        ]
+      }
     },
     {
       "id": "P70",

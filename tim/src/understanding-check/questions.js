@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs'
 import { TimError } from '../errors.js'
 import { readJsonFile } from '../backlog/io.js'
 import { writeJsonAtomic } from '../review/store.js'
+import { elements } from './jq-values.js'
 import { commaList } from './lists.js'
 import { checkFilePaths, checkFolder } from './paths.js'
 import { requireExisting, requireGiven } from './refusals.js'
@@ -164,7 +165,10 @@ const requireReplaceable = (given) => {
 const readExistingQuestions = (path) => {
   requireExisting(path)
   const questionSet = readJsonFile(path)
-  return { questionSet, questions: questionListOf(questionSet, path) }
+  return {
+    questionSet,
+    questions: elements(questionSet?.questions, `${path} questions`)
+  }
 }
 
 /**

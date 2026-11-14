@@ -8,6 +8,7 @@ import {
 import { join } from 'node:path'
 import { TimError } from '../errors.js'
 import { readJsonFile } from '../backlog/io.js'
+import { echoedLines } from './echo.js'
 import {
   alternative,
   elements,
@@ -149,7 +150,7 @@ const ticketSummaryLines = (folder, summary) => {
   const ticketPath = join(folder, 'ticket.md')
   return isFile(ticketPath)
     ? descriptionLines(readFileSync(ticketPath, 'utf8'))
-    : [summary]
+    : echoedLines(summary)
 }
 
 const changeSummaryBlock = (analysis) =>

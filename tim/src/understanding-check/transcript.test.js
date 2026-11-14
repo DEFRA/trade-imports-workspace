@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { stageInterviewWorkspace } from './__fixtures__/interview-workspace.js'
 import { addScore, recordAnswer } from './transcript.js'
@@ -20,6 +20,12 @@ const checkFile = (workspaceRoot, ticket, name) =>
 
 const readCheckFile = (workspaceRoot, ticket, name) =>
   JSON.parse(readFileSync(checkFile(workspaceRoot, ticket, name), 'utf8'))
+
+const withNullQuestions = (workspaceRoot, ticket) =>
+  writeFileSync(
+    checkFile(workspaceRoot, ticket, 'questions.json'),
+    JSON.stringify({ ticket, questions: null })
+  )
 
 describe('#recordAnswer', () => {
   test('Should record the answer without its trailing newlines and count its characters', () =>
@@ -78,6 +84,28 @@ describe('#recordAnswer', () => {
       })
 
       expect(recorded.skipped).toBe(true)
+    }))
+})
+
+describe('#recordAnswer with questions that are not a list', () => {
+  test('Should refuse and start no transcript', () =>
+    withStaged((root) => {
+      withNullQuestions(root, 'EUDPA-230')
+
+      expect(() =>
+        recordAnswer({
+          workspaceRoot: root,
+          ticket: 'EUDPA-230',
+          questionId: 'Q1',
+          skipped: true,
+          now: NOW
+        })
+      ).toThrow(
+        `Error: ${checkFile(root, 'EUDPA-230', 'questions.json')} questions is not a list`
+      )
+      expect(existsSync(checkFile(root, 'EUDPA-230', 'transcript.json'))).toBe(
+        false
+      )
     }))
 })
 
@@ -155,6 +183,39 @@ describe('#addScore', () => {
       expect(
         existsSync(checkFile(root, 'EUDPA-241', '.interview-meta.json'))
       ).toBe(false)
+    }))
+
+  test('Should refuse a quoted match, and write nothing, when questions is not a list', () =>
+    withStaged((root) => {
+      withNullQuestions(root, 'EUDPA-240')
+      const transcriptBefore = readFileSync(
+        checkFile(root, 'EUDPA-240', 'transcript.json'),
+        'utf8'
+      )
+
+      expect(() => addScore(scoreGiven(root))).toThrow(
+        `Error: ${checkFile(root, 'EUDPA-240', 'questions.json')} questions is not a list`
+      )
+      expect(
+        readFileSync(checkFile(root, 'EUDPA-240', 'transcript.json'), 'utf8')
+      ).toBe(transcriptBefore)
+      expect(
+        readCheckFile(root, 'EUDPA-240', '.interview-meta.json').coverage_gaps
+      ).toEqual([])
+    }))
+
+  test('Should record an empty match as unscorable without reading the questions', () =>
+    withStaged((root) => {
+      withNullQuestions(root, 'EUDPA-240')
+
+      const scored = addScore(scoreGiven(root, { rubricMatch: '' }))
+
+      expect(scored).toEqual({
+        questionId: 'Q1',
+        verdict: 'FAIL',
+        unscorable: true,
+        warning: ''
+      })
     }))
 
   test('Should refuse a verdict that is not PASS, PARTIAL or FAIL', () =>

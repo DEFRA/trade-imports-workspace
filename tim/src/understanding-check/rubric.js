@@ -1,3 +1,4 @@
+import { isEchoOptionsOnly } from './echo.js'
 import { rawOutput } from './jq-values.js'
 
 const CATEGORICAL_VERBS = [
@@ -57,7 +58,6 @@ export const hasCategoricalVerb = (clause) => {
   )
 }
 
-const ECHO_OPTIONS_ONLY = /^-[neE]+$/
 const SPACE_RUN =
   /[\t\n\v\f\r \u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+/g
 
@@ -70,7 +70,7 @@ const SPACE_RUN =
  * @returns {string}
  */
 export const squeezedText = (text) => {
-  if (ECHO_OPTIONS_ONLY.test(text)) return ''
+  if (isEchoOptionsOnly(text)) return ''
   return `${text}\n`.replace(SPACE_RUN, ' ').replace(/^ /, '').replace(/ $/, '')
 }
 

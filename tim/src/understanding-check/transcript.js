@@ -2,6 +2,7 @@ import { existsSync, readFileSync, statSync } from 'node:fs'
 import { TimError } from '../errors.js'
 import { readJsonFile } from '../backlog/io.js'
 import { writeJsonAtomic } from '../review/store.js'
+import { elements } from './jq-values.js'
 import { commaList, evidenceList } from './lists.js'
 import { checkFilePaths, checkFolder } from './paths.js'
 import { requireExisting, requireGiven } from './refusals.js'
@@ -13,18 +14,8 @@ const UNSCORABLE = '<unscorable>'
 
 const isFile = (path) => existsSync(path) && statSync(path).isFile()
 
-const listIn = (value, path, key) => {
-  const list = value[key] ?? []
-  if (!Array.isArray(list)) {
-    throw new TimError('PARSE', `Error: ${path} ${key} is not a list`)
-  }
-  return list
-}
-
-const readQuestions = (path) => {
-  requireExisting(path)
-  return listIn(readJsonFile(path), path, 'questions')
-}
+const readQuestions = (path) =>
+  elements(readJsonFile(path)?.questions, `${path} questions`)
 
 const entriesOf = (transcript, path) => {
   if (!Array.isArray(transcript.entries)) {
@@ -78,6 +69,7 @@ export const recordAnswer = ({
   now
 }) => {
   const paths = checkFilePaths(checkFolder(workspaceRoot, ticket))
+  requireExisting(paths.questions)
   const questions = readQuestions(paths.questions)
   if (!questions.some((question) => question.id === questionId)) {
     throw new TimError(
@@ -116,13 +108,16 @@ export const recordAnswerText = ({ questionId, skipped, characters }) =>
     ? `Recorded skip for ${questionId}.`
     : `Recorded answer for ${questionId} (${characters} chars).`
 
-const quotesRubric = (rubricMatch, question) =>
-  rubricMatch !== '' &&
-  rubricMatch !== UNSCORABLE &&
-  rubricMatchOverlaps(rubricMatch, rubricClauseLines(question))
-
 const isUnquoted = (rubricMatch) =>
   rubricMatch === '' || rubricMatch === UNSCORABLE
+
+const quotesRubric = ({ rubricMatch, questionsPath, questionId }) => {
+  if (isUnquoted(rubricMatch)) return false
+  const question = readQuestions(questionsPath).find(
+    (each) => each.id === questionId
+  )
+  return rubricMatchOverlaps(rubricMatch, rubricClauseLines(question))
+}
 
 const scoreOf = ({
   verdict,
@@ -193,10 +188,13 @@ export const addScore = ({
     throw new TimError('USAGE', 'Error: --verdict must be PASS|PARTIAL|FAIL')
   }
   const paths = checkFilePaths(checkFolder(workspaceRoot, ticket))
-  const questions = readQuestions(paths.questions)
+  requireExisting(paths.questions)
   requireExisting(paths.transcript, ' — record an answer first')
-  const question = questions.find((each) => each.id === questionId)
-  const quoted = quotesRubric(rubricMatch, question)
+  const quoted = quotesRubric({
+    rubricMatch,
+    questionsPath: paths.questions,
+    questionId
+  })
   const warning =
     quoted || isUnquoted(rubricMatch)
       ? ''

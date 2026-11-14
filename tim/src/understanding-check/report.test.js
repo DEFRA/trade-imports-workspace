@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { stageInterviewWorkspace } from './__fixtures__/interview-workspace.js'
 import { renderPreview, writeReport } from './report.js'
@@ -15,6 +15,14 @@ const withStaged = (run) => {
 
 const checkFolderIn = (workspaceRoot, ticket) =>
   join(workspaceRoot, 'workareas', 'understanding-checks', ticket)
+
+const useSummaryWithNoTicketFile = (workspaceRoot, summary) => {
+  const folder = checkFolderIn(workspaceRoot, 'EUDPA-204')
+  const metaPath = join(folder, '.interview-meta.json')
+  const meta = JSON.parse(readFileSync(metaPath, 'utf8'))
+  writeFileSync(metaPath, JSON.stringify({ ...meta, summary }))
+  rmSync(join(folder, 'ticket.md'))
+}
 
 describe('#renderPreview', () => {
   test('Should list each analysis in file-name order with its finding counts', () =>
@@ -49,6 +57,39 @@ describe('#writeReport', () => {
 
       expect(readFileSync(path, 'utf8')).toContain(
         '| Q1 | architecture | PASS | Names the Q1 \\\\| reason |  |'
+      )
+    }))
+
+  test('Should print the summary as the ticket summary when there is no ticket.md', () =>
+    withStaged((root) => {
+      useSummaryWithNoTicketFile(root, 'Plain summary')
+
+      const { path } = writeReport({ workspaceRoot: root, ticket: 'EUDPA-204' })
+
+      expect(readFileSync(path, 'utf8')).toContain(
+        '## 2. Ticket summary\n\nPlain summary\n\n## 3. Change summary'
+      )
+    }))
+
+  test('Should print no ticket summary line for a summary echo reads as -n', () =>
+    withStaged((root) => {
+      useSummaryWithNoTicketFile(root, '-n')
+
+      const { path } = writeReport({ workspaceRoot: root, ticket: 'EUDPA-204' })
+
+      expect(readFileSync(path, 'utf8')).toContain(
+        '## 2. Ticket summary\n\n\n## 3. Change summary'
+      )
+    }))
+
+  test('Should print an empty ticket summary line for a summary echo reads as -e', () =>
+    withStaged((root) => {
+      useSummaryWithNoTicketFile(root, '-eE')
+
+      const { path } = writeReport({ workspaceRoot: root, ticket: 'EUDPA-204' })
+
+      expect(readFileSync(path, 'utf8')).toContain(
+        '## 2. Ticket summary\n\n\n\n## 3. Change summary'
       )
     }))
 

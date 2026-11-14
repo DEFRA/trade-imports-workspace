@@ -1841,14 +1841,17 @@
       ],
       "risk": "Medium. The file format is what other tools grep for (`^version:`, the confluence-page-id line). --clean deletes only <root>/docs/confluence.",
       "proof": "Golden HTML-to-Markdown corpus. `diff -r` of a live sync tree from bash and from tim (ignoring the timestamp line). A second clone writes only under itself.",
-      "status": "todo",
+      "status": "blocked",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "blockedReason": "tim confluence sync now refuses a non-numeric --page-id or --root-id with a usage error (exit 2) before --clean removes anything, and accepts a page URL, where sync-docs.sh exited 1, but the row's risk does not name this change and no test covers it.",
+        "recoverableCommits": "The blocked attempt is in the local reflog, unpushed: trade-imports-workspace: 44fd2d86, 2d4ebeea, a8df0af3. Cherry-pick them and fix only the reason, rather than rebuilding."
+      }
     },
     {
       "id": "P38",

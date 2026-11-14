@@ -120,12 +120,12 @@ Agents cannot do these two rows, so the loop skips them:
 ## State
 
 - Progress: 65 of 67 (97%), counted over rows whose status is not "person".
-- Landed this run: P62, P70 and P69.
+- Landed this run: none.
 - Blocked this run: none.
-- Why the loop stopped: it reached its limit of 3 rows for one run.
-- Still to do: P71 (drop the canonical-path allowlist entries) and P72
-  (skill, rules and docs text stop naming the workspace path). Both wait
-  on P11.
+- Why the loop stopped: no row was left that it could build. P11, P55 and
+  P19B are for Sam. P71 (drop the canonical-path allowlist entries) and
+  P72 (skill, rules and docs text stop naming the workspace path) wait on
+  P11.
 - Rows for Sam:
   - **P11:** test which allowlist patterns match without a prompt. P71 and
     P72 wait on it.
@@ -135,6 +135,33 @@ Agents cannot do these two rows, so the loop skips them:
   - **P19B:** port the two guard hooks to Node with no dependencies.
   - P26's canary (raising a real govuk ticket) still waits for Sam's
     go-ahead.
-- Landing result: none yet.
-- Next: Sam does P11 and records which allowlist pattern forms match
-  without a prompt, then relaunches the loop to build P71 and P72.
+- Landing result: all 13 pull requests on `chore/NO_JIRA-bash-to-tim` are
+  ready for review. Nothing is merged.
+  - Green (12): workspace #263, performance-tests #36, defra-id-stub #15,
+    animals-admin #92, reference-data #41, dynamics-gateway #34,
+    address-book #27, animals-backend #131, plants-frontend #146,
+    ins-frontend #86, animals-frontend #485, ins-tests #113.
+  - Red (1): plants-prototype #27. None of its three failures comes from
+    this branch, which changes one README there:
+    - Design release canary: CI's throwaway release `plants-working`
+      clashes with a real release of that name merged on 27 October. Fix:
+      rename the throwaway release in
+      `.github/workflows/check-pull-request.yml`.
+    - Security audit: the new joi and @hapi/content advisories, fixed in
+      defra-id-stub the same way.
+    - FIT Tests: `fit/sets-chooser.fit.spec.js` gets a 404 for
+      `/assets/fonts/*.woff2`.
+
+    No fix can be committed there: its pre-commit hook is already red
+    (NEEDS-SAM item 11) and `--no-verify` is banned. The prototype owner
+    has to decide.
+  - Fixes pushed while landing: four forwarding scripts under
+    `scripts/ci/` and `scripts/stack/` so `e2e-tests.yml@main` still runs
+    (delete them once the workspace and performance-tests pull requests
+    merge, NEEDS-SAM item 12); tim tests made to pass on Linux;
+    defra-id-stub joi upgrade and override; dynamics-gateway
+    `EventsSendControllerIT` reads only its own session.
+  - The four forwarding scripts show as modified locally only because of a
+    file-permission difference. Git holds the run permission.
+- Next: Sam reviews and merges the 12 green pull requests, and the
+  prototype owner decides what to do about #27.

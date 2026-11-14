@@ -3451,14 +3451,35 @@
       ],
       "risk": "Medium. Keep per-package classification fragments, because planners run in parallel.",
       "proof": "Golden JSON from a fixture run directory. Directory diffs after each writer. A concurrency test with 20 parallel set-classification calls.",
-      "status": "todo",
+      "status": "done",
       "checks": [
         "tim-unit",
         "tim-lint",
         "parity",
         "no-callers"
       ],
-      "evidence": null
+      "evidence": {
+        "commits": [
+          {
+            "repo": "trade-imports-workspace",
+            "sha": "6e0125ae"
+          }
+        ],
+        "checks": [
+          "tim-unit: green. npm --prefix tim test gave 402 files passed, 25 skipped, 6036 tests passed, 8 expected fail. The new npm golden recorder skips now that the scripts are gone.",
+          "tim-lint: npm --prefix tim run lint and run format:check both exit 0.",
+          "parity: the Bash goldens were recorded before the scripts were deleted, in tim/src/npm-upgrade/__fixtures__/__golden__/npm-packages-scripts.json: 87 cases across list, counts, set-status, set-classification, aggregate and verify, with the run folder's files recorded for the writers and verify. tim/src/commands/npm/index.test.js spawns tim on each case. Text cases match stdout, stderr, exit code and files byte for byte. JSON cases match on the envelope .result, or the error message where the Bash refused. A mutation probe on the TSV escaping turned the list parity test red, and it was restored. A concurrency test ran 20 parallel set-classification calls, then aggregate, and lost no rows.",
+          "no-callers: git grep across the workspace (excluding workareas), repos/*, .claude/settings*.json, hooks and .github finds no mention of the six script names. The only hits are in the new untracked-at-grep-time recorder fixture and golden, which follows the pattern of earlier rows.",
+          "no new fixed path: the only added '<HOME>/git/defra' text is in the recorded Bash golden. No new .sh file."
+        ],
+        "deviations": [
+          "A missing required option now prints a `tim npm packages <cmd>` usage line, where the Bash printed its own script path. It still exits 1. Every refusal exits 1, matching the Bash, not tim's usual exit 2 for usage errors. This is in the commit message.",
+          "The printed next-step hints in tools/npm/run-automated-upgrades.sh and start-upgrade.sh, and the comment in start-upgrade.sh, now name the tim commands instead of the deleted scripts.",
+          "In start-upgrade.sh phase 3, the two list calls read `jq -e '.result'`, so an error envelope still stops the script under set -e, as the failing Bash call did. The other bash JSON readers use `jq '.result'` / `.result[0]`.",
+          "The four bash callers get a small `tim_packages` helper that calls `tim --workspace \"$WORKSPACE\" npm packages` with WORKSPACE=\"$(cd \"$SCRIPT_DIR/../..\" && pwd -P)\". This needs `tim` on PATH (npm link), as CLAUDE.md sets up.",
+          "settings-followups.md: no allowlist entry names these scripts, so the P64 section says there is nothing to remove. It is committed with the row, as P38 was."
+        ]
+      }
     },
     {
       "id": "P65",

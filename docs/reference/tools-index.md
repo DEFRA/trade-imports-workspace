@@ -129,16 +129,16 @@ epics included, goes through `tim jira create`.
 | `tools/understanding-check/start-check.sh` | EUDPA-X | Step 0 dispatcher — emits `MODE: FRESH` or `MODE: RESUME` |
 | `tools/understanding-check/prepare-check.sh` | EUDPA-X [--json] [--max-diff-bytes N] | Step 1 — fetch ticket + PRs, cache redacted diffs, bake best-practices, seed meta + per-repo analysis placeholders |
 | `tools/understanding-check/redact-diff.js` | IN OUT | Helper — redact env vars / API keys / PEM blocks in a diff before it lands on disk |
-| `tools/understanding-check/analysis-add-finding.sh` | EUDPA-X --repo R --section S --evidence-file F --evidence-lines L --field K=V ... | ANALYST helper — append finding (rejects without evidence) |
-| `tools/understanding-check/analysis-set-verdict.sh` | EUDPA-X --repo R --change-summary "..." --why-it-changed "..." | ANALYST helper — mark per-repo analysis complete |
+| `tim understanding-check analysis add-finding` | EUDPA-X --repo R --section S --evidence-file F --evidence-lines L --field K=V ... [--json] | ANALYST helper — append finding (rejects without evidence) |
+| `tim understanding-check analysis complete` | EUDPA-X --repo R --change-summary "..." --why-it-changed "..." [--json] | ANALYST helper — mark per-repo analysis complete |
 | `tools/understanding-check/question-add.sh` | EUDPA-X --category C --prompt "..." --anchor-file F --anchor-lines L --expected-concepts CSV --rubric-pass "..." --rubric-partial "..." --rubric-fail "..." | QUESTION_GENERATOR helper — append question (caps at 12; rejects hedged rubrics) |
 | `tools/understanding-check/question-replace.sh` | EUDPA-X --id QN ... | Plan-gate edit — replace question by id |
 | `tools/understanding-check/question-remove.sh` | EUDPA-X --id QN | Plan-gate edit — drop a question (renumbers downstream ids) |
 | `tools/understanding-check/transcript-record-answer.sh` | EUDPA-X --question-id QN --answer-file F [--skipped] | Interview — persist developer's answer |
 | `tools/understanding-check/transcript-add-score.sh` | EUDPA-X --question-id QN --verdict V --rubric-match "..." --missed-concepts CSV --evidence-cited file:lines[,...] [--follow-up "..."] | SCORER helper — append score (forces FAIL/unscorable if rubric_match doesn't overlap a clause) |
-| `tools/understanding-check/counts.sh` | EUDPA-X [--json] | Diagnostic — PASS/PARTIAL/FAIL/security-FAIL/coverage-gap counts |
-| `tools/understanding-check/verify-coverage.sh` | EUDPA-X [--json] | Step 7 gate — every question scored, every finding has evidence |
-| `tools/understanding-check/finalize-verdict.sh` | EUDPA-X [--json] | Step 7 — apply deterministic counting rule, stamp verdict + exit code |
+| `tim understanding-check counts` | EUDPA-X [--json] | Diagnostic — PASS/PARTIAL/FAIL/security-FAIL/coverage-gap counts |
+| `tim understanding-check verify` | EUDPA-X [--json] | Step 7 gate — every question scored, every finding has evidence; gaps on stderr, exit 1 |
+| `tim understanding-check finalize` | EUDPA-X [--json] | Step 7 — apply deterministic counting rule, stamp verdict + exit code (0 pass, 1 needs-review, 2 high-risk) |
 | `tools/understanding-check/render-report.sh` | EUDPA-X [--preview] | Plan-gate preview (Step 4) or full report (Step 7) |
 | **sonar** | | |
 | `tools/sonar/sonar-push-check.sh` | (reads `.tool_input.command` from stdin JSON) | Canonical `PreToolUse(Bash)` hook body, referenced by every SonarCloud-integrated repo's `.claude/settings.json` via its `$HOME`-absolute path rather than duplicated per repo. Fires only when the command is an actual `git push`; runs the real build/test/analysis pipeline CI uses (`mvn clean verify sonar:sonar` for Java repos, `npm ci && npm test` then `sonar-scanner` for Node repos, scoped to the current branch's open PR when one exists) and blocks the push (exit 2) if the SonarCloud quality gate fails. Requires `SONAR_TOKEN` in the environment; skips gracefully (exit 0) if it's unset, `jq`/`gh` are missing, or the repo isn't recognised as Java/Node. See CLAUDE.md's "SonarCloud integration" section for why this replaced the (unlicensed-for-this-org) `sonar analyze agentic` Stop hook. |

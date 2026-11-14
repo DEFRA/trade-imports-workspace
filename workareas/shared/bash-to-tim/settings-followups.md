@@ -25,3 +25,8 @@ Bash(~/git/defra/trade-imports-workspace/tools/theme-ticket/*:*)
 ```
 
 `Bash(tim:*)` covers `tim theme-ticket`.
+
+## P40
+
+None. No allowlist entry names `tools/understanding-check/`; the generic
+`tools/**` entries and `Bash(tim:*)` cover what remains.

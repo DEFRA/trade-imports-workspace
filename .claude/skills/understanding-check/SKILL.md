@@ -41,8 +41,8 @@ JSON canonical:
 
 | File | Mutated by | Purpose |
 |---|---|---|
-| `.interview-meta.json` | `prepare-check.sh`, `finalize-verdict.sh` | run metadata + verdict + coverage gaps |
-| `analysis.{repo}.json` | `analysis-add-finding.sh`, `analysis-set-verdict.sh` | per-repo findings (evidence-anchored) |
+| `.interview-meta.json` | `prepare-check.sh`, `tim understanding-check finalize` | run metadata + verdict + coverage gaps |
+| `analysis.{repo}.json` | `tim understanding-check analysis add-finding`, `tim understanding-check analysis complete` | per-repo findings (evidence-anchored) |
 | `questions.json` | `question-add.sh`, `question-replace.sh`, `question-remove.sh` | combined question set (the plan-gate artifact) |
 | `transcript.json` | `transcript-record-answer.sh`, `transcript-add-score.sh` | per-question answer + score |
 | `report.md` | `render-report.sh` | rendered final report (regenerable from JSON) |
@@ -244,10 +244,10 @@ hedged "I'm not sure" judgements — see
 ## Step 7: Verify coverage and finalise
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/understanding-check/verify-coverage.sh EUDPA-XXXXX
+tim understanding-check verify EUDPA-XXXXX
 ```
 
-Gates the verdict step. Exits non-zero if:
+Gates the verdict step. Lists the gaps on stderr and exits 1 if:
 
 - Any question is missing an answer or a score.
 - Any analysis finding lacks evidence (shouldn't happen — helpers
@@ -256,12 +256,15 @@ Gates the verdict step. Exits non-zero if:
 Then apply the deterministic counting rule:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/understanding-check/finalize-verdict.sh EUDPA-XXXXX
+tim understanding-check finalize EUDPA-XXXXX
 ```
 
-The script reads `transcript.json`, applies
-[`assets/verdict-rule.md`](assets/verdict-rule.md), and stamps the
-verdict + exit code onto `.interview-meta.json`. Coverage gaps
+The command reads `transcript.json`, applies
+[`assets/verdict-rule.md`](assets/verdict-rule.md), stamps the
+verdict + exit code onto `.interview-meta.json` and exits with that
+code. A finalize that could not run also exits 1, so read the verdict
+from its `Verdict for` line (or `--json` `result.verdict`), not from the
+exit code alone. Coverage gaps
 recorded during the run automatically downgrade `pass` → `needs-review`.
 
 Then render the report:
@@ -306,20 +309,20 @@ Section 10 of the report is a paste-ready PR comment.
 
 ## Scripts cheat-sheet
 
-All under `~/git/defra/trade-imports-workspace/tools/understanding-check/`:
+Scripts under the workspace's `tools/understanding-check/`, and the `tim` commands that replace some of them:
 
-| Script | Purpose |
+| Script or command | Purpose |
 |---|---|
 | `start-check.sh` | Step 0 dispatcher — emits `MODE: FRESH` or `MODE: RESUME` |
 | `prepare-check.sh` | Step 1 — fetch ticket + PRs, cache redacted diffs, bake best-practices, seed meta |
-| `analysis-add-finding.sh` | ANALYST helper — append a finding to `analysis.{repo}.json` (evidence required; rejected without `--evidence file:lines`) |
-| `analysis-set-verdict.sh` | ANALYST helper — mark per-repo analysis as `complete` |
+| `tim understanding-check analysis add-finding` | ANALYST helper — append a finding to `analysis.{repo}.json` (evidence required; rejected without `--evidence-file` and `--evidence-lines`) |
+| `tim understanding-check analysis complete` | ANALYST helper — mark per-repo analysis as `complete` |
 | `question-add.sh` | QUESTION_GENERATOR helper — append a question (categorical rubric required; clamps total to 12) |
 | `question-replace.sh` | Plan-gate edit — replace question by id |
 | `question-remove.sh` | Plan-gate edit — drop a question by id (renumbers downstream ids) |
 | `transcript-record-answer.sh` | Interview helper — persist developer's answer for a question |
 | `transcript-add-score.sh` | SCORER helper — append a score (rubric-match required) |
-| `counts.sh` | Diagnostic — PASS/PARTIAL/FAIL by category |
-| `verify-coverage.sh` | Step 7 gate — every question scored, every finding has evidence |
-| `finalize-verdict.sh` | Step 7 — apply deterministic counting rule, stamp verdict + exit code |
+| `tim understanding-check counts` | Diagnostic — PASS/PARTIAL/FAIL by category |
+| `tim understanding-check verify` | Step 7 gate — every question scored, every finding has evidence |
+| `tim understanding-check finalize` | Step 7 — apply deterministic counting rule, stamp verdict + exit code |
 | `render-report.sh` | Step 4 (`--preview`) and Step 7 — render markdown from JSON state |

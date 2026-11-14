@@ -266,6 +266,40 @@ tim theme-ticket push workareas/shared/design-release-2-1/tickets/animals-journe
   sends nothing until `--confirm`.
 - A usage error exits 2; every other refusal exits 1.
 
+### `tim understanding-check` — the understanding-check skill's steps
+
+```bash
+tim understanding-check analysis add-finding EUDPA-123 --repo trade-imports-stub \
+  --section edgeCases --evidence-file src/a.js --evidence-lines 4-9 --field case="Empty list"
+tim understanding-check analysis complete EUDPA-123 --repo trade-imports-stub \
+  --change-summary "Adds the check." --why-it-changed "Users asked for it."
+tim understanding-check counts EUDPA-123
+tim understanding-check verify EUDPA-123
+tim understanding-check finalize EUDPA-123
+```
+
+- State lives in `workareas/understanding-checks/<ticket>/` of the
+  workspace tim runs in.
+- `analysis add-finding` appends a finding to `analysis.<repo>.json`: an
+  id one past the section's highest, each `--field KEY=VALUE` (split on
+  the first `=`) in order, then the evidence. It prints the id.
+  `analysis complete` stamps `changeSummary` and `whyItChanged` (at most
+  300 characters each), `verdict: "complete"` and `completed_at`.
+- `counts` prints PASS, PARTIAL, FAIL and PENDING overall and by question
+  category, with security FAILs and coverage gaps. It refuses an answer to
+  a question with no category in `questions.json`.
+- `verify` lists, on stderr, every missing state file, incomplete or
+  missing analysis, finding without evidence (a missing section counts as
+  one), unanswered question and unscored answer, and exits 1 when there
+  are any.
+- `finalize` applies the counting rule in
+  `.claude/skills/understanding-check/assets/verdict-rule.md`, stamps the
+  verdict, its reason, `exit_code`, `completed_at` and the counts onto
+  `.interview-meta.json`, and exits 0 for pass, 1 for needs-review and 2
+  for high-risk. `--json` adds `meta_path`.
+- Every refusal, a usage error included, exits 1, so it never reads as
+  high-risk.
+
 ### `tim capture` — photograph a running app
 
 Runs an app's own FIT suite with Playwright tracing on, keeps the traces under

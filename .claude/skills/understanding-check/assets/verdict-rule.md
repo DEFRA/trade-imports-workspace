@@ -1,6 +1,6 @@
 # Deterministic verdict rule + report layout
 
-`finalize-verdict.sh` reads `transcript.json` and applies the table
+`tim understanding-check finalize` reads `transcript.json` and applies the table
 below. The rule is deterministic — no LLM judging the final verdict.
 That's intentional: LLM-scored individual answers (advisory) + a
 counting rule on top (deterministic) is the gate.
@@ -30,7 +30,6 @@ Then, in evaluation order (first match wins):
   truncated.
 - The parent session if the developer types `quit` mid-interview.
 - The SCORER persona if the helper records `FAIL/unscorable`.
-- `verify-coverage.sh` if it finds a missing answer or score.
 
 ## Why this shape
 

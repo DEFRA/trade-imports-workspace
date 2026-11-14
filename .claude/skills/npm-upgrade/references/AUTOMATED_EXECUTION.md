@@ -82,7 +82,7 @@ Stdout is one JSON object:
 ## Step 2: Report
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/packages-counts.sh --run-id {run-id}
+tim npm packages counts --run-id {run-id}
 ```
 
 ```
@@ -100,16 +100,17 @@ Total auto attempted: {N}
 ```
 
 Pull the per-repo `{done}` / `{demoted}` numbers from
-`packages-list.sh`:
+`tim npm packages list`:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/packages-list.sh --run-id {run-id} --classification auto --status done --json
+tim npm packages list --run-id {run-id} --classification auto --status done --json
 ```
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/packages-list.sh --run-id {run-id} --classification manual --json
+tim npm packages list --run-id {run-id} --classification manual --json
 ```
 
+Each prints a tim JSON envelope; the rows are its `.result` array.
 (Filter the latter for `demoted_from_auto: true` if you want the
 "demoted just now" subset specifically.)
 

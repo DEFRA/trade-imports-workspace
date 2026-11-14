@@ -312,3 +312,11 @@ generic `tools/**` entries cover what remains.
 
 No allowlist entry in any `.claude/settings*.json` (workspace or `repos/*`)
 names `tools/confluence/page.sh`; nothing to remove.
+
+## P64
+
+No allowlist entry in any `.claude/settings*.json` (workspace or `repos/*`)
+names `tools/npm/packages-list.sh`, `packages-counts.sh`,
+`packages-set-status.sh`, `packages-set-classification.sh`,
+`packages-aggregate-classifications.sh` or
+`verify-classification-coverage.sh`; nothing to remove.

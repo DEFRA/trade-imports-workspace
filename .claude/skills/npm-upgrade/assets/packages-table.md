@@ -45,7 +45,7 @@ state lives in `packages.{repo}.json`.
       "upgrade_type": "patch",                // patch | minor | major
       "dependency_type": "dependencies",      // dependencies | devDependencies
 
-      // Set by PACKAGE_PLANNER via packages-set-classification.sh.
+      // Set by PACKAGE_PLANNER via `tim npm packages set-classification`.
       "classification": null,                 // null | "auto" | "manual"
       "risk": null,                           // null | "LOW" | "MEDIUM" | "HIGH"
       "safe_for_automation": null,            // null | true | false
@@ -56,7 +56,7 @@ state lives in `packages.{repo}.json`.
       "migration_guide_url": null,            // optional
 
       // Set by upgrade-one-package.sh / run-manual-upgrade.sh via
-      // packages-set-status.sh.
+      // `tim npm packages set-status`.
       "implementation_status": null,          // null | "todo" | "inprogress" | "done" | "failed"
       "failure_reason": null,                 // free-text on failure
       "commit_sha": null,                     // short SHA on success
@@ -76,28 +76,30 @@ state lives in `packages.{repo}.json`.
 | Value | Meaning | How set |
 |---|---|---|
 | `null` | Pending — `PACKAGE_PLANNER` has not yet classified. | Default. |
-| `"auto"` | No code changes required; safe to upgrade automatically. | `packages-set-classification.sh --classification auto`. |
-| `"manual"` | Code changes required, or risk too high for automation. | `packages-set-classification.sh --classification manual`. Auto-set by upgrade-one-package when an auto upgrade demotes (also sets `demoted_from_auto: true`). |
+| `"auto"` | No code changes required; safe to upgrade automatically. | `tim npm packages set-classification --classification auto`. |
+| `"manual"` | Code changes required, or risk too high for automation. | `tim npm packages set-classification --classification manual`. Auto-set by upgrade-one-package when an auto upgrade demotes (also sets `demoted_from_auto: true`). |
 
 ## Implementation status values
 
 | Value | Meaning | How set |
 |---|---|---|
 | `null` | No implementation attempt yet. | Default. |
-| `"todo"` | Queued for the runner (`run-automated-upgrades.sh` or `run-manual-upgrade.sh`). | `packages-set-status.sh --status todo`. |
-| `"inprogress"` | Runner has claimed it. | `packages-set-status.sh --status inprogress`. |
-| `"done"` | Upgrade committed locally. `commit_sha` populated. | `packages-set-status.sh --status done --commit-sha SHA`. |
-| `"failed"` | Upgrade attempted and failed; rolled back. `failure_reason` populated. | `packages-set-status.sh --status failed --failure-reason "..."`. |
+| `"todo"` | Queued for the runner (`run-automated-upgrades.sh` or `run-manual-upgrade.sh`). | `tim npm packages set-status --status todo`. |
+| `"inprogress"` | Runner has claimed it. | `tim npm packages set-status --status inprogress`. |
+| `"done"` | Upgrade committed locally. `commit_sha` populated. | `tim npm packages set-status --status done --commit-sha SHA`. |
+| `"failed"` | Upgrade attempted and failed; rolled back. `failure_reason` populated. | `tim npm packages set-status --status failed --failure-reason "..."`. |
 
-## Helper scripts (all under `~/git/defra/trade-imports-workspace/tools/npm/`)
+## Helpers (`tim npm packages` and the scripts under `tools/npm/`)
 
 | Script | Purpose |
 |---|---|
 | `packages-init.sh` | Initial population from ncu output (called by `discover-upgrades.sh`) |
-| `packages-set-classification.sh` | Set classification + risk + rationale (+ file list, change summary, urls) for one package |
-| `packages-set-status.sh` | Set implementation_status + failure_reason / commit_sha / completed_at |
-| `packages-list.sh` | Query packages with filters (`--classification`, `--status`, `--risk`, `--repo`, `--json`) |
-| `packages-counts.sh` | Summary counts by classification + risk + status |
+| `tim npm packages set-classification` | Set classification + risk + rationale (+ file list, change summary, urls) for one package |
+| `tim npm packages set-status` | Set implementation_status + failure_reason / commit_sha / completed_at |
+| `tim npm packages list` | Query packages with filters (`--classification`, `--status`, `--risk`, `--repo`, `--json`) |
+| `tim npm packages counts` | Summary counts by classification + risk + status |
+| `tim npm packages aggregate` | Fold the per-package classification files into `packages.{repo}.json` |
+| `tim npm packages verify` | Phase 1 gate: aggregate, then exit 1 while any package is not classified |
 
 All mutations use `mktemp + mv` for atomicity. None of the helpers
 take the markdown plan body as input — there is no markdown plan.
@@ -111,7 +113,8 @@ take the markdown plan body as input — there is no markdown plan.
 - `cat >> *.inprogress` body annotations — gone. Failure reason +
   commit SHA live in dedicated JSON fields.
 - `find ... | wc -l` status queries — replaced by
-  `packages-counts.sh --json` / `packages-list.sh --json`.
+  `tim npm packages counts --json` / `tim npm packages list --json`,
+  read from the envelope's `.result`.
 
 ## Audit and override state (phase 0, 2 and 4)
 

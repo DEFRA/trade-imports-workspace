@@ -476,6 +476,32 @@ tim govuk apply --run-id EUDPA-264 --repo trade-imports-animals-frontend --govuk
 - A missing option, or a classification other than todo or noop, exits
   2; every other refusal exits 1.
 
+### `tim npm packages` — read and change an npm upgrade run's packages
+
+```bash
+tim npm packages list --run-id EUDPA-500 --classification manual --json
+tim npm packages counts --run-id EUDPA-500 --repo trade-imports-animals-frontend
+tim npm packages set-status --run-id EUDPA-500 --repo trade-imports-animals-frontend --package lodash --status done --commit-sha 0123abc
+tim npm packages set-classification --run-id EUDPA-500 --repo trade-imports-animals-frontend --package lodash --classification auto --risk LOW --safe-for-automation true --rationale "Patch fix only"
+tim npm packages aggregate --run-id EUDPA-500
+tim npm packages verify --run-id EUDPA-500 --json
+```
+
+- The state is `workareas/npm-upgrades/<run>/<repo>/packages.<repo>.json`.
+- `list` prints one tab-separated line per package; `--json` gives the
+  rows, each with its `repo`. A `pending` classification is one nobody
+  has set; a `pending` status is none or `todo`. `--filter` is the same
+  as `--classification`.
+- `list` and `counts` refuse a missing run, but give `[]` or zero counts
+  with `--json`.
+- `set-classification` writes one file per package under
+  `<repo>/classifications/`, so planners can run at once. `aggregate`
+  folds those files into the packages file.
+- `verify` runs `aggregate` first, writing what it did to stderr, then
+  exits 1 and lists the packages still not classified when there are any.
+  `--json` gives `{pending_count, pending}`.
+- Every refusal, a usage error included, exits 1.
+
 ### `tim review` — the review skill's helpers
 
 ```bash

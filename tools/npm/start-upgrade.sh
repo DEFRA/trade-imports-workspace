@@ -26,7 +26,7 @@
 #              package that still has classification=null. The caller
 #              fans out one PACKAGE_PLANNER subagent per manifest
 #              entry. After workers finish, the caller runs
-#              `verify-classification-coverage.sh` as the gate.
+#              `tim npm packages verify` as the gate.
 #
 #   --phase 2  Spawn `run-automated-upgrades.sh` per repo in
 #              parallel (background tasks), aggregate exit codes,
@@ -55,6 +55,8 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WORKSPACE="$(cd "$SCRIPT_DIR/../.." && pwd -P)"
+tim_packages() { tim --workspace "$WORKSPACE" npm packages "$@"; }
 
 REPOS_MANIFEST="$SCRIPT_DIR/../../repos.json"
 
@@ -296,13 +298,13 @@ phase1() {
 
     echo >&2
     echo "Phase 1 setup complete. Spawn one PACKAGE_PLANNER per MANIFEST entry," >&2
-    echo "then run: ~/git/defra/trade-imports-workspace/tools/npm/verify-classification-coverage.sh --run-id $TICKET" >&2
+    echo "then run: tim npm packages verify --run-id $TICKET" >&2
 }
 
 phase2() {
     # Fold any leftover PACKAGE_PLANNER classification fragments into
     # the canonical packages.{repo}.json before reading state.
-    "$SCRIPT_DIR/packages-aggregate-classifications.sh" --run-id "$TICKET" >&2 || true
+    tim_packages aggregate --run-id "$TICKET" >&2 || true
 
     # Fan out per-repo runners. Run sequentially per repo (so the
     # internal --no-discover / sequential-package loop is honoured),
@@ -379,22 +381,22 @@ phase2() {
 
 phase3() {
     # Defensive aggregate in case Phase 1 verify wasn't the last gate.
-    "$SCRIPT_DIR/packages-aggregate-classifications.sh" --run-id "$TICKET" >&2 || true
+    tim_packages aggregate --run-id "$TICKET" >&2 || true
 
     # Emit the handoff manifest: every manual package (regardless of
     # status) plus any auto that ended up failed (these have already
     # been demoted to manual by upgrade-one-package, but the safety
     # net is cheap).
     local manual_json failed_json
-    manual_json=$("$SCRIPT_DIR/packages-list.sh" \
+    manual_json=$(tim_packages list \
         --run-id "$TICKET" \
         --classification manual \
-        --json)
-    failed_json=$("$SCRIPT_DIR/packages-list.sh" \
+        --json | jq -e '.result')
+    failed_json=$(tim_packages list \
         --run-id "$TICKET" \
         --classification auto \
         --status failed \
-        --json)
+        --json | jq -e '.result')
 
     # Every allowlist entry in each repo's audit-ci.jsonc (the truth),
     # with the package and kind this run's writer recorded for it.

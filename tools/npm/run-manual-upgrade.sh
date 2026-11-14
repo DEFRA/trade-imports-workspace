@@ -27,6 +27,8 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WORKSPACE="$(cd "$SCRIPT_DIR/../.." && pwd -P)"
+tim_packages() { tim --workspace "$WORKSPACE" npm packages "$@"; }
 # shellcheck source=audit-lib.sh
 source "$SCRIPT_DIR/audit-lib.sh"
 
@@ -99,7 +101,7 @@ echo "========================================="
 
 set_status() {
     local status="$1"; shift
-    "$SCRIPT_DIR/packages-set-status.sh" \
+    tim_packages set-status \
         --run-id "$RUN_ID" --repo "$REPO_NAME" --package "$PACKAGE" \
         --status "$status" "$@" >/dev/null
 }

@@ -40,7 +40,7 @@ Paths anchored on `~/git/defra/trade-imports-workspace` — compute via the
 ## Step 1: Mark inprogress + claim the lane
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/packages-set-status.sh \
+tim npm packages set-status \
   --run-id {run-id} --repo {repo} --package {package} --status inprogress
 ```
 
@@ -264,7 +264,7 @@ git -C ~/git/defra/trade-imports-workspace/repos/{repo} rev-parse --short HEAD
 Mark done:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/packages-set-status.sh \
+tim npm packages set-status \
   --run-id {run-id} --repo {repo} --package {package} --status done --commit-sha {short-sha}
 ```
 

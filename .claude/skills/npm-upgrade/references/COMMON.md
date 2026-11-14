@@ -25,9 +25,9 @@ invoke them by absolute path.
 | `discover-upgrades.sh` | 1 | Find outdated packages + seed `packages.{repo}.json` |
 | `prebake-context.sh` | 1 | Per-package context bundle (best-effort) |
 | `bake-best-practices.sh` | 1 | Per-repo best-practices bundle |
-| `packages-init.sh` / `packages-set-classification.sh` / `packages-set-status.sh` | All | JSON state writers (atomic) |
-| `packages-list.sh` / `packages-counts.sh` | All | JSON state queries |
-| `verify-classification-coverage.sh` | 1 | Phase 1 gate |
+| `packages-init.sh` / `tim npm packages set-classification` / `tim npm packages set-status` | All | JSON state writers (atomic) |
+| `tim npm packages list` / `tim npm packages counts` | All | JSON state queries |
+| `tim npm packages verify` | 1 | Phase 1 gate |
 | `run-automated-upgrades.sh` | 2 | Per-repo automated runner |
 | `upgrade-one-package.sh` | 2 | Internal: install + test + commit + rollback, JSON-aware |
 | `run-manual-upgrade.sh` | 3 | Per-package manual runner (spawned by WALKER) |
@@ -40,8 +40,9 @@ Schema: `assets/packages-table.md`.
 
 There are no `.auto.md` / `.manual.md` plan files on disk — the
 classification, risk, rationale, files_affected and change summary
-all live in the JSON. `packages-list.sh --classification manual --json`
-is the canonical query for "what needs manual work".
+all live in the JSON. `tim npm packages list --classification manual --json`
+is the canonical query for "what needs manual work". With `--json`, every
+`tim npm packages` command prints a tim JSON envelope: read its `.result`.
 
 There are no `.todo` / `.inprogress` / `.done` / `.failed` marker
 files either — implementation status lives on `implementation_status`

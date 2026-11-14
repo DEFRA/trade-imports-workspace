@@ -21,7 +21,7 @@ is no pre-veto walker on the auto side — Phase 2 just runs.
 ## Step 1: Load the work list
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/packages-list.sh --run-id EUDPA-XXXXX --classification manual --json
+tim npm packages list --run-id EUDPA-XXXXX --classification manual --json
 ```
 
 For an optional repo filter add `--repo {repo}`. Also pull the
@@ -29,8 +29,10 @@ failed-auto demotion side (these are already classified manual via
 demoted_from_auto, but a separate query helps render them first):
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/packages-list.sh --run-id EUDPA-XXXXX --classification auto --status failed --json
+tim npm packages list --run-id EUDPA-XXXXX --classification auto --status failed --json
 ```
+
+Each prints a tim JSON envelope; the rows are its `.result` array.
 
 If both queries are empty:
 ```
@@ -102,7 +104,7 @@ held package needs one: the handoff report and the PR body list it.
 Then store it:
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/packages-set-status.sh \
+tim npm packages set-status \
   --run-id EUDPA-XXXXX --repo {repo} --package {pkg} \
   --status failed --failure-reason "Deferred by walker: {reason}"
 ```
@@ -157,7 +159,7 @@ not given them (the sweep's workflow args `allowlistOwner` and
 `expiryDays` carry them).
 
 The implementor returns one of `DONE`, `FAILED`, `SKIPPED`. It updates
-JSON state itself via `packages-set-status.sh`; you don't need to.
+JSON state itself via `tim npm packages set-status`; you don't need to.
 
 You can also call `run-manual-upgrade.sh` directly if you'd prefer the
 script-driven flow without an extra subagent:
@@ -205,7 +207,7 @@ If no `DONE` package was in the tests repo, skip this step.
 ## Step 5: Final report
 
 ```bash
-~/git/defra/trade-imports-workspace/tools/npm/packages-counts.sh --run-id EUDPA-XXXXX
+tim npm packages counts --run-id EUDPA-XXXXX
 ```
 
 Print the summary:

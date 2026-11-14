@@ -153,6 +153,6 @@ takes I/D/S keystrokes per package, and (for `I`) spawns one
 
 - The JSON manifest contains everything operators need to read; no
   hand-parsing of markdown files.
-- `packages-list.sh --classification manual --json` is the same query
+- `tim npm packages list --classification manual --json` is the same query
   the dispatcher uses; you can call it ad-hoc if the user wants a
   filtered subset (`--risk HIGH`, `--repo {repo}`, etc).

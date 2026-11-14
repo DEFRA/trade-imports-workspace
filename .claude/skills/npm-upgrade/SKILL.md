@@ -30,7 +30,7 @@ by name via the Task tool.
 
 | Persona | Used in | Artifact |
 |---|---|---|
-| `references/PACKAGE_PLANNER.md` | `references/DISCOVERY_AND_PLANNING.md` Step 2 — one per outdated package, parallel fan-out | classification row in `packages.{repo}.json` (via `packages-set-classification.sh`) |
+| `references/PACKAGE_PLANNER.md` | `references/DISCOVERY_AND_PLANNING.md` Step 2 — one per outdated package, parallel fan-out | classification row in `packages.{repo}.json` (via `tim npm packages set-classification`) |
 | `references/MANUAL_UPGRADE_IMPLEMENTOR.md` | `references/WALKER.md` `I` keystroke — one per package the operator chooses to implement | source edits + commit + JSON status row update |
 
 Spawn idiom: Task tool with `subagent_type: general-purpose` and a prompt
@@ -151,7 +151,7 @@ Follow references/DISCOVERY_AND_PLANNING.md. Run ID: {run-id}
 Phase 1 calls the dispatcher (`start-upgrade.sh --phase 1`) which
 runs discovery, pre-bakes per-package context, and emits a JSON spawn
 manifest. The persona fans out one PACKAGE_PLANNER subagent per
-manifest entry, then runs `verify-classification-coverage.sh` as the
+manifest entry, then runs `tim npm packages verify` as the
 gate.
 
 Emit ALL Task calls in a single assistant response — do NOT spawn one, await the result, then spawn the next. Parallelism only works when calls are batched in one turn.
@@ -256,9 +256,9 @@ Scripts (`~/git/defra/trade-imports-workspace/tools/npm/`):
 - `discover-upgrades.sh` — discovery + seed `packages.{repo}.json`.
 - `prebake-context.sh` — per-package context pre-bake (best-effort).
 - `bake-best-practices.sh` — per-repo best-practices bundle.
-- `packages-init.sh` / `packages-set-classification.sh` / `packages-set-status.sh` — JSON state writers.
-- `packages-list.sh` / `packages-counts.sh` — JSON state queries.
-- `verify-classification-coverage.sh` — Phase 1 gate.
+- `packages-init.sh` / `tim npm packages set-classification` / `tim npm packages set-status` — JSON state writers.
+- `tim npm packages list` / `tim npm packages counts` — JSON state queries.
+- `tim npm packages verify` — Phase 1 gate.
 - `run-automated-upgrades.sh` — Phase 2 per-repo runner.
 - `upgrade-one-package.sh` — Phase 2 helper (install + test + commit + rollback; JSON-aware).
 - `run-manual-upgrade.sh` — Phase 3 per-package runner (spawned by WALKER on `I`).

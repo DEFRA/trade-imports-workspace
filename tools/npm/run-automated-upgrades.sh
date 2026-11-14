@@ -10,6 +10,8 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+WORKSPACE="$(cd "$SCRIPT_DIR/../.." && pwd -P)"
+tim_packages() { tim --workspace "$WORKSPACE" npm packages "$@"; }
 
 show_help() {
     cat << EOF
@@ -92,9 +94,9 @@ echo
 
 # Initial backlog: every auto package with pending status.
 list_pending() {
-    "$SCRIPT_DIR/packages-list.sh" \
+    tim_packages list \
         --run-id "$RUN_ID" --repo "$REPO_NAME" \
-        --classification auto --status pending --json
+        --classification auto --status pending --json | jq '.result'
 }
 
 initial_count=$(list_pending | jq 'length')
@@ -120,8 +122,8 @@ while [[ "$initial_count" -gt 0 ]]; do
 
     if "$SCRIPT_DIR/upgrade-one-package.sh" --run-id "$RUN_ID" --repo "$REPO_NAME" --package "$next_pkg" ${ALLOWLIST_ARGS[@]+"${ALLOWLIST_ARGS[@]}"}; then
         # Check whether it succeeded or controlled-failed.
-        latest=$("$SCRIPT_DIR/packages-list.sh" \
-            --run-id "$RUN_ID" --repo "$REPO_NAME" --package "$next_pkg" --json | jq -r '.[0].implementation_status')
+        latest=$(tim_packages list \
+            --run-id "$RUN_ID" --repo "$REPO_NAME" --package "$next_pkg" --json | jq -r '.result[0].implementation_status')
         if [[ "$latest" == "done" ]]; then
             SUCCESS=$((SUCCESS + 1))
             echo "✓ Success"
@@ -141,7 +143,7 @@ while [[ "$initial_count" -gt 0 ]]; do
             # Stop the batch (and skip the lockfile refresh, which
             # audits too) rather than fail them all.
             echo "✗ Repo-level stop: the audit is red or could not run (see $next_pkg's failure_reason). Fix the repo, then rerun phase 2." >&2
-            "$SCRIPT_DIR/packages-counts.sh" --run-id "$RUN_ID" --repo "$REPO_NAME" || true
+            tim_packages counts --run-id "$RUN_ID" --repo "$REPO_NAME" || true
             exit 3
         fi
         FAILED=$((FAILED + 1))
@@ -198,7 +200,7 @@ if [[ "$REPO_NAME" == "trade-imports-ins-tests" ]] && [[ $SUCCESS -gt 0 || $REFR
     echo
 fi
 
-"$SCRIPT_DIR/packages-counts.sh" --run-id "$RUN_ID" --repo "$REPO_NAME"
+tim_packages counts --run-id "$RUN_ID" --repo "$REPO_NAME"
 
 echo
 echo "==========================================="
@@ -215,7 +217,7 @@ fi
 
 if [[ $FAILED -gt 0 ]]; then
     echo "❌ Failed packages auto-demoted to classification=manual:"
-    echo "   ~/git/defra/trade-imports-workspace/tools/npm/packages-list.sh --run-id $RUN_ID --repo $REPO_NAME --status failed"
+    echo "   tim npm packages list --run-id $RUN_ID --repo $REPO_NAME --status failed"
     echo
 fi
 
@@ -226,4 +228,4 @@ if [[ $SUCCESS -gt 0 ]]; then
 fi
 
 echo "📊 Overall status:"
-echo "   ~/git/defra/trade-imports-workspace/tools/npm/packages-counts.sh --run-id $RUN_ID"
+echo "   tim npm packages counts --run-id $RUN_ID"

@@ -85,15 +85,10 @@ epics included, goes through `tim jira create`.
 | `tools/npm/audit-allowlist-forget.sh` | --run-id TICKET --repo R --ghsa GHSA [--ghsa GHSA ...] | Drop entries from the run's `allowlist.<repo>.json` state after a hand rollback (the scripted upgrades do this themselves); never touches `audit-ci.jsonc`. Run with `bash` |
 | `tools/npm/refresh-lockfile.sh` | --run-id TICKET --repo R [--repo-path PATH] | `npm update` (lockfile only), then test, lint, audit and commit "Refresh transitive dependencies"; rolls back and reports on failure |
 | `tools/npm/reset-overrides.sh` | --run-id TICKET --repo R [--repo-path PATH] | Phase 4: remove every override in a throwaway worktree, put back only those a failing audit / test / lint / build needs, commit "Remove overrides" with a kept-overrides table |
-| `tools/npm/verify-classification-coverage.sh` | --run-id TICKET [--repo R] [--json] | Phase 1 coverage gate — fail iff any package.classification == null |
 | `tools/npm/prebake-context.sh` | --run-id TICKET --repo R --package PKG | Best-effort fetch of changelog + grep usages; updates `context_baked` field |
 | `tools/npm/bake-best-practices.sh` | --run-id TICKET --repo R | Concatenate dependency-relevant best-practices into per-repo bundle |
 | `tools/npm/discover-upgrades.sh` | repo-path --run-id TICKET [--strategy LEVEL] [--json] | Discover outdated deps + seed `packages.{repo}.json` |
 | `tools/npm/packages-init.sh` | --run-id TICKET --repo R --repo-path PATH --strategy LEVEL --ncu-version VER (--ncu-json JSON \| --ncu-file PATH) | Seed `packages.{repo}.json` from ncu output |
-| `tools/npm/packages-list.sh` | --run-id TICKET [--repo R] [--package PKG] [--classification ...] [--risk ...] [--status ...] [--json] | List packages with filters |
-| `tools/npm/packages-counts.sh` | --run-id TICKET [--repo R] [--json] | Counts by classification × status × risk |
-| `tools/npm/packages-set-classification.sh` | --run-id TICKET --repo R --package PKG --classification auto\|manual --risk LOW\|MEDIUM\|HIGH --safe-for-automation true\|false --rationale "..." [--files-affected CSV] [--changes-required "..."] [--changelog-url URL] [--migration-guide-url URL] [--demoted-from-auto true\|false] | Set PACKAGE_PLANNER fields on one package |
-| `tools/npm/packages-set-status.sh` | --run-id TICKET --repo R --package PKG --status todo\|inprogress\|done\|failed [--failure-reason "..."] [--commit-sha SHA] | Set implementation_status (+ commit_sha / failure_reason) |
 | `tools/npm/run-automated-upgrades.sh` | repo-name --run-id TICKET [--allowlist-owner NAME --expiry-days N] | Phase 2 per-repo runner (JSON-state-driven), ending with `refresh-lockfile.sh` |
 | `tools/npm/upgrade-one-package.sh` | --run-id TICKET --repo R --package PKG [--allowlist-owner NAME --expiry-days N] [--repo-path PATH] | Phase 2 internal: install + test + audit + commit + rollback (a refused commit rolls back too) |
 | `tools/npm/run-manual-upgrade.sh` | --run-id TICKET --repo R --package PKG [--allowlist-owner NAME --expiry-days N] [--repo-path PATH] | Phase 3 per-package manual runner (spawned by WALKER), same audit gate |

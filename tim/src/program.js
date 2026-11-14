@@ -37,6 +37,7 @@ import { register as registerSkill } from './commands/skill/index.js'
 import { register as registerThemeTicket } from './commands/theme-ticket/index.js'
 import { register as registerUnderstandingCheck } from './commands/understanding-check/index.js'
 import { register as registerGovuk } from './commands/govuk/index.js'
+import { register as registerNpm } from './commands/npm/index.js'
 import { register as registerReview } from './commands/review/index.js'
 import { register as registerTicket } from './commands/ticket/index.js'
 import { register as registerStyle } from './commands/style/index.js'
@@ -187,6 +188,7 @@ export const buildProgram = () => {
   registerThemeTicket(program, { timVersion: pkg.version })
   registerUnderstandingCheck(program, { timVersion: pkg.version })
   registerGovuk(program, { timVersion: pkg.version })
+  registerNpm(program, { timVersion: pkg.version })
   registerReview(program, { timVersion: pkg.version })
   registerStyle(program, { timVersion: pkg.version })
   registerTicket(program, { timVersion: pkg.version })

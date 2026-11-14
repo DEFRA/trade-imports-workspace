@@ -23,12 +23,15 @@ export const workspaceFlagValue = (args) => {
     : flag.slice(WORKSPACE_FLAG.length + 1)
 }
 
+const leaveFallbackWarningToCli = () => {}
+
 const addressedWorkspaceRoot = ({ args, env, cwd }) => {
   try {
     return resolveWorkspaceRoot({
       explicit: workspaceFlagValue(args),
       env: env.TIM_WORKSPACE,
-      cwd
+      cwd,
+      warn: leaveFallbackWarningToCli
     })
   } catch {
     return null

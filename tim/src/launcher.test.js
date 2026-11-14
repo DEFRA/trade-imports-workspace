@@ -267,3 +267,41 @@ describe('global tim launched from one of several clones', () => {
     )
   })
 })
+
+describe('global tim falling back on the canonical clone', () => {
+  let base
+
+  beforeAll(() => {
+    base = realpathSync(mkdtempSync(join(tmpdir(), 'tim-launcher-fallback-')))
+  })
+
+  afterAll(() => {
+    rmSync(base, { recursive: true, force: true })
+  })
+
+  test('Should hand over to the canonical clone without printing a warning of its own', async () => {
+    const home = join(base, 'home')
+    const canonicalClone = makeWorkspace(
+      join(home, 'git', 'defra'),
+      'trade-imports-workspace'
+    )
+    writeRoster(canonicalClone, ['fixture-a'])
+    writeStubTim(canonicalClone, { withDependencies: true })
+    const outsideAnyClone = join(base, 'outside')
+    mkdirSync(outsideAnyClone)
+
+    const { stdout, stderr, exitCode } = await execa(
+      'node',
+      [launcherPath, 'hello'],
+      {
+        cwd: outsideAnyClone,
+        reject: false,
+        env: { HOME: home, TIM_NO_AUTO_PULL: '1', TIM_WORKSPACE: '' }
+      }
+    )
+
+    expect(exitCode).toBe(0)
+    expect(stdout).toBe(join(canonicalClone, 'tim', 'src', 'cli.js'))
+    expect(stderr).toBe('')
+  })
+})

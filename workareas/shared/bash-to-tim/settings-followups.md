@@ -216,3 +216,41 @@ Nothing to remove. No allowlist entry names `tools/review/share-review.sh`,
 addition, for Sam to decide: `Bash(gh pr comment:*)`, which the review
 skill now runs itself to post each body (it posts to GitHub, so it may be
 better left prompting).
+
+## P57
+
+No allowlist entry names `tools/sonar/sonar-push-check.sh` or
+`scripts/sonar/sonar-push-gate.sh`. The row could not finish: every
+`.claude/settings.json` (the workspace's and each repo's) is protected
+from agent edits. Both scripts are now forwarders to
+`tim sonar push-check --hook`, run from the clone that holds them, so the
+hooks already run tim. Make these changes, keeping each `matcher` and
+`timeout`:
+
+- Workspace `.claude/settings.json`, PreToolUse `Bash` (timeout 600):
+  `bash "$CLAUDE_PROJECT_DIR/scripts/sonar/sonar-push-gate.sh"`
+  becomes
+  `W="$CLAUDE_PROJECT_DIR"; if [ -f "$W/tim/src/cli.js" ] && [ -d "$W/tim/node_modules" ]; then node "$W/tim/src/cli.js" sonar push-check --hook; fi`
+- Each repo's `.claude/settings.json` line 19, in
+  trade-imports-animals-frontend first (canary), then address-book,
+  animals-admin, dynamics-gateway, animals-backend, ins-backend,
+  reference-data and ins-frontend:
+  `bash $HOME/git/defra/trade-imports-workspace/tools/sonar/sonar-push-check.sh`
+  becomes
+  `W="$CLAUDE_PROJECT_DIR/../.."; if [ -f "$W/tim/src/cli.js" ] && [ -d "$W/tim/node_modules" ]; then node "$W/tim/src/cli.js" sonar push-check --hook; fi`
+  This finds the workspace the repo is cloned inside; a repo cloned on
+  its own gets no check. Each is a service-repo PR on
+  `chore/NO_JIRA-bash-to-tim`.
+- `CLAUDE.md` "SonarCloud integration": the pre-push bullet should name
+  `tim sonar push-check --hook` as the check, and the manual-run block
+  should become `tim sonar push-check`, run inside the repo. The old
+  `bash .../sonar-push-check.sh <<< ...` line still works through the
+  forwarder.
+
+Delete the forwarders, and `tim/src/sonar/push-check-forwarders.test.js`
+with them, only once `git grep sonar-push-check.sh` over every
+`refs/remotes/origin/*` in the eight repos is clean. On 14 Nov 2026 every
+remote branch still named it, `main` included (address-book 2,
+animals-frontend 19, animals-admin 9, dynamics-gateway 2,
+animals-backend 8, ins-backend 2, reference-data 7, ins-frontend 13
+branches).

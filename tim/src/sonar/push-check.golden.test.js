@@ -1,4 +1,7 @@
 import { execa } from 'execa'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { expect, test } from 'vitest'
 import {
   goldenText,
@@ -73,7 +76,15 @@ const recordInTurn = async (cases, record) => {
   return recordings
 }
 
-test.skipIf(![checkScript, gateScript].every(workspaceScriptExists))(
+const workspaceRoot = fileURLToPath(new URL('../../../', import.meta.url))
+
+const holdsTheRecordedBash = (script) =>
+  workspaceScriptExists(script) &&
+  !readFileSync(join(workspaceRoot, script), 'utf8').includes(
+    'sonar push-check --hook'
+  )
+
+test.skipIf(![checkScript, gateScript].every(holdsTheRecordedBash))(
   'the Bash push check and gate give the recorded exit code, output, tool calls and repo state for every case',
   async () => {
     const recordings = [

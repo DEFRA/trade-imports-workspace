@@ -110,7 +110,7 @@ It used to register all eight, but Claude Code starts every server in a project 
 at session start, and each one is an `mcp/sonarqube` docker container (roughly 400–800 MiB).
 Every workspace-root session therefore held about 5–6 GiB of Docker memory, enough to starve
 the testcontainers the Java integration suites start. Nothing automated needed them: the
-pre-push quality gate (`tools/sonar/sonar-push-check.sh`) and the pending-check hooks under
+pre-push quality gate (`tim sonar push-check --hook`) and the pending-check hooks under
 `scripts/sonar/` call SonarCloud through the `sonar` CLI and the scanners, not through MCP.
 
 To query SonarCloud from a workspace-root session, use the `sonar` CLI (for example
